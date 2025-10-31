@@ -1,0 +1,48 @@
+name: Update Splash Image
+author: Bert Pluymers
+description: Generate updated Splash image with appropriate package version.
+
+inputs:
+    uv_version:
+        required: true
+        description: "Version of UV to be used."
+    github_token:
+        required: true
+        description: "Github token to be used to upload to github pages"
+
+
+runs:
+    using: "composite"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: '${{ inputs.github_token }}'
+          ref: develop  # this always acts upon the develop branch
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ inputs.uv_version }}
+
+      - name: Determine Package version
+        shell: bash
+        run: |
+            PACKAGE_VERSION=$(uv version --short)
+            echo "PACKAGE_EFFECTIVE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV            
+
+      - name: Install ImageMagick 7
+        uses: mfinelli/setup-imagemagick@v7
+
+      - name: Prepare splash screen
+        shell: bash
+        run: |
+            ./.github/scripts/create_splash.sh                                                
+            mkdir -p "./splash"
+            cp "./images/splash_with_version.webp" "./splash/splash.webp"           
+
+      - name: Pass splash to next action
+        uses: actions/upload-artifact@v4
+        with:
+          name: splash
+          path: ./splash/

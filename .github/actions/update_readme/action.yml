@@ -1,0 +1,49 @@
+name: Update README.md (develop)
+author: Bert Pluymers
+description: Update links in README.md to point to appropriate version's images
+
+inputs:
+    uv_version:
+        required: true
+        description: "Version of UV to be used."
+    github_token:
+        required: true
+        description: "Github token to be used to upload to push updated readme."
+
+
+runs:
+    using: "composite"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: '${{ inputs.github_token }}'
+          ref: develop  # this always acts upon the develop branch
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ inputs.uv_version }}
+
+      - name: Determine Package version
+        shell: bash
+        run: |
+            PACKAGE_VERSION=$(uv version --short)
+            echo "PACKAGE_EFFECTIVE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+
+      - name: Update README URLs & Commit changes
+        shell: bash
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email ""          
+          git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/bertpl/max-div.git          
+          git pull origin develop
+          
+          uv run --python 3.13 .github/scripts/update_readme_urls.py "$GITHUB_WORKSPACE/.python-versions" "$GITHUB_WORKSPACE/pyproject.toml" "$GITHUB_WORKSPACE/README.md"
+          echo "----------------------------------------------------------"
+          cat "$GITHUB_WORKSPACE/README.md" | head -n 10
+          echo "..."
+          echo "----------------------------------------------------------"
+
+          git diff --quiet || (git add "$GITHUB_WORKSPACE/README.md" && git commit -m "Update README.md image URLs")
+          git push
