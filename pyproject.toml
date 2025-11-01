@@ -1,0 +1,53 @@
+[project]
+name = "max-div"
+version = "0.0.1"
+description = "Flexible Solver for Maximum Diversity problems with Fairness Constraints."
+readme = "README.md"
+authors = [
+    { name = "Bert Pluymers", email = "bert.pluymers@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.0.0",
+]
+
+[project.optional-dependencies]
+numba = [
+    "numba>=0.57",
+]
+
+[dependency-groups]
+dev = [
+    "genbadge[all]>=1.1.2",
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+]
+
+[project.urls]
+Source = "https://github.com/bertpl/max-div"
+ChangeLog = "https://github.com/bertpl/max-div/blob/develop/CHANGELOG.md"
+Issues = "https://github.com/bertpl/max-div/issues"
+Roadmap = "https://github.com/bertpl/max-div/milestones"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+packages = ["max_div"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["max_div"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["I"]
+
+[tool.coverage.report]
+exclude_also = [
+    "@abstractmethod",
+    "@abc.abstractmethod",
+]

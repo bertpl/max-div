@@ -1,0 +1,76 @@
+name: Update package version
+author: Bert Pluymers
+description: Update package version to a specific version
+
+inputs:
+    uv_version:
+        required: true
+        description: "Version of UV to be used."
+    github_token:
+        required: true
+        description: "GitHub token with permissions to push to selected branch (git_ref)."
+    git_ref:
+        required: false
+        description: "git ref (tag/commmit/branch) where to bump version  (default: develop)"
+        default: "develop"
+    only_if_equal_to_version:
+        required: false
+        description: "Only bump version if the current version is exactly equal to this one. If omitted, we always bump."
+        default: ""
+    bump_type:
+        required: false
+        description: "Type of version bump [major|minor|patch] (default=minor)."
+        default: "minor"
+
+runs:
+  using: "composite"
+  steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: '${{ inputs.github_token }}'
+          ref: ${{ inputs.git_ref }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ inputs.uv_version }}
+
+      - name: Check if we need to bump
+        shell: bash
+        run: |
+            if [[ -n ${{ inputs.only_if_equal_to_version }} ]]; then
+                if [[ ${{ inputs.only_if_equal_to_version }} == $( uv version --short ) ]]; then
+                    echo "VERSION_BUMP_NEEDED=true" >> $GITHUB_ENV
+                else
+                    echo "VERSION_BUMP_NEEDED=false" >> $GITHUB_ENV
+                fi
+            else
+                echo "VERSION_BUMP_NEEDED=true" >> $GITHUB_ENV    
+            fi
+
+      - name: Bump if needed
+        shell: bash
+        run: |
+            git config --local user.name "GitHub Actions"
+            git config --local user.email ""          
+            git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/bertpl/max-div.git
+            git pull origin ${{ inputs.git_ref }}
+          
+            if [[ $VERSION_BUMP_NEEDED == "true" ]]; then
+
+                ver_before="$(uv version --short)"
+                uv version --bump ${{ inputs.bump_type }}
+                ver_after="$(uv version --short)"
+                echo "Bumping version ${ver_before} -> ${ver_after}."          
+                
+                git add pyproject.toml
+                git commit -m "Bump package version ${ver_before} -> ${ver_after}"
+                git push origin          
+          
+            else
+                
+                ver_before="$(uv version --short)"
+                echo "Not bumping version ${ver_before}."
+            
+            fi

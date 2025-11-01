@@ -1,0 +1,47 @@
+name: Update Badge images based on Unit Test Coverage
+author: Bert Pluymers
+description: Generate unit test coverage & update badges.
+
+inputs:
+    uv_version:
+        required: true
+        description: "Version of UV to be used."
+    github_token:
+        required: true
+        description: "Github token to be used to upload to github pages."
+
+
+runs:
+    using: "composite"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: '${{ inputs.github_token }}'
+          ref: develop  # this always acts upon the develop branch
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ inputs.uv_version }}
+
+      - name: Create coverage report
+        shell: bash
+        run: |
+            uv venv
+            source .venv/bin/activate
+            uv sync
+            uv run --python 3.11 pytest ./tests --junitxml=junit.xml --cov=./max_div/ --cov-report=xml
+            uv run --python 3.13 --all-extras pytest ./tests --junitxml=junit.xml --cov=./max_div/ --cov-append --cov-report=xml
+
+      - name: Generate badges
+        shell: bash
+        run: |            
+            uv run genbadge tests -i junit.xml -o "./badges/badge-test-count.svg"
+            uv run genbadge coverage -i coverage.xml -o "./badges/badge-coverage.svg"
+
+      - name: Pass badges to next action
+        uses: actions/upload-artifact@v4
+        with:
+          name: badges
+          path: ./badges/

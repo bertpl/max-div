@@ -1,0 +1,68 @@
+name: Upload updated badges & splash screen to gh-pages to appropriate version folder
+author: Bert Pluymers
+description: Runs after update-badges & update-splash, uploads generated images to gh-pages branch.
+
+inputs:
+    uv_version:
+        required: true
+        description: "Version of UV to be used."
+    github_token:
+        required: true
+        description: "Github token to be used to upload to github pages"
+
+
+runs:
+    using: "composite"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: '${{ inputs.github_token }}'
+          ref: develop  # this always acts upon the develop branch
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ inputs.uv_version }}
+
+      - name: Determine Package version & prepare folders
+        shell: bash
+        run: |
+            PACKAGE_VERSION=$(uv version --short)
+            echo "PACKAGE_EFFECTIVE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+            mkdir -p "./pages/version_artifacts/v${PACKAGE_VERSION}"
+
+      - name: Download badges artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: badges
+          path: ./badges
+
+      - name: Download splash artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: splash
+          path: ./splash
+
+      - name: Copy all artifacts to version folder
+        shell: bash
+        run: |
+            cp -r ./badges/* "./pages/version_artifacts/v${PACKAGE_EFFECTIVE_VERSION}/"
+            cp -r ./splash/* "./pages/version_artifacts/v${PACKAGE_EFFECTIVE_VERSION}/"        
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Create Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './pages'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ inputs.github_token }}
+          publish_dir: './pages'
+          publish_branch: 'gh-pages'
+          keep_files: true

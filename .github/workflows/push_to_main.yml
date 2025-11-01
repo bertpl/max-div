@@ -1,0 +1,104 @@
+name: Push to Main
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+          python_version: ["3.11", "3.12", "3.13"]
+          dependency_resolution: ["lowest-direct", "highest"]
+          include_all_extra_deps: ["false", "true"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/unit_test
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          python_version: ${{ matrix.python_version }}
+          dependency_resolution: ${{ matrix.dependency_resolution }}
+          include_all_extra_deps: ${{ matrix.include_all_extra_deps }}
+
+
+  tag-as-release:
+    name: tag as release
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Full checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch all history and tags
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Create tag
+        run: |
+          TAG="v$( uv version --short )"  
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "Tag ${TAG} already exists --> do not create & fail this step"
+            exit -1
+          else
+            echo "Tag ${TAG} does not exist --> create it now"
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+
+
+  publish-to-prod:
+    needs: tag-as-release
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      # IMPORTANT: this permission is mandatory for Trusted Publishing
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Build package with uv
+        shell: bash
+        run: uv build
+
+      - name: Publish package distributions to PyPI   [---PROD---]
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://upload.pypi.org/legacy/
+
+
+  bump-version:
+    needs: publish-to-prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Check current version
+        run: |
+            PACKAGE_VERSION=$( uv version --short )
+            echo "CURRENT_PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV                 
+
+      - uses: ./.github/actions/bump_version
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+          git_ref: 'develop'
+          bump_type: 'patch'
+          only_if_equal_to_version: ${{ env.CURRENT_PACKAGE_VERSION }}

@@ -1,0 +1,48 @@
+name: Check ChangeLog
+author: Bert Pluymers
+description: Check if ChangeLog is part of PR & has version number in it
+
+inputs:
+    uv_version:
+        required: true
+        description: "Version of UV to be used."
+    git_ref:
+        required: true
+        description: "git ref that triggered workflow"
+
+
+runs:
+  using: "composite"
+  steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ inputs.uv_version }}
+
+      - name: Check if release notes have changed
+        shell: bash
+        run: |
+          git fetch origin ${{ inputs.git_ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ inputs.git_ref }}...HEAD)
+          if echo "$CHANGED_FILES" | grep -q "CHANGELOG.md"; then
+            echo "CHANGELOG.md found in diff --> OK"
+          else
+            echo "CHANGELOG.md NOT found in diff --> FAIL"
+            exit -1
+          fi
+
+      - name: Check if change log contains current version
+        shell: bash
+        run: |
+          CURRENT_VERSION=$(uv version --short)
+          if grep -q "$CURRENT_VERSION" CHANGELOG.md; then
+            echo "CHANGELOG.md contains current version $CURRENT_VERSION --> OK"
+          else
+            echo "CHANGELOG.md does NOT contain current version $CURRENT_VERSION --> FAIL"
+            exit -1
+          fi
