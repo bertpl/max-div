@@ -1,7 +1,7 @@
 [project]
 name = "max-div"
-version = "0.0.1"
-description = "Flexible Solver for Maximum Diversity problems with Fairness Constraints."
+version = "0.0.2"
+description = "Flexible Solver for Maximum Diversity Problems with Fairness Constraints."
 readme = "README.md"
 authors = [
     { name = "Bert Pluymers", email = "bert.pluymers@gmail.com" }
@@ -15,15 +15,28 @@ dependencies = [
 numba = [
     "numba>=0.57",
 ]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.24.0",
+    "mkdocs-autoapi[python]>=0.4.1",
+    "mkdocs-include-markdown-plugin>=7.2.0",
+    "ruff>=0.14.0",
+]
 
 [dependency-groups]
 dev = [
     "genbadge[all]>=1.1.2",
     "pytest>=8.0",
     "pytest-cov>=6.0",
+    "ruff>=0.14.0",
 ]
 
+[project.scripts]
+benchmark_sample_int = "max_div.benchmark:benchmark_sample_int"
+
 [project.urls]
+Documentation = "https://max-div.readthedocs.io/"
 Source = "https://github.com/bertpl/max-div"
 ChangeLog = "https://github.com/bertpl/max-div/blob/develop/CHANGELOG.md"
 Issues = "https://github.com/bertpl/max-div/issues"
