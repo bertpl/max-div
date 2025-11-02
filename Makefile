@@ -41,3 +41,7 @@ format-single-file:
 
 splash:
 	./.github/scripts/create_splash.sh;
+
+mkdocs:
+	uv sync --extra docs;
+	mkdocs build;
