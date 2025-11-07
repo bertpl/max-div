@@ -1,9 +1,10 @@
-name: Push to branch other than main or develop
+name: Push to branch other than main/develop/release
 on:
   push:
     branches-ignore:
       - main
       - develop
+      - release/*
 
 jobs:
   test:

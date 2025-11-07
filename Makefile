@@ -40,7 +40,7 @@ format-single-file:
 	uvx ruff check --fix ${file_path};
 
 splash:
-	./.github/scripts/create_splash.sh;
+	./.github/scripts/create_splash.sh "$$(uv version --short)-dev";
 
 mkdocs:
 	uv sync --extra docs;

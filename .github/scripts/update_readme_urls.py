@@ -1,8 +1,8 @@
 #!/bin/python3
 # SYNTAX:
-#  python3 update_readme_urls.py <python_versions_file> <pyproject_toml_file> <readme_file>
+#  python3 update_readme_urls.py <python_versions_file> <pyproject_toml_file> <readme_file> <build_type>
+import re
 import sys
-import textwrap
 import tomllib
 from pathlib import Path
 
@@ -22,37 +22,34 @@ def get_python_versions(python_versions_file: Path) -> list[str]:
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 
-def render_template(python_versions: list[str], package_version: str) -> list[str]:
-    url_python_versions = "%20%7C%20".join(python_versions)  # ' | ' is the separator in the shields.io URL
-
-    return [
-        line
-        for line in textwrap.dedent(
-            f"""
-                ![shields.io-python-versions](https://img.shields.io/badge/python-{url_python_versions}-blue)
-                ![genbadge-test-count](https://bertpl.github.io/max-div/version_artifacts/v{package_version}/badge-test-count.svg)
-                ![genbadge-test-coverage](https://bertpl.github.io/max-div/version_artifacts/v{package_version}/badge-coverage.svg)
-                ![max-div logo](https://bertpl.github.io/max-div/version_artifacts/v{package_version}/splash.webp)
-            """
-        ).splitlines()
-        if line
-    ]
-
-
-def write_to_readme(readme_file: Path, url_lines: list[str]):
-    # config
-    start_line = "<!--START_SECTION:images-->"
-    end_line = "<!--END_SECTION:images-->"
-
-    # read file
+def update_readme(readme_file: Path, python_versions: list[str], package_version: str, build_type: str):
+    # --- read file ---------------------------------------
     readme_lines = readme_file.read_text().splitlines()
 
-    # update in-memory
-    i_start_line = readme_lines.index(start_line)
-    i_end_line = readme_lines.index(end_line)
-    readme_lines = readme_lines[: i_start_line + 1] + url_lines + readme_lines[i_end_line:]
+    # --- update python versions badge --------------------
+    url_python_versions = "%20%7C%20".join(python_versions)  # ' | ' is the separator in the shields.io URL
+    badge_link = f"![shields.io-python-versions](https://img.shields.io/badge/python-{url_python_versions}-blue)"
+    for i, line in enumerate(readme_lines):
+        if line.startswith("![shields.io-python-versions]"):
+            if line != badge_link:
+                print(f"Updating line {i + 1} in README.md:")
+                print(f"  OLD: {line}")
+                print(f"  NEW: {badge_link}")
+            readme_lines[i] = badge_link
+            break
 
-    # save back to file
+    # --- update links to gh_pages ------------------------
+    relative_version_path = f"{build_type}/v{package_version}"
+    pattern = r"(release|develop)/v\d+\.\d+\.\d+"
+    for i, line in enumerate(readme_lines):
+        new_line = re.sub(pattern, relative_version_path, line)
+        if new_line != line:
+            print(f"Updating line {i + 1} in README.md:")
+            print(f"  OLD: {line}")
+            print(f"  NEW: {new_line}")
+        readme_lines[i] = re.sub(pattern, relative_version_path, line)
+
+    # --- save update lines -------------------------------
     readme_file.write_text("\n".join(readme_lines))
 
 
@@ -62,25 +59,26 @@ def write_to_readme(readme_file: Path, url_lines: list[str]):
 def update_readme_urls():
     # --- argument handling -------------------------------
     args = sys.argv[1:]
-    if len(args) != 3:
-        print(f"expected 3 arguments, got {len(args)}.")
+    if len(args) != 4:
+        print(f"expected 4 arguments, got {len(args)}.")
         print(f"Syntax:")
-        print(f"  update_readme_urls.py <python_versions_file> <pyproject_toml_file> <readme_file>")
+        print(f"  update_readme_urls.py <python_versions_file> <pyproject_toml_file> <readme_file> <build_type>")
         exit(1)
     else:
         python_versions_file = Path(args[0])
         pyproject_toml_file = Path(args[1])
         readme_file = Path(args[2])
+        build_type = args[3]
+        if build_type not in ["release", "develop"]:
+            print(f"4th argument must be 'release' or 'develop', got '{build_type}'.")
+            exit(1)
 
     # --- read data ---------------------------------------
     package_version = get_package_version(pyproject_toml_file)
     python_versions = get_python_versions(python_versions_file)
 
-    # --- render template ---------------------------------
-    url_lines = render_template(python_versions, package_version)
-
-    # --- write to readme ---------------------------------
-    write_to_readme(readme_file, url_lines)
+    # --- update readme -----------------------------------
+    update_readme(readme_file, python_versions, package_version, build_type)
 
 
 if __name__ == "__main__":

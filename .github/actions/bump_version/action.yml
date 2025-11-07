@@ -54,7 +54,7 @@ runs:
         run: |
             git config --local user.name "GitHub Actions"
             git config --local user.email ""          
-            git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/bertpl/max-div.git
+            git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/${{ github.repository }}.git
             git pull origin ${{ inputs.git_ref }}
           
             if [[ $VERSION_BUMP_NEEDED == "true" ]]; then

@@ -1,0 +1,25 @@
+name: Determine Build Type
+author: Bert Pluymers
+description: Determine build type based on branch name (release or develop)
+
+outputs:
+    build_type:
+        description: "Build type: 'release' if triggered by release/... branch, otherwise 'develop'"
+        value: ${{ steps.determine_build_type.outputs.build_type }}
+
+runs:
+    using: "composite"
+    steps:
+      - name: Determine Build Type
+        id: determine_build_type
+        shell: bash
+        run: |
+          echo "GitHub Ref: ${{ github.ref }}"
+          if [[ ${{ github.ref }} == refs/heads/release/* ]]; then
+            echo "build_type=release" >> $GITHUB_OUTPUT
+            echo "Build type: release"
+          else
+            echo "build_type=develop" >> $GITHUB_OUTPUT
+            echo "Build type: develop"
+          fi
+

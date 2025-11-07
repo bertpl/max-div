@@ -18,19 +18,24 @@ runs:
         uses: actions/checkout@v4
         with:
           token: '${{ inputs.github_token }}'
-          ref: develop  # this always acts upon the develop branch
+          ref: ${{ github.ref }} # check out the triggering ref
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
           version: ${{ inputs.uv_version }}
 
+      - name: Determine Build Type
+        id: build_type
+        uses: ./.github/actions/build_type
+
       - name: Determine Package version & prepare folders
         shell: bash
         run: |
             PACKAGE_VERSION=$(uv version --short)
-            echo "PACKAGE_EFFECTIVE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
-            mkdir -p "./pages/version_artifacts/v${PACKAGE_VERSION}"
+            VERSION_FOLDER="./pages/version_artifacts/${{ steps.build_type.outputs.build_type }}/v${PACKAGE_VERSION}"
+            echo "VERSION_FOLDER=$VERSION_FOLDER" >> $GITHUB_ENV
+            mkdir -p "$VERSION_FOLDER"
 
       - name: Download badges artifact
         uses: actions/download-artifact@v4
@@ -47,8 +52,8 @@ runs:
       - name: Copy all artifacts to version folder
         shell: bash
         run: |
-            cp -r ./badges/* "./pages/version_artifacts/v${PACKAGE_EFFECTIVE_VERSION}/"
-            cp -r ./splash/* "./pages/version_artifacts/v${PACKAGE_EFFECTIVE_VERSION}/"        
+            cp -r ./badges/* "$VERSION_FOLDER"
+            cp -r ./splash/* "$VERSION_FOLDER"        
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -18,26 +18,35 @@ runs:
         uses: actions/checkout@v4
         with:
           token: '${{ inputs.github_token }}'
-          ref: develop  # this always acts upon the develop branch
+          ref: ${{ github.ref }} # check out the triggering ref
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
           version: ${{ inputs.uv_version }}
 
-      - name: Determine Package version
-        shell: bash
-        run: |
-            PACKAGE_VERSION=$(uv version --short)
-            echo "PACKAGE_EFFECTIVE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV            
+      - name: Determine Build Type
+        id: build_type
+        uses: ./.github/actions/build_type
 
       - name: Install ImageMagick 7
         uses: mfinelli/setup-imagemagick@v7
 
+      - name: Determine Package version
+        shell: bash
+        run: |
+            PACKAGE_VERSION=$(uv version --short)
+            if [[ "${{ steps.build_type.outputs.build_type }}" == "develop" ]]; then
+              DISPLAY_VERSION="v${PACKAGE_VERSION}-dev"
+            else
+              DISPLAY_VERSION="v${PACKAGE_VERSION}"
+            fi
+            echo "DISPLAY_VERSION=$DISPLAY_VERSION" >> $GITHUB_ENV  
+
       - name: Prepare splash screen
         shell: bash
         run: |
-            ./.github/scripts/create_splash.sh                                                
+            ./.github/scripts/create_splash.sh "${DISPLAY_VERSION}"
             mkdir -p "./splash"
             cp "./images/splash_with_version.webp" "./splash/splash.webp"           
 

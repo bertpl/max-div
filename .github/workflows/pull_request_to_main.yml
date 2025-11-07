@@ -6,46 +6,6 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  check-version-tag-does-not-exist:
-    name: check version
-    runs-on: ubuntu-latest
-    steps:
-      - name: Full checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # fetch all history and tags
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: ${{ vars.UV_VERSION }}
-
-      - name: Check tag
-        run: |
-          TAG="v$( uv version --short )"  
-          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
-            echo "Tag ${TAG} already exists --> UNSAFE to merge to main"
-            exit -1
-          else
-            echo "Tag ${TAG} does not exist --> safe to merge to main"
-          fi
-
-
-  check-release-notes:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch all history for accurate diff
-
-      - name: Check for release notes
-        uses: ./.github/actions/check_changelog
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          git_ref: ${{ github.event.pull_request.base.ref }}
-
-
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -65,96 +25,16 @@ jobs:
           dependency_resolution: ${{ matrix.dependency_resolution }}
           include_all_extra_deps: ${{ matrix.include_all_extra_deps }}
 
-
-  update-readme:
+  check-change-log:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for accurate diff
 
-      - uses: ./.github/actions/update_readme
+      - name: Check change log
+        uses: ./.github/actions/check_changelog
         with:
           uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
-
-  update-badges:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/update_badges
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
-
-  update-splash:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/update_splash
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
-
-  upload-version-artefacts:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: [update-badges, update-splash]
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/upload_version_artefacts
-        id: deployment
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
-
-  publish-to-dev:
-    runs-on: ubuntu-latest
-    environment: dev
-    permissions:
-      # IMPORTANT: this permission is mandatory for Trusted Publishing
-      id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: ${{ vars.UV_VERSION }}
-
-      - name: Update version in pyproject.toml
-        shell: bash
-        run: |
-          ver_dev="$(uv version --short).dev${{ github.run_number }}"
-          echo "Updating version to ${ver_dev}"
-          uv version "${ver_dev}"
-
-      - name: Build package with uv
-        shell: bash
-        run: uv build
-
-      - name: Publish package distributions to PyPI   [---DEV---]
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-
+          git_ref: ${{ github.event.pull_request.base.ref }}

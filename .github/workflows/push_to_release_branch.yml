@@ -1,0 +1,170 @@
+name: Push to Release Branch
+on:
+  push:
+    branches: ["release/*"]
+
+jobs:
+  validate-branch-version:
+    name: Validate branch name matches package version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Validate branch and version match
+        run: |
+          PACKAGE_VERSION=$(uv version --short)
+          BRANCH_NAME="${{ github.ref_name }}"
+          EXPECTED_BRANCH="release/v${PACKAGE_VERSION}"
+          
+          echo "Package version: ${PACKAGE_VERSION}"
+          echo "Current branch: ${BRANCH_NAME}"
+          echo "Expected branch: ${EXPECTED_BRANCH}"
+          
+          if [[ "${BRANCH_NAME}" != "${EXPECTED_BRANCH}" ]]; then
+            echo "ERROR: Branch name does not match package version!"
+            echo "  Branch: ${BRANCH_NAME}"
+            echo "  Expected: ${EXPECTED_BRANCH}"
+            exit 1
+          else
+            echo "✓ Branch name matches package version"
+          fi
+
+  check-version-tag-does-not-exist:
+    name: Check version tag does not exist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Full checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch all history and tags
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Check tag
+        run: |
+          TAG="v$( uv version --short )"  
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "Tag ${TAG} already exists --> UNSAFE to merge to main"
+            exit -1
+          else
+            echo "Tag ${TAG} does not exist --> safe to merge to main"
+          fi
+
+  update-badges:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/update_badges
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+  update-splash:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/update_splash
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+  upload-version-artefacts:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: [update-badges, update-splash]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/upload_version_artefacts
+        id: deployment
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+          python_version: ["3.11", "3.12", "3.13"]
+          dependency_resolution: ["lowest-direct", "highest"]
+          include_all_extra_deps: ["false", "true"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/unit_test
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          python_version: ${{ matrix.python_version }}
+          dependency_resolution: ${{ matrix.dependency_resolution }}
+          include_all_extra_deps: ${{ matrix.include_all_extra_deps }}
+
+  update-readme:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      readme_updated: ${{ steps.update_readme_step.outputs.readme_updated }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/update_readme
+        id: update_readme_step
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+  tag-as-release:
+    name: tag as release
+    needs:
+     - check-version-tag-does-not-exist
+     - validate-branch-version
+     - update-readme
+     - test
+    if: needs.update-readme.outputs.readme_updated == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Full checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch all history and tags
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Create tag via API
+        env:
+          GH_TOKEN: ${{ secrets.GIT_ADMIN_TOKEN }}
+        run: |
+          TAG="v$(uv version --short)"
+          COMMIT_SHA="${{ github.sha }}"
+          
+          gh api repos/${{ github.repository }}/git/refs \
+            -f ref="refs/tags/${TAG}" \
+            -f sha="${COMMIT_SHA}"

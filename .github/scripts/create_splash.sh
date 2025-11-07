@@ -9,6 +9,9 @@ echo "------ ImageMagick version info ------------------------------------------
 magick identify -version
 echo "----------------------------------------------------------------------------"
 
+# --- argument handling ---
+DISPLAY_VERSION="$1"  # e.g. "v0.1.10" or "v0.1.11-dev"
+
 # --- prepare background & blend with logo ---
 if [ ! -f ./images/splash/_splash_no_text.png ]; then
     # NOTE: we want to avoid doing these steps in Github Actions, as these take ages to complete...
@@ -40,8 +43,8 @@ echo "Adding text & version info..."
 magick -pointsize 36 -font "./images/splash/google_fonts_montserrat_italic.ttf" "./images/splash/_splash_no_text.png" -gravity SouthWest -fill "#bbbbdd" -annotate +10+5 "DiffusionBee 2.5.3 (FLUX.1-dev + Real-ESRGAN)" "./images/temp.mpc"
 magick -pointsize 64 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/temp.mpc" -gravity South -fill "#000000" -annotate +3+22 "Configurable Solver for Maximum Diversity Problems with Fairness Constraints." "./images/temp.mpc"
 magick -pointsize 64 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/temp.mpc" -gravity South -fill "#eeeeee" -annotate +0+25 "Configurable Solver for Maximum Diversity Problems with Fairness Constraints." "./images/temp.mpc"
-magick -pointsize 128 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/temp.mpc" -gravity West -fill "black" -annotate +1353+283 "v$(uv version --short)" "./images/temp.mpc"
-magick -pointsize 128 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/temp.mpc" -gravity West -fill "white" -annotate +1350+280 "v$(uv version --short)" -quality 95 -define webp:lossless=false "./images/splash_with_version.webp"
+magick -pointsize 128 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/temp.mpc" -gravity West -fill "black" -annotate +1353+283 "${DISPLAY_VERSION}" "./images/temp.mpc"
+magick -pointsize 128 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/temp.mpc" -gravity West -fill "white" -annotate +1350+280 "${DISPLAY_VERSION}" -quality 95 -define webp:lossless=false "./images/splash_with_version.webp"
 
 # --- clean up ---
 echo "Cleaning up..."
