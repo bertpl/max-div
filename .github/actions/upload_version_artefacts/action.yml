@@ -3,9 +3,6 @@ author: Bert Pluymers
 description: Runs after update-badges & update-splash, uploads generated images to gh-pages branch.
 
 inputs:
-    uv_version:
-        required: true
-        description: "Version of UV to be used."
     github_token:
         required: true
         description: "Github token to be used to upload to github pages"
@@ -15,15 +12,12 @@ runs:
     using: "composite"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: '${{ inputs.github_token }}'
           ref: ${{ github.ref }} # check out the triggering ref
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ inputs.uv_version }}
+      - uses: astral-sh/setup-uv@v7
 
       - name: Determine Build Type
         id: build_type

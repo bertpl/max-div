@@ -1,0 +1,35 @@
+name: Validate Version Trigger
+author: Bert Pluymers
+description: Validate if the ref (branch or tag) that triggered the workflow matches the package version.
+
+outputs:
+    package_version:
+        description: "The package version extracted from pyproject.toml"
+        value: ${{ steps.validate.outputs.package_version }}
+
+runs:
+    using: "composite"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+      - name: Validate if ${{ github.ref_name }} matches package version
+        id: validate
+        shell: bash
+        run: |
+          PACKAGE_VERSION=$(uv version --short)
+          TRIGGERING_REF="${{ github.ref_name }}"
+          
+          echo "Package version: ${PACKAGE_VERSION}"
+          echo "Triggering ref: ${TRIGGERING_REF}"
+          
+          # Set output
+          echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
+          
+          if [[ "${TRIGGERING_REF}" == *"${PACKAGE_VERSION}" ]]; then
+            echo "✓ Triggering ref ends with package version"
+          else
+            echo "ERROR: Triggering ref does not end with package version!"
+            echo "  Ref: ${TRIGGERING_REF}"
+            echo "  Expected to end with: ${PACKAGE_VERSION}"
+            exit 1
+          fi

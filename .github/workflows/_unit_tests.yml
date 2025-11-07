@@ -1,0 +1,35 @@
+name: Unit Test Matrix
+on:
+  workflow_call:
+
+jobs:
+  determine_python_versions:
+    runs-on: ubuntu-latest
+    name: Python versions
+    outputs:
+      python_versions: ${{ steps.get_python_versions.outputs.python_versions }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/python_versions
+        id: get_python_versions
+  
+
+  test_matrix:
+    runs-on: ubuntu-latest
+    name: ${{ matrix.python_version }} - ${{ startsWith(matrix.dependency_resolution, 'lo') && 'low' || 'high' }} - ${{ matrix.include_all_extra_deps }}
+    needs: determine_python_versions
+    strategy:
+      fail-fast: false
+      matrix:
+          python_version: ${{ fromJson(needs.determine_python_versions.outputs.python_versions) }}
+          dependency_resolution: ["lowest-direct", "highest"]
+          include_all_extra_deps: ["false", "true"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - uses: ./.github/actions/unit_test
+        with:
+          python_version: ${{ matrix.python_version }}
+          dependency_resolution: ${{ matrix.dependency_resolution }}
+          include_all_extra_deps: ${{ matrix.include_all_extra_deps }}

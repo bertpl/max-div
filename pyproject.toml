@@ -38,7 +38,7 @@ benchmark_sample_int = "max_div.benchmark:benchmark_sample_int"
 [project.urls]
 Documentation = "https://max-div.readthedocs.io/"
 Source = "https://github.com/bertpl/max-div"
-ChangeLog = "https://github.com/bertpl/max-div/blob/develop/CHANGELOG.md"
+ChangeLog = "https://github.com/bertpl/max-div/blob/main/CHANGELOG.md"
 Issues = "https://github.com/bertpl/max-div/issues"
 Roadmap = "https://github.com/bertpl/max-div/milestones"
 
@@ -58,6 +58,9 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["I"]
+
+[tool.coverage.run]
+source = ["max_div"]
 
 [tool.coverage.report]
 exclude_also = [

@@ -3,12 +3,13 @@ author: Bert Pluymers
 description: Update links in README.md to point to appropriate version's images
 
 inputs:
-    uv_version:
-        required: true
-        description: "Version of UV to be used."
     github_token:
         required: true
         description: "Github token to be used to upload to push updated readme."
+    fail_if_updated:
+        required: false
+        default: 'false'
+        description: "Whether to fail the action if the README was updated (true/false)"
 
 outputs:
     readme_updated:
@@ -19,7 +20,7 @@ runs:
     using: "composite"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: '${{ inputs.github_token }}'
           ref: ${{ github.ref }}   # check out the triggering ref
@@ -28,10 +29,7 @@ runs:
         id: build_type
         uses: ./.github/actions/build_type
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ inputs.uv_version }}
+      - uses: astral-sh/setup-uv@v7
 
       - name: Update README URLs & Commit changes
         id: update_readme
@@ -53,8 +51,13 @@ runs:
               echo "No changes to commit"
           else
               git add "$GITHUB_WORKSPACE/README.md"
-              git commit -m "Update README.md image URLs"
+              git commit -m "Update README.md for ${{ steps.build_type.outputs.build_type }}/v$(uv version --short)"
               git push
               echo "readme_updated=true" >> $GITHUB_OUTPUT
               echo "Changes committed and pushed"
+              
+              if [ "${{ inputs.fail_if_updated }}" = "true" ]; then
+                  echo "ERROR: README.md was updated & fail_if_updated is set to true."
+                  exit 1
+              fi
           fi

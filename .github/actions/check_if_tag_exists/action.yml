@@ -1,0 +1,56 @@
+name: Check if Git Tag Exists
+author: Bert Pluymers
+description: Check if a git tag exists in the repository
+
+inputs:
+    tag:
+        required: true
+        description: "Git tag to check for existence"
+    fail_if_exists:
+        required: false
+        description: "Fail the action if the tag exists (default: false)"
+        default: "false"
+    fail_if_not_exists:
+        required: false
+        description: "Fail the action if the tag does not exist (default: false)"
+        default: "false"
+
+outputs:
+    tag_exists:
+        description: "Whether the tag exists (true/false)"
+        value: ${{ steps.check_tag.outputs.tag_exists }}
+
+runs:
+    using: "composite"
+    steps:
+      - name: Deep checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # fetch all history and tags
+
+      - name: Check if tag exists
+        id: check_tag
+        shell: bash
+        run: |
+          TAG="${{ inputs.tag }}"
+          
+          echo "Checking if tag '${TAG}' exists..."
+          
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Tag '${TAG}' exists"
+            
+            if [[ "${{ inputs.fail_if_exists }}" == "true" ]]; then
+              echo "ERROR: Tag '${TAG}' exists and fail_if_exists is set to true"
+              exit 1
+            fi
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "✗ Tag '${TAG}' does not exist"
+            
+            if [[ "${{ inputs.fail_if_not_exists }}" == "true" ]]; then
+              echo "ERROR: Tag '${TAG}' does not exist and fail_if_not_exists is set to true"
+              exit 1
+            fi
+          fi
+

@@ -3,9 +3,6 @@ author: Bert Pluymers
 description: Run unit tests with specific python version, extras, dependency resolution
 
 inputs:
-    uv_version:
-        required: true
-        description: "Version of UV to be used."
     python_version:
         required: false
         description: "Version of Python to be used.  If omitted will default to version in .python-version"
@@ -22,10 +19,7 @@ inputs:
 runs:
     using: "composite"
     steps:
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: ${{ inputs.uv_version }}
+      - uses: astral-sh/setup-uv@v7
 
       - name: Determine Python version
         shell: bash

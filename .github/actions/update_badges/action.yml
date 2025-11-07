@@ -3,9 +3,6 @@ author: Bert Pluymers
 description: Generate unit test coverage & update badges.
 
 inputs:
-    uv_version:
-        required: true
-        description: "Version of UV to be used."
     github_token:
         required: true
         description: "Github token to be used to upload to github pages."
@@ -15,15 +12,16 @@ runs:
     using: "composite"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: '${{ inputs.github_token }}'
           ref: ${{ github.ref }} # check out the triggering ref
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ inputs.uv_version }}
+      - uses: astral-sh/setup-uv@v7
+
+      - name: Get Python versions
+        id: python_versions
+        uses: ./.github/actions/python_versions
 
       - name: Create coverage report
         shell: bash
@@ -31,8 +29,8 @@ runs:
             uv venv
             source .venv/bin/activate
             uv sync
-            uv run --python 3.11 pytest ./tests --junitxml=junit.xml --cov=./max_div/ --cov-report=xml
-            uv run --python 3.13 --all-extras pytest ./tests --junitxml=junit.xml --cov=./max_div/ --cov-append --cov-report=xml
+            uv run --python ${{ steps.python_versions.outputs.python_version_min }} pytest ./tests --junitxml=junit.xml --cov --cov-report=xml
+            uv run --python ${{ steps.python_versions.outputs.python_version_max }} --all-extras pytest ./tests --junitxml=junit.xml --cov --cov-append --cov-report=xml
 
       - name: Generate badges
         shell: bash

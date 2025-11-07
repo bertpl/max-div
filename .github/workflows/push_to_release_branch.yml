@@ -4,159 +4,80 @@ on:
     branches: ["release/*"]
 
 jobs:
-  validate-branch-version:
-    name: Validate branch name matches package version
+
+  version-checks:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@v5
+      - id: validate_version_trigger
+        uses: ./.github/actions/validate_version_trigger
+      - uses: ./.github/actions/check_if_tag_exists
         with:
-          version: ${{ vars.UV_VERSION }}
-
-      - name: Validate branch and version match
-        run: |
-          PACKAGE_VERSION=$(uv version --short)
-          BRANCH_NAME="${{ github.ref_name }}"
-          EXPECTED_BRANCH="release/v${PACKAGE_VERSION}"
-          
-          echo "Package version: ${PACKAGE_VERSION}"
-          echo "Current branch: ${BRANCH_NAME}"
-          echo "Expected branch: ${EXPECTED_BRANCH}"
-          
-          if [[ "${BRANCH_NAME}" != "${EXPECTED_BRANCH}" ]]; then
-            echo "ERROR: Branch name does not match package version!"
-            echo "  Branch: ${BRANCH_NAME}"
-            echo "  Expected: ${EXPECTED_BRANCH}"
-            exit 1
-          else
-            echo "✓ Branch name matches package version"
-          fi
-
-  check-version-tag-does-not-exist:
-    name: Check version tag does not exist
-    runs-on: ubuntu-latest
-    steps:
-      - name: Full checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # fetch all history and tags
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: ${{ vars.UV_VERSION }}
-
-      - name: Check tag
-        run: |
-          TAG="v$( uv version --short )"  
-          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
-            echo "Tag ${TAG} already exists --> UNSAFE to merge to main"
-            exit -1
-          else
-            echo "Tag ${TAG} does not exist --> safe to merge to main"
-          fi
-
-  update-badges:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/update_badges
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
-  update-splash:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/update_splash
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
-  upload-version-artefacts:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: [update-badges, update-splash]
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/upload_version_artefacts
-        id: deployment
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-          python_version: ["3.11", "3.12", "3.13"]
-          dependency_resolution: ["lowest-direct", "highest"]
-          include_all_extra_deps: ["false", "true"]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/unit_test
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          python_version: ${{ matrix.python_version }}
-          dependency_resolution: ${{ matrix.dependency_resolution }}
-          include_all_extra_deps: ${{ matrix.include_all_extra_deps }}
+          tag: "v${{ steps.validate_version_trigger.outputs.package_version }}"
+          fail_if_exists: "true"
 
   update-readme:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
-      readme_updated: ${{ steps.update_readme_step.outputs.readme_updated }}
+      readme_updated: ${{ steps.update_readme.outputs.readme_updated }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - uses: ./.github/actions/update_readme
-        id: update_readme_step
+      - name: Update readme
+        id: update_readme
+        uses: ./.github/actions/update_readme
         with:
-          uv_version: ${{ vars.UV_VERSION }}
           github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+      - name: Check readme update output
+        run: |
+          echo "README updated: ${{ steps.update_readme.outputs.readme_updated }}"
+          if [ "${{ steps.update_readme.outputs.readme_updated }}" = "true" ]; then
+            echo "⚠️  README was updated, committed & pushed."
+            echo "Subsequent jobs will be skipped, but will re-run triggered by the next commit."
+          fi
+
+  check-change-log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check change log
+        uses: ./.github/actions/check_changelog
+
+  update-images:
+    needs:
+     - version-checks
+     - update-readme
+     - check-change-log
+    if: needs.update-readme.outputs.readme_updated == 'false'
+    uses: ./.github/workflows/_update_images.yml
+    secrets:
+      gh_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+  test:
+    needs:
+     - version-checks
+     - update-readme
+     - check-change-log
+    if: needs.update-readme.outputs.readme_updated == 'false'
+    uses: ./.github/workflows/_unit_tests.yml
 
   tag-as-release:
     name: tag as release
     needs:
-     - check-version-tag-does-not-exist
-     - validate-branch-version
-     - update-readme
+     - update-images
      - test
-    if: needs.update-readme.outputs.readme_updated == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Full checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0  # fetch all history and tags
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: ${{ vars.UV_VERSION }}
+      - uses: astral-sh/setup-uv@v7
 
       - name: Create tag via API
         env:

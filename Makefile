@@ -27,9 +27,9 @@ test:
 coverage:
 	# run tests with Python 3.11; WITHOUT optional dependencies & create new report
 	uv sync	# should remove numba
-	uv run --python 3.11 pytest ./tests --cov=./max_div/ --cov-report=html
+	uv run --python 3.11 pytest ./tests --cov --cov-report=html
 	# run tests with Python 3.13; WITH ALL optional dependencies & append to report
-	uv run --all-extras --python 3.13 pytest ./tests --cov=./max_div/ --cov-append --cov-report=html
+	uv run --all-extras --python 3.13 pytest ./tests --cov --cov-append --cov-report=html
 
 format:
 	uvx ruff format .;
@@ -40,7 +40,7 @@ format-single-file:
 	uvx ruff check --fix ${file_path};
 
 splash:
-	./.github/scripts/create_splash.sh "$$(uv version --short)-dev";
+	./images/splash/create_splash_with_version.sh "$$(uv version --short)-dev";
 
 mkdocs:
 	uv sync --extra docs;

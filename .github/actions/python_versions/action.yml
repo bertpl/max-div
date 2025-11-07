@@ -1,0 +1,33 @@
+name: Determine Python Versions
+author: Bert Pluymers
+description: Determine supported Python versions from .python-versions file (all, min, max) (assumes code checked out)
+
+outputs:
+    python_versions:
+        description: "Array of Python versions to be used to define e.g. a test matrix"
+        value: ${{ steps.python_versions.outputs.python_versions }}
+    python_version_min:
+        description: "Minimum Python version from .python-versions file"
+        value: ${{ steps.python_versions.outputs.python_version_min }}
+    python_version_max:
+        description: "Maximum Python version from .python-versions file"
+        value: ${{ steps.python_versions.outputs.python_version_max }}
+
+runs:
+    using: "composite"
+    steps:
+      - name: Set Python versions
+        id: python_versions
+        shell: bash
+        run: |
+          versions=$(cat .python-versions | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          min_version=$(cat .python-versions | grep -v '^$' | sort -V | head -n 1)
+          max_version=$(cat .python-versions | grep -v '^$' | sort -V | tail -n 1)
+          
+          echo "All Python versions: $versions"
+          echo "Minimum Python version: $min_version"
+          echo "Maximum Python version: $max_version"
+          
+          echo "python_versions=$versions" >> $GITHUB_OUTPUT
+          echo "python_version_min=$min_version" >> $GITHUB_OUTPUT
+          echo "python_version_max=$max_version" >> $GITHUB_OUTPUT
