@@ -13,6 +13,8 @@ help:
 	@echo ''
 	@echo '  splash       			        Build splash screen using current version of package.'
 	@echo ''
+	@echo '  mkdocs       			        Update mkdocs site.'
+	@echo ''
 	@echo 'Options:'
 	@echo ''
 	@echo '  format-single-file             - accepts `file_path=<path>` to pass the relative path of the file to be formatted.'

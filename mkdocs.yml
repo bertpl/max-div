@@ -3,36 +3,17 @@ site_url: https://yourusername.github.io/your-repo-name/
 repo_url: https://github.com/bertpl/max-div
 repo_name: bertpl/max-div
 
+extra_css:
+  - stylesheets/extra.css
+
 theme:
-  name: material
-  palette:
-    # Light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: blue
-      accent: blue
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    # Dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: blue
-      accent: blue
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-  features:
-    - navigation.instant
-    - navigation.tracking
-    - navigation.tabs
-    - navigation.sections
-    - navigation.expand
-    - navigation.top
-    - search.suggest
-    - search.highlight
-    - content.code.copy
-    - content.code.annotate
+  name: readthedocs
+  navigation_depth: 4
+  collapse_navigation: false
+  titles_only: false
+  sticky_navigation: true
+  includehidden: true
+  prev_next_buttons_location: both
 
 plugins:
   - search

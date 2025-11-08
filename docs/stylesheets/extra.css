@@ -1,0 +1,6 @@
+/*!* Make ReadTheDocs theme more responsive and use more screen width *!*/
+
+/* Increase max width of the main content area */
+.wy-nav-content {
+    max-width: 100% !important;
+}
