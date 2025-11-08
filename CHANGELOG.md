@@ -5,7 +5,11 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+  - add full CLI to `max-div`
+
 - **improved**:
+  - allow benchmarking functionality to output results in Markdown format 
   - switch docs to use `readthedocs` theme
   
 <!------------------------------------------------------------------------------------------------->

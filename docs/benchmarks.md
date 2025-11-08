@@ -5,61 +5,93 @@ All benchmarks are run on `m6a.2xlarge` AWS EC2 instances.
 ## max_div.sampling.discrete.sample_int
 
 ```bash
-uv run --extra numba benchmark_sample_int 
+uv run --extra numba max-div benchmark --markdown sample-int
 ```
 
-Essentially here we compare `np.random.choice` (`use_numba=False`) with an optimized, Numba-accelerated version.
+### A. WITH replacement, UNIFORM probabilities
 
-**Result:**
-```
-Benchmarking `sample_int`...
+| `k`   | `n`   | **accelerated=False**<br>*(numpy)*                       | **accelerated=True**<br>*(custom numba)*                 |
+| ----- | ----- | -------------------------------------------------------- | -------------------------------------------------------- |
+| 1     | 10    | 9.967 μsec ± 4.4%                                        | <span style="color:#00aa00">**1.529 μsec ± 0.2%**</span> |
+| 10    | 10    | 8.896 μsec ± 0.7%                                        | <span style="color:#00aa00">**1.676 μsec ± 0.1%**</span> |
+| 100   | 10    | 9.879 μsec ± 0.3%                                        | <span style="color:#00aa00">**3.077 μsec ± 1.5%**</span> |
+| 1000  | 10    | 20.18 μsec ± 0.3%                                        | <span style="color:#00aa00">**17.65 μsec ± 0.1%**</span> |
+| 10000 | 10    | <span style="color:#00aa00">**120.3 μsec ± 0.1%**</span> | 161.7 μsec ± 0.0%                                        |
+| 1     | 100   | 8.677 μsec ± 0.8%                                        | <span style="color:#00aa00">**1.530 μsec ± 0.1%**</span> |
+| 10    | 100   | 8.731 μsec ± 0.4%                                        | <span style="color:#00aa00">**1.633 μsec ± 0.0%**</span> |
+| 100   | 100   | 9.460 μsec ± 1.0%                                        | <span style="color:#00aa00">**2.638 μsec ± 0.0%**</span> |
+| 1000  | 100   | 15.63 μsec ± 0.4%                                        | <span style="color:#00aa00">**13.42 μsec ± 0.1%**</span> |
+| 10000 | 100   | <span style="color:#00aa00">**76.10 μsec ± 0.1%**</span> | 119.4 μsec ± 0.0%                                        |
+| 1     | 1000  | 8.768 μsec ± 0.7%                                        | <span style="color:#00aa00">**1.533 μsec ± 0.1%**</span> |
+| 10    | 1000  | 8.952 μsec ± 0.7%                                        | <span style="color:#00aa00">**1.586 μsec ± 0.2%**</span> |
+| 100   | 1000  | 9.268 μsec ± 0.8%                                        | <span style="color:#00aa00">**2.316 μsec ± 0.1%**</span> |
+| 1000  | 1000  | 12.56 μsec ± 0.5%                                        | <span style="color:#00aa00">**10.26 μsec ± 0.0%**</span> |
+| 10000 | 1000  | <span style="color:#00aa00">**44.47 μsec ± 0.2%**</span> | 84.23 μsec ± 4.9%                                        |
+| 1     | 10000 | 8.869 μsec ± 0.4%                                        | <span style="color:#00aa00">**1.523 μsec ± 0.1%**</span> |
+| 10    | 10000 | 8.923 μsec ± 0.7%                                        | <span style="color:#00aa00">**1.677 μsec ± 0.1%**</span> |
+| 100   | 10000 | 10.05 μsec ± 0.3%                                        | <span style="color:#00aa00">**3.094 μsec ± 0.1%**</span> |
+| 1000  | 10000 | 20.78 μsec ± 0.2%                                        | <span style="color:#00aa00">**17.22 μsec ± 2.8%**</span> |
+| 10000 | 10000 | <span style="color:#00aa00">**125.6 μsec ± 0.1%**</span> | 166.7 μsec ± 0.1%                                        |
 
-                                        use_numba=False           use_numba=True
-WITH REPLACEMENT, UNIFORM
-    1      out of 10                  7.819 μsec ± 0.2%        1.542 μsec ± 0.5%
-    1      out of 100                 7.751 μsec ± 0.2%        1.550 μsec ± 0.3%
-    1      out of 1_000               7.811 μsec ± 0.3%        1.555 μsec ± 0.1%
-    1      out of 5_000               7.849 μsec ± 0.2%        1.550 μsec ± 0.1%
-    1      out of 10_000              7.844 μsec ± 0.3%        1.567 μsec ± 0.2%
-    10     out of 10_000              8.012 μsec ± 0.2%        1.726 μsec ± 0.1%
-    100    out of 10_000              9.099 μsec ± 0.2%        3.151 μsec ± 1.5%
-    1_000  out of 10_000              19.73 μsec ± 0.2%        18.19 μsec ± 0.0%
-    5_000  out of 10_000              65.89 μsec ± 0.0%        84.32 μsec ± 0.1%
-    10_000 out of 10_000              123.7 μsec ± 0.0%        166.9 μsec ± 0.0%
+### B. WITHOUT replacement, UNIFORM probabilities
 
-WITHOUT REPLACEMENT, UNIFORM
-    1      out of 10                  7.803 μsec ± 0.2%        1.546 μsec ± 0.1%
-    1      out of 100                 7.808 μsec ± 0.1%        1.555 μsec ± 0.3%
-    1      out of 1_000               7.832 μsec ± 0.2%        1.548 μsec ± 0.1%
-    1      out of 5_000               7.859 μsec ± 0.3%        1.566 μsec ± 0.2%
-    1      out of 10_000              7.849 μsec ± 0.1%        1.558 μsec ± 0.1%
-    10     out of 10_000              122.4 μsec ± 0.0%        2.621 μsec ± 0.3%
-    100    out of 10_000              122.5 μsec ± 0.1%        4.084 μsec ± 0.1%
-    1_000  out of 10_000              122.4 μsec ± 0.1%        19.49 μsec ± 0.1%
-    5_000  out of 10_000              122.4 μsec ± 0.0%        70.00 μsec ± 0.0%
-    10_000 out of 10_000              122.5 μsec ± 0.0%        137.8 μsec ± 0.0%
+| `k`   | `n`   | **accelerated=False**<br>*(numpy)*                       | **accelerated=True**<br>*(custom numba)*                 |
+| ----- | ----- | -------------------------------------------------------- | -------------------------------------------------------- |
+| 1     | 10    | 8.766 μsec ± 0.9%                                        | <span style="color:#00aa00">**1.538 μsec ± 0.1%**</span> |
+| 10    | 10    | 7.114 μsec ± 1.0%                                        | <span style="color:#00aa00">**1.646 μsec ± 0.1%**</span> |
+| 1     | 100   | 8.663 μsec ± 0.6%                                        | <span style="color:#00aa00">**1.530 μsec ± 0.1%**</span> |
+| 10    | 100   | 8.065 μsec ± 0.7%                                        | <span style="color:#00aa00">**1.675 μsec ± 0.2%**</span> |
+| 100   | 100   | 8.077 μsec ± 0.4%                                        | <span style="color:#00aa00">**2.862 μsec ± 0.1%**</span> |
+| 1     | 1000  | 8.758 μsec ± 0.4%                                        | <span style="color:#00aa00">**1.524 μsec ± 0.1%**</span> |
+| 10    | 1000  | 17.93 μsec ± 0.2%                                        | <span style="color:#00aa00">**1.750 μsec ± 0.1%**</span> |
+| 100   | 1000  | 17.90 μsec ± 0.2%                                        | <span style="color:#00aa00">**2.630 μsec ± 0.1%**</span> |
+| 1000  | 1000  | 18.22 μsec ± 0.3%                                        | <span style="color:#00aa00">**14.99 μsec ± 0.1%**</span> |
+| 1     | 10000 | 8.891 μsec ± 1.0%                                        | <span style="color:#00aa00">**1.538 μsec ± 0.3%**</span> |
+| 10    | 10000 | 124.6 μsec ± 0.1%                                        | <span style="color:#00aa00">**2.596 μsec ± 0.3%**</span> |
+| 100   | 10000 | 124.5 μsec ± 0.1%                                        | <span style="color:#00aa00">**4.059 μsec ± 0.2%**</span> |
+| 1000  | 10000 | 126.4 μsec ± 0.8%                                        | <span style="color:#00aa00">**19.46 μsec ± 0.0%**</span> |
+| 10000 | 10000 | <span style="color:#00aa00">**124.6 μsec ± 0.0%**</span> | 145.2 μsec ± 0.0%                                        |
 
-WITH REPLACEMENT, NON-UNIFORM
-    1      out of 10                  14.01 μsec ± 0.2%        1.344 μsec ± 0.2%
-    1      out of 100                 14.63 μsec ± 0.2%        1.416 μsec ± 0.3%
-    1      out of 1_000               21.97 μsec ± 0.2%        2.302 μsec ± 0.4%
-    1      out of 5_000               53.27 μsec ± 0.1%        5.675 μsec ± 0.1%
-    1      out of 10_000              89.30 μsec ± 0.1%        9.872 μsec ± 0.0%
-    10     out of 10_000              90.29 μsec ± 0.1%        10.81 μsec ± 0.0%
-    100    out of 10_000              99.51 μsec ± 0.1%        19.64 μsec ± 0.1%
-    1_000  out of 10_000              189.2 μsec ± 0.0%        106.8 μsec ± 0.0%
-    5_000  out of 10_000              583.4 μsec ± 0.0%        494.8 μsec ± 0.0%
-    10_000 out of 10_000              1.074 msec ± 0.0%        970.6 μsec ± 0.3%
+### C. WITH replacement, CUSTOM probabilities
 
-WITHOUT REPLACEMENT, NON-UNIFORM
-    1      out of 10                  14.02 μsec ± 0.2%        1.347 μsec ± 0.2%
-    1      out of 100                 14.69 μsec ± 0.2%        1.418 μsec ± 0.6%
-    1      out of 1_000               21.94 μsec ± 0.2%        2.270 μsec ± 0.1%
-    1      out of 5_000               52.98 μsec ± 0.2%        5.697 μsec ± 0.3%
-    1      out of 10_000              89.55 μsec ± 0.1%        9.870 μsec ± 0.0%
-    10     out of 10_000              115.1 μsec ± 0.2%        234.7 μsec ± 0.6%
-    100    out of 10_000              153.7 μsec ± 0.4%        233.6 μsec ± 0.4%
-    1_000  out of 10_000              344.5 μsec ± 0.4%        244.8 μsec ± 0.3%
-    5_000  out of 10_000              1.321 msec ± 0.1%        271.5 μsec ± 0.1%
-    10_000 out of 10_000              3.853 msec ± 0.1%        144.7 μsec ± 0.0%
-```
+| `k`   | `n`   | **accelerated=False**<br>*(numpy)*                       | **accelerated=True**<br>*(custom numba)*                 |
+| ----- | ----- | -------------------------------------------------------- | -------------------------------------------------------- |
+| 1     | 10    | 15.91 μsec ± 0.3%                                        | <span style="color:#00aa00">**1.308 μsec ± 0.1%**</span> |
+| 10    | 10    | 16.14 μsec ± 0.3%                                        | <span style="color:#00aa00">**1.587 μsec ± 0.5%**</span> |
+| 100   | 10    | 18.42 μsec ± 0.5%                                        | <span style="color:#00aa00">**4.263 μsec ± 0.2%**</span> |
+| 1000  | 10    | 39.61 μsec ± 0.2%                                        | <span style="color:#00aa00">**31.76 μsec ± 0.0%**</span> |
+| 10000 | 10    | <span style="color:#00aa00">**238.0 μsec ± 0.1%**</span> | 308.6 μsec ± 0.1%                                        |
+| 1     | 100   | 16.60 μsec ± 0.8%                                        | <span style="color:#00aa00">**1.372 μsec ± 0.1%**</span> |
+| 10    | 100   | 17.14 μsec ± 0.7%                                        | <span style="color:#00aa00">**1.858 μsec ± 0.1%**</span> |
+| 100   | 100   | 21.22 μsec ± 0.3%                                        | <span style="color:#00aa00">**6.471 μsec ± 0.1%**</span> |
+| 1000  | 100   | 62.26 μsec ± 0.1%                                        | <span style="color:#00aa00">**51.96 μsec ± 0.1%**</span> |
+| 10000 | 100   | <span style="color:#00aa00">**470.7 μsec ± 0.1%**</span> | 508.8 μsec ± 0.1%                                        |
+| 1     | 1000  | 21.81 μsec ± 0.3%                                        | <span style="color:#00aa00">**2.242 μsec ± 0.1%**</span> |
+| 10    | 1000  | 22.41 μsec ± 0.2%                                        | <span style="color:#00aa00">**2.932 μsec ± 0.1%**</span> |
+| 100   | 1000  | 31.30 μsec ± 0.2%                                        | <span style="color:#00aa00">**9.657 μsec ± 0.1%**</span> |
+| 1000  | 1000  | 93.11 μsec ± 0.1%                                        | <span style="color:#00aa00">**76.27 μsec ± 0.0%**</span> |
+| 10000 | 1000  | <span style="color:#00aa00">**701.6 μsec ± 0.1%**</span> | 743.8 μsec ± 0.1%                                        |
+| 1     | 10000 | 91.54 μsec ± 0.2%                                        | <span style="color:#00aa00">**9.835 μsec ± 0.0%**</span> |
+| 10    | 10000 | 93.03 μsec ± 0.4%                                        | <span style="color:#00aa00">**10.78 μsec ± 0.0%**</span> |
+| 100   | 10000 | 102.3 μsec ± 0.4%                                        | <span style="color:#00aa00">**19.63 μsec ± 0.1%**</span> |
+| 1000  | 10000 | 191.9 μsec ± 0.1%                                        | <span style="color:#00aa00">**107.0 μsec ± 0.2%**</span> |
+| 10000 | 10000 | 1.077 msec ± 0.1%                                        | <span style="color:#00aa00">**980.7 μsec ± 0.2%**</span> |
+
+### D. WITHOUT replacement, CUSTOM probabilities
+
+| `k`   | `n`   | **accelerated=False**<br>*(numpy)*                       | **accelerated=True**<br>*(custom numba)*                 |
+| ----- | ----- | -------------------------------------------------------- | -------------------------------------------------------- |
+| 1     | 10    | 16.07 μsec ± 0.3%                                        | <span style="color:#00aa00">**1.296 μsec ± 0.1%**</span> |
+| 10    | 10    | 69.74 μsec ± 0.3%                                        | <span style="color:#00aa00">**1.399 μsec ± 0.4%**</span> |
+| 1     | 100   | 16.69 μsec ± 0.5%                                        | <span style="color:#00aa00">**1.387 μsec ± 0.5%**</span> |
+| 10    | 100   | 44.00 μsec ± 0.7%                                        | <span style="color:#00aa00">**4.501 μsec ± 0.3%**</span> |
+| 100   | 100   | 119.0 μsec ± 0.2%                                        | <span style="color:#00aa00">**2.635 μsec ± 1.0%**</span> |
+| 1     | 1000  | 24.29 μsec ± 0.3%                                        | <span style="color:#00aa00">**2.256 μsec ± 0.1%**</span> |
+| 10    | 1000  | 46.56 μsec ± 0.2%                                        | <span style="color:#00aa00">**23.75 μsec ± 0.2%**</span> |
+| 100   | 1000  | 77.15 μsec ± 0.5%                                        | <span style="color:#00aa00">**26.84 μsec ± 0.1%**</span> |
+| 1000  | 1000  | 439.0 μsec ± 0.2%                                        | <span style="color:#00aa00">**14.72 μsec ± 0.1%**</span> |
+| 1     | 10000 | 91.23 μsec ± 0.1%                                        | <span style="color:#00aa00">**9.850 μsec ± 0.1%**</span> |
+| 10    | 10000 | <span style="color:#00aa00">**118.0 μsec ± 0.2%**</span> | 229.6 μsec ± 0.3%                                        |
+| 100   | 10000 | <span style="color:#00aa00">**157.0 μsec ± 0.4%**</span> | 248.2 μsec ± 0.3%                                        |
+| 1000  | 10000 | 350.1 μsec ± 0.3%                                        | <span style="color:#00aa00">**243.6 μsec ± 0.4%**</span> |
+| 10000 | 10000 | 3.860 msec ± 0.2%                                        | <span style="color:#00aa00">**144.9 μsec ± 0.1%**</span> |

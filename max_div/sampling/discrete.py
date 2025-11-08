@@ -12,7 +12,7 @@ def sample_int(
     replace: bool = True,
     p: np.ndarray[float] | None = None,
     seed: int | None = None,
-    use_numba: bool = True,
+    accelerated: bool = True,
 ) -> int | np.ndarray[np.int64]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
@@ -34,14 +34,15 @@ def sample_int(
     :param p: Optional 1D array of probabilities associated with each integer in the range.
               Size must be equal to max_value + 1 and sum to 1.
     :param seed: Optional random seed for reproducibility.
-    :param use_numba: Use the self-implemented algorithm (which is `numba`-accelerated if `numba` is installed)
+    :param accelerated: Use the self-implemented algorithm (which is `numba`-accelerated if `numba` is installed),
+                        Otherwise we use `np.random.choice`.
     :return: `k=None` --> single integer; `k>=1` --> (k,)-sized array with sampled integers.
     """
 
     # -------------------------------------------------------------------------
-    #  Don't try using numba
+    #  NOT ACCELERATED
     # -------------------------------------------------------------------------
-    if not use_numba:
+    if not accelerated:
         # --- argument handling ---------------------------
         if (k == 1) or (k is None):
             replace = True  # single sample, replacement makes no difference, so we can fall back to faster methods
@@ -67,7 +68,7 @@ def sample_int(
             return np.random.choice(n, size=k, replace=replace, p=p)
 
     # -------------------------------------------------------------------------
-    #  Try using numba
+    #  ACCELERATED
     # -------------------------------------------------------------------------
     else:
         # --- argument handling ---------------------------

@@ -48,6 +48,7 @@ plugins:
       autoapi_dir: ./max_div
       autoapi_ignore:
         - "**/internal/**"
+        - "**/_*.py"
       autoapi_file_patterns: ['*.py']
       autoapi_add_nav_entry: Reference
       autoapi_root: ./docs/reference
@@ -72,4 +73,5 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - CLI: cli.md
   - Benchmarks: benchmarks.md

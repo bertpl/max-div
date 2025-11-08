@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.0.0",
+    "click>=8.2.0",
 ]
 
 [project.optional-dependencies]
@@ -33,7 +34,7 @@ dev = [
 ]
 
 [project.scripts]
-benchmark_sample_int = "max_div.benchmark:benchmark_sample_int"
+max-div = "max_div._cli:cli"
 
 [project.urls]
 Documentation = "https://max-div.readthedocs.io/"
