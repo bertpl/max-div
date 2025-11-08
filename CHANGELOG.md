@@ -2,11 +2,11 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.5
-> *(under development)*
+> *(2025-11-08)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-  - add full CLI to `max-div`
+  - implement `max-div` CLI, allowing package to be installed as tool to define system-wide command 'max-div'
 
 - **improved**:
   - allow benchmarking functionality to output results in Markdown format 
