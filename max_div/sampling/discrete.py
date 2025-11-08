@@ -28,6 +28,8 @@ def sample_int(
     |  Yes           | Yes            | True       | >1   | Multinomial sampling using CDF           | O(n + k log(n)) |
     |  Yes           | Yes            | False      | >1   | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick) using the Ziggurat algorithm.  | O(n) |
 
+    <br>
+
     :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
     :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
     :param replace: Whether to sample with replacement.
