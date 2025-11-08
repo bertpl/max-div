@@ -1,7 +1,7 @@
 [project]
 name = "max-div"
 version = "0.0.6"
-description = "Flexible Solver for Maximum Diversity Problems with Fairness Constraints."
+description = "Configurable Solver for Maximum Diversity Problems with Fairness Constraints."
 readme = "README.md"
 authors = [
     { name = "Bert Pluymers", email = "bert.pluymers@gmail.com" }
