@@ -26,13 +26,13 @@ def sample_int(
     |  `True`        | No             | `False`    | *any* | k-element Fisher-Yates shuffle           | O(n)            |
     |  `True`        | Yes            | *any*      | 1     | Multinomial sampling using CDF           | O(n + log(n))   |
     |  `True`        | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
-    |  `True`        | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick) using the Ziggurat algorithm.  | O(n) |
+    |  `True`        | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick).  | O(n) |
 
     NOTE:
-     - current implementations (both accelerated and non-accelerated) do NOT use the new np.random.Generator API,
-       but the legacy np.random functions.  In theory the new `Generator` API should provide improved algorithms and
-       higher efficiency.  However, practical tests do not show significant improvements, while clearly showing an
-       additional 10-20 μsec overhead for calling the `Generator` methods via the numpy C-interface.
+     - using the np.random.Generator API incurs an extra 3-4 μsec overhead per call compared to using the legacy
+       np.random functions. The main reason is that the new interface requires calls through the numpy C-API, while the
+       legacy functions are re-implemented in Numba and compiled together with the rest of the numba-accelerated code.
+       Instantiating a Generator incurs a ~10 μsec penalty, so should also be avoided to be done repeatedly.
 
     <br>
 
@@ -163,13 +163,14 @@ def sample_int_numba(
             # algorithm description:
             #   Efraimidis:       select k elements corresponding to k largest values of  u_i^{1/p_i} (u_i ~ U(0,1))
             #   Gumbel-Max Trick: select k smallest values of  -log(u_i)/p_i  (u_i ~ U(0,1))
-            #   Ziggurat:         (TODO) generate log(u_i) more efficiently, applying the Ziggurat algorithm
+            #   Ziggurat:         INVESTIGATE: generate log(u_i) more efficiently, applying the Ziggurat algorithm
             #                            to the exponential distribution, which avoids usage of transcendental
             #                            functions for the majority of the samples.
+            #                     (Initial testing surprisingly did not show improvements)
             if k < n:
                 keys = np.empty(n, dtype=np.float64)  # O(n)
-                # note: computing -np.log(u[i]) seems to be faster than np.random.standard_exponential().
                 u = np.random.random(n)  # O(n)
+                # note: computing -np.log(u[i]) does not seem to be noticeably slower than np.random.standard_exponential().
                 for i in range(n):  # n x O(1)
                     if p[i] == 0.0:
                         keys[i] = np.inf
