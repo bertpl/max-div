@@ -17,27 +17,19 @@ def format_as_markdown(headers: list[str], data: list[list[str | BenchmarkResult
     converted_data: list[list[str]] = [headers]
 
     for row in data:
-        # Find all BenchmarkResult objects in this row and their indices
-        benchmark_results: list[tuple[int, BenchmarkResult]] = []
-        for i, cell in enumerate(row):
-            if isinstance(cell, BenchmarkResult):
-                benchmark_results.append((i, cell))
-
         # Find the fastest BenchmarkResult (minimum median time)
-        fastest_idx = None
-        if benchmark_results:
-            fastest_idx = min(benchmark_results, key=lambda x: x[1].t_sec_q_50)[0]
+        t_q50_min = min([value.t_sec_q_50 for value in row if isinstance(value, BenchmarkResult)])
 
-        # Convert row to strings, highlighting the fastest
+        # Convert row to strings, highlighting the results with t_q25 <= t_q50_min
         converted_row: list[str] = []
-        for i, cell in enumerate(row):
-            if isinstance(cell, BenchmarkResult):
-                text = cell.t_sec_with_uncertainty_str
-                if i == fastest_idx:
+        for i, value in enumerate(row):
+            if isinstance(value, BenchmarkResult):
+                text = value.t_sec_with_uncertainty_str
+                if value.t_sec_q_25 <= t_q50_min:
                     text = md_colored(md_bold(text), "#00aa00")
                 converted_row.append(text)
             else:
-                converted_row.append(str(cell))
+                converted_row.append(str(value))
 
         converted_data.append(converted_row)
 

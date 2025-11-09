@@ -4,16 +4,16 @@ from max_div.internal.formatting import md_bold, md_colored, md_italic, md_multi
 def test_md_table():
     # --- arrange -----------------------------------------
     data = [
-        ["Header 1", "Header 2", "Header 3"],
-        ["Row 1 Col 1", "Row 1 Col 2"],
-        ["Row 2 Col 1", "", "Row 2 Col 3"],
+        ["Header 1", "Header 2", "Header 3", ""],
+        ["Row 1 Col 1", "Row 1 Col 2", "", ""],
+        ["Row 2 Col 1", "", "Row 2 Col 3", ""],
     ]
 
     expected = [
-        "| Header 1    | Header 2    | Header 3    |",
-        "| ----------- | ----------- | ----------- |",
-        "| Row 1 Col 1 | Row 1 Col 2 |             |",
-        "| Row 2 Col 1 |             | Row 2 Col 3 |",
+        "| Header 1    | Header 2    | Header 3    |   |",
+        "| ----------- | ----------- | ----------- | - |",
+        "| Row 1 Col 1 | Row 1 Col 2 |             |   |",
+        "| Row 2 Col 1 |             | Row 2 Col 3 |   |",
     ]
 
     # --- act ---------------------------------------------

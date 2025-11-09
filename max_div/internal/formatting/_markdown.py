@@ -1,14 +1,9 @@
 def md_table(data: list[list[str]]) -> list[str]:
     """Creates a Markdown table from a 2D list of strings, where the first list represents the table headers."""
-    if not data:
-        return []
-
-    if len(data) < 2:
-        raise ValueError("Table must have at least a header row and one data row")
 
     # Calculate column widths based on all rows
     num_cols = len(data[0])
-    col_widths = [max(len(row[i]) if i < len(row) else 1 for row in data) for i in range(num_cols)]
+    col_widths = [max(1, max(len(row[i]) for row in data)) for i in range(num_cols)]  # max width of content and >=1
 
     result = []
 
@@ -22,9 +17,7 @@ def md_table(data: list[list[str]]) -> list[str]:
 
     # Add data rows
     for row in data[1:]:
-        row_str = (
-            "| " + " | ".join((row[i] if i < len(row) else "").ljust(col_widths[i]) for i in range(num_cols)) + " |"
-        )
+        row_str = "| " + " | ".join(row[i].ljust(col_widths[i]) for i in range(num_cols)) + " |"
         result.append(row_str)
 
     return result
