@@ -173,7 +173,4 @@ def sample_int_numba(
                     keys[i] = -np.log(u[i]) / p[i]
 
             # Get indices of k smallest keys
-            if k > 1:
-                return np.argpartition(keys, k)[:k]  # O(n) average case
-            else:
-                return np.array([np.argmin(keys)])  # O(n)
+            return np.argpartition(keys, k)[:k]  # O(n) average case
