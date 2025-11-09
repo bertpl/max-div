@@ -125,12 +125,6 @@ def sample_int_numba(
     if use_seed:
         np.random.seed(seed)
 
-    if (k == n) and (not replace):
-        # corner case: return all elements in random order
-        population = np.arange(n, dtype=np.int64)
-        np.random.shuffle(population)
-        return population
-
     if not use_p:
         if replace:
             # UNIFORM sampling with replacement
@@ -164,13 +158,20 @@ def sample_int_numba(
             #   Ziggurat:         (TODO) generate log(u_i) more efficiently, applying the Ziggurat algorithm
             #                            to the exponential distribution, which avoids usage of transcendental
             #                            functions for the majority of the samples.
-            keys = np.empty(n, dtype=np.float64)  # O(n)
-            u = np.random.random(n)  # O(n)
-            for i in range(n):  # n x O(1)
-                if p[i] == 0.0:
-                    keys[i] = np.inf
-                else:
-                    keys[i] = -np.log(u[i]) / p[i]
+            if k < n:
+                keys = np.empty(n, dtype=np.float64)  # O(n)
+                u = np.random.random(n)  # O(n)
+                for i in range(n):  # n x O(1)
+                    if p[i] == 0.0:
+                        keys[i] = np.inf
+                    else:
+                        keys[i] = -np.log(u[i]) / p[i]
 
-            # Get indices of k smallest keys
-            return np.argpartition(keys, k)[:k]  # O(n) average case
+                # Get indices of k smallest keys
+                return np.argpartition(keys, k)[:k]  # O(n) average case
+
+            else:
+                # corner case: return all elements in random order
+                population = np.arange(n, dtype=np.int64)
+                np.random.shuffle(population)
+                return population
