@@ -19,14 +19,14 @@ def sample_int(
 
     Different implementation is used, depending on the case:
 
-    | `use_numba`    | `p` specified  | `replace`  | `k`  | Method Used                              | Complexity      |
-    |----------------|----------------|------------|------|------------------------------------------|-----------------|
-    |  No            | Any            | Any        | Any  | `np.random.choice`                       | depends         |
-    |  Yes           | No             | True       | Any  | `np.random.randint`, uniform sampling    | O(k)            |
-    |  Yes           | No             | False      | Any  | k-element Fisher-Yates shuffle           | O(n)            |
-    |  Yes           | Yes            | Any        | 1    | Multinomial sampling using CDF           | O(n + log(n))   |
-    |  Yes           | Yes            | True       | >1   | Multinomial sampling using CDF           | O(n + k log(n)) |
-    |  Yes           | Yes            | False      | >1   | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick) using the Ziggurat algorithm.  | O(n) |
+    | `accelerated`  | `p` specified  | `replace`  | `k`   | Method Used                              | Complexity      |
+    |----------------|----------------|------------|-------|------------------------------------------|-----------------|
+    |  `False`       | *any*          | *any*      | *any* | `np.random.choice`                       | depends         |
+    |  `True`        | No             | `True`     | *any* | `np.random.randint`, uniform sampling    | O(k)            |
+    |  `True`        | No             | `False`    | *any* | k-element Fisher-Yates shuffle           | O(n)            |
+    |  `True`        | Yes            | *any*      | 1     | Multinomial sampling using CDF           | O(n + log(n))   |
+    |  `True`        | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
+    |  `True`        | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick) using the Ziggurat algorithm.  | O(n) |
 
     <br>
 
