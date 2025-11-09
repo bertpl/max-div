@@ -1,14 +1,18 @@
-# Benchmarks
+# `sample_int`
 
-All benchmarks are run on `m6a.2xlarge` AWS EC2 instances.
+([API reference][max_div.sampling.discrete.sample_int])
 
-## max_div.sampling.discrete.sample_int
-
+Command:
+```bash
+uv tool install max-div[numba]
+max-div benchmark --markdown sample-int
+```
+or 
 ```bash
 uv run --extra numba max-div benchmark --markdown sample-int
 ```
 
-### A. WITH replacement, UNIFORM probabilities
+## A. WITH replacement, UNIFORM probabilities
 
 | `k`   | `n`   | **accelerated=False**<br>*(numpy)*                       | **accelerated=True**<br>*(custom numba)*                 |
 | ----- | ----- | -------------------------------------------------------- | -------------------------------------------------------- |
@@ -33,7 +37,7 @@ uv run --extra numba max-div benchmark --markdown sample-int
 | 1000  | 10000 | 20.78 μsec ± 0.2%                                        | <span style="color:#00aa00">**17.22 μsec ± 2.8%**</span> |
 | 10000 | 10000 | <span style="color:#00aa00">**125.6 μsec ± 0.1%**</span> | 166.7 μsec ± 0.1%                                        |
 
-### B. WITHOUT replacement, UNIFORM probabilities
+## B. WITHOUT replacement, UNIFORM probabilities
 
 | `k`   | `n`   | **accelerated=False**<br>*(numpy)*                       | **accelerated=True**<br>*(custom numba)*                 |
 | ----- | ----- | -------------------------------------------------------- | -------------------------------------------------------- |
@@ -52,7 +56,7 @@ uv run --extra numba max-div benchmark --markdown sample-int
 | 1000  | 10000 | 126.4 μsec ± 0.8%                                        | <span style="color:#00aa00">**19.46 μsec ± 0.0%**</span> |
 | 10000 | 10000 | <span style="color:#00aa00">**124.6 μsec ± 0.0%**</span> | 145.2 μsec ± 0.0%                                        |
 
-### C. WITH replacement, CUSTOM probabilities
+## C. WITH replacement, CUSTOM probabilities
 
 | `k`   | `n`   | **accelerated=False**<br>*(numpy)*                       | **accelerated=True**<br>*(custom numba)*                 |
 | ----- | ----- | -------------------------------------------------------- | -------------------------------------------------------- |
@@ -77,7 +81,7 @@ uv run --extra numba max-div benchmark --markdown sample-int
 | 1000  | 10000 | 191.9 μsec ± 0.1%                                        | <span style="color:#00aa00">**107.0 μsec ± 0.2%**</span> |
 | 10000 | 10000 | 1.077 msec ± 0.1%                                        | <span style="color:#00aa00">**980.7 μsec ± 0.2%**</span> |
 
-### D. WITHOUT replacement, CUSTOM probabilities
+## D. WITHOUT replacement, CUSTOM probabilities
 
 | `k`   | `n`   | **accelerated=False**<br>*(numpy)*                       | **accelerated=True**<br>*(custom numba)*                 |
 | ----- | ----- | -------------------------------------------------------- | -------------------------------------------------------- |

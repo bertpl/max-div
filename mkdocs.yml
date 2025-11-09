@@ -74,4 +74,4 @@ markdown_extensions:
 nav:
   - Home: index.md
   - CLI: cli.md
-  - Benchmarks: benchmarks.md
+  - Benchmarks: benchmarks/*.md

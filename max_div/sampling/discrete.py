@@ -19,14 +19,20 @@ def sample_int(
 
     Different implementation is used, depending on the case:
 
-    | `use_numba`    | `p` specified  | `replace`  | `k`  | Method Used                              | Complexity      |
-    |----------------|----------------|------------|------|------------------------------------------|-----------------|
-    |  No            | Any            | Any        | Any  | `np.random.choice`                       | depends         |
-    |  Yes           | No             | True       | Any  | `np.random.randint`, uniform sampling    | O(k)            |
-    |  Yes           | No             | False      | Any  | k-element Fisher-Yates shuffle           | O(n)            |
-    |  Yes           | Yes            | Any        | 1    | Multinomial sampling using CDF           | O(n + log(n))   |
-    |  Yes           | Yes            | True       | >1   | Multinomial sampling using CDF           | O(n + k log(n)) |
-    |  Yes           | Yes            | False      | >1   | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick) using the Ziggurat algorithm.  | O(n) |
+    | `accelerated`  | `p` specified  | `replace`  | `k`   | Method Used                              | Complexity      |
+    |----------------|----------------|------------|-------|------------------------------------------|-----------------|
+    |  `False`       | *any*          | *any*      | *any* | `np.random.choice`                       | depends         |
+    |  `True`        | No             | `True`     | *any* | `np.random.randint`, uniform sampling    | O(k)            |
+    |  `True`        | No             | `False`    | *any* | k-element Fisher-Yates shuffle           | O(n)            |
+    |  `True`        | Yes            | *any*      | 1     | Multinomial sampling using CDF           | O(n + log(n))   |
+    |  `True`        | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
+    |  `True`        | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick) using the Ziggurat algorithm.  | O(n) |
+
+    NOTE:
+     - current implementations (both accelerated and non-accelerated) do NOT use the new np.random.Generator API,
+       but the legacy np.random functions.  In theory the new `Generator` API should provide improved algorithms and
+       higher efficiency.  However, practical tests do not show significant improvements, while clearly showing an
+       additional 10-20 μsec overhead for calling the `Generator` methods via the numpy C-interface.
 
     <br>
 
@@ -125,15 +131,10 @@ def sample_int_numba(
     if use_seed:
         np.random.seed(seed)
 
-    if (k == n) and (not replace):
-        # corner case: return all elements in random order
-        population = np.arange(n, dtype=np.int64)
-        np.random.shuffle(population)
-        return population
-
     if not use_p:
         if replace:
             # UNIFORM sampling with replacement
+            # note: the below is faster than a manual loop with np.random.randint calls
             return np.random.choice(n, size=k)  # O(k)
         else:
             # UNIFORM sampling without replacement using Fisher-Yates shuffle
@@ -151,6 +152,7 @@ def sample_int_numba(
                 csum += p[i]
                 cdf[i] = csum
             samples = np.empty(k, dtype=np.int64)  # O(k)
+            # note: computing the below in a loop, is faster than writing a np-vectorized one-liner
             for i in range(k):  # k x O(log(n))
                 r = np.random.random()
                 idx = np.searchsorted(cdf, r)
@@ -164,16 +166,21 @@ def sample_int_numba(
             #   Ziggurat:         (TODO) generate log(u_i) more efficiently, applying the Ziggurat algorithm
             #                            to the exponential distribution, which avoids usage of transcendental
             #                            functions for the majority of the samples.
-            keys = np.empty(n, dtype=np.float64)  # O(n)
-            u = np.random.random(n)  # O(n)
-            for i in range(n):  # n x O(1)
-                if p[i] == 0.0:
-                    keys[i] = np.inf
-                else:
-                    keys[i] = -np.log(u[i]) / p[i]
+            if k < n:
+                keys = np.empty(n, dtype=np.float64)  # O(n)
+                # note: computing -np.log(u[i]) seems to be faster than np.random.standard_exponential().
+                u = np.random.random(n)  # O(n)
+                for i in range(n):  # n x O(1)
+                    if p[i] == 0.0:
+                        keys[i] = np.inf
+                    else:
+                        keys[i] = -np.log(u[i]) / p[i]
 
-            # Get indices of k smallest keys
-            if k > 1:
+                # Get indices of k smallest keys
                 return np.argpartition(keys, k)[:k]  # O(n) average case
+
             else:
-                return np.array([np.argmin(keys)])  # O(n)
+                # corner case: return all elements in random order
+                population = np.arange(n, dtype=np.int64)
+                np.random.shuffle(population)
+                return population

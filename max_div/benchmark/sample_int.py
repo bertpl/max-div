@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.internal.compat import is_numba_installed
@@ -34,12 +35,15 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
     print()
 
     for replace, use_p, desc in [
-        (True, False, "with replacement, uniform probabilities"),
-        (False, False, "without replacement, uniform probabilities"),
-        (True, True, "with replacement, custom probabilities"),
-        (False, True, "without replacement, custom probabilities"),
+        (True, False, "A. WITH replacement, UNIFORM probabilities"),
+        (False, False, "B. WITHOUT replacement, UNIFORM probabilities"),
+        (True, True, "C. WITH replacement, CUSTOM probabilities"),
+        (False, True, "D. WITHOUT replacement, CUSTOM probabilities"),
     ]:
-        print(desc.upper() + ": ", end="")
+        if markdown:
+            print(f"## {desc}")
+        else:
+            print(f"{desc}:")
 
         # --- create headers ------------------------------
         if markdown:
@@ -54,36 +58,31 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
 
         # --- benchmark ------------------------------------
         data: list[list[str | BenchmarkResult]] = []
-        for n in [10, 100, 1000, 10000]:
-            for k in [1, 10, 100, 1000, 10000]:
-                if (not replace) and (k > n):
-                    continue  # skip this combination, since it's not feasible
+        n_k_values = [(n, k) for n in [10, 100, 1000, 10000] for k in [1, 10, 100, 1000, 10000] if replace or (k <= n)]
+        for n, k in tqdm(n_k_values, leave=False):
+            data_row: list[str | BenchmarkResult] = [str(k), str(n)]
 
-                data_row: list[str | BenchmarkResult] = [str(k), str(n)]
+            for accelerated in [False, True]:
+                if use_p:
+                    p = np.random.rand(n)
+                    p /= p.sum()
+                else:
+                    p = None
 
-                for accelerated in [False, True]:
-                    if use_p:
-                        p = np.random.rand(n)
-                        p /= p.sum()
-                    else:
-                        p = None
+                def func_to_benchmark():
+                    sample_int(n=n, k=k, replace=replace, p=p, accelerated=accelerated)
 
-                    def func_to_benchmark():
-                        sample_int(n=n, k=k, replace=replace, p=p, accelerated=accelerated)
-
-                    data_row.append(
-                        benchmark(
-                            f=func_to_benchmark,
-                            t_per_run=0.001 if turbo else 0.1,
-                            n_warmup=3 if turbo else 10,
-                            n_benchmark=3 if turbo else 30,
-                            silent=True,
-                        )
+                data_row.append(
+                    benchmark(
+                        f=func_to_benchmark,
+                        t_per_run=0.001 if turbo else 0.1,
+                        n_warmup=3 if turbo else 10,
+                        n_benchmark=3 if turbo else 30,
+                        silent=True,
                     )
+                )
 
-                data.append(data_row)
-                print(".", end="")  # minimalistic progress indicator
-        print()
+            data.append(data_row)
 
         # --- show results -----------------------------------------
         if markdown:
