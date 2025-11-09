@@ -28,6 +28,12 @@ def sample_int(
     |  `True`        | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
     |  `True`        | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick) using the Ziggurat algorithm.  | O(n) |
 
+    NOTE:
+     - current implementations (both accelerated and non-accelerated) do NOT use the new np.random.Generator API,
+       but the legacy np.random functions.  In theory the new `Generator` API should provide improved algorithms and
+       higher efficiency.  However, practical tests do not show significant improvements, while clearly showing an
+       additional 10-20 μsec overhead for calling the `Generator` methods via the numpy C-interface.
+
     <br>
 
     :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
@@ -128,6 +134,7 @@ def sample_int_numba(
     if not use_p:
         if replace:
             # UNIFORM sampling with replacement
+            # note: the below is faster than a manual loop with np.random.randint calls
             return np.random.choice(n, size=k)  # O(k)
         else:
             # UNIFORM sampling without replacement using Fisher-Yates shuffle
@@ -145,6 +152,7 @@ def sample_int_numba(
                 csum += p[i]
                 cdf[i] = csum
             samples = np.empty(k, dtype=np.int64)  # O(k)
+            # note: computing the below in a loop, is faster than writing a np-vectorized one-liner
             for i in range(k):  # k x O(log(n))
                 r = np.random.random()
                 idx = np.searchsorted(cdf, r)
@@ -160,6 +168,7 @@ def sample_int_numba(
             #                            functions for the majority of the samples.
             if k < n:
                 keys = np.empty(n, dtype=np.float64)  # O(n)
+                # note: computing -np.log(u[i]) seems to be faster than np.random.standard_exponential().
                 u = np.random.random(n)  # O(n)
                 for i in range(n):  # n x O(1)
                     if p[i] == 0.0:
