@@ -7,6 +7,7 @@
 
 - **improved**:
   - `sampling.discrete.sample_int`: improve benchmarking + add notes on optimization efforts
+  - improve collection of test coverage data for `numba`-decorated functions
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.5
