@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.internal.formatting import md_bold, md_italic, md_multiline
-from max_div.sampling.discrete import sample_int
+from max_div.sampling.discrete import sample_int_numba, sample_int_numpy
 
 from ._formatting import format_as_markdown, format_for_console
 
@@ -61,10 +61,17 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
                     p = np.random.rand(n)
                     p /= p.sum()
                 else:
-                    p = None
+                    p = np.zeros(0)
+                p = p.astype(np.float64)
 
-                def func_to_benchmark():
-                    sample_int(n=n, k=k, replace=replace, p=p, use_numba=use_numba)
+                if use_numba:
+
+                    def func_to_benchmark():
+                        sample_int_numba(n=n, k=k, replace=replace, p=p)
+                else:
+
+                    def func_to_benchmark():
+                        sample_int_numpy(n=n, k=k, replace=replace, p=p)
 
                 data_row.append(
                     benchmark(
