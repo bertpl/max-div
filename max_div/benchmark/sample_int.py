@@ -44,11 +44,11 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
             headers = [
                 "`k`",
                 "`n`",
-                md_multiline([md_bold("use_numba=False"), md_italic("(numpy)")]),
-                md_multiline([md_bold("use_numba=True"), md_italic("(custom numba)")]),
+                "`sample_int_numpy`",
+                "`sample_int_numba`",
             ]
         else:
-            headers = ["k", "n", "use_numba=False", "use_numba=True"]
+            headers = ["k", "n", "sample_int_numpy", "sample_int_numba"]
 
         # --- benchmark ------------------------------------
         data: list[list[str | BenchmarkResult]] = []
