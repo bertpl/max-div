@@ -34,7 +34,6 @@ plugins:
               - "!^_"          # Exclude private members (starting with _)
               - "^__init__$"   # But keep __init__ methods
               - "!^__[^_]"     # Exclude protected (double underscore, but not dunder)
-              - "!_numba$"     # Exclude functions ending with _numba, which are optimized flavors of existing functions
               - "!_internal$"  # Exclude functions ending with _internal, which are purely internal
 
             # Member options

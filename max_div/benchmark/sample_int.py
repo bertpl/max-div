@@ -44,11 +44,11 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
             headers = [
                 "`k`",
                 "`n`",
-                md_multiline([md_bold("accelerated=False"), md_italic("(numpy)")]),
-                md_multiline([md_bold("accelerated=True"), md_italic("(custom numba)")]),
+                md_multiline([md_bold("use_numba=False"), md_italic("(numpy)")]),
+                md_multiline([md_bold("use_numba=True"), md_italic("(custom numba)")]),
             ]
         else:
-            headers = ["k", "n", "accelerated=False", "accelerated=True"]
+            headers = ["k", "n", "use_numba=False", "use_numba=True"]
 
         # --- benchmark ------------------------------------
         data: list[list[str | BenchmarkResult]] = []
@@ -56,7 +56,7 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
         for n, k in tqdm(n_k_values, leave=False):
             data_row: list[str | BenchmarkResult] = [str(k), str(n)]
 
-            for accelerated in [False, True]:
+            for use_numba in [False, True]:
                 if use_p:
                     p = np.random.rand(n)
                     p /= p.sum()
@@ -64,7 +64,7 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
                     p = None
 
                 def func_to_benchmark():
-                    sample_int(n=n, k=k, replace=replace, p=p, accelerated=accelerated)
+                    sample_int(n=n, k=k, replace=replace, p=p, use_numba=use_numba)
 
                 data_row.append(
                     benchmark(
