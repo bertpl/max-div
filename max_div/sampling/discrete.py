@@ -11,21 +11,128 @@ def sample_int(
     replace: bool = True,
     p: np.ndarray[float] | None = None,
     seed: int | None = None,
-    accelerated: bool = True,
+    use_numba: bool = True,
 ) -> int | np.ndarray[np.int64]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
 
-    Different implementation is used, depending on the case:
+    Depending on the value of `use_numba`, computations are executed by...
 
-    | `accelerated`  | `p` specified  | `replace`  | `k`   | Method Used                              | Complexity      |
-    |----------------|----------------|------------|-------|------------------------------------------|-----------------|
-    |  `False`       | *any*          | *any*      | *any* | `np.random.choice`                       | depends         |
-    |  `True`        | No             | `True`     | *any* | `np.random.randint`, uniform sampling    | O(k)            |
-    |  `True`        | No             | `False`    | *any* | k-element Fisher-Yates shuffle           | O(n)            |
-    |  `True`        | Yes            | *any*      | 1     | Multinomial sampling using CDF           | O(n + log(n))   |
-    |  `True`        | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
-    |  `True`        | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick).  | O(n) |
+    - `use_numba=False`: see [sample_int_numpy][max_div.sampling.discrete.sample_int_numpy]
+    - `use_numba=True`: see [sample_int_numba][max_div.sampling.discrete.sample_int_numba]
+
+    :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
+    :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
+    :param replace: Whether to sample with replacement.
+    :param p: Optional 1D array of probabilities associated with each integer in the range.
+              Size must be equal to max_value + 1 and sum to 1.
+              (if `None` or size==0, uniform sampling is performed)
+    :param seed: Optional random seed for reproducibility. If `None` or 0, no seed is set.
+    :param use_numba: Use the custom numba-accelerated implementation, otherwise we use `np.random.choice`.
+    :return: `k=None` --> single integer; `k>=1` --> (k,)-sized array with sampled integers.
+    """
+    if not use_numba:
+        return sample_int_numpy(n=n, k=k, replace=replace, p=p, seed=seed)
+
+    else:
+        # NOTE: minimal validation to make sure numba doesn't fail to compile
+        if (p is not None) and p.ndim != 1:
+            raise ValueError(f"p must be a 1D array. (here: ndim={p.ndim})")
+
+        # NOTE: we need a few if-clauses, since numba does not support optional arguments
+        if k is None:
+            # assume k=1 and return an integer
+            if p is None:
+                return sample_int_numba(n=n, k=1, replace=replace, seed=seed or 0)[0]
+            else:
+                return sample_int_numba(n=n, k=1, replace=replace, p=p, seed=seed or 0)[0]
+
+        else:
+            # k is specified, return array
+            if p is None:
+                return sample_int_numba(n=n, k=k, replace=replace, seed=seed or 0)
+            else:
+                return sample_int_numba(n=n, k=k, replace=replace, p=p, seed=seed or 0)
+
+
+# =================================================================================================
+#  sample_int_numpy
+# =================================================================================================
+def sample_int_numpy(
+    n: int,
+    k: int | None = None,
+    replace: bool = True,
+    p: np.ndarray[float] | None = None,
+    seed: int | None = None,
+) -> int | np.ndarray[np.int64]:
+    """
+    Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
+
+    This will always use `np.random.choice` for sampling and is intended to be used to compare against the
+    numba-accelerated version.  For production-use, use `sample_int_numba` or `sample_int` with `accelerated=True`.
+
+    :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
+    :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
+    :param replace: Whether to sample with replacement.
+    :param p: Optional 1D array of probabilities associated with each integer in the range.
+              Size must be equal to max_value + 1 and sum to 1.
+    :param seed: Optional random seed for reproducibility.  If `None` or 0, no seed is set.
+    :return: `k=None` --> single integer; `k>=1` --> (k,)-sized array with sampled integers.
+    """
+
+    # --- argument handling ---------------------------
+    if (k == 1) or (k is None):
+        replace = True  # single sample, replacement makes no difference, so we can fall back to faster methods
+
+    # --- argument validation -------------------------
+    if n < 1:
+        raise ValueError(f"n must be >=1. (here: {n})")
+    if k is not None:
+        if k < 1:
+            raise ValueError(f"k must be >=1. (here: {k})")
+        if (not replace) and (k > n):
+            raise ValueError(f"Cannot sample {k} unique values from range [0, {n}) without replacement.")
+    if p is not None:
+        if (p.size > 0) and (p.size != n):
+            raise ValueError(f"p must be of size n=0 or n={n}. (here: size={p.size})")
+        elif p.size == 0:
+            p = None  # indicate no probabilities specified
+
+    # --- sampling ------------------------------------
+    if seed:
+        np.random.seed(seed)
+
+    if k is None:
+        # returns scalar
+        return np.random.choice(n, size=None, replace=replace, p=p)
+    else:
+        # returns array
+        return np.random.choice(n, size=k, replace=replace, p=p)
+
+
+# =================================================================================================
+#  sample_int_numba
+# =================================================================================================
+@numba.njit
+def sample_int_numba(
+    n: int,
+    k: int,
+    replace: bool,
+    p: np.ndarray[float] = np.zeros(0),
+    seed: int = 0,
+) -> np.ndarray[np.int64]:
+    """
+    Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
+
+    This is a custom numba, speed-optimized implementation, using a different algorithm depending on the case:
+
+    | `p` specified  | `replace`  | `k`   | Method Used                              | Complexity      |
+    |----------------|------------|-------|------------------------------------------|-----------------|
+    | No             | `True`     | *any* | `np.random.randint`, uniform sampling    | O(k)            |
+    | No             | `False`    | *any* | k-element Fisher-Yates shuffle           | O(n)            |
+    | Yes            | *any*      | 1     | Multinomial sampling using CDF           | O(n + log(n))   |
+    | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
+    | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick).  | O(n) |
 
     NOTE:
      - using the np.random.Generator API incurs an extra 3-4 μsec overhead per call compared to using the legacy
@@ -40,96 +147,25 @@ def sample_int(
     :param replace: Whether to sample with replacement.
     :param p: Optional 1D array of probabilities associated with each integer in the range.
               Size must be equal to max_value + 1 and sum to 1.
-    :param seed: Optional random seed for reproducibility.
-    :param accelerated: Use the custom numba-accelerated implementation, otherwise we use `np.random.choice`.
-    :return: `k=None` --> single integer; `k>=1` --> (k,)-sized array with sampled integers.
+              NOTE: if size is 0, indicates no probabilities specified.  (=DEFAULT)
+                    if size > 0, but not equal to max_value+1, a ValueError is raised.
+    :param seed: (default=0) Optional random seed for reproducibility. If `None` or 0, no seed is set.
+    :return: (k,)-sized array with sampled integers.
     """
 
-    # -------------------------------------------------------------------------
-    #  NOT ACCELERATED
-    # -------------------------------------------------------------------------
-    if not accelerated:
-        # --- argument handling ---------------------------
-        if (k == 1) or (k is None):
-            replace = True  # single sample, replacement makes no difference, so we can fall back to faster methods
+    if n < 1:
+        raise ValueError(f"n must be >=1. (here: {n})")
+    if k < 1:
+        raise ValueError(f"k must be >=1. (here: {k})")
+    if k == 1:
+        replace = True  # single sample, replacement makes no difference, so we can fall back to faster methods
+    elif (not replace) and (k > n):
+        raise ValueError(f"Cannot sample {k} unique values from range [0, {n}) without replacement.")
 
-        # --- argument validation -------------------------
-        if n < 1:
-            raise ValueError(f"n must be >=1. (here: {n})")
-        if k is not None:
-            if k < 1:
-                raise ValueError(f"k must be >=1. (here: {k})")
-            if (not replace) and (k > n):
-                raise ValueError(f"Cannot sample {k} unique values from range [0, {n}) without replacement.")
-
-        # --- sampling ------------------------------------
-        if seed is not None:
-            np.random.seed(seed)
-
-        if k is None:
-            # returns scalar
-            return np.random.choice(n, size=None, replace=replace, p=p)
-        else:
-            # returns array
-            return np.random.choice(n, size=k, replace=replace, p=p)
-
-    # -------------------------------------------------------------------------
-    #  ACCELERATED
-    # -------------------------------------------------------------------------
-    else:
-        # --- argument handling ---------------------------
-        k_orig = k  # remember, to know what return value we need
-        if (k == 1) or (k is None):
-            k = 1  # make sure we always have an integer for the numba function
-            replace = True  # single sample, replacement makes no difference, so we can fall back to faster methods
-        if p is None:
-            use_p = False
-            p = np.zeros(0, dtype=np.float64)  # dummy value
-        else:
-            use_p = True
-        if seed is None:
-            use_seed = False
-            seed = 42  # dummy value
-        else:
-            use_seed = True
-
-        # --- argument validation -------------------------
-        if n < 1:
-            raise ValueError(f"n must be >=1. (here: {n})")
-        if k < 1:
-            raise ValueError(f"k must be >=1. (here: {k})")
-        if (not replace) and (k > n):
-            raise ValueError(f"Cannot sample {k} unique values from range [0, {n}) without replacement.")
-        if use_p:
-            if (p.ndim != 1) or (p.size != n):
-                raise ValueError(f"p must be a 1D array of size {n}. (here: shape={p.shape})")
-
-        # --- call numba function -------------------------
-        samples = sample_int_numba(n=n, k=k, replace=replace, use_p=use_p, p=p, use_seed=use_seed, seed=seed)
-        if k_orig is None:
-            return samples[0]
-        else:
-            return samples
-
-
-@numba.njit
-def sample_int_numba(
-    n: int,
-    k: int,
-    replace: bool,
-    use_p: bool = False,
-    p: np.ndarray[float] = np.zeros(0),
-    use_seed: bool = False,
-    seed: int = 42,
-) -> np.ndarray[int]:
-    """
-    See native python version docstring.  We split the implementation into a core numba-decorated function and
-    a Python front-end, because numba-decorated functions do not allow for multiple possible return types.
-    """
-    if use_seed:
+    if seed != 0:
         np.random.seed(seed)
 
-    if not use_p:
+    if p.size == 0:
         if replace:
             # UNIFORM sampling with replacement
             # note: the below is faster than a manual loop with np.random.randint calls
@@ -141,7 +177,8 @@ def sample_int_numba(
                 j = np.random.randint(i, n)
                 population[i], population[j] = population[j], population[i]
             return population[:k]  # O(k)
-    else:
+
+    elif p.size == n:
         if replace:
             # NON-UNIFORM sampling with replacement using CDF
             cdf = np.empty(n)  # O(n)
@@ -183,3 +220,6 @@ def sample_int_numba(
                 population = np.arange(n, dtype=np.int64)
                 np.random.shuffle(population)
                 return population
+
+    else:
+        raise ValueError(f"p must be of size 0 (no probabilities) or size n={n}. (here: size={p.size})")
