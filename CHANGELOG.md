@@ -8,6 +8,7 @@
 - **improved**:
   - `sampling.discrete.sample_int`: improve benchmarking + add notes on optimization efforts
   - improve collection of test coverage data for `numba`-decorated functions
+  - make `numba` a non-optional dependency for the sake of code simplicity
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.5

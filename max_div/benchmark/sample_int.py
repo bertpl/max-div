@@ -2,7 +2,6 @@ import numpy as np
 from tqdm import tqdm
 
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
-from max_div.internal.compat import is_numba_installed
 from max_div.internal.formatting import md_bold, md_italic, md_multiline
 from max_div.sampling.discrete import sample_int
 
@@ -25,11 +24,6 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
     :param turbo: If `True`, a much shorter (but less reliable) benchmark is run; intended for testing purposes.
     :param markdown: If `True`, outputs the results as a Markdown table.
     """
-
-    if not is_numba_installed():
-        print("====================================================================================")
-        print("   WARNING: Numba is not installed!!!")
-        print("====================================================================================")
 
     print("Benchmarking `sample_int`...")
     print()
