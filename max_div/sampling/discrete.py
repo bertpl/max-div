@@ -1,6 +1,5 @@
+import numba
 import numpy as np
-
-from max_div.internal.compat import numba
 
 
 # =================================================================================================
@@ -42,8 +41,7 @@ def sample_int(
     :param p: Optional 1D array of probabilities associated with each integer in the range.
               Size must be equal to max_value + 1 and sum to 1.
     :param seed: Optional random seed for reproducibility.
-    :param accelerated: Use the self-implemented algorithm (which is `numba`-accelerated if `numba` is installed),
-                        Otherwise we use `np.random.choice`.
+    :param accelerated: Use the custom numba-accelerated implementation, otherwise we use `np.random.choice`.
     :return: `k=None` --> single integer; `k>=1` --> (k,)-sized array with sampled integers.
     """
 
