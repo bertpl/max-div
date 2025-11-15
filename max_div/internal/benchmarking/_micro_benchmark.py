@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Literal
 
 import numpy as np
 
@@ -28,6 +30,41 @@ class BenchmarkResult:
         s_median = self.t_sec_str
         s_perc = f"{50 * (self.t_sec_q_75 - self.t_sec_q_25) / self.t_sec_q_50:.1f}%"
         return f"{s_median} ± {s_perc}"
+
+    @classmethod
+    def aggregate(cls, results: list[BenchmarkResult], method: Literal["mean", "geomean", "sum"]) -> BenchmarkResult:
+        """
+        Aggregate multiple BenchmarkResult objects into a single result, by aggregating q25, q50, 75 values separately.
+
+        :param results: List of BenchmarkResult objects to aggregate
+        :param method: Aggregation method - "mean", "geomean" (geometric mean), or "sum"
+        :return: Aggregated BenchmarkResult
+        """
+        if not results:
+            raise ValueError("Cannot aggregate empty list of results")
+
+        # Collect all quantile values
+        q25_values = [r.t_sec_q_25 for r in results]
+        q50_values = [r.t_sec_q_50 for r in results]
+        q75_values = [r.t_sec_q_75 for r in results]
+
+        # Apply the aggregation method
+        if method == "mean":
+            agg_q25 = np.mean(q25_values)
+            agg_q50 = np.mean(q50_values)
+            agg_q75 = np.mean(q75_values)
+        elif method == "geomean":
+            agg_q25 = np.exp(np.mean(np.log(q25_values)))
+            agg_q50 = np.exp(np.mean(np.log(q50_values)))
+            agg_q75 = np.exp(np.mean(np.log(q75_values)))
+        elif method == "sum":
+            agg_q25 = np.sum(q25_values)
+            agg_q50 = np.sum(q50_values)
+            agg_q75 = np.sum(q75_values)
+        else:
+            raise ValueError(f"Unknown aggregation method: {method}")
+
+        return BenchmarkResult(t_sec_q_25=agg_q25, t_sec_q_50=agg_q50, t_sec_q_75=agg_q75)
 
 
 # =================================================================================================

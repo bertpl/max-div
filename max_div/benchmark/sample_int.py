@@ -5,7 +5,7 @@ from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.internal.formatting import md_bold, md_italic, md_multiline
 from max_div.sampling.discrete import sample_int_numba, sample_int_numpy
 
-from ._formatting import format_as_markdown, format_for_console
+from ._formatting import extend_table_with_aggregate_row, format_as_markdown, format_for_console
 
 
 def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
@@ -86,6 +86,7 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
             data.append(data_row)
 
         # --- show results -----------------------------------------
+        data = extend_table_with_aggregate_row(data, agg="geomean")
         if markdown:
             display_data = format_as_markdown(headers, data)
         else:

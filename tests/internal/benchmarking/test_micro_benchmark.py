@@ -22,3 +22,42 @@ def test_micro_benchmark(t_sleep: float, silent: bool):
     assert isinstance(result, BenchmarkResult)
     assert result.t_sec_q_25 <= result.t_sec_q_50 <= result.t_sec_q_75
     assert 0.5 * t_sleep <= result.t_sec_q_50 <= 2 * t_sleep
+
+
+@pytest.mark.parametrize(
+    "method,expected_q25,expected_q50,expected_q75",
+    [
+        ("mean", 7 / 3, 14 / 3, 21 / 3),
+        ("geomean", 2.0, 4.0, 6.0),
+        ("sum", 7.0, 14.0, 21.0),
+    ],
+)
+def test_micro_benchmark_result_aggregation(method, expected_q25, expected_q50, expected_q75):
+    # --- arrange -----------------------------------------
+    results = [
+        BenchmarkResult(t_sec_q_25=1.0, t_sec_q_50=2.0, t_sec_q_75=3.0),
+        BenchmarkResult(t_sec_q_25=2.0, t_sec_q_50=4.0, t_sec_q_75=6.0),
+        BenchmarkResult(t_sec_q_25=4.0, t_sec_q_50=8.0, t_sec_q_75=12.0),
+    ]
+
+    # --- act ---------------------------------------------
+    aggregated = BenchmarkResult.aggregate(results, method=method)
+
+    # --- assert ------------------------------------------
+    assert isinstance(aggregated, BenchmarkResult)
+    assert aggregated.t_sec_q_25 == pytest.approx(expected_q25)
+    assert aggregated.t_sec_q_50 == pytest.approx(expected_q50)
+    assert aggregated.t_sec_q_75 == pytest.approx(expected_q75)
+
+
+@pytest.mark.parametrize(
+    "results,method",
+    [
+        ([], "mean"),
+        ([BenchmarkResult(t_sec_q_25=1.0, t_sec_q_50=2.0, t_sec_q_75=3.0)], "invalid"),
+    ],
+)
+def test_micro_benchmark_result_aggregation_raises_value_error(results, method):
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        BenchmarkResult.aggregate(results, method=method)
