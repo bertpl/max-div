@@ -113,12 +113,17 @@ def sample_int_numpy(
 # =================================================================================================
 #  sample_int_numba
 # =================================================================================================
-@numba.njit(fastmath=True)
+@numba.njit(
+    numba.types.int64[:](
+        numba.types.int64, numba.types.int64, numba.types.boolean, numba.types.float32[:], numba.types.int64
+    ),
+    fastmath=True,
+)
 def sample_int_numba(
     n: int,
     k: int,
     replace: bool,
-    p: np.ndarray[float] = np.zeros(0),
+    p: np.ndarray[np.float32] = np.zeros(0, dtype=np.float32),
     seed: int = 0,
 ) -> np.ndarray[np.int64]:
     """
