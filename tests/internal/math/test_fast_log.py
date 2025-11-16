@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div.internal.math._fast_log import fast_log2_f32_poly, fast_log2_f64_poly, fast_log_f32_poly, fast_log_f64_poly
+from max_div.internal.math.fast_log import fast_log2_f32_poly, fast_log2_f64_poly, fast_log_f32_poly, fast_log_f64_poly
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,8 @@
 import numba
 import numpy as np
 
-from max_div.internal.math import fast_log2_f32_poly
+from max_div.internal.math.fast_log import fast_log2_f32_poly
+from max_div.internal.math.random import GLOBAL_RNG_STATE, rand_float32, rand_int32, set_seed
 
 
 # =================================================================================================
@@ -69,8 +70,8 @@ def sample_int_numpy(
     k: np.int32 | None = None,
     replace: bool = True,
     p: np.ndarray[float] | None = None,
-    seed: int | None = None,
-) -> int | np.ndarray[np.int32]:
+    seed: np.int64 | None = None,
+) -> np.int32 | np.ndarray[np.int32]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
 
@@ -125,7 +126,7 @@ def sample_int_numba(
     k: np.int32,
     replace: bool,
     p: np.ndarray[np.float32] = np.zeros(0, dtype=np.float32),
-    seed: int = 0,
+    seed: np.int64 = 0,
 ) -> np.ndarray[np.int32]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
@@ -173,21 +174,22 @@ def sample_int_numba(
         raise ValueError(f"Cannot sample {k} unique values from range [0, {n}) without replacement.")
 
     if seed != 0:
-        np.random.seed(seed)
+        rng_state = set_seed(seed)
+    else:
+        rng_state = set_seed(np.random.randint(1, 1_000_000_000_000))
 
     if p.size == 0:
         if replace:
             # UNIFORM sampling with replacement
             samples = np.empty(k, dtype=np.int32)
             for i in range(k):
-                samples[i] = np.int32(np.random.randint(0, n))
-            # return np.random.choice(n, size=k).astype(np.int32)  # O(k)
+                samples[i] = rand_int32(rng_state, 0, n)
             return samples
         else:
             # UNIFORM sampling without replacement using Fisher-Yates shuffle
             population = np.arange(n, dtype=np.int32)  # O(n)
             for i in range(k):  # k x O(1)
-                j = np.random.randint(i, n)
+                j = rand_int32(rng_state, i, n)
                 population[i], population[j] = population[j], population[i]
             return population[:k]  # O(k)
 
@@ -198,7 +200,7 @@ def sample_int_numba(
             samples = np.empty(k, dtype=np.int32)  # O(k)
             # note: computing the below in a loop, is faster than writing a np-vectorized one-liner
             for i in range(k):  # k x O(log(n))
-                r = np.float32(np.random.random())
+                r = rand_float32(rng_state)
                 idx = np.searchsorted(cdf, r)
                 samples[i] = idx
             return samples
@@ -218,7 +220,7 @@ def sample_int_numba(
                     if p[i] == 0.0:
                         keys[i] = np.inf
                     else:
-                        ui = np.float32(np.random.random())
+                        ui = rand_float32(rng_state)
                         # NOTE: we use a fast log2 approximation here for speed; log2 vs log is irrelevant since
                         #       it's just a scaling factor, and we are only interested in the order of the final list
                         keys[i] = -fast_log2_f32_poly(ui, degree=2) / p[i]  # using fast log2 approximation
@@ -228,9 +230,12 @@ def sample_int_numba(
 
             else:
                 # corner case: return all elements in random order
-                population = np.arange(n, dtype=np.int32)
-                np.random.shuffle(population)
-                return population
+                # to this end we perform 1 full Fisher-Yates shuffle
+                population = np.arange(n, dtype=np.int32)  # O(n)
+                for i in range(n):  # n x O(1)
+                    j = rand_int32(rng_state, i, n)
+                    population[i], population[j] = population[j], population[i]
+                return population[:k]  # O(k)
 
     else:
         raise ValueError(f"p must be of size 0 (no probabilities) or size n={n}. (here: size={p.size})")

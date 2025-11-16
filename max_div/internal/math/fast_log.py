@@ -154,3 +154,14 @@ def fast_log2_f32_poly(x: np.float32, degree: int) -> np.float32:
 
     # Return log2(x) = exponent + log2(mantissa)
     return exponent + log2_mantissa
+
+
+# =================================================================================================
+#  Public API
+# =================================================================================================
+__ALL__ = [
+    "fast_log2_f32_poly",
+    "fast_log2_f32_poly",
+    "fast_log_f64_poly",
+    "fast_log_f64_poly",
+]
