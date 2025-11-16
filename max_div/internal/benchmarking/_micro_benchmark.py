@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Literal
 
 import numpy as np
 
@@ -29,6 +31,41 @@ class BenchmarkResult:
         s_perc = f"{50 * (self.t_sec_q_75 - self.t_sec_q_25) / self.t_sec_q_50:.1f}%"
         return f"{s_median} ± {s_perc}"
 
+    @classmethod
+    def aggregate(cls, results: list[BenchmarkResult], method: Literal["mean", "geomean", "sum"]) -> BenchmarkResult:
+        """
+        Aggregate multiple BenchmarkResult objects into a single result, by aggregating q25, q50, 75 values separately.
+
+        :param results: List of BenchmarkResult objects to aggregate
+        :param method: Aggregation method - "mean", "geomean" (geometric mean), or "sum"
+        :return: Aggregated BenchmarkResult
+        """
+        if not results:
+            raise ValueError("Cannot aggregate empty list of results")
+
+        # Collect all quantile values
+        q25_values = [r.t_sec_q_25 for r in results]
+        q50_values = [r.t_sec_q_50 for r in results]
+        q75_values = [r.t_sec_q_75 for r in results]
+
+        # Apply the aggregation method
+        if method == "mean":
+            agg_q25 = np.mean(q25_values)
+            agg_q50 = np.mean(q50_values)
+            agg_q75 = np.mean(q75_values)
+        elif method == "geomean":
+            agg_q25 = np.exp(np.mean(np.log(q25_values)))
+            agg_q50 = np.exp(np.mean(np.log(q50_values)))
+            agg_q75 = np.exp(np.mean(np.log(q75_values)))
+        elif method == "sum":
+            agg_q25 = np.sum(q25_values)
+            agg_q50 = np.sum(q50_values)
+            agg_q75 = np.sum(q75_values)
+        else:
+            raise ValueError(f"Unknown aggregation method: {method}")
+
+        return BenchmarkResult(t_sec_q_25=agg_q25, t_sec_q_50=agg_q50, t_sec_q_75=agg_q75)
+
 
 # =================================================================================================
 #  Main benchmarking function
@@ -36,7 +73,7 @@ class BenchmarkResult:
 def benchmark(
     f: Callable,
     t_per_run: float = 0.1,
-    n_warmup: int = 10,
+    n_warmup: int = 5,
     n_benchmark: int = 30,
     silent: bool = False,
 ) -> BenchmarkResult:
@@ -46,7 +83,7 @@ def benchmark(
     :param f: (Callable) Function to benchmark. Should take no arguments.
     :param t_per_run: (float, default=0.1) time in seconds we want to target per benchmarking run.
                       # of executions/run is adjusted to meet this target.
-    :param n_warmup: (int, default=10) Number of warmup runs to perform before benchmarking.
+    :param n_warmup: (int, default=5) Number of warmup runs to perform before benchmarking.
     :param n_benchmark: (int, default=30) Number of benchmark runs to perform.
     :param silent: (bool, default=False) If True, suppresses any output during benchmarking.
     :return: Median estimate of duration/execution of `f` in seconds.
@@ -85,13 +122,14 @@ def benchmark(
             if not silent:
                 print("w", end="")
 
-        # adjust n_executions
+        # adjust n_executions to bring t_tot closer to t_per_run
+        # NOTE: during warmup we adjust n_executions at a log-scale to reach t_per_run target at end of warmup
         t_tot = timer_tot.t_elapsed_sec()
         n_executions = round(
             clip(
-                value=n_executions * (t_per_run / t_tot),
-                min_value=max(1.0, n_executions / 10),
-                max_value=n_executions * 10,
+                value=n_executions * (t_per_run / t_tot) ** min(1.0, (i + 1) / n_warmup),
+                min_value=max(1.0, n_executions / 100),
+                max_value=n_executions * 100,
             )
         )
 

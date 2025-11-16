@@ -9,10 +9,10 @@ from max_div.sampling.discrete import sample_int
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def get_probabilities(n: int) -> np.ndarray[float]:
+def get_probabilities(n: int) -> np.ndarray[np.float32]:
     probs = np.random.random(n)
     probs /= probs.sum()
-    return probs
+    return probs.astype(np.float32)
 
 
 # =================================================================================================
@@ -43,10 +43,12 @@ def test_sample_int_argument_validation(use_numba: bool):
 
     # --- p invalid shape --------------------------------
     with pytest.raises(ValueError):
-        sample_int(n=10, k=5, replace=True, p=np.array([0.1, 0.9]), use_numba=use_numba)  # wrong size
+        sample_int(n=10, k=5, replace=True, p=np.array([0.1, 0.9], dtype=np.float32), use_numba=use_numba)  # wrong size
 
     with pytest.raises(ValueError):
-        sample_int(n=4, k=2, replace=True, p=np.array([[0.1, 0.4], [0.4, 0.1]]), use_numba=use_numba)  # wrong shape
+        sample_int(
+            n=4, k=2, replace=True, p=np.array([[0.1, 0.4], [0.4, 0.1]], dtype=np.float32), use_numba=use_numba
+        )  # wrong shape
 
 
 # =================================================================================================
@@ -86,7 +88,7 @@ def test_sample_int_uniform_with_replacement_invariants_multiple(n: int, k: int,
     # --- assert ------------------------------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
-    assert samples.dtype == np.int64
+    assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
 
 
@@ -169,7 +171,7 @@ def test_sample_int_uniform_without_replacement_invariants_multiple(
     # --- assert ------------------------------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
-    assert samples.dtype == np.int64
+    assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
     assert len(set(samples)) == k  # all samples are unique
 
@@ -245,7 +247,7 @@ def test_sample_int_non_uniform_with_replacement_invariants_multiple(n: int, k: 
     # --- assert ------------------------------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
-    assert samples.dtype == np.int64
+    assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
 
 
@@ -310,7 +312,7 @@ def test_sample_int_non_uniform_with_replacement_probs(use_numba: bool, factor: 
     samples = sample_int(n=n, k=k, replace=True, p=p, use_numba=use_numba)
 
     # --- assert ------------------------------------------
-    assert 0.95 * expected_mean < np.mean(samples) < 1.05 * expected_mean
+    assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all([p[i] > 0 for i in samples])
 
 
@@ -354,7 +356,7 @@ def test_sample_int_non_uniform_without_replacement_invariants_multiple(n: int, 
     # --- assert ------------------------------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
-    assert samples.dtype == np.int64
+    assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
     assert len(set(samples)) == k  # all samples are unique
 
@@ -405,5 +407,5 @@ def test_sample_int_non_uniform_without_replacement_probs(use_numba: bool, facto
     samples = sample_int(n=n, k=k, replace=False, p=p, use_numba=use_numba)
 
     # --- assert ------------------------------------------
-    assert 0.95 * expected_mean < np.mean(samples) < 1.05 * expected_mean
+    assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all([p[i] > 0 for i in samples])

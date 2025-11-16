@@ -2,13 +2,12 @@ import numpy as np
 from tqdm import tqdm
 
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
-from max_div.internal.formatting import md_bold, md_italic, md_multiline
 from max_div.sampling.discrete import sample_int_numba, sample_int_numpy
 
-from ._formatting import format_as_markdown, format_for_console
+from ._formatting import extend_table_with_aggregate_row, format_as_markdown, format_for_console
 
 
-def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
+def benchmark_sample_int(speed: float = 0.0, markdown: bool = False) -> None:
     """
     Benchmarks the `sample_int` function from `max_div.sampling.discrete`.
 
@@ -21,7 +20,7 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
         * (10, 1), (100, 1), (1000, 1), (5000, 1), (10000, 1)
         * (10000, 10), (10000, 100), (10000, 1000), (10000, 5000), (10000, 10000)
 
-    :param turbo: If `True`, a much shorter (but less reliable) benchmark is run; intended for testing purposes.
+    :param speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
     :param markdown: If `True`, outputs the results as a Markdown table.
     """
 
@@ -62,7 +61,7 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
                     p /= p.sum()
                 else:
                     p = np.zeros(0)
-                p = p.astype(np.float64)
+                p = p.astype(np.float32)
 
                 if use_numba:
 
@@ -76,9 +75,9 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
                 data_row.append(
                     benchmark(
                         f=func_to_benchmark,
-                        t_per_run=0.001 if turbo else 0.1,
-                        n_warmup=3 if turbo else 10,
-                        n_benchmark=3 if turbo else 30,
+                        t_per_run=0.1 / (1000.0**speed),
+                        n_warmup=int(10 - 5 * speed),
+                        n_benchmark=int(30 - 20 * speed),
                         silent=True,
                     )
                 )
@@ -86,6 +85,7 @@ def benchmark_sample_int(turbo: bool = True, markdown: bool = False) -> None:
             data.append(data_row)
 
         # --- show results -----------------------------------------
+        data = extend_table_with_aggregate_row(data, agg="geomean")
         if markdown:
             display_data = format_as_markdown(headers, data)
         else:
