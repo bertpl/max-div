@@ -136,11 +136,15 @@ def sample_int_numba(
     | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
     | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick).  | O(n) |
 
-    NOTE:
+    NOTES:
      - using the np.random.Generator API incurs an extra 3-4 μsec overhead per call compared to using the legacy
        np.random functions. The main reason is that the new interface requires calls through the numpy C-API, while the
        legacy functions are re-implemented in Numba and compiled together with the rest of the numba-accelerated code.
        Instantiating a Generator incurs a ~10 μsec penalty, so should also be avoided to be done repeatedly.
+     - given the intended use-case within max_div, it is acceptable that provided probabilities are only approximately
+       taken into account.  Therefore, we use float32 representation and use a fast-approx-log function in the
+       Efraimidis-Spirakis sampling method.  Overall this can result in <1% deviation from target probabilities, i.e.
+         p[3] = 0.1 --> actual frequency in samples = [0.099 to 0.101].
 
     <br>
 
