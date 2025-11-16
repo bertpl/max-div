@@ -76,8 +76,8 @@ def numba_status():
     click.echo(f"SVML enabled       : {config.USING_SVML}")
     click.echo(f"Threading layer    : {config.THREADING_LAYER}")
     click.echo(f"Number of threads  : {config.NUMBA_NUM_THREADS}")
-    click.echo(f"Debug mode         : {config.DEBUG}")
     click.echo(f"Optimization level : {config.OPT}")
+    click.echo(f"Debug mode         : {config.DEBUG}")
     click.echo(f"Disable JIT        : {config.DISABLE_JIT}")
     click.echo("-" * 50)
 
