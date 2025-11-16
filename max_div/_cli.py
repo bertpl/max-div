@@ -5,12 +5,18 @@ import click
 from max_div.benchmark import benchmark_sample_int as _benchmark_sample_int
 
 
+# -------------------------------------------------------------------------
+#  Main CLI Group
+# -------------------------------------------------------------------------
 @click.group()
 def cli():
     """max-div: Flexible Solver for Maximum Diversity Problems with Fairness Constraints."""
     pass
 
 
+# -------------------------------------------------------------------------
+#  Benchmarking Commands
+# -------------------------------------------------------------------------
 @cli.group()
 @click.option(
     "--turbo",
@@ -50,5 +56,34 @@ def sample_int(ctx):
     _benchmark_sample_int(speed=speed, markdown=markdown)
 
 
+# -------------------------------------------------------------------------
+#  Misc Commands
+# -------------------------------------------------------------------------
+@cli.command()
+def numba_status():
+    """Show Numba version, llvmlite version, and configuration including SVML status."""
+    import llvmlite
+    import numba
+
+    click.echo(f"Numba version    : {numba.__version__}")
+    click.echo(f"llvmlite version : {llvmlite.__version__}")
+
+    # Show key configuration settings
+    from numba import config
+
+    click.echo("\nNumba Configuration:")
+    click.echo("-" * 50)
+    click.echo(f"SVML enabled       : {config.USING_SVML}")
+    click.echo(f"Threading layer    : {config.THREADING_LAYER}")
+    click.echo(f"Number of threads  : {config.NUMBA_NUM_THREADS}")
+    click.echo(f"Debug mode         : {config.DEBUG}")
+    click.echo(f"Optimization level : {config.OPT}")
+    click.echo(f"Disable JIT        : {config.DISABLE_JIT}")
+    click.echo("-" * 50)
+
+
+# -------------------------------------------------------------------------
+#  Entrypoint
+# -------------------------------------------------------------------------
 if __name__ == "__main__":
     cli()

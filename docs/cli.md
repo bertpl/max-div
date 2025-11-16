@@ -34,3 +34,25 @@ All benchmarking commands support the following shared flags & options:
 --speed       Value between 0.0 (default) and 1.0 (fastest) to speed up the benchmark at the cost of accuracy.
 --markdown    Output results in Markdown format
 ```
+
+### 2.3. Numba status
+
+```bash
+max-div numba-status
+```
+
+Results in the following:
+```
+Numba version    : 0.62.1
+llvmlite version : 0.45.1
+
+Numba Configuration:
+--------------------------------------------------
+SVML enabled       : False
+Threading layer    : default
+Number of threads  : 16
+Debug mode         : 0
+Optimization level : _OptLevel(3)
+Disable JIT        : 0
+--------------------------------------------------
+```
