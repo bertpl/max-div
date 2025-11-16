@@ -181,11 +181,7 @@ def sample_int_numba(
     elif p.size == n:
         if replace:
             # NON-UNIFORM sampling with replacement using CDF
-            cdf = np.empty(n, dtype=np.float32)  # O(n)
-            csum = np.float32(0.0)
-            for i in range(n):  # n x O(1)
-                csum += p[i]
-                cdf[i] = csum
+            cdf = np.cumsum(p)  # O(n)
             samples = np.empty(k, dtype=np.int64)  # O(k)
             # note: computing the below in a loop, is faster than writing a np-vectorized one-liner
             for i in range(k):  # k x O(log(n))
