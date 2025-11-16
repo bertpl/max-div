@@ -88,7 +88,7 @@ def test_sample_int_uniform_with_replacement_invariants_multiple(n: int, k: int,
     # --- assert ------------------------------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
-    assert samples.dtype == np.int64
+    assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
 
 
@@ -171,7 +171,7 @@ def test_sample_int_uniform_without_replacement_invariants_multiple(
     # --- assert ------------------------------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
-    assert samples.dtype == np.int64
+    assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
     assert len(set(samples)) == k  # all samples are unique
 
@@ -247,7 +247,7 @@ def test_sample_int_non_uniform_with_replacement_invariants_multiple(n: int, k: 
     # --- assert ------------------------------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
-    assert samples.dtype == np.int64
+    assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
 
 
@@ -356,7 +356,7 @@ def test_sample_int_non_uniform_without_replacement_invariants_multiple(n: int, 
     # --- assert ------------------------------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
-    assert samples.dtype == np.int64
+    assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
     assert len(set(samples)) == k  # all samples are unique
 

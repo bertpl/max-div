@@ -33,6 +33,9 @@ def sample_int(
     :param use_numba: Use the custom numba-accelerated implementation, otherwise we use `np.random.choice`.
     :return: `k=None` --> single integer; `k>=1` --> (k,)-sized array with sampled integers.
     """
+    n = np.int32(n)
+    k = np.int32(k) if k is not None else None
+
     if not use_numba:
         return sample_int_numpy(n=n, k=k, replace=replace, p=p, seed=seed)
 
@@ -42,6 +45,7 @@ def sample_int(
             raise ValueError(f"p must be a 1D array. (here: ndim={p.ndim})")
 
         # NOTE: we need a few if-clauses, since numba does not support optional arguments
+
         if k is None:
             # assume k=1 and return an integer
             if p is None:
@@ -61,12 +65,12 @@ def sample_int(
 #  sample_int_numpy
 # =================================================================================================
 def sample_int_numpy(
-    n: int,
-    k: int | None = None,
+    n: np.int32,
+    k: np.int32 | None = None,
     replace: bool = True,
     p: np.ndarray[float] | None = None,
     seed: int | None = None,
-) -> int | np.ndarray[np.int64]:
+) -> int | np.ndarray[np.int32]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
 
@@ -106,10 +110,10 @@ def sample_int_numpy(
 
     if k is None:
         # returns scalar
-        return np.random.choice(n, size=None, replace=replace, p=p)
+        return np.int32(np.random.choice(n, size=None, replace=replace, p=p))
     else:
         # returns array
-        return np.random.choice(n, size=k, replace=replace, p=p)
+        return np.random.choice(n, size=k, replace=replace, p=p).astype(np.int32)
 
 
 # =================================================================================================
@@ -117,12 +121,12 @@ def sample_int_numpy(
 # =================================================================================================
 @numba.njit(fastmath=True)
 def sample_int_numba(
-    n: int,
-    k: int,
+    n: np.int32,
+    k: np.int32,
     replace: bool,
     p: np.ndarray[np.float32] = np.zeros(0, dtype=np.float32),
     seed: int = 0,
-) -> np.ndarray[np.int64]:
+) -> np.ndarray[np.int32]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
 
@@ -174,11 +178,14 @@ def sample_int_numba(
     if p.size == 0:
         if replace:
             # UNIFORM sampling with replacement
-            # note: the below is faster than a manual loop with np.random.randint calls
-            return np.random.choice(n, size=k)  # O(k)
+            samples = np.empty(k, dtype=np.int32)
+            for i in range(k):
+                samples[i] = np.int32(np.random.randint(0, n))
+            # return np.random.choice(n, size=k).astype(np.int32)  # O(k)
+            return samples
         else:
             # UNIFORM sampling without replacement using Fisher-Yates shuffle
-            population = np.arange(n, dtype=np.int64)  # O(n)
+            population = np.arange(n, dtype=np.int32)  # O(n)
             for i in range(k):  # k x O(1)
                 j = np.random.randint(i, n)
                 population[i], population[j] = population[j], population[i]
@@ -188,7 +195,7 @@ def sample_int_numba(
         if replace:
             # NON-UNIFORM sampling with replacement using CDF
             cdf = np.cumsum(p)  # O(n)
-            samples = np.empty(k, dtype=np.int64)  # O(k)
+            samples = np.empty(k, dtype=np.int32)  # O(k)
             # note: computing the below in a loop, is faster than writing a np-vectorized one-liner
             for i in range(k):  # k x O(log(n))
                 r = np.float32(np.random.random())
@@ -217,11 +224,11 @@ def sample_int_numba(
                         keys[i] = -fast_log2_f32_poly(ui, degree=2) / p[i]  # using fast log2 approximation
 
                 # Get indices of k smallest keys
-                return np.argpartition(keys, k)[:k]  # O(n) average case
+                return np.argpartition(keys, k)[:k].astype(np.int32)  # O(n) average case
 
             else:
                 # corner case: return all elements in random order
-                population = np.arange(n, dtype=np.int64)
+                population = np.arange(n, dtype=np.int32)
                 np.random.shuffle(population)
                 return population
 
