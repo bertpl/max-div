@@ -9,10 +9,10 @@ from max_div.sampling.discrete import sample_int
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def get_probabilities(n: int) -> np.ndarray[float]:
+def get_probabilities(n: int) -> np.ndarray[np.float32]:
     probs = np.random.random(n)
     probs /= probs.sum()
-    return probs
+    return probs.astype(np.float32)
 
 
 # =================================================================================================
@@ -43,10 +43,12 @@ def test_sample_int_argument_validation(use_numba: bool):
 
     # --- p invalid shape --------------------------------
     with pytest.raises(ValueError):
-        sample_int(n=10, k=5, replace=True, p=np.array([0.1, 0.9]), use_numba=use_numba)  # wrong size
+        sample_int(n=10, k=5, replace=True, p=np.array([0.1, 0.9], dtype=np.float32), use_numba=use_numba)  # wrong size
 
     with pytest.raises(ValueError):
-        sample_int(n=4, k=2, replace=True, p=np.array([[0.1, 0.4], [0.4, 0.1]]), use_numba=use_numba)  # wrong shape
+        sample_int(
+            n=4, k=2, replace=True, p=np.array([[0.1, 0.4], [0.4, 0.1]], dtype=np.float32), use_numba=use_numba
+        )  # wrong shape
 
 
 # =================================================================================================

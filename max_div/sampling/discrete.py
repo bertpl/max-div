@@ -9,7 +9,7 @@ def sample_int(
     n: int,
     k: int | None = None,
     replace: bool = True,
-    p: np.ndarray[float] | None = None,
+    p: np.ndarray[np.float32] | None = None,
     seed: int | None = None,
     use_numba: bool = True,
 ) -> int | np.ndarray[np.int64]:
@@ -113,12 +113,7 @@ def sample_int_numpy(
 # =================================================================================================
 #  sample_int_numba
 # =================================================================================================
-@numba.njit(
-    numba.types.int64[:](
-        numba.types.int64, numba.types.int64, numba.types.boolean, numba.types.float32[:], numba.types.int64
-    ),
-    fastmath=True,
-)
+@numba.njit(fastmath=True)
 def sample_int_numba(
     n: int,
     k: int,
@@ -186,15 +181,15 @@ def sample_int_numba(
     elif p.size == n:
         if replace:
             # NON-UNIFORM sampling with replacement using CDF
-            cdf = np.empty(n)  # O(n)
-            csum = 0.0
+            cdf = np.empty(n, dtype=np.float32)  # O(n)
+            csum = np.float32(0.0)
             for i in range(n):  # n x O(1)
                 csum += p[i]
                 cdf[i] = csum
             samples = np.empty(k, dtype=np.int64)  # O(k)
             # note: computing the below in a loop, is faster than writing a np-vectorized one-liner
             for i in range(k):  # k x O(log(n))
-                r = np.random.random()
+                r = np.float32(np.random.random())
                 idx = np.searchsorted(cdf, r)
                 samples[i] = idx
             return samples
@@ -208,14 +203,15 @@ def sample_int_numba(
             #                            functions for the majority of the samples.
             #                     (Initial testing surprisingly did not show improvements)
             if k < n:
-                keys = np.empty(n, dtype=np.float64)  # O(n)
-                u = np.random.random(n)  # O(n)
+                keys = np.empty(n, dtype=np.float32)  # O(n)
+                # u = np.random.random(n)  # O(n)
                 # note: computing -np.log(u[i]) does not seem to be noticeably slower than np.random.standard_exponential().
                 for i in range(n):  # n x O(1)
                     if p[i] == 0.0:
                         keys[i] = np.inf
                     else:
-                        keys[i] = -np.log(u[i]) / p[i]
+                        ui = np.float32(np.random.random())
+                        keys[i] = -np.log(ui) / p[i]
 
                 # Get indices of k smallest keys
                 return np.argpartition(keys, k)[:k]  # O(n) average case

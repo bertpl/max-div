@@ -61,7 +61,7 @@ def benchmark_sample_int(speed: float = 0.0, markdown: bool = False) -> None:
                     p /= p.sum()
                 else:
                     p = np.zeros(0)
-                p = p.astype(np.float64)
+                p = p.astype(np.float32)
 
                 if use_numba:
 
