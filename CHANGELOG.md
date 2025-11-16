@@ -7,11 +7,14 @@
 
 - **new**:
   - make `numba` and non-`numba` versions of `sampling.discrete.sample_int` public and self-sustained (full-featured)
+  - CLI command `numba-status` to report on `numba` installation and configuration status
 
 - **improved**:
   - `sampling.discrete.sample_int`: improve benchmarking + add notes on optimization efforts
-  - improve collection of test coverage data for `numba`-decorated functions
+  - improve coverage statistics for `numba`-decorated functions
   - make `numba` a non-optional dependency for the sake of code simplicity
+  - improve granularity of speed-vs-accuracy trade-off in benchmarking functionality (add `--speed` argument)
+
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.5
