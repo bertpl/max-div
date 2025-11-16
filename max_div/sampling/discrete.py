@@ -1,6 +1,8 @@
 import numba
 import numpy as np
 
+from max_div.internal.math import fast_log2_f32_poly
+
 
 # =================================================================================================
 #  sample_int
@@ -200,14 +202,15 @@ def sample_int_numba(
             #                     (Initial testing surprisingly did not show improvements)
             if k < n:
                 keys = np.empty(n, dtype=np.float32)  # O(n)
-                # u = np.random.random(n)  # O(n)
                 # note: computing -np.log(u[i]) does not seem to be noticeably slower than np.random.standard_exponential().
                 for i in range(n):  # n x O(1)
                     if p[i] == 0.0:
                         keys[i] = np.inf
                     else:
                         ui = np.float32(np.random.random())
-                        keys[i] = -np.log(ui) / p[i]
+                        # NOTE: we use a fast log2 approximation here for speed; log2 vs log is irrelevant since
+                        #       it's just a scaling factor, and we are only interested in the order of the final list
+                        keys[i] = -fast_log2_f32_poly(ui, degree=2) / p[i]  # using fast log2 approximation
 
                 # Get indices of k smallest keys
                 return np.argpartition(keys, k)[:k]  # O(n) average case
