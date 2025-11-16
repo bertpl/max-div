@@ -2,7 +2,7 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.6
-> *(under development)*
+> *(2025-11-16)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
@@ -10,7 +10,9 @@
   - CLI command `numba-status` to report on `numba` installation and configuration status
 
 - **improved**:
-  - `sampling.discrete.sample_int`: improve benchmarking + add notes on optimization efforts
+  - `sampling.discrete.sample_int`: 
+     - significant speedup
+     - improve benchmarking + add notes on optimization efforts
   - improve coverage statistics for `numba`-decorated functions
   - make `numba` a non-optional dependency for the sake of code simplicity
   - improve granularity of speed-vs-accuracy trade-off in benchmarking functionality (add `--speed` argument)
