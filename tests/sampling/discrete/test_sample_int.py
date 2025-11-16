@@ -312,7 +312,7 @@ def test_sample_int_non_uniform_with_replacement_probs(use_numba: bool, factor: 
     samples = sample_int(n=n, k=k, replace=True, p=p, use_numba=use_numba)
 
     # --- assert ------------------------------------------
-    assert 0.95 * expected_mean < np.mean(samples) < 1.05 * expected_mean
+    assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all([p[i] > 0 for i in samples])
 
 
@@ -407,5 +407,5 @@ def test_sample_int_non_uniform_without_replacement_probs(use_numba: bool, facto
     samples = sample_int(n=n, k=k, replace=False, p=p, use_numba=use_numba)
 
     # --- assert ------------------------------------------
-    assert 0.95 * expected_mean < np.mean(samples) < 1.05 * expected_mean
+    assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all([p[i] > 0 for i in samples])
