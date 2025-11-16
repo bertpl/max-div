@@ -16,7 +16,12 @@ def cli():
     "--turbo",
     is_flag=True,
     default=False,
-    help="Run a much shorter (but less reliable) benchmark; intended for testing purposes.",
+    help="Run shorter, less accurate benchmark; identical to --speed=1.0; intended for testing purposes.",
+)
+@click.option(
+    "--speed",
+    default=0.0,
+    help="Values closer to 1.0 result in shorter, less accurate benchmark; Overridden by --turbo when provided.",
 )
 @click.option(
     "--markdown",
@@ -25,11 +30,14 @@ def cli():
     help="Output benchmark results in Markdown table format.",
 )
 @click.pass_context
-def benchmark(ctx, turbo: bool, markdown: bool):
+def benchmark(ctx, turbo: bool, speed: float, markdown: bool):
     """Benchmarking commands."""
     # Store flags in context so subcommands can access them
     ctx.ensure_object(dict)
-    ctx.obj["turbo"] = turbo
+    if turbo:
+        ctx.obj["speed"] = 1.0
+    else:
+        ctx.obj["speed"] = speed
     ctx.obj["markdown"] = markdown
 
 
@@ -37,9 +45,9 @@ def benchmark(ctx, turbo: bool, markdown: bool):
 @click.pass_context
 def sample_int(ctx):
     """Benchmarks the `sample_int` function from `max_div.sampling.discrete`."""
-    turbo = ctx.obj["turbo"]
+    speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
-    _benchmark_sample_int(turbo=turbo, markdown=markdown)
+    _benchmark_sample_int(speed=speed, markdown=markdown)
 
 
 if __name__ == "__main__":
