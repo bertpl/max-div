@@ -73,7 +73,7 @@ class BenchmarkResult:
 def benchmark(
     f: Callable,
     t_per_run: float = 0.1,
-    n_warmup: int = 10,
+    n_warmup: int = 5,
     n_benchmark: int = 30,
     silent: bool = False,
 ) -> BenchmarkResult:
@@ -83,7 +83,7 @@ def benchmark(
     :param f: (Callable) Function to benchmark. Should take no arguments.
     :param t_per_run: (float, default=0.1) time in seconds we want to target per benchmarking run.
                       # of executions/run is adjusted to meet this target.
-    :param n_warmup: (int, default=10) Number of warmup runs to perform before benchmarking.
+    :param n_warmup: (int, default=5) Number of warmup runs to perform before benchmarking.
     :param n_benchmark: (int, default=30) Number of benchmark runs to perform.
     :param silent: (bool, default=False) If True, suppresses any output during benchmarking.
     :return: Median estimate of duration/execution of `f` in seconds.
@@ -122,13 +122,14 @@ def benchmark(
             if not silent:
                 print("w", end="")
 
-        # adjust n_executions
+        # adjust n_executions to bring t_tot closer to t_per_run
+        # NOTE: during warmup we adjust n_executions at a log-scale to reach t_per_run target at end of warmup
         t_tot = timer_tot.t_elapsed_sec()
         n_executions = round(
             clip(
-                value=n_executions * (t_per_run / t_tot),
-                min_value=max(1.0, n_executions / 10),
-                max_value=n_executions * 10,
+                value=n_executions * (t_per_run / t_tot) ** min(1.0, (i + 1) / n_warmup),
+                min_value=max(1.0, n_executions / 100),
+                max_value=n_executions * 100,
             )
         )
 
