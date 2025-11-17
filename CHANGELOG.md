@@ -5,6 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **improved**:
+  - test coverage of internal rng functionality
+  
 - **internal**:
   - add `pytest-xdist` and `pytest-rerunfailures` to improve test performance & robustness
 

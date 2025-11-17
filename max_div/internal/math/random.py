@@ -19,7 +19,7 @@ from numpy import float32, float64, int32, int64, uint64
 _TO_FLOAT64 = float64(1.0 / 9007199254740992.0)
 
 
-# Constant for converting uint64 to float64 in [0.0, 1.0): 1.0 / 2**24
+# Constant for converting uint64 to float32 in [0.0, 1.0): 1.0 / 2**24
 _TO_FLOAT32 = float32(1.0 / 16777216.0)
 
 
