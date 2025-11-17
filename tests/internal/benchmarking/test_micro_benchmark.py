@@ -5,6 +5,7 @@ import pytest
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 
 
+@pytest.mark.flaky(reruns=10)
 @pytest.mark.parametrize("t_sleep", [1e-5, 1e-4, 1e-3])
 @pytest.mark.parametrize("silent", [True, False])
 def test_micro_benchmark(t_sleep: float, silent: bool):

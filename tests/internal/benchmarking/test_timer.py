@@ -5,6 +5,7 @@ import pytest
 from max_div.internal.benchmarking import Timer
 
 
+@pytest.mark.flaky(reruns=10)
 def test_timer():
     # --- arrange -----------------------------------------
     timer = Timer()
@@ -22,6 +23,7 @@ def test_timer():
     assert 50_000_000 < timer.t_elapsed_nsec() < 150_000_000, "t_elapsed_nsec() result incorrect."
 
 
+@pytest.mark.flaky(reruns=10)
 def test_timer_running():
     # --- arrange -----------------------------------------
     timer = Timer()

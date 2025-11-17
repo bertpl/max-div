@@ -32,6 +32,8 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "ruff>=0.14.0",
+    "pytest-xdist>=3.5.0",
+    "pytest-rerunfailures>=14.0",
 ]
 
 [project.scripts]
@@ -69,3 +71,6 @@ exclude_also = [
     "@abstractmethod",
     "@abc.abstractmethod",
 ]
+
+[tool.pytest.ini_options]
+addopts = "-n auto --dist worksteal"
