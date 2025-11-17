@@ -1,6 +1,13 @@
 import numpy as np
 
-from max_div.internal.math.random import rand_float32, rand_float64, rand_int32, rand_int64, set_seed
+from max_div.internal.math.random import (
+    rand_float32,
+    rand_float64,
+    rand_int32,
+    rand_int32_array,
+    rand_int64,
+    set_seed,
+)
 
 
 # -------------------------------------------------------------------------
@@ -218,3 +225,127 @@ def test_rand_int64_large_range():
     assert max(values) > 900_000_000
     # 100% uniqueness very likely when sampling 10000 out of 1 billion possible values
     assert len(set(values)) >= 9_999
+
+
+# -------------------------------------------------------------------------
+#  rand_int32_array
+# -------------------------------------------------------------------------
+def test_rand_int32_array_seed():
+    # --- arrange ----------------------------------------
+    rng_state_1 = set_seed(1)
+    rng_state_2 = set_seed(1)
+
+    # --- act ---------------------------------------------
+    arr1 = rand_int32_array(rng_state_1, np.int32(0), np.int32(100), np.int32(10))
+    arr2 = rand_int32_array(rng_state_2, np.int32(0), np.int32(100), np.int32(10))
+
+    # --- assert ------------------------------------------
+    assert np.array_equal(arr1, arr2)
+    assert arr1.dtype == np.int32
+    assert len(arr1) == 10
+
+
+def test_rand_int32_array_different_calls():
+    # --- arrange ----------------------------------------
+    rng_state = set_seed(1)
+
+    # --- act ---------------------------------------------
+    arr1 = rand_int32_array(rng_state, np.int32(0), np.int32(100), np.int32(10))
+    arr2 = rand_int32_array(rng_state, np.int32(0), np.int32(100), np.int32(10))
+
+    # --- assert ------------------------------------------
+    # Different calls should produce different results
+    assert not np.array_equal(arr1, arr2)
+
+
+def test_rand_int32_array_stats():
+    # --- arrange -----------------------------------------
+    rng_state = set_seed(1)
+    low = np.int32(0)
+    high = np.int32(100)
+    size = np.int32(10000)
+
+    # --- act ---------------------------------------------
+    values = rand_int32_array(rng_state, low, high, size)
+
+    # --- assert ------------------------------------------
+    assert len(values) == 10000
+    assert values.dtype == np.int32
+    assert np.min(values) == 0
+    assert np.max(values) == 99
+    assert 49 < np.mean(values) < 51
+    # Should have good coverage of the range
+    assert len(set(values)) == 100  # All values in [0, 100) should appear
+
+
+def test_rand_int32_array_range():
+    # --- arrange -----------------------------------------
+    rng_state = set_seed(1)
+    low = np.int32(-50)
+    high = np.int32(50)
+    size = np.int32(10000)
+
+    # --- act ---------------------------------------------
+    values = rand_int32_array(rng_state, low, high, size)
+
+    # --- assert ------------------------------------------
+    assert len(values) == 10000
+    assert np.all(values >= low)
+    assert np.all(values < high)
+    assert np.min(values) == -50
+    assert np.max(values) == 49
+    assert -1 < np.mean(values) < 1
+
+
+def test_rand_int32_array_small_range():
+    # --- arrange -----------------------------------------
+    rng_state = set_seed(1)
+    low = np.int32(0)
+    high = np.int32(5)
+    size = np.int32(1000)
+
+    # --- act ---------------------------------------------
+    values = rand_int32_array(rng_state, low, high, size)
+
+    # --- assert ------------------------------------------
+    assert len(values) == 1000
+    assert np.all(values >= 0)
+    assert np.all(values < 5)
+    # Should have all values in the small range
+    assert set(values.tolist()) == {0, 1, 2, 3, 4}
+
+
+def test_rand_int32_array_single_element():
+    # --- arrange -----------------------------------------
+    rng_state = set_seed(1)
+    low = np.int32(0)
+    high = np.int32(100)
+    size = np.int32(1)
+
+    # --- act ---------------------------------------------
+    values = rand_int32_array(rng_state, low, high, size)
+
+    # --- assert ------------------------------------------
+    assert len(values) == 1
+    assert 0 <= values[0] < 100
+
+
+def test_rand_int32_array_large_size():
+    # --- arrange -----------------------------------------
+    rng_state = set_seed(1)
+    low = np.int32(0)
+    high = np.int32(1000)
+    size = np.int32(100000)
+
+    # --- act ---------------------------------------------
+    values = rand_int32_array(rng_state, low, high, size)
+
+    # --- assert ------------------------------------------
+    assert len(values) == 100000
+    assert values.dtype == np.int32
+    assert np.all(values >= 0)
+    assert np.all(values < 1000)
+    # Statistical checks
+    assert 490 < np.mean(values) < 510
+    # Should have high uniqueness
+    assert len(set(values.tolist())) >= 999  # Almost all values should appear

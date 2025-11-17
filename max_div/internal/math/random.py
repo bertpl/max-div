@@ -3,13 +3,14 @@ Custom simple random number generation module for integration in numba oriented 
 even when used inside numba.njit.
 
 This is based on the following:
+  - https://www.pcg-random.org/posts/bounded-rands.html
   - xoroshiro128+ algorithm by David Blackman and Sebastiano Vigna (http://xoroshiro.di.unimi.it/)
   - splitmix64 for seed initialization by Sebastiano Vigna (http://xorshift.di.unimi.it/splitmix64.c)
 """
 
 import numba
 import numpy as np
-from numpy import float32, float64, int32, int64, uint64
+from numpy import float32, float64, int32, int64, uint32, uint64
 
 # =================================================================================================
 #  Constants
@@ -94,9 +95,13 @@ def rand_int64(rng_state: np.ndarray[uint64], low: np.int64, high: np.int64) -> 
     Generate a random int64 in [low, high) using the provided rng_state.
     There might be a small bias for large (high-low) if the range is not a power of two.
     """
-    range_size = high - low
-    rnd_uint64 = _xoroshiro128plus_next(rng_state)
-    return low + int64(rnd_uint64 % uint64(range_size))
+    if low == 0:
+        rnd_uint64 = _xoroshiro128plus_next(rng_state)
+        return int64(rnd_uint64 % uint64(high))
+    else:
+        range_size = high - low
+        rnd_uint64 = _xoroshiro128plus_next(rng_state)
+        return low + int64(rnd_uint64 % uint64(range_size))
 
 
 @numba.njit("int32(uint64[:], int32, int32)", fastmath=True, inline="always")
@@ -105,9 +110,50 @@ def rand_int32(rng_state: np.ndarray[uint64], low: np.int32, high: np.int32) -> 
     Generate a random int32 in [low, high) using the provided rng_state.
     There might be a small bias for large (high-low) if the range is not a power of two.
     """
-    range_size = high - low
-    rnd_uint64 = _xoroshiro128plus_next(rng_state)
-    return low + int32(rnd_uint64 % uint64(range_size))
+    if low == 0:
+        rnd_uint64 = _xoroshiro128plus_next(rng_state)
+        return int32(rnd_uint64 % uint64(high))
+    else:
+        range_size = high - low
+        rnd_uint64 = _xoroshiro128plus_next(rng_state)
+        return low + int32(rnd_uint64 % uint64(range_size))
+
+
+@numba.njit("int32[:](uint64[:], int32, int32, int32)", fastmath=True, inline="always")
+def rand_int32_array(
+    rng_state: np.ndarray[uint64], low: np.int32, high: np.int32, size: np.int32
+) -> np.ndarray[np.int32]:
+    """
+    Generate an array of random int32 values in [low, high) using the provided rng_state.
+    Optimized to generate 2 values per RNG call by using upper and lower 32 bits.
+    There might be a small bias for large (high-low) if the range is not a power of two.
+    """
+    result = np.empty(size, dtype=np.int32)
+    if low == 0:
+        range_size = uint64(high)
+        i = 0
+        while i < size:
+            rnd_uint64 = _xoroshiro128plus_next(rng_state)
+            # Use lower 32 bits for first value
+            result[i] = int32((rnd_uint64 & uint64(0xFFFFFFFF)) % range_size)
+            i += 1
+            # Use upper 32 bits for second value if needed
+            if i < size:
+                result[i] = int32((rnd_uint64 >> uint64(32)) % range_size)
+                i += 1
+    else:
+        range_size = uint64(high - low)
+        i = 0
+        while i < size:
+            rnd_uint64 = _xoroshiro128plus_next(rng_state)
+            # Use lower 32 bits for first value
+            result[i] = low + int32((rnd_uint64 & uint64(0xFFFFFFFF)) % range_size)
+            i += 1
+            # Use upper 32 bits for second value if needed
+            if i < size:
+                result[i] = low + int32((rnd_uint64 >> uint64(32)) % range_size)
+                i += 1
+    return result
 
 
 # =================================================================================================
@@ -118,6 +164,7 @@ __ALL__ = [
     "rand_float32",
     "rand_float64",
     "rand_int32",
+    "rand_int32_array",
     "rand_int64",
     "set_seed",
 ]

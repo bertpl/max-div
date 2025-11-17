@@ -2,7 +2,13 @@ import numba
 import numpy as np
 
 from max_div.internal.math.fast_log import fast_log2_f32_poly
-from max_div.internal.math.random import GLOBAL_RNG_STATE, rand_float32, rand_int32, set_seed
+from max_div.internal.math.random import (
+    GLOBAL_RNG_STATE,
+    rand_float32,
+    rand_int32,
+    rand_int32_array,
+    set_seed,
+)
 
 
 # =================================================================================================
@@ -181,10 +187,11 @@ def sample_int_numba(
     if p.size == 0:
         if replace:
             # UNIFORM sampling with replacement
-            samples = np.empty(k, dtype=np.int32)
-            for i in range(k):
-                samples[i] = rand_int32(rng_state, 0, n)
-            return samples
+            return rand_int32_array(rng_state, 0, n, k)  # O(k)
+            # samples = np.empty(k, dtype=np.int32)
+            # for i in range(k):
+            #     samples[i] = rand_int32(rng_state, 0, n)
+            # return samples
         else:
             # UNIFORM sampling without replacement using Fisher-Yates shuffle
             population = np.arange(n, dtype=np.int32)  # O(n)
@@ -198,7 +205,9 @@ def sample_int_numba(
             # NON-UNIFORM sampling with replacement using CDF
             cdf = np.cumsum(p)  # O(n)
             samples = np.empty(k, dtype=np.int32)  # O(k)
-            # note: computing the below in a loop, is faster than writing a np-vectorized one-liner
+            # notes:
+            #  - computing the below in a loop, is faster than writing a np-vectorized one-liner
+            #  - implementing & calling a rand_float32_array outside the loop once is not faster
             for i in range(k):  # k x O(log(n))
                 r = rand_float32(rng_state)
                 idx = np.searchsorted(cdf, r)
@@ -215,7 +224,9 @@ def sample_int_numba(
             #                     (Initial testing surprisingly did not show improvements)
             if k < n:
                 keys = np.empty(n, dtype=np.float32)  # O(n)
-                # note: computing -np.log(u[i]) does not seem to be noticeably slower than np.random.standard_exponential().
+                # notes:
+                #  - computing -np.log(u[i]) does not seem to be noticeably slower than np.random.standard_exponential().
+                #  - implementing & calling a rand_float32_array outside the loop once is not faster
                 for i in range(n):  # n x O(1)
                     if p[i] == 0.0:
                         keys[i] = np.inf

@@ -2,11 +2,12 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.7
-> *(under development)*
+> *(2025-11-17)*
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
   - test coverage of internal rng functionality
+  - improve speed of generating `int32` arrays in `sampling.discrete.sample_int`
   
 - **internal**:
   - add `pytest-xdist` and `pytest-rerunfailures` to improve test performance & robustness
