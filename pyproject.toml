@@ -1,6 +1,6 @@
 [project]
 name = "max-div"
-version = "0.0.8"
+version = "0.0.9"
 description = "Configurable Solver for Maximum Diversity Problems with Fairness Constraints."
 readme = "README.md"
 authors = [
