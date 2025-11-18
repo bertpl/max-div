@@ -66,7 +66,7 @@ def _splitmix64_next(init_state: np.ndarray[uint64]) -> uint64:
 @numba.njit(fastmath=True, inline="always")
 def set_seed(seed: np.int64) -> np.ndarray[uint64]:
     """Initialize xoroshiro128+ state from single seed; using splitmix64 algorithm."""
-    init_state = np.array([np.int64(seed).view(np.uint64)], dtype=uint64)
+    init_state = np.array([seed], dtype=uint64)
 
     state = np.empty(2, dtype=uint64)
     state[0] = _splitmix64_next(init_state)

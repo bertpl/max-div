@@ -9,6 +9,7 @@ from max_div.internal.math.random import (
     rand_int32_array,
     set_seed,
 )
+from max_div.internal.math.select_k_minmax import select_k_min
 
 
 # =================================================================================================
@@ -237,7 +238,10 @@ def sample_int_numba(
                         keys[i] = -fast_log2_f32_poly(ui, degree=2) / p[i]  # using fast log2 approximation
 
                 # Get indices of k smallest keys
-                return np.argpartition(keys, k)[:k].astype(np.int32)  # O(n) average case
+                if k <= (10 + n // 20):
+                    return select_k_min(keys, np.int32(k))  # most efficient for small k and k/n
+                else:
+                    return np.argpartition(keys, k)[:k].astype(np.int32)  # O(n) average case
 
             else:
                 # corner case: return all elements in random order
