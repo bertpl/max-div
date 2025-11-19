@@ -2,6 +2,7 @@ site_name: MAX-DIV - Maximum Diversity Solver.
 site_url: https://yourusername.github.io/your-repo-name/
 repo_url: https://github.com/bertpl/max-div
 repo_name: bertpl/max-div
+site_dir: ./reports/docs
 
 extra_css:
   - stylesheets/extra.css

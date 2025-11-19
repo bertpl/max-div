@@ -10,9 +10,8 @@ uv.lock
 __pycache__
 *.pyc
 
-# Coverage reports
-.coverage
-htmlcov
+# various auto-generated 'reports' (coverage, mkdocs)
+/reports
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
@@ -31,9 +30,6 @@ Thumbs.db
 # IDE files
 .idea
 .vscode
-
-# mkdocs
-site
 
 # other
 .local

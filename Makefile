@@ -1,5 +1,7 @@
 file_path=
 
+.PHONY: help build test coverage format format-single-file splash docs show-coverage show-docs
+
 help:
 	@echo 'Commands:'
 	@echo ''
@@ -11,9 +13,12 @@ help:
 	@echo '  format		                    Format source code using ruff.'
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
-	@echo '  splash       			        Build splash screen using current version of package.'
+	@echo '  splash       			        Build splash screen using current version of package. (./images/splash_with_version.webp)'
+	@echo '  coverage                       Generate test coverage report. (./reports/coverage)'
+	@echo '  docs        			        Update mkdocs site. (./reports/docs)'
 	@echo ''
-	@echo '  mkdocs       			        Update mkdocs site.'
+	@echo '  show-coverage                  Open test coverage report in browser.'
+	@echo '  show-docs                      Open mkdocs site in browser.'
 	@echo ''
 	@echo 'Options:'
 	@echo ''
@@ -29,11 +34,12 @@ test:
 coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
+	mkdir -p ./reports
 	# run tests with Python 3.11; WITHOUT optional dependencies & create new report
 	uv sync	# should remove numba
-	NUMBA_DISABLE_JIT=1 uv run --python 3.11 pytest ./tests --cov --cov-report=html
+	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --python 3.11 pytest ./tests --cov --cov-report=html:./reports/coverage
 	# run tests with Python 3.13; WITH ALL optional dependencies & append to report
-	NUMBA_DISABLE_JIT=1 uv run --all-extras --python 3.13 pytest ./tests --cov --cov-append --cov-report=html
+	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --all-extras --python 3.13 pytest ./tests --cov --cov-append --cov-report=html:./reports/coverage
 
 format:
 	uvx ruff format .;
@@ -46,6 +52,16 @@ format-single-file:
 splash:
 	./images/splash/create_splash_with_version.sh "$$(uv version --short)-dev";
 
-mkdocs:
+docs:
+	mkdir -p ./reports
 	uv sync --extra docs;
 	mkdocs build;
+
+show-coverage:
+	# trigger browser to open coverage report
+	open ./reports/coverage/index.html
+
+show-docs:
+	# trigger browser to open mkdocs site
+	# (go through pycharm built-in server, to make this site work correctly)
+	open http://localhost:63342/max-div/reports/docs/index.html
