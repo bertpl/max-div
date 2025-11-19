@@ -1,1 +1,1 @@
-from .discrete import sample_int, sample_int_numba, sample_int_numpy
+from .uncon import randint, randint_numba, randint_numpy

@@ -25,7 +25,7 @@ max-div --help
 There are various (currently 1, to be extended) benchmarking commands available with similar behavior:
 
 ```bash
-max-div benchmark sample-int
+max-div benchmark randint
 ```
 
 All benchmarking commands support the following shared flags & options:

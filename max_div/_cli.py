@@ -2,7 +2,7 @@
 
 import click
 
-from max_div.benchmark import benchmark_sample_int as _benchmark_sample_int
+from max_div.benchmark import benchmark_randint as _benchmark_randint
 
 
 # -------------------------------------------------------------------------
@@ -49,11 +49,11 @@ def benchmark(ctx, turbo: bool, speed: float, markdown: bool):
 
 @benchmark.command()
 @click.pass_context
-def sample_int(ctx):
-    """Benchmarks the `sample_int` function from `max_div.sampling.discrete`."""
+def randint(ctx):
+    """Benchmarks the `randint` function from `max_div.sampling.discrete`."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
-    _benchmark_sample_int(speed=speed, markdown=markdown)
+    _benchmark_randint(speed=speed, markdown=markdown)
 
 
 # -------------------------------------------------------------------------

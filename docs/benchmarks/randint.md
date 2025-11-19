@@ -1,21 +1,21 @@
-# `sample_int`
+# `randint`
 
-([API reference][max_div.sampling.discrete.sample_int])
+([API reference][max_div.sampling.uncon.randint])
 
 Command:
 ```bash
 uv tool install max-div
-max-div benchmark --markdown sample-int
+max-div benchmark --markdown randint
 ```
 or 
 ```bash
-uv run max-div benchmark --markdown sample-int
+uv run max-div benchmark --markdown randint
 ```
 
 ## A. WITH replacement, UNIFORM probabilities
                                                                                                                                                                                               
-| `k`   | `n`          | `sample_int_numpy` | `sample_int_numba`                                       |
-| ----- | ------------ | ------------------ | -------------------------------------------------------- |
+| `k`   | `n`          | `randint_numpy`    | `randint_numba`                                          |
+| ----- | ------------ |--------------------|----------------------------------------------------------|
 | 1     | 10           | 8.488 μsec ± 0.2%  | <span style="color:#00aa00">**966.9 nsec ± 0.8%**</span> |
 | 10    | 10           | 8.758 μsec ± 0.3%  | <span style="color:#00aa00">**980.9 nsec ± 0.2%**</span> |
 | 100   | 10           | 9.843 μsec ± 0.2%  | <span style="color:#00aa00">**1.118 μsec ± 0.1%**</span> |
@@ -40,8 +40,8 @@ uv run max-div benchmark --markdown sample-int
 
 ## B. WITHOUT replacement, UNIFORM probabilities
                                                                                                                                                                                               
-| `k`   | `n`          | `sample_int_numpy` | `sample_int_numba`                                       |
-| ----- | ------------ | ------------------ | -------------------------------------------------------- |
+| `k`   | `n`          | `randint_numpy`    | `randint_numba`                                          |
+| ----- | ------------ |--------------------|----------------------------------------------------------|
 | 1     | 10           | 8.669 μsec ± 0.5%  | <span style="color:#00aa00">**972.7 nsec ± 0.2%**</span> |
 | 10    | 10           | 6.827 μsec ± 0.5%  | <span style="color:#00aa00">**1.017 μsec ± 0.1%**</span> |
 | 1     | 100          | 8.595 μsec ± 0.2%  | <span style="color:#00aa00">**967.2 nsec ± 0.3%**</span> |
@@ -60,8 +60,8 @@ uv run max-div benchmark --markdown sample-int
 
 ## C. WITH replacement, CUSTOM probabilities
                                                                                                                                                                                               
-| `k`   | `n`          | `sample_int_numpy` | `sample_int_numba`                                       |
-| ----- | ------------ | ------------------ | -------------------------------------------------------- |
+| `k`   | `n`          | `randint_numpy`    | `randint_numba`                                          |
+| ----- | ------------ |--------------------|----------------------------------------------------------|
 | 1     | 10           | 16.34 μsec ± 0.2%  | <span style="color:#00aa00">**1.022 μsec ± 0.2%**</span> |
 | 10    | 10           | 16.58 μsec ± 0.2%  | <span style="color:#00aa00">**1.214 μsec ± 0.8%**</span> |
 | 100   | 10           | 18.52 μsec ± 0.2%  | <span style="color:#00aa00">**2.702 μsec ± 0.4%**</span> |
@@ -86,8 +86,8 @@ uv run max-div benchmark --markdown sample-int
 
 ## D. WITHOUT replacement, CUSTOM probabilities
                                                                                                                                                                                               
-| `k`   | `n`          | `sample_int_numpy` | `sample_int_numba`                                       |
-| ----- | ------------ | ------------------ | -------------------------------------------------------- |
+| `k`   | `n`          | `randint_numpy`    | `randint_numba`                                          |
+| ----- | ------------ |--------------------|----------------------------------------------------------|
 | 1     | 10           | 16.40 μsec ± 0.3%  | <span style="color:#00aa00">**1.016 μsec ± 0.2%**</span> |
 | 10    | 10           | 66.43 μsec ± 0.3%  | <span style="color:#00aa00">**1.008 μsec ± 0.2%**</span> |
 | 1     | 100          | 17.14 μsec ± 0.3%  | <span style="color:#00aa00">**1.088 μsec ± 0.1%**</span> |

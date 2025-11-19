@@ -1,9 +1,12 @@
+"""
+Sample integers from a range without any imposed constraints (i.e. sample at least k from sub-range S)
+"""
+
 import numba
 import numpy as np
 
 from max_div.internal.math.fast_log import fast_log2_f32_poly
 from max_div.internal.math.random import (
-    GLOBAL_RNG_STATE,
     rand_float32,
     rand_int32,
     rand_int32_array,
@@ -13,9 +16,9 @@ from max_div.internal.math.select_k_minmax import select_k_min
 
 
 # =================================================================================================
-#  sample_int
+#  randint
 # =================================================================================================
-def sample_int(
+def randint(
     n: int,
     k: int | None = None,
     replace: bool = True,
@@ -25,11 +28,12 @@ def sample_int(
 ) -> int | np.ndarray[np.int64]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
+    This function does not support providing constraints (e.g. sample at least k from sub-range S).
 
     Depending on the value of `use_numba`, computations are executed by...
 
-    - `use_numba=False`: see [sample_int_numpy][max_div.sampling.discrete.sample_int_numpy]
-    - `use_numba=True`: see [sample_int_numba][max_div.sampling.discrete.sample_int_numba]
+    - `use_numba=False`: see [randint_numpy][max_div.sampling.uncon.randint_numpy]
+    - `use_numba=True`: see [randint_numba][max_div.sampling.uncon.randint_numba]
 
     :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
     :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
@@ -45,7 +49,7 @@ def sample_int(
     k = np.int32(k) if k is not None else None
 
     if not use_numba:
-        return sample_int_numpy(n=n, k=k, replace=replace, p=p, seed=seed)
+        return randint_numpy(n=n, k=k, replace=replace, p=p, seed=seed)
 
     else:
         # NOTE: minimal validation to make sure numba doesn't fail to compile
@@ -57,22 +61,22 @@ def sample_int(
         if k is None:
             # assume k=1 and return an integer
             if p is None:
-                return sample_int_numba(n=n, k=1, replace=replace, seed=seed or 0)[0]
+                return randint_numba(n=n, k=1, replace=replace, seed=seed or 0)[0]
             else:
-                return sample_int_numba(n=n, k=1, replace=replace, p=p, seed=seed or 0)[0]
+                return randint_numba(n=n, k=1, replace=replace, p=p, seed=seed or 0)[0]
 
         else:
             # k is specified, return array
             if p is None:
-                return sample_int_numba(n=n, k=k, replace=replace, seed=seed or 0)
+                return randint_numba(n=n, k=k, replace=replace, seed=seed or 0)
             else:
-                return sample_int_numba(n=n, k=k, replace=replace, p=p, seed=seed or 0)
+                return randint_numba(n=n, k=k, replace=replace, p=p, seed=seed or 0)
 
 
 # =================================================================================================
-#  sample_int_numpy
+#  randint_numpy
 # =================================================================================================
-def sample_int_numpy(
+def randint_numpy(
     n: np.int32,
     k: np.int32 | None = None,
     replace: bool = True,
@@ -83,7 +87,7 @@ def sample_int_numpy(
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
 
     This will always use `np.random.choice` for sampling and is intended to be used to compare against the
-    numba-accelerated version.  For production-use, use `sample_int_numba` or `sample_int` with `accelerated=True`.
+    numba-accelerated version.  For production-use, use `randint_numba` or `randint` with `accelerated=True`.
 
     :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
     :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
@@ -125,10 +129,10 @@ def sample_int_numpy(
 
 
 # =================================================================================================
-#  sample_int_numba
+#  randint_numba
 # =================================================================================================
 @numba.njit(fastmath=True)
-def sample_int_numba(
+def randint_numba(
     n: np.int32,
     k: np.int32,
     replace: bool,

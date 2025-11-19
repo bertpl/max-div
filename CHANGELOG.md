@@ -6,6 +6,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **improved**:
+  - make naming more consistent with other known functionality: `sample_int` -> `randint`
+
 - **internal**:
   - update local dev tooling to declutter project root 
 

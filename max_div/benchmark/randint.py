@@ -2,14 +2,14 @@ import numpy as np
 from tqdm import tqdm
 
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
-from max_div.sampling.discrete import sample_int_numba, sample_int_numpy
+from max_div.sampling.uncon import randint_numba, randint_numpy
 
 from ._formatting import extend_table_with_aggregate_row, format_as_markdown, format_for_console
 
 
-def benchmark_sample_int(speed: float = 0.0, markdown: bool = False) -> None:
+def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
     """
-    Benchmarks the `sample_int` function from `max_div.sampling.discrete`.
+    Benchmarks the `randint` function from `max_div.sampling.discrete`.
 
     Different scenarios are tested:
 
@@ -24,7 +24,7 @@ def benchmark_sample_int(speed: float = 0.0, markdown: bool = False) -> None:
     :param markdown: If `True`, outputs the results as a Markdown table.
     """
 
-    print("Benchmarking `sample_int`...")
+    print("Benchmarking `randint`...")
     print()
 
     for replace, use_p, desc in [
@@ -43,11 +43,11 @@ def benchmark_sample_int(speed: float = 0.0, markdown: bool = False) -> None:
             headers = [
                 "`k`",
                 "`n`",
-                "`sample_int_numpy`",
-                "`sample_int_numba`",
+                "`randint_numpy`",
+                "`randint_numba`",
             ]
         else:
-            headers = ["k", "n", "sample_int_numpy", "sample_int_numba"]
+            headers = ["k", "n", "randint_numpy", "randint_numba"]
 
         # --- benchmark ------------------------------------
         data: list[list[str | BenchmarkResult]] = []
@@ -66,11 +66,11 @@ def benchmark_sample_int(speed: float = 0.0, markdown: bool = False) -> None:
                 if use_numba:
 
                     def func_to_benchmark():
-                        sample_int_numba(n=n, k=k, replace=replace, p=p)
+                        randint_numba(n=n, k=k, replace=replace, p=p)
                 else:
 
                     def func_to_benchmark():
-                        sample_int_numpy(n=n, k=k, replace=replace, p=p)
+                        randint_numpy(n=n, k=k, replace=replace, p=p)
 
                 data_row.append(
                     benchmark(

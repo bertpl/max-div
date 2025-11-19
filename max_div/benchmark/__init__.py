@@ -1,1 +1,1 @@
-from .sample_int import benchmark_sample_int
+from .randint import benchmark_randint

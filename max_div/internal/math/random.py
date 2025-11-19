@@ -27,9 +27,6 @@ _TO_FLOAT32 = float32(1.0 / 16777216.0)
 # =================================================================================================
 #  Core
 # =================================================================================================
-GLOBAL_RNG_STATE = np.array([uint64(0x0123456789ABCDEF), uint64(0xFEDCBA9876543210)], dtype=np.uint64)
-
-
 @numba.njit(fastmath=True, inline="always")
 def rotl(x: uint64, k: uint64) -> uint64:
     """Rotate left operation"""
@@ -160,7 +157,6 @@ def rand_int32_array(
 #  Public API
 # =================================================================================================
 __ALL__ = [
-    "GLOBAL_RNG_STATE",
     "rand_float32",
     "rand_float64",
     "rand_int32",
