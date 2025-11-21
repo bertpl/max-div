@@ -3,11 +3,14 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.9
-> *(under development)*
+> *(2025-11-21)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+  - add `sampling.con.randint_constrained`, which is like `randint` but supporting constraints
+
 - **improved**:
-  - make naming more consistent with other known functionality: `sample_int` -> `randint`
+  - make naming more consistent with other known functionality: `sampling.discrete.sample_int` -> `sampling.uncon.randint`
   - ensure `randint` also works with non-normalized probabilities (with minimal loss of efficiency, especially in `numba`-flavor)
 
 - **internal**:
