@@ -4,3 +4,39 @@
 .wy-nav-content {
     max-width: 100% !important;
 }
+
+/* table & sidebar formatting in LIGHT mode */
+[data-md-color-scheme="default"] table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+[data-md-color-scheme="default"] .md-typeset table:not([class]) thead tr {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+[data-md-color-scheme="default"] .md-sidebar--primary .md-sidebar__scrollwrap {
+    border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+[data-md-color-scheme="default"] .md-nav--primary > .md-nav__title {
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* table & sidebar formatting in DARK mode */
+[data-md-color-scheme="slate"] table tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) thead tr {
+    background-color: rgba(255, 255, 255, 0.10);
+}
+[data-md-color-scheme="slate"] .md-sidebar--primary .md-sidebar__scrollwrap {
+    border-right: 1px solid rgba(255, 255, 255, 0.20);
+}
+[data-md-color-scheme="slate"] .md-nav--primary > .md-nav__title {
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.20);
+}
+
+/* Reduce vertical padding in table cells */
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+    padding: 0.4em 0.8em;  /* Default is 0.9375em 1.25em */
+}

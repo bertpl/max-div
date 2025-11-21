@@ -8,27 +8,43 @@ extra_css:
   - stylesheets/extra.css
 
 theme:
-  name: readthedocs
-  navigation_depth: 4
-  collapse_navigation: false
-  titles_only: false
-  sticky_navigation: true
-  includehidden: true
-  prev_next_buttons_location: both
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.annotate
+    - navigation.expand
+    - navigation.sections
+    - toc.integrate
 
 plugins:
-  - search
   - include-markdown
+  - search
   - mkdocstrings:
       handlers:
         python:
           paths: [max_div]
           options:
-            # Show documentation from docstrings
-            docstring_style: sphinx  # or numpy, or google
+            # These options specifically help with complex signatures
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            line_length: 80
             show_source: false
+            members_order: source
+            docstring_style: sphinx  # or numpy, or google
+            merge_init_into_class: true
+            show_submodules: false
             show_root_heading: true
             show_root_full_path: false
+            show_if_no_docstring: false  # Hide undocumented members
 
             # Filter members to exclude private/internal
             filters:
@@ -37,13 +53,6 @@ plugins:
               - "!^__[^_]"     # Exclude protected (double underscore, but not dunder)
               - "!_internal$"  # Exclude functions ending with _internal, which are purely internal
 
-            # Member options
-            members_order: source  # or alphabetical
-            show_if_no_docstring: false  # Hide undocumented members
-
-            # Show type annotations
-            show_signature_annotations: true
-            separate_signature: true
   - mkdocs-autoapi:
       autoapi_dir: ./max_div
       autoapi_ignore:
@@ -54,6 +63,8 @@ plugins:
       autoapi_root: ./docs/reference
 
 markdown_extensions:
+  - toc:
+      toc_depth: 1  # Only show h1 (#) headers
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
