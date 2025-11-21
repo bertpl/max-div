@@ -296,15 +296,16 @@ def test_randint_non_uniform_with_replacement_seed(n: int, k: int, use_numba: bo
 
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("factor", [2.0, 5.0, 10.0, 100.0, 1000.0, 0.0])
-def test_randint_non_uniform_with_replacement_probs(use_numba: bool, factor: float):
+@pytest.mark.parametrize("sum_of_p", [1.0, 0.1, 10.0])
+def test_randint_non_uniform_with_replacement_probs(use_numba: bool, factor: float, sum_of_p: float):
     # --- arrange -----------------------------------------
     n = 10000
     k = 1000
     p = get_probabilities(n)
     p[int(0.9 * n) :] = factor * p[int(0.9 * n) :]  # multiply last 10% of probs with factor
-    p = p / p.sum()  # re-normalize
+    p = p * (sum_of_p / p.sum())  # ensure sum(p) = sum_of_p, so we also test non-normalized probs
 
-    expected_mean = sum(i * p[i] for i in range(n))
+    expected_mean = sum(i * p[i] for i in range(n)) / sum_of_p
 
     # --- act ---------------------------------------------
     samples = randint(n=n, k=k, replace=True, p=p, use_numba=use_numba)
@@ -391,15 +392,16 @@ def test_randint_non_uniform_without_replacement_seed(n: int, k: int, use_numba:
 
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("factor", [2.0, 5.0, 10.0, 100.0, 1000.0, 0.0])
-def test_randint_non_uniform_without_replacement_probs(use_numba: bool, factor: float):
+@pytest.mark.parametrize("sum_of_p", [1.0, 0.1, 10.0])
+def test_randint_non_uniform_without_replacement_probs(use_numba: bool, factor: float, sum_of_p: float):
     # --- arrange -----------------------------------------
     n = 10000
     k = 1000
     p = get_probabilities(n)
     p[int(0.8 * n) :] = factor * p[int(0.8 * n) :]  # multiply last 20% of probs with factor
-    p = p / p.sum()  # re-normalize
+    p = p * (sum_of_p / p.sum())  # ensure sum(p) = sum_of_p, so we also test non-normalized probs
 
-    expected_mean = sum(i * p[i] for i in range(n))  # approx. correct; this assumes replacement
+    expected_mean = sum(i * p[i] for i in range(n)) / sum_of_p  # approx. correct; this assumes replacement
 
     # --- act ---------------------------------------------
     samples = randint(n=n, k=k, replace=False, p=p, use_numba=use_numba)

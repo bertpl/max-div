@@ -8,6 +8,7 @@
 
 - **improved**:
   - make naming more consistent with other known functionality: `sample_int` -> `randint`
+  - ensure `randint` also works with non-normalized probabilities (with minimal loss of efficiency, especially in `numba`-flavor)
 
 - **internal**:
   - update local dev tooling to declutter project root 

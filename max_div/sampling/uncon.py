@@ -93,7 +93,7 @@ def randint_numpy(
     :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
     :param replace: Whether to sample with replacement.
     :param p: Optional 1D array of probabilities associated with each integer in the range.
-              Size must be equal to max_value + 1 and sum to 1.
+              Size must be equal to max_value + 1, and should have non-negative values. Sum is not require to be 1.
     :param seed: Optional random seed for reproducibility.  If `None` or 0, no seed is set.
     :return: `k=None` --> single integer; `k>=1` --> (k,)-sized array with sampled integers.
     """
@@ -119,6 +119,8 @@ def randint_numpy(
     # --- sampling ------------------------------------
     if seed:
         np.random.seed(seed)
+    if p is not None:
+        p = p * (1.0 / np.sum(p))  # normalize probabilities
 
     if k is None:
         # returns scalar
@@ -170,7 +172,7 @@ def randint_numba(
     :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
     :param replace: Whether to sample with replacement.
     :param p: Optional 1D array of probabilities associated with each integer in the range.
-              Size must be equal to max_value + 1 and sum to 1.
+              Size must be equal to max_value + 1, and should have non-negative values. Sum is not require to be 1.
               NOTE: if size is 0, indicates no probabilities specified.  (=DEFAULT)
                     if size > 0, but not equal to max_value+1, a ValueError is raised.
     :param seed: (default=0) Optional random seed for reproducibility. If `None` or 0, no seed is set.
@@ -211,12 +213,13 @@ def randint_numba(
         if replace:
             # NON-UNIFORM sampling with replacement using CDF
             cdf = np.cumsum(p)  # O(n)
+            p_sum = cdf[-1]
             samples = np.empty(k, dtype=np.int32)  # O(k)
             # notes:
             #  - computing the below in a loop, is faster than writing a np-vectorized one-liner
             #  - implementing & calling a rand_float32_array outside the loop once is not faster
             for i in range(k):  # k x O(log(n))
-                r = rand_float32(rng_state)
+                r = rand_float32(rng_state) * p_sum
                 idx = np.searchsorted(cdf, r)
                 samples[i] = idx
             return samples
