@@ -11,6 +11,9 @@
 - **improved**:
   - various minor improvements to docs 
 
+- **internal**:
+  - improve test coverage of cli functionality
+
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.9
 > *(2025-11-21)*
