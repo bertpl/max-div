@@ -67,6 +67,7 @@ select = ["I"]
 source = ["max_div"]
 
 [tool.coverage.report]
+precision = 2
 exclude_also = [
     "@abstractmethod",
     "@abc.abstractmethod",

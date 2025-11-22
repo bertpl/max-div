@@ -3,6 +3,7 @@
 import click
 
 from max_div.benchmark import benchmark_randint as _benchmark_randint
+from max_div.benchmark import benchmark_randint_constrained as _benchmark_randint_constrained
 
 
 # -------------------------------------------------------------------------
@@ -47,13 +48,22 @@ def benchmark(ctx, turbo: bool, speed: float, markdown: bool):
     ctx.obj["markdown"] = markdown
 
 
-@benchmark.command()
+@benchmark.command(name="randint")
 @click.pass_context
 def randint(ctx):
     """Benchmarks the `randint` function from `max_div.sampling.uncon`."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
     _benchmark_randint(speed=speed, markdown=markdown)
+
+
+@benchmark.command(name="randint_constrained")
+@click.pass_context
+def randint_constrained(ctx):
+    """Benchmarks the `randint_constrained` function from `max_div.sampling.con`."""
+    speed = ctx.obj["speed"]
+    markdown = ctx.obj["markdown"]
+    _benchmark_randint_constrained(speed=speed, markdown=markdown)
 
 
 # -------------------------------------------------------------------------

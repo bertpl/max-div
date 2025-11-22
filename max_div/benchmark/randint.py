@@ -4,7 +4,14 @@ from tqdm import tqdm
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.sampling.uncon import randint_numba, randint_numpy
 
-from ._formatting import extend_table_with_aggregate_row, format_as_markdown, format_for_console
+from ._formatting import (
+    BoldLabels,
+    CellContent,
+    FastestBenchmark,
+    extend_table_with_aggregate_row,
+    format_as_markdown,
+    format_for_console,
+)
 
 
 def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
@@ -50,10 +57,10 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
             headers = ["k", "n", "randint_numpy", "randint_numba"]
 
         # --- benchmark ------------------------------------
-        data: list[list[str | BenchmarkResult]] = []
+        data: list[list[CellContent]] = []
         n_k_values = [(n, k) for n in [10, 100, 1000, 10000] for k in [1, 10, 100, 1000, 10000] if replace or (k <= n)]
         for n, k in tqdm(n_k_values, leave=False):
-            data_row: list[str | BenchmarkResult] = [str(k), str(n)]
+            data_row: list[CellContent] = [str(k), str(n)]
 
             for use_numba in [False, True]:
                 if use_p:
@@ -75,9 +82,9 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
                 data_row.append(
                     benchmark(
                         f=func_to_benchmark,
-                        t_per_run=0.1 / (1000.0**speed),
-                        n_warmup=int(10 - 5 * speed),
-                        n_benchmark=int(30 - 20 * speed),
+                        t_per_run=0.05 / (1000.0**speed),
+                        n_warmup=int(8 - 5 * speed),
+                        n_benchmark=int(25 - 22 * speed),
                         silent=True,
                     )
                 )
@@ -87,7 +94,7 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
         # --- show results -----------------------------------------
         data = extend_table_with_aggregate_row(data, agg="geomean")
         if markdown:
-            display_data = format_as_markdown(headers, data)
+            display_data = format_as_markdown(headers, data, highlighters=[FastestBenchmark(), BoldLabels()])
         else:
             display_data = format_for_console(headers, data)
 

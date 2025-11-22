@@ -31,6 +31,9 @@ class BenchmarkResult:
         s_perc = f"{50 * (self.t_sec_q_75 - self.t_sec_q_25) / self.t_sec_q_50:.1f}%"
         return f"{s_median} ± {s_perc}"
 
+    def __str__(self) -> str:
+        return self.t_sec_with_uncertainty_str
+
     @classmethod
     def aggregate(cls, results: list[BenchmarkResult], method: Literal["mean", "geomean", "sum"]) -> BenchmarkResult:
         """

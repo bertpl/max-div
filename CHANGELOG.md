@@ -5,6 +5,9 @@
 > *(2025-11-22)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+  - add `benchmark randint_constrained` command to CLI
+
 - **improved**:
   - various minor improvements to docs 
 

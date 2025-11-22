@@ -86,7 +86,7 @@ def randint_constrained(
 
         # --- sample according to strategy ------
         # construct modified probabilities, taking into account scores
-        if not p:
+        if (p is None) or (p.size == 0):
             p_mod = np.ones(n)  # uniform probabilities
         else:
             p_mod = p.copy()  # avoid modifying input array

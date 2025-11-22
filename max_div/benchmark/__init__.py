@@ -1,1 +1,2 @@
 from .randint import benchmark_randint
+from .randint_constrained import benchmark_randint_constrained

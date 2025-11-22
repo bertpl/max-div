@@ -22,10 +22,11 @@ max-div --help
 
 ### 2.2. Benchmarking
 
-There are various (currently 1, to be extended) benchmarking commands available with similar behavior:
+There are various (currently 2, to be extended) benchmarking commands available with similar behavior:
 
 ```bash
 max-div benchmark randint
+max-div benchmark randint_constrained
 ```
 
 All benchmarking commands support the following shared flags & options:
