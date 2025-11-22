@@ -1,8 +1,12 @@
+import numpy as np
 import pytest
 
-from max_div.solver import Constraints
+from max_div.constraints import Constraints
 
 
+# =================================================================================================
+#  Constraints
+# =================================================================================================
 @pytest.mark.parametrize("n_cons", [0, 1, 2, 4, 8])
 def test_constraints_n_cons(n_cons: int):
     # --- arrange -----------------------------------------
@@ -45,3 +49,35 @@ def test_constraints_all(deepcopy: bool):
         assert result is result_2
         assert result[0] is result_2[0]
         assert result[0].int_set is result_2[0].int_set
+
+
+def test_constraints_to_numpy():
+    # --- arrange -----------------------------------------
+    cons = Constraints()
+    cons.add(indices={0, 1, 2, 3, 4}, min_count=2, max_count=3)
+    cons.add(indices={10, 11, 12, 13}, min_count=0, max_count=7)
+    cons.add(indices={3, 11}, min_count=2, max_count=2)
+
+    # --- act ---------------------------------------------
+    con_values, con_indices = cons._to_numpy()
+
+    # --- assert ------------------------------------------
+    assert np.array_equal(
+        con_values,
+        np.array(
+            [
+                [2, 3],  # min_count, max_count for constraint 0
+                [0, 7],  # min_count, max_count for constraint 1
+                [2, 2],  # min_count, max_count for constraint 2
+            ],
+            dtype=np.int32,
+        ),
+    )
+
+    assert con_indices.shape[0] == 17  # (2*n_cons) + (5+4+2) = 6 + 11 = 17
+    assert con_indices.dtype == np.int32
+
+    for i, con in enumerate(cons.all()):
+        i_start = con_indices[2 * i]
+        i_end = con_indices[2 * i + 1]
+        assert list(con_indices[i_start:i_end]) == sorted(con.int_set)
