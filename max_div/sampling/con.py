@@ -1,3 +1,7 @@
+"""
+Methods for sampling WITH constraints.
+"""
+
 import copy
 import math
 from dataclasses import dataclass
@@ -29,8 +33,14 @@ def randint_constrained(
     """
     Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
 
-    Note that no guarantees are given that constraints are satisfied; a best-effort attempt will be made, with the
+    NOTES:
+
+    * there are no guarantees are given that constraints are satisfied; a best-effort attempt will be made, with the
     probability of the result satisfying the constraints increasing the simpler the constraints are.
+
+    * `randint_constrained` is essentially a version of [`randint`][max_div.sampling.uncon.randint] that supports constraints.
+
+    * for benchmark results, see [here](../../../../benchmarks/randint.md)
 
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)
@@ -39,6 +49,7 @@ def randint_constrained(
     :param p: optional, target probabilities for each integer in `[0, n)`. No guarantees are given if provided,
               but will help guide qualitative preference of sampling algorithm.  Higher p[i] values will increase
               probability of integer `i` being included in the sample, to the extent the constraints allow this.
+    :param seed: (int, optional) random seed  (not set if None or 0 are provided)
     :return: list of samples
     """
 

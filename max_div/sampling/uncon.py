@@ -1,5 +1,5 @@
 """
-Sample integers from a range without any imposed constraints (i.e. sample at least k from sub-range S)
+Methods for sampling WITHOUT constraints.
 """
 
 import numba
@@ -28,12 +28,16 @@ def randint(
 ) -> int | np.ndarray[np.int64]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
-    This function does not support providing constraints (e.g. sample at least k from sub-range S).
 
     Depending on the value of `use_numba`, computations are executed by...
 
     - `use_numba=False`: see [randint_numpy][max_div.sampling.uncon.randint_numpy]
     - `use_numba=True`: see [randint_numba][max_div.sampling.uncon.randint_numba]
+
+    NOTES:
+
+    * If you're looking for a way to impose constraints (e.g. sample at least 2 from set {2, 4, 7, 11}),
+      check out [`randint_constrained`][max_div.sampling.con.randint_constrained].
 
     :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
     :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.

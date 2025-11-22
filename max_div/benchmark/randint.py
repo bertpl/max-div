@@ -9,7 +9,7 @@ from ._formatting import extend_table_with_aggregate_row, format_as_markdown, fo
 
 def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
     """
-    Benchmarks the `randint` function from `max_div.sampling.discrete`.
+    Benchmarks the `randint` function from `max_div.sampling.uncon`.
 
     Different scenarios are tested:
 
@@ -17,8 +17,8 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
      * uniform & non-uniform sampling
      * `use_numba` True and False
      * different sizes of (`n`, `k`):
-        * (10, 1), (100, 1), (1000, 1), (5000, 1), (10000, 1)
-        * (10000, 10), (10000, 100), (10000, 1000), (10000, 5000), (10000, 10000)
+        * both `n` & `k` are varied across [1, 10, 100, 1000, 10000]
+        * all valid combinations are tested (if `replace==False` we don't test `k`>`n`)
 
     :param speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
     :param markdown: If `True`, outputs the results as a Markdown table.

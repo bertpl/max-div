@@ -50,7 +50,7 @@ def benchmark(ctx, turbo: bool, speed: float, markdown: bool):
 @benchmark.command()
 @click.pass_context
 def randint(ctx):
-    """Benchmarks the `randint` function from `max_div.sampling.discrete`."""
+    """Benchmarks the `randint` function from `max_div.sampling.uncon`."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
     _benchmark_randint(speed=speed, markdown=markdown)
