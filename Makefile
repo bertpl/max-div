@@ -35,11 +35,8 @@ coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
 	mkdir -p ./reports
-	# run tests with Python 3.11; WITHOUT optional dependencies & create new report
-	uv sync	# should remove numba
-	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --python 3.11 pytest ./tests --cov --cov-report=html:./reports/coverage
 	# run tests with Python 3.13; WITH ALL optional dependencies & append to report
-	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --all-extras --python 3.13 pytest ./tests --cov --cov-append --cov-report=html:./reports/coverage
+	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --all-extras --python 3.13 pytest ./tests --cov --cov-report=html:./reports/coverage
 
 format:
 	uvx ruff format .;
