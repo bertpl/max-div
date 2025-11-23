@@ -1,6 +1,6 @@
 # Benchmark Results
 
-All benchmarks are run on `m6a.2xlarge` AWS EC2 instances.
+All benchmarks are run on `m6a.xlarge` or `m6a.2xlarge` AWS EC2 instances.
 
 ## `max_div.sampling`
 

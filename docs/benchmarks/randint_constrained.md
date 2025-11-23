@@ -16,86 +16,86 @@ uv run max-div benchmark --markdown randint_constrained
 
 Varying n & k with 10 non-overlapping constraints spanning equal portions of the n range (uniform sampling).
 
-| `k` | `n`  | `n_cons`     | `randint_numba`<br>(time)                                | `randint_numba`<br>(accuracy %)             | `randint_constrained`<br>(time) | `randint_constrained`<br>(accuracy %)         |         
-| --- | ---- | ------------ | -------------------------------------------------------- | ------------------------------------------- | ------------------------------- | --------------------------------------------- |
-| 2   | 10   | 10           | <span style="color:#00aa00">**1.077 μsec ± 1.0%**</span> | <span style="color:#00aa00">**100%**</span> | 98.82 μsec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 4   | 10   | 10           | <span style="color:#00aa00">**1.104 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100%**</span> | 124.6 μsec ± 0.1%               | <span style="color:#00aa00">**100%**</span>   |
-| 8   | 10   | 10           | <span style="color:#00aa00">**1.114 μsec ± 0.2%**</span> | <span style="color:#00aa00">**100%**</span> | 179.6 μsec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 2   | 100  | 10           | <span style="color:#00aa00">**1.101 μsec ± 0.2%**</span> | 91%                                         | 149.1 μsec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 4   | 100  | 10           | <span style="color:#00aa00">**1.109 μsec ± 0.2%**</span> | 52%                                         | 216.1 μsec ± 0.1%               | <span style="color:#00aa00">**100%**</span>   |
-| 8   | 100  | 10           | <span style="color:#00aa00">**1.116 μsec ± 0.2%**</span> | 2%                                          | 377.7 μsec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 16  | 100  | 10           | <span style="color:#00aa00">**1.136 μsec ± 0.1%**</span> | 0%                                          | 697.0 μsec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 32  | 100  | 10           | <span style="color:#00aa00">**1.192 μsec ± 0.2%**</span> | 8%                                          | 1.352 msec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 64  | 100  | 10           | <span style="color:#00aa00">**1.286 μsec ± 0.2%**</span> | 13%                                         | 2.978 msec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 2   | 1000 | 10           | <span style="color:#00aa00">**1.210 μsec ± 0.1%**</span> | 93%                                         | 667.0 μsec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 4   | 1000 | 10           | <span style="color:#00aa00">**1.247 μsec ± 0.1%**</span> | 43%                                         | 1.190 msec ± 0.5%               | <span style="color:#00aa00">**100%**</span>   |
-| 8   | 1000 | 10           | <span style="color:#00aa00">**1.246 μsec ± 0.1%**</span> | 2%                                          | 2.400 msec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 16  | 1000 | 10           | <span style="color:#00aa00">**1.267 μsec ± 0.3%**</span> | 2%                                          | 4.810 msec ± 0.4%               | <span style="color:#00aa00">**100%**</span>   |
-| 32  | 1000 | 10           | <span style="color:#00aa00">**1.303 μsec ± 0.1%**</span> | 1%                                          | 9.197 msec ± 0.5%               | <span style="color:#00aa00">**100%**</span>   |
-| 64  | 1000 | 10           | <span style="color:#00aa00">**1.548 μsec ± 0.3%**</span> | 0%                                          | 20.05 msec ± 0.8%               | <span style="color:#00aa00">**100%**</span>   |
-| 128 | 1000 | 10           | <span style="color:#00aa00">**1.695 μsec ± 0.1%**</span> | 0%                                          | 42.31 msec ± 0.6%               | <span style="color:#00aa00">**100%**</span>   |
-| 256 | 1000 | 10           | <span style="color:#00aa00">**1.994 μsec ± 0.2%**</span> | 1%                                          | 92.11 msec ± 0.4%               | <span style="color:#00aa00">**100%**</span>   |
-|     |      | **Geomean:** | <span style="color:#00aa00">**1.260 μsec ± 0.2%**</span> |                                             | 1.441 msec ± 0.3%               |                                               |
-|     |      | **Mean:**    |                                                          | 35.8%                                       |                                 | <span style="color:#00aa00">**100.0%**</span> |
+| `k` | `n`  | `n_cons`     | `randint_numba`<br>(time)                                | `randint_numba`<br>(accuracy %)               | `randint_constrained_numba`<br>(time) | `randint_constrained_numba`<br>(accuracy %)    |
+| --- | ---- | ------------ | -------------------------------------------------------- | --------------------------------------------- | ------------------------------------- | ---------------------------------------------- |
+| 2   | 10   | 10           | <span style="color:#00aa00">**1.103 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100.0%**</span> | 2.656 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 4   | 10   | 10           | <span style="color:#00aa00">**1.132 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100.0%**</span> | 3.321 μsec ± 0.4%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 8   | 10   | 10           | <span style="color:#00aa00">**1.138 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100.0%**</span> | 4.992 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 2   | 100  | 10           | <span style="color:#00aa00">**1.123 μsec ± 0.1%**</span> | 90.6%                                         | 3.193 μsec ± 0.2%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 4   | 100  | 10           | <span style="color:#00aa00">**1.132 μsec ± 0.2%**</span> | 51.1%                                         | 4.448 μsec ± 0.2%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 8   | 100  | 10           | <span style="color:#00aa00">**1.148 μsec ± 0.1%**</span> | 2.4%                                          | 7.304 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 16  | 100  | 10           | <span style="color:#00aa00">**1.174 μsec ± 0.8%**</span> | 1.7%                                          | 13.04 μsec ± 0.2%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 32  | 100  | 10           | <span style="color:#00aa00">**1.220 μsec ± 0.2%**</span> | 4.1%                                          | 24.60 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 64  | 100  | 10           | <span style="color:#00aa00">**1.319 μsec ± 0.7%**</span> | 18.2%                                         | 48.38 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 2   | 1000 | 10           | <span style="color:#00aa00">**1.253 μsec ± 0.1%**</span> | 90.0%                                         | 8.011 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 4   | 1000 | 10           | <span style="color:#00aa00">**1.208 μsec ± 0.2%**</span> | 46.2%                                         | 14.00 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 8   | 1000 | 10           | <span style="color:#00aa00">**1.265 μsec ± 0.1%**</span> | 1.4%                                          | 27.47 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 16  | 1000 | 10           | <span style="color:#00aa00">**1.245 μsec ± 0.3%**</span> | 0.8%                                          | 53.27 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 32  | 1000 | 10           | <span style="color:#00aa00">**1.328 μsec ± 0.1%**</span> | 1.7%                                          | 106.1 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 64  | 1000 | 10           | <span style="color:#00aa00">**1.383 μsec ± 1.0%**</span> | 1.0%                                          | 212.6 μsec ± 0.2%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 128 | 1000 | 10           | <span style="color:#00aa00">**1.558 μsec ± 0.1%**</span> | 0.4%                                          | 439.2 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 256 | 1000 | 10           | <span style="color:#00aa00">**1.813 μsec ± 0.3%**</span> | 0.7%                                          | 886.7 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+|     |      | **Geomean:** | <span style="color:#00aa00">**1.256 μsec ± 0.3%**</span> |                                               | 22.57 μsec ± 0.1%                     |                                                |
+|     |      | **Mean:**    |                                                          | 35.90%                                        |                                       | <span style="color:#00aa00">**100.00%**</span> |
 
 ## Scenario A2
 
 Identical to Scenario A1, but with custom probabilities p provided, favoring larger values.
 
-| `k` | `n`  | `n_cons`     | `randint_numba`<br>(time)                                | `randint_numba`<br>(accuracy %)             | `randint_constrained`<br>(time) | `randint_constrained`<br>(accuracy %)         |         
-| --- | ---- | ------------ | -------------------------------------------------------- | ------------------------------------------- | ------------------------------- | --------------------------------------------- |
-| 2   | 10   | 10           | <span style="color:#00aa00">**1.290 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100%**</span> | 94.51 μsec ± 0.4%               | <span style="color:#00aa00">**100%**</span>   |
-| 4   | 10   | 10           | <span style="color:#00aa00">**1.321 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100%**</span> | 117.0 μsec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 8   | 10   | 10           | <span style="color:#00aa00">**1.313 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100%**</span> | 170.2 μsec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 2   | 100  | 10           | <span style="color:#00aa00">**1.763 μsec ± 0.1%**</span> | 93%                                         | 142.2 μsec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 4   | 100  | 10           | <span style="color:#00aa00">**2.015 μsec ± 0.1%**</span> | 38%                                         | 205.0 μsec ± 0.2%               | <span style="color:#00aa00">**100%**</span>   |
-| 8   | 100  | 10           | <span style="color:#00aa00">**2.457 μsec ± 0.1%**</span> | 0%                                          | 363.7 μsec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 16  | 100  | 10           | <span style="color:#00aa00">**3.218 μsec ± 0.1%**</span> | 0%                                          | 664.5 μsec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 32  | 100  | 10           | <span style="color:#00aa00">**3.329 μsec ± 0.1%**</span> | 0%                                          | 1.293 msec ± 0.4%               | <span style="color:#00aa00">**100%**</span>   |
-| 64  | 100  | 10           | <span style="color:#00aa00">**3.297 μsec ± 0.1%**</span> | 0%                                          | 2.797 msec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 2   | 1000 | 10           | <span style="color:#00aa00">**5.286 μsec ± 0.1%**</span> | 76%                                         | 663.1 μsec ± 0.4%               | <span style="color:#00aa00">**100%**</span>   |
-| 4   | 1000 | 10           | <span style="color:#00aa00">**5.747 μsec ± 0.0%**</span> | 29%                                         | 1.138 msec ± 0.4%               | <span style="color:#00aa00">**100%**</span>   |
-| 8   | 1000 | 10           | <span style="color:#00aa00">**6.830 μsec ± 0.2%**</span> | 0%                                          | 2.387 msec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 16  | 1000 | 10           | <span style="color:#00aa00">**8.988 μsec ± 0.1%**</span> | 0%                                          | 4.599 msec ± 0.3%               | <span style="color:#00aa00">**100%**</span>   |
-| 32  | 1000 | 10           | <span style="color:#00aa00">**12.91 μsec ± 0.0%**</span> | 0%                                          | 9.260 msec ± 0.5%               | <span style="color:#00aa00">**100%**</span>   |
-| 64  | 1000 | 10           | <span style="color:#00aa00">**14.60 μsec ± 0.2%**</span> | 0%                                          | 19.13 msec ± 0.5%               | <span style="color:#00aa00">**100%**</span>   |
-| 128 | 1000 | 10           | <span style="color:#00aa00">**15.26 μsec ± 0.2%**</span> | 0%                                          | 40.74 msec ± 0.4%               | <span style="color:#00aa00">**100%**</span>   |
-| 256 | 1000 | 10           | <span style="color:#00aa00">**16.34 μsec ± 0.1%**</span> | 0%                                          | 86.51 msec ± 0.7%               | <span style="color:#00aa00">**100%**</span>   |
-|     |      | **Geomean:** | <span style="color:#00aa00">**4.307 μsec ± 0.1%**</span> |                                             | 1.383 msec ± 0.3%               |                                               |
-|     |      | **Mean:**    |                                                          | 31.5%                                       |                                 | <span style="color:#00aa00">**100.0%**</span> |
+| `k` | `n`  | `n_cons`     | `randint_numba`<br>(time)                                | `randint_numba`<br>(accuracy %)               | `randint_constrained_numba`<br>(time) | `randint_constrained_numba`<br>(accuracy %)    |
+| --- | ---- | ------------ | -------------------------------------------------------- | --------------------------------------------- | ------------------------------------- | ---------------------------------------------- |
+| 2   | 10   | 10           | <span style="color:#00aa00">**1.321 μsec ± 0.2%**</span> | <span style="color:#00aa00">**100.0%**</span> | 2.311 μsec ± 0.6%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 4   | 10   | 10           | <span style="color:#00aa00">**1.359 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100.0%**</span> | 3.005 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 8   | 10   | 10           | <span style="color:#00aa00">**1.350 μsec ± 0.1%**</span> | <span style="color:#00aa00">**100.0%**</span> | 4.546 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 2   | 100  | 10           | <span style="color:#00aa00">**1.810 μsec ± 0.1%**</span> | 86.7%                                         | 2.904 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 4   | 100  | 10           | <span style="color:#00aa00">**2.057 μsec ± 0.1%**</span> | 40.3%                                         | 4.220 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 8   | 100  | 10           | <span style="color:#00aa00">**2.506 μsec ± 0.1%**</span> | 0.5%                                          | 7.000 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 16  | 100  | 10           | <span style="color:#00aa00">**3.275 μsec ± 0.1%**</span> | 0.2%                                          | 12.85 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 32  | 100  | 10           | <span style="color:#00aa00">**3.411 μsec ± 0.3%**</span> | 0.0%                                          | 24.48 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 64  | 100  | 10           | <span style="color:#00aa00">**3.370 μsec ± 0.1%**</span> | 0.0%                                          | 48.06 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 2   | 1000 | 10           | <span style="color:#00aa00">**5.327 μsec ± 0.0%**</span> | 79.2%                                         | 8.226 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 4   | 1000 | 10           | <span style="color:#00aa00">**5.856 μsec ± 0.3%**</span> | 28.9%                                         | 14.87 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 8   | 1000 | 10           | <span style="color:#00aa00">**6.899 μsec ± 0.0%**</span> | 0.2%                                          | 29.01 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 16  | 1000 | 10           | <span style="color:#00aa00">**9.088 μsec ± 0.2%**</span> | 0.0%                                          | 57.39 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 32  | 1000 | 10           | <span style="color:#00aa00">**12.98 μsec ± 0.0%**</span> | 0.0%                                          | 113.5 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 64  | 1000 | 10           | <span style="color:#00aa00">**14.72 μsec ± 0.2%**</span> | 0.0%                                          | 229.3 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 128 | 1000 | 10           | <span style="color:#00aa00">**15.38 μsec ± 0.2%**</span> | 0.0%                                          | 463.8 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span>  |
+| 256 | 1000 | 10           | <span style="color:#00aa00">**16.43 μsec ± 0.1%**</span> | 0.0%                                          | 942.3 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span>  |
+|     |      | **Geomean:** | <span style="color:#00aa00">**4.380 μsec ± 0.1%**</span> |                                               | 22.47 μsec ± 0.1%                     |                                                |
+|     |      | **Mean:**    |                                                          | 31.53%                                        |                                       | <span style="color:#00aa00">**100.00%**</span> |
 
 ## Scenario B1
 
 Fixed n=1000 & k=100 with varying number of constraints spanning random 1% portions of the n range (uniform sampling).
 
-| `k` | `n`  | `n_cons`     | `randint_numba`<br>(time)                                | `randint_numba`<br>(accuracy %) | `randint_constrained`<br>(time) | `randint_constrained`<br>(accuracy %)        |                      
-| --- | ---- | ------------ | -------------------------------------------------------- | ------------------------------- | ------------------------------- | -------------------------------------------- |
-| 100 | 1000 | 2            | <span style="color:#00aa00">**1.456 μsec ± 0.1%**</span> | 0%                              | 19.96 msec ± 0.2%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 4            | <span style="color:#00aa00">**1.457 μsec ± 0.2%**</span> | 0%                              | 20.02 msec ± 0.6%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 8            | <span style="color:#00aa00">**1.454 μsec ± 0.1%**</span> | 5%                              | 20.09 msec ± 0.1%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 16           | <span style="color:#00aa00">**1.459 μsec ± 0.3%**</span> | 84%                             | 19.96 msec ± 0.4%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 32           | <span style="color:#00aa00">**1.451 μsec ± 0.1%**</span> | 60%                             | 20.30 msec ± 0.5%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 64           | <span style="color:#00aa00">**1.456 μsec ± 0.1%**</span> | 0%                              | 23.56 msec ± 1.1%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 128          | <span style="color:#00aa00">**1.457 μsec ± 0.2%**</span> | 0%                              | 36.04 msec ± 2.1%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 256          | <span style="color:#00aa00">**1.458 μsec ± 0.4%**</span> | 0%                              | 52.32 msec ± 2.1%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 512          | <span style="color:#00aa00">**1.462 μsec ± 0.1%**</span> | 0%                              | 83.79 msec ± 1.9%               | <span style="color:#00aa00">**79%**</span>   |
-|     |      | **Geomean:** | <span style="color:#00aa00">**1.457 μsec ± 0.2%**</span> |                                 | 28.42 msec ± 1.0%               |                                              |
-|     |      | **Mean:**    |                                                          | 16.6%                           |                                 | <span style="color:#00aa00">**97.7%**</span> |
+| `k` | `n`  | `n_cons`     | `randint_numba`<br>(time)                                | `randint_numba`<br>(accuracy %) | `randint_constrained_numba`<br>(time) | `randint_constrained_numba`<br>(accuracy %)   |               
+| --- | ---- | ------------ | -------------------------------------------------------- | ------------------------------- | ------------------------------------- | --------------------------------------------- |
+| 100 | 1000 | 2            | <span style="color:#00aa00">**1.559 μsec ± 0.1%**</span> | 0.0%                            | 257.8 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 4            | <span style="color:#00aa00">**1.557 μsec ± 0.1%**</span> | 0.2%                            | 260.1 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 8            | <span style="color:#00aa00">**1.553 μsec ± 0.2%**</span> | 4.2%                            | 266.9 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 16           | <span style="color:#00aa00">**1.557 μsec ± 0.2%**</span> | 98.4%                           | 273.9 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 32           | <span style="color:#00aa00">**1.550 μsec ± 0.1%**</span> | 92.6%                           | 296.9 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 64           | <span style="color:#00aa00">**1.555 μsec ± 0.2%**</span> | 1.1%                            | 340.9 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 128          | <span style="color:#00aa00">**1.575 μsec ± 0.1%**</span> | 0.0%                            | 493.8 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 256          | <span style="color:#00aa00">**1.552 μsec ± 0.1%**</span> | 0.0%                            | 693.7 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 512          | <span style="color:#00aa00">**1.541 μsec ± 0.1%**</span> | 0.0%                            | 1.048 msec ± 0.1%                     | <span style="color:#00aa00">**72.9%**</span>  |
+|     |      | **Geomean:** | <span style="color:#00aa00">**1.555 μsec ± 0.1%**</span> |                                 | 383.2 μsec ± 0.1%                     |                                               |
+|     |      | **Mean:**    |                                                          | 21.83%                          |                                       | <span style="color:#00aa00">**96.99%**</span> |
 
 ## Scenario B2
 
 Identical to Scenario B1, but with custom probabilities p provided, favoring larger values.
 
-| `k` | `n`  | `n_cons`     | `randint_numba`<br>(time)                                | `randint_numba`<br>(accuracy %)             | `randint_constrained`<br>(time) | `randint_constrained`<br>(accuracy %)        |          
-| --- | ---- | ------------ | -------------------------------------------------------- | ------------------------------------------- | ------------------------------- | -------------------------------------------- |
-| 100 | 1000 | 2            | <span style="color:#00aa00">**15.01 μsec ± 0.2%**</span> | 0%                                          | 20.23 msec ± 0.6%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 4            | <span style="color:#00aa00">**15.03 μsec ± 0.2%**</span> | 0%                                          | 20.14 msec ± 0.5%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 8            | <span style="color:#00aa00">**15.04 μsec ± 0.2%**</span> | 1%                                          | 20.40 msec ± 0.7%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 16           | <span style="color:#00aa00">**15.01 μsec ± 0.2%**</span> | <span style="color:#00aa00">**100%**</span> | 19.98 msec ± 0.4%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 32           | <span style="color:#00aa00">**15.01 μsec ± 0.1%**</span> | 96%                                         | 20.74 msec ± 0.3%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 64           | <span style="color:#00aa00">**15.04 μsec ± 0.2%**</span> | 0%                                          | 22.81 msec ± 1.6%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 128          | <span style="color:#00aa00">**15.00 μsec ± 0.2%**</span> | 0%                                          | 35.79 msec ± 1.5%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 256          | <span style="color:#00aa00">**15.03 μsec ± 0.2%**</span> | 0%                                          | 52.15 msec ± 2.1%               | <span style="color:#00aa00">**100%**</span>  |
-| 100 | 1000 | 512          | <span style="color:#00aa00">**15.02 μsec ± 0.2%**</span> | 0%                                          | 82.36 msec ± 1.8%               | <span style="color:#00aa00">**60%**</span>   |
-|     |      | **Geomean:** | <span style="color:#00aa00">**15.02 μsec ± 0.2%**</span> |                                             | 28.42 msec ± 1.0%               |                                              |
-|     |      | **Mean:**    |                                                          | 21.9%                                       |                                 | <span style="color:#00aa00">**95.6%**</span> |
+| `k` | `n`  | `n_cons`     | `randint_numba`<br>(time)                                | `randint_numba`<br>(accuracy %)               | `randint_constrained_numba`<br>(time) | `randint_constrained_numba`<br>(accuracy %)   | 
+| --- | ---- | ------------ | -------------------------------------------------------- | --------------------------------------------- | ------------------------------------- | --------------------------------------------- |
+| 100 | 1000 | 2            | <span style="color:#00aa00">**15.10 μsec ± 0.2%**</span> | 0.0%                                          | 281.3 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 4            | <span style="color:#00aa00">**15.10 μsec ± 0.1%**</span> | 0.7%                                          | 284.1 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 8            | <span style="color:#00aa00">**15.11 μsec ± 0.1%**</span> | 2.4%                                          | 290.7 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 16           | <span style="color:#00aa00">**15.10 μsec ± 0.2%**</span> | <span style="color:#00aa00">**100.0%**</span> | 297.5 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 32           | <span style="color:#00aa00">**15.06 μsec ± 0.3%**</span> | 96.0%                                         | 320.8 μsec ± 0.0%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 64           | <span style="color:#00aa00">**15.10 μsec ± 0.1%**</span> | 0.9%                                          | 365.3 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 128          | <span style="color:#00aa00">**15.13 μsec ± 0.3%**</span> | 0.0%                                          | 517.3 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 256          | <span style="color:#00aa00">**15.13 μsec ± 0.2%**</span> | 0.0%                                          | 717.6 μsec ± 0.1%                     | <span style="color:#00aa00">**100.0%**</span> |
+| 100 | 1000 | 512          | <span style="color:#00aa00">**15.11 μsec ± 0.2%**</span> | 0.0%                                          | 1.071 msec ± 0.1%                     | <span style="color:#00aa00">**68.2%**</span>  |
+|     |      | **Geomean:** | <span style="color:#00aa00">**15.10 μsec ± 0.2%**</span> |                                               | 409.2 μsec ± 0.0%                     |                                               |
+|     |      | **Mean:**    |                                                          | 22.22%                                        |                                       | <span style="color:#00aa00">**96.47%**</span> |

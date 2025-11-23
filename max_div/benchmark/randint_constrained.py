@@ -4,10 +4,11 @@ from dataclasses import dataclass
 import numpy as np
 from tqdm import tqdm
 
+from max_div.constraints._numba import _build_array_repr
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.internal.formatting import md_multiline
 from max_div.sampling import randint_numba
-from max_div.sampling.con import Constraint, randint_constrained
+from max_div.sampling.con import Constraint, randint_constrained_numba
 
 from ._formatting import (
     BoldLabels,
@@ -135,8 +136,8 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                 "`n_cons`",
                 md_multiline(["`randint_numba`", "(time)"]),
                 md_multiline(["`randint_numba`", "(accuracy %)"]),
-                md_multiline(["`randint_constrained`", "(time)"]),
-                md_multiline(["`randint_constrained`", "(accuracy %)"]),
+                md_multiline(["`randint_constrained_numba`", "(time)"]),
+                md_multiline(["`randint_constrained_numba`", "(accuracy %)"]),
             ]
         else:
             headers = [
@@ -145,8 +146,8 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                 "n_cons",
                 "randint_numba (time)",
                 "randint_numba (accuracy %)",
-                "randint_constrained (time)",
-                "randint_constrained (accuracy %)",
+                "randint_constrained_numba (time)",
+                "randint_constrained_numba (accuracy %)",
             ]
 
         # --- benchmark scenario ----------------
@@ -186,16 +187,19 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
             else:
                 p = None
 
+            # --- convert constraints to numpy format once ---
+            con_values, con_indices = _build_array_repr(cons)
+
             # --- benchmark & determine precision ---
             data.append(
                 [
                     str(k),
                     str(n),
                     str(n_cons),
-                    _benchmark(n=n, k=k, cons=cons, ignore_constraints=True, p=p, speed=speed),
-                    _determine_precision(n=n, k=k, cons=cons, ignore_constraints=True, p=p, speed=speed),
-                    _benchmark(n=n, k=k, cons=cons, ignore_constraints=False, p=p, speed=speed),
-                    _determine_precision(n=n, k=k, cons=cons, ignore_constraints=False, p=p, speed=speed),
+                    _benchmark(n, k, con_values, con_indices, p, True, speed),
+                    _determine_precision(n, k, cons, con_values, con_indices, p, True, speed),
+                    _benchmark(n, k, con_values, con_indices, p, False, speed),
+                    _determine_precision(n, k, cons, con_values, con_indices, p, False, speed),
                 ]
             )
 
@@ -224,35 +228,58 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
 #  Internal helpers
 # =================================================================================================
 def _benchmark(
-    n: int, k: int, cons: list[Constraint], ignore_constraints: bool, p: np.ndarray | None, speed: float
+    n: int,
+    k: int,
+    con_values: np.ndarray[np.int32],
+    con_indices: np.ndarray[np.int32],
+    p: np.ndarray | None,
+    ignore_constraints: bool,
+    speed: float,
 ) -> BenchmarkResult:
     """
-    Runs a benchmark for given parameters and returns the BenchmarkResult.
-    ignore_constraints: if True, benchmarks `randint_numba`, else `randint_constrained`.
+    Runs a benchmark and returns the BenchmarkResult.
+    If ignore_constraints=True, benchmarks randint_numba.
+    If ignore_constraints=False, benchmarks randint_constrained_numba.
     """
     n = np.int32(n)
     k = np.int32(k)
 
     if ignore_constraints:
+        # Benchmark randint_numba
         if p is None:
 
             def benchmark_func():
                 return randint_numba(n=n, k=k, replace=False)
         else:
-            p = p.astype(np.float32)
+            p_float32 = p.astype(np.float32)
 
             def benchmark_func():
-                return randint_numba(n=n, k=k, replace=False, p=p)
+                return randint_numba(n=n, k=k, replace=False, p=p_float32)
     else:
+        # Benchmark randint_constrained_numba
         if p is None:
 
             def benchmark_func():
-                return randint_constrained(n=n, k=k, cons=cons)
+                return randint_constrained_numba(
+                    n=n,
+                    k=k,
+                    con_values=con_values,
+                    con_indices=con_indices,
+                    p=np.zeros(0, dtype=np.float32),
+                    seed=np.int64(0),
+                )
         else:
-            p = p.astype(np.float32)
+            p_float32 = p.astype(np.float32)
 
             def benchmark_func():
-                return randint_constrained(n=n, k=k, cons=cons, p=p)
+                return randint_constrained_numba(
+                    n=n,
+                    k=k,
+                    con_values=con_values,
+                    con_indices=con_indices,
+                    p=p_float32,
+                    seed=np.int64(0),
+                )
 
     return benchmark(
         f=benchmark_func,
@@ -264,20 +291,29 @@ def _benchmark(
 
 
 def _determine_precision(
-    n: int, k: int, cons: list[Constraint], ignore_constraints: bool, p: np.ndarray | None, speed: float
+    n: int,
+    k: int,
+    cons: list[Constraint],
+    con_values: np.ndarray[np.int32],
+    con_indices: np.ndarray[np.int32],
+    p: np.ndarray | None,
+    ignore_constraints: bool,
+    speed: float,
 ) -> Percentage:
     """
-    Determines how often (%) the constraints are satisfied when sampling with given parameters.
-    ignore_constraints: if True, benchmarks `randint_numba`, else `randint_constrained`.
+    Determines how often (%) the constraints are satisfied when sampling.
+    If ignore_constraints=True, samples with randint_numba.
+    If ignore_constraints=False, samples with randint_constrained_numba.
     """
 
-    # Calculate number of runs based on speed (100 at speed=0, 2 at speed=1)
-    n_runs = int(100 * (0.02**speed))
+    # Calculate number of runs based on speed (1000 at speed=0, 2 at speed=1)
+    n_runs = int(1000 * (0.002**speed))
 
     satisfied_count = 0
     for run_idx in range(n_runs):
         # Run the appropriate function with seed equal to run index
         if ignore_constraints:
+            # Use randint_numba
             if p is None:
                 result = randint_numba(n=np.int32(n), k=np.int32(k), replace=False, seed=np.int64(run_idx))
             else:
@@ -285,10 +321,25 @@ def _determine_precision(
                     n=np.int32(n), k=np.int32(k), replace=False, p=p.astype(np.float32), seed=np.int64(run_idx)
                 )
         else:
+            # Use randint_constrained_numba
             if p is None:
-                result = randint_constrained(n=n, k=k, cons=cons, seed=run_idx)
+                result = randint_constrained_numba(
+                    n=np.int32(n),
+                    k=np.int32(k),
+                    con_values=con_values,
+                    con_indices=con_indices,
+                    p=np.zeros(0, dtype=np.float32),
+                    seed=np.int64(run_idx),
+                )
             else:
-                result = randint_constrained(n=n, k=k, cons=cons, p=p.astype(np.float32), seed=run_idx)
+                result = randint_constrained_numba(
+                    n=np.int32(n),
+                    k=np.int32(k),
+                    con_values=con_values,
+                    con_indices=con_indices,
+                    p=p.astype(np.float32),
+                    seed=np.int64(run_idx),
+                )
 
         # Check if all constraints are satisfied
         constraints_satisfied = True
@@ -301,4 +352,4 @@ def _determine_precision(
         if constraints_satisfied:
             satisfied_count += 1
 
-    return Percentage(frac=satisfied_count / n_runs, decimals=0)
+    return Percentage(frac=satisfied_count / n_runs, decimals=1)
