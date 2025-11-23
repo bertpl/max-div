@@ -59,7 +59,7 @@ def test_constraints_to_numpy():
     cons.add(indices={3, 11}, min_count=2, max_count=2)
 
     # --- act ---------------------------------------------
-    con_values, con_indices = cons._to_numpy()
+    con_values, con_indices = cons.to_numpy()
 
     # --- assert ------------------------------------------
     assert np.array_equal(

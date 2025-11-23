@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from numba.typed import List
 
-from ._constraint import Constraint
+from .constraint import Constraint
 
 
 class Constraints:
@@ -30,13 +30,18 @@ class Constraints:
         self._cons.append(Constraint(indices, min_count, max_count))
 
     def all(self, deepcopy: bool = False) -> list[Constraint]:
+        """
+        Return list of Constraint objects.
+        :param deepcopy: If True, return a deep copy of the list and its contents.
+        :return: list of constraints representing what was added using `add()`.
+        """
         if not deepcopy:
             return self._cons
         else:
             return copy.deepcopy(self._cons)
 
-    def _to_numpy(self) -> tuple[np.ndarray[np.int32], np.ndarray[np.int32]]:
-        """Convert to 2 numpy arrays (con_values, con_indices) for use in internal numba functions."""
+    def to_numpy(self) -> tuple[np.ndarray[np.int32], np.ndarray[np.int32]]:
+        """Convert to 2 numpy arrays (con_values, con_indices) for use in numba sampling functions."""
         from ._numba import _build_array_repr
 
         return _build_array_repr(self._cons)

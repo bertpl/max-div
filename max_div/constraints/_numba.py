@@ -2,7 +2,7 @@ import numba
 import numpy as np
 from numba.typed import List
 
-from ._constraint import Constraint
+from .constraint import Constraint
 
 
 # =================================================================================================

@@ -4,23 +4,14 @@ Methods for sampling WITH constraints.
 
 import copy
 import math
-from dataclasses import dataclass
 
 import numba
 import numpy as np
 from numba import types
 
+from max_div.constraints import Constraint
 from max_div.constraints._numba import _np_con_indices, _np_con_max_value, _np_con_min_value
 from max_div.sampling import randint_numba
-
-
-@dataclass
-class Constraint:
-    """Constraint indicating we want to sample at least `min_count` and at most `max_count` integers from `int_set`."""
-
-    int_set: set[int]
-    min_count: int
-    max_count: int
 
 
 # =================================================================================================
@@ -43,7 +34,8 @@ def randint_constrained(
 
     * `randint_constrained` is essentially a version of [`randint`][max_div.sampling.uncon.randint] that supports constraints.
 
-    * for benchmark results, see [here](../../../../benchmarks/randint.md)
+    * It is strongly advised to use the fully equivalent function [randint_constrained_numba][max_div.sampling.con.randint_constraint_numba]
+      which is 10-100x faster due to its use of numba JIT compilation and efficient numpy-based data structures.
 
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)
@@ -252,8 +244,13 @@ def randint_constrained_numba(
     seed: np.int64 = 0,
 ) -> np.ndarray[np.int32]:
     """
-    Numba version of randint_constrained.
+    Numba version of randint_constrained, which is 10-100x faster than the pure Python version.
+
     Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
+
+    `con_values` & `con_indices` can be obtained by using the `to_numpy` method of the [Constraints][max_div.constraints.constraints.Constraints] class.
+
+    For benchmark results, see [here](../../../../benchmarks/randint_constrained.md)
 
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)
