@@ -14,7 +14,7 @@ uv run max-div benchmark --markdown randint_constrained
 
 We compare the following situations:
 - use `randint_numba`, i.e. we simply sample without taking constraints into account
-- use `randint_constrained_numba`, i.e. we sample taking constraints into account
+- use `randint_constrained`, i.e. we sample taking constraints into account
 
 We test both speed (absolute time of a single call) and accuracy (% of cases the generated samples satisfied the constraints).
 
@@ -27,8 +27,8 @@ Varying n & k with 10 non-overlapping constraints spanning equal portions of the
 
 #### Timing Results                                                                                                                                                                                              
 
-| `k` | `n`  | `n_cons`     | `randint_numba`                                          | `randint_constrained_numba`<br>(eager=False) | `randint_constrained_numba`<br>(eager=True) |
-| --- | ---- | ------------ | -------------------------------------------------------- | -------------------------------------------- | ------------------------------------------- |
+| `k` | `n`  | `n_cons`     | `randint_numba`                                          | `randint_constrained`<br>(eager=False) | `randint_constrained`<br>(eager=True) |
+| --- | ---- | ------------ |----------------------------------------------------------| -------------------------------------------- | ------------------------------------------- |
 | 2   | 10   | 10           | <span style="color:#00aa00">**544.0 nsec ± 0.4%**</span> | 1.420 μsec ± 0.4%                            | 1.414 μsec ± 0.4%                           |
 | 4   | 10   | 10           | <span style="color:#00aa00">**548.6 nsec ± 1.0%**</span> | 1.959 μsec ± 0.5%                            | 1.925 μsec ± 0.4%                           |
 | 8   | 10   | 10           | <span style="color:#00aa00">**573.8 nsec ± 0.4%**</span> | 3.074 μsec ± 0.3%                            | 3.078 μsec ± 0.2%                           |
@@ -50,8 +50,8 @@ Varying n & k with 10 non-overlapping constraints spanning equal portions of the
 
 #### Accuracy Results
 
-| `k` | `n`  | `n_cons`  | `randint_numba`                               | `randint_constrained_numba`<br>(eager=False)   | `randint_constrained_numba`<br>(eager=True)    |
-| --- | ---- | --------- | --------------------------------------------- | ---------------------------------------------- | ---------------------------------------------- |
+| `k` | `n`  | `n_cons`  | `randint_numba`                               | `randint_constrained`<br>(eager=False)   | `randint_constrained`<br>(eager=True)    |
+| --- | ---- | --------- |-----------------------------------------------| ---------------------------------------------- | ---------------------------------------------- |
 | 2   | 10   | 10        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
 | 4   | 10   | 10        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
 | 8   | 10   | 10        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
@@ -75,8 +75,8 @@ Varying n & k with 10 non-overlapping constraints spanning equal portions of the
 
 #### Timing Results                                                                                                                                                                                              
 
-| `k` | `n`  | `n_cons`     | `randint_numba`                                          | `randint_constrained_numba`<br>(eager=False) | `randint_constrained_numba`<br>(eager=True) |
-| --- | ---- | ------------ | -------------------------------------------------------- | -------------------------------------------- | ------------------------------------------- |
+| `k` | `n`  | `n_cons`     | `randint_numba`                                          | `randint_constrained`<br>(eager=False) | `randint_constrained`<br>(eager=True) |
+| --- | ---- | ------------ |----------------------------------------------------------| -------------------------------------------- | ------------------------------------------- |
 | 2   | 10   | 10           | <span style="color:#00aa00">**680.3 nsec ± 0.7%**</span> | 1.309 μsec ± 0.6%                            | 1.323 μsec ± 0.5%                           |
 | 4   | 10   | 10           | <span style="color:#00aa00">**694.7 nsec ± 1.2%**</span> | 1.866 μsec ± 0.5%                            | 1.843 μsec ± 0.6%                           |
 | 8   | 10   | 10           | <span style="color:#00aa00">**678.6 nsec ± 0.7%**</span> | 2.975 μsec ± 0.3%                            | 2.978 μsec ± 0.3%                           |
@@ -98,8 +98,8 @@ Varying n & k with 10 non-overlapping constraints spanning equal portions of the
 
 #### Accuracy Results
 
-| `k` | `n`  | `n_cons`  | `randint_numba`                               | `randint_constrained_numba`<br>(eager=False)   | `randint_constrained_numba`<br>(eager=True)    |
-| --- | ---- | --------- | --------------------------------------------- | ---------------------------------------------- | ---------------------------------------------- |
+| `k` | `n`  | `n_cons`  | `randint_numba`                               | `randint_constrained`<br>(eager=False)   | `randint_constrained`<br>(eager=True)    |
+| --- | ---- | --------- |-----------------------------------------------| ---------------------------------------------- | ---------------------------------------------- |
 | 2   | 10   | 10        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
 | 4   | 10   | 10        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
 | 8   | 10   | 10        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
@@ -127,8 +127,8 @@ Fixed n=1000 & k=100 with varying number of constraints spanning random 1% porti
 
 #### Timing Results                                                                                                                                                                                              
 
-| `k` | `n`  | `n_cons`     | `randint_numba`                                          | `randint_constrained_numba`<br>(eager=False) | `randint_constrained_numba`<br>(eager=True) |
-| --- | ---- | ------------ | -------------------------------------------------------- | -------------------------------------------- | ------------------------------------------- |
+| `k` | `n`  | `n_cons`     | `randint_numba`                                          | `randint_constrained`<br>(eager=False) | `randint_constrained`<br>(eager=True) |
+| --- | ---- | ------------ |----------------------------------------------------------| -------------------------------------------- | ------------------------------------------- |
 | 100 | 1000 | 2            | <span style="color:#00aa00">**877.3 nsec ± 2.0%**</span> | 228.7 μsec ± 0.2%                            | 227.5 μsec ± 0.2%                           |
 | 100 | 1000 | 4            | <span style="color:#00aa00">**883.8 nsec ± 0.7%**</span> | 230.5 μsec ± 0.2%                            | 230.4 μsec ± 0.2%                           |
 | 100 | 1000 | 8            | <span style="color:#00aa00">**878.2 nsec ± 1.2%**</span> | 234.5 μsec ± 0.2%                            | 233.4 μsec ± 0.2%                           |
@@ -145,8 +145,8 @@ Fixed n=1000 & k=100 with varying number of constraints spanning random 1% porti
 
 #### Accuracy Results
 
-| `k` | `n`  | `n_cons`  | `randint_numba`                             | `randint_constrained_numba`<br>(eager=False)  | `randint_constrained_numba`<br>(eager=True)   |
-| --- | ---- | --------- | ------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+| `k` | `n`  | `n_cons`  | `randint_numba`                             | `randint_constrained`<br>(eager=False)  | `randint_constrained`<br>(eager=True)   |
+| --- | ---- | --------- |---------------------------------------------| --------------------------------------------- | --------------------------------------------- |
 | 100 | 1000 | 2         | 0.0%                                        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span> |
 | 100 | 1000 | 4         | 0.0%                                        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span> |
 | 100 | 1000 | 8         | 0.0%                                        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span> |
@@ -165,8 +165,8 @@ Fixed n=1000 & k=100 with varying number of constraints spanning random 1% porti
 
 #### Timing Results                                                                                                                                                                                              
 
-| `k` | `n`  | `n_cons`     | `randint_numba`                                          | `randint_constrained_numba`<br>(eager=False) | `randint_constrained_numba`<br>(eager=True) |
-| --- | ---- | ------------ | -------------------------------------------------------- | -------------------------------------------- | ------------------------------------------- |
+| `k` | `n`  | `n_cons`     | `randint_numba`                                          | `randint_constrained`<br>(eager=False) | `randint_constrained`<br>(eager=True) |
+| --- | ---- | ------------ |----------------------------------------------------------| -------------------------------------------- | ------------------------------------------- |
 | 100 | 1000 | 2            | <span style="color:#00aa00">**10.68 μsec ± 0.6%**</span> | 238.8 μsec ± 0.2%                            | 239.6 μsec ± 0.9%                           |
 | 100 | 1000 | 4            | <span style="color:#00aa00">**10.63 μsec ± 0.5%**</span> | 241.2 μsec ± 0.2%                            | 241.0 μsec ± 0.3%                           |
 | 100 | 1000 | 8            | <span style="color:#00aa00">**10.61 μsec ± 0.7%**</span> | 245.1 μsec ± 0.2%                            | 243.9 μsec ± 0.2%                           |
@@ -183,8 +183,8 @@ Fixed n=1000 & k=100 with varying number of constraints spanning random 1% porti
 
 #### Accuracy Results
 
-| `k` | `n`  | `n_cons`  | `randint_numba`                             | `randint_constrained_numba`<br>(eager=False)  | `randint_constrained_numba`<br>(eager=True)   |
-| --- | ---- | --------- | ------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+| `k` | `n`  | `n_cons`  | `randint_numba`                             | `randint_constrained`<br>(eager=False)  | `randint_constrained`<br>(eager=True)   |
+| --- | ---- | --------- |---------------------------------------------| --------------------------------------------- | --------------------------------------------- |
 | 100 | 1000 | 2         | 0.0%                                        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span> |
 | 100 | 1000 | 4         | 0.0%                                        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span> |
 | 100 | 1000 | 8         | 0.0%                                        | <span style="color:#00aa00">**100.0%**</span> | <span style="color:#00aa00">**100.0%**</span> |

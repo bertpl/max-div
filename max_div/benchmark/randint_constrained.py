@@ -10,8 +10,9 @@ from max_div.constraints._numba import _build_array_repr
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.internal.formatting import md_multiline
 from max_div.sampling import randint_numba
-from max_div.sampling.con import Constraint, randint_constrained_numba
+from max_div.sampling.con import randint_constrained
 
+from ..constraints import Constraint
 from ._formatting import (
     BoldLabels,
     CellContent,
@@ -184,7 +185,7 @@ def _benchmark(
     k = np.int32(k)
 
     # build a <index_range> number of different constraints, to randomize the problems we benchmark
-    index_range = 100
+    index_range = int(100 * (0.02**speed))  # 100 at speed=0, 2 at speed=1
     lst_cons = []
     lst_con_values = []
     lst_con_indices = []
@@ -211,7 +212,7 @@ def _benchmark(
         if p is None:
 
             def benchmark_func(_idx: int):
-                return randint_constrained_numba(
+                return randint_constrained(
                     n=n,
                     k=k,
                     con_values=lst_con_values[_idx],
@@ -224,7 +225,7 @@ def _benchmark(
             p_float32 = p.astype(np.float32)
 
             def benchmark_func(_idx: int):
-                return randint_constrained_numba(
+                return randint_constrained(
                     n=n,
                     k=k,
                     con_values=lst_con_values[_idx],
@@ -280,7 +281,7 @@ def _determine_precision(
                 )
         else:
             # Use randint_constrained_numba
-            result = randint_constrained_numba(
+            result = randint_constrained(
                 n=np.int32(n),
                 k=np.int32(k),
                 con_values=con_values,
