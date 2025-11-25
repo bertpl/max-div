@@ -2,7 +2,7 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.1.2
-> *(under development)*
+> *(2025-11-25)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
@@ -12,6 +12,7 @@
 - **improved**:
   - speed up test coverage generation
   - improve visual clarity of `randint_constrained` benchmarking output
+  - add benchmarking for `randint_constrained_robust` to `benchmark randint_constrained` CLI command
 
 
 <!------------------------------------------------------------------------------------------------->
