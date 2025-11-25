@@ -4,6 +4,7 @@ Methods for sampling WITHOUT constraints.
 
 import numba
 import numpy as np
+from numpy.typing import NDArray
 
 from max_div.internal.math.fast_log import fast_log2_f32_poly
 from max_div.internal.math.random import (
@@ -22,10 +23,10 @@ def randint(
     n: int,
     k: int | None = None,
     replace: bool = True,
-    p: np.ndarray[np.float32] | None = None,
+    p: NDArray[np.float32] | None = None,
     seed: int | None = None,
     use_numba: bool = True,
-) -> int | np.ndarray[np.int64]:
+) -> int | NDArray[np.int64]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
 
@@ -84,9 +85,9 @@ def randint_numpy(
     n: np.int32,
     k: np.int32 | None = None,
     replace: bool = True,
-    p: np.ndarray[float] | None = None,
+    p: NDArray[np.float64] | None = None,
     seed: np.int64 | None = None,
-) -> np.int32 | np.ndarray[np.int32]:
+) -> np.int32 | NDArray[np.int32]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
 
@@ -142,9 +143,9 @@ def randint_numba(
     n: np.int32,
     k: np.int32,
     replace: bool,
-    p: np.ndarray[np.float32] = np.zeros(0, dtype=np.float32),
+    p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),
     seed: np.int64 = 0,
-) -> np.ndarray[np.int32]:
+) -> NDArray[np.int32]:
     """
     Randomly sample `k` integers from range `[0, n-1]`, optionally with replacement and per-value probabilities.
 

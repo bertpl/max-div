@@ -5,6 +5,7 @@ Methods for sampling WITH constraints.
 import numba
 import numpy as np
 from numba import types
+from numpy.typing import NDArray
 
 from max_div.constraints._numba import _np_con_indices, _np_con_max_value, _np_con_min_value
 from max_div.sampling import randint_numba
@@ -24,11 +25,11 @@ from max_div.sampling import randint_numba
 )
 def _compute_score(
     n: np.int32,
-    con_values: np.ndarray[np.int32],
-    con_indices: np.ndarray[np.int32],
-    already_sampled: np.ndarray[np.int32],
+    con_values: NDArray[np.int32],
+    con_indices: NDArray[np.int32],
+    already_sampled: NDArray[np.int32],
     hard_max_constraints: bool,
-) -> np.ndarray[np.int32]:
+) -> NDArray[np.int32]:
     """
     Score each integer in `[0, n)` based on how sampling each integer helps toward satisfying the constraints
       - if it helps achieve a min_count that is not satisfied yet:    +1
@@ -90,12 +91,12 @@ def _compute_score(
 def randint_constrained(
     n: np.int32,
     k: np.int32,
-    con_values: np.ndarray[np.int32],
-    con_indices: np.ndarray[np.int32],
-    p: np.ndarray[np.float32] = np.zeros(0, dtype=np.float32),
+    con_values: NDArray[np.int32],
+    con_indices: NDArray[np.int32],
+    p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),
     seed: np.int64 = 0,
     eager: bool = False,
-) -> np.ndarray[np.int32]:
+) -> NDArray[np.int32]:
     """
     Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
 

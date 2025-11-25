@@ -3,6 +3,7 @@ from typing import Iterable
 
 import numpy as np
 from numba.typed import List
+from numpy.typing import NDArray
 
 from .constraint import Constraint
 
@@ -52,7 +53,7 @@ class Constraints:
 
         return True
 
-    def to_numpy(self) -> tuple[np.ndarray[np.int32], np.ndarray[np.int32]]:
+    def to_numpy(self) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
         """Convert to 2 numpy arrays (con_values, con_indices) for use in numba sampling functions."""
         from ._numba import _build_array_repr
 

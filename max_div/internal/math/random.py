@@ -10,7 +10,8 @@ This is based on the following:
 
 import numba
 import numpy as np
-from numpy import float32, float64, int32, int64, uint32, uint64
+from numpy import float32, float64, int32, int64, uint64
+from numpy.typing import NDArray
 
 # =================================================================================================
 #  Constants
@@ -34,7 +35,7 @@ def rotl(x: uint64, k: uint64) -> uint64:
 
 
 @numba.njit(fastmath=True, inline="always")
-def _xoroshiro128plus_next(rng_state: np.ndarray[uint64]) -> uint64:
+def _xoroshiro128plus_next(rng_state: NDArray[uint64]) -> uint64:
     """Generate next random uint64 and update state in-place"""
     s0 = rng_state[0]
     s1 = rng_state[1]
@@ -48,7 +49,7 @@ def _xoroshiro128plus_next(rng_state: np.ndarray[uint64]) -> uint64:
 
 
 @numba.njit(fastmath=True)
-def _splitmix64_next(init_state: np.ndarray[uint64]) -> uint64:
+def _splitmix64_next(init_state: NDArray[uint64]) -> uint64:
     """Used to initialize xoroshiro128+ state from single seed; state is a 1-element array, modified in-place."""
     z = init_state[0] + uint64(0x9E3779B97F4A7C15)
     init_state[0] = z
@@ -61,7 +62,7 @@ def _splitmix64_next(init_state: np.ndarray[uint64]) -> uint64:
 #  Interface
 # =================================================================================================
 @numba.njit(fastmath=True, inline="always")
-def set_seed(seed: np.int64) -> np.ndarray[uint64]:
+def set_seed(seed: np.int64) -> NDArray[uint64]:
     """Initialize xoroshiro128+ state from single seed; using splitmix64 algorithm."""
     init_state = np.array([seed], dtype=uint64)
 
@@ -73,21 +74,21 @@ def set_seed(seed: np.int64) -> np.ndarray[uint64]:
 
 
 @numba.njit("float64(uint64[:])", fastmath=True, inline="always")
-def rand_float64(rng_state: np.ndarray[uint64]) -> float64:
+def rand_float64(rng_state: NDArray[uint64]) -> float64:
     """Generate a random float64 in [0.0, 1.0) using the provided rng_state."""
     rnd_uint64 = _xoroshiro128plus_next(rng_state)
     return float64((rnd_uint64 >> uint64(11)) * _TO_FLOAT64)  # 2**-53
 
 
 @numba.njit("float32(uint64[:])", fastmath=True, inline="always")
-def rand_float32(rng_state: np.ndarray[uint64]) -> float32:
+def rand_float32(rng_state: NDArray[uint64]) -> float32:
     """Generate a random float32 in [0.0, 1.0) using the provided rng_state."""
     rnd_uint64 = _xoroshiro128plus_next(rng_state)
     return float32((rnd_uint64 >> uint64(40)) * _TO_FLOAT32)  # 2**-24
 
 
 @numba.njit("int64(uint64[:], int64, int64)", fastmath=True, inline="always")
-def rand_int64(rng_state: np.ndarray[uint64], low: np.int64, high: np.int64) -> np.int64:
+def rand_int64(rng_state: NDArray[uint64], low: np.int64, high: np.int64) -> np.int64:
     """
     Generate a random int64 in [low, high) using the provided rng_state.
     There might be a small bias for large (high-low) if the range is not a power of two.
@@ -102,7 +103,7 @@ def rand_int64(rng_state: np.ndarray[uint64], low: np.int64, high: np.int64) -> 
 
 
 @numba.njit("int32(uint64[:], int32, int32)", fastmath=True, inline="always")
-def rand_int32(rng_state: np.ndarray[uint64], low: np.int32, high: np.int32) -> np.int32:
+def rand_int32(rng_state: NDArray[uint64], low: np.int32, high: np.int32) -> np.int32:
     """
     Generate a random int32 in [low, high) using the provided rng_state.
     There might be a small bias for large (high-low) if the range is not a power of two.
@@ -117,9 +118,7 @@ def rand_int32(rng_state: np.ndarray[uint64], low: np.int32, high: np.int32) -> 
 
 
 @numba.njit("int32[:](uint64[:], int32, int32, int32)", fastmath=True, inline="always")
-def rand_int32_array(
-    rng_state: np.ndarray[uint64], low: np.int32, high: np.int32, size: np.int32
-) -> np.ndarray[np.int32]:
+def rand_int32_array(rng_state: NDArray[uint64], low: np.int32, high: np.int32, size: np.int32) -> NDArray[np.int32]:
     """
     Generate an array of random int32 values in [low, high) using the provided rng_state.
     Optimized to generate 2 values per RNG call by using upper and lower 32 bits.

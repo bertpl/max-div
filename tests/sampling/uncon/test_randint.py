@@ -2,6 +2,7 @@ import numbers
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from max_div.sampling.uncon import randint
 
@@ -9,7 +10,7 @@ from max_div.sampling.uncon import randint
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def get_probabilities(n: int) -> np.ndarray[np.float32]:
+def get_probabilities(n: int) -> NDArray[np.float32]:
     probs = np.random.random(n)
     probs /= probs.sum()
     return probs.astype(np.float32)
