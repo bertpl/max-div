@@ -134,9 +134,9 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                         str(k),
                         str(n),
                         str(n_cons),
-                        _benchmark(n, k, con_values, con_indices, p, True, speed, False),
-                        _benchmark(n, k, con_values, con_indices, p, False, speed, False),
-                        _benchmark(n, k, con_values, con_indices, p, False, speed, True),
+                        _benchmark(s, n, k, n_cons, p, True, speed, False),
+                        _benchmark(s, n, k, n_cons, p, False, speed, False),
+                        _benchmark(s, n, k, n_cons, p, False, speed, True),
                     ]
                 )
 
@@ -165,104 +165,11 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
 # =================================================================================================
 #  Internal helpers
 # =================================================================================================
-# def _build_scenarios() -> list[_Scenario]:
-#     # --- init --------------------------------------------
-#     scenarios = []
-#
-#     # --- scenario A --------------------------------------
-#     for use_p in [False, True]:
-#         if not use_p:
-#             letter = "A1"
-#             description = "Varying n & k with 10 non-overlapping constraints spanning equal portions of the n range (uniform sampling)."
-#         else:
-#             letter = "A2"
-#             description = "Identical to Scenario A1, but with custom probabilities p provided, favoring larger values."
-#
-#         scenarios.append(
-#             Scenario(
-#                 letter=letter,
-#                 description=description,
-#                 n_k_cons_tuples=[
-#                     (n, k, 10)
-#                     for n in [10, 100, 1000]
-#                     for k in [2**i for i in range(1, 9)]  # 2, 4, 8, ..., 256
-#                     if k < n
-#                 ],
-#                 use_p=use_p,
-#             ),
-#         )
-#
-#     # --- scenario B --------------------------------------
-#     for use_p in [False, True]:
-#         if not use_p:
-#             letter = "B1"
-#             description = "Fixed n=1000 & k=100 with varying number of constraints spanning random 1% portions of the n range (uniform sampling)."
-#         else:
-#             letter = "B2"
-#             description = "Identical to Scenario B1, but with custom probabilities p provided, favoring larger values."
-#
-#         scenarios.append(
-#             Scenario(
-#                 letter=letter,
-#                 description=description,
-#                 n_k_cons_tuples=[
-#                     (1000, 100, n_cons)
-#                     for n_cons in [2**i for i in range(1, 9)] + [384, 512]  # 2, 4, 8, ..., 256, 384, 512
-#                 ],
-#                 use_p=use_p,
-#             ),
-#         )
-#
-#     # --- return ------------------------------------------
-#     return scenarios
-#
-#
-# def _construct_cons_and_p(
-#     s: _Scenario, n: int, k: int, n_cons: int
-# ) -> tuple[list[Constraint], np.ndarray[np.float32] | None]:
-#     if s.letter.startswith("A"):
-#         # --- scenario A ----------------------------------
-#         cons = [
-#             Constraint(
-#                 int_set=set(range(i * (n // 10), (i + 1) * (n // 10))),
-#                 min_count=math.floor(k / 11),
-#                 max_count=math.ceil(k / 9),
-#             )
-#             for i in range(10)
-#         ]
-#     else:
-#         # --- scenario B ----------------------------------
-#         cons = []
-#         for i in range(n_cons):
-#             cons.append(
-#                 Constraint(
-#                     int_set=set(
-#                         randint_numba(
-#                             n=np.int32(n),
-#                             k=np.int32(n // 100),  # 1% random samples from n
-#                             replace=False,
-#                             seed=np.int64(42 + i),
-#                         )
-#                     ),
-#                     min_count=math.floor(10 / n_cons),
-#                     max_count=math.ceil(100 / n_cons),
-#                 )
-#             )
-#
-#     if s.use_p:
-#         p = np.array([1.0 + i for i in range(n)], dtype=np.float32)
-#         p /= p.sum()
-#     else:
-#         p = None
-#
-#     return cons, p
-
-
 def _benchmark(
+    s: Scenario,
     n: int,
     k: int,
-    con_values: np.ndarray[np.int32],
-    con_indices: np.ndarray[np.int32],
+    n_cons: int,
     p: np.ndarray | None,
     ignore_constraints: bool,
     speed: float,
@@ -276,27 +183,39 @@ def _benchmark(
     n = np.int32(n)
     k = np.int32(k)
 
+    # build a <index_range> number of different constraints, to randomize the problems we benchmark
+    index_range = 100
+    lst_cons = []
+    lst_con_values = []
+    lst_con_indices = []
+    for i in range(index_range):
+        cons = s.build_constraints(n, k, n_cons, seed=424242 * i)
+        con_values, con_indices = _build_array_repr(cons)
+        lst_cons.append(cons)
+        lst_con_values.append(con_values)
+        lst_con_indices.append(con_indices)
+
     if ignore_constraints:
         # Benchmark randint_numba
         if p is None:
 
-            def benchmark_func():
+            def benchmark_func(_idx: int):
                 return randint_numba(n=n, k=k, replace=False)
         else:
             p_float32 = p.astype(np.float32)
 
-            def benchmark_func():
+            def benchmark_func(_idx: int):
                 return randint_numba(n=n, k=k, replace=False, p=p_float32)
     else:
         # Benchmark randint_constrained_numba
         if p is None:
 
-            def benchmark_func():
+            def benchmark_func(_idx: int):
                 return randint_constrained_numba(
                     n=n,
                     k=k,
-                    con_values=con_values,
-                    con_indices=con_indices,
+                    con_values=lst_con_values[_idx],
+                    con_indices=lst_con_indices[_idx],
                     p=np.zeros(0, dtype=np.float32),
                     seed=np.int64(0),
                     eager=eager,
@@ -304,12 +223,12 @@ def _benchmark(
         else:
             p_float32 = p.astype(np.float32)
 
-            def benchmark_func():
+            def benchmark_func(_idx: int):
                 return randint_constrained_numba(
                     n=n,
                     k=k,
-                    con_values=con_values,
-                    con_indices=con_indices,
+                    con_values=lst_con_values[_idx],
+                    con_indices=lst_con_indices[_idx],
                     p=p_float32,
                     seed=np.int64(0),
                     eager=eager,
@@ -321,6 +240,7 @@ def _benchmark(
         n_warmup=int(8 - 5 * speed),
         n_benchmark=int(25 - 22 * speed),
         silent=True,
+        index_range=index_range,
     )
 
 
