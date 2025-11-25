@@ -87,6 +87,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
 
     # --- build scenarios ---------------------------------
     scenarios = [ScenarioA(), ScenarioB()]
+    max_count = int(100 * (0.01**speed))  # max_count=100 if speed=0;  max_count=1 at speed=1
 
     # --- benchmark all scenarios -------------------------
     print("Benchmarking `randint_constrained`...")
@@ -118,10 +119,9 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
             timing_data: list[list[CellContent]] = []
             accuracy_data: list[list[CellContent]] = []
 
-            for n, k, n_cons in tqdm(s.n_k_n_cons_tuples(), leave=False):
-                # --- build constraints ---
-                cons = s.build_constraints(n, k, n_cons, seed=42)
-                con_values, con_indices = _build_array_repr(cons)
+            for i, (n, k, n_cons) in tqdm(enumerate(s.n_k_n_cons_tuples()), leave=False):
+                if i >= max_count:
+                    continue
 
                 # --- construct p ---
                 if use_p:
