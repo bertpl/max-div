@@ -5,6 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+  - remove excessively slow pure-Python `randint_constrained` & promote `randint_constrained_numba` -> `randint_constrained`
+
 - **improved**:
   - speed up test coverage generation
   - improve visual clarity of `randint_constrained` benchmarking output
