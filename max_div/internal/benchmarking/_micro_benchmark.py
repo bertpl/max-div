@@ -79,6 +79,7 @@ def benchmark(
     n_warmup: int = 5,
     n_benchmark: int = 30,
     silent: bool = False,
+    index_range: int | None = None,
 ) -> BenchmarkResult:
     """
     Adaptive micro-benchmarking function, to determine the duration/execution of the provided callable `f`.
@@ -89,32 +90,54 @@ def benchmark(
     :param n_warmup: (int, default=5) Number of warmup runs to perform before benchmarking.
     :param n_benchmark: (int, default=30) Number of benchmark runs to perform.
     :param silent: (bool, default=False) If True, suppresses any output during benchmarking.
+    :param index_range: (int | None, default=None) If provided, indicates that the benchmarking function accepts an
+                         integer index 'i' in range [0, index_range). When running the benchmark, 'i' will be cycled
+                         through this range to allow for more diverse execution paths.
     :return: Median estimate of duration/execution of `f` in seconds.
     """
 
     # --- init --------------------------------------------
     lst_t = []  # list of measured times per execution in seconds
     n_executions = 1  # number of executions per run, adjusted dynamically
-    f_baseline = _baseline_fun  # baseline function to subtract overhead
+    if index_range is None:
+        f_baseline = _baseline_fun  # baseline function to subtract overhead
+    else:
+        f_baseline = _baseline_fun_indexed  # baseline function to subtract overhead, with index
 
     if not silent:
         print("Benchmarking: ", end="")
 
     # --- main loop ---------------------------------------
     for i in range(n_warmup + n_benchmark):
-        # run
-        with Timer() as timer_tot:
-            # baseline
-            with Timer() as timer_baseline:
-                for _ in range(n_executions):
-                    f_baseline()
-            t_baseline = timer_baseline.t_elapsed_sec()
+        if index_range is None:
+            # --- without index -----------------
+            with Timer() as timer_tot:
+                # --- baseline ---
+                with Timer() as timer_baseline:
+                    for _ in range(n_executions):
+                        f_baseline()
+                t_baseline = timer_baseline.t_elapsed_sec()
 
-            # actual function
-            with Timer() as timer_f:
-                for _ in range(n_executions):
-                    f()
-            t_f = timer_f.t_elapsed_sec()
+                # --- actual function ---
+                with Timer() as timer_f:
+                    for _ in range(n_executions):
+                        f()
+                t_f = timer_f.t_elapsed_sec()
+        else:
+            # --- with index --------------------
+            idx_offset = int((i * index_range) // (n_warmup + n_benchmark))
+            with Timer() as timer_tot:
+                # --- baseline ---
+                with Timer() as timer_baseline:
+                    for idx in range(idx_offset, idx_offset + n_executions):
+                        f_baseline(idx % index_range)
+                t_baseline = timer_baseline.t_elapsed_sec()
+
+                # --- actual function ---
+                with Timer() as timer_f:
+                    for idx in range(idx_offset, idx_offset + n_executions):
+                        f(idx % index_range)
+                t_f = timer_f.t_elapsed_sec()
 
         # store results of benchmark runs
         if i >= n_warmup:
@@ -150,4 +173,8 @@ def benchmark(
 #  Baseline benchmarks
 # =================================================================================================
 def _baseline_fun():
+    pass
+
+
+def _baseline_fun_indexed(i: int):
     pass
