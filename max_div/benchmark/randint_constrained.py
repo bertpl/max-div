@@ -10,6 +10,7 @@ from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.sampling import randint_numba
 from max_div.sampling.con import Constraint, randint_constrained_numba
 
+from ..internal.formatting import md_multiline
 from ._formatting import (
     BoldLabels,
     CellContent,
@@ -58,7 +59,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
      * **SCENARIO B1**
         * `n` =  1000
         * `k` =   100
-        * `n_cons` in [2, 4, 8, 16, ..., 512]
+        * `n_cons` in [2, 4, 8, 16, ..., 256, 384, 512]
             * each constraint spans a random 1% of the `n` range (=10 values)
             * min_count = floor(10 / n_cons)
             * max_count = ceil(100 / n_cons)
@@ -102,7 +103,8 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                 "`n`",
                 "`n_cons`",
                 "`randint_numba`",
-                "`randint_constrained_numba`",
+                md_multiline(["`randint_constrained_numba`", "(eager=False)"]),
+                md_multiline(["`randint_constrained_numba`", "(eager=True)"]),
             ]
         else:
             format_table = format_for_console
@@ -111,7 +113,8 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                 "n",
                 "n_cons",
                 "randint_numba",
-                "randint_constrained_numba",
+                "randint_constrained_numba (eager=False)",
+                "randint_constrained_numba (eager=True)",
             ]
 
         # --- benchmark scenario ----------------
@@ -131,8 +134,9 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                     str(k),
                     str(n),
                     str(n_cons),
-                    _benchmark(n, k, con_values, con_indices, p, True, speed),
-                    _benchmark(n, k, con_values, con_indices, p, False, speed),
+                    _benchmark(n, k, con_values, con_indices, p, True, speed, False),
+                    _benchmark(n, k, con_values, con_indices, p, False, speed, False),
+                    _benchmark(n, k, con_values, con_indices, p, False, speed, True),
                 ]
             )
 
@@ -141,8 +145,9 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                     str(k),
                     str(n),
                     str(n_cons),
-                    _determine_precision(n, k, cons, con_values, con_indices, p, True, speed),
-                    _determine_precision(n, k, cons, con_values, con_indices, p, False, speed),
+                    _determine_precision(n, k, cons, con_values, con_indices, p, True, speed, False),
+                    _determine_precision(n, k, cons, con_values, con_indices, p, False, speed, False),
+                    _determine_precision(n, k, cons, con_values, con_indices, p, False, speed, True),
                 ]
             )
 
@@ -222,7 +227,7 @@ def _build_scenarios() -> list[_Scenario]:
                 description=description,
                 n_k_cons_tuples=[
                     (1000, 100, n_cons)
-                    for n_cons in [2**i for i in range(1, 10)] + [768, 1024]  # 2, 4, 8, ..., 512, 768, 1024
+                    for n_cons in [2**i for i in range(1, 9)] + [384, 512]  # 2, 4, 8, ..., 256, 384, 512
                 ],
                 use_p=use_p,
             ),
@@ -281,6 +286,7 @@ def _benchmark(
     p: np.ndarray | None,
     ignore_constraints: bool,
     speed: float,
+    eager: bool,
 ) -> BenchmarkResult:
     """
     Runs a benchmark and returns the BenchmarkResult.
@@ -313,6 +319,7 @@ def _benchmark(
                     con_indices=con_indices,
                     p=np.zeros(0, dtype=np.float32),
                     seed=np.int64(0),
+                    eager=eager,
                 )
         else:
             p_float32 = p.astype(np.float32)
@@ -325,6 +332,7 @@ def _benchmark(
                     con_indices=con_indices,
                     p=p_float32,
                     seed=np.int64(0),
+                    eager=eager,
                 )
 
     return benchmark(
@@ -345,6 +353,7 @@ def _determine_precision(
     p: np.ndarray | None,
     ignore_constraints: bool,
     speed: float,
+    eager: bool,
 ) -> Percentage:
     """
     Determines how often (%) the constraints are satisfied when sampling.
@@ -368,24 +377,15 @@ def _determine_precision(
                 )
         else:
             # Use randint_constrained_numba
-            if p is None:
-                result = randint_constrained_numba(
-                    n=np.int32(n),
-                    k=np.int32(k),
-                    con_values=con_values,
-                    con_indices=con_indices,
-                    p=np.zeros(0, dtype=np.float32),
-                    seed=np.int64(run_idx),
-                )
-            else:
-                result = randint_constrained_numba(
-                    n=np.int32(n),
-                    k=np.int32(k),
-                    con_values=con_values,
-                    con_indices=con_indices,
-                    p=p.astype(np.float32),
-                    seed=np.int64(run_idx),
-                )
+            result = randint_constrained_numba(
+                n=np.int32(n),
+                k=np.int32(k),
+                con_values=con_values,
+                con_indices=con_indices,
+                p=np.zeros(0, dtype=np.float32) if (p is None) else p.astype(np.float32),
+                seed=np.int64(run_idx),
+                eager=eager,
+            )
 
         # Check if all constraints are satisfied
         constraints_satisfied = True

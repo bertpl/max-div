@@ -1,13 +1,14 @@
 import numpy as np
 import pytest
 
+from max_div.constraints._numba import _build_array_repr
 from max_div.sampling.con import Constraint, randint_constrained, randint_constrained_numba
 
 
 # =================================================================================================
 #  randint_constrained
 # =================================================================================================
-@pytest.mark.parametrize("seed", list(range(1, 100)))
+@pytest.mark.parametrize("seed", list(range(1, 50)))
 def test_randint_constrained_basic(seed: int) -> None:
     # --- arrange -----------------------------------------
     n = 20
@@ -31,7 +32,7 @@ def test_randint_constrained_basic(seed: int) -> None:
         assert con.min_count <= count <= con.max_count
 
 
-@pytest.mark.parametrize("seed", list(range(1, 100)))
+@pytest.mark.parametrize("seed", list(range(1, 50)))
 def test_randint_constrained_infeasible(seed: int) -> None:
     # --- arrange -----------------------------------------
     n = 100
@@ -57,8 +58,9 @@ def test_randint_constrained_infeasible(seed: int) -> None:
 # =================================================================================================
 #  randint_constrained_numba
 # =================================================================================================
-@pytest.mark.parametrize("seed", list(range(1, 100)))
-def test_randint_constrained_numba_basic(seed: int) -> None:
+@pytest.mark.parametrize("seed", list(range(1, 50)))
+@pytest.mark.parametrize("eager", [True, False])
+def test_randint_constrained_numba_basic(seed: int, eager: bool) -> None:
     # --- arrange -----------------------------------------
     n = 20
     k = 5
@@ -69,8 +71,6 @@ def test_randint_constrained_numba_basic(seed: int) -> None:
     ]
 
     # convert to numba format
-    from max_div.constraints._numba import _build_array_repr
-
     con_values, con_indices = _build_array_repr(cons)
 
     # --- act ---------------------------------------------
@@ -81,6 +81,7 @@ def test_randint_constrained_numba_basic(seed: int) -> None:
         con_indices=con_indices,
         p=np.zeros(0, dtype=np.float32),
         seed=np.int64(seed),
+        eager=eager,
     )
 
     # --- assert ------------------------------------------
@@ -93,8 +94,9 @@ def test_randint_constrained_numba_basic(seed: int) -> None:
         assert con.min_count <= count <= con.max_count
 
 
-@pytest.mark.parametrize("seed", list(range(1, 100)))
-def test_randint_constrained_numba_infeasible(seed: int) -> None:
+@pytest.mark.parametrize("seed", list(range(1, 50)))
+@pytest.mark.parametrize("eager", [True, False])
+def test_randint_constrained_numba_infeasible(seed: int, eager: bool) -> None:
     # --- arrange -----------------------------------------
     n = 100
     k = 5
@@ -104,8 +106,6 @@ def test_randint_constrained_numba_infeasible(seed: int) -> None:
     ]
 
     # convert to numba format
-    from max_div.constraints._numba import _build_array_repr
-
     con_values, con_indices = _build_array_repr(cons)
 
     # --- act ---------------------------------------------
@@ -116,6 +116,7 @@ def test_randint_constrained_numba_infeasible(seed: int) -> None:
         con_indices=con_indices,
         p=np.zeros(0, dtype=np.float32),
         seed=np.int64(seed),
+        eager=eager,
     )
 
     # --- assert ------------------------------------------

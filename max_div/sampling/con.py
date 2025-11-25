@@ -233,6 +233,7 @@ def _compute_score_numba(
         types.int32[:],
         types.float32[:],
         types.int64,
+        types.boolean,
     )
 )
 def randint_constrained_numba(
@@ -242,6 +243,7 @@ def randint_constrained_numba(
     con_indices: np.ndarray[np.int32],
     p: np.ndarray[np.float32] = np.zeros(0, dtype=np.float32),
     seed: np.int64 = 0,
+    eager: bool = False,
 ) -> np.ndarray[np.int32]:
     """
     Numba version of randint_constrained, which is 10-100x faster than the pure Python version.
@@ -258,6 +260,9 @@ def randint_constrained_numba(
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py
     :param p: optional, target probabilities for each integer in `[0, n)`
     :param seed: random seed
+    :param eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
+                  increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
+                  and adherence to the provided p-values.
     :return: array of samples
     """
     # --- initialize --------------------------------------
@@ -296,7 +301,10 @@ def randint_constrained_numba(
 
         if max_score >= score_threshold:
             # STRATEGY 1: focus on those samples that help satisfy constraints
-            pass
+            if eager:
+                # if eager, we only focus on those candidate samples with the highest score
+                # (focus on 'best' samples, instead of 'good enough' samples)
+                score_threshold = max_score
         else:
             # STRATEGY 2: choose samples with best net effect
             score = _compute_score_numba(n, con_values_working, con_indices, already_sampled, False)
