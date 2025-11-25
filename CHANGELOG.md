@@ -6,7 +6,9 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
-  - speed up coverage generation
+  - speed up test coverage generation
+  - improve visual clarity of `randint_constrained` benchmarking output
+
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.1.1

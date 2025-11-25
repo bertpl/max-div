@@ -1,12 +1,12 @@
 import math
 from dataclasses import dataclass
+from functools import partial
 
 import numpy as np
 from tqdm import tqdm
 
 from max_div.constraints._numba import _build_array_repr
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
-from max_div.internal.formatting import md_multiline
 from max_div.sampling import randint_numba
 from max_div.sampling.con import Constraint, randint_constrained_numba
 
@@ -72,7 +72,119 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
     """
 
     # --- build scenarios ---------------------------------
+    scenarios = _build_scenarios()
+
+    # --- benchmark all scenarios -------------------------
+    print("Benchmarking `randint_constrained`...")
+    print()
+    for s in scenarios:
+        if markdown:
+            print(f"## Scenario {s.letter}")
+        else:
+            print(f"Scenario {s.letter}:")
+
+        print()
+        print(s.description)
+        print()
+
+        # --- create headers --------------------
+        if markdown:
+            format_table = partial(
+                format_as_markdown,
+                highlighters=[
+                    FastestBenchmark(),
+                    HighestPercentage(),
+                    BoldLabels(),
+                ],
+            )
+            headers = [
+                "`k`",
+                "`n`",
+                "`n_cons`",
+                "`randint_numba`",
+                "`randint_constrained_numba`",
+            ]
+        else:
+            format_table = format_for_console
+            headers = [
+                "k",
+                "n",
+                "n_cons",
+                "randint_numba",
+                "randint_constrained_numba",
+            ]
+
+        # --- benchmark scenario ----------------
+        timing_data: list[list[CellContent]] = []
+        accuracy_data: list[list[CellContent]] = []
+
+        for n, k, n_cons in tqdm(s.n_k_cons_tuples, leave=False):
+            # --- build constraints & p ---
+            cons, p = _construct_cons_and_p(s, n, k, n_cons)
+
+            # --- convert constraints to numpy format once ---
+            con_values, con_indices = _build_array_repr(cons)
+
+            # --- benchmark & determine precision ---
+            timing_data.append(
+                [
+                    str(k),
+                    str(n),
+                    str(n_cons),
+                    _benchmark(n, k, con_values, con_indices, p, True, speed),
+                    _benchmark(n, k, con_values, con_indices, p, False, speed),
+                ]
+            )
+
+            accuracy_data.append(
+                [
+                    str(k),
+                    str(n),
+                    str(n_cons),
+                    _determine_precision(n, k, cons, con_values, con_indices, p, True, speed),
+                    _determine_precision(n, k, cons, con_values, con_indices, p, False, speed),
+                ]
+            )
+
+        # --- show timing results -----------------------------------------
+        if markdown:
+            print("### Timing Results")
+            print()
+        else:
+            print("Timing Results:")
+            print()
+
+        timing_data = extend_table_with_aggregate_row(timing_data, agg="geomean")
+        timing_display = format_table(headers, timing_data)
+
+        for line in timing_display:
+            print(line)
+        print()
+
+        # --- show accuracy results -----------------------------------------
+        if markdown:
+            print("### Accuracy Results")
+            print()
+        else:
+            print("Accuracy Results:")
+            print()
+
+        accuracy_data = extend_table_with_aggregate_row(accuracy_data, agg="mean")
+        accuracy_display = format_table(headers, accuracy_data)
+
+        for line in accuracy_display:
+            print(line)
+        print()
+
+
+# =================================================================================================
+#  Internal helpers
+# =================================================================================================
+def _build_scenarios() -> list[_Scenario]:
+    # --- init --------------------------------------------
     scenarios = []
+
+    # --- scenario A --------------------------------------
     for use_p in [False, True]:
         if not use_p:
             letter = "A1"
@@ -95,6 +207,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
             ),
         )
 
+    # --- scenario B --------------------------------------
     for use_p in [False, True]:
         if not use_p:
             letter = "B1"
@@ -109,124 +222,57 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                 description=description,
                 n_k_cons_tuples=[
                     (1000, 100, n_cons)
-                    for n_cons in [2**i for i in range(1, 10)]  # 2, 4, 8, ..., 512
+                    for n_cons in [2**i for i in range(1, 10)] + [768, 1024]  # 2, 4, 8, ..., 512, 768, 1024
                 ],
                 use_p=use_p,
             ),
         )
 
-    # --- benchmark all scenarios -------------------------
-    print("Benchmarking `randint_constrained`...")
-    print()
-    for s in scenarios:
-        if markdown:
-            print(f"## Scenario {s.letter}")
-        else:
-            print(f"Scenario {s.letter}:")
+    # --- return ------------------------------------------
+    return scenarios
 
-        print()
-        print(s.description)
-        print()
 
-        # --- create headers --------------------
-        if markdown:
-            headers = [
-                "`k`",
-                "`n`",
-                "`n_cons`",
-                md_multiline(["`randint_numba`", "(time)"]),
-                md_multiline(["`randint_numba`", "(accuracy %)"]),
-                md_multiline(["`randint_constrained_numba`", "(time)"]),
-                md_multiline(["`randint_constrained_numba`", "(accuracy %)"]),
-            ]
-        else:
-            headers = [
-                "k",
-                "n",
-                "n_cons",
-                "randint_numba (time)",
-                "randint_numba (accuracy %)",
-                "randint_constrained_numba (time)",
-                "randint_constrained_numba (accuracy %)",
-            ]
-
-        # --- benchmark scenario ----------------
-        data: list[list[CellContent]] = []
-        for n, k, n_cons in tqdm(s.n_k_cons_tuples, leave=False):
-            # --- build constraints ---
-            if s.letter.startswith("A"):
-                cons = [
-                    Constraint(
-                        int_set=set(range(i * (n // 10), (i + 1) * (n // 10))),
-                        min_count=math.floor(k / 11),
-                        max_count=math.ceil(k / 9),
-                    )
-                    for i in range(10)
-                ]
-            else:
-                cons = []
-                for i in range(n_cons):
-                    cons.append(
-                        Constraint(
-                            int_set=set(
-                                randint_numba(
-                                    n=np.int32(n),
-                                    k=np.int32(n // 100),  # 1% random samples from n
-                                    replace=False,
-                                    seed=np.int64(42 + i),
-                                )
-                            ),
-                            min_count=math.floor(10 / n_cons),
-                            max_count=math.ceil(100 / n_cons),
+def _construct_cons_and_p(
+    s: _Scenario, n: int, k: int, n_cons: int
+) -> tuple[list[Constraint], np.ndarray[np.float32] | None]:
+    if s.letter.startswith("A"):
+        # --- scenario A ----------------------------------
+        cons = [
+            Constraint(
+                int_set=set(range(i * (n // 10), (i + 1) * (n // 10))),
+                min_count=math.floor(k / 11),
+                max_count=math.ceil(k / 9),
+            )
+            for i in range(10)
+        ]
+    else:
+        # --- scenario B ----------------------------------
+        cons = []
+        for i in range(n_cons):
+            cons.append(
+                Constraint(
+                    int_set=set(
+                        randint_numba(
+                            n=np.int32(n),
+                            k=np.int32(n // 100),  # 1% random samples from n
+                            replace=False,
+                            seed=np.int64(42 + i),
                         )
-                    )
-
-            if s.use_p:
-                p = np.array([1.0 + i for i in range(n)], dtype=np.float32)
-                p /= p.sum()
-            else:
-                p = None
-
-            # --- convert constraints to numpy format once ---
-            con_values, con_indices = _build_array_repr(cons)
-
-            # --- benchmark & determine precision ---
-            data.append(
-                [
-                    str(k),
-                    str(n),
-                    str(n_cons),
-                    _benchmark(n, k, con_values, con_indices, p, True, speed),
-                    _determine_precision(n, k, cons, con_values, con_indices, p, True, speed),
-                    _benchmark(n, k, con_values, con_indices, p, False, speed),
-                    _determine_precision(n, k, cons, con_values, con_indices, p, False, speed),
-                ]
+                    ),
+                    min_count=math.floor(10 / n_cons),
+                    max_count=math.ceil(100 / n_cons),
+                )
             )
 
-        # --- show results -----------------------------------------
-        data = extend_table_with_aggregate_row(data, agg="geomean", include_percentage=False)
-        data = extend_table_with_aggregate_row(data, agg="mean", include_benchmark_result=False)
-        if markdown:
-            display_data = format_as_markdown(
-                headers,
-                data,
-                highlighters=[
-                    FastestBenchmark(),
-                    HighestPercentage(),
-                    BoldLabels(),
-                ],
-            )
-        else:
-            display_data = format_for_console(headers, data)
+    if s.use_p:
+        p = np.array([1.0 + i for i in range(n)], dtype=np.float32)
+        p /= p.sum()
+    else:
+        p = None
 
-        for line in display_data:
-            print(line)
-        print()
+    return cons, p
 
 
-# =================================================================================================
-#  Internal helpers
-# =================================================================================================
 def _benchmark(
     n: int,
     k: int,
