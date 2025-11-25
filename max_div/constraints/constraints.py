@@ -1,4 +1,5 @@
 import copy
+from typing import Iterable
 
 import numpy as np
 from numba.typed import List
@@ -39,6 +40,17 @@ class Constraints:
             return self._cons
         else:
             return copy.deepcopy(self._cons)
+
+    def satisfied(self, samples: Iterable[int]) -> bool:
+        """Check if the given samples satisfy all constraints."""
+        samples_set = set(samples)
+
+        for con in self._cons:
+            count = sum(1 for s in samples_set if s in con.int_set)
+            if count < con.min_count or count > con.max_count:
+                return False
+
+        return True
 
     def to_numpy(self) -> tuple[np.ndarray[np.int32], np.ndarray[np.int32]]:
         """Convert to 2 numpy arrays (con_values, con_indices) for use in numba sampling functions."""

@@ -108,3 +108,28 @@ def _np_con_build_index_sets(
     for i in np.arange(n_cons, dtype=np.int32):
         list_of_sets.append(set(_np_con_indices(con_indices, i)))
     return list_of_sets
+
+
+@numba.njit(inline="always")
+def _np_con_satisfied(
+    con_values: NDArray[np.int32],
+    index_sets: List[set[np.int32]],
+    samples: NDArray[np.int32],
+) -> bool:
+    """Check if the given samples satisfy all constraints."""
+    n_cons = con_values.shape[0]
+
+    for i_con in np.arange(n_cons, dtype=np.int32):
+        min_val = _np_con_min_value(con_values, i_con)
+        max_val = _np_con_max_value(con_values, i_con)
+        indices_set = index_sets[i_con]
+
+        count = np.int32(0)
+        for s in samples:
+            if s in indices_set:
+                count += 1
+
+        if count < min_val or count > max_val:
+            return False
+
+    return True
