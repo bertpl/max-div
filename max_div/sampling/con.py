@@ -7,7 +7,12 @@ import numpy as np
 from numba import types
 from numpy.typing import NDArray
 
-from max_div.constraints._numba import _np_con_indices, _np_con_max_value, _np_con_min_value
+from max_div.constraints._numba import (
+    _np_con_indices,
+    _np_con_max_value,
+    _np_con_min_value,
+    _np_con_satisfied,
+)
 from max_div.sampling import randint_numba
 
 
@@ -221,4 +226,61 @@ def randint_constrained(
         k_remaining -= 1
 
     # --- done ----------------------------------------
+    return samples
+
+
+# =================================================================================================
+#  randint_constrained_robust
+# =================================================================================================
+@numba.njit
+def randint_constrained_robust(
+    n: np.int32,
+    k: np.int32,
+    con_values: NDArray[np.int32],
+    con_indices: NDArray[np.int32],
+    p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),
+    seed: np.int64 = 0,
+    n_trials: int = 5,
+) -> NDArray[np.int32]:
+    """
+    Robust version of `randint_constrained` that tries multiple times to find a feasible solution.
+
+    Strategy:
+      - attempt 0:              randint(...)
+                                        --> this is very cheap, and we might get lucky if constraints are loose
+      - attempt 1:              randint_constrained(..., eager=False)
+                                        --> try once with constraints
+      - attempt 2...n_trials-1: randint_constrained(..., eager=True)
+                                        --> try multiple times with eager=True to maximize chance of feasibility
+
+    :param n: range to sample from [0, n)
+    :param k: number of unique samples to draw (no replacement)
+    :param con_values: 2D array (n_cons, 2) with min_count and max_count for each constraint
+    :param con_indices: 1D array with constraint indices in the format described in _constraints.py
+    :param p: optional, target probabilities for each integer in `[0, n)`
+    :param seed: random seed
+    :param n_trials: number of trials to attempt (>=3)
+    """
+
+    # --- init ------------------------
+    if n_trials < 3:
+        raise ValueError(f"n_trials must be at least 3, here: {n_trials}")
+
+    # --- main loop -------------------
+    for i in range(n_trials):
+        if i == 0:
+            # attempt 0: pure random sampling
+            samples = randint_numba(n, k, False, p, seed + i)
+        elif i == 1:
+            # attempt 1: constrained sampling, non-eager
+            samples = randint_constrained(n, k, con_values, con_indices, p, seed + i, eager=False)
+        else:
+            # attempt 2...n_trials-1: constrained sampling, eager
+            samples = randint_constrained(n, k, con_values, con_indices, p, seed + i, eager=True)
+
+        # --- check feasibility -------
+        if _np_con_satisfied(con_values, con_indices, samples):
+            return samples
+
+    # --- failed all attempts -----
     return samples

@@ -6,6 +6,7 @@ import pytest
 from max_div.constraints import Constraint, Constraints
 from max_div.constraints._numba import (
     _build_array_repr,
+    _is_int_in_sorted_array,
     _np_con_build_index_sets,
     _np_con_indices,
     _np_con_max_value,
@@ -135,10 +136,35 @@ def test_np_con_satisfied(samples: Iterable[int], expected: bool):
     cons.add(indices={10, 11, 12, 13}, min_count=0, max_count=3)
 
     con_values, con_indices = cons.to_numpy()
-    index_sets = _np_con_build_index_sets(con_indices, np.int32(2))
 
     # --- act ---------------------------------------------
-    result = _np_con_satisfied(con_values, index_sets, np.array(list(samples), dtype=np.int32))
+    result = _np_con_satisfied(con_values, con_indices, np.array(list(samples), dtype=np.int32))
 
     # --- assert ------------------------------------------
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "arr, value, expected",
+    [
+        ([1, 2, 10], 0, False),
+        ([1, 2, 10], 1, True),
+        ([1, 2, 10], 2, True),
+        ([1, 2, 10], 5, False),
+        ([1, 2, 10], 10, True),
+        ([1, 2, 10], 20, False),
+        (list(range(0, 1000, 2)), -1, False),
+        (list(range(0, 1000, 2)), 0, True),
+        (list(range(0, 1000, 2)), 77, False),
+        (list(range(0, 1000, 2)), 998, True),
+        (list(range(0, 1000, 2)), 1235, False),
+    ],
+)
+def test_is_int_in_sorted_array(arr: list, value: int, expected: bool):
+    assert (
+        _is_int_in_sorted_array(
+            arr=np.array(arr, dtype=np.int32),
+            value=np.int32(value),
+        )
+        == expected
+    )

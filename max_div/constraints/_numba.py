@@ -114,7 +114,7 @@ def _np_con_build_index_sets(
 @numba.njit(inline="always")
 def _np_con_satisfied(
     con_values: NDArray[np.int32],
-    index_sets: List[set[np.int32]],
+    con_indices: NDArray[np.int32],
     samples: NDArray[np.int32],
 ) -> bool:
     """Check if the given samples satisfy all constraints."""
@@ -123,14 +123,48 @@ def _np_con_satisfied(
     for i_con in np.arange(n_cons, dtype=np.int32):
         min_val = _np_con_min_value(con_values, i_con)
         max_val = _np_con_max_value(con_values, i_con)
-        indices_set = index_sets[i_con]
+        indices = _np_con_indices(con_indices, i_con)
 
         count = np.int32(0)
         for s in samples:
-            if s in indices_set:
+            if _is_int_in_sorted_array(indices, s):
                 count += 1
 
         if count < min_val or count > max_val:
             return False
 
     return True
+
+
+@numba.njit(inline="always")
+def _is_int_in_sorted_array(
+    arr: NDArray[np.int32],
+    value: np.int32,
+) -> bool:
+    """Check if value is in sorted array arr using binary search."""
+    if len(arr) < 32:
+        # Linear search on small array
+        for val in arr:
+            if val == value:
+                return True
+        return False
+    else:
+        # Binary search on sorted array
+        left = np.int32(0)
+        right = np.int32(len(arr) - 1)
+
+        while left <= right:
+            if left == right:
+                return arr[left] == value
+            else:
+                mid = (left + right) // 2
+                mid_val = arr[mid]
+
+                if mid_val == value:
+                    return True
+                elif mid_val < value:
+                    left = mid + 1
+                else:
+                    right = mid - 1
+
+        return False

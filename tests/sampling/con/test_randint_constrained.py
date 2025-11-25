@@ -3,15 +3,15 @@ import pytest
 
 from max_div.constraints import Constraint
 from max_div.constraints._numba import _build_array_repr
-from max_div.sampling.con import randint_constrained
+from max_div.sampling.con import randint_constrained, randint_constrained_robust
 
 
 # =================================================================================================
 #  randint_constrained
 # =================================================================================================
 @pytest.mark.parametrize("seed", list(range(1, 50)))
-@pytest.mark.parametrize("eager", [True, False])
-def test_randint_constrained_basic(seed: int, eager: bool) -> None:
+@pytest.mark.parametrize("mode", ["non_eager", "eager", "robust"])
+def test_randint_constrained_basic(seed: int, mode: str) -> None:
     # --- arrange -----------------------------------------
     n = 20
     k = 5
@@ -25,15 +25,25 @@ def test_randint_constrained_basic(seed: int, eager: bool) -> None:
     con_values, con_indices = _build_array_repr(cons)
 
     # --- act ---------------------------------------------
-    samples = randint_constrained(
-        n=np.int32(n),
-        k=np.int32(k),
-        con_values=con_values,
-        con_indices=con_indices,
-        p=np.zeros(0, dtype=np.float32),
-        seed=np.int64(seed),
-        eager=eager,
-    )
+    if mode == "robust":
+        samples = randint_constrained_robust(
+            n=np.int32(n),
+            k=np.int32(k),
+            con_values=con_values,
+            con_indices=con_indices,
+            p=np.zeros(0, dtype=np.float32),
+            seed=np.int64(seed),
+        )
+    else:
+        samples = randint_constrained(
+            n=np.int32(n),
+            k=np.int32(k),
+            con_values=con_values,
+            con_indices=con_indices,
+            p=np.zeros(0, dtype=np.float32),
+            seed=np.int64(seed),
+            eager=(mode == "eager"),
+        )
 
     # --- assert ------------------------------------------
     assert len(samples) == k
@@ -46,8 +56,8 @@ def test_randint_constrained_basic(seed: int, eager: bool) -> None:
 
 
 @pytest.mark.parametrize("seed", list(range(1, 50)))
-@pytest.mark.parametrize("eager", [True, False])
-def test_randint_constrained_infeasible(seed: int, eager: bool) -> None:
+@pytest.mark.parametrize("mode", ["non_eager", "eager", "robust"])
+def test_randint_constrained_infeasible(seed: int, mode: str) -> None:
     # --- arrange -----------------------------------------
     n = 100
     k = 5
@@ -60,15 +70,25 @@ def test_randint_constrained_infeasible(seed: int, eager: bool) -> None:
     con_values, con_indices = _build_array_repr(cons)
 
     # --- act ---------------------------------------------
-    samples = randint_constrained(
-        n=np.int32(n),
-        k=np.int32(k),
-        con_values=con_values,
-        con_indices=con_indices,
-        p=np.zeros(0, dtype=np.float32),
-        seed=np.int64(seed),
-        eager=eager,
-    )
+    if mode == "robust":
+        samples = randint_constrained_robust(
+            n=np.int32(n),
+            k=np.int32(k),
+            con_values=con_values,
+            con_indices=con_indices,
+            p=np.zeros(0, dtype=np.float32),
+            seed=np.int64(seed),
+        )
+    else:
+        samples = randint_constrained(
+            n=np.int32(n),
+            k=np.int32(k),
+            con_values=con_values,
+            con_indices=con_indices,
+            p=np.zeros(0, dtype=np.float32),
+            seed=np.int64(seed),
+            eager=(mode == "eager"),
+        )
 
     # --- assert ------------------------------------------
     assert len(samples) == k

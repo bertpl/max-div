@@ -6,6 +6,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
+  - implement `randint_constrained_robust`
   - remove excessively slow pure-Python `randint_constrained` & promote `randint_constrained_numba` -> `randint_constrained`
 
 - **improved**:
