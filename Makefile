@@ -29,14 +29,14 @@ build:
 
 test:
 	# run all tests - with numba & just 1 python version
-	uv run --all-extras --python 3.13 pytest ./tests
+	uv run --all-extras --python 3.13 pytest ./tests --durations=10 --disable-warnings
 
 coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
 	mkdir -p ./reports
 	# run tests with Python 3.13; WITH ALL optional dependencies & append to report
-	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --all-extras --python 3.13 pytest ./tests --cov --cov-report=html:./reports/coverage
+	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --all-extras --python 3.13 pytest ./tests --cov --cov-report=html:./reports/coverage --durations=10 --disable-warnings
 
 format:
 	uvx ruff format .;

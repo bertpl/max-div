@@ -2,11 +2,18 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.1.2
-> *(under development)*
+> *(2025-11-25)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+  - implement `randint_constrained_robust`
+  - remove excessively slow pure-Python `randint_constrained` & promote `randint_constrained_numba` -> `randint_constrained`
+
 - **improved**:
-  - speed up coverage generation
+  - speed up test coverage generation
+  - improve visual clarity of `randint_constrained` benchmarking output
+  - add benchmarking for `randint_constrained_robust` to `benchmark randint_constrained` CLI command
+
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.1.1

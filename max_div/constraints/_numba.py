@@ -1,6 +1,7 @@
 import numba
 import numpy as np
 from numba.typed import List
+from numpy.typing import NDArray
 
 from .constraint import Constraint
 
@@ -43,7 +44,7 @@ from .constraint import Constraint
 # =================================================================================================
 def _build_array_repr(
     cons: list[Constraint],
-) -> tuple[np.ndarray[np.int32], np.ndarray[np.int32]]:
+) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
     """
     Convert list of Constraint objects to numba-compatible representation:
       - con_values: 2D numpy array of shape (n_cons, 2) with min_count and max_count for each constraint
@@ -79,19 +80,19 @@ def _build_array_repr(
 
 
 @numba.njit(numba.int32(numba.int32[:, :], numba.int32), inline="always")
-def _np_con_min_value(con_values: np.ndarray[np.int32], i_con: np.int32) -> np.int32:
+def _np_con_min_value(con_values: NDArray[np.int32], i_con: np.int32) -> np.int32:
     """Return min_value of i-th constraint from con_values array."""
     return con_values[i_con, 0]
 
 
 @numba.njit(numba.int32(numba.int32[:, :], numba.int32), inline="always")
-def _np_con_max_value(con_values: np.ndarray[np.int32], i_con: np.int32) -> np.int32:
+def _np_con_max_value(con_values: NDArray[np.int32], i_con: np.int32) -> np.int32:
     """Return max_value of i-th constraint from con_values array."""
     return con_values[i_con, 1]
 
 
 @numba.njit(numba.int32[:](numba.int32[:], numba.int32), inline="always")
-def _np_con_indices(con_indices: np.ndarray[np.int32], i_con: np.int32) -> np.ndarray[np.int32]:
+def _np_con_indices(con_indices: NDArray[np.int32], i_con: np.int32) -> NDArray[np.int32]:
     """Return the indices array for the i-th constraint from con_indices array."""
     start = con_indices[2 * i_con]
     end = con_indices[2 * i_con + 1]
@@ -100,7 +101,7 @@ def _np_con_indices(con_indices: np.ndarray[np.int32], i_con: np.int32) -> np.nd
 
 @numba.njit(inline="always")
 def _np_con_build_index_sets(
-    con_indices: np.ndarray[np.int32],
+    con_indices: NDArray[np.int32],
     n_cons: np.int32,
 ) -> List[set[np.int32]]:
     """Build list of sets of indices for each constraint from con_indices array."""
@@ -108,3 +109,62 @@ def _np_con_build_index_sets(
     for i in np.arange(n_cons, dtype=np.int32):
         list_of_sets.append(set(_np_con_indices(con_indices, i)))
     return list_of_sets
+
+
+@numba.njit(inline="always")
+def _np_con_satisfied(
+    con_values: NDArray[np.int32],
+    con_indices: NDArray[np.int32],
+    samples: NDArray[np.int32],
+) -> bool:
+    """Check if the given samples satisfy all constraints."""
+    n_cons = con_values.shape[0]
+
+    for i_con in np.arange(n_cons, dtype=np.int32):
+        min_val = _np_con_min_value(con_values, i_con)
+        max_val = _np_con_max_value(con_values, i_con)
+        indices = _np_con_indices(con_indices, i_con)
+
+        count = np.int32(0)
+        for s in samples:
+            if _is_int_in_sorted_array(indices, s):
+                count += 1
+
+        if count < min_val or count > max_val:
+            return False
+
+    return True
+
+
+@numba.njit(inline="always")
+def _is_int_in_sorted_array(
+    arr: NDArray[np.int32],
+    value: np.int32,
+) -> bool:
+    """Check if value is in sorted array arr using binary search."""
+    if len(arr) < 32:
+        # Linear search on small array
+        for val in arr:
+            if val == value:
+                return True
+        return False
+    else:
+        # Binary search on sorted array
+        left = np.int32(0)
+        right = np.int32(len(arr) - 1)
+
+        while left <= right:
+            if left == right:
+                return arr[left] == value
+            else:
+                mid = (left + right) // 2
+                mid_val = arr[mid]
+
+                if mid_val == value:
+                    return True
+                elif mid_val < value:
+                    left = mid + 1
+                else:
+                    right = mid - 1
+
+        return False

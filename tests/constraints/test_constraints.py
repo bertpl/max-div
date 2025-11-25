@@ -1,3 +1,5 @@
+from typing import Iterable
+
 import numpy as np
 import pytest
 
@@ -49,6 +51,32 @@ def test_constraints_all(deepcopy: bool):
         assert result is result_2
         assert result[0] is result_2[0]
         assert result[0].int_set is result_2[0].int_set
+
+
+@pytest.mark.parametrize(
+    "samples, expected",
+    [
+        ([], False),
+        ([1], False),
+        ([0, 2], True),
+        ([1, 3, 4], True),
+        ([0, 2, 4, 11], True),
+        ([0, 2, 4, 1], False),
+        ([10, 11, 12, 13], False),
+        ([10, 11], False),
+    ],
+)
+def test_constraints_satisfied(samples: Iterable[int], expected: bool):
+    # --- arrange -----------------------------------------
+    cons = Constraints()
+    cons.add(indices={0, 1, 2, 3, 4}, min_count=2, max_count=3)
+    cons.add(indices={10, 11, 12, 13}, min_count=0, max_count=3)
+
+    # --- act ---------------------------------------------
+    result = cons.satisfied(samples)
+
+    # --- assert ------------------------------------------
+    assert result == expected
 
 
 def test_constraints_to_numpy():

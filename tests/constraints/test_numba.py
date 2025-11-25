@@ -1,12 +1,17 @@
-import numpy as np
+from typing import Iterable
 
-from max_div.constraints import Constraint
+import numpy as np
+import pytest
+
+from max_div.constraints import Constraint, Constraints
 from max_div.constraints._numba import (
     _build_array_repr,
+    _is_int_in_sorted_array,
     _np_con_build_index_sets,
     _np_con_indices,
     _np_con_max_value,
     _np_con_min_value,
+    _np_con_satisfied,
 )
 
 
@@ -109,3 +114,57 @@ def test_np_con_build_index_sets():
     assert set(index_sets[0]) == {0, 1, 2, 3, 4}
     assert set(index_sets[1]) == {10, 11, 12, 13}
     assert set(index_sets[2]) == {3, 11}
+
+
+@pytest.mark.parametrize(
+    "samples, expected",
+    [
+        ([], False),
+        ([1], False),
+        ([0, 2], True),
+        ([1, 3, 4], True),
+        ([0, 2, 4, 11], True),
+        ([0, 2, 4, 1], False),
+        ([10, 11, 12, 13], False),
+        ([10, 11], False),
+    ],
+)
+def test_np_con_satisfied(samples: Iterable[int], expected: bool):
+    # --- arrange -----------------------------------------
+    cons = Constraints()
+    cons.add(indices={0, 1, 2, 3, 4}, min_count=2, max_count=3)
+    cons.add(indices={10, 11, 12, 13}, min_count=0, max_count=3)
+
+    con_values, con_indices = cons.to_numpy()
+
+    # --- act ---------------------------------------------
+    result = _np_con_satisfied(con_values, con_indices, np.array(list(samples), dtype=np.int32))
+
+    # --- assert ------------------------------------------
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "arr, value, expected",
+    [
+        ([1, 2, 10], 0, False),
+        ([1, 2, 10], 1, True),
+        ([1, 2, 10], 2, True),
+        ([1, 2, 10], 5, False),
+        ([1, 2, 10], 10, True),
+        ([1, 2, 10], 20, False),
+        (list(range(0, 1000, 2)), -1, False),
+        (list(range(0, 1000, 2)), 0, True),
+        (list(range(0, 1000, 2)), 77, False),
+        (list(range(0, 1000, 2)), 998, True),
+        (list(range(0, 1000, 2)), 1235, False),
+    ],
+)
+def test_is_int_in_sorted_array(arr: list, value: int, expected: bool):
+    assert (
+        _is_int_in_sorted_array(
+            arr=np.array(arr, dtype=np.int32),
+            value=np.int32(value),
+        )
+        == expected
+    )

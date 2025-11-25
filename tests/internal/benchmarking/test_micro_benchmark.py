@@ -8,16 +8,24 @@ from max_div.internal.benchmarking import BenchmarkResult, benchmark
 @pytest.mark.flaky(reruns=10)
 @pytest.mark.parametrize("t_sleep", [1e-5, 1e-4, 1e-3])
 @pytest.mark.parametrize("silent", [True, False])
-def test_micro_benchmark(t_sleep: float, silent: bool):
+@pytest.mark.parametrize("index_range", [None, 1000])
+def test_micro_benchmark(t_sleep: float, silent: bool, index_range: int | None):
     # --- arrange -----------------------------------------
-    def f_test():
+    def f_test(_idx: int = 0):
         t_start = perf_counter_ns()
         t_end = t_start + (1e9 * t_sleep)
         while perf_counter_ns() < t_end:
             pass
 
     # --- act ---------------------------------------------
-    result = benchmark(f_test, t_per_run=1e-2, n_warmup=10, n_benchmark=20, silent=silent)
+    result = benchmark(
+        f_test,
+        t_per_run=1e-2,
+        n_warmup=10,
+        n_benchmark=20,
+        silent=silent,
+        index_range=index_range,
+    )
 
     # --- assert ------------------------------------------
     assert isinstance(result, BenchmarkResult)

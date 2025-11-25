@@ -1,12 +1,13 @@
 import numba
 import numpy as np
+from numpy.typing import NDArray
 
 
 # =================================================================================================
 #  select_k_min
 # =================================================================================================
 @numba.njit("int32[:](float32[:], int32)", fastmath=True, inline="always")
-def select_k_min(arr: np.ndarray[np.float32], k: np.int32) -> np.ndarray[np.int32]:
+def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:
     """
     Find indices of k smallest elements in a float32 array using Numba.
 
@@ -16,14 +17,14 @@ def select_k_min(arr: np.ndarray[np.float32], k: np.int32) -> np.ndarray[np.int3
 
     Parameters:
     -----------
-    arr : np.ndarray[np.float32]
+    arr : NDArray[np.float32]
         Input array with n elements (typically 1000-10000)
     k : int
         Number of smallest elements to find
 
     Returns:
     --------
-    indices : np.ndarray[np.int32]
+    indices : NDArray[np.int32]
         Array of k indices pointing to the smallest elements.
         Indices are returned in arbitrary order (not sorted by value).
 
@@ -130,7 +131,7 @@ def select_k_min(arr: np.ndarray[np.float32], k: np.int32) -> np.ndarray[np.int3
 #  select_k_max
 # =================================================================================================
 @numba.njit("int32[:](float32[:], int32)", fastmath=True, inline="always")
-def select_k_max(arr: np.ndarray[np.float32], k: np.int32) -> np.ndarray[np.int32]:
+def select_k_max(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:
     """
     Find indices of k largest elements in a float32 array using Numba.
 
@@ -140,14 +141,14 @@ def select_k_max(arr: np.ndarray[np.float32], k: np.int32) -> np.ndarray[np.int3
 
     Parameters:
     -----------
-    arr : np.ndarray[np.float32]
+    arr : NDArray[np.float32]
         Input array with n elements (typically 1000-10000)
     k : int
         Number of largest elements to find
 
     Returns:
     --------
-    indices : np.ndarray[np.int32]
+    indices : NDArray[np.int32]
         Array of k indices pointing to the largest elements.
         Indices are returned in arbitrary order (not sorted by value).
 
