@@ -6,7 +6,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
-  - further speed up test coverage generation
+    - further speed up test coverage generation
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.1.2
@@ -14,13 +14,13 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-  - implement `randint_constrained_robust`
-  - remove excessively slow pure-Python `randint_constrained` & promote `randint_constrained_numba` -> `randint_constrained`
+    - implement `randint_constrained_robust`
+    - remove excessively slow pure-Python `randint_constrained` & promote `randint_constrained_numba` -> `randint_constrained`
 
 - **improved**:
-  - speed up test coverage generation
-  - improve visual clarity of `randint_constrained` benchmarking output
-  - add benchmarking for `randint_constrained_robust` to `benchmark randint_constrained` CLI command
+    - speed up test coverage generation
+    - improve visual clarity of `randint_constrained` benchmarking output
+    - add benchmarking for `randint_constrained_robust` to `benchmark randint_constrained` CLI command
 
 
 <!------------------------------------------------------------------------------------------------->
@@ -29,8 +29,8 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-  - implement `Constraints` class
-  - implement `sampling.con.randint_constrained_numba` function, offering a 10-100x speedup over the non-`numba` version
+    - implement `Constraints` class
+    - implement `sampling.con.randint_constrained_numba` function, offering a 10-100x speedup over the non-`numba` version
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.1.0
@@ -38,13 +38,13 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-  - add `benchmark randint_constrained` command to CLI
+    - add `benchmark randint_constrained` command to CLI
 
 - **improved**:
-  - various minor improvements to docs 
+    - various minor improvements to docs 
 
 - **internal**:
-  - improve test coverage of cli functionality
+    - improve test coverage of cli functionality
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.9
@@ -52,14 +52,14 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-  - add `sampling.con.randint_constrained`, which is like `randint` but supporting constraints
+    - add `sampling.con.randint_constrained`, which is like `randint` but supporting constraints
 
 - **improved**:
-  - make naming more consistent with other known functionality: `sampling.discrete.sample_int` -> `sampling.uncon.randint`
-  - ensure `randint` also works with non-normalized probabilities (with minimal loss of efficiency, especially in `numba`-flavor)
+    - make naming more consistent with other known functionality: `sampling.discrete.sample_int` -> `sampling.uncon.randint`
+    - ensure `randint` also works with non-normalized probabilities (with minimal loss of efficiency, especially in `numba`-flavor)
 
 - **internal**:
-  - update local dev tooling to declutter project root 
+    - update local dev tooling to declutter project root 
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.8
@@ -67,7 +67,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
-  - `sampling.discrete.sample_int`: speedup for non-uniform sampling without replacement (custom min-heap implementation)
+    - `sampling.discrete.sample_int`: speedup for non-uniform sampling without replacement (custom min-heap implementation)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.7
@@ -75,11 +75,11 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
-  - test coverage of internal rng functionality
-  - improve speed of generating `int32` arrays in `sampling.discrete.sample_int`
+    - test coverage of internal rng functionality
+    - improve speed of generating `int32` arrays in `sampling.discrete.sample_int`
   
 - **internal**:
-  - add `pytest-xdist` and `pytest-rerunfailures` to improve test performance & robustness
+    - add `pytest-xdist` and `pytest-rerunfailures` to improve test performance & robustness
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.6
@@ -87,16 +87,16 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-  - make `numba` and non-`numba` versions of `sampling.discrete.sample_int` public and self-sustained (full-featured)
-  - CLI command `numba-status` to report on `numba` installation and configuration status
+    - make `numba` and non-`numba` versions of `sampling.discrete.sample_int` public and self-sustained (full-featured)
+    - CLI command `numba-status` to report on `numba` installation and configuration status
 
 - **improved**:
-  - `sampling.discrete.sample_int`: 
-     - significant speedup
-     - improve benchmarking + add notes on optimization efforts
-  - improve coverage statistics for `numba`-decorated functions
-  - make `numba` a non-optional dependency for the sake of code simplicity
-  - improve granularity of speed-vs-accuracy trade-off in benchmarking functionality (add `--speed` argument)
+    - `sampling.discrete.sample_int`: 
+        - significant speedup
+        - improve benchmarking + add notes on optimization efforts
+    - improve coverage statistics for `numba`-decorated functions
+    - make `numba` a non-optional dependency for the sake of code simplicity
+    - improve granularity of speed-vs-accuracy trade-off in benchmarking functionality (add `--speed` argument)
 
 
 <!------------------------------------------------------------------------------------------------->
@@ -105,11 +105,11 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-  - implement `max-div` CLI, allowing package to be installed as tool to define system-wide command 'max-div'
+    - implement `max-div` CLI, allowing package to be installed as tool to define system-wide command 'max-div'
 
 - **improved**:
-  - allow benchmarking functionality to output results in Markdown format 
-  - switch docs to use `readthedocs` theme
+    - allow benchmarking functionality to output results in Markdown format 
+    - switch docs to use `readthedocs` theme
   
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.4
@@ -117,7 +117,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**: 
-  - further improvements to CI/CD pipeline
+    - further improvements to CI/CD pipeline
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.3
@@ -125,7 +125,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**: 
-  - move to trunk-based development workflow with release branches
+    - move to trunk-based development workflow with release branches
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.2
@@ -133,8 +133,8 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**: 
-  - `sampling.discrete.sample_int`
-  - `benchmark.benchmark_sample_int` 
+    - `sampling.discrete.sample_int`
+    - `benchmark.benchmark_sample_int` 
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.0.1

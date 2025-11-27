@@ -85,4 +85,6 @@ markdown_extensions:
 nav:
   - Home: index.md
   - CLI: cli.md
-  - Benchmark Results: benchmarks/*.md
+  - Benchmark Results: benchmarks/_index.md
+  - Roadmap: roadmap.md
+  - Change Log: changelog.md
