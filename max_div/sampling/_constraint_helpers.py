@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 
 
 # =================================================================================================
-#  Handlers for numpy-based constraint representation
+#  CONSTRUCTORS for numpy-based constraint representation
 # =================================================================================================
 #
 #   Constraints:
@@ -77,6 +77,22 @@ def _build_array_repr(
     return con_values, con_indices
 
 
+def _build_con_membership(
+    m: np.int32,
+    constraints: list["Constraint"],
+) -> dict[np.int32, list[np.int32]]:
+    """Build a mapping from each index to the list of constraints it belongs to."""
+    con_membership: dict[np.int32, list[np.int32]] = {i: [] for i in np.arange(m, dtype=np.int32)}
+    for i_con, con in enumerate(constraints):
+        i_con = np.int32(i_con)
+        for idx in con.int_set:
+            con_membership[np.int32(idx)].append(i_con)
+    return con_membership
+
+
+# =================================================================================================
+#  LOW-LEVEL HANDLING of numpy-based constraint representation
+# =================================================================================================
 @numba.njit(numba.int32(numba.int32[:, :], numba.int32), inline="always")
 def _np_con_min_value(con_values: NDArray[np.int32], i_con: np.int32) -> np.int32:
     """Return min_value of i-th constraint from con_values array."""
@@ -166,3 +182,20 @@ def _is_int_in_sorted_array(
                     right = mid - 1
 
         return False
+
+
+@numba.njit(inline="always")
+def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
+    """
+    Return in total by how much constraints are not satisfied, assuming they represent how many _additional_ samples
+    to select from each constraint.
+    """
+    s = np.int32(0)
+    for i_con in range(con_values.shape[0]):
+        if con_values[i_con, 0] > 0:
+            # not yet enough samples for this constraint
+            s = s + con_values[i_con, 0]
+        if con_values[i_con, 1] < 0:
+            # too many samples for this constraint
+            s = s - con_values[i_con, 1]
+    return s
