@@ -1,11 +1,19 @@
 import copy
+from dataclasses import dataclass
 from typing import Iterable
 
 import numpy as np
 from numba.typed import List
 from numpy.typing import NDArray
 
-from .constraint import Constraint
+
+@dataclass
+class Constraint:
+    """Constraint indicating we want to sample at least `min_count` and at most `max_count` integers from `int_set`."""
+
+    int_set: set[int]
+    min_count: int
+    max_count: int
 
 
 class Constraints:
@@ -54,7 +62,7 @@ class Constraints:
         return True
 
     def to_numpy(self) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
-        """Convert to 2 numpy arrays (con_values, con_indices) for use in numba sampling functions."""
-        from ._numba import _build_array_repr
+        """Convert to 2 numpy arrays (con_values, con_indices) for use in low-level numba sampling functions."""
+        from max_div.sampling._constraint_helpers import _build_array_repr
 
         return _build_array_repr(self._cons)

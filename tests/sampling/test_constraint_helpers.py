@@ -3,8 +3,7 @@ from typing import Iterable
 import numpy as np
 import pytest
 
-from max_div.constraints import Constraint, Constraints
-from max_div.constraints._numba import (
+from max_div.sampling._constraint_helpers import (
     _build_array_repr,
     _is_int_in_sorted_array,
     _np_con_build_index_sets,
@@ -13,6 +12,7 @@ from max_div.constraints._numba import (
     _np_con_min_value,
     _np_con_satisfied,
 )
+from max_div.solver._constraints import Constraint, Constraints
 
 
 def test_build_array_repr():

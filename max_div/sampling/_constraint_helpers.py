@@ -3,8 +3,6 @@ import numpy as np
 from numba.typed import List
 from numpy.typing import NDArray
 
-from .constraint import Constraint
-
 
 # =================================================================================================
 #  Handlers for numpy-based constraint representation
@@ -43,12 +41,12 @@ from .constraint import Constraint
 #
 # =================================================================================================
 def _build_array_repr(
-    cons: list[Constraint],
+    cons: list["Constraint"],
 ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
     """
     Convert list of Constraint objects to numba-compatible representation:
       - con_values: 2D numpy array of shape (n_cons, 2) with min_count and max_count for each constraint
-      - con_indices: 1D numpy array of shape (total_indices,) with concatenated
+      - con_indices: 1D numpy array of shape (2*n_cons + n_indices,) with indexed, concatenated indices of all cons.
 
     :param cons: list of Constraint objects
     :return: tuple of (con_values, con_indices)

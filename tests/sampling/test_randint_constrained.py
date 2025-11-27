@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from max_div.constraints import Constraint
-from max_div.constraints._numba import _build_array_repr
+from max_div.sampling._constraint_helpers import _build_array_repr
 from max_div.sampling.con import randint_constrained, randint_constrained_robust
+from max_div.solver import Constraint
 
 
 # =================================================================================================

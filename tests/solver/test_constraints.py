@@ -3,7 +3,7 @@ from typing import Iterable
 import numpy as np
 import pytest
 
-from max_div.constraints import Constraints
+from max_div.solver._constraints import Constraints
 
 
 # =================================================================================================
