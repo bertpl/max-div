@@ -7,13 +7,14 @@ import numpy as np
 from numba import types
 from numpy.typing import NDArray
 
-from max_div.constraints._numba import (
+from max_div.sampling import randint_numba
+
+from ._constraint_helpers import (
     _np_con_indices,
     _np_con_max_value,
     _np_con_min_value,
     _np_con_satisfied,
 )
-from max_div.sampling import randint_numba
 
 
 # =================================================================================================

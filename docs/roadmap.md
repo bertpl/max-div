@@ -16,12 +16,12 @@
 
 ## v0.2.0
 
-- First version with a `MaxDivSolver` class & all associated classes (metrics, distances, constraints, solver steps, ...)
+- First version of the `MaxDivSolver` framework & all core classes (metrics, distances, constraints, solver state, ...)
 
 ## v0.2.x
-
+ 
+- Implement solver strategies
 - Improvements & optimizations to `MaxDivSolver` functionality
-- Add more solver step implementations
 
 ## v0.3.0
 
