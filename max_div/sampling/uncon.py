@@ -6,7 +6,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div.internal.math.fast_log import fast_log2_f32_poly
+from max_div.internal.math.fast_log import fast_log2_f32
 from max_div.internal.math.random import (
     rand_float32,
     rand_int32,
@@ -249,7 +249,7 @@ def randint_numba(
                         ui = rand_float32(rng_state)
                         # NOTE: we use a fast log2 approximation here for speed; log2 vs log is irrelevant since
                         #       it's just a scaling factor, and we are only interested in the order of the final list
-                        keys[i] = -fast_log2_f32_poly(ui, degree=2) / p[i]  # using fast log2 approximation
+                        keys[i] = -fast_log2_f32(ui) / p[i]  # using fast log2 approximation
 
                 # Get indices of k smallest keys
                 if k <= (10 + n // 20):

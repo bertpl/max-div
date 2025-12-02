@@ -5,7 +5,10 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**:
+    - `fast_log_*` & `fast_log2_*`
+      - simplify & speedup by only supporting degree 2 (we don't need more accuracy)
+      - update computation of coefficients to guarantee continuity and smoothness of the approximation
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.0
