@@ -1,10 +1,9 @@
 import numpy as np
-import pytest
 
 from max_div.internal.math.fast_log import fast_log2_f32, fast_log2_f64, fast_log_f32, fast_log_f64
 
 
-def test_fast_log_f64_poly():
+def test_fast_log_f64():
     # --- arrange -----------------------------------------
     max_diff = 0.006
     x_values = np.logspace(-1, +4, 10_000)
@@ -20,7 +19,7 @@ def test_fast_log_f64_poly():
     assert diff <= max_diff, f"Max diff {diff} exceeds allowed {max_diff}"
 
 
-def test_fast_log2_f64_poly():
+def test_fast_log2_f64():
     # --- arrange -----------------------------------------
     max_diff = 0.008
     x_values = np.logspace(-1, +4, 10_000)
@@ -36,7 +35,7 @@ def test_fast_log2_f64_poly():
     assert diff <= max_diff, f"Max diff {diff} exceeds allowed {max_diff}"
 
 
-def test_fast_log_f32_poly():
+def test_fast_log_f32():
     # --- arrange -----------------------------------------
     max_diff = 0.006
     x_values = np.logspace(-1, +4, 10_000, dtype=np.float32)
@@ -52,7 +51,7 @@ def test_fast_log_f32_poly():
     assert diff <= max_diff, f"Max diff {diff} exceeds allowed {max_diff}"
 
 
-def test_fast_log2_f32_poly():
+def test_fast_log2_f32():
     # --- arrange -----------------------------------------
     max_diff = 0.008
     x_values = np.logspace(-1, +4, 10_000, dtype=np.float32)

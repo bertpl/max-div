@@ -2,13 +2,16 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.1
-> *(under development)*
+> *(2025-12-02)*
 <!------------------------------------------------------------------------------------------------->
+
+- **new**:
+    - `fast_exp*` functions in the same spirit as the updated `fast_log*` functions
 
 - **improved**:
     - `fast_log_*` & `fast_log2_*`
-      - simplify & speedup by only supporting degree 2 (we don't need more accuracy)
-      - update computation of coefficients to guarantee continuity and smoothness of the approximation
+        - simplify & speedup by only supporting degree 2 (we don't need more accuracy)
+        - update computation of coefficients to guarantee continuity and smoothness of the approximation
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.0

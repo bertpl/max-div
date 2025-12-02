@@ -95,8 +95,8 @@ def fast_log2_f32(x: np.float32) -> np.float32:
 #  Public API
 # =================================================================================================
 __ALL__ = [
-    "fast_log2_f32_poly",
-    "fast_log2_f32_poly",
-    "fast_log_f64_poly",
-    "fast_log_f64_poly",
+    "fast_log2_f32",
+    "fast_log2_f32",
+    "fast_log_f64",
+    "fast_log_f64",
 ]

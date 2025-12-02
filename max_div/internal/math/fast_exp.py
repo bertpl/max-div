@@ -1,0 +1,96 @@
+import math
+
+import numba
+import numpy as np
+
+# -------------------------------------------------------------------------
+#  Constants
+# -------------------------------------------------------------------------
+
+# --- float64 ---------------------------------------------
+_D_LOG2_E = 1.4426950408889634  # np.log2(e)
+
+# Obtained via minimax polynomial fitting over [0.0, 1.0) with additional
+# continuity & smoothness constraints imposed on boundary points.
+# See: ./notebooks/poly_approx_log2_exp2.ipynb
+_D20 = 0.9992006862217113
+_D21 = 0.6661337908144742
+_D22 = 0.3330668954072371
+
+# --- float32 ---------------------------------------------
+_S_LOG2_E = np.float32(_D_LOG2_E)
+
+_S20 = np.float32(_D20)
+_S21 = np.float32(_D21)
+_S22 = np.float32(_D22)
+
+
+# -------------------------------------------------------------------------
+#  Fast approximations for np.exp
+# -------------------------------------------------------------------------
+@numba.njit(fastmath=True, inline="always")
+def fast_exp_f64(x: np.float64) -> np.float64:
+    """
+    Fast exp approximation using 2nd order polynomial after range reduction.
+    (max rel error ~0.0027 over entire range)
+    """
+    return fast_exp2_f64(_D_LOG2_E * x)
+
+
+@numba.njit(fastmath=True, inline="always")
+def fast_exp_f32(x: np.float32) -> np.float32:
+    """
+    Fast exp approximation using 2nd order polynomial after range reduction.
+    (max abs error ~0.0027 over entire range)
+    """
+    return fast_exp2_f32(_S_LOG2_E * x)
+
+
+# -------------------------------------------------------------------------
+#  Fast approximations for np.log2
+# -------------------------------------------------------------------------
+@numba.njit(fastmath=True, inline="always")
+def fast_exp2_f64(x: np.float64) -> np.float64:
+    """
+    Fast exp approximation using 2nd order polynomial after range reduction.
+    (max abs error ~0.0027 over entire range.)
+    """
+
+    # --- split in int + fraction -------------------------
+    k = np.floor(x)  # float64
+    f = x - k  # f is in [0, 1)
+
+    # --- polynomial approximation ------------------------
+    exp2_f = _D20 + f * (_D21 + f * _D22)
+
+    # --- combine parts -----------------------------------
+    return np.float64(math.ldexp(exp2_f, int(k)))
+
+
+@numba.njit(fastmath=True, inline="always")
+def fast_exp2_f32(x: np.float32) -> np.float32:
+    """
+    Fast log approximation using 2nd order polynomial after range reduction.
+    (max abs error ~0.0075 over entire range.)
+    """
+
+    # --- split in int + fraction -------------------------
+    k = np.floor(x)  # float64
+    f = x - k  # f is in [0, 1)
+
+    # --- polynomial approximation ------------------------
+    exp2_f = _S20 + f * (_S21 + f * _S22)
+
+    # --- combine parts -----------------------------------
+    return np.float32(math.ldexp(exp2_f, int(k)))
+
+
+# =================================================================================================
+#  Public API
+# =================================================================================================
+__ALL__ = [
+    "fast_exp2_f32",
+    "fast_exp2_f32",
+    "fast_exp_f64",
+    "fast_exp_f64",
+]
