@@ -2,12 +2,16 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.2
-> *(under development)*
+> *(2025-12-03)*
 <!------------------------------------------------------------------------------------------------->
+
+- **new**:
+    - add `DiversityMetric.approx_geomean_separation()` based on `fast_log2` and `fast_exp2`
+    - add benchmarking of different `DiversityMetric` implementations to CLI & docs
 
 - **improved**:
     - further improve test coverage of `fast_log*` & `fast_exp*` functions
-    - make `DiversityMetric` more flexible & add `approx_geomean_separation` based on `fast_log2` and `fast_exp2`
+    - make `DiversityMetric` implementation more flexible 
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.1
