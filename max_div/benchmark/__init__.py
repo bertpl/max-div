@@ -1,2 +1,3 @@
+from .diversity_metrics import benchmark_diversity_metrics
 from .randint import benchmark_randint
 from .randint_constrained import benchmark_randint_constrained

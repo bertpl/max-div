@@ -6,3 +6,4 @@ All benchmarks are run on `m6a.xlarge` or `m6a.2xlarge` AWS EC2 instances.
 
 - `randint`: [results](randint.md)
 - `randint_constrained`: [results](randint_constrained.md)
+- `DiversityMetric`: [results](diversity_metrics.md)

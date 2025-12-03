@@ -4,7 +4,7 @@ from click.testing import CliRunner
 from max_div._cli import benchmark, numba_status
 
 
-@pytest.mark.parametrize("sub_command", ["randint", "randint_constrained"])
+@pytest.mark.parametrize("sub_command", ["randint", "randint_constrained", "diversity_metrics"])
 @pytest.mark.parametrize("options", ["--turbo", "--speed=1.0"])
 def test_cli_benchmark(sub_command: str, options: str):
     # --- arrange -----------------------------------------
