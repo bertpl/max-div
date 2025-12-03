@@ -16,7 +16,7 @@ from ._distance import (
     update_separation_add,
     update_separation_remove,
 )
-from ._diversity import DiversityMetric, compute_diversity
+from ._diversity import DiversityMetric
 
 
 class SolverState:
@@ -180,7 +180,7 @@ class SolverState:
 
     @property
     def diversity(self) -> np.float32:
-        return compute_diversity(self.selected_separation_array, self._diversity_metric)
+        return self._diversity_metric.compute(self.selected_separation_array)
 
     @property
     def score(self) -> tuple[np.int32, np.int32, np.float32]:

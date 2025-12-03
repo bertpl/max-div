@@ -19,7 +19,7 @@ class MaxDivSolverBuilder:
         """
         self._vectors: np.ndarray | None = None
         self._distance_metric: DistanceMetric = DistanceMetric.L2_EUCLIDEAN
-        self._diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION
+        self._diversity_metric: DiversityMetric = DiversityMetric.geomean_separation()
         self._selection_size: int | None = None
         self._constraints: list[Constraint] = []
         self._strategies: list[SolverStrategy] = [

@@ -10,7 +10,7 @@ def test_solver_state_end_to_end():
         vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
         target_selection_size=3,
         distance_metric=DistanceMetric.L1_MANHATTAN,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_metric=DiversityMetric.geomean_separation(),
         constraints=[
             Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2),
             Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
@@ -20,7 +20,7 @@ def test_solver_state_end_to_end():
     # --- assert 1 ----------------------------------------
     assert state.selected_index_array.size == 0
     assert state.not_selected_index_array.size == 6
-    assert state.score == (-3, -2, np.inf)
+    assert state.score == (-3, -2, 0.0)
 
     # --- act 1 -------------------------------------------
     state.add(0)

@@ -7,6 +7,7 @@
 
 - **improved**:
     - further improve test coverage of `fast_log*` & `fast_exp*` functions
+    - make `DiversityMetric` more flexible & add `approx_geomean_separation` based on `fast_log2` and `fast_exp2`
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.1

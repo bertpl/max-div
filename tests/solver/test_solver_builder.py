@@ -146,7 +146,7 @@ def test_max_div_solver_builder_end_to_end():
         .set_initialization_strategy(init_strategy)
         .add_optimization_strategies(optim_strategies)
         .with_distance_metric(DistanceMetric.L1_MANHATTAN)
-        .with_diversity_metric(DiversityMetric.MIN_SEPARATION)
+        .with_diversity_metric(DiversityMetric.min_separation())
         .with_constraints(constraints)
     )
     solver = builder.build()
@@ -157,5 +157,5 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._selection_size == selection_size
     assert solver._strategies == [init_strategy] + optim_strategies
     assert solver._distance_metric == DistanceMetric.L1_MANHATTAN
-    assert solver._diversity_metric == DiversityMetric.MIN_SEPARATION
+    assert solver._diversity_metric.name == DiversityMetric.min_separation().name
     assert solver._constraints == constraints
