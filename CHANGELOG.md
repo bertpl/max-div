@@ -6,7 +6,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **new**:
+    - add `SolverState` snapshot management, so `SolverStrategy` modules can perform trial-modifications to the state.
+
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.2
