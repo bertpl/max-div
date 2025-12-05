@@ -67,4 +67,25 @@ class MaxDivSolver:
         Solve the maximum diversity problem with the given configuration.
         :return: A MaxDivSolution object representing the solution found.
         """
-        pass
+        # --- Init ----------------------------------------
+        step_names = self._get_step_names()
+
+        # --- Main loop -----------------------------------
+        for step_name, step in zip(step_names, self._strategies):
+            step.run(self._state, step_name)
+
+        # --- Construct result ----------------------------
+        return MaxDivSolution(
+            i_selected=self._state.selected_index_array.copy(),
+        )
+
+    # -------------------------------------------------------------------------
+    #  Internal
+    # -------------------------------------------------------------------------
+    def _get_step_names(self) -> list[str]:
+        n_steps = len(self._strategies)
+        step_names = [f"step {i}/{n_steps} - {s.name}" for i, s in enumerate(self._strategies, start=1)]
+        max_len = max(len(name) for name in step_names)
+        step_names = [name.ljust(max_len + 2) for name in step_names]
+
+        return step_names

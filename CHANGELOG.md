@@ -2,12 +2,13 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.4
-> *(under development)*
+> *(2025-12-05)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
   - `SolverStrategy` progress bar support 
-  
+  - First version of main `MaxDivSolver` loop
+
 - **improved**:
   - test coverage of `SolverState` and `SolverStrategy` modules
 
