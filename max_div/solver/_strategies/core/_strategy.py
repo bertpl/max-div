@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 
 from max_div.solver._solver_state import SolverState
 
-from ._duration import DurationProgress, StrategyDuration
+from ._progress_tracker import Progress, ProgressTracker
 from ._type import StrategyType
 
 
@@ -17,7 +17,7 @@ class SolverStrategy(ABC):
     # -------------------------------------------------------------------------
     #  Construction & Configuration
     # -------------------------------------------------------------------------
-    def __init__(self, strategy_type: StrategyType, duration: StrategyDuration, name: str | None = None):
+    def __init__(self, strategy_type: StrategyType, duration: ProgressTracker, name: str | None = None):
         """
         Initialize the solver strategy.
         :param strategy_type: type of the strategy
@@ -35,7 +35,7 @@ class SolverStrategy(ABC):
         return self._strategy_type
 
     @property
-    def duration(self) -> StrategyDuration:
+    def duration(self) -> ProgressTracker:
         return self._duration
 
     @property
@@ -51,7 +51,7 @@ class SolverStrategy(ABC):
         duration.start()
         pbar = tqdm(desc=tqdm_desc) if tqdm_desc else None
 
-        def _update_pbar(_progress: DurationProgress):
+        def _update_pbar(_progress: Progress):
             if pbar is not None:
                 pbar.n = _progress.n_current
                 pbar.total = _progress.n_total

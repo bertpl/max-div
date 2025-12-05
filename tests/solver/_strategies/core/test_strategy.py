@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from max_div.solver._strategies import SolverStrategy, StrategyDuration, StrategyType, iterations
+from max_div.solver._strategies import ProgressTracker, SolverStrategy, StrategyType, iterations
 
 
 # =================================================================================================
@@ -26,7 +26,7 @@ def test_strategy_properties():
 
     # --- act & assert ------------------------------------
     assert strategy.type == StrategyType.INITIALIZATION
-    assert isinstance(strategy.duration, StrategyDuration)
+    assert isinstance(strategy.duration, ProgressTracker)
     assert strategy.name == "DummyStrategy"
 
 

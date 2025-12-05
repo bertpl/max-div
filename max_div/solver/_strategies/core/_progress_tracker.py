@@ -7,51 +7,59 @@ from typing import Self
 
 
 # =================================================================================================
-#  DurationProgress
+#  Progress
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
-class DurationProgress:
+class Progress:
     n_current: int
     n_total: int
-    is_finished: bool
+
+    @property
+    def is_finished(self) -> bool:
+        return self.n_current >= self.n_total
 
 
 # =================================================================================================
-#  StrategyDuration
+#  ProgressTracker
 # =================================================================================================
-class StrategyDuration(ABC):
-    @abstractmethod
+class ProgressTracker(ABC):
+    def __init__(self):
+        self._t_start = 0.0
+        self._iter_count = 0
+
     def start(self):
-        pass
+        self._t_start = time.perf_counter()
+        self._iter_count = 0
+
+    def t_elapsed_sec(self) -> float:
+        return time.perf_counter() - self._t_start
+
+    def iter_count(self) -> int:
+        return self._iter_count
 
     @abstractmethod
-    def progress(self) -> DurationProgress:
-        """Returns progress as (n_current, n_total) to be used for e.g. tqdm progress updates."""
+    def progress(self) -> Progress:
+        """Returns Progress object."""
         raise NotImplementedError
 
     def iteration_done(self):
-        pass  # optional hook for subclasses
+        self._iter_count += 1
 
 
 # =================================================================================================
 #  Iteration-based
 # =================================================================================================
-class IterationBasedDuration(StrategyDuration):
+class IterationBasedProgress(ProgressTracker):
     def __init__(self, max_iters: int):
+        super().__init__()
+        if max_iters < 1:
+            raise ValueError("max_iters must be >= 1")
         self._max_iters = max_iters
-        self._n_iters_finished = 0
 
-    def start(self):
-        self._n_iters_finished = 0
-
-    def iteration_done(self):
-        self._n_iters_finished += 1
-
-    def progress(self) -> DurationProgress:
-        return DurationProgress(
-            n_current=self._n_iters_finished,
+    def progress(self) -> Progress:
+        return Progress(
+            n_current=min(self._iter_count, self._max_iters),
             n_total=self._max_iters,
-            is_finished=(self._n_iters_finished >= self._max_iters),
         )
 
     # -------------------------------------------------------------------------
@@ -59,28 +67,30 @@ class IterationBasedDuration(StrategyDuration):
     # -------------------------------------------------------------------------
     @classmethod
     def iterations(cls, max_iters: int) -> Self:
-        return IterationBasedDuration(max_iters=max_iters)
+        return IterationBasedProgress(max_iters=max_iters)
 
 
 # =================================================================================================
 #  Time-based
 # =================================================================================================
-class TimeBasedDuration(StrategyDuration):
+class TimeBasedProgress(ProgressTracker):
     def __init__(self, max_seconds: float):
+        super().__init__()
+        if max_seconds <= 0.0:
+            raise ValueError("max_seconds must be > 0.0")
         self._max_seconds = max_seconds
-        self._t_start = 0.0
-        self._t_finished = 0.0
+        self._n_total = max(1, int(self._max_seconds))  # never <1
 
-    def start(self):
-        self._t_start = time.perf_counter()
-        self._t_finished = time.perf_counter() + self._max_seconds
+    def progress(self) -> Progress:
+        t_elapsed = self.t_elapsed_sec()
+        if t_elapsed >= self._max_seconds:
+            n_current = self._n_total
+        else:
+            n_current = min(int(t_elapsed), self._n_total - 1)
 
-    def progress(self) -> DurationProgress:
-        t_now = time.perf_counter()
-        return DurationProgress(
-            n_current=int(t_now - self._t_start),
-            n_total=int(self._max_seconds),
-            is_finished=(t_now >= self._t_finished),
+        return Progress(
+            n_current=n_current,
+            n_total=self._n_total,
         )
 
     # -------------------------------------------------------------------------
@@ -88,21 +98,21 @@ class TimeBasedDuration(StrategyDuration):
     # -------------------------------------------------------------------------
     @classmethod
     def seconds(cls, max_seconds: float) -> Self:
-        return TimeBasedDuration(max_seconds=max_seconds)
+        return TimeBasedProgress(max_seconds=max_seconds)
 
     @classmethod
     def minutes(cls, max_minutes: float) -> Self:
-        return TimeBasedDuration(max_seconds=max_minutes * 60.0)
+        return TimeBasedProgress(max_seconds=max_minutes * 60.0)
 
     @classmethod
     def hours(cls, max_hours: float) -> Self:
-        return TimeBasedDuration(max_seconds=max_hours * 3600.0)
+        return TimeBasedProgress(max_seconds=max_hours * 3600.0)
 
 
 # =================================================================================================
 #  Shorthand Factory Methods
 # =================================================================================================
-iterations = IterationBasedDuration.iterations
-seconds = TimeBasedDuration.seconds
-minutes = TimeBasedDuration.minutes
-hours = TimeBasedDuration.hours
+iterations = IterationBasedProgress.iterations
+seconds = TimeBasedProgress.seconds
+minutes = TimeBasedProgress.minutes
+hours = TimeBasedProgress.hours

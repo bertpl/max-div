@@ -5,7 +5,8 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**:
+  - Improve progress tracking implementation for future use in `MaxDivSolver` overall progress reporting
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.4
