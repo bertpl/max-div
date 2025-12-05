@@ -1,4 +1,4 @@
-from ._base import SolverStrategy, StrategyType, iterations
+from .core import SolverStrategy, StrategyType, iterations
 
 
 class OptimDummy(SolverStrategy):

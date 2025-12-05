@@ -22,9 +22,45 @@ def new_solver_state() -> SolverState:
     )
 
 
+@pytest.fixture(scope="function")
+def new_solver_state_unconstrained() -> SolverState:
+    return SolverState.new(
+        vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
+        target_selection_size=3,
+        distance_metric=DistanceMetric.L1_MANHATTAN,
+        diversity_metric=DiversityMetric.geomean_separation(),
+        constraints=[],
+    )
+
+
 # =================================================================================================
 #  Tests
 # =================================================================================================
+def test_solver_state_has_constraints(new_solver_state, new_solver_state_unconstrained):
+    assert new_solver_state.has_constraints == True
+    assert new_solver_state_unconstrained.has_constraints == False
+
+    assert new_solver_state.constraint_violation == 2
+    assert new_solver_state_unconstrained.constraint_violation == 0
+
+
+def test_solver_state_add_remove(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        state.remove(3)  # never added
+
+    state.add(0)
+    with pytest.raises(ValueError):
+        state.add(0)  # already selected
+
+    state.remove(0)
+    with pytest.raises(ValueError):
+        state.remove(0)  # already not selected
+
+
 def test_solver_state_end_to_end(new_solver_state):
     # --- arrange -----------------------------------------
     state = new_solver_state

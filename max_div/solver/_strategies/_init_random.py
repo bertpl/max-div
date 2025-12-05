@@ -1,6 +1,6 @@
 from max_div.solver._solver_state import SolverState
 
-from ._base import SolverStrategy, StrategyType, iterations
+from .core import SolverStrategy, StrategyType, iterations
 
 
 class InitRandom(SolverStrategy):

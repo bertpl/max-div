@@ -5,7 +5,11 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **new**:
+  - `SolverStrategy` progress bar support 
+  
+- **improved**:
+  - test coverage of `SolverState` and `SolverStrategy` modules
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.3
