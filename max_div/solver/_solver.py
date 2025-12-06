@@ -5,7 +5,7 @@ from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
-from ._strategies import SolverStrategy
+from ._solver_step import SolverStep
 
 
 class MaxDivSolver:
@@ -30,7 +30,7 @@ class MaxDivSolver:
         diversity_metric: DiversityMetric,
         selection_size: int,
         constraints: list[Constraint],
-        strategies: list[SolverStrategy],
+        solver_steps: list[SolverStep],
     ):
         """
         Initialize the MaxDivSolver with the given configuration.
@@ -39,7 +39,9 @@ class MaxDivSolver:
         :param diversity_metric: (str) The diversity metric to use.
         :param selection_size: (int) The number of vectors to be selected from the input set.
         :param constraints: (list) A list of constraints to try to satisfy during solving.
-        :param strategies: (list) A list of solver strategies to use.
+        :param solver_steps: (list) A list of solver steps to execute,
+                                       the first of which needs to be an InitializationStep,
+                                       while all latter ones need to be OptimizationSteps.
         """
 
         # --- properties ----------------------------------
@@ -48,7 +50,7 @@ class MaxDivSolver:
         self._diversity_metric = diversity_metric
         self._selection_size = selection_size
         self._constraints = constraints
-        self._strategies = strategies
+        self._solver_steps = solver_steps
 
         # --- state ---------------------------------------
         self._state = SolverState.new(
@@ -71,7 +73,7 @@ class MaxDivSolver:
         step_names = self._get_step_names()
 
         # --- Main loop -----------------------------------
-        for step_name, step in zip(step_names, self._strategies):
+        for step_name, step in zip(step_names, self._solver_steps):
             step.run(self._state, step_name)
 
         # --- Construct result ----------------------------
@@ -83,8 +85,8 @@ class MaxDivSolver:
     #  Internal
     # -------------------------------------------------------------------------
     def _get_step_names(self) -> list[str]:
-        n_steps = len(self._strategies)
-        step_names = [f"step {i}/{n_steps} - {s.name}" for i, s in enumerate(self._strategies, start=1)]
+        n_steps = len(self._solver_steps)
+        step_names = [f"step {i}/{n_steps} - {s.name}" for i, s in enumerate(self._solver_steps, start=1)]
         max_len = max(len(name) for name in step_names)
         step_names = [name.ljust(max_len + 2) for name in step_names]
 

@@ -2,11 +2,13 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.5
-> *(under development)*
+> *(2025-12-06)*
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
   - Improve progress tracking implementation for future use in `MaxDivSolver` overall progress reporting
+  - Introduction of `SolverStep`, combining a strategy & a duration
+  - Introduction of `Score` class for more structured scoring enabling more advanced future strategies
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.4

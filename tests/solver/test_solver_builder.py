@@ -4,7 +4,9 @@ import pytest
 from max_div.solver import Constraint, MaxDivSolver, MaxDivSolverBuilder
 from max_div.solver._distance import DistanceMetric
 from max_div.solver._diversity import DiversityMetric
-from max_div.solver._strategies import SolverStrategy
+from max_div.solver._duration import iterations, seconds
+from max_div.solver._solver_step import InitializationStep, OptimizationStep
+from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
 
 # =================================================================================================
@@ -83,11 +85,11 @@ def test_solver_builder_with_selection_size():
 @pytest.mark.parametrize(
     "strategy, expected_ok",
     [
-        (SolverStrategy.init_random(), True),
-        (SolverStrategy.optim_dummy(), False),
+        (InitializationStrategy.random(), True),
+        (OptimizationStrategy.dummy(), False),
     ],
 )
-def test_solver_builder_set_initialization_strategy(strategy: SolverStrategy, expected_ok: bool):
+def test_solver_builder_set_initialization_strategy(strategy, expected_ok: bool):
     # --- arrange -----------------------------------------
     builder = MaxDivSolverBuilder()
 
@@ -96,31 +98,35 @@ def test_solver_builder_set_initialization_strategy(strategy: SolverStrategy, ex
         builder = builder.set_initialization_strategy(strategy)
         assert builder is not None
     else:
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             _ = builder.set_initialization_strategy(strategy)
 
 
 @pytest.mark.parametrize(
     "strategies, expected_ok",
     [
-        ([SolverStrategy.optim_dummy(), SolverStrategy.optim_dummy()], True),
-        ([SolverStrategy.optim_dummy()], True),
-        ([SolverStrategy.init_random()], False),
-        ([SolverStrategy.init_random(), SolverStrategy.optim_dummy()], False),
-        ([SolverStrategy.optim_dummy(), SolverStrategy.init_random()], False),
+        ([OptimizationStrategy.dummy(), OptimizationStrategy.dummy()], True),
+        ([OptimizationStrategy.dummy()], True),
+        ([InitializationStrategy.random()], False),
+        ([InitializationStrategy.random(), OptimizationStrategy.dummy()], False),
+        ([OptimizationStrategy.dummy(), InitializationStrategy.random()], False),
     ],
 )
-def test_solver_builder_add_optimization_strategies(strategies: list[SolverStrategy], expected_ok: bool):
+def test_solver_builder_add_solver_steps(strategies: list, expected_ok: bool):
     # --- arrange -----------------------------------------
     builder = MaxDivSolverBuilder()
+    solver_steps = [
+        InitializationStep(s) if isinstance(s, InitializationStrategy) else OptimizationStep(s, duration=seconds(10))
+        for s in strategies
+    ]
 
     # --- act & assert ------------------------------------
     if expected_ok:
-        builder = builder.add_optimization_strategies(strategies)
+        builder = builder.add_solver_steps(solver_steps)
         assert builder is not None
     else:
-        with pytest.raises(ValueError):
-            _ = builder.add_optimization_strategies(strategies)
+        with pytest.raises(TypeError):
+            _ = builder.add_solver_steps(solver_steps)
 
 
 # =================================================================================================
@@ -130,8 +136,11 @@ def test_max_div_solver_builder_end_to_end():
     # --- arrange -----------------------------------------
     vectors = np.random.rand(10, 5).astype(np.float32)
     selection_size = 5
-    init_strategy = SolverStrategy.init_random()
-    optim_strategies = [SolverStrategy.optim_dummy(), SolverStrategy.optim_dummy()]
+    init_strategy = InitializationStrategy.random()
+    solver_steps = [
+        OptimizationStep(OptimizationStrategy.dummy(), seconds(1)),
+        OptimizationStep(OptimizationStrategy.dummy(), iterations(100)),
+    ]
     constraints = [
         Constraint(set(range(0, 5)), min_count=2, max_count=3),
         Constraint(set(range(5, 10)), min_count=2, max_count=3),
@@ -144,7 +153,7 @@ def test_max_div_solver_builder_end_to_end():
         builder.with_vectors(vectors)
         .with_selection_size(selection_size)
         .set_initialization_strategy(init_strategy)
-        .add_optimization_strategies(optim_strategies)
+        .add_solver_steps(solver_steps)
         .with_distance_metric(DistanceMetric.L1_MANHATTAN)
         .with_diversity_metric(DiversityMetric.min_separation())
         .with_constraints(constraints)
@@ -155,7 +164,10 @@ def test_max_div_solver_builder_end_to_end():
     assert isinstance(solver, MaxDivSolver)
     assert solver._vectors.shape == vectors.shape
     assert solver._selection_size == selection_size
-    assert solver._strategies == [init_strategy] + optim_strategies
+    assert len(solver._solver_steps) == 3
+    assert solver._solver_steps[0]._strategy == init_strategy
+    assert solver._solver_steps[1] == solver_steps[0]
+    assert solver._solver_steps[2] == solver_steps[1]
     assert solver._distance_metric == DistanceMetric.L1_MANHATTAN
     assert solver._diversity_metric.name == DiversityMetric.min_separation().name
     assert solver._constraints == constraints

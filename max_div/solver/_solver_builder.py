@@ -6,7 +6,8 @@ from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._solver import MaxDivSolver
-from ._strategies import SolverStrategy, StrategyType
+from ._solver_step import InitializationStep, OptimizationStep, SolverStep
+from ._strategies import InitializationStrategy
 
 
 class MaxDivSolverBuilder:
@@ -22,8 +23,8 @@ class MaxDivSolverBuilder:
         self._diversity_metric: DiversityMetric = DiversityMetric.geomean_separation()
         self._selection_size: int | None = None
         self._constraints: list[Constraint] = []
-        self._strategies: list[SolverStrategy] = [
-            SolverStrategy.init_random(),  # Default initialization strategy
+        self._solver_steps: list[SolverStep] = [
+            InitializationStep(InitializationStrategy.random()),  # Default initialization strategy
         ]
 
     # -------------------------------------------------------------------------
@@ -55,21 +56,19 @@ class MaxDivSolverBuilder:
         self._selection_size = selection_size
         return self
 
-    def set_initialization_strategy(self, strategy: SolverStrategy) -> Self:
-        if strategy.type != StrategyType.INITIALIZATION:
-            raise ValueError("The provided strategy is not an initialization strategy.")
-        self._strategies[0] = strategy
+    def set_initialization_strategy(self, init_strategy: InitializationStrategy) -> Self:
+        self._solver_steps[0] = InitializationStep(init_strategy)
         return self
 
-    def add_optimization_strategy(self, strategy: SolverStrategy) -> Self:
-        if strategy.type != StrategyType.OPTIMIZATION:
-            raise ValueError("The provided strategy is not an optimization strategy.")
-        self._strategies.append(strategy)
+    def add_solver_step(self, solver_step: OptimizationStep) -> Self:
+        if not isinstance(solver_step, OptimizationStep):
+            raise TypeError("Only OptimizationStep instances can be added as solver steps.")
+        self._solver_steps.append(solver_step)
         return self
 
-    def add_optimization_strategies(self, strategies: list[SolverStrategy]) -> Self:
-        for strategy in strategies:
-            self.add_optimization_strategy(strategy)
+    def add_solver_steps(self, solver_steps: list[OptimizationStep]) -> Self:
+        for solver_step in solver_steps:
+            self.add_solver_step(solver_step)
         return self
 
     def with_constraint(self, constraint: Constraint) -> Self:
@@ -103,5 +102,5 @@ class MaxDivSolverBuilder:
             diversity_metric=self._diversity_metric,
             selection_size=self._selection_size,
             constraints=self._constraints,
-            strategies=self._strategies,
+            solver_steps=self._solver_steps,
         )

@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from max_div.solver import Constraint, DistanceMetric, DiversityMetric
+from max_div.solver._score import Score
 from max_div.solver._solver_state import SolverState
 
 
@@ -68,7 +69,7 @@ def test_solver_state_end_to_end(new_solver_state):
     # --- assert 1 ----------------------------------------
     assert state.selected_index_array.size == 0
     assert state.not_selected_index_array.size == 6
-    assert state.score == (-3, -2, 0.0)
+    assert state.score.value == (-3, -2, 0.0)
 
     # --- act 1 -------------------------------------------
     state.add(0)
@@ -79,7 +80,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert np.array_equal(state.selected_index_array, [0, 2, 5])
     assert np.array_equal(state.not_selected_index_array, [1, 3, 4])
     assert np.allclose(state.selected_separation_array, [2, 2, 3])
-    assert np.allclose(state.score, (0, 0, (2 * 2 * 3) ** (1 / 3)))
+    assert np.allclose(state.score.value, (0, 0, (2 * 2 * 3) ** (1 / 3)))
 
     # --- act 2 -------------------------------------------
     state.remove(5)
@@ -90,7 +91,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert np.array_equal(state.not_selected_index_array, [1, 3, 5])
     assert np.allclose(state.selected_separation_array, [2, 2, 2])
     assert np.allclose(state.not_selected_separation_array, [1, 1, 1])
-    assert np.allclose(state.score, (0, 0, 2))
+    assert np.allclose(state.score.value, (0, 0, 2))
 
 
 def test_solver_state_snapshot(new_solver_state):

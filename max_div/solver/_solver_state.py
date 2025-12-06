@@ -18,6 +18,7 @@ from ._distance import (
     update_separation_remove,
 )
 from ._diversity import DiversityMetric
+from ._score import Score
 
 
 # =================================================================================================
@@ -173,6 +174,11 @@ class SolverState:
         return self._con_values.shape[0] > 0
 
     @property
+    def target_selection_size(self) -> np.int32:
+        """Return target selection size."""
+        return self._target_selection_size
+
+    @property
     def selected_index_array(self) -> NDArray[np.int32]:
         """Return selected indices as a numpy array of np.int32."""
         return np.array(self._selected, dtype=np.int32)
@@ -213,16 +219,18 @@ class SolverState:
         return self._diversity_metric.compute(self.selected_separation_array)
 
     @property
-    def score(self) -> tuple[np.int32, np.int32, np.float32]:
+    def score(self) -> Score:
         """
         Return overall score of the current selection as (-sample_count_mismatch, -constraint_violation, diversity).
         The first 2 elements are <=0, while the last element is >=0.  The tuple is constructed such that higher is better
         and tuple-comparison prioritizes sample count match first, then constraint satisfaction, and finally diversity.
         """
-        return (
-            -self.sample_count_mismatch,
-            -self.constraint_violation,
-            self.diversity,
+        return Score(
+            value=(
+                -float(self.sample_count_mismatch),
+                -float(self.constraint_violation),
+                float(self.diversity),
+            )
         )
 
     # -------------------------------------------------------------------------
