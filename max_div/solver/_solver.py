@@ -86,7 +86,7 @@ class MaxDivSolver:
     # -------------------------------------------------------------------------
     def _get_step_names(self) -> list[str]:
         n_steps = len(self._solver_steps)
-        step_names = [f"step {i}/{n_steps} - {s.name}" for i, s in enumerate(self._solver_steps, start=1)]
+        step_names = [f"step {i}/{n_steps} - {s.name()}" for i, s in enumerate(self._solver_steps, start=1)]
         max_len = max(len(name) for name in step_names)
         step_names = [name.ljust(max_len + 2) for name in step_names]
 

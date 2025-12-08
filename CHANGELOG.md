@@ -5,7 +5,8 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **new**:
+    - make a `SolverStep` return score checkpoints correctly via `SolverStepResult`
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.5
@@ -13,9 +14,9 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
-  - Improve progress tracking implementation for future use in `MaxDivSolver` overall progress reporting
-  - Introduction of `SolverStep`, combining a strategy & a duration
-  - Introduction of `Score` class for more structured scoring enabling more advanced future strategies
+    - Improve progress tracking implementation for future use in `MaxDivSolver` overall progress reporting
+    - Introduction of `SolverStep`, combining a strategy & a duration
+    - Introduction of `Score` class for more structured scoring enabling more advanced future strategies
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.4
@@ -23,11 +24,11 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-  - `SolverStrategy` progress bar support 
-  - First version of main `MaxDivSolver` loop
+    - `SolverStrategy` progress bar support 
+    - First version of main `MaxDivSolver` loop
 
 - **improved**:
-  - test coverage of `SolverState` and `SolverStrategy` modules
+    - test coverage of `SolverState` and `SolverStrategy` modules
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.3

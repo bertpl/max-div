@@ -16,7 +16,13 @@ from ._solver_state import SolverState
 # =================================================================================================
 @dataclass
 class SolverStepResult:
-    duration: Elapsed
+    # checkpoints of how score evolved during execution of the step
+    # NOTE: we should always make sure the last checkpoint represents the final state after all iterations
+    score_checkpoints: list[tuple[Elapsed, Score]]
+
+    @property
+    def elapsed(self) -> Elapsed:
+        return self.score_checkpoints[-1][0]
 
 
 # =================================================================================================
@@ -65,14 +71,21 @@ class InitializationStep(SolverStep):
         return self._strategy.name
 
     def _run_child(self, state: SolverState, pbar: tqdm | None) -> SolverStepResult:
+        # --- execute initialization ----------------------
         with Timer() as t:
             self._strategy.initialize(state)
 
+        # --- gather results ------------------------------
         return SolverStepResult(
-            duration=Elapsed(
-                t_elapsed_sec=t.t_elapsed_sec(),
-                n_iterations=1,
-            ),
+            score_checkpoints=[
+                (
+                    Elapsed(
+                        t_elapsed_sec=t.t_elapsed_sec(),
+                        n_iterations=1,
+                    ),
+                    state.score,
+                )
+            ],
         )
 
 
@@ -95,7 +108,7 @@ class OptimizationStep(SolverStep):
     def _run_child(self, state: SolverState, pbar: tqdm | None) -> SolverStepResult:
         # --- init ----------------------------------------
         tracker = self._duration.track()
-        checkpoints: list[tuple[Elapsed, Score]] = []
+        score_checkpoints: list[tuple[Elapsed, Score]] = []
         next_checkpoint_iter_count = 1
 
         # --- main loop -----------------------------------
@@ -108,9 +121,12 @@ class OptimizationStep(SolverStep):
             n_iters = self._determine_n_iterations(tracker, next_checkpoint_iter_count)
             self._strategy.perform_n_iterations(state, n_iters)
 
+            # --- update progress ---
+            tracker.iterations_done(n_iters)
+
             # --- create checkpoint if needed ---
             if tracker.iter_count() >= next_checkpoint_iter_count:
-                checkpoints.append((tracker.elapsed(), state.score))
+                score_checkpoints.append((tracker.elapsed(), state.score))
                 next_checkpoint_iter_count = int(
                     max(
                         [
@@ -120,15 +136,15 @@ class OptimizationStep(SolverStep):
                     )
                 )
 
-            # --- update progress ---
-            tracker.iterations_done(n_iters)
-
-        # --- finalize ------------------------------------
         if pbar:
             progress.update_tqdm(pbar)  # one last time
-        return SolverStepResult(
-            duration=tracker.elapsed(),
-        )
+
+        # --- gather results ------------------------------
+        elapsed = tracker.elapsed()
+        if (len(score_checkpoints) == 0) or (elapsed.n_iterations > score_checkpoints[-1][0].n_iterations):
+            # make sure we always have a checkpoint after the last iteration
+            score_checkpoints.append((elapsed, state.score))
+        return SolverStepResult(score_checkpoints=score_checkpoints)
 
     @staticmethod
     def _determine_n_iterations(tracker: ProgressTracker, next_checkpoint_iter_count: int) -> int:
@@ -151,7 +167,7 @@ class OptimizationStep(SolverStep):
                 [
                     int(iters_per_second),  # so we can report progress every 1sec
                     next_checkpoint_iter_count - iter_count,  # so we can make a checkpoint at exactly the right time
-                    int(total_iters_left / 2),  # proceed towards the end in steps of 50% of what's remaining at most
+                    total_iters_left // 2,  # proceed towards the end in steps of 50% of what's remaining at most
                 ]
             ),
         )

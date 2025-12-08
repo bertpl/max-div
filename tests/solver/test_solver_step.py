@@ -1,17 +1,21 @@
+import math
 from unittest.mock import Mock
 
 import pytest
 
 from max_div.internal.benchmarking import Timer
-from max_div.solver._duration import iterations, seconds
+from max_div.solver._duration import Elapsed, iterations, seconds
+from max_div.solver._score import Score
 from max_div.solver._solver_state import SolverState
 from max_div.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
+# =================================================================================================
+#  Helpers
+# =================================================================================================
 
-# =================================================================================================
-#  Testing Classes
-# =================================================================================================
+
+# --- Test Strategy Implementations -----------------------
 class InitTest(InitializationStrategy):
     def __init__(self):
         super().__init__()
@@ -30,6 +34,37 @@ class OptimTest(OptimizationStrategy):
         self._n_iterations += 1
 
 
+# --- checks ----------------------------------------------
+def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[Elapsed, Score]]):
+    # --- non-empty -------------------
+    assert len(score_checkpoints) >= 1, "score_checkpoints must contain at least one entry"
+
+    # --- check iteration counts ------
+    iter_values = [e.n_iterations for e, _ in score_checkpoints]
+    assert min(iter_values) >= 0, "score_checkpoints contains negative iteration counts"
+    assert len(iter_values) == len(set(iter_values)), "score_checkpoints contains duplicate iteration counts"
+    assert iter_values == sorted(iter_values), "score_checkpoints iteration counts should be strictly increasing"
+    for j in range(len(iter_values) - 1):
+        # subsequent iteration counts should be roughly ~10% spaced apart
+        i, i_next = iter_values[j], iter_values[j + 1]
+        i_delta = i_next - i
+
+        # allowed ranges
+        i_delta_min = math.floor(0.09 * i)
+        i_delta_max = max(1, math.ceil(0.11 * i))
+        if j == len(iter_values) - 2:
+            i_delta_min = 0  # last checkpoint is allowed to be closer
+
+        # check in range
+        assert i_delta_min <= i_delta <= i_delta_max, f"checkpoints should be ~10%-spaced; here: {i} -> {i_next}"
+
+    # --- check elapsed times ---------
+    t_values = [e.t_elapsed_sec for e, _ in score_checkpoints]
+    assert min(t_values) >= 0.0, "score_checkpoints contains negative elapsed times"
+    # NOTE: duplicate time values can happen if iterations are very fast, so we don't assert uniqueness here
+    assert t_values == sorted(t_values), "score_checkpoints elapsed times should be non-decreasing"
+
+
 # =================================================================================================
 #  InitializationStep
 # =================================================================================================
@@ -40,6 +75,18 @@ def test_initialization_step_validation():
     # this should not work fine
     with pytest.raises(TypeError):
         _ = InitializationStep(OptimTest())
+
+
+def test_initialization_step_name():
+    # --- arrange -----------------------------------------
+    strategy = InitTest()
+    step = InitializationStep(strategy)
+
+    # --- act ---------------------------------------------
+    step_name = step.name()
+
+    # --- assert ------------------------------------------
+    assert step_name == strategy.name
 
 
 def test_initialization_step_run():
@@ -54,8 +101,8 @@ def test_initialization_step_run():
     # --- assert ---
     assert strategy._n_iterations == 1
     assert isinstance(result, SolverStepResult)
-    assert result.duration.t_elapsed_sec >= 0.0
-    assert result.duration.n_iterations == 1
+    assert result.elapsed.n_iterations == 1, "initialization should take exactly 1 iteration"
+    assert_score_checkpoints_are_sane(result.score_checkpoints)
 
 
 # =================================================================================================
@@ -70,6 +117,18 @@ def test_optimization_step_validation():
         _ = OptimizationStep(InitTest(), duration=seconds(1))
 
 
+def test_optimization_step_name():
+    # --- arrange -----------------------------------------
+    strategy = OptimTest()
+    step = OptimizationStep(strategy, duration=seconds(1))
+
+    # --- act ---------------------------------------------
+    step_name = step.name()
+
+    # --- assert ------------------------------------------
+    assert step_name == strategy.name
+
+
 def test_optimization_step_run_iterations():
     # --- arrange ---
     strategy = OptimTest()
@@ -82,8 +141,8 @@ def test_optimization_step_run_iterations():
     # --- assert ---
     assert strategy._n_iterations == 123
     assert isinstance(result, SolverStepResult)
-    assert result.duration.t_elapsed_sec >= 0.0
-    assert result.duration.n_iterations == 123
+    assert result.elapsed.n_iterations == 123
+    assert_score_checkpoints_are_sane(result.score_checkpoints)
 
 
 def test_optimization_step_run_seconds():
@@ -99,5 +158,6 @@ def test_optimization_step_run_seconds():
     # --- assert ---
     assert t.t_elapsed_sec() >= 0.1
     assert isinstance(result, SolverStepResult)
-    assert result.duration.t_elapsed_sec >= 0.1
-    assert result.duration.n_iterations == strategy._n_iterations > 0
+    assert result.elapsed.t_elapsed_sec >= 0.1
+    assert result.elapsed.n_iterations == strategy._n_iterations > 0
+    assert_score_checkpoints_are_sane(result.score_checkpoints)
