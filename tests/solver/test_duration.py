@@ -69,6 +69,21 @@ def test_progress_tracker_track(duration: TargetDuration):
     assert isinstance(duration.track(), ProgressTracker)
 
 
+def test_progress_tracker_iters_per_second():
+    # --- arrange -----------------------------------------
+    tracker = seconds(1.0).track()
+
+    # --- act ---------------------------------------------
+    ips_1 = tracker.iters_per_second()
+    tracker.iterations_done(1)
+    time.sleep(0.1)
+    ips_2 = tracker.iters_per_second()
+
+    # --- assert ------------------------------------------
+    assert ips_1 == 0.0  # 0 iterations -> 0 iters/sec
+    assert 5.0 <= ips_2 <= 20.0  # should be around 10 iters/sec
+
+
 def test_progress_tracker_iteration_based():
     # --- arrange -----------------------------------------
     tracker_1 = iterations(1).track()

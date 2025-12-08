@@ -3,9 +3,10 @@ import numpy as np
 from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
+from ._duration import Elapsed
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
-from ._solver_step import SolverStep
+from ._solver_step import SolverStep, SolverStepResult
 
 
 class MaxDivSolver:
@@ -73,21 +74,50 @@ class MaxDivSolver:
         step_names = self._get_step_names()
 
         # --- Main loop -----------------------------------
+        step_results: dict[str, SolverStepResult] = dict()
         for step_name, step in zip(step_names, self._solver_steps):
-            step.run(self._state, step_name)
+            step_results[step_name.strip()] = step.run(self._state, step_name)
 
         # --- Construct result ----------------------------
-        return MaxDivSolution(
-            i_selected=self._state.selected_index_array.copy(),
-        )
+        return self._construct_final_solution(step_results)
 
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
     def _get_step_names(self) -> list[str]:
+        """Return list of numbered step names, left aligned to be of equal length."""
         n_steps = len(self._solver_steps)
         step_names = [f"step {i}/{n_steps} - {s.name()}" for i, s in enumerate(self._solver_steps, start=1)]
         max_len = max(len(name) for name in step_names)
         step_names = [name.ljust(max_len + 2) for name in step_names]
 
         return step_names
+
+    def _construct_final_solution(self, step_results: dict[str, SolverStepResult]) -> MaxDivSolution:
+        """Construct the final MaxDivSolution from the current state & step results."""
+
+        # --- collect step durations --------------------
+        step_durations = {step_name: result.elapsed for step_name, result in step_results.items()}
+
+        # --- aggregate score checkpoints -----------------
+        score_checkpoints = []
+        elapsed_from_previous_steps = Elapsed(t_elapsed_sec=0.0, n_iterations=0)
+        for step_name, result in step_results.items():
+            for elapsed, score in result.score_checkpoints:
+                score_checkpoints.append(
+                    (
+                        step_name,
+                        elapsed_from_previous_steps + elapsed,
+                        score,
+                    )
+                )
+
+            # Update elapsed_from_previous_steps to include this step's total elapsed time
+            elapsed_from_previous_steps += result.elapsed
+
+        # --- construct solution --------------------------
+        return MaxDivSolution(
+            i_selected=self._state.selected_index_array.copy(),
+            score_checkpoints=score_checkpoints,
+            step_durations=step_durations,
+        )

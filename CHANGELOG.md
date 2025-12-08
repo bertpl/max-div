@@ -7,6 +7,7 @@
 
 - **new**:
     - make a `SolverStep` return score checkpoints correctly via `SolverStepResult`
+    - make `MaxDivSolver` return extensive meta-data via `MaxDivSolution`
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.5

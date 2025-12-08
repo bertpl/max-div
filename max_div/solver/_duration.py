@@ -115,10 +115,10 @@ class ProgressTracker(ABC):
 
     def iters_per_second(self):
         t_elapsed = time.perf_counter() - self._t_start
-        if t_elapsed > 0.0:
+        if (t_elapsed > 0.0) and (self._iter_count > 0):
             return self._iter_count / t_elapsed
         else:
-            return 1.0
+            return 0.0
 
     @abstractmethod
     def get_progress(self) -> Progress:
@@ -196,9 +196,22 @@ class Progress:
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
 class Elapsed:
+    # --- data fields -----------------
     t_elapsed_sec: float
     n_iterations: int
 
+    # --- equal -----------------------
+    def __eq__(self, other) -> bool:
+        # equal if...
+        #   n_iterations is exactly equal
+        #   t_elapsed_sec is equal within 1e-10 sec, which is < 1 clock cycle on typical modern hardware
+        return (
+            isinstance(other, Elapsed)
+            and (self.n_iterations == other.n_iterations)
+            and abs(self.t_elapsed_sec - other.t_elapsed_sec) < 1e-10
+        )
+
+    # --- math ------------------------
     def __add__(self, other: Elapsed) -> Elapsed:
         if other == 0:
             return self  # helps ensure sum() works correctly
