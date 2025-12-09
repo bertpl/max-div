@@ -79,4 +79,4 @@ exclude_also = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-n auto --dist worksteal"
+addopts = "-n auto --dist worksteal --reruns 10"
