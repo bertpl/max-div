@@ -21,6 +21,8 @@ class MaxDivSolverBuilder:
         self._vectors: np.ndarray | None = None
         self._distance_metric: DistanceMetric = DistanceMetric.L2_EUCLIDEAN
         self._diversity_metric: DiversityMetric = DiversityMetric.geomean_separation()
+        self._diversity_tie_breakers: list[DiversityMetric | object] = []
+        self._default_diversity_tie_breakers: bool = True
         self._selection_size: int | None = None
         self._constraints: list[Constraint] = []
         self._solver_steps: list[SolverStep] = [
@@ -48,6 +50,16 @@ class MaxDivSolverBuilder:
 
     def with_diversity_metric(self, diversity_metric: DiversityMetric) -> Self:
         self._diversity_metric = diversity_metric
+        return self
+
+    def with_diversity_tie_breakers(self, diversity_tie_breakers: list[DiversityMetric]) -> Self:
+        self._diversity_tie_breakers = diversity_tie_breakers
+        self._default_diversity_tie_breakers = False
+        return self
+
+    def with_default_diversity_tie_breakers(self) -> Self:
+        self._diversity_tie_breakers = []
+        self._default_diversity_tie_breakers = True
         return self
 
     def with_selection_size(self, selection_size: int) -> Self:
@@ -92,6 +104,24 @@ class MaxDivSolverBuilder:
             return False, "selection_size cannot be greater than the number of available vectors."
         return True, ""
 
+    def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:
+        if not self._default_diversity_tie_breakers:
+            # custom tie-breakers provided by the user
+            return self._diversity_tie_breakers
+        else:
+            # default tie-breakers based on the main diversity metric
+            if self._diversity_metric == DiversityMetric.min_separation():
+                return [
+                    DiversityMetric.approx_geomean_separation(),
+                    DiversityMetric.non_zero_separation_frac(),
+                ]
+            elif (self._diversity_metric == DiversityMetric.geomean_separation()) or (
+                self._diversity_metric == DiversityMetric.approx_geomean_separation()
+            ):
+                return [DiversityMetric.non_zero_separation_frac()]
+            else:
+                return []
+
     def build(self) -> MaxDivSolver:
         ok, msg = self._is_buildable()
         if not ok:
@@ -100,6 +130,7 @@ class MaxDivSolverBuilder:
             vectors=self._vectors,
             distance_metric=self._distance_metric,
             diversity_metric=self._diversity_metric,
+            diversity_tie_breakers=self._determine_diversity_tie_breakers(),
             selection_size=self._selection_size,
             constraints=self._constraints,
             solver_steps=self._solver_steps,

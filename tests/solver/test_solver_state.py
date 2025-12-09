@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from max_div.solver import Constraint, DistanceMetric, DiversityMetric
-from max_div.solver._score import Score
 from max_div.solver._solver_state import SolverState
 
 
@@ -16,6 +15,7 @@ def new_solver_state() -> SolverState:
         target_selection_size=3,
         distance_metric=DistanceMetric.L1_MANHATTAN,
         diversity_metric=DiversityMetric.geomean_separation(),
+        diversity_tie_breakers=[DiversityMetric.non_zero_separation_frac()],
         constraints=[
             Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2),
             Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
@@ -30,6 +30,7 @@ def new_solver_state_unconstrained() -> SolverState:
         target_selection_size=3,
         distance_metric=DistanceMetric.L1_MANHATTAN,
         diversity_metric=DiversityMetric.geomean_separation(),
+        diversity_tie_breakers=[DiversityMetric.non_zero_separation_frac()],
         constraints=[],
     )
 
@@ -41,8 +42,8 @@ def test_solver_state_has_constraints(new_solver_state, new_solver_state_unconst
     assert new_solver_state.has_constraints == True
     assert new_solver_state_unconstrained.has_constraints == False
 
-    assert new_solver_state.constraint_violation == 2
-    assert new_solver_state_unconstrained.constraint_violation == 0
+    assert new_solver_state.score.constraints < 1.0  # constraints present and not all satisfied --> <1.0
+    assert new_solver_state_unconstrained.score.constraints == 1.0  # no constraints -> perfect score
 
 
 def test_solver_state_add_remove(new_solver_state):
@@ -69,7 +70,8 @@ def test_solver_state_end_to_end(new_solver_state):
     # --- assert 1 ----------------------------------------
     assert state.selected_index_array.size == 0
     assert state.not_selected_index_array.size == 6
-    assert state.score.value == (-3, -2, 0.0)
+    assert state.score.size < 1.0  # insufficient vectors selected
+    assert state.score.constraints < 1.0  # constraints not satisfied
 
     # --- act 1 -------------------------------------------
     state.add(0)
@@ -80,7 +82,9 @@ def test_solver_state_end_to_end(new_solver_state):
     assert np.array_equal(state.selected_index_array, [0, 2, 5])
     assert np.array_equal(state.not_selected_index_array, [1, 3, 4])
     assert np.allclose(state.selected_separation_array, [2, 2, 3])
-    assert np.allclose(state.score.value, (0, 0, (2 * 2 * 3) ** (1 / 3)))
+    assert state.score.size == 1.0  # correct number of vectors selected
+    assert state.score.constraints == 1.0  # all constraints satisfied
+    assert state.score.diversity == pytest.approx((2 * 2 * 3) ** (1 / 3))  # geomean of separations 2, 2, 3
 
     # --- act 2 -------------------------------------------
     state.remove(5)
@@ -91,7 +95,9 @@ def test_solver_state_end_to_end(new_solver_state):
     assert np.array_equal(state.not_selected_index_array, [1, 3, 5])
     assert np.allclose(state.selected_separation_array, [2, 2, 2])
     assert np.allclose(state.not_selected_separation_array, [1, 1, 1])
-    assert np.allclose(state.score.value, (0, 0, 2))
+    assert state.score.size == 1.0  # correct number of vectors selected
+    assert state.score.constraints == 1.0  # all constraints satisfied
+    assert state.score.diversity == pytest.approx(2.0)  # geomean of separations 2, 2, 2
 
 
 def test_solver_state_snapshot(new_solver_state):

@@ -130,6 +130,69 @@ def test_solver_builder_add_solver_steps(strategies: list, expected_ok: bool):
 
 
 # =================================================================================================
+#  MaxDivSolverBuilder - Tie-Breaker Metrics
+# =================================================================================================
+@pytest.mark.parametrize(
+    "diversity_metric, expected_tie_breakers",
+    [
+        (
+            DiversityMetric.min_separation(),
+            [DiversityMetric.approx_geomean_separation(), DiversityMetric.non_zero_separation_frac()],
+        ),
+        (DiversityMetric.geomean_separation(), [DiversityMetric.non_zero_separation_frac()]),
+        (DiversityMetric.approx_geomean_separation(), [DiversityMetric.non_zero_separation_frac()]),
+        (DiversityMetric.mean_separation(), []),
+    ],
+)
+def test_max_div_solver_builder_tie_breaker_metrics_defaults(
+    diversity_metric: DiversityMetric, expected_tie_breakers: list[DiversityMetric]
+):
+    # --- arrange -----------------------------------------
+    builder = (
+        MaxDivSolverBuilder()
+        .with_vectors(np.random.rand(10, 5).astype(np.float32))
+        .with_selection_size(4)
+        .with_diversity_metric(diversity_metric)
+        .with_default_diversity_tie_breakers()
+    )
+
+    # --- act ---------------------------------------------
+    solver = builder.build()
+
+    # --- assert ------------------------------------------
+    assert solver._diversity_metric == diversity_metric
+    for true_tie_breaker, expected_tie_breaker in zip(solver._diversity_tie_breakers, expected_tie_breakers):
+        assert true_tie_breaker == expected_tie_breaker
+
+
+def test_max_div_solver_builder_tie_breaker_metrics_custom():
+    # --- arrange -----------------------------------------
+    builder = (
+        MaxDivSolverBuilder()
+        .with_vectors(np.random.rand(10, 5).astype(np.float32))
+        .with_selection_size(4)
+        .with_diversity_metric(DiversityMetric.geomean_separation())
+        .with_diversity_tie_breakers(
+            [
+                DiversityMetric.approx_geomean_separation(),
+                DiversityMetric.non_zero_separation_frac(),
+                DiversityMetric.mean_separation(),
+            ]
+        )
+    )
+
+    # --- act ---------------------------------------------
+    solver = builder.build()
+
+    # --- assert ------------------------------------------
+    assert solver._diversity_metric == DiversityMetric.geomean_separation()
+    assert len(solver._diversity_tie_breakers) == 3
+    assert solver._diversity_tie_breakers[0] == DiversityMetric.approx_geomean_separation()
+    assert solver._diversity_tie_breakers[1] == DiversityMetric.non_zero_separation_frac()
+    assert solver._diversity_tie_breakers[2] == DiversityMetric.mean_separation()
+
+
+# =================================================================================================
 #  MaxDivSolverBuilder - End-to-End
 # =================================================================================================
 def test_max_div_solver_builder_end_to_end():
@@ -165,9 +228,9 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._vectors.shape == vectors.shape
     assert solver._selection_size == selection_size
     assert len(solver._solver_steps) == 3
-    assert solver._solver_steps[0]._strategy == init_strategy
-    assert solver._solver_steps[1] == solver_steps[0]
-    assert solver._solver_steps[2] == solver_steps[1]
+    assert solver._solver_steps[0].name() == init_strategy.name
+    assert solver._solver_steps[1].name() == solver_steps[0].name()
+    assert solver._solver_steps[2].name() == solver_steps[1].name()
     assert solver._distance_metric == DistanceMetric.L1_MANHATTAN
     assert solver._diversity_metric.name == DiversityMetric.min_separation().name
     assert solver._constraints == constraints

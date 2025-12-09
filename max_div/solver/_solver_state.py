@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 from sortedcontainers import SortedSet
 
-from max_div.sampling._constraint_helpers import _build_array_repr, _build_con_membership, _np_con_total_violation
+from max_div.sampling._constraint_helpers import _build_array_repr, _build_con_membership
 
 from ._constraints import Constraint
 from ._distance import (
@@ -18,7 +18,7 @@ from ._distance import (
     update_separation_remove,
 )
 from ._diversity import DiversityMetric
-from ._score import Score
+from ._score import Score, ScoreGenerator
 
 
 # =================================================================================================
@@ -35,7 +35,7 @@ class SolverState:
         m: np.int32,
         target_selection_size: np.int32,
         d: NDArray[np.float32],
-        diversity_metric: DiversityMetric,
+        score_generator: ScoreGenerator,
         selected: SortedSet,
         not_selected: SortedSet,
         sep_global: NDArray[np.float32],
@@ -45,8 +45,7 @@ class SolverState:
         con_membership: dict[np.int32, list[np.int32]],
     ):
         """
-        Initialize the SolverState.  The constructor is not intended to be used directly, instead use new() or other
-        potential factory methods.
+        Initialize the SolverState.  The constructor is not intended to be used directly, instead use new().
 
         Problem Dimensions:
 
@@ -58,7 +57,7 @@ class SolverState:
         :param m: (np.int32) number of vectors
         :param target_selection_size: (np.int32) target number of selected vectors
         :param d: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (m*(m-1))//2)
-        :param diversity_metric: (DiversityMetric) The diversity metric to use.
+        :param score_generator: (ScoreGenerator) score generator to compute scores for current state
         :param selected: (SortedSet) set of selected indices (np.int32)
         :param not_selected: (SortedSet) set of not selected indices (np.int32)
         :param sep_global: (np.ndarray[np.float32]) m x 1 array with separation of each vector wrt the others
@@ -78,8 +77,8 @@ class SolverState:
         self._sep_global = sep_global  # READ-ONLY
         self._sep_selected = sep_selected
 
-        # diversity
-        self._diversity_metric = diversity_metric  # READ-ONLY
+        # scoring
+        self._score_generator = score_generator  # READ-ONLY
 
         # selection
         self._selected = selected
@@ -199,38 +198,17 @@ class SolverState:
         return self._sep_selected[list(self._not_selected)]
 
     # -------------------------------------------------------------------------
-    #  Diversity
+    #  Scoring
     # -------------------------------------------------------------------------
-    @property
-    def sample_count_mismatch(self) -> np.int32:
-        """Return difference between number of selected samples and required number of samples."""
-        return np.int32(abs(len(self._selected) - self._target_selection_size))
-
-    @property
-    def constraint_violation(self) -> np.int32:
-        """Return total constraint violation (sum of all min_count violations)."""
-        if not self.has_constraints:
-            return np.int32(0)
-        else:
-            return _np_con_total_violation(self._con_values)
-
-    @property
-    def diversity(self) -> np.float32:
-        return self._diversity_metric.compute(self.selected_separation_array)
-
     @property
     def score(self) -> Score:
         """
-        Return overall score of the current selection as (-sample_count_mismatch, -constraint_violation, diversity).
-        The first 2 elements are <=0, while the last element is >=0.  The tuple is constructed such that higher is better
-        and tuple-comparison prioritizes sample count match first, then constraint satisfaction, and finally diversity.
+        Return overall score of the current selection as a multi-component prioritized Score object.
         """
-        return Score(
-            value=(
-                -float(self.sample_count_mismatch),
-                -float(self.constraint_violation),
-                float(self.diversity),
-            )
+        return self._score_generator.compute_score(
+            n_selected=len(self._selected),
+            con_values=self._con_values,
+            selected_separation_array=self.selected_separation_array,
         )
 
     # -------------------------------------------------------------------------
@@ -243,6 +221,7 @@ class SolverState:
         target_selection_size: int,
         distance_metric: DistanceMetric,
         diversity_metric: DiversityMetric,
+        diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
     ) -> SolverState:
         # --- distances ---
@@ -259,19 +238,28 @@ class SolverState:
         con_values, con_indices = _build_array_repr(constraints)
         con_membership = _build_con_membership(m, constraints)
 
+        # --- score generator ---
+        score_generator = ScoreGenerator(
+            m,
+            target_selection_size,
+            diversity_metric,
+            diversity_tie_breakers,
+            constraints,
+        )
+
         # --- construct & return ---
         return SolverState(
-            m,
-            np.int32(target_selection_size),
-            d,
-            diversity_metric,
-            selected,
-            not_selected,
-            sep_global,
-            sep_selected,
-            con_values,
-            con_indices,
-            con_membership,
+            m=m,
+            target_selection_size=np.int32(target_selection_size),
+            d=d,
+            score_generator=score_generator,
+            selected=selected,
+            not_selected=not_selected,
+            sep_global=sep_global,
+            sep_selected=sep_selected,
+            con_values=con_values,
+            con_indices=con_indices,
+            con_membership=con_membership,
         )
 
 

@@ -2,10 +2,15 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.6
-> *(under development)*
+> *(2025-12-09)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
+    - full support for structured multi-component scoring & diversity tie-breaker metrics 
+        - implement structured `Score` object with optional `div_tie_breakers` field
+        - add support for manual or preset tie-breaker metrics in `MaxDivSolverBuilder`
+        - integrate update `Score` class with `SolverState` & `Solver` implementations
+    - add initial support for soft constraint handling
     - make a `SolverStep` return score checkpoints correctly via `SolverStepResult`
     - make `MaxDivSolver` return extensive meta-data via `MaxDivSolution`
     - add `non_zero_separation_frac` to `DiversityMetric` implementations and benchmarking suite

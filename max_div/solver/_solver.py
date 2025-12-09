@@ -29,18 +29,21 @@ class MaxDivSolver:
         vectors: np.ndarray,
         distance_metric: DistanceMetric,
         diversity_metric: DiversityMetric,
+        diversity_tie_breakers: list[DiversityMetric],
         selection_size: int,
         constraints: list[Constraint],
         solver_steps: list[SolverStep],
     ):
         """
         Initialize the MaxDivSolver with the given configuration.
+
         :param vectors: (M x N ndarray) A set of M vectors in N dimensions.
         :param distance_metric: (DistanceMetric) The distance metric to use.
-        :param diversity_metric: (str) The diversity metric to use.
+        :param diversity_metric: (DiversityMetric) The diversity metric to use.
+        :param diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
         :param selection_size: (int) The number of vectors to be selected from the input set.
-        :param constraints: (list) A list of constraints to try to satisfy during solving.
-        :param solver_steps: (list) A list of solver steps to execute,
+        :param constraints: (list[Constraint]) A list of constraints to try to satisfy during solving.
+        :param solver_steps: (list[SolverStep]) A list of solver steps to execute,
                                        the first of which needs to be an InitializationStep,
                                        while all latter ones need to be OptimizationSteps.
         """
@@ -49,6 +52,7 @@ class MaxDivSolver:
         self._vectors = vectors
         self._distance_metric = distance_metric
         self._diversity_metric = diversity_metric
+        self._diversity_tie_breakers = diversity_tie_breakers
         self._selection_size = selection_size
         self._constraints = constraints
         self._solver_steps = solver_steps
@@ -59,6 +63,7 @@ class MaxDivSolver:
             target_selection_size=selection_size,
             distance_metric=distance_metric,
             diversity_metric=diversity_metric,
+            diversity_tie_breakers=diversity_tie_breakers,
             constraints=constraints,
         )
 
