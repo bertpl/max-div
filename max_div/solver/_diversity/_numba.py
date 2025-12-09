@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from numba import njit
 from numpy.typing import NDArray
@@ -9,7 +11,12 @@ from max_div.internal.math.fast_log import fast_log2_f32
 @njit("float32(float32[::1])", fastmath=True, inline="always")
 def min_separation(sep: NDArray[np.float32]) -> np.float32:
     """Minimum separation of all selected vectors."""
-    return np.min(sep)
+    # return np.min(sep)
+    n = sep.shape[0]
+    min_value = np.float32(np.inf)
+    for i in range(n):
+        min_value = min(min_value, sep[i])
+    return min_value
 
 
 @njit("float32(float32[::1])", fastmath=True, inline="always")
@@ -42,3 +49,13 @@ def approx_geomean_separation(sep: NDArray[np.float32]) -> np.float32:
         else:
             log_sum += fast_log2_f32(sep[i])
     return fast_exp2_f32(log_sum / n)
+
+
+@njit("float32(float32[::1])", fastmath=True, inline="always")
+def non_zero_separation_frac(sep: NDArray[np.float32]) -> np.float32:
+    n = sep.shape[0]
+    n_non_zero = np.int32(0)
+    for i in range(n):
+        if sep[i] != 0.0:
+            n_non_zero += 1
+    return np.float32(n_non_zero) / np.float32(n)

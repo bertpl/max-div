@@ -23,6 +23,7 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False) -> N
      * `mean_separation`
      * `geomean_separation`
      * `approx_geomean_separation`
+     * `non_zero_separation_frac`
 
     Vector sizes tested: [2, 4, 8, ..., 1024, 2048, 4096]
 
@@ -43,6 +44,7 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False) -> N
             "`mean_separation`",
             "`geomean_separation`",
             "`approx_geomean_separation`",
+            "`non_zero_separation_frac`",
         ]
     else:
         print("DiversityMetric Performance:")
@@ -53,6 +55,7 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False) -> N
             "mean_separation",
             "geomean_separation",
             "approx_geomean_separation",
+            "non_zero_separation_frac",
         ]
 
     # --- create diversity metrics --------------------
@@ -61,6 +64,7 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False) -> N
         DiversityMetric.mean_separation(),
         DiversityMetric.geomean_separation(),
         DiversityMetric.approx_geomean_separation(),
+        DiversityMetric.non_zero_separation_frac(),
     ]
 
     # --- benchmark ------------------------------------

@@ -8,6 +8,11 @@
 - **new**:
     - make a `SolverStep` return score checkpoints correctly via `SolverStepResult`
     - make `MaxDivSolver` return extensive meta-data via `MaxDivSolution`
+    - add `non_zero_separation_frac` to `DiversityMetric` implementations and benchmarking suite
+
+- **improved**:
+    - ~20% speed improvement of `min_separation` diversity metric  
+
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.5
