@@ -101,7 +101,7 @@ class ProgressTracker(ABC):
         self._t_start = time.perf_counter()
         self._iter_count = 0
 
-    def iterations_done(self, n: int):
+    def report_iterations_done(self, n: int):
         self._iter_count += n
 
     def iter_count(self) -> int:
@@ -124,10 +124,6 @@ class ProgressTracker(ABC):
     def get_progress(self) -> Progress:
         raise NotImplementedError()
 
-    @abstractmethod
-    def estimated_n_iterations_remaining(self) -> int:
-        raise NotImplementedError()
-
 
 class _TimeTracker(ProgressTracker):
     def __init__(self, max_seconds: float):
@@ -136,25 +132,22 @@ class _TimeTracker(ProgressTracker):
         self._n_total = max(1, int(max_seconds))
 
     def get_progress(self) -> Progress:
+        est_iters_per_second = self.iters_per_second()
         t_elapsed = time.perf_counter() - self._t_start
         if t_elapsed >= self._max_seconds:
-            n_current = self._n_total
+            fraction = 1.0
+            est_n_iters_remaining = 0
         else:
-            n_current = min(int(t_elapsed), self._n_total - 1)
+            fraction = t_elapsed / self._max_seconds
+            est_n_iters_remaining = max(1, int((self._max_seconds - t_elapsed) * est_iters_per_second))
 
         return Progress(
-            n_current=n_current,
-            n_total=self._n_total,
+            tqdm_n_total=self._n_total,
+            fraction=fraction,
+            iter_count=self._iter_count,
+            est_n_iters_remaining=est_n_iters_remaining,
+            est_iters_per_second=est_iters_per_second,
         )
-
-    def estimated_n_iterations_remaining(self) -> int:
-        t_elapsed = time.perf_counter() - self._t_start
-        if t_elapsed >= self._max_seconds:
-            return 0
-        else:
-            iters_per_sec = self._iter_count / t_elapsed
-            iters_remaining = iters_per_sec * (self._max_seconds - t_elapsed)
-            return int(iters_remaining)
 
 
 class _IterationTracker(ProgressTracker):
@@ -163,13 +156,18 @@ class _IterationTracker(ProgressTracker):
         self._max_iters = max_iters
 
     def get_progress(self) -> Progress:
-        return Progress(
-            n_current=min(self._iter_count, self._max_iters),
-            n_total=self._max_iters,
-        )
+        if self._iter_count >= self._max_iters:
+            fraction = 1.0
+        else:
+            fraction = self._iter_count / self._max_iters
 
-    def estimated_n_iterations_remaining(self) -> int:
-        return max(0, self._max_iters - self._iter_count)
+        return Progress(
+            tqdm_n_total=self._max_iters,
+            fraction=fraction,
+            iter_count=self._iter_count,
+            est_n_iters_remaining=max(0, self._max_iters - self._iter_count),
+            est_iters_per_second=self.iters_per_second(),
+        )
 
 
 # =================================================================================================
@@ -177,17 +175,42 @@ class _IterationTracker(ProgressTracker):
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
 class Progress:
-    n_current: int
-    n_total: int
+    """Representation of progress made so far towards a target duration, including various meta-data."""
+
+    # --- tqdm ---
+    tqdm_n_total: int  # total number of steps for tqdm progress bar
+
+    # --- other---
+    fraction: float  # fractional progress in [0,1]
+    iter_count: int  # total number of iterations reported done
+    est_n_iters_remaining: float  # estimated number of iterations remaining
+    est_iters_per_second: float  # estimated number of iterations executed so far per second
+
+    @property
+    def tqdm_n_current(self) -> int:
+        if self.fraction >= 1.0:
+            return self.tqdm_n_total
+        else:
+            # report fractional progress, but limited to tqdm_n_total-1 in case we're not finished yet.
+            return max(0, min(self.tqdm_n_total - 1, round(self.fraction * self.tqdm_n_total)))
+
+    @property
+    def est_progress_fraction_per_iter(self) -> float:
+        """Estimated progress fraction increase per executed iteration."""
+        est_total_iters = self.iter_count + self.est_n_iters_remaining
+        if est_total_iters >= 1:
+            return 1.0 / est_total_iters
+        else:
+            return 0.0
 
     @property
     def is_finished(self) -> bool:
-        return self.n_current >= self.n_total
+        return self.fraction >= 1.0
 
     def update_tqdm(self, pbar: tqdm):
         """Updates a tqdm progress bar to reflect current progress"""
-        pbar.n = self.n_current
-        pbar.total = self.n_total
+        pbar.n = self.tqdm_n_current
+        pbar.total = self.tqdm_n_total
         pbar.refresh()
 
 

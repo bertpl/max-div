@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 from max_div.internal.benchmarking._timer import Timer
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
-from ._duration import Elapsed, ProgressTracker, TargetDuration
+from ._duration import Elapsed, Progress, TargetDuration
 from ._score import Score
 from ._solver_state import SolverState
 
@@ -118,11 +118,16 @@ class OptimizationStep(SolverStep):
                 progress.update_tqdm(pbar)
 
             # --- do n iterations ---
-            n_iters = self._determine_n_iterations(tracker, next_checkpoint_iter_count)
-            self._strategy.perform_n_iterations(state, n_iters)
+            n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count)
+            self._strategy.perform_n_iterations(
+                state=state,
+                n_iters=n_iters,
+                current_progress_frac=progress.fraction,
+                progress_frac_per_iter=progress.est_progress_fraction_per_iter,
+            )
 
             # --- update progress ---
-            tracker.iterations_done(n_iters)
+            tracker.report_iterations_done(n_iters)
 
             # --- create checkpoint if needed ---
             if tracker.iter_count() >= next_checkpoint_iter_count:
@@ -147,7 +152,7 @@ class OptimizationStep(SolverStep):
         return SolverStepResult(score_checkpoints=score_checkpoints)
 
     @staticmethod
-    def _determine_n_iterations(tracker: ProgressTracker, next_checkpoint_iter_count: int) -> int:
+    def _determine_n_iterations(progress: Progress, next_checkpoint_iter_count: int) -> int:
         """
         Determine number of iterations to execute in the next inner loop.
 
@@ -157,17 +162,17 @@ class OptimizationStep(SolverStep):
           - next_checkpoint_iter_count: this is the # of iterations at which we want to keep track
                                                                                   of the score we're optimizing.
         """
-        total_iters_left = tracker.estimated_n_iterations_remaining()
-        iters_per_second = tracker.iters_per_second()
-        iter_count = tracker.iter_count()
+        iters_until_next_pbar_update = int(progress.est_iters_per_second)  # target = 1x/sec
+        iters_until_next_checkpoint = next_checkpoint_iter_count - progress.iter_count
+        half_iters_until_finished = progress.est_n_iters_remaining // 2  # iters to move 50% closer to being finished
 
         return max(
             1,  # never less than 1 iteration
             min(
                 [
-                    int(iters_per_second),  # so we can report progress every 1sec
-                    next_checkpoint_iter_count - iter_count,  # so we can make a checkpoint at exactly the right time
-                    total_iters_left // 2,  # proceed towards the end in steps of 50% of what's remaining at most
+                    iters_until_next_pbar_update,
+                    iters_until_next_checkpoint,
+                    half_iters_until_finished,
                 ]
             ),
         )

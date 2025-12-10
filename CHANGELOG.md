@@ -9,6 +9,8 @@
     - methods for modifying 'selectivity' of an array of probabilities (more or less uniform) 
         - `modify_p_selectivity_power` & `modify_p_selectivity_pwl2`
         - add benchmarking of these methods to CLI & docs
+    - make strategies aware of progress fraction within execution of a `SolverStep` to allow scheduling various
+       parameters (constraint softness, wide vs selective search, ...)
 - **improved**:
     - add caching of `Score` object in `SolverState` to avoid redundant score computations when state hasn't changed
 

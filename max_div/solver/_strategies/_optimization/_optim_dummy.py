@@ -4,5 +4,5 @@ from ._base import OptimizationStrategy
 
 
 class OptimDummy(OptimizationStrategy):
-    def _perform_single_iteration(self, state: SolverState):
+    def _perform_single_iteration(self, state: SolverState, progress_frac: float):
         pass  # TODO

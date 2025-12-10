@@ -29,9 +29,11 @@ class OptimTest(OptimizationStrategy):
     def __init__(self):
         super().__init__()
         self._n_iterations = 0
+        self._progress_fracs = []
 
-    def _perform_single_iteration(self, state: SolverState):
+    def _perform_single_iteration(self, state: SolverState, progress_frac: float):
         self._n_iterations += 1
+        self._progress_fracs.append(progress_frac)
 
 
 # --- checks ----------------------------------------------
@@ -140,6 +142,9 @@ def test_optimization_step_run_iterations():
 
     # --- assert ---
     assert strategy._n_iterations == 123
+    for i, progress_frac in enumerate(strategy._progress_fracs):
+        assert math.isclose(i / 123, progress_frac)
+
     assert isinstance(result, SolverStepResult)
     assert result.elapsed.n_iterations == 123
     assert_score_checkpoints_are_sane(result.score_checkpoints)
