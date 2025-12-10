@@ -16,18 +16,32 @@
 
 ## v0.2.0
 
-- First version of the `MaxDivSolver` framework & all core classes (metrics, distances, constraints, solver state, ...)
+- First version of the `MaxDivSolver` framework all core classes (metrics, distances, constraints, solver state, ...)
 
 ## v0.2.x
  
-- Implement solver strategies
-- Improvements & optimizations to `MaxDivSolver` functionality
+- Implement all remaining parts of framework
+  - multi-component prioritized constraints
+  - soft constraint handling
+  - tie-breaker diversity scores
+  - full `MaxDivSolverBuilder` class for `MaxDivSolver` instances
+  - probability selectivity modification functionality
+  - support for `SolverSteps` with scheduled (=progress-dependent) parameters
 
 ## v0.3.0
 
-- First version with full-featured `MaxDivSolver`
+- First version of the `MaxDivSolver` framework & all core classes (metrics, distances, constraints, solver state, scheduling, ...)
 
 ## v0.3.x
+
+- Implementation of various initialization & optimization strategies
+- Implementation of convenient strategy presets in `MaxDivSolverBuilder` class.
+
+## v0.4.0
+
+- First version with full-featured `MaxDivSolver`, including a variety of initialization & optimization strategies.
+
+## v0.4.x
 
 - Documentation push
   - Getting started / Tutorial
