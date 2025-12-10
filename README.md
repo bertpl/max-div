@@ -1,4 +1,4 @@
-![shields.io-python-versions](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
+![shields.io-python-versions](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
 ![genbadge-test-count](https://bertpl.github.io/max-div/version_artifacts/develop/v0.3.1/badge-test-count.svg)
 ![genbadge-test-coverage](https://bertpl.github.io/max-div/version_artifacts/develop/v0.3.1/badge-coverage.svg)
 [![docs-build-status](https://app.readthedocs.org/projects/max-div/badge/?version=latest)](https://max-div.readthedocs.io/en/stable)
