@@ -40,7 +40,7 @@ runs:
           git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/${{ github.repository }}.git          
           git pull origin "$GITHUB_REF"
           
-          uv run --python 3.13 .github/scripts/update_readme_urls.py "$GITHUB_WORKSPACE/.python-versions" "$GITHUB_WORKSPACE/pyproject.toml" "$GITHUB_WORKSPACE/README.md" "${{ steps.build_type.outputs.build_type }}"
+          uv run --python 3.14 .github/scripts/update_readme_urls.py "$GITHUB_WORKSPACE/.python-versions" "$GITHUB_WORKSPACE/pyproject.toml" "$GITHUB_WORKSPACE/README.md" "${{ steps.build_type.outputs.build_type }}"
           echo "----------------------------------------------------------"
           cat "$GITHUB_WORKSPACE/README.md" | head -n 10
           echo "..."
