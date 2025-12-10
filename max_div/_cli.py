@@ -3,6 +3,7 @@
 import click
 
 from max_div.benchmark import benchmark_diversity_metrics as _benchmark_diversity_metrics
+from max_div.benchmark import benchmark_modify_p_selectivity as _benchmark_modify_p_selectivity
 from max_div.benchmark import benchmark_randint as _benchmark_randint
 from max_div.benchmark import benchmark_randint_constrained as _benchmark_randint_constrained
 
@@ -74,6 +75,15 @@ def diversity_metrics(ctx):
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
     _benchmark_diversity_metrics(speed=speed, markdown=markdown)
+
+
+@benchmark.command(name="modify_p_selectivity")
+@click.pass_context
+def modify_p_selectivity(ctx):
+    """Benchmark different modify_p_selectivity flavors."""
+    speed = ctx.obj["speed"]
+    markdown = ctx.obj["markdown"]
+    _benchmark_modify_p_selectivity(speed=speed, markdown=markdown)
 
 
 # -------------------------------------------------------------------------

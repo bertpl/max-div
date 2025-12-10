@@ -5,6 +5,10 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+    - methods for modifying 'selectivity' of an array of probabilities (more or less uniform) 
+        - `modify_p_selectivity_power` & `modify_p_selectivity_pwl2`
+        - add benchmarking of these methods to CLI & docs
 - **improved**:
     - add caching of `Score` object in `SolverState` to avoid redundant score computations when state hasn't changed
 
