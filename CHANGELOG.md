@@ -2,11 +2,12 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.1
-> *(under development)*
+> *(2025-12-10)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
     - add support for Python 3.14 
+    - `MaxDivProblem` class, so problems can be formulated outside of the `MaxDivSolver` and `MaxDivSolverBuilder` classes, paving the way for a built-in benchmark suite.
 
 - **improved**:
     - improve consistency of dimension notations `n`, `d`, `k`, `m` across codebase

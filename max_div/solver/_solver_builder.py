@@ -5,6 +5,7 @@ import numpy as np
 from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
+from ._problem import MaxDivProblem
 from ._solver import MaxDivSolver
 from ._solver_step import InitializationStep, OptimizationStep, SolverStep
 from ._strategies import InitializationStrategy
@@ -14,17 +15,21 @@ class MaxDivSolverBuilder:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, problem: MaxDivProblem):
         """
         Initialize the MaxDivSolverBuilder.
         """
-        self._vectors: np.ndarray | None = None
-        self._k: int | None = None
-        self._distance_metric: DistanceMetric = DistanceMetric.L2_EUCLIDEAN
-        self._diversity_metric: DiversityMetric = DiversityMetric.geomean_separation()
+
+        # --- problem properties ----------------
+        self._vectors: np.ndarray = problem.vectors
+        self._k: int = problem.k
+        self._distance_metric: DistanceMetric = problem.distance_metric
+        self._diversity_metric: DiversityMetric = problem.diversity_metric
+        self._constraints: list[Constraint] = problem.constraints
+
+        # --- solver configuration --------------
         self._diversity_tie_breakers: list[DiversityMetric | object] = []
         self._default_diversity_tie_breakers: bool = True
-        self._constraints: list[Constraint] = []
         self._solver_steps: list[SolverStep] = [
             InitializationStep(InitializationStrategy.random()),  # Default initialization strategy
         ]
@@ -32,26 +37,6 @@ class MaxDivSolverBuilder:
     # -------------------------------------------------------------------------
     #  Builder API
     # -------------------------------------------------------------------------
-    def with_vectors(self, vectors: np.ndarray) -> Self:
-        if vectors.ndim != 2:
-            raise ValueError("Vectors must be a 2D numpy array.")
-        if vectors.shape[0] < 2:
-            raise ValueError("At least two vectors are required to compute diversity.")
-        if vectors.shape[1] == 0:
-            raise ValueError("Vectors must have at least one dimension.")
-        if vectors.dtype != np.float32:
-            raise ValueError("Vectors must be of type np.float32.")
-        self._vectors = vectors
-        return self
-
-    def with_distance_metric(self, distance_metric: DistanceMetric) -> Self:
-        self._distance_metric = distance_metric
-        return self
-
-    def with_diversity_metric(self, diversity_metric: DiversityMetric) -> Self:
-        self._diversity_metric = diversity_metric
-        return self
-
     def with_diversity_tie_breakers(self, diversity_tie_breakers: list[DiversityMetric]) -> Self:
         self._diversity_tie_breakers = diversity_tie_breakers
         self._default_diversity_tie_breakers = False
@@ -60,12 +45,6 @@ class MaxDivSolverBuilder:
     def with_default_diversity_tie_breakers(self) -> Self:
         self._diversity_tie_breakers = []
         self._default_diversity_tie_breakers = True
-        return self
-
-    def with_selection_size(self, k: int) -> Self:
-        if k < 2:
-            raise ValueError("k must be at least 2.")
-        self._k = k
         return self
 
     def set_initialization_strategy(self, init_strategy: InitializationStrategy) -> Self:
@@ -83,25 +62,10 @@ class MaxDivSolverBuilder:
             self.add_solver_step(solver_step)
         return self
 
-    def with_constraint(self, constraint: Constraint) -> Self:
-        self._constraints.append(constraint)
-        return self
-
-    def with_constraints(self, constraints: list[Constraint]) -> Self:
-        for con in constraints:
-            self.with_constraint(con)
-        return self
-
     # -------------------------------------------------------------------------
     #  Build
     # -------------------------------------------------------------------------
     def _is_buildable(self) -> tuple[bool, str]:
-        if self._vectors is None:
-            return False, "with_vectors() must be called before build()."
-        if self._k is None:
-            return False, "with_selection_size() must be called before build()."
-        if self._k > self._vectors.shape[0]:
-            return False, "selection_size cannot be greater than the number of available vectors."
         return True, ""
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:

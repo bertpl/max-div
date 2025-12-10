@@ -48,13 +48,15 @@ class MaxDivSolver:
                                        while all latter ones need to be OptimizationSteps.
         """
 
-        # --- properties ----------------------------------
+        # --- problem description -------------------------
         self._vectors = vectors
         self._k = k
         self._distance_metric = distance_metric
         self._diversity_metric = diversity_metric
-        self._diversity_tie_breakers = diversity_tie_breakers
         self._constraints = constraints
+
+        # --- solver config -------------------------------
+        self._diversity_tie_breakers = diversity_tie_breakers
         self._solver_steps = solver_steps
 
         # --- state ---------------------------------------

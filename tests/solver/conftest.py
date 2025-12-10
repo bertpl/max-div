@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div.solver import Constraint, DistanceMetric, DiversityMetric, MaxDivSolver, MaxDivSolverBuilder
+from max_div.solver import Constraint, DistanceMetric, DiversityMetric, MaxDivProblem, MaxDivSolver, MaxDivSolverBuilder
 from max_div.solver._duration import iterations, seconds
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
@@ -22,16 +22,18 @@ def example_problem_1() -> MaxDivSolver:
         Constraint(set(range(5, 10)), min_count=2, max_count=3),
     ]
 
-    builder = MaxDivSolverBuilder()
-
     # return built solver
     builder = (
-        builder.with_vectors(vectors)
-        .with_selection_size(selection_size)
+        MaxDivSolverBuilder(
+            MaxDivProblem(
+                vectors=vectors,
+                k=selection_size,
+                distance_metric=DistanceMetric.L1_MANHATTAN,
+                diversity_metric=DiversityMetric.min_separation(),
+                constraints=constraints,
+            )
+        )
         .set_initialization_strategy(init_strategy)
         .add_solver_steps(solver_steps)
-        .with_distance_metric(DistanceMetric.L1_MANHATTAN)
-        .with_diversity_metric(DiversityMetric.min_separation())
-        .with_constraints(constraints)
     )
     return builder.build()
