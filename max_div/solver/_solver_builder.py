@@ -19,11 +19,11 @@ class MaxDivSolverBuilder:
         Initialize the MaxDivSolverBuilder.
         """
         self._vectors: np.ndarray | None = None
+        self._k: int | None = None
         self._distance_metric: DistanceMetric = DistanceMetric.L2_EUCLIDEAN
         self._diversity_metric: DiversityMetric = DiversityMetric.geomean_separation()
         self._diversity_tie_breakers: list[DiversityMetric | object] = []
         self._default_diversity_tie_breakers: bool = True
-        self._selection_size: int | None = None
         self._constraints: list[Constraint] = []
         self._solver_steps: list[SolverStep] = [
             InitializationStep(InitializationStrategy.random()),  # Default initialization strategy
@@ -62,10 +62,10 @@ class MaxDivSolverBuilder:
         self._default_diversity_tie_breakers = True
         return self
 
-    def with_selection_size(self, selection_size: int) -> Self:
-        if selection_size < 2:
-            raise ValueError("selection_size must be at least 2.")
-        self._selection_size = selection_size
+    def with_selection_size(self, k: int) -> Self:
+        if k < 2:
+            raise ValueError("k must be at least 2.")
+        self._k = k
         return self
 
     def set_initialization_strategy(self, init_strategy: InitializationStrategy) -> Self:
@@ -98,9 +98,9 @@ class MaxDivSolverBuilder:
     def _is_buildable(self) -> tuple[bool, str]:
         if self._vectors is None:
             return False, "with_vectors() must be called before build()."
-        if self._selection_size is None:
+        if self._k is None:
             return False, "with_selection_size() must be called before build()."
-        if self._selection_size > self._vectors.shape[0]:
+        if self._k > self._vectors.shape[0]:
             return False, "selection_size cannot be greater than the number of available vectors."
         return True, ""
 
@@ -128,10 +128,10 @@ class MaxDivSolverBuilder:
             raise ValueError(f"Cannot build MaxDivSolver: {msg}")
         return MaxDivSolver(
             vectors=self._vectors,
+            k=self._k,
             distance_metric=self._distance_metric,
             diversity_metric=self._diversity_metric,
             diversity_tie_breakers=self._determine_diversity_tie_breakers(),
-            selection_size=self._selection_size,
             constraints=self._constraints,
             solver_steps=self._solver_steps,
         )

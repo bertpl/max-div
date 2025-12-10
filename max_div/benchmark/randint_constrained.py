@@ -32,7 +32,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
     """
     Benchmarks the `randint_constrained` function from `max_div.sampling.con`.
 
-    Different scenarios are tested across different values of `k`, `n` & `n_cons` (# of constraints):
+    Different scenarios are tested across different values of `k`, `n` & `m` (# of constraints):
 
      * **SCENARIO A**
         * all combinations with `k` < `n` with
@@ -46,10 +46,10 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
      * **SCENARIO B**
         * `n` =  1000
         * `k` =   100
-        * `n_cons` in [2, 4, 8, 16, ..., 256, 384, 512, 768, 1024]
+        * `m` in [2, 4, 8, 16, ..., 256, 384, 512, 768, 1024]
             * each constraint spans a random 1% of the `n` range (=10 values)
-            * min_count = 1+floor(10 / n_cons)
-            * max_count = 1+ceil(1000 / n_cons)
+            * min_count = 1+floor(10 / m)
+            * max_count = 1+ceil(1000 / m)
 
     Both scenarios are tested with uniform sampling (no custom probabilities p) and with custom probabilities p
      favoring larger values to be sampled.
@@ -108,7 +108,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
             headers = [
                 "`k`",
                 "`n`",
-                "`n_cons`",
+                "`m`",
                 "`randint_numba`",
                 md_multiline(["`randint_constrained`", "(eager=False)"]),
                 md_multiline(["`randint_constrained`", "(eager=True)"]),
@@ -119,7 +119,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
             timing_data: list[list[CellContent]] = []
             accuracy_data: list[list[CellContent]] = []
 
-            for i, (n, k, n_cons) in tqdm(enumerate(s.n_k_n_cons_tuples()), leave=False):
+            for i, (n, k, m) in tqdm(enumerate(s.n_k_m_tuples()), leave=False):
                 if i >= max_count:
                     continue
 
@@ -135,11 +135,11 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                     [
                         str(k),
                         str(n),
-                        str(n_cons),
-                        _benchmark(s, n, k, n_cons, p, speed, "no_cons"),
-                        _benchmark(s, n, k, n_cons, p, speed, "non_eager"),
-                        _benchmark(s, n, k, n_cons, p, speed, "eager"),
-                        _benchmark(s, n, k, n_cons, p, speed, "robust"),
+                        str(m),
+                        _benchmark(s, n, k, m, p, speed, "no_cons"),
+                        _benchmark(s, n, k, m, p, speed, "non_eager"),
+                        _benchmark(s, n, k, m, p, speed, "eager"),
+                        _benchmark(s, n, k, m, p, speed, "robust"),
                     ]
                 )
 
@@ -147,11 +147,11 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                     [
                         str(k),
                         str(n),
-                        str(n_cons),
-                        _determine_precision(s, n, k, n_cons, p, speed, "no_cons"),
-                        _determine_precision(s, n, k, n_cons, p, speed, "non_eager"),
-                        _determine_precision(s, n, k, n_cons, p, speed, "eager"),
-                        _determine_precision(s, n, k, n_cons, p, speed, "robust"),
+                        str(m),
+                        _determine_precision(s, n, k, m, p, speed, "no_cons"),
+                        _determine_precision(s, n, k, m, p, speed, "non_eager"),
+                        _determine_precision(s, n, k, m, p, speed, "eager"),
+                        _determine_precision(s, n, k, m, p, speed, "robust"),
                     ]
                 )
 
@@ -173,7 +173,7 @@ def _benchmark(
     s: Scenario,
     n: int,
     k: int,
-    n_cons: int,
+    m: int,
     p: np.ndarray | None,
     speed: float,
     mode: str,
@@ -190,7 +190,7 @@ def _benchmark(
     lst_con_values = []
     lst_con_indices = []
     for i in range(index_range):
-        cons = s.build_constraints(n, k, n_cons, seed=424242 * i)
+        cons = s.build_constraints(n, k, m, seed=424242 * i)
         con_values, con_indices = _build_array_repr(cons)
         lst_cons.append(cons)
         lst_con_values.append(con_values)
@@ -246,7 +246,7 @@ def _determine_precision(
     s: Scenario,
     n: int,
     k: int,
-    n_cons: int,
+    m: int,
     p: np.ndarray | None,
     speed: float,
     mode: str,
@@ -266,7 +266,7 @@ def _determine_precision(
     satisfied_count = 0
     for run_idx in range(n_runs):
         # --- build constraints ---
-        cons = s.build_constraints(n, k, n_cons, seed=424242 * run_idx)
+        cons = s.build_constraints(n, k, m, seed=424242 * run_idx)
         con_values, con_indices = _build_array_repr(cons)
 
         # Run the appropriate function with seed equal to run index
@@ -318,11 +318,11 @@ class Scenario(ABC):
         self.description = description
 
     @abstractmethod
-    def n_k_n_cons_tuples(self) -> list[tuple[int, int, int]]:
+    def n_k_m_tuples(self) -> list[tuple[int, int, int]]:
         raise NotImplementedError()
 
     @abstractmethod
-    def build_constraints(self, n: int, k: int, n_cons: int, seed: int) -> list[Constraint]:
+    def build_constraints(self, n: int, k: int, m: int, seed: int) -> list[Constraint]:
         raise NotImplementedError()
 
 
@@ -333,7 +333,7 @@ class ScenarioA(Scenario):
             description="Varying n & k with 10 non-overlapping constraints spanning equal portions of the n-range",
         )
 
-    def n_k_n_cons_tuples(self) -> list[tuple[int, int, int]]:
+    def n_k_m_tuples(self) -> list[tuple[int, int, int]]:
         return [
             (n, k, 10)
             for n in [10, 100, 1000]
@@ -341,7 +341,7 @@ class ScenarioA(Scenario):
             if k < n
         ]
 
-    def build_constraints(self, n: int, k: int, n_cons: int, seed: int) -> list[Constraint]:
+    def build_constraints(self, n: int, k: int, m: int, seed: int) -> list[Constraint]:
         return [
             Constraint(
                 int_set=set(range(i * (n // 10), (i + 1) * (n // 10))),
@@ -359,15 +359,15 @@ class ScenarioB(Scenario):
             description="Fixed n=1000 & k=100 with varying number of constraints spanning random 1% portions of the n-range",
         )
 
-    def n_k_n_cons_tuples(self) -> list[tuple[int, int, int]]:
+    def n_k_m_tuples(self) -> list[tuple[int, int, int]]:
         return [
-            (1000, 100, n_cons)
-            for n_cons in [2**i for i in range(1, 9)] + [384, 512, 768, 1024]  # 2, 4, 8, ..., 256, 384, 512, 768, 1024
+            (1000, 100, m)
+            for m in [2**i for i in range(1, 9)] + [384, 512, 768, 1024]  # 2, 4, 8, ..., 256, 384, 512, 768, 1024
         ]
 
-    def build_constraints(self, n: int, k: int, n_cons: int, seed: int) -> list[Constraint]:
+    def build_constraints(self, n: int, k: int, m: int, seed: int) -> list[Constraint]:
         cons = []
-        for i in range(n_cons):
+        for i in range(m):
             cons.append(
                 Constraint(
                     int_set=set(
@@ -378,8 +378,8 @@ class ScenarioB(Scenario):
                             seed=np.int64(seed + i),
                         )
                     ),
-                    min_count=1 + math.floor(10 / n_cons),
-                    max_count=1 + math.ceil(1000 / n_cons),
+                    min_count=1 + math.floor(10 / m),
+                    max_count=1 + math.ceil(1000 / m),
                 )
             )
         return cons

@@ -25,7 +25,7 @@ from numpy.typing import NDArray
 #         ], dtype=np.int32)
 #
 #     con_indices:
-#         -> Part 1 - first 2*n_cons values indicate start/end indices in the array for each constraint
+#         -> Part 1 - first 2*m values indicate start/end indices in the array for each constraint
 #         -> Part 2 - followed by concatenated indices from each constraint's int_set
 #
 #                  |-------- Part 1 ----------|----------- Part 2 ---------------|
@@ -45,20 +45,20 @@ def _build_array_repr(
 ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
     """
     Convert list of Constraint objects to numba-compatible representation:
-      - con_values: 2D numpy array of shape (n_cons, 2) with min_count and max_count for each constraint
-      - con_indices: 1D numpy array of shape (2*n_cons + n_indices,) with indexed, concatenated indices of all cons.
+      - con_values: 2D numpy array of shape (m, 2) with min_count and max_count for each constraint
+      - con_indices: 1D numpy array of shape (2*m + n_indices,) with indexed, concatenated indices of all cons.
 
     :param cons: list of Constraint objects
     :return: tuple of (con_values, con_indices)
     """
 
     # get dimensions
-    n_cons = len(cons)
+    m = len(cons)
     n_indices = sum([len(con.int_set) for con in cons])
 
     # pre-allocate
-    con_values = np.empty((n_cons, 2), dtype=np.int32)
-    con_indices = np.empty((2 * n_cons) + n_indices, dtype=np.int32)
+    con_values = np.empty((m, 2), dtype=np.int32)
+    con_indices = np.empty((2 * m) + n_indices, dtype=np.int32)
 
     # build con_values
     for i, con in enumerate(cons):
@@ -66,7 +66,7 @@ def _build_array_repr(
         con_values[i, 1] = np.int32(con.max_count)
 
     # build con_indices
-    i_start = 2 * n_cons  # where we start filling in values from int_set for each constraint
+    i_start = 2 * m  # where we start filling in values from int_set for each constraint
     for i, con in enumerate(cons):
         con_indices[2 * i] = np.int32(i_start)
         con_indices[(2 * i) + 1] = np.int32(i_start + len(con.int_set))
@@ -116,11 +116,11 @@ def _np_con_indices(con_indices: NDArray[np.int32], i_con: np.int32) -> NDArray[
 @numba.njit(inline="always")
 def _np_con_build_index_sets(
     con_indices: NDArray[np.int32],
-    n_cons: np.int32,
+    m: np.int32,
 ) -> List[set[np.int32]]:
     """Build list of sets of indices for each constraint from con_indices array."""
     list_of_sets = List()
-    for i in np.arange(n_cons, dtype=np.int32):
+    for i in np.arange(m, dtype=np.int32):
         list_of_sets.append(set(_np_con_indices(con_indices, i)))
     return list_of_sets
 
@@ -132,9 +132,9 @@ def _np_con_satisfied(
     samples: NDArray[np.int32],
 ) -> bool:
     """Check if the given samples satisfy all constraints."""
-    n_cons = con_values.shape[0]
+    m = con_values.shape[0]
 
-    for i_con in np.arange(n_cons, dtype=np.int32):
+    for i_con in np.arange(m, dtype=np.int32):
         min_val = _np_con_min_value(con_values, i_con)
         max_val = _np_con_max_value(con_values, i_con)
         indices = _np_con_indices(con_indices, i_con)

@@ -8,6 +8,9 @@
 - **new**:
     - add support for Python 3.14 
 
+- **improved**:
+    - improve consistency of dimension notations `n`, `d`, `k`, `m` across codebase
+
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.0
 > *(2025-12-10)*
@@ -19,6 +22,7 @@
         - add benchmarking of these methods to CLI & docs
     - make strategies aware of progress fraction within execution of a `SolverStep` to allow scheduling various
        parameters (constraint softness, wide vs selective search, ...)
+  
 - **improved**:
     - add caching of `Score` object in `SolverState` to avoid redundant score computations when state hasn't changed
 

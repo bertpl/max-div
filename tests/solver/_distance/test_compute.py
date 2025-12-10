@@ -6,7 +6,7 @@ from max_div.solver._distance import (
     DistanceMetric,
     compute_pdist,
     compute_separation,
-    get_pdist,
+    get_pdist_el,
     update_separation_add,
     update_separation_remove,
 )
@@ -67,7 +67,7 @@ def test_get_pdist_values(i: int, j: int):
     expected_value = squareform(d)[i, j]
 
     # --- act ---------------------------------------------
-    value = get_pdist(d, np.int32(i), np.int32(j), np.int32(m))
+    value = get_pdist_el(d, np.int32(i), np.int32(j), np.int32(m))
 
     # --- assert ------------------------------------------
     assert value == pytest.approx(expected_value)

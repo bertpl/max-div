@@ -29,7 +29,8 @@ class Constraints:
     #  API
     # -------------------------------------------------------------------------
     @property
-    def n_cons(self) -> int:
+    def m(self) -> int:
+        """'m' = the number of constraints."""
         return len(self._cons)
 
     def add(self, indices: set[int], min_count: int, max_count: int) -> None:

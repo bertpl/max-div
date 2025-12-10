@@ -12,7 +12,7 @@ from max_div.solver._solver_state import SolverState
 def new_solver_state() -> SolverState:
     return SolverState.new(
         vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
-        target_selection_size=3,
+        k=3,
         distance_metric=DistanceMetric.L1_MANHATTAN,
         diversity_metric=DiversityMetric.geomean_separation(),
         diversity_tie_breakers=[DiversityMetric.non_zero_separation_frac()],
@@ -27,7 +27,7 @@ def new_solver_state() -> SolverState:
 def new_solver_state_unconstrained() -> SolverState:
     return SolverState.new(
         vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
-        target_selection_size=3,
+        k=3,
         distance_metric=DistanceMetric.L1_MANHATTAN,
         diversity_metric=DiversityMetric.geomean_separation(),
         diversity_tie_breakers=[DiversityMetric.non_zero_separation_frac()],

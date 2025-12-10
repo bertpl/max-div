@@ -9,18 +9,18 @@ from max_div.solver._constraints import Constraints
 # =================================================================================================
 #  Constraints
 # =================================================================================================
-@pytest.mark.parametrize("n_cons", [0, 1, 2, 4, 8])
-def test_constraints_n_cons(n_cons: int):
+@pytest.mark.parametrize("m", [0, 1, 2, 4, 8])
+def test_constraints_m(m: int):
     # --- arrange -----------------------------------------
     cons = Constraints()
-    for _ in range(n_cons):
+    for _ in range(m):
         cons.add(indices={0, 1, 2}, min_count=1, max_count=2)
 
     # --- act ---------------------------------------------
-    result = cons.n_cons
+    result = cons.m
 
     # --- assert ------------------------------------------
-    assert result == n_cons
+    assert result == m
 
 
 @pytest.mark.parametrize("deepcopy", [False, True])
@@ -102,7 +102,7 @@ def test_constraints_to_numpy():
         ),
     )
 
-    assert con_indices.shape[0] == 17  # (2*n_cons) + (5+4+2) = 6 + 11 = 17
+    assert con_indices.shape[0] == 17  # (2*m) + (5+4+2) = 6 + 11 = 17
     assert con_indices.dtype == np.int32
 
     for i, con in enumerate(cons.all()):

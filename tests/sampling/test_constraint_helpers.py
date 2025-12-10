@@ -41,7 +41,7 @@ def test_build_array_repr():
         ),
     )
 
-    assert con_indices.shape[0] == 17  # (2*n_cons) + (5+4+2) = 6 + 11 = 17
+    assert con_indices.shape[0] == 17  # (2*m) + (5+4+2) = 6 + 11 = 17
     assert con_indices.dtype == np.int32
 
     for i, con in enumerate(cons):

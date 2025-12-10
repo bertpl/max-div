@@ -46,13 +46,13 @@ def _compute_score(
     The basic idea behind the scoring is that integers with score <= 0 will not be sampled, if at all possible.
 
     :param n: range to score [0, n)
-    :param con_values: 2D array (n_cons, 2) with min_count and max_count for each constraint
+    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py
     :param already_sampled: 1D array of integers already sampled (negative values indicate no more samples)
     :param hard_max_constraints: if True, integers that would violate max_count constraints are heavily penalized
     :return: array of scores for each integer
     """
-    n_cons = con_values.shape[0]
+    m = con_values.shape[0]
 
     # --- init --------------------------------------------
     large_penalty = np.int32(2**24)
@@ -63,7 +63,7 @@ def _compute_score(
     scores = np.zeros(n, dtype=np.int32)
 
     # --- min_count / max_count ---------------------------
-    for i_con in np.arange(n_cons, dtype=np.int32):
+    for i_con in np.arange(m, dtype=np.int32):
         min_val = _np_con_min_value(con_values, i_con)
         max_val = _np_con_max_value(con_values, i_con)
         indices = _np_con_indices(con_indices, i_con)
@@ -123,7 +123,7 @@ def randint_constrained(
 
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)
-    :param con_values: 2D array (n_cons, 2) with min_count and max_count for each constraint
+    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py
     :param p: optional, target probabilities for each integer in `[0, n)`
     :param seed: random seed
@@ -135,7 +135,7 @@ def randint_constrained(
     # --- initialize --------------------------------------
     samples = np.empty(k, dtype=np.int32)
     k_remaining = k
-    n_cons = con_values.shape[0]
+    m = con_values.shape[0]
 
     # Make a copy of con_values to track current min/max counts
     con_values_working = con_values.copy()
@@ -154,7 +154,7 @@ def randint_constrained(
 
         # determine how much improvement we need to be able to satisfy all min_count constraints
         total_score_needed = np.int32(0)
-        for i_con in range(n_cons):
+        for i_con in range(m):
             min_val = _np_con_min_value(con_values_working, np.int32(i_con))
             if min_val > 0:
                 total_score_needed += min_val
@@ -213,7 +213,7 @@ def randint_constrained(
         s = result[0]
 
         # --- update stats --------------------------------
-        for i_con in range(n_cons):
+        for i_con in range(m):
             indices = _np_con_indices(con_indices, np.int32(i_con))
             for idx in indices:
                 if idx == s:
@@ -256,7 +256,7 @@ def randint_constrained_robust(
 
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)
-    :param con_values: 2D array (n_cons, 2) with min_count and max_count for each constraint
+    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py
     :param p: optional, target probabilities for each integer in `[0, n)`
     :param seed: random seed

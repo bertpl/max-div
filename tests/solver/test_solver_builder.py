@@ -226,7 +226,7 @@ def test_max_div_solver_builder_end_to_end():
     # --- assert ------------------------------------------
     assert isinstance(solver, MaxDivSolver)
     assert solver._vectors.shape == vectors.shape
-    assert solver._selection_size == selection_size
+    assert solver._k == selection_size
     assert len(solver._solver_steps) == 3
     assert solver._solver_steps[0].name() == init_strategy.name
     assert solver._solver_steps[1].name() == solver_steps[0].name()

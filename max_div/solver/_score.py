@@ -3,7 +3,8 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from ..sampling._constraint_helpers import _np_con_total_violation
+from max_div.sampling._constraint_helpers import _np_con_total_violation
+
 from ._constraints import Constraint
 from ._diversity import DiversityMetric
 
@@ -79,8 +80,8 @@ class ScoreGenerator:
     # -------------------------------------------------------------------------
     def __init__(
         self,
-        m: int,
-        target_selection_size: int,
+        n: int,
+        k: int,
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
@@ -88,24 +89,24 @@ class ScoreGenerator:
         """
         Initialize the ScoreGenerator.
 
-        :param m: number of vectors in the max-div problem.
-        :param target_selection_size: (int) The target selection size for the max-div problem.
+        :param n: (int) number of vectors in the max-div problem.
+        :param k: (int) The target selection size for the max-div problem.
         :param diversity_metric: (DiversityMetric) The diversity metric used to compute diversity scores.
         :param diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
         :param constraints: (list[Constraint]) The list of constraints used in the max-div problem.
         """
 
         # --- size score computation ------------
-        self._k = target_selection_size
-        self._size_c0 = 1 / (1 + target_selection_size)
-        self._size_c1 = 1 / (1 + m - target_selection_size)
+        self._k = k
+        self._size_c0 = 1 / (1 + k)
+        self._size_c1 = 1 / (1 + n - k)
 
         # --- constraint score computation ------
         if len(constraints) > 0:
             max_con_violations = [
                 max(
                     con.min_count,  # in case of minimal selection
-                    min(target_selection_size, len(con.int_set)) - con.max_count,  # in case of maximal selection
+                    min(k, len(con.int_set)) - con.max_count,  # in case of maximal selection
                     0,  # in case we can never violate this constraint
                 )
                 for con in constraints

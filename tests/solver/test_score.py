@@ -72,8 +72,8 @@ def test_score_as_tuple_soft_constraints_corner_cases(
 def test_score_generator_size():
     # --- arrange -----------------------------------------
     generator = ScoreGenerator(
-        m=20,
-        target_selection_size=3,
+        n=20,
+        k=3,
         diversity_metric=DiversityMetric.min_separation(),
         diversity_tie_breakers=[],
         constraints=[],
@@ -100,8 +100,8 @@ def test_score_generator_size():
 def test_score_generator_constraints():
     # --- arrange -----------------------------------------
     generator = ScoreGenerator(
-        m=100,
-        target_selection_size=8,
+        n=100,
+        k=8,
         diversity_metric=DiversityMetric.min_separation(),
         diversity_tie_breakers=[],
         constraints=[
@@ -136,8 +136,8 @@ def test_score_generator_constraints():
 def test_score_generator_constraints_no_constraints():
     # --- arrange -----------------------------------------
     generator = ScoreGenerator(
-        m=100,
-        target_selection_size=8,
+        n=100,
+        k=8,
         diversity_metric=DiversityMetric.min_separation(),
         diversity_tie_breakers=[],
         constraints=[],
@@ -153,8 +153,8 @@ def test_score_generator_constraints_no_constraints():
 def test_score_generator_diversity_scores():
     # --- arrange -----------------------------------------
     generator = ScoreGenerator(
-        m=100,
-        target_selection_size=5,
+        n=100,
+        k=5,
         diversity_metric=DiversityMetric.min_separation(),
         diversity_tie_breakers=[
             DiversityMetric.mean_separation(),
