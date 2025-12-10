@@ -79,6 +79,7 @@ class SolverState:
 
         # scoring
         self._score_generator = score_generator  # READ-ONLY
+        self._score: Score | None = None
 
         # selection
         self._selected = selected
@@ -91,6 +92,9 @@ class SolverState:
 
         # snapshot
         self._snapshot: Snapshot = Snapshot.empty()
+
+        # finalize
+        self._update_score()
 
     # -------------------------------------------------------------------------
     #  Main API - used by solver strategies to modify state
@@ -146,6 +150,9 @@ class SolverState:
             self._con_values[i_con, 0] -= 1  # decrease min_count
             self._con_values[i_con, 1] -= 1  # decrease max_count
 
+        # --- score ---------------------------------------
+        self._update_score()
+
     def remove(self, index: int | np.int32):
         # --- validation ----------------------------------
         index = np.int32(index)
@@ -163,6 +170,9 @@ class SolverState:
         for i_con in self._con_membership[index]:
             self._con_values[i_con, 0] += 1  # increase min_count
             self._con_values[i_con, 1] += 1  # increase max_count
+
+        # --- score ---------------------------------------
+        self._update_score()
 
     # -------------------------------------------------------------------------
     #  Properties
@@ -200,16 +210,19 @@ class SolverState:
     # -------------------------------------------------------------------------
     #  Scoring
     # -------------------------------------------------------------------------
+    def _update_score(self):
+        self._score = self._score_generator.compute_score(
+            n_selected=len(self._selected),
+            con_values=self._con_values,
+            selected_separation_array=self.selected_separation_array,
+        )
+
     @property
     def score(self) -> Score:
         """
         Return overall score of the current selection as a multi-component prioritized Score object.
         """
-        return self._score_generator.compute_score(
-            n_selected=len(self._selected),
-            con_values=self._con_values,
-            selected_separation_array=self.selected_separation_array,
-        )
+        return self._score
 
     # -------------------------------------------------------------------------
     #  Factory methods

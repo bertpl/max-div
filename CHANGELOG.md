@@ -5,7 +5,8 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**:
+    - add caching of `Score` object in `SolverState` to avoid redundant score computations when state hasn't changed
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.2.6
