@@ -112,7 +112,7 @@ def modify_p_selectivity_power(p: NDArray[np.float32], modifier: np.float32) -> 
 
 @njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always")
 def modify_p_selectivity_pwl2(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
-    """
+    r"""
     This method modifies the selectivity of the p array using a piecewise linear approach with 2 linear segments.
     This method serves as a faster, but approximate alternative to the power-based method `modify_p_selectivity_power`.
 
