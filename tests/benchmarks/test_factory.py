@@ -1,0 +1,50 @@
+import pytest
+
+from max_div.benchmarks import BenchmarkProblemFactory
+from max_div.benchmarks._registry import BenchmarkProblem
+from max_div.solver import MaxDivProblem
+
+
+def test_benchmark_problem_factory_show_all():
+    BenchmarkProblemFactory.show_all()  # just ensure no errors occur
+
+
+def test_benchmark_problem_factory_get_all_benchmark_problems():
+    # --- act ---------------------------------------------
+    problems_dict = BenchmarkProblemFactory.get_all_benchmark_problems()
+
+    # --- assert ------------------------------------------
+    assert isinstance(problems_dict, dict)
+    assert len(problems_dict) > 0
+    assert all(isinstance(name, str) for name in problems_dict.keys())
+    assert all(isinstance(cls, type) and issubclass(cls, BenchmarkProblem) for cls in problems_dict.values())
+
+
+@pytest.mark.parametrize("name", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
+def test_benchmark_problem_factory_create_problem(name: str):
+    # --- act ---------------------------------------------
+    problem_cls = BenchmarkProblemFactory.get_all_benchmark_problems()[name]
+    example_params = problem_cls.get_example_parameters()
+    problem_instance = BenchmarkProblemFactory.construct_problem(name, **example_params)
+
+    # --- assert ------------------------------------------
+    assert isinstance(problem_instance, MaxDivProblem)
+
+
+def test_benchmark_problem_factory_create_problem_invalid_name():
+    # --- arrange -----------------------------------------
+    invalid_name = "NonExistentBenchmarkProblem"
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        BenchmarkProblemFactory.construct_problem(invalid_name)
+
+
+def test_benchmark_problem_factory_create_problem_invalid_params():
+    # --- arrange -----------------------------------------
+    valid_name = list(BenchmarkProblemFactory.get_all_benchmark_problems().keys())[0]
+    invalid_params = {"non_existent_param": 42}
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        BenchmarkProblemFactory.construct_problem(valid_name, **invalid_params)

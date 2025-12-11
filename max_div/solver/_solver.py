@@ -1,5 +1,6 @@
 import numpy as np
 
+from ..internal.formatting import ljust_str_list
 from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
@@ -95,10 +96,7 @@ class MaxDivSolver:
         """Return list of numbered step names, left aligned to be of equal length."""
         n_steps = len(self._solver_steps)
         step_names = [f"step {i}/{n_steps} - {s.name()}" for i, s in enumerate(self._solver_steps, start=1)]
-        max_len = max(len(name) for name in step_names)
-        step_names = [name.ljust(max_len + 2) for name in step_names]
-
-        return step_names
+        return ljust_str_list(step_names)
 
     def _construct_final_solution(self, step_results: dict[str, SolverStepResult]) -> MaxDivSolution:
         """Construct the final MaxDivSolution from the current state & step results."""

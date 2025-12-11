@@ -5,6 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+    - Framework for built-in benchmark suite for `MaxDivSolver` problems & strategies, including first, simple problem 
+
 - **improved**:
     - structure of CLI implementation; improving encapsulation of internal, low-level, CLI-only benchmarking functionality
     - various low-level algorithmic tweaks & test coverage improvements
