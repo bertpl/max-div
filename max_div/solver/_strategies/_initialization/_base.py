@@ -4,29 +4,13 @@ from abc import ABC, abstractmethod
 from typing import Self
 
 from max_div.solver._solver_state import SolverState
+from max_div.solver._strategies._base import StrategyBase
 
 
 # =================================================================================================
 #  InitializationStrategy
 # =================================================================================================
-class InitializationStrategy(ABC):
-    # -------------------------------------------------------------------------
-    #  Construction & Configuration
-    # -------------------------------------------------------------------------
-    def __init__(self, name: str | None = None):
-        """
-        Initialize the initialization strategy.
-        :param name: optional name of the strategy
-        """
-        self._name = name or self.__class__.__name__
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    # -------------------------------------------------------------------------
-    #  Main API
-    # -------------------------------------------------------------------------
+class InitializationStrategy(StrategyBase, ABC):
     @abstractmethod
     def initialize(self, state: SolverState):
         """

@@ -158,6 +158,7 @@ def test_max_div_solver_builder_end_to_end():
         )
         .set_initialization_strategy(init_strategy)
         .add_solver_steps(solver_steps)
+        .with_seed(123)
     )
     solver = builder.build()
 
@@ -172,3 +173,4 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._distance_metric == DistanceMetric.L1_MANHATTAN
     assert solver._diversity_metric.name == DiversityMetric.min_separation().name
     assert solver._constraints == constraints
+    assert solver._seed == 123

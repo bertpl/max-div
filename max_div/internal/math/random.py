@@ -48,7 +48,7 @@ def _xoroshiro128plus_next(rng_state: NDArray[uint64]) -> uint64:
     return result
 
 
-@numba.njit(fastmath=True)
+@numba.njit(fastmath=True, inline="always")
 def _splitmix64_next(init_state: NDArray[uint64]) -> uint64:
     """Used to initialize xoroshiro128+ state from single seed; state is a 1-element array, modified in-place."""
     z = init_state[0] + uint64(0x9E3779B97F4A7C15)

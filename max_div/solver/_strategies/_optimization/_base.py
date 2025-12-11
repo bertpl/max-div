@@ -5,29 +5,13 @@ from typing import Self
 
 from max_div.internal.utils import ALMOST_ONE_F32
 from max_div.solver._solver_state import SolverState
+from max_div.solver._strategies._base import StrategyBase
 
 
 # =================================================================================================
 #  OptimizationStrategy
 # =================================================================================================
-class OptimizationStrategy(ABC):
-    # -------------------------------------------------------------------------
-    #  Construction & Configuration
-    # -------------------------------------------------------------------------
-    def __init__(self, name: str | None = None):
-        """
-        Initialize the optimization strategy.
-        :param name: optional name of the strategy
-        """
-        self._name = name or self.__class__.__name__
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    # -------------------------------------------------------------------------
-    #  Main API
-    # -------------------------------------------------------------------------
+class OptimizationStrategy(StrategyBase, ABC):
     def perform_n_iterations(
         self, state: SolverState, n_iters: int, current_progress_frac: float, progress_frac_per_iter: float
     ):

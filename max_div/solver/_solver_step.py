@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 from tqdm.auto import tqdm
 
@@ -9,6 +10,7 @@ from max_div.solver._strategies import InitializationStrategy, OptimizationStrat
 from ._duration import Elapsed, Progress, TargetDuration
 from ._score import Score
 from ._solver_state import SolverState
+from ._strategies._base import StrategyBase
 
 
 # =================================================================================================
@@ -28,10 +30,18 @@ class SolverStepResult:
 # =================================================================================================
 #  SolverStep
 # =================================================================================================
-class SolverStep(ABC):
-    @abstractmethod
+S = TypeVar("S", bound=StrategyBase)
+
+
+class SolverStep(ABC, Generic[S]):
+    def __init__(self, strategy: S):
+        self._strategy: S = strategy
+
     def name(self) -> str:
-        raise NotImplementedError
+        return self._strategy.name
+
+    def set_seed(self, seed: int):
+        self._strategy.seed = seed
 
     def run(self, state: SolverState, tqdm_desc: str | None = None) -> SolverStepResult:
         """
@@ -58,17 +68,14 @@ class SolverStep(ABC):
 # =================================================================================================
 #  InitializationStep
 # =================================================================================================
-class InitializationStep(SolverStep):
+class InitializationStep(SolverStep[InitializationStrategy]):
     def __init__(self, init_strategy: InitializationStrategy):
         if not isinstance(init_strategy, InitializationStrategy):
             raise TypeError(
                 "The provided strategy is not an InitializationStrategy. "
                 + "Use one of the InitializationStrategy factory methods to instantiate one..",
             )
-        self._strategy = init_strategy
-
-    def name(self) -> str:
-        return self._strategy.name
+        super().__init__(init_strategy)
 
     def _run_child(self, state: SolverState, pbar: tqdm | None) -> SolverStepResult:
         # --- execute initialization ----------------------
@@ -92,18 +99,15 @@ class InitializationStep(SolverStep):
 # =================================================================================================
 #  OptimizationStep
 # =================================================================================================
-class OptimizationStep(SolverStep):
+class OptimizationStep(SolverStep[OptimizationStrategy]):
     def __init__(self, optim_strategy: OptimizationStrategy, duration: TargetDuration):
         if not isinstance(optim_strategy, OptimizationStrategy):
             raise TypeError(
                 "The provided strategy is not an OptimizationStrategy. "
                 + "Use one of the OptimizationStrategy factory methods to instantiate one..",
             )
-        self._strategy = optim_strategy
+        super().__init__(optim_strategy)
         self._duration = duration
-
-    def name(self) -> str:
-        return self._strategy.name
 
     def _run_child(self, state: SolverState, pbar: tqdm | None) -> SolverStepResult:
         # --- init ----------------------------------------

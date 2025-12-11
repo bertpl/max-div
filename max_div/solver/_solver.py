@@ -1,6 +1,8 @@
 import numpy as np
 
-from ..internal.formatting import ljust_str_list
+from max_div.internal.formatting import ljust_str_list
+from max_div.internal.utils import deterministic_hash
+
 from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
@@ -34,6 +36,7 @@ class MaxDivSolver:
         diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
         solver_steps: list[SolverStep],
+        seed: int = 42,
     ):
         """
         Initialize the MaxDivSolver with the given configuration.
@@ -47,6 +50,7 @@ class MaxDivSolver:
         :param solver_steps: (list[SolverStep]) A list of solver steps to execute,
                                        the first of which needs to be an InitializationStep,
                                        while all latter ones need to be OptimizationSteps.
+        :param seed: (int) Random seed for the solver.
         """
 
         # --- problem description -------------------------
@@ -59,6 +63,7 @@ class MaxDivSolver:
         # --- solver config -------------------------------
         self._diversity_tie_breakers = diversity_tie_breakers
         self._solver_steps = solver_steps
+        self._seed = seed
 
         # --- state ---------------------------------------
         self._state = SolverState.new(
@@ -80,10 +85,12 @@ class MaxDivSolver:
         """
         # --- Init ----------------------------------------
         step_names = self._get_step_names()
+        step_seeds = [deterministic_hash((self._seed, i)) for i in range(len(step_names))]
 
         # --- Main loop -----------------------------------
         step_results: dict[str, SolverStepResult] = dict()
-        for step_name, step in zip(step_names, self._solver_steps):
+        for step_name, step_seed, step in zip(step_names, step_seeds, self._solver_steps):
+            step.set_seed(step_seed)
             step_results[step_name.strip()] = step.run(self._state, step_name)
 
         # --- Construct result ----------------------------

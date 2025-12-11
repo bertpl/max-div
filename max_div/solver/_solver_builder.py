@@ -33,6 +33,7 @@ class MaxDivSolverBuilder:
         self._solver_steps: list[SolverStep] = [
             InitializationStep(InitializationStrategy.random()),  # Default initialization strategy
         ]
+        self._seed = 42
 
     # -------------------------------------------------------------------------
     #  Builder API
@@ -60,6 +61,10 @@ class MaxDivSolverBuilder:
     def add_solver_steps(self, solver_steps: list[OptimizationStep]) -> Self:
         for solver_step in solver_steps:
             self.add_solver_step(solver_step)
+        return self
+
+    def with_seed(self, seed: int) -> Self:
+        self._seed = seed
         return self
 
     # -------------------------------------------------------------------------
@@ -92,4 +97,5 @@ class MaxDivSolverBuilder:
             diversity_tie_breakers=self._determine_diversity_tie_breakers(),
             constraints=self._constraints,
             solver_steps=self._solver_steps,
+            seed=self._seed,
         )
