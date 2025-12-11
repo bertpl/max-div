@@ -183,7 +183,7 @@ class Progress:
     # --- other---
     fraction: float  # fractional progress in [0,1]
     iter_count: int  # total number of iterations reported done
-    est_n_iters_remaining: float  # estimated number of iterations remaining
+    est_n_iters_remaining: int  # estimated number of iterations remaining
     est_iters_per_second: float  # estimated number of iterations executed so far per second
 
     @property
@@ -198,10 +198,8 @@ class Progress:
     def est_progress_fraction_per_iter(self) -> float:
         """Estimated progress fraction increase per executed iteration."""
         est_total_iters = self.iter_count + self.est_n_iters_remaining
-        if est_total_iters >= 1:
-            return 1.0 / est_total_iters
-        else:
-            return 0.0
+        # normally either iter_count or est_n_iters_remaining is >=1; just to be sure, we take max(1, ...)
+        return 1.0 / max(1, est_total_iters)
 
     @property
     def is_finished(self) -> bool:

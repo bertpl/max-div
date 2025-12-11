@@ -142,6 +142,29 @@ def randint_constrained(
 
     sample_idx = np.int32(0)
 
+    # --- pre-process p -----------------------------------
+    # we construct an 'augmented p' aug_p, which is identical to p, except small entries are adjusted to be >0,
+    # avoiding issues later on when we exclude certain elements due to constraint-violation, which might otherwise
+    # cause all p-values to become zero.
+    if p.size == 0:
+        # no p provided --> uniform
+        p_aug = np.ones(n, dtype=np.float32)
+    else:
+        # determine p_max
+        p_max = np.float32(0.0)
+        for i in range(n):
+            p_max = max(p_max, p[i])
+
+        # construct p_aug by adding small value to each p
+        if p_max == 0.0:
+            # all p are zero --> uniform
+            p_aug = np.ones(n, dtype=np.float32)
+        else:
+            p_delta = np.float32(1e-12 * p_max)
+            p_aug = p.copy()
+            for i in range(n):
+                p_aug[i] += p_delta
+
     # --- sample ------------------------------------------
     while k_remaining > 0:
         # --- score & thresholds ----------------
@@ -187,23 +210,9 @@ def randint_constrained(
             score_threshold = max_score
 
         # --- sample according to strategy ------
-        # construct modified probabilities
-        if p.size == 0:
-            p_mod = np.ones(n, dtype=np.float32)
-        else:
-            p_mod = p.copy()
 
-        # make sure no p_mod is == 0
-        max_p = np.float32(0.0)
-        for val in p_mod:
-            if val > max_p:
-                max_p = val
-        min_p = np.float32(1e-12 * max_p)
-        for i in range(n):
-            if p_mod[i] < min_p:
-                p_mod[i] = min_p
-
-        # zero out probabilities for scores below threshold
+        # zero out probabilities for scores below threshold  (there will always be at least 1 we don't zero out)
+        p_mod = p_aug.copy()
         for i in range(n):
             if score[i] < score_threshold:
                 p_mod[i] = np.float32(0.0)

@@ -65,9 +65,6 @@ class MaxDivSolverBuilder:
     # -------------------------------------------------------------------------
     #  Build
     # -------------------------------------------------------------------------
-    def _is_buildable(self) -> tuple[bool, str]:
-        return True, ""
-
     def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:
         if not self._default_diversity_tie_breakers:
             # custom tie-breakers provided by the user
@@ -87,9 +84,6 @@ class MaxDivSolverBuilder:
                 return []
 
     def build(self) -> MaxDivSolver:
-        ok, msg = self._is_buildable()
-        if not ok:
-            raise ValueError(f"Cannot build MaxDivSolver: {msg}")
         return MaxDivSolver(
             vectors=self._vectors,
             k=self._k,

@@ -7,6 +7,7 @@
 
 - **improved**:
     - structure of CLI implementation; improving encapsulation of internal, low-level, CLI-only benchmarking functionality
+    - various low-level algorithmic tweaks & test coverage improvements
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.1
