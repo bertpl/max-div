@@ -5,7 +5,8 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**:
+    - structure of CLI implementation; improving encapsulation of internal, low-level, CLI-only benchmarking functionality
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.1
