@@ -2,11 +2,12 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.2
-> *(under development)*
+> *(2025-12-11)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-    - Framework for built-in benchmark suite for `MaxDivSolver` problems & strategies, including first, simple problem 
+    - Framework for built-in benchmark suite for `MaxDivSolver` problems & strategies 
+    - First 4 benchmark problems (A1, A2, A3, A4)
 
 - **improved**:
     - structure of CLI implementation; improving encapsulation of internal, low-level, CLI-only benchmarking functionality

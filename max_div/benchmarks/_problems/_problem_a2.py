@@ -7,16 +7,16 @@ from max_div.solver import DistanceMetric, DiversityMetric, MaxDivProblem
 
 
 # =================================================================================================
-#  A1 - Uniform - Unconstrained
+#  A2 - Gaussian - Unconstrained
 # =================================================================================================
-class BenchmarkProblem_A1(BenchmarkProblem):
+class BenchmarkProblem_A2(BenchmarkProblem):
     @classmethod
     def name(cls) -> str:
-        return "A1"
+        return "A2"
 
     @classmethod
     def description(cls) -> str:
-        return "Unconstrained problem with uniform vector density"
+        return "Unconstrained problem with non-uniform vector density (gaussian distribution)"
 
     @classmethod
     def supported_params(cls) -> dict[str, str]:
@@ -38,9 +38,9 @@ class BenchmarkProblem_A1(BenchmarkProblem):
         n = 100 * size
         k = 10 * size
 
-        # Generate uniform random vectors
+        # Generate gaussian random vectors
         np.random.seed(42)
-        vectors = np.random.random_sample(size=(n, d)).astype(np.float32)
+        vectors = np.random.randn(n, d).astype(np.float32)
 
         return MaxDivProblem(
             vectors=vectors,

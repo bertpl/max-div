@@ -8,3 +8,6 @@ IMPORT_ME_FOR_BENCHMARK_PROBLEM_DISCOVERY = object()
 
 # import actual benchmark problems to register them
 from ._problem_a1 import BenchmarkProblem_A1
+from ._problem_a2 import BenchmarkProblem_A2
+from ._problem_a3 import BenchmarkProblem_A3
+from ._problem_a4 import BenchmarkProblem_A4
