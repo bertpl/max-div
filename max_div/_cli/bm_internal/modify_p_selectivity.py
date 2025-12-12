@@ -39,7 +39,7 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False) -
 
     # --- create headers ------------------------------
     if markdown:
-        print("## modify_p_selectivity_* Performance")
+        print("## modify_p_selectivity Performance")
         print()
         headers = [
             "`size`",
@@ -47,7 +47,7 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False) -
             "`pwl2`",
         ]
     else:
-        print("modify_p_selectivity_* Performance:")
+        print("modify_p_selectivity Performance:")
         print()
         headers = [
             "size",

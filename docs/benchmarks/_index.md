@@ -1,10 +1,14 @@
 # Benchmark Results
 
-All benchmarks are run on `m6a.xlarge` or `m6a.2xlarge` AWS EC2 instances.
+`max-div` has several benchmarking commands implemented in its CLI, all of which can be triggered as
+```
+max-div benchmark <category> <method>
+```
 
-## internal methods
+This section contains benchmark results for these two categories:
 
-- `randint`: [results](randint.md)
-- `randint_constrained`: [results](randint_constrained.md)
-- `DiversityMetric`: [results](diversity_metrics.md)
-- `modify_p_selectivity_*`: [results](modify_p_selectivity.md)
+- [solver benchmarks](./solver/_index.md)
+- [internal methods](./internal/_index.md) 
+
+
+All benchmarks are run on a 16" MacBook Pro with M3-class CPU.

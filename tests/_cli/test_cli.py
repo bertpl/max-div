@@ -14,12 +14,12 @@ from max_div._cli import benchmark, numba_status
     ],
 )
 @pytest.mark.parametrize("options", ["--turbo", "--speed=1.0"])
-def test_cli_benchmark(sub_command: str, options: str):
+def test_cli_benchmark_internal(sub_command: str, options: str):
     # --- arrange -----------------------------------------
     runner = CliRunner()
 
     # --- act ---------------------------------------------
-    result = runner.invoke(benchmark, [options, sub_command])
+    result = runner.invoke(benchmark, ["internal", options, sub_command])
 
     # --- assert ------------------------------------------
     assert result.exit_code == 0

@@ -1,6 +1,6 @@
 import pytest
 
-from max_div._cli.benchmarking import (
+from max_div._cli.bm_internal import (
     benchmark_diversity_metrics,
     benchmark_modify_p_selectivity,
     benchmark_randint,

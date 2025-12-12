@@ -8,10 +8,12 @@
 - **new**:
     - implement `InitOneShotRandom` initialization strategy
     - make `SolverStep`, `InitializationStrategy` & `OptimizationStrategy` instances have a settable random seed
+    - add distinction between `internal` and `solver` (to be added) benchmarks in CLI
 
 - **improved**:
     - add initialization of `SolverState` to the reported results  
     - reliability & testing of DiversityMetric implementations for sub-standard array sizes
+    - improve docs structure
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.2

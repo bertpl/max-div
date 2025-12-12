@@ -15,7 +15,7 @@ We compare speed of modifying the selectivity of a float32-array of probabilitie
 - `power` --> `modify_p_selectivity_power`
 - `pwl2` --> `modify_p_selectivity_pwl2`
 
-## modify_p_selectivity_* Performance
+## modify_p_selectivity Performance
 
                                                                                                                                                                                                            
 | `size`       | `power`           | `pwl2`                                                   |

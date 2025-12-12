@@ -22,11 +22,27 @@ max-div --help
 
 ### 2.2. Benchmarking
 
-There are various (currently 2, to be extended) benchmarking commands available with similar behavior:
+There are two categories of benchmarks: `solver` and `internal`.
 
 ```bash
-max-div benchmark randint
-max-div benchmark randint_constrained
+max-div benchmark solver <test_problem>
+max-div benchmark internal <method>
+```
+
+#### 2.2.1. Solver benchmarks
+
+*(to be added)*
+
+#### 2.2.2. Internal benchmarks
+
+
+There are various benchmarking commands available for internal functionality:
+
+```bash
+max-div benchmark internal randint
+max-div benchmark internal randint_constrained
+max-div benchmark internal diversity_metrics
+max-div benchmark internal modify_p_selectivity
 ```
 
 All benchmarking commands support the following shared flags & options:
