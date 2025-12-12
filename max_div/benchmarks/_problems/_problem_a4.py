@@ -16,7 +16,7 @@ class BenchmarkProblem_A4(BenchmarkProblem):
 
     @classmethod
     def description(cls) -> str:
-        return "Problem with non-uniform vector density (gaussian distribution) and simple constrains"
+        return "Problem with non-uniform vector density (gaussian distribution) and complex constrains"
 
     @classmethod
     def supported_params(cls) -> dict[str, str]:

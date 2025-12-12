@@ -31,10 +31,22 @@ max-div benchmark internal <method>
 
 #### 2.2.1. Solver benchmarks
 
-*(to be added)*
+The following commands support running test problems to evaluate solver performance:
+
+```bash
+max-div benchmark solver list
+max-div benchmark solver run <test_problem>
+```
+
+The `run` sub-command supports the following flags & options:
+
+```
+--markdown    Output results in Markdown format
+```
+
+For results, see [here](./benchmarks/solver/_index.md).
 
 #### 2.2.2. Internal benchmarks
-
 
 There are various benchmarking commands available for internal functionality:
 
@@ -51,6 +63,8 @@ All benchmarking commands support the following shared flags & options:
 --speed       Value between 0.0 (default) and 1.0 (fastest) to speed up the benchmark at the cost of accuracy.
 --markdown    Output results in Markdown format
 ```
+
+For results, see [here](./benchmarks/internal/_index.md).
 
 ### 2.3. Numba status
 

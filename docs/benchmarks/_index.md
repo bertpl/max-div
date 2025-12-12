@@ -2,7 +2,7 @@
 
 `max-div` has several benchmarking commands implemented in its CLI, all of which can be triggered as
 ```
-max-div benchmark <category> <method>
+max-div benchmark <category> <sub-command>
 ```
 
 This section contains benchmark results for these two categories:
