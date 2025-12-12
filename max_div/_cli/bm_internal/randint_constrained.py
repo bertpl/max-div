@@ -6,14 +6,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from tqdm import tqdm
 
-from max_div.internal.benchmarking import BenchmarkResult, benchmark
-from max_div.internal.formatting import md_multiline
-from max_div.sampling import randint_numba
-from max_div.sampling._constraint_helpers import _build_array_repr
-from max_div.sampling.con import randint_constrained, randint_constrained_robust
-from max_div.solver import Constraint
-
-from ._formatting import (
+from max_div._cli.formatting import (
     BoldLabels,
     CellContent,
     FastestBenchmark,
@@ -23,6 +16,12 @@ from ._formatting import (
     format_as_markdown,
     format_for_console,
 )
+from max_div.internal.benchmarking import BenchmarkResult, benchmark
+from max_div.internal.formatting import md_multiline
+from max_div.sampling import randint_numba
+from max_div.sampling._constraint_helpers import _build_array_repr
+from max_div.sampling.con import randint_constrained, randint_constrained_robust
+from max_div.solver import Constraint
 
 
 # =================================================================================================

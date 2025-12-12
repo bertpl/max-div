@@ -2,13 +2,13 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.3
-> *(under development)*
+> *(2025-12-12)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
     - implement `InitOneShotRandom` initialization strategy
     - make `SolverStep`, `InitializationStrategy` & `OptimizationStrategy` instances have a settable random seed
-    - add distinction between `internal` and `solver` benchmarks in CLI
+    - add distinction between `internal` and `solver` benchmarks in CLI & implement `benchmark solver` commands
 
 - **improved**:
     - add initialization of `SolverState` to the reported results  

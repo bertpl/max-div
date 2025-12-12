@@ -3,6 +3,7 @@ import click
 from max_div.benchmarks import BenchmarkProblemFactory
 
 from ._cmd_benchmark import benchmark
+from .bm_solver import run_solver_benchmark
 
 
 # =================================================================================================
@@ -29,7 +30,7 @@ def _list():
 # =================================================================================================
 #  benchmark solver run
 # =================================================================================================
-@solver.group(name="run")
+@solver.command(name="run")
 @click.argument("test_problem")
 @click.option(
     "--markdown",
@@ -39,4 +40,4 @@ def _list():
 )
 def run(test_problem: str, markdown: bool):
     """Run specific solver benchmark problem."""
-    pass
+    run_solver_benchmark(test_problem, markdown)

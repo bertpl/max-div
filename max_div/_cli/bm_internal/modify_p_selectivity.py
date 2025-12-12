@@ -1,19 +1,18 @@
 import numpy as np
 from tqdm import tqdm
 
-from max_div.internal.benchmarking import benchmark
-from max_div.internal.math.modify_p_selectivity import (
-    modify_p_selectivity_power,
-    modify_p_selectivity_pwl2,
-)
-
-from ._formatting import (
+from max_div._cli.formatting import (
     BoldLabels,
     CellContent,
     FastestBenchmark,
     extend_table_with_aggregate_row,
     format_as_markdown,
     format_for_console,
+)
+from max_div.internal.benchmarking import benchmark
+from max_div.internal.math.modify_p_selectivity import (
+    modify_p_selectivity_power,
+    modify_p_selectivity_pwl2,
 )
 
 

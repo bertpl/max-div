@@ -1,10 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
-from max_div.internal.benchmarking import BenchmarkResult, benchmark
-from max_div.sampling.uncon import randint_numba, randint_numpy
-
-from ._formatting import (
+from max_div._cli.formatting import (
     BoldLabels,
     CellContent,
     FastestBenchmark,
@@ -12,6 +9,8 @@ from ._formatting import (
     format_as_markdown,
     format_for_console,
 )
+from max_div.internal.benchmarking import benchmark
+from max_div.sampling.uncon import randint_numba, randint_numpy
 
 
 def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
