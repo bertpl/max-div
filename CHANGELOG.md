@@ -10,6 +10,7 @@
 
 - **improved**:
     - add initialization of `SolverState` to the reported results  
+    - reliability & testing of DiversityMetric implementations for sub-standard array sizes
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.2
