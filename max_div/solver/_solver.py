@@ -1,5 +1,6 @@
 import numpy as np
 
+from max_div.internal.benchmarking import Timer
 from max_div.internal.formatting import ljust_str_list
 from max_div.internal.utils import deterministic_hash
 
@@ -66,14 +67,16 @@ class MaxDivSolver:
         self._seed = seed
 
         # --- state ---------------------------------------
-        self._state = SolverState.new(
-            vectors=vectors,
-            k=k,
-            distance_metric=distance_metric,
-            diversity_metric=diversity_metric,
-            diversity_tie_breakers=diversity_tie_breakers,
-            constraints=constraints,
-        )
+        with Timer() as timer:
+            self._state = SolverState.new(
+                vectors=vectors,
+                k=k,
+                distance_metric=distance_metric,
+                diversity_metric=diversity_metric,
+                diversity_tie_breakers=diversity_tie_breakers,
+                constraints=constraints,
+            )
+        self._t_solver_state_init_sec = timer.t_elapsed_sec()  # can be significant due to e.g. computation of distances
 
     # -------------------------------------------------------------------------
     #  API
@@ -84,11 +87,22 @@ class MaxDivSolver:
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------
+        n_steps = len(self._solver_steps)
         step_names = self._get_step_names()
-        step_seeds = [deterministic_hash((self._seed, i)) for i in range(len(step_names))]
+        step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
+
+        # init step results with solver state initialization as virtual step 0
+        step_results: dict[str, SolverStepResult] = dict()
+        step_results[f"step 0/{n_steps} - SolverState init"] = SolverStepResult(
+            score_checkpoints=[
+                (
+                    Elapsed(t_elapsed_sec=self._t_solver_state_init_sec, n_iterations=0),
+                    self._state.score,
+                )
+            ]
+        )
 
         # --- Main loop -----------------------------------
-        step_results: dict[str, SolverStepResult] = dict()
         for step_name, step_seed, step in zip(step_names, step_seeds, self._solver_steps):
             step.set_seed(step_seed)
             step_results[step_name.strip()] = step.run(self._state, step_name)

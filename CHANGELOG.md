@@ -8,6 +8,9 @@
 - **new**:
     - make `SolverStep`, `InitializationStrategy` & `OptimizationStrategy` instances have a settable random seed
 
+- **improved**:
+    - add initialization of `SolverState` to the reported results  
+
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.2
 > *(2025-12-11)*

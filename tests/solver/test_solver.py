@@ -22,7 +22,10 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[str, Elapsed
     )
 
     for i, step_name in enumerate(singular_step_names):
-        assert f"{i + 1}/{len(singular_step_names)}" in step_name
+        # e.g. if we have 4 steps reported...
+        #  - first step is step 0/3 representing SolverState initialization
+        #  - other steps are step 1/3, step 2/3, step 3/3, represent actual SolverSteps
+        assert f"{i}/{len(singular_step_names) - 1}" in step_name
 
     # --- check iteration counts ------
     iter_values = [e.n_iterations for _, e, _ in score_checkpoints]
