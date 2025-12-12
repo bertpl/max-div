@@ -24,7 +24,11 @@ class InitializationStrategy(StrategyBase, ABC):
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def random(cls) -> Self:
-        from ._init_random import InitRandom
+    def one_shot_random(cls, constrained: bool = True, uniform: bool = False) -> Self:
+        """Create a InitOneShotRandom initialization strategy."""
+        from ._init_one_shot_random import InitOneShotRandom
 
-        return InitRandom()
+        return InitOneShotRandom(
+            constrained=constrained,
+            uniform=uniform,
+        )

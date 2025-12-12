@@ -197,6 +197,16 @@ class SolverState:
         """Return True if >0 constraints are defined."""
         return self._con_values.shape[0] > 0
 
+    @cached_property
+    def con_indices(self) -> NDArray[np.int32]:
+        """Return constraint indices array."""
+        return self._con_indices  # should not be modified (!)
+
+    @property  # not cached, since this array is expected to change
+    def con_values(self) -> NDArray[np.int32]:
+        """Return constraint indices array."""
+        return self._con_values  # should not be modified (!)
+
     @property
     def selected_index_array(self) -> NDArray[np.int32]:
         """Return selected indices as a numpy array of np.int32."""
@@ -216,6 +226,11 @@ class SolverState:
     def not_selected_separation_array(self) -> NDArray[np.float32]:
         """Return separation of not selected vectors wrt selected vectors as a numpy array of np.float32."""
         return self._sep_selected[list(self._not_selected)]
+
+    @property
+    def global_separation_array(self) -> NDArray[np.float32]:
+        """Return global separation of all vectors wrt all other vectors as a numpy array of np.float32."""
+        return self._sep_global  # should not be modified (!)
 
     # -------------------------------------------------------------------------
     #  Scoring

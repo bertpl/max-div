@@ -12,7 +12,7 @@ def example_problem_1() -> MaxDivSolver:
     # prepare data
     vectors = np.random.rand(10, 5).astype(np.float32)
     selection_size = 5
-    init_strategy = InitializationStrategy.random()
+    init_strategy = InitializationStrategy.one_shot_random()
     solver_steps = [
         OptimizationStep(OptimizationStrategy.dummy(), seconds(0.1)),
         OptimizationStep(OptimizationStrategy.dummy(), iterations(1234)),

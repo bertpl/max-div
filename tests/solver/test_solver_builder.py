@@ -27,7 +27,7 @@ def dummy_problem() -> MaxDivProblem:
 @pytest.mark.parametrize(
     "strategy, expected_ok",
     [
-        (InitializationStrategy.random(), True),
+        (InitializationStrategy.one_shot_random(), True),
         (OptimizationStrategy.dummy(), False),
     ],
 )
@@ -49,9 +49,9 @@ def test_solver_builder_set_initialization_strategy(dummy_problem, strategy, exp
     [
         ([OptimizationStrategy.dummy(), OptimizationStrategy.dummy()], True),
         ([OptimizationStrategy.dummy()], True),
-        ([InitializationStrategy.random()], False),
-        ([InitializationStrategy.random(), OptimizationStrategy.dummy()], False),
-        ([OptimizationStrategy.dummy(), InitializationStrategy.random()], False),
+        ([InitializationStrategy.one_shot_random()], False),
+        ([InitializationStrategy.one_shot_random(), OptimizationStrategy.dummy()], False),
+        ([OptimizationStrategy.dummy(), InitializationStrategy.one_shot_random()], False),
     ],
 )
 def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expected_ok: bool):
@@ -135,7 +135,7 @@ def test_max_div_solver_builder_end_to_end():
     # --- arrange -----------------------------------------
     vectors = np.random.rand(10, 5).astype(np.float32)
     k = 5
-    init_strategy = InitializationStrategy.random()
+    init_strategy = InitializationStrategy.one_shot_random()
     solver_steps = [
         OptimizationStep(OptimizationStrategy.dummy(), seconds(1)),
         OptimizationStep(OptimizationStrategy.dummy(), iterations(100)),

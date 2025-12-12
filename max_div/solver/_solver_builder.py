@@ -31,7 +31,7 @@ class MaxDivSolverBuilder:
         self._diversity_tie_breakers: list[DiversityMetric | object] = []
         self._default_diversity_tie_breakers: bool = True
         self._solver_steps: list[SolverStep] = [
-            InitializationStep(InitializationStrategy.random()),  # Default initialization strategy
+            InitializationStep(InitializationStrategy.one_shot_random()),  # Default initialization strategy
         ]
         self._seed = 42
 

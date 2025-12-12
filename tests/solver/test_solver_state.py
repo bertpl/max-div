@@ -82,6 +82,9 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.not_selected_index_array.size == 6
     assert state.score.size < 1.0  # insufficient vectors selected
     assert state.score.constraints < 1.0  # constraints not satisfied
+    assert np.array_equal(state.con_values, state._con_values)
+    assert np.array_equal(state.con_indices, state._con_indices)
+    assert np.array_equal(state.global_separation_array, state._sep_global)
 
     # --- act 1 -------------------------------------------
     state.add(0)
@@ -138,4 +141,4 @@ def test_solver_state_snapshot(new_solver_state):
     assert np.array_equal(state.selected_index_array, orig_selected_array)
     assert np.array_equal(state.not_selected_index_array, orig_not_selected_array)
     assert np.allclose(state.selected_separation_array, orig_separation_array)
-    assert np.array_equal(state._con_values, orig_con_values)
+    assert np.array_equal(state.con_values, orig_con_values)

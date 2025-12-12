@@ -6,6 +6,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
+    - implement `InitOneShotRandom` initialization strategy
     - make `SolverStep`, `InitializationStrategy` & `OptimizationStrategy` instances have a settable random seed
 
 - **improved**:
