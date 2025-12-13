@@ -1,5 +1,13 @@
+from max_div.benchmarks import BenchmarkProblemFactory
+
 from .benchmark_initialization import benchmark_initialization_strategies
 
 
 def run_solver_benchmark(name: str, markdown: bool, file: bool = False, speed: float = 0.0):
-    benchmark_initialization_strategies(name, markdown, file, speed)
+    if name == "all":
+        # special case: run all benchmark problems
+        all_problem_names = list(BenchmarkProblemFactory.get_all_benchmark_problems().keys())
+        for problem_name in all_problem_names:
+            run_solver_benchmark(problem_name, markdown, file, speed)
+    else:
+        benchmark_initialization_strategies(name, markdown, file, speed)

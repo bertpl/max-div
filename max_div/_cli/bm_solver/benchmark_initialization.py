@@ -74,7 +74,7 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
 
     # --- show results ------------------------------------
     with stdout_to_file(enabled=file, filename=f"benchmark_initialization_{problem_name}.md"):
-        print("Testing Initialization strategies:")
+        print("Tested Initialization strategies:")
         strat_names_ljust = ljust_str_list([f"`{strat_name}`" for strat_name, _, _ in init_strategies])
         for strat_name_ljust, (_, desc, _) in zip(strat_names_ljust, init_strategies):
             print(f" - {strat_name_ljust}: {desc}")

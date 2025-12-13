@@ -35,6 +35,7 @@ The following commands support running test problems to evaluate solver performa
 
 ```bash
 max-div benchmark solver list
+max-div benchmark solver run all
 max-div benchmark solver run <test_problem>
 ```
 

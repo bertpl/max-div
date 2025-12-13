@@ -14,6 +14,7 @@
         - Add uncertainty ranges to reported metrics
         - Add `--turbo` flag and `--speed` parameter
         - Allow output to file using `--file` flag
+        - Allow benchmarking `all` test problems with single command
         - Improve test coverage
 
 <!------------------------------------------------------------------------------------------------->

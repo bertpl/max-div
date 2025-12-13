@@ -27,7 +27,7 @@ def test_cli_benchmark_solver_list():
         ["--speed=1.0"],
     ],
 )
-@pytest.mark.parametrize("test_problem", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
+@pytest.mark.parametrize("test_problem", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()) + ["all"])
 def test_cli_benchmark_solver_run(options: list[str], test_problem: str):
     # --- arrange -----------------------------------------
     runner = CliRunner()

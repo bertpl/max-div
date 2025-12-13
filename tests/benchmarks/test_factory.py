@@ -19,6 +19,10 @@ def test_benchmark_problem_factory_get_all_benchmark_problems():
     assert all(isinstance(name, str) for name in problems_dict.keys())
     assert all(isinstance(cls, type) and issubclass(cls, BenchmarkProblem) for cls in problems_dict.values())
 
+    assert "all" not in [name.lower().strip() for name in problems_dict.keys()], (
+        "'all' should not be used as name, to avoid conflict with `benchmark solver run all` CLI command"
+    )
+
 
 @pytest.mark.parametrize("name", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
 def test_benchmark_problem_factory_create_problem(name: str):
