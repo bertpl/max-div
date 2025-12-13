@@ -33,6 +33,12 @@ def _list():
 @solver.command(name="run")
 @click.argument("test_problem")
 @click.option(
+    "--file",
+    is_flag=True,
+    default=False,
+    help="Redirect output from console to file.",
+)
+@click.option(
     "--turbo",
     is_flag=True,
     default=False,
@@ -49,8 +55,8 @@ def _list():
     default=False,
     help="Output benchmark results in Markdown table format.",
 )
-def run(test_problem: str, turbo: bool, speed: float, markdown: bool):
+def run(test_problem: str, file: bool, turbo: bool, speed: float, markdown: bool):
     """Run specific solver benchmark problem."""
     if turbo:
         speed = 1.0
-    run_solver_benchmark(test_problem, markdown, speed)
+    run_solver_benchmark(test_problem, markdown, file, speed)

@@ -44,6 +44,7 @@ The `run` sub-command supports the following flags & options:
 --turbo       Run a much faster (but less reliable/complete) benchmark; equivalent with --speed=1.0; overrides --speed if both are provided.
 --speed       Value between 0.0 (default) and 1.0 (fastest) to speed up the benchmark at the cost of accuracy/completeness.
 --markdown    Output results in Markdown format
+--file        Output results to a file in current directory instead of stdout
 ```
 
 For results, see [here](./benchmarks/solver/_index.md).

@@ -13,6 +13,7 @@
         - Add constraint score reporting 
         - Add uncertainty ranges to reported metrics
         - Add `--turbo` flag and `--speed` parameter
+        - Allow output to file using `--file` flag
         - Improve test coverage
 
 <!------------------------------------------------------------------------------------------------->
