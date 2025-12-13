@@ -1,1 +1,1 @@
-from .run import run_solver_benchmark
+from ._benchmark_solver_run import run_solver_benchmark

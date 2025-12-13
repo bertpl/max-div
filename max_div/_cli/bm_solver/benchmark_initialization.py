@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 from tqdm import tqdm
 
@@ -39,22 +41,22 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool):
 
     # --- benchmark across sizes --------------------------
     # Initialize data structures for benchmark results
-    times: dict[int, dict[str, BenchmarkResult]] = dict()
-    diversity_scores: dict[int, dict[str, str]] = dict()
+    times: dict[int, dict[str, BenchmarkResult]] = defaultdict(dict)
+    diversity_scores: dict[int, dict[str, str]] = defaultdict(dict)
+    constraint_scores: dict[int, dict[str, str]] = defaultdict(dict)
 
     for size in tqdm(size_range, leave=False):
-        # initialize data structures for this size
-        times[size] = dict()
-        diversity_scores[size] = dict()
-
         # Create problem instance
         problem = construct_problem_instance(problem_name, size, diversity_metric)
 
         # go over all initialization strategies
         for strat_name, _, strategy_factory_method in init_strategies:
-            # Repeat n_seeds times with different seed
+            # initialize lists for this (size, strategy)
             times_lst = []
             diversity_scores_lst = []
+            constraint_scores_lst = []
+
+            # Repeat n_seeds times with different seed
             for seed in range(1, n_seeds + 1):
                 # Create solver with explicit initialization strategy
                 solver = (
@@ -72,6 +74,7 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool):
                     list(solution.step_durations.values())[-1].t_elapsed_sec
                 )  # last step is initialization
                 diversity_scores_lst.append(solution.score.diversity)
+                constraint_scores_lst.append(solution.score.constraints)
 
             # Register results for this (size, strategy)
             times[size][strat_name] = BenchmarkResult(
@@ -80,13 +83,21 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool):
                 t_sec_q_75=float(np.quantile(times_lst, 0.75)),
             )
             diversity_scores[size][strat_name] = f"{float(np.median(diversity_scores_lst)):.3f}"
+            constraint_scores[size][strat_name] = f"{float(np.median(constraint_scores_lst)):.3f}"
 
     # --- show results ------------------------------------
+
+    # prepare scope of what we need to show
     strategy_names = [strat_name for strat_name, _, _ in init_strategies]
-    for data, title in [
+    data_and_titles = [
         (times, "Time Duration"),
         (diversity_scores, "Diversity Score"),
-    ]:
+    ]
+    if has_constraints:
+        data_and_titles.append((constraint_scores, "Constraint Score"))
+
+    # show all relevant data
+    for data, title in data_and_titles:
         # --- create table data ---
         if markdown:
             headers = ["`d`", "`n`", "`k`", "`m`"] + [f"`{s}`" for s in strategy_names]

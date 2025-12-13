@@ -8,6 +8,9 @@
 - **new**:
     - Add 5th solver benchmark problem with simpler constraints, to complete the spectrum
 
+- **improved**:
+    - Add constraint score reporting to `benchmark solver run` CLI command 
+
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.3
 > *(2025-12-12)*
