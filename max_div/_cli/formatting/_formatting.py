@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Literal
 
+import numpy as np
+
 from max_div.internal.benchmarking import BenchmarkResult
 from max_div.internal.formatting import md_bold, md_colored, md_table
 
@@ -18,7 +20,45 @@ class Percentage:
         return f"{(self.frac * 100):.{self.decimals}f}%"
 
 
-CellContent = str | BenchmarkResult | Percentage
+@dataclass(frozen=True)
+class NumberWithUncertainty:
+    value_q_25: float
+    value_q_50: float
+    value_q_75: float
+    decimals: int = 3
+
+    @property
+    def value_str(self) -> str:
+        return f"{self.value_q_50:.{self.decimals}f}"
+
+    @property
+    def value_with_uncertainty_str(self) -> str:
+        s_median = self.value_str
+        s_perc = f"{50 * (self.value_q_75 - self.value_q_25) / self.value_q_50:.1f}%"
+        return f"{s_median} ± {s_perc}"
+
+    def __str__(self) -> str:
+        return self.value_with_uncertainty_str
+
+    @classmethod
+    def from_list(cls, lst: list[float], decimals: int = 3) -> NumberWithUncertainty:
+        """
+        Create a NumberWithUncertainty from a list of measured values.
+
+        :param lst: List of measured values
+        :param decimals: Number of decimals to display
+        :return: NumberWithUncertainty with computed q25, q50, q75
+        """
+        q25, q50, q75 = np.quantile(lst, [0.25, 0.50, 0.75])
+        return NumberWithUncertainty(
+            value_q_25=float(q25),
+            value_q_50=float(q50),
+            value_q_75=float(q75),
+            decimals=decimals,
+        )
+
+
+CellContent = str | BenchmarkResult | Percentage | NumberWithUncertainty
 
 
 # =================================================================================================

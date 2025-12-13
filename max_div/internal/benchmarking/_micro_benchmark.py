@@ -35,6 +35,17 @@ class BenchmarkResult:
         return self.t_sec_with_uncertainty_str
 
     @classmethod
+    def from_list(cls, lst: list[float]) -> BenchmarkResult:
+        """
+        Create a BenchmarkResult from a list of measured times.
+
+        :param lst: List of measured times in seconds
+        :return: BenchmarkResult with computed q25, q50, q75
+        """
+        q25, q50, q75 = np.quantile(lst, [0.25, 0.50, 0.75])
+        return BenchmarkResult(t_sec_q_25=float(q25), t_sec_q_50=float(q50), t_sec_q_75=float(q75))
+
+    @classmethod
     def aggregate(cls, results: list[BenchmarkResult], method: Literal["mean", "geomean", "sum"]) -> BenchmarkResult:
         """
         Aggregate multiple BenchmarkResult objects into a single result, by aggregating q25, q50, 75 values separately.

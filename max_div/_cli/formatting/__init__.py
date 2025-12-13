@@ -3,6 +3,7 @@ from ._formatting import (
     CellContent,
     FastestBenchmark,
     HighestPercentage,
+    NumberWithUncertainty,
     Percentage,
     extend_table_with_aggregate_row,
     format_as_markdown,

@@ -3,16 +3,11 @@ from collections import defaultdict
 import numpy as np
 from tqdm import tqdm
 
-from max_div._cli.formatting import (
-    BoldLabels,
-    format_as_markdown,
-    format_for_console,
-)
-from max_div.benchmarks import BenchmarkProblemFactory
+from max_div._cli.formatting import BoldLabels, NumberWithUncertainty, format_as_markdown, format_for_console
 from max_div.internal.benchmarking import BenchmarkResult
+from max_div.internal.formatting import ljust_str_list
 from max_div.solver import DiversityMetric, MaxDivSolverBuilder
 
-from ...internal.formatting import ljust_str_list
 from ._helpers import construct_problem_instance, get_initialization_strategies, problem_has_constraints
 
 
@@ -42,8 +37,8 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool):
     # --- benchmark across sizes --------------------------
     # Initialize data structures for benchmark results
     times: dict[int, dict[str, BenchmarkResult]] = defaultdict(dict)
-    diversity_scores: dict[int, dict[str, str]] = defaultdict(dict)
-    constraint_scores: dict[int, dict[str, str]] = defaultdict(dict)
+    diversity_scores: dict[int, dict[str, NumberWithUncertainty]] = defaultdict(dict)
+    constraint_scores: dict[int, dict[str, NumberWithUncertainty]] = defaultdict(dict)
 
     for size in tqdm(size_range, leave=False):
         # Create problem instance
@@ -77,13 +72,9 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool):
                 constraint_scores_lst.append(solution.score.constraints)
 
             # Register results for this (size, strategy)
-            times[size][strat_name] = BenchmarkResult(
-                t_sec_q_25=float(np.quantile(times_lst, 0.25)),
-                t_sec_q_50=float(np.quantile(times_lst, 0.50)),
-                t_sec_q_75=float(np.quantile(times_lst, 0.75)),
-            )
-            diversity_scores[size][strat_name] = f"{float(np.median(diversity_scores_lst)):.3f}"
-            constraint_scores[size][strat_name] = f"{float(np.median(constraint_scores_lst)):.3f}"
+            times[size][strat_name] = BenchmarkResult.from_list(times_lst)
+            diversity_scores[size][strat_name] = NumberWithUncertainty.from_list(diversity_scores_lst)
+            constraint_scores[size][strat_name] = NumberWithUncertainty.from_list(constraint_scores_lst)
 
     # --- show results ------------------------------------
 

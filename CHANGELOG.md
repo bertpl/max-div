@@ -10,6 +10,7 @@
 
 - **improved**:
     - Add constraint score reporting to `benchmark solver run` CLI command 
+    - Add uncertainty ranges to reported metrics in `benchmark solver run` CLI command
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.3
