@@ -11,20 +11,21 @@ from max_div.solver import DiversityMetric, MaxDivSolverBuilder
 from ._helpers import construct_problem_instance, get_initialization_strategies, problem_has_constraints
 
 
-def benchmark_initialization_strategies(problem_name: str, markdown: bool):
+def benchmark_initialization_strategies(problem_name: str, markdown: bool, speed: float = 0.0):
     """
     Benchmark initialization strategies on a given benchmark problem across different sizes.
 
     :param problem_name: Name of the benchmark problem
     :param markdown: If True, outputs the results as a Markdown table, otherwise plain text without markup.
+    :param speed: Speed factor to adjust the benchmark duration (0.0 = full, 1.0 = fastest).
     """
     print(f"Benchmarking initialization strategies on problem: {problem_name}")
     print()
 
     # --- prep --------------------------------------------
     diversity_metric = DiversityMetric.geomean_separation()
-    size_range = list(range(1, 21))
-    n_seeds = 32
+    size_range = list(range(1, 1 + int(20 - 19 * speed)))  # [1,20] for speed=0.0 to [1,1] for speed=1.0
+    n_seeds = int(32 - speed * 31)  # from 1 (speed=1.0) to 32 (speed=0.0)
     has_constraints = problem_has_constraints(problem_name, [min(size_range), max(size_range)])
     init_strategies = get_initialization_strategies(has_constraints)
 

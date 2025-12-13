@@ -33,11 +33,24 @@ def _list():
 @solver.command(name="run")
 @click.argument("test_problem")
 @click.option(
+    "--turbo",
+    is_flag=True,
+    default=False,
+    help="Run shorter, less accurate/complete benchmark; identical to --speed=1.0; intended for testing purposes.",
+)
+@click.option(
+    "--speed",
+    default=0.0,
+    help="Values closer to 1.0 result in shorter, less accurate benchmark; Overridden by --turbo when provided.",
+)
+@click.option(
     "--markdown",
     is_flag=True,
     default=False,
     help="Output benchmark results in Markdown table format.",
 )
-def run(test_problem: str, markdown: bool):
+def run(test_problem: str, turbo: bool, speed: float, markdown: bool):
     """Run specific solver benchmark problem."""
-    run_solver_benchmark(test_problem, markdown)
+    if turbo:
+        speed = 1.0
+    run_solver_benchmark(test_problem, markdown, speed)

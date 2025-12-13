@@ -2,6 +2,7 @@ import pytest
 from click.testing import CliRunner
 
 from max_div._cli import benchmark, numba_status
+from max_div.benchmarks import BenchmarkProblemFactory
 
 
 # =================================================================================================
@@ -13,6 +14,26 @@ def test_cli_benchmark_solver_list():
 
     # --- act ---------------------------------------------
     result = runner.invoke(benchmark, ["solver", "list"])
+
+    # --- assert ------------------------------------------
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["--turbo", "--markdown"],
+        ["--turbo"],
+        ["--speed=1.0"],
+    ],
+)
+@pytest.mark.parametrize("test_problem", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
+def test_cli_benchmark_solver_run(options: list[str], test_problem: str):
+    # --- arrange -----------------------------------------
+    runner = CliRunner()
+
+    # --- act ---------------------------------------------
+    result = runner.invoke(benchmark, ["solver", "run", *options, test_problem])
 
     # --- assert ------------------------------------------
     assert result.exit_code == 0
@@ -30,13 +51,20 @@ def test_cli_benchmark_solver_list():
         "modify_p_selectivity",
     ],
 )
-@pytest.mark.parametrize("options", ["--turbo", "--speed=1.0"])
-def test_cli_benchmark_internal(sub_command: str, options: str):
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["--turbo", "--markdown"],
+        ["--turbo"],
+        ["--speed=1.0"],
+    ],
+)
+def test_cli_benchmark_internal(sub_command: str, options: list[str]):
     # --- arrange -----------------------------------------
     runner = CliRunner()
 
     # --- act ---------------------------------------------
-    result = runner.invoke(benchmark, ["internal", options, sub_command])
+    result = runner.invoke(benchmark, ["internal", *options, sub_command])
 
     # --- assert ------------------------------------------
     assert result.exit_code == 0

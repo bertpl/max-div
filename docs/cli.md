@@ -41,6 +41,8 @@ max-div benchmark solver run <test_problem>
 The `run` sub-command supports the following flags & options:
 
 ```
+--turbo       Run a much faster (but less reliable/complete) benchmark; equivalent with --speed=1.0; overrides --speed if both are provided.
+--speed       Value between 0.0 (default) and 1.0 (fastest) to speed up the benchmark at the cost of accuracy/completeness.
 --markdown    Output results in Markdown format
 ```
 
@@ -59,8 +61,8 @@ max-div benchmark internal modify_p_selectivity
 
 All benchmarking commands support the following shared flags & options:
 ```
---turbo       Run a much faster (but less reliable) benchmark; equivalent with --speed=1.0; overrides --speed if both are provided.
---speed       Value between 0.0 (default) and 1.0 (fastest) to speed up the benchmark at the cost of accuracy.
+--turbo       Run a much faster (but less reliable/complete) benchmark; equivalent with --speed=1.0; overrides --speed if both are provided.
+--speed       Value between 0.0 (default) and 1.0 (fastest) to speed up the benchmark at the cost of accuracy/completeness.
 --markdown    Output results in Markdown format
 ```
 

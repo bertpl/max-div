@@ -9,8 +9,11 @@
     - Add 5th solver benchmark problem with simpler constraints, to complete the spectrum
 
 - **improved**:
-    - Add constraint score reporting to `benchmark solver run` CLI command 
-    - Add uncertainty ranges to reported metrics in `benchmark solver run` CLI command
+    - `benchmark solver run` CLI command
+        - Add constraint score reporting 
+        - Add uncertainty ranges to reported metrics
+        - Add `--turbo` flag and `--speed` parameter
+        - Improve test coverage
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.3

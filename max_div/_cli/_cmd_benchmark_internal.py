@@ -17,7 +17,7 @@ from .bm_internal import (
     "--turbo",
     is_flag=True,
     default=False,
-    help="Run shorter, less accurate benchmark; identical to --speed=1.0; intended for testing purposes.",
+    help="Run shorter, less accurate/complete benchmark; identical to --speed=1.0; intended for testing purposes.",
 )
 @click.option(
     "--speed",
