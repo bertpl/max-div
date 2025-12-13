@@ -13,8 +13,8 @@ from max_div._cli.formatting import (
     HighestPercentage,
     Percentage,
     extend_table_with_aggregate_row,
-    format_as_markdown,
-    format_for_console,
+    format_table_as_markdown,
+    format_table_for_console,
 )
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.internal.formatting import md_multiline
@@ -60,7 +60,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
     # --- define formatting -------------------------------
     def print_table(_headers: list[str], _data: list[list[CellContent]]):
         if markdown:
-            _table = format_as_markdown(
+            _table = format_table_as_markdown(
                 _headers,
                 _data,
                 highlighters=[
@@ -71,7 +71,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
             )
         else:
             _headers = [h.replace("`", "").replace("<br>", " ") for h in _headers]
-            _table = format_for_console(_headers, _data)
+            _table = format_table_for_console(_headers, _data)
 
         for _line in _table:
             print(_line)

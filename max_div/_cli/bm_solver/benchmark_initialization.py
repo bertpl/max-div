@@ -8,8 +8,8 @@ from max_div._cli.formatting import (
     HighestNumberWithUncertainty,
     NumberWithUncertainty,
     extend_table_with_aggregate_row,
-    format_as_markdown,
-    format_for_console,
+    format_table_as_markdown,
+    format_table_for_console,
 )
 from max_div.internal.benchmarking import BenchmarkResult
 from max_div.internal.formatting import ljust_str_list
@@ -130,7 +130,7 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
 
             # --- show table ---
             if markdown:
-                display_data = format_as_markdown(
+                display_data = format_table_as_markdown(
                     headers,
                     table_data,
                     highlighters=[
@@ -140,7 +140,7 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
                     ],
                 )
             else:
-                display_data = format_for_console(headers, table_data)
+                display_data = format_table_for_console(headers, table_data)
 
             print()
             for line in display_data:

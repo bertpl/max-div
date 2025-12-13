@@ -6,8 +6,8 @@ from max_div._cli.formatting import (
     CellContent,
     FastestBenchmark,
     extend_table_with_aggregate_row,
-    format_as_markdown,
-    format_for_console,
+    format_table_as_markdown,
+    format_table_for_console,
 )
 from max_div.internal.benchmarking import benchmark
 from max_div.internal.math.modify_p_selectivity import (
@@ -93,9 +93,9 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False) -
     # --- show results -----------------------------------------
     data = extend_table_with_aggregate_row(data, agg="geomean")
     if markdown:
-        display_data = format_as_markdown(headers, data, highlighters=[FastestBenchmark(), BoldLabels()])
+        display_data = format_table_as_markdown(headers, data, highlighters=[FastestBenchmark(), BoldLabels()])
     else:
-        display_data = format_for_console(headers, data)
+        display_data = format_table_for_console(headers, data)
 
     print()
     for line in display_data:
