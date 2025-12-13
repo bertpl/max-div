@@ -20,6 +20,8 @@ help:
 	@echo '  show-coverage                  Open test coverage report in browser.'
 	@echo '  show-docs                      Open mkdocs site in browser.'
 	@echo ''
+	@echo '  update-solver-benchmarks       Run solver benchmarks and update results in ./docs/benchmarks/solver/results/.'
+	@echo ''
 	@echo 'Options:'
 	@echo ''
 	@echo '  format-single-file             - accepts `file_path=<path>` to pass the relative path of the file to be formatted.'
@@ -62,3 +64,9 @@ show-docs:
 	# trigger browser to open mkdocs site
 	# (go through pycharm built-in server, to make this site work correctly)
 	open http://localhost:63342/max-div/reports/docs/index.html
+
+update-solver-benchmarks:
+	uv run max-div benchmark solver run --markdown --file all;
+	rm ./docs/benchmarks/solver/results/*.md;
+	mv ./benchmark*.md ./docs/benchmarks/solver/results/;
+	$(MAKE) docs

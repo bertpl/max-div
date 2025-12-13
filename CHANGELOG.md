@@ -2,11 +2,12 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.4
-> *(under development)*
+> *(2025-12-13)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
     - Add 5th solver benchmark problem with simpler constraints, to complete the spectrum
+    - Add benchmarking results to documentation & add `make` command to automatically regenerate benchmark results
 
 - **improved**:
     - `benchmark solver run` CLI command

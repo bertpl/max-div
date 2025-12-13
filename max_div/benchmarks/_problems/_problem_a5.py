@@ -35,7 +35,7 @@ class BenchmarkProblem_A5(BenchmarkProblem):
     @classmethod
     def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
         d = size
-        n = 100 * size
+        n = 150 * size
         k = 10 * size
 
         # Generate gaussian random vectors, such that in each dimension...
@@ -53,7 +53,7 @@ class BenchmarkProblem_A5(BenchmarkProblem):
             constraints.append(
                 Constraint(
                     int_set=set(indices_positive),
-                    min_count=k // 2,
+                    min_count=int(0.4 * k),
                     max_count=k,
                 )
             )
@@ -63,7 +63,7 @@ class BenchmarkProblem_A5(BenchmarkProblem):
             constraints.append(
                 Constraint(
                     int_set=set(indices_negative),
-                    min_count=k // 2,
+                    min_count=int(0.4 * k),
                     max_count=k,
                 )
             )
@@ -73,8 +73,8 @@ class BenchmarkProblem_A5(BenchmarkProblem):
             constraints.append(
                 Constraint(
                     int_set=set(indices_in_range),
-                    min_count=k // 2,
-                    max_count=k // 2,
+                    min_count=int(0.7 * k),
+                    max_count=k,
                 )
             )
 

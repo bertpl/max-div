@@ -2,7 +2,15 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from max_div._cli.formatting import BoldLabels, NumberWithUncertainty, format_as_markdown, format_for_console
+from max_div._cli.formatting import (
+    BoldLabels,
+    FastestBenchmark,
+    HighestNumberWithUncertainty,
+    NumberWithUncertainty,
+    extend_table_with_aggregate_row,
+    format_as_markdown,
+    format_for_console,
+)
 from max_div.internal.benchmarking import BenchmarkResult
 from max_div.internal.formatting import ljust_str_list
 from max_div.internal.utils import stdout_to_file
@@ -21,7 +29,6 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
     :param speed: Speed factor to adjust the benchmark duration (0.0 = full, 1.0 = fastest).
     """
     print(f"Benchmarking initialization strategies on problem: {problem_name}")
-    print()
 
     # --- prep --------------------------------------------
     diversity_metric = DiversityMetric.geomean_separation()
@@ -74,23 +81,25 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
 
     # --- show results ------------------------------------
     with stdout_to_file(enabled=file, filename=f"benchmark_initialization_{problem_name}.md"):
-        print("Tested Initialization strategies:")
+        # show tested initialization strategies
         strat_names_ljust = ljust_str_list([f"`{strat_name}`" for strat_name, _, _ in init_strategies])
+        print("Tested Initialization strategies:")
+        print()
         for strat_name_ljust, (_, desc, _) in zip(strat_names_ljust, init_strategies):
             print(f" - {strat_name_ljust}: {desc}")
         print()
 
         # prepare scope of what we need to show
         strategy_names = [strat_name for strat_name, _, _ in init_strategies]
-        data_and_titles = [
-            (times, "Time Duration"),
-            (diversity_scores, "Diversity Score"),
-        ]
+        scope = [
+            (times, "Time Duration", "geomean"),
+            (diversity_scores, "Diversity Score", "geomean"),
+        ]  # (data, title, agg_type)-tuples
         if has_constraints:
-            data_and_titles.append((constraint_scores, "Constraint Score"))
+            scope.append((constraint_scores, "Constraint Score", "mean"))
 
         # show all relevant data
-        for data, title in data_and_titles:
+        for data, title, agg_type in scope:
             # --- create table data ---
             if markdown:
                 headers = ["`d`", "`n`", "`k`", "`m`"] + [f"`{s}`" for s in strategy_names]
@@ -110,6 +119,9 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
                     + [data[size][strat_name] for strat_name in strategy_names]
                 )
 
+            # --- add aggregates ---
+            table_data = extend_table_with_aggregate_row(table_data, agg=agg_type)
+
             # --- show title ---
             if markdown:
                 print(f"### {title}")
@@ -118,7 +130,15 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
 
             # --- show table ---
             if markdown:
-                display_data = format_as_markdown(headers, table_data, highlighters=[BoldLabels()])
+                display_data = format_as_markdown(
+                    headers,
+                    table_data,
+                    highlighters=[
+                        BoldLabels(),
+                        FastestBenchmark(),
+                        HighestNumberWithUncertainty(),
+                    ],
+                )
             else:
                 display_data = format_for_console(headers, table_data)
 

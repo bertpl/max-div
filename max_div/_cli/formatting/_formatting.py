@@ -59,6 +59,45 @@ class NumberWithUncertainty:
             decimals=decimals,
         )
 
+    @classmethod
+    def aggregate(
+        cls, results: list[NumberWithUncertainty], method: Literal["mean", "geomean", "sum"]
+    ) -> NumberWithUncertainty:
+        """
+        Aggregate multiple NumberWithUncertainty objects into a single result,
+        by aggregating q25, q50, 75 values separately.
+
+        :param results: List of NumberWithUncertainty objects to aggregate
+        :param method: Aggregation method - "mean", "geomean" (geometric mean), or "sum"
+        :return: Aggregated NumberWithUncertainty
+        """
+        if not results:
+            raise ValueError("Cannot aggregate empty list of results")
+
+        # Collect all quantile values
+        q25_values = [r.value_q_25 for r in results]
+        q50_values = [r.value_q_50 for r in results]
+        q75_values = [r.value_q_75 for r in results]
+
+        # Apply the aggregation method
+        if method == "mean":
+            agg_q25 = np.mean(q25_values)
+            agg_q50 = np.mean(q50_values)
+            agg_q75 = np.mean(q75_values)
+        elif method == "geomean":
+            agg_q25 = np.exp(np.mean(np.log(q25_values)))
+            agg_q50 = np.exp(np.mean(np.log(q50_values)))
+            agg_q75 = np.exp(np.mean(np.log(q75_values)))
+        else:
+            raise ValueError(f"Unknown aggregation method: {method}")
+
+        return NumberWithUncertainty(
+            value_q_25=agg_q25,
+            value_q_50=agg_q50,
+            value_q_75=agg_q75,
+            decimals=max([r.decimals for r in results]),
+        )
+
 
 CellContent = str | BenchmarkResult | Percentage | NumberWithUncertainty
 
@@ -71,6 +110,7 @@ def extend_table_with_aggregate_row(
     agg: Literal["mean", "geomean", "sum"],
     include_benchmark_result: bool = True,
     include_percentage: bool = True,
+    include_number_with_uncertainty: bool = True,
 ) -> list[list[CellContent]]:
     """
     This function adds aggregate statistics for BenchmarkResult | Percentage (=Aggregatable) columns to the data table.
@@ -87,7 +127,7 @@ def extend_table_with_aggregate_row(
     """
     n_cols = len(data[0])
 
-    Aggregatable = BenchmarkResult | Percentage
+    Aggregatable = BenchmarkResult | Percentage | NumberWithUncertainty
 
     # Identify which columns contain Aggregatable objects
     has_aggregatable = [False] * n_cols
@@ -133,6 +173,12 @@ def extend_table_with_aggregate_row(
                 avg_frac = sum(p.frac for p in percentages) / len(percentages)
                 max_decimals = max(p.decimals for p in percentages)
                 agg_row[col_idx] = Percentage(frac=avg_frac, decimals=max_decimals + 1)
+
+        if include_number_with_uncertainty:
+            # Collect all NumberWithUncertainty values from this column
+            numbers = [row[col_idx] for row in data if isinstance(row[col_idx], NumberWithUncertainty)]
+            if numbers:  # Only compute if we have values
+                agg_row[col_idx] = NumberWithUncertainty.aggregate(numbers, method=agg)
 
     # Return data with the aggregate row appended
     return data + [agg_row]
@@ -190,6 +236,33 @@ class HighestPercentage(HighLighter):
                 if isinstance(value, Percentage):
                     text = str(value)
                     if text == str(max_perc):  # make green if its str-representation is equal
+                        if self.bold:
+                            text = md_bold(text)
+                        text = md_colored(text, self.color)
+                    converted_row.append(text)
+                else:
+                    converted_row.append(value)
+            return converted_row
+        else:
+            return row
+
+
+class HighestNumberWithUncertainty(HighLighter):
+    def __init__(self, bold: bool = True, color: str = "#00aa00"):
+        self.bold = bold
+        self.color = color
+
+    def process_row(self, row: list[CellContent]) -> list[CellContent]:
+        if any(isinstance(value, NumberWithUncertainty) for value in row):
+            # Find the highest NumberWithUncertainty (maximum value_q_50)
+            q50_max = max([value.value_q_50 for value in row if isinstance(value, NumberWithUncertainty)])
+
+            # Convert row to strings, highlighting the results with value_q_50 == max value_q_50
+            converted_row: list[CellContent] = []
+            for i, value in enumerate(row):
+                if isinstance(value, NumberWithUncertainty):
+                    text = str(value)
+                    if value.value_q_75 >= q50_max:
                         if self.bold:
                             text = md_bold(text)
                         text = md_colored(text, self.color)

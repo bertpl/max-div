@@ -2,6 +2,7 @@ from ._formatting import (
     BoldLabels,
     CellContent,
     FastestBenchmark,
+    HighestNumberWithUncertainty,
     HighestPercentage,
     NumberWithUncertainty,
     Percentage,

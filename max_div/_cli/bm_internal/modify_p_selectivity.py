@@ -33,7 +33,7 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False) -
     :param markdown: If `True`, outputs the results as a Markdown table.
     """
 
-    print("Benchmarking `modify_p_selectivity_*`...")
+    print("Benchmarking `modify_p_selectivity`...")
     print()
 
     # --- create headers ------------------------------
