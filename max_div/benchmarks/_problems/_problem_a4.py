@@ -7,7 +7,7 @@ from max_div.solver import Constraint, DistanceMetric, DiversityMetric, MaxDivPr
 
 
 # =================================================================================================
-#  A4 - Gaussian - Complex constraints
+#  A4 - Gaussian - Intermediate constraints
 # =================================================================================================
 class BenchmarkProblem_A4(BenchmarkProblem):
     @classmethod
@@ -16,12 +16,12 @@ class BenchmarkProblem_A4(BenchmarkProblem):
 
     @classmethod
     def description(cls) -> str:
-        return "Problem with non-uniform vector density (gaussian distribution) and complex constrains"
+        return "Problem with non-uniform vector density (gaussian distribution) and intermediate constraints"
 
     @classmethod
     def supported_params(cls) -> dict[str, str]:
         return dict(
-            size="(int) value in [1, ...].  Problem size, with d=size, n=100*size, k=10*size, m=3*size",
+            size="(int) value in [1, ...].  Problem size, with d=size, n=100*size, k=10*size, m=2*size",
             diversity_metric="(DiversityMetric) diversity metric to be maximized",
         )
 
@@ -38,45 +38,20 @@ class BenchmarkProblem_A4(BenchmarkProblem):
         n = 100 * size
         k = 10 * size
 
-        # Generate gaussian random vectors, such that in each dimension...
-        #   ~31% of values are <=0
-        #   ~69% of values are >=0
-        #   ~62% of values are in [-1, +1]
+        # Generate gaussian random vectors
         np.random.seed(42)
-        vectors = np.random.randn(n, d).astype(np.float32) + 0.5  # shift by 0.5
+        vectors = np.random.randn(n, d).astype(np.float32) + 1.0  # shift by 1.0 (distribution of signs ~84%-16%)
 
         # Generate constraints
         constraints: list[Constraint] = []
         for i in range(d):
-            # at least half of k samples should have positive or 0 value in dimension i
+            # half of k samples should have positive or 0 value in dimension i
             indices_positive = [idx for idx in range(n) if vectors[idx, i] >= 0.0]
-            constraints.append(
-                Constraint(
-                    int_set=set(indices_positive),
-                    min_count=k // 2,
-                    max_count=k,
-                )
-            )
+            constraints.append(Constraint(int_set=set(indices_positive), min_count=k // 2, max_count=k))
 
-            # at least half of k samples should have negative or 0 value in dimension i
+            # half of k samples should have negative or 0 value in dimension i
             indices_negative = [idx for idx in range(n) if vectors[idx, i] <= 0.0]
-            constraints.append(
-                Constraint(
-                    int_set=set(indices_negative),
-                    min_count=k // 2,
-                    max_count=k,
-                )
-            )
-
-            # exact half of k samples should have value in [-1, +1] in dimension i
-            indices_in_range = [idx for idx in range(n) if -1.0 <= vectors[idx, i] <= 1.0]
-            constraints.append(
-                Constraint(
-                    int_set=set(indices_in_range),
-                    min_count=k // 2,
-                    max_count=k // 2,
-                )
-            )
+            constraints.append(Constraint(int_set=set(indices_negative), min_count=k // 2, max_count=k))
 
         return MaxDivProblem(
             vectors=vectors,

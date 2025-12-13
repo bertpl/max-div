@@ -7,7 +7,7 @@ from max_div.solver import Constraint, DistanceMetric, DiversityMetric, MaxDivPr
 
 
 # =================================================================================================
-#  A3 - Gaussian - Simple constraints
+#  A3 - Non-Uniform - Simple constraints
 # =================================================================================================
 class BenchmarkProblem_A3(BenchmarkProblem):
     @classmethod
@@ -16,12 +16,12 @@ class BenchmarkProblem_A3(BenchmarkProblem):
 
     @classmethod
     def description(cls) -> str:
-        return "Problem with non-uniform vector density (gaussian distribution) and simple constrains"
+        return "Problem with semi-non-uniform vector density and simple constraints"
 
     @classmethod
     def supported_params(cls) -> dict[str, str]:
         return dict(
-            size="(int) value in [1, ...].  Problem size, with d=size, n=100*size, k=10*size, m=2*size",
+            size="(int) value in [1, ...].  Problem size, with d=2, n=100*size, k=10*size, m=2*size",
             diversity_metric="(DiversityMetric) diversity metric to be maximized",
         )
 
@@ -34,24 +34,25 @@ class BenchmarkProblem_A3(BenchmarkProblem):
 
     @classmethod
     def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
-        d = size
         n = 100 * size
         k = 10 * size
+        m = 2 * size
 
-        # Generate gaussian random vectors
+        # Generate semi-non-uniform random vectors (uniform + gaussian)
         np.random.seed(42)
-        vectors = np.random.randn(n, d).astype(np.float32) + 1.0  # shift by 1.0 (distribution of signs ~84%-16%)
+        uniform_col = np.random.rand(n, 1)
+        gaussian_col = np.random.randn(n, 1)
+        vectors = np.concatenate((uniform_col, gaussian_col), axis=1).astype(np.float32)
 
         # Generate constraints
         constraints: list[Constraint] = []
-        for i in range(d):
-            # half of k samples should have positive or 0 value in dimension i
-            indices_positive = [idx for idx in range(n) if vectors[idx, i] >= 0.0]
-            constraints.append(Constraint(int_set=set(indices_positive), min_count=k // 2, max_count=k))
-
-            # half of k samples should have negative or 0 value in dimension i
-            indices_negative = [idx for idx in range(n) if vectors[idx, i] <= 0.0]
-            constraints.append(Constraint(int_set=set(indices_negative), min_count=k // 2, max_count=k))
+        for i in range(m):
+            # generate m bands [v_min, v_max] spanning dimension 0   (total range [0,1])
+            # add specify constraint that at least 4 samples should be taken from each band
+            # (k=5*m and n=50*m, so this should always be feasible)
+            v_min, v_max = i / m, (i + 1) / m  # range of values in dimension 0
+            indices_in_range = [idx for idx in range(n) if v_min <= vectors[idx, 0] <= v_max]
+            constraints.append(Constraint(int_set=set(indices_in_range), min_count=4, max_count=k))
 
         return MaxDivProblem(
             vectors=vectors,

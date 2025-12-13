@@ -11,3 +11,4 @@ from ._problem_a1 import BenchmarkProblem_A1
 from ._problem_a2 import BenchmarkProblem_A2
 from ._problem_a3 import BenchmarkProblem_A3
 from ._problem_a4 import BenchmarkProblem_A4
+from ._problem_a5 import BenchmarkProblem_A5
