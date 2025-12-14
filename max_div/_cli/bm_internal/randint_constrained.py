@@ -18,6 +18,7 @@ from max_div._cli.formatting import (
 )
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.internal.formatting import md_multiline
+from max_div.internal.utils import stdout_to_file
 from max_div.sampling import randint_numba
 from max_div.sampling._constraint_helpers import _build_array_repr
 from max_div.sampling.con import randint_constrained, randint_constrained_robust
@@ -27,7 +28,7 @@ from max_div.solver import Constraint
 # =================================================================================================
 #  Main benchmark function
 # =================================================================================================
-def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) -> None:
+def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
     """
     Benchmarks the `randint_constrained` function from `max_div.sampling.con`.
 
@@ -90,35 +91,15 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
 
     # --- benchmark all scenarios -------------------------
     print("Benchmarking `randint_constrained`...")
-    print()
+
+    i_file = 0
     for s in scenarios:
-        print_header(s.name, 2)
-
-        print(s.description)
-        print()
-
         for use_p in [False, True]:
-            if use_p:
-                print_header("Non-uniform sampling (custom p).", 3)
-            else:
-                print_header("Uniform sampling.", 3)
-
-            # --- create headers --------------------
-            headers = [
-                "`k`",
-                "`n`",
-                "`m`",
-                "`randint_numba`",
-                md_multiline(["`randint_constrained`", "(eager=False)"]),
-                md_multiline(["`randint_constrained`", "(eager=True)"]),
-                md_multiline(["`randint_constrained_robust`", "(n_trials=5)"]),
-            ]
-
             # --- benchmark scenario ----------------
             timing_data: list[list[CellContent]] = []
             accuracy_data: list[list[CellContent]] = []
 
-            for i, (n, k, m) in tqdm(enumerate(s.n_k_m_tuples()), leave=False):
+            for i, (n, k, m) in enumerate(tqdm(s.n_k_m_tuples(), leave=file)):
                 if i >= max_count:
                     continue
 
@@ -154,15 +135,42 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False) ->
                     ]
                 )
 
-            # --- show timing results -----------------------------------------
-            print_header("Timing Results", 4)
-            timing_data = extend_table_with_aggregate_row(timing_data, agg="geomean")
-            print_table(headers, timing_data)
+            # --- show all results --------------------------------------------
 
-            # --- show accuracy results -----------------------------------------
-            print_header("Accuracy Results", 4)
+            # --- prepare tables ---
+            headers = [
+                "`k`",
+                "`n`",
+                "`m`",
+                "`randint_numba`",
+                md_multiline(["`randint_constrained`", "(eager=False)"]),
+                md_multiline(["`randint_constrained`", "(eager=True)"]),
+                md_multiline(["`randint_constrained_robust`", "(n_trials=5)"]),
+            ]
+            timing_data = extend_table_with_aggregate_row(timing_data, agg="geomean")
             accuracy_data = extend_table_with_aggregate_row(accuracy_data, agg="mean")
-            print_table(headers, accuracy_data)
+
+            # --- output ---
+            i_file += 1
+            with stdout_to_file(file, f"benchmark_randint_constrained_{i_file}.md"):
+                # headers
+                if i_file in [1, 3]:
+                    print_header(s.name, 2)
+                    print(s.description)
+                    print()
+
+                if use_p:
+                    print_header("Non-uniform sampling (custom p).", 3)
+                else:
+                    print_header("Uniform sampling.", 3)
+
+                # timing results
+                print_header("Timing Results", 4)
+                print_table(headers, timing_data)
+
+                # accuracy results
+                print_header("Accuracy Results", 4)
+                print_table(headers, accuracy_data)
 
 
 # =================================================================================================

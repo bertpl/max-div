@@ -14,9 +14,10 @@ from max_div.internal.math.modify_p_selectivity import (
     modify_p_selectivity_power,
     modify_p_selectivity_pwl2,
 )
+from max_div.internal.utils import stdout_to_file
 
 
-def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False) -> None:
+def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
     """
     Benchmarks the modify_p_selectivity functions from `max_div.internal.math.modify_p_selectivity`.
 
@@ -34,25 +35,6 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False) -
     """
 
     print("Benchmarking `modify_p_selectivity`...")
-    print()
-
-    # --- create headers ------------------------------
-    if markdown:
-        print("## modify_p_selectivity Performance")
-        print()
-        headers = [
-            "`size`",
-            "`power`",
-            "`pwl2`",
-        ]
-    else:
-        print("modify_p_selectivity Performance:")
-        print()
-        headers = [
-            "size",
-            "power",
-            "pwl2",
-        ]
 
     # --- prepare random modifier values --------------
     # Generate 100 random modifier values in (0.0, 1.0)
@@ -91,13 +73,31 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False) -
         data.append(data_row)
 
     # --- show results -----------------------------------------
+
+    # --- prepare table ---
     data = extend_table_with_aggregate_row(data, agg="geomean")
     if markdown:
+        headers = ["`size`", "`power`", "`pwl2`"]
         display_data = format_table_as_markdown(headers, data, highlighters=[FastestBenchmark(), BoldLabels()])
     else:
+        headers = ["size", "power", "pwl2"]
         display_data = format_table_for_console(headers, data)
 
-    print()
-    for line in display_data:
-        print(line)
-    print()
+    # --- output ---
+    with stdout_to_file(file, "benchmark_modify_p_selectivity.md"):
+        if markdown:
+            print("## modify_p_selectivity Performance")
+            print()
+        else:
+            print("modify_p_selectivity Performance:")
+            print()
+
+        print("Tested methods:")
+        print()
+        print(" - `power`: `modify_p_selectivity_power`")
+        print(" - `pwl2`: `modify_p_selectivity_pwl2`")
+
+        print()
+        for line in display_data:
+            print(line)
+        print()

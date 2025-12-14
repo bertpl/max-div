@@ -1,5 +1,17 @@
 # Change Log
 
+
+<!------------------------------------------------------------------------------------------------->
+> ## v0.3.5
+> *(under development)*
+<!------------------------------------------------------------------------------------------------->
+
+- **improved**:
+    - `benchmark internal` CLI command
+        - Redirect output to file using `--file` flag 
+        - add `all` benchmark that runs all in one
+        - add `make` command to automatically regenerate benchmark results in docs
+
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.4
 > *(2025-12-13)*
@@ -14,7 +26,7 @@
         - Add constraint score reporting 
         - Add uncertainty ranges to reported metrics
         - Add `--turbo` flag and `--speed` parameter
-        - Allow output to file using `--file` flag
+        - Redirect output to file using `--file` flag
         - Allow benchmarking `all` test problems with single command
         - Improve test coverage
 

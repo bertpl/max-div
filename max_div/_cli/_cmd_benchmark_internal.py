@@ -14,6 +14,12 @@ from .bm_internal import (
 # =================================================================================================
 @benchmark.group(name="internal")
 @click.option(
+    "--file",
+    is_flag=True,
+    default=False,
+    help="Redirect output from console to file.",
+)
+@click.option(
     "--turbo",
     is_flag=True,
     default=False,
@@ -31,7 +37,7 @@ from .bm_internal import (
     help="Output benchmark results in Markdown table format.",
 )
 @click.pass_context
-def internal(ctx, turbo: bool, speed: float, markdown: bool):
+def internal(ctx, file: bool, turbo: bool, speed: float, markdown: bool):
     """Internal benchmarks for max-div implementation details."""
     # Store flags in context so subcommands can access them
     ctx.ensure_object(dict)
@@ -40,39 +46,60 @@ def internal(ctx, turbo: bool, speed: float, markdown: bool):
     else:
         ctx.obj["speed"] = speed
     ctx.obj["markdown"] = markdown
+    ctx.obj["file"] = file
+
+
+# =================================================================================================
+#  benchmark internal <method>
+# =================================================================================================
+@internal.command(name="all")
+@click.pass_context
+def cmd_all(ctx):
+    """Runs all internal benchmarks."""
+    speed = ctx.obj["speed"]
+    markdown = ctx.obj["markdown"]
+    file = ctx.obj["file"]
+    benchmark_randint(speed, markdown, file)
+    benchmark_randint_constrained(speed, markdown, file)
+    benchmark_diversity_metrics(speed, markdown, file)
+    benchmark_modify_p_selectivity(speed, markdown, file)
 
 
 @internal.command(name="randint")
 @click.pass_context
-def randint(ctx):
+def cmd_randint(ctx):
     """Benchmarks the `randint` function from `max_div.sampling.uncon`."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
-    benchmark_randint(speed=speed, markdown=markdown)
+    file = ctx.obj["file"]
+    benchmark_randint(speed, markdown, file)
 
 
 @internal.command(name="randint_constrained")
 @click.pass_context
-def randint_constrained(ctx):
+def cmd_randint_constrained(ctx):
     """Benchmarks the `randint_constrained` function from `max_div.sampling.con`."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
-    benchmark_randint_constrained(speed=speed, markdown=markdown)
+    file = ctx.obj["file"]
+    benchmark_randint_constrained(speed, markdown, file)
 
 
 @internal.command(name="diversity_metrics")
 @click.pass_context
-def diversity_metrics(ctx):
+def cmd_diversity_metrics(ctx):
     """Benchmarks computation of DiversityMetrics."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
-    benchmark_diversity_metrics(speed=speed, markdown=markdown)
+    file = ctx.obj["file"]
+    benchmark_diversity_metrics(speed, markdown, file)
 
 
 @internal.command(name="modify_p_selectivity")
 @click.pass_context
-def modify_p_selectivity(ctx):
+def cmd_modify_p_selectivity(ctx):
     """Benchmark different modify_p_selectivity flavors."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
-    benchmark_modify_p_selectivity(speed=speed, markdown=markdown)
+    file = ctx.obj["file"]
+    benchmark_modify_p_selectivity(speed, markdown, file)

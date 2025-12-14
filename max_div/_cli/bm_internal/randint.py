@@ -10,10 +10,11 @@ from max_div._cli.formatting import (
     format_table_for_console,
 )
 from max_div.internal.benchmarking import benchmark
+from max_div.internal.utils import stdout_to_file
 from max_div.sampling.uncon import randint_numba, randint_numpy
 
 
-def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
+def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
     """
     Benchmarks the `randint` function from `max_div.sampling.uncon`.
 
@@ -31,34 +32,18 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
     """
 
     print("Benchmarking `randint`...")
-    print()
 
-    for replace, use_p, desc in [
-        (True, False, "A. WITH replacement, UNIFORM probabilities"),
-        (False, False, "B. WITHOUT replacement, UNIFORM probabilities"),
-        (True, True, "C. WITH replacement, CUSTOM probabilities"),
-        (False, True, "D. WITHOUT replacement, CUSTOM probabilities"),
+    i_file = 0
+    for replace, use_p, letter, desc in [
+        (True, False, "A", "WITH replacement, UNIFORM probabilities"),
+        (False, False, "B", "WITHOUT replacement, UNIFORM probabilities"),
+        (True, True, "C", "WITH replacement, CUSTOM probabilities"),
+        (False, True, "D", "WITHOUT replacement, CUSTOM probabilities"),
     ]:
-        if markdown:
-            print(f"## {desc}")
-        else:
-            print(f"{desc}:")
-
-        # --- create headers ------------------------------
-        if markdown:
-            headers = [
-                "`k`",
-                "`n`",
-                "`randint_numpy`",
-                "`randint_numba`",
-            ]
-        else:
-            headers = ["k", "n", "randint_numpy", "randint_numba"]
-
         # --- benchmark ------------------------------------
         data: list[list[CellContent]] = []
         n_k_values = [(n, k) for n in [10, 100, 1000, 10000] for k in [1, 10, 100, 1000, 10000] if replace or (k <= n)]
-        for n, k in tqdm(n_k_values, leave=False):
+        for n, k in tqdm(n_k_values, leave=file):
             data_row: list[CellContent] = [str(k), str(n)]
 
             for use_numba in [False, True]:
@@ -91,13 +76,25 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False) -> None:
             data.append(data_row)
 
         # --- show results -----------------------------------------
+
+        # --- prepare table ---
         data = extend_table_with_aggregate_row(data, agg="geomean")
         if markdown:
+            headers = ["`k`", "`n`", "`randint_numpy`", "`randint_numba`"]
             display_data = format_table_as_markdown(headers, data, highlighters=[FastestBenchmark(), BoldLabels()])
         else:
+            headers = ["k", "n", "randint_numpy", "randint_numba"]
             display_data = format_table_for_console(headers, data)
 
-        print()
-        for line in display_data:
-            print(line)
-        print()
+        # --- output ---
+        i_file += 1
+        with stdout_to_file(file, f"benchmark_randint_{i_file}.md"):
+            if markdown:
+                print(f"## {letter}. {desc}")
+            else:
+                print(f"{letter}. {desc}:")
+
+            print()
+            for line in display_data:
+                print(line)
+            print()

@@ -45,6 +45,7 @@ def test_cli_benchmark_solver_run(options: list[str], test_problem: str):
 @pytest.mark.parametrize(
     "sub_command",
     [
+        "all",
         "randint",
         "randint_constrained",
         "diversity_metrics",

@@ -10,10 +10,11 @@ from max_div._cli.formatting import (
     format_table_for_console,
 )
 from max_div.internal.benchmarking import benchmark
+from max_div.internal.utils import stdout_to_file
 from max_div.solver._diversity import DiversityMetric
 
 
-def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False) -> None:
+def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
     """
     Benchmarks the 4 DiversityMetric flavors from `max_div.solver._diversity`.
 
@@ -31,31 +32,6 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False) -> N
     """
 
     print("Benchmarking `DiversityMetric`...")
-    print()
-
-    # --- create headers ------------------------------
-    if markdown:
-        print("## DiversityMetric Performance")
-        print()
-        headers = [
-            "`size`",
-            "`min_separation`",
-            "`mean_separation`",
-            "`geomean_separation`",
-            "`approx_geomean_separation`",
-            "`non_zero_separation_frac`",
-        ]
-    else:
-        print("DiversityMetric Performance:")
-        print()
-        headers = [
-            "size",
-            "min_separation",
-            "mean_separation",
-            "geomean_separation",
-            "approx_geomean_separation",
-            "non_zero_separation_frac",
-        ]
 
     # --- create diversity metrics --------------------
     metrics = [
@@ -96,13 +72,40 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False) -> N
         data.append(data_row)
 
     # --- show results -----------------------------------------
+
+    # --- prepare table ---
     data = extend_table_with_aggregate_row(data, agg="geomean")
     if markdown:
+        headers = [
+            "`size`",
+            "`min_separation`",
+            "`mean_separation`",
+            "`geomean_separation`",
+            "`approx_geomean_separation`",
+            "`non_zero_separation_frac`",
+        ]
         display_data = format_table_as_markdown(headers, data, highlighters=[FastestBenchmark(), BoldLabels()])
     else:
+        headers = [
+            "size",
+            "min_separation",
+            "mean_separation",
+            "geomean_separation",
+            "approx_geomean_separation",
+            "non_zero_separation_frac",
+        ]
         display_data = format_table_for_console(headers, data)
 
-    print()
-    for line in display_data:
-        print(line)
-    print()
+    # --- output ---
+    with stdout_to_file(file, "benchmark_diversity_metrics.md"):
+        if markdown:
+            print("## DiversityMetric Performance")
+            print()
+        else:
+            print("DiversityMetric Performance")
+            print()
+
+        print()
+        for line in display_data:
+            print(line)
+        print()

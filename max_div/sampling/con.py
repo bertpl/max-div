@@ -117,9 +117,9 @@ def randint_constrained(
       compared to the older pure-Python implementation.
 
     * `con_values` & `con_indices` can be obtained by using the `to_numpy`
-       method of the [Constraints][max_div.constraints.constraints.Constraints] class.
+       method of the `Constraints` class.
 
-    *  For benchmark results, see [here](../../../../benchmarks/randint_constrained.md)
+    *  For benchmark results, see [here](../../../../benchmarks/internal/bm_randint_constrained.md)
 
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)

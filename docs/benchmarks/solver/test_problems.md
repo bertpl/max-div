@@ -5,13 +5,13 @@ and optimization strategies & presets under controlled conditions.
 
 ### High-level overview
 
-| Problem Name | $d$ | $n$    | $k$    | $m$  | Description                                                     |
-|--------------|-----|--------|--------|------|-----------------------------------------------------------------|
-| `A1`         | $s$ | $100s$ | $10s$  | $0$  | Unconstrained, uniform vector density                           |
-| `A2`         | $s$ | $100s$ | $10s$  | $0$  | Unconstrained, non-uniform vector density                       |
-| `A3`         | $2$ | $100s$ | $10s$  | $2s$ | semi-uniform vector density, simple non-overlapping constraints |
-| `A4`         | $s$ | $150s$ | $10s$  | $2s$ | non-uniform vector density, overlapping constraints             |
-| `A5`         | $s$ | $150s$ | $10s$  | $3s$ | non-uniform vector density, strongly coupled constraints        |
+| Problem Name | $d$ | $n$    | $k$    | $m$  | Description                                                     | Results                  |
+|--------------|-----|--------|--------|------|-----------------------------------------------------------------|--------------------------|
+| `A1`         | $s$ | $100s$ | $10s$  | $0$  | Unconstrained, uniform vector density                           | [link](bm_problem_a1.md) |
+| `A2`         | $s$ | $100s$ | $10s$  | $0$  | Unconstrained, non-uniform vector density                       | [link](bm_problem_a2.md) |
+| `A3`         | $2$ | $100s$ | $10s$  | $2s$ | semi-uniform vector density, simple non-overlapping constraints | [link](bm_problem_a3.md) |
+| `A4`         | $s$ | $150s$ | $10s$  | $2s$ | non-uniform vector density, overlapping constraints             | [link](bm_problem_a4.md) |
+| `A5`         | $s$ | $150s$ | $10s$  | $3s$ | non-uniform vector density, strongly coupled constraints        | [link](bm_problem_a5.md) |
 
 **Legend:**
 

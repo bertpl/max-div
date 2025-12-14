@@ -171,6 +171,8 @@ def randint_numba(
        Efraimidis-Spirakis sampling method.  Overall this can result in <1% deviation from target probabilities, i.e.
          p[3] = 0.1 --> actual frequency in samples = [0.099 to 0.101].
 
+     - For benchmark results, see [here](../../../../benchmarks/internal/bm_randint.md)
+
     <br>
 
     :param n: defines population to sample from as range [0, n-1].  `n` must be >0.

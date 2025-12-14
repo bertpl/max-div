@@ -5,7 +5,7 @@ of scaling behavior for developers of custom solver strategies, as well as showc
 by means of custom numba implementations.
 
 ### Results
-- [DiversityMetric](diversity_metrics.md)
-- [randint](randint.md)
-- [randint_constrained](randint_constrained.md)
-- [modify_p_selectivity](modify_p_selectivity.md)
+- [DiversityMetric](bm_diversity_metrics.md)
+- [randint](bm_randint.md)
+- [randint_constrained](bm_randint_constrained.md)
+- [modify_p_selectivity](bm_modify_p_selectivity.md)

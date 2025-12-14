@@ -20,7 +20,9 @@ help:
 	@echo '  show-coverage                  Open test coverage report in browser.'
 	@echo '  show-docs                      Open mkdocs site in browser.'
 	@echo ''
+	@echo '  update-internal-benchmarks     Run internal benchmarks and update results in ./docs/benchmarks/internal/results/.'
 	@echo '  update-solver-benchmarks       Run solver benchmarks and update results in ./docs/benchmarks/solver/results/.'
+	@echo '  update-all-benchmarks          Run all benchmarks and update results in ./docs/benchmarks/.'
 	@echo ''
 	@echo 'Options:'
 	@echo ''
@@ -65,8 +67,16 @@ show-docs:
 	# (go through pycharm built-in server, to make this site work correctly)
 	open http://localhost:63342/max-div/reports/docs/index.html
 
+update-internal-benchmarks:
+	uv run max-div benchmark internal --markdown --file all;
+	rm ./docs/benchmarks/internal/results/*.md;
+	mv ./benchmark*.md ./docs/benchmarks/internal/results/;
+	$(MAKE) docs
+
 update-solver-benchmarks:
 	uv run max-div benchmark solver run --markdown --file all;
 	rm ./docs/benchmarks/solver/results/*.md;
 	mv ./benchmark*.md ./docs/benchmarks/solver/results/;
 	$(MAKE) docs
+
+update-all-benchmarks: update-internal-benchmarks update-solver-benchmarks

@@ -97,17 +97,17 @@ nav:
       - Overview: benchmarks/_index.md
       - Solver:
         - Test Problems: benchmarks/solver/test_problems.md
-        - Problem A1: benchmarks/solver/problem_a1.md
-        - Problem A2: benchmarks/solver/problem_a2.md
-        - Problem A3: benchmarks/solver/problem_a3.md
-        - Problem A4: benchmarks/solver/problem_a4.md
-        - Problem A5: benchmarks/solver/problem_a5.md
+        - Problem A1: benchmarks/solver/bm_problem_a1.md
+        - Problem A2: benchmarks/solver/bm_problem_a2.md
+        - Problem A3: benchmarks/solver/bm_problem_a3.md
+        - Problem A4: benchmarks/solver/bm_problem_a4.md
+        - Problem A5: benchmarks/solver/bm_problem_a5.md
       - Internal:
-        - Overview: benchmarks/internal/_index.md
-        - DiversityMetric: benchmarks/internal/diversity_metrics.md
-        - randint: benchmarks/internal/randint.md
-        - randint_constrained: benchmarks/internal/randint_constrained.md
-        - modify_p_selectivity: benchmarks/internal/modify_p_selectivity.md
+        - Overview: benchmarks/internal/overview.md
+        - DiversityMetric: benchmarks/internal/bm_diversity_metrics.md
+        - randint: benchmarks/internal/bm_randint.md
+        - randint_constrained: benchmarks/internal/bm_randint_constrained.md
+        - modify_p_selectivity: benchmarks/internal/bm_modify_p_selectivity.md
   - About:
     - Roadmap: roadmap.md
     - Change Log: changelog.md
