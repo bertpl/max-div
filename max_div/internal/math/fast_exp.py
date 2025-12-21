@@ -54,7 +54,7 @@ def fast_exp2_f32(x: np.float32) -> np.float32:
     """
 
     # --- split in int + fraction -------------------------
-    k = np.floor(x)  # float64
+    k = np.floor(x)  # float32
     f = x - k  # f is in [0, 1)
 
     # --- polynomial approximation ------------------------

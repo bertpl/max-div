@@ -7,4 +7,5 @@ from ._table_highlighters import (
     HighestNumberWithUncertainty,
     HighestPercentage,
     HighLighter,
+    LowestPercentage,
 )

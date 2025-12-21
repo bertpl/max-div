@@ -85,9 +85,14 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
             print(f"{_txt}:")
         print()
 
+    # --- speed-dependent settings --------------------
+    max_count = int(100 * (0.01**speed))  # max_count=100 if speed=0;  max_count=1 at speed=1
+    t_per_run = 0.05 / (1000.0**speed)
+    n_warmup = int(8 - 5 * speed)
+    n_benchmark = int(25 - 22 * speed)
+
     # --- build scenarios ---------------------------------
     scenarios = [ScenarioA(), ScenarioB()]
-    max_count = int(100 * (0.01**speed))  # max_count=100 if speed=0;  max_count=1 at speed=1
 
     # --- benchmark all scenarios -------------------------
     print("Benchmarking `randint_constrained`...")
@@ -191,8 +196,13 @@ def _benchmark(
     n = np.int32(n)
     k = np.int32(k)
 
-    # build a <index_range> number of different constraints, to randomize the problems we benchmark
+    # speed-dependent settings
     index_range = int(100 * (0.02**speed))  # 100 at speed=0, 2 at speed=1
+    t_per_run = 0.05 / (1000.0**speed)
+    n_warmup = int(8 - 5 * speed)
+    n_benchmark = int(25 - 22 * speed)
+
+    # build a <index_range> number of different constraints, to randomize the problems we benchmark
     lst_cons = []
     lst_con_values = []
     lst_con_indices = []
@@ -241,9 +251,9 @@ def _benchmark(
 
     return benchmark(
         f=benchmark_func,
-        t_per_run=0.05 / (1000.0**speed),
-        n_warmup=int(8 - 5 * speed),
-        n_benchmark=int(25 - 22 * speed),
+        t_per_run=t_per_run,
+        n_warmup=n_warmup,
+        n_benchmark=n_benchmark,
         silent=True,
         index_range=index_range,
     )

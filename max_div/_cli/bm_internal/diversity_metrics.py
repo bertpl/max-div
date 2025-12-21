@@ -33,6 +33,12 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
 
     print("Benchmarking `DiversityMetric`...")
 
+    # --- speed-dependent settings --------------------
+    max_size = round(100_000 / (1_000**speed))
+    t_per_run = 0.05 / (1000.0**speed)
+    n_warmup = int(8 - 5 * speed)
+    n_benchmark = int(25 - 22 * speed)
+
     # --- create diversity metrics --------------------
     metrics = [
         DiversityMetric.min_separation(),
@@ -44,9 +50,10 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
 
     # --- benchmark ------------------------------------
     data: list[list[CellContent]] = []
-    sizes = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+    sizes = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
+    sizes = [size for size in sizes if size <= max_size]
 
-    for size in tqdm(sizes, leave=False):
+    for size in tqdm(sizes, leave=file):
         data_row: list[CellContent] = [str(size)]
 
         # Generate random separation vectors for benchmarking
@@ -57,14 +64,14 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
         for metric in metrics:
 
             def func_to_benchmark():
-                return metric.compute(test_separations)
+                metric.compute(test_separations)
 
             data_row.append(
                 benchmark(
                     f=func_to_benchmark,
-                    t_per_run=0.05 / (1000.0**speed),
-                    n_warmup=int(8 - 5 * speed),
-                    n_benchmark=int(25 - 22 * speed),
+                    t_per_run=t_per_run,
+                    n_warmup=n_warmup,
+                    n_benchmark=n_benchmark,
                     silent=True,
                 )
             )

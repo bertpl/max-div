@@ -33,6 +33,12 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
 
     print("Benchmarking `randint`...")
 
+    # --- speed-dependent settings --------------------
+    t_per_run = 0.05 / (1000.0**speed)
+    n_warmup = int(8 - 5 * speed)
+    n_benchmark = int(25 - 22 * speed)
+
+    # --- benchmark scenarios -------------------------
     i_file = 0
     for replace, use_p, letter, desc in [
         (True, False, "A", "WITH replacement, UNIFORM probabilities"),
@@ -66,9 +72,9 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
                 data_row.append(
                     benchmark(
                         f=func_to_benchmark,
-                        t_per_run=0.05 / (1000.0**speed),
-                        n_warmup=int(8 - 5 * speed),
-                        n_benchmark=int(25 - 22 * speed),
+                        t_per_run=t_per_run,
+                        n_warmup=n_warmup,
+                        n_benchmark=n_benchmark,
                         silent=True,
                     )
                 )

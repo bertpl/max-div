@@ -68,6 +68,33 @@ class HighestPercentage(HighLighter):
             return row
 
 
+class LowestPercentage(HighLighter):
+    def __init__(self, bold: bool = True, color: str = "#00aa00"):
+        self.bold = bold
+        self.color = color
+
+    def process_row(self, row: list[CellContent]) -> list[CellContent]:
+        if any(isinstance(value, Percentage) for value in row):
+            # Find the highest Percentage (maximum frac)
+            min_perc = min([value for value in row if isinstance(value, Percentage)], key=lambda x: x.frac)
+
+            # Convert row to strings, highlighting the results with frac == min_frac
+            converted_row: list[CellContent] = []
+            for i, value in enumerate(row):
+                if isinstance(value, Percentage):
+                    text = str(value)
+                    if text == str(min_perc):  # make green if its str-representation is equal
+                        if self.bold:
+                            text = md_bold(text)
+                        text = md_colored(text, self.color)
+                    converted_row.append(text)
+                else:
+                    converted_row.append(value)
+            return converted_row
+        else:
+            return row
+
+
 class HighestNumberWithUncertainty(HighLighter):
     def __init__(self, bold: bool = True, color: str = "#00aa00"):
         self.bold = bold

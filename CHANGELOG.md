@@ -6,6 +6,13 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+    - refactor `modify_p_selectivity` methods 
+      - unify various implementations under single API
+      - allow in-place modification, for optimal speed
+      - add fast-power based implementation (method=20)
+      - add accuracy estimation to `modify_p_selectivity` benchmark
+
 - **improved**:
     - `benchmark internal` CLI command
         - Redirect output to file using `--file` flag 
