@@ -6,7 +6,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div.internal.math.fast_log import fast_log2_f32
+from max_div.internal.math.fast_log_exp import fast_log2_f32
 from max_div.internal.math.random import (
     rand_float32,
     rand_int32,

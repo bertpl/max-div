@@ -1,4 +1,4 @@
-## modify_p_selectivity Performance
+## modify_p_selectivity Performance                                                                                                                                                                                                                                                                                                                 
 
 Tested methods:
 
@@ -10,17 +10,16 @@ Tested methods:
 
 | size          | method=0                                     | method=10         | method=20         | method=100                                               |
 | ------------- | -------------------------------------------- | ----------------- | ----------------- | -------------------------------------------------------- |
-| 10            | 284.0 nsec ± 0.6%                            | 235.4 nsec ± 0.3% | 235.3 nsec ± 0.7% | <span style="color:#00aa00">**215.4 nsec ± 1.6%**</span> |
-| 20            | 352.5 nsec ± 0.3%                            | 262.4 nsec ± 3.4% | 262.7 nsec ± 0.2% | <span style="color:#00aa00">**222.0 nsec ± 0.4%**</span> |
-| 50            | 551.2 nsec ± 0.3%                            | 354.6 nsec ± 0.4% | 356.4 nsec ± 0.5% | <span style="color:#00aa00">**251.8 nsec ± 0.4%**</span> |
-| 100           | 895.8 nsec ± 0.2%                            | 490.4 nsec ± 1.2% | 516.6 nsec ± 0.5% | <span style="color:#00aa00">**301.9 nsec ± 1.5%**</span> |
-| 200           | 1.621 μsec ± 0.9%                            | 775.4 nsec ± 0.4% | 763.9 nsec ± 0.4% | <span style="color:#00aa00">**395.1 nsec ± 0.5%**</span> |
-| 500           | 3.677 μsec ± 0.1%                            | 1.592 μsec ± 0.1% | 1.568 μsec ± 0.3% | <span style="color:#00aa00">**690.2 nsec ± 0.2%**</span> |
-| 1000          | 7.126 μsec ± 0.1%                            | 2.934 μsec ± 0.2% | 2.938 μsec ± 0.2% | <span style="color:#00aa00">**1.184 μsec ± 0.3%**</span> |
-| 2000          | 13.94 μsec ± 0.3%                            | 5.720 μsec ± 0.3% | 5.656 μsec ± 0.3% | <span style="color:#00aa00">**2.167 μsec ± 0.3%**</span> |
-| 5000          | 34.76 μsec ± 0.4%                            | 13.89 μsec ± 0.2% | 13.84 μsec ± 0.3% | <span style="color:#00aa00">**5.062 μsec ± 0.5%**</span> |
-| 10000         | 69.83 μsec ± 2.1%                            | 27.59 μsec ± 0.5% | 27.44 μsec ± 0.3% | <span style="color:#00aa00">**9.986 μsec ± 0.6%**</span> |
-| 20000         | 142.7 μsec ± 1.5%                            | 55.23 μsec ± 0.2% | 54.89 μsec ± 0.2% | <span style="color:#00aa00">**20.05 μsec ± 0.3%**</span> |
-| **Geomean:**  | 4.334 μsec ± 0.6%                            | 2.157 μsec ± 0.7% | 2.158 μsec ± 0.4% | <span style="color:#00aa00">**1.090 μsec ± 0.6%**</span> |
-| **e_approx:** | <span style="color:#00aa00">**0.00%**</span> | 0.89%             | 0.48%             | 16.33%                                                   |
-
+| 10            | 283.6 nsec ± 0.7%                            | 235.1 nsec ± 0.8% | 232.6 nsec ± 0.5% | <span style="color:#00aa00">**213.4 nsec ± 0.6%**</span> |
+| 20            | 351.1 nsec ± 0.2%                            | 262.4 nsec ± 0.7% | 263.9 nsec ± 0.3% | <span style="color:#00aa00">**220.9 nsec ± 0.2%**</span> |
+| 50            | 550.7 nsec ± 0.3%                            | 355.8 nsec ± 0.2% | 345.4 nsec ± 0.5% | <span style="color:#00aa00">**251.0 nsec ± 0.5%**</span> |
+| 100           | 895.3 nsec ± 0.3%                            | 490.3 nsec ± 0.2% | 478.1 nsec ± 0.2% | <span style="color:#00aa00">**297.1 nsec ± 0.4%**</span> |
+| 200           | 1.588 μsec ± 0.3%                            | 771.1 nsec ± 0.4% | 746.5 nsec ± 0.2% | <span style="color:#00aa00">**392.8 nsec ± 0.3%**</span> |
+| 500           | 3.677 μsec ± 0.2%                            | 1.593 μsec ± 0.1% | 1.566 μsec ± 0.0% | <span style="color:#00aa00">**686.5 nsec ± 0.8%**</span> |
+| 1000          | 7.108 μsec ± 0.5%                            | 2.926 μsec ± 0.3% | 2.913 μsec ± 0.1% | <span style="color:#00aa00">**1.155 μsec ± 0.8%**</span> |
+| 2000          | 13.95 μsec ± 0.3%                            | 5.671 μsec ± 0.5% | 5.616 μsec ± 0.4% | <span style="color:#00aa00">**2.046 μsec ± 0.4%**</span> |
+| 5000          | 34.53 μsec ± 0.3%                            | 13.80 μsec ± 0.3% | 13.73 μsec ± 0.3% | <span style="color:#00aa00">**4.816 μsec ± 0.5%**</span> |
+| 10000         | 69.14 μsec ± 0.2%                            | 27.52 μsec ± 0.2% | 27.31 μsec ± 0.4% | <span style="color:#00aa00">**9.564 μsec ± 0.2%**</span> |
+| 20000         | 140.6 μsec ± 0.3%                            | 55.08 μsec ± 0.3% | 54.86 μsec ± 0.4% | <span style="color:#00aa00">**19.30 μsec ± 0.5%**</span> |
+| **Geomean:**  | 4.310 μsec ± 0.3%                            | 2.152 μsec ± 0.4% | 2.125 μsec ± 0.3% | <span style="color:#00aa00">**1.065 μsec ± 0.5%**</span> |
+| **e_approx:** | <span style="color:#00aa00">**0.00%**</span> | 0.89%             | 0.41%             | 16.33%                                                   |

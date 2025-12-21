@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pytest
 
-from max_div.internal.math.fast_exp import fast_exp2_f32, fast_exp2_f64, fast_exp_f32, fast_exp_f64
+from max_div.internal.math.fast_log_exp import fast_exp2_f32, fast_exp2_f64, fast_exp_f32, fast_exp_f64
 
 
 # =================================================================================================

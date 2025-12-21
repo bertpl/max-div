@@ -1,9 +1,5 @@
-from functools import lru_cache
-from itertools import product
-
 import numba
 import numpy as np
-from numpy.typing import NDArray
 
 # -------------------------------------------------------------------------
 #  Constants
@@ -14,24 +10,23 @@ from numpy.typing import NDArray
 # --- log2(x) ---
 # Obtained via minimax polynomial fitting over [0.5, 1.0] with additional
 # constraint of having an exact fit at 0.5 and 1.0
-# See: ./notebooks/poly_approx_pow.ipynb
-_D_L0 = -2.6080969294048635
-_D_L1 = 3.8242907882145905
-_D_L2 = -1.216193858809727
+# See: --> ./notebooks/calibrate_fast_pow.ipynb
+#      --> max_div/internal/math/fast_pow/_calibration.py
+_D_L0 = -2.63265442228959800630
+_D_L1 = 3.89271942562166550772
+_D_L2 = -1.26181295041444374583
 
 
 # --- exp2(x) ---
 # Obtained via minimax polynomial fitting over [0.0, 1.0] with additional
 # constraint of having an exact fit at 0.0 and 1.0
-# See: ./notebooks/poly_approx_pow.ipynb
-_D_E0 = 1.0
-_D_E1 = 0.6700844332949878
-_D_E2 = 0.32991556670501215
+# See: --> ./notebooks/calibrate_fast_pow.ipynb
+#      --> max_div/internal/math/fast_pow/_calibration.py
 
+_D_E0 = 0.99917715862992750875
+_D_E1 = 0.67296905274855078893
+_D_E2 = 0.32620810588137671981
 
-# NOTE:
-#  given the above boundary contraints of having an exact fit for log2(1) and exp2(0),
-#  it is guaranteed that exp2_approx(t * log2_approx(1.0)) == 1.0 for any t
 
 # --- float32 ---------------------------------------------
 
@@ -95,36 +90,3 @@ def fast_pow_f32(x: np.float32, t: np.float32) -> np.float32:
 
     # --- combine parts -----------------------------------
     return np.float32(np.ldexp(exp2_f, np.int32(k)))
-
-
-# -------------------------------------------------------------------------
-#  Calibration data
-# -------------------------------------------------------------------------
-@lru_cache(maxsize=4)
-def construct_calibration_data(n: int) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
-    """
-    Construct calibration data for fast_pow_f32 testing & calibration of coefficients in the form of a
-    (x, t, x**t)-tuple of float64 arrays (can be downcast to float32 as needed).
-
-    These data points are intended to be used to ensure / check similarity between x**t and fast_pow_f32(x, t)
-
-    t will be chosen as (1+s)/(1-s) with s chosen uniformly in [-0.9, 0.9]  (hence t in [1/19, 19])
-    x will be chosen such that x**t is equally spaced in [0.001, 0.999]
-
-    :param n: (int) size parameter, with resulting arrays of size n^2   (!!!)
-    """
-
-    # --- init ----------------------------------
-    x_values = np.empty(n * n, dtype=np.float64)
-    t_values = np.empty(n * n, dtype=np.float64)
-    xt_values = np.empty(n * n, dtype=np.float64)
-
-    # --- construct data ------------------------
-    for i, (s, xt) in enumerate(product(np.linspace(-0.9, 0.9, n), np.linspace(0.001, 0.999, n))):
-        t = (1.0 + s) / (1.0 - s)
-        xt_values[i] = np.float64(xt)
-        t_values[i] = np.float64(t)
-        x_values[i] = np.float64(xt ** (1.0 / t))
-
-    # --- return --------------------------------
-    return x_values, t_values, xt_values

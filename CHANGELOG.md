@@ -18,6 +18,7 @@
         - Redirect output to file using `--file` flag 
         - add `all` benchmark that runs all in one
         - add `make` command to automatically regenerate benchmark results in docs
+    - improve accuracy of `modify_p_selectivity` method 20  (recalibrated coefficients)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.4

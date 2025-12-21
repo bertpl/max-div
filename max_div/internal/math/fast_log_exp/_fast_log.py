@@ -10,10 +10,11 @@ _D_LOG_2 = 0.6931471805599453  # np.log(2)
 
 # Obtained via minimax polynomial fitting over [0.5, 1.0) with additional
 # continuity & smoothness constraints imposed on boundary points.
-# See: ./notebooks/poly_approx_log2_exp2.ipynb
-_D20 = -2.664483083612307
-_D21 = 4.0
-_D22 = -1.3333333333333333
+# See: --> ./notebooks/calibrate_fast_log2_exp2.ipynb
+#      --> max_div/internal/math/fast_log_exp/_calibration.py
+_D20 = -2.66448308361168395564
+_D21 = 4.00000000000000000000
+_D22 = -1.33333333333333325932
 
 # --- float32 ---------------------------------------------
 _S_LOG_2 = np.float32(_D_LOG_2)

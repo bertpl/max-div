@@ -11,8 +11,7 @@ import numpy as np
 from numba import njit
 from numpy.typing import NDArray
 
-from max_div.internal.math.fast_exp import fast_exp2_f32
-from max_div.internal.math.fast_log import fast_log2_f32
+from max_div.internal.math.fast_log_exp import fast_exp2_f32, fast_log2_f32
 from max_div.internal.math.fast_pow import fast_pow_f32
 
 

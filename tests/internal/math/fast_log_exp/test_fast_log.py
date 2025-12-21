@@ -1,9 +1,7 @@
-import math
-
 import numpy as np
 import pytest
 
-from max_div.internal.math.fast_log import fast_log2_f32, fast_log2_f64, fast_log_f32, fast_log_f64
+from max_div.internal.math.fast_log_exp import fast_log2_f32, fast_log2_f64, fast_log_f32, fast_log_f64
 
 
 # =================================================================================================
