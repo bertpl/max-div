@@ -1,3 +1,5 @@
+import os
+
 import numba
 import numpy as np
 
@@ -30,4 +32,6 @@ def test_fast_pow_f32_llvm_output():
     fast_pow_f32(np.float32(0.5), np.float32(1.2))  # trigger compilation
 
     # --- act ---------------------------------------------
-    print(fast_pow_f32.inspect_llvm((numba.float32, numba.float32)))  # dump LLVM IR
+    jit_disabled = os.environ.get("NUMBA_DISABLE_JIT", "0")
+    if jit_disabled not in {"1", "true", "True"}:
+        print(fast_pow_f32.inspect_llvm((numba.float32, numba.float32)))  # dump LLVM IR
