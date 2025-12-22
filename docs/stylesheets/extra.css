@@ -40,3 +40,9 @@
 .md-typeset table:not([class]) td {
     padding: 0.4em 0.8em;  /* Default is 0.9375em 1.25em */
 }
+
+/* Prevent wrapping in table cells */
+table td,
+table th {
+  white-space: nowrap;
+}

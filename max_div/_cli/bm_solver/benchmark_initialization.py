@@ -12,13 +12,20 @@ from max_div._cli.formatting import (
     format_table_for_console,
 )
 from max_div.internal.benchmarking import BenchmarkResult
-from max_div.internal.formatting import ljust_str_list
 from max_div.internal.utils import stdout_to_file
 from max_div.solver import DiversityMetric, MaxDivSolverBuilder
 
-from ._helpers import construct_problem_instance, get_initialization_strategies, problem_has_constraints
+from ._helpers import (
+    InitStrategyInfo,
+    construct_problem_instance,
+    get_initialization_strategies,
+    problem_has_constraints,
+)
 
 
+# =================================================================================================
+#  Benchmark file
+# =================================================================================================
 def benchmark_initialization_strategies(problem_name: str, markdown: bool, file: bool = False, speed: float = 0.0):
     """
     Benchmark initialization strategies on a given benchmark problem across different sizes.
@@ -35,7 +42,7 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
     size_range = list(range(1, 1 + int(20 - 19 * speed)))  # [1,20] for speed=0.0 to [1,1] for speed=1.0
     n_seeds = int(32 - speed * 31)  # from 1 (speed=1.0) to 32 (speed=0.0)
     has_constraints = problem_has_constraints(problem_name, [min(size_range), max(size_range)])
-    init_strategies = get_initialization_strategies(has_constraints)
+    init_strategies: list[InitStrategyInfo] = get_initialization_strategies(has_constraints)
 
     # --- benchmark across sizes --------------------------
     # Initialize data structures for benchmark results
@@ -48,7 +55,7 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
         problem = construct_problem_instance(problem_name, size, diversity_metric)
 
         # go over all initialization strategies
-        for strat_name, _, strategy_factory_method in init_strategies:
+        for strat_info in init_strategies:
             # initialize lists for this (size, strategy)
             times_lst = []
             diversity_scores_lst = []
@@ -59,7 +66,7 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
                 # Create solver with explicit initialization strategy
                 solver = (
                     MaxDivSolverBuilder(problem)
-                    .set_initialization_strategy(strategy_factory_method())
+                    .set_initialization_strategy(strat_info.factory())
                     .with_seed(seed)
                     .build()
                 )
@@ -75,22 +82,17 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
                 constraint_scores_lst.append(solution.score.constraints)
 
             # Register results for this (size, strategy)
-            times[size][strat_name] = BenchmarkResult.from_list(times_lst)
-            diversity_scores[size][strat_name] = NumberWithUncertainty.from_list(diversity_scores_lst)
-            constraint_scores[size][strat_name] = NumberWithUncertainty.from_list(constraint_scores_lst)
+            times[size][strat_info.name] = BenchmarkResult.from_list(times_lst)
+            diversity_scores[size][strat_info.name] = NumberWithUncertainty.from_list(diversity_scores_lst)
+            constraint_scores[size][strat_info.name] = NumberWithUncertainty.from_list(constraint_scores_lst)
 
     # --- show results ------------------------------------
     with stdout_to_file(enabled=file, filename=f"benchmark_initialization_{problem_name}.md"):
         # show tested initialization strategies
-        strat_names_ljust = ljust_str_list([f"`{strat_name}`" for strat_name, _, _ in init_strategies])
-        print("Tested Initialization strategies:")
-        print()
-        for strat_name_ljust, (_, desc, _) in zip(strat_names_ljust, init_strategies):
-            print(f" - {strat_name_ljust}: {desc}")
-        print()
+        show_strategies_table(markdown, init_strategies, has_constraints)
 
         # prepare scope of what we need to show
-        strategy_names = [strat_name for strat_name, _, _ in init_strategies]
+        strategy_names = [strat_info.name for strat_info in init_strategies]
         scope = [
             (times, "Time Duration", "geomean"),
             (diversity_scores, "Diversity Score", "geomean"),
@@ -146,3 +148,43 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
             for line in display_data:
                 print(line)
             print()
+
+
+# =================================================================================================
+#  Helpers
+# =================================================================================================
+def show_strategies_table(
+    markdown: bool, init_strategies: list[InitStrategyInfo], problem_has_constraints: bool
+) -> None:
+    # --- prepare table data ------------------------------
+    if markdown:
+        headers = ["`name`", "`class`", "`params`"]
+    else:
+        headers = ["name", "class", "params"]
+
+    if problem_has_constraints:
+        headers.append("Constraint-aware")
+
+    table_data = []
+    for strat_info in init_strategies:
+        table_data.append(
+            [
+                f"`{strat_info.name}`" if markdown else strat_info.name,
+                strat_info.class_name,
+                strat_info.class_kwargs,
+            ]
+        )
+        if problem_has_constraints:
+            table_data[-1].append(strat_info.uses_constraints)
+
+    # --- show table ---
+    if markdown:
+        display_data = format_table_as_markdown(headers, table_data)
+    else:
+        display_data = format_table_for_console(headers, table_data)
+
+    print("Tested Initialization strategies:")
+    print()
+    for line in display_data:
+        print(line)
+    print()

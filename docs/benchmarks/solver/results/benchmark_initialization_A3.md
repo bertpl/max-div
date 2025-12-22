@@ -1,15 +1,17 @@
-Tested Initialization strategies:
+Tested Initialization strategies:                                                                                                                                                                                
 
- - `ROS(u)`     : InitRandomOneShot(uniform=True, constrained=False)
- - `ROS(nu)`    : InitRandomOneShot(uniform=False, constrained=False)
- - `ROS(u,con)` : InitRandomOneShot(uniform=True, constrained=True)
- - `ROS(nu,con)`: InitRandomOneShot(uniform=False, constrained=True)
- - `RB(2)`      : InitRandomBatched(b=2, constrained=False)
- - `RB(10)`     : InitRandomBatched(b=10, constrained=False)
- - `RB(2,con)`  : InitRandomBatched(b=2, constrained=True)
- - `RB(10,con)` : InitRandomBatched(b=10, constrained=True)
- - `E(2)`       : InitEager(nc=2)
- - `E(10)`      : InitEager(nc=10)
+| `name`        | `class`           | `params`                         | Constraint-aware |
+| ------------- | ----------------- | -------------------------------- | ---------------- |
+| `ROS(u)`      | InitRandomOneShot | uniform=True, constrained=False  | False            |
+| `ROS(nu)`     | InitRandomOneShot | uniform=False, constrained=False | False            |
+| `ROS(u,con)`  | InitRandomOneShot | uniform=True, constrained=True   | True             |
+| `ROS(nu,con)` | InitRandomOneShot | uniform=False, constrained=True  | True             |
+| `RB(2)`       | InitRandomBatched | b=2, constrained=False           | False            |
+| `RB(10)`      | InitRandomBatched | b=10, constrained=False          | False            |
+| `RB(2,con)`   | InitRandomBatched | b=2, constrained=True            | True             |
+| `RB(10,con)`  | InitRandomBatched | b=10, constrained=True           | True             |
+| `E(2)`        | InitEager         | nc=2                             | True             |
+| `E(10)`       | InitEager         | nc=10                            | True             |
 
 ### Time Duration
 

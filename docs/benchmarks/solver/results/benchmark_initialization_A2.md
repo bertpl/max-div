@@ -1,11 +1,13 @@
-Tested Initialization strategies:
+Tested Initialization strategies:                                                                                                                                                                                
 
- - `ROS(u)` : InitRandomOneShot(uniform=True, constrained=False)
- - `ROS(nu)`: InitRandomOneShot(uniform=False, constrained=False)
- - `RB(2)`  : InitRandomBatched(b=2, constrained=False)
- - `RB(10)` : InitRandomBatched(b=10, constrained=False)
- - `E(2)`   : InitEager(nc=2)
- - `E(10)`  : InitEager(nc=10)
+| `name`        | `class`           | `params`                         |
+| ------------- | ----------------- | -------------------------------- |
+| `ROS(u)`      | InitRandomOneShot | uniform=True, constrained=False  |
+| `ROS(nu)`     | InitRandomOneShot | uniform=False, constrained=False |
+| `RB(2)`       | InitRandomBatched | b=2, constrained=False           |
+| `RB(10)`      | InitRandomBatched | b=10, constrained=False          |
+| `E(2)`        | InitEager         | nc=2                             |
+| `E(10)`       | InitEager         | nc=10                            |
 
 ### Time Duration
 
