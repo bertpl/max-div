@@ -93,6 +93,7 @@ def randint_constrained(
     seed: np.int64 = np.int64(0),
     eager: bool = False,
     k_context: np.int32 = np.int32(-1),
+    i_forbidden: NDArray[np.int32] = np.empty(0, dtype=np.int32),
 ) -> NDArray[np.int32]:
     """
     Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
@@ -112,6 +113,13 @@ def randint_constrained(
 
     *  For benchmark results, see [here](../../../../benchmarks/internal/bm_randint_constrained.md)
 
+    PRIORITIES:
+
+    1) Provide exactly 'k' unique samples (no replacement)
+    2) if provided, don't generate samples from i_forbidden   (can be used to indicate already sampled values)
+    3) satisfy constraints
+    4) if p is provided, don't sample from integers with p=0
+
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)
     :param con_values: 2D array (m, 2) with min_count and max_count for each constraint
@@ -130,8 +138,22 @@ def randint_constrained(
                         a) not provided or <=k:  the algorithm assumes k_context = k
                         b) provided and >k:      the algorithm knows that more samples will be drawn later.
 
+    :param i_forbidden: (optional) 1D array of integers in `[0, n)` that must not be sampled
+
     :return: array of samples
     """
+
+    # --- parameter validation ----------------------------
+    n_forbidden = i_forbidden.shape[0]
+    if k > (n - n_forbidden):
+        if n_forbidden:
+            raise ValueError(
+                f"Cannot sample {k} unique integers from [0, {n}) when {n_forbidden} integers are forbidden."
+                f"  ({k} > {n}-{n_forbidden})"
+            )
+        else:
+            raise ValueError(f"Cannot sample {k} unique integers from [0, {n}). ({k} > {n})")
+
     # --- initialize --------------------------------------
     if k_context < k:
         k_context = k
@@ -172,7 +194,11 @@ def randint_constrained(
         # --- score & thresholds ----------------
 
         # Get already sampled integers
-        already_sampled = samples[:sample_idx]
+        # (we include i_forbidden, since they're excluded from sampling, with equal priority as already sampled values)
+        if n_forbidden:
+            already_sampled = np.concatenate((samples[:sample_idx], i_forbidden))
+        else:
+            already_sampled = samples[:sample_idx]
 
         # determine how much each integer would help us satisfy min_count constraints
         score = _compute_score(n, con_values_working, con_indices, already_sampled, True)

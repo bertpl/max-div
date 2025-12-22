@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 import pytest
 
@@ -190,3 +192,88 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
     else:
         # we can sample from either constraint 1 or 2; p will motivate algorithm to choose from (3,4,5)
         assert samples[0] in {3, 4, 5}
+
+
+@pytest.mark.parametrize(
+    "k, n, n_forbidden, expected_ok",
+    [
+        (9, 10, 0, True),
+        (10, 10, 0, True),
+        (8, 10, 1, True),
+        (8, 10, 2, True),
+        (2, 10, 8, True),
+        (10, 9, 0, False),
+        (8, 10, 3, False),
+    ],
+)
+def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_ok: bool):
+    """Check for ValueError in case k, n, len(i_forbidden) are conflicting."""
+
+    # --- arrange -----------------------------------------
+    cons = [Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)]
+
+    # convert to numba format
+    con_values, con_indices = _build_array_repr(cons)
+
+    p = np.random.rand(n).astype(np.float32)
+    seed = 42
+    i_forbidden = np.array(list(range(n_forbidden)), dtype=np.int32)
+
+    function_call = partial(
+        randint_constrained,
+        n=np.int32(n),
+        k=np.int32(k),
+        con_values=con_values,
+        con_indices=con_indices,
+        p=p,
+        seed=np.int64(seed),
+        eager=False,
+        i_forbidden=i_forbidden,
+    )
+
+    # --- act & assert ------------------------------------
+    if expected_ok:
+        _ = function_call()  # should work
+    else:
+        with pytest.raises(ValueError):
+            _ = function_call()  # should raise ValueError
+
+
+@pytest.mark.parametrize("min_count", [0, 1, 2, 3, 4, 5, 6, 7, 8])
+@pytest.mark.parametrize("eager", [False, True])
+def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool):
+    """Test if i_forbidden is prioritized over constraints and p=0."""
+
+    # --- arrange -----------------------------------------
+    seed = 42
+    n = 10
+    k = 5
+    i_forbidden = np.array([3, 4], dtype=np.int32)
+
+    # set up constraints & p such that sampling is tempted sample forbidden indices 3 or 4
+    cons = [Constraint(int_set={0, 1, 2, 3, 4}, min_count=min_count, max_count=10)]
+    con_values, con_indices = _build_array_repr(cons)
+
+    p = np.array([0, 0.1, 0.1, 1, 1, 0.1, 0.1, 0.0, 0.0, 0.0], dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    samples = randint_constrained(
+        n=np.int32(n),
+        k=np.int32(k),
+        con_values=con_values,
+        con_indices=con_indices,
+        p=p,
+        seed=np.int64(seed),
+        eager=eager,
+        i_forbidden=i_forbidden,
+    )
+
+    # --- assert ------------------------------------------
+
+    # never sample forbidden indices
+    assert not any(s == 3 for s in samples)
+    assert not any(s == 4 for s in samples)
+
+    # if k==2, there's only 1 possible solution that also avoids sampling from p=0
+    if k == 2:
+        assert set(samples) == {1, 2}

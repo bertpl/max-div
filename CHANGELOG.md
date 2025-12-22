@@ -7,7 +7,9 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-    - add `k_context` parameter to `randint_constrained` to enable sampling in batches
+    - extended functionality for `randint_constrained`
+      - add `k_context` parameter to enable sampling in batches
+      - add `i_forbidden` parameter to have more flexibility on how to sample from non-selected subsets of ranges
     - refactor `modify_p_selectivity` methods 
       - unify various implementations under single API
       - allow in-place modification, for optimal speed
