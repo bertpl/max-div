@@ -11,9 +11,10 @@ def test_calibrate_fast_log_exp():
     # --- arrange -----------------------------------------
     n = 100
     acc = 1e-2
+    n_evals = 1000
 
     # --- act ---------------------------------------------
-    (c0, c1, c2), (d0, d1, d2) = calibrate_fast_log_exp(n, acc)
+    (c0, c1, c2), (d0, d1, d2) = calibrate_fast_log_exp(n, acc, n_evals)
 
     # --- assert ------------------------------------------
 

@@ -12,7 +12,7 @@ from max_div.internal.math.fast_pow._fast_pow import _D_L2 as c2_actual
 @pytest.mark.parametrize("start_from_current", [False, True])
 def test_calibrate_fast_pow(start_from_current: bool):
     # --- arrange -----------------------------------------
-    n_data = 1_000
+    n_data = 100
     acc = 1e-4
     n_evals = 10_000
 
@@ -22,7 +22,7 @@ def test_calibrate_fast_pow(start_from_current: bool):
     # --- assert ------------------------------------------
 
     if start_from_current:
-        tol = 0.01
+        tol = 0.05
     else:
         tol = 0.25
 

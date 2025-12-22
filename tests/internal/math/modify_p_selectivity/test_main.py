@@ -34,10 +34,10 @@ def test_modify_p_selectivity_accuracy(method, tol):
 
 
 @pytest.mark.parametrize("method, tol", METHODS_AND_TOLERANCES)
-@pytest.mark.parametrize("modifier", np.linspace(-0.9, 0.9, 10))
+@pytest.mark.parametrize("modifier", np.linspace(-0.9, 0.9, 20))
 def test_modify_p_selectivity_preserve_order(method, tol, modifier):
     # --- arrange -----------------------------------------
-    p = np.linspace(0.0, 1.0, num=1000, dtype=np.float32)
+    p = np.linspace(0.0, 1.0, num=10_000, dtype=np.float32)
 
     # --- act ---------------------------------------------
     p_out = np.empty_like(p)

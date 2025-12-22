@@ -119,11 +119,21 @@ def _pwl_2_segment(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.f
 
     # actual transformation
     n = p.size
-    for i in range(n):
-        pi = p[i]
-        if pi <= r:
-            p[i] = c0 * pi  # linear segment 1
-        else:
-            p[i] = 1.0 - c1 * (1.0 - pi)  # linear segment 2
+    if r >= 0.5:
+        # convex situation as depicted above -> take max. of 2 segments
+        for i in range(n):
+            pi = p[i]
+            p[i] = max(
+                c0 * pi,  # linear segment 1
+                1.0 - c1 * (1.0 - pi),  # linear segment 2
+            )
+    else:
+        # concave situation -> take min. of 2 segments
+        for i in range(n):
+            pi = p[i]
+            p[i] = min(
+                c0 * pi,  # linear segment 1
+                1.0 - c1 * (1.0 - pi),  # linear segment 2
+            )
 
     return p

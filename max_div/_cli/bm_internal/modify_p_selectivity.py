@@ -20,6 +20,9 @@ from max_div.internal.utils import stdout_to_file
 METHODS = [np.int32(0), np.int32(10), np.int32(20), np.int32(100)]
 
 
+# =================================================================================================
+#  Main benchmark
+# =================================================================================================
 def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
     """
     Benchmarks the modify_p_selectivity function from `max_div.internal.math.modify_p_selectivity`,
@@ -110,25 +113,46 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
 
     # --- output ---
     with stdout_to_file(file, "benchmark_modify_p_selectivity.md"):
+        show_methods_table(markdown)
+
         if markdown:
-            print("## modify_p_selectivity Performance")
+            print("## Benchmark results")
             print()
         else:
-            print("modify_p_selectivity Performance:")
+            print("Benchmark results")
             print()
-
-        print("Tested methods:")
-        print()
-        print("  - 0    --> p**t")
-        print("  - 10   --> fast_exp2(t * fast_log2(p))   (NOT specifically optimized for this use case)")
-        print("  - 20   --> fast_pow(p, t)                (specifically optimized for this use case)")
-        print("  - 100  --> 2-segment PWL approx. of p**t")
-        print()
 
         print()
         for line in display_data:
             print(line)
         print()
+
+
+# =================================================================================================
+#  Helpers
+# =================================================================================================
+def show_methods_table(markdown: bool) -> None:
+    # --- prepare table data ------------------------------
+    headers = ["`method`", "Description"]
+    data = [
+        [0, "p**t"],
+        [10, "fast_exp2(t * fast_log2(p))   (NOT specifically optimized for this use case)"],
+        [20, "fast_pow(p, t)                (specifically optimized for this use case)"],
+        [100, "2-segment PWL approx. of p**t"],
+    ]
+
+    # --- format appropriately ----------------------------
+    if markdown:
+        display_data = format_table_as_markdown(headers, data)
+    else:
+        display_data = format_table_for_console(headers, data)
+
+    # --- display table -----------------------------------
+    print("Tested methods:")
+    print()
+    for line in display_data:
+        print(line)
+    print()
 
 
 def compute_accuracy(method: int, n: int) -> float:

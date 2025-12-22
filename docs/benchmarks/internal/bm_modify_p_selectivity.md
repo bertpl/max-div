@@ -1,4 +1,4 @@
-# `modify_p_selectivity_*`
+# `modify_p_selectivity`
 
 Command:
 ```bash
