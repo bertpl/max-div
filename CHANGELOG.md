@@ -3,11 +3,13 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.5
-> *(under development)*
+> *(2025-12-22)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
     - implement `InitRandomBatched` initialization strategy
+      - core implementation
+      - extend solver benchmarking implementation & docs with new strategy
     - extended functionality for `randint_constrained`
       - add `k_context` parameter to enable sampling in batches
       - add `i_forbidden` parameter to have more flexibility on how to sample from non-selected subsets of ranges

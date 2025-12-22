@@ -14,7 +14,7 @@ def get_initialization_strategies(constraints: bool) -> list[tuple[str, str, Cal
     Construct a list of initialization strategies based on whether the problem has constraints.
     Result is returns as a list of (name, description, strategy_factory_method) tuples.
     """
-    result = []
+    result = []  # (name, description, strategy_factory_method, needs_constraints)-tuples
 
     # --- InitRandomOneShot -------------------------------
     result.extend(
@@ -23,32 +23,65 @@ def get_initialization_strategies(constraints: bool) -> list[tuple[str, str, Cal
                 "ROS(u)",
                 "InitRandomOneShot(uniform=True, constrained=False)",
                 partial(InitializationStrategy.random_one_shot, uniform=True, constrained=False),
+                False,
             ),
             (
                 "ROS(nu)",
                 "InitRandomOneShot(uniform=False, constrained=False)",
                 partial(InitializationStrategy.random_one_shot, uniform=False, constrained=False),
+                False,
+            ),
+            (
+                "ROS(u,con)",
+                "InitRandomOneShot(uniform=True, constrained=True)",
+                partial(InitializationStrategy.random_one_shot, uniform=True, constrained=True),
+                True,
+            ),
+            (
+                "ROS(nu,con)",
+                "InitRandomOneShot(uniform=False, constrained=True)",
+                partial(InitializationStrategy.random_one_shot, uniform=False, constrained=True),
+                True,
             ),
         ]
     )
-    if constraints:
-        result.extend(
-            [
-                (
-                    "ROS(u,con)",
-                    "InitRandomOneShot(uniform=True, constrained=True)",
-                    partial(InitializationStrategy.random_one_shot, uniform=True, constrained=True),
-                ),
-                (
-                    "ROS(nu,con)",
-                    "InitRandomOneShot(uniform=False, constrained=True)",
-                    partial(InitializationStrategy.random_one_shot, uniform=False, constrained=True),
-                ),
-            ]
-        )
+
+    # --- InitRandomBatched -------------------------------
+    result.extend(
+        [
+            (
+                "RB(2)",
+                "InitRandomBatched(b=2, constrained=False)",
+                partial(InitializationStrategy.random_batched, b=2, constrained=False),
+                False,
+            ),
+            (
+                "RB(10)",
+                "InitRandomBatched(b=10, constrained=False)",
+                partial(InitializationStrategy.random_batched, b=10, constrained=False),
+                False,
+            ),
+            (
+                "RB(2,con)",
+                "InitRandomBatched(b=2, constrained=True)",
+                partial(InitializationStrategy.random_batched, b=2, constrained=True),
+                True,
+            ),
+            (
+                "RB(10,con)",
+                "InitRandomBatched(b=10, constrained=True)",
+                partial(InitializationStrategy.random_batched, b=10, constrained=True),
+                True,
+            ),
+        ]
+    )
 
     # --- return ------------------------------------------
-    return result
+    return [
+        (name, desc, factory_method)
+        for name, desc, factory_method, needs_constraints in result
+        if (not needs_constraints) or constraints
+    ]
 
 
 # =================================================================================================
