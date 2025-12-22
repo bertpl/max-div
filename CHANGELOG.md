@@ -7,6 +7,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
+    - implement `InitRandomBatched` initialization strategy
     - extended functionality for `randint_constrained`
       - add `k_context` parameter to enable sampling in batches
       - add `i_forbidden` parameter to have more flexibility on how to sample from non-selected subsets of ranges

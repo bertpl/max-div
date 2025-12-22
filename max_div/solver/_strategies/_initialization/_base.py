@@ -32,3 +32,13 @@ class InitializationStrategy(StrategyBase, ABC):
             constrained=constrained,
             uniform=uniform,
         )
+
+    @classmethod
+    def random_batched(cls, b: int, constrained: bool = True) -> Self:
+        """Create a InitRandomBatched initialization strategy."""
+        from ._init_random_batched import InitRandomBatched
+
+        return InitRandomBatched(
+            b=b,
+            constrained=constrained,
+        )
