@@ -83,25 +83,16 @@ def _compute_score(
     return scores
 
 
-@numba.njit(
-    types.int32[:](
-        types.int32,
-        types.int32,
-        types.int32[:, :],
-        types.int32[:],
-        types.float32[:],
-        types.int64,
-        types.boolean,
-    )
-)
+@numba.njit(fastmath=True)
 def randint_constrained(
     n: np.int32,
     k: np.int32,
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
     p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),
-    seed: np.int64 = 0,
+    seed: np.int64 = np.int64(0),
     eager: bool = False,
+    k_context: np.int32 = np.int32(-1),
 ) -> NDArray[np.int32]:
     """
     Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
@@ -130,11 +121,22 @@ def randint_constrained(
     :param eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
                   increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
                   and adherence to the provided p-values.
+    :param k_context: (int, default=-1) number of total samples - in the bigger context - we want to sample in order to
+                        satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
+                        constraints, giving it potentially more liberty to pick from a wider range of samples and with
+                        potentially higher p-values.
+
+                      Two cases:
+                        a) not provided or <=k:  the algorithm assumes k_context = k
+                        b) provided and >k:      the algorithm knows that more samples will be drawn later.
+
     :return: array of samples
     """
     # --- initialize --------------------------------------
+    if k_context < k:
+        k_context = k
     samples = np.empty(k, dtype=np.int32)
-    k_remaining = k
+    k_remaining = k_context
     m = con_values.shape[0]
 
     # Make a copy of con_values to track current min/max counts
@@ -166,7 +168,7 @@ def randint_constrained(
                 p_aug[i] += p_delta
 
     # --- sample ------------------------------------------
-    while k_remaining > 0:
+    for _ in range(k):
         # --- score & thresholds ----------------
 
         # Get already sampled integers

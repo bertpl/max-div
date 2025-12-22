@@ -7,6 +7,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
+    - add `k_context` parameter to `randint_constrained` to enable sampling in batches
     - refactor `modify_p_selectivity` methods 
       - unify various implementations under single API
       - allow in-place modification, for optimal speed

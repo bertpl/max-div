@@ -143,3 +143,50 @@ def test_randint_constrained_robust_validation():
             seed=np.int64(seed),
             n_trials=2,  # <3 --> ValueError
         )
+
+
+@pytest.mark.parametrize("k_context", [-1, 0, 1, 2, 3, 5, 10])
+@pytest.mark.parametrize("seed", list(range(42, 50)))
+def test_randint_constrained_k_context(k_context: int, seed: int):
+    """
+    Test if k_context parameter is working as expected.
+
+    Therefore, we set up a constraint that can only be satisfied if k_context>k, but with very small
+     member probabilities.
+
+        --> k_context = k     => sample will generate a member from the constraint, despite low probability
+        --> k_context > k     => sample will avoid the constraint, as it's not urgent + other samples have higher prob.
+
+    """
+
+    # --- arrange -----------------------------------------
+    n = 6
+    k = 1
+    cons = [
+        Constraint(int_set={0, 1, 2}, min_count=1, max_count=3),
+        Constraint(int_set={0, 1, 2, 3, 4, 5}, min_count=1, max_count=3),
+    ]
+    p = np.array([1e-15, 1e-15, 1e-15, 1.0, 1.0, 1.0], dtype=np.float32)
+
+    # convert to numba format
+    con_values, con_indices = _build_array_repr(cons)
+
+    # --- act ---------------------------------------------
+    samples = randint_constrained(
+        n=np.int32(n),
+        k=np.int32(k),
+        con_values=con_values,
+        con_indices=con_indices,
+        p=p,
+        seed=np.int64(seed),
+        eager=False,
+        k_context=np.int32(k_context),
+    )
+
+    # --- assert ------------------------------------------
+    if k_context < 2:
+        # must sample from constraint 1 (0,1,2)
+        assert samples[0] in {0, 1, 2}
+    else:
+        # we can sample from either constraint 1 or 2; p will motivate algorithm to choose from (3,4,5)
+        assert samples[0] in {3, 4, 5}
