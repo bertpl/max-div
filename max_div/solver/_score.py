@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -64,6 +67,22 @@ class Score:
         else:
             soft_constraint = (self.constraints ** (1.0 - soft)) * (self.diversity**soft)
             return self.size, soft_constraint, self.diversity, *self.div_tie_breakers
+
+    # --- math overloads --------------
+    def __lt__(self, other: Any) -> bool:
+        if isinstance(other, Score):
+            return self.as_tuple() < other.as_tuple()
+        return NotImplemented
+
+    def __le__(self, other: Any) -> bool:
+        if isinstance(other, Score):
+            return self.as_tuple() <= other.as_tuple()
+        return NotImplemented
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, Score):
+            return self.as_tuple() == other.as_tuple()
+        return NotImplemented
 
 
 # =================================================================================================

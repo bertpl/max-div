@@ -42,3 +42,10 @@ class InitializationStrategy(StrategyBase, ABC):
             b=b,
             constrained=constrained,
         )
+
+    @classmethod
+    def eager(cls, nc: int) -> Self:
+        """Create a InitEager initialization strategy."""
+        from ._init_eager import InitEager
+
+        return InitEager(nc=nc)

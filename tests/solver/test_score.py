@@ -174,3 +174,48 @@ def test_score_generator_diversity_scores():
     assert len(score.div_tie_breakers) == 2
     assert score.div_tie_breakers[0] == pytest.approx(3.0)
     assert score.div_tie_breakers[1] == pytest.approx(0.8)
+
+
+def test_score_comparison_happy_path():
+    # --- arrange -----------------------------------------
+    score_1a = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
+    score_1b = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
+    score_2 = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.5))
+    score_3 = Score(size=0.8, constraints=0.9, diversity=0.90, div_tie_breakers=(0.9, 0.9))
+    score_4 = Score(size=0.7, constraints=1.0, diversity=1.0, div_tie_breakers=(1.0, 1.0))
+
+    # --- act & assert ------------------------------------
+    assert score_1a == score_1b
+    assert score_1a >= score_1b
+    assert score_1a <= score_1b
+    assert not score_1a < score_1b
+    assert not score_1a > score_1b
+
+    assert score_1a > score_2
+    assert score_2 < score_1a
+
+    assert score_1a > score_3
+    assert score_3 < score_1a
+
+    assert score_1a > score_4
+    assert score_4 < score_1a
+
+
+def test_score_comparison_invalid_types():
+    # --- arrange -----------------------------------------
+    score = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
+
+    # --- act & assert ------------------------------------
+    _ = score == object()  # == is implemented in object()
+
+    with pytest.raises(TypeError):
+        _ = score < 42  # type: ignore
+
+    with pytest.raises(TypeError):
+        _ = score <= 42  # type: ignore
+
+    with pytest.raises(TypeError):
+        _ = score > 42  # type: ignore
+
+    with pytest.raises(TypeError):
+        _ = score >= 42  # type: ignore

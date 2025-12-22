@@ -18,7 +18,7 @@ def test_init_random_batched_parameter_validation():
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
 @pytest.mark.parametrize("arg_constrained", [True, False])
 @pytest.mark.parametrize("arg_b", [2, 10, 100])
-def test_init_random_one_shot(problem_has_constraints: bool, arg_constrained: bool, arg_b: int):
+def test_init_random_batched(problem_has_constraints: bool, arg_constrained: bool, arg_b: int):
     # --- arrange -----------------------------------------
     solver_state = new_solver_state(problem_has_constraints)
     strategy = InitializationStrategy.random_batched(

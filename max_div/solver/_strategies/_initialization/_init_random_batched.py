@@ -25,8 +25,8 @@ class InitRandomBatched(InitializationStrategy):
     As we progress through the batches, selectivity of p[i] is modified with modifier = #sampled / #to_sample.
         (see modify_p_selectivity for details)
 
-    Suggested use: when `InitRandomOneShot` does not provide a sufficiently high-quality initialization, but other
-                   initialization strategies are too slow.
+    Suggested use: when `InitRandomOneShot` does not provide a sufficiently high-quality initialization, but when
+                   e.g. `InitEager` is too slow.
 
     Parameters:
     - constrained (bool): If `True`, respects problem constraints during initialization.
@@ -34,18 +34,6 @@ class InitRandomBatched(InitializationStrategy):
     - b (int): Number of batches to sample (must be > 1).
                      -> If e.g. k=100 and b=5, each batch samples 20 items.
                      -> If k is not an exact multiple of b, the first batches will be slightly larger.
-
-    - uniform (bool): If `True`, samples uniformly at random.
-                      If `False`, uses vector separations as sampling weights, sampling well-separated vectors
-                                         with higher probability (default: `False`)
-
-    Notes:
-        - using separation as sampling weights is a heuristic, not an exactly optimal solution, with known limitations:
-            - in 1D problems this heuristic should be probabilistically optimal, but in higher dimensions (the more
-              likely scenario) it is not.  E.g. in 2D where vectors have half the separation as in other regions, we
-              should sample 4x fewer, not 2x fewer vectors.
-            - when multiple vectors (e.g. 5) are identical and hence have 0 separation, we will not sample any of them
-              (unless k is high enough), while optimal solutions might in fact contain exactly 1 of them.
 
     Time Complexity:
        - without constraints: ~O(bn)
