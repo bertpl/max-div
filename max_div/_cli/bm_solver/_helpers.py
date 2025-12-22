@@ -76,6 +76,24 @@ def get_initialization_strategies(constraints: bool) -> list[tuple[str, str, Cal
         ]
     )
 
+    # --- InitEager ---------------------------------------
+    result.extend(
+        [
+            (
+                "E(2)",
+                "InitEager(nc=2)",
+                partial(InitializationStrategy.eager, nc=2),
+                False,
+            ),
+            (
+                "E(10)",
+                "InitEager(nc=10)",
+                partial(InitializationStrategy.eager, nc=10),
+                False,
+            ),
+        ]
+    )
+
     # --- return ------------------------------------------
     return [
         (name, desc, factory_method)
