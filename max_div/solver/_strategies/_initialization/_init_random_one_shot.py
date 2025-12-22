@@ -5,7 +5,7 @@ from max_div.solver._solver_state import SolverState
 from ._base import InitializationStrategy
 
 
-class InitOneShotRandom(InitializationStrategy):
+class InitRandomOneShot(InitializationStrategy):
     """
     Initialize by taking a single (hence: one-shot) random sample of k items.  This is among the fastest
     initialization strategies, but potentially also with the lowest quality.

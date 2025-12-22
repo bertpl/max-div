@@ -1,37 +1,37 @@
 Tested Initialization strategies:
 
- - `OSR(u)` : InitOneShotRandom(uniform=True, constrained=False)
- - `OSR(nu)`: InitOneShotRandom(uniform=False, constrained=False)
+ - `ROS(u)` : InitRandomOneShot(uniform=True, constrained=False)
+ - `ROS(nu)`: InitRandomOneShot(uniform=False, constrained=False)
 
 ### Time Duration
 
-| `d` | `n`  | `k` | `m`          | `OSR(u)`                                                 | `OSR(nu)`                                                |
+| `d` | `n`  | `k` | `m`          | `ROS(u)`                                                 | `ROS(nu)`                                                |
 | --- | ---- | --- | ------------ | -------------------------------------------------------- | -------------------------------------------------------- |
-| 1   | 100  | 10  | 0            | <span style="color:#00aa00">**43.94 μsec ± 4.9%**</span> | 45.77 μsec ± 1.4%                                        |
-| 2   | 200  | 20  | 0            | <span style="color:#00aa00">**95.35 μsec ± 5.9%**</span> | <span style="color:#00aa00">**91.31 μsec ± 1.2%**</span> |
-| 3   | 300  | 30  | 0            | <span style="color:#00aa00">**143.5 μsec ± 1.8%**</span> | 147.4 μsec ± 1.0%                                        |
-| 4   | 400  | 40  | 0            | <span style="color:#00aa00">**208.3 μsec ± 3.0%**</span> | <span style="color:#00aa00">**211.7 μsec ± 2.9%**</span> |
-| 5   | 500  | 50  | 0            | <span style="color:#00aa00">**273.5 μsec ± 1.5%**</span> | 277.3 μsec ± 4.0%                                        |
-| 6   | 600  | 60  | 0            | <span style="color:#00aa00">**343.4 μsec ± 0.9%**</span> | 352.9 μsec ± 1.5%                                        |
-| 7   | 700  | 70  | 0            | <span style="color:#00aa00">**428.3 μsec ± 1.0%**</span> | 437.3 μsec ± 0.7%                                        |
-| 8   | 800  | 80  | 0            | <span style="color:#00aa00">**514.9 μsec ± 1.0%**</span> | 518.6 μsec ± 1.0%                                        |
-| 9   | 900  | 90  | 0            | <span style="color:#00aa00">**612.6 μsec ± 1.1%**</span> | 631.4 μsec ± 1.6%                                        |
-| 10  | 1000 | 100 | 0            | <span style="color:#00aa00">**717.9 μsec ± 1.8%**</span> | <span style="color:#00aa00">**723.2 μsec ± 1.3%**</span> |
-| 11  | 1100 | 110 | 0            | <span style="color:#00aa00">**830.8 μsec ± 1.2%**</span> | 840.3 μsec ± 1.1%                                        |
-| 12  | 1200 | 120 | 0            | <span style="color:#00aa00">**956.4 μsec ± 1.5%**</span> | <span style="color:#00aa00">**962.6 μsec ± 0.9%**</span> |
-| 13  | 1300 | 130 | 0            | <span style="color:#00aa00">**1.077 msec ± 1.2%**</span> | 1.102 msec ± 1.3%                                        |
-| 14  | 1400 | 140 | 0            | <span style="color:#00aa00">**1.209 msec ± 1.6%**</span> | 1.239 msec ± 1.1%                                        |
-| 15  | 1500 | 150 | 0            | 1.510 msec ± 4.9%                                        | <span style="color:#00aa00">**1.388 msec ± 1.1%**</span> |
-| 16  | 1600 | 160 | 0            | <span style="color:#00aa00">**1.534 msec ± 2.2%**</span> | <span style="color:#00aa00">**1.565 msec ± 2.3%**</span> |
-| 17  | 1700 | 170 | 0            | <span style="color:#00aa00">**1.689 msec ± 1.4%**</span> | <span style="color:#00aa00">**1.691 msec ± 1.6%**</span> |
-| 18  | 1800 | 180 | 0            | <span style="color:#00aa00">**1.841 msec ± 1.7%**</span> | <span style="color:#00aa00">**1.856 msec ± 0.9%**</span> |
-| 19  | 1900 | 190 | 0            | <span style="color:#00aa00">**2.034 msec ± 1.2%**</span> | 2.071 msec ± 1.1%                                        |
-| 20  | 2000 | 200 | 0            | <span style="color:#00aa00">**2.192 msec ± 1.3%**</span> | <span style="color:#00aa00">**2.197 msec ± 0.7%**</span> |
-|     |      |     | **Geomean:** | <span style="color:#00aa00">**601.1 μsec ± 2.1%**</span> | <span style="color:#00aa00">**606.5 μsec ± 1.4%**</span> |
+| 1   | 100  | 10  | 0            | <span style="color:#00aa00">**45.79 μsec ± 4.3%**</span> | <span style="color:#00aa00">**45.71 μsec ± 1.6%**</span> |
+| 2   | 200  | 20  | 0            | <span style="color:#00aa00">**94.90 μsec ± 1.0%**</span> | 96.54 μsec ± 1.2%                                        |
+| 3   | 300  | 30  | 0            | <span style="color:#00aa00">**151.9 μsec ± 3.1%**</span> | 156.6 μsec ± 1.1%                                        |
+| 4   | 400  | 40  | 0            | <span style="color:#00aa00">**214.5 μsec ± 0.8%**</span> | 219.1 μsec ± 1.5%                                        |
+| 5   | 500  | 50  | 0            | <span style="color:#00aa00">**288.5 μsec ± 0.9%**</span> | 293.3 μsec ± 0.6%                                        |
+| 6   | 600  | 60  | 0            | <span style="color:#00aa00">**367.9 μsec ± 1.7%**</span> | <span style="color:#00aa00">**368.1 μsec ± 3.0%**</span> |
+| 7   | 700  | 70  | 0            | <span style="color:#00aa00">**454.2 μsec ± 2.5%**</span> | <span style="color:#00aa00">**464.6 μsec ± 2.0%**</span> |
+| 8   | 800  | 80  | 0            | <span style="color:#00aa00">**530.2 μsec ± 1.9%**</span> | 541.3 μsec ± 2.0%                                        |
+| 9   | 900  | 90  | 0            | <span style="color:#00aa00">**634.6 μsec ± 1.8%**</span> | <span style="color:#00aa00">**628.2 μsec ± 1.7%**</span> |
+| 10  | 1000 | 100 | 0            | <span style="color:#00aa00">**737.2 μsec ± 1.6%**</span> | 764.8 μsec ± 4.6%                                        |
+| 11  | 1100 | 110 | 0            | 933.1 μsec ± 4.6%                                        | <span style="color:#00aa00">**875.6 μsec ± 2.2%**</span> |
+| 12  | 1200 | 120 | 0            | <span style="color:#00aa00">**991.5 μsec ± 1.7%**</span> | <span style="color:#00aa00">**994.0 μsec ± 1.3%**</span> |
+| 13  | 1300 | 130 | 0            | <span style="color:#00aa00">**1.131 msec ± 1.4%**</span> | <span style="color:#00aa00">**1.139 msec ± 2.0%**</span> |
+| 14  | 1400 | 140 | 0            | <span style="color:#00aa00">**1.272 msec ± 1.8%**</span> | <span style="color:#00aa00">**1.268 msec ± 1.1%**</span> |
+| 15  | 1500 | 150 | 0            | <span style="color:#00aa00">**1.387 msec ± 1.8%**</span> | 1.433 msec ± 1.7%                                        |
+| 16  | 1600 | 160 | 0            | <span style="color:#00aa00">**1.559 msec ± 1.3%**</span> | <span style="color:#00aa00">**1.573 msec ± 1.4%**</span> |
+| 17  | 1700 | 170 | 0            | <span style="color:#00aa00">**1.701 msec ± 2.0%**</span> | 1.731 msec ± 1.2%                                        |
+| 18  | 1800 | 180 | 0            | <span style="color:#00aa00">**1.891 msec ± 1.3%**</span> | <span style="color:#00aa00">**1.904 msec ± 1.7%**</span> |
+| 19  | 1900 | 190 | 0            | <span style="color:#00aa00">**2.034 msec ± 1.0%**</span> | 2.064 msec ± 1.6%                                        |
+| 20  | 2000 | 200 | 0            | <span style="color:#00aa00">**2.278 msec ± 1.7%**</span> | <span style="color:#00aa00">**2.278 msec ± 1.2%**</span> |
+|     |      |     | **Geomean:** | <span style="color:#00aa00">**620.9 μsec ± 1.9%**</span> | <span style="color:#00aa00">**626.5 μsec ± 1.7%**</span> |
 
 ### Diversity Score
 
-| `d` | `n`  | `k` | `m`          | `OSR(u)`      | `OSR(nu)`                                            |
+| `d` | `n`  | `k` | `m`          | `ROS(u)`      | `ROS(nu)`                                            |
 | --- | ---- | --- | ------------ | ------------- | ---------------------------------------------------- |
 | 1   | 100  | 10  | 0            | 0.113 ± 37.2% | <span style="color:#00aa00">**0.227 ± 19.3%**</span> |
 | 2   | 200  | 20  | 0            | 0.359 ± 13.6% | <span style="color:#00aa00">**0.502 ± 8.6%**</span>  |

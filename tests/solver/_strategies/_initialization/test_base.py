@@ -3,7 +3,7 @@ from max_div.solver._strategies import InitializationStrategy
 
 
 def test_initialization_strategy_factory():
-    assert isinstance(InitializationStrategy.one_shot_random(), InitializationStrategy)
+    assert isinstance(InitializationStrategy.random_one_shot(), InitializationStrategy)
 
 
 def test_initialization_strategy_properties():

@@ -16,18 +16,18 @@ def get_initialization_strategies(constraints: bool) -> list[tuple[str, str, Cal
     """
     result = []
 
-    # --- OneShotInitRandom -------------------------------
+    # --- InitRandomOneShot -------------------------------
     result.extend(
         [
             (
-                "OSR(u)",
-                "InitOneShotRandom(uniform=True, constrained=False)",
-                partial(InitializationStrategy.one_shot_random, uniform=True, constrained=False),
+                "ROS(u)",
+                "InitRandomOneShot(uniform=True, constrained=False)",
+                partial(InitializationStrategy.random_one_shot, uniform=True, constrained=False),
             ),
             (
-                "OSR(nu)",
-                "InitOneShotRandom(uniform=False, constrained=False)",
-                partial(InitializationStrategy.one_shot_random, uniform=False, constrained=False),
+                "ROS(nu)",
+                "InitRandomOneShot(uniform=False, constrained=False)",
+                partial(InitializationStrategy.random_one_shot, uniform=False, constrained=False),
             ),
         ]
     )
@@ -35,14 +35,14 @@ def get_initialization_strategies(constraints: bool) -> list[tuple[str, str, Cal
         result.extend(
             [
                 (
-                    "OSR(u,con)",
-                    "InitOneShotRandom(uniform=True, constrained=True)",
-                    partial(InitializationStrategy.one_shot_random, uniform=True, constrained=True),
+                    "ROS(u,con)",
+                    "InitRandomOneShot(uniform=True, constrained=True)",
+                    partial(InitializationStrategy.random_one_shot, uniform=True, constrained=True),
                 ),
                 (
-                    "OSR(nu,con)",
-                    "InitOneShotRandom(uniform=False, constrained=True)",
-                    partial(InitializationStrategy.one_shot_random, uniform=False, constrained=True),
+                    "ROS(nu,con)",
+                    "InitRandomOneShot(uniform=False, constrained=True)",
+                    partial(InitializationStrategy.random_one_shot, uniform=False, constrained=True),
                 ),
             ]
         )

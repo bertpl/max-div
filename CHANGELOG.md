@@ -15,6 +15,7 @@
       - add accuracy estimation to `modify_p_selectivity` benchmark
 
 - **improved**:
+    - rename initialization strategy `InitOneShotRandom` -> `InitRandomOneShot`, in preparation of other random init strategies
     - `benchmark internal` CLI command
         - Redirect output to file using `--file` flag 
         - add `all` benchmark that runs all in one

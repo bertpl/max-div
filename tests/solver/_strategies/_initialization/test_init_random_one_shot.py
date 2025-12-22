@@ -8,10 +8,10 @@ from ._helpers import new_solver_state
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
 @pytest.mark.parametrize("arg_constrained", [True, False])
 @pytest.mark.parametrize("arg_uniform", [True, False])
-def test_init_one_shot_random(problem_has_constraints: bool, arg_constrained: bool, arg_uniform: bool):
+def test_init_random_one_shot(problem_has_constraints: bool, arg_constrained: bool, arg_uniform: bool):
     # --- arrange -----------------------------------------
     solver_state = new_solver_state(problem_has_constraints)
-    strategy = InitializationStrategy.one_shot_random(
+    strategy = InitializationStrategy.random_one_shot(
         constrained=arg_constrained,
         uniform=arg_uniform,
     )
