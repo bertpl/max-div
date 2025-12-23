@@ -21,12 +21,6 @@ def test_fast_pow_f32_accuracy():
     assert max(abs(xt_exact_arr - xt_approx_arr)) <= max_abs_tol
 
 
-# def test_fast_pow_f32_edge_cases():
-#     assert 0.99 <= fast_pow_f32(np.float32(0.0), np.float32(0.0)) <= 1.01
-#     assert 0.99 <= fast_pow_f32(np.float32(0.5), np.float32(0.0)) <= 1.01
-#     assert 0.99 <= fast_pow_f32(np.float32(0.0), np.float32(1000000.0)) <= 1.01
-
-
 def test_fast_pow_f32_llvm_output():
     # --- arrange -----------------------------------------
     fast_pow_f32(np.float32(0.5), np.float32(1.2))  # trigger compilation

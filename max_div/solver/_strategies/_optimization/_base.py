@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Self
+from typing import Any, Self
 
 from max_div.internal.utils import ALMOST_ONE_F32
+from max_div.solver._scheduling import ParameterSchedule, _evaluate_schedules, _schedules_to_2d_numpy_array
 from max_div.solver._solver_state import SolverState
 from max_div.solver._strategies._base import StrategyBase
 
@@ -12,6 +13,40 @@ from max_div.solver._strategies._base import StrategyBase
 #  OptimizationStrategy
 # =================================================================================================
 class OptimizationStrategy(StrategyBase, ABC):
+    # -------------------------------------------------------------------------
+    #  Constructor
+    # -------------------------------------------------------------------------
+    def __init__(self, name: str | None = None, scheduled_params: dict[str, Any] | None = None):
+        """
+        Initialize the optimization strategy.
+        :param name: optional name of the strategy; if omitted class name is used.
+        :param scheduled_params: optional dictionary of parameters that have scheduled values.
+
+                        The values of this dictionary are screened to check if any are of type ParameterSchedule.
+                        These properties will be updated (using setattr(self, arg, value)) at the start of each
+                        iteration, based on the ParameterSchedule and the current progress fraction.  All other
+                        members of the dictionary are ignored and assumed not be scheduled; no action is taken f
+                        or these.
+        """
+        super().__init__(name)
+        if isinstance(scheduled_params, dict) and any(
+            isinstance(v, ParameterSchedule) for v in scheduled_params.values()
+        ):
+            # at least 1 scheduled parameter
+            self.has_scheduled_params = True
+            self.scheduled_param_names = [k for k, v in scheduled_params.items() if isinstance(v, ParameterSchedule)]
+            self.scheduled_param_configs = _schedules_to_2d_numpy_array(
+                [v for v in scheduled_params.values() if isinstance(v, ParameterSchedule)]
+            )
+        else:
+            # no scheduled parameters
+            self.has_scheduled_params = False
+            self.scheduled_params = []
+            self.scheduled_param_configs = _schedules_to_2d_numpy_array([])
+
+    # -------------------------------------------------------------------------
+    #  Main API
+    # -------------------------------------------------------------------------
     def perform_n_iterations(
         self, state: SolverState, n_iters: int, current_progress_frac: float, progress_frac_per_iter: float
     ):
@@ -26,15 +61,26 @@ class OptimizationStrategy(StrategyBase, ABC):
                                        solver step configurations, this can be an estimate.
         """
 
-        # --- prep ---
-        progress_frac_per_iter = min(
-            progress_frac_per_iter,
-            float(ALMOST_ONE_F32 * (1.0 - current_progress_frac) / n_iters),
-        )  # ensure we never progress beyond 1.0
+        # --- prep ----------------------------------------
+        if n_iters > 1:
+            progress_frac_per_iter = min(
+                progress_frac_per_iter,
+                float(ALMOST_ONE_F32 * (1.0 - current_progress_frac) / (n_iters - 1)),
+            )  # ensure we never progress beyond 1.0
+        has_scheduled_params = self.has_scheduled_params
 
-        # --- main loop ---
+        # --- main loop -----------------------------------
         for _ in range(n_iters):
+            # --- update scheduled parameters ---
+            if has_scheduled_params:
+                param_values = _evaluate_schedules(self.scheduled_param_configs, current_progress_frac)
+                for param_name, param_value in zip(self.scheduled_param_names, param_values):
+                    setattr(self, param_name, param_value)
+
+            # --- execute iteration ---
             self._perform_single_iteration(state, current_progress_frac)
+
+            # --- update progress ---
             current_progress_frac += progress_frac_per_iter
 
     @abstractmethod
