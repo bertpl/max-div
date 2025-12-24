@@ -1,27 +1,29 @@
-Tested methods:                                                                                                                                                                                                                                                                                                                                     
+Tested methods:
 
-| `method` | Description                                                                  |
-| -------- | ---------------------------------------------------------------------------- |
-| 0        | p**t                                                                         |
-| 10       | fast_exp2(t * fast_log2(p))   (NOT specifically optimized for this use case) |
-| 20       | fast_pow(p, t)                (specifically optimized for this use case)     |
-| 100      | 2-segment PWL approx. of p**t                                                |
+| `name`          | `method(args)`                     | Type                | Details                                                                    |
+| --------------- | ---------------------------------- | ------------------- | -------------------------------------------------------------------------- |
+| **method=0**    | `modify_p_selectivity(method=0)`   | Power-based         | p**t                                                                       |
+| **method=10**   | `modify_p_selectivity(method=10)`  | Power-based         | fast_exp2(t * fast_log2(p)) (NOT specifically optimized for this use case) |
+| **method=20**   | `modify_p_selectivity(method=20)`  | Power-based         | fast_pow(p, t) (specifically optimized for this use case)                  |
+| **method=100**  | `modify_p_selectivity(method=100)` | Power-based         | 2-segment PWL approx. of p**t                                              |
+| **exponential** | `exponential_selectivity()`        | Exponential mapping | maps [p_min, p_max] to [1.0, low_value**t]                                 |
 
 ## Benchmark results
 
 
-| size          | method=0                                     | method=10         | method=20         | method=100                                               |
-| ------------- | -------------------------------------------- | ----------------- | ----------------- | -------------------------------------------------------- |
-| 10            | 285.4 nsec ± 0.7%                            | 236.2 nsec ± 0.4% | 237.1 nsec ± 0.8% | <span style="color:#00aa00">**217.2 nsec ± 0.5%**</span> |
-| 20            | 354.3 nsec ± 0.5%                            | 258.9 nsec ± 0.5% | 264.7 nsec ± 0.6% | <span style="color:#00aa00">**224.4 nsec ± 0.8%**</span> |
-| 50            | 552.8 nsec ± 0.3%                            | 353.5 nsec ± 0.8% | 346.3 nsec ± 0.6% | <span style="color:#00aa00">**251.8 nsec ± 0.5%**</span> |
-| 100           | 895.1 nsec ± 0.3%                            | 490.4 nsec ± 0.6% | 478.8 nsec ± 0.7% | <span style="color:#00aa00">**297.6 nsec ± 0.7%**</span> |
-| 200           | 1.586 μsec ± 0.4%                            | 758.5 nsec ± 0.5% | 739.3 nsec ± 0.5% | <span style="color:#00aa00">**388.9 nsec ± 0.6%**</span> |
-| 500           | 3.671 μsec ± 0.3%                            | 1.555 μsec ± 0.5% | 1.526 μsec ± 0.7% | <span style="color:#00aa00">**666.4 nsec ± 0.4%**</span> |
-| 1000          | 7.069 μsec ± 0.3%                            | 2.827 μsec ± 0.5% | 2.847 μsec ± 1.0% | <span style="color:#00aa00">**1.105 μsec ± 0.3%**</span> |
-| 2000          | 13.93 μsec ± 0.1%                            | 5.516 μsec ± 0.2% | 5.499 μsec ± 0.5% | <span style="color:#00aa00">**2.016 μsec ± 0.1%**</span> |
-| 5000          | 34.34 μsec ± 0.4%                            | 13.33 μsec ± 0.8% | 13.32 μsec ± 0.2% | <span style="color:#00aa00">**4.724 μsec ± 0.2%**</span> |
-| 10000         | 68.81 μsec ± 0.2%                            | 26.91 μsec ± 0.4% | 26.67 μsec ± 0.5% | <span style="color:#00aa00">**9.307 μsec ± 0.1%**</span> |
-| 20000         | 139.6 μsec ± 0.2%                            | 53.65 μsec ± 0.6% | 53.73 μsec ± 0.6% | <span style="color:#00aa00">**18.82 μsec ± 0.5%**</span> |
-| **Geomean:**  | 4.307 μsec ± 0.3%                            | 2.113 μsec ± 0.5% | 2.100 μsec ± 0.6% | <span style="color:#00aa00">**1.052 μsec ± 0.4%**</span> |
-| **e_approx:** | <span style="color:#00aa00">**0.00%**</span> | 0.89%             | 0.41%             | 16.33%                                                   |
+| size          | method=0                                     | method=10         | method=20         | method=100                                               | exponential       |
+| ------------- | -------------------------------------------- | ----------------- | ----------------- | -------------------------------------------------------- | ----------------- |
+| 10            | 287.0 nsec ± 0.8%                            | 237.6 nsec ± 0.6% | 239.4 nsec ± 0.6% | <span style="color:#00aa00">**216.1 nsec ± 1.4%**</span> | 288.3 nsec ± 1.1% |
+| 20            | 355.3 nsec ± 0.9%                            | 261.7 nsec ± 0.9% | 264.7 nsec ± 0.9% | <span style="color:#00aa00">**219.6 nsec ± 0.5%**</span> | 310.0 nsec ± 0.9% |
+| 50            | 553.0 nsec ± 0.4%                            | 356.3 nsec ± 0.5% | 343.6 nsec ± 0.7% | <span style="color:#00aa00">**237.3 nsec ± 0.6%**</span> | 379.5 nsec ± 1.2% |
+| 100           | 887.8 nsec ± 0.5%                            | 484.5 nsec ± 0.2% | 475.2 nsec ± 0.8% | <span style="color:#00aa00">**279.7 nsec ± 0.6%**</span> | 474.0 nsec ± 0.4% |
+| 200           | 1.589 μsec ± 0.4%                            | 757.2 nsec ± 0.5% | 735.4 nsec ± 0.8% | <span style="color:#00aa00">**353.0 nsec ± 0.5%**</span> | 660.4 nsec ± 0.3% |
+| 500           | 3.667 μsec ± 0.5%                            | 1.544 μsec ± 0.3% | 1.526 μsec ± 0.6% | <span style="color:#00aa00">**573.9 nsec ± 0.5%**</span> | 1.227 μsec ± 0.4% |
+| 1000          | 7.094 μsec ± 0.5%                            | 2.826 μsec ± 0.4% | 2.814 μsec ± 0.2% | <span style="color:#00aa00">**916.9 nsec ± 0.4%**</span> | 2.158 μsec ± 0.2% |
+| 2000          | 13.90 μsec ± 0.2%                            | 5.510 μsec ± 0.5% | 5.503 μsec ± 0.6% | <span style="color:#00aa00">**1.653 μsec ± 0.1%**</span> | 4.022 μsec ± 0.2% |
+| 5000          | 34.37 μsec ± 0.1%                            | 13.40 μsec ± 0.5% | 13.40 μsec ± 0.2% | <span style="color:#00aa00">**3.838 μsec ± 0.2%**</span> | 9.604 μsec ± 0.1% |
+| 10000         | 68.61 μsec ± 0.3%                            | 26.79 μsec ± 0.2% | 26.71 μsec ± 0.5% | <span style="color:#00aa00">**7.524 μsec ± 0.1%**</span> | 18.93 μsec ± 0.2% |
+| 20000         | 139.9 μsec ± 0.2%                            | 54.41 μsec ± 0.4% | 54.11 μsec ± 0.3% | <span style="color:#00aa00">**15.17 μsec ± 0.4%**</span> | 37.54 μsec ± 0.1% |
+| **Geomean:**  | 4.308 μsec ± 0.4%                            | 2.117 μsec ± 0.4% | 2.099 μsec ± 0.6% | <span style="color:#00aa00">**924.9 nsec ± 0.5%**</span> | 1.830 μsec ± 0.5% |
+| **e_approx:** | <span style="color:#00aa00">**0.00%**</span> | 0.89%             | 0.41%             | 16.33%                                                   | N/A               |
+

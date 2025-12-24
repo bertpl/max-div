@@ -12,12 +12,10 @@ from max_div._cli.formatting import (
     format_table_for_console,
 )
 from max_div.internal.benchmarking import benchmark
-from max_div.internal.math.modify_p_selectivity import (
-    modify_p_selectivity,
-)
+from max_div.internal.math.modify_p_selectivity import exponential_selectivity, modify_p_selectivity
 from max_div.internal.utils import stdout_to_file
 
-METHODS = [np.int32(0), np.int32(10), np.int32(20), np.int32(100)]
+MODIFY_P_METHODS = [np.int32(0), np.int32(10), np.int32(20), np.int32(100)]
 
 
 # =================================================================================================
@@ -48,7 +46,7 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
 
     # --- compute approximation errors ----------------
     # compute errors by method (by comparing exact power method vs other methods on calibration data)
-    error_by_method = {method: compute_accuracy(method, n_accuracy) for method in METHODS}
+    error_by_method = {method: compute_accuracy(method, n_accuracy) for method in MODIFY_P_METHODS}
 
     # --- prepare random modifier values --------------
     # Generate 100 random modifier values in (0.0, 1.0)
@@ -69,7 +67,8 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
         p_in = np.random.rand(size).astype(np.float32)
         p_out = np.empty_like(p_in)
 
-        for method in [np.int32(0), np.int32(10), np.int32(20), np.int32(100)]:
+        # test modify_p_selectivity for all defined methods
+        for method in MODIFY_P_METHODS:
             # define function to be benchmarked
             def benchmark_fun(_idx: int):
                 modify_p_selectivity(p_in, random_modifiers[_idx], method, p_out)
@@ -86,6 +85,22 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
                 )
             )
 
+        # test order_based_selectivity
+        def benchmark_fun(_idx: int):
+            exponential_selectivity(p_in, p_out, random_modifiers[_idx])
+
+        # run benchmark
+        data_row.append(
+            benchmark(
+                f=benchmark_fun,
+                t_per_run=t_per_run,
+                n_warmup=n_warmup,
+                n_benchmark=n_benchmark,
+                silent=True,
+                index_range=100,
+            )
+        )
+
         data.append(data_row)
 
     # --- show results -----------------------------------------
@@ -94,9 +109,11 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
 
     # add geomean time + approximation error rows
     data = extend_table_with_aggregate_row(data, agg="geomean")
-    extra_data_line = ["e_approx:"] + [Percentage(error_by_method[method], decimals=2) for method in METHODS]
+    extra_data_line = (
+        ["e_approx:"] + [Percentage(error_by_method[method], decimals=2) for method in MODIFY_P_METHODS] + ["N/A"]
+    )
     data.append(extra_data_line)
-    headers = ["size"] + [f"method={method}" for method in METHODS]
+    headers = ["size"] + [f"method={method}" for method in MODIFY_P_METHODS] + ["exponential"]
 
     if markdown:
         display_data = format_table_as_markdown(
@@ -133,12 +150,28 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
 # =================================================================================================
 def show_methods_table(markdown: bool) -> None:
     # --- prepare table data ------------------------------
-    headers = ["`method`", "Description"]
+    headers = ["`name`", "`method(args)`", "Type", "Details"]
     data = [
-        [0, "p**t"],
-        [10, "fast_exp2(t * fast_log2(p))   (NOT specifically optimized for this use case)"],
-        [20, "fast_pow(p, t)                (specifically optimized for this use case)"],
-        [100, "2-segment PWL approx. of p**t"],
+        ["**method=0**", "`modify_p_selectivity(method=0)`", "Power-based", "p**t"],
+        [
+            "**method=10**",
+            "`modify_p_selectivity(method=10)`",
+            "Power-based",
+            "fast_exp2(t * fast_log2(p)) (NOT specifically optimized for this use case)",
+        ],
+        [
+            "**method=20**",
+            "`modify_p_selectivity(method=20)`",
+            "Power-based",
+            "fast_pow(p, t) (specifically optimized for this use case)",
+        ],
+        ["**method=100**", "`modify_p_selectivity(method=100)`", "Power-based", "2-segment PWL approx. of p**t"],
+        [
+            "**exponential**",
+            "`exponential_selectivity()`",
+            "Exponential mapping",
+            "maps [p_min, p_max] to [1.0, low_value**t]",
+        ],
     ]
 
     # --- format appropriately ----------------------------
