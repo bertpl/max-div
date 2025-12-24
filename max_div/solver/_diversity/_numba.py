@@ -8,7 +8,6 @@ from max_div.internal.math.fast_log_exp import fast_exp2_f32, fast_log2_f32
 @njit("float32(float32[::1])", fastmath=True, inline="always")
 def min_separation(sep: NDArray[np.float32]) -> np.float32:
     """Minimum separation of all selected vectors."""
-    # return np.min(sep)
     n = sep.shape[0]
     min_value = np.float32(np.inf)
     for i in range(n):
@@ -28,10 +27,7 @@ def geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     log_sum = np.float32(0.0)
     n = sep.shape[0]
     for i in range(n):
-        if sep[i] == 0.0:
-            return np.float32(0.0)
-        else:
-            log_sum += np.log(sep[i])
+        log_sum += np.log(sep[i])
     return np.exp(log_sum / n)
 
 
@@ -41,10 +37,7 @@ def approx_geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     log_sum = np.float32(0.0)
     n = sep.shape[0]
     for i in range(n):
-        if sep[i] == 0.0:
-            return np.float32(0.0)
-        else:
-            log_sum += fast_log2_f32(sep[i])
+        log_sum += fast_log2_f32(sep[i])
     return fast_exp2_f32(log_sum / n)
 
 

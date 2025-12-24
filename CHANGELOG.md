@@ -11,6 +11,7 @@
 
 - **improved**:
     - tweak layout of solver benchmark docs 
+    - speed improvement of `geomean_separation_approx` (±60%)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.6
