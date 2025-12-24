@@ -11,6 +11,7 @@
       - extend `OptimizationStrategy` implementation to support scheduled parameters, that evolve according to a schedule during multi-iteration execution of a strategy 
     - low-level math
       - add `exponential` p-selectivity modification method  
+      - add truncated Poisson sampling
 
 - **improved**:
     - docs
