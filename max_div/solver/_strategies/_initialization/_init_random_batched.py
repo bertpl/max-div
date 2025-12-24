@@ -79,13 +79,13 @@ class InitRandomBatched(InitializationStrategy):
                 # first batch:
                 #   - use global separation only
                 #   - no selectivity modification
-                p = state.global_separation_array.copy()
+                p = state.global_separation_array
             else:
                 # later batches:
                 #   - use combined separation (wrt selection so far + global)
                 #   - modify selectivity based on progress
-                p = state.not_selected_separation_array.copy()
-                p += state.global_separation_array[state.not_selected_index_array]
+                p = state.global_separation_array[state.not_selected_index_array]  # this creates a new array
+                p += state.not_selected_separation_array  # so we can add in-place
 
                 modifier = min(0.9, k_done / k)  # proportional to progress; cap at 0.9 to avoid extremes
                 modify_p_selectivity(

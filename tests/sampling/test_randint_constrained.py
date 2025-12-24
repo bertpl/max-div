@@ -35,6 +35,11 @@ def test_randint_constrained_basic(seed: int, mode: str, p_mode: str) -> None:
     else:  # p_mode == "zero"
         p = np.zeros(n, dtype=np.float32)
 
+    # copies for later comparison
+    con_values_before = con_values.copy()
+    con_indices_before = con_indices.copy()
+    p_before = p.copy()
+
     # --- act ---------------------------------------------
     if mode == "robust":
         samples = randint_constrained_robust(
@@ -60,6 +65,11 @@ def test_randint_constrained_basic(seed: int, mode: str, p_mode: str) -> None:
     assert len(samples) == k
     assert len(set(samples)) == k  # unique samples
     assert all(0 <= s < n for s in samples)
+
+    # check if provided arrays were left untouched
+    assert np.array_equal(con_values_before, con_values), "con_values array should never be modified."
+    assert np.array_equal(con_indices, con_indices_before), "p array should never be modified."
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
     for con in cons:
         count = sum(1 for s in samples if s in con.int_set)
@@ -89,6 +99,11 @@ def test_randint_constrained_infeasible(seed: int, mode: str, p_mode: str) -> No
     else:  # p_mode == "zero"
         p = np.zeros(n, dtype=np.float32)
 
+    # copies for later comparison
+    con_values_before = con_values.copy()
+    con_indices_before = con_indices.copy()
+    p_before = p.copy()
+
     # --- act ---------------------------------------------
     if mode == "robust":
         samples = randint_constrained_robust(
@@ -114,6 +129,11 @@ def test_randint_constrained_infeasible(seed: int, mode: str, p_mode: str) -> No
     assert len(samples) == k
     assert len(set(samples)) == k  # unique samples
     assert all(0 <= s < n for s in samples)
+
+    # check if provided arrays were left untouched
+    assert np.array_equal(con_values_before, con_values), "con_values array should never be modified."
+    assert np.array_equal(con_indices, con_indices_before), "p array should never be modified."
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
     for con in cons:
         count = sum(1 for s in samples if s in con.int_set)
@@ -173,6 +193,11 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
     # convert to numba format
     con_values, con_indices = _build_array_repr(cons)
 
+    # copies for later comparison
+    con_values_before = con_values.copy()
+    con_indices_before = con_indices.copy()
+    p_before = p.copy()
+
     # --- act ---------------------------------------------
     samples = randint_constrained(
         n=np.int32(n),
@@ -186,12 +211,19 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
     )
 
     # --- assert ------------------------------------------
+
+    # check k_context correctness
     if k_context < 2:
         # must sample from constraint 1 (0,1,2)
         assert samples[0] in {0, 1, 2}
     else:
         # we can sample from either constraint 1 or 2; p will motivate algorithm to choose from (3,4,5)
         assert samples[0] in {3, 4, 5}
+
+    # check if provided arrays were left untouched
+    assert np.array_equal(con_values_before, con_values), "con_values array should never be modified."
+    assert np.array_equal(con_indices, con_indices_before), "p array should never be modified."
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -256,6 +288,12 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
 
     p = np.array([0, 0.1, 0.1, 1, 1, 0.1, 0.1, 0.0, 0.0, 0.0], dtype=np.float32)
 
+    # copies for later comparison
+    i_forbidden_before = i_forbidden.copy()
+    con_values_before = con_values.copy()
+    con_indices_before = con_indices.copy()
+    p_before = p.copy()
+
     # --- act ---------------------------------------------
     samples = randint_constrained(
         n=np.int32(n),
@@ -277,3 +315,9 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
     # if k==2, there's only 1 possible solution that also avoids sampling from p=0
     if k == 2:
         assert set(samples) == {1, 2}
+
+    # check if provided arrays were left untouched
+    assert np.array_equal(i_forbidden_before, i_forbidden), "i_forbidden array should never be modified."
+    assert np.array_equal(con_values_before, con_values), "con_values array should never be modified."
+    assert np.array_equal(con_indices, con_indices_before), "p array should never be modified."
+    assert np.array_equal(p, p_before), "p array should never be modified."

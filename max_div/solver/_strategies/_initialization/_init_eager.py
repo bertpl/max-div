@@ -73,13 +73,14 @@ class InitEager(InitializationStrategy):
                 # first batch of candidates:
                 #   - use global separation only
                 #   - no selectivity modification
-                p = state.global_separation_array.copy()
+                p = state.global_separation_array
             else:
                 # later batches:
-                #   - use combined separation (wrt selection so far + global)
+                #   - use separation of not-selected wrt selected items
+                #       --> as opposed to RandomBatched, we ignore global separation here; we only add 1 item at a time,
+                #           so we don't run the risk of adding multiple similar items in one batch as in RandomBatched.
                 #   - modify selectivity based on progress
-                p = state.not_selected_separation_array.copy()
-                p += state.global_separation_array[state.not_selected_index_array]
+                p = state.not_selected_separation_array
 
                 modifier = min(0.9, i / k)  # proportional to progress; cap at 0.9 to avoid extremes
                 modify_p_selectivity(

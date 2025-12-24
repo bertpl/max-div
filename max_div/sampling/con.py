@@ -122,9 +122,9 @@ def randint_constrained(
 
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)
-    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint
-    :param con_indices: 1D array with constraint indices in the format described in _constraints.py
-    :param p: optional, target probabilities for each integer in `[0, n)`
+    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
+    :param con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
+    :param p: optional, target probabilities for each integer in `[0, n)`                            (never modified!)
     :param seed: random seed
     :param eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
                   increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
@@ -138,7 +138,7 @@ def randint_constrained(
                         a) not provided or <=k:  the algorithm assumes k_context = k
                         b) provided and >k:      the algorithm knows that more samples will be drawn later.
 
-    :param i_forbidden: (optional) 1D array of integers in `[0, n)` that must not be sampled
+    :param i_forbidden: (optional) 1D array of integers in `[0, n)` that must not be sampled         (never modified!)
 
     :return: array of samples
     """

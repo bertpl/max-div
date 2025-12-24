@@ -59,12 +59,18 @@ def test_randint_argument_validation(use_numba: bool):
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("p", [None, np.zeros(0, np.float64)])
 def test_randint_uniform_with_replacement_invariants_single(n: int, use_numba: bool, p: np.ndarray | None):
+    # --- arrange -----------------------------------------
+    if p is not None:
+        p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     sample = randint(n, replace=True, p=p, use_numba=use_numba)
 
     # --- assert ------------------------------------------
     assert isinstance(sample, numbers.Integral)
     assert 0 <= sample < n
+    if p is not None:
+        assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -83,6 +89,10 @@ def test_randint_uniform_with_replacement_invariants_single(n: int, use_numba: b
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("p", [None, np.zeros(0, np.float64)])
 def test_randint_uniform_with_replacement_invariants_multiple(n: int, k: int, use_numba: bool, p: np.ndarray | None):
+    # --- arrange -----------------------------------------
+    if p is not None:
+        p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     samples = randint(n, k, replace=True, p=p, use_numba=use_numba)
 
@@ -91,16 +101,24 @@ def test_randint_uniform_with_replacement_invariants_multiple(n: int, k: int, us
     assert samples.shape == (k,)
     assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
+    if p is not None:
+        assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("p", [None, np.zeros(0, np.float64)])
 def test_randint_uniform_with_replacement_duplicates(use_numba: bool, p: np.ndarray | None):
+    # --- arrange -----------------------------------------
+    if p is not None:
+        p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     samples = randint(n=1000, k=900, replace=True, p=p, use_numba=use_numba)  # very unlikely all are unique
 
     # --- assert ------------------------------------------
     assert len(set(samples)) < 900  # there are duplicates, which is expected with replacement
+    if p is not None:
+        assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -119,6 +137,10 @@ def test_randint_uniform_with_replacement_duplicates(use_numba: bool, p: np.ndar
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("p", [None, np.zeros(0, np.float64)])
 def test_randint_uniform_with_replacement_seed(n: int, k: int, use_numba: bool, p: np.ndarray | None):
+    # --- arrange -----------------------------------------
+    if p is not None:
+        p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     samples_1 = randint(n, k, replace=True, p=p, use_numba=use_numba, seed=123)
     samples_2 = randint(n, k, replace=True, p=p, use_numba=use_numba, seed=123)
@@ -132,6 +154,8 @@ def test_randint_uniform_with_replacement_seed(n: int, k: int, use_numba: bool, 
         assert not list(samples_1) == list(samples_3)
         assert not list(samples_2) == list(samples_3)
         assert not list(samples_3) == list(samples_4)
+    if p is not None:
+        assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 # =================================================================================================
@@ -141,12 +165,18 @@ def test_randint_uniform_with_replacement_seed(n: int, k: int, use_numba: bool, 
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("p", [None, np.zeros(0, np.float64)])
 def test_randint_uniform_without_replacement_invariants_single(n: int, use_numba: bool, p: np.ndarray | None):
+    # --- arrange -----------------------------------------
+    if p is not None:
+        p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     sample = randint(n, replace=False, p=p, use_numba=use_numba)
 
     # --- assert ------------------------------------------
     assert isinstance(sample, numbers.Integral)
     assert 0 <= sample < n
+    if p is not None:
+        assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -164,6 +194,10 @@ def test_randint_uniform_without_replacement_invariants_single(n: int, use_numba
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("p", [None, np.zeros(0, np.float64)])
 def test_randint_uniform_without_replacement_invariants_multiple(n: int, k: int, use_numba: bool, p: np.ndarray | None):
+    # --- arrange -----------------------------------------
+    if p is not None:
+        p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     samples = randint(n, k, replace=False, p=p, use_numba=use_numba)
 
@@ -173,6 +207,8 @@ def test_randint_uniform_without_replacement_invariants_multiple(n: int, k: int,
     assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
     assert len(set(samples)) == k  # all samples are unique
+    if p is not None:
+        assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -190,6 +226,10 @@ def test_randint_uniform_without_replacement_invariants_multiple(n: int, k: int,
 @pytest.mark.parametrize("use_numba", [True, False])
 @pytest.mark.parametrize("p", [None, np.zeros(0, np.float64)])
 def test_randint_uniform_without_replacement_seed(n: int, k: int, use_numba: bool, p: np.ndarray | None):
+    # --- arrange -----------------------------------------
+    if p is not None:
+        p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     samples_1 = randint(n, k, replace=False, p=p, use_numba=use_numba, seed=123)
     samples_2 = randint(n, k, replace=False, p=p, use_numba=use_numba, seed=123)
@@ -203,6 +243,8 @@ def test_randint_uniform_without_replacement_seed(n: int, k: int, use_numba: boo
         assert not list(samples_1) == list(samples_3)
         assert not list(samples_2) == list(samples_3)
         assert not list(samples_3) == list(samples_4)
+    if p is not None:
+        assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 # =================================================================================================
@@ -213,6 +255,7 @@ def test_randint_uniform_without_replacement_seed(n: int, k: int, use_numba: boo
 def test_randint_non_uniform_with_replacement_invariants_single(n: int, use_numba: bool):
     # --- arrange -----------------------------------------
     p = get_probabilities(n)
+    p_before = p.copy()  # copy for later comparison
 
     # --- act ---------------------------------------------
     sample = randint(n, replace=True, p=p, use_numba=use_numba)
@@ -220,6 +263,7 @@ def test_randint_non_uniform_with_replacement_invariants_single(n: int, use_numb
     # --- assert ------------------------------------------
     assert isinstance(sample, numbers.Integral)
     assert 0 <= sample < n
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -239,6 +283,7 @@ def test_randint_non_uniform_with_replacement_invariants_single(n: int, use_numb
 def test_randint_non_uniform_with_replacement_invariants_multiple(n: int, k: int, use_numba: bool):
     # --- arrange -----------------------------------------
     p = get_probabilities(n)
+    p_before = p.copy()  # copy for later comparison
 
     # --- act ---------------------------------------------
     samples = randint(n, k, replace=True, p=p, use_numba=use_numba)
@@ -248,18 +293,21 @@ def test_randint_non_uniform_with_replacement_invariants_multiple(n: int, k: int
     assert samples.shape == (k,)
     assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize("use_numba", [True, False])
 def test_randint_non_uniform_with_replacement_duplicates(use_numba: bool):
     # --- arrange -----------------------------------------
     p = get_probabilities(1000)
+    p_before = p.copy()  # copy for later comparison
 
     # --- act ---------------------------------------------
     samples = randint(n=1000, k=900, replace=True, p=p, use_numba=use_numba)  # very unlikely all are unique
 
     # --- assert ------------------------------------------
     assert len(set(samples)) < 900  # there are duplicates, which is expected with replacement
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -279,6 +327,7 @@ def test_randint_non_uniform_with_replacement_duplicates(use_numba: bool):
 def test_randint_non_uniform_with_replacement_seed(n: int, k: int, use_numba: bool):
     # --- arrange -----------------------------------------
     p = get_probabilities(n)
+    p_before = p.copy()  # copy for later comparison
 
     # --- act ---------------------------------------------
     samples_1 = randint(n, k, replace=True, p=p, use_numba=use_numba, seed=123)
@@ -293,6 +342,7 @@ def test_randint_non_uniform_with_replacement_seed(n: int, k: int, use_numba: bo
         assert not list(samples_1) == list(samples_3)
         assert not list(samples_2) == list(samples_3)
         assert not list(samples_3) == list(samples_4)
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize("use_numba", [True, False])
@@ -308,12 +358,15 @@ def test_randint_non_uniform_with_replacement_probs(use_numba: bool, factor: flo
 
     expected_mean = sum(i * p[i] for i in range(n)) / sum_of_p
 
+    p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     samples = randint(n=n, k=k, replace=True, p=p, use_numba=use_numba)
 
     # --- assert ------------------------------------------
     assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all([p[i] > 0 for i in samples])
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 # =================================================================================================
@@ -324,6 +377,7 @@ def test_randint_non_uniform_with_replacement_probs(use_numba: bool, factor: flo
 def test_randint_non_uniform_without_replacement_invariants_single(n: int, use_numba: bool):
     # --- arrange -----------------------------------------
     p = get_probabilities(n)
+    p_before = p.copy()  # copy for later comparison
 
     # --- act ---------------------------------------------
     sample = randint(n, replace=False, p=p, use_numba=use_numba)
@@ -331,6 +385,7 @@ def test_randint_non_uniform_without_replacement_invariants_single(n: int, use_n
     # --- assert ------------------------------------------
     assert isinstance(sample, numbers.Integral)
     assert 0 <= sample < n
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -349,6 +404,7 @@ def test_randint_non_uniform_without_replacement_invariants_single(n: int, use_n
 def test_randint_non_uniform_without_replacement_invariants_multiple(n: int, k: int, use_numba: bool):
     # --- arrange -----------------------------------------
     p = get_probabilities(n)
+    p_before = p.copy()  # copy for later comparison
 
     # --- act ---------------------------------------------
     samples = randint(n, k, replace=False, p=p, use_numba=use_numba)
@@ -359,6 +415,7 @@ def test_randint_non_uniform_without_replacement_invariants_multiple(n: int, k: 
     assert samples.dtype == np.int32
     assert 0 <= samples.min() <= samples.max() < n
     assert len(set(samples)) == k  # all samples are unique
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize(
@@ -377,6 +434,7 @@ def test_randint_non_uniform_without_replacement_invariants_multiple(n: int, k: 
 def test_randint_non_uniform_without_replacement_seed(n: int, k: int, use_numba: bool):
     # --- arrange -----------------------------------------
     p = get_probabilities(n)
+    p_before = p.copy()  # copy for later comparison
 
     # --- act ---------------------------------------------
     samples_1 = randint(n, k, replace=False, p=p, use_numba=use_numba, seed=123)
@@ -389,6 +447,7 @@ def test_randint_non_uniform_without_replacement_seed(n: int, k: int, use_numba:
         # in this case, it's very unlikely that samples_3 matches samples_1 or samples_2
         assert not list(samples_1) == list(samples_3)
         assert not list(samples_2) == list(samples_3)
+    assert np.array_equal(p, p_before), "p array should never be modified."
 
 
 @pytest.mark.parametrize("use_numba", [True, False])
@@ -404,9 +463,12 @@ def test_randint_non_uniform_without_replacement_probs(use_numba: bool, factor: 
 
     expected_mean = sum(i * p[i] for i in range(n)) / sum_of_p  # approx. correct; this assumes replacement
 
+    p_before = p.copy()  # copy for later comparison
+
     # --- act ---------------------------------------------
     samples = randint(n=n, k=k, replace=False, p=p, use_numba=use_numba)
 
     # --- assert ------------------------------------------
     assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all([p[i] > 0 for i in samples])
+    assert np.array_equal(p, p_before), "p array should never be modified."

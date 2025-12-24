@@ -10,8 +10,13 @@
     - extend `OptimizationStrategy` implementation to support scheduled parameters, that evolve according to a schedule during multi-iteration execution of a strategy 
 
 - **improved**:
-    - tweak layout of solver benchmark docs 
-    - speed improvement of `geomean_separation_approx` (±60%)
+    - docs
+      - tweak layout of solver benchmark docs 
+    - diversity metrics
+      - speed improvement of `geomean_separation_approx` (±60%)
+    - initialization strategies
+      - sampling heuristics of `InitEager`, leading to slightly higher (~5%) diversity scores and slightly faster execution (~10%)
+      - reduce unnecessary array copying in `InitRandomBatched` and `InitRandomEager`
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.6
