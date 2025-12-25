@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from functools import cached_property
 
@@ -97,6 +98,25 @@ class SolverState:
         self._update_score()
 
     # -------------------------------------------------------------------------
+    #  Copy
+    # -------------------------------------------------------------------------
+    def copy(self) -> SolverState:
+        """Returns a deep copy of the current state."""
+        return SolverState(
+            n=self._n,
+            k=self._k,
+            pdist=self._pdist.copy(),
+            score_generator=self._score_generator.copy(),
+            selected=self._selected.copy(),
+            not_selected=self._not_selected.copy(),
+            sep_global=self._sep_global.copy(),
+            sep_selected=self._sep_selected.copy(),
+            con_values=self._con_values.copy(),
+            con_indices=self._con_indices.copy(),
+            con_membership=deepcopy(self._con_membership),
+        )
+
+    # -------------------------------------------------------------------------
     #  Main API - used by solver strategies to modify state
     # -------------------------------------------------------------------------
     def set_snapshot(self):
@@ -128,6 +148,9 @@ class SolverState:
         self._not_selected = self._snapshot.not_selected
         self._sep_selected = self._snapshot.sep_selected
         self._con_values = self._snapshot.con_values
+
+        # restore score
+        self._update_score()
 
         # clear snapshot after restoring
         self._snapshot.clear()

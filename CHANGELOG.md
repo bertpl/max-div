@@ -6,8 +6,9 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**: 
-    - solution score
-      - speed improvement of score computation in case of soft constraints 
+    - solver framework
+      - speed improvement of score computation in case of soft constraints
+      - improve unit test coverage & depth of `SolverState` 
     - low-level math
       - speed improvement of fast exponential and power function approximations by up to ~40%, leading to speed improvements in modify_p_selectivity methods of up to ~25-30% 
 

@@ -119,6 +119,7 @@ class ScoreGenerator:
         """
 
         # --- size score computation ------------
+        self._n = n
         self._k = k
         self._size_c0 = 1 / (1 + k)
         self._size_c1 = 1 / (1 + n - k)
@@ -140,6 +141,22 @@ class ScoreGenerator:
         # --- diversity & tie-breakers ----------
         self._diversity_metric = diversity_metric
         self._diversity_tie_breakers = diversity_tie_breakers
+
+        # --- store other params ---------------
+        self._constraints = constraints
+
+    # -------------------------------------------------------------------------
+    #  Copy
+    # -------------------------------------------------------------------------
+    def copy(self) -> ScoreGenerator:
+        """Create a deep copy of this ScoreGenerator."""
+        return ScoreGenerator(
+            n=self._n,
+            k=self._k,
+            diversity_metric=self._diversity_metric,
+            diversity_tie_breakers=self._diversity_tie_breakers.copy(),
+            constraints=self._constraints.copy(),
+        )
 
     # -------------------------------------------------------------------------
     #  Score computation

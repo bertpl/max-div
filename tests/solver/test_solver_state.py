@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy import random
 
 from max_div.solver import Constraint, DistanceMetric, DiversityMetric
 from max_div.solver._solver_state import SolverState
@@ -56,7 +57,7 @@ def test_solver_state_properties(new_solver_state, new_solver_state_unconstraine
     assert new_solver_state_unconstrained.score.constraints == 1.0  # no constraints -> perfect score
 
 
-def test_solver_state_add_remove(new_solver_state):
+def test_solver_state_add_remove_validation(new_solver_state):
     # --- arrange -----------------------------------------
     state = new_solver_state
 
@@ -142,3 +143,58 @@ def test_solver_state_snapshot(new_solver_state):
     assert np.array_equal(state.not_selected_index_array, orig_not_selected_array)
     assert np.allclose(state.selected_separation_array, orig_separation_array)
     assert np.array_equal(state.con_values, orig_con_values)
+
+
+@pytest.mark.parametrize("seed", list(range(1, 100)))
+def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
+    """Check solver state consistency after a large series of add/remove operations."""
+
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state_ref = new_solver_state.copy()  # we'll leave this untouched until the end
+    n_iters = 100
+
+    # --- act ---------------------------------------------
+    random.seed(seed)
+    for _ in range(n_iters):
+        # take snapshot
+        state.set_snapshot()
+
+        # add random number of items
+        n_to_add = random.randint(0, len(state.not_selected_index_array) + 1)
+        indices_to_select = state.not_selected_index_array.copy()
+        random.shuffle(indices_to_select)
+        for idx in indices_to_select[:n_to_add]:
+            state.add(idx)
+
+        # remove random number of items
+        n_to_remove = random.randint(0, len(state.selected_index_array) + 1)
+        indices_to_remove = state.selected_index_array.copy()
+        random.shuffle(indices_to_remove)
+        for idx in indices_to_remove[:n_to_remove]:
+            state.remove(idx)
+
+        # restore snapshot with some probability
+        if random.rand() < 0.5:
+            state.restore_snapshot()
+
+    # --- assert ------------------------------------------
+
+    # double check state_ref was not changed
+    assert len(state_ref.selected_index_array) == 0
+    assert len(state_ref.not_selected_index_array) == state.n
+
+    # sync state_ref with state
+    for idx in state.selected_index_array:
+        state_ref.add(idx)
+
+    # check if they're the same
+    assert np.array_equal(state.selected_index_array, state_ref.selected_index_array)
+    assert np.array_equal(state.not_selected_index_array, state_ref.not_selected_index_array)
+    assert np.array_equal(state.global_separation_array, state_ref.global_separation_array)
+    assert np.array_equal(state.not_selected_separation_array, state_ref.not_selected_separation_array)
+    assert np.array_equal(state.selected_separation_array, state_ref.selected_separation_array)
+    assert np.array_equal(state.con_values, state_ref.con_values)
+    assert np.array_equal(state.con_indices, state_ref.con_indices)
+
+    assert state.score == state_ref.score
