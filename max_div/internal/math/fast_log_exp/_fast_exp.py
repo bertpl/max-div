@@ -3,6 +3,8 @@ import math
 import numba
 import numpy as np
 
+from max_div.internal.math.powers_of_2 import power_of_2_f32
+
 # -------------------------------------------------------------------------
 #  Constants
 # -------------------------------------------------------------------------
@@ -62,7 +64,7 @@ def fast_exp2_f32(x: np.float32) -> np.float32:
     exp2_f = _S20 + f * (_S21 + f * _S22)
 
     # --- combine parts -----------------------------------
-    return np.float32(math.ldexp(exp2_f, int(k)))
+    return exp2_f * power_of_2_f32(np.int32(k))
 
 
 # -------------------------------------------------------------------------

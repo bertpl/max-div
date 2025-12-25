@@ -5,7 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**: 
+    - low-level math
+      - speed improvement of fast exponential and power function approximations by up to ~40%, leading to speed improvements in modify_p_selectivity methods of up to ~25-30%
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.7
