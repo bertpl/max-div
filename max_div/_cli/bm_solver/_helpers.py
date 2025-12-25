@@ -27,6 +27,20 @@ def get_initialization_strategies(constraints: bool) -> list[InitStrategyInfo]:
     """
     result: list[InitStrategyInfo] = []
 
+    # --- InitDummy ---------------------------------------
+    result.extend(
+        [
+            InitStrategyInfo(
+                name="REF",
+                class_name="InitDummy",
+                class_kwargs="/",
+                factory=InitializationStrategy.dummy,
+                needs_constraints=False,
+                uses_constraints=False,
+            ),
+        ]
+    )
+
     # --- InitRandomOneShot -------------------------------
     result.extend(
         [

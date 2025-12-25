@@ -7,8 +7,11 @@
 
 - **new**:
     - solver framework
-       - implement `SwapBasedOptimizationStrategy` base class & first implementation `OptimRandomSwaps` (baseline method)
- 
+       - implement `SwapBasedOptimizationStrategy` base class for swap-based optimization strategies
+    - solver strategies 
+       - implement `InitDummy` baseline initialization strategy
+       - implement `OptimRandomSwaps` baseline optimization strategy
+
 - **improved**: 
     - solver framework
       - speed improvement of score computation in case of soft constraints

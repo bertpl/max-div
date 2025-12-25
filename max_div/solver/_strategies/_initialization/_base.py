@@ -24,6 +24,13 @@ class InitializationStrategy(StrategyBase, ABC):
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
+    def dummy(cls) -> Self:
+        """Create a InitDummy initialization strategy."""
+        from ._init_dummy import InitDummy
+
+        return InitDummy()
+
+    @classmethod
     def random_one_shot(cls, constrained: bool = True, uniform: bool = False) -> Self:
         """Create a InitRandomOneShot initialization strategy."""
         from ._init_random_one_shot import InitRandomOneShot
