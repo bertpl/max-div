@@ -1,6 +1,9 @@
 # Benchmark Results - Problem A5
 
-## Initialization Strategies
+## I. Initialization Strategies
 
 {% include-markdown "./results/benchmark_initialization_A5.md" %}
 
+## II. Optimization Strategies
+
+{% include-markdown "./results/benchmark_optimization_A5.md" %}

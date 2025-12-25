@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from functools import partial
+from itertools import product
 from typing import Callable
 
 from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.solver import DiversityMetric, MaxDivProblem
-from max_div.solver._strategies import InitializationStrategy
+from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
 
 # =================================================================================================
@@ -23,7 +24,7 @@ class InitStrategyInfo:
 def get_initialization_strategies(constraints: bool) -> list[InitStrategyInfo]:
     """
     Construct a list of initialization strategies based on whether the problem has constraints.
-    Result is returns as a list of (name, description, strategy_factory_method) tuples.
+    Result is returns as a list of InitStrategyInfo objects.
     """
     result: list[InitStrategyInfo] = []
 
@@ -146,6 +147,39 @@ def get_initialization_strategies(constraints: bool) -> list[InitStrategyInfo]:
 # =================================================================================================
 #  Optimization strategies
 # =================================================================================================
+@dataclass
+class OptimStrategyInfo:
+    name: str
+    class_name: str
+    class_kwargs: str
+    factory: Callable[[], OptimizationStrategy]
+    needs_constraints: bool
+    uses_constraints: bool
+
+
+def get_optimization_strategies(constraints: bool) -> list[OptimStrategyInfo]:
+    """
+    Construct a list of optimization strategies based on whether the problem has constraints.
+    Result is returns as a list of OptimStrategyInfo objects.
+    """
+    result: list[OptimStrategyInfo] = []
+
+    # --- OptimRandomSwaps --------------------------------
+    result.extend(
+        [
+            OptimStrategyInfo(
+                name="REF",
+                class_name="OptimRandomSwaps",
+                class_kwargs="/",
+                factory=OptimizationStrategy.random_swaps,
+                needs_constraints=False,
+                uses_constraints=False,
+            ),
+        ]
+    )
+
+    # --- return ------------------------------------------
+    return [info for info in result if (not info.needs_constraints) or constraints]
 
 
 # =================================================================================================
@@ -174,3 +208,9 @@ def construct_problem_instance(name: str, size: int, diversity_metric: Diversity
         size=size,
         diversity_metric=diversity_metric,
     )
+
+
+def get_size_range(speed: float) -> list[int]:
+    """Get size range based on speed parameter."""
+    max_size = round(64 ** (1 - speed))  # 64 for speed=0.0 to 1 for speed=1.0
+    return sorted({value for c, k in product([1.0, 1.5], range(50)) if (value := round(c * (2.0**k))) <= max_size})

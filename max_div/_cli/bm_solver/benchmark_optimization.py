@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import product
 
 from tqdm import tqdm
 
@@ -14,11 +15,14 @@ from max_div._cli.formatting import (
 from max_div.internal.benchmarking import BenchmarkResult
 from max_div.internal.utils import stdout_to_file
 from max_div.solver import DiversityMetric, MaxDivSolverBuilder
+from max_div.solver._duration import iterations
+from max_div.solver._solver_step import OptimizationStep
+from max_div.solver._strategies import InitializationStrategy
 
 from ._helpers import (
-    InitStrategyInfo,
+    OptimStrategyInfo,
     construct_problem_instance,
-    get_initialization_strategies,
+    get_optimization_strategies,
     get_size_range,
     problem_has_constraints,
 )
@@ -27,9 +31,15 @@ from ._helpers import (
 # =================================================================================================
 #  Benchmark function
 # =================================================================================================
-def benchmark_initialization_strategies(problem_name: str, markdown: bool, file: bool = False, speed: float = 0.0):
+def benchmark_optimization_strategies(problem_name: str, markdown: bool, file: bool = False, speed: float = 0.0):
     """
     Benchmark initialization strategies on a given benchmark problem across different sizes.
+
+    The setup is relatively straightforward:
+      - for each problem size we...
+        - initialize the solver with InitDummy (=very poor initialization)
+        - we let the optimization strategy run for 1000 iterations, independent of problem size, for a fixed set of seeds
+        - we record time taken, final diversity score, and final constraint score
 
     :param problem_name: Name of the benchmark problem
     :param markdown: If True, outputs the results as a Markdown table, otherwise plain text without markup.
@@ -41,8 +51,9 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
     diversity_metric = DiversityMetric.geomean_separation()
     size_range = get_size_range(speed)
     n_seeds = int(10 - speed * 9)  # from 1 (speed=1.0) to 10 (speed=0.0)
+    n_iterations = int(1000 - speed * 999)  # from 1 (speed=1.0) to 1000 (speed=0.0)
     has_constraints = problem_has_constraints(problem_name, [min(size_range), max(size_range)])
-    init_strategies: list[InitStrategyInfo] = get_initialization_strategies(has_constraints)
+    optim_strategies: list[OptimStrategyInfo] = get_optimization_strategies(has_constraints)
 
     # --- benchmark across sizes --------------------------
     # Initialize data structures for benchmark results
@@ -50,18 +61,19 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
     diversity_scores: dict[int, dict[str, NumberWithUncertainty]] = defaultdict(dict)
     constraint_scores: dict[int, dict[str, NumberWithUncertainty]] = defaultdict(dict)
 
-    size_exp = 2.0  # exponent with which size influences time spent
+    size_exp = 1.0  # exponent with which size influences time spent
     pbar = tqdm(
-        desc=f"problem {problem_name} - Initialization strategies".ljust(40),
-        total=sum([round(s**size_exp) for s in size_range]) * len(init_strategies) * n_seeds,
+        desc=f"problem {problem_name} - Optimization strategies".ljust(40),
+        total=sum([round(s**size_exp) for s in size_range]) * len(optim_strategies) * n_seeds,
         leave=file,
     )
 
     for size in size_range:
         # Create problem instance
         problem = construct_problem_instance(problem_name, size, diversity_metric)
-        # go over all initialization strategies
-        for strat_info in init_strategies:
+
+        # go over all optimization strategies
+        for strat_info in optim_strategies:
             # initialize lists for this (size, strategy)
             times_lst = []
             diversity_scores_lst = []
@@ -72,7 +84,13 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
                 # Create solver with explicit initialization strategy
                 solver = (
                     MaxDivSolverBuilder(problem)
-                    .set_initialization_strategy(strat_info.factory())
+                    .set_initialization_strategy(InitializationStrategy.dummy())
+                    .add_solver_step(
+                        OptimizationStep(
+                            optim_strategy=strat_info.factory(),
+                            duration=iterations(n_iterations),
+                        )
+                    )
                     .with_seed(seed)
                     .build()
                 )
@@ -83,7 +101,7 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
                 # Track elapsed time and diversity score
                 times_lst.append(
                     list(solution.step_durations.values())[-1].t_elapsed_sec
-                )  # last step is initialization
+                )  # last step is optimization we're testing
                 diversity_scores_lst.append(solution.score.diversity)
                 constraint_scores_lst.append(solution.score.constraints)
 
@@ -97,12 +115,12 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
             constraint_scores[size][strat_info.name] = NumberWithUncertainty.from_list(constraint_scores_lst)
 
     # --- show results ------------------------------------
-    with stdout_to_file(enabled=file, filename=f"benchmark_initialization_{problem_name}.md"):
-        # show tested initialization strategies
-        show_strategies_table(markdown, init_strategies, has_constraints)
+    with stdout_to_file(enabled=file, filename=f"benchmark_optimization_{problem_name}.md"):
+        # show tested optimization strategies
+        show_strategies_table(markdown, optim_strategies, has_constraints, n_iterations)
 
         # prepare scope of what we need to show
-        strategy_names = [strat_info.name for strat_info in init_strategies]
+        strategy_names = [strat_info.name for strat_info in optim_strategies]
         scope = [
             (times, "Time Duration", "geomean"),
             (diversity_scores, "Diversity Score", "geomean"),
@@ -164,7 +182,10 @@ def benchmark_initialization_strategies(problem_name: str, markdown: bool, file:
 #  Helpers
 # =================================================================================================
 def show_strategies_table(
-    markdown: bool, init_strategies: list[InitStrategyInfo], problem_has_constraints: bool
+    markdown: bool,
+    optim_strategies: list[OptimStrategyInfo],
+    problem_has_constraints: bool,
+    n_iterations: int,
 ) -> None:
     # --- prepare table data ------------------------------
     if markdown:
@@ -176,7 +197,7 @@ def show_strategies_table(
         headers.append("Constraint-aware")
 
     table_data = []
-    for strat_info in init_strategies:
+    for strat_info in optim_strategies:
         table_data.append(
             [
                 f"`{strat_info.name}`" if markdown else strat_info.name,
@@ -193,7 +214,7 @@ def show_strategies_table(
     else:
         display_data = format_table_for_console(headers, table_data)
 
-    print("Tested Initialization strategies:")
+    print(f"Tested Optimization strategies ({n_iterations} iterations):")
     print()
     for line in display_data:
         print(line)

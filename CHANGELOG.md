@@ -2,7 +2,7 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.8
-> *(under development)*
+> *(2025-12-25)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
@@ -11,6 +11,8 @@
     - solver strategies 
        - implement `InitDummy` baseline initialization strategy
        - implement `OptimRandomSwaps` baseline optimization strategy
+    - benchmarks
+       - extend solver benchmarks with testing of optimization strategies + test up to larger problem sizes
 
 - **improved**: 
     - solver framework
