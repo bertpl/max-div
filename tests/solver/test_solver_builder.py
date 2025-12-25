@@ -28,7 +28,7 @@ def dummy_problem() -> MaxDivProblem:
     "strategy, expected_ok",
     [
         (InitializationStrategy.random_one_shot(), True),
-        (OptimizationStrategy.dummy(), False),
+        (OptimizationStrategy.random_swaps(), False),
     ],
 )
 def test_solver_builder_set_initialization_strategy(dummy_problem, strategy, expected_ok: bool):
@@ -47,11 +47,11 @@ def test_solver_builder_set_initialization_strategy(dummy_problem, strategy, exp
 @pytest.mark.parametrize(
     "strategies, expected_ok",
     [
-        ([OptimizationStrategy.dummy(), OptimizationStrategy.dummy()], True),
-        ([OptimizationStrategy.dummy()], True),
+        ([OptimizationStrategy.random_swaps(), OptimizationStrategy.random_swaps()], True),
+        ([OptimizationStrategy.random_swaps()], True),
         ([InitializationStrategy.random_one_shot()], False),
-        ([InitializationStrategy.random_one_shot(), OptimizationStrategy.dummy()], False),
-        ([OptimizationStrategy.dummy(), InitializationStrategy.random_one_shot()], False),
+        ([InitializationStrategy.random_one_shot(), OptimizationStrategy.random_swaps()], False),
+        ([OptimizationStrategy.random_swaps(), InitializationStrategy.random_one_shot()], False),
     ],
 )
 def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expected_ok: bool):
@@ -137,8 +137,8 @@ def test_max_div_solver_builder_end_to_end():
     k = 5
     init_strategy = InitializationStrategy.random_one_shot()
     solver_steps = [
-        OptimizationStep(OptimizationStrategy.dummy(), seconds(1)),
-        OptimizationStep(OptimizationStrategy.dummy(), iterations(100)),
+        OptimizationStep(OptimizationStrategy.random_swaps(), seconds(1)),
+        OptimizationStep(OptimizationStrategy.random_swaps(), iterations(100)),
     ]
     constraints = [
         Constraint(set(range(0, 5)), min_count=2, max_count=3),

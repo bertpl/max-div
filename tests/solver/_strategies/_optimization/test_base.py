@@ -1,3 +1,4 @@
+from typing import Callable
 from unittest.mock import Mock
 
 import numpy as np
@@ -11,8 +12,23 @@ from max_div.solver._strategies import OptimizationStrategy
 # =================================================================================================
 #  TEST - Basic functionality
 # =================================================================================================
+@pytest.mark.parametrize(
+    "factory_method",
+    [
+        OptimizationStrategy.random_swaps,
+    ],
+    ids=["random_swaps"],
+)
+def test_optimization_strategy_factory(factory_method: Callable[[], OptimizationStrategy]):
+    """Test factory methods of OptimizationStrategy base class."""
+
+    # --- act & assert ------------------------------------
+    assert isinstance(factory_method(), OptimizationStrategy)
+
+
 def test_optimization_strategy_factory():
-    assert isinstance(OptimizationStrategy.dummy(), OptimizationStrategy)
+    """Test factory methods of OptimizationStrategy base class."""
+    assert isinstance(OptimizationStrategy.random_swaps(), OptimizationStrategy)
 
 
 def test_optimization_strategy_properties():

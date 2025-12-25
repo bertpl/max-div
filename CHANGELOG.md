@@ -5,6 +5,10 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+    - solver framework
+       - implement `SwapBasedOptimizationStrategy` base class & first implementation `OptimRandomSwaps` (baseline method)
+ 
 - **improved**: 
     - solver framework
       - speed improvement of score computation in case of soft constraints

@@ -14,8 +14,8 @@ def example_problem_1() -> MaxDivSolver:
     selection_size = 5
     init_strategy = InitializationStrategy.random_one_shot()
     solver_steps = [
-        OptimizationStep(OptimizationStrategy.dummy(), seconds(0.1)),
-        OptimizationStep(OptimizationStrategy.dummy(), iterations(1234)),
+        OptimizationStep(OptimizationStrategy.random_swaps(), seconds(0.1)),
+        OptimizationStep(OptimizationStrategy.random_swaps(), iterations(1234)),
     ]
     constraints = [
         Constraint(set(range(0, 5)), min_count=2, max_count=3),

@@ -1,9 +1,26 @@
+from functools import partial
+from typing import Callable
+
+import pytest
+
 from max_div.solver._solver_state import SolverState
 from max_div.solver._strategies import InitializationStrategy
 
 
-def test_initialization_strategy_factory():
-    assert isinstance(InitializationStrategy.random_one_shot(), InitializationStrategy)
+@pytest.mark.parametrize(
+    "factory_method",
+    [
+        InitializationStrategy.random_one_shot,
+        partial(InitializationStrategy.random_batched, b=2),
+        partial(InitializationStrategy.eager, nc=2),
+    ],
+    ids=["random_one_shot", "random_batched", "eager"],
+)
+def test_initialization_strategy_factory(factory_method: Callable[[], InitializationStrategy]):
+    """Test factory methods of InitializationStrategy base class."""
+
+    # --- act & assert ------------------------------------
+    assert isinstance(factory_method(), InitializationStrategy)
 
 
 def test_initialization_strategy_properties():
