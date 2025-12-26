@@ -1,15 +1,75 @@
 from dataclasses import dataclass
 from functools import partial
-from itertools import product
 from typing import Callable
 
-from max_div.benchmarks import BenchmarkProblemFactory
-from max_div.solver import DiversityMetric, MaxDivProblem
-from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
+from max_div._cli.formatting import format_table_as_markdown, format_table_for_console
+from max_div.solver import DiversityMetric, MaxDivSolver, MaxDivSolverBuilder
+from max_div.solver._strategies import InitializationStrategy
+
+from ._base import BenchmarkProblemGenerator, BenchmarkSolverConstructor
 
 
 # =================================================================================================
-#  Initialization strategies
+#  Main class
+# =================================================================================================
+class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
+    def __init__(self, problem_name: str, diversity_metric: DiversityMetric = DiversityMetric.geomean_separation()):
+        super().__init__(
+            benchmark_type="initialization",
+            problem_generator=BenchmarkProblemGenerator(problem_name, diversity_metric),
+        )
+        self._strategies: dict[str, InitStrategyInfo] = {
+            info.name: info for info in get_initialization_strategies(self.has_constraints)
+        }
+
+    def estimated_duration(self, size: int, strat_name: str) -> int:
+        return size * size  # initialization methods roughly scale with O(kn) = O(size^2)
+
+    def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
+        problem = self.construct_problem(size)
+        strat_info = self._strategies[strat_name]
+        return MaxDivSolverBuilder(problem).set_initialization_strategy(strat_info.factory()).with_seed(seed).build()
+
+    def strategy_names(self) -> list[str]:
+        return list(self._strategies.keys())
+
+    def show_strategies_table(self, markdown: bool):
+        # --- prepare table data ------------------------------
+        if markdown:
+            headers = ["`name`", "`class`", "`params`"]
+        else:
+            headers = ["name", "class", "params"]
+
+        if self.has_constraints:
+            headers.append("Constraint-aware")
+
+        table_data = []
+        for strat_info in self._strategies.values():
+            table_data.append(
+                [
+                    f"`{strat_info.name}`" if markdown else strat_info.name,
+                    strat_info.class_name,
+                    strat_info.class_kwargs,
+                ]
+            )
+            if self.has_constraints:
+                table_data[-1].append(strat_info.uses_constraints)
+
+        # --- show table ---
+        if markdown:
+            display_data = format_table_as_markdown(headers, table_data)
+        else:
+            display_data = format_table_for_console(headers, table_data)
+
+        print("Tested Initialization strategies:")
+        print()
+        for line in display_data:
+            print(line)
+        print()
+
+
+# =================================================================================================
+#  Helper classes
 # =================================================================================================
 @dataclass
 class InitStrategyInfo:
@@ -142,75 +202,3 @@ def get_initialization_strategies(constraints: bool) -> list[InitStrategyInfo]:
 
     # --- return ------------------------------------------
     return [info for info in result if (not info.needs_constraints) or constraints]
-
-
-# =================================================================================================
-#  Optimization strategies
-# =================================================================================================
-@dataclass
-class OptimStrategyInfo:
-    name: str
-    class_name: str
-    class_kwargs: str
-    factory: Callable[[], OptimizationStrategy]
-    needs_constraints: bool
-    uses_constraints: bool
-
-
-def get_optimization_strategies(constraints: bool) -> list[OptimStrategyInfo]:
-    """
-    Construct a list of optimization strategies based on whether the problem has constraints.
-    Result is returns as a list of OptimStrategyInfo objects.
-    """
-    result: list[OptimStrategyInfo] = []
-
-    # --- OptimRandomSwaps --------------------------------
-    result.extend(
-        [
-            OptimStrategyInfo(
-                name="REF",
-                class_name="OptimRandomSwaps",
-                class_kwargs="/",
-                factory=OptimizationStrategy.random_swaps,
-                needs_constraints=False,
-                uses_constraints=False,
-            ),
-        ]
-    )
-
-    # --- return ------------------------------------------
-    return [info for info in result if (not info.needs_constraints) or constraints]
-
-
-# =================================================================================================
-#  Problem construction & properties
-# =================================================================================================
-def problem_has_constraints(name: str, size_range: list[int]) -> bool:
-    """Determine if a benchmark problem has constraints based on its name and size range."""
-    m_values = [
-        construct_problem_instance(
-            name=name,
-            size=size,
-            diversity_metric=DiversityMetric.geomean_separation(),
-        ).m
-        for size in size_range
-    ]
-    return max(m_values) > 0
-
-
-def construct_problem_instance(name: str, size: int, diversity_metric: DiversityMetric) -> MaxDivProblem:
-    """
-    Construct a benchmark problem instance.
-    In case some problem types have different parameters, we can encapsulate that logic here.
-    """
-    return BenchmarkProblemFactory.construct_problem(
-        name=name,
-        size=size,
-        diversity_metric=diversity_metric,
-    )
-
-
-def get_size_range(speed: float) -> list[int]:
-    """Get size range based on speed parameter."""
-    max_size = round(64 ** (1 - speed))  # 64 for speed=0.0 to 1 for speed=1.0
-    return sorted({value for c, k in product([1.0, 1.5], range(50)) if (value := round(c * (2.0**k))) <= max_size})
