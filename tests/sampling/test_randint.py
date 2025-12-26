@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 
-from max_div.sampling.uncon import randint
+from max_div.sampling.uncon import randint, randint_numba
 
 
 # =================================================================================================
@@ -472,3 +472,33 @@ def test_randint_non_uniform_without_replacement_probs(use_numba: bool, factor: 
     assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all([p[i] > 0 for i in samples])
     assert np.array_equal(p, p_before), "p array should never be modified."
+
+
+# =================================================================================================
+#  Test if we never select i such that p[i]
+# =================================================================================================
+#
+#     -----------------------------------------------------------------------------------
+#  --------- NOTE: commented out to not clutter test stats with 2000 skipped tests ---------
+#     -----------------------------------------------------------------------------------
+#
+# @pytest.mark.skip(reason="Very slow; only for manual checks.")
+# @pytest.mark.parametrize("seed_offset", [np.int64(42 + (i * 1_000_000_000)) for i in range(1000)])
+# @pytest.mark.parametrize("replace", [False, True])
+# def test_randint_numba_zero_probability_selection(seed_offset: np.int64, replace: bool):
+#     """Test that `randint_numba` never selects indices with zero probability, by triggering it 1_000_000_000 times."""
+#     # --- arrange -----------------------------------------
+#     n = np.int32(4)
+#     k = np.int32(2)
+#     p = np.array([0.0, 0.5, 0.0, 0.5], dtype=np.float32)
+#     i_selected: set[np.int32] = set()
+#
+#     # --- act ---------------------------------------------
+#     for seed in np.arange(seed_offset, seed_offset + 1_000_000, dtype=np.int64):
+#         samples = randint_numba(n=n, k=k, replace=replace, p=p, seed=seed)
+#         for s in samples:
+#             i_selected.add(s)
+#
+#     # --- assert ------------------------------------------
+#     for i in i_selected:
+#         assert p[i] > 0.0, f"Selected index {i} with zero probability!"

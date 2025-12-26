@@ -1,11 +1,17 @@
 import numpy as np
+import pytest
 
 from max_div.internal.math.random import (
+    _TINY_F32,
+    _TINY_F64,
+    _xoroshiro128plus_next,
     rand_float32,
     rand_float64,
     rand_int32,
     rand_int32_array,
     rand_int64,
+    rand_nz_float32,
+    rand_nz_float64,
     set_seed,
 )
 
@@ -38,8 +44,6 @@ def test_rand_float32_seed():
     f21 = rand_float32(rng_state_2)
     f22 = rand_float32(rng_state_2)
 
-    print(type(f11), f11)
-
     # --- assert ------------------------------------------
     assert f11 == f21
     assert f12 == f22
@@ -58,8 +62,69 @@ def test_rand_float32_stats():
     assert min(values) < 0.01
     assert max(values) > 0.99
     assert 0.49 < np.mean(values) < 0.51
-    # 100% uniqueness not expected when sampling 10000 out of 2^24 possible values
+    # 100% uniqueness not expected when sampling 10000 out of ~2^24 possible values
     assert len(set(values)) > 0.99 * len(values)
+
+
+@pytest.mark.parametrize(
+    "rng_state, expected_uint64, expected_float32",
+    [
+        (
+            [0, 0],
+            0,
+            0.0,  # 0.0 return value is possible with this function
+        ),
+        (
+            [np.iinfo(np.uint64).max, 0],
+            np.iinfo(np.uint64).max,
+            1.0 - np.finfo(np.float32).eps,
+        ),
+    ],
+    ids=["min_value", "max_value"],
+)
+def test_rand_float32_exact_range(rng_state: list[int], expected_uint64: int, expected_float32: float):
+    # --- arrange -----------------------------------------
+    rng_state_np = np.array(rng_state, dtype=np.uint64)
+
+    # --- act ---------------------------------------------
+    value_uint64 = _xoroshiro128plus_next(rng_state_np.copy())  # copy rng_state to avoid modifying the original
+    value_float32 = rand_float32(rng_state_np)
+
+    # --- assert ------------------------------------------
+    assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
+    assert value_float32 == expected_float32
+
+
+# -------------------------------------------------------------------------
+#  rand_nz_float32
+# -------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "rng_state, expected_uint64, expected_float32",
+    [
+        (
+            [0, 0],
+            0,
+            _TINY_F32,  # 0.0 return value should NOT be possible with this function
+        ),
+        (
+            [np.iinfo(np.uint64).max, 0],
+            np.iinfo(np.uint64).max,
+            1.0 - np.finfo(np.float32).eps,
+        ),
+    ],
+    ids=["min_value", "max_value"],
+)
+def test_rand_nz_float32_exact_range(rng_state: list[int], expected_uint64: int, expected_float32: float):
+    # --- arrange -----------------------------------------
+    rng_state_np = np.array(rng_state, dtype=np.uint64)
+
+    # --- act ---------------------------------------------
+    value_uint64 = _xoroshiro128plus_next(rng_state_np.copy())  # copy rng_state to avoid modifying the original
+    value_float32 = rand_nz_float32(rng_state_np)
+
+    # --- assert ------------------------------------------
+    assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
+    assert value_float32 == expected_float32
 
 
 # -------------------------------------------------------------------------
@@ -98,6 +163,67 @@ def test_rand_float64_stats():
     assert 0.49 < np.mean(values) < 0.51
     # 100% uniqueness expected when sampling 10000 out of 2^53 possible values
     assert len(set(values)) == len(values)
+
+
+@pytest.mark.parametrize(
+    "rng_state, expected_uint64, expected_float64",
+    [
+        (
+            [0, 0],
+            0,
+            0.0,  # 0.0 return value is possible with this function
+        ),
+        (
+            [np.iinfo(np.uint64).max, 0],
+            np.iinfo(np.uint64).max,
+            1.0 - np.finfo(np.float64).eps,
+        ),
+    ],
+    ids=["min_value", "max_value"],
+)
+def test_rand_float64_exact_range(rng_state: list[int], expected_uint64: int, expected_float64: float):
+    # --- arrange -----------------------------------------
+    rng_state_np = np.array(rng_state, dtype=np.uint64)
+
+    # --- act ---------------------------------------------
+    value_uint64 = _xoroshiro128plus_next(rng_state_np.copy())  # copy rng_state to avoid modifying the original
+    value_float64 = rand_float64(rng_state_np)
+
+    # --- assert ------------------------------------------
+    assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
+    assert value_float64 == expected_float64
+
+
+# -------------------------------------------------------------------------
+#  rand_nz_float64
+# -------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "rng_state, expected_uint64, expected_float64",
+    [
+        (
+            [0, 0],
+            0,
+            _TINY_F64,  # 0.0 return value should NOT be possible with this function
+        ),
+        (
+            [np.iinfo(np.uint64).max, 0],
+            np.iinfo(np.uint64).max,
+            1.0 - np.finfo(np.float64).eps,
+        ),
+    ],
+    ids=["min_value", "max_value"],
+)
+def test_rand_nz_float64_exact_range(rng_state: list[int], expected_uint64: int, expected_float64: float):
+    # --- arrange -----------------------------------------
+    rng_state_np = np.array(rng_state, dtype=np.uint64)
+
+    # --- act ---------------------------------------------
+    value_uint64 = _xoroshiro128plus_next(rng_state_np.copy())  # copy rng_state to avoid modifying the original
+    value_float64 = rand_nz_float64(rng_state_np)
+
+    # --- assert ------------------------------------------
+    assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
+    assert value_float64 == expected_float64
 
 
 # -------------------------------------------------------------------------

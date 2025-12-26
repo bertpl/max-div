@@ -11,9 +11,12 @@ from max_div.internal.math.random import (
     rand_float32,
     rand_int32,
     rand_int32_array,
+    rand_nz_float32,
     set_seed,
 )
 from max_div.internal.math.select_k_minmax import select_k_min
+
+_SMALLEST_F32 = np.finfo(np.float32).smallest_subnormal
 
 
 # =================================================================================================
@@ -161,6 +164,17 @@ def randint_numba(
 
     NOTES:
 
+     - For benchmark results, see [here](../../../../benchmarks/internal/bm_randint.md)
+
+     - When providing `p`...
+
+         - we will never return a sample `i` for which `p[i]==0.0`, except when replace=False and there are no
+           k options with p>0.0.
+
+         - it is not needed to normalize it to sum to 1; any non-negative values are accepted.
+           However, we do require that sum(p) > 0, such that it can be guaranteed we always return a sample
+           with p[i] > 0.
+
      - using the np.random.Generator API incurs an extra 3-4 μsec overhead per call compared to using the legacy
        np.random functions. The main reason is that the new interface requires calls through the numpy C-API, while the
        legacy functions are re-implemented in Numba and compiled together with the rest of the numba-accelerated code.
@@ -170,8 +184,6 @@ def randint_numba(
        taken into account.  Therefore, we use float32 representation and use a fast-approx-log function in the
        Efraimidis-Spirakis sampling method.  Overall this can result in <1% deviation from target probabilities, i.e.
          p[3] = 0.1 --> actual frequency in samples = [0.099 to 0.101].
-
-     - For benchmark results, see [here](../../../../benchmarks/internal/bm_randint.md)
 
     <br>
 
@@ -226,7 +238,21 @@ def randint_numba(
             #  - computing the below in a loop, is faster than writing a np-vectorized one-liner
             #  - implementing & calling a rand_float32_array outside the loop once is not faster
             for i in range(k):  # k x O(log(n))
-                r = rand_float32(rng_state) * p_sum
+                # ---------------------
+                # NOTE about adding _SMALLEST_F32 below:
+                #   a) np.searchsorted will return idx such that cdf[idx-1] < r <= cdf[idx]
+                #                               hence, such that cdf[idx-1] < r <= cdf[idx-1] + p[idx]
+                #      as a result, _NORMALLY_, it will never return an idx for which p[idx]==0.0.
+                #   b) HOWEVER, a corner case exists in case r <= cdf[0], which is an exception where
+                #      searchsorted will return idx=0.
+                #      This is problematic, in case p[0]==0.0 and r=0.0, since then idx=0 is invalid.
+                #
+                #  --> therefore we will simply ensure r>0.0 by adding a tiny number, which solves this
+                #      corner case entirely.
+                #  --> using r = rand_nz_float32(...)*p_sum would not solve this case entirely, in case p_sum if very
+                #      small, which might cause the product to underflow and still cause cases of r=0.0.
+                # ---------------------
+                r = _SMALLEST_F32 + (rand_nz_float32(rng_state) * p_sum)  # ensure r>0.0
                 idx = np.searchsorted(cdf, r)
                 samples[i] = idx
             return samples

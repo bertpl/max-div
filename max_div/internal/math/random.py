@@ -17,12 +17,13 @@ from numpy.typing import NDArray
 #  Constants
 # =================================================================================================
 
-# Constant for converting uint64 to float64 in [0.0, 1.0): 1.0 / 2**53
-_TO_FLOAT64 = float64(1.0 / 9007199254740992.0)
+# Constant for converting uint64 range to float64 in [0.0, 1.0)
+_UINT64_TO_FLOAT64 = float64((1.0 - np.finfo(float64).eps) / (2**64))  # map 2**64 -> (1.0 - eps_f64)
+_TINY_F64 = np.float64((2**-8) * np.finfo(float64).eps)  # small (<< EPS_F64) non-zero float64, far from underflow
 
-
-# Constant for converting uint64 to float32 in [0.0, 1.0): 1.0 / 2**24
-_TO_FLOAT32 = float32(1.0 / 16777216.0)
+# Constant for converting uint64 range to float32 in [0.0, 1.0)
+_UINT64_TO_FLOAT32 = float32((1.0 - np.finfo(float32).eps) / (2**64))  # map 2**64 -> (1.0 - eps_f32)
+_TINY_F32 = np.float32((2**-8) * np.finfo(float32).eps)  # small (<< EPS_F32) non-zero float32, far from underflow
 
 
 # =================================================================================================
@@ -77,14 +78,34 @@ def set_seed(seed: np.int64) -> NDArray[uint64]:
 def rand_float64(rng_state: NDArray[uint64]) -> float64:
     """Generate a random float64 in [0.0, 1.0) using the provided rng_state."""
     rnd_uint64 = _xoroshiro128plus_next(rng_state)
-    return float64((rnd_uint64 >> uint64(11)) * _TO_FLOAT64)  # 2**-53
+    return float64(rnd_uint64) * _UINT64_TO_FLOAT64
+
+
+@numba.njit("float64(uint64[:])", fastmath=True, inline="always")
+def rand_nz_float64(rng_state: NDArray[uint64]) -> float64:
+    """Generate a random float64 in (0.0, 1.0) using the provided rng_state."""
+    rnd_uint64 = _xoroshiro128plus_next(rng_state)
+    # To ensure results >0.0, we add a very small positive number.
+    #  --> Small enough to not influence the max. value or any of the relevant statistics.
+    #  --> Large enough to avoid exact 0.0 results and steer clear from underflow
+    return float64(rnd_uint64) * _UINT64_TO_FLOAT64 + _TINY_F64  # should compile to FMA instruction
 
 
 @numba.njit("float32(uint64[:])", fastmath=True, inline="always")
 def rand_float32(rng_state: NDArray[uint64]) -> float32:
     """Generate a random float32 in [0.0, 1.0) using the provided rng_state."""
     rnd_uint64 = _xoroshiro128plus_next(rng_state)
-    return float32((rnd_uint64 >> uint64(40)) * _TO_FLOAT32)  # 2**-24
+    return float32(rnd_uint64) * _UINT64_TO_FLOAT32
+
+
+@numba.njit("float32(uint64[:])", fastmath=True, inline="always")
+def rand_nz_float32(rng_state: NDArray[uint64]) -> float32:
+    """Generate a random float32 in (0.0, 1.0) using the provided rng_state."""
+    rnd_uint64 = _xoroshiro128plus_next(rng_state)
+    # To ensure results >0.0, we add a very small positive number.
+    #  --> Small enough to not influence the max. value or any of the relevant statistics.
+    #  --> Large enough to avoid exact 0.0 results and steer clear from underflow
+    return float32(rnd_uint64) * _UINT64_TO_FLOAT32 + _TINY_F32  # should compile to FMA instruction
 
 
 @numba.njit("int64(uint64[:], int64, int64)", fastmath=True, inline="always")
