@@ -5,6 +5,8 @@ import numpy as np
 from max_div.benchmarks._registry import BenchmarkProblem
 from max_div.solver import Constraint, DistanceMetric, DiversityMetric, MaxDivProblem
 
+from ._helpers import sort_vectors
+
 
 # =================================================================================================
 #  A4 - Gaussian - Intermediate constraints
@@ -41,6 +43,7 @@ class BenchmarkProblem_A4(BenchmarkProblem):
         # Generate gaussian random vectors
         np.random.seed(42)
         vectors = np.random.randn(n, d).astype(np.float32) + 0.5  # shift by 0.5 (distribution of signs ~69%-31%)
+        vectors = sort_vectors(vectors)  # sort by increasing L2 norm of rows
 
         # Generate constraints
         constraints: list[Constraint] = []

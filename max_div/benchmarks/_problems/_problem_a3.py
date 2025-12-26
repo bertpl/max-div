@@ -5,6 +5,8 @@ import numpy as np
 from max_div.benchmarks._registry import BenchmarkProblem
 from max_div.solver import Constraint, DistanceMetric, DiversityMetric, MaxDivProblem
 
+from ._helpers import sort_vectors
+
 
 # =================================================================================================
 #  A3 - Non-Uniform - Simple constraints
@@ -43,6 +45,7 @@ class BenchmarkProblem_A3(BenchmarkProblem):
         uniform_col = np.random.rand(n, 1)
         gaussian_col = np.random.randn(n, 1)
         vectors = np.concatenate((uniform_col, gaussian_col), axis=1).astype(np.float32)
+        vectors = sort_vectors(vectors)  # sort by increasing L2 norm of rows
 
         # Generate constraints
         constraints: list[Constraint] = []

@@ -5,6 +5,8 @@ import numpy as np
 from max_div.benchmarks._registry import BenchmarkProblem
 from max_div.solver import DistanceMetric, DiversityMetric, MaxDivProblem
 
+from ._helpers import sort_vectors
+
 
 # =================================================================================================
 #  A2 - Gaussian - Unconstrained
@@ -41,6 +43,7 @@ class BenchmarkProblem_A2(BenchmarkProblem):
         # Generate gaussian random vectors
         np.random.seed(42)
         vectors = np.random.randn(n, d).astype(np.float32)
+        vectors = sort_vectors(vectors)  # sort by increasing L2 norm of rows
 
         return MaxDivProblem(
             vectors=vectors,

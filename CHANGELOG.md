@@ -7,6 +7,8 @@
 
 - **improved**:
   - streamline solver benchmarking implementation
+  - sort vectors in solver benchmark problems such as to penalize degenerate/naive problem initialization
+    (i.e. make the first `k` vectors not randomly scattered, but clustered together)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.8
