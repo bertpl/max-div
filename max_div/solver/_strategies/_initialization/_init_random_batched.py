@@ -2,7 +2,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div.internal.math.modify_p_selectivity import modify_p_selectivity
+from max_div.internal.math.modify_p_selectivity import exponential_selectivity
 from max_div.sampling.con import randint_constrained
 from max_div.sampling.uncon import randint_numba
 from max_div.solver._solver_state import SolverState
@@ -88,11 +88,10 @@ class InitRandomBatched(InitializationStrategy):
                 p += state.not_selected_separation_array  # so we can add in-place
 
                 modifier = min(0.9, k_done / k)  # proportional to progress; cap at 0.9 to avoid extremes
-                modify_p_selectivity(
-                    p=p,
-                    modifier=np.float32(modifier),
-                    method=self.__MODIFY_P_METHOD,
+                exponential_selectivity(
+                    p_in=p,
                     p_out=p,  # in-place
+                    modifier=np.float32(modifier),
                 )
 
             # --- sample ---

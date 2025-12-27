@@ -6,9 +6,12 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
-  - streamline solver benchmarking implementation
-  - sort vectors in solver benchmark problems such as to penalize degenerate/naive problem initialization
-    (i.e. make the first `k` vectors not randomly scattered, but clustered together)
+    - solver strategies
+        - switch to more generic and faster `exponential_selectivity` in initialization strategies     
+    - solver benchmarking
+        - streamline solver benchmarking implementation
+        - sort vectors in solver benchmark problems such as to penalize degenerate/naive problem initialization
+          (i.e. make the first `k` vectors not randomly scattered, but clustered together)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.8
