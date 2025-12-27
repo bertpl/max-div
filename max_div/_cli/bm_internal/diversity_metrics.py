@@ -29,13 +29,14 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
 
     :param speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
     :param markdown: If `True`, outputs the results as a Markdown table.
+    :param file: If `True`, redirects output to a file instead of console.
     """
 
     print("Benchmarking `DiversityMetric`...")
 
     # --- speed-dependent settings --------------------
     max_size = round(100_000 / (1_000**speed))
-    t_per_run = 0.05 / (1000.0**speed)
+    t_per_run = 0.01 / (1000.0**speed)
     n_warmup = int(8 - 5 * speed)
     n_benchmark = int(25 - 22 * speed)
 

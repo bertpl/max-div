@@ -56,6 +56,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
 
     :param speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
     :param markdown: If `True`, outputs the results as a Markdown table.
+    :param file: If `True`, redirects output to a file instead of console.
     """
 
     # --- define formatting -------------------------------
@@ -87,9 +88,6 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
 
     # --- speed-dependent settings --------------------
     max_count = int(100 * (0.01**speed))  # max_count=100 if speed=0;  max_count=1 at speed=1
-    t_per_run = 0.05 / (1000.0**speed)
-    n_warmup = int(8 - 5 * speed)
-    n_benchmark = int(25 - 22 * speed)
 
     # --- build scenarios ---------------------------------
     scenarios = [ScenarioA(), ScenarioB()]
@@ -198,7 +196,7 @@ def _benchmark(
 
     # speed-dependent settings
     index_range = int(100 * (0.02**speed))  # 100 at speed=0, 2 at speed=1
-    t_per_run = 0.05 / (1000.0**speed)
+    t_per_run = 0.01 / (1000.0**speed)
     n_warmup = int(8 - 5 * speed)
     n_benchmark = int(25 - 22 * speed)
 
@@ -277,8 +275,8 @@ def _determine_precision(
     else:
         p = p.astype(np.float32)
 
-    # Calculate number of runs based on speed (1000 at speed=0, 2 at speed=1)
-    n_runs = int(1000 * (0.002**speed))
+    # Calculate number of runs based on speed (200 at speed=0, 1 at speed=1)
+    n_runs = round(200 ** (1 - speed))
 
     satisfied_count = 0
     for run_idx in range(n_runs):

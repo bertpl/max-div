@@ -8,19 +8,19 @@ Tested Optimization strategies (1000 iterations):
 
 | `d` | `n`  | `k` | `m`          | `REF`                                                    |
 | --- | ---- | --- | ------------ | -------------------------------------------------------- |
-| 1   | 150  | 10  | 3            | <span style="color:#00aa00">**38.26 msec ± 0.6%**</span> |
-| 2   | 300  | 20  | 6            | <span style="color:#00aa00">**54.67 msec ± 1.3%**</span> |
-| 3   | 450  | 30  | 9            | <span style="color:#00aa00">**71.19 msec ± 1.2%**</span> |
-| 4   | 600  | 40  | 12           | <span style="color:#00aa00">**86.88 msec ± 0.8%**</span> |
-| 6   | 900  | 60  | 18           | <span style="color:#00aa00">**116.7 msec ± 0.9%**</span> |
-| 8   | 1200 | 80  | 24           | <span style="color:#00aa00">**155.2 msec ± 1.1%**</span> |
-| 12  | 1800 | 120 | 36           | <span style="color:#00aa00">**214.0 msec ± 1.6%**</span> |
-| 16  | 2400 | 160 | 48           | <span style="color:#00aa00">**289.1 msec ± 3.5%**</span> |
-| 24  | 3600 | 240 | 72           | <span style="color:#00aa00">**425.9 msec ± 1.7%**</span> |
-| 32  | 4800 | 320 | 96           | <span style="color:#00aa00">**602.6 msec ± 1.7%**</span> |
-| 48  | 7200 | 480 | 144          | <span style="color:#00aa00">**886.3 msec ± 0.7%**</span> |
-| 64  | 9600 | 640 | 192          | <span style="color:#00aa00">**1.235 sec  ± 0.5%**</span> |
-|     |      |     | **Geomean:** | <span style="color:#00aa00">**199.9 msec ± 1.3%**</span> |
+| 1   | 150  | 10  | 3            | <span style="color:#00aa00">**37.19 msec ± 0.5%**</span> |
+| 2   | 300  | 20  | 6            | <span style="color:#00aa00">**53.03 msec ± 0.3%**</span> |
+| 3   | 450  | 30  | 9            | <span style="color:#00aa00">**69.11 msec ± 0.4%**</span> |
+| 4   | 600  | 40  | 12           | <span style="color:#00aa00">**84.89 msec ± 0.5%**</span> |
+| 6   | 900  | 60  | 18           | <span style="color:#00aa00">**118.8 msec ± 1.2%**</span> |
+| 8   | 1200 | 80  | 24           | <span style="color:#00aa00">**158.1 msec ± 2.8%**</span> |
+| 12  | 1800 | 120 | 36           | <span style="color:#00aa00">**214.6 msec ± 2.5%**</span> |
+| 16  | 2400 | 160 | 48           | <span style="color:#00aa00">**292.4 msec ± 6.5%**</span> |
+| 24  | 3600 | 240 | 72           | <span style="color:#00aa00">**417.5 msec ± 0.7%**</span> |
+| 32  | 4800 | 320 | 96           | <span style="color:#00aa00">**602.1 msec ± 3.5%**</span> |
+| 48  | 7200 | 480 | 144          | <span style="color:#00aa00">**824.0 msec ± 1.0%**</span> |
+| 64  | 9600 | 640 | 192          | <span style="color:#00aa00">**1.138 sec  ± 0.5%**</span> |
+|     |      |     | **Geomean:** | <span style="color:#00aa00">**196.0 msec ± 1.7%**</span> |
 
 ### Diversity Score
 
