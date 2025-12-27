@@ -5,6 +5,10 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+    - solver strategies
+       - implement `OptimGuidedSwaps` optimization strategy, the intended workhorse strategy for the solver 
+
 - **improved**:
     - solver strategies
         - switch to more generic and faster `exponential_selectivity` in initialization strategies     

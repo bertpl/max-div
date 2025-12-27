@@ -99,6 +99,22 @@ class OptimizationStrategy(StrategyBase, ABC):
         raise NotImplementedError()
 
     # -------------------------------------------------------------------------
+    #  Helpers
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def initial_param_value(param: float | ParameterSchedule) -> float:
+        """
+        Helper method to get the initial value of a parameter that may be scheduled or fixed.
+        Intended for use inside constructors of child classes.
+        :param param: (float | ParameterSchedule) parameter to get initial value for
+        :return: (float) initial value of the parameter
+        """
+        if isinstance(param, ParameterSchedule):
+            return param.get_value(f=0.0)
+        else:
+            return float(param)
+
+    # -------------------------------------------------------------------------
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
@@ -106,6 +122,29 @@ class OptimizationStrategy(StrategyBase, ABC):
         from ._optim_random_swaps import OptimRandomSwaps
 
         return OptimRandomSwaps()
+
+    @classmethod
+    def guided_swaps(
+        cls,
+        min_swap_size: int = 1,
+        max_swap_size: int = 1,
+        swap_size_lambda: float | ParameterSchedule = 1.0,
+        constraint_softness: float | ParameterSchedule = 0.0,
+        p_add_constraint_aware: float | ParameterSchedule = 1.0,
+        remove_selectivity_modifier: float | ParameterSchedule = 0.0,
+        add_selectivity_modifier: float | ParameterSchedule = 0.0,
+    ) -> Self:
+        from ._optim_guided_swaps import OptimGuidedSwaps
+
+        return OptimGuidedSwaps(
+            min_swap_size=min_swap_size,
+            max_swap_size=max_swap_size,
+            swap_size_lambda=swap_size_lambda,
+            constraint_softness=constraint_softness,
+            p_add_constraint_aware=p_add_constraint_aware,
+            remove_selectivity_modifier=remove_selectivity_modifier,
+            add_selectivity_modifier=add_selectivity_modifier,
+        )
 
 
 # =================================================================================================
@@ -149,8 +188,8 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         )
         self.min_swap_size: np.int32 = np.int32(min_swap_size)
         self.max_swap_size: np.int32 = np.int32(max_swap_size)
-        self.swap_size_lambda = swap_size_lambda
-        self.constraint_softness = constraint_softness
+        self.swap_size_lambda: float = self.initial_param_value(swap_size_lambda)
+        self.constraint_softness: float = self.initial_param_value(constraint_softness)
 
     # -------------------------------------------------------------------------
     #  Single Iteration
@@ -205,14 +244,14 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     def _samples_to_be_removed(
         self,
         state: SolverState,
-        n: np.int32,
+        n_to_remove: np.int32,
         seed: np.int64,
     ) -> NDArray[np.int32]:
         """
         Determine which n samples to remove from the current selection.  The values returned should be indices present
         in state.selected_index_array.
         :param state: (SolverState) current solver state, with # selected samples = k
-        :param n: (np.int32) number of samples to be removed  (swap size)
+        :param n_to_remove: (np.int32) number of samples to be removed  (swap size)
         :param seed: (np.int64) random seed to be used for any sampling
         :return: (int32 ndarray) of shape (n,) with indices of samples to be REMOVED
         """
@@ -222,7 +261,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     def _samples_to_be_added(
         self,
         state: SolverState,
-        n: np.int32,
+        n_to_add: np.int32,
         samples_just_removed: NDArray[np.int32],
         seed: np.int64,
     ) -> NDArray[np.int32]:
@@ -230,7 +269,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         Determine which n samples to add to the current selection, right after having removed n samples.
         The values returned should be indices present in state.not_selected_index_array.
         :param state: (SolverState) current solver state, with # selected samples = k-n
-        :param n: (np.int32) number of samples to be added  (swap size)
+        :param n_to_add: (np.int32) number of samples to be added  (swap size)
         :param samples_just_removed: (int32 ndarray) of shape (n,) with indices of samples that were just removed
                                           (potentially to be taken into account to avoid resampling them)
         :param seed: (np.int64) random seed to be used for any sampling

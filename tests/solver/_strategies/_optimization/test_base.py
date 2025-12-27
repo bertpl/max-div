@@ -45,6 +45,23 @@ def test_optimization_strategy_properties():
     assert TestOptimizationStrategy("custom_name").name == "custom_name"
 
 
+@pytest.mark.parametrize(
+    "param, expected_initial_value",
+    [
+        (1.2345, 1.2345),
+        (1, 1.0),
+        (linear(3.456, 7.890), 3.456),
+    ],
+)
+def test_optimization_strategy_initial_param_value(param: ParameterSchedule | float, expected_initial_value: float):
+    # --- act ---------------------------------------------
+    initial_value = OptimizationStrategy.initial_param_value(param)
+
+    # --- assert ------------------------------------------
+    assert isinstance(initial_value, float)
+    assert initial_value == expected_initial_value
+
+
 # =================================================================================================
 #  TEST - Parameter Scheduling
 # =================================================================================================
