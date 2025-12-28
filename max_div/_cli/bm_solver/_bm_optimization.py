@@ -1,9 +1,12 @@
 from dataclasses import dataclass
+from functools import partial
 from typing import Callable
 
 from max_div._cli.formatting import format_table_as_markdown, format_table_for_console
+from max_div.internal.formatting import md_multiline
 from max_div.solver import DiversityMetric, MaxDivSolver, MaxDivSolverBuilder
 from max_div.solver._duration import iterations
+from max_div.solver._scheduling import ease_in_out, linear
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
@@ -116,6 +119,151 @@ def get_optimization_strategies(constraints: bool) -> list[OptimStrategyInfo]:
                 factory=OptimizationStrategy.random_swaps,
                 needs_constraints=False,
                 uses_constraints=False,
+            ),
+        ]
+    )
+
+    # --- OptimGuidedSwaps --------------------------------
+    result.extend(
+        [
+            OptimStrategyInfo(
+                name="GS(1)",
+                class_name="OptimGuidedSwaps",
+                class_kwargs="(default)",
+                factory=OptimizationStrategy.guided_swaps,
+                needs_constraints=False,
+                uses_constraints=True,
+            ),
+            OptimStrategyInfo(
+                name="GS(3)",
+                class_name="OptimGuidedSwaps",
+                class_kwargs=md_multiline(
+                    [
+                        "min_swap_size=1",
+                        "max_swap_size=3",
+                    ]
+                ),
+                factory=partial(OptimizationStrategy.guided_swaps, min_swap_size=3, max_swap_size=3),
+                needs_constraints=False,
+                uses_constraints=True,
+            ),
+            OptimStrategyInfo(
+                name="GS(1-3)",
+                class_name="OptimGuidedSwaps",
+                class_kwargs=md_multiline(
+                    [
+                        "min_swap_size=1",
+                        "max_swap_size=3",
+                    ]
+                ),
+                factory=partial(OptimizationStrategy.guided_swaps, min_swap_size=1, max_swap_size=3),
+                needs_constraints=False,
+                uses_constraints=True,
+            ),
+            OptimStrategyInfo(
+                name="GS(1-3,soft)",
+                class_name="OptimGuidedSwaps",
+                class_kwargs=md_multiline(
+                    [
+                        "min_swap_size=1",
+                        "max_swap_size=3",
+                        "constraint_softness=ease_in_out(1.0,0.0)",
+                        "p_add_constraint_aware=ease_in_out(0.0,1.0)",
+                    ]
+                ),
+                factory=partial(
+                    OptimizationStrategy.guided_swaps,
+                    min_swap_size=1,
+                    max_swap_size=3,
+                    constraint_softness=ease_in_out(1.0, 0.0),
+                    p_add_constraint_aware=ease_in_out(0.0, 1.0),
+                ),
+                needs_constraints=True,
+                uses_constraints=True,
+            ),
+            OptimStrategyInfo(
+                name="GS(1-3,wide)",
+                class_name="OptimGuidedSwaps",
+                class_kwargs=md_multiline(
+                    [
+                        "min_swap_size=1",
+                        "max_swap_size=3",
+                        "remove_selectivity_modifier=-0.8",
+                        "add_selectivity_modifier=-0.8",
+                    ]
+                ),
+                factory=partial(
+                    OptimizationStrategy.guided_swaps,
+                    min_swap_size=1,
+                    max_swap_size=3,
+                    remove_selectivity_modifier=-0.8,
+                    add_selectivity_modifier=-0.8,
+                ),
+                needs_constraints=False,
+                uses_constraints=True,
+            ),
+            OptimStrategyInfo(
+                name="GS(1-3,narrow)",
+                class_name="OptimGuidedSwaps",
+                class_kwargs=md_multiline(
+                    [
+                        "min_swap_size=1",
+                        "max_swap_size=3",
+                        "remove_selectivity_modifier=0.8",
+                        "add_selectivity_modifier=0.8",
+                    ]
+                ),
+                factory=partial(
+                    OptimizationStrategy.guided_swaps,
+                    min_swap_size=1,
+                    max_swap_size=3,
+                    remove_selectivity_modifier=0.8,
+                    add_selectivity_modifier=0.8,
+                ),
+                needs_constraints=False,
+                uses_constraints=True,
+            ),
+            OptimStrategyInfo(
+                name="GS(1-3,wi->na)",
+                class_name="OptimGuidedSwaps",
+                class_kwargs=md_multiline(
+                    [
+                        "min_swap_size=1",
+                        "max_swap_size=3",
+                        "remove_selectivity_modifier=linear(-0.8,+0.8)",
+                        "add_selectivity_modifier=linear(-0.8,+0.8)",
+                    ]
+                ),
+                factory=partial(
+                    OptimizationStrategy.guided_swaps,
+                    min_swap_size=1,
+                    max_swap_size=3,
+                    remove_selectivity_modifier=linear(-0.8, 0.8),
+                    add_selectivity_modifier=linear(-0.8, 0.8),
+                ),
+                needs_constraints=False,
+                uses_constraints=True,
+            ),
+            OptimStrategyInfo(
+                name="GS(1-3,na->wi)",
+                class_name="OptimGuidedSwaps",
+                class_kwargs=md_multiline(
+                    [
+                        "min_swap_size=1",
+                        "max_swap_size=3",
+                        "remove_selectivity_modifier=linear(+0.8,-0.8)",
+                        "add_selectivity_modifier=linear(+0.8,-0.8)",
+                    ]
+                ),
+                factory=partial(
+                    OptimizationStrategy.guided_swaps,
+                    min_swap_size=1,
+                    max_swap_size=3,
+                    remove_selectivity_modifier=linear(0.8, -0.8),
+                    add_selectivity_modifier=linear(0.8, -0.8),
+                ),
+                needs_constraints=False,
+                uses_constraints=True,
             ),
         ]
     )

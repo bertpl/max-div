@@ -1,60 +1,68 @@
 Tested Optimization strategies (1000 iterations):
 
-| `name` | `class`          | `params` | Constraint-aware |
-| ------ | ---------------- | -------- | ---------------- |
-| `REF`  | OptimRandomSwaps | /        | False            |
+| `name`           | `class`          | `params`                                                                                                                          | Constraint-aware |
+| ---------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `REF`            | OptimRandomSwaps | /                                                                                                                                 | False            |
+| `GS(1)`          | OptimGuidedSwaps | (default)                                                                                                                         | True             |
+| `GS(3)`          | OptimGuidedSwaps | min_swap_size=1<br>max_swap_size=3                                                                                                | True             |
+| `GS(1-3)`        | OptimGuidedSwaps | min_swap_size=1<br>max_swap_size=3                                                                                                | True             |
+| `GS(1-3,soft)`   | OptimGuidedSwaps | min_swap_size=1<br>max_swap_size=3<br>constraint_softness=ease_in_out(1.0,0.0)<br>p_add_constraint_aware=ease_in_out(0.0,1.0)     | True             |
+| `GS(1-3,wide)`   | OptimGuidedSwaps | min_swap_size=1<br>max_swap_size=3<br>remove_selectivity_modifier=-0.8<br>add_selectivity_modifier=-0.8                           | True             |
+| `GS(1-3,narrow)` | OptimGuidedSwaps | min_swap_size=1<br>max_swap_size=3<br>remove_selectivity_modifier=0.8<br>add_selectivity_modifier=0.8                             | True             |
+| `GS(1-3,wi->na)` | OptimGuidedSwaps | min_swap_size=1<br>max_swap_size=3<br>remove_selectivity_modifier=linear(-0.8,+0.8)<br>add_selectivity_modifier=linear(-0.8,+0.8) | True             |
+| `GS(1-3,na->wi)` | OptimGuidedSwaps | min_swap_size=1<br>max_swap_size=3<br>remove_selectivity_modifier=linear(+0.8,-0.8)<br>add_selectivity_modifier=linear(+0.8,-0.8) | True             |
 
 ### Time Duration
 
-| `d` | `n`  | `k` | `m`          | `REF`                                                    |
-| --- | ---- | --- | ------------ | -------------------------------------------------------- |
-| 1   | 150  | 10  | 2            | <span style="color:#00aa00">**36.78 msec ± 0.4%**</span> |
-| 2   | 300  | 20  | 4            | <span style="color:#00aa00">**52.58 msec ± 0.6%**</span> |
-| 3   | 450  | 30  | 6            | <span style="color:#00aa00">**68.24 msec ± 0.3%**</span> |
-| 4   | 600  | 40  | 8            | <span style="color:#00aa00">**84.32 msec ± 0.4%**</span> |
-| 6   | 900  | 60  | 12           | <span style="color:#00aa00">**115.0 msec ± 0.7%**</span> |
-| 8   | 1200 | 80  | 16           | <span style="color:#00aa00">**149.7 msec ± 0.8%**</span> |
-| 12  | 1800 | 120 | 24           | <span style="color:#00aa00">**214.1 msec ± 1.4%**</span> |
-| 16  | 2400 | 160 | 32           | <span style="color:#00aa00">**331.2 msec ± 2.8%**</span> |
-| 24  | 3600 | 240 | 48           | <span style="color:#00aa00">**414.1 msec ± 3.3%**</span> |
-| 32  | 4800 | 320 | 64           | <span style="color:#00aa00">**570.4 msec ± 2.6%**</span> |
-| 48  | 7200 | 480 | 96           | <span style="color:#00aa00">**863.5 msec ± 1.6%**</span> |
-| 64  | 9600 | 640 | 128          | <span style="color:#00aa00">**1.233 sec  ± 1.4%**</span> |
-|     |      |     | **Geomean:** | <span style="color:#00aa00">**197.0 msec ± 1.3%**</span> |
+| `d` | `n`  | `k` | `m`          | `REF`                                                    | `GS(1)`           | `GS(3)`           | `GS(1-3)`         | `GS(1-3,soft)`    | `GS(1-3,wide)`    | `GS(1-3,narrow)`  | `GS(1-3,wi->na)`  | `GS(1-3,na->wi)`  |
+| --- | ---- | --- | ------------ | -------------------------------------------------------- | ----------------- | ----------------- | ----------------- | ----------------- | ----------------- | ----------------- | ----------------- | ----------------- |
+| 1   | 150  | 10  | 2            | <span style="color:#00aa00">**37.24 msec ± 0.4%**</span> | 43.90 msec ± 0.3% | 71.79 msec ± 0.4% | 52.04 msec ± 0.8% | 52.24 msec ± 0.4% | 52.01 msec ± 0.7% | 51.78 msec ± 0.6% | 53.01 msec ± 0.6% | 52.78 msec ± 0.8% |
+| 2   | 300  | 20  | 4            | <span style="color:#00aa00">**52.51 msec ± 0.4%**</span> | 61.90 msec ± 0.5% | 100.8 msec ± 0.6% | 73.25 msec ± 0.4% | 73.01 msec ± 0.4% | 73.33 msec ± 0.8% | 72.40 msec ± 0.6% | 74.04 msec ± 0.7% | 74.38 msec ± 0.5% |
+| 3   | 450  | 30  | 6            | <span style="color:#00aa00">**68.77 msec ± 0.3%**</span> | 79.47 msec ± 0.4% | 130.2 msec ± 0.4% | 94.64 msec ± 0.7% | 93.38 msec ± 0.8% | 94.09 msec ± 0.7% | 93.42 msec ± 0.6% | 95.63 msec ± 0.7% | 95.15 msec ± 0.5% |
+| 4   | 600  | 40  | 8            | <span style="color:#00aa00">**83.89 msec ± 0.5%**</span> | 98.17 msec ± 0.4% | 161.1 msec ± 0.3% | 117.0 msec ± 0.6% | 115.3 msec ± 0.6% | 116.3 msec ± 0.7% | 115.8 msec ± 0.8% | 118.0 msec ± 0.3% | 117.3 msec ± 0.8% |
+| 6   | 900  | 60  | 12           | <span style="color:#00aa00">**114.5 msec ± 0.5%**</span> | 133.9 msec ± 0.4% | 221.4 msec ± 0.4% | 160.3 msec ± 0.6% | 156.4 msec ± 0.5% | 159.2 msec ± 1.0% | 159.3 msec ± 0.5% | 161.0 msec ± 0.7% | 160.9 msec ± 0.5% |
+| 8   | 1200 | 80  | 16           | <span style="color:#00aa00">**148.7 msec ± 0.9%**</span> | 173.7 msec ± 0.9% | 284.3 msec ± 0.5% | 207.8 msec ± 0.7% | 201.3 msec ± 0.7% | 206.8 msec ± 1.0% | 205.5 msec ± 0.5% | 209.3 msec ± 0.8% | 207.9 msec ± 0.8% |
+| 12  | 1800 | 120 | 24           | <span style="color:#00aa00">**209.7 msec ± 1.0%**</span> | 246.4 msec ± 1.1% | 405.7 msec ± 1.0% | 294.9 msec ± 1.0% | 286.6 msec ± 1.0% | 294.9 msec ± 1.1% | 294.6 msec ± 0.5% | 298.6 msec ± 1.4% | 293.8 msec ± 0.6% |
+| 16  | 2400 | 160 | 32           | <span style="color:#00aa00">**272.4 msec ± 1.3%**</span> | 329.9 msec ± 0.9% | 545.3 msec ± 0.9% | 391.4 msec ± 0.9% | 378.4 msec ± 1.2% | 394.8 msec ± 1.7% | 393.0 msec ± 0.7% | 398.5 msec ± 1.0% | 390.6 msec ± 0.9% |
+| 24  | 3600 | 240 | 48           | <span style="color:#00aa00">**400.5 msec ± 1.2%**</span> | 486.8 msec ± 0.7% | 827.4 msec ± 1.0% | 585.7 msec ± 1.1% | 563.8 msec ± 1.1% | 582.0 msec ± 1.0% | 585.2 msec ± 0.8% | 595.8 msec ± 0.6% | 590.7 msec ± 1.0% |
+| 32  | 4800 | 320 | 64           | <span style="color:#00aa00">**530.3 msec ± 1.2%**</span> | 684.4 msec ± 0.5% | 1.158 sec  ± 0.9% | 837.5 msec ± 1.0% | 784.4 msec ± 0.9% | 826.7 msec ± 0.4% | 840.7 msec ± 0.9% | 819.9 msec ± 0.6% | 834.5 msec ± 0.4% |
+| 48  | 7200 | 480 | 96           | <span style="color:#00aa00">**792.4 msec ± 0.4%**</span> | 1.036 sec  ± 0.8% | 1.844 sec  ± 0.6% | 1.297 sec  ± 0.6% | 1.195 sec  ± 0.9% | 1.267 sec  ± 0.8% | 1.318 sec  ± 0.2% | 1.285 sec  ± 1.4% | 1.279 sec  ± 0.8% |
+| 64  | 9600 | 640 | 128          | <span style="color:#00aa00">**1.078 sec  ± 2.0%**</span> | 1.600 sec  ± 0.3% | 2.822 sec  ± 0.8% | 1.899 sec  ± 0.7% | 1.744 sec  ± 0.6% | 1.845 sec  ± 2.2% | 1.938 sec  ± 2.5% | 1.963 sec  ± 1.2% | 1.991 sec  ± 1.1% |
+|     |      |     | **Geomean:** | <span style="color:#00aa00">**188.3 msec ± 0.8%**</span> | 230.2 msec ± 0.6% | 384.8 msec ± 0.7% | 276.1 msec ± 0.8% | 266.7 msec ± 0.8% | 274.1 msec ± 1.0% | 275.7 msec ± 0.8% | 278.6 msec ± 0.8% | 277.8 msec ± 0.7% |
 
 ### Diversity Score
 
-| `d` | `n`  | `k` | `m`          | `REF`                                               |
-| --- | ---- | --- | ------------ | --------------------------------------------------- |
-| 1   | 150  | 10  | 2            | <span style="color:#00aa00">**0.530 ± 2.3%**</span> |
-| 2   | 300  | 20  | 4            | <span style="color:#00aa00">**1.052 ± 2.3%**</span> |
-| 3   | 450  | 30  | 6            | <span style="color:#00aa00">**1.381 ± 2.0%**</span> |
-| 4   | 600  | 40  | 8            | <span style="color:#00aa00">**1.648 ± 2.1%**</span> |
-| 6   | 900  | 60  | 12           | <span style="color:#00aa00">**2.131 ± 2.2%**</span> |
-| 8   | 1200 | 80  | 16           | <span style="color:#00aa00">**2.401 ± 2.8%**</span> |
-| 12  | 1800 | 120 | 24           | <span style="color:#00aa00">**2.851 ± 2.2%**</span> |
-| 16  | 2400 | 160 | 32           | <span style="color:#00aa00">**3.230 ± 2.7%**</span> |
-| 24  | 3600 | 240 | 48           | <span style="color:#00aa00">**4.236 ± 0.3%**</span> |
-| 32  | 4800 | 320 | 64           | <span style="color:#00aa00">**5.240 ± 0.4%**</span> |
-| 48  | 7200 | 480 | 96           | <span style="color:#00aa00">**6.747 ± 0.0%**</span> |
-| 64  | 9600 | 640 | 128          | <span style="color:#00aa00">**8.061 ± 0.1%**</span> |
-|     |      |     | **Geomean:** | <span style="color:#00aa00">**2.540 ± 1.6%**</span> |
+| `d` | `n`  | `k` | `m`          | `REF`        | `GS(1)`                                             | `GS(3)`      | `GS(1-3)`    | `GS(1-3,soft)` | `GS(1-3,wide)` | `GS(1-3,narrow)`                                    | `GS(1-3,wi->na)`                                    | `GS(1-3,na->wi)`                                    |
+| --- | ---- | --- | ------------ | ------------ | --------------------------------------------------- | ------------ | ------------ | -------------- | -------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| 1   | 150  | 10  | 2            | 0.523 ± 2.2% | <span style="color:#00aa00">**0.545 ± 1.1%**</span> | 0.465 ± 4.0% | 0.533 ± 1.4% | 0.536 ± 1.0%   | 0.530 ± 2.3%   | 0.540 ± 1.5%                                        | <span style="color:#00aa00">**0.543 ± 1.1%**</span> | 0.541 ± 0.6%                                        |
+| 2   | 300  | 20  | 4            | 1.043 ± 2.0% | 1.162 ± 0.7%                                        | 1.073 ± 0.7% | 1.149 ± 0.9% | 1.151 ± 1.7%   | 1.086 ± 2.1%   | <span style="color:#00aa00">**1.170 ± 1.0%**</span> | <span style="color:#00aa00">**1.172 ± 1.1%**</span> | <span style="color:#00aa00">**1.173 ± 0.9%**</span> |
+| 3   | 450  | 30  | 6            | 1.388 ± 2.4% | 1.574 ± 0.8%                                        | 1.492 ± 0.7% | 1.558 ± 1.2% | 1.539 ± 1.1%   | 1.468 ± 1.9%   | <span style="color:#00aa00">**1.631 ± 1.0%**</span> | 1.605 ± 0.9%                                        | <span style="color:#00aa00">**1.616 ± 1.2%**</span> |
+| 4   | 600  | 40  | 8            | 1.698 ± 1.4% | 1.962 ± 1.3%                                        | 1.914 ± 1.1% | 1.972 ± 0.7% | 1.931 ± 1.6%   | 1.857 ± 0.8%   | <span style="color:#00aa00">**2.062 ± 1.3%**</span> | 2.044 ± 0.7%                                        | <span style="color:#00aa00">**2.066 ± 0.9%**</span> |
+| 6   | 900  | 60  | 12           | 2.171 ± 2.8% | 2.561 ± 0.8%                                        | 2.498 ± 1.2% | 2.545 ± 1.0% | 2.523 ± 0.9%   | 2.399 ± 0.9%   | <span style="color:#00aa00">**2.764 ± 0.3%**</span> | 2.680 ± 0.4%                                        | 2.701 ± 0.7%                                        |
+| 8   | 1200 | 80  | 16           | 2.401 ± 2.9% | 3.084 ± 0.9%                                        | 3.058 ± 0.7% | 3.075 ± 0.8% | 3.028 ± 0.6%   | 2.959 ± 1.4%   | <span style="color:#00aa00">**3.311 ± 0.7%**</span> | 3.204 ± 0.8%                                        | 3.237 ± 0.7%                                        |
+| 12  | 1800 | 120 | 24           | 2.790 ± 2.5% | 3.855 ± 0.5%                                        | 3.838 ± 0.3% | 3.874 ± 0.6% | 3.790 ± 0.8%   | 3.681 ± 0.7%   | <span style="color:#00aa00">**4.173 ± 0.3%**</span> | 4.051 ± 0.8%                                        | 4.029 ± 0.6%                                        |
+| 16  | 2400 | 160 | 32           | 3.263 ± 0.8% | 4.504 ± 0.5%                                        | 4.522 ± 0.5% | 4.547 ± 0.4% | 4.449 ± 0.4%   | 4.310 ± 0.4%   | <span style="color:#00aa00">**4.879 ± 0.3%**</span> | 4.739 ± 0.4%                                        | 4.695 ± 0.4%                                        |
+| 24  | 3600 | 240 | 48           | 4.270 ± 0.5% | 5.511 ± 0.4%                                        | 5.505 ± 0.6% | 5.537 ± 0.3% | 5.389 ± 0.7%   | 5.239 ± 0.5%   | <span style="color:#00aa00">**5.887 ± 0.6%**</span> | 5.694 ± 0.3%                                        | 5.621 ± 0.5%                                        |
+| 32  | 4800 | 320 | 64           | 5.232 ± 0.4% | 6.266 ± 0.2%                                        | 6.198 ± 0.5% | 6.307 ± 0.1% | 6.186 ± 0.5%   | 6.049 ± 0.3%   | <span style="color:#00aa00">**6.688 ± 0.4%**</span> | 6.485 ± 0.4%                                        | 6.363 ± 0.3%                                        |
+| 48  | 7200 | 480 | 96           | 6.755 ± 0.3% | 7.518 ± 0.3%                                        | 7.404 ± 0.5% | 7.542 ± 0.3% | 7.490 ± 0.1%   | 7.224 ± 0.3%   | <span style="color:#00aa00">**8.035 ± 0.2%**</span> | 7.755 ± 0.4%                                        | 7.547 ± 0.2%                                        |
+| 64  | 9600 | 640 | 128          | 8.033 ± 0.1% | 8.659 ± 0.4%                                        | 8.644 ± 0.3% | 8.694 ± 0.2% | 8.834 ± 0.2%   | 8.576 ± 0.4%   | <span style="color:#00aa00">**9.100 ± 0.1%**</span> | 8.868 ± 0.2%                                        | 8.720 ± 0.0%                                        |
+|     |      |     | **Geomean:** | 2.545 ± 1.5% | 3.032 ± 0.7%                                        | 2.937 ± 0.9% | 3.028 ± 0.6% | 2.995 ± 0.8%   | 2.895 ± 1.0%   | <span style="color:#00aa00">**3.197 ± 0.6%**</span> | 3.127 ± 0.6%                                        | 3.112 ± 0.6%                                        |
 
 ### Constraint Score
 
-| `d` | `n`  | `k` | `m`       | `REF`                                               |
-| --- | ---- | --- | --------- | --------------------------------------------------- |
-| 1   | 150  | 10  | 2         | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
-| 2   | 300  | 20  | 4         | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
-| 3   | 450  | 30  | 6         | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
-| 4   | 600  | 40  | 8         | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
-| 6   | 900  | 60  | 12        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
-| 8   | 1200 | 80  | 16        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
-| 12  | 1800 | 120 | 24        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
-| 16  | 2400 | 160 | 32        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
-| 24  | 3600 | 240 | 48        | <span style="color:#00aa00">**0.999 ± 0.1%**</span> |
-| 32  | 4800 | 320 | 64        | <span style="color:#00aa00">**0.986 ± 0.1%**</span> |
-| 48  | 7200 | 480 | 96        | <span style="color:#00aa00">**0.962 ± 0.1%**</span> |
-| 64  | 9600 | 640 | 128       | <span style="color:#00aa00">**0.949 ± 0.0%**</span> |
-|     |      |     | **Mean:** | <span style="color:#00aa00">**0.991 ± 0.0%**</span> |
+| `d` | `n`  | `k` | `m`       | `REF`                                               | `GS(1)`                                             | `GS(3)`                                             | `GS(1-3)`                                           | `GS(1-3,soft)`                                      | `GS(1-3,wide)`                                      | `GS(1-3,narrow)`                                    | `GS(1-3,wi->na)`                                    | `GS(1-3,na->wi)`                                    |
+| --- | ---- | --- | --------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| 1   | 150  | 10  | 2         | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 2   | 300  | 20  | 4         | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 3   | 450  | 30  | 6         | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 4   | 600  | 40  | 8         | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 6   | 900  | 60  | 12        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 8   | 1200 | 80  | 16        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 12  | 1800 | 120 | 24        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 16  | 2400 | 160 | 32        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 24  | 3600 | 240 | 48        | 0.999 ± 0.0%                                        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 32  | 4800 | 320 | 64        | 0.986 ± 0.1%                                        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 48  | 7200 | 480 | 96        | 0.964 ± 0.0%                                        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+| 64  | 9600 | 640 | 128       | 0.948 ± 0.0%                                        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | 0.998 ± 0.1%                                        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
+|     |      |     | **Mean:** | 0.991 ± 0.0%                                        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | 1.000 ± 0.0%                                        | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> | <span style="color:#00aa00">**1.000 ± 0.0%**</span> |
 

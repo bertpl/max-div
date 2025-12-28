@@ -2,12 +2,13 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.3.9
-> *(under development)*
+> *(2025-12-28)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
     - solver strategies
        - implement `OptimGuidedSwaps` optimization strategy, the intended workhorse strategy for the solver 
+    - extend solver benchmarking implementation & docs with new strategy
 
 - **improved**:
     - solver strategies
