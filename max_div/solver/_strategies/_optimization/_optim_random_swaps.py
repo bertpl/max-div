@@ -26,14 +26,14 @@ class OptimRandomSwaps(SwapBasedOptimizationStrategy):
     # -------------------------------------------------------------------------
     #  Implementation
     # -------------------------------------------------------------------------
-    def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32, seed: np.int64) -> NDArray[np.int32]:
+    def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
         n_selected = state.selected_index_array.shape[0]
-        i_to_remove = randint_numba(n_selected, np.int32(1), False, seed=seed)
+        i_to_remove = randint_numba(n_selected, np.int32(1), False, seed=self.next_seed())
         return state.selected_index_array[i_to_remove]
 
     def _samples_to_be_added(
-        self, state: SolverState, n_to_add: np.int32, samples_just_removed: NDArray[np.int32], seed: np.int64
+        self, state: SolverState, n_to_add: np.int32, samples_just_removed: NDArray[np.int32]
     ) -> NDArray[np.int32]:
         n_not_selected = state.not_selected_index_array.shape[0]
-        i_to_add = randint_numba(n_not_selected, np.int32(1), False, seed=seed)
+        i_to_add = randint_numba(n_not_selected, np.int32(1), False, seed=self.next_seed())
         return state.not_selected_index_array[i_to_add]

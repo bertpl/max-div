@@ -203,15 +203,12 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
           - if this swap did not improve the score -> revert to previous selection
         """
 
-        # --- prep ---
-        seed = self.next_seed()  # we can use the same seed for all sampling in this iteration
-
         # --- determine swap size ---
         n = sample_truncated_poisson(
             self.min_swap_size,
             self.max_swap_size,
             np.float32(self.swap_size_lambda),
-            seed=seed,
+            seed=self.next_seed(),
         )
 
         # --- take snapshot & remove n samples ---
@@ -221,14 +218,14 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         score_before = state.score
 
         # add
-        samples_to_remove = self._samples_to_be_removed(state, n, seed)
+        samples_to_remove = self._samples_to_be_removed(state, n)
         for s in samples_to_remove:
             state.remove(s)
 
         # --- add n samples and evaluate ---
 
         # add
-        samples_to_add = self._samples_to_be_added(state, n, samples_just_removed=samples_to_remove, seed=seed)
+        samples_to_add = self._samples_to_be_added(state, n, samples_just_removed=samples_to_remove)
         for s in samples_to_add:
             state.add(s)
 
@@ -245,14 +242,16 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         self,
         state: SolverState,
         n_to_remove: np.int32,
-        seed: np.int64,
     ) -> NDArray[np.int32]:
         """
         Determine which n samples to remove from the current selection.  The values returned should be indices present
         in state.selected_index_array.
+
+        NOTE: for reproducibility, any random sampling inside this method should use self.next_seed() method of the
+              strategy to get a new seed.
+
         :param state: (SolverState) current solver state, with # selected samples = k
         :param n_to_remove: (np.int32) number of samples to be removed  (swap size)
-        :param seed: (np.int64) random seed to be used for any sampling
         :return: (int32 ndarray) of shape (n,) with indices of samples to be REMOVED
         """
         raise NotImplementedError()
@@ -263,16 +262,19 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         state: SolverState,
         n_to_add: np.int32,
         samples_just_removed: NDArray[np.int32],
-        seed: np.int64,
     ) -> NDArray[np.int32]:
         """
         Determine which n samples to add to the current selection, right after having removed n samples.
         The values returned should be indices present in state.not_selected_index_array.
+
+        NOTE: for reproducibility, any random sampling inside this method should use self.next_seed() method of the
+              strategy to get a new seed.
+
         :param state: (SolverState) current solver state, with # selected samples = k-n
         :param n_to_add: (np.int32) number of samples to be added  (swap size)
         :param samples_just_removed: (int32 ndarray) of shape (n,) with indices of samples that were just removed
                                           (potentially to be taken into account to avoid resampling them)
-        :param seed: (np.int64) random seed to be used for any sampling
+
         :return: (int32 ndarray) of shape (n,) with indices of samples to be ADDED
         """
         raise NotImplementedError()

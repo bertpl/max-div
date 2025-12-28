@@ -50,7 +50,7 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
     # -------------------------------------------------------------------------
     #  Implementation
     # -------------------------------------------------------------------------
-    def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32, seed: np.int64) -> NDArray[np.int32]:
+    def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
         # --- guiding probabilities for removal ---
         p = state.selected_separation_array  # this creates a copy
         exponential_selectivity(
@@ -66,18 +66,18 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
             k=n_to_remove,
             replace=False,
             p=p,
-            seed=seed,
+            seed=self.next_seed(),
         )  # these are indices into selected_index_array
 
         # --- return vectors to be removed ---
         return state.selected_index_array[i_to_remove]
 
     def _samples_to_be_added(
-        self, state: SolverState, n_to_add: np.int32, samples_just_removed: NDArray[np.int32], seed: np.int64
+        self, state: SolverState, n_to_add: np.int32, samples_just_removed: NDArray[np.int32]
     ) -> NDArray[np.int32]:
         # --- constraint-aware or not? ---
         if state.has_constraints:
-            r = rand_float32(rng_state=set_seed(seed))  # random float in [0.0, 1.0)
+            r = rand_float32(rng_state=set_seed(self.next_seed()))  # random float in [0.0, 1.0)
             constraint_aware = r < self.p_add_constraint_aware
         else:
             constraint_aware = False
@@ -109,7 +109,7 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
                 con_values=state.con_values,
                 con_indices=state.con_indices,
                 p=p_full,
-                seed=seed,
+                seed=self.next_seed(),
                 eager=False,
                 i_forbidden=state.selected_index_array,
             )  # these are indices in [0, n) as needed
@@ -120,6 +120,6 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
                 k=n_to_add,
                 replace=False,
                 p=p,
-                seed=seed,
+                seed=self.next_seed(),
             )  # these are indices into not_selected_index_array
             return state.not_selected_index_array[i_samples]
