@@ -33,7 +33,7 @@ def test_optim_random_swaps(problem_name: str, size: int):
     )
 
     # initialize solver state
-    init_strategy = InitializationStrategy.dummy()
+    init_strategy = InitializationStrategy.fast()
     init_strategy.initialize(solver_state)
 
     # prepare strategy

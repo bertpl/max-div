@@ -65,7 +65,7 @@ def test_optim_guided_swaps(
     )
 
     # initialize solver state
-    init_strategy = InitializationStrategy.dummy()
+    init_strategy = InitializationStrategy.fast()
     init_strategy.initialize(solver_state)
 
     # prepare strategy

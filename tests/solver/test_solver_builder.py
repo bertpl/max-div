@@ -5,7 +5,7 @@ from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.solver import Constraint, MaxDivProblem, MaxDivSolver, MaxDivSolverBuilder
 from max_div.solver._distance import DistanceMetric
 from max_div.solver._diversity import DiversityMetric
-from max_div.solver._duration import iterations, seconds
+from max_div.solver._duration import TargetDuration, iterations, seconds
 from max_div.solver._solver_step import InitializationStep, OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
@@ -180,9 +180,10 @@ def test_max_div_solver_builder_end_to_end():
 # =================================================================================================
 #  Presets
 # =================================================================================================
-@pytest.mark.parametrize("size", [1, 2, 10])
+@pytest.mark.parametrize("size", [1, 5])
 @pytest.mark.parametrize("problem_name", ["A1", "A2", "A3", "A4", "A5"])
-def test_max_div_solver_builder_preset_default(problem_name: str, size: int):
+@pytest.mark.parametrize("target_duration", [seconds(0.2), iterations(100)])
+def test_max_div_solver_builder_preset_default(problem_name: str, size: int, target_duration: TargetDuration):
     """
     Test preset_default strategy on reference problems and check if we're optimizing.
     """
@@ -201,7 +202,7 @@ def test_max_div_solver_builder_preset_default(problem_name: str, size: int):
         MaxDivSolverBuilder(problem)
         .with_seed(42)
         .with_preset_default(
-            optimization_duration=iterations(100),
+            target_duration=target_duration,
         )
     ).build()
     result = solver.solve()

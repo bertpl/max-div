@@ -16,6 +16,9 @@ from ._constraint_helpers import (
     _np_con_satisfied,
 )
 
+_SCORE_PENALTY_HARD_CONSTRAINT = np.int32(2**24)
+_SCORE_PENALTY_ALREADY_SAMPLED = np.int32(2**30)
+
 
 # =================================================================================================
 #  randint_constrained
@@ -41,7 +44,7 @@ def _compute_score(
       - if it helps achieve a min_count that is not satisfied yet:    +1
       - if it would violate a max_count that we already hit:          -1      if hard_max_constraints=False
                                                                       -2**24  if hard_max_constraints=True
-      - if we already sampled it:                                     -2**24  if hard_max_constraints=True
+      - if we already sampled it:                                     -2**30  if hard_max_constraints=True
 
     The basic idea behind the scoring is that integers with score <= 0 will not be sampled, if at all possible.
 
@@ -55,9 +58,8 @@ def _compute_score(
     m = con_values.shape[0]
 
     # --- init --------------------------------------------
-    large_penalty = np.int32(2**24)
     if hard_max_constraints:
-        max_count_penalty = large_penalty
+        max_count_penalty = _SCORE_PENALTY_HARD_CONSTRAINT
     else:
         max_count_penalty = np.int32(1)
     scores = np.zeros(n, dtype=np.int32)
@@ -73,12 +75,15 @@ def _compute_score(
                 scores[idx] += 1
         if max_val <= 0:
             for idx in indices:
-                scores[idx] -= max_count_penalty
+                scores[idx] = max(
+                    scores[idx] - max_count_penalty,
+                    -_SCORE_PENALTY_ALREADY_SAMPLED + 1,  # avoid wrap-around + ensure -already_sampled_penalty is lower
+                )
 
     # --- already sampled ---------------------------------
     for i in already_sampled:
         if i >= 0:  # negative values indicate end of valid samples
-            scores[i] -= large_penalty
+            scores[i] = -_SCORE_PENALTY_ALREADY_SAMPLED
 
     return scores
 

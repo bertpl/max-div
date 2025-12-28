@@ -49,6 +49,19 @@ class BenchmarkProblem(ABC):
         """
         raise NotImplementedError()
 
+    @classmethod
+    @abstractmethod
+    def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
+        """
+        Returns problem dimensions as (d, n, k, m, n_con_indices)-tuple for this benchmark problem,
+        given the provided parameters.  These dimensions can be indicative (especially n_con_indices), if
+        they are stochastic.  Main goal of this method is to get an idea of dimensions without needing to create
+        the full problem instance.
+
+        :param kwargs: parameters passed to create_problem_instance() for which we want to know resulting dimensions.
+        """
+        raise NotImplementedError()
+
     # -------------------------------------------------------------------------
     #  Problem creation
     # -------------------------------------------------------------------------

@@ -6,6 +6,7 @@ from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._duration import TargetDuration
+from ._presets import preset_default_get_strategies
 from ._problem import MaxDivProblem
 from ._scheduling import ease_in, ease_in_out, ease_out
 from ._solver import MaxDivSolver
@@ -21,6 +22,9 @@ class MaxDivSolverBuilder:
         """
         Initialize the MaxDivSolverBuilder.
         """
+
+        # --- problem ---------------------------
+        self._problem = problem
 
         # --- problem properties ----------------
         self._vectors: np.ndarray = problem.vectors
@@ -72,63 +76,30 @@ class MaxDivSolverBuilder:
     # -------------------------------------------------------------------------
     #  Builder API - PRESETS
     # -------------------------------------------------------------------------
-    def with_preset_default(self, optimization_duration: TargetDuration) -> Self:
+    def with_preset_default(self, target_duration: TargetDuration) -> Self:
         """
         Configure the builder with default preset settings (overriding any previous settings):
-          - Appropriate initialization strategy
+          - Appropriate initialization strategy (most accurate strategy+settings taking est. <5% of total time)
           - Appropriate optimization strategy
           - Default diversity tie-breakers
 
         Please make sure to set diversity metric prior to calling this method, as it influences the choices.
 
-        :param optimization_duration: Target duration for the optimization phase (either in time or iterations).
+        :param target_duration: Target duration for the init+optim phases (either in time or iterations).
                                        --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
         """
 
-        # --- clear previous strategies ---
-        self._solver_steps.clear()
+        # --- apply main preset logic -----------
+        init_strategy, optim_steps = preset_default_get_strategies(
+            problem=self._problem,
+            duration=target_duration,
+        )
 
-        # --- initialization strategy ---
-        # intermediate-speed, solid-quality initialization
-        # TODO: adjust init strategy based on problem properties & optimization_duration to take max 10% of total time
-        self._solver_steps: list[SolverStep] = [
-            InitializationStep(
-                InitializationStrategy.random_batched(
-                    b=10,
-                    constrained=True,
-                )
-            )
+        # --- configure solver steps ------------
+        self._solver_steps = [
+            InitializationStep(init_strategy),
+            *optim_steps,
         ]
-
-        # --- optimization strategies ---
-        if len(self._constraints) > 0:
-            # constrained problem
-            #  --> low->high selectivity strategy with swap size 1-3 works best
-            self._solver_steps.append(
-                OptimizationStep(
-                    optim_strategy=OptimizationStrategy.guided_swaps(
-                        min_swap_size=1,
-                        max_swap_size=3,
-                        remove_selectivity_modifier=ease_in(-0.8, 0.8),  # wide->narrow late
-                        add_selectivity_modifier=ease_out(-0.8, 0.8),  # wide->narrow early
-                    ),
-                    duration=optimization_duration,
-                ),
-            )
-        else:
-            # unconstrained problem
-            #  --> selective replacement with swap size 1-3 works best
-            self._solver_steps.append(
-                OptimizationStep(
-                    optim_strategy=OptimizationStrategy.guided_swaps(
-                        min_swap_size=1,
-                        max_swap_size=3,
-                        remove_selectivity_modifier=0.8,
-                        add_selectivity_modifier=0.8,
-                    ),
-                    duration=optimization_duration,
-                )
-            )
 
         # --- diversity tie-breakers ---
         self.with_default_diversity_tie_breakers()

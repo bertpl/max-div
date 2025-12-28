@@ -29,11 +29,11 @@ class InitRandomBatched(InitializationStrategy):
                    e.g. `InitEager` is too slow.
 
     Parameters:
-    - constrained (bool): If `True`, respects problem constraints during initialization.
-                          If `False`, constraints are ignored. (default: `True`)
     - b (int): Number of batches to sample (must be > 1).
                      -> If e.g. k=100 and b=5, each batch samples 20 items.
                      -> If k is not an exact multiple of b, the first batches will be slightly larger.
+    - ignore_constraints (bool): If `False`, respects problem constraints during initialization, if present.
+                                 If `True`, constraints are ignored. (default: `False`)
 
     Time Complexity:
        - without constraints: ~O(bn)
@@ -43,12 +43,13 @@ class InitRandomBatched(InitializationStrategy):
     __MODIFY_P_METHOD: np.int32 = np.int32(20)  # method using fast_pow_f32(p[i], t)
     __SAMPLE_EAGER: bool = True  # always use eager sampling for this case
 
-    def __init__(self, b: int, constrained: bool = True):
+    def __init__(self, b: int, ignore_constraints: bool = False):
         """
         Constructor for InitRandomBatched class.
         :param b: (int) Number of batches to sample (must be > 1).
-        :param constrained: (bool, default=True) If `True`, respects problem constraints during initialization,
-                                                 If `False`, constraints are ignored.
+        :param ignore_constraints: (bool, default=False)
+                                If `False`, respects problem constraints during initialization, if present.
+                                If `True`, constraints are ignored.
         """
 
         # --- parameter validation ----
@@ -58,7 +59,7 @@ class InitRandomBatched(InitializationStrategy):
         # --- init --------------------
         super().__init__()
         self.b = b
-        self.constrained = constrained
+        self.ignore_constraints = ignore_constraints
 
     def initialize(self, state: SolverState):
         # --- init ------------------------------
@@ -95,7 +96,7 @@ class InitRandomBatched(InitializationStrategy):
                 )
 
             # --- sample ---
-            if self.constrained and state.has_constraints:
+            if state.has_constraints and (not self.ignore_constraints):
                 # NOTE: A) at this point, 'p' is of size 'n_not_selected', hence potentially smaller than 'n'
                 #       B) also, con_indices refers to 'original' indices in [0,n) (not to 'not selected' indices)
                 #       --> Since these 2 properties are not compatible, we need to fix either 'p' or 'con_indices'.

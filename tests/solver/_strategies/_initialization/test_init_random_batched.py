@@ -16,14 +16,14 @@ def test_init_random_batched_parameter_validation():
 
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
-@pytest.mark.parametrize("arg_constrained", [True, False])
+@pytest.mark.parametrize("arg_ignore_constraints", [True, False])
 @pytest.mark.parametrize("arg_b", [2, 10, 100])
-def test_init_random_batched(problem_has_constraints: bool, arg_constrained: bool, arg_b: int):
+def test_init_random_batched(problem_has_constraints: bool, arg_ignore_constraints: bool, arg_b: int):
     # --- arrange -----------------------------------------
     solver_state = new_solver_state(problem_has_constraints)
     strategy = InitializationStrategy.random_batched(
         b=np.int32(arg_b),
-        constrained=arg_constrained,
+        ignore_constraints=arg_ignore_constraints,
     )
 
     # --- act ---------------------------------------------
@@ -32,9 +32,9 @@ def test_init_random_batched(problem_has_constraints: bool, arg_constrained: boo
 
     # --- assert ------------------------------------------
     assert score.size == 1.0, "Selection size should be equal to k after initialization"
-    if arg_constrained:
-        assert score.constraints == 1.0, "All constraints should be satisfied, if initialized with constrained=True"
-    if problem_has_constraints and not arg_constrained:
+    if not arg_ignore_constraints:
+        assert score.constraints == 1.0, "All constraints should be satisfied, if ignore_constraints=True"
+    if problem_has_constraints and arg_ignore_constraints:
         assert score.constraints < 1.0, "Not all constraints are expected to be satisfied"
 
 

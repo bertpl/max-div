@@ -2,7 +2,7 @@ import pytest
 
 from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.benchmarks._registry import BenchmarkProblem
-from max_div.solver import MaxDivProblem
+from max_div.solver import DiversityMetric, MaxDivProblem
 
 
 def test_benchmark_problem_factory_show_all():
@@ -52,3 +52,22 @@ def test_benchmark_problem_factory_create_problem_invalid_params():
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):
         BenchmarkProblemFactory.construct_problem(valid_name, **invalid_params)
+
+
+@pytest.mark.parametrize("benchmark_name", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
+@pytest.mark.parametrize("size", [2, 4, 8, 16])
+def test_benchmark_problem_factory_get_problem_dimensions(benchmark_name: str, size: int):
+    # --- act ---------------------------------------------
+    problem = BenchmarkProblemFactory.construct_problem(
+        benchmark_name,
+        size=size,
+        diversity_metric=DiversityMetric.min_separation(),
+    )
+    d, n, k, m, n_con_indices = BenchmarkProblemFactory.get_problem_dimensions(benchmark_name, size=size)
+
+    # --- assert ------------------------------------------
+    assert problem.d == d
+    assert problem.n == n
+    assert problem.k == k
+    assert problem.m == m
+    assert 0.9 * n_con_indices <= problem.n_constraint_indices <= 1.1 * n_con_indices

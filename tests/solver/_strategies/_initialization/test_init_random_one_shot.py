@@ -6,13 +6,13 @@ from ._helpers import new_solver_state
 
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
-@pytest.mark.parametrize("arg_constrained", [True, False])
+@pytest.mark.parametrize("arg_ignore_constraints", [True, False])
 @pytest.mark.parametrize("arg_uniform", [True, False])
-def test_init_random_one_shot(problem_has_constraints: bool, arg_constrained: bool, arg_uniform: bool):
+def test_init_random_one_shot(problem_has_constraints: bool, arg_ignore_constraints: bool, arg_uniform: bool):
     # --- arrange -----------------------------------------
     solver_state = new_solver_state(problem_has_constraints)
     strategy = InitializationStrategy.random_one_shot(
-        constrained=arg_constrained,
+        ignore_constraints=arg_ignore_constraints,
         uniform=arg_uniform,
     )
 
@@ -22,7 +22,7 @@ def test_init_random_one_shot(problem_has_constraints: bool, arg_constrained: bo
 
     # --- assert ------------------------------------------
     assert score.size == 1.0, "Selection size should be equal to k after initialization"
-    if arg_constrained:
-        assert score.constraints == 1.0, "All constraints should be satisfied, if initialized with constrained=True"
-    if problem_has_constraints and not arg_constrained:
+    if not arg_ignore_constraints:
+        assert score.constraints == 1.0, "All constraints should be satisfied, if ignore_constraints=False"
+    if problem_has_constraints and arg_ignore_constraints:
         assert score.constraints < 1.0, "Not all constraints are expected to be satisfied"

@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 #  Base class
 # =================================================================================================
 class ParameterSchedule:
-    def __init__(self, v0: float, v1: float, c_poly: list[float]):
+    def __init__(self, v0: float, v1: float, c_poly: list[float], name: str = ""):
         """
         Initializes a ScheduledParameter instance, where the parameter value `v` as a function of
           progress fraction `f` in [0.0, 1.0] is defined as follows:
@@ -31,10 +31,12 @@ class ParameterSchedule:
         :param v0: (float) initial value of the parameter at progress fraction f=0.0
         :param v1: (float) final value of the parameter at progress fraction f=1.0
         :param c_poly: (list[float]) coefficients of the cubic polynomial defining the scheduling function s(f)
+        :param name: (str) optional name/description of this schedule (used in __str__())
         """
         self.v0 = v0
         self.v1 = v1
         self.c_poly = c_poly
+        self.name = name or f"ParameterSchedule(v0={v0}, v1={v1}, c_poly={c_poly})"
 
     def get_value(self, f: float) -> float:
         """
@@ -64,28 +66,31 @@ class ParameterSchedule:
         """Maximum possible value of the parameter, assuming s(f) in [0.0, 1.0]."""
         return max(self.v0, self.v1)
 
+    def __str__(self) -> str:
+        return self.name
+
 
 # =================================================================================================
 #  Child classes
 # =================================================================================================
 class LinearSchedule(ParameterSchedule):
     def __init__(self, v0: float, v1: float):
-        super().__init__(v0, v1, [0.0, 1.0, 0.0, 0.0])
+        super().__init__(v0, v1, [0.0, 1.0, 0.0, 0.0], f"linear({v0:.2f},{v1:.2f})")
 
 
 class EaseInSchedule(ParameterSchedule):
     def __init__(self, v0: float, v1: float):
-        super().__init__(v0, v1, [0.0, 0.0, 1.0, 0.0])
+        super().__init__(v0, v1, [0.0, 0.0, 1.0, 0.0], f"ease_in({v0:.2f},{v1:.2f})")
 
 
 class EaseOutSchedule(ParameterSchedule):
     def __init__(self, v0: float, v1: float):
-        super().__init__(v0, v1, [0.0, 2.0, -1.0, 0.0])
+        super().__init__(v0, v1, [0.0, 2.0, -1.0, 0.0], f"ease_out({v0:.2f},{v1:.2f})")
 
 
 class EaseInOutSchedule(ParameterSchedule):
     def __init__(self, v0: float, v1: float):
-        super().__init__(v0, v1, [0.0, 0.0, 3.0, -2.0])
+        super().__init__(v0, v1, [0.0, 0.0, 3.0, -2.0], f"ease_in_out({v0:.2f},{v1:.2f})")
 
 
 # =================================================================================================

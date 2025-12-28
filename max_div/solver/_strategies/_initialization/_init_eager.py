@@ -3,7 +3,6 @@ import numpy as np
 from max_div.internal.math.modify_p_selectivity import exponential_selectivity
 from max_div.sampling.con import randint_constrained
 from max_div.sampling.uncon import randint_numba
-from max_div.solver._score import Score
 from max_div.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy
@@ -33,6 +32,8 @@ class InitEager(InitializationStrategy):
 
     Parameters:
     - nc (int): Number of candidates (>1) to sample in each iteration, the best of which will be added.
+    - ignore_constraints (bool): If `False`, respects problem constraints during initialization, if present.
+                                 If `True`, constraints are ignored. (default: `False`)
 
     Time Complexity:
        - without constraints: ~O(nc * k * n)
@@ -42,10 +43,13 @@ class InitEager(InitializationStrategy):
     __MODIFY_P_METHOD: np.int32 = np.int32(20)  # method using fast_pow_f32(p[i], t)
     __SAMPLE_EAGER: bool = True  # always use eager sampling for this case
 
-    def __init__(self, nc: int):
+    def __init__(self, nc: int, ignore_constraints: bool = False):
         """
         Constructor for InitRandomBatched class.
         :param nc: (int) Number of candidates to sample in each iteration.
+        :param ignore_constraints: (bool, default=False)
+                        If `False`, respects problem constraints during initialization, if present.
+                        If `True`, constraints are ignored when sampling candidates and when comparing scores.
         """
 
         # --- parameter validation ----
@@ -55,6 +59,7 @@ class InitEager(InitializationStrategy):
         # --- init --------------------
         super().__init__()
         self.nc = np.int32(nc)
+        self.ignore_constraints = ignore_constraints
 
     def initialize(self, state: SolverState):
         # --- init ------------------------------
@@ -89,11 +94,11 @@ class InitEager(InitializationStrategy):
 
             # --- sample nc times ---
             best_sample: np.int32 = np.int32(-1)
-            best_score: Score | None = None
+            best_score_tuple: tuple | None = None
 
             for j in range(nc):
                 # --- sample once ---
-                if state.has_constraints:
+                if state.has_constraints and (not self.ignore_constraints):
                     # NOTE: A) at this point, 'p' is of size 'n_not_selected', hence potentially smaller than 'n'
                     #       B) also, con_indices refers to 'original' indices in [0,n) (not to 'not selected' indices)
                     #       --> Since these 2 properties are not compatible, we need to fix either 'p' or 'con_indices'.
@@ -133,8 +138,13 @@ class InitEager(InitializationStrategy):
                 state.restore_snapshot()
 
                 # see if sample is better
-                if (best_score is None) or (score > best_score):
-                    best_score = score
+                if self.ignore_constraints:
+                    score_tuple = score.as_tuple(soft=1.0)  # ignore constraint score
+                else:
+                    score_tuple = score.as_tuple()  # consider full score, including constraints
+
+                if (best_score_tuple is None) or (score_tuple > best_score_tuple):
+                    best_score_tuple = score_tuple
                     best_sample = sample
 
             # --- now, finally add best sample ---

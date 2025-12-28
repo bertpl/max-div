@@ -4,7 +4,12 @@ import numpy as np
 import pytest
 
 from max_div.sampling._constraint_helpers import _build_array_repr
-from max_div.sampling.con import randint_constrained, randint_constrained_robust
+from max_div.sampling.con import (
+    _SCORE_PENALTY_ALREADY_SAMPLED,
+    _compute_score,
+    randint_constrained,
+    randint_constrained_robust,
+)
 from max_div.solver import Constraint
 
 
@@ -321,3 +326,39 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
     assert np.array_equal(con_values_before, con_values), "con_values array should never be modified."
     assert np.array_equal(con_indices, con_indices_before), "p array should never be modified."
     assert np.array_equal(p, p_before), "p array should never be modified."
+
+
+def test_randint_constrained_score_wrap_around():
+    """
+    In case of very large nr of constraints, very negative scores can theoretically wrap around to positive ones.
+    This could e.g. cause duplicate samples to be generated.
+
+    This test specifically checks if the safeguard against this issue is working as expected.
+    """
+
+    # --- arrange -----------------------------------------
+    n = 10
+    constraints = [
+        Constraint(
+            int_set=set(range(1, n)),  # all samples except index 0
+            min_count=0,
+            max_count=0,
+        )
+        for _ in range(1000)
+    ]
+    con_values, con_indices = _build_array_repr(constraints)
+
+    # --- act ---------------------------------------------
+    score = _compute_score(
+        n=np.int32(n),
+        con_values=con_values,
+        con_indices=con_indices,
+        already_sampled=np.array([0], dtype=np.int32),
+        hard_max_constraints=True,
+    )
+
+    # --- assert ------------------------------------------
+    assert max(score) <= 0.0, "Scores should not have wrapped around to positive values."
+    assert score[0] == -_SCORE_PENALTY_ALREADY_SAMPLED
+    for i in range(1, n):
+        assert -_SCORE_PENALTY_ALREADY_SAMPLED < score[i] < 0.0

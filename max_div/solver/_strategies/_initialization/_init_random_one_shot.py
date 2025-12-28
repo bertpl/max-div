@@ -13,11 +13,11 @@ class InitRandomOneShot(InitializationStrategy):
     Suggested use: if time constraints are severe or problem dimensions `n` or `k` are very large.
 
     Parameters:
-    - constrained (bool): If `True`, respects problem constraints during initialization.
-                          If `False`, constraints are ignored. (default: `True`)
     - uniform (bool): If `True`, samples uniformly at random.
                       If `False`, uses vector separations as sampling weights, sampling well-separated vectors
                                          with higher probability (default: `False`)
+    - ignore_constraints (bool): If `False`, respects problem constraints during initialization, if present.
+                                 If `True`, constraints are ignored. (default: `False`)
 
     Notes:
         - using separation as sampling weights is a heuristic, not an exactly optimal solution, with known limitations:
@@ -32,14 +32,14 @@ class InitRandomOneShot(InitializationStrategy):
        - with constraints:    ~O(kn)
     """
 
-    def __init__(self, constrained: bool = True, uniform: bool = False):
+    def __init__(self, uniform: bool = False, ignore_constraints: bool = False):
         super().__init__()
-        self.constrained = constrained
         self.uniform = uniform
+        self.ignore_constraints = ignore_constraints
 
     def initialize(self, state: SolverState):
         # --- sample --------------------------------------
-        if self.constrained and state.has_constraints:
+        if state.has_constraints and (not self.ignore_constraints):
             # take constraints into account
             if self.uniform:
                 samples = randint_constrained_robust(

@@ -1,6 +1,21 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
+> ## v0.4.1
+> *(2025-12-31)*
+<!------------------------------------------------------------------------------------------------->
+
+- **new**:
+    - notebooks for automated estimated of time models of init. and optim. strategies for different problem sizes
+
+- **improved**:
+    - make default preset in `MaxDivSolverBuilder` smart, taking into account expected duration of strategies
+    - make solver benchmarks explicitly tied to presets, reducing duplication of code
+
+- **fixed**:
+    - corner case where `randint_constrained` could return duplicate samples due to `int32` overflow/underflow wrap-around
+
+<!------------------------------------------------------------------------------------------------->
 > ## v0.4.0
 > *(2025-12-28)*
 <!------------------------------------------------------------------------------------------------->

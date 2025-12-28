@@ -296,28 +296,38 @@ class BenchmarkSolverConstructor(ABC):
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, benchmark_type: str, problem_generator: BenchmarkProblemGenerator):
+    def __init__(self, benchmark_type: str, problem_name: str, diversity_metric: DiversityMetric):
         self._benchmark_type = benchmark_type
-        self._problem_generator = problem_generator
-        self._constraints = problem_generator.has_constraints
+        self._problem_name = problem_name
+        self._diversity_metric = diversity_metric
 
     # -------------------------------------------------------------------------
     #  API
     # -------------------------------------------------------------------------
     @property
     def problem_name(self) -> str:
-        return self._problem_generator.problem_name
+        return self._problem_name
 
     @property
     def has_constraints(self) -> bool:
-        return self._constraints
+        """Determine if problems with 'problem_name' have constraints, assuming this property is size-independent."""
+        d, n, k, m, n_con_indices = self.get_problem_dimensions(size=10)
+        return m > 0
 
     @property
     def benchmark_type(self) -> str:
         return self._benchmark_type
 
     def construct_problem(self, size: int) -> MaxDivProblem:
-        return self._problem_generator.construct_problem(size)
+        return BenchmarkProblemFactory.construct_problem(
+            name=self._problem_name,
+            size=size,
+            diversity_metric=self._diversity_metric,
+        )
+
+    def get_problem_dimensions(self, size: int) -> tuple[int, int, int, int, int]:
+        """Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with given size."""
+        return BenchmarkProblemFactory.get_problem_dimensions(self._problem_name, size=size)
 
     # -------------------------------------------------------------------------
     #  API - ABSTRACT
@@ -341,34 +351,3 @@ class BenchmarkSolverConstructor(ABC):
     def show_strategies_table(self, markdown: bool):
         """Displays a table summarizing the strategies that can be constructed by this class."""
         raise NotImplementedError()
-
-
-# =================================================================================================
-#  BenchmarkProblemGenerator
-# =================================================================================================
-class BenchmarkProblemGenerator:
-    """
-    Class whose instances can generator problems of a requested size for one specific
-    (problem_name, diversity_metric) combination.
-    """
-
-    def __init__(self, problem_name: str, diversity_metric: DiversityMetric):
-        self._problem_name = problem_name
-        self._diversity_metric = diversity_metric
-
-    @property
-    def problem_name(self) -> str:
-        return self._problem_name
-
-    @cached_property
-    def has_constraints(self) -> bool:
-        """Determine if problems with 'problem_name' have constraints, assuming this property is size-independent."""
-        problem = self.construct_problem(size=1)
-        return problem.m > 0
-
-    def construct_problem(self, size: int) -> MaxDivProblem:
-        return BenchmarkProblemFactory.construct_problem(
-            name=self._problem_name,
-            size=size,
-            diversity_metric=self._diversity_metric,
-        )

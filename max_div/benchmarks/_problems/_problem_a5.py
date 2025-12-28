@@ -35,10 +35,18 @@ class BenchmarkProblem_A5(BenchmarkProblem):
         )
 
     @classmethod
-    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
+    def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
+        size = kwargs.get("size")
         d = size
         n = 150 * size
         k = 10 * size
+        m = 3 * size
+        n_con_indices = round(d * (n * 1.62))  # each dimension has 3 constraints, with expected 1.62*n total indices
+        return d, n, k, m, n_con_indices
+
+    @classmethod
+    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
+        d, n, k, m, _ = cls.get_problem_dimensions(size=size)
 
         # Generate gaussian random vectors, such that in each dimension...
         #   ~31% of values are <=0

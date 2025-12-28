@@ -35,10 +35,18 @@ class BenchmarkProblem_A3(BenchmarkProblem):
         )
 
     @classmethod
-    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
+    def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
+        size = kwargs.get("size")
+        d = 2
         n = 100 * size
         k = 10 * size
         m = 2 * size
+        n_con_indices = n
+        return d, n, k, m, n_con_indices
+
+    @classmethod
+    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
+        d, n, k, m, _ = cls.get_problem_dimensions(size=size)
 
         # Generate semi-non-uniform random vectors (uniform + gaussian)
         np.random.seed(42)
@@ -54,7 +62,7 @@ class BenchmarkProblem_A3(BenchmarkProblem):
             # add specify constraint that at least 4 samples should be taken from each band
             # (k=5*m and n=50*m, so this should always be feasible)
             v_min, v_max = i / m, (i + 1) / m  # range of values in dimension 0
-            indices_in_range = [idx for idx in range(n) if v_min <= vectors[idx, 0] <= v_max]
+            indices_in_range = [idx for idx in range(n) if v_min <= vectors[idx, 0] < v_max]
             constraints.append(Constraint(int_set=set(indices_in_range), min_count=4, max_count=k))
 
         return MaxDivProblem(

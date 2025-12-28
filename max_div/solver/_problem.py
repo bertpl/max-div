@@ -31,6 +31,10 @@ class MaxDivProblem:
     def m(self) -> int:
         return len(self.constraints)
 
+    @property
+    def n_constraint_indices(self) -> int:
+        return sum([len(con.int_set) for con in self.constraints])
+
     # --- factory methods ---------------------------------
     @classmethod
     def new(

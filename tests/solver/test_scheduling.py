@@ -151,6 +151,24 @@ def test_parameter_schedule_aliases(alias_fun, expected_cls):
     assert schedule.v1 == 3.69
 
 
+@pytest.mark.parametrize(
+    "schedule,expected_str",
+    [
+        (linear(0.1, 0.2), "linear(0.10,0.20)"),
+        (ease_in(1.5, -2.5), "ease_in(1.50,-2.50)"),
+        (ease_out(-3.0, 4.0), "ease_out(-3.00,4.00)"),
+        (ease_in_out(0.0, 1.0), "ease_in_out(0.00,1.00)"),
+        (
+            ParameterSchedule(v0=0.0, v1=1.0, c_poly=[0.2, 0.4, 0.6, 0.8]),
+            "ParameterSchedule(v0=0.0, v1=1.0, c_poly=[0.2, 0.4, 0.6, 0.8])",
+        ),
+    ],
+    ids=["linear", "ease_in", "ease_out", "ease_in_out", "ParameterSchedule"],
+)
+def test_parameter_schedule_str(schedule: ParameterSchedule, expected_str: str):
+    assert str(schedule) == expected_str
+
+
 # =================================================================================================
 #  TEST - numba acceleration
 # =================================================================================================

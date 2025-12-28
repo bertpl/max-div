@@ -1,12 +1,9 @@
-from dataclasses import dataclass
-from functools import partial
-from typing import Callable
-
 from max_div._cli.formatting import format_table_as_markdown, format_table_for_console
+from max_div.internal.formatting import md_multiline
 from max_div.solver import DiversityMetric, MaxDivSolver, MaxDivSolverBuilder
-from max_div.solver._strategies import InitializationStrategy
+from max_div.solver._strategies._initialization._presets import InitPreset
 
-from ._base import BenchmarkProblemGenerator, BenchmarkSolverConstructor
+from ._base import BenchmarkSolverConstructor
 
 
 # =================================================================================================
@@ -16,22 +13,31 @@ class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
     def __init__(self, problem_name: str, diversity_metric: DiversityMetric = DiversityMetric.geomean_separation()):
         super().__init__(
             benchmark_type="initialization",
-            problem_generator=BenchmarkProblemGenerator(problem_name, diversity_metric),
+            problem_name=problem_name,
+            diversity_metric=diversity_metric,
         )
-        self._strategies: dict[str, InitStrategyInfo] = {
-            info.name: info for info in get_initialization_strategies(self.has_constraints)
+        self._presets: dict[str, InitPreset] = {
+            str(preset.value): preset
+            for preset in InitPreset.all()
+            if preset.is_relevant_for_problem(self.has_constraints)
         }
 
     def estimated_duration(self, size: int, strat_name: str) -> int:
-        return size * size  # initialization methods roughly scale with O(kn) = O(size^2)
+        """Returns estimated time taken in milliseconds based on the preset's time model."""
+        d, n, k, m, n_con_indices = self.get_problem_dimensions(size)
+        preset = self._presets[strat_name]
+        time_model = preset.time_model()
+        estimated_duration_sec = time_model.get_time_sec(n=n, k=k, m=m, n_con_indices=n_con_indices)
+        estimated_duration_msec = max(1, round(1000 * estimated_duration_sec))  # at least 1 ms
+        return estimated_duration_msec
 
     def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
         problem = self.construct_problem(size)
-        strat_info = self._strategies[strat_name]
-        return MaxDivSolverBuilder(problem).set_initialization_strategy(strat_info.factory()).with_seed(seed).build()
+        preset = self._presets[strat_name]
+        return MaxDivSolverBuilder(problem).set_initialization_strategy(preset.create()).with_seed(seed).build()
 
     def strategy_names(self) -> list[str]:
-        return list(self._strategies.keys())
+        return list(self._presets.keys())
 
     def show_strategies_table(self, markdown: bool):
         # --- prepare table data ------------------------------
@@ -44,16 +50,22 @@ class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
             headers.append("Constraint-aware")
 
         table_data = []
-        for strat_info in self._strategies.values():
+        for name, preset in self._presets.items():
+            class_name = preset.class_name()
+            if markdown:
+                class_kwargs = md_multiline([f"{k}={str(v)}" for k, v in preset.class_kwargs().items()])
+            else:
+                class_kwargs = ", ".join([f"{k}={str(v)}" for k, v in preset.class_kwargs().items()])
+
             table_data.append(
                 [
-                    f"`{strat_info.name}`" if markdown else strat_info.name,
-                    strat_info.class_name,
-                    strat_info.class_kwargs,
+                    f"`{name}`" if markdown else name,
+                    class_name,
+                    class_kwargs,
                 ]
             )
             if self.has_constraints:
-                table_data[-1].append(strat_info.uses_constraints)
+                table_data[-1].append(preset.is_constraint_aware())
 
         # --- show table ---
         if markdown:
@@ -66,139 +78,3 @@ class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
         for line in display_data:
             print(line)
         print()
-
-
-# =================================================================================================
-#  Helper classes
-# =================================================================================================
-@dataclass
-class InitStrategyInfo:
-    name: str
-    class_name: str
-    class_kwargs: str
-    factory: Callable[[], InitializationStrategy]
-    needs_constraints: bool
-    uses_constraints: bool
-
-
-def get_initialization_strategies(constraints: bool) -> list[InitStrategyInfo]:
-    """
-    Construct a list of initialization strategies based on whether the problem has constraints.
-    Result is returns as a list of InitStrategyInfo objects.
-    """
-    result: list[InitStrategyInfo] = []
-
-    # --- InitDummy ---------------------------------------
-    result.extend(
-        [
-            InitStrategyInfo(
-                name="REF",
-                class_name="InitDummy",
-                class_kwargs="/",
-                factory=InitializationStrategy.dummy,
-                needs_constraints=False,
-                uses_constraints=False,
-            ),
-        ]
-    )
-
-    # --- InitRandomOneShot -------------------------------
-    result.extend(
-        [
-            InitStrategyInfo(
-                name="ROS(u)",
-                class_name="InitRandomOneShot",
-                class_kwargs="uniform=True, constrained=False",
-                factory=partial(InitializationStrategy.random_one_shot, uniform=True, constrained=False),
-                needs_constraints=False,
-                uses_constraints=False,
-            ),
-            InitStrategyInfo(
-                name="ROS(nu)",
-                class_name="InitRandomOneShot",
-                class_kwargs="uniform=False, constrained=False",
-                factory=partial(InitializationStrategy.random_one_shot, uniform=False, constrained=False),
-                needs_constraints=False,
-                uses_constraints=False,
-            ),
-            InitStrategyInfo(
-                name="ROS(u,con)",
-                class_name="InitRandomOneShot",
-                class_kwargs="uniform=True, constrained=True",
-                factory=partial(InitializationStrategy.random_one_shot, uniform=True, constrained=True),
-                needs_constraints=True,
-                uses_constraints=True,
-            ),
-            InitStrategyInfo(
-                name="ROS(nu,con)",
-                class_name="InitRandomOneShot",
-                class_kwargs="uniform=False, constrained=True",
-                factory=partial(InitializationStrategy.random_one_shot, uniform=False, constrained=True),
-                needs_constraints=True,
-                uses_constraints=True,
-            ),
-        ]
-    )
-
-    # --- InitRandomBatched -------------------------------
-    result.extend(
-        [
-            InitStrategyInfo(
-                name="RB(2)",
-                class_name="InitRandomBatched",
-                class_kwargs="b=2, constrained=False",
-                factory=partial(InitializationStrategy.random_batched, b=2, constrained=False),
-                needs_constraints=False,
-                uses_constraints=False,
-            ),
-            InitStrategyInfo(
-                name="RB(10)",
-                class_name="InitRandomBatched",
-                class_kwargs="b=10, constrained=False",
-                factory=partial(InitializationStrategy.random_batched, b=10, constrained=False),
-                needs_constraints=False,
-                uses_constraints=False,
-            ),
-            InitStrategyInfo(
-                name="RB(2,con)",
-                class_name="InitRandomBatched",
-                class_kwargs="b=2, constrained=True",
-                factory=partial(InitializationStrategy.random_batched, b=2, constrained=True),
-                needs_constraints=True,
-                uses_constraints=True,
-            ),
-            InitStrategyInfo(
-                name="RB(10,con)",
-                class_name="InitRandomBatched",
-                class_kwargs="b=10, constrained=True",
-                factory=partial(InitializationStrategy.random_batched, b=10, constrained=True),
-                needs_constraints=True,
-                uses_constraints=True,
-            ),
-        ]
-    )
-
-    # --- InitEager ---------------------------------------
-    result.extend(
-        [
-            InitStrategyInfo(
-                name="E(2)",
-                class_name="InitEager",
-                class_kwargs="nc=2",
-                factory=partial(InitializationStrategy.eager, nc=2),
-                needs_constraints=False,
-                uses_constraints=True,
-            ),
-            InitStrategyInfo(
-                name="E(10)",
-                class_name="InitEager",
-                class_kwargs="nc=10",
-                factory=partial(InitializationStrategy.eager, nc=10),
-                needs_constraints=False,
-                uses_constraints=True,
-            ),
-        ]
-    )
-
-    # --- return ------------------------------------------
-    return [info for info in result if (not info.needs_constraints) or constraints]

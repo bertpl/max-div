@@ -6,10 +6,10 @@ from ._helpers import new_solver_state
 
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
-def test_init_dummy(problem_has_constraints: bool):
+def test_init_fast(problem_has_constraints: bool):
     # --- arrange -----------------------------------------
     solver_state = new_solver_state(problem_has_constraints)
-    strategy = InitializationStrategy.dummy()
+    strategy = InitializationStrategy.fast()
 
     # --- act ---------------------------------------------
     strategy.initialize(solver_state)

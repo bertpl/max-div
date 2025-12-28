@@ -24,35 +24,38 @@ class InitializationStrategy(StrategyBase, ABC):
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def dummy(cls) -> Self:
-        """Create a InitDummy initialization strategy."""
-        from ._init_dummy import InitDummy
+    def fast(cls) -> Self:
+        """Create a InitFast initialization strategy."""
+        from ._init_fast import InitFast
 
-        return InitDummy()
+        return InitFast()
 
     @classmethod
-    def random_one_shot(cls, constrained: bool = True, uniform: bool = False) -> Self:
+    def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> Self:
         """Create a InitRandomOneShot initialization strategy."""
         from ._init_random_one_shot import InitRandomOneShot
 
         return InitRandomOneShot(
-            constrained=constrained,
             uniform=uniform,
+            ignore_constraints=ignore_constraints,
         )
 
     @classmethod
-    def random_batched(cls, b: int, constrained: bool = True) -> Self:
+    def random_batched(cls, b: int, ignore_constraints: bool = False) -> Self:
         """Create a InitRandomBatched initialization strategy."""
         from ._init_random_batched import InitRandomBatched
 
         return InitRandomBatched(
             b=b,
-            constrained=constrained,
+            ignore_constraints=ignore_constraints,
         )
 
     @classmethod
-    def eager(cls, nc: int) -> Self:
+    def eager(cls, nc: int, ignore_constraints: bool = False) -> Self:
         """Create a InitEager initialization strategy."""
         from ._init_eager import InitEager
 
-        return InitEager(nc=nc)
+        return InitEager(
+            nc=nc,
+            ignore_constraints=ignore_constraints,
+        )

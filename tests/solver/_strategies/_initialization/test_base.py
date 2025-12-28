@@ -10,12 +10,23 @@ from max_div.solver._strategies import InitializationStrategy
 @pytest.mark.parametrize(
     "factory_method",
     [
-        InitializationStrategy.dummy,
-        InitializationStrategy.random_one_shot,
-        partial(InitializationStrategy.random_batched, b=2),
-        partial(InitializationStrategy.eager, nc=2),
+        InitializationStrategy.fast,
+        partial(InitializationStrategy.random_one_shot, ignore_constraints=False),
+        partial(InitializationStrategy.random_one_shot, ignore_constraints=True),
+        partial(InitializationStrategy.random_batched, b=2, ignore_constraints=False),
+        partial(InitializationStrategy.random_batched, b=5, ignore_constraints=True),
+        partial(InitializationStrategy.eager, nc=2, ignore_constraints=False),
+        partial(InitializationStrategy.eager, nc=5, ignore_constraints=True),
     ],
-    ids=["dummy", "random_one_shot", "random_batched", "eager"],
+    ids=[
+        "fast",
+        "random_one_shot_1",
+        "random_one_shot_2",
+        "random_batched_1",
+        "random_batched_2",
+        "eager_1",
+        "eager_2",
+    ],
 )
 def test_initialization_strategy_factory(factory_method: Callable[[], InitializationStrategy]):
     """Test factory methods of InitializationStrategy base class."""

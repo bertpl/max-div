@@ -35,10 +35,18 @@ class BenchmarkProblem_A1(BenchmarkProblem):
         )
 
     @classmethod
-    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
+    def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
+        size = kwargs.get("size")
         d = size
         n = 100 * size
         k = 10 * size
+        m = 0
+        n_con_indices = 0
+        return d, n, k, m, n_con_indices
+
+    @classmethod
+    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
+        d, n, k, _, _ = cls.get_problem_dimensions(size=size)
 
         # Generate uniform random vectors
         np.random.seed(42)
