@@ -25,6 +25,8 @@ def test_cli_benchmark_solver_list():
         ["--turbo", "--markdown"],
         ["--turbo"],
         ["--speed=1.0"],
+        ["--turbo", "--optimization-only"],
+        ["--turbo", "--initialization-only"],
     ],
 )
 @pytest.mark.parametrize("test_problem", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()) + ["all"])

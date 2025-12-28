@@ -55,8 +55,48 @@ def _list():
     default=False,
     help="Output benchmark results in Markdown table format.",
 )
-def run(test_problem: str, file: bool, turbo: bool, speed: float, markdown: bool):
+@click.option(
+    "--optimization-only",
+    is_flag=True,
+    default=False,
+    help="Run only optimization benchmarks.",
+)
+@click.option(
+    "--initialization-only",
+    is_flag=True,
+    default=False,
+    help="Run only initialization benchmarks.",
+)
+def run(
+    test_problem: str,
+    file: bool,
+    turbo: bool,
+    speed: float,
+    markdown: bool,
+    optimization_only: bool,
+    initialization_only: bool,
+):
     """Run specific solver benchmark problem."""
+
+    # --- argument handling -------------------------------
     if turbo:
         speed = 1.0
-    run_solver_benchmark(test_problem, markdown, file, speed)
+    if optimization_only:
+        benchmark_initialization = False
+        benchmark_optimization = True
+    elif initialization_only:
+        benchmark_initialization = True
+        benchmark_optimization = False
+    else:
+        benchmark_initialization = True
+        benchmark_optimization = True
+
+    # --- run benchmarks ----------------------------------
+    run_solver_benchmark(
+        name=test_problem,
+        markdown=markdown,
+        file=file,
+        speed=speed,
+        benchmark_initialization=benchmark_initialization,
+        benchmark_optimization=benchmark_optimization,
+    )
