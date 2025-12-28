@@ -95,7 +95,7 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
             p_in=p,
             p_out=p,  # in-place
             modifier=np.float32(self.add_selectivity_modifier),
-            descending=True,  # for removal, we want to have vectors with small separation have higher probability
+            descending=False,  # for adding, we want to have vectors with high separation have higher probability
         )
 
         # --- sample ---
