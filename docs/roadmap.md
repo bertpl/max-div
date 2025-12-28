@@ -2,7 +2,7 @@
 
 ## v0.0.x
 
-- Initial projet setup
+- Initial project setup
 - Implement & optimize unconstrained sampling (`randint`)
 - Implement benchmarking
 
