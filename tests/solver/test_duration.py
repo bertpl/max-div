@@ -56,6 +56,48 @@ def test_target_duration_str_repr(duration: TargetDuration, expected_repr: str):
     assert repr(duration) == expected_repr
 
 
+@pytest.mark.parametrize(
+    "duration, multiplier, expected_duration",
+    [
+        (iterations(100), 2, iterations(200)),
+        (iterations(150), 0.5, iterations(75)),
+        (iterations(150), 0.001, iterations(1)),
+        (seconds(10.0), 3, seconds(30.0)),
+        (minutes(4.0), 0.5, minutes(2.0)),
+        (seconds(1.0), 1e-15, seconds(1e-9)),
+    ],
+)
+def test_target_duration_mul(duration: TargetDuration, multiplier: float | int, expected_duration: TargetDuration):
+    # --- act ---------------------------------------------
+    result_duration_1 = duration * multiplier
+    result_duration_2 = multiplier * duration
+
+    # --- assert ------------------------------------------
+
+    # check type
+    assert type(result_duration_1) == type(expected_duration)
+    assert type(result_duration_2) == type(expected_duration)
+
+    # check equality (roughly) in type-independent way
+    assert str(result_duration_1) == str(expected_duration)
+    assert str(result_duration_2) == str(expected_duration)
+
+
+def test_target_duration_mul_type_error():
+    # --- act & assert ------------------------------------
+    with pytest.raises(TypeError):
+        _ = iterations(100) * "invalid"
+
+    with pytest.raises(TypeError):
+        _ = "invalid" * iterations(100)
+
+    with pytest.raises(TypeError):
+        _ = seconds(60.0) * "invalid"
+
+    with pytest.raises(TypeError):
+        _ = "invalid" * seconds(60.0)
+
+
 # =================================================================================================
 #  ProgressTracker
 # =================================================================================================

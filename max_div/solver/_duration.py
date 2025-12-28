@@ -67,6 +67,14 @@ class _TargetTimeDuration(TargetDuration):
     def track(self) -> ProgressTracker:
         return _TimeTracker(self._t_target_sec)
 
+    def __mul__(self, other: float | int) -> _TargetTimeDuration:
+        if not isinstance(other, (float, int)):
+            return NotImplemented
+        return _TargetTimeDuration(max(1e-9, self._t_target_sec * other))
+
+    def __rmul__(self, other: float | int) -> _TargetTimeDuration:
+        return self.__mul__(other)
+
 
 class _TargetIterationCount(TargetDuration):
     def __init__(self, n_iters: int):
@@ -82,6 +90,14 @@ class _TargetIterationCount(TargetDuration):
 
     def track(self) -> ProgressTracker:
         return _IterationTracker(self._n_iters)
+
+    def __mul__(self, other: float | int) -> _TargetIterationCount:
+        if not isinstance(other, (float, int)):
+            return NotImplemented
+        return _TargetIterationCount(max(1, round(self._n_iters * other)))
+
+    def __rmul__(self, other: float | int) -> _TargetIterationCount:
+        return self.__mul__(other)
 
 
 # --- shorthand factory methods ---------------------------

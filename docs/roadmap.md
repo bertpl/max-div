@@ -43,6 +43,9 @@
 
 ## v0.4.x
 
+- Additional tweaks and completions
+  - add 'smart' presets
+  - add preset benchmarking
 - Documentation push
   - Getting started / Tutorial
   - Use cases with benchmarks & visualizations

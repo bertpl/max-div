@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.solver import Constraint, MaxDivProblem, MaxDivSolver, MaxDivSolverBuilder
 from max_div.solver._distance import DistanceMetric
 from max_div.solver._diversity import DiversityMetric
@@ -174,3 +175,43 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._diversity_metric.name == DiversityMetric.min_separation().name
     assert solver._constraints == constraints
     assert solver._seed == 123
+
+
+# =================================================================================================
+#  Presets
+# =================================================================================================
+@pytest.mark.parametrize("size", [1, 2, 10])
+@pytest.mark.parametrize("problem_name", ["A1", "A2", "A3", "A4", "A5"])
+def test_max_div_solver_builder_preset_default(problem_name: str, size: int):
+    """
+    Test preset_default strategy on reference problems and check if we're optimizing.
+    """
+
+    # --- arrange -----------------------------------------
+
+    # prepare problem & solver state
+    problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
+        name=problem_name,
+        size=size,
+        diversity_metric=DiversityMetric.approx_geomean_separation(),
+    )
+
+    # --- act ---------------------------------------------
+    solver = (
+        MaxDivSolverBuilder(problem)
+        .with_seed(42)
+        .with_preset_default(
+            optimization_duration=iterations(100),
+        )
+    ).build()
+    result = solver.solve()
+
+    # --- assert ------------------------------------------
+    score_after_initialization = result.score_checkpoints[1][2]
+    score_after_optimization = result.score_checkpoints[-1][2]
+
+    assert score_after_initialization.size == 1.0, "initialization should select k items."
+    assert score_after_optimization.size == 1.0, "final solution should contain k items."
+    assert len(result.i_selected) == problem.k, "final solution should contain k items."
+
+    assert score_after_optimization > score_after_initialization, "Optimization should improve the score."

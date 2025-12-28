@@ -5,10 +5,12 @@ import numpy as np
 from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
+from ._duration import TargetDuration
 from ._problem import MaxDivProblem
+from ._scheduling import ease_in, ease_in_out, ease_out
 from ._solver import MaxDivSolver
 from ._solver_step import InitializationStep, OptimizationStep, SolverStep
-from ._strategies import InitializationStrategy
+from ._strategies import InitializationStrategy, OptimizationStrategy
 
 
 class MaxDivSolverBuilder:
@@ -65,6 +67,73 @@ class MaxDivSolverBuilder:
 
     def with_seed(self, seed: int) -> Self:
         self._seed = seed
+        return self
+
+    # -------------------------------------------------------------------------
+    #  Builder API - PRESETS
+    # -------------------------------------------------------------------------
+    def with_preset_default(self, optimization_duration: TargetDuration) -> Self:
+        """
+        Configure the builder with default preset settings (overriding any previous settings):
+          - Appropriate initialization strategy
+          - Appropriate optimization strategy
+          - Default diversity tie-breakers
+
+        Please make sure to set diversity metric prior to calling this method, as it influences the choices.
+
+        :param optimization_duration: Target duration for the optimization phase (either in time or iterations).
+                                       --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
+        """
+
+        # --- clear previous strategies ---
+        self._solver_steps.clear()
+
+        # --- initialization strategy ---
+        # intermediate-speed, solid-quality initialization
+        # TODO: adjust init strategy based on problem properties & optimization_duration to take max 10% of total time
+        self._solver_steps: list[SolverStep] = [
+            InitializationStep(
+                InitializationStrategy.random_batched(
+                    b=10,
+                    constrained=True,
+                )
+            )
+        ]
+
+        # --- optimization strategies ---
+        if len(self._constraints) > 0:
+            # constrained problem
+            #  --> low->high selectivity strategy with swap size 1-3 works best
+            self._solver_steps.append(
+                OptimizationStep(
+                    optim_strategy=OptimizationStrategy.guided_swaps(
+                        min_swap_size=1,
+                        max_swap_size=3,
+                        remove_selectivity_modifier=ease_in(-0.8, 0.8),  # wide->narrow late
+                        add_selectivity_modifier=ease_out(-0.8, 0.8),  # wide->narrow early
+                    ),
+                    duration=optimization_duration,
+                ),
+            )
+        else:
+            # unconstrained problem
+            #  --> selective replacement with swap size 1-3 works best
+            self._solver_steps.append(
+                OptimizationStep(
+                    optim_strategy=OptimizationStrategy.guided_swaps(
+                        min_swap_size=1,
+                        max_swap_size=3,
+                        remove_selectivity_modifier=0.8,
+                        add_selectivity_modifier=0.8,
+                    ),
+                    duration=optimization_duration,
+                )
+            )
+
+        # --- diversity tie-breakers ---
+        self.with_default_diversity_tie_breakers()
+
+        # --- we're done ---
         return self
 
     # -------------------------------------------------------------------------
