@@ -1,12 +1,19 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
+> ## v0.4.2
+> *(under development)*
+<!------------------------------------------------------------------------------------------------->
+
+/
+
+<!------------------------------------------------------------------------------------------------->
 > ## v0.4.1
 > *(2025-12-31)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
-    - notebooks for automated estimated of time models of init. and optim. strategies for different problem sizes
+    - notebooks for automated estimation of time models of init. and optim. strategies for different problem sizes
 
 - **improved**:
     - make default preset in `MaxDivSolverBuilder` smart, taking into account expected duration of strategies
