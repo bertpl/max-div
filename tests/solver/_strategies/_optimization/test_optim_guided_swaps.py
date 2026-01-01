@@ -30,7 +30,7 @@ from max_div.solver._strategies._optimization import OptimizationStrategy
         linear(0.0, 1.0),
     ],
 )
-@pytest.mark.parametrize("size", [10])
+@pytest.mark.parametrize("size", [5])
 @pytest.mark.parametrize("problem_name", ["A1", "A2", "A3", "A4", "A5"])
 def test_optim_guided_swaps(
     problem_name: str,

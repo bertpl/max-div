@@ -36,8 +36,9 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
 
     # --- speed-dependent settings --------------------
     t_per_run = 0.01 / (1000.0**speed)
-    n_warmup = int(8 - 5 * speed)
-    n_benchmark = int(25 - 22 * speed)
+    n_warmup = int(8 - 6 * speed)
+    n_benchmark = int(25 - 24 * speed)
+    max_size = round(10_000 / (100**speed))
 
     # --- benchmark scenarios -------------------------
     i_file = 0
@@ -51,6 +52,9 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
         data: list[list[CellContent]] = []
         n_k_values = [(n, k) for n in [10, 100, 1000, 10000] for k in [1, 10, 100, 1000, 10000] if replace or (k <= n)]
         for n, k in tqdm(n_k_values, leave=file):
+            if n > max_size or k > max_size:
+                continue
+
             data_row: list[CellContent] = [str(k), str(n)]
 
             for use_numba in [False, True]:

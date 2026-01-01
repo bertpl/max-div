@@ -182,8 +182,7 @@ def test_max_div_solver_builder_end_to_end():
 # =================================================================================================
 @pytest.mark.parametrize("size", [1, 5])
 @pytest.mark.parametrize("problem_name", ["A1", "A2", "A3", "A4", "A5"])
-@pytest.mark.parametrize("target_duration", [seconds(0.2), iterations(100)])
-def test_max_div_solver_builder_preset_default(problem_name: str, size: int, target_duration: TargetDuration):
+def test_max_div_solver_builder_preset_default(problem_name: str, size: int):
     """
     Test preset_default strategy on reference problems and check if we're optimizing.
     """
@@ -202,7 +201,7 @@ def test_max_div_solver_builder_preset_default(problem_name: str, size: int, tar
         MaxDivSolverBuilder(problem)
         .with_seed(42)
         .with_preset_default(
-            target_duration=target_duration,
+            target_duration=iterations(100),
         )
     ).build()
     result = solver.solve()

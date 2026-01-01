@@ -42,8 +42,8 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
     n_accuracy = round(1000.0 / (100.0**speed))  # 1000 when speed=0, 10 when speed=1
     max_size = round(100_000 / (1_000**speed))
     t_per_run = 0.01 / (1000.0**speed)
-    n_warmup = int(8 - 5 * speed)
-    n_benchmark = int(25 - 22 * speed)
+    n_warmup = int(8 - 6 * speed)
+    n_benchmark = int(25 - 24 * speed)
 
     # --- compute approximation errors ----------------
     # compute errors by method (by comparing exact power method vs other methods on calibration data)

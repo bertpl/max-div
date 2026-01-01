@@ -37,8 +37,8 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
     # --- speed-dependent settings --------------------
     max_size = round(100_000 / (1_000**speed))
     t_per_run = 0.01 / (1000.0**speed)
-    n_warmup = int(8 - 5 * speed)
-    n_benchmark = int(25 - 22 * speed)
+    n_warmup = int(8 - 6 * speed)
+    n_benchmark = int(25 - 24 * speed)
 
     # --- create diversity metrics --------------------
     metrics = [

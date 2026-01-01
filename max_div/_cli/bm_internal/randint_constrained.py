@@ -197,8 +197,8 @@ def _benchmark(
     # speed-dependent settings
     index_range = int(100 * (0.02**speed))  # 100 at speed=0, 2 at speed=1
     t_per_run = 0.01 / (1000.0**speed)
-    n_warmup = int(8 - 5 * speed)
-    n_benchmark = int(25 - 22 * speed)
+    n_warmup = int(8 - 6 * speed)
+    n_benchmark = int(25 - 24 * speed)
 
     # build a <index_range> number of different constraints, to randomize the problems we benchmark
     lst_cons = []
