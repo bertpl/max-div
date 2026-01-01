@@ -8,10 +8,9 @@ from ._diversity import DiversityMetric
 from ._duration import TargetDuration
 from ._presets import preset_default_get_strategies
 from ._problem import MaxDivProblem
-from ._scheduling import ease_in, ease_in_out, ease_out
 from ._solver import MaxDivSolver
 from ._solver_step import InitializationStep, OptimizationStep, SolverStep
-from ._strategies import InitializationStrategy, OptimizationStrategy
+from ._strategies import InitializationStrategy
 
 
 class MaxDivSolverBuilder:
@@ -76,7 +75,12 @@ class MaxDivSolverBuilder:
     # -------------------------------------------------------------------------
     #  Builder API - PRESETS
     # -------------------------------------------------------------------------
-    def with_preset_default(self, target_duration: TargetDuration) -> Self:
+    def with_preset_default(
+        self,
+        target_duration: TargetDuration,
+        initialization_included: bool = False,
+        hardware_speed_correction: float = 1.0,
+    ) -> Self:
         """
         Configure the builder with default preset settings (overriding any previous settings):
           - Appropriate initialization strategy (most accurate strategy+settings taking est. <5% of total time)
@@ -87,12 +91,19 @@ class MaxDivSolverBuilder:
 
         :param target_duration: Target duration for the init+optim phases (either in time or iterations).
                                        --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
+        :param initialization_included: Whether the target duration includes initialization time.  Note that this
+                                         flag does not influence whether an initialization strategy is being
+                                         configured by the preset; this is always the case.
+        :param hardware_speed_correction: (float) set to value >1 if current hardware is faster than the reference
+                                          hardware.  Use estimate_platform_speed to get an estimate.
         """
 
         # --- apply main preset logic -----------
         init_strategy, optim_steps = preset_default_get_strategies(
             problem=self._problem,
-            duration=target_duration,
+            target_duration=target_duration,
+            initialization_included=initialization_included,
+            hardware_speed_correction=hardware_speed_correction,
         )
 
         # --- configure solver steps ------------

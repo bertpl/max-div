@@ -6,7 +6,7 @@ import math
 
 from max_div.solver import MaxDivProblem
 from max_div.solver._duration import TargetDuration, _TargetIterationCount, _TargetTimeDuration
-from max_div.solver._scheduling import ease_in, ease_out, linear
+from max_div.solver._scheduling import ease_in, ease_out
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 from max_div.solver._strategies._initialization._presets import InitPreset
@@ -15,6 +15,9 @@ from max_div.solver._strategies._optimization._presets import OptimPreset
 # =================================================================================================
 #  Constants
 # =================================================================================================
+# Candidate initialization presets, ordered from fastest to slowest (lowest to highest quality),
+# which are considered in this order and selected based on estimated time budget.
+# On larger problems, time taken by these method can range by a factor of up to 1000x.
 _CANDIDATE_INIT_PRESETS = [
     InitPreset.FAST,
     InitPreset.ROS_NU,
@@ -33,7 +36,10 @@ _CANDIDATE_INIT_PRESETS = [
 #  Main entry point
 # =================================================================================================
 def preset_default_get_strategies(
-    problem: MaxDivProblem, duration: TargetDuration
+    problem: MaxDivProblem,
+    target_duration: TargetDuration,
+    initialization_included: bool = False,
+    hardware_speed_correction: float = 1.0,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     """
     Main logic of the 'default' preset.
@@ -47,12 +53,19 @@ def preset_default_get_strategies(
             --> this allows us to estimate how much time (seconds) this is expected to take
        2) determine initialization strategy
             --> this is chosen from a list of presets, such that the most accurate preset is chosen that will
-                  use <= 5% of the estimated optimization time
+                  use <= 5% of the target_duration
 
+    :param problem: (MaxDivProblem) The problem for which we want to determine a solver configuration.
+    :param target_duration: (TargetDuration) The target duration to aim for.  (iteration- or time-based)
+    :param initialization_included: (bool) Whether the target_duration includes initialization time or only refers
+                                           to optimization time.  If True, duration of the optimization is reduced,
+                                           based on the estimated initialization time.   (default: False)
+    :param hardware_speed_correction: (float) set to value >1 if current hardware is faster than the reference
+                                        hardware.  Use estimate_platform_speed to get an estimate.
     """
 
     # --- optimization strategy ---------------------------
-    # RATIONALE: Benchmarks show that NARROW strategies result in best diversity without satisfying constraint
+    # RATIONALE: Benchmarks show that NARROW strategies result in the best diversity without sacrificing constraint
     #            satisfaction. However, where constraints cause very uneven spread of selected items or where
     #            the original distribution of items is very non-uniform, starting WIDE is expected to improve
     #            robustness of converging to a good solution.
@@ -65,29 +78,32 @@ def preset_default_get_strategies(
     )
 
     # --- convert duration to time ------------------------
-    target_duration_sec: float = 1.0
-    if isinstance(duration, _TargetTimeDuration):
-        target_duration_sec = duration._t_target_sec
-    elif isinstance(duration, _TargetIterationCount):
-        target_duration_iterations = duration._n_iters
+    if isinstance(target_duration, _TargetTimeDuration):
+        target_duration_sec = target_duration._t_target_sec
+    elif isinstance(target_duration, _TargetIterationCount):
+        target_duration_iterations = target_duration._n_iters
         time_model = OptimPreset.GS_1_3_WI_NA.time_model()
-        t_sec_per_iteration = time_model.get_time_sec(
+        t_sec_per_iteration = hardware_speed_correction * time_model.get_time_sec(
             n=problem.n,
             k=problem.k,
             m=problem.m,
             n_con_indices=problem.n_constraint_indices,
         )
         target_duration_sec = target_duration_iterations * t_sec_per_iteration
+    else:
+        raise TypeError(f"Unsupported TargetDuration type: {type(target_duration)}")
 
     # --- determine initialization strategy ---------------
-    max_init_time_sec = 0.05 * target_duration_sec  # 5% of total time budget
+    max_init_time_sec = 0.05 * target_duration_sec  # 5% of target duration
 
+    # initialize
     best_init_preset: InitPreset = InitPreset.FAST
     best_init_time_sec: float = math.inf
 
+    # go over all candidates
     for init_preset in _CANDIDATE_INIT_PRESETS:
         time_model = init_preset.time_model()
-        est_init_time_sec = time_model.get_time_sec(
+        est_init_time_sec = hardware_speed_correction * time_model.get_time_sec(
             n=problem.n,
             k=problem.k,
             m=problem.m,
@@ -102,11 +118,22 @@ def preset_default_get_strategies(
 
     init_strategy = best_init_preset.create()
 
-    # --- see how much time we have left to optimize ------
-    init_time_frac = best_init_time_sec / target_duration_sec  # this could be >1 for very small target durations
-    optim_time_frac = max(0.0, 1.0 - init_time_frac)
+    # --- determine optimization duration -----------------
+    if initialization_included:
+        # reduce optimization duration based on estimated init time
+        #  e.g. assume...
+        #         - target_duration = 1000 iterations, which we expect to take 10sec for the selected optim strategy
+        #         - we have selected an initialization strategy that is expected to take 0.4sec.
+        #        ==> then we have 9.6sec left for optimization
+        #        ==> we reduce target_duration by (0.4/10)=4%  --> 960 iterations left for optimization
+        init_time_frac = best_init_time_sec / target_duration_sec  # this could be >1 for very small target durations
+        optim_time_frac = max(0.0, 1.0 - init_time_frac)
+    else:
+        optim_time_frac = 1.0  # 100% of target duration for optimization
+
+    # --- set up solver steps -----------------------------
     if optim_time_frac > 0.0:
-        optim_duration: TargetDuration = optim_time_frac * duration  # this can be time- or iteration-based
+        optim_duration = optim_time_frac * target_duration  # this can be time- or iteration-based
         optim_steps = [
             OptimizationStep(
                 optim_strategy=optim_strategy,
@@ -116,5 +143,5 @@ def preset_default_get_strategies(
     else:
         optim_steps = []
 
-    # --- we're done ---
+    # --- return final result -----------------------------
     return init_strategy, optim_steps
