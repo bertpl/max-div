@@ -16,6 +16,8 @@ from dataclasses import dataclass
 
 from tqdm import tqdm
 
+from max_div.internal.formatting import format_time_duration
+
 
 # =================================================================================================
 #  TargetDuration
@@ -24,6 +26,14 @@ class TargetDuration(ABC):
     @abstractmethod
     def track(self) -> ProgressTracker:
         raise NotImplementedError()
+
+    @abstractmethod
+    def value(self) -> float:
+        """numerical value (without unit) of the target duration"""
+        raise NotImplementedError()
+
+    def __eq__(self, other):
+        return isinstance(other, TargetDuration) and (type(self) is type(other)) and (self.value() == other.value())
 
     # -------------------------------------------------------------------------
     #  Factory methods
@@ -51,18 +61,15 @@ class _TargetTimeDuration(TargetDuration):
             raise ValueError("t_target_sec must be > 0")
         self._t_target_sec = t_target_sec
 
+    def value(self) -> float:
+        return self._t_target_sec
+
     def __str__(self):
         return repr(self)
 
     def __repr__(self):
-        if self._t_target_sec <= 1.0:
-            return f"TargetDuration({self._t_target_sec:.3f} seconds)"
-        elif self._t_target_sec < 10.0:
-            return f"TargetDuration({self._t_target_sec:.2f} seconds)"
-        elif self._t_target_sec < 100.0:
-            return f"TargetDuration({self._t_target_sec:.1f} seconds)"
-        else:
-            return f"TargetDuration({int(round(self._t_target_sec)):_} seconds)"
+        t_str = format_time_duration(self._t_target_sec, n_chars=8).strip()
+        return f"TargetDuration({t_str})"
 
     def track(self) -> ProgressTracker:
         return _TimeTracker(self._t_target_sec)
@@ -81,6 +88,9 @@ class _TargetIterationCount(TargetDuration):
         if n_iters <= 0:
             raise ValueError("n_iters must be > 0")
         self._n_iters = n_iters
+
+    def value(self) -> float:
+        return float(self._n_iters)
 
     def __str__(self):
         return repr(self)

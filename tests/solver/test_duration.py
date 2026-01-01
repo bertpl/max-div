@@ -41,17 +41,51 @@ def test_target_duration_factory_methods():
 
 
 @pytest.mark.parametrize(
+    "duration, expected_value",
+    [
+        (iterations(1000), 1000.0),
+        (seconds(0.1234), 0.1234),
+        (minutes(1.0), 60.0),
+    ],
+)
+def test_target_duration_value(duration: TargetDuration, expected_value: float):
+    assert duration.value() == expected_value
+
+
+@pytest.mark.parametrize(
+    "duration_a, duration_b, expected_equal",
+    [
+        (iterations(1000), iterations(1000), True),
+        (iterations(1000), iterations(999), False),
+        (seconds(1.0), seconds(1.0), True),
+        (seconds(30.0), minutes(0.5), True),
+        (seconds(1), minutes(1), False),
+        (seconds(1), iterations(1), False),
+    ],
+)
+def test_target_duration_eq(duration_a: TargetDuration, duration_b: TargetDuration, expected_equal: bool):
+    # --- act ---------------------------------------------
+    is_equal = duration_a == duration_b
+    is_not_equal = duration_a != duration_b
+
+    # --- assert ------------------------------------------
+    assert is_equal is expected_equal
+    assert is_not_equal is (not expected_equal)
+
+
+@pytest.mark.parametrize(
     "duration, expected_repr",
     [
         (iterations(1000), "TargetDuration(1_000 iterations)"),
-        (seconds(0.1234), "TargetDuration(0.123 seconds)"),
-        (seconds(1.234), "TargetDuration(1.23 seconds)"),
-        (seconds(10.5), "TargetDuration(10.5 seconds)"),
-        (minutes(5.0), "TargetDuration(300 seconds)"),
-        (hours(1.0), "TargetDuration(3_600 seconds)"),
+        (seconds(0.1234), "TargetDuration(123.40ms)"),
+        (seconds(1.234), "TargetDuration(1.23s)"),
+        (seconds(10.5), "TargetDuration(10.50s)"),
+        (minutes(5.0), "TargetDuration(5m0.00s)"),
+        (hours(1.0), "TargetDuration(1h0m0.0s)"),
     ],
 )
 def test_target_duration_str_repr(duration: TargetDuration, expected_repr: str):
+    print(str(duration))
     assert str(duration) == expected_repr
     assert repr(duration) == expected_repr
 
