@@ -2,10 +2,16 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.2
-> *(under development)*
+> *(2026-01-02)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**:
+    - `TargetDuration` now implements `__eq__` and more informative `__repr__` and `__str__` for time-based durations.
+    - `MaxDivSolverBuilder`: add config options to default preset + improve test coverage
+    - `estimate_platform_speed` 
+        - move to `internal.benchmarking` 
+        - improve implementation for maintainability & encapsulation
+    - fix slowest & a few flaky tests
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.1
