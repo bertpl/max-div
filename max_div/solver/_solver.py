@@ -8,6 +8,7 @@ from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._duration import Elapsed
+from ._progress_reporting import TqdmProgressReporter
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
 from ._solver_step import SolverStep, SolverStepResult
@@ -69,21 +70,32 @@ class MaxDivSolver:
     # -------------------------------------------------------------------------
     #  API
     # -------------------------------------------------------------------------
-    def solve(self) -> MaxDivSolution:
+    def solve(self, verbosity: int = 10) -> MaxDivSolution:
         """
         Solve the maximum diversity problem with the given configuration.
+        :param verbosity: (int) The verbosity level.
+                             0 = silent,
+                            10 = tqdm progress bar per solver step (updated every 1sec)
+                            2x = progress table with iteration count, metrics, elapsed time, ...
+                                 (updated at 0% and 100% of every step, every 1sec
+                                                     or with decreasing freq. for long-running steps)
+
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------
 
+        # --- progress reporting ---
+        progress_reporter = TqdmProgressReporter()
+
         # --- solver steps ---
         n_steps = len(self._solver_steps)
-        step_names = self._get_step_names()
+        step_names = self._get_step_names()  # includes solver state init step (hence length n_steps+1)
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
         step_results: dict[str, SolverStepResult] = dict()
 
         # --- solver state ---
         with Timer() as timer:
+            progress_reporter.solver_step_started(step_names[0])
             state = SolverState.new(
                 vectors=self._vectors,
                 k=self._k,
@@ -92,9 +104,10 @@ class MaxDivSolver:
                 diversity_tie_breakers=self._diversity_tie_breakers,
                 constraints=self._constraints,
             )
+            progress_reporter.solver_step_finished(state.score)
 
         # init step results with solver state initialization as virtual step 0
-        step_results[f"step 0/{n_steps} - SolverState init"] = SolverStepResult(
+        step_results[step_names[0].strip()] = SolverStepResult(
             score_checkpoints=[
                 (
                     Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
@@ -104,9 +117,11 @@ class MaxDivSolver:
         )
 
         # --- Main loop -----------------------------------
-        for step_name, step_seed, step in zip(step_names, step_seeds, self._solver_steps):
+        for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
+            progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
-            step_results[step_name.strip()] = step.run(state, step_name)
+            step_results[step_name.strip()] = step.run(state, progress_reporter)
+            progress_reporter.solver_step_finished(state.score)
 
         # --- Construct result ----------------------------
         return self._construct_final_solution(state, step_results)
@@ -116,9 +131,9 @@ class MaxDivSolver:
     # -------------------------------------------------------------------------
     def _get_step_names(self) -> list[str]:
         """Return list of numbered step names, left aligned to be of equal length."""
+        names = ["Init SolverState"] + [s.name() for s in self._solver_steps]
         n_steps = len(self._solver_steps)
-        step_names = [f"step {i}/{n_steps} - {s.name()}" for i, s in enumerate(self._solver_steps, start=1)]
-        return ljust_str_list(step_names)
+        return ljust_str_list([f"step {i}/{n_steps} - {name}" for i, name in enumerate(names)])
 
     @staticmethod
     def _construct_final_solution(state: SolverState, step_results: dict[str, SolverStepResult]) -> MaxDivSolution:

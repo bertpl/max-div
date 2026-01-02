@@ -2,12 +2,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
-from tqdm.auto import tqdm
-
 from max_div.internal.benchmarking._timer import Timer
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
 from ._duration import Elapsed, Progress, TargetDuration
+from ._progress_reporting import ProgressReporter, SilentProgressReporter
 from ._score import Score
 from ._solver_state import SolverState
 from ._strategies._base import StrategyBase
@@ -43,25 +42,9 @@ class SolverStep(ABC, Generic[S]):
     def set_seed(self, seed: int):
         self._strategy.seed = seed
 
-    def run(self, state: SolverState, tqdm_desc: str | None = None) -> SolverStepResult:
-        """
-        Executes the solver step by executing a strategy 1x or repeatedly and returns a SolverStepResult.
-        """
-
-        # --- init ---
-        pbar = tqdm(desc=tqdm_desc, total=1) if (tqdm_desc is not None) else None
-
-        # --- execute child ---
-        result = self._run_child(state, pbar)
-
-        # --- wrap up ---
-        if (pbar is not None) and (pbar.n < pbar.total):
-            pbar.n = pbar.total
-            pbar.refresh()
-        return result
-
     @abstractmethod
-    def _run_child(self, state: SolverState, pbar: tqdm | None) -> SolverStepResult:
+    def run(self, state: SolverState, progress_reporter: ProgressReporter | None = None) -> SolverStepResult:
+        """Executes the solver step by executing a strategy 1x or repeatedly and returns a SolverStepResult."""
         raise NotImplementedError
 
 
@@ -77,7 +60,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
             )
         super().__init__(init_strategy)
 
-    def _run_child(self, state: SolverState, pbar: tqdm | None) -> SolverStepResult:
+    def run(self, state: SolverState, progress_reporter: ProgressReporter | None = None) -> SolverStepResult:
         # --- execute initialization ----------------------
         with Timer() as t:
             while state.n_selected < state.k:
@@ -118,8 +101,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         super().__init__(optim_strategy)
         self._duration = duration
 
-    def _run_child(self, state: SolverState, pbar: tqdm | None) -> SolverStepResult:
+    def run(self, state: SolverState, progress_reporter: ProgressReporter | None = None) -> SolverStepResult:
         # --- init ----------------------------------------
+        progress_reporter = progress_reporter or SilentProgressReporter()
         tracker = self._duration.track()
         score_checkpoints: list[tuple[Elapsed, Score]] = []
         next_checkpoint_iter_count = 1
@@ -127,8 +111,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         # --- main loop -----------------------------------
         while not (progress := tracker.get_progress()).is_finished:
             # --- update progress ---
-            if pbar:
-                progress.update_tqdm(pbar)
+            progress_reporter.update(progress, state.score)
 
             # --- do n iterations ---
             n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count)
@@ -153,9 +136,6 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                         ]
                     )
                 )
-
-        if pbar:
-            progress.update_tqdm(pbar)  # one last time
 
         # --- gather results ------------------------------
         elapsed = tracker.elapsed()
