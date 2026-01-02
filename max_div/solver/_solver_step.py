@@ -61,18 +61,32 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         super().__init__(init_strategy)
 
     def run(self, state: SolverState, progress_reporter: ProgressReporter | None = None) -> SolverStepResult:
+        # --- set up progress tracking --------------------
+        progress_reporter = progress_reporter or SilentProgressReporter()
+        duration = TargetDuration.iterations(int(state.k))  # we need to select k items
+        tracker = duration.track()
+
         # --- execute initialization ----------------------
         with Timer() as t:
             while state.n_selected < state.k:
                 # continue while we don't have a complete initial selection
+
+                # --- update progress ---
+                progress_reporter.update(tracker.get_progress(), state)
+
+                # --- get next samples ---
                 samples = self._strategy.get_next_samples(
                     state=state,
                     k_remaining=state.k - state.n_selected,
                 )
 
-                # add items to state
+                # --- add items to state ---
                 for s in samples:
                     state.add(s)
+
+                tracker.report_iterations_done(len(samples))
+
+        progress_reporter.solver_step_finished(tracker.get_progress(), state)
 
         # --- gather results ------------------------------
         return SolverStepResult(
@@ -111,7 +125,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         # --- main loop -----------------------------------
         while not (progress := tracker.get_progress()).is_finished:
             # --- update progress ---
-            progress_reporter.update(progress, state.score)
+            progress_reporter.update(progress, state)
 
             # --- do n iterations ---
             n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count)
@@ -122,7 +136,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                 progress_frac_per_iter=progress.est_progress_fraction_per_iter,
             )
 
-            # --- update progress ---
+            # --- report progress to tracker ---
             tracker.report_iterations_done(n_iters)
 
             # --- create checkpoint if needed ---
@@ -136,6 +150,8 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                         ]
                     )
                 )
+
+        progress_reporter.solver_step_finished(progress, state)
 
         # --- gather results ------------------------------
         elapsed = tracker.elapsed()
@@ -151,11 +167,11 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
         We take into account:
           - estimated total number of iterations left in tracked duration
-          - we want to show a progress bar update every ~1sec
+          - we want to trigger a potential progress report at most every ~0.5sec
           - next_checkpoint_iter_count: this is the # of iterations at which we want to keep track
                                                                                   of the score we're optimizing.
         """
-        iters_until_next_pbar_update = int(progress.est_iters_per_second)  # target = 1x/sec
+        iters_until_next_progress_report = int(0.5 * progress.est_iters_per_second)  # target = 2x/sec
         iters_until_next_checkpoint = next_checkpoint_iter_count - progress.iter_count
         half_iters_until_finished = progress.est_n_iters_remaining // 2  # iters to move 50% closer to being finished
 
@@ -163,7 +179,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             1,  # never less than 1 iteration
             min(
                 [
-                    iters_until_next_pbar_update,
+                    iters_until_next_progress_report,
                     iters_until_next_checkpoint,
                     half_iters_until_finished,
                 ]

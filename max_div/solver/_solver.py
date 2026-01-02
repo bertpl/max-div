@@ -8,7 +8,7 @@ from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._duration import Elapsed
-from ._progress_reporting import TqdmProgressReporter
+from ._progress_reporting import ProgressReporter, TqdmProgressReporter
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
 from ._solver_step import SolverStep, SolverStepResult
@@ -75,17 +75,22 @@ class MaxDivSolver:
         Solve the maximum diversity problem with the given configuration.
         :param verbosity: (int) The verbosity level.
                              0 = silent,
-                            10 = tqdm progress bar per solver step (updated every 1sec)
-                            2x = progress table with iteration count, metrics, elapsed time, ...
-                                 (updated at 0% and 100% of every step, every 1sec
-                                                     or with decreasing freq. for long-running steps)
-
+                            10 = tqdm progress bar per solver step
+                            20 = progress table with iteration count, metrics, elapsed time, ...
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------
 
         # --- progress reporting ---
-        progress_reporter = TqdmProgressReporter()
+        match verbosity:
+            case 0:
+                progress_reporter = ProgressReporter.silent()
+            case 10:
+                progress_reporter = ProgressReporter.tqdm()
+            case 20:
+                progress_reporter = ProgressReporter.tabular()
+            case _:
+                raise ValueError(f"Invalid verbosity level: {verbosity}")
 
         # --- solver steps ---
         n_steps = len(self._solver_steps)
@@ -104,7 +109,7 @@ class MaxDivSolver:
                 diversity_tie_breakers=self._diversity_tie_breakers,
                 constraints=self._constraints,
             )
-            progress_reporter.solver_step_finished(state.score)
+            progress_reporter.solver_step_finished(None, state)
 
         # init step results with solver state initialization as virtual step 0
         step_results[step_names[0].strip()] = SolverStepResult(
@@ -121,7 +126,6 @@ class MaxDivSolver:
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
             step_results[step_name.strip()] = step.run(state, progress_reporter)
-            progress_reporter.solver_step_finished(state.score)
 
         # --- Construct result ----------------------------
         return self._construct_final_solution(state, step_results)

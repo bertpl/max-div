@@ -2,11 +2,14 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.3
-> *(under development)*
+> *(2026-01-02)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+    - implement `verbosity` parameter in `MaxDivSolver.solver()` and add option for more detailed tabular progress reporting.
+
 - **improved**:
-    - ci: show slowest tests in github actions when running tests or generating coverage (badge generation) 
+    - ci: show slow tests in CI when running tests or generating coverage (badge generation) 
     - cli: 
         - add `benchmark platform` command to benchmark platform speed
         - add `solve` command for easy test-running the solver on test problems

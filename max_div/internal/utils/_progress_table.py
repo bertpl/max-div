@@ -4,7 +4,7 @@ class ProgressTable:
 
     def show_header(self):
         self.print_row(self.headers)
-        self.print_row(["-" * len(h) for h in self.headers])
+        self.print_line()
 
     def show_progress(self, values: list[str]):
         values_adjusted = []
@@ -14,6 +14,9 @@ class ProgressTable:
             values_adjusted.append(value)
 
         self.print_row(values_adjusted)
+
+    def print_line(self):
+        self.print_row(["-" * len(h) for h in self.headers])
 
     @staticmethod
     def print_row(values: list[str], sep="|"):

@@ -1,6 +1,8 @@
 from hashlib import sha256
 
+import numba
 import numpy as np
+from numpy.typing import NDArray
 
 
 # =================================================================================================
@@ -19,6 +21,23 @@ def deterministic_hash_int64(obj: object) -> np.int64:
     Generate a deterministic type-aware int64 hash for a given object, based on its string representation.
     """
     return int_to_int64(deterministic_hash(obj))
+
+
+@numba.njit(fastmath=True, inline="always")
+def np_int32_array_var_length_hash(arr: NDArray[np.int32], n: int) -> NDArray[np.int32]:
+    """Takes the input array and creates an output array of length n, that represents a var-length hash of the input."""
+
+    # create output array
+    result = np.zeros(n, dtype=np.int32)
+
+    # mix in all input values with output array
+    running_hash = np.int32(0)
+    n_input = arr.size
+    for i in range(n_input + 2 * n):
+        running_hash = (running_hash * np.int32(31)) + (result[(i + 1) % n] * np.int32(17)) + np.int64(arr[i % n_input])
+        result[i % n] += running_hash
+
+    return result
 
 
 # =================================================================================================

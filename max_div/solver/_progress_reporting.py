@@ -1,11 +1,20 @@
+from __future__ import annotations
+
 import math
+import sys
 from abc import ABC, abstractmethod
 from time import perf_counter
 
+import numpy as np
+from numpy._typing import NDArray
 from tqdm.auto import tqdm
 
+from max_div.internal.formatting import format_long_time_duration, format_time_duration
+from max_div.internal.utils._hash import np_int32_array_var_length_hash
+from max_div.internal.utils._progress_table import ProgressTable
 from max_div.solver._duration import Progress
 from max_div.solver._score import Score
+from max_div.solver._solver_state import SolverState
 
 
 # =================================================================================================
@@ -18,17 +27,35 @@ class ProgressReporter(ABC):
         pass
 
     @abstractmethod
-    def update(self, progress: Progress, score: Score):
+    def update(self, progress: Progress, state: SolverState):
         """
-        Update progress reporter with current progress and score.
+        Update progress reporter with current progress and state.
         Reporters can choose to not report certain updates they receive, if they come too frequently.
         """
         pass
 
     @abstractmethod
-    def solver_step_finished(self, score: Score):
+    def solver_step_finished(self, progress: Progress | None, state: SolverState):
         """Notify that the current solver step has finished."""
         pass
+
+    # -------------------------------------------------------------------------
+    #  Factory methods
+    # -------------------------------------------------------------------------
+    @classmethod
+    def silent(cls) -> SilentProgressReporter:
+        """Create a silent progress reporter that doesn't output anything."""
+        return SilentProgressReporter()
+
+    @classmethod
+    def tqdm(cls) -> TqdmProgressReporter:
+        """Create a tqdm-based progress bar reporter."""
+        return TqdmProgressReporter()
+
+    @classmethod
+    def tabular(cls) -> TabularProgressReporter:
+        """Create a tabular progress reporter."""
+        return TabularProgressReporter()
 
 
 # =================================================================================================
@@ -39,7 +66,7 @@ class SilentProgressReporter(ProgressReporter):
 
     def solver_step_started(self, step_name: str): ...  # no-op
     def update(self, progress: Progress, score: Score): ...  # no-op
-    def solver_step_finished(self, score: Score): ...  # no-op
+    def solver_step_finished(self, progress: Progress | None, score: Score): ...  # no-op
 
 
 # =================================================================================================
@@ -57,10 +84,10 @@ class TqdmProgressReporter(ProgressReporter):
     def solver_step_started(self, step_name: str):
         if (step_name != self._current_step_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
-            self._current_pbar = tqdm(desc=f"{step_name} ", total=1)  # initialize new pbar
+            self._current_pbar = tqdm(desc=f"{step_name} ", total=1, file=sys.stdout)  # initialize new pbar
             self._current_step_name = step_name
 
-    def update(self, progress: Progress, score: Score):
+    def update(self, progress: Progress, state: SolverState):
         if self._current_pbar is not None:
             # ignore updates coming in before starting a new step or after finishing the current step
             n = progress.tqdm_n_current
@@ -69,7 +96,7 @@ class TqdmProgressReporter(ProgressReporter):
                 self._current_pbar.total = progress.tqdm_n_total
                 self._current_pbar.refresh()
 
-    def solver_step_finished(self, score: Score):
+    def solver_step_finished(self, progress: Progress | None, state: SolverState):
         self._close_current_pbar()
 
     # -------------------------------------------------------------------------
@@ -77,14 +104,10 @@ class TqdmProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     def _close_current_pbar(self):
         if self._current_pbar is not None:
-            # check pbar.total
-            if self._current_pbar.total == 0:
-                self._current_pbar.total = 1
-
-            # check pbar.n
-            if self._current_pbar.n < self._current_pbar.total:
-                self._current_pbar.n = self._current_pbar.total
-                self._current_pbar.refresh()
+            # make sure pbar shows 100%
+            self._current_pbar.total = max(1, self._current_pbar.total)
+            self._current_pbar.n = self._current_pbar.total
+            self._current_pbar.refresh()
 
             # cleanup
             self._current_pbar.close()
@@ -95,4 +118,122 @@ class TqdmProgressReporter(ProgressReporter):
 #  Tabular
 # =================================================================================================
 class TabularProgressReporter(ProgressReporter):
-    pass
+    # -------------------------------------------------------------------------
+    #  Constructor
+    # -------------------------------------------------------------------------
+    def __init__(self):
+        self._progress_table: ProgressTable | None = None
+        self._step_name = ""
+
+        # don't show next table line before passing both thresholds below:
+        self._next_report_t_elapsed: float = 0.0
+        self._next_report_iter: int = 0
+
+        # start times
+        self._t_start_solver = -1.0
+        self._t_start_step = 0.0
+
+        # other stats
+        self._n_progress_reports_this_step = 0
+
+    # -------------------------------------------------------------------------
+    #  Main API
+    # -------------------------------------------------------------------------
+    def solver_step_started(self, step_name: str):
+        # make sure table is initialized
+        self._step_name = step_name
+        if not self._progress_table:
+            self._initialize_table(step_name_width=len(step_name))
+
+        # reset progress reporting thresholds
+        self._next_report_t: float = 0.0
+        self._next_report_iter: int = 0
+
+        # record step start time
+        self._t_start_step = perf_counter()
+        if self._t_start_solver < 0:
+            self._t_start_solver = self._t_start_step
+
+    def update(self, progress: Progress, state: SolverState):
+        iter_now = progress.iter_count
+        t_now = perf_counter()
+        t_elapsed_step = t_now - self._t_start_step
+
+        if (iter_now >= self._next_report_iter) and (t_elapsed_step >= self._next_report_t):
+            # show table row
+            self._show_table_row(progress, state)
+            self._n_progress_reports_this_step += 1
+
+            # update next report thresholds
+            self._next_report_iter = iter_now + max(1, int(iter_now * 0.05))  # every ~5% more iterations
+            if self._n_progress_reports_this_step < 10:
+                t_increment = 0.1  # every 0.1sec first 10 reports
+            else:
+                t_increment = 1.0  # every 1sec otherwise
+
+            self._next_report_t += t_increment * math.ceil((t_elapsed_step - self._next_report_t) / t_increment)
+
+    def solver_step_finished(self, progress: Progress | None, state: SolverState):
+        # show final metrics + horizontal table line
+        self._show_table_row(progress=progress, state=state)
+        self._show_table_line()
+
+    # -------------------------------------------------------------------------
+    #  Internal
+    # -------------------------------------------------------------------------
+    def _initialize_table(self, step_name_width: int):
+        """Initialize self._progress_table"""
+        self._progress_table = ProgressTable(
+            headers=[
+                "Solver time".ljust(11),
+                "Solver step".ljust(step_name_width),
+                "Step progress".ljust(14),
+                "Step iter.".ljust(12),
+                "Step time".ljust(11),
+                "Selected".ljust(13),
+                "Constr. score".ljust(15),
+                "Diversity score".ljust(15),
+                "Selection hash".ljust(32),
+            ]
+        )
+        self._progress_table.show_header()
+
+    def _show_table_row(self, progress: Progress | None, state: SolverState):
+        t_now = perf_counter()
+        t_elapsed_solver = t_now - self._t_start_solver
+        t_elapsed_step = t_now - self._t_start_step
+        score = state.score
+
+        self._progress_table.show_progress(
+            values=[
+                format_long_time_duration(t_elapsed_solver, n_chars=8),
+                self._step_name,
+                f"{progress.fraction * 100:.2f}%" if progress else "",
+                f"{progress.iter_count:_}".rjust(12) if progress else "",
+                format_long_time_duration(t_elapsed_step, n_chars=8),
+                f"{state.n_selected:>6}/{state.k:>6}",
+                f"{score.constraints:.5f}",
+                f"{score.diversity:.5e}",
+                self._get_selection_hash(
+                    selection=state.selected_index_array,  # create hash from currently selected indices...
+                    n=math.ceil((32 * state.n_selected) / state.k),  # ...of length proportional to selection size
+                ).ljust(32),
+            ]
+        )
+
+    def _show_table_line(self):
+        if self._progress_table:
+            self._progress_table.print_line()
+
+    @staticmethod
+    def _get_selection_hash(selection: NDArray[np.int32], n: int) -> str:
+        """Get a hex hash string representing the current selection in the solver state."""
+
+        # --- shortcut ---
+        if n == 0:
+            return ""
+
+        # --- generate hash ---
+        hash_array = np_int32_array_var_length_hash(selection, n)
+        hash_str = "".join(f"{val & 0xF:x}" for val in hash_array)
+        return hash_str

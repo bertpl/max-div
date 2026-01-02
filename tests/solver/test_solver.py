@@ -1,3 +1,6 @@
+import pytest
+
+from max_div.internal.utils import stdout_to_file
 from max_div.solver import MaxDivSolution
 from max_div.solver._duration import Elapsed
 from max_div.solver._score import Score
@@ -53,3 +56,35 @@ def test_solver_minimal(example_solver):
     assert solution.duration == sum(list(solution.step_durations.values()))
     assert solution.duration == solution.score_checkpoints[-1][1]
     assert solution.score == solution.score_checkpoints[-1][2]
+
+
+@pytest.mark.parametrize(
+    "verbosity,error_expected",
+    [
+        (0, False),
+        (10, False),
+        (20, False),
+        (42, True),
+    ],
+)
+def test_solver_verbosity(example_solver, tmp_path, verbosity: int, error_expected: bool):
+    # --- act & assert ------------------------------------
+    if not error_expected:
+        # arrange
+        output_file = tmp_path / "output.txt"
+
+        # act
+        with stdout_to_file(filename=output_file):
+            _ = example_solver.solve(verbosity=verbosity)
+
+        # assert
+        output_content = output_file.read_text()
+        if verbosity == 0:
+            assert len(output_content) == 0, f"Expected no output for verbosity=0, but got: {output_content}"
+        else:
+            assert output_content != "", f"Expected output for verbosity={verbosity}, but file is empty"
+
+    else:
+        # act & assert
+        with pytest.raises(ValueError):
+            _ = example_solver.solve(verbosity=verbosity)
