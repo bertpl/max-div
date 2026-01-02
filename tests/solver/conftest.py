@@ -8,7 +8,7 @@ from max_div.solver._strategies import InitializationStrategy, OptimizationStrat
 
 
 @pytest.fixture
-def example_problem_1() -> MaxDivSolver:
+def example_solver() -> MaxDivSolver:
     # prepare data
     vectors = np.random.rand(10, 5).astype(np.float32)
     selection_size = 5

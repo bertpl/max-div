@@ -66,18 +66,6 @@ class MaxDivSolver:
         self._solver_steps = solver_steps
         self._seed = seed
 
-        # --- state ---------------------------------------
-        with Timer() as timer:
-            self._state = SolverState.new(
-                vectors=vectors,
-                k=k,
-                distance_metric=distance_metric,
-                diversity_metric=diversity_metric,
-                diversity_tie_breakers=diversity_tie_breakers,
-                constraints=constraints,
-            )
-        self._t_solver_state_init_sec = timer.t_elapsed_sec()  # can be significant due to e.g. computation of distances
-
     # -------------------------------------------------------------------------
     #  API
     # -------------------------------------------------------------------------
@@ -87,17 +75,30 @@ class MaxDivSolver:
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------
+
+        # --- solver steps ---
         n_steps = len(self._solver_steps)
         step_names = self._get_step_names()
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
+        step_results: dict[str, SolverStepResult] = dict()
+
+        # --- solver state ---
+        with Timer() as timer:
+            state = SolverState.new(
+                vectors=self._vectors,
+                k=self._k,
+                distance_metric=self._distance_metric,
+                diversity_metric=self._diversity_metric,
+                diversity_tie_breakers=self._diversity_tie_breakers,
+                constraints=self._constraints,
+            )
 
         # init step results with solver state initialization as virtual step 0
-        step_results: dict[str, SolverStepResult] = dict()
         step_results[f"step 0/{n_steps} - SolverState init"] = SolverStepResult(
             score_checkpoints=[
                 (
-                    Elapsed(t_elapsed_sec=self._t_solver_state_init_sec, n_iterations=0),
-                    self._state.score,
+                    Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
+                    state.score,
                 )
             ]
         )
@@ -105,10 +106,10 @@ class MaxDivSolver:
         # --- Main loop -----------------------------------
         for step_name, step_seed, step in zip(step_names, step_seeds, self._solver_steps):
             step.set_seed(step_seed)
-            step_results[step_name.strip()] = step.run(self._state, step_name)
+            step_results[step_name.strip()] = step.run(state, step_name)
 
         # --- Construct result ----------------------------
-        return self._construct_final_solution(step_results)
+        return self._construct_final_solution(state, step_results)
 
     # -------------------------------------------------------------------------
     #  Internal
@@ -119,7 +120,8 @@ class MaxDivSolver:
         step_names = [f"step {i}/{n_steps} - {s.name()}" for i, s in enumerate(self._solver_steps, start=1)]
         return ljust_str_list(step_names)
 
-    def _construct_final_solution(self, step_results: dict[str, SolverStepResult]) -> MaxDivSolution:
+    @staticmethod
+    def _construct_final_solution(state: SolverState, step_results: dict[str, SolverStepResult]) -> MaxDivSolution:
         """Construct the final MaxDivSolution from the current state & step results."""
 
         # --- collect step durations --------------------
@@ -143,7 +145,7 @@ class MaxDivSolver:
 
         # --- construct solution --------------------------
         return MaxDivSolution(
-            i_selected=self._state.selected_index_array.copy(),
+            i_selected=state.selected_index_array.copy(),
             score_checkpoints=score_checkpoints,
             step_durations=step_durations,
         )

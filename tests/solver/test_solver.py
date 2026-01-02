@@ -43,9 +43,9 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[str, Elapsed
 # =================================================================================================
 #  Tests
 # =================================================================================================
-def test_solver_minimal(example_problem_1):
+def test_solver_minimal(example_solver):
     # --- act ---------------------------------------------
-    solution = example_problem_1.solve()
+    solution = example_solver.solve()
 
     # --- assert ------------------------------------------
     assert isinstance(solution, MaxDivSolution)
@@ -53,4 +53,3 @@ def test_solver_minimal(example_problem_1):
     assert solution.duration == sum(list(solution.step_durations.values()))
     assert solution.duration == solution.score_checkpoints[-1][1]
     assert solution.score == solution.score_checkpoints[-1][2]
-    assert solution.score == example_problem_1._state.score
