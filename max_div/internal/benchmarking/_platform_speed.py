@@ -190,15 +190,15 @@ def _get_reference_benchmarks() -> list[PlatformSpeedBenchmark]:
     # -------------------------------------------------------------------------
     return [
         # --- GENERIC ---------------------
-        PlatformSpeedBenchmark("gen_list_log2    ", _bm_generic_list_log2, 2_150),
-        PlatformSpeedBenchmark("gen_sort_int32   ", _bm_generic_sort_int32, 6_400),
-        PlatformSpeedBenchmark("gen_for_cond     ", _bm_generic_for_loop_conditional, 7_500),
+        PlatformSpeedBenchmark("gen_list_log2    ", _bm_generic_list_log2, 2_300),
+        PlatformSpeedBenchmark("gen_sort_int32   ", _bm_generic_sort_int32, 6_750),
+        PlatformSpeedBenchmark("gen_for_cond     ", _bm_generic_for_loop_conditional, 7_750),
         PlatformSpeedBenchmark("gen_np_sum_f32   ", _bm_np_sum_float32, 85_000),
         PlatformSpeedBenchmark("gen_np_add_f64   ", _bm_np_addition_float64, 43_000),
         # --- MAX-DIV-SPECIFIC ------------
         PlatformSpeedBenchmark("pkg_diversity    ", _bm_max_div_diversity, 260_000),
         PlatformSpeedBenchmark("pkg_selectivity  ", _bm_max_div_selectivity, 470_000),
-        PlatformSpeedBenchmark("pkg_randint      ", _bm_max_div_randint, 37_500),
+        PlatformSpeedBenchmark("pkg_randint      ", _bm_max_div_randint, 37_250),
         PlatformSpeedBenchmark("pkg_randint_con  ", _bm_max_div_randint_constrained, 710),
         PlatformSpeedBenchmark("pkg_solver_state ", _bm_max_div_solver_state, 380),
     ]

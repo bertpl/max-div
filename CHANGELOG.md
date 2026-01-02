@@ -7,6 +7,7 @@
 
 - **improved**:
     - ci: show slowest tests in github actions when running tests or generating coverage (badge generation) 
+    - cli: add `benchmark platform` command to benchmark platform speed
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.2

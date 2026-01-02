@@ -74,6 +74,27 @@ def test_cli_benchmark_internal(sub_command: str, options: list[str]):
 
 
 # =================================================================================================
+#  benchmark platform
+# =================================================================================================
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["--fast", "--verbose"],
+        ["--fast"],
+    ],
+)
+def test_cli_benchmark_platform(options: list[str]):
+    # --- arrange -----------------------------------------
+    runner = CliRunner()
+
+    # --- act ---------------------------------------------
+    result = runner.invoke(benchmark, ["platform", *options])
+
+    # --- assert ------------------------------------------
+    assert result.exit_code == 0
+
+
+# =================================================================================================
 #  numba_status
 # =================================================================================================
 def test_cli_numba_status():
