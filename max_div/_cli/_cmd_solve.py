@@ -1,0 +1,64 @@
+import click
+
+from max_div.benchmarks import BenchmarkProblemFactory
+from max_div.solver import DiversityMetric, MaxDivSolverBuilder
+from max_div.solver._duration import TargetDuration
+
+from ._cli import cli
+
+
+@cli.command(name="solve")
+@click.argument("test_problem")
+@click.option(
+    "--iterations",
+    help="Number of iterations. Use this or --seconds to indicate duration.  Default=1000 iter.",
+)
+@click.option(
+    "--seconds",
+    help="Number of seconds. Use this or --iterations to indicate duration.  Default=1000 iter.",
+)
+@click.option(
+    "--verbosity",
+    default=20,
+    help="Verbosity level (0=silent, 10=tqdm, 20=tabular). Default=20.",
+)
+@click.option(
+    "--size",
+    default=10,
+    help="Problem size parameter. Default=10.",
+)
+def solve(
+    test_problem: str, iterations: int | None = None, seconds: float | None = None, verbosity: int = 20, size: int = 10
+) -> None:
+    """Run the solver on requested benchmark problem."""
+
+    # --- argument handling -------------------------------
+    if (iterations is not None) and (seconds is not None):
+        raise click.UsageError("Please provide only one of --iterations or --seconds.")
+    if (not iterations) and (not seconds):
+        duration = TargetDuration.iterations(1000)  # default to 1000 iterations
+    elif iterations is not None:
+        duration = TargetDuration.iterations(int(iterations))
+    else:
+        duration = TargetDuration.seconds(float(seconds))
+
+    # --- show what we'll do ------------------------------
+    click.echo(f"Solving test problem '{test_problem}' for a duration of {str(duration)} using default preset...")
+
+    # --- construct solver --------------------------------
+    solver = (
+        MaxDivSolverBuilder(
+            BenchmarkProblemFactory.construct_problem(
+                name=test_problem,
+                size=size,
+                diversity_metric=DiversityMetric.approx_geomean_separation(),
+            ),
+        )
+        .with_preset_default(
+            target_duration=duration,
+        )
+        .build()
+    )
+
+    # --- solve -------------------------------------------
+    solver.solve(verbosity=verbosity)

@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
-from max_div._cli import benchmark, numba_status
+from max_div._cli import benchmark, numba_status, solve
 from max_div.benchmarks import BenchmarkProblemFactory
 
 
@@ -92,6 +92,30 @@ def test_cli_benchmark_platform(options: list[str]):
 
     # --- assert ------------------------------------------
     assert result.exit_code == 0
+
+
+# =================================================================================================
+#  solve
+# =================================================================================================
+@pytest.mark.parametrize(
+    "options, expected_exit_code",
+    [
+        (["--size=2"], 0),
+        (["--iterations=10", "--size=3"], 0),
+        (["--seconds=0.001", "--size=4"], 0),
+        (["--seconds=0.001", "--iterations=1000"], 2),
+    ],
+)
+@pytest.mark.parametrize("test_problem", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
+def test_cli_solve(options: list[str], test_problem: str, expected_exit_code: int):
+    # --- arrange -----------------------------------------
+    runner = CliRunner()
+
+    # --- act ---------------------------------------------
+    result = runner.invoke(solve, [*options, test_problem])
+
+    # --- assert ------------------------------------------
+    assert result.exit_code == expected_exit_code
 
 
 # =================================================================================================
