@@ -201,19 +201,24 @@ class SolverState:
     #  Properties
     # -------------------------------------------------------------------------
     @cached_property
+    def n(self) -> np.int32:
+        """Return total number of vectors."""
+        return self._n
+
+    @cached_property
     def k(self) -> np.int32:
         """Return target selection size."""
         return self._k
+
+    @property
+    def n_selected(self) -> np.int32:
+        """Return current number of selected vectors."""
+        return np.int32(len(self._selected))
 
     @cached_property
     def m(self) -> np.int32:
         """Return total number of constraints."""
         return self._con_values.shape[0]
-
-    @cached_property
-    def n(self) -> np.int32:
-        """Return total number of vectors."""
-        return self._n
 
     @cached_property
     def has_constraints(self) -> bool:

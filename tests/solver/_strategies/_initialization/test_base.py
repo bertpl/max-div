@@ -1,7 +1,9 @@
 from functools import partial
 from typing import Callable
 
+import numpy as np
 import pytest
+from numpy._typing import NDArray
 
 from max_div.solver._solver_state import SolverState
 from max_div.solver._strategies import InitializationStrategy
@@ -41,7 +43,7 @@ def test_initialization_strategy_properties():
         def __init__(self, name: str | None = None):
             super().__init__(name)
 
-        def initialize(self, state: SolverState):
+        def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
             pass
 
     # --- act & assert ------------------------------------

@@ -3,6 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Self
 
+import numpy as np
+from numpy.typing import NDArray
+
 from max_div.solver._solver_state import SolverState
 from max_div.solver._strategies._base import StrategyBase
 
@@ -12,11 +15,18 @@ from max_div.solver._strategies._base import StrategyBase
 # =================================================================================================
 class InitializationStrategy(StrategyBase, ABC):
     @abstractmethod
-    def initialize(self, state: SolverState):
+    def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         """
-        Computes an initial solution, starting from a SolverState with empty selection,
-          resulting in a SolverState with a selection of appropriate size.
-        :param state: (SolverState) The current solver state.
+        Return next batch of samples to be added to the initial selection.
+
+        This method is called repeatedly by the Solver, until enough samples have been selected to
+        reach the desired selection size.
+
+        :param state: (SolverState) The current solver state, to fetch problem size, constraints, distances, etc...,
+                                    so initial selection can be made in an informed way.
+        :param k_remaining: (int) number of samples that remain to be selected.
+        :return: np.array of unique np.int32 values, shape=(b,), with indices of samples to be added to the selection.
+                  b can be any value in range [1, k_remaining].  Samples should be unique and not yet selected.
         """
         raise NotImplementedError()
 

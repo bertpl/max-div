@@ -1,3 +1,6 @@
+import numpy as np
+from numpy._typing import NDArray
+
 from max_div.sampling.con import randint_constrained_robust
 from max_div.sampling.uncon import randint_numba
 from max_div.solver._solver_state import SolverState
@@ -12,6 +15,5 @@ class InitFast(InitializationStrategy):
     where time is very constrained.
     """
 
-    def initialize(self, state: SolverState):
-        for idx in range(state.k):
-            state.add(idx)
+    def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
+        return np.arange(k_remaining, dtype=np.int32)

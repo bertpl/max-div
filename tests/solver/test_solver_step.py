@@ -1,7 +1,9 @@
 import math
 from unittest.mock import Mock
 
+import numpy as np
 import pytest
+from numpy._typing import NDArray
 
 from max_div.internal.benchmarking import Timer
 from max_div.solver._duration import Elapsed, iterations, seconds
@@ -21,8 +23,9 @@ class InitTest(InitializationStrategy):
         super().__init__()
         self._n_iterations = 0
 
-    def initialize(self, state: SolverState):
+    def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         self._n_iterations += 1
+        return state.not_selected_index_array[:k_remaining]
 
 
 class OptimTest(OptimizationStrategy):
@@ -34,6 +37,21 @@ class OptimTest(OptimizationStrategy):
     def _perform_single_iteration(self, state: SolverState, progress_frac: float):
         self._n_iterations += 1
         self._progress_fracs.append(progress_frac)
+
+
+class DummySolverState:
+    def __init__(self, n: int, k: int):
+        self.n = n
+        self.k = k
+        self.n_selected = 0
+        self.score = Mock()
+
+    def add(self, s: int):
+        self.n_selected += 1
+
+    @property
+    def not_selected_index_array(self):
+        return np.arange(self.n, dtype=np.int32)[self.n_selected :]
 
 
 # --- checks ----------------------------------------------
@@ -95,15 +113,15 @@ def test_initialization_step_run():
     # --- arrange ---
     strategy = InitTest()
     step = InitializationStep(strategy)
-    state = Mock()
+    state = DummySolverState(n=100, k=10)
 
     # --- act ---
     result = step.run(state)
 
     # --- assert ---
-    assert strategy._n_iterations == 1
+    assert strategy._n_iterations == 1, "This initialization should take exactly 1 iteration"
     assert isinstance(result, SolverStepResult)
-    assert result.elapsed.n_iterations == 1, "initialization should take exactly 1 iteration"
+    assert result.elapsed.n_iterations == 1, "This initialization should take exactly 1 iteration"
     assert_score_checkpoints_are_sane(result.score_checkpoints)
 
 

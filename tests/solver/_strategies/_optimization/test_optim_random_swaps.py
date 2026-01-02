@@ -3,6 +3,7 @@ import pytest
 from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.solver import DiversityMetric, MaxDivProblem
 from max_div.solver._solver_state import SolverState
+from max_div.solver._solver_step import InitializationStep
 from max_div.solver._strategies._initialization import InitializationStrategy
 from max_div.solver._strategies._optimization import OptimizationStrategy
 
@@ -33,8 +34,8 @@ def test_optim_random_swaps(problem_name: str, size: int):
     )
 
     # initialize solver state
-    init_strategy = InitializationStrategy.fast()
-    init_strategy.initialize(solver_state)
+    init_step = InitializationStep(InitializationStrategy.fast())
+    init_step.run(solver_state)
 
     # prepare strategy
     optim_strategy = OptimizationStrategy.random_swaps()

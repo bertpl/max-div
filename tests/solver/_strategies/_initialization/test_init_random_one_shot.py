@@ -1,5 +1,6 @@
 import pytest
 
+from max_div.solver._solver_step import InitializationStep
 from max_div.solver._strategies import InitializationStrategy
 
 from ._helpers import new_solver_state
@@ -15,9 +16,10 @@ def test_init_random_one_shot(problem_has_constraints: bool, arg_ignore_constrai
         ignore_constraints=arg_ignore_constraints,
         uniform=arg_uniform,
     )
+    init_step = InitializationStep(strategy)
 
     # --- act ---------------------------------------------
-    strategy.initialize(solver_state)
+    init_step.run(solver_state)
     score = solver_state.score
 
     # --- assert ------------------------------------------

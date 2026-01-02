@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from max_div.solver._solver_step import InitializationStep
 from max_div.solver._strategies import InitializationStrategy
 from max_div.solver._strategies._initialization._init_eager import InitEager
 
@@ -22,9 +23,10 @@ def test_init_eager(problem_has_constraints: bool, arg_ignore_constraints: bool,
         nc=np.int32(arg_nc),
         ignore_constraints=arg_ignore_constraints,
     )
+    init_step = InitializationStep(strategy)
 
     # --- act ---------------------------------------------
-    strategy.initialize(solver_state)
+    init_step.run(solver_state)
     score = solver_state.score
 
     # --- assert ------------------------------------------

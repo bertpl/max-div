@@ -1,5 +1,6 @@
 import pytest
 
+from max_div.solver._solver_step import InitializationStep
 from max_div.solver._strategies import InitializationStrategy
 
 from ._helpers import new_solver_state
@@ -10,9 +11,10 @@ def test_init_fast(problem_has_constraints: bool):
     # --- arrange -----------------------------------------
     solver_state = new_solver_state(problem_has_constraints)
     strategy = InitializationStrategy.fast()
+    init_step = InitializationStep(strategy)
 
     # --- act ---------------------------------------------
-    strategy.initialize(solver_state)
+    init_step.run(solver_state)
     score = solver_state.score
 
     # --- assert ------------------------------------------

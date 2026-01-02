@@ -1,3 +1,6 @@
+import numpy as np
+from numpy._typing import NDArray
+
 from max_div.sampling.con import randint_constrained_robust
 from max_div.sampling.uncon import randint_numba
 from max_div.solver._solver_state import SolverState
@@ -37,12 +40,12 @@ class InitRandomOneShot(InitializationStrategy):
         self.uniform = uniform
         self.ignore_constraints = ignore_constraints
 
-    def initialize(self, state: SolverState):
+    def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         # --- sample --------------------------------------
         if state.has_constraints and (not self.ignore_constraints):
             # take constraints into account
             if self.uniform:
-                samples = randint_constrained_robust(
+                return randint_constrained_robust(
                     n=state.n,
                     k=state.k,
                     con_values=state.con_values,
@@ -50,7 +53,7 @@ class InitRandomOneShot(InitializationStrategy):
                     seed=self.seed,
                 )
             else:
-                samples = randint_constrained_robust(
+                return randint_constrained_robust(
                     n=state.n,
                     k=state.k,
                     con_values=state.con_values,
@@ -61,21 +64,17 @@ class InitRandomOneShot(InitializationStrategy):
         else:
             # don't take constraints into account
             if self.uniform:
-                samples = randint_numba(
+                return randint_numba(
                     n=state.n,
                     k=state.k,
                     replace=False,
                     seed=self.seed,
                 )
             else:
-                samples = randint_numba(
+                return randint_numba(
                     n=state.n,
                     k=state.k,
                     replace=False,
                     p=state.global_separation_array,
                     seed=self.seed,
                 )
-
-        # --- update state --------------------------------
-        for sample in samples:
-            state.add(sample)

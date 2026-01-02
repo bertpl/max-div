@@ -1,4 +1,5 @@
-import numba
+import math
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -52,105 +53,76 @@ class InitRandomBatched(InitializationStrategy):
                                 If `True`, constraints are ignored.
         """
 
-        # --- parameter validation ----
+        # --- parameter validation --------------
         if b <= 1:
             raise ValueError("InitRandomBatched requires b > 1; for b=1 use InitRandomOneShot instead.")
 
-        # --- init --------------------
+        # --- settings --------------------------
         super().__init__()
         self.b = b
         self.ignore_constraints = ignore_constraints
 
-    def initialize(self, state: SolverState):
-        # --- init ------------------------------
+        # --- initialize state ------------------
+        self._batches_remaining = 0  # set appropriately when calling get_next_samples the first time
 
-        # settings
-        k = state.k
-        b = min(np.int32(self.b), k)  # number of batches cannot exceed k
+    def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
+        # --- determine batch size --------------
+        n_selected = state.n_selected
+        if n_selected == 0:
+            # first call
+            self._batches_remaining = self.b
 
-        # tracking variables
-        k_done = 0
-        k_remaining = k
+        batch_size = np.int32(max(1, math.ceil(k_remaining / self._batches_remaining)))
+        self._batches_remaining -= 1
 
-        # --- main loop -------------------------
-        batch_sizes = _get_batch_sizes(k, b)
-        for i_batch, batch_size in enumerate(batch_sizes):
-            # --- construct p array ---
-            if i_batch == 0:
-                # first batch:
-                #   - use global separation only
-                #   - no selectivity modification
-                p = state.global_separation_array
-            else:
-                # later batches:
-                #   - use combined separation (wrt selection so far + global)
-                #   - modify selectivity based on progress
-                p = state.global_separation_array[state.not_selected_index_array]  # this creates a new array
-                p += state.not_selected_separation_array  # so we can add in-place
+        # --- construct p array -----------------
+        if n_selected == 0:
+            # first batch:
+            #   - use global separation only
+            #   - no selectivity modification
+            p = state.global_separation_array
+        else:
+            # later batches:
+            #   - use combined separation (wrt selection so far + global)
+            #   - modify selectivity based on progress
+            p = state.global_separation_array[state.not_selected_index_array]  # this creates a new array
+            p += state.not_selected_separation_array  # so we can add in-place
 
-                modifier = min(0.9, k_done / k)  # proportional to progress; cap at 0.9 to avoid extremes
-                exponential_selectivity(
-                    p_in=p,
-                    p_out=p,  # in-place
-                    modifier=np.float32(modifier),
-                )
+            modifier = min(0.9, n_selected / state.k)  # proportional to progress; cap at 0.9 to avoid extremes
+            exponential_selectivity(
+                p_in=p,
+                p_out=p,  # in-place
+                modifier=np.float32(modifier),
+            )
 
-            # --- sample ---
-            if state.has_constraints and (not self.ignore_constraints):
-                # NOTE: A) at this point, 'p' is of size 'n_not_selected', hence potentially smaller than 'n'
-                #       B) also, con_indices refers to 'original' indices in [0,n) (not to 'not selected' indices)
-                #       --> Since these 2 properties are not compatible, we need to fix either 'p' or 'con_indices'.
-                #       --> `con_indices` is complicated to rewrite in terms of 'not selected' indices,
-                #           hence we extend 'p' to size 'n' and set the `i_forbidden` argument of `randint_constrained`
-                #           to exclude already selected indices.
-                p_full = np.zeros(state.n, dtype=np.float32)
-                p_full[state.not_selected_index_array] = p
-                samples = randint_constrained(
-                    n=state.n,
-                    k=batch_size,
-                    con_values=state.con_values,
-                    con_indices=state.con_indices,
-                    p=p_full,
-                    seed=self.next_seed(),
-                    eager=self.__SAMPLE_EAGER,
-                    k_context=k_remaining,
-                    i_forbidden=state.selected_index_array,
-                )
-            else:
-                # NOTE: i_samples are indices into state.not_selected_index_array
-                i_samples = randint_numba(
-                    n=np.int32(p.size),
-                    k=batch_size,
-                    replace=False,
-                    p=p,
-                    seed=self.next_seed(),
-                )
-                samples = state.not_selected_index_array[i_samples]
-
-            # --- update state ---
-            for sample in samples:
-                state.add(sample)
-
-            # --- update tracking variables ---
-            k_done += batch_size
-            k_remaining -= batch_size
-
-
-# =================================================================================================
-#  Initial helpers
-# =================================================================================================
-@numba.njit(numba.types.int32[:](numba.types.int32, numba.types.int32))
-def _get_batch_sizes(k: np.int32, b: np.int32) -> NDArray[np.int32]:
-    """
-    Get sizes of each batch when splitting k items into b batches.
-    If k is not an exact multiple of b, the first batches will be slightly larger.
-
-    Example:
-        k=10, b=3  ->  [4, 3, 3]
-        k=100, b=6 ->  [17, 17, 17, 17, 16, 16]
-    """
-    batch_sizes = np.zeros(b, dtype=np.int32)
-    for i in range(k):
-        batch_sizes[i % b] += 1
-
-    return batch_sizes
+        # --- sample ---
+        if state.has_constraints and (not self.ignore_constraints):
+            # NOTE: A) at this point, 'p' is of size 'n_not_selected', hence potentially smaller than 'n'
+            #       B) also, con_indices refers to 'original' indices in [0,n) (not to 'not selected' indices)
+            #       --> Since these 2 properties are not compatible, we need to fix either 'p' or 'con_indices'.
+            #       --> `con_indices` is complicated to rewrite in terms of 'not selected' indices,
+            #           hence we extend 'p' to size 'n' and set the `i_forbidden` argument of `randint_constrained`
+            #           to exclude already selected indices.
+            p_full = np.zeros(state.n, dtype=np.float32)
+            p_full[state.not_selected_index_array] = p
+            return randint_constrained(
+                n=state.n,
+                k=batch_size,
+                con_values=state.con_values,
+                con_indices=state.con_indices,
+                p=p_full,
+                seed=self.next_seed(),
+                eager=self.__SAMPLE_EAGER,
+                k_context=k_remaining,
+                i_forbidden=state.selected_index_array,
+            )
+        else:
+            # NOTE: i_samples are indices into state.not_selected_index_array
+            i_samples = randint_numba(
+                n=np.int32(p.size),
+                k=batch_size,
+                replace=False,
+                p=p,
+                seed=self.next_seed(),
+            )
+            return state.not_selected_index_array[i_samples]

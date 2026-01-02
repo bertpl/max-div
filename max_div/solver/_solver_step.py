@@ -49,7 +49,7 @@ class SolverStep(ABC, Generic[S]):
         """
 
         # --- init ---
-        pbar = tqdm(desc=tqdm_desc, total=1) if (tqdm_desc is None) else None
+        pbar = tqdm(desc=tqdm_desc, total=1) if (tqdm_desc is not None) else None
 
         # --- execute child ---
         result = self._run_child(state, pbar)
@@ -80,7 +80,16 @@ class InitializationStep(SolverStep[InitializationStrategy]):
     def _run_child(self, state: SolverState, pbar: tqdm | None) -> SolverStepResult:
         # --- execute initialization ----------------------
         with Timer() as t:
-            self._strategy.initialize(state)
+            while state.n_selected < state.k:
+                # continue while we don't have a complete initial selection
+                samples = self._strategy.get_next_samples(
+                    state=state,
+                    k_remaining=state.k - state.n_selected,
+                )
+
+                # add items to state
+                for s in samples:
+                    state.add(s)
 
         # --- gather results ------------------------------
         return SolverStepResult(
