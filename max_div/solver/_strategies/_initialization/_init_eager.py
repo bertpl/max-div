@@ -58,7 +58,8 @@ class InitEager(InitializationStrategy):
             raise ValueError("InitEager requires nc > 1; for nc=1 use InitRandomBatched with b=k instead.")
 
         # --- init ------------------------------
-        super().__init__()
+        name = f"InitEager(nc={nc}" + (",uncon)" if ignore_constraints else ")")
+        super().__init__(name)
         self.nc = np.int32(nc)
         self.ignore_constraints = ignore_constraints
 

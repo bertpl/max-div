@@ -57,7 +57,7 @@ class TqdmProgressReporter(ProgressReporter):
     def solver_step_started(self, step_name: str):
         if (step_name != self._current_step_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
-            self._current_pbar = tqdm(desc=step_name, total=0)  # initialize new pbar
+            self._current_pbar = tqdm(desc=f"{step_name} ", total=1)  # initialize new pbar
             self._current_step_name = step_name
 
     def update(self, progress: Progress, score: Score):
@@ -79,7 +79,6 @@ class TqdmProgressReporter(ProgressReporter):
         if self._current_pbar is not None:
             # check pbar.total
             if self._current_pbar.total == 0:
-                # update was never called
                 self._current_pbar.total = 1
 
             # check pbar.n

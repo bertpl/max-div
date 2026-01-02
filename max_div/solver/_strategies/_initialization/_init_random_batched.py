@@ -58,7 +58,8 @@ class InitRandomBatched(InitializationStrategy):
             raise ValueError("InitRandomBatched requires b > 1; for b=1 use InitRandomOneShot instead.")
 
         # --- settings --------------------------
-        super().__init__()
+        name = f"InitRandomBatched(b={b}" + (",uncon)" if ignore_constraints else ")")
+        super().__init__(name)
         self.b = b
         self.ignore_constraints = ignore_constraints
 

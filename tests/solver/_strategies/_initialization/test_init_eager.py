@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -35,3 +37,22 @@ def test_init_eager(problem_has_constraints: bool, arg_ignore_constraints: bool,
         assert score.constraints == 1.0, "All constraints should be satisfied, if problem has constraints"
     if problem_has_constraints and arg_ignore_constraints:
         assert score.constraints < 1.0, "Not all constraints are expected to be satisfied"
+
+
+@pytest.mark.parametrize(
+    "kwargs, expected_name",
+    [
+        (dict(nc=2, ignore_constraints=False), "InitEager(nc=2)"),
+        (dict(nc=3, ignore_constraints=False), "InitEager(nc=3)"),
+        (dict(nc=4, ignore_constraints=True), "InitEager(nc=4,uncon)"),
+        (dict(nc=5, ignore_constraints=True), "InitEager(nc=5,uncon)"),
+    ],
+)
+def test_init_eager_name(kwargs: dict[str, Any], expected_name: str):
+    """Test that the strategy name is generated as expected."""
+
+    # --- arrange -----------------------------------------
+    optim_strategy = InitializationStrategy.eager(**kwargs)
+
+    # --- act & assert ------------------------------------
+    assert optim_strategy.name == expected_name

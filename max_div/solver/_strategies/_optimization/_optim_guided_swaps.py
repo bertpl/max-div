@@ -32,7 +32,9 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
         remove_selectivity_modifier: float | ParameterSchedule = 0.0,
         add_selectivity_modifier: float | ParameterSchedule = 0.0,
     ):
+        name = f"OptimGuidedSwaps({min_swap_size}" + (f"-{max_swap_size})" if max_swap_size > min_swap_size else ")")
         super().__init__(
+            name=name,
             min_swap_size=min_swap_size,
             max_swap_size=max_swap_size,
             swap_size_lambda=swap_size_lambda,

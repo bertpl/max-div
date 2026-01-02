@@ -36,7 +36,8 @@ class InitRandomOneShot(InitializationStrategy):
     """
 
     def __init__(self, uniform: bool = False, ignore_constraints: bool = False):
-        super().__init__()
+        name = "InitRandomOneShot(" + ("u" if uniform else "nu") + (",uncon)" if ignore_constraints else ")")
+        super().__init__(name)
         self.uniform = uniform
         self.ignore_constraints = ignore_constraints
 

@@ -1,8 +1,6 @@
 import numpy as np
 from numpy._typing import NDArray
 
-from max_div.sampling.con import randint_constrained_robust
-from max_div.sampling.uncon import randint_numba
 from max_div.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy

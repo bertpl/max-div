@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from max_div.benchmarks import BenchmarkProblemFactory
@@ -90,3 +92,23 @@ def test_optim_guided_swaps(
     # --- assert ------------------------------------------
     assert len(solver_state.selected_index_array) == problem.k, "Number of selected items should remain k."
     assert solver_state.score > initial_score, "We should be optimizing"
+
+
+@pytest.mark.parametrize(
+    "kwargs, expected_name",
+    [
+        (dict(min_swap_size=1, max_swap_size=1), "OptimGuidedSwaps(1)"),
+        (dict(min_swap_size=2, max_swap_size=2), "OptimGuidedSwaps(2)"),
+        (dict(min_swap_size=3, max_swap_size=3), "OptimGuidedSwaps(3)"),
+        (dict(min_swap_size=1, max_swap_size=3), "OptimGuidedSwaps(1-3)"),
+        (dict(min_swap_size=2, max_swap_size=5), "OptimGuidedSwaps(2-5)"),
+    ],
+)
+def test_optim_guided_swaps_name(kwargs: dict[str, Any], expected_name: str):
+    """Test that the strategy name is generated as expected."""
+
+    # --- arrange -----------------------------------------
+    optim_strategy = OptimizationStrategy.guided_swaps(**kwargs)
+
+    # --- act & assert ------------------------------------
+    assert optim_strategy.name == expected_name

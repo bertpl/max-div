@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from max_div.solver._solver_step import InitializationStep
@@ -28,3 +30,22 @@ def test_init_random_one_shot(problem_has_constraints: bool, arg_ignore_constrai
         assert score.constraints == 1.0, "All constraints should be satisfied, if ignore_constraints=False"
     if problem_has_constraints and arg_ignore_constraints:
         assert score.constraints < 1.0, "Not all constraints are expected to be satisfied"
+
+
+@pytest.mark.parametrize(
+    "kwargs, expected_name",
+    [
+        (dict(uniform=True, ignore_constraints=False), "InitRandomOneShot(u)"),
+        (dict(uniform=False, ignore_constraints=False), "InitRandomOneShot(nu)"),
+        (dict(uniform=True, ignore_constraints=True), "InitRandomOneShot(u,uncon)"),
+        (dict(uniform=False, ignore_constraints=True), "InitRandomOneShot(nu,uncon)"),
+    ],
+)
+def test_init_random_one_shot_name(kwargs: dict[str, Any], expected_name: str):
+    """Test that the strategy name is generated as expected."""
+
+    # --- arrange -----------------------------------------
+    optim_strategy = InitializationStrategy.random_one_shot(**kwargs)
+
+    # --- act & assert ------------------------------------
+    assert optim_strategy.name == expected_name

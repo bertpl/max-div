@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -38,3 +40,22 @@ def test_init_random_batched(problem_has_constraints: bool, arg_ignore_constrain
         assert score.constraints == 1.0, "All constraints should be satisfied, if ignore_constraints=True"
     if problem_has_constraints and arg_ignore_constraints:
         assert score.constraints < 1.0, "Not all constraints are expected to be satisfied"
+
+
+@pytest.mark.parametrize(
+    "kwargs, expected_name",
+    [
+        (dict(b=2, ignore_constraints=False), "InitRandomBatched(b=2)"),
+        (dict(b=3, ignore_constraints=False), "InitRandomBatched(b=3)"),
+        (dict(b=4, ignore_constraints=True), "InitRandomBatched(b=4,uncon)"),
+        (dict(b=5, ignore_constraints=True), "InitRandomBatched(b=5,uncon)"),
+    ],
+)
+def test_init_random_batched_name(kwargs: dict[str, Any], expected_name: str):
+    """Test that the strategy name is generated as expected."""
+
+    # --- arrange -----------------------------------------
+    optim_strategy = InitializationStrategy.random_batched(**kwargs)
+
+    # --- act & assert ------------------------------------
+    assert optim_strategy.name == expected_name
