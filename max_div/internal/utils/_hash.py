@@ -34,7 +34,7 @@ def np_int32_array_var_length_hash(arr: NDArray[np.int32], n: int) -> NDArray[np
     running_hash = np.int32(0)
     n_input = arr.size
     for i in range(n_input + 2 * n):
-        running_hash = (running_hash * np.int32(31)) + (result[(i + 1) % n] * np.int32(17)) + np.int64(arr[i % n_input])
+        running_hash = (running_hash * np.int32(31)) + (result[(i + 1) % n] * np.int32(17)) + np.int32(arr[i % n_input])
         result[i % n] += running_hash
 
     return result
