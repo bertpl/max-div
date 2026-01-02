@@ -50,7 +50,7 @@ runs:
         shell: bash
         run:  |
             if [ "${{ inputs.include_all_extra_deps }}" = "true" ]; then
-                uv run --all-extras --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests
+                uv run --all-extras --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests --durations=20
             else
-                uv run --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests
+                uv run --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests --durations=20
             fi

@@ -29,7 +29,7 @@ runs:
             uv venv
             source .venv/bin/activate
             uv sync
-            NUMBA_DISABLE_JIT=1 uv run --python ${{ steps.python_versions.outputs.python_version_max }} --all-extras pytest ./tests --junitxml=junit.xml --cov --cov-report=xml
+            NUMBA_DISABLE_JIT=1 uv run --python ${{ steps.python_versions.outputs.python_version_max }} --all-extras pytest ./tests --junitxml=junit.xml --cov --cov-report=xml --durations=20
 
       - name: Generate badges
         shell: bash
