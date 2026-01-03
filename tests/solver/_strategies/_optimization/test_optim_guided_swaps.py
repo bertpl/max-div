@@ -9,6 +9,7 @@ from max_div.solver._solver_state import SolverState
 from max_div.solver._solver_step import InitializationStep
 from max_div.solver._strategies._initialization import InitializationStrategy
 from max_div.solver._strategies._optimization import OptimizationStrategy
+from max_div.solver._strategies._optimization._optim_guided_swaps import OptimGuidedSwaps
 
 
 @pytest.mark.parametrize(
@@ -112,3 +113,21 @@ def test_optim_guided_swaps_name(kwargs: dict[str, Any], expected_name: str):
 
     # --- act & assert ------------------------------------
     assert optim_strategy.name == expected_name
+
+
+def test_optim_guided_swaps_get_debug_info():
+    # --- arrange -----------------------------------------
+    strategy = OptimGuidedSwaps(
+        min_swap_size=2,
+        max_swap_size=5,
+        swap_size_lambda=2.1,
+        add_selectivity_modifier=0.6,
+        remove_selectivity_modifier=-0.2,
+        p_add_constraint_aware=0.4,
+        constraint_softness=0.23,
+    )
+
+    # --- act ---------------------------------------------
+    debug_info = strategy.get_debug_info()
+    # --- assert ------------------------------------------
+    assert debug_info.strip() == "λ= 2.10 | sel_rem=-0.20 | sel_add= 0.60 | p_con= 0.40 | soft= 0.23"

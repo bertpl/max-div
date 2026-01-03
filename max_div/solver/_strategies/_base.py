@@ -38,3 +38,9 @@ class StrategyBase:
         """Get the next seed & update current one."""
         self._seed += 1  # this will silently wrap around in case of overflow
         return self._seed
+
+    # -------------------------------------------------------------------------
+    #  Debug info
+    # -------------------------------------------------------------------------
+    def get_debug_info(self) -> str:
+        return "/"

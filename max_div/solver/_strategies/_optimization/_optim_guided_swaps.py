@@ -125,3 +125,16 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
                 seed=self.next_seed(),
             )  # these are indices into not_selected_index_array
             return state.not_selected_index_array[i_samples]
+
+    # -------------------------------------------------------------------------
+    #  Debug info
+    # -------------------------------------------------------------------------
+    def get_debug_info(self) -> str:
+        debug_info = (
+            f"λ={self.swap_size_lambda:5.2f}"
+            f" | sel_rem={self.remove_selectivity_modifier:5.2f}"
+            f" | sel_add={self.add_selectivity_modifier:5.2f}"
+            f" | p_con={self.p_add_constraint_aware:5.2f}"
+            f" | soft={self.constraint_softness:5.2f}"
+        )
+        return debug_info.ljust(100)

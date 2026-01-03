@@ -47,6 +47,9 @@ class SolverStep(ABC, Generic[S]):
         """Executes the solver step by executing a strategy 1x or repeatedly and returns a SolverStepResult."""
         raise NotImplementedError
 
+    def get_debug_info(self) -> str:
+        return self._strategy.get_debug_info()
+
 
 # =================================================================================================
 #  InitializationStep
@@ -72,7 +75,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
                 # continue while we don't have a complete initial selection
 
                 # --- update progress ---
-                progress_reporter.update(tracker.get_progress(), state)
+                progress_reporter.update(tracker.get_progress(), state, self.get_debug_info)
 
                 # --- get next samples ---
                 samples = self._strategy.get_next_samples(
@@ -86,7 +89,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
 
                 tracker.report_iterations_done(len(samples))
 
-        progress_reporter.solver_step_finished(tracker.get_progress(), state)
+        progress_reporter.solver_step_finished(tracker.get_progress(), state, self.get_debug_info)
 
         # --- gather results ------------------------------
         return SolverStepResult(
@@ -125,7 +128,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         # --- main loop -----------------------------------
         while not (progress := tracker.get_progress()).is_finished:
             # --- update progress ---
-            progress_reporter.update(progress, state)
+            progress_reporter.update(progress, state, self.get_debug_info)
 
             # --- do n iterations ---
             n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count)
@@ -151,7 +154,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                     )
                 )
 
-        progress_reporter.solver_step_finished(progress, state)
+        progress_reporter.solver_step_finished(progress, state, self.get_debug_info)
 
         # --- gather results ------------------------------
         elapsed = tracker.elapsed()

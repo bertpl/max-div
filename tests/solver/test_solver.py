@@ -64,6 +64,12 @@ def test_solver_minimal(example_solver):
         (0, False),
         (10, False),
         (20, False),
+        (21, False),
+        (22, False),
+        (23, False),
+        (24, True),
+        (25, False),
+        (26, True),
         (42, True),
     ],
 )

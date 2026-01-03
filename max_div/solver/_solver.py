@@ -76,7 +76,13 @@ class MaxDivSolver:
         :param verbosity: (int) The verbosity level.
                              0 = silent,
                             10 = tqdm progress bar per solver step
-                            20 = progress table with iteration count, metrics, elapsed time, ...
+                            2x = progress table with iteration count, metrics, elapsed time, ...
+                                   20  -->  slowest updates  (spacing increasing with 10%)
+                                   21  -->  slower  updates  (spacing increasing with  5%)
+                                   22  -->  faster  updates  (spacing increasing with  2%)
+                                   23  -->  fastest updates  (spacing increasing with  1%)
+
+                                   25  -->  debug mode       (1% spacing + debug info column)
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------
@@ -87,8 +93,17 @@ class MaxDivSolver:
                 progress_reporter = ProgressReporter.silent()
             case 10:
                 progress_reporter = ProgressReporter.tqdm()
-            case 20:
-                progress_reporter = ProgressReporter.tabular()
+            case 20 | 21 | 22 | 23:
+                progress_reporter = ProgressReporter.tabular(
+                    c_slowdown=[1.10, 1.05, 1.02, 1.01][verbosity - 20],
+                    debug_info=False,
+                )
+            case 25:
+                # same as 23, but with debug_info enabled
+                progress_reporter = ProgressReporter.tabular(
+                    c_slowdown=1.01,
+                    debug_info=True,
+                )
             case _:
                 raise ValueError(f"Invalid verbosity level: {verbosity}")
 
