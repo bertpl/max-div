@@ -78,7 +78,7 @@ def test_optim_guided_swaps(
         max_swap_size=max_swap_size,
         swap_size_lambda=swap_size_lambda,
     )
-    optim_strategy.seed = 42
+    optim_strategy.set_seed(42)
     initial_score = solver_state.score
     n_iterations = 100
 

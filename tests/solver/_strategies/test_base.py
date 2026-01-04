@@ -34,17 +34,17 @@ def test_strategy_base_seed_default_unique():
     assert len({StrategyBase(name=str(i)).seed for i in range(100)}) == 100
 
 
-def test_strategy_base_seed_set():
-    """Test if set seed is deterministic"""
+def test_strategy_base_set_seed():
+    """Test if set_seed is deterministic"""
 
     # --- arrange -----------------------------------------
     strategy = StrategyBase()
 
     # --- act ---------------------------------------------
     seed_1 = strategy.seed
-    strategy.seed = 42
+    strategy.set_seed(42)
     seed_2 = strategy.seed
-    strategy.seed = 43
+    strategy.set_seed(43)
     seed_3 = strategy.seed
     seed_3b = strategy.seed  # should stay the same
 

@@ -39,7 +39,7 @@ def test_optim_random_swaps(problem_name: str, size: int):
 
     # prepare strategy
     optim_strategy = OptimizationStrategy.random_swaps()
-    optim_strategy.seed = 42
+    optim_strategy.set_seed(42)
     initial_score = solver_state.score
     n_iterations = 100
 

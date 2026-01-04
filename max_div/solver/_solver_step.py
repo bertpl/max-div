@@ -40,7 +40,7 @@ class SolverStep(ABC, Generic[S]):
         return self._strategy.name
 
     def set_seed(self, seed: int):
-        self._strategy.seed = seed
+        self._strategy.set_seed(seed)
 
     @abstractmethod
     def run(self, state: SolverState, progress_reporter: ProgressReporter | None = None) -> SolverStepResult:

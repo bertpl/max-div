@@ -29,8 +29,7 @@ class StrategyBase:
         """Return _seed without updating it."""
         return self._seed
 
-    @seed.setter
-    def seed(self, seed: int | np.int64):
+    def set_seed(self, seed: int | np.int64) -> None:
         """Sets the random seed for the strategy, to be used by child classes."""
         self._seed = int_to_int64(seed)
 
