@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div.solver._scheduling import (
+from max_div.solver._parameters._parameter_schedule import (
     EaseInOutSchedule,
     EaseInSchedule,
     EaseOutSchedule,
@@ -78,6 +78,19 @@ def test_parameter_schedule_get_value(c_poly: list[float], f: float, v_expected:
     # --- assert ------------------------------------------
     assert v_min <= v <= v_max
     assert v == pytest.approx(v_expected)
+
+
+@pytest.mark.parametrize(
+    "sched",
+    [
+        linear(1.0, 2.0),
+        ease_in(1.1, 2.1),
+        ease_out(3.0, 4.0),
+        ease_in_out(5.1, 6.1),
+    ],
+)
+def test_parameter_schedule_get_initial_value(sched: ParameterSchedule):
+    assert sched.min_value <= sched.get_initial_value() <= sched.max_value
 
 
 # =================================================================================================

@@ -34,3 +34,32 @@ def sample_truncated_poisson(min_value: np.int32, max_value: np.int32, _lambda: 
 
     # --- sample ----------------------
     return randint_numba(n=np.int32(p.shape[0]), k=np.int32(1), replace=False, p=p, seed=seed)[0] + min_value
+
+
+@njit(fastmath=True, inline="always")
+def truncated_poisson_expected_value(min_value: np.int32, max_value: np.int32, _lambda: np.float32) -> np.float32:
+    """
+    Compute expected value of a two-sided truncated Poisson distribution with given min, max & lambda values
+
+    :param min_value: (np.int32) minimum value (inclusive)
+    :param max_value: (np.int32) maximum value (inclusive)
+    :param _lambda: (np.float32) lambda parameter of the Poisson distribution
+    :return: (np.float32) expected value of the truncated Poisson distribution in range [min_value, max_value]
+    """
+
+    # --- compute p -------------------
+    p = np.zeros(max_value - min_value + 1, dtype=np.float32)
+    for k in range(min_value, max_value + 1):
+        if k == min_value:
+            p[0] = 1.0  # we can start from any arbitrary value, as we don't need normalization
+        else:
+            p[k - min_value] = p[k - min_value - 1] * (_lambda / np.float32(k))
+
+    # --- compute expected value -------
+    sum_p_k = np.float32(0.0)
+    sum_p = np.float32(0.0)
+    for k in range(min_value, max_value + 1):
+        sum_p_k += p[k - min_value] * np.float32(k)
+        sum_p += p[k - min_value]
+
+    return sum_p_k / sum_p

@@ -8,9 +8,17 @@ from numpy.typing import NDArray
 
 from max_div.internal.utils import ALMOST_ONE_F32
 from max_div.sampling.poisson import sample_truncated_poisson
-from max_div.solver._scheduling import ParameterSchedule, _evaluate_schedules, _schedules_to_2d_numpy_array
+from max_div.solver._parameters import (
+    AdaptiveSampler,
+    ParameterSchedule,
+    ParameterValueSource,
+    _evaluate_schedules,
+    _schedules_to_2d_numpy_array,
+)
 from max_div.solver._solver_state import SolverState
 from max_div.solver._strategies._base import StrategyBase
+
+ParamValueType = ParameterValueSource | float | int | np.float32 | np.int32 | bool
 
 
 # =================================================================================================
@@ -18,35 +26,78 @@ from max_div.solver._strategies._base import StrategyBase
 # =================================================================================================
 class OptimizationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
-    #  Constructor
+    #  Constructor / Configuration
     # -------------------------------------------------------------------------
-    def __init__(self, name: str | None = None, scheduled_params: dict[str, Any] | None = None):
+    def __init__(self, name: str | None = None, dynamic_params: dict[str, ParamValueType] | None = None):
         """
         Initialize the optimization strategy.
         :param name: optional name of the strategy; if omitted class name is used.
-        :param scheduled_params: optional dictionary of parameters that have scheduled values.
+        :param dynamic_params: optional dictionary of parameters that are potentially adjusted each iteration.
 
-                        The values of this dictionary are screened to check if any are of type ParameterSchedule.
-                        These properties will be updated (using setattr(self, arg, value)) at the start of each
-                        iteration, based on the ParameterSchedule and the current progress fraction.  All other
-                        members of the dictionary are ignored and assumed not be scheduled; no action is taken f
-                        or these.
+                The values of this dictionary are triaged by type, with different action taken:
+
+                ParameterSchedule       these parameters are updated each iteration based on a schedule,
+                                        which essentially maps progress_fraction -> parameter value.
+
+                AdaptiveSampler         these parameters are sampled from a distribution in each iteration,
+                                        which is adapted based on success/failure of the resulting swaps.
+
+                other (float, int, ...) these parameters are fixed for the duration of the strategy.
+
         """
         super().__init__(name)
-        if isinstance(scheduled_params, dict) and any(
-            isinstance(v, ParameterSchedule) for v in scheduled_params.values()
-        ):
-            # at least 1 scheduled parameter
+
+        # --- initialize scheduled parameters ---
+        #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params
+        self.has_scheduled_params = False
+        self.scheduled_params = []
+        self.scheduled_param_configs = np.empty(0, dtype=np.float32)
+
+        # --- adaptively sampled parameters ---
+        #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params
+        self.has_sampled_params = False
+        self.sampled_params: dict[str, AdaptiveSampler] = dict()
+
+        # --- now actually configure them ---
+        if dynamic_params:
+            self._configure_dynamic_params(dynamic_params)
+
+    def _configure_dynamic_params(self, dynamic_params: dict[str, ParamValueType]):
+        """
+        Internal method to configure dynamic parameters (scheduled and/or sampled).
+        :param dynamic_params: (dict) dictionary of dynamic parameters to configure
+        """
+
+        # --- schedule parameters ---------------
+        scheduled_parameters = {
+            param_name: param_value
+            for param_name, param_value in dynamic_params.items()
+            if isinstance(param_value, ParameterSchedule)
+        }
+        if scheduled_parameters:
             self.has_scheduled_params = True
-            self.scheduled_param_names = [k for k, v in scheduled_params.items() if isinstance(v, ParameterSchedule)]
-            self.scheduled_param_configs = _schedules_to_2d_numpy_array(
-                [v for v in scheduled_params.values() if isinstance(v, ParameterSchedule)]
-            )
-        else:
-            # no scheduled parameters
-            self.has_scheduled_params = False
-            self.scheduled_params = []
-            self.scheduled_param_configs = _schedules_to_2d_numpy_array([])
+            self.scheduled_param_names = list(scheduled_parameters.keys())
+            self.scheduled_param_configs = _schedules_to_2d_numpy_array(list(scheduled_parameters.values()))
+
+        # --- sampled parameters ----------------
+        sampled_parameters = {
+            param_name: param_value
+            for param_name, param_value in dynamic_params.items()
+            if isinstance(param_value, AdaptiveSampler)
+        }
+        if sampled_parameters:
+            self.has_sampled_params = True
+            self.sampled_params = sampled_parameters
+
+    @property
+    def has_dynamic_params(self) -> bool:
+        return self.has_scheduled_params or self.has_sampled_params
+
+    def set_seed(self, seed: int | np.int64) -> None:
+        super().set_seed(seed)
+        for i_sampler, sampler in enumerate(self.sampled_params.values()):
+            # set seed for each sampler, offset by multiple of large prime
+            sampler.update_seed(seed + (1_234_577 * i_sampler))
 
     # -------------------------------------------------------------------------
     #  Main API
@@ -72,23 +123,33 @@ class OptimizationStrategy(StrategyBase, ABC):
                 float(ALMOST_ONE_F32 * (1.0 - current_progress_frac) / (n_iters - 1)),
             )  # ensure we never progress beyond 1.0
         has_scheduled_params = self.has_scheduled_params
+        has_sampled_params = self.has_sampled_params
 
         # --- main loop -----------------------------------
         for _ in range(n_iters):
-            # --- update scheduled parameters ---
+            # --- update dynamic parameters ---
             if has_scheduled_params:
                 param_values = _evaluate_schedules(self.scheduled_param_configs, current_progress_frac)
                 for param_name, param_value in zip(self.scheduled_param_names, param_values):
                     setattr(self, param_name, param_value)
+            if has_sampled_params:
+                for param_name, sampler in self.sampled_params.items():
+                    param_value = sampler.new_sample()
+                    setattr(self, param_name, param_value)
 
             # --- execute iteration ---
-            self._perform_single_iteration(state, current_progress_frac)
+            success = self._perform_single_iteration(state, current_progress_frac)
+
+            # --- inform samplers of success/failure ---
+            if has_sampled_params:
+                for sampler in self.sampled_params.values():
+                    sampler.feedback(success)
 
             # --- update progress ---
             current_progress_frac += progress_frac_per_iter
 
     @abstractmethod
-    def _perform_single_iteration(self, state: SolverState, progress_frac: float):
+    def _perform_single_iteration(self, state: SolverState, progress_frac: float) -> bool:
         """
         Perform one iteration of the strategy, modifying the solver state in-place,
           trying to reach a more optimal solution.
@@ -102,15 +163,15 @@ class OptimizationStrategy(StrategyBase, ABC):
     #  Helpers
     # -------------------------------------------------------------------------
     @staticmethod
-    def initial_param_value(param: float | ParameterSchedule) -> float:
+    def initial_param_value(param: ParamValueType) -> float:
         """
-        Helper method to get the initial value of a parameter that may be scheduled or fixed.
+        Helper method to get the initial value of a parameter that may be either dynamic or fixed.
         Intended for use inside constructors of child classes.
-        :param param: (float | ParameterSchedule) parameter to get initial value for
+        :param param: (ParamValueType) parameter to get initial value for
         :return: (float) initial value of the parameter
         """
-        if isinstance(param, ParameterSchedule):
-            return param.get_value(f=0.0)
+        if isinstance(param, ParameterValueSource):
+            return param.get_initial_value()
         else:
             return float(param)
 
@@ -174,13 +235,13 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         name: str | None = None,
         min_swap_size: int = 1,
         max_swap_size: int = 1,
-        swap_size_lambda: float | ParameterSchedule = 1.0,
-        constraint_softness: float | ParameterSchedule = 0.0,
-        scheduled_params: dict[str, Any] | None = None,
+        swap_size_lambda: float | ParameterValueSource = 1.0,
+        constraint_softness: float | ParameterValueSource = 0.0,
+        dynamic_params: dict[str, ParamValueType] | None = None,
     ):
         super().__init__(
             name=name,
-            scheduled_params=(scheduled_params or dict())
+            dynamic_params=(dynamic_params or dict())
             | dict(
                 swap_size_lambda=swap_size_lambda,
                 constraint_softness=constraint_softness,
@@ -194,7 +255,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     # -------------------------------------------------------------------------
     #  Single Iteration
     # -------------------------------------------------------------------------
-    def _perform_single_iteration(self, state: SolverState, progress_frac: float):
+    def _perform_single_iteration(self, state: SolverState, progress_frac: float) -> bool:
         """
         Perform one iteration of the swap-based optimization strategy:
           - determine swap size n
@@ -232,7 +293,13 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         # evaluate
         score_after = state.score
         if score_after.as_tuple(self.constraint_softness) <= score_before.as_tuple(self.constraint_softness):
+            success = False
             state.restore_snapshot()  # score didn't improve -> restore snapshot
+        else:
+            success = True
+
+        # --- return success flag ---
+        return success
 
     # -------------------------------------------------------------------------
     #  Abstract methods

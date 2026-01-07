@@ -4,7 +4,7 @@ import pytest
 
 from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.solver import DiversityMetric, MaxDivProblem
-from max_div.solver._scheduling import ParameterSchedule, linear
+from max_div.solver._parameters import ParameterSchedule, linear
 from max_div.solver._solver_state import SolverState
 from max_div.solver._solver_step import InitializationStep
 from max_div.solver._strategies._initialization import InitializationStrategy

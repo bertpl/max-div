@@ -9,11 +9,13 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from .base import ParameterValueSource
+
 
 # =================================================================================================
 #  Base class
 # =================================================================================================
-class ParameterSchedule:
+class ParameterSchedule(ParameterValueSource):
     def __init__(self, v0: float, v1: float, c_poly: list[float], name: str = ""):
         """
         Initializes a ScheduledParameter instance, where the parameter value `v` as a function of
@@ -68,6 +70,10 @@ class ParameterSchedule:
 
     def __str__(self) -> str:
         return self.name
+
+    def get_initial_value(self) -> float:
+        """Return a valid initial value (any) for the parameter."""
+        return self.get_value(0.0)
 
 
 # =================================================================================================
@@ -124,7 +130,8 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
     Convert a list of ParameterSchedule instances to a 2D numpy array for use in low-level numba-optimized
       schedule evaluation functions.
     :param schedules: list of ParameterSchedule instances
-    :return: 2D numpy array of shape (n_schedules, 6) with schedule data
+    :return: 2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
+                        [min_value, max_value, d0, d1, d2, d3]
     """
 
     # --- prep ------------------------
@@ -157,7 +164,8 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
 def _evaluate_schedules(schedules_array: NDArray[np.float64], f: float) -> NDArray[np.float64]:
     """
     Evaluate multiple ParameterSchedule instances at once, given their numpy array representation.
-    :param schedules_array: 2D numpy array of shape (n_schedules, 6) with schedule data
+    :param schedules_array: 2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
+                        [min_value, max_value, d0, d1, d2, d3]
     :param f: progress fraction in [0.0, 1.0]
     :return: 1D numpy array of shape (n_schedules,) with evaluated parameter values
     """

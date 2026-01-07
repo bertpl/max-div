@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any
 
-from max_div.solver._scheduling import ease_in_out, linear
+from max_div.solver._parameters import ease_in_out, linear
 from max_div.solver._strategies import OptimizationStrategy
 
 from ._optim_guided_swaps import OptimGuidedSwaps

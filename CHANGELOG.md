@@ -5,6 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+    - support sampled parameters (using `AdaptiveSampler` class) in optimization strategies, similar to `ParameterSchedule`, but stochastic in nature.
+
 - **improved**:
     - improve granularity of `verbosity` parameter in `MaxDivSolver.solver()` wrt reporting frequency, including debug mode.
 

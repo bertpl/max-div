@@ -5,7 +5,7 @@ from max_div.internal.math.modify_p_selectivity import exponential_selectivity
 from max_div.internal.math.random import rand_float32, set_seed
 from max_div.sampling import randint_numba
 from max_div.sampling.con import randint_constrained
-from max_div.solver._scheduling import ParameterSchedule
+from max_div.solver._parameters import ParameterSchedule
 from max_div.solver._solver_state import SolverState
 
 from ._base import SwapBasedOptimizationStrategy
@@ -39,7 +39,7 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
             max_swap_size=max_swap_size,
             swap_size_lambda=swap_size_lambda,
             constraint_softness=constraint_softness,
-            scheduled_params=dict(
+            dynamic_params=dict(
                 p_add_constraint_aware=p_add_constraint_aware,
                 remove_selectivity_modifier=remove_selectivity_modifier,
                 add_selectivity_modifier=add_selectivity_modifier,
