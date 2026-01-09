@@ -4,6 +4,7 @@ from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.solver import DiversityMetric, MaxDivSolverBuilder
 from max_div.solver._duration import TargetDuration
 
+from ..solver._presets import SolverPreset
 from ._cli import cli
 
 
@@ -27,8 +28,18 @@ from ._cli import cli
     default=10,
     help="Problem size parameter. Default=10.",
 )
+@click.option(
+    "--preset",
+    default="default",
+    help="Set solver preset to use. Default='default'. Options: " + ", ".join([p.value for p in SolverPreset]),
+)
 def solve(
-    test_problem: str, iterations: int | None = None, seconds: float | None = None, verbosity: int = 20, size: int = 10
+    test_problem: str,
+    iterations: int | None = None,
+    seconds: float | None = None,
+    verbosity: int = 20,
+    size: int = 10,
+    preset: str = "default",
 ) -> None:
     """Run the solver on requested benchmark problem."""
 
@@ -43,7 +54,9 @@ def solve(
         duration = TargetDuration.seconds(float(seconds))
 
     # --- show what we'll do ------------------------------
-    click.echo(f"Solving test problem '{test_problem}' for a duration of {str(duration)} using default preset...")
+    click.echo(
+        f"Solving test problem '{test_problem}' for a duration of {str(duration)} using {preset.upper()} preset..."
+    )
 
     # --- construct solver --------------------------------
     solver = (
@@ -54,9 +67,7 @@ def solve(
                 diversity_metric=DiversityMetric.approx_geomean_separation(),
             ),
         )
-        .with_preset_default(
-            target_duration=duration,
-        )
+        .with_preset(target_duration=duration, preset=SolverPreset(preset))
         .build()
     )
 

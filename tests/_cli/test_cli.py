@@ -100,9 +100,10 @@ def test_cli_benchmark_platform(options: list[str]):
 @pytest.mark.parametrize(
     "options, expected_exit_code",
     [
-        (["--size=2"], 0),
+        (["--size=2", "--preset=default"], 0),
         (["--iterations=10", "--size=3"], 0),
         (["--seconds=0.001", "--size=4"], 0),
+        (["--seconds=0.001"], 0),
         (["--seconds=0.001", "--iterations=1000"], 2),
     ],
 )

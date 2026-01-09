@@ -6,7 +6,7 @@ from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._duration import TargetDuration
-from ._presets import preset_default_get_strategies
+from ._presets import SolverPreset, get_preset_strategies, get_preset_strategies_default
 from ._problem import MaxDivProblem
 from ._solver import MaxDivSolver
 from ._solver_step import InitializationStep, OptimizationStep, SolverStep
@@ -75,14 +75,15 @@ class MaxDivSolverBuilder:
     # -------------------------------------------------------------------------
     #  Builder API - PRESETS
     # -------------------------------------------------------------------------
-    def with_preset_default(
+    def with_preset(
         self,
         target_duration: TargetDuration,
+        preset: SolverPreset = SolverPreset.DEFAULT,
         initialization_included: bool = False,
         hardware_speed_correction: float = 1.0,
     ) -> Self:
         """
-        Configure the builder with default preset settings (overriding any previous settings):
+        Configure the builder with specified preset settings (overriding any previous settings):
           - Appropriate initialization strategy (most accurate strategy+settings taking est. <5% of total time)
           - Appropriate optimization strategy
           - Default diversity tie-breakers
@@ -91,6 +92,7 @@ class MaxDivSolverBuilder:
 
         :param target_duration: Target duration for the init+optim phases (either in time or iterations).
                                        --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
+        :param preset: Preset to use (default: SolverPreset.DEFAULT)
         :param initialization_included: Whether the target duration includes initialization time.  Note that this
                                          flag does not influence whether an initialization strategy is being
                                          configured by the preset; this is always the case.
@@ -99,8 +101,9 @@ class MaxDivSolverBuilder:
         """
 
         # --- apply main preset logic -----------
-        init_strategy, optim_steps = preset_default_get_strategies(
+        init_strategy, optim_steps = get_preset_strategies(
             problem=self._problem,
+            preset=preset,
             target_duration=target_duration,
             initialization_included=initialization_included,
             hardware_speed_correction=hardware_speed_correction,

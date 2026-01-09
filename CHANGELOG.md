@@ -9,7 +9,8 @@
     - support sampled parameters (using `AdaptiveSampler` class) in optimization strategies, similar to `ParameterSchedule`, but stochastic in nature.
 
 - **improved**:
-    - improve granularity of `verbosity` parameter in `MaxDivSolver.solver()` wrt reporting frequency, including debug mode.
+    - `MaxDivSolver.solver()`: improve granularity of `verbosity` parameter wrt reporting frequency, including debug mode.
+    - `solve` CLI command: add ability to specify which preset to use. 
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.3

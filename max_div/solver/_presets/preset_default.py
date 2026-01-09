@@ -6,7 +6,7 @@ import math
 
 from max_div.solver import MaxDivProblem
 from max_div.solver._duration import TargetDuration, _TargetIterationCount, _TargetTimeDuration
-from max_div.solver._parameters import ease_in, ease_out
+from max_div.solver._parameters import ease_in, ease_out, linear
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 from max_div.solver._strategies._initialization._presets import InitPreset
@@ -33,9 +33,9 @@ _CANDIDATE_INIT_PRESETS = [
 
 
 # =================================================================================================
-#  Main entry point
+#  DEFAULT preset
 # =================================================================================================
-def preset_default_get_strategies(
+def get_preset_strategies_default(
     problem: MaxDivProblem,
     target_duration: TargetDuration,
     initialization_included: bool = False,
@@ -71,8 +71,8 @@ def preset_default_get_strategies(
     #            robustness of converging to a good solution.
     optim_strategy = OptimizationStrategy.guided_swaps(
         min_swap_size=1,
-        max_swap_size=3,
-        swap_size_lambda=1.0,
+        max_swap_size=9,
+        swap_size_lambda=ease_out(6.0, 2.0),
         remove_selectivity_modifier=ease_in(-0.8, +0.8),  # wide -> narrow  (late)
         add_selectivity_modifier=ease_out(-0.8, +0.8),  #   wide -> narrow  (early)
     )
