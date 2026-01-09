@@ -5,6 +5,7 @@ from max_div.internal.math.modify_p_selectivity import exponential_selectivity
 from max_div.internal.math.random import rand_float32, set_seed
 from max_div.sampling import randint_numba
 from max_div.sampling.con import randint_constrained
+from max_div.sampling.poisson import sample_truncated_poisson
 from max_div.solver._parameters import ParameterSchedule
 from max_div.solver._solver_state import SolverState
 
@@ -35,16 +36,17 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
         name = f"OptimGuidedSwaps({min_swap_size}" + (f"-{max_swap_size})" if max_swap_size > min_swap_size else ")")
         super().__init__(
             name=name,
-            min_swap_size=min_swap_size,
-            max_swap_size=max_swap_size,
-            swap_size_lambda=swap_size_lambda,
             constraint_softness=constraint_softness,
             dynamic_params=dict(
+                swap_size_lambda=swap_size_lambda,
                 p_add_constraint_aware=p_add_constraint_aware,
                 remove_selectivity_modifier=remove_selectivity_modifier,
                 add_selectivity_modifier=add_selectivity_modifier,
             ),
         )
+        self.min_swap_size: np.int32 = np.int32(min_swap_size)
+        self.max_swap_size: np.int32 = np.int32(max_swap_size)
+        self.swap_size_lambda: float = self.initial_param_value(swap_size_lambda)
         self.p_add_constraint_aware: float = self.initial_param_value(p_add_constraint_aware)
         self.remove_selectivity_modifier: float = self.initial_param_value(remove_selectivity_modifier)
         self.add_selectivity_modifier: float = self.initial_param_value(add_selectivity_modifier)
@@ -52,6 +54,15 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
     # -------------------------------------------------------------------------
     #  Implementation
     # -------------------------------------------------------------------------
+    def _determine_swap_size(self) -> np.int32:
+        n = sample_truncated_poisson(
+            self.min_swap_size,
+            self.max_swap_size,
+            np.float32(self.swap_size_lambda),
+            seed=self.next_seed(),
+        )
+        return n
+
     def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
         # --- guiding probabilities for removal ---
         p = state.selected_separation_array  # this creates a copy

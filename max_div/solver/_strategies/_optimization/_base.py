@@ -233,9 +233,6 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     def __init__(
         self,
         name: str | None = None,
-        min_swap_size: int = 1,
-        max_swap_size: int = 1,
-        swap_size_lambda: float | ParameterValueSource = 1.0,
         constraint_softness: float | ParameterValueSource = 0.0,
         dynamic_params: dict[str, ParamValueType] | None = None,
     ):
@@ -243,13 +240,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
             name=name,
             dynamic_params=(dynamic_params or dict())
             | dict(
-                swap_size_lambda=swap_size_lambda,
                 constraint_softness=constraint_softness,
             ),
         )
-        self.min_swap_size: np.int32 = np.int32(min_swap_size)
-        self.max_swap_size: np.int32 = np.int32(max_swap_size)
-        self.swap_size_lambda: float = self.initial_param_value(swap_size_lambda)
         self.constraint_softness: float = self.initial_param_value(constraint_softness)
 
     # -------------------------------------------------------------------------
@@ -265,45 +258,74 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         """
 
         # --- determine swap size ---
-        n = sample_truncated_poisson(
-            self.min_swap_size,
-            self.max_swap_size,
-            np.float32(self.swap_size_lambda),
-            seed=self.next_seed(),
-        )
+        n = self._determine_swap_size()
 
         # --- take snapshot & remove n samples ---
 
-        # snapshot
+        # score before
         state.set_snapshot()
         score_before = state.score
 
-        # add
-        samples_to_remove = self._samples_to_be_removed(state, n)
-        for s in samples_to_remove:
-            state.remove(s)
-
-        # --- add n samples and evaluate ---
+        # remove
+        samples_removed = self._remove_samples(state, n)
 
         # add
-        samples_to_add = self._samples_to_be_added(state, n, samples_just_removed=samples_to_remove)
-        for s in samples_to_add:
-            state.add(s)
+        _ = self._add_samples(state, n, samples_just_removed=samples_removed)
 
         # evaluate
         score_after = state.score
         if score_after.as_tuple(self.constraint_softness) <= score_before.as_tuple(self.constraint_softness):
+            # score didn't improve -> failed swap attempt -> revert
             success = False
-            state.restore_snapshot()  # score didn't improve -> restore snapshot
+            state.restore_snapshot()
         else:
+            # score did improve -> successful swap attempt
             success = True
 
         # --- return success flag ---
         return success
 
     # -------------------------------------------------------------------------
+    #  Internal methods that can be overridden
+    # -------------------------------------------------------------------------
+    def _remove_samples(
+        self,
+        state: SolverState,
+        n_to_remove: np.int32,
+    ) -> NDArray[np.int32]:
+        """
+        REMOVE n samples and return the indices of removed samples.
+        """
+        samples_to_remove = self._samples_to_be_removed(state, n_to_remove)
+        for s in samples_to_remove:
+            state.remove(s)
+        return samples_to_remove
+
+    def _add_samples(
+        self,
+        state: SolverState,
+        n_to_add: np.int32,
+        samples_just_removed: NDArray[np.int32],
+    ) -> NDArray[np.int32]:
+        """
+        ADD n samples and return the indices of added samples.
+        """
+        samples_to_add = self._samples_to_be_added(state, n_to_add, samples_just_removed=samples_just_removed)
+        for s in samples_to_add:
+            state.add(s)
+        return samples_to_add
+
+    # -------------------------------------------------------------------------
     #  Abstract methods
     # -------------------------------------------------------------------------
+    @abstractmethod
+    def _determine_swap_size(self) -> np.int32:
+        """
+        Determine the swap size n for the current iteration.
+        :return: (np.int32) swap size n
+        """
+        raise NotImplementedError()
+
     @abstractmethod
     def _samples_to_be_removed(
         self,
