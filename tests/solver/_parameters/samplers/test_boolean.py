@@ -86,4 +86,3 @@ def test_sampled_boolean_alias():
     assert sampler._p_true_prior == pytest.approx(0.8)
     assert sampler._tau_learn == pytest.approx(123.45)
     assert sampler._tau_forget == pytest.approx(123.45 * 123.45)
-    assert sampler._seed == 1248

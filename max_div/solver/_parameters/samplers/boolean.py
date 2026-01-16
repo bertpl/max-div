@@ -1,6 +1,6 @@
 import numpy as np
 
-from max_div.internal.math.random import rand_float32
+from max_div.random.rng import rand_float32
 from max_div.solver._parameters._adaptive_sampler import AdaptiveSampler
 
 

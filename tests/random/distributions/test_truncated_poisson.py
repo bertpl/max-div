@@ -3,7 +3,8 @@ import math
 import numpy as np
 import pytest
 
-from max_div.sampling.poisson import sample_truncated_poisson
+from max_div.random import new_rng_state
+from max_div.random.distributions import sample_truncated_poisson
 
 
 @pytest.mark.parametrize("min_value, max_value", [(1, 5), (2, 2), (2, 4), (3, 7), (10, 20), (15, 20)])
@@ -13,12 +14,13 @@ def test_sample_truncated_poisson_boundaries(min_value: int, max_value: int):
     lambda_values = np.linspace(1.0, max_value + 1.0, num=n_samples)
 
     # --- act ---------------------------------------------
+    rng_state = new_rng_state(np.int64(42))
     samples = [
         sample_truncated_poisson(
             min_value=np.int32(min_value),
             max_value=np.int32(max_value),
             _lambda=np.float32(lambda_values[i]),
-            seed=np.int64(42 + i),
+            rng_state=rng_state,
         )
         for i in range(n_samples)
     ]
@@ -51,12 +53,13 @@ def test_sample_truncated_poisson_distribution(min_value: int, max_value: int, _
     hist_expected /= np.sum(hist_expected)  # normalize
 
     # --- act ---------------------------------------------
+    rng_state = new_rng_state(np.int64(42))
     for i in range(n_samples):
         sample = sample_truncated_poisson(
             min_value=np.int32(min_value),
             max_value=np.int32(max_value),
             _lambda=np.float32(_lambda),
-            seed=np.int64(42 + i),
+            rng_state=rng_state,
         )
         hist[sample] += 1.0
 

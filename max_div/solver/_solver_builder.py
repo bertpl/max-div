@@ -2,7 +2,8 @@ from typing import Self
 
 import numpy as np
 
-from ._constraints import Constraint
+from max_div.random import Constraint
+
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._duration import TargetDuration

@@ -3,13 +3,12 @@ from functools import partial
 import numpy as np
 import pytest
 
-from max_div.sampling._constraint_helpers import _build_array_repr
-from max_div.sampling.con import (
+from max_div.random import Constraint, ConstraintList, new_rng_state
+from max_div.random._randint._randint_constrained import (
     _SCORE_PENALTY_ALREADY_SAMPLED,
     _compute_score,
     randint_constrained,
 )
-from max_div.solver import Constraint
 
 
 # =================================================================================================
@@ -22,14 +21,15 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
     # --- arrange -----------------------------------------
     n = 20
     k = 5
-    cons = [
+    constraints = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
         Constraint(int_set={10, 11, 12, 13, 14}, min_count=1, max_count=3),
         Constraint(int_set={3, 4, 10, 11}, min_count=2, max_count=2),
     ]
+    rng_state = new_rng_state(np.int64(seed))
 
-    # convert to numba format
-    con_values, con_indices = _build_array_repr(cons)
+    # convert to numpy format
+    con_values, con_indices = ConstraintList(constraints).to_numpy()
 
     # construct p array
     if p_mode == "random":
@@ -51,7 +51,7 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
         con_values=con_values,
         con_indices=con_indices,
         p=p,
-        seed=np.int64(seed),
+        rng_state=rng_state,
         eager=eager,
     )
 
@@ -65,7 +65,7 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
     assert np.array_equal(con_indices, con_indices_before), "p array should never be modified."
     assert np.array_equal(p, p_before), "p array should never be modified."
 
-    for con in cons:
+    for con in constraints:
         count = sum(1 for s in samples if s in con.int_set)
         assert con.min_count <= count <= con.max_count
 
@@ -77,13 +77,14 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
     # --- arrange -----------------------------------------
     n = 100
     k = 5
-    cons = [
+    constraints = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=3, max_count=3),
         Constraint(int_set={10, 11, 12, 13, 14}, min_count=3, max_count=3),
     ]
+    rng_state = new_rng_state(np.int64(seed))
 
-    # convert to numba format
-    con_values, con_indices = _build_array_repr(cons)
+    # convert to numpy format
+    con_values, con_indices = ConstraintList(constraints).to_numpy()
 
     # construct p array
     if p_mode == "random":
@@ -105,7 +106,7 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
         con_values=con_values,
         con_indices=con_indices,
         p=p,
-        seed=np.int64(seed),
+        rng_state=rng_state,
         eager=eager,
     )
 
@@ -119,7 +120,7 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
     assert np.array_equal(con_indices, con_indices_before), "p array should never be modified."
     assert np.array_equal(p, p_before), "p array should never be modified."
 
-    for con in cons:
+    for con in constraints:
         count = sum(1 for s in samples if s in con.int_set)
         assert 2 <= count <= 3  # least harmful solution is to sample 2 or 3 from each constraint set
 
@@ -141,14 +142,15 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
     # --- arrange -----------------------------------------
     n = 6
     k = 1
-    cons = [
+    constraints = [
         Constraint(int_set={0, 1, 2}, min_count=1, max_count=3),
         Constraint(int_set={0, 1, 2, 3, 4, 5}, min_count=1, max_count=3),
     ]
     p = np.array([1e-15, 1e-15, 1e-15, 1.0, 1.0, 1.0], dtype=np.float32)
+    rng_state = new_rng_state(np.int64(seed))
 
-    # convert to numba format
-    con_values, con_indices = _build_array_repr(cons)
+    # convert to numpy format
+    con_values, con_indices = ConstraintList(constraints).to_numpy()
 
     # copies for later comparison
     con_values_before = con_values.copy()
@@ -162,7 +164,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
         con_values=con_values,
         con_indices=con_indices,
         p=p,
-        seed=np.int64(seed),
+        rng_state=rng_state,
         eager=False,
         k_context=np.int32(k_context),
     )
@@ -199,13 +201,13 @@ def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_
     """Check for ValueError in case k, n, len(i_forbidden) are conflicting."""
 
     # --- arrange -----------------------------------------
-    cons = [Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)]
+    constraints = [Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)]
 
-    # convert to numba format
-    con_values, con_indices = _build_array_repr(cons)
+    # convert to numpy format
+    con_values, con_indices = ConstraintList(constraints).to_numpy()
 
     p = np.random.rand(n).astype(np.float32)
-    seed = 42
+    rng_state = new_rng_state(42)
     i_forbidden = np.array(list(range(n_forbidden)), dtype=np.int32)
 
     function_call = partial(
@@ -215,7 +217,7 @@ def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_
         con_values=con_values,
         con_indices=con_indices,
         p=p,
-        seed=np.int64(seed),
+        rng_state=rng_state,
         eager=False,
         i_forbidden=i_forbidden,
     )
@@ -234,14 +236,14 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
     """Test if i_forbidden is prioritized over constraints and p=0."""
 
     # --- arrange -----------------------------------------
-    seed = 42
+    rng_state = new_rng_state(42)
     n = 10
     k = 5
     i_forbidden = np.array([3, 4], dtype=np.int32)
 
     # set up constraints & p such that sampling is tempted sample forbidden indices 3 or 4
-    cons = [Constraint(int_set={0, 1, 2, 3, 4}, min_count=min_count, max_count=10)]
-    con_values, con_indices = _build_array_repr(cons)
+    constraints = [Constraint(int_set={0, 1, 2, 3, 4}, min_count=min_count, max_count=10)]
+    con_values, con_indices = ConstraintList(constraints).to_numpy()
 
     p = np.array([0, 0.1, 0.1, 1, 1, 0.1, 0.1, 0.0, 0.0, 0.0], dtype=np.float32)
 
@@ -258,7 +260,7 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
         con_values=con_values,
         con_indices=con_indices,
         p=p,
-        seed=np.int64(seed),
+        rng_state=rng_state,
         eager=eager,
         i_forbidden=i_forbidden,
     )
@@ -298,7 +300,7 @@ def test_randint_constrained_score_wrap_around():
         )
         for _ in range(1000)
     ]
-    con_values, con_indices = _build_array_repr(constraints)
+    con_values, con_indices = ConstraintList(constraints).to_numpy()
 
     # --- act ---------------------------------------------
     score = _compute_score(

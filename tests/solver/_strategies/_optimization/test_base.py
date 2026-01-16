@@ -155,13 +155,14 @@ def test_optimization_strategy_dynamic_params_sampled(param_b_sampled: bool):
     solver_state = Mock()
 
     # --- act 1 -------------------------------------------
+    rng_state_before = param_b_sampler._rng_state.copy()
     strategy.set_seed(seed=1000)
 
     # --- assert 1 ----------------------------------------
     if param_b_sampled:
-        assert param_b_sampler._seed == 1000
+        assert not np.array_equal(param_b_sampler._rng_state, rng_state_before)
     else:
-        assert param_b_sampler._seed != 1000
+        assert np.array_equal(param_b_sampler._rng_state, rng_state_before)
 
     # --- act 2 -------------------------------------------
     _ = strategy.perform_n_iterations(

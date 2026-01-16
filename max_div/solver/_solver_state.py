@@ -8,9 +8,8 @@ import numpy as np
 from numpy.typing import NDArray
 from sortedcontainers import SortedSet
 
-from max_div.sampling._constraint_helpers import _build_array_repr, _build_con_membership
+from max_div.random import Constraint, ConstraintList
 
-from ._constraints import Constraint
 from ._distance import (
     DistanceMetric,
     compute_pdist,
@@ -256,6 +255,11 @@ class SolverState:
         return self._sep_selected[list(self._not_selected)]
 
     @property
+    def full_separation_array(self) -> NDArray[np.float32]:
+        """Return separation of all vectors wrt selected vectors as a numpy array of np.float32."""
+        return self._sep_selected  # should not be modified (!)
+
+    @property
     def global_separation_array(self) -> NDArray[np.float32]:
         """Return global separation of all vectors wrt all other vectors as a numpy array of np.float32."""
         return self._sep_global  # should not be modified (!)
@@ -301,7 +305,7 @@ class SolverState:
         not_selected = SortedSet(np.arange(n, dtype=np.int32))
 
         # --- constraints ---
-        con_values, con_indices = _build_array_repr(constraints)
+        con_values, con_indices = ConstraintList(constraints).to_numpy()
         con_membership = _build_con_membership(n, constraints)
 
         # --- score generator ---
@@ -374,3 +378,19 @@ class Snapshot:
 _EMPTY_SORTED_SET = SortedSet()
 _EMPTY_NP_ARRAY_INT32 = np.array([], dtype=np.int32)
 _EMPTY_NP_ARRAY_FLOAT32 = np.array([], dtype=np.float32)
+
+
+# =================================================================================================
+#  HELPERS
+# =================================================================================================
+def _build_con_membership(
+    m: np.int32,
+    constraints: list[Constraint],
+) -> dict[np.int32, list[np.int32]]:
+    """Build a mapping from each index to the list of constraints it belongs to."""
+    con_membership: dict[np.int32, list[np.int32]] = {i: [] for i in np.arange(m, dtype=np.int32)}
+    for i_con, con in enumerate(constraints):
+        i_con = np.int32(i_con)
+        for idx in con.int_set:
+            con_membership[np.int32(idx)].append(i_con)
+    return con_membership

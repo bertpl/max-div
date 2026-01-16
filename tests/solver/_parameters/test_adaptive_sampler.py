@@ -23,7 +23,6 @@ def test_adaptive_sampler_construction():
     # --- act & assert ------------------------------------
     assert isinstance(sampler, AdaptiveSampler)
 
-    assert sampler._seed != 0
     assert sampler._rng_state.sum() != 0
     assert sampler._tau_learn == pytest.approx(10.0)
     assert sampler._tau_forget == pytest.approx(100.0)
@@ -58,20 +57,14 @@ def test_adaptive_sampler_update_seed():
         tau_forget=100.0,
         seed=123,
     )
-
-    seed_before = sampler._seed
     rng_state_before = sampler._rng_state.copy()
 
     # --- act ---------------------------------------------
     sampler.update_seed(1234)
 
-    seed_after = sampler._seed
-    rng_state_after = sampler._rng_state.copy()
-
     # --- assert ------------------------------------------
-    assert seed_before != seed_after
-    assert rng_state_before.sum() != rng_state_after.sum()
-    assert seed_after == 1234
+    rng_state_after = sampler._rng_state.copy()
+    assert not np.array_equal(rng_state_before, rng_state_after)
 
 
 def test_adaptive_sampler_update_tau():

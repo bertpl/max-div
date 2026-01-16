@@ -9,8 +9,9 @@
     - support sampled parameters (using `AdaptiveSampler` class) in optimization strategies, similar to `ParameterSchedule`, but stochastic in nature.
 
 - **improved**:
+    - full refactor of sampling functionality, for improved flexibility, performance & future-readiness
     - `MaxDivSolver.solver()`: improve granularity of `verbosity` parameter wrt reporting frequency, including debug mode.
-    - `solve` CLI command: add ability to specify which preset to use. 
+    - `solve` CLI command: add ability to specify which preset to use.
 
 - **deprecated**:
     - remove unneeded `randint_constrained_robust` function and associated functionality. 

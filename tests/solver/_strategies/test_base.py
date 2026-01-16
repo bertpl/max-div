@@ -1,3 +1,5 @@
+import numpy as np
+
 from max_div.solver._strategies._base import StrategyBase
 
 
@@ -42,11 +44,14 @@ def test_strategy_base_set_seed():
 
     # --- act ---------------------------------------------
     seed_1 = strategy.seed
+    rng_state_1 = strategy._rng_state.copy()
     strategy.set_seed(42)
     seed_2 = strategy.seed
+    rng_state_2 = strategy._rng_state.copy()
     strategy.set_seed(43)
     seed_3 = strategy.seed
     seed_3b = strategy.seed  # should stay the same
+    rng_state_3 = strategy._rng_state.copy()
 
     # --- assert ------------------------------------------
     assert seed_1 != seed_2
@@ -54,16 +59,5 @@ def test_strategy_base_set_seed():
     assert seed_2 == 42
     assert seed_3 == 43
     assert seed_3b == 43
-
-
-def test_strategy_base_seed_auto_update():
-    """Test if the seed auto-updates upon each access"""
-
-    # --- arrange -----------------------------------------
-    strategy = StrategyBase()
-
-    # --- act ---------------------------------------------
-    seeds = [strategy.next_seed() for _ in range(100)]
-
-    # --- assert ------------------------------------------
-    assert len(seeds) == len(set(seeds)), "100 accessed seeds should all be unique"
+    assert not np.array_equal(rng_state_1, rng_state_2)
+    assert not np.array_equal(rng_state_2, rng_state_3)

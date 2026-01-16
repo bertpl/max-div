@@ -6,7 +6,8 @@ General usage of dimensions:
    m: number of (group) constraints imposed on the problem
 """
 
-from ._constraints import Constraint
+from max_div.random import Constraint
+
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._problem import MaxDivProblem

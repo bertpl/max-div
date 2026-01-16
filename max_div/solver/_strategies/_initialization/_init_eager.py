@@ -1,10 +1,8 @@
 import numpy as np
 from numpy._typing import NDArray
 
-from max_div.internal.math.modify_p_selectivity import exponential_selectivity
-from max_div.sampling.con import randint_constrained
-from max_div.sampling.uncon import randint_numba
 from max_div.solver._solver_state import SolverState
+from max_div.solver._strategies._sampling import SamplingType, select_items_to_add
 
 from ._base import InitializationStrategy
 
@@ -65,70 +63,26 @@ class InitEager(InitializationStrategy):
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         # --- initialize ------------------------
-        k = state.k
-        n_selected = state.n_selected
-        nc = min(self.nc, state.n - n_selected)  # number of candidates cannot be larger than remaining items
+        nc = min(self.nc, state.n - state.n_selected)  # number of candidates cannot be larger than remaining items
+        modifier = min(0.9, state.n_selected / state.k)  # proportional to progress; cap at 0.9 to avoid extremes
 
-        # --- construct p array -----------------
-        if n_selected == 0:
-            # first batch of candidates:
-            #   - use global separation only
-            #   - no selectivity modification
-            p = state.global_separation_array
-        else:
-            # later batches:
-            #   - use separation of not-selected wrt selected items
-            #       --> as opposed to RandomBatched, we ignore global separation here; we only add 1 item at a time,
-            #           so we don't run the risk of adding multiple similar items in one batch as in RandomBatched.
-            #   - modify selectivity based on progress
-            p = state.not_selected_separation_array
+        # --- select nc candidates --------------
+        candidates = select_items_to_add(
+            state=state,
+            candidates=state.not_selected_index_array,
+            k=nc,
+            selectivity_modifier=modifier,
+            rng_state=self._rng_state,
+            sampling_type=SamplingType.CANDIDATES,
+            include_within_group_separation=True,
+            ignore_constraints=self.ignore_constraints,
+        )
 
-            modifier = min(0.9, n_selected / k)  # proportional to progress; cap at 0.9 to avoid extremes
-            exponential_selectivity(
-                p_in=p,
-                p_out=p,  # in-place
-                modifier=np.float32(modifier),
-            )
-
-        # --- sample nc times ---
+        # --- select best one -------------------
         best_sample: np.int32 = np.int32(-1)
         best_score_tuple: tuple | None = None
 
-        for j in range(nc):
-            # --- sample once ---
-            if state.has_constraints and (not self.ignore_constraints):
-                # NOTE: A) at this point, 'p' is of size 'n_not_selected', hence potentially smaller than 'n'
-                #       B) also, con_indices refers to 'original' indices in [0,n) (not to 'not selected' indices)
-                #       --> Since these 2 properties are not compatible, we need to fix either 'p' or 'con_indices'.
-                #       --> `con_indices` is complicated to rewrite in terms of 'not selected' indices,
-                #           hence we extend 'p' to size 'n' and set the `i_forbidden` argument of `randint_constrained`
-                #           to exclude already selected indices.
-                p_full = np.zeros(state.n, dtype=np.float32)
-                p_full[state.not_selected_index_array] = p
-                sample = randint_constrained(
-                    n=state.n,
-                    k=np.int32(1),
-                    con_values=state.con_values,
-                    con_indices=state.con_indices,
-                    p=p_full,
-                    seed=self.next_seed(),
-                    eager=self.__SAMPLE_EAGER,
-                    k_context=k_remaining,
-                    i_forbidden=state.selected_index_array,
-                )[0]
-            else:
-                # NOTE: i_samples are indices into state.not_selected_index_array
-                i_sample = randint_numba(
-                    n=np.int32(p.size),
-                    k=np.int32(1),
-                    replace=False,
-                    p=p,
-                    seed=self.next_seed(),
-                )[0]
-                sample = state.not_selected_index_array[i_sample]
-
-            # --- try out sample --
-
+        for sample in candidates:
             # take snapshot -> add and remember score -> revert
             state.set_snapshot()
             state.add(sample)

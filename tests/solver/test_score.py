@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div.solver._constraints import Constraint
+from max_div.solver import Constraint
 from max_div.solver._diversity import DiversityMetric
 from max_div.solver._score import Score, ScoreGenerator
 

@@ -4,7 +4,8 @@ from typing import Self
 import numpy as np
 from numpy.typing import NDArray
 
-from ._constraints import Constraint, Constraints
+from max_div.random import Constraint
+
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 
@@ -43,7 +44,7 @@ class MaxDivProblem:
         k: int,
         distance_metric: DistanceMetric = DistanceMetric.L2_EUCLIDEAN,
         diversity_metric: DiversityMetric = DiversityMetric.geomean_separation(),
-        constraints: list[Constraint] | Constraints | None = None,
+        constraints: list[Constraint] | None = None,
     ) -> Self:
         # --- validate ----------------
         if vectors.ndim != 2:
@@ -60,8 +61,6 @@ class MaxDivProblem:
 
         if constraints is None:
             constraints = []
-        elif isinstance(constraints, Constraints):
-            constraints = constraints.all()
 
         # --- build -------------------
         return MaxDivProblem(

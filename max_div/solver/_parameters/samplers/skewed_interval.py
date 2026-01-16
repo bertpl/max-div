@@ -1,6 +1,6 @@
 import numpy as np
 
-from max_div.sampling.modified_power import sample_modified_power_distribution
+from max_div.random.distributions import sample_modified_power_distribution
 from max_div.solver._parameters._adaptive_sampler import AdaptiveSampler
 
 
@@ -46,7 +46,7 @@ class SkewedIntervalAdaptiveSampler(AdaptiveSampler[np.float32]):
     def new_sample(self) -> np.float32:
         normalized_median = (self._median - self._min_value) / (self._max_value - self._min_value)
         normalized_median = np.clip(normalized_median, np.float32(0.01), np.float32(0.99))
-        normalized_sample = sample_modified_power_distribution(normalized_median, self._next_seed())
+        normalized_sample = sample_modified_power_distribution(normalized_median, self._rng_state)
         sample = self._min_value + normalized_sample * (self._max_value - self._min_value)
         self._last_sample = sample
         return sample

@@ -96,10 +96,7 @@ def _get_reference_benchmarks() -> list[PlatformSpeedBenchmark]:
     #  Late imports to avoid circular dependencies
     # -------------------------------------------------------------------------
     from max_div.internal.math.modify_p_selectivity import exponential_selectivity
-    from max_div.sampling._constraint_helpers import _build_array_repr
-    from max_div.sampling.con import randint_constrained
-    from max_div.sampling.uncon import randint_numba
-    from max_div.solver._constraints import Constraint
+    from max_div.random import Constraint, ConstraintList, new_rng_state, randint, randint_constrained
     from max_div.solver._distance import DistanceMetric
     from max_div.solver._diversity import DiversityMetric
     from max_div.solver._solver_state import SolverState
@@ -142,7 +139,13 @@ def _get_reference_benchmarks() -> list[PlatformSpeedBenchmark]:
     def _bm_max_div_randint(size: int):
         p = np.linspace(0.1, 1.0, size, dtype=np.float32)
         for replace in [True, False]:
-            _ = randint_numba(n=np.int32(size), k=np.int32(size // 2), replace=replace, p=p, seed=np.int64(size))
+            _ = randint(
+                n=np.int32(size),
+                k=np.int32(size // 2),
+                replace=replace,
+                p=p,
+                rng_state=new_rng_state(np.int64(size)),
+            )
 
     def _bm_max_div_randint_constrained(size: int):
         p = np.linspace(0.1, 1.0, size, dtype=np.float32)
@@ -153,7 +156,7 @@ def _get_reference_benchmarks() -> list[PlatformSpeedBenchmark]:
                 max_count=size // 3,
             )
         ]
-        con_values, con_indices = _build_array_repr(constraints)
+        con_values, con_indices = ConstraintList(constraints).to_numpy()
         for eager in [True, False]:
             _ = randint_constrained(
                 n=np.int32(size),
@@ -161,7 +164,7 @@ def _get_reference_benchmarks() -> list[PlatformSpeedBenchmark]:
                 con_values=con_values,
                 con_indices=con_indices,
                 p=p,
-                seed=np.int64(size),
+                rng_state=new_rng_state(np.int64(size)),
                 eager=eager,
             )
 

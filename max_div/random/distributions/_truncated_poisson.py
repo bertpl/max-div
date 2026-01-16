@@ -1,11 +1,17 @@
 import numpy as np
 from numba import njit
+from numpy.typing import NDArray
 
-from .uncon import randint_numba
+from max_div.random import randint1
 
 
 @njit(fastmath=True, inline="always")
-def sample_truncated_poisson(min_value: np.int32, max_value: np.int32, _lambda: np.float32, seed: np.int64):
+def sample_truncated_poisson(
+    min_value: np.int32,
+    max_value: np.int32,
+    _lambda: np.float32,
+    rng_state: NDArray[np.uint64],
+):
     """
     Generate single int32 sample from a two-sided truncated Poisson distribution with given min and max values
 
@@ -20,7 +26,7 @@ def sample_truncated_poisson(min_value: np.int32, max_value: np.int32, _lambda: 
     :param min_value: (np.int32) minimum value (inclusive)
     :param max_value: (np.int32) maximum value (inclusive)
     :param _lambda: (np.float32) lambda parameter of the Poisson distribution
-    :param seed: (np.int64) random seed
+    :param rng_state: (np.uint64 array) RNG state for underlying random sampling
     :return: (np.int32) single sample from the truncated Poisson distribution in range [min_value, max_value]
     """
 
@@ -33,7 +39,7 @@ def sample_truncated_poisson(min_value: np.int32, max_value: np.int32, _lambda: 
             p[k - min_value] = p[k - min_value - 1] * (_lambda / np.float32(k))
 
     # --- sample ----------------------
-    return randint_numba(n=np.int32(p.shape[0]), k=np.int32(1), replace=False, p=p, seed=seed)[0] + min_value
+    return randint1(n=np.int32(p.shape[0]), p=p, rng_state=rng_state) + min_value
 
 
 @njit(fastmath=True, inline="always")

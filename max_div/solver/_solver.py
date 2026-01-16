@@ -3,12 +3,12 @@ import numpy as np
 from max_div.internal.benchmarking import Timer
 from max_div.internal.formatting import ljust_str_list
 from max_div.internal.utils import deterministic_hash
+from max_div.random import Constraint
 
-from ._constraints import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._duration import Elapsed
-from ._progress_reporting import ProgressReporter, TqdmProgressReporter
+from ._progress_reporting import ProgressReporter
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
 from ._solver_step import SolverStep, SolverStepResult

@@ -1,14 +1,16 @@
 import numpy as np
+import pytest
 
-from max_div.sampling._constraint_helpers import (
+from max_div.random._constraints import (
+    Constraint,
+    ConstraintList,
     _build_array_repr,
-    _build_con_membership,
     _np_con_indices,
     _np_con_max_value,
     _np_con_min_value,
     _np_con_total_violation,
+    _np_largest_con_index,
 )
-from max_div.solver._constraints import Constraint
 
 
 def test_build_array_repr():
@@ -20,11 +22,12 @@ def test_build_array_repr():
     ]
 
     # --- act ---------------------------------------------
-    con_values, con_indices = _build_array_repr(cons)
+    con_values_1, con_indices_1 = _build_array_repr(cons)
+    con_values_2, con_indices_2 = ConstraintList(cons).to_numpy()
 
     # --- assert ------------------------------------------
     assert np.array_equal(
-        con_values,
+        con_values_1,
         np.array(
             [
                 [2, 3],  # min_count, max_count for constraint 0
@@ -35,57 +38,27 @@ def test_build_array_repr():
         ),
     )
 
-    assert con_indices.shape[0] == 17  # (2*m) + (5+4+2) = 6 + 11 = 17
-    assert con_indices.dtype == np.int32
+    assert con_indices_1.shape[0] == 17  # (2*m) + (5+4+2) = 6 + 11 = 17
+    assert con_indices_1.dtype == np.int32
 
     for i, con in enumerate(cons):
-        i_start = con_indices[2 * i]
-        i_end = con_indices[2 * i + 1]
-        assert list(con_indices[i_start:i_end]) == sorted(con.int_set)
+        i_start = con_indices_1[2 * i]
+        i_end = con_indices_1[2 * i + 1]
+        assert list(con_indices_1[i_start:i_end]) == sorted(con.int_set)
 
-
-def test_build_con_membership():
-    # --- arrange -----------------------------------------
-    cons = [
-        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
-        Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
-        Constraint(int_set={3, 11}, min_count=2, max_count=2),
-    ]
-    m = np.int32(14)
-
-    # --- act ---------------------------------------------
-    con_membership = _build_con_membership(m, cons)
-
-    # --- assert ------------------------------------------
-    expected_membership = {
-        0: [0],
-        1: [0],
-        2: [0],
-        3: [0, 2],
-        4: [0],
-        5: [],
-        6: [],
-        7: [],
-        8: [],
-        9: [],
-        10: [1],
-        11: [1, 2],
-        12: [1],
-        13: [1],
-    }
-
-    assert con_membership == expected_membership
+    assert np.array_equal(con_values_1, con_values_2)
+    assert np.array_equal(con_indices_1, con_indices_2)
 
 
 def test_np_con_min_value():
     # --- arrange -----------------------------------------
-    con_values, con_indices = _build_array_repr(
+    con_values, con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
             Constraint(int_set={3, 11}, min_count=2, max_count=2),
         ]
-    )
+    ).to_numpy()
 
     # --- act & assert ------------------------------------
     assert _np_con_min_value(con_values, np.int32(0)) == 2
@@ -95,13 +68,13 @@ def test_np_con_min_value():
 
 def test_np_con_max_value():
     # --- arrange -----------------------------------------
-    con_values, con_indices = _build_array_repr(
+    con_values, con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
             Constraint(int_set={3, 11}, min_count=2, max_count=2),
         ]
-    )
+    ).to_numpy()
 
     # --- act & assert ------------------------------------
     assert _np_con_max_value(con_values, np.int32(0)) == 3
@@ -111,18 +84,43 @@ def test_np_con_max_value():
 
 def test_np_con_indices():
     # --- arrange -----------------------------------------
-    con_values, con_indices = _build_array_repr(
+    con_values, con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
             Constraint(int_set={3, 11}, min_count=2, max_count=2),
         ]
-    )
+    ).to_numpy()
 
     # --- act & assert ------------------------------------
     assert np.array_equal(_np_con_indices(con_indices, np.int32(0)), np.array([0, 1, 2, 3, 4], dtype=np.int32))
     assert np.array_equal(_np_con_indices(con_indices, np.int32(1)), np.array([10, 11, 12, 13], dtype=np.int32))
     assert np.array_equal(_np_con_indices(con_indices, np.int32(2)), np.array([3, 11], dtype=np.int32))
+
+
+@pytest.mark.parametrize(
+    "i1_max,i2_max,i3_max,expected_result",
+    [
+        (4, 13, 11, 13),
+        (4, 13, 30, 30),
+        (40, 13, 30, 40),
+    ],
+)
+def test_np_largest_con_index(i1_max: int, i2_max: int, i3_max: int, expected_result: int):
+    # --- arrange -----------------------------------------
+    _, con_indices = ConstraintList(
+        [
+            Constraint(int_set={0, 1, 2, 3, i1_max}, min_count=2, max_count=3),
+            Constraint(int_set={10, 11, 12, i2_max}, min_count=0, max_count=7),
+            Constraint(int_set={3, i3_max}, min_count=2, max_count=2),
+        ]
+    ).to_numpy()
+
+    # --- act ---------------------------------------------
+    result = _np_largest_con_index(con_indices)
+
+    # --- assert ------------------------------------------
+    assert result == expected_result
 
 
 def test_np_con_total_violation():

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Self
+from typing import Self
 
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div.internal.utils import ALMOST_ONE_F32
-from max_div.sampling.poisson import sample_truncated_poisson
 from max_div.solver._parameters import (
     AdaptiveSampler,
     ParameterSchedule,
@@ -257,8 +256,16 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
           - if this swap did not improve the score -> revert to previous selection
         """
 
-        # --- determine swap size ---
-        n = self._determine_swap_size()
+        # --- init ---
+        n_swap = min(
+            self._determine_swap_size(),
+            state.n_selected,  # we need to remove n_swap samples from selected, so n_selected is lower bound
+            state.n - state.n_selected,  # we need to select n_swap from currently unselected, so this is lower bound
+        )
+
+        # do this now, before the just-removed ones get added to the not_selected ones; we don't want these
+        # just-removed ones to be selected to be added again immediately.
+        candidate_samples_to_add = state.not_selected_index_array
 
         # --- take snapshot & remove n samples ---
 
@@ -267,10 +274,10 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         score_before = state.score
 
         # remove
-        samples_removed = self._remove_samples(state, n)
+        _ = self._remove_samples(state, n_swap)
 
         # add
-        _ = self._add_samples(state, n, samples_just_removed=samples_removed)
+        _ = self._add_samples(state, n_swap, candidate_samples_to_add)
 
         # evaluate
         score_after = state.score
@@ -288,11 +295,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     # -------------------------------------------------------------------------
     #  Internal methods that can be overridden
     # -------------------------------------------------------------------------
-    def _remove_samples(
-        self,
-        state: SolverState,
-        n_to_remove: np.int32,
-    ) -> NDArray[np.int32]:
+    def _remove_samples(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
         """
         REMOVE n samples and return the indices of removed samples.
         """
@@ -302,15 +305,12 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         return samples_to_remove
 
     def _add_samples(
-        self,
-        state: SolverState,
-        n_to_add: np.int32,
-        samples_just_removed: NDArray[np.int32],
+        self, state: SolverState, n_to_add: np.int32, candidate_samples: NDArray[np.int32]
     ) -> NDArray[np.int32]:
         """
         ADD n samples and return the indices of added samples.
         """
-        samples_to_add = self._samples_to_be_added(state, n_to_add, samples_just_removed=samples_just_removed)
+        samples_to_add = self._samples_to_be_added(state, n_to_add, candidate_samples)
         for s in samples_to_add:
             state.add(s)
         return samples_to_add
@@ -327,11 +327,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def _samples_to_be_removed(
-        self,
-        state: SolverState,
-        n_to_remove: np.int32,
-    ) -> NDArray[np.int32]:
+    def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
         """
         Determine which n samples to remove from the current selection.  The values returned should be indices present
         in state.selected_index_array.
@@ -347,10 +343,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
 
     @abstractmethod
     def _samples_to_be_added(
-        self,
-        state: SolverState,
-        n_to_add: np.int32,
-        samples_just_removed: NDArray[np.int32],
+        self, state: SolverState, n_to_add: np.int32, candidate_samples: NDArray[np.int32]
     ) -> NDArray[np.int32]:
         """
         Determine which n samples to add to the current selection, right after having removed n samples.
@@ -359,11 +352,10 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         NOTE: for reproducibility, any random sampling inside this method should use self.next_seed() method of the
               strategy to get a new seed.
 
-        :param state: (SolverState) current solver state, with # selected samples = k-n
+        :param state: (SolverState) current solver state, with # selected samples = k-n_to_add
         :param n_to_add: (np.int32) number of samples to be added  (swap size)
-        :param samples_just_removed: (int32 ndarray) of shape (n,) with indices of samples that were just removed
-                                          (potentially to be taken into account to avoid resampling them)
-
+        :param candidate_samples: (1D np.int32 ndarray) with candidate samples to choose from; this method should
+                                     NEVER return samples that are not in this array.
         :return: (int32 ndarray) of shape (n,) with indices of samples to be ADDED
         """
         raise NotImplementedError()

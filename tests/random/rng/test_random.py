@@ -1,10 +1,8 @@
 import numpy as np
 import pytest
 
-from max_div.internal.math.random import (
-    _TINY_F32,
-    _TINY_F64,
-    _xoroshiro128plus_next,
+from max_div.random.rng import (
+    new_rng_state,
     rand_float32,
     rand_float64,
     rand_int32,
@@ -12,18 +10,22 @@ from max_div.internal.math.random import (
     rand_int64,
     rand_nz_float32,
     rand_nz_float64,
-    set_seed,
+)
+from max_div.random.rng._core import (
+    _TINY_F32,
+    _TINY_F64,
+    _xoroshiro128plus_next,
 )
 
 
 # -------------------------------------------------------------------------
-#  set_seed
+#  new_rng_state
 # -------------------------------------------------------------------------
-def test_set_seed():
+def test_new_rng_state():
     # --- act ---------------------------------------------
-    rng_state_1 = set_seed(1)
-    rng_state_2 = set_seed(1)
-    rng_state_3 = set_seed(3)
+    rng_state_1 = new_rng_state(1)
+    rng_state_2 = new_rng_state(1)
+    rng_state_3 = new_rng_state(3)
 
     # --- assert ------------------------------------------
     assert all(rng_state_1 == rng_state_2)
@@ -35,8 +37,8 @@ def test_set_seed():
 # -------------------------------------------------------------------------
 def test_rand_float32_seed():
     # --- arrange ----------------------------------------
-    rng_state_1 = set_seed(1)
-    rng_state_2 = set_seed(1)
+    rng_state_1 = new_rng_state(1)
+    rng_state_2 = new_rng_state(1)
 
     # --- act ---------------------------------------------
     f11 = rand_float32(rng_state_1)
@@ -53,7 +55,7 @@ def test_rand_float32_seed():
 
 def test_rand_float32_stats():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
 
     # --- act ---------------------------------------------
     values = [rand_float32(rng_state) for _ in range(10000)]
@@ -132,8 +134,8 @@ def test_rand_nz_float32_exact_range(rng_state: list[int], expected_uint64: int,
 # -------------------------------------------------------------------------
 def test_rand_float64_seed():
     # --- arrange ----------------------------------------
-    rng_state_1 = set_seed(1)
-    rng_state_2 = set_seed(1)
+    rng_state_1 = new_rng_state(1)
+    rng_state_2 = new_rng_state(1)
 
     # --- act ---------------------------------------------
     f11 = rand_float64(rng_state_1)
@@ -152,7 +154,7 @@ def test_rand_float64_seed():
 
 def test_rand_float64_stats():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
 
     # --- act ---------------------------------------------
     values = [rand_float64(rng_state) for _ in range(10000)]
@@ -231,8 +233,8 @@ def test_rand_nz_float64_exact_range(rng_state: list[int], expected_uint64: int,
 # -------------------------------------------------------------------------
 def test_rand_int32_seed():
     # --- arrange ----------------------------------------
-    rng_state_1 = set_seed(1)
-    rng_state_2 = set_seed(1)
+    rng_state_1 = new_rng_state(1)
+    rng_state_2 = new_rng_state(1)
 
     # --- act ---------------------------------------------
     i11 = rand_int32(rng_state_1, np.int32(0), np.int32(100))
@@ -251,7 +253,7 @@ def test_rand_int32_seed():
 
 def test_rand_int32_stats():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(100)
 
@@ -268,7 +270,7 @@ def test_rand_int32_stats():
 
 def test_rand_int32_range():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int32(-50)
     high = np.int32(50)
 
@@ -286,8 +288,8 @@ def test_rand_int32_range():
 # -------------------------------------------------------------------------
 def test_rand_int64_seed():
     # --- arrange ----------------------------------------
-    rng_state_1 = set_seed(1)
-    rng_state_2 = set_seed(1)
+    rng_state_1 = new_rng_state(1)
+    rng_state_2 = new_rng_state(1)
 
     # --- act ---------------------------------------------
     i11 = rand_int64(rng_state_1, np.int64(0), np.int64(100))
@@ -306,7 +308,7 @@ def test_rand_int64_seed():
 
 def test_rand_int64_stats():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int64(0)
     high = np.int64(100)
 
@@ -323,7 +325,7 @@ def test_rand_int64_stats():
 
 def test_rand_int64_range():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int64(-50)
     high = np.int64(50)
 
@@ -338,7 +340,7 @@ def test_rand_int64_range():
 
 def test_rand_int64_large_range():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int64(0)
     high = np.int64(1_000_000_000)
 
@@ -358,8 +360,8 @@ def test_rand_int64_large_range():
 # -------------------------------------------------------------------------
 def test_rand_int32_array_seed():
     # --- arrange ----------------------------------------
-    rng_state_1 = set_seed(1)
-    rng_state_2 = set_seed(1)
+    rng_state_1 = new_rng_state(1)
+    rng_state_2 = new_rng_state(1)
 
     # --- act ---------------------------------------------
     arr1 = rand_int32_array(rng_state_1, np.int32(0), np.int32(100), np.int32(10))
@@ -373,7 +375,7 @@ def test_rand_int32_array_seed():
 
 def test_rand_int32_array_different_calls():
     # --- arrange ----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
 
     # --- act ---------------------------------------------
     arr1 = rand_int32_array(rng_state, np.int32(0), np.int32(100), np.int32(10))
@@ -386,7 +388,7 @@ def test_rand_int32_array_different_calls():
 
 def test_rand_int32_array_stats():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(100)
     size = np.int32(10000)
@@ -406,7 +408,7 @@ def test_rand_int32_array_stats():
 
 def test_rand_int32_array_range():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int32(-50)
     high = np.int32(50)
     size = np.int32(10000)
@@ -425,7 +427,7 @@ def test_rand_int32_array_range():
 
 def test_rand_int32_array_small_range():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(5)
     size = np.int32(1000)
@@ -443,7 +445,7 @@ def test_rand_int32_array_small_range():
 
 def test_rand_int32_array_single_element():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(100)
     size = np.int32(1)
@@ -458,7 +460,7 @@ def test_rand_int32_array_single_element():
 
 def test_rand_int32_array_large_size():
     # --- arrange -----------------------------------------
-    rng_state = set_seed(1)
+    rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(1000)
     size = np.int32(100000)

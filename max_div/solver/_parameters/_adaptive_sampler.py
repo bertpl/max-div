@@ -23,8 +23,8 @@ from typing import Generic, TypeVar
 
 import numpy as np
 
-from max_div.internal.math.random import set_seed
 from max_div.internal.utils import int_to_int64
+from max_div.random.rng import new_rng_state
 
 from .base import ParameterValueSource
 
@@ -52,7 +52,6 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
         self._c_learn, self._c_forget = 0.0, 0.0
         self._c_learn_f32, self._c_forget_f32 = np.float32(0.0), np.float32(0.0)
         self._forgetting_enabled = False
-        self._seed = np.int64(-1)
         self._rng_state = np.zeros(2, dtype=np.uint64)
 
         # --- go through update methods ---------
@@ -61,8 +60,7 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
 
     def update_seed(self, seed: np.int64 | int):
         """Update the seed for the random number generator used by the sampler."""
-        self._seed = int_to_int64(seed)
-        self._rng_state = set_seed(self._seed)  # alternative to use directly in our low-level rng methods
+        self._rng_state = new_rng_state(int_to_int64(seed))  # rng_state matches better with downstream usage than seed
 
     def update_tau(self, tau_learn: float | None = None, tau_forget: float | None = None):
         """Update the time constants for learning and forgetting."""
@@ -81,13 +79,6 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
                 self._forgetting_enabled = True
                 self._c_forget = 1.0 - (0.5 ** (1 / tau_forget))  # adjust by 50% in 'tau_forget' # of steps
                 self._c_forget_f32 = np.float32(self._c_forget)
-
-    # -------------------------------------------------------------------------
-    #  Internal
-    # -------------------------------------------------------------------------
-    def _next_seed(self) -> np.int64:
-        self._seed += np.int64(1)  # will wrap around if exceeds np.int64 max without warnings
-        return self._seed
 
     # -------------------------------------------------------------------------
     #  Main API

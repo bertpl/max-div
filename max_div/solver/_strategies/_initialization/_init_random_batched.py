@@ -3,10 +3,8 @@ import math
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div.internal.math.modify_p_selectivity import exponential_selectivity
-from max_div.sampling.con import randint_constrained
-from max_div.sampling.uncon import randint_numba
 from max_div.solver._solver_state import SolverState
+from max_div.solver._strategies._sampling import SamplingType, select_items_to_add
 
 from ._base import InitializationStrategy
 
@@ -73,57 +71,18 @@ class InitRandomBatched(InitializationStrategy):
             # first call
             self._batches_remaining = self.b
 
-        batch_size = np.int32(max(1, math.ceil(k_remaining / self._batches_remaining)))
+        batch_size = int(max(1, math.ceil(k_remaining / self._batches_remaining)))
         self._batches_remaining -= 1
 
-        # --- construct p array -----------------
-        if n_selected == 0:
-            # first batch:
-            #   - use global separation only
-            #   - no selectivity modification
-            p = state.global_separation_array
-        else:
-            # later batches:
-            #   - use combined separation (wrt selection so far + global)
-            #   - modify selectivity based on progress
-            p = state.global_separation_array[state.not_selected_index_array]  # this creates a new array
-            p += state.not_selected_separation_array  # so we can add in-place
-
-            modifier = min(0.9, n_selected / state.k)  # proportional to progress; cap at 0.9 to avoid extremes
-            exponential_selectivity(
-                p_in=p,
-                p_out=p,  # in-place
-                modifier=np.float32(modifier),
-            )
-
-        # --- sample ---
-        if state.has_constraints and (not self.ignore_constraints):
-            # NOTE: A) at this point, 'p' is of size 'n_not_selected', hence potentially smaller than 'n'
-            #       B) also, con_indices refers to 'original' indices in [0,n) (not to 'not selected' indices)
-            #       --> Since these 2 properties are not compatible, we need to fix either 'p' or 'con_indices'.
-            #       --> `con_indices` is complicated to rewrite in terms of 'not selected' indices,
-            #           hence we extend 'p' to size 'n' and set the `i_forbidden` argument of `randint_constrained`
-            #           to exclude already selected indices.
-            p_full = np.zeros(state.n, dtype=np.float32)
-            p_full[state.not_selected_index_array] = p
-            return randint_constrained(
-                n=state.n,
-                k=batch_size,
-                con_values=state.con_values,
-                con_indices=state.con_indices,
-                p=p_full,
-                seed=self.next_seed(),
-                eager=self.__SAMPLE_EAGER,
-                k_context=k_remaining,
-                i_forbidden=state.selected_index_array,
-            )
-        else:
-            # NOTE: i_samples are indices into state.not_selected_index_array
-            i_samples = randint_numba(
-                n=np.int32(p.size),
-                k=batch_size,
-                replace=False,
-                p=p,
-                seed=self.next_seed(),
-            )
-            return state.not_selected_index_array[i_samples]
+        # --- select samples --------------------
+        modifier = min(0.9, n_selected / state.k)  # proportional to progress; cap at 0.9 to avoid extremes
+        return select_items_to_add(
+            state=state,
+            candidates=state.not_selected_index_array,
+            k=batch_size,
+            selectivity_modifier=modifier,
+            rng_state=self._rng_state,
+            sampling_type=SamplingType.GROUP,
+            include_within_group_separation=True,
+            ignore_constraints=self.ignore_constraints,
+        )

@@ -19,10 +19,7 @@ from max_div._cli.formatting import (
 from max_div.internal.benchmarking import BenchmarkResult, benchmark
 from max_div.internal.formatting import md_multiline
 from max_div.internal.utils import stdout_to_file
-from max_div.sampling import randint_numba
-from max_div.sampling._constraint_helpers import _build_array_repr
-from max_div.sampling.con import randint_constrained
-from max_div.solver import Constraint
+from max_div.random import P_UNIFORM, Constraint, ConstraintList, new_rng_state, randint, randint_constrained
 
 
 # =================================================================================================
@@ -143,7 +140,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                 "`k`",
                 "`n`",
                 "`m`",
-                "`randint_numba`",
+                "`randint`",
                 md_multiline(["`randint_constrained`", "(eager=False)"]),
                 md_multiline(["`randint_constrained`", "(eager=True)"]),
             ]
@@ -203,7 +200,7 @@ def _benchmark(
     lst_con_indices = []
     for i in range(index_range):
         cons = s.build_constraints(n, k, m, seed=424242 * i)
-        con_values, con_indices = _build_array_repr(cons)
+        con_values, con_indices = ConstraintList(cons).to_numpy()
         lst_cons.append(cons)
         lst_con_values.append(con_values)
         lst_con_indices.append(con_indices)
@@ -213,13 +210,23 @@ def _benchmark(
     else:
         p = p.astype(np.float32)
 
+    rng_state = new_rng_state(np.int64(42))
+
     if mode == "no_cons":
-        # Benchmark randint_numba
+        # Benchmark randint
         def benchmark_func(_idx: int):
-            return randint_numba(n=n, k=k, replace=False, p=p)
+            return randint(
+                n=n,
+                k=k,
+                replace=False,
+                p=p,
+                rng_state=rng_state,
+            )
 
     else:
         # Benchmark randint_constrained
+        eager = mode == "eager"
+
         def benchmark_func(_idx: int):
             return randint_constrained(
                 n=n,
@@ -227,8 +234,8 @@ def _benchmark(
                 con_values=lst_con_values[_idx],
                 con_indices=lst_con_indices[_idx],
                 p=p,
-                seed=np.int64(0),
-                eager=(mode == "eager"),
+                rng_state=rng_state,
+                eager=eager,
             )
 
     return benchmark(
@@ -266,11 +273,12 @@ def _determine_precision(
     for run_idx in range(n_runs):
         # --- build constraints ---
         cons = s.build_constraints(n, k, m, seed=424242 * run_idx)
-        con_values, con_indices = _build_array_repr(cons)
+        con_values, con_indices = ConstraintList(cons).to_numpy()
 
         # Run the appropriate function with seed equal to run index
+        rng_state = new_rng_state(np.int64(run_idx))
         if mode == "no_cons":
-            result = randint_numba(n=np.int32(n), k=np.int32(k), replace=False, p=p, seed=np.int64(run_idx))
+            result = randint(n=np.int32(n), k=np.int32(k), replace=False, p=p, rng_state=rng_state)
         else:
             # Use randint_constrained_numba
             result = randint_constrained(
@@ -279,7 +287,7 @@ def _determine_precision(
                 con_values=con_values,
                 con_indices=con_indices,
                 p=p,
-                seed=np.int64(run_idx),
+                rng_state=rng_state,
                 eager=(mode == "eager"),
             )
 
@@ -359,11 +367,12 @@ class ScenarioB(Scenario):
             cons.append(
                 Constraint(
                     int_set=set(
-                        randint_numba(
+                        randint(
                             n=np.int32(n),
                             k=np.int32(n // 100),  # 1% random samples from n
                             replace=False,
-                            seed=np.int64(seed + i),
+                            p=P_UNIFORM,
+                            rng_state=new_rng_state(np.int64(seed + i)),
                         )
                     ),
                     min_count=1 + math.floor(10 / m),

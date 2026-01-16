@@ -1,13 +1,11 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div.internal.math.modify_p_selectivity import exponential_selectivity
-from max_div.internal.math.random import rand_float32, set_seed
-from max_div.sampling import randint_numba
-from max_div.sampling.con import randint_constrained
-from max_div.sampling.poisson import sample_truncated_poisson
+from max_div.random.distributions import sample_truncated_poisson
+from max_div.random.rng import rand_float32
 from max_div.solver._parameters import ParameterSchedule
 from max_div.solver._solver_state import SolverState
+from max_div.solver._strategies._sampling import SamplingType, select_items_to_add, select_items_to_remove
 
 from ._base import SwapBasedOptimizationStrategy
 
@@ -55,87 +53,39 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
     #  Implementation
     # -------------------------------------------------------------------------
     def _determine_swap_size(self) -> np.int32:
-        n = sample_truncated_poisson(
+        return sample_truncated_poisson(
             self.min_swap_size,
             self.max_swap_size,
             np.float32(self.swap_size_lambda),
-            seed=self.next_seed(),
+            self._rng_state,
         )
-        return n
 
     def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
-        # --- guiding probabilities for removal ---
-        p = state.selected_separation_array  # this creates a copy
-        exponential_selectivity(
-            p_in=p,
-            p_out=p,  # in-place
-            modifier=np.float32(self.remove_selectivity_modifier),
-            descending=True,  # for removal, we want to have vectors with small separation have higher probability
-        )
-
-        # --- sample ---
-        i_to_remove = randint_numba(
-            n=np.int32(p.shape[0]),
+        return select_items_to_remove(
+            state=state,
             k=n_to_remove,
-            replace=False,
-            p=p,
-            seed=self.next_seed(),
-        )  # these are indices into selected_index_array
-
-        # --- return vectors to be removed ---
-        return state.selected_index_array[i_to_remove]
+            selectivity_modifier=self.remove_selectivity_modifier,
+            rng_state=self._rng_state,
+        )
 
     def _samples_to_be_added(
-        self, state: SolverState, n_to_add: np.int32, samples_just_removed: NDArray[np.int32]
+        self, state: SolverState, n_to_add: np.int32, candidate_samples: NDArray[np.int32]
     ) -> NDArray[np.int32]:
-        # --- constraint-aware or not? ---
-        if state.has_constraints:
-            r = rand_float32(rng_state=set_seed(self.next_seed()))  # random float in [0.0, 1.0)
-            constraint_aware = r < self.p_add_constraint_aware
-        else:
-            constraint_aware = False
+        # --- ignore constraints or not? ---
+        r = rand_float32(self._rng_state)  # random float in [0.0, 1.0)
+        ignore_constraints = r > self.p_add_constraint_aware
 
-        # --- construct guiding probabilities for addition ---
-        if n_to_add > 1:
-            # also take into account intra-batch separation (inferred from global separation)
-            p = state.global_separation_array[state.not_selected_index_array]  # this creates a new array
-            p += state.not_selected_separation_array  # so we can add in-place
-        else:
-            # only look at separation of not-selected w.r.t. selected
-            p = state.not_selected_separation_array  # this creates a copy
-
-        exponential_selectivity(
-            p_in=p,
-            p_out=p,  # in-place
-            modifier=np.float32(self.add_selectivity_modifier),
-            descending=False,  # for adding, we want to have vectors with high separation have higher probability
+        # --- select items to add ---
+        return select_items_to_add(
+            state=state,
+            candidates=candidate_samples,
+            k=n_to_add,
+            selectivity_modifier=self.add_selectivity_modifier,
+            rng_state=self._rng_state,
+            sampling_type=SamplingType.GROUP,
+            include_within_group_separation=(n_to_add > 1),
+            ignore_constraints=ignore_constraints,
         )
-
-        # --- sample ---
-        if constraint_aware:
-            p_full = np.zeros(state.n, dtype=np.float32)
-            p_full[state.not_selected_index_array] = p  # make p_full of size n & use i_forbidden to exclude selected
-
-            return randint_constrained(
-                n=state.n,
-                k=n_to_add,
-                con_values=state.con_values,
-                con_indices=state.con_indices,
-                p=p_full,
-                seed=self.next_seed(),
-                eager=False,
-                i_forbidden=state.selected_index_array,
-            )  # these are indices in [0, n) as needed
-
-        else:
-            i_samples = randint_numba(
-                n=np.int32(p.size),
-                k=n_to_add,
-                replace=False,
-                p=p,
-                seed=self.next_seed(),
-            )  # these are indices into not_selected_index_array
-            return state.not_selected_index_array[i_samples]
 
     # -------------------------------------------------------------------------
     #  Debug info

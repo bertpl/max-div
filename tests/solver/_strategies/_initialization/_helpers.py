@@ -1,6 +1,6 @@
 import numpy as np
 
-from max_div.solver._constraints import Constraint
+from max_div.random import Constraint
 from max_div.solver._distance import DistanceMetric
 from max_div.solver._diversity import DiversityMetric
 from max_div.solver._solver_state import SolverState

@@ -99,4 +99,3 @@ def test_skewed_interval_alias(median_prior: float | None):
         assert sampler._median_prior == pytest.approx(0.5 * (0.2 + 0.8))
     assert sampler._tau_learn == pytest.approx(123.45)
     assert sampler._tau_forget == pytest.approx(123.45 * 123.45)
-    assert sampler._seed == 1248

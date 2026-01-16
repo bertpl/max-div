@@ -1,15 +1,15 @@
 """
-Methods for sampling WITH constraints.
+numba-accelerated function for constrained sampled.  This function is roughly equivalent with randint,
+but supports defining constraints via the `con_values` and `con_indices` parameters.
 """
 
 import numba
 import numpy as np
-from numba import types
 from numpy.typing import NDArray
 
-from max_div.sampling import randint_numba
+from max_div.random._constraints import _np_con_indices, _np_con_max_value, _np_con_min_value
 
-from ._constraint_helpers import _np_con_indices, _np_con_max_value, _np_con_min_value
+from ._randint import randint1
 
 _SCORE_PENALTY_HARD_CONSTRAINT = np.int32(2**24)
 _SCORE_PENALTY_ALREADY_SAMPLED = np.int32(2**30)
@@ -18,15 +18,7 @@ _SCORE_PENALTY_ALREADY_SAMPLED = np.int32(2**30)
 # =================================================================================================
 #  randint_constrained
 # =================================================================================================
-@numba.njit(
-    types.int32[:](
-        types.int32,
-        types.int32[:, :],
-        types.int32[:],
-        types.int32[:],
-        types.boolean,
-    )
-)
+@numba.njit("int32[:](int32,int32[:,:],int32[:],int32[:],boolean)", fastmath=True, cache=True)
 def _compute_score(
     n: np.int32,
     con_values: NDArray[np.int32],
@@ -41,7 +33,7 @@ def _compute_score(
                                                                       -2**24  if hard_max_constraints=True
       - if we already sampled it:                                     -2**30  if hard_max_constraints=True
 
-    The basic idea behind the scoring is that integers with score <= 0 will not be sampled, if at all possible.
+    The basic idea behind the scoring is that -if at all possible- integers with score <= 0 will not be sampled.
 
     :param n: range to score [0, n)
     :param con_values: 2D array (m, 2) with min_count and max_count for each constraint
@@ -83,14 +75,14 @@ def _compute_score(
     return scores
 
 
-@numba.njit(fastmath=True)
+@numba.njit(fastmath=True, cache=True)
 def randint_constrained(
     n: np.int32,
     k: np.int32,
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
+    rng_state: NDArray[np.uint64],
     p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),
-    seed: np.int64 = np.int64(0),
     eager: bool = False,
     k_context: np.int32 = np.int32(-1),
     i_forbidden: NDArray[np.int32] = np.empty(0, dtype=np.int32),
@@ -101,31 +93,32 @@ def randint_constrained(
     NOTES:
 
     * no guarantees are given that the solution will satisfy all constraints; a best-effort attempt will be made, with the
-    probability of the result satisfying the constraints increasing the simpler the constraints are.
+    probability of the result satisfying the constraints increasing the simpler & less strict the constraints are.
 
-    * `randint_constrained` is essentially a version of [`randint`][max_div.sampling.uncon.randint] that supports constraints.
+    * `randint_constrained` is essentially a version of randint that supports constraints.
 
     * This version is numba-accelerated and uses efficient numpy-based data structures, resulting in 10-100x speedup
-      compared to the older pure-Python implementation.
+      compared to equivalent pure-Python implementations.
 
     * `con_values` & `con_indices` can be obtained by using the `to_numpy`
-       method of the `Constraints` class.
+       method of the `ConstraintList` class.
 
     *  For benchmark results, see [here](../../../../benchmarks/internal/bm_randint_constrained.md)
 
-    PRIORITIES:
+    PRIORITIES that this algorithm adheres to:
 
-    1) Provide exactly 'k' unique samples (no replacement)
-    2) if provided, don't generate samples from i_forbidden   (can be used to indicate already sampled values)
-    3) satisfy constraints
-    4) if p is provided, don't sample from integers with p=0
+     1) Provide exactly 'k' unique samples (no replacement)
+     2) if provided, don't generate samples from i_forbidden   (can be used to indicate already sampled values)
+     3) satisfy constraints
+     4) if p is provided, don't sample from integers with p=0
 
     :param n: range to sample from [0, n)
     :param k: number of unique samples to draw (no replacement)
     :param con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
     :param p: optional, target probabilities for each integer in `[0, n)`                            (never modified!)
-    :param seed: random seed
+    :param rng_state: (2-element uint64 array) state for random number generation; updated in-place.
+                                (use new_rng_state(seed) to construct an initial state)            (modified in-place)
     :param eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
                   increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
                   and adherence to the provided p-values.
@@ -246,8 +239,7 @@ def randint_constrained(
                 p_mod[i] = np.float32(0.0)
 
         # sample one integer
-        result = randint_numba(n, np.int32(1), False, p_mod, seed)
-        s = result[0]
+        s = randint1(n=n, p=p_mod, rng_state=rng_state)
 
         # --- update stats --------------------------------
         for i_con in range(m):

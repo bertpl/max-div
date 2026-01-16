@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div.solver import DistanceMetric, DiversityMetric, MaxDivProblem
-from max_div.solver._constraints import Constraint, Constraints
+from max_div.solver import Constraint, DistanceMetric, DiversityMetric, MaxDivProblem
 
 
 def test_problem_properties():
@@ -26,14 +25,10 @@ def test_problem_properties():
     assert m == 0
 
 
-@pytest.mark.parametrize("con_type", ["Constraints", "list[Constraint]", "None"])
+@pytest.mark.parametrize("con_type", ["list[Constraint]", "None"])
 def test_problem_new_happy_path(con_type: str):
     # --- arrange -----------------------------------------
-    if con_type == "Constraints":
-        constraints = Constraints()
-        constraints.add(indices={1, 2, 3}, min_count=1, max_count=2)
-        constraints.add(indices={3, 4, 5, 6, 7}, min_count=2, max_count=3)
-    elif con_type == "list[Constraint]":
+    if con_type == "list[Constraint]":
         constraints = [
             Constraint(int_set={1, 2, 3}, min_count=1, max_count=2),
             Constraint(int_set={3, 4, 5, 6, 7}, min_count=2, max_count=3),

@@ -1,6 +1,8 @@
 import numpy as np
+from numpy.typing import NDArray
 
 from max_div.internal.utils import deterministic_hash_int64, int_to_int64
+from max_div.random import new_rng_state
 
 
 class StrategyBase:
@@ -16,6 +18,7 @@ class StrategyBase:
         """
         self._name: str = name or self.__class__.__name__
         self._seed: np.int64 = deterministic_hash_int64(self._name)
+        self._rng_state: NDArray[np.uint64] = new_rng_state(self._seed)
 
     # -------------------------------------------------------------------------
     #  Properties
@@ -32,11 +35,7 @@ class StrategyBase:
     def set_seed(self, seed: int | np.int64) -> None:
         """Sets the random seed for the strategy, to be used by child classes."""
         self._seed = int_to_int64(seed)
-
-    def next_seed(self) -> np.int64:
-        """Get the next seed & update current one."""
-        self._seed += 1  # this will silently wrap around in case of overflow
-        return self._seed
+        self._rng_state = new_rng_state(self._seed)
 
     # -------------------------------------------------------------------------
     #  Debug info

@@ -1,13 +1,16 @@
 import numpy as np
 import pytest
 
-from max_div.sampling.modified_power import modified_power_transform, sample_modified_power_distribution
+from max_div.random import new_rng_state
+from max_div.random.distributions import sample_modified_power_distribution
+from max_div.random.distributions._modified_power import _modified_power_transform
 
 
 @pytest.mark.parametrize("m", [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99])
 def test_sample_modified_power_distribution(m: float):
     # --- act ---------------------------------------------
-    samples = [sample_modified_power_distribution(np.float32(m), seed=np.int64(i)) for i in range(1000)]
+    rng_state = new_rng_state(np.int64(42))
+    samples = [sample_modified_power_distribution(np.float32(m), rng_state=rng_state) for i in range(1000)]
 
     # --- assert ------------------------------------------
     assert 0.0 <= min(samples) <= 1.0
@@ -20,16 +23,17 @@ def test_sample_modified_power_distribution(m: float):
 
 
 def test_sample_symmetric_power_distribution_edge_cases():
-    assert sample_modified_power_distribution(np.float32(0.0), seed=np.int64(42)) == 0.0
-    assert sample_modified_power_distribution(np.float32(1.0), seed=np.int64(42)) == 1.0
+    rng_state = new_rng_state(np.int64(42))
+    assert sample_modified_power_distribution(np.float32(0.0), rng_state=rng_state) == 0.0
+    assert sample_modified_power_distribution(np.float32(1.0), rng_state=rng_state) == 1.0
 
 
 @pytest.mark.parametrize("m", [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99])
 def test_modified_power_transformation(m: float):
     # --- act ---------------------------------------------
-    f0_0 = modified_power_transform(np.float32(0.0), np.float32(m))
-    f0_5 = modified_power_transform(np.float32(0.5), np.float32(m))
-    f1_0 = modified_power_transform(np.float32(1.0), np.float32(m))
+    f0_0 = _modified_power_transform(np.float32(0.0), np.float32(m))
+    f0_5 = _modified_power_transform(np.float32(0.5), np.float32(m))
+    f1_0 = _modified_power_transform(np.float32(1.0), np.float32(m))
 
     # --- assert ------------------------------------------
     assert f0_0 == 0.0

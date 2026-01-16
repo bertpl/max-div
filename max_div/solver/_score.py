@@ -6,9 +6,9 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div.sampling._constraint_helpers import _np_con_total_violation
+from max_div.random import Constraint
+from max_div.random._constraints import _np_con_total_violation
 
-from ._constraints import Constraint
 from ._diversity import DiversityMetric
 
 

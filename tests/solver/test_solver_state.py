@@ -3,7 +3,7 @@ import pytest
 from numpy import random
 
 from max_div.solver import Constraint, DistanceMetric, DiversityMetric
-from max_div.solver._solver_state import SolverState
+from max_div.solver._solver_state import SolverState, _build_con_membership
 
 
 # =================================================================================================
@@ -198,3 +198,36 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
     assert np.array_equal(state.con_indices, state_ref.con_indices)
 
     assert state.score == state_ref.score
+
+
+def test_build_con_membership():
+    # --- arrange -----------------------------------------
+    cons = [
+        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
+        Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
+        Constraint(int_set={3, 11}, min_count=2, max_count=2),
+    ]
+    m = np.int32(14)
+
+    # --- act ---------------------------------------------
+    con_membership = _build_con_membership(m, cons)
+
+    # --- assert ------------------------------------------
+    expected_membership = {
+        0: [0],
+        1: [0],
+        2: [0],
+        3: [0, 2],
+        4: [0],
+        5: [],
+        6: [],
+        7: [],
+        8: [],
+        9: [],
+        10: [1],
+        11: [1, 2],
+        12: [1],
+        13: [1],
+    }
+
+    assert con_membership == expected_membership

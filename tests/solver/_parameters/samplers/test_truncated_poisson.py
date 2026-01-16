@@ -99,4 +99,3 @@ def test_sampled_poisson_alias(lambda_prior: float | None):
         assert sampler._lambda_prior == pytest.approx(0.5 * (2 + 12))
     assert sampler._tau_learn == pytest.approx(123.45)
     assert sampler._tau_forget == pytest.approx(123.45 * 123.45)
-    assert sampler._seed == 124816

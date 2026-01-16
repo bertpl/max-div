@@ -36,7 +36,7 @@ def test_order_based_selectivity_corner_case():
 
     # --- act ---------------------------------------------
     p_out = np.empty_like(p_in)
-    exponential_selectivity(p_in, p_out, np.float32(0.5), descending=False, low_value=np.float32(0.1))
+    exponential_selectivity(p_in, p_out, np.float32(0.5), reverse=False, low_value=np.float32(0.1))
 
     # --- assert ------------------------------------------
     assert np.array_equal(p_out, expected_p_out)

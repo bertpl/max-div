@@ -11,7 +11,7 @@ from max_div._cli.formatting import (
 )
 from max_div.internal.benchmarking import benchmark
 from max_div.internal.utils import stdout_to_file
-from max_div.sampling.uncon import randint_numba, randint_numpy
+from max_div.random import new_rng_state, randint, randint_python
 
 
 def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
@@ -66,13 +66,16 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
                 p = p.astype(np.float32)
 
                 if use_numba:
+                    rng_state = new_rng_state(np.int64(42))
+                    n = np.int32(n)
+                    k = np.int32(k)
 
                     def func_to_benchmark():
-                        randint_numba(n=n, k=k, replace=replace, p=p)
+                        randint(n=n, k=k, replace=replace, p=p, rng_state=rng_state)
                 else:
 
                     def func_to_benchmark():
-                        randint_numpy(n=n, k=k, replace=replace, p=p)
+                        randint_python(n=n, k=k, replace=replace, p=p)
 
                 data_row.append(
                     benchmark(
@@ -91,10 +94,10 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
         # --- prepare table ---
         data = extend_table_with_aggregate_row(data, agg="geomean")
         if markdown:
-            headers = ["`k`", "`n`", "`randint_numpy`", "`randint_numba`"]
+            headers = ["`k`", "`n`", "`randint_python`", "`randint`"]
             display_data = format_table_as_markdown(headers, data, highlighters=[FastestBenchmark(), BoldLabels()])
         else:
-            headers = ["k", "n", "randint_numpy", "randint_numba"]
+            headers = ["k", "n", "randint_python", "randint"]
             display_data = format_table_for_console(headers, data)
 
         # --- output ---

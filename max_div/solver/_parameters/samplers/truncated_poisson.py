@@ -1,6 +1,6 @@
 import numpy as np
 
-from max_div.sampling.poisson import sample_truncated_poisson, truncated_poisson_expected_value
+from max_div.random.distributions import sample_truncated_poisson, truncated_poisson_expected_value
 from max_div.solver._parameters._adaptive_sampler import AdaptiveSampler
 
 
@@ -46,7 +46,7 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
                 min_value=self._min_value,
                 max_value=self._max_value,
                 _lambda=self._lambda,
-                seed=self._next_seed(),
+                rng_state=self._rng_state,
             )
         )
         self._last_sample = sample
