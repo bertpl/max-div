@@ -21,7 +21,7 @@ from max_div.internal.formatting import md_multiline
 from max_div.internal.utils import stdout_to_file
 from max_div.sampling import randint_numba
 from max_div.sampling._constraint_helpers import _build_array_repr
-from max_div.sampling.con import randint_constrained, randint_constrained_robust
+from max_div.sampling.con import randint_constrained
 from max_div.solver import Constraint
 
 
@@ -122,7 +122,6 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                         _benchmark(s, n, k, m, p, speed, "no_cons"),
                         _benchmark(s, n, k, m, p, speed, "non_eager"),
                         _benchmark(s, n, k, m, p, speed, "eager"),
-                        _benchmark(s, n, k, m, p, speed, "robust"),
                     ]
                 )
 
@@ -134,7 +133,6 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                         _determine_precision(s, n, k, m, p, speed, "no_cons"),
                         _determine_precision(s, n, k, m, p, speed, "non_eager"),
                         _determine_precision(s, n, k, m, p, speed, "eager"),
-                        _determine_precision(s, n, k, m, p, speed, "robust"),
                     ]
                 )
 
@@ -148,7 +146,6 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                 "`randint_numba`",
                 md_multiline(["`randint_constrained`", "(eager=False)"]),
                 md_multiline(["`randint_constrained`", "(eager=True)"]),
-                md_multiline(["`randint_constrained_robust`", "(n_trials=5)"]),
             ]
             timing_data = extend_table_with_aggregate_row(timing_data, agg="geomean")
             accuracy_data = extend_table_with_aggregate_row(accuracy_data, agg="mean")
@@ -221,7 +218,7 @@ def _benchmark(
         def benchmark_func(_idx: int):
             return randint_numba(n=n, k=k, replace=False, p=p)
 
-    elif mode in ["non_eager", "eager"]:
+    else:
         # Benchmark randint_constrained
         def benchmark_func(_idx: int):
             return randint_constrained(
@@ -232,19 +229,6 @@ def _benchmark(
                 p=p,
                 seed=np.int64(0),
                 eager=(mode == "eager"),
-            )
-
-    else:
-        # Benchmark randint_constrained_robust
-        def benchmark_func(_idx: int):
-            return randint_constrained_robust(
-                n=n,
-                k=k,
-                con_values=lst_con_values[_idx],
-                con_indices=lst_con_indices[_idx],
-                p=p,
-                seed=np.int64(0),
-                n_trials=5,
             )
 
     return benchmark(
@@ -287,7 +271,7 @@ def _determine_precision(
         # Run the appropriate function with seed equal to run index
         if mode == "no_cons":
             result = randint_numba(n=np.int32(n), k=np.int32(k), replace=False, p=p, seed=np.int64(run_idx))
-        elif mode in ["non_eager", "eager"]:
+        else:
             # Use randint_constrained_numba
             result = randint_constrained(
                 n=np.int32(n),
@@ -297,17 +281,6 @@ def _determine_precision(
                 p=p,
                 seed=np.int64(run_idx),
                 eager=(mode == "eager"),
-            )
-        else:
-            # Use randint_constrained_robust
-            result = randint_constrained_robust(
-                n=np.int32(n),
-                k=np.int32(k),
-                con_values=con_values,
-                con_indices=con_indices,
-                p=p,
-                seed=np.int64(run_idx),
-                n_trials=5,
             )
 
         # Check if all constraints are satisfied

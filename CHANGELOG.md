@@ -12,6 +12,9 @@
     - `MaxDivSolver.solver()`: improve granularity of `verbosity` parameter wrt reporting frequency, including debug mode.
     - `solve` CLI command: add ability to specify which preset to use. 
 
+- **deprecated**:
+    - remove unneeded `randint_constrained_robust` function and associated functionality. 
+
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.3
 > *(2026-01-02)*

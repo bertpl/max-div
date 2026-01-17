@@ -1,7 +1,7 @@
 import numpy as np
 from numpy._typing import NDArray
 
-from max_div.sampling.con import randint_constrained_robust
+from max_div.sampling.con import randint_constrained
 from max_div.sampling.uncon import randint_numba
 from max_div.solver._solver_state import SolverState
 
@@ -46,7 +46,7 @@ class InitRandomOneShot(InitializationStrategy):
         if state.has_constraints and (not self.ignore_constraints):
             # take constraints into account
             if self.uniform:
-                return randint_constrained_robust(
+                return randint_constrained(
                     n=state.n,
                     k=state.k,
                     con_values=state.con_values,
@@ -54,7 +54,7 @@ class InitRandomOneShot(InitializationStrategy):
                     seed=self.seed,
                 )
             else:
-                return randint_constrained_robust(
+                return randint_constrained(
                     n=state.n,
                     k=state.k,
                     con_values=state.con_values,
