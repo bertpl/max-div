@@ -46,6 +46,12 @@
 - Additional tweaks and completions
   - add 'smart' presets
   - add preset benchmarking
+
+## v0.5.0
+
+- First version with finalized presets & optimization strategies with satisfactory generic performance characteristics.
+
+## v0.5.x
 - Documentation push
   - Getting started / Tutorial
   - Use cases with benchmarks & visualizations
