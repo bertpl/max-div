@@ -27,7 +27,12 @@ class OptimizationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
     #  Constructor / Configuration
     # -------------------------------------------------------------------------
-    def __init__(self, name: str | None = None, dynamic_params: dict[str, ParamValueType] | None = None):
+    def __init__(
+        self,
+        name: str | None = None,
+        dynamic_params: dict[str, ParamValueType] | None = None,
+        ignore_infeasible_diversity_up_to_fraction: float = -1.0,
+    ):
         """
         Initialize the optimization strategy.
         :param name: optional name of the strategy; if omitted class name is used.
@@ -43,8 +48,21 @@ class OptimizationStrategy(StrategyBase, ABC):
 
                 other (float, int, ...) these parameters are fixed for the duration of the strategy.
 
+        :param ignore_infeasible_diversity_up_to_fraction: float between 0 and 1.  If provided, we compare solution
+                           scores using the flag 'ignore_infeasible_diversity' until the step has progressed up to this
+                           fraction.  This allows optimization strategies to focus on satisfying constraints first
+                           before trying to improve diversity.  Trying to improve diversity while still infeasible wrt
+                           constraints, can steer away the solution from more feasible regions of the search space,
+                           in case of hard-to-satisfy, overlapping constraints.
+
+                           This parameter will influence how the instance field 'ignore_infeasible_diversity' is set.
+                           When not provided it is always False; when provided it will start as True and will get set
+                           to False at the appropriate time during optimization.
+
         """
         super().__init__(name)
+        self.ignore_infeasible_diversity_up_to_fraction = ignore_infeasible_diversity_up_to_fraction
+        self.ignore_infeasible_diversity = 0.0 <= ignore_infeasible_diversity_up_to_fraction
 
         # --- initialize scheduled parameters ---
         #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params
@@ -135,6 +153,7 @@ class OptimizationStrategy(StrategyBase, ABC):
                 for param_name, sampler in self.sampled_params.items():
                     param_value = sampler.new_sample()
                     setattr(self, param_name, param_value)
+            self.ignore_infeasible_diversity = current_progress_frac <= self.ignore_infeasible_diversity_up_to_fraction
 
             # --- execute iteration ---
             success = self._perform_single_iteration(state, current_progress_frac)
@@ -234,6 +253,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         name: str | None = None,
         constraint_softness: float | ParameterValueSource = 0.0,
         dynamic_params: dict[str, ParamValueType] | None = None,
+        ignore_infeasible_diversity_up_to_fraction: float = -1.0,
     ):
         super().__init__(
             name=name,
@@ -241,6 +261,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
             | dict(
                 constraint_softness=constraint_softness,
             ),
+            ignore_infeasible_diversity_up_to_fraction=ignore_infeasible_diversity_up_to_fraction,
         )
         self.constraint_softness: float = self.initial_param_value(constraint_softness)
 
@@ -272,6 +293,10 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         # score before
         state.set_snapshot()
         score_before = state.score
+        score_tuple_before = score_before.as_tuple(
+            soft=self.constraint_softness,
+            ignore_infeasible_diversity=self.ignore_infeasible_diversity,
+        )
 
         # remove
         _ = self._remove_samples(state, n_swap)
@@ -281,12 +306,17 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
 
         # evaluate
         score_after = state.score
-        if score_after.as_tuple(self.constraint_softness) <= score_before.as_tuple(self.constraint_softness):
-            # score didn't improve -> failed swap attempt -> revert
-            success = False
+        score_tuple_after = score_after.as_tuple(
+            soft=self.constraint_softness,
+            ignore_infeasible_diversity=self.ignore_infeasible_diversity,
+        )
+        if score_tuple_after < score_tuple_before:
+            # score deteriorated -> revert; failure
             state.restore_snapshot()
+            success = False
         else:
-            # score did improve -> successful swap attempt
+            # score did improve or stayed equal -> do not revert; success
+            # NOTE: for the sake of exploring the search space, swaps with equal score are not reverted.
             success = True
 
         # --- return success flag ---

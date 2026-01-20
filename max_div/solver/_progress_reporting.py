@@ -28,7 +28,7 @@ class ProgressReporter(ABC):
         pass
 
     @abstractmethod
-    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None):
+    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs):
         """
         Update progress reporter with current progress and state.
         Reporters can choose to not report certain updates they receive, if they come too frequently.
@@ -37,7 +37,7 @@ class ProgressReporter(ABC):
 
     @abstractmethod
     def solver_step_finished(
-        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None
+        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs
     ):
         """Notify that the current solver step has finished."""
         pass
@@ -68,9 +68,11 @@ class SilentProgressReporter(ProgressReporter):
     """A progress reporter that is fully silent and doesn't output anything."""
 
     def solver_step_started(self, step_name: str): ...  # no-op
-    def update(self, progress: Progress, score: Score, get_debug_info: Callable[[], str] | None = None): ...  # no-op
+    def update(
+        self, progress: Progress, score: Score, get_debug_info: Callable[[], str] | None = None, **kwargs
+    ): ...  # no-op
     def solver_step_finished(
-        self, progress: Progress | None, score: Score, get_debug_info: Callable[[], str] | None = None
+        self, progress: Progress | None, score: Score, get_debug_info: Callable[[], str] | None = None, **kwargs
     ): ...  # no-op
 
 
@@ -92,7 +94,7 @@ class TqdmProgressReporter(ProgressReporter):
             self._current_pbar = tqdm(desc=f"{step_name} ", total=1, file=sys.stdout)  # initialize new pbar
             self._current_step_name = step_name
 
-    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None):
+    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs):
         if self._current_pbar is not None:
             # ignore updates coming in before starting a new step or after finishing the current step
             n = progress.tqdm_n_current
@@ -102,7 +104,7 @@ class TqdmProgressReporter(ProgressReporter):
                 self._current_pbar.refresh()
 
     def solver_step_finished(
-        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None
+        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs
     ):
         self._close_current_pbar()
 
@@ -180,7 +182,7 @@ class TabularProgressReporter(ProgressReporter):
         if self._t_start_solver < 0:
             self._t_start_solver = self._t_start_step
 
-    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None):
+    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs):
         iter_now = progress.iter_count
         t_now = perf_counter()
         t_elapsed_step = t_now - self._t_start_step
@@ -188,7 +190,8 @@ class TabularProgressReporter(ProgressReporter):
         if (iter_now >= self._next_report_iter) and (t_elapsed_step >= self._next_report_t):
             # show table row
             debug_info = get_debug_info() if (self._debug_info and (get_debug_info is not None)) else ""
-            self._show_table_row(progress, state, debug_info)
+            ignore_infeasible_diversity = kwargs.get("ignore_infeasible_diversity", False)
+            self._show_table_row(progress, state, debug_info, ignore_infeasible_diversity)
             self._n_progress_reports_this_step += 1
 
             # update next report thresholds
@@ -197,11 +200,12 @@ class TabularProgressReporter(ProgressReporter):
             self._next_report_t += t_increment * math.ceil((t_elapsed_step - self._next_report_t) / t_increment)
 
     def solver_step_finished(
-        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None
+        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs
     ):
         # show final metrics + horizontal table line
         debug_info = get_debug_info() if (self._debug_info and (get_debug_info is not None)) else ""
-        self._show_table_row(progress, state, debug_info)
+        ignore_infeasible_diversity = kwargs.get("ignore_infeasible_diversity", False)
+        self._show_table_row(progress, state, debug_info, ignore_infeasible_diversity)
         self._show_table_line()
 
     # -------------------------------------------------------------------------
@@ -221,15 +225,26 @@ class TabularProgressReporter(ProgressReporter):
                 "Diversity".ljust(14),
                 "Selection hash".ljust(32),
             ]
-            + (["Debug info".ljust(75)] if self._debug_info else []),
+            + (["Debug info".ljust(90)] if self._debug_info else []),
         )
         self._progress_table.show_header()
 
-    def _show_table_row(self, progress: Progress | None, state: SolverState, debug_info: str = ""):
+    def _show_table_row(
+        self,
+        progress: Progress | None,
+        state: SolverState,
+        debug_info: str = "",
+        ignore_infeasible_diversity: bool = False,
+    ):
         t_now = perf_counter()
         t_elapsed_solver = t_now - self._t_start_solver
         t_elapsed_step = t_now - self._t_start_step
         score = state.score
+
+        if ignore_infeasible_diversity and (score.constraints < 1.0):
+            diversity_str = f"({score.diversity:.4e})"  # between brackets if we're ignoring it
+        else:
+            diversity_str = f"{score.diversity:.6e}"
 
         self._progress_table.show_progress(
             values=[
@@ -240,7 +255,7 @@ class TabularProgressReporter(ProgressReporter):
                 format_long_time_duration(t_elapsed_step, n_chars=8),
                 f"{state.n_selected:>6}/{state.k:>6}",
                 f"{score.constraints:.6f}" if (state.m > 0) else "/",
-                f"{score.diversity:.6e}",
+                diversity_str,
                 self._get_selection_hash(
                     selection=state.selected_index_array,  # create hash from currently selected indices...
                     n=math.ceil((32 * state.n_selected) / state.k),  # ...of length proportional to selection size

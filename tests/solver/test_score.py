@@ -66,6 +66,33 @@ def test_score_as_tuple_soft_constraints_corner_cases(
     assert np.allclose(score_tuple, expected_tuple)
 
 
+@pytest.mark.parametrize(
+    "soft,ignore_infeasible_diversity,expected_feas_tuple,expected_infeas_tuple",
+    [
+        (0.0, False, (1.0, 0.8, 0.2, 0.7, 0.6), (1.0, 1.0, 4.0, 0.7, 0.6)),
+        (0.5, False, (1.0, 0.4, 0.2, 0.7, 0.6), (1.0, 2.0, 4.0, 0.7, 0.6)),
+        (1.0, False, (1.0, 0.2, 0.2, 0.7, 0.6), (1.0, 4.0, 4.0, 0.7, 0.6)),
+        (0.0, True, (1.0, 0.8, 0.0, 0.0, 0.0), (1.0, 1.0, 4.0, 0.7, 0.6)),
+        (0.5, True, (1.0, 0.8, 0.0, 0.0, 0.0), (1.0, 2.0, 4.0, 0.7, 0.6)),
+        (1.0, True, (1.0, 0.8, 0.0, 0.0, 0.0), (1.0, 4.0, 4.0, 0.7, 0.6)),
+    ],
+)
+def test_score_as_tuple_ignore_infeasible_diversity(
+    soft: float, ignore_infeasible_diversity: bool, expected_feas_tuple: tuple, expected_infeas_tuple: tuple
+):
+    # --- arrange -----------------------------------------
+    score_feas = Score(size=1.0, constraints=0.8, diversity=0.2, div_tie_breakers=(0.7, 0.6))
+    score_infeas = Score(size=1.0, constraints=1.0, diversity=4.0, div_tie_breakers=(0.7, 0.6))
+
+    # --- act ---------------------------------------------
+    tuple_feas = score_feas.as_tuple(soft=soft, ignore_infeasible_diversity=ignore_infeasible_diversity)
+    tuple_infeas = score_infeas.as_tuple(soft=soft, ignore_infeasible_diversity=ignore_infeasible_diversity)
+
+    # --- assert ------------------------------------------
+    assert np.allclose(tuple_feas, expected_feas_tuple)
+    assert np.allclose(tuple_infeas, expected_infeas_tuple)
+
+
 # =================================================================================================
 #  ScoreGenerator
 # =================================================================================================

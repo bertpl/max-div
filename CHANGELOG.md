@@ -5,7 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **new**:
+  - add ability to ignore diversity if constraints are not yet satisfied, the first 'f' fraction of optimization step progress  
+
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.4

@@ -128,7 +128,12 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         # --- main loop -----------------------------------
         while not (progress := tracker.get_progress()).is_finished:
             # --- update progress ---
-            progress_reporter.update(progress, state, self.get_debug_info)
+            progress_reporter.update(
+                progress,
+                state,
+                self.get_debug_info,
+                ignore_infeasible_diversity=self._strategy.ignore_infeasible_diversity,
+            )
 
             # --- do n iterations ---
             n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count)
@@ -154,7 +159,12 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                     )
                 )
 
-        progress_reporter.solver_step_finished(progress, state, self.get_debug_info)
+        progress_reporter.solver_step_finished(
+            progress,
+            state,
+            self.get_debug_info,
+            ignore_infeasible_diversity=self._strategy.ignore_infeasible_diversity,
+        )
 
         # --- gather results ------------------------------
         elapsed = tracker.elapsed()
