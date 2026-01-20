@@ -7,32 +7,18 @@ from max_div.solver._strategies import InitializationStrategy, OptimizationStrat
 
 
 # =================================================================================================
-#  SMART / THOROUGH preset
+#  RANDOM preset
 # =================================================================================================
-def get_preset_strategies_smart(
-    problem: MaxDivProblem,
+def get_preset_strategies_random(
     target_duration: TargetDuration,
-    thorough: bool = False,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     # --- initialization ----------------------------------
-    init_strategy = InitializationStrategy.fast()
+    init_strategy = InitializationStrategy.random_one_shot(uniform=True)
 
     # --- optimization steps ------------------------------
-    if thorough:
-        n_max = 64
-    else:
-        n_max = 8
-
     optim_steps = [
         OptimizationStep(
-            optim_strategy=OptimizationStrategy.smart_swaps(
-                swap_size_max=n_max,
-                nc_remove_max=n_max,
-                nc_add_max=n_max,
-                tau_learn=100,
-                tau_forget=math.inf,
-                ignore_infeasible_diversity_up_to_fraction=0.5 if (problem.m > 0) else -1.0,
-            ),
+            optim_strategy=OptimizationStrategy.random_swaps(),
             duration=target_duration,
         )
     ]

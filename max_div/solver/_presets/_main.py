@@ -5,6 +5,7 @@ from max_div.solver._strategies import InitializationStrategy
 
 from ._enum import SolverPreset
 from .preset_guided import get_preset_strategies_guided
+from .preset_random import get_preset_strategies_random
 from .preset_smart import get_preset_strategies_smart
 
 
@@ -19,6 +20,10 @@ def get_preset_strategies(
     hardware_speed_correction: float = 1.0,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     match preset:
+        case SolverPreset.RANDOM:
+            return get_preset_strategies_random(
+                target_duration,
+            )
         case SolverPreset.GUIDED:
             return get_preset_strategies_guided(
                 problem,
@@ -30,6 +35,11 @@ def get_preset_strategies(
             return get_preset_strategies_smart(
                 problem,
                 target_duration,
-                initialization_included,
-                hardware_speed_correction,
+                thorough=False,
+            )
+        case SolverPreset.THOROUGH:
+            return get_preset_strategies_smart(
+                problem,
+                target_duration,
+                thorough=True,
             )

@@ -1,14 +1,25 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
-> ## v0.4.5
+> ## v0.4.6
 > *(under development)*
+<!------------------------------------------------------------------------------------------------->
+
+/
+
+<!------------------------------------------------------------------------------------------------->
+> ## v0.4.5
+> *(2026-01-20)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
   - add ability to ignore diversity if constraints are not yet satisfied, the first 'f' fraction of optimization step progress  
   - add new optimization strategy 'OptimSmartSwaps', leading to more robust & faster convergence across the board
-  - add new `SMART` (new default) & `GUIDED` (former default) presets.
+  - add new solver presets:
+    - `RANDOM`: baseline strategy for reference (using `OptimRandomSwaps`)
+    - `GUIDED` former default
+    - `SMART`: new default
+    - `THOROUGH`: same as `SMART` but with significantly wider sampling ranges for `swap_size`, `nc_add` & `nc_remove`.
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.4
