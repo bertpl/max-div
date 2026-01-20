@@ -225,6 +225,27 @@ class OptimizationStrategy(StrategyBase, ABC):
             add_selectivity_modifier=add_selectivity_modifier,
         )
 
+    @classmethod
+    def smart_swaps(
+        cls,
+        swap_size_max: int,
+        nc_remove_max: int,
+        nc_add_max: int,
+        tau_learn: float = 100.0,
+        tau_forget: float | None = None,
+        ignore_infeasible_diversity_up_to_fraction: float = -1.0,
+    ) -> Self:
+        from ._optim_smart_swaps import OptimSmartSwaps
+
+        return OptimSmartSwaps(
+            swap_size_max=swap_size_max,
+            nc_remove_max=nc_remove_max,
+            nc_add_max=nc_add_max,
+            tau_learn=tau_learn,
+            tau_forget=tau_forget,
+            ignore_infeasible_diversity_up_to_fraction=ignore_infeasible_diversity_up_to_fraction,
+        )
+
 
 # =================================================================================================
 #  Swap-Based Optimization Strategy base class

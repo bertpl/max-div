@@ -182,16 +182,8 @@ def test_max_div_solver_builder_end_to_end():
 #  Presets
 # =================================================================================================
 @pytest.mark.parametrize("size", [1, 5])
-@pytest.mark.parametrize(
-    "problem_name, preset",
-    [
-        ("A1", SolverPreset.DEFAULT),
-        ("A2", SolverPreset.DEFAULT),
-        ("A3", SolverPreset.DEFAULT),
-        ("A4", SolverPreset.DEFAULT),
-        ("A5", SolverPreset.DEFAULT),
-    ],
-)
+@pytest.mark.parametrize("problem_name", ["A1", "A2", "A3", "A4", "A5"])
+@pytest.mark.parametrize("preset", list(SolverPreset))
 def test_max_div_solver_builder_preset(problem_name: str, size: int, preset: SolverPreset):
     """
     Test different preset strategy on reference problems and check if we're optimizing.
@@ -215,7 +207,7 @@ def test_max_div_solver_builder_preset(problem_name: str, size: int, preset: Sol
             preset=preset,
         )
     ).build()
-    result = solver.solve()
+    result = solver.solve(verbosity=25)
 
     # --- assert ------------------------------------------
     score_after_initialization = result.score_checkpoints[1][2]

@@ -7,7 +7,7 @@ from max_div.random import Constraint
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
 from ._duration import TargetDuration
-from ._presets import SolverPreset, get_preset_strategies, get_preset_strategies_default
+from ._presets import SolverPreset, get_preset_strategies, get_preset_strategies_guided
 from ._problem import MaxDivProblem
 from ._solver import MaxDivSolver
 from ._solver_step import InitializationStep, OptimizationStep, SolverStep

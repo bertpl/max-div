@@ -1,3 +1,3 @@
 from ._enum import SolverPreset
 from ._main import get_preset_strategies
-from .preset_default import get_preset_strategies_default
+from .preset_guided import get_preset_strategies_guided

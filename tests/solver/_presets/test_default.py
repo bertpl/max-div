@@ -3,7 +3,7 @@ import pytest
 from max_div.benchmarks._factory import BenchmarkProblemFactory
 from max_div.solver import DiversityMetric
 from max_div.solver._duration import TargetDuration, iterations, seconds
-from max_div.solver._presets.preset_default import get_preset_strategies_default
+from max_div.solver._presets.preset_guided import get_preset_strategies_guided
 from max_div.solver._strategies._initialization._init_eager import InitEager
 from max_div.solver._strategies._initialization._init_fast import InitFast
 
@@ -21,7 +21,7 @@ def test_preset_default_get_strategies_short(target_duration: TargetDuration, in
     )
 
     # --- act ---------------------------------------------
-    init_strat, optim_steps = get_preset_strategies_default(problem, target_duration, initialization_included)
+    init_strat, optim_steps = get_preset_strategies_guided(problem, target_duration, initialization_included)
 
     # --- assert ------------------------------------------
     assert isinstance(init_strat, InitFast)  # we should choose the fastest in this case
@@ -45,7 +45,7 @@ def test_preset_default_get_strategies_long(target_duration: TargetDuration, ini
     )
 
     # --- act ---------------------------------------------
-    init_strat, optim_steps = get_preset_strategies_default(problem, target_duration, initialization_included)
+    init_strat, optim_steps = get_preset_strategies_guided(problem, target_duration, initialization_included)
 
     # --- assert ------------------------------------------
     assert isinstance(init_strat, InitEager)  # we should have time to initialize with InitEager
@@ -61,4 +61,4 @@ def test_preset_default_get_strategies_long(target_duration: TargetDuration, ini
 def test_preset_default_get_strategies_invalid_duration():
     """Test that an invalid TargetDuration type raises a TypeError."""
     with pytest.raises(TypeError):
-        _ = get_preset_strategies_default("dummy_problem", "invalid_duration_type")
+        _ = get_preset_strategies_guided("dummy_problem", "invalid_duration_type")

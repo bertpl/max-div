@@ -33,9 +33,9 @@ _CANDIDATE_INIT_PRESETS = [
 
 
 # =================================================================================================
-#  DEFAULT preset
+#  GUIDED preset
 # =================================================================================================
-def get_preset_strategies_default(
+def get_preset_strategies_guided(
     problem: MaxDivProblem,
     target_duration: TargetDuration,
     initialization_included: bool = False,

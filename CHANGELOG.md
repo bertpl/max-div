@@ -7,7 +7,8 @@
 
 - **new**:
   - add ability to ignore diversity if constraints are not yet satisfied, the first 'f' fraction of optimization step progress  
-
+  - add new optimization strategy 'OptimSmartSwaps', leading to more robust & faster convergence across the board
+  - add new `SMART` (new default) & `GUIDED` (former default) presets.
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.4
