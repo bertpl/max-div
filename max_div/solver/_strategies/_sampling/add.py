@@ -98,7 +98,7 @@ def select_items_to_add(
                 con_values=state.con_values,
                 con_indices=state.con_indices,
                 eager=False,
-                k_context=state.n - state.n_selected,
+                k_context=state.k - state.n_selected,
             )
         else:
             # these samples are intended to be individual CANDIDATES, from which only one will be actually added
@@ -114,7 +114,7 @@ def select_items_to_add(
                     con_values=state.con_values,
                     con_indices=state.con_indices,
                     eager=False,
-                    k_context=state.n - state.n_selected,
+                    k_context=state.k - state.n_selected,
                 )[0]
 
                 # remove sample from candidates & p to prevent duplicates
