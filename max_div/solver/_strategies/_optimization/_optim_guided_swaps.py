@@ -91,8 +91,9 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
     #  Debug info
     # -------------------------------------------------------------------------
     def get_debug_info(self) -> str:
-        debug_info = (
-            f"λ={self.swap_size_lambda:5.2f}"
+        debug_info = super().get_debug_info().strip()
+        debug_info += (
+            f" | λ_swap={self.swap_size_lambda:5.2f}"
             f" | sel_rem={self.remove_selectivity_modifier:5.2f}"
             f" | sel_add={self.add_selectivity_modifier:5.2f}"
             f" | p_con={self.p_add_constraint_aware:5.2f}"

@@ -130,4 +130,6 @@ def test_optim_guided_swaps_get_debug_info():
     # --- act ---------------------------------------------
     debug_info = strategy.get_debug_info()
     # --- assert ------------------------------------------
-    assert debug_info.strip() == "λ= 2.10 | sel_rem=-0.20 | sel_add= 0.60 | p_con= 0.40 | soft= 0.23"
+    assert (
+        debug_info.strip() == "scs= 50.000% | λ_swap= 2.10 | sel_rem=-0.20 | sel_add= 0.60 | p_con= 0.40 | soft= 0.23"
+    )

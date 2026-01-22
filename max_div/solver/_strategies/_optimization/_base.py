@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Self
 
+import numba
 import numpy as np
 from numpy.typing import NDArray
 
@@ -285,6 +286,14 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
             ignore_infeasible_diversity_up_to_fraction=ignore_infeasible_diversity_up_to_fraction,
         )
         self.constraint_softness: float = self.initial_param_value(constraint_softness)
+        self._success_rate_state = np.zeros(20, dtype=np.int64)  # buffer for last 10 success & 10 fail iters
+
+    def get_success_rate(self) -> float:
+        """
+        Estimate the swap success rate of the optimization strategy, based on recent history of successes and failures.
+        :return: (float) estimated success rate in range [0.0, 1.0]
+        """
+        return float(_estimate_success_rate(self._success_rate_state))
 
     # -------------------------------------------------------------------------
     #  Single Iteration
@@ -339,6 +348,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
             # score did improve or stayed equal -> do not revert; success
             # NOTE: for the sake of exploring the search space, swaps with equal score are not reverted.
             success = True
+
+        # --- update fail/success history ---
+        _update_success_rate_state(self._success_rate_state, success)
 
         # --- return success flag ---
         return success
@@ -410,3 +422,60 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         :return: (int32 ndarray) of shape (n,) with indices of samples to be ADDED
         """
         raise NotImplementedError()
+
+    # -------------------------------------------------------------------------
+    #  Debug info
+    # -------------------------------------------------------------------------
+    def get_debug_info(self) -> str:
+        success_rate = self.get_success_rate()
+        return f"scs={100 * success_rate:7.3f}%".ljust(100)
+
+
+# =================================================================================================
+#  Helper classes
+# =================================================================================================
+@numba.njit("void(int64[:], boolean)", fastmath=True, inline="always", cache=True)
+def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: bool):
+    """
+    Update success rate state in-place, based on provided success flag.  Current iteration # is estimated based on
+    values found in the state (current iter = max(success_rate_state) + 1).
+    :param success_rate_state: 2n-sized np.int64 array representing buffer of
+                                 - n last success iters (in order)
+                                 - n last fail iters (in order)
+    :param success: (bool) True if latest iteration was a success, False otherwise
+    """
+    n = int(success_rate_state.shape[0] // 2)
+    it = max(success_rate_state[n - 1], success_rate_state[-1]) + 1
+    if success:
+        # shift success history to the left & add new iter at the end
+        success_rate_state[0 : n - 1] = success_rate_state[1:n]
+        success_rate_state[n - 1] = it
+    else:
+        # shift failure history to the left & add new iter at the end
+        success_rate_state[n : 2 * n - 1] = success_rate_state[n + 1 : 2 * n]
+        success_rate_state[2 * n - 1] = it
+
+
+@numba.njit("float64(int64[:])", fastmath=True, inline="always", cache=True)
+def _estimate_success_rate(success_rate_state: NDArray[np.int64]) -> np.float64:
+    """
+    Estimates the success rate based on the provided success rate state.
+
+    success_rate is computed as:
+
+        success_rate_proxy = 1/(current_iter - mean(success_rate_state[:n]))
+        failure_rate_proxy = 1/(current_iter - mean(success_rate_state[n:]))
+
+        success_rate = success_rate_proxy / (success_rate_proxy + failure_rate_proxy)
+
+    :param success_rate_state: 2n-sized np.int64 array representing buffer of
+                                 - n last success iters (in order)
+                                 - n last fail iters (in order)
+    :return: (float64) estimated success rate in range [0.0, 1.0]
+    """
+    n = int(success_rate_state.shape[0] // 2)
+    it = max(success_rate_state[n - 1], success_rate_state[-1]) + 1
+    success_rate_proxy = 1.0 / (it - np.mean(success_rate_state[0:n]))
+    failure_rate_proxy = 1.0 / (it - np.mean(success_rate_state[n : 2 * n]))
+    success_rate = success_rate_proxy / (success_rate_proxy + failure_rate_proxy)
+    return success_rate

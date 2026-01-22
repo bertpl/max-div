@@ -53,14 +53,11 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
         return sample
 
     def summary_statistic(self) -> float:
-        """Return expected value for (min_value, max_value, lambda) truncated Poisson distribution."""
-        return float(
-            truncated_poisson_expected_value(
-                min_value=self._min_value,
-                max_value=self._max_value,
-                _lambda=self._lambda,
-            )
-        )
+        """
+        Returns value of the lambda parameter of the truncated Poisson distribution, which is a fast proxy
+        for the expected value of the distribution. (in the non-truncated case they are equal).
+        """
+        return float(self._lambda)
 
     def feedback(self, success: bool):
         if success:

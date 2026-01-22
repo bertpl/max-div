@@ -26,7 +26,7 @@ def test_truncated_poisson_adaptive_sampler_construction():
     assert all([1 <= sampler.new_sample() <= 8 for _ in range(1000)])  # all should be in [1, 8]
 
     # expected value checks
-    assert sampler.summary_statistic() == pytest.approx(2.3111331462)
+    assert sampler.summary_statistic() == pytest.approx(2.0)  # returns lambda
     assert 2.1 < np.mean([sampler.new_sample() for _ in range(1000)]) < 2.5
 
 

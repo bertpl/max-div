@@ -255,15 +255,19 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
     #  Debug info
     # -------------------------------------------------------------------------
     def get_debug_info(self) -> str:
+        # --- collect info ---
         swap_size = self.get_expected_param_value("swap_size")
         nc_remove = self.get_expected_param_value("nc_remove")
         nc_add = self.get_expected_param_value("nc_add")
         selectivity_modifier_remove = self.get_expected_param_value("selectivity_modifier_remove")
         selectivity_modifier_add = self.get_expected_param_value("selectivity_modifier_add")
-        debug_info = (
-            f"ns={swap_size:4.1f}"
-            f" | nc_r={nc_remove:4.1f}"
-            f" | nc_a={nc_add:4.1f}"
+
+        # --- build string ---
+        debug_info = super().get_debug_info().strip()
+        debug_info += (
+            f" | λ_swap={swap_size:4.1f}"
+            f" | λ_rem={nc_remove:4.1f}"
+            f" | λ_add={nc_add:4.1f}"
             f" | sel_rem={selectivity_modifier_remove:5.2f}"
             f" | sel_add={selectivity_modifier_add:5.2f}"
         )
