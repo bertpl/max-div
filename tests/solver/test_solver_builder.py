@@ -182,7 +182,7 @@ def test_max_div_solver_builder_end_to_end():
 #  Presets
 # =================================================================================================
 @pytest.mark.parametrize("size", [1, 5])
-@pytest.mark.parametrize("problem_name", ["A1", "A2", "A3", "A4", "A5"])
+@pytest.mark.parametrize("problem_name", BenchmarkProblemFactory.get_all_benchmark_names())
 @pytest.mark.parametrize("preset", list(SolverPreset))
 def test_max_div_solver_builder_preset(problem_name: str, size: int, preset: SolverPreset):
     """

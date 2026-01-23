@@ -15,7 +15,7 @@ def test_benchmark_problem_factory_get_all_benchmark_problems():
 
     # --- assert ------------------------------------------
     assert isinstance(problems_dict, dict)
-    assert len(problems_dict) == 5  # number of built-in problems; adjust number as we add more
+    assert len(problems_dict) == 8  # number of built-in problems; adjust number as we add more
     assert all(isinstance(name, str) for name in problems_dict.keys())
     assert all(isinstance(cls, type) and issubclass(cls, BenchmarkProblem) for cls in problems_dict.values())
 

@@ -9,12 +9,12 @@ from ._helpers import sort_vectors
 
 
 # =================================================================================================
-#  A2 - Gaussian - Unconstrained
+#  U2 - Gaussian - Unconstrained
 # =================================================================================================
-class BenchmarkProblem_A2(BenchmarkProblem):
+class BenchmarkProblem_U2(BenchmarkProblem):
     @classmethod
     def name(cls) -> str:
-        return "A2"
+        return "U2"
 
     @classmethod
     def description(cls) -> str:

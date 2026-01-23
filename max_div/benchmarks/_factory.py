@@ -39,6 +39,10 @@ class BenchmarkProblemFactory:
         return BenchmarkProblemRegistry.get_registered_classes()
 
     @classmethod
+    def get_all_benchmark_names(cls) -> list[str]:
+        return sorted(cls.get_all_benchmark_problems().keys())
+
+    @classmethod
     def get_problem_dimensions(cls, name: str, **params) -> tuple[int, int, int, int, int]:
         """
         Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with the given name,

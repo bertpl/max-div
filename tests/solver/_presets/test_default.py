@@ -15,7 +15,7 @@ def test_preset_default_get_strategies_short(target_duration: TargetDuration, in
 
     # --- arrange -----------------------------------------
     problem = BenchmarkProblemFactory.construct_problem(
-        name="A1",
+        name="U1",
         size=10,
         diversity_metric=DiversityMetric.min_separation(),
     )
@@ -39,7 +39,7 @@ def test_preset_default_get_strategies_long(target_duration: TargetDuration, ini
 
     # --- arrange -----------------------------------------
     problem = BenchmarkProblemFactory.construct_problem(
-        name="A1",
+        name="U1",
         size=10,
         diversity_metric=DiversityMetric.min_separation(),
     )

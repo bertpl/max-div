@@ -7,8 +7,11 @@ Package containing the actual definitions of benchmark problems.
 IMPORT_ME_FOR_BENCHMARK_PROBLEM_DISCOVERY = object()
 
 # import actual benchmark problems to register them
-from ._problem_a1 import BenchmarkProblem_A1
-from ._problem_a2 import BenchmarkProblem_A2
-from ._problem_a3 import BenchmarkProblem_A3
-from ._problem_a4 import BenchmarkProblem_A4
-from ._problem_a5 import BenchmarkProblem_A5
+from ._problem_c1 import BenchmarkProblem_C1
+from ._problem_c2 import BenchmarkProblem_C2
+from ._problem_c3 import BenchmarkProblem_C3
+from ._problem_c4 import BenchmarkProblem_C4
+from ._problem_u1 import BenchmarkProblem_U1
+from ._problem_u2 import BenchmarkProblem_U2
+from ._problem_u3 import BenchmarkProblem_U3
+from ._problem_u4 import BenchmarkProblem_U4

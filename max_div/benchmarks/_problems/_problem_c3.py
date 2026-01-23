@@ -9,21 +9,21 @@ from ._helpers import sort_vectors
 
 
 # =================================================================================================
-#  A3 - Non-Uniform - Simple constraints
+#  C3 - Gaussian - Medium-Hard constraints
 # =================================================================================================
-class BenchmarkProblem_A3(BenchmarkProblem):
+class BenchmarkProblem_C3(BenchmarkProblem):
     @classmethod
     def name(cls) -> str:
-        return "A3"
+        return "C3"
 
     @classmethod
     def description(cls) -> str:
-        return "Problem with semi-non-uniform vector density and simple constraints"
+        return "Problem with non-uniform vector density (gaussian distribution) and intermediate constraints"
 
     @classmethod
     def supported_params(cls) -> dict[str, str]:
         return dict(
-            size="(int) value in [1, ...].  Problem size, with d=2, n=100*size, k=10*size, m=2*size",
+            size="(int) value in [1, ...].  Problem size, with d=size, n=100*size, k=10*size, m=2*size",
             diversity_metric="(DiversityMetric) diversity metric to be maximized",
         )
 
@@ -37,33 +37,32 @@ class BenchmarkProblem_A3(BenchmarkProblem):
     @classmethod
     def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
         size = kwargs.get("size")
-        d = 2
-        n = 100 * size
+        d = size
+        n = 150 * size
         k = 10 * size
         m = 2 * size
-        n_con_indices = n
+        n_con_indices = d * n
         return d, n, k, m, n_con_indices
 
     @classmethod
     def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
         d, n, k, m, _ = cls.get_problem_dimensions(size=size)
 
-        # Generate semi-non-uniform random vectors (uniform + gaussian)
+        # Generate gaussian random vectors
         np.random.seed(42)
-        uniform_col = np.random.rand(n, 1)
-        gaussian_col = np.random.randn(n, 1)
-        vectors = np.concatenate((uniform_col, gaussian_col), axis=1).astype(np.float32)
+        vectors = np.random.randn(n, d).astype(np.float32) + 0.5  # shift by 0.5 (distribution of signs ~69%-31%)
         vectors = sort_vectors(vectors)  # sort by increasing L2 norm of rows
 
         # Generate constraints
         constraints: list[Constraint] = []
-        for i in range(m):
-            # generate m bands [v_min, v_max] spanning dimension 0   (total range [0,1])
-            # add specify constraint that at least 4 samples should be taken from each band
-            # (k=5*m and n=50*m, so this should always be feasible)
-            v_min, v_max = i / m, (i + 1) / m  # range of values in dimension 0
-            indices_in_range = [idx for idx in range(n) if v_min <= vectors[idx, 0] < v_max]
-            constraints.append(Constraint(int_set=set(indices_in_range), min_count=4, max_count=k))
+        for i in range(d):
+            # half of k samples should have positive or 0 value in dimension i
+            indices_positive = [idx for idx in range(n) if vectors[idx, i] >= 0.0]
+            constraints.append(Constraint(int_set=set(indices_positive), min_count=int(0.4 * k), max_count=k))
+
+            # half of k samples should have negative or 0 value in dimension i
+            indices_negative = [idx for idx in range(n) if vectors[idx, i] <= 0.0]
+            constraints.append(Constraint(int_set=set(indices_negative), min_count=int(0.4 * k), max_count=k))
 
         return MaxDivProblem(
             vectors=vectors,

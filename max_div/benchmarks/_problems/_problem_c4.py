@@ -9,12 +9,12 @@ from ._helpers import sort_vectors
 
 
 # =================================================================================================
-#  A5 - Gaussian - Complex constraints
+#  C4 - Gaussian - Hard constraints
 # =================================================================================================
-class BenchmarkProblem_A5(BenchmarkProblem):
+class BenchmarkProblem_C4(BenchmarkProblem):
     @classmethod
     def name(cls) -> str:
-        return "A5"
+        return "C4"
 
     @classmethod
     def description(cls) -> str:

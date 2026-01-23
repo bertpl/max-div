@@ -35,7 +35,7 @@ from max_div.solver._strategies._optimization._optim_guided_swaps import OptimGu
     ],
 )
 @pytest.mark.parametrize("size", [5])
-@pytest.mark.parametrize("problem_name", ["A1", "A2", "A3", "A4", "A5"])
+@pytest.mark.parametrize("problem_name", BenchmarkProblemFactory.get_all_benchmark_names())
 def test_optim_guided_swaps(
     problem_name: str,
     size: int,
