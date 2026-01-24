@@ -6,8 +6,9 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
-  - make solver debug info reporting (verbosity=25) more informative (a.o., added swap success %)
   - extend solver benchmark problems A1-A5 to extended set of 4 unconstrained (U1-U4) and 4 constrained (C1-C4) problems
+  - tweaks to SMART & THOROUGH presets for faster convergence
+  - make solver debug info reporting (verbosity=25) more informative (a.o., added swap success %)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.5

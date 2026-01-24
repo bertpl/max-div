@@ -29,9 +29,9 @@ def get_preset_strategies_smart(
                 swap_size_max=n_max,
                 nc_remove_max=n_max,
                 nc_add_max=n_max,
-                tau_learn=100,
+                tau_learn=10,
                 tau_forget=math.inf,
-                ignore_infeasible_diversity_up_to_fraction=0.5 if (problem.m > 0) else -1.0,
+                ignore_infeasible_diversity_up_to_fraction=0.8,
             ),
             duration=target_duration,
         )
