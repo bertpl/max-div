@@ -42,7 +42,7 @@ class SolverBenchmarkExecutor:
                 solver = scope.construct_solver(size, strat_name, seed)
 
                 # --- run solver  ---
-                solution = solver.solve()
+                solution = solver.solve(verbosity=0)
 
                 # --- get results ---
                 t_elapsed_sec = list(solution.step_durations.values())[-1].t_elapsed_sec
