@@ -44,7 +44,10 @@ def test_truncated_poisson_adaptive_sampler_construction_validation():
 
 @pytest.mark.parametrize("good_values", [[1, 2, 3], [8, 9, 10]])
 @pytest.mark.parametrize("tau_forget", [100.0, math.inf])
-def test_truncated_poisson_adaptive_sampler_learn_and_forget(good_values: list[int], tau_forget):
+@pytest.mark.parametrize("large_value_exponent", [0.0, 0.5, 1.0])
+def test_truncated_poisson_adaptive_sampler_learn_and_forget(
+    good_values: list[int], tau_forget: float, large_value_exponent: float
+):
     # --- arrange -----------------------------------------
     sampler = TruncatedPoissonAdaptiveSampler(
         min_value=1,
@@ -52,6 +55,7 @@ def test_truncated_poisson_adaptive_sampler_learn_and_forget(good_values: list[i
         lambda_prior=5.5,
         tau_learn=10.0,
         tau_forget=tau_forget,
+        large_value_penalty_exponent=large_value_exponent,
         seed=123,
     )
 
@@ -87,6 +91,7 @@ def test_sampled_poisson_alias(lambda_prior: float | None):
         lambda_prior=lambda_prior,
         tau_learn=123.45,
         tau_forget=None,
+        large_value_penalty_exponent=0.1234,
         seed=124816,
     )
 
@@ -99,3 +104,4 @@ def test_sampled_poisson_alias(lambda_prior: float | None):
         assert sampler._lambda_prior == pytest.approx(0.5 * (2 + 12))
     assert sampler._tau_learn == pytest.approx(123.45)
     assert sampler._tau_forget == pytest.approx(123.45 * 123.45)
+    assert sampler._large_value_penalty_exponent_f32 == pytest.approx(0.1234)

@@ -15,6 +15,7 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
         lambda_prior: float,
         tau_learn: float,
         tau_forget: float,
+        large_value_penalty_exponent: float = 0.0,
         seed: int | np.int64 = 42,
     ):
         """
@@ -27,6 +28,8 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
         :param tau_learn: (float) time constant for learning from successful samples.
         :param tau_forget: (float) time constant for forgetting learned probability
                                                      in case of unsuccessful samples.
+        :param large_value_penalty_exponent: (float) exponent for penalizing larger values when learning, by using
+                                             learning factor  c = c_learn * ((lambda/sampled_value) ^ exponent).
         :param seed: (int|int64) initial random seed for sampling.
         """
         super().__init__(tau_learn=tau_learn, tau_forget=tau_forget, seed=seed)
@@ -39,6 +42,7 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
         self._lambda_prior: np.float32 = np.float32(lambda_prior)
         self._lambda: np.float32 = self._lambda_prior
         self._last_sample: int = round(lambda_prior)
+        self._large_value_penalty_exponent_f32 = np.float32(large_value_penalty_exponent)
 
     def new_sample(self) -> int:
         sample = int(
@@ -61,7 +65,9 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
 
     def feedback(self, success: bool):
         if success:
-            self._lambda += self._c_learn_f32 * (np.float32(self._last_sample) - self._lambda)
+            c_correction = np.pow(self._lambda / np.float32(self._last_sample), self._large_value_penalty_exponent_f32)
+            c_learn_f32 = self._c_learn_f32 * c_correction
+            self._lambda += c_learn_f32 * (np.float32(self._last_sample) - self._lambda)
         elif self._forgetting_enabled:
             self._lambda += self._c_forget_f32 * (self._lambda_prior - self._lambda)
 
@@ -75,6 +81,7 @@ def sampled_poisson(
     lambda_prior: float | None = None,
     tau_learn: float = 100.0,
     tau_forget: float | None = None,
+    large_value_penalty_exponent: float = 0.0,
     seed: int = 42,
 ) -> TruncatedPoissonAdaptiveSampler:
     """Alias for easier access to TruncatedPoissonAdaptiveSampler."""
@@ -84,5 +91,6 @@ def sampled_poisson(
         lambda_prior=lambda_prior if lambda_prior is not None else (0.5 * (min_value + max_value)),
         tau_learn=tau_learn,
         tau_forget=tau_forget if tau_forget is not None else (tau_learn * tau_learn),
+        large_value_penalty_exponent=large_value_penalty_exponent,
         seed=seed,
     )

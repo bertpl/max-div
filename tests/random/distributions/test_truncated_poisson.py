@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from max_div.random import new_rng_state
-from max_div.random.distributions import sample_truncated_poisson
+from max_div.random.distributions import sample_truncated_poisson, truncated_poisson_expected_value
 
 
 @pytest.mark.parametrize("min_value, max_value", [(1, 5), (2, 2), (2, 4), (3, 7), (10, 20), (15, 20)])
@@ -66,6 +66,16 @@ def test_sample_truncated_poisson_distribution(min_value: int, max_value: int, _
     hist /= n_samples  # normalize
 
     # --- assert ------------------------------------------
-    print(hist)
-    print(hist_expected)
     assert np.allclose(hist, hist_expected, atol=0.05)
+
+
+def test_truncated_poisson_expected_value():
+    # --- act ---------------------------------------------
+    result = truncated_poisson_expected_value(
+        min_value=np.int32(1),
+        max_value=np.int32(5),
+        _lambda=np.float32(2.0),
+    )
+
+    # --- assert ------------------------------------------
+    assert result == pytest.approx(2.2340424060821533)
