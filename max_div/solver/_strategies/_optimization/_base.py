@@ -80,6 +80,9 @@ class OptimizationStrategy(StrategyBase, ABC):
         if dynamic_params:
             self._configure_dynamic_params(dynamic_params)
 
+        # --- iteration counts ---
+        self.iter = 0
+
     def _configure_dynamic_params(self, dynamic_params: dict[str, ParamValueType]):
         """
         Internal method to configure dynamic parameters (scheduled and/or sampled).
@@ -165,6 +168,7 @@ class OptimizationStrategy(StrategyBase, ABC):
                     sampler.feedback(success)
 
             # --- update progress ---
+            self.iter += 1
             current_progress_frac += progress_frac_per_iter
 
     @abstractmethod
@@ -233,8 +237,8 @@ class OptimizationStrategy(StrategyBase, ABC):
         nc_remove_max: int,
         nc_add_max: int,
         tau_learn: float = 100.0,
-        tau_forget: float | None = None,
         ignore_infeasible_diversity_up_to_fraction: float = -1.0,
+        cost_awareness: float = 0.0,
     ) -> Self:
         from ._optim_smart_swaps import OptimSmartSwaps
 
@@ -243,8 +247,8 @@ class OptimizationStrategy(StrategyBase, ABC):
             nc_remove_max=nc_remove_max,
             nc_add_max=nc_add_max,
             tau_learn=tau_learn,
-            tau_forget=tau_forget,
             ignore_infeasible_diversity_up_to_fraction=ignore_infeasible_diversity_up_to_fraction,
+            cost_awareness=cost_awareness,
         )
 
 

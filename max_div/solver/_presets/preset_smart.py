@@ -19,9 +19,13 @@ def get_preset_strategies_smart(
 
     # --- optimization steps ------------------------------
     if thorough:
+        # THOROUGH preset
         n_max = 64
+        cost_awareness = 0.1
     else:
+        # SMART preset
         n_max = 8
+        cost_awareness = 0.5
 
     optim_steps = [
         OptimizationStep(
@@ -30,8 +34,8 @@ def get_preset_strategies_smart(
                 nc_remove_max=n_max,
                 nc_add_max=n_max,
                 tau_learn=10,
-                tau_forget=math.inf,
                 ignore_infeasible_diversity_up_to_fraction=0.8,
+                cost_awareness=cost_awareness,
             ),
             duration=target_duration,
         )

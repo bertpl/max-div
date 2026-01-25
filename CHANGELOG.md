@@ -5,10 +5,15 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**:
-  - extend solver benchmark problems A1-A5 to extended set of 4 unconstrained (U1-U4) and 4 constrained (C1-C4) problems
+- **new**:
   - make adaptive Poisson-based sampling (used for swap size and # candidates meta-parameter sampling) cost-aware, by penalizing adapting towards larger, more expensive values.
-  - tweaks to SMART & THOROUGH presets for faster convergence
+  - extend solver benchmark problems A1-A5 to extended set of 4 unconstrained (U1-U4) and 4 constrained (C1-C4) problems
+
+- **improved**:
+  - solver presets
+    - tweaks to SMART & THOROUGH presets for faster convergence
+      - increase adaptive sampling learning rate by ~10x
+      - make adaptive sampling cost-aware (SMART: 0.5, THOROUGH: 0.1)
   - make solver debug info reporting (verbosity=25) more informative (a.o., added swap success %)
 
 <!------------------------------------------------------------------------------------------------->

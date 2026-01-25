@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from numpy.typing import NDArray
 
@@ -25,8 +27,8 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         nc_remove_max: int,
         nc_add_max: int,
         tau_learn: float = 100.0,
-        tau_forget: float | None = None,
         ignore_infeasible_diversity_up_to_fraction: float = -1.0,
+        cost_awareness: float = 0.0,
     ):
         """
         Optimization-based strategy that performs 'smart' swaps, that combine
@@ -37,36 +39,40 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         :param nc_remove_max: (int) maximum 'nc'-value to be adaptively sampled from for REMOVING.
         :param nc_add_max: (int) maximum 'nc'-value to be adaptively sampled from for ADDING.
         :param tau_learn: (float) learning time constant for adaptive parameter sampling.
-        :param tau_forget: (float | None) forgetting time constant for adaptive parameter sampling
-                                                                        (if omitted, defaults to tau_learn^2).
         :param ignore_infeasible_diversity_up_to_fraction: (float) fraction of total diversity score
+        :param cost_awareness: (float >= 0) value to indicate how much larger values of n_swap, nc_remove, nc_add
+                               should be avoided, since they incur additional computational cost.  Non-0 values
+                               make it such that larger values are only used if they provide sufficient benefit.
         """
 
         # --- swap_size ---
         _swap_size = sampled_poisson(
             min_value=1,
             max_value=swap_size_max,
-            lambda_prior=min(2.0, swap_size_max),
+            lambda_prior=1.0,
             tau_learn=tau_learn,
-            tau_forget=tau_forget,
+            tau_forget=math.inf,
+            large_value_penalty_exponent=cost_awareness,
         )
 
         # --- nc_remove ---
         _nc_remove = sampled_poisson(
             min_value=1,
             max_value=nc_remove_max,
-            lambda_prior=np.sqrt(nc_remove_max),
+            lambda_prior=1.0,
             tau_learn=tau_learn,
-            tau_forget=tau_forget,
+            tau_forget=math.inf,
+            large_value_penalty_exponent=cost_awareness,
         )
 
         # --- nc_add ---
         _nc_add = sampled_poisson(
             min_value=1,
             max_value=nc_add_max,
-            lambda_prior=np.sqrt(nc_add_max),
+            lambda_prior=1.0,
             tau_learn=tau_learn,
-            tau_forget=tau_forget,
+            tau_forget=math.inf,
+            large_value_penalty_exponent=cost_awareness,
         )
 
         # --- selectivity modifiers ---
@@ -75,14 +81,14 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             max_value=0.99,
             median_prior=0.0,
             tau_learn=tau_learn,
-            tau_forget=tau_forget,
+            tau_forget=math.inf,
         )
         _selectivity_modifier_add = sampled_interval(
             min_value=-0.99,
             max_value=0.99,
             median_prior=0.0,
             tau_learn=tau_learn,
-            tau_forget=tau_forget,
+            tau_forget=math.inf,
         )
 
         # --- name ----------------------------------------
