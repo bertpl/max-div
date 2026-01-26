@@ -7,7 +7,7 @@ from max_div.solver._strategies._optimization._time_model import OptimizationTim
 
 def test_optim_preset_count():
     """Forces focus on these unit tests when changing OptimPreset."""
-    assert len(list(OptimPreset)) == 10
+    assert len(list(OptimPreset)) == 13
     assert OptimPreset.all() == list(OptimPreset)
 
 

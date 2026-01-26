@@ -8,6 +8,7 @@ from max_div.solver._strategies import OptimizationStrategy
 
 from ._optim_guided_swaps import OptimGuidedSwaps
 from ._optim_random_swaps import OptimRandomSwaps
+from ._optim_smart_swaps import OptimSmartSwaps
 from ._time_model import OptimizationTimeModel
 
 
@@ -30,6 +31,9 @@ class OptimPreset(StrEnum):
     GS_1_3_NARROW = "GS(1-3,narrow)"
     GS_1_3_WI_NA = "GS(1-3,wi->na)"
     GS_1_3_NA_WI = "GS(1-3,na->wi)"
+    SM_2 = "SM(2)"
+    SM_4 = "SM(4)"
+    SM_8 = "SM(8)"
 
     # -------------------------------------------------------------------------
     #  Factory
@@ -120,6 +124,39 @@ _OPTIM_CLASSES_AND_KWARGS: dict[OptimPreset, tuple[type[OptimizationStrategy], d
             add_selectivity_modifier=linear(+0.8, -0.8),
         ),
     ),
+    OptimPreset.SM_2: (
+        OptimSmartSwaps,
+        dict(
+            swap_size_max=2,
+            nc_remove_max=2,
+            nc_add_max=2,
+            tau_learn=10,
+            ignore_infeasible_diversity_up_to_fraction=0.8,
+            cost_awareness=0.5,
+        ),
+    ),
+    OptimPreset.SM_4: (
+        OptimSmartSwaps,
+        dict(
+            swap_size_max=4,
+            nc_remove_max=4,
+            nc_add_max=4,
+            tau_learn=10,
+            ignore_infeasible_diversity_up_to_fraction=0.8,
+            cost_awareness=0.5,
+        ),
+    ),
+    OptimPreset.SM_8: (
+        OptimSmartSwaps,
+        dict(
+            swap_size_max=8,
+            nc_remove_max=8,
+            nc_add_max=8,
+            tau_learn=10,
+            ignore_infeasible_diversity_up_to_fraction=0.8,
+            cost_awareness=0.5,
+        ),
+    ),
 }
 
 # =================================================================================================
@@ -156,4 +193,8 @@ _OPTIM_TIME_MODELS: dict[OptimPreset, OptimizationTimeModel] = {
     OptimPreset.GS_1_3_NA_WI: OptimizationTimeModel(
         t0=4.00e-05, t_n=1.11e-07, t_k=1.91e-07, t_m=4.79e-08, t_n_con_indices=3.31e-09
     ),
+    # BELOW ARE PLACEHOLDERS
+    OptimPreset.SM_2: OptimizationTimeModel(t0=1e-5, t_n=1e-7, t_k=1e-7, t_m=1e-7, t_n_con_indices=1e-9),
+    OptimPreset.SM_4: OptimizationTimeModel(t0=1e-5, t_n=1e-7, t_k=1e-7, t_m=1e-7, t_n_con_indices=1e-9),
+    OptimPreset.SM_8: OptimizationTimeModel(t0=1e-5, t_n=1e-7, t_k=1e-7, t_m=1e-7, t_n_con_indices=1e-9),
 }
