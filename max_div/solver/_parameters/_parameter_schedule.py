@@ -160,7 +160,7 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
     return arr
 
 
-@numba.njit(fastmath=True, inline="always")
+@numba.njit(fastmath=True, inline="always", cache=True)
 def _evaluate_schedules(schedules_array: NDArray[np.float64], f: float) -> NDArray[np.float64]:
     """
     Evaluate multiple ParameterSchedule instances at once, given their numpy array representation.

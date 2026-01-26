@@ -46,7 +46,7 @@ _S_E2 = np.float32(_D_E2)
 # -------------------------------------------------------------------------
 #  Fast approximations for pow (x^t)
 # -------------------------------------------------------------------------
-@numba.njit(numba.float32(numba.float32, numba.float32), fastmath=True, inline="always")
+@numba.njit(numba.float32(numba.float32, numba.float32), fastmath=True, inline="always", cache=True)
 def fast_pow_f32(x: np.float32, t: np.float32) -> np.float32:
     """
     Fast 'pow' approximation using 2nd order polynomial after range reduction.

@@ -133,7 +133,7 @@ class Cost:
 # =================================================================================================
 #  Cost Function - NUMBA
 # =================================================================================================
-@numba.njit
+@numba.njit(cache=True)
 def pow2_approx_array(
     x_arr: np.ndarray, t_arr: np.ndarray, c0: float, c1: float, c2: float, d0: float, d1: float, d2: float
 ) -> np.ndarray:
@@ -144,32 +144,6 @@ def pow2_approx_array(
         exp2_tx = exp2_approx(t_arr[i] * log2_x, d0, d1, d2)
         result[i] = exp2_tx
     return result
-
-
-# @numba.njit
-# def log2_approx(x: float, c0: float, c1: float, c2: float) -> float:
-#     """Only efficient for x in or close to [0.5, 1]"""
-#     if x <= 0:
-#         return -1e6
-#     if x < 0.5:
-#         return log2_approx(2 * x, c0, c1, c2) - 1.0
-#     elif x > 1:
-#         return log2_approx(x / 2, c0, c1, c2) + 1.0
-#     else:
-#         # f(x) - but only valid in [0.5, 1]
-#         return c0 + (c1 * x) + (c2 * x * x)
-#
-#
-# @numba.njit
-# def exp2_approx(x: float, d0: float, d1: float, d2: float) -> float:
-#     """Only efficient for x in or close to [0, 1]"""
-#     if x < 0:
-#         return exp2_approx(x + 1, d0, d1, d2) / 2
-#     elif x > 1:
-#         return exp2_approx(x - 1, d0, d1, d2) * 2
-#     else:
-#         # g(x) - but only valid in [0, 1]
-#         return d0 + (d1 * x) + (d2 * x * x)
 
 
 # -------------------------------------------------------------------------

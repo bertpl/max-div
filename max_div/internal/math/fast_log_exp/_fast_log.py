@@ -27,7 +27,7 @@ _S22 = np.float32(_D22)
 # -------------------------------------------------------------------------
 #  Fast approximations for np.log2
 # -------------------------------------------------------------------------
-@numba.njit(numba.float64(numba.float64), fastmath=True, inline="always")
+@numba.njit(numba.float64(numba.float64), fastmath=True, inline="always", cache=True)
 def fast_log2_f64(x: np.float64) -> np.float64:
     """
     Fast log approximation using 2nd order polynomial after range reduction.
@@ -49,7 +49,7 @@ def fast_log2_f64(x: np.float64) -> np.float64:
     return exponent + log2_mantissa
 
 
-@numba.njit(numba.float32(numba.float32), fastmath=True, inline="always")
+@numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
 def fast_log2_f32(x: np.float32) -> np.float32:
     """
     Fast log approximation using 2nd order polynomial after range reduction.
@@ -74,7 +74,7 @@ def fast_log2_f32(x: np.float32) -> np.float32:
 # -------------------------------------------------------------------------
 #  Fast approximations for np.log
 # -------------------------------------------------------------------------
-@numba.njit(numba.float64(numba.float64), fastmath=True, inline="always")
+@numba.njit(numba.float64(numba.float64), fastmath=True, inline="always", cache=True)
 def fast_log_f64(x: np.float64) -> np.float64:
     """
     Fast log approximation using 2nd order polynomial after range reduction.
@@ -83,7 +83,7 @@ def fast_log_f64(x: np.float64) -> np.float64:
     return _D_LOG_2 * fast_log2_f64(x)
 
 
-@numba.njit(numba.float32(numba.float32), fastmath=True, inline="always")
+@numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
 def fast_log_f32(x: np.float32) -> np.float32:
     """
     Fast log approximation using 2nd order polynomial after range reduction.

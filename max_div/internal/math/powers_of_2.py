@@ -19,7 +19,7 @@ _POWERS_OF_2_F32 = np.array(
 )
 
 
-@numba.njit("float32(int32)", fastmath=True, inline="always")
+@numba.njit("float32(int32)", fastmath=True, inline="always", cache=True)
 def power_of_2_f32(k: np.int32) -> np.float32:
     """
     Compute float32 2^k for arbitrary int32 k, using precomputed values in range [-150, 128].

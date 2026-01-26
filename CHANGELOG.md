@@ -2,7 +2,7 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.6
-> *(under development)*
+> *(2026-01-26)*
 <!------------------------------------------------------------------------------------------------->
 
 - **new**:
@@ -15,6 +15,7 @@
       - increase adaptive sampling learning rate by ~10x
       - make adaptive sampling cost-aware (SMART: 0.5, THOROUGH: 0.1)
   - make solver debug info reporting (verbosity=25) more informative (a.o., added swap success %)
+  - make all numbs.njit-decorated functions cached
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.5

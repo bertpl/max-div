@@ -39,7 +39,7 @@ def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArr
 # =================================================================================================
 #  Low-level
 # =================================================================================================
-@numba.njit("float32(float32[::1], int32, int32, int32)", inline="always")
+@numba.njit("float32(float32[::1], int32, int32, int32)", inline="always", cache=True)
 def get_pdist_el(pdist: NDArray[np.float32], i: np.int32, j: np.int32, n: np.int32) -> np.float32:
     """Return element from 'pdist' array representing distance between vectors i & j, given n vectors in total."""
     if i == j:
@@ -52,7 +52,7 @@ def get_pdist_el(pdist: NDArray[np.float32], i: np.int32, j: np.int32, n: np.int
         return pdist[index]
 
 
-@numba.njit("float32[::1](float32[::1], int32)")
+@numba.njit("float32[::1](float32[::1], int32)", cache=True)
 def compute_separation(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.float32]:
     """Compute separation of each vector wrt all others, given pairwise distance array pdist and n vectors in total."""
     sep = np.full(n, fill_value=np.inf, dtype=np.float32)
@@ -67,7 +67,7 @@ def compute_separation(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.fl
     return sep
 
 
-@numba.njit("void(float32[::1], float32[::1], int32, int32)")
+@numba.njit("void(float32[::1], float32[::1], int32, int32)", cache=True)
 def update_separation_add(sep: NDArray[np.float32], pdist: NDArray[np.float32], n: np.int32, i_added: np.int32) -> None:
     """Update separation of each vector wrt selection, given pdist array and n vectors in total, after adding i_added."""
     for j in np.arange(n, dtype=np.int32):
@@ -77,7 +77,7 @@ def update_separation_add(sep: NDArray[np.float32], pdist: NDArray[np.float32], 
                 sep[j] = dist
 
 
-@numba.njit("void(float32[::1], float32[::1], int32, int32, int32[::1])")
+@numba.njit("void(float32[::1], float32[::1], int32, int32, int32[::1])", cache=True)
 def update_separation_remove(
     sep: NDArray[np.float32],
     pdist: NDArray[np.float32],

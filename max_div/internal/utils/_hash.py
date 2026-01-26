@@ -23,7 +23,7 @@ def deterministic_hash_int64(obj: object) -> np.int64:
     return int_to_int64(deterministic_hash(obj))
 
 
-@numba.njit(fastmath=True, inline="always")
+@numba.njit(fastmath=True, inline="always", cache=True)
 def np_int32_array_var_length_hash(arr: NDArray[np.int32], n: int) -> NDArray[np.int32]:
     """Takes the input array and creates an output array of length n, that represents a var-length hash of the input."""
 
