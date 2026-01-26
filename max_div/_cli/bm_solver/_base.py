@@ -110,7 +110,7 @@ class SolverBenchmarkScope:
     # -------------------------------------------------------------------------
     def __enter__(self) -> SolverBenchmarkScope:
         self._pbar = tqdm(
-            total=self._total_duration(),
+            total=len(self.params()),
             desc=f"Problem {self.problem_name} - {self.benchmark_type.capitalize()}".ljust(40),
             leave=self._leave_pbar,
         )
@@ -180,8 +180,7 @@ class SolverBenchmarkScope:
 
         # --- update progress bar ---
         if self._pbar:
-            est_duration = self._solver_constructor.estimated_duration(size, strat_name)
-            self._pbar.n += est_duration
+            self._pbar.n += 1
             self._pbar.refresh()
 
     def show_results_tables(self, markdown: bool, file: bool):
@@ -269,15 +268,6 @@ class SolverBenchmarkScope:
                     print(line)
                 print()
 
-    # -------------------------------------------------------------------------
-    #  Internal
-    # -------------------------------------------------------------------------
-    def _total_duration(self) -> int:
-        """Total relative duration of all benchmarks in this scope, for progress bar purposes."""
-        return sum(
-            [self._solver_constructor.estimated_duration(size, strat_name) for size, strat_name, _ in self.params()]
-        )
-
 
 # =================================================================================================
 #  BenchmarkSolverConstructor
@@ -332,11 +322,6 @@ class BenchmarkSolverConstructor(ABC):
     # -------------------------------------------------------------------------
     #  API - ABSTRACT
     # -------------------------------------------------------------------------
-    @abstractmethod
-    def estimated_duration(self, size: int, strat_name: str) -> int:
-        """Estimates duration (in relative integer units) for given (size, strat_name)-tuple."""
-        raise NotImplementedError()
-
     @abstractmethod
     def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
         """Constructs and returns a Solver for given (size, strat_name, seed)-tuple."""

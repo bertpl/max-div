@@ -1,8 +1,7 @@
 import pytest
 
+from max_div.benchmarks._strategy_presets import OptimPreset
 from max_div.solver._strategies import OptimizationStrategy
-from max_div.solver._strategies._optimization._presets import OptimPreset
-from max_div.solver._strategies._optimization._time_model import OptimizationTimeModel
 
 
 def test_optim_preset_count():
@@ -27,4 +26,3 @@ def test_optim_preset_properties(optim_preset: OptimPreset):
     assert isinstance(optim_preset.is_constraint_aware(), bool)
     assert isinstance(optim_preset.is_relevant_for_problem(problem_has_constraints=True), bool)
     assert isinstance(optim_preset.is_relevant_for_problem(problem_has_constraints=False), bool)
-    assert isinstance(optim_preset.time_model(), OptimizationTimeModel)

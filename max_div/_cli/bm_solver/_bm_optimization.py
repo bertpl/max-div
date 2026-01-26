@@ -1,10 +1,10 @@
 from max_div._cli.formatting import format_table_as_markdown, format_table_for_console
+from max_div.benchmarks._strategy_presets import OptimPreset
 from max_div.internal.formatting import md_multiline
 from max_div.solver import DiversityMetric, MaxDivSolver, MaxDivSolverBuilder
 from max_div.solver._duration import iterations
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy
-from max_div.solver._strategies._optimization._presets import OptimPreset
 
 from ._base import BenchmarkSolverConstructor
 
@@ -30,14 +30,6 @@ class BenchmarkSolverConstructor_Optimization(BenchmarkSolverConstructor):
             for preset in OptimPreset.all()
             if preset.is_relevant_for_problem(self.has_constraints)
         }
-
-    def estimated_duration(self, size: int, strat_name: str) -> int:
-        d, n, k, m, n_con_indices = self.get_problem_dimensions(size)
-        preset = self._presets[strat_name]
-        time_model = preset.time_model()
-        estimated_duration_sec_per_iter = time_model.get_time_sec(n=n, k=k, m=m, n_con_indices=n_con_indices)
-        estimated_duration_msec = max(1, round(1000 * self._n_iterations * estimated_duration_sec_per_iter))  # >=1 ms
-        return estimated_duration_msec
 
     def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
         problem = self.construct_problem(size)

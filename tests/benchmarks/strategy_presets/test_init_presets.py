@@ -1,8 +1,7 @@
 import pytest
 
+from max_div.benchmarks._strategy_presets import InitPreset
 from max_div.solver._strategies import InitializationStrategy
-from max_div.solver._strategies._initialization._presets import InitPreset
-from max_div.solver._strategies._initialization._time_model import InitializationTimeModel
 
 
 def test_init_preset_count():
@@ -27,4 +26,3 @@ def test_init_preset_properties(init_preset: InitPreset):
     assert isinstance(init_preset.is_constraint_aware(), bool)
     assert isinstance(init_preset.is_relevant_for_problem(problem_has_constraints=True), bool)
     assert isinstance(init_preset.is_relevant_for_problem(problem_has_constraints=False), bool)
-    assert isinstance(init_preset.time_model(), InitializationTimeModel)

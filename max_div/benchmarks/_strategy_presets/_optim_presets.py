@@ -5,11 +5,9 @@ from typing import Any
 
 from max_div.solver._parameters import ease_in_out, linear
 from max_div.solver._strategies import OptimizationStrategy
-
-from ._optim_guided_swaps import OptimGuidedSwaps
-from ._optim_random_swaps import OptimRandomSwaps
-from ._optim_smart_swaps import OptimSmartSwaps
-from ._time_model import OptimizationTimeModel
+from max_div.solver._strategies._optimization._optim_guided_swaps import OptimGuidedSwaps
+from max_div.solver._strategies._optimization._optim_random_swaps import OptimRandomSwaps
+from max_div.solver._strategies._optimization._optim_smart_swaps import OptimSmartSwaps
 
 
 # =================================================================================================
@@ -59,10 +57,6 @@ class OptimPreset(StrEnum):
     def class_kwargs(self) -> dict[str, Any]:
         _, kwargs = _OPTIM_CLASSES_AND_KWARGS[self]
         return kwargs
-
-    def time_model(self) -> OptimizationTimeModel:
-        """Get the OptimizationTimeModel associated with this preset."""
-        return _OPTIM_TIME_MODELS[self]
 
     @classmethod
     def all(cls) -> list[OptimPreset]:
@@ -157,44 +151,4 @@ _OPTIM_CLASSES_AND_KWARGS: dict[OptimPreset, tuple[type[OptimizationStrategy], d
             cost_awareness=0.5,
         ),
     ),
-}
-
-# =================================================================================================
-#  Time Models
-# =================================================================================================
-_OPTIM_TIME_MODELS: dict[OptimPreset, OptimizationTimeModel] = {
-    OptimPreset.RS: OptimizationTimeModel(
-        t0=2.58e-05, t_n=7.91e-08, t_k=1.28e-07, t_m=2.23e-08, t_n_con_indices=9.67e-10
-    ),
-    OptimPreset.GS_1: OptimizationTimeModel(
-        t0=3.16e-05, t_n=9.39e-08, t_k=1.45e-07, t_m=3.56e-08, t_n_con_indices=2.25e-09
-    ),
-    OptimPreset.GS_2: OptimizationTimeModel(
-        t0=4.48e-05, t_n=1.33e-07, t_k=2.21e-07, t_m=6.06e-08, t_n_con_indices=4.42e-09
-    ),
-    OptimPreset.GS_3: OptimizationTimeModel(
-        t0=5.59e-05, t_n=1.39e-07, t_k=3.31e-07, t_m=8.14e-08, t_n_con_indices=6.44e-09
-    ),
-    OptimPreset.GS_1_3: OptimizationTimeModel(
-        t0=3.90e-05, t_n=1.10e-07, t_k=1.86e-07, t_m=4.76e-08, t_n_con_indices=3.30e-09
-    ),
-    OptimPreset.GS_1_3_SOFT: OptimizationTimeModel(
-        t0=3.95e-05, t_n=1.08e-07, t_k=1.75e-07, t_m=3.86e-08, t_n_con_indices=2.33e-09
-    ),
-    OptimPreset.GS_1_3_WIDE: OptimizationTimeModel(
-        t0=3.86e-05, t_n=1.11e-07, t_k=1.88e-07, t_m=4.68e-08, t_n_con_indices=3.34e-09
-    ),
-    OptimPreset.GS_1_3_NARROW: OptimizationTimeModel(
-        t0=3.85e-05, t_n=1.10e-07, t_k=1.83e-07, t_m=4.71e-08, t_n_con_indices=3.33e-09
-    ),
-    OptimPreset.GS_1_3_WI_NA: OptimizationTimeModel(
-        t0=3.98e-05, t_n=1.11e-07, t_k=1.85e-07, t_m=4.76e-08, t_n_con_indices=3.30e-09
-    ),
-    OptimPreset.GS_1_3_NA_WI: OptimizationTimeModel(
-        t0=4.00e-05, t_n=1.11e-07, t_k=1.91e-07, t_m=4.79e-08, t_n_con_indices=3.31e-09
-    ),
-    # BELOW ARE PLACEHOLDERS
-    OptimPreset.SM_2: OptimizationTimeModel(t0=1e-5, t_n=1e-7, t_k=1e-7, t_m=1e-7, t_n_con_indices=1e-9),
-    OptimPreset.SM_4: OptimizationTimeModel(t0=1e-5, t_n=1e-7, t_k=1e-7, t_m=1e-7, t_n_con_indices=1e-9),
-    OptimPreset.SM_8: OptimizationTimeModel(t0=1e-5, t_n=1e-7, t_k=1e-7, t_m=1e-7, t_n_con_indices=1e-9),
 }
