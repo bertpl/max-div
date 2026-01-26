@@ -5,7 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**:
+  - solver presets
+    - streamline RANDOM & GUIDED presets to always use 'fast' initialization, like all other presets.
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.6

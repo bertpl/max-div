@@ -16,8 +16,6 @@ def get_preset_strategies(
     problem: MaxDivProblem,
     preset: SolverPreset,
     target_duration: TargetDuration,
-    initialization_included: bool = False,
-    hardware_speed_correction: float = 1.0,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     match preset:
         case SolverPreset.RANDOM:
@@ -28,8 +26,6 @@ def get_preset_strategies(
             return get_preset_strategies_guided(
                 problem,
                 target_duration,
-                initialization_included,
-                hardware_speed_correction,
             )
         case SolverPreset.SMART | SolverPreset.DEFAULT:
             return get_preset_strategies_smart(

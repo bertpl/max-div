@@ -80,8 +80,6 @@ class MaxDivSolverBuilder:
         self,
         target_duration: TargetDuration,
         preset: SolverPreset = SolverPreset.DEFAULT,
-        initialization_included: bool = False,
-        hardware_speed_correction: float = 1.0,
     ) -> Self:
         """
         Configure the builder with specified preset settings (overriding any previous settings):
@@ -94,11 +92,6 @@ class MaxDivSolverBuilder:
         :param target_duration: Target duration for the init+optim phases (either in time or iterations).
                                        --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
         :param preset: Preset to use (default: SolverPreset.DEFAULT)
-        :param initialization_included: Whether the target duration includes initialization time.  Note that this
-                                         flag does not influence whether an initialization strategy is being
-                                         configured by the preset; this is always the case.
-        :param hardware_speed_correction: (float) set to value >1 if current hardware is faster than the reference
-                                          hardware.  Use estimate_platform_speed to get an estimate.
         """
 
         # --- apply main preset logic -----------
@@ -106,8 +99,6 @@ class MaxDivSolverBuilder:
             problem=self._problem,
             preset=preset,
             target_duration=target_duration,
-            initialization_included=initialization_included,
-            hardware_speed_correction=hardware_speed_correction,
         )
 
         # --- configure solver steps ------------
