@@ -86,6 +86,8 @@ def test_solver_state_end_to_end(new_solver_state):
     assert np.array_equal(state.con_values, state._con_values)
     assert np.array_equal(state.con_indices, state._con_indices)
     assert np.array_equal(state.global_separation_array, state._sep_global)
+    assert state.n_selected == 0
+    assert state.n_not_selected == 6
 
     # --- act 1 -------------------------------------------
     state.add(0)
@@ -99,6 +101,8 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.score.size == 1.0  # correct number of vectors selected
     assert state.score.constraints == 1.0  # all constraints satisfied
     assert state.score.diversity == pytest.approx((2 * 2 * 3) ** (1 / 3))  # geomean of separations 2, 2, 3
+    assert state.n_selected == 3
+    assert state.n_not_selected == 3
 
     # --- act 2 -------------------------------------------
     state.remove(5)
@@ -112,6 +116,8 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.score.size == 1.0  # correct number of vectors selected
     assert state.score.constraints == 1.0  # all constraints satisfied
     assert state.score.diversity == pytest.approx(2.0)  # geomean of separations 2, 2, 2
+    assert state.n_selected == 3
+    assert state.n_not_selected == 3
 
 
 def test_solver_state_snapshot(new_solver_state):
@@ -198,6 +204,9 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
     assert np.array_equal(state.con_indices, state_ref.con_indices)
 
     assert state.score == state_ref.score
+
+    assert state.n_selected == state_ref.n_selected
+    assert state.n_not_selected == state_ref.n_not_selected
 
 
 def test_build_con_membership():

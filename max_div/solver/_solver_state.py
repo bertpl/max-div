@@ -6,7 +6,6 @@ from functools import cached_property
 
 import numpy as np
 from numpy.typing import NDArray
-from sortedcontainers import SortedSet
 
 from max_div.random import Constraint, ConstraintList
 
@@ -36,8 +35,7 @@ class SolverState:
         k: np.int32,
         pdist: NDArray[np.float32],
         score_generator: ScoreGenerator,
-        selected: SortedSet,
-        not_selected: SortedSet,
+        selected: NDArray[np.bool],
         sep_global: NDArray[np.float32],
         sep_selected: NDArray[np.float32],
         con_values: NDArray[np.int32],
@@ -58,8 +56,7 @@ class SolverState:
         :param k: (np.int32) target number of selected vectors
         :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
         :param score_generator: (ScoreGenerator) score generator to compute scores for current state
-        :param selected: (SortedSet) set of selected indices (np.int32)
-        :param not_selected: (SortedSet) set of not selected indices (np.int32)
+        :param selected: (np.ndarray[np.bool]) array indicating which of the n vectors are initially selected.
         :param sep_global: (np.ndarray[np.float32]) n x 1 array with separation of each vector wrt the others
         :param sep_selected: (np.ndarray[np.float32]) n x 1 array with separation of each vector wrt selected set
         :param con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)
@@ -83,7 +80,7 @@ class SolverState:
 
         # selection
         self._selected = selected
-        self._not_selected = not_selected
+        self._n_selected: np.int32 = np.int32(sum(selected))
 
         # constraints
         self._con_values = con_values  # min/max counts of extra samples needed on top of current selection
@@ -107,7 +104,6 @@ class SolverState:
             pdist=self._pdist.copy(),
             score_generator=self._score_generator.copy(),
             selected=self._selected.copy(),
-            not_selected=self._not_selected.copy(),
             sep_global=self._sep_global.copy(),
             sep_selected=self._sep_selected.copy(),
             con_values=self._con_values.copy(),
@@ -127,7 +123,7 @@ class SolverState:
 
         # NOTE: we create copies, such that add(.) and remove(.) cannot influence the snapshot after it was taken
         self._snapshot.selected = self._selected.copy()
-        self._snapshot.not_selected = self._not_selected.copy()
+        self._snapshot.n_selected = self._n_selected
         self._snapshot.sep_selected = self._sep_selected.copy()
         self._snapshot.con_values = self._con_values.copy()
         self._snapshot.is_valid = True
@@ -144,7 +140,7 @@ class SolverState:
 
         # restore snapshot (no copy needed; we will clear the snapshot)
         self._selected = self._snapshot.selected
-        self._not_selected = self._snapshot.not_selected
+        self._n_selected = self._snapshot.n_selected
         self._sep_selected = self._snapshot.sep_selected
         self._con_values = self._snapshot.con_values
 
@@ -157,12 +153,12 @@ class SolverState:
     def add(self, index: int | np.int32):
         # --- validation ----------------------------------
         index = np.int32(index)
-        if index in self._selected:
+        if self._selected[index]:
             raise ValueError("Cannot add index that is already selected.")
 
         # --- selection -----------------------------------
-        self._selected.add(index)
-        self._not_selected.remove(index)
+        self._selected[index] = True
+        self._n_selected += np.int32(1)
 
         # --- separation ----------------------------------
         update_separation_add(self._sep_selected, self._pdist, self._n, index)
@@ -178,12 +174,12 @@ class SolverState:
     def remove(self, index: int | np.int32):
         # --- validation ----------------------------------
         index = np.int32(index)
-        if index in self._not_selected:
+        if not self._selected[index]:
             raise ValueError("Cannot remove index that is not selected.")
 
         # --- selection -----------------------------------
-        self._selected.remove(index)
-        self._not_selected.add(index)
+        self._selected[index] = False
+        self._n_selected -= np.int32(1)
 
         # --- separation ----------------------------------
         update_separation_remove(self._sep_selected, self._pdist, self._n, index, self.selected_index_array)
@@ -212,7 +208,12 @@ class SolverState:
     @property
     def n_selected(self) -> np.int32:
         """Return current number of selected vectors."""
-        return np.int32(len(self._selected))
+        return self._n_selected
+
+    @property
+    def n_not_selected(self) -> np.int32:
+        """Return current number of selected vectors."""
+        return self._n - self._n_selected
 
     @cached_property
     def m(self) -> np.int32:
@@ -237,22 +238,22 @@ class SolverState:
     @property
     def selected_index_array(self) -> NDArray[np.int32]:
         """Return selected indices as a numpy array of np.int32."""
-        return np.array(self._selected, dtype=np.int32)
+        return np.flatnonzero(self._selected).astype(np.int32)
 
     @property
     def not_selected_index_array(self) -> NDArray[np.int32]:
         """Return not selected indices as a numpy array of np.int32."""
-        return np.array(self._not_selected, dtype=np.int32)
+        return np.flatnonzero(~self._selected).astype(np.int32)
 
     @property
     def selected_separation_array(self) -> NDArray[np.float32]:
         """Return separation of selected vectors wrt other selected vectors as a numpy array of np.float32."""
-        return self._sep_selected[list(self._selected)]
+        return self._sep_selected[self._selected]
 
     @property
     def not_selected_separation_array(self) -> NDArray[np.float32]:
         """Return separation of not selected vectors wrt selected vectors as a numpy array of np.float32."""
-        return self._sep_selected[list(self._not_selected)]
+        return self._sep_selected[~self._selected]
 
     @property
     def full_separation_array(self) -> NDArray[np.float32]:
@@ -269,7 +270,7 @@ class SolverState:
     # -------------------------------------------------------------------------
     def _update_score(self):
         self._score = self._score_generator.compute_score(
-            n_selected=len(self._selected),
+            n_selected=self._n_selected,
             con_values=self._con_values,
             selected_separation_array=self.selected_separation_array,
         )
@@ -301,8 +302,7 @@ class SolverState:
         sep_selected = np.full(n, fill_value=np.inf, dtype=np.float32)
 
         # --- selection ---
-        selected = SortedSet()
-        not_selected = SortedSet(np.arange(n, dtype=np.int32))
+        selected = np.full(n, False, dtype=np.bool)
 
         # --- constraints ---
         con_values, con_indices = ConstraintList(constraints).to_numpy()
@@ -324,7 +324,6 @@ class SolverState:
             pdist=pdist,
             score_generator=score_generator,
             selected=selected,
-            not_selected=not_selected,
             sep_global=sep_global,
             sep_selected=sep_selected,
             con_values=con_values,
@@ -336,7 +335,7 @@ class SolverState:
 # =================================================================================================
 #  Helper Classes
 # =================================================================================================
-@dataclass
+@dataclass(slots=True)
 class Snapshot:
     """
     Class internally used by SolverState to store snapshots of its state.  This class models a subset of the fields
@@ -345,8 +344,8 @@ class Snapshot:
 
     is_valid: bool
 
-    selected: SortedSet  # sorted set of np.int32
-    not_selected: SortedSet  # sorted set of np.int32
+    selected: NDArray[np.bool]  # boolean array representing the selection
+    n_selected: np.int32  # number of True values in 'selected'
 
     sep_selected: NDArray[np.float32]  # m-sized 1D array with separation of each vector wrt selected set
     con_values: NDArray[np.int32]  # (nc x 2)-sized array with current status of constraint bounds
@@ -357,8 +356,8 @@ class Snapshot:
     def clear(self):
         """Clear the snapshot, making it invalid."""
         self.is_valid = False
-        self.selected = _EMPTY_SORTED_SET
-        self.not_selected = _EMPTY_SORTED_SET
+        self.selected = _EMPTY_NP_ARRAY_BOOL
+        self.n_selected = np.int32(0)
         self.sep_selected = _EMPTY_NP_ARRAY_FLOAT32
         self.con_values = _EMPTY_NP_ARRAY_INT32
 
@@ -367,15 +366,15 @@ class Snapshot:
         """Create and return an empty/invalid snapshot."""
         return Snapshot(
             is_valid=False,
-            selected=_EMPTY_SORTED_SET,
-            not_selected=_EMPTY_SORTED_SET,
+            selected=_EMPTY_NP_ARRAY_BOOL,
+            n_selected=np.int32(0),
             sep_selected=_EMPTY_NP_ARRAY_FLOAT32,
             con_values=_EMPTY_NP_ARRAY_INT32,
         )
 
 
 # singletons to avoid repeated, unnecessary allocations
-_EMPTY_SORTED_SET = SortedSet()
+_EMPTY_NP_ARRAY_BOOL = np.array([], dtype=np.bool)
 _EMPTY_NP_ARRAY_INT32 = np.array([], dtype=np.int32)
 _EMPTY_NP_ARRAY_FLOAT32 = np.array([], dtype=np.float32)
 

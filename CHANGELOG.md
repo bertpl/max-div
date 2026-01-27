@@ -6,6 +6,8 @@
 <!------------------------------------------------------------------------------------------------->
 
 - **improved**:
+  - general solver speedup
+    - factor ~2-3x by keeping track of selection as a boolean numpy array, instead of a SortedSet 
   - solver presets
     - streamline RANDOM & GUIDED presets to always use 'fast' initialization, like all other presets.
 
