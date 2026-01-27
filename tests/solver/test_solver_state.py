@@ -65,9 +65,17 @@ def test_solver_state_add_remove_validation(new_solver_state):
     with pytest.raises(ValueError):
         state.remove(3)  # never added
 
+    with pytest.raises(ValueError):
+        state.remove_many(np.array([3, 4], dtype=np.int32))  # never added
+
     state.add(0)
     with pytest.raises(ValueError):
         state.add(0)  # already selected
+
+    with pytest.raises(ValueError):
+        state.add_many(np.array([0, 1], dtype=np.int32))  # 0 is already selected
+
+    state.add(1)  # this should be possible, since validation errors invalidate the entire batch
 
     state.remove(0)
     with pytest.raises(ValueError):
@@ -162,7 +170,7 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
 
     # --- act ---------------------------------------------
     random.seed(seed)
-    for _ in range(n_iters):
+    for it in range(n_iters):
         # take snapshot
         state.set_snapshot()
 
@@ -170,15 +178,25 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
         n_to_add = random.randint(0, len(state.not_selected_index_array) + 1)
         indices_to_select = state.not_selected_index_array.copy()
         random.shuffle(indices_to_select)
-        for idx in indices_to_select[:n_to_add]:
-            state.add(idx)
+        if it % 2 == 0:
+            # use add()
+            for idx in indices_to_select[:n_to_add]:
+                state.add(idx)
+        else:
+            # use add_many()
+            state.add_many(indices_to_select[:n_to_add])
 
         # remove random number of items
         n_to_remove = random.randint(0, len(state.selected_index_array) + 1)
         indices_to_remove = state.selected_index_array.copy()
         random.shuffle(indices_to_remove)
-        for idx in indices_to_remove[:n_to_remove]:
-            state.remove(idx)
+        if it % 2 == 0:
+            # use remove()
+            for idx in indices_to_remove[:n_to_remove]:
+                state.remove(idx)
+        else:
+            # use remove_many()
+            state.remove_many(indices_to_remove[:n_to_remove])
 
         # restore snapshot with some probability
         if random.rand() < 0.5:

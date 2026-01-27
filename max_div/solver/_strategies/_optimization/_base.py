@@ -367,8 +367,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         REMOVE n samples and return the indices of removed samples.
         """
         samples_to_remove = self._samples_to_be_removed(state, n_to_remove)
-        for s in samples_to_remove:
-            state.remove(s)
+        state.remove_many(samples_to_remove)
         return samples_to_remove
 
     def _add_samples(
@@ -378,8 +377,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         ADD n samples and return the indices of added samples.
         """
         samples_to_add = self._samples_to_be_added(state, n_to_add, candidate_samples)
-        for s in samples_to_add:
-            state.add(s)
+        state.add_many(samples_to_add)
         return samples_to_add
 
     # -------------------------------------------------------------------------

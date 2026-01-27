@@ -154,7 +154,7 @@ class SolverState:
         # --- validation ----------------------------------
         index = np.int32(index)
         if self._selected[index]:
-            raise ValueError("Cannot add index that is already selected.")
+            raise ValueError(f"Cannot add index that is already selected ({index}).")
 
         # --- selection -----------------------------------
         self._selected[index] = True
@@ -170,11 +170,32 @@ class SolverState:
         # --- score ---------------------------------------
         self._update_score()
 
+    def add_many(self, indices: NDArray[np.int32]):
+        # --- validation ----------------------------------
+        if any(self._selected[indices]):
+            raise ValueError(f"Cannot add index that is already selected ({list(indices)}).")
+
+        # --- selection -----------------------------------
+        self._selected[indices] = True
+        self._n_selected += np.int32(len(indices))
+
+        # --- separation ----------------------------------
+        for index in indices:
+            update_separation_add(self._sep_selected, self._pdist, self._n, index)
+
+        # --- constraints ---------------------------------
+        # decrease both min_count and max_count for all constraints that include any of 'indices'
+        for index in indices:
+            self._con_values[self._con_membership[index], :] -= 1
+
+        # --- score ---------------------------------------
+        self._update_score()
+
     def remove(self, index: int | np.int32):
         # --- validation ----------------------------------
         index = np.int32(index)
         if not self._selected[index]:
-            raise ValueError("Cannot remove index that is not selected.")
+            raise ValueError(f"Cannot remove index that is not selected ({index}).")
 
         # --- selection -----------------------------------
         self._selected[index] = False
@@ -186,6 +207,27 @@ class SolverState:
         # --- constraints ---------------------------------
         # increase both min_count and max_count for all constraints that include 'index'
         self._con_values[self._con_membership[index], :] += 1
+
+        # --- score ---------------------------------------
+        self._update_score()
+
+    def remove_many(self, indices: NDArray[np.int32]):
+        # --- validation ----------------------------------
+        if any(~self._selected[indices]):
+            raise ValueError(f"Cannot remove index that is not selected ({list(indices)}).")
+
+        # --- selection -----------------------------------
+        self._selected[indices] = False
+        self._n_selected -= np.int32(len(indices))
+
+        # --- separation ----------------------------------
+        for index in indices:
+            update_separation_remove(self._sep_selected, self._pdist, self._n, index, self.selected_index_array)
+
+        # --- constraints ---------------------------------
+        # increase both min_count and max_count for all constraints that include any of 'indices'
+        for index in indices:
+            self._con_values[self._con_membership[index], :] += 1
 
         # --- score ---------------------------------------
         self._update_score()

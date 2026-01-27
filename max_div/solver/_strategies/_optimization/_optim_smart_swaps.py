@@ -233,8 +233,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
 
             # 2) evaluate this candidate group of samples
             #  --> temporarily add all samples
-            for s in candidate_samples_to_add:
-                state.add(s)
+            state.add_many(candidate_samples_to_add)
 
             #  --> compute new score & update best score/samples
             cand_score_tuple = state.score.as_tuple(
@@ -247,12 +246,10 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
                 best_samples = candidate_samples_to_add
 
             #  --> re-remove all samples
-            for s in candidate_samples_to_add:
-                state.remove(s)
+            state.remove_many(candidate_samples_to_add)
 
         # b) now actually add best sample set to selection
-        for s in best_samples:
-            state.add(s)
+        state.add_many(best_samples)
 
         # return best samples
         return best_samples

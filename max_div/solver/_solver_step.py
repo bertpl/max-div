@@ -84,8 +84,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
                 )
 
                 # --- add items to state ---
-                for s in samples:
-                    state.add(s)
+                state.add_many(samples)
 
                 tracker.report_iterations_done(len(samples))
 

@@ -8,7 +8,8 @@
 - **improved**:
   - general solver (`SolverState`) low-level speed optimizations (factor ~2-3x)
     - keep track of selection as a boolean numpy array, instead of a SortedSet 
-    - keep track of constraint membership as numpy arrays instead of Python lists  
+    - keep track of constraint membership as numpy arrays instead of Python lists
+    - implement `SolverState.add_many`, `SolverState.remove_many` methods for more efficient batch modifications
   - solver presets
     - streamline RANDOM & GUIDED presets to always use 'fast' initialization, like all other presets.
 

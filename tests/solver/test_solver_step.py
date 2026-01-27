@@ -49,6 +49,9 @@ class DummySolverState:
     def add(self, s: int):
         self.n_selected += 1
 
+    def add_many(self, samples: NDArray[np.int32]):
+        self.n_selected += len(samples)
+
     @property
     def not_selected_index_array(self):
         return np.arange(self.n, dtype=np.int32)[self.n_selected :]
