@@ -164,9 +164,8 @@ class SolverState:
         update_separation_add(self._sep_selected, self._pdist, self._n, index)
 
         # --- constraints ---------------------------------
-        for i_con in self._con_membership[index]:
-            self._con_values[i_con, 0] -= 1  # decrease min_count
-            self._con_values[i_con, 1] -= 1  # decrease max_count
+        # decrease both min_count and max_count for all constraints that include 'index'
+        self._con_values[self._con_membership[index], :] -= 1
 
         # --- score ---------------------------------------
         self._update_score()
@@ -185,9 +184,8 @@ class SolverState:
         update_separation_remove(self._sep_selected, self._pdist, self._n, index, self.selected_index_array)
 
         # --- constraints ---------------------------------
-        for i_con in self._con_membership[index]:
-            self._con_values[i_con, 0] += 1  # increase min_count
-            self._con_values[i_con, 1] += 1  # increase max_count
+        # increase both min_count and max_count for all constraints that include 'index'
+        self._con_values[self._con_membership[index], :] += 1
 
         # --- score ---------------------------------------
         self._update_score()
@@ -385,11 +383,17 @@ _EMPTY_NP_ARRAY_FLOAT32 = np.array([], dtype=np.float32)
 def _build_con_membership(
     m: np.int32,
     constraints: list[Constraint],
-) -> dict[np.int32, list[np.int32]]:
+) -> dict[np.int32, NDArray[np.int32]]:
     """Build a mapping from each index to the list of constraints it belongs to."""
-    con_membership: dict[np.int32, list[np.int32]] = {i: [] for i in np.arange(m, dtype=np.int32)}
+
+    # map index -> list
+    con_membership_lst: dict[np.int32, list[np.int32]] = {i: [] for i in np.arange(m, dtype=np.int32)}
     for i_con, con in enumerate(constraints):
         i_con = np.int32(i_con)
         for idx in con.int_set:
-            con_membership[np.int32(idx)].append(i_con)
+            con_membership_lst[np.int32(idx)].append(i_con)
+
+    # map index -> np.array
+    con_membership = {idx: np.array(con_list, dtype=np.int32) for idx, con_list in con_membership_lst.items()}
+
     return con_membership

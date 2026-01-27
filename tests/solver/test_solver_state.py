@@ -217,11 +217,6 @@ def test_build_con_membership():
         Constraint(int_set={3, 11}, min_count=2, max_count=2),
     ]
     m = np.int32(14)
-
-    # --- act ---------------------------------------------
-    con_membership = _build_con_membership(m, cons)
-
-    # --- assert ------------------------------------------
     expected_membership = {
         0: [0],
         1: [0],
@@ -238,5 +233,14 @@ def test_build_con_membership():
         12: [1],
         13: [1],
     }
+    expected_membership = {k: np.array(v, dtype=np.int32) for k, v in expected_membership.items()}
 
-    assert con_membership == expected_membership
+    # --- act ---------------------------------------------
+    con_membership = _build_con_membership(m, cons)
+
+    # --- assert ------------------------------------------
+    assert con_membership.keys() == expected_membership.keys()
+    for key, value in con_membership.items():
+        assert isinstance(value, np.ndarray)
+        assert value.dtype == np.int32
+        assert np.array_equal(value, expected_membership[key])
