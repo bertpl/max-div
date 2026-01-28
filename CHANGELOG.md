@@ -5,7 +5,8 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **deprecated**:
+  - remove platform benchmarking functionality (formerly used to estimate duration of initialization strategies in presets) 
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.7
