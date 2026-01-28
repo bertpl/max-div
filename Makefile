@@ -74,7 +74,7 @@ update-internal-benchmarks:
 	$(MAKE) docs
 
 update-solver-benchmarks:
-	uv run max-div benchmark solver run --markdown --file all;
+	uv run max-div benchmark solver strategies --markdown --file --problem=all;
 	rm ./docs/benchmarks/solver/results/*.md;
 	mv ./benchmark*.md ./docs/benchmarks/solver/results/;
 	$(MAKE) docs

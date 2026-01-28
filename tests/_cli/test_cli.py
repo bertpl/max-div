@@ -8,12 +8,12 @@ from max_div.benchmarks import BenchmarkProblemFactory
 # =================================================================================================
 #  benchmark solver
 # =================================================================================================
-def test_cli_benchmark_solver_list():
+def test_cli_benchmark_solver_list_problems():
     # --- arrange -----------------------------------------
     runner = CliRunner()
 
     # --- act ---------------------------------------------
-    result = runner.invoke(benchmark, ["solver", "list"])
+    result = runner.invoke(benchmark, ["solver", "list_problems"])
 
     # --- assert ------------------------------------------
     assert result.exit_code == 0
@@ -30,12 +30,13 @@ def test_cli_benchmark_solver_list():
     ],
 )
 @pytest.mark.parametrize("test_problem", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()) + ["all"])
-def test_cli_benchmark_solver_run(options: list[str], test_problem: str):
+def test_cli_benchmark_solver_strategies(options: list[str], test_problem: str):
     # --- arrange -----------------------------------------
     runner = CliRunner()
+    options.append(f"--problem={test_problem}")
 
     # --- act ---------------------------------------------
-    result = runner.invoke(benchmark, ["solver", "run", *options, test_problem])
+    result = runner.invoke(benchmark, ["solver", "strategies", *options])
 
     # --- assert ------------------------------------------
     assert result.exit_code == 0

@@ -18,7 +18,7 @@ class BenchmarkProblem_U3(BenchmarkProblem):
 
     @classmethod
     def description(cls) -> str:
-        return "Unconstrained problem with uniform vector density"
+        return "Unconstrained problem with non-uniform vector density (exponentially spaced)"
 
     @classmethod
     def supported_params(cls) -> dict[str, str]:

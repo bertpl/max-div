@@ -25,7 +25,7 @@ max-div --help
 There are two categories of benchmarks: `solver` and `internal`.
 
 ```bash
-max-div benchmark solver <test_problem>
+max-div benchmark solver <sub_command>
 max-div benchmark internal <method>
 ```
 
@@ -34,18 +34,18 @@ max-div benchmark internal <method>
 The following commands support running test problems to evaluate solver performance:
 
 ```bash
-max-div benchmark solver list
-max-div benchmark solver run all
-max-div benchmark solver run <test_problem>
+max-div benchmark solver list_problems
+max-div benchmark solver strategies <options>
 ```
 
-The `run` sub-command supports the following flags & options:
+The `strategies` sub-command tests both individual initialization & optimization strategies & supports the following flags & options:
 
 ```
 --turbo       Run a much faster (but less reliable/complete) benchmark; equivalent with --speed=1.0; overrides --speed if both are provided.
 --speed       Value between 0.0 (default) and 1.0 (fastest) to speed up the benchmark at the cost of accuracy/completeness.
 --markdown    Output results in Markdown format
 --file        Output results to a file in current directory instead of stdout
+--problem     Either the name of a specific test problem (see `list_problems`) or `all` to run all test problems (default: `all`)
 ```
 
 For results, see [here](./benchmarks/solver/test_problems.md).

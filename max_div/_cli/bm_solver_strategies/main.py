@@ -6,7 +6,7 @@ from ._bm_initialization import BenchmarkSolverConstructor_Initialization
 from ._bm_optimization import BenchmarkSolverConstructor_Optimization
 
 
-def run_solver_benchmark(
+def run_solver_strategies_benchmark(
     name: str,
     markdown: bool,
     file: bool = False,
@@ -21,7 +21,9 @@ def run_solver_benchmark(
         # special case: run all benchmark problems
         all_problem_names = list(BenchmarkProblemFactory.get_all_benchmark_problems().keys())
         for problem_name in all_problem_names:
-            run_solver_benchmark(problem_name, markdown, file, speed, benchmark_initialization, benchmark_optimization)
+            run_solver_strategies_benchmark(
+                problem_name, markdown, file, speed, benchmark_initialization, benchmark_optimization
+            )
         return
 
     # -------------------------------------------------------------------------

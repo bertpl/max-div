@@ -5,6 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **improved**:
+  - rename cli command `benchmark solver run` to `benchmark solver strategies` to accommodate future additions.  
+
 - **deprecated**:
   - remove platform benchmarking functionality (formerly used to estimate duration of initialization strategies in presets) 
 
