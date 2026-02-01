@@ -1,5 +1,5 @@
-from max_div.solver import MaxDivProblem
 from max_div.solver._duration import TargetDuration
+from max_div.solver._problem import MaxDivProblem
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy
 
@@ -17,7 +17,7 @@ def get_preset_strategies(
     preset: SolverPreset,
     target_duration: TargetDuration,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
-    match preset:
+    match preset.resolve_alias():
         case SolverPreset.RANDOM:
             return get_preset_strategies_random(
                 target_duration,
@@ -27,7 +27,7 @@ def get_preset_strategies(
                 problem,
                 target_duration,
             )
-        case SolverPreset.SMART | SolverPreset.DEFAULT:
+        case SolverPreset.SMART:
             return get_preset_strategies_smart(
                 problem,
                 target_duration,

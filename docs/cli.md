@@ -36,6 +36,7 @@ The following commands support running test problems to evaluate solver performa
 ```bash
 max-div benchmark solver list_problems
 max-div benchmark solver strategies <options>
+max-div benchmark solver presets <options>
 ```
 
 The `strategies` sub-command tests both individual initialization & optimization strategies & supports the following flags & options:
@@ -47,6 +48,9 @@ The `strategies` sub-command tests both individual initialization & optimization
 --file        Output results to a file in current directory instead of stdout
 --problem     Either the name of a specific test problem (see `list_problems`) or `all` to run all test problems (default: `all`)
 ```
+
+The `presets` sub-command tests predefined solver presets (=predefined initialization + optimization strategies)
+  & supports similar flags & options as the `strategies` sub-command.
 
 For results, see [here](./benchmarks/solver/test_problems.md).
 

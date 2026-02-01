@@ -1,9 +1,12 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
-> ## v0.4.8
-> *(under development)*
+> ## v0.5.0
+> *(2026-02-01)*
 <!------------------------------------------------------------------------------------------------->
+
+- **new**:
+  - add solver preset benchmarking capabilities to CLI  
 
 - **improved**:
   - rename cli command `benchmark solver run` to `benchmark solver strategies` to accommodate future additions.

@@ -74,20 +74,19 @@ def test_target_duration_eq(duration_a: TargetDuration, duration_b: TargetDurati
 
 
 @pytest.mark.parametrize(
-    "duration, expected_repr",
+    "duration, expected_repr, expected_str",
     [
-        (iterations(1000), "TargetDuration(1_000 iterations)"),
-        (seconds(0.1234), "TargetDuration(123.40ms)"),
-        (seconds(1.234), "TargetDuration(1.23s)"),
-        (seconds(10.5), "TargetDuration(10.50s)"),
-        (minutes(5.0), "TargetDuration(5m0.00s)"),
-        (hours(1.0), "TargetDuration(1h0m0.0s)"),
+        (iterations(1000), "TargetDuration(1_000 it.)", "1_000 it."),
+        (seconds(0.1234), "TargetDuration(123.40ms)", "123.40ms"),
+        (seconds(1.234), "TargetDuration(1.23s)", "1.23s"),
+        (seconds(10.5), "TargetDuration(10.50s)", "10.50s"),
+        (minutes(5.0), "TargetDuration(5m0.00s)", "5m0.00s"),
+        (hours(1.0), "TargetDuration(1h0m0.0s)", "1h0m0.0s"),
     ],
 )
-def test_target_duration_str_repr(duration: TargetDuration, expected_repr: str):
-    print(str(duration))
-    assert str(duration) == expected_repr
+def test_target_duration_repr_str(duration: TargetDuration, expected_repr: str, expected_str: str):
     assert repr(duration) == expected_repr
+    assert str(duration) == expected_str
 
 
 @pytest.mark.parametrize(
@@ -130,6 +129,16 @@ def test_target_duration_mul_type_error():
 
     with pytest.raises(TypeError):
         _ = "invalid" * seconds(60.0)
+
+
+def test_duration_lt():
+    assert iterations(100) < iterations(200)
+    assert seconds(10.0) < seconds(20.0)
+    assert seconds(30.0) < minutes(1.0)
+    assert minutes(2.0) < hours(0.1)
+
+    with pytest.raises(TypeError):
+        _ = iterations(100) < "bla"
 
 
 # =================================================================================================

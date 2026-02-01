@@ -10,7 +10,10 @@ from max_div.random import Constraint
 
 from ._distance import DistanceMetric
 from ._diversity import DiversityMetric
+from ._duration import TargetDuration, TargetIterationCount, TargetTimeDuration, hours, iterations, minutes, seconds
+from ._presets import SolverPreset
 from ._problem import MaxDivProblem
+from ._score import Score
 from ._solution import MaxDivSolution
 from ._solver import MaxDivSolver
 from ._solver_builder import MaxDivSolverBuilder

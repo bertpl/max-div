@@ -1,10 +1,8 @@
 import click
 
 from max_div.benchmarks import BenchmarkProblemFactory
-from max_div.solver import DiversityMetric, MaxDivSolverBuilder
-from max_div.solver._duration import TargetDuration
+from max_div.solver import DiversityMetric, MaxDivSolverBuilder, SolverPreset, TargetDuration
 
-from ..solver._presets import SolverPreset
 from ._cli import cli
 
 
@@ -12,11 +10,11 @@ from ._cli import cli
 @click.argument("test_problem")
 @click.option(
     "--iterations",
-    help="Number of iterations. Use this or --seconds to indicate duration.  Default=1000 iter.",
+    help="Number of iterations. Use this or --seconds to indicate duration.  Default=100 iter.",
 )
 @click.option(
     "--seconds",
-    help="Number of seconds. Use this or --iterations to indicate duration.  Default=1000 iter.",
+    help="Number of seconds. Use this or --iterations to indicate duration.  Default=100 iter.",
 )
 @click.option(
     "--verbosity",
@@ -47,7 +45,7 @@ def solve(
     if (iterations is not None) and (seconds is not None):
         raise click.UsageError("Please provide only one of --iterations or --seconds.")
     if (not iterations) and (not seconds):
-        duration = TargetDuration.iterations(1000)  # default to 1000 iterations
+        duration = TargetDuration.iterations(100)  # default to 100 iterations
     elif iterations is not None:
         duration = TargetDuration.iterations(int(iterations))
     else:

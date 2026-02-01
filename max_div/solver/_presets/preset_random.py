@@ -1,7 +1,4 @@
-import math
-
 from max_div.solver._duration import TargetDuration
-from max_div.solver._problem import MaxDivProblem
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 

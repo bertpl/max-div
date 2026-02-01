@@ -2,11 +2,17 @@ import numpy as np
 import pytest
 
 from max_div.benchmarks import BenchmarkProblemFactory
-from max_div.solver import Constraint, MaxDivProblem, MaxDivSolver, MaxDivSolverBuilder
+from max_div.solver import (
+    Constraint,
+    MaxDivProblem,
+    MaxDivSolver,
+    MaxDivSolverBuilder,
+    SolverPreset,
+    iterations,
+    seconds,
+)
 from max_div.solver._distance import DistanceMetric
 from max_div.solver._diversity import DiversityMetric
-from max_div.solver._duration import TargetDuration, iterations, seconds
-from max_div.solver._presets import SolverPreset
 from max_div.solver._solver_step import InitializationStep, OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 

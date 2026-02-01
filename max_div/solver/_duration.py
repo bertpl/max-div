@@ -32,30 +32,41 @@ class TargetDuration(ABC):
         """numerical value (without unit) of the target duration"""
         raise NotImplementedError()
 
+    def __repr__(self):
+        return f"TargetDuration({str(self)})"
+
     def __eq__(self, other):
         return isinstance(other, TargetDuration) and (type(self) is type(other)) and (self.value() == other.value())
+
+    def __hash__(self):
+        return hash((type(self), self.value()))
+
+    def __lt__(self, other):
+        if not isinstance(other, TargetDuration):
+            return NotImplemented
+        return self.value() < other.value()
 
     # -------------------------------------------------------------------------
     #  Factory methods
     # -------------------------------------------------------------------------
     @classmethod
     def seconds(cls, t_target_sec: float) -> TargetDuration:
-        return _TargetTimeDuration(t_target_sec)
+        return TargetTimeDuration(t_target_sec)
 
     @classmethod
     def minutes(cls, t_target_min: float) -> TargetDuration:
-        return _TargetTimeDuration(t_target_min * 60.0)
+        return TargetTimeDuration(t_target_min * 60.0)
 
     @classmethod
     def hours(cls, t_target_hours: float) -> TargetDuration:
-        return _TargetTimeDuration(t_target_hours * 3600.0)
+        return TargetTimeDuration(t_target_hours * 3600.0)
 
     @classmethod
     def iterations(cls, n_iters: int) -> TargetDuration:
-        return _TargetIterationCount(n_iters)
+        return TargetIterationCount(n_iters)
 
 
-class _TargetTimeDuration(TargetDuration):
+class TargetTimeDuration(TargetDuration):
     def __init__(self, t_target_sec: float):
         if t_target_sec <= 0:
             raise ValueError("t_target_sec must be > 0")
@@ -65,25 +76,21 @@ class _TargetTimeDuration(TargetDuration):
         return self._t_target_sec
 
     def __str__(self):
-        return repr(self)
-
-    def __repr__(self):
-        t_str = format_time_duration(self._t_target_sec, n_chars=8).strip()
-        return f"TargetDuration({t_str})"
+        return format_time_duration(self._t_target_sec, n_chars=8).strip()
 
     def track(self) -> ProgressTracker:
         return _TimeTracker(self._t_target_sec)
 
-    def __mul__(self, other: float | int) -> _TargetTimeDuration:
+    def __mul__(self, other: float | int) -> TargetTimeDuration:
         if not isinstance(other, (float, int)):
             return NotImplemented
-        return _TargetTimeDuration(max(1e-9, self._t_target_sec * other))
+        return TargetTimeDuration(max(1e-9, self._t_target_sec * other))
 
-    def __rmul__(self, other: float | int) -> _TargetTimeDuration:
+    def __rmul__(self, other: float | int) -> TargetTimeDuration:
         return self.__mul__(other)
 
 
-class _TargetIterationCount(TargetDuration):
+class TargetIterationCount(TargetDuration):
     def __init__(self, n_iters: int):
         if n_iters <= 0:
             raise ValueError("n_iters must be > 0")
@@ -93,20 +100,17 @@ class _TargetIterationCount(TargetDuration):
         return float(self._n_iters)
 
     def __str__(self):
-        return repr(self)
-
-    def __repr__(self):
-        return f"TargetDuration({self._n_iters:_} iterations)"
+        return f"{self._n_iters:_} it."
 
     def track(self) -> ProgressTracker:
         return _IterationTracker(self._n_iters)
 
-    def __mul__(self, other: float | int) -> _TargetIterationCount:
+    def __mul__(self, other: float | int) -> TargetIterationCount:
         if not isinstance(other, (float, int)):
             return NotImplemented
-        return _TargetIterationCount(max(1, round(self._n_iters * other)))
+        return TargetIterationCount(max(1, round(self._n_iters * other)))
 
-    def __rmul__(self, other: float | int) -> _TargetIterationCount:
+    def __rmul__(self, other: float | int) -> TargetIterationCount:
         return self.__mul__(other)
 
 
