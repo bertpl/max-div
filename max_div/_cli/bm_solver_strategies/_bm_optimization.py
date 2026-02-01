@@ -1,6 +1,5 @@
-from max_div._cli.formatting import format_table_as_markdown, format_table_for_console
 from max_div.benchmarks._strategy_presets import OptimPreset
-from max_div.internal.formatting import md_multiline
+from max_div.internal.markdown import Report, ReportElement, Table
 from max_div.solver import DiversityMetric, MaxDivSolver, MaxDivSolverBuilder
 from max_div.solver._duration import iterations
 from max_div.solver._solver_step import OptimizationStep
@@ -50,42 +49,18 @@ class BenchmarkSolverConstructor_Optimization(BenchmarkSolverConstructor):
     def strategy_names(self) -> list[str]:
         return list(self._presets.keys())
 
-    def show_strategies_table(self, markdown: bool):
-        # --- prepare table data ------------------------------
-        if markdown:
-            headers = ["`name`", "`class`", "`params`"]
-        else:
-            headers = ["name", "class", "params"]
-
-        if self.has_constraints:
-            headers.append("Constraint-aware")
-
-        table_data = []
+    def build_strategies_table(self) -> list[ReportElement | str]:
+        # --- prepare table ---------------------
+        table = Table(["`name`", "`class`", "`params`"] + (["Constraint-aware"] if self.has_constraints else []))
         for name, preset in self._presets.items():
-            class_name = preset.class_name()
-            if markdown:
-                class_kwargs = md_multiline([f"{k}={str(v)}" for k, v in preset.class_kwargs().items()])
-            else:
-                class_kwargs = ", ".join([f"{k}={str(v)}" for k, v in preset.class_kwargs().items()])
-
-            table_data.append(
+            table.add_row(
                 [
-                    f"`{name}`" if markdown else name,
-                    class_name,
-                    class_kwargs,
+                    f"`{name}`",
+                    preset.class_name(),
+                    "\n".join([f"{k}={str(v)}" for k, v in preset.class_kwargs().items()]),
                 ]
+                + ([str(preset.is_constraint_aware())] if self.has_constraints else [])
             )
-            if self.has_constraints:
-                table_data[-1].append(preset.is_constraint_aware())
 
-        # --- show table ---
-        if markdown:
-            display_data = format_table_as_markdown(headers, table_data)
-        else:
-            display_data = format_table_for_console(headers, table_data)
-
-        print(f"Tested Optimization strategies ({self._n_iterations} iterations):")
-        print()
-        for line in display_data:
-            print(line)
-        print()
+        # --- return ReportElements list --------
+        return [f"Tested Optimization strategies ({self._n_iterations} iterations):", table]

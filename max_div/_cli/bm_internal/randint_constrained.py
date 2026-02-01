@@ -6,18 +6,17 @@ from abc import ABC, abstractmethod
 import numpy as np
 from tqdm import tqdm
 
-from max_div._cli.formatting import (
-    BoldLabels,
-    CellContent,
-    FastestBenchmark,
-    HighestPercentage,
-    Percentage,
-    extend_table_with_aggregate_row,
-    format_table_as_markdown,
-    format_table_for_console,
+from max_div.internal.benchmarking import benchmark
+from max_div.internal.markdown import (
+    Report,
+    Table,
+    TableAggregationType,
+    TablePercentage,
+    TableTimeElapsed,
+    h2,
+    h3,
+    h4,
 )
-from max_div.internal.benchmarking import BenchmarkResult, benchmark
-from max_div.internal.formatting import md_multiline
 from max_div.internal.utils import stdout_to_file
 from max_div.random import P_UNIFORM, Constraint, ConstraintList, new_rng_state, randint, randint_constrained
 
@@ -56,33 +55,6 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
     :param file: If `True`, redirects output to a file instead of console.
     """
 
-    # --- define formatting -------------------------------
-    def print_table(_headers: list[str], _data: list[list[CellContent]]):
-        if markdown:
-            _table = format_table_as_markdown(
-                _headers,
-                _data,
-                highlighters=[
-                    FastestBenchmark(),
-                    HighestPercentage(),
-                    BoldLabels(),
-                ],
-            )
-        else:
-            _headers = [h.replace("`", "").replace("<br>", " ") for h in _headers]
-            _table = format_table_for_console(_headers, _data)
-
-        for _line in _table:
-            print(_line)
-        print()
-
-    def print_header(_txt: str, _level: int):
-        if markdown:
-            print(f"{'#' * _level} {_txt}")
-        else:
-            print(f"{_txt}:")
-        print()
-
     # --- speed-dependent settings --------------------
     max_count = int(100 * (0.01**speed))  # max_count=100 if speed=0;  max_count=1 at speed=1
 
@@ -96,8 +68,16 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
     for s in scenarios:
         for use_p in [False, True]:
             # --- benchmark scenario ----------------
-            timing_data: list[list[CellContent]] = []
-            accuracy_data: list[list[CellContent]] = []
+            headers = [
+                "`k`",
+                "`n`",
+                "`m`",
+                "`randint`",
+                "`randint_constrained`\n(eager=False)",
+                "`randint_constrained`\n(eager=True)",
+            ]
+            timing_table = Table(headers)
+            accuracy_table = Table(headers)
 
             for i, (n, k, m) in enumerate(tqdm(s.n_k_m_tuples(), leave=file)):
                 if i >= max_count:
@@ -111,7 +91,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                     p = None
 
                 # --- benchmark & determine precision ---
-                timing_data.append(
+                timing_table.add_row(
                     [
                         str(k),
                         str(n),
@@ -122,7 +102,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                     ]
                 )
 
-                accuracy_data.append(
+                accuracy_table.add_row(
                     [
                         str(k),
                         str(n),
@@ -135,39 +115,32 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
 
             # --- show all results --------------------------------------------
 
-            # --- prepare tables ---
-            headers = [
-                "`k`",
-                "`n`",
-                "`m`",
-                "`randint`",
-                md_multiline(["`randint_constrained`", "(eager=False)"]),
-                md_multiline(["`randint_constrained`", "(eager=True)"]),
+            # --- prepare final report ---
+            timing_table.add_aggregate_row(TableAggregationType.GEOMEAN)
+            timing_table.highlight_results(TableTimeElapsed, clr_lowest=Table.GREEN)
+
+            accuracy_table.add_aggregate_row(TableAggregationType.MEAN)
+            accuracy_table.highlight_results(TablePercentage, clr_highest=Table.GREEN)
+
+            report = Report()
+            if i_file in [1, 3]:
+                report += [h2(s.name), s.description]
+            if use_p:
+                report += h3("Non-uniform sampling (custom p).")
+            else:
+                report += h3("Uniform sampling.")
+
+            report += [
+                h4("Timing Results"),
+                timing_table,
+                h4("Accuracy Results"),
+                accuracy_table,
             ]
-            timing_data = extend_table_with_aggregate_row(timing_data, agg="geomean")
-            accuracy_data = extend_table_with_aggregate_row(accuracy_data, agg="mean")
 
             # --- output ---
             i_file += 1
             with stdout_to_file(file, f"benchmark_randint_constrained_{i_file}.md"):
-                # headers
-                if i_file in [1, 3]:
-                    print_header(s.name, 2)
-                    print(s.description)
-                    print()
-
-                if use_p:
-                    print_header("Non-uniform sampling (custom p).", 3)
-                else:
-                    print_header("Uniform sampling.", 3)
-
-                # timing results
-                print_header("Timing Results", 4)
-                print_table(headers, timing_data)
-
-                # accuracy results
-                print_header("Accuracy Results", 4)
-                print_table(headers, accuracy_data)
+                report.print(markdown=markdown)
 
 
 # =================================================================================================
@@ -181,7 +154,7 @@ def _benchmark(
     p: np.ndarray | None,
     speed: float,
     mode: str,
-) -> BenchmarkResult:
+) -> TableTimeElapsed:
     """
     Runs a benchmark and returns the BenchmarkResult.
     """
@@ -238,13 +211,15 @@ def _benchmark(
                 eager=eager,
             )
 
-    return benchmark(
-        f=benchmark_func,
-        t_per_run=t_per_run,
-        n_warmup=n_warmup,
-        n_benchmark=n_benchmark,
-        silent=True,
-        index_range=index_range,
+    return TableTimeElapsed.from_benchmark_result(
+        benchmark(
+            f=benchmark_func,
+            t_per_run=t_per_run,
+            n_warmup=n_warmup,
+            n_benchmark=n_benchmark,
+            silent=True,
+            index_range=index_range,
+        )
     )
 
 
@@ -256,7 +231,7 @@ def _determine_precision(
     p: np.ndarray | None,
     speed: float,
     mode: str,
-) -> Percentage:
+) -> TablePercentage:
     """
     Determines how often (%) the constraints are satisfied when sampling.
     """
@@ -302,7 +277,7 @@ def _determine_precision(
         if constraints_satisfied:
             satisfied_count += 1
 
-    return Percentage(frac=satisfied_count / n_runs, decimals=1)
+    return TablePercentage(frac=satisfied_count / n_runs, decimals=1)
 
 
 # =================================================================================================

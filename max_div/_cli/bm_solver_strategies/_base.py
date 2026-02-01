@@ -5,17 +5,16 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from max_div._cli.formatting import (
-    BoldLabels,
-    FastestBenchmark,
-    HighestNumberWithUncertainty,
-    NumberWithUncertainty,
-    extend_table_with_aggregate_row,
-    format_table_as_markdown,
-    format_table_for_console,
-)
 from max_div.benchmarks import BenchmarkProblemFactory
-from max_div.internal.benchmarking import BenchmarkResult
+from max_div.internal.markdown import (
+    Report,
+    ReportElement,
+    Table,
+    TableAggregationType,
+    TableTimeElapsed,
+    TableValueWithUncertainty,
+    h3,
+)
 from max_div.internal.utils import stdout_to_file
 from max_div.solver import DiversityMetric, MaxDivProblem, MaxDivSolver
 
@@ -188,48 +187,44 @@ class SolverBenchmarkScope:
 
         # redirect stdout to file if requested
         with stdout_to_file(enabled=file, filename=f"benchmark_{benchmark_type}_{problem_name}.md"):
-            # --- show tested strategies table ----------------
-            self._solver_constructor.show_strategies_table(markdown)
+            # --- initialize report -----------------------
+            report = Report()
+            report += self._solver_constructor.build_strategies_table()
 
-            # --- aggregate data ------------------------------
+            # --- aggregate data --------------------------
             t_elapsed_agg = {
-                (size, strat_name): BenchmarkResult.from_list(result_lst)
+                (size, strat_name): TableTimeElapsed.from_values(result_lst)
                 for (size, strat_name), result_lst in self._t_elapsed.items()
             }
             diversity_scores_agg = {
-                (size, strat_name): NumberWithUncertainty.from_list(result_lst)
+                (size, strat_name): TableValueWithUncertainty.from_values(result_lst)
                 for (size, strat_name), result_lst in self._diversity_scores.items()
             }
             constraint_scores_agg = {
-                (size, strat_name): NumberWithUncertainty.from_list(result_lst)
+                (size, strat_name): TableValueWithUncertainty.from_values(result_lst)
                 for (size, strat_name), result_lst in self._constraint_scores.items()
             }
 
-            # --- prepare table data --------------------------
+            # --- prepare table data ----------------------
 
-            # --- prep ---
+            # --- prep ----------------
             strat_names = self._solver_constructor.strategy_names()
             size_range = sorted({size for size, _, _ in self.params()})
-            scope = [
-                (t_elapsed_agg, "Time Duration", "geomean"),
-                (diversity_scores_agg, "Diversity Score", "geomean"),
+            scope: list[tuple[dict, str, TableAggregationType]] = [
+                (t_elapsed_agg, "Time Duration", TableAggregationType.GEOMEAN),
+                (diversity_scores_agg, "Diversity Score", TableAggregationType.GEOMEAN),
             ]  # (data, title, agg_type)-tuples
             if self._constraints:
-                scope.append((constraint_scores_agg, "Constraint Score", "mean"))
+                scope.append((constraint_scores_agg, "Constraint Score", TableAggregationType.MEAN))
 
-            # --- show all tables ---
+            # --- show all tables -----
+            headers = ["`d`", "`n`", "`k`", "`m`"] + [f"`{s}`" for s in strat_names]
             for data, title, agg_type in scope:
-                # header
-                if markdown:
-                    headers = ["`d`", "`n`", "`k`", "`m`"] + [f"`{s}`" for s in strat_names]
-                else:
-                    headers = ["d", "n", "k", "m"] + strat_names
-
-                # table data
-                table_data = []
+                # create table
+                table = Table(headers)
                 for size in size_range:
                     problem = self._solver_constructor.construct_problem(size)
-                    table_data.append(
+                    table.add_row(
                         [
                             str(problem.d),
                             str(problem.n),
@@ -239,33 +234,17 @@ class SolverBenchmarkScope:
                         + [data[size, strat_name] for strat_name in strat_names]
                     )
 
-                # add aggregates
-                table_data = extend_table_with_aggregate_row(table_data, agg=agg_type)
+                # finalize table & add to report
+                table.add_aggregate_row(agg_type)
+                table.highlight_results(TableTimeElapsed, clr_highest=Table.RED)
+                table.highlight_results(TableTimeElapsed, clr_lowest=Table.GREEN)
+                table.highlight_results(TableValueWithUncertainty, clr_lowest=Table.RED)
+                table.highlight_results(TableValueWithUncertainty, clr_highest=Table.GREEN)
 
-                # --- show title ---
-                if markdown:
-                    print(f"### {title}")
-                else:
-                    print(f"{title}:")
+                report += [h3(title), table]
 
-                # --- show table ---
-                if markdown:
-                    display_data = format_table_as_markdown(
-                        headers,
-                        table_data,
-                        highlighters=[
-                            BoldLabels(),
-                            FastestBenchmark(),
-                            HighestNumberWithUncertainty(),
-                        ],
-                    )
-                else:
-                    display_data = format_table_for_console(headers, table_data)
-
-                print()
-                for line in display_data:
-                    print(line)
-                print()
+            # show final report
+            report.print(markdown=markdown)
 
 
 # =================================================================================================
@@ -332,6 +311,6 @@ class BenchmarkSolverConstructor(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def show_strategies_table(self, markdown: bool):
-        """Displays a table summarizing the strategies that can be constructed by this class."""
+    def build_strategies_table(self) -> list[ReportElement | str]:
+        """Builds a Table object summarizing the strategies that can be constructed by this class."""
         raise NotImplementedError()

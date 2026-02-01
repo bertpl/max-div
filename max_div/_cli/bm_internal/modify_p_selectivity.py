@@ -1,17 +1,16 @@
 import numpy as np
 from tqdm import tqdm
 
-from max_div._cli.formatting import (
-    BoldLabels,
-    CellContent,
-    FastestBenchmark,
-    LowestPercentage,
-    Percentage,
-    extend_table_with_aggregate_row,
-    format_table_as_markdown,
-    format_table_for_console,
-)
 from max_div.internal.benchmarking import benchmark
+from max_div.internal.markdown import (
+    Report,
+    Table,
+    TableAggregationType,
+    TableElement,
+    TablePercentage,
+    TableTimeElapsed,
+    h2,
+)
 from max_div.internal.math.modify_p_selectivity import exponential_selectivity, modify_p_selectivity
 from max_div.internal.utils import stdout_to_file
 
@@ -55,12 +54,12 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
     random_modifiers = np.random.uniform(0.0, 1.0, 100).astype(np.float32)
 
     # --- benchmark ------------------------------------
-    data: list[list[CellContent]] = []
+    table = Table(headers=["size"] + [f"method={method}" for method in MODIFY_P_METHODS] + ["exponential"])
     sizes = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
     sizes = [size for size in sizes if size <= max_size]
 
     for size in tqdm(sizes, leave=file):
-        data_row: list[CellContent] = [str(size)]
+        table_row: list[TableElement | str] = [str(size)]
 
         # Generate random p array for benchmarking
         # Use size-dependent seed for reproducibility
@@ -75,7 +74,26 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
                 modify_p_selectivity(p_in, random_modifiers[_idx], method, p_out)
 
             # run benchmark
-            data_row.append(
+            table_row.append(
+                TableTimeElapsed.from_benchmark_result(
+                    benchmark(
+                        f=benchmark_fun,
+                        t_per_run=t_per_run,
+                        n_warmup=n_warmup,
+                        n_benchmark=n_benchmark,
+                        silent=True,
+                        index_range=100,
+                    )
+                )
+            )
+
+        # test order_based_selectivity
+        def benchmark_fun(_idx: int):
+            exponential_selectivity(p_in, p_out, random_modifiers[_idx])
+
+        # run benchmark
+        table_row.append(
+            TableTimeElapsed.from_benchmark_result(
                 benchmark(
                     f=benchmark_fun,
                     t_per_run=t_per_run,
@@ -85,108 +103,83 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
                     index_range=100,
                 )
             )
-
-        # test order_based_selectivity
-        def benchmark_fun(_idx: int):
-            exponential_selectivity(p_in, p_out, random_modifiers[_idx])
-
-        # run benchmark
-        data_row.append(
-            benchmark(
-                f=benchmark_fun,
-                t_per_run=t_per_run,
-                n_warmup=n_warmup,
-                n_benchmark=n_benchmark,
-                silent=True,
-                index_range=100,
-            )
         )
 
-        data.append(data_row)
+        table.add_row(table_row)
 
     # --- show results -----------------------------------------
 
-    # --- prepare table ---
-
-    # add geomean time + approximation error rows
-    data = extend_table_with_aggregate_row(data, agg="geomean")
-    extra_data_line = (
-        ["e_approx:"] + [Percentage(error_by_method[method], decimals=2) for method in MODIFY_P_METHODS] + ["N/A"]
+    # --- create final report ---
+    table.add_aggregate_row(TableAggregationType.GEOMEAN)
+    table.add_row(
+        ["**e_approx:**"]
+        + [TablePercentage(error_by_method[method], decimals=2) for method in MODIFY_P_METHODS]
+        + ["N/A"]
     )
-    data.append(extra_data_line)
-    headers = ["size"] + [f"method={method}" for method in MODIFY_P_METHODS] + ["exponential"]
 
-    if markdown:
-        display_data = format_table_as_markdown(
-            headers,
-            data,
-            highlighters=[
-                FastestBenchmark(),
-                LowestPercentage(),
-                BoldLabels(),
-            ],
-        )
-    else:
-        display_data = format_table_for_console(headers, data)
+    table.highlight_results(TableTimeElapsed, clr_lowest=Table.GREEN, clr_highest=Table.RED)
+    table.highlight_results(TablePercentage, clr_lowest=Table.GREEN, clr_highest=Table.RED)
+
+    report = Report()
+    report += [
+        "Tested methods:",
+        get_methods_table(),
+        h2("Benchmark results"),
+        table,
+    ]
 
     # --- output ---
     with stdout_to_file(file, "benchmark_modify_p_selectivity.md"):
-        show_methods_table(markdown)
-
-        if markdown:
-            print("## Benchmark results")
-            print()
-        else:
-            print("Benchmark results")
-            print()
-
-        print()
-        for line in display_data:
-            print(line)
-        print()
+        report.print(markdown=markdown)
 
 
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def show_methods_table(markdown: bool) -> None:
-    # --- prepare table data ------------------------------
-    headers = ["`name`", "`method(args)`", "Type", "Details"]
-    data = [
-        ["**method=0**", "`modify_p_selectivity(method=0)`", "Power-based", "p**t"],
+def get_methods_table() -> Table:
+    table = Table(headers=["`name`", "`method(args)`", "Type", "Details"])
+    table.add_row(
+        [
+            "**method=0**",
+            "`modify_p_selectivity(method=0)`",
+            "Power-based",
+            "p**t",
+        ]
+    )
+    table.add_row(
         [
             "**method=10**",
             "`modify_p_selectivity(method=10)`",
             "Power-based",
             "fast_exp2(t * fast_log2(p)) (NOT specifically optimized for this use case)",
-        ],
+        ]
+    )
+    table.add_row(
         [
             "**method=20**",
             "`modify_p_selectivity(method=20)`",
             "Power-based",
             "fast_pow(p, t) (specifically optimized for this use case)",
-        ],
-        ["**method=100**", "`modify_p_selectivity(method=100)`", "Power-based", "2-segment PWL approx. of p**t"],
+        ]
+    )
+    table.add_row(
+        [
+            "**method=100**",
+            "`modify_p_selectivity(method=100)`",
+            "Power-based",
+            "2-segment PWL approx. of p**t",
+        ]
+    )
+    table.add_row(
         [
             "**exponential**",
             "`exponential_selectivity()`",
             "Exponential mapping",
             "maps [p_min, p_max] to [1.0, low_value**t]",
-        ],
-    ]
+        ]
+    )
 
-    # --- format appropriately ----------------------------
-    if markdown:
-        display_data = format_table_as_markdown(headers, data)
-    else:
-        display_data = format_table_for_console(headers, data)
-
-    # --- display table -----------------------------------
-    print("Tested methods:")
-    print()
-    for line in display_data:
-        print(line)
-    print()
+    return table
 
 
 def compute_accuracy(method: int, n: int) -> float:

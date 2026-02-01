@@ -1,15 +1,15 @@
 import numpy as np
 from tqdm import tqdm
 
-from max_div._cli.formatting import (
-    BoldLabels,
-    CellContent,
-    FastestBenchmark,
-    extend_table_with_aggregate_row,
-    format_table_as_markdown,
-    format_table_for_console,
-)
 from max_div.internal.benchmarking import benchmark
+from max_div.internal.markdown import (
+    Report,
+    Table,
+    TableAggregationType,
+    TableElement,
+    TableTimeElapsed,
+    h2,
+)
 from max_div.internal.utils import stdout_to_file
 from max_div.random import new_rng_state, randint, randint_python
 
@@ -49,13 +49,13 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
         (False, True, "D", "WITHOUT replacement, CUSTOM probabilities"),
     ]:
         # --- benchmark ------------------------------------
-        data: list[list[CellContent]] = []
+        table = Table(headers=["`k`", "`n`", "`randint_python`", "`randint`"])
         n_k_values = [(n, k) for n in [10, 100, 1000, 10000] for k in [1, 10, 100, 1000, 10000] if replace or (k <= n)]
         for n, k in tqdm(n_k_values, leave=file):
             if n > max_size or k > max_size:
                 continue
 
-            data_row: list[CellContent] = [str(k), str(n)]
+            table_row: list[TableElement | str] = [str(k), str(n)]
 
             for use_numba in [False, True]:
                 if use_p:
@@ -77,38 +77,30 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
                     def func_to_benchmark():
                         randint_python(n=n, k=k, replace=replace, p=p)
 
-                data_row.append(
-                    benchmark(
-                        f=func_to_benchmark,
-                        t_per_run=t_per_run,
-                        n_warmup=n_warmup,
-                        n_benchmark=n_benchmark,
-                        silent=True,
+                table_row.append(
+                    TableTimeElapsed.from_benchmark_result(
+                        benchmark(
+                            f=func_to_benchmark,
+                            t_per_run=t_per_run,
+                            n_warmup=n_warmup,
+                            n_benchmark=n_benchmark,
+                            silent=True,
+                        )
                     )
                 )
 
-            data.append(data_row)
+            table.add_row(table_row)
 
         # --- show results -----------------------------------------
 
-        # --- prepare table ---
-        data = extend_table_with_aggregate_row(data, agg="geomean")
-        if markdown:
-            headers = ["`k`", "`n`", "`randint_python`", "`randint`"]
-            display_data = format_table_as_markdown(headers, data, highlighters=[FastestBenchmark(), BoldLabels()])
-        else:
-            headers = ["k", "n", "randint_python", "randint"]
-            display_data = format_table_for_console(headers, data)
+        # --- prepare final report ---
+        table.add_aggregate_row(TableAggregationType.GEOMEAN)
+        table.highlight_results(TableTimeElapsed, clr_lowest=Table.GREEN)
+
+        report = Report()
+        report += [h2(f"{letter}. {desc}"), table]
 
         # --- output ---
         i_file += 1
         with stdout_to_file(file, f"benchmark_randint_{i_file}.md"):
-            if markdown:
-                print(f"## {letter}. {desc}")
-            else:
-                print(f"{letter}. {desc}:")
-
-            print()
-            for line in display_data:
-                print(line)
-            print()
+            report.print(markdown=markdown)

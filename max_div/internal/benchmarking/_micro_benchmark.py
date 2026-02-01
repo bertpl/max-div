@@ -31,9 +31,6 @@ class BenchmarkResult:
         s_perc = f"{50 * (self.t_sec_q_75 - self.t_sec_q_25) / self.t_sec_q_50:.1f}%"
         return f"{s_median} ± {s_perc}"
 
-    def __str__(self) -> str:
-        return self.t_sec_with_uncertainty_str
-
     @classmethod
     def from_list(cls, lst: list[float]) -> BenchmarkResult:
         """
@@ -171,8 +168,7 @@ def benchmark(
         )
 
     # --- finalize ----------------------------------------
-    q25, q50, q75 = np.percentile(lst_t, [25, 50, 75])
-    result = BenchmarkResult(t_sec_q_25=q25, t_sec_q_50=q50, t_sec_q_75=q75)
+    result = BenchmarkResult.from_list(lst_t)
     if not silent:
         print(f"   {result.t_sec_with_uncertainty_str} per execution")
 
