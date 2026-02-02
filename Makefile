@@ -23,6 +23,7 @@ help:
 	@echo '  update-internal-benchmarks     Run internal benchmarks and update results in ./docs/benchmarks/internal/results/.'
 	@echo '  update-solver-benchmarks       Run solver benchmarks and update results in ./docs/benchmarks/solver/results/.'
 	@echo '  update-all-benchmarks          Run all benchmarks and update results in ./docs/benchmarks/.'
+	@cho  '  update-benchmark-figures       Updates all benchmark-related figures in ./docs/benchmarks/solver/images.'
 	@echo ''
 	@echo 'Options:'
 	@echo ''
@@ -80,3 +81,7 @@ update-solver-benchmarks:
 	$(MAKE) docs
 
 update-all-benchmarks: update-internal-benchmarks update-solver-benchmarks
+
+update-benchmark-figures:
+	uv run ./local/docs/figures/fig_bm_problems_vectors_and_cons.py ./docs/benchmarks/solver/images
+	uv run ./local/docs/figures/fig_bm_problems_separations.py ./docs/benchmarks/solver/images

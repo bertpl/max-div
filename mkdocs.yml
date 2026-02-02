@@ -97,14 +97,38 @@ nav:
       - Overview: benchmarks/_index.md
       - Solver:
         - Test Problems: benchmarks/solver/test_problems.md
-        - Problem U1: benchmarks/solver/bm_problem_u1.md
-        - Problem U2: benchmarks/solver/bm_problem_u2.md
-        - Problem U3: benchmarks/solver/bm_problem_u3.md
-        - Problem U4: benchmarks/solver/bm_problem_u4.md
-        - Problem C1: benchmarks/solver/bm_problem_c1.md
-        - Problem C2: benchmarks/solver/bm_problem_c2.md
-        - Problem C3: benchmarks/solver/bm_problem_c3.md
-        - Problem C4: benchmarks/solver/bm_problem_c4.md
+        - Problem U1:
+            - Description: benchmarks/solver/bm_problem_u1.md
+            - Initialization Strategies: benchmarks/solver/bm_problem_u1_init.md
+            - Optimization Strategies: benchmarks/solver/bm_problem_u1_optim.md
+        - Problem U2:
+            - Description: benchmarks/solver/bm_problem_u2.md
+            - Initialization Strategies: benchmarks/solver/bm_problem_u2_init.md
+            - Optimization Strategies: benchmarks/solver/bm_problem_u2_optim.md
+        - Problem U3:
+            - Description: benchmarks/solver/bm_problem_u3.md
+            - Initialization Strategies: benchmarks/solver/bm_problem_u3_init.md
+            - Optimization Strategies: benchmarks/solver/bm_problem_u3_optim.md
+        - Problem U4:
+            - Description: benchmarks/solver/bm_problem_u4.md
+            - Initialization Strategies: benchmarks/solver/bm_problem_u4_init.md
+            - Optimization Strategies: benchmarks/solver/bm_problem_u4_optim.md
+        - Problem C1:
+            - Description: benchmarks/solver/bm_problem_c1.md
+            - Initialization Strategies: benchmarks/solver/bm_problem_c1_init.md
+            - Optimization Strategies: benchmarks/solver/bm_problem_c1_optim.md
+        - Problem C2:
+            - Description: benchmarks/solver/bm_problem_c2.md
+            - Initialization Strategies: benchmarks/solver/bm_problem_c2_init.md
+            - Optimization Strategies: benchmarks/solver/bm_problem_c2_optim.md
+        - Problem C3:
+            - Description: benchmarks/solver/bm_problem_c3.md
+            - Initialization Strategies: benchmarks/solver/bm_problem_c3_init.md
+            - Optimization Strategies: benchmarks/solver/bm_problem_c3_optim.md
+        - Problem C4:
+            - Description: benchmarks/solver/bm_problem_c4.md
+            - Initialization Strategies: benchmarks/solver/bm_problem_c4_init.md
+            - Optimization Strategies: benchmarks/solver/bm_problem_c4_optim.md
       - Internal:
         - Overview: benchmarks/internal/overview.md
         - DiversityMetric: benchmarks/internal/bm_diversity_metrics.md

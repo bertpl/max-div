@@ -1,0 +1,206 @@
+import sys
+from pathlib import Path
+
+import numpy as np
+from matplotlib import pyplot as plt
+from tqdm import tqdm
+
+from local.docs.figures.utils import save_fig
+from local.docs.utils import univariate_kde_adaptive
+from max_div.benchmarks import BenchmarkProblemFactory
+from max_div.solver import DiversityMetric
+from max_div.solver._distance import compute_pdist, compute_separation
+
+
+# =================================================================================================
+#  Main functionality
+# =================================================================================================
+def create_figures(target_folder: Path) -> None:
+    """
+    For all benchmark problems, create a figure showing the distribution of separations of the entire
+    vector populate for sizes n=1,2,4,8,16,32,64,128.
+    """
+
+    problem_names = BenchmarkProblemFactory.get_all_benchmark_problems()
+    for problem_name in tqdm(problem_names, desc="Creating benchmark problem figures"):
+        # --- generate data ---------------------
+        sizes = [2, 8, 32, 128]
+        sep_dict = {size: compute_separations(problem_name, size) for size in sizes}
+
+        # --- create figure ---------------------
+        create_figure_for_problem(target_folder, problem_name, sep_dict)
+
+    plt.show()
+
+
+def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: dict[int, np.ndarray]):
+
+    # --- fig, ax -----------------------------------------
+    fig, ax = plt.subplots(figsize=(9, 5))
+
+    # --- compute KDEs ------------------------------------
+    x_min, x_max = determine_x_range(sep_dict)
+    x_values = np.logspace(np.log10(x_min), np.log10(x_max), 1000)
+    kde_dict = {size: compute_kde(separations, x_values) for size, separations in sep_dict.items()}
+    y_min, y_max = determine_y_range(kde_dict)
+
+    # rug-related
+    h_rug_rel = 0.05
+    y_unit = h_rug_rel * y_max  # we will use this e.g. to determine vertical spacing of rug plots at the bottom
+
+    # --- plot KDEs ---------------------------------------
+    n_sizes = len(kde_dict)
+    for i_size, size in enumerate(sorted(kde_dict.keys()), start=1):
+        h = ax.plot(
+            x_values,
+            kde_dict[size],
+            lw=0.5,
+            label=f"$s={size}$",
+        )
+
+        # Extract the color from the Line2D object
+        line_color = h[0].get_color()
+
+        # plot filled area under the curve
+        ax.fill_between(
+            x_values,
+            kde_dict[size],
+            alpha=0.3,
+            color=line_color,
+        )
+
+        # rug plot
+        y_rug = -i_size * y_unit
+        ax.plot([x_min, x_max], [y_rug, y_rug], lw=0.5, color=line_color)
+        for sep in sep_dict[size]:
+            ax.plot([sep, sep], [y_rug, y_rug + (0.5 * y_unit)], lw=0.25, color=line_color, alpha=0.5)
+
+        # plot the size (as text) slightly above the highest point of the curve
+        max_kde_value = np.max(kde_dict[size])
+        max_kde_x = x_values[np.argmax(kde_dict[size])]
+        ax.text(
+            max_kde_x,
+            max_kde_value + 0.03 * y_max,
+            f"$s={size}$",
+            fontsize=9,
+            ha="center",
+            va="bottom",
+        )
+
+    # --- decorations -------------------------------------
+
+    # axes
+    ax.set_xscale("log")
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+    ax.set_xlabel(r"$L_2 \ \text{distance}$")
+    ax.set_ylabel("Probability density\n(adaptive KDE)")
+
+    # disable clipping to allow lines outside the axis range to be visible
+    ax.set_clip_on(False)
+    for line in ax.get_lines():
+        line.set_clip_on(False)
+
+    # position spines: x-spine at negative y, y-spine at y=0 (creating a gap)
+    ax.spines["bottom"].set_position(("axes", -(n_sizes + 0.5) * h_rug_rel))
+    # ax.spines["left"].set_position(("data", 0))
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
+
+    # grid & legend
+    ax.grid()
+    ax.legend(loc="upper left", title="Problem size")
+
+    # title
+    ax.set_title(f"Vector separations for problem {problem_name}", fontsize=14, fontweight="bold", pad=32)
+    ax.text(
+        0.0,
+        1.05,
+        "(full population; distances to nearest neighbor)",
+        transform=ax.transAxes,
+        fontsize=12,
+        ha="left",
+        va="bottom",
+    )
+
+    # --- save --------------------------------------------
+    save_fig(fig, target_folder / f"problem_{problem_name}_separations.png")
+
+
+def determine_y_range(kde_dict: dict[int, np.ndarray]) -> tuple[float, float]:
+    """
+    Determine the y-axis range for the separations figure.
+    """
+    all_kde_values = np.concatenate(list(kde_dict.values()))
+    max_kde_value = np.max(all_kde_values)
+    return 0.0, 1.1 * max_kde_value
+
+
+def determine_x_range(sep_dict: dict[int, np.ndarray]) -> tuple[float, float]:
+    """
+    Determine the x-axis range for the separations figure.
+    """
+    all_separations = np.concatenate(list(sep_dict.values()))
+    min_sep = np.min(all_separations)
+    max_sep = np.max(all_separations)
+    log10_min_sep = np.log10(min_sep)
+    log10_max_sep = np.log10(max_sep)
+
+    x_margin = 0.1 * (log10_max_sep - log10_min_sep)
+    return (
+        10 ** float(log10_min_sep - x_margin),
+        10 ** float(log10_max_sep + x_margin),
+    )
+
+
+def compute_kde(separations: np.ndarray, x_values: np.ndarray) -> np.ndarray:
+    """
+    Computes a log-KDE:
+      - convert separations and x_values to log10 scale
+      - compute KDE and evaluate at x_values in log10 scale
+      - return KDE
+    """
+
+    # log-transform
+    log_separations = np.log10(separations)
+    # log_separations = np.quantile(log_separations, np.linspace(0, 1, 1000))
+    log_x_values = np.log10(x_values)
+
+    # KDE
+    # return univariate_kde(log_separations, log_x_values)
+    return univariate_kde_adaptive(log_separations, log_x_values, n_centers_max=20_000)
+
+
+# =================================================================================================
+#  Generate data
+# =================================================================================================
+def compute_separations(problem_name: str, size: int) -> np.ndarray:
+    """
+    Compute the separations of the entire vector population for the given problem and size.
+    """
+    problem = BenchmarkProblemFactory.construct_problem(
+        problem_name,
+        size=size,
+        diversity_metric=DiversityMetric.geomean_separation(),
+    )
+
+    # compute separations
+    pdist = compute_pdist(problem.vectors, problem.distance_metric)
+    separations = compute_separation(pdist, np.int32(problem.n))
+
+    # return
+    return separations
+
+
+# =================================================================================================
+#  Main Entrypoint
+# =================================================================================================
+if __name__ == "__main__":
+    """
+    Syntax: python fig_bm_problems_separations.py <target_folder>
+    """
+    if len(sys.argv) != 2:
+        print("Syntax: python fig_bm_problems_vectors_and_cons.py <target_folder>")
+    else:
+        _target_folder = Path(sys.argv[1]).absolute()
+        create_figures(_target_folder)

@@ -1,9 +1,37 @@
 # Benchmark Results - Problem C1
 
-## I. Initialization Strategies
+## I. Problem Description
 
-{% include-markdown "./results/benchmark_initialization_C1.md" %}
+### A. Overall Approach
 
-## II. Optimization Strategies
+Vectors are 2-dimensional and have...
 
-{% include-markdown "./results/benchmark_optimization_C1.md" %}
+- first component drawn from a uniform distribution over $[0, 1]$,
+- second component drawn from a standard normal distribution $\mathcal{N}(0, 1)$.
+
+All vectors are split in $m=2s$ non-overlapping groups, by splitting the range $[0, 1]$ of the first component into $m$ equal segments.
+From each group between $4$ and $k$ vectors need to be selected.  This is always feasible, since $k=5m$ and $n=50m$.
+
+### B. Visualization
+
+This image shows problem C1 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=20$, $m=4$):
+
+![Problem C1](./images/problem_C1.png){ .center }
+
+The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations 
+using the L2 distance metric and the `geomean_separation` diversity metric:
+
+![Problem C1 with Solution](./images/problem_C1_with_solution.png){ .center }
+
+### C. Separation statistics
+
+The image below shows distribution of vector separations (distances to nearest neighbor for all vectors in the population),
+for different problem sizes:
+
+![Problem C1 - Vector Separations](./images/problem_C1_separations.png){ .center75 }
+
+## II. Benchmark results
+
+- [Initialization Strategies](bm_problem_c1_init.md)
+- [Optimization Strategies](bm_problem_c1_optim.md)
+- Solver Presets (TODO)

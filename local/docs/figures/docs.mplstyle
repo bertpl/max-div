@@ -1,0 +1,87 @@
+##### FIGURE & SAVING #########################################################
+figure.figsize        : 6.0, 3.7      # ~16:10, good for web/docs
+figure.dpi            : 120
+savefig.dpi           : 200
+savefig.bbox          : tight
+savefig.pad_inches    : 0.05
+savefig.transparent   : False
+
+##### FONT & TEXT #############################################################
+font.family           : Roboto
+font.size             : 10
+axes.titlesize        : 11
+axes.labelsize        : 10
+xtick.labelsize       : 9
+ytick.labelsize       : 9
+legend.fontsize       : 9
+
+axes.unicode_minus    : True
+text.color            : 222222
+axes.labelcolor       : 222222
+xtick.color           : 222222
+ytick.color           : 222222
+
+##### LINES & MARKERS #########################################################
+lines.linewidth       : 2
+lines.markersize      : 4
+lines.solid_capstyle  : round
+lines.solid_joinstyle : round
+
+##### COLOR CYCLE (COLORBLIND-FRIENDLY, MUTED) ################################
+# muted blue, muted orange, muted green, muted red, muted purple, brown, pink, gray, khaki, cyan
+axes.prop_cycle       : cycler("color", ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B2", "#937860", "#DA8BC3", "#8C8C8C", "#CCB974", "#64B5CD"])
+
+##### AXES & SPINES ###########################################################
+axes.edgecolor        : 222222
+axes.linewidth        : 0.8
+axes.grid             : False
+axes.axisbelow        : True
+axes.titlelocation    : left
+axes.titlepad         : 12
+
+# Clean, minimal spines
+axes.spines.top       : False
+axes.spines.right     : False
+
+##### GRID ####################################################################
+grid.color            : E5E5E5
+grid.linestyle        : -
+grid.linewidth        : 0.6
+grid.alpha            : 1.0
+
+##### TICKS ###################################################################
+xtick.direction       : out
+ytick.direction       : out
+xtick.major.size      : 4
+ytick.major.size      : 4
+xtick.major.width     : 0.8
+ytick.major.width     : 0.8
+xtick.minor.size      : 2
+ytick.minor.size      : 2
+xtick.minor.width     : 0.6
+ytick.minor.width     : 0.6
+xtick.minor.visible   : False
+ytick.minor.visible   : False
+
+##### LEGEND ##################################################################
+legend.frameon        : True
+legend.framealpha     : 0.9
+legend.edgecolor      : DDDDDD
+legend.fancybox       : False
+legend.loc            : best
+legend.borderaxespad  : 0.6
+legend.handlelength   : 1.5
+legend.handletextpad  : 0.4
+legend.borderpad      : 0.4
+legend.columnspacing  : 1.0
+
+##### PATCHES (affects legend frame) ##########################################
+patch.linewidth       : 0.5
+
+##### IMAGES / COLORMAPS ######################################################
+image.cmap            : viridis
+image.interpolation   : antialiased
+
+##### MISC ####################################################################
+axes.formatter.use_mathtext : True
+axes.formatter.limits       : -4, 4

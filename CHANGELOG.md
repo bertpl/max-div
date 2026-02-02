@@ -5,6 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+  - docs: add illustrations to all 8 solver benchmark problems & restructure for clarity
+
 - **improved**:
   - solver preset benchmarking functionality
     - improved scope calculations (higher accuracy for target duration; avoid too short durations)
