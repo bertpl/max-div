@@ -5,7 +5,10 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**:
+  - solver preset benchmarking functionality
+    - improved scope calculations (higher accuracy for target duration; avoid too short durations)
+    - improved result reporting (case-specific number formatting; no constraint score for unconstrained problems)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.0

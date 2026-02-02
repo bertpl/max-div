@@ -17,15 +17,37 @@ def determine_benchmark_scope_for_max_duration(
     This method auto-tunes speed to fall just within the target duration.
     Returns (speed, scope)-tuple
     """
-    for speed in np.linspace(0.0, 1.0, 1001):
-        speed = float(speed)
-        scope = determine_benchmark_scope(presets, problems, size, speed)
-        t_est = estimate_execution_time_sec_multi(scope)
-        if t_est <= max_duration_sec:
-            return speed, scope
 
-    # fallback (too slow, but fastest we can do)
-    return 1.0, determine_benchmark_scope(presets, problems, size, 1.0)
+    def _get_scope_for_speed(_speed: float) -> list[SolverPresetBenchmarkParams]:
+        return determine_benchmark_scope(presets, problems, size, _speed)
+
+    def _get_duration_for_speed(_speed: float) -> float:
+        return estimate_execution_time_sec_multi(_get_scope_for_speed(_speed))
+
+    # check speed=0
+    lb_speed = 0.0
+    lb_duration = _get_duration_for_speed(lb_speed)
+    if lb_duration <= max_duration_sec:
+        # slowest setting is already fast enough
+        return lb_speed, _get_scope_for_speed(lb_speed)
+
+    # check speed=1
+    ub_speed = 1.0
+    ub_duration = _get_duration_for_speed(ub_speed)
+    if ub_duration >= max_duration_sec:
+        # fastest setting is still too slow
+        return ub_speed, _get_scope_for_speed(ub_speed)
+
+    # bisection
+    for _ in range(20):
+        mid_speed = 0.5 * (lb_speed + ub_speed)
+        mid_duration = _get_duration_for_speed(mid_speed)
+        if mid_duration <= max_duration_sec:
+            ub_speed = mid_speed
+        else:
+            lb_speed = mid_speed
+
+    return ub_speed, _get_scope_for_speed(ub_speed)
 
 
 def determine_benchmark_scope(
@@ -37,18 +59,16 @@ def determine_benchmark_scope(
     """Compute full list of benchmark runs to be executed based on presets, problems, size, and speed."""
 
     # standard settings
-    durations_sec = [1, 2, 4, 8, 15, 30] + [60.0 * m for m in [1, 2, 4, 8, 15, 30, 60]]
-    n_runs = 7
-
-    # adjust for size
-    c_size = max(0.1, min(1.0, size / 100.0))
-    durations_sec = [s * c_size for s in durations_sec]
+    durations_sec = [1, 2, 4, 8, 15, 30] + [60.0 * m for m in [1, 2, 4, 8, 15, 30, 60, 120]]
+    n_runs = 9
 
     # adjust for speed
     c_duration = 2 ** (-20 * speed)
-    durations_sec = sorted({max(1e-3, c_duration * s) for s in durations_sec})
+    max_duration_sec = c_duration * max(durations_sec)
+    min_duration_sec = min(1.0, max_duration_sec)
+    durations_sec = sorted({max(min_duration_sec, c_duration * s) for s in durations_sec})
     durations = [TargetTimeDuration(t_target_sec=s) for s in durations_sec]
-    n_runs = max(1, round(n_runs * (1.0 - speed**2)))
+    n_runs = max(1, round(n_runs * (1.0 - speed)))
 
     # final scope
     seeds = list(range(1, n_runs + 1))

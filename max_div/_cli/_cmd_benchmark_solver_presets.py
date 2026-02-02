@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import click
@@ -136,20 +136,24 @@ def presets(
     min_seed = min([s.seed for s in scope])
     max_seed = max([s.seed for s in scope])
     est_duration_str = format_time_duration(estimate_execution_time_sec_multi(scope), n_chars=8).strip()
+    start_time = datetime.now()
+    end_time = start_time + timedelta(seconds=estimate_execution_time_sec_multi(scope))
+    start_time_str = start_time.strftime("%a %Y-%m-%d %H:%M:%S")
+    end_time_str = end_time.strftime("%a %Y-%m-%d %H:%M:%S")
 
     # report statistics
     click.echo(f"Executing {len(scope)} solver preset benchmark runs using {n_processes} parallel processes...")
     click.echo(f"  - problem size  : {size:_}")
-    click.echo(f"  - speed         : {speed:.3f}")
+    click.echo(f"  - speed         : {speed:.6f}")
     click.echo(f"  - problems      : {len(problems):_}".ljust(40) + f"[{', '.join(problems)}]")
     click.echo(f"  - presets       : {len(presets):_}".ljust(40) + f"[{', '.join(presets)}]")
     click.echo(f"  - durations     : {n_durations:_}".ljust(40) + f"[{min_duration_str} -> {max_duration_str}]")
     click.echo(f"  - seeds         : {n_seeds:_}".ljust(40) + f"[{min_seed} -> {max_seed}]")
-    click.echo(f"  - est. duration : {est_duration_str}")
+    click.echo(f"  - est. duration : {est_duration_str}".ljust(40) + f"[{start_time_str} -> {end_time_str}]")
     if json_file_name:
-        click.echo(f"  - results file    : {json_file_name}")
+        click.echo(f"  - results file  : {json_file_name}")
     else:
-        click.echo(f"  - results file    : /")
+        click.echo(f"  - results file  : /")
 
     # --- run benchmarks ----------------------------------
     if dry_run:

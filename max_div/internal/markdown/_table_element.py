@@ -150,12 +150,21 @@ class TableTimeElapsed(_QuantiledTableElement):
 
 
 class TableValueWithUncertainty(_QuantiledTableElement):
-    def __init__(self, value_q_25: float, value_q_50: float, value_q_75: float, decimals: int = 3):
+    def __init__(
+        self, value_q_25: float, value_q_50: float, value_q_75: float, decimals: int = 3, scientific: bool = False
+    ):
         super().__init__(q_25=value_q_25, q_50=value_q_50, q_75=value_q_75)
         self.decimals = decimals
+        self.scientific = scientific  # False = float representation, True = scientific notation
 
     def to_mark_down(self) -> str:
-        s_median = f"{self.q_50:.{self.decimals}f}"
+        if self.decimals == 0:
+            s_median = f"{round(self.q_50):_}"
+        else:
+            if self.scientific:
+                s_median = f"{self.q_50:.{self.decimals}e}"
+            else:
+                s_median = f"{self.q_50:.{self.decimals}f}"
         s_perc = f"{50 * (self.q_75 - self.q_25) / self.q_50:.1f}%"
         return f"{s_median} ± {s_perc}"
 
@@ -165,18 +174,23 @@ class TableValueWithUncertainty(_QuantiledTableElement):
     ) -> TableValueWithUncertainty:
         q_25_agg, q_50_agg, q_75_agg = cls._aggregate_quantiles(elements, agg_type)
         max_decimals = max(el.decimals for el in elements)
+        scientific = elements[0].scientific
         return TableValueWithUncertainty(
             value_q_25=q_25_agg,
             value_q_50=q_50_agg,
             value_q_75=q_75_agg,
             decimals=max_decimals,
+            scientific=scientific,
         )
 
     @classmethod
-    def from_values(cls, t_values: list[float], decimals: int = 3) -> TableValueWithUncertainty:
+    def from_values(
+        cls, t_values: list[float], decimals: int = 3, scientific: bool = False
+    ) -> TableValueWithUncertainty:
         return TableValueWithUncertainty(
             value_q_25=float(np.quantile(t_values, 0.25)),
             value_q_50=float(np.quantile(t_values, 0.50)),
             value_q_75=float(np.quantile(t_values, 0.75)),
             decimals=decimals,
+            scientific=scientific,
         )
