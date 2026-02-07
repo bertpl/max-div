@@ -1,6 +1,5 @@
 from max_div.solver._duration import TargetDuration
 from max_div.solver._parameters import ease_in, ease_out
-from max_div.solver._problem import MaxDivProblem
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
@@ -9,7 +8,6 @@ from max_div.solver._strategies import InitializationStrategy, OptimizationStrat
 #  GUIDED preset
 # =================================================================================================
 def get_preset_strategies_guided(
-    problem: MaxDivProblem,
     target_duration: TargetDuration,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     """
@@ -23,7 +21,7 @@ def get_preset_strategies_guided(
     """
 
     # --- initialization ----------------------------------
-    init_strategy = InitializationStrategy.fast()
+    init_strategy = InitializationStrategy.random_one_shot(uniform=True, ignore_constraints=True)
 
     # --- optimization strategy ---------------------------
     # RATIONALE: Benchmarks show that NARROW strategies result in the best diversity without sacrificing constraint

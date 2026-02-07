@@ -96,7 +96,6 @@ class MaxDivSolverBuilder:
 
         # --- apply main preset logic -----------
         init_strategy, optim_steps = get_preset_strategies(
-            problem=self._problem,
             preset=preset,
             target_duration=target_duration,
         )

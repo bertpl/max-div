@@ -9,6 +9,8 @@
   - docs: add illustrations to all 8 solver benchmark problems & restructure for clarity
 
 - **improved**:
+  - use `InitRandomOneShot` instead of `InitFast` for all presets, to allow seed to more strongly affect outcome,
+      increasing the chance to get good results across multiple seeds   
   - solver preset benchmarking functionality
     - improved scope calculations (higher accuracy for target duration; avoid too short durations)
     - improved result reporting (case-specific number formatting; no constraint score for unconstrained problems)

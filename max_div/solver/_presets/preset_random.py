@@ -10,7 +10,7 @@ def get_preset_strategies_random(
     target_duration: TargetDuration,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     # --- initialization ----------------------------------
-    init_strategy = InitializationStrategy.fast()
+    init_strategy = InitializationStrategy.random_one_shot(uniform=True, ignore_constraints=True)
 
     # --- optimization steps ------------------------------
     optim_steps = [

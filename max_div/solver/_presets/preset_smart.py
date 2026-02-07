@@ -1,5 +1,4 @@
 from max_div.solver._duration import TargetDuration
-from max_div.solver._problem import MaxDivProblem
 from max_div.solver._solver_step import OptimizationStep
 from max_div.solver._strategies import InitializationStrategy, OptimizationStrategy
 
@@ -8,12 +7,11 @@ from max_div.solver._strategies import InitializationStrategy, OptimizationStrat
 #  SMART / THOROUGH preset
 # =================================================================================================
 def get_preset_strategies_smart(
-    problem: MaxDivProblem,
     target_duration: TargetDuration,
     thorough: bool = False,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     # --- initialization ----------------------------------
-    init_strategy = InitializationStrategy.fast()
+    init_strategy = InitializationStrategy.random_one_shot(uniform=True, ignore_constraints=True)
 
     # --- optimization steps ------------------------------
     if thorough:
