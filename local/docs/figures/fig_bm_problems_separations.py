@@ -163,12 +163,16 @@ def compute_kde(separations: np.ndarray, x_values: np.ndarray) -> np.ndarray:
 
     # log-transform
     log_separations = np.log10(separations)
-    # log_separations = np.quantile(log_separations, np.linspace(0, 1, 1000))
     log_x_values = np.log10(x_values)
 
     # KDE
-    # return univariate_kde(log_separations, log_x_values)
-    return univariate_kde_adaptive(log_separations, log_x_values, n_centers_max=20_000)
+    return univariate_kde_adaptive(
+        log_separations,
+        log_x_values,
+        smoothness=1.75,  # somewhat smoother curves, since we're more interested in overall shape than perfect 'fit'
+        n_centers_max=1_000_000,
+        bw_q_clip=(0.05, 0.95),
+    )
 
 
 # =================================================================================================
