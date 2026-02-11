@@ -5,25 +5,25 @@ file_path=
 help:
 	@echo 'Commands:'
 	@echo ''
-	@echo '  help                           Show this help message.'
+	@echo '  help                                   Show this help message.'
 	@echo ''
-	@echo '  build                          (Re)build package using uv.'
+	@echo '  build                                  (Re)build package using uv.'
 	@echo ''
-	@echo '  test                           Run pytest unit tests.'
-	@echo '  format                         Format source code using ruff.'
-	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
+	@echo '  test                                   Run pytest unit tests.'
+	@echo '  format                                 Format source code using ruff.'
+	@echo '  format-single-file                     Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
-	@echo '  splash                         Build splash screen using current version of package. (./images/splash_with_version.webp)'
-	@echo '  coverage                       Generate test coverage report. (./reports/coverage)'
-	@echo '  docs                           Update mkdocs site. (./reports/docs)'
+	@echo '  splash                                 Build splash screen using current version of package. (./images/splash_with_version.webp)'
+	@echo '  coverage                               Generate test coverage report. (./reports/coverage)'
+	@echo '  docs                                   Update mkdocs site. (./reports/docs)'
 	@echo ''
-	@echo '  show-coverage                  Open test coverage report in browser.'
-	@echo '  show-docs                      Open mkdocs site in browser.'
+	@echo '  show-coverage                          Open test coverage report in browser.'
+	@echo '  show-docs                              Open mkdocs site in browser.'
 	@echo ''
-	@echo '  update-internal-benchmarks     Run internal benchmarks and update results in ./docs/benchmarks/internal/results/.'
-	@echo '  update-solver-benchmarks       Run solver benchmarks and update results in ./docs/benchmarks/solver/results/.'
-	@echo '  update-all-benchmarks          Run all benchmarks and update results in ./docs/benchmarks/.'
-	@cho  '  update-benchmark-figures       Updates all benchmark-related figures in ./docs/benchmarks/solver/images.'
+	@echo '  update-internal-benchmarks             Run internal benchmarks and update results in ./docs/benchmarks/internal/results/.'
+	@echo '  update-solver-strategies-benchmarks    Run solver benchmarks and update results in ./docs/benchmarks/solver/results/.'
+	@echo '  update-all-benchmarks                  Run all benchmarks and update results in ./docs/benchmarks/.'
+	@cho  '  update-solver-benchmark-figures        Updates all benchmark-related figures in ./docs/benchmarks/solver/images.'
 	@echo ''
 	@echo 'Options:'
 	@echo ''
@@ -74,14 +74,15 @@ update-internal-benchmarks:
 	mv ./benchmark*.md ./docs/benchmarks/internal/results/;
 	$(MAKE) docs
 
-update-solver-benchmarks:
+update-solver-strategies-benchmarks:
 	uv run max-div benchmark solver strategies --markdown --file --problem=all;
-	rm ./docs/benchmarks/solver/results/*.md;
-	mv ./benchmark*.md ./docs/benchmarks/solver/results/;
+	mv -f ./benchmark*.md ./docs/benchmarks/solver/results/;
 	$(MAKE) docs
 
-update-all-benchmarks: update-internal-benchmarks update-solver-benchmarks
+update-all-benchmarks: update-internal-benchmarks update-solver-strategies-benchmarks
 
-update-benchmark-figures:
+update-solver-benchmark-figures:
+	mv -f ./preset_results*.json ./local/docs/data/;
 	uv run ./local/docs/figures/fig_bm_problems_vectors_and_cons.py ./docs/benchmarks/solver/images
 	uv run ./local/docs/figures/fig_bm_problems_separations.py ./docs/benchmarks/solver/images
+	uv run ./local/docs/figures/fig_bm_problems_preset_results.py ./docs/benchmarks/solver/images

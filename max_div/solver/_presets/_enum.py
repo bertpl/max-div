@@ -24,3 +24,8 @@ class SolverPreset(StrEnum):
             SolverPreset.THOROUGH: 3,
         }
         return str(order.get(self, str(self))) < str(order.get(other, other))
+
+    @classmethod
+    def all_sorted(cls) -> list[SolverPreset]:
+        """Return list of unique (as in 'resolve_alias'), sorted presets."""
+        return sorted({p.resolve_alias() for p in SolverPreset})

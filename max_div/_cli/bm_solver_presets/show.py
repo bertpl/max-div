@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.internal.markdown import Report, Table, TableElement, TableTimeElapsed, TableValueWithUncertainty, h1, h2
 from max_div.internal.utils import stdout_to_file
 
-from ...benchmarks import BenchmarkProblemFactory
 from ._models import SolverPresetBenchmarkResult
 
 
@@ -26,7 +26,7 @@ class AggregateResult:
 def show_solver_presets_benchmark_results(
     results: list[SolverPresetBenchmarkResult],
     markdown: bool,
-    to_file: bool,
+    markdown_file_name: str | None,
 ):
     # --- extract scope -----------------------------------
     problem_size = results[0].params.problem_size
@@ -124,5 +124,5 @@ def show_solver_presets_benchmark_results(
         ]
 
         # output report
-        with stdout_to_file(enabled=to_file, filename=Path(f"preset_results_{problem_name}_{problem_size}.md")):
+        with stdout_to_file(enabled=markdown_file_name is not None, filename=Path(str(markdown_file_name))):
             report.print(markdown=markdown)

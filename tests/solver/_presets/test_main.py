@@ -2,8 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from max_div.benchmarks._factory import BenchmarkProblemFactory
-from max_div.solver import DiversityMetric, SolverPreset
+from max_div.solver import SolverPreset
 from max_div.solver._duration import TargetDuration, iterations, seconds
 from max_div.solver._presets import get_preset_strategies
 from max_div.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
@@ -40,3 +39,12 @@ def test_get_preset_strategies_invalid_preset():
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):
         get_preset_strategies(invalid_preset, seconds(1))
+
+
+def test_solver_preset_all_sorted():
+    assert SolverPreset.all_sorted() == [
+        SolverPreset.RANDOM,
+        SolverPreset.GUIDED,
+        SolverPreset.SMART,
+        SolverPreset.THOROUGH,
+    ]

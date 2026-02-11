@@ -28,4 +28,4 @@ for different problem sizes:
 
 - [Initialization Strategies](bm_problem_c2_init.md)
 - [Optimization Strategies](bm_problem_c2_optim.md)
-- Solver Presets (TODO)
+- [Solver Presets](bm_problem_c2_presets.md)

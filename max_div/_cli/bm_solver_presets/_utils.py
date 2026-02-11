@@ -13,8 +13,23 @@ def get_pbar_units(params: SolverPresetBenchmarkParams) -> int:
 # =================================================================================================
 #  Estimate time durations
 # =================================================================================================
-def estimate_execution_time_sec_multi(params: list[SolverPresetBenchmarkParams]) -> float:
+def estimate_execution_time_sec_multi(
+    params: list[SolverPresetBenchmarkParams], per_problem_execution: bool = True
+) -> float:
     """Estimate total execution time in seconds for multiple benchmark runs, taking multiprocessing into account."""
+
+    # --- per problem? ----------------
+    if per_problem_execution:
+        all_problem_names = set(p.problem_name for p in params)
+        return sum(
+            [
+                estimate_execution_time_sec_multi(
+                    params=[p for p in params if p.problem_name == problem_name],
+                    per_problem_execution=False,
+                )
+                for problem_name in all_problem_names
+            ]
+        )
 
     # --- init ------------------------
     durations_sec = [estimate_execution_time_sec_single(p) for p in params]

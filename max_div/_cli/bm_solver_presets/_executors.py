@@ -19,7 +19,13 @@ def executor_multi_parallel(
 ) -> list[SolverPresetBenchmarkResult]:
     # --- init --------------------------------------------
     n_pbar_units = sum([get_pbar_units(params) for params in scope])
-    pbar = tqdm(desc="Executing preset benchmarks", total=n_pbar_units, leave=True)
+    problem_names = sorted({params.problem_name for params in scope})
+    desc = (
+        "Executing preset benchmarks for " + f"problem {problem_names[0]}"
+        if len(problem_names) == 1
+        else f"problems {problem_names[0]} -> {problem_names[-1]}"
+    )
+    pbar = tqdm(desc=desc, total=n_pbar_units, leave=True)
 
     # --- execute -----------------------------------------
     results = []

@@ -50,7 +50,7 @@ def test_cli_benchmark_solver_strategies(options: list[str], test_problem: str):
         ["--dry-run", "--turbo", "--markdown"],
         ["--dry-run", "--size=100", "--turbo"],
         ["--dry-run", "--size=10", "--speed=1.0"],
-        ["--dry-run", "--json-file", "--size=100", "--target-max-minutes=10000"],
+        ["--dry-run", "--json-file", "--size=100", "--target-max-minutes=1000000"],
         ["--dry-run", "--json-file", "--size=100", "--target-max-minutes=10"],
         ["--dry-run", "--markdown-file", "--size=100", "--target-max-minutes=0.00000001"],
         ["--size=1", "--json-file", "--preset=random", "--speed=1.0"],

@@ -99,15 +99,12 @@ def presets(
     # --- argument handling - speed -----------------------
     if turbo:
         speed = 1.0
+    if markdown_file:
+        markdown = True
 
     # --- argument handling - preset(s) & problem(s) ------
     presets = resolve_presets(preset)
     problems = resolve_problems(problem)
-
-    # --- argument handling - file(s) ---------------------
-    _timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_id = f"{_timestamp}_size_{size}"
-    json_file_name = Path(f"solver_preset_results_{file_id}.json") if json_file else None
 
     # --- determine scope ---------------------------------
     if target_max_minutes:
@@ -130,8 +127,19 @@ def presets(
     # gather statistics
     n_processes = get_n_processes(len(scope))
     n_durations = len({s.duration for s in scope})
-    min_duration_str = str(min([s.duration for s in scope]))
-    max_duration_str = str(max([s.duration for s in scope]))
+    durations_sec = sorted({s.duration for s in scope})
+    if len(durations_sec) > 4:
+        durations_str = ", ".join(
+            [
+                str(durations_sec[0]),
+                str(durations_sec[1]),
+                "...",
+                str(durations_sec[-2]),
+                str(durations_sec[-1]),
+            ]
+        )
+    else:
+        durations_str = ", ".join([str(d) for d in durations_sec])
     n_seeds = len({s.seed for s in scope})
     min_seed = min([s.seed for s in scope])
     max_seed = max([s.seed for s in scope])
@@ -147,13 +155,9 @@ def presets(
     click.echo(f"  - speed         : {speed:.6f}")
     click.echo(f"  - problems      : {len(problems):_}".ljust(40) + f"[{', '.join(problems)}]")
     click.echo(f"  - presets       : {len(presets):_}".ljust(40) + f"[{', '.join(presets)}]")
-    click.echo(f"  - durations     : {n_durations:_}".ljust(40) + f"[{min_duration_str} -> {max_duration_str}]")
+    click.echo(f"  - durations     : {n_durations:_}".ljust(40) + f"[{durations_str}]")
     click.echo(f"  - seeds         : {n_seeds:_}".ljust(40) + f"[{min_seed} -> {max_seed}]")
     click.echo(f"  - est. duration : {est_duration_str}".ljust(40) + f"[{start_time_str} -> {end_time_str}]")
-    if json_file_name:
-        click.echo(f"  - results file  : {json_file_name}")
-    else:
-        click.echo(f"  - results file  : /")
 
     # --- run benchmarks ----------------------------------
     if dry_run:
@@ -161,16 +165,23 @@ def presets(
         click.echo("---=== DRY_RUN ENABLED - SKIPPING BENCHMARK EXECUTION ===---")
         click.echo("")
     else:
-        results = execute_solver_presets_benchmark(
-            scope=scope,
-            json_file_name=json_file_name,
-        )
+        for problem in problems:
+            # file names for this problem
+            json_file_name = f"preset_results_{problem}_{size}.json" if json_file else None
+            markdown_file_name = f"preset_results_{problem}_{size}.md" if markdown_file else None
 
-        show_solver_presets_benchmark_results(
-            results=results,
-            markdown=markdown,
-            to_file=markdown_file,
-        )
+            # execute for this problem
+            results = execute_solver_presets_benchmark(
+                scope=[p for p in scope if p.problem_name == problem],
+                json_file_name=json_file_name,
+            )
+
+            # show for this problem
+            show_solver_presets_benchmark_results(
+                results=results,
+                markdown=markdown,
+                markdown_file_name=markdown_file_name,
+            )
 
 
 # =================================================================================================

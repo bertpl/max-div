@@ -3,7 +3,7 @@ import numpy as np
 from max_div.solver import SolverPreset, TargetTimeDuration
 
 from ._models import SolverPresetBenchmarkParams
-from ._utils import estimate_execution_time_sec_multi
+from ._utils import estimate_execution_time_sec_multi, get_n_processes
 
 
 def determine_benchmark_scope_for_max_duration(
@@ -39,7 +39,7 @@ def determine_benchmark_scope_for_max_duration(
         return ub_speed, _get_scope_for_speed(ub_speed)
 
     # bisection
-    for _ in range(20):
+    for _ in range(30):
         mid_speed = 0.5 * (lb_speed + ub_speed)
         mid_duration = _get_duration_for_speed(mid_speed)
         if mid_duration <= max_duration_sec:
@@ -58,30 +58,33 @@ def determine_benchmark_scope(
 ) -> list[SolverPresetBenchmarkParams]:
     """Compute full list of benchmark runs to be executed based on presets, problems, size, and speed."""
 
-    # standard settings
-    durations_sec = [1, 2, 4, 8, 15, 30] + [60.0 * m for m in [1, 2, 4, 8, 15, 30, 60, 120]]
-    n_runs = 9
+    # --- speed-dependent settings ------------------------
+    interp_speed = [0.0, 0.5, 0.99, 1.0]
+    interp_max_duration_sec = [24 * 3600.0, 2 * 3600.0, 2.0, 1e-3]
+    interp_min_duration_sec = [1.0, 1.0, 1.0, 1e-4]
+    n_processes = get_n_processes(1000)  # number of processes used for the largest scopes
+    interp_n_runs = [1000, 4 * n_processes, 2 * n_processes, 2]
 
-    # adjust for speed
-    c_duration = 2 ** (-20 * speed)
-    max_duration_sec = c_duration * max(durations_sec)
-    min_duration_sec = min(1.0, max_duration_sec)
-    durations_sec = sorted({max(min_duration_sec, c_duration * s) for s in durations_sec})
-    durations = [TargetTimeDuration(t_target_sec=s) for s in durations_sec]
-    n_runs = max(1, round(n_runs * (1.0 - speed)))
+    max_duration_sec = float(np.interp(speed, interp_speed, interp_max_duration_sec))
+    min_duration_sec = float(np.interp(speed, interp_speed, interp_min_duration_sec))
+    n_runs = float(np.interp(speed, interp_speed, interp_n_runs))
 
-    # final scope
-    seeds = list(range(1, n_runs + 1))
+    durations_sec = [
+        max_duration_sec * ((min_duration_sec / max_duration_sec) ** (i_run / (n_runs - 1)))
+        for i_run in range(round(n_runs) + 2)
+    ]
+    durations_sec = sorted({max(min_duration_sec, d) for d in durations_sec})
+
+    # --- final scope -------------------------------------
     return [
         SolverPresetBenchmarkParams(
             preset=preset,
             problem_name=problem,
             problem_size=size,
-            duration=duration,
+            duration=TargetTimeDuration(t_target_sec=duration_sec),
             seed=seed,
         )
         for problem in problems
         for preset in presets
-        for duration in durations
-        for seed in seeds
+        for seed, duration_sec in enumerate(durations_sec, start=1)
     ]

@@ -103,9 +103,6 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
 
     # position spines: x-spine at negative y, y-spine at y=0 (creating a gap)
     ax.spines["bottom"].set_position(("axes", -(n_sizes + 0.5) * h_rug_rel))
-    # ax.spines["left"].set_position(("data", 0))
-    # ax.spines['top'].set_visible(False)
-    # ax.spines['right'].set_visible(False)
 
     # grid & legend
     ax.grid()
