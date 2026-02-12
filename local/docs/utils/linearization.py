@@ -92,10 +92,10 @@ class UpperExponentialTransform:
                     next_label = tick_labels[i + 1]
 
                     # check if there's a jump in length (more digits in next label)
-                    if len(next_label) > len(curr_label) and "." in curr_label and "." in next_label:
+                    if len(next_label) > len(curr_label) and "." in next_label:
                         # determine the step size based on the current label's precision
-                        curr_decimals = len(curr_label.split(".")[1]) if "." in curr_label else 0
-                        step = 10 ** -(curr_decimals + 1)
+                        next_decimals = len(next_label.split(".")[1])
+                        step = 10**-next_decimals
 
                         # generate intermediate ticks from curr_tick + step up to (but not including) next_tick
                         intermediate_tick = ticks[i] + step
