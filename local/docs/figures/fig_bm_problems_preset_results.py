@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import sys
 from pathlib import Path
 
@@ -9,8 +8,7 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
-from local.docs.utils import UpperExponentialTransform
-from local.docs.utils.regression import SplineBounds, SplineQuantileRegressor, SplineRegressor
+from local.docs.utils import LogTransform, PresetQuantilesTable, QuantileCurves, UpperLogTransform
 from max_div._cli.bm_solver_presets._models import SolverPresetBenchmarkResult, results_from_json
 from max_div.benchmarks import BenchmarkProblemFactory
 from max_div.solver import SolverPreset
@@ -19,13 +17,16 @@ from max_div.solver import SolverPreset
 # =================================================================================================
 #  Main functionality
 # =================================================================================================
-def create_figures(target_folder: Path):
+def create_figures(target_fig_folder: Path, target_md_folder: Path, show_plots: bool = True):
     """
     For each (problem, size)-combination for which we have data we create the following figures:
       - constraint score vs iteration
       - constraint score vs elapsed time
       - diversity score vs iteration
       - diversity score vs elapsed time
+    :param target_fig_folder: Path to save figure files.
+    :param target_md_folder: Path to save markdown files.
+    :param show_plots: Whether to display the plots (blocking). Default is True.
     """
 
     plt.close("all")
@@ -56,18 +57,21 @@ def create_figures(target_folder: Path):
 
         # --- create figure -----------
         create_single_figure(
-            target_folder=target_folder,
+            target_fig_folder=target_fig_folder,
+            target_md_folder=target_md_folder,
             problem_name=problem,
             size=size,
             results=result,
             show_constraints=has_constraints,
         )
 
-    plt.show()
+    if show_plots:
+        plt.show()
 
 
 def create_single_figure(
-    target_folder: Path,
+    target_fig_folder: Path,
+    target_md_folder: Path,
     problem_name: str,
     size: int,
     results: list[SolverPresetBenchmarkResult],
@@ -79,6 +83,9 @@ def create_single_figure(
     all_constraint_scores = [result.score.constraints for result in results]
     all_presets = SolverPreset.all_sorted()
     n_presets = len(all_presets)
+
+    # --- create PresetQuantilesTable for markdown tables -
+    quantiles_table = PresetQuantilesTable(problem_name, size, target_md_folder)
 
     # --- axis configurations -----------------------------
     x_axes = ["iteration", "elapsed_sec"]
@@ -116,13 +123,13 @@ def create_single_figure(
                 y_result_score_field = "constraints"
                 y_label = "Constraint score\n(in [0,1])"
                 y_title = "Constraint Score"
-                y_transform = UpperExponentialTransform.from_y_values(all_constraint_scores)
+                y_transform = UpperLogTransform.from_values(all_constraint_scores)
                 use_y_transform = max(all_constraint_scores) < 1
             else:
                 y_result_score_field = "diversity"
                 y_label = "Diversity score"
                 y_title = "Diversity Score"
-                y_transform = UpperExponentialTransform.from_y_values(all_diversity_scores)
+                y_transform = UpperLogTransform.from_values(all_diversity_scores)
                 use_y_transform = max(all_constraint_scores) == 1
 
             # --- plot data per preset ------------------------
@@ -151,9 +158,17 @@ def create_single_figure(
                         x_data=np.array(x),
                         y_data=np.array(y),
                         n_knots=3,
+                        x_transform=LogTransform(),
                         y_transform=y_transform,
                     )
-                    x_q, q10, q50, q90 = quantile_curves.get_core_curves()  # in transformed space, if y_transform
+                    # Add to quantiles table for markdown generation
+                    quantiles_table.add_quantile_curves(
+                        quantile_curves=quantile_curves,
+                        preset=preset,
+                        x_axis=x_axis,
+                        y_axis=y_axis,
+                    )
+                    x_q, q10, q50, q90 = quantile_curves.get_full_curves()  # in transformed space, if y_transform
                     q10 = y_transform.f(q10)
                     q50 = y_transform.f(q50)
                     q90 = y_transform.f(q90)
@@ -234,11 +249,10 @@ def create_single_figure(
     fig.subplots_adjust(wspace=0.075, hspace=0.15)
 
     # --- save figure ---------------------------------
-    save_fig(
-        fig,
-        target_folder / f"preset_results_{problem_name}_{str(size)}.png",
-        tgt_pixels=20_000_000,
-    )
+    save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{str(size)}.webp")
+
+    # --- save markdown report ------------------------
+    quantiles_table.generate_tables()
 
 
 # =================================================================================================
@@ -248,148 +262,22 @@ def _get_data_file_name(problem_name: str, size: int) -> Path:
     return Path(f"./local/docs/data/preset_results_{problem_name}_{size}.json")
 
 
-def _get_figure_file_name(target_folder: Path, problem_name: str, size: int) -> Path:
-    return target_folder / ""
-
-
-# =================================================================================================
-#  Uncertainty bounds
-# =================================================================================================
-class QuantileCurves:
-    """
-    Class modeling (q10, q50, q90)-quantile curves.  If y_transform is provided, spline regressions are performed
-    in transformed y-space, but end results (quantiles, core curves) are returned in original y-space.
-    """
-
-    # -------------------------------------------------------------------------
-    #  Constructor
-    # -------------------------------------------------------------------------
-    def __init__(
-        self,
-        q10: SplineRegressor,
-        q50: SplineRegressor,
-        q90: SplineRegressor,
-        y_transform: UpperExponentialTransform | None = None,
-    ):
-        self._q10 = q10
-        self._q50 = q50
-        self._q90 = q90
-        self._y_transform = y_transform
-
-    # -------------------------------------------------------------------------
-    #  Evaluation methods
-    # -------------------------------------------------------------------------
-    def get_core_curves(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        x = np.linspace(self._q50.knots[0], self._q50.knots[-1], 1000)  # transformed coordinates
-        q10 = self._q10.predict(x)
-        q50 = self._q50.predict(x)
-        q90 = self._q90.predict(x)
-        if self._y_transform is not None:
-            q10 = self._y_transform.f_inv(q10)
-            q50 = self._y_transform.f_inv(q50)
-            q90 = self._y_transform.f_inv(q90)
-        return self._transform_x_inv(x), q10, q50, q90
-
-    # -------------------------------------------------------------------------
-    #  Internal methods
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def _transform_x(x: np.ndarray | float) -> np.ndarray | float:
-        if isinstance(x, float):
-            return math.log(x)
-        else:
-            return np.log(x)
-
-    @staticmethod
-    def _transform_x_inv(x: np.ndarray | float) -> np.ndarray | float:
-        if isinstance(x, float):
-            return math.exp(x)
-        else:
-            return np.exp(x)
-
-    # -------------------------------------------------------------------------
-    #  Factory Methods
-    # -------------------------------------------------------------------------
-    @classmethod
-    def from_data(
-        cls,
-        x_data: np.ndarray,
-        y_data: np.ndarray,
-        n_knots: int = 3,
-        y_transform: UpperExponentialTransform | None = None,
-    ) -> QuantileCurves:
-        """
-        Create quantile curves for the provided data.
-
-        We first transform the data
-         - log transform for x_data
-         - upper exponential transform for y_data
-
-        Then we compute quantiles using quantile spline regression, which we post-process such that...
-          - q10 <= q50 <= q90 for all x
-          - q10, q50, q90 are monotone non-decreasing in x
-
-        If y_transform is provided, the resulting QuantileCurves object will represent curves in transformed y-space.
-        """
-
-        # --- transform data ------------------------------
-        x_transformed = cls._transform_x(x_data)
-        if y_transform:
-            y_transformed = y_transform.f(y_data)
-        else:
-            y_transformed = y_data
-
-        # --- fit quantile splines ------------------------
-
-        # derivative bounds
-        dfdx = (max(y_transformed) - min(y_transformed)) / (max(x_transformed) - min(x_transformed))
-        dfx_bounds = SplineBounds(
-            x=x_transformed,
-            lb=np.full_like(x_transformed, dfdx / 10),
-        )
-
-        # first fit q50
-        q50 = SplineQuantileRegressor.cubic(x_transformed, y_transformed, n_knots, q=0.5, dfx_bounds=dfx_bounds)
-
-        # fit q10 <= q50-margin
-        q10 = SplineQuantileRegressor.cubic(
-            x_transformed,
-            y_transformed,
-            n_knots,
-            q=0.1,
-            fx_bounds=SplineBounds(
-                x=x_transformed,
-                ub=q50.predict(x_transformed) - 0.01 * (max(y_transformed) - min(y_transformed)),
-            ),
-            dfx_bounds=dfx_bounds,
-        )
-
-        # fit q90 >= q50+margin
-        q90 = SplineQuantileRegressor.cubic(
-            x_transformed,
-            y_transformed,
-            n_knots,
-            q=0.9,
-            fx_bounds=SplineBounds(
-                x=x_transformed,
-                lb=q50.predict(x_transformed) + 0.01 * (max(y_transformed) - min(y_transformed)),
-            ),
-            dfx_bounds=dfx_bounds,
-        )
-
-        # --- return curves -------------------------------
-        return QuantileCurves(q10, q50, q90, y_transform)
-
-
 # =================================================================================================
 #  Main Entrypoint
 # =================================================================================================
 if __name__ == "__main__":
     """
-    Syntax: python fig_bm_problems_preset_results.py <target_folder>
+    Syntax: python fig_bm_problems_preset_results.py <target_fig_folder> <target_md_folder> [--show-plots=true|false]
     """
-    if len(sys.argv) != 2:
-        print("Syntax: python fig_bm_problems_preset_results.py <target_folder>")
+    if len(sys.argv) < 3:
+        print(
+            "Syntax: python fig_bm_problems_preset_results.py <target_fig_folder> <target_md_folder> [--show-plots=true|false]"
+        )
     else:
-        _target_folder = Path(sys.argv[1]).absolute()
-        create_figures(_target_folder)
+        _target_fig_folder = Path(sys.argv[1]).absolute()
+        _target_md_folder = Path(sys.argv[2]).absolute()
+        _show_plots = True
+        for arg in sys.argv[3:]:
+            if arg.startswith("--show-plots="):
+                _show_plots = arg.split("=")[1].lower() in ("true", "yes", "1")
+        create_figures(_target_fig_folder, _target_md_folder, show_plots=_show_plots)

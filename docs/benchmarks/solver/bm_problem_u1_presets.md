@@ -1,6 +1,6 @@
 # Benchmark Results - Problem U1 - Solver Presets
 
-## Introduction
+## I. Introduction
 
 We present results of the different built-in solver presets on problem U1, size=100.  We run each preset for
 increasing durations and evaluate final constraint & diversity score of the solution.  Each run is performed with a 
@@ -13,8 +13,14 @@ The resulting uncertainty bounds give an idea of the result that can be expected
 (with different seeds) as this is expected to lie around ~q90.  Uncertainty bounds are only estimated and shown
 for the relevant metric (constraint score if the problem is constrained and infeasible; diversity score otherwise)
 
-## Results
+## II. Results
 
-![Problem U1 - Size 100 - Preset results](./images/preset_results_U1_100.png)
+### A. Figures
+
+![Problem U1 - Size 100 - Preset results](./images/preset_results_U1_100.webp)
+
+### B. Tables
+
+--8<-- "docs/benchmarks/solver/results/preset_result_quantiles_U1_100.md"
 
 

@@ -7,6 +7,7 @@ from max_div.internal.markdown import (
     TablePercentage,
     TableText,
     TableTimeElapsed,
+    TableValueRange,
     TableValueWithUncertainty,
 )
 
@@ -248,6 +249,100 @@ def test_table_value_with_uncertainty_lt_and_equalish():
     value_2 = TableValueWithUncertainty(value_q_25=0.9, value_q_50=1.0, value_q_75=1.1, decimals=2)
     value_3 = TableValueWithUncertainty(value_q_25=1.1, value_q_50=1.2, value_q_75=1.3, decimals=2)
     value_4 = TableValueWithUncertainty(value_q_25=1.11, value_q_50=1.21, value_q_75=1.31, decimals=2)
+
+    # --- act & assert ------------------------------------
+    assert value_1 < value_2 < value_3 < value_4
+
+    assert not value_1.is_equalish(value_2)
+    assert not value_2.is_equalish(value_1)
+
+    assert not value_2.is_equalish(value_3)
+    assert not value_3.is_equalish(value_2)
+
+    assert value_3.is_equalish(value_4)
+    assert value_4.is_equalish(value_3)
+
+
+# =================================================================================================
+#  TableValueRange
+# =================================================================================================
+@pytest.mark.parametrize(
+    "q25, q50, q75, expected_str",
+    [
+        (0.8, 1.0, 1.2, "0.80...1.20"),
+        (0.81111, 1.2222, 1.3333, "0.81...1.33"),
+        (1234.56789, 1235.6789, 1236.789, "123(4.57...6.79)"),
+        (123456, 234567, 345678, "123456...345678"),
+        (888, 999, 1111, "888...1111"),
+        (9.123, 10.345, 11.777, "9.1...11.8"),
+        (111.111, 222.222, 333.333, "111...333"),
+        (123.45678, 123.45678, 123.45678, "123.456780000"),
+        # NOTE: next 3 cases are unexpected, since they're not sorted
+        (1111, 999, 888, "1111...888"),
+        (11.777, 10.345, 9.123, "11.8...9.1"),
+        (333.333, 222.222, 111.111, "333...111"),
+    ],
+)
+def test_table_value_range(q25: float, q50: float, q75: float, expected_str: str):
+    # --- act ---------------------------------------------
+    table_value = TableValueRange(value_q_25=q25, value_q_50=q50, value_q_75=q75, diff_decimals=3, max_decimals=9)
+
+    # --- assert ------------------------------------------
+    assert isinstance(table_value, TableValueRange)
+    assert table_value.supports_aggregation
+
+    assert table_value.q_25 == q25
+    assert table_value.q_50 == q50
+    assert table_value.q_75 == q75
+    assert table_value.diff_decimals == 3
+    assert table_value.to_plain_text() == [expected_str]
+    assert table_value.to_mark_down() == expected_str
+
+
+def test_table_value_range_aggregate():
+    # --- arrange -----------------------------------------
+    value_1 = TableValueRange(value_q_25=0.8, value_q_50=1.0, value_q_75=1.2, max_decimals=3, diff_decimals=2)
+    value_2 = TableValueRange(value_q_25=0.9, value_q_50=1.1, value_q_75=1.3, max_decimals=3, diff_decimals=2)
+    value_3 = TableValueRange(value_q_25=1.3, value_q_50=1.5, value_q_75=1.7, max_decimals=3, diff_decimals=2)
+
+    # --- act ---------------------------------------------
+    mean_value = TableValueRange.aggregate(
+        elements=[value_1, value_2, value_3],
+        agg_type=TableAggregationType.MEAN,
+    )
+
+    # --- assert ------------------------------------------
+    assert isinstance(mean_value, TableValueRange)
+    assert mean_value.q_25 == pytest.approx(1.0)
+    assert mean_value.q_50 == pytest.approx(1.2)
+    assert mean_value.q_75 == pytest.approx(1.4)
+    assert mean_value.max_decimals == 3  # max of max_decimals
+    assert mean_value.diff_decimals == 2  # max of diff_decimals
+
+
+def test_table_value_range_from_values():
+    # --- act ---------------------------------------------
+    table_value = TableValueRange.from_values([0.8, 0.9, 1.0, 1.1, 1.2], max_decimals=5, diff_decimals=3)
+
+    # --- assert ------------------------------------------
+    assert isinstance(table_value, TableValueRange)
+    assert table_value.q_25 == pytest.approx(0.9)
+    assert table_value.q_50 == pytest.approx(1.0)
+    assert table_value.q_75 == pytest.approx(1.1)
+    assert table_value.max_decimals == 5
+    assert table_value.diff_decimals == 3
+
+
+def test_table_value_range_lt_and_equalish():
+    # --- arrange -----------------------------------------
+    # 4 values set up such that...
+    #   - q50 increases strictly
+    #   - value_1.q50 is in q25-q75 range of value_2, but NOT vice versa
+    #   - value_3 & value_4 have their medians in each other's 25-75 percentile range
+    value_1 = TableValueRange(value_q_25=0.8, value_q_50=0.91, value_q_75=0.99, max_decimals=3, diff_decimals=2)
+    value_2 = TableValueRange(value_q_25=0.9, value_q_50=1.0, value_q_75=1.1, max_decimals=3, diff_decimals=2)
+    value_3 = TableValueRange(value_q_25=1.1, value_q_50=1.2, value_q_75=1.3, max_decimals=3, diff_decimals=2)
+    value_4 = TableValueRange(value_q_25=1.11, value_q_50=1.21, value_q_75=1.31, max_decimals=3, diff_decimals=2)
 
     # --- act & assert ------------------------------------
     assert value_1 < value_2 < value_3 < value_4

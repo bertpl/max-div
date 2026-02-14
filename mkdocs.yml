@@ -29,7 +29,6 @@ theme:
     - toc.integrate
 
 plugins:
-  - include-markdown
   - search
   - mkdocstrings:
       handlers:

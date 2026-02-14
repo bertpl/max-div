@@ -113,6 +113,7 @@ class Table(ReportElement):
         clr_highest: str | None = None,
         make_bold: bool = True,
         make_italic: bool = False,
+        highlight_single_values: bool = True,
     ):
         """
         For each ROW, highlights the lowest and/or highest values in the table for the specified element type.
@@ -122,16 +123,30 @@ class Table(ReportElement):
             table.highlight_results(TablePercentage, clr_lowest=table.RED, clr_highest=table.GREEN, make_bold=True)
 
                 --> Highlights lowest percentages in red and highest percentages in green, making both bold.
+
+        :param element_type: Type of TableElement to compare and highlight.
+        :param clr_lowest: Color for lowest values (e.g., Table.RED).
+        :param clr_highest: Color for highest values (e.g., Table.GREEN).
+        :param make_bold: Whether to make highlighted values bold.
+        :param make_italic: Whether to make highlighted values italic.
+        :param highlight_single_values: If False, skip highlighting rows with only one value to compare.
         """
 
         for row_idx in range(self.n_rows()):
+            # collect all elements of the specified type in this row
+            elements_in_row = [cell for cell in self.rows[row_idx] if isinstance(cell, element_type)]
+
             # check if we have any element of the specified type in this row
-            if not any(isinstance(cell, element_type) for cell in self.rows[row_idx]):
+            if not elements_in_row:
+                continue
+
+            # skip highlighting if there's only one value and highlight_single_values is False
+            if not highlight_single_values and len(elements_in_row) == 1:
                 continue
 
             # highlight lowest
             if clr_lowest is not None:
-                min_value = min([cell for cell in self.rows[row_idx] if isinstance(cell, element_type)])
+                min_value = min(elements_in_row)
                 for col_idx, cell in enumerate(self.rows[row_idx]):
                     if isinstance(cell, element_type) and cell.is_equalish(min_value):
                         layout = self.layout(row_idx, col_idx)
@@ -141,7 +156,7 @@ class Table(ReportElement):
 
             # highlight highest
             if clr_highest is not None:
-                max_value = max([cell for cell in self.rows[row_idx] if isinstance(cell, element_type)])
+                max_value = max(elements_in_row)
                 for col_idx, cell in enumerate(self.rows[row_idx]):
                     if isinstance(cell, element_type) and cell.is_equalish(max_value):
                         layout = self.layout(row_idx, col_idx)

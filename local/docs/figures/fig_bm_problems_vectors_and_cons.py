@@ -85,11 +85,12 @@ _LEGEND_POSITION = dict(
 # =================================================================================================
 #  Main functionality
 # =================================================================================================
-def create_figures(target_folder: Path) -> None:
+def create_figures(target_folder: Path, show_plots: bool = True) -> None:
     """
     For all benchmark problems, create a figure for the case d=2, showing the population of vectors,
     constraints & an example solution (using DEFAULT preset for 1000 iterations).
     :param target_folder: (str) The folder where the figures will be saved.
+    :param show_plots: (bool) Whether to display the plots (blocking). Default is True.
     """
 
     problem_names = BenchmarkProblemFactory.get_all_benchmark_problems()
@@ -112,7 +113,8 @@ def create_figures(target_folder: Path) -> None:
             solution=solution,
         )
 
-    plt.show()
+    if show_plots:
+        plt.show()
 
 
 def create_figure_for_problem(
@@ -160,7 +162,7 @@ def create_figure_for_problem(
     fig.tight_layout()
 
     # save (without solution)
-    save_fig(fig, target_folder / f"problem_{problem_name}.png")
+    save_fig(fig, target_folder / f"problem_{problem_name}.webp")
 
     # plot solution
     sol_x = problem.vectors[solution.i_selected, 0].flatten()
@@ -168,8 +170,8 @@ def create_figure_for_problem(
     ax.plot(sol_x, sol_y, **_RED_DOTS, label="Example solution")
     ax.legend(loc=_LEGEND_POSITION[problem_name])
 
-    # save (without solution)
-    save_fig(fig, target_folder / f"problem_{problem_name}_with_solution.png")
+    # save (with solution)
+    save_fig(fig, target_folder / f"problem_{problem_name}_with_solution.webp")
 
 
 def get_example_solution(problem: MaxDivProblem) -> MaxDivSolution:
@@ -387,10 +389,14 @@ def annotate_constraint_text_vert(ax: Axes, y_bot: float, y_top: float, x: float
 # =================================================================================================
 if __name__ == "__main__":
     """
-    Syntax: python fig_bm_problems_vectors_and_cons.py <target_folder>
+    Syntax: python fig_bm_problems_vectors_and_cons.py <target_folder> [--show-plots=true|false]
     """
-    if len(sys.argv) != 2:
-        print("Syntax: python fig_bm_problems_vectors_and_cons.py <target_folder>")
+    if len(sys.argv) < 2:
+        print("Syntax: python fig_bm_problems_vectors_and_cons.py <target_folder> [--show-plots=true|false]")
     else:
         _target_folder = Path(sys.argv[1]).absolute()
-        create_figures(_target_folder)
+        _show_plots = True
+        for arg in sys.argv[2:]:
+            if arg.startswith("--show-plots="):
+                _show_plots = arg.split("=")[1].lower() in ("true", "yes", "1")
+        create_figures(_target_folder, show_plots=_show_plots)

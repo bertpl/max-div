@@ -1,0 +1,43 @@
+#### Diversity Score vs Total Iterations
+
+(estimated q10...q90 ranges)
+
+| Total Iterations | `RANDOM`                                                | `GUIDED`                                                | `SMART`                                                 | `THOROUGH`                                              |
+| ---------------- | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
+| 1_000            | -                                                       | -                                                       | <span style="color:#dd0000">**0.05(194...489)**</span>  | <span style="color:#00aa00">**0.05(619...893)**</span>  |
+| 2_000            | -                                                       | <span style="color:#dd0000">**0.05(610...771)**</span>  | 0.0(589...600)                                          | <span style="color:#00aa00">**0.06(090...238)**</span>  |
+| 5_000            | <span style="color:#dd0000">**0.03(560...998)**</span>  | 0.0(599...611)                                          | 0.06(257...328)                                         | <span style="color:#00aa00">**0.06(351...433)**</span>  |
+| 10_000           | <span style="color:#dd0000">**0.0(397...434)**</span>   | 0.06(188...280)                                         | 0.06(375...440)                                         | <span style="color:#00aa00">**0.064(311...904)**</span> |
+| 20_000           | <span style="color:#dd0000">**0.04(173...507)**</span>  | 0.063(185...852)                                        | 0.064(350...957)                                        | <span style="color:#00aa00">**0.06(466...513)**</span>  |
+| 50_000           | <span style="color:#dd0000">**0.04(322...634)**</span>  | 0.064(161...634)                                        | <span style="color:#00aa00">**0.06(470...526)**</span>  | <span style="color:#00aa00">**0.06(483...523)**</span>  |
+| 100_000          | <span style="color:#dd0000">**0.04(445...742)**</span>  | 0.064(523...932)                                        | <span style="color:#00aa00">**0.06(479...533)**</span>  | <span style="color:#00aa00">**0.06(488...526)**</span>  |
+| 200_000          | <span style="color:#dd0000">**0.04(643...917)**</span>  | 0.06(468...508)                                         | <span style="color:#00aa00">**0.06(484...536)**</span>  | <span style="color:#00aa00">**0.06(494...533)**</span>  |
+| 500_000          | <span style="color:#dd0000">**0.05(063...284)**</span>  | 0.06(474...519)                                         | <span style="color:#00aa00">**0.06(493...542)**</span>  | <span style="color:#00aa00">**0.065(124...538)**</span> |
+| 1_000_000        | <span style="color:#dd0000">**0.05(439...610)**</span>  | 0.06(480...530)                                         | <span style="color:#00aa00">**0.065(082...528)**</span> | -                                                       |
+| 2_000_000        | <span style="color:#dd0000">**0.05(778...902)**</span>  | 0.06(494...546)                                         | <span style="color:#00aa00">**0.065(311...689)**</span> | -                                                       |
+| 5_000_000        | <span style="color:#dd0000">**0.061(128...887)**</span> | <span style="color:#00aa00">**0.065(267...721)**</span> | -                                                       | -                                                       |
+| 10_000_000       | 0.06(281...332)                                         | -                                                       | -                                                       | -                                                       |
+| 20_000_000       | 0.06(391...425)                                         | -                                                       | -                                                       | -                                                       |
+
+#### Diversity Score vs Total Time
+
+(estimated q10...q90 ranges)
+
+| Total Time | `RANDOM`                                                | `GUIDED`                                                | `SMART`                                                 | `THOROUGH`                                              |
+| ---------- | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
+| 10.0s      | <span style="color:#dd0000">**0.04(269...603)**</span>  | <span style="color:#00aa00">**0.06(218...303)**</span>  | 0.06(160...243)                                         | 0.0(598...615)                                          |
+| 15.0s      | <span style="color:#dd0000">**0.04(335...661)**</span>  | <span style="color:#00aa00">**0.06(296...368)**</span>  | <span style="color:#00aa00">**0.06(276...349)**</span>  | 0.06(153...279)                                         |
+| 30.0s      | <span style="color:#dd0000">**0.04(482...782)**</span>  | <span style="color:#00aa00">**0.06(386...441)**</span>  | <span style="color:#00aa00">**0.06(388...453)**</span>  | 0.06(327...409)                                         |
+| 45.0s      | <span style="color:#dd0000">**0.04(605...884)**</span>  | <span style="color:#00aa00">**0.064(193...685)**</span> | <span style="color:#00aa00">**0.064(244...866)**</span> | 0.06(385...452)                                         |
+| 1m0s       | <span style="color:#dd0000">**0.04(713...975)**</span>  | <span style="color:#00aa00">**0.064(367...826)**</span> | <span style="color:#00aa00">**0.06(443...503)**</span>  | 0.064(136...734)                                        |
+| 2m0s       | <span style="color:#dd0000">**0.05(044...261)**</span>  | <span style="color:#00aa00">**0.06(461...503)**</span>  | <span style="color:#00aa00">**0.06(469...525)**</span>  | <span style="color:#00aa00">**0.06(455...502)**</span>  |
+| 5m0s       | <span style="color:#dd0000">**0.05(535...689)**</span>  | <span style="color:#00aa00">**0.06(472...516)**</span>  | <span style="color:#00aa00">**0.06(482...534)**</span>  | <span style="color:#00aa00">**0.06(477...515)**</span>  |
+| 10m0s      | <span style="color:#dd0000">**0.05(855...967)**</span>  | <span style="color:#00aa00">**0.06(477...524)**</span>  | <span style="color:#00aa00">**0.06(487...537)**</span>  | <span style="color:#00aa00">**0.06(483...519)**</span>  |
+| 15m0s      | <span style="color:#dd0000">**0.060(077...987)**</span> | <span style="color:#00aa00">**0.06(481...531)**</span>  | <span style="color:#00aa00">**0.06(490...540)**</span>  | <span style="color:#00aa00">**0.06(486...522)**</span>  |
+| 30m0s      | <span style="color:#dd0000">**0.062(083...703)**</span> | <span style="color:#00aa00">**0.06(495...547)**</span>  | <span style="color:#00aa00">**0.06(499...549)**</span>  | <span style="color:#00aa00">**0.06(492...531)**</span>  |
+| 45m0s      | <span style="color:#dd0000">**0.06(294...343)**</span>  | <span style="color:#00aa00">**0.065(082...582)**</span> | <span style="color:#00aa00">**0.065(077...569)**</span> | <span style="color:#00aa00">**0.06(498...539)**</span>  |
+| 1h0m       | <span style="color:#dd0000">**0.063(440...850)**</span> | <span style="color:#00aa00">**0.065(194...668)**</span> | <span style="color:#00aa00">**0.065(154...637)**</span> | <span style="color:#00aa00">**0.065(036...469)**</span> |
+| 1h15m      | <span style="color:#dd0000">**0.06(377...412)**</span>  | <span style="color:#00aa00">**0.065(289...732)**</span> | <span style="color:#00aa00">**0.065(223...692)**</span> | <span style="color:#00aa00">**0.065(091...534)**</span> |
+| 1h30m      | <span style="color:#dd0000">**0.064(001...320)**</span> | <span style="color:#00aa00">**0.065(369...782)**</span> | <span style="color:#00aa00">**0.065(284...739)**</span> | <span style="color:#00aa00">**0.065(141...589)**</span> |
+| 1h45m      | <span style="color:#dd0000">**0.064(178...467)**</span> | <span style="color:#00aa00">**0.065(437...821)**</span> | <span style="color:#00aa00">**0.065(337...777)**</span> | <span style="color:#00aa00">**0.065(188...637)**</span> |
+| 2h0m       | <span style="color:#dd0000">**0.064(317...583)**</span> | <span style="color:#00aa00">**0.065(496...853)**</span> | <span style="color:#00aa00">**0.065(385...809)**</span> | <span style="color:#00aa00">**0.065(231...678)**</span> |

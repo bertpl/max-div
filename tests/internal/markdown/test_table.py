@@ -76,10 +76,16 @@ def test_table_highlight_results():
     table.add_row(["Period 1", TablePercentage(0.95), TablePercentage(0.70), TablePercentage(0.95001)])
     table.add_row(["Period 2", TablePercentage(0.95), TablePercentage(0.70), TablePercentage(0.94)])
     table.add_row(["Period 3", TablePercentage(0.90), TablePercentage(0.91), TablePercentage(0.90)])
+    table.add_row(["Period 4", "-", "-", TablePercentage(0.93)])
     table.add_aggregate_row(agg_type=TableAggregationType.MEAN, restrict_to_types=[TablePercentage])
 
     # --- act ---------------------------------------------
-    table.highlight_results(element_type=TablePercentage, clr_lowest=Table.RED, clr_highest=Table.GREEN)
+    table.highlight_results(
+        element_type=TablePercentage,
+        clr_lowest=Table.RED,
+        clr_highest=Table.GREEN,
+        highlight_single_values=False,
+    )
     md_lines = table.render(markdown=True)
 
     # --- assert ------------------------------------------
@@ -91,6 +97,7 @@ def test_table_highlight_results():
         '| Period 1  | <span style="color:#00aa00">**95.0%**</span>  | <span style="color:#dd0000">**70.0%**</span>  | <span style="color:#00aa00">**95.0%**</span> |',
         '| Period 2  | <span style="color:#00aa00">**95.0%**</span>  | <span style="color:#dd0000">**70.0%**</span>  | 94.0%                                        |',
         '| Period 3  | <span style="color:#dd0000">**90.0%**</span>  | <span style="color:#00aa00">**91.0%**</span>  | <span style="color:#dd0000">**90.0%**</span> |',
+        "| Period 4  | -                                             | -                                             | 93.0%                                        |",
         '| **Mean:** | <span style="color:#00aa00">**93.33%**</span> | <span style="color:#dd0000">**77.00%**</span> | 93.00%                                       |',
         "",
     ]

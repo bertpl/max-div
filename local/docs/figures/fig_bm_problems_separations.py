@@ -15,10 +15,12 @@ from max_div.solver._distance import compute_pdist, compute_separation
 # =================================================================================================
 #  Main functionality
 # =================================================================================================
-def create_figures(target_folder: Path) -> None:
+def create_figures(target_folder: Path, show_plots: bool = True) -> None:
     """
     For all benchmark problems, create a figure showing the distribution of separations of the entire
     vector populate for sizes n=1,2,4,8,16,32,64,128.
+    :param target_folder: Path to save the figures.
+    :param show_plots: Whether to display the plots (blocking). Default is True.
     """
 
     problem_names = BenchmarkProblemFactory.get_all_benchmark_problems()
@@ -30,7 +32,8 @@ def create_figures(target_folder: Path) -> None:
         # --- create figure ---------------------
         create_figure_for_problem(target_folder, problem_name, sep_dict)
 
-    plt.show()
+    if show_plots:
+        plt.show()
 
 
 def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: dict[int, np.ndarray]):
@@ -121,7 +124,7 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
     )
 
     # --- save --------------------------------------------
-    save_fig(fig, target_folder / f"problem_{problem_name}_separations.png")
+    save_fig(fig, target_folder / f"problem_{problem_name}_separations.webp")
 
 
 def determine_y_range(kde_dict: dict[int, np.ndarray]) -> tuple[float, float]:
@@ -198,10 +201,14 @@ def compute_separations(problem_name: str, size: int) -> np.ndarray:
 # =================================================================================================
 if __name__ == "__main__":
     """
-    Syntax: python fig_bm_problems_separations.py <target_folder>
+    Syntax: python fig_bm_problems_separations.py <target_folder> [--show-plots=true|false]
     """
-    if len(sys.argv) != 2:
-        print("Syntax: python fig_bm_problems_vectors_and_cons.py <target_folder>")
+    if len(sys.argv) < 2:
+        print("Syntax: python fig_bm_problems_separations.py <target_folder> [--show-plots=true|false]")
     else:
         _target_folder = Path(sys.argv[1]).absolute()
-        create_figures(_target_folder)
+        _show_plots = True
+        for arg in sys.argv[2:]:
+            if arg.startswith("--show-plots="):
+                _show_plots = arg.split("=")[1].lower() in ("true", "yes", "1")
+        create_figures(_target_folder, show_plots=_show_plots)

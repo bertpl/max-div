@@ -7,5 +7,6 @@ from ._table_element import (
     TablePercentage,
     TableText,
     TableTimeElapsed,
+    TableValueRange,
     TableValueWithUncertainty,
 )

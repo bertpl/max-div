@@ -1,4 +1,4 @@
 # Benchmark Results - Problem U4 - Initialization Strategies
 
-{% include-markdown "./results/benchmark_initialization_U4.md" %}
+--8<-- "docs/benchmarks/solver/results/benchmark_initialization_U4.md"
 

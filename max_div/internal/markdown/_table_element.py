@@ -194,3 +194,84 @@ class TableValueWithUncertainty(_QuantiledTableElement):
             decimals=decimals,
             scientific=scientific,
         )
+
+
+class TableValueRange(_QuantiledTableElement):
+    def __init__(
+        self, value_q_25: float, value_q_50: float, value_q_75: float, max_decimals: int = 20, diff_decimals: int = 2
+    ):
+        super().__init__(q_25=value_q_25, q_50=value_q_50, q_75=value_q_75)
+        self.max_decimals = max_decimals
+        self.diff_decimals = diff_decimals
+
+    def to_mark_down(self) -> str:
+        prefix = suffix_min = suffix_max = ""
+        for n_decimals in range(self.max_decimals, -1, -1):
+            # Render q25 and q75 with n_decimals
+            s_min = f"{self.q_25:.{n_decimals}f}"
+            s_max = f"{self.q_75:.{n_decimals}f}"
+
+            # Align by decimal point (if present) or right-align (left-pad with spaces)
+            if "." in s_min and "." in s_max:
+                decimal_pos_min = s_min.index(".")
+                decimal_pos_max = s_max.index(".")
+                if decimal_pos_min < decimal_pos_max:
+                    s_min = " " * (decimal_pos_max - decimal_pos_min) + s_min
+                elif decimal_pos_max < decimal_pos_min:
+                    s_max = " " * (decimal_pos_min - decimal_pos_max) + s_max
+            else:
+                # Right-align (left-pad shorter string)
+                if len(s_min) < len(s_max):
+                    s_min = " " * (len(s_max) - len(s_min)) + s_min
+                elif len(s_max) < len(s_min):
+                    s_max = " " * (len(s_min) - len(s_max)) + s_max
+
+            # Find common prefix length
+            common_prefix_len = 0
+            for i in range(min(len(s_min), len(s_max))):
+                if s_min[i] == s_max[i]:
+                    common_prefix_len = i + 1
+                else:
+                    break
+
+            # Extract prefix and suffixes
+            prefix = s_min[:common_prefix_len]
+            suffix_min = s_min[common_prefix_len:]
+            suffix_max = s_max[common_prefix_len:]
+
+            # Check if suffix length (excluding decimal) equals diff_decimals
+            suffix_len_without_dot = len(suffix_min.replace(".", ""))
+            if (suffix_len_without_dot <= self.diff_decimals) or (n_decimals == 0):
+                break
+
+        # Create the merged string: "prefix(min_suffix...max_suffix)"
+        prefix, suffix_min, suffix_max = prefix.strip(), suffix_min.strip(), suffix_max.strip()
+        if suffix_min or suffix_max:
+            if prefix:
+                return f"{prefix}({suffix_min}...{suffix_max})"
+            else:
+                return f"{suffix_min}...{suffix_max}"
+        return prefix
+
+    @classmethod
+    def aggregate(cls, elements: list[TableValueRange], agg_type: TableAggregationType) -> TableValueRange:
+        q_25_agg, q_50_agg, q_75_agg = cls._aggregate_quantiles(elements, agg_type)
+        max_max_decimals = max(el.max_decimals for el in elements)
+        max_diff_decimals = max(el.diff_decimals for el in elements)
+        return TableValueRange(
+            value_q_25=q_25_agg,
+            value_q_50=q_50_agg,
+            value_q_75=q_75_agg,
+            max_decimals=max_max_decimals,
+            diff_decimals=max_diff_decimals,
+        )
+
+    @classmethod
+    def from_values(cls, t_values: list[float], max_decimals: int = 20, diff_decimals: int = 2) -> TableValueRange:
+        return TableValueRange(
+            value_q_25=float(np.quantile(t_values, 0.25)),
+            value_q_50=float(np.quantile(t_values, 0.50)),
+            value_q_75=float(np.quantile(t_values, 0.75)),
+            max_decimals=max_decimals,
+            diff_decimals=diff_decimals,
+        )

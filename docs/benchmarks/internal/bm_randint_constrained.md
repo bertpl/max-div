@@ -18,7 +18,7 @@ We compare the following situations:
 
 We test both speed (absolute time of a single call) and accuracy (% of cases the generated samples satisfied the constraints).
 
-{% include-markdown "./results/benchmark_randint_constrained_1.md" %}
-{% include-markdown "./results/benchmark_randint_constrained_2.md" %}
-{% include-markdown "./results/benchmark_randint_constrained_3.md" %}
-{% include-markdown "./results/benchmark_randint_constrained_4.md" %}
+--8<-- "docs/benchmarks/internal/results/benchmark_randint_constrained_1.md"
+--8<-- "docs/benchmarks/internal/results/benchmark_randint_constrained_2.md"
+--8<-- "docs/benchmarks/internal/results/benchmark_randint_constrained_3.md"
+--8<-- "docs/benchmarks/internal/results/benchmark_randint_constrained_4.md"

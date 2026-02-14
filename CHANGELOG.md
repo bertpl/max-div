@@ -5,6 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+  - add tabular solver preset benchmark results to docs
+
 - **improved**:
   - tweaks to docs figures layout
 

@@ -21,19 +21,19 @@ between groups, creating $2^d$ possible combinations of group membership, most o
 
 This image shows problem C3 with size parameter $s=2$ (thus $d=2$, $n=300$, $k=20$, $m=4$):
 
-![Problem C3](./images/problem_C3.png){ .center }
+![Problem C3](./images/problem_C3.webp){ .center }
 
 The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations 
 using the L2 distance metric and the `geomean_separation` diversity metric:
 
-![Problem C3 with Solution](./images/problem_C3_with_solution.png){ .center }
+![Problem C3 with Solution](./images/problem_C3_with_solution.webp){ .center }
 
 ### C. Separation statistics
 
 The image below shows distribution of vector separations (distances to nearest neighbor for all vectors in the population),
 for different problem sizes:
 
-![Problem C3 - Vector Separations](./images/problem_C3_separations.png){ .center75 }
+![Problem C3 - Vector Separations](./images/problem_C3_separations.webp){ .center75 }
 
 ## II. Benchmark results
 

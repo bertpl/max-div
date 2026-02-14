@@ -23,7 +23,7 @@ help:
 	@echo '  update-internal-benchmarks             Run internal benchmarks and update results in ./docs/benchmarks/internal/results/.'
 	@echo '  update-solver-strategies-benchmarks    Run solver benchmarks and update results in ./docs/benchmarks/solver/results/.'
 	@echo '  update-all-benchmarks                  Run all benchmarks and update results in ./docs/benchmarks/.'
-	@cho  '  update-solver-benchmark-figures        Updates all benchmark-related figures in ./docs/benchmarks/solver/images.'
+	@echo '  update-solver-benchmark-figures        Updates all benchmark-related figures in ./docs/benchmarks/solver/images.'
 	@echo ''
 	@echo 'Options:'
 	@echo ''
@@ -82,7 +82,9 @@ update-solver-strategies-benchmarks:
 update-all-benchmarks: update-internal-benchmarks update-solver-strategies-benchmarks
 
 update-solver-benchmark-figures:
-	mv -f ./preset_results*.json ./local/docs/data/;
-	uv run ./local/docs/figures/fig_bm_problems_vectors_and_cons.py ./docs/benchmarks/solver/images
-	uv run ./local/docs/figures/fig_bm_problems_separations.py ./docs/benchmarks/solver/images
-	uv run ./local/docs/figures/fig_bm_problems_preset_results.py ./docs/benchmarks/solver/images
+	@if ls ./preset_results*.json 1> /dev/null 2>&1; then \
+		mv -f ./preset_results*.json ./local/docs/data/; \
+	fi
+	uv run ./local/docs/figures/fig_bm_problems_vectors_and_cons.py ./docs/benchmarks/solver/images --show-plots=false
+	uv run ./local/docs/figures/fig_bm_problems_separations.py ./docs/benchmarks/solver/images --show-plots=false
+	uv run ./local/docs/figures/fig_bm_problems_preset_results.py ./docs/benchmarks/solver/images ./docs/benchmarks/solver/results --show-plots=false

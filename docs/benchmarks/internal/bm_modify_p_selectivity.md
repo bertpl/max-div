@@ -10,4 +10,4 @@ or
 uv run max-div benchmark --markdown modify_p_selectivity
 ```
 
-{% include-markdown "./results/benchmark_modify_p_selectivity.md" %}
+--8<-- "docs/benchmarks/internal/results/benchmark_modify_p_selectivity.md"
