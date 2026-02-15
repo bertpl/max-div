@@ -35,7 +35,7 @@ class SplineRegressor(ABC):
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, knots: np.ndarray):
+    def __init__(self, knots: np.ndarray, c: np.ndarray | None = None):
         """
         Create a spline regressor with the given knots.  The knots should be unique and sorted in increasing order.
         :param knots: (list[float]) List of knot locations, sorted in increasing order.
@@ -49,7 +49,10 @@ class SplineRegressor(ABC):
 
         # --- store parameters ---
         self.knots = knots
-        self.c = np.zeros(self.n)  # to be set appropriately using a fitting method
+        if c is not None:
+            self.c = c
+        else:
+            self.c = np.zeros(self.n)  # to be set appropriately using a fitting method
 
     @property
     def n_knots(self) -> int:
@@ -84,6 +87,23 @@ class SplineRegressor(ABC):
             return float(fx_values[0])
         else:
             return fx_values
+
+    def predict_deriv(self, x: float | np.ndarray) -> float | np.ndarray:
+
+        # prep input & compute derivative basis matrix
+        if isinstance(x, float):
+            deriv_matrix = self._deriv_matrix(np.array([x]))
+        else:
+            deriv_matrix = self._deriv_matrix(x)
+
+        # evaluate derivative of spline
+        dfx_values = deriv_matrix @ self.c
+
+        # return result in appropriate format
+        if isinstance(x, float):
+            return float(dfx_values[0])
+        else:
+            return dfx_values
 
     # -------------------------------------------------------------------------
     #  Internal
@@ -141,6 +161,7 @@ class SplineQuantileRegressor(SplineRegressor, ABC):
         q: float,
         fx_bounds: SplineBounds | None = None,
         dfx_bounds: SplineBounds | None = None,
+        reg: float = 0.0,
     ):
 
         # --- generate ineq. constraints ------------------
@@ -183,9 +204,28 @@ class SplineQuantileRegressor(SplineRegressor, ABC):
             Aineq = None
             bineq = None
 
+        # --- generate regularization term ----------------
+        if reg > 0:
+            nx = self.n + len(x_data) + 1  # number of x-values at which we evaluate
+            x_reg = np.quantile(self.knots, np.linspace(0, 1, nx))
+            dfdx_reg = self._deriv_matrix(x_reg)
+            d2fdx2_reg = np.diff(dfdx_reg, axis=0) / np.diff(x_reg)[:, np.newaxis]
+
+            # scale such that effective regularization cost term is...
+            #   - proportional to 'reg'
+            #   - proportional to len(x_data) (=equal counter-weight to data fitting cost)
+            #   - independent of the number of intervals over which we regularize 2nd deriv.
+            scale = np.sqrt(reg * len(x_data) / (nx - 1))
+            A_l2reg = scale * d2fdx2_reg
+            b_l2reg = np.zeros(d2fdx2_reg.shape[0])
+
+        else:
+            A_l2reg = None
+            b_l2reg = None
+
         # --- actual regression ---------------------------
         basis_matrix = self._basis_matrix(x_data)
-        linear_regressor = LinearRegressor.fit_quantile(basis_matrix, y_data, q, Aineq, bineq)
+        linear_regressor = LinearRegressor.fit_quantile(basis_matrix, y_data, q, Aineq, bineq, A_l2reg, b_l2reg)
 
         # --- extract result ------------------------------
         self.c = linear_regressor.c
@@ -202,9 +242,10 @@ class SplineQuantileRegressor(SplineRegressor, ABC):
         q: float,
         fx_bounds: SplineBounds | None = None,
         dfx_bounds: SplineBounds | None = None,
+        reg: float = 0.0,
     ) -> Self:
         regressor = LinearSplineQuantileRegressor(knots=cls._knots_from_x_data(x_data, n_knots))
-        regressor.fit(x_data, y_data, q, fx_bounds, dfx_bounds)
+        regressor.fit(x_data, y_data, q, fx_bounds, dfx_bounds, reg)
         return regressor
 
     @classmethod
@@ -216,9 +257,10 @@ class SplineQuantileRegressor(SplineRegressor, ABC):
         q: float,
         fx_bounds: SplineBounds | None = None,
         dfx_bounds: SplineBounds | None = None,
+        reg: float = 0.0,
     ) -> Self:
         regressor = QuadraticSplineQuantileRegressor(knots=cls._knots_from_x_data(x_data, n_knots))
-        regressor.fit(x_data, y_data, q, fx_bounds, dfx_bounds)
+        regressor.fit(x_data, y_data, q, fx_bounds, dfx_bounds, reg)
         return regressor
 
     @classmethod
@@ -230,9 +272,10 @@ class SplineQuantileRegressor(SplineRegressor, ABC):
         q: float,
         fx_bounds: SplineBounds | None = None,
         dfx_bounds: SplineBounds | None = None,
+        reg: float = 0.0,
     ) -> Self:
         regressor = CubicSplineQuantileRegressor(knots=cls._knots_from_x_data(x_data, n_knots))
-        regressor.fit(x_data, y_data, q, fx_bounds, dfx_bounds)
+        regressor.fit(x_data, y_data, q, fx_bounds, dfx_bounds, reg)
         return regressor
 
 

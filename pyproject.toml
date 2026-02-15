@@ -39,7 +39,7 @@ dev = [
     "jupyter>=1.1.0",
     "ipywidgets>=8.0.0",
     "matplotlib>=3.3.0",
-    "cvxpy[ECOS]>=1.7.1"
+    "cvxpy[ECOS,OSQP]>=1.7.1"
 ]
 
 [project.scripts]

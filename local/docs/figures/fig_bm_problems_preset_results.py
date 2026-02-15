@@ -157,9 +157,11 @@ def create_single_figure(
                     quantile_curves = QuantileCurves.from_data(
                         x_data=np.array(x),
                         y_data=np.array(y),
-                        n_knots=3,
+                        n_knots=10,
                         x_transform=LogTransform(),
                         y_transform=y_transform,
+                        q50_reg=1.0,
+                        q10_q90_reg=2.0,
                     )
                     # Add to quantiles table for markdown generation
                     quantiles_table.add_quantile_curves(

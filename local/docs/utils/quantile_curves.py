@@ -6,6 +6,7 @@ import numpy as np
 
 from local.docs.utils.axis_transforms import AxisTransform, NullTransform
 from local.docs.utils.regression import SplineBounds, SplineQuantileRegressor, SplineRegressor
+from local.docs.utils.regression.splines import CubicSplineQuantileRegressor
 
 
 class QuantileCurves:
@@ -50,11 +51,6 @@ class QuantileCurves:
     @cached_property
     def x_min(self) -> float:
         """Return smallest x for which all quantile curves are properly defined."""
-        first_knots = [
-            float(min(self._x_transform.f_inv(self._q10.knots))),
-            float(min(self._x_transform.f_inv(self._q50.knots))),
-            float(min(self._x_transform.f_inv(self._q90.knots))),
-        ]
         return max(
             [
                 float(min(self._x_transform.f_inv(self._q10.knots))),
@@ -66,11 +62,6 @@ class QuantileCurves:
     @cached_property
     def x_max(self) -> float:
         """Return largest x for which all quantile curves are properly defined."""
-        last_knots = [
-            float(max(self._x_transform.f_inv(self._q10.knots))),
-            float(max(self._x_transform.f_inv(self._q50.knots))),
-            float(max(self._x_transform.f_inv(self._q90.knots))),
-        ]
         return min(
             [
                 float(max(self._x_transform.f_inv(self._q10.knots))),
@@ -113,6 +104,8 @@ class QuantileCurves:
         n_knots: int = 3,
         x_transform: AxisTransform | None = None,
         y_transform: AxisTransform | None = None,
+        q50_reg: float = 0.0,
+        q10_q90_reg: float = 0.0,
     ) -> QuantileCurves:
         """
         Create quantile curves for the provided data.
@@ -135,40 +128,80 @@ class QuantileCurves:
 
         # --- fit quantile splines ------------------------
 
-        # derivative bounds
-        dfdx = (max(y_trans) - min(y_trans)) / (max(x_trans) - min(x_trans))
-        dfx_bounds = SplineBounds(
-            x=x_trans,
-            lb=np.full_like(x_trans, dfdx / 10),
+        # prep
+        y_min = min(y_trans)
+        y_max = max(y_trans)
+        y_margin = max(
+            (y_max - y_min) * 0.01,
+            (abs(y_max) + abs(y_min)) * 0.001,
+            1e-9,
         )
 
-        # first fit q50
-        q50 = SplineQuantileRegressor.cubic(x_trans, y_trans, n_knots, q=0.5, dfx_bounds=dfx_bounds)
+        # derivative bounds
+        dfdx = (max(y_trans) - min(y_trans)) / (max(x_trans) - min(x_trans))
 
-        # fit q10 <= q50-margin
-        q10 = SplineQuantileRegressor.cubic(
+        # first fit q50
+        q50 = SplineQuantileRegressor.cubic(
             x_trans,
             y_trans,
+            n_knots,
+            q=0.5,
+            fx_bounds=SplineBounds(
+                x=x_trans,
+                lb=np.full_like(x_trans, y_min - (0.5 * y_margin)),
+                ub=np.full_like(x_trans, y_max + (0.5 * y_margin)),
+            ),
+            dfx_bounds=SplineBounds(
+                x=x_trans,
+                lb=np.full_like(x_trans, dfdx / 10),
+            ),
+            reg=q50_reg,
+        )
+        q50_spline_y = q50.predict(x_trans)
+        q50_spline_dydx = q50.predict_deriv(x_trans)
+
+        # fit q10 <= q50-margin
+        q10_delta = SplineQuantileRegressor.cubic(
+            x_trans,
+            y_trans - q50_spline_y,
             n_knots,
             q=0.1,
             fx_bounds=SplineBounds(
                 x=x_trans,
-                ub=q50.predict(x_trans) - 0.01 * (max(y_trans) - min(y_trans)),
+                lb=np.full_like(x_trans, y_min - (2 * y_margin)) - q50_spline_y,
+                ub=np.full_like(x_trans, -y_margin),
             ),
-            dfx_bounds=dfx_bounds,
+            dfx_bounds=SplineBounds(
+                x=x_trans,
+                lb=np.full_like(x_trans, dfdx / 10) - q50_spline_dydx,
+            ),
+            reg=q10_q90_reg,
+        )
+        q10 = CubicSplineQuantileRegressor(
+            knots=q10_delta.knots,
+            c=q50.c + q10_delta.c,
         )
 
         # fit q90 >= q50+margin
-        q90 = SplineQuantileRegressor.cubic(
+        q90_delta = SplineQuantileRegressor.cubic(
             x_trans,
-            y_trans,
+            y_trans - q50_spline_y,
             n_knots,
             q=0.9,
             fx_bounds=SplineBounds(
                 x=x_trans,
-                lb=q50.predict(x_trans) + 0.01 * (max(y_trans) - min(y_trans)),
+                lb=np.full_like(x_trans, y_margin),
+                ub=np.full_like(x_trans, y_max + (2 * y_margin)) - q50_spline_y,
             ),
-            dfx_bounds=dfx_bounds,
+            dfx_bounds=SplineBounds(
+                x=x_trans,
+                lb=np.full_like(x_trans, dfdx / 10) - q50_spline_dydx,
+            ),
+            reg=q10_q90_reg,
+        )
+        q90 = CubicSplineQuantileRegressor(
+            knots=q90_delta.knots,
+            c=q50.c + q90_delta.c,
         )
 
         # --- return curves -------------------------------

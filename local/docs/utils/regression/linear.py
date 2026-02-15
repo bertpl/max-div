@@ -48,9 +48,13 @@ class LinearRegressor:
         q: float,
         Aineq: np.ndarray | None = None,
         bineq: np.ndarray | None = None,
+        A_l2reg: np.ndarray | None = None,
+        b_l2reg: np.ndarray | None = None,
     ) -> LinearRegressor:
         """
-        Solve the linear system A @ c = b for c using quantile regression with quantile q.
+        Solve the linear system A @ c = b for c using quantile regression with quantile q, optionally
+        with an additional L2 regularization term || A_l2reg @ - b_l2reg ||_2^2
+             and/or linear inequality constraints (Aineq @ c <= bineq).
 
         The quantile defines how many (fraction q)   of the residuals should be negative
                          and how many (fraction 1-q) of the residuals should be positive.
@@ -81,25 +85,45 @@ class LinearRegressor:
             mineq = 0
             if (Aineq is not None) or (bineq is not None):
                 raise ValueError("(Aineq, bineq) should either be both None or both numpy arrays.")
+        if (A_l2reg is not None) and (b_l2reg is not None):
+            if A_l2reg.shape[1] != n:
+                raise ValueError(f"A_l2reg should have shape (m_l2reg, {n}), but has shape {A_l2reg.shape}")
+            if b_l2reg.ndim != 1:
+                raise ValueError(f"b_l2reg should be 1D numpy array, but has {b_l2reg.ndim} dimensions")
+            if b_l2reg.shape[0] != A_l2reg.shape[0]:
+                raise ValueError(f"b_l2reg vs A_l2reg size mismatch")
+        elif (A_l2reg is not None) or (b_l2reg is not None):
+            raise ValueError("(A_l2reg, b_l2reg) should either be both None or both numpy arrays.")
 
         # --- construct LP problem ------------------------
         c = cp.Variable(n)
         residuals = b - A @ c
-        pinball_loss = cp.sum(cp.maximum(q * residuals, (q - 1) * residuals))
+        loss = cp.sum(cp.maximum(q * residuals, (q - 1) * residuals))  # pinball loss
         if mineq > 0:
             constraints = [Aineq @ c <= bineq]
         else:
             constraints = None
 
-        # --- solve LP problem ----------------------------
-        problem = cp.Problem(cp.Minimize(pinball_loss), constraints)
-        problem.solve(cp.ECOS)
+        # --- add L2 regularization term if provided ------
+        is_qp = False
+        if A_l2reg is not None:
+            l2_reg_term = cp.sum_squares(A_l2reg @ c - b_l2reg)
+            loss += l2_reg_term
+            is_qp = True
+
+        # --- solve LP/QP problem -------------------------
+        problem = cp.Problem(cp.Minimize(loss), constraints)
+        if is_qp:
+            problem.solve(cp.OSQP, max_iter=1_000_000)
+        else:
+            problem.solve(cp.ECOS)
 
         # --- check & extract solution --------------------
         if not (problem.status == cp.OPTIMAL):
-            raise ValueError(f"Quantile regression problem could not be solved to optimality. Status: {problem.status}")
-        else:
-            return LinearRegressor(c.value)
+            print(f"WARNING: Quantile regression problem could not be solved to optimality. Status: {problem.status}.")
+            print("         Will try to continue with sub-optimal solution...")
+
+        return LinearRegressor(c.value)
 
 
 if __name__ == "__main__":
