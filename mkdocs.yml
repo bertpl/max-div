@@ -65,7 +65,6 @@ plugins:
       autoapi_file_patterns: ['*.py']
       autoapi_add_nav_entry: Reference
       autoapi_root: ./docs/reference
-  - glightbox
 
 markdown_extensions:
   - toc:

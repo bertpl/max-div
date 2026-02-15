@@ -5,7 +5,8 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-/
+- **improved**:
+  - simplify: remove `glightbox` mkdocs plugin; due to limited zoom functionality and awkward ergonomics on mobile.   
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.3
