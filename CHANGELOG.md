@@ -5,6 +5,9 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
+- **new**:
+  - add `--max-run-duration-minutes` option to `benchmark solver presets` CLI command.
+
 - **improved**:
   - simplify: remove `glightbox` mkdocs plugin; due to limited zoom functionality and awkward ergonomics on mobile.   
   - improved q10-q90 solver preset results uncertainty estimation

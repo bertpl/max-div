@@ -11,6 +11,7 @@ def determine_benchmark_scope_for_max_duration(
     problems: list[str],
     size: int,
     max_duration_sec: float,
+    max_run_duration_sec: float | None = None,
 ) -> tuple[float, list[SolverPresetBenchmarkParams]]:
     """
     Compute full list of benchmark runs to be executed based on presets, problems, size, and target duration.
@@ -19,7 +20,7 @@ def determine_benchmark_scope_for_max_duration(
     """
 
     def _get_scope_for_speed(_speed: float) -> list[SolverPresetBenchmarkParams]:
-        return determine_benchmark_scope(presets, problems, size, _speed)
+        return determine_benchmark_scope(presets, problems, size, _speed, max_run_duration_sec)
 
     def _get_duration_for_speed(_speed: float) -> float:
         return estimate_execution_time_sec_multi(_get_scope_for_speed(_speed))
@@ -55,6 +56,7 @@ def determine_benchmark_scope(
     problems: list[str],
     size: int,
     speed: float,
+    max_run_duration_sec: float | None = None,
 ) -> list[SolverPresetBenchmarkParams]:
     """Compute full list of benchmark runs to be executed based on presets, problems, size, and speed."""
 
@@ -65,7 +67,10 @@ def determine_benchmark_scope(
     n_processes = get_n_processes(1000)  # number of processes used for the largest scopes
     interp_n_runs = [1000, 4 * n_processes, 2 * n_processes, 2]
 
-    max_duration_sec = float(np.interp(speed, interp_speed, interp_max_duration_sec))
+    if max_run_duration_sec is not None:
+        max_duration_sec = max_run_duration_sec
+    else:
+        max_duration_sec = float(np.interp(speed, interp_speed, interp_max_duration_sec))
     min_duration_sec = float(np.interp(speed, interp_speed, interp_min_duration_sec))
     n_runs = float(np.interp(speed, interp_speed, interp_n_runs))
 

@@ -77,6 +77,13 @@ from .bm_solver_presets import (
     help="When True, determines & reports scope, but does not perform any benchmark.",
 )
 @click.option(
+    "--max-run-duration-minutes",
+    type=float,
+    required=False,
+    default=None,
+    help="When provided, overrides the maximum duration of a single benchmark run.",
+)
+@click.option(
     "--markdown",
     is_flag=True,
     default=False,
@@ -92,6 +99,7 @@ def presets(
     speed: float,
     target_max_minutes: float | None,
     dry_run: bool,
+    max_run_duration_minutes: float | None,
     markdown: bool,
 ):
     """Benchmark solver presets on specific solver benchmark problem."""
@@ -106,6 +114,9 @@ def presets(
     presets = resolve_presets(preset)
     problems = resolve_problems(problem)
 
+    # --- argument handling - max_run_duration -------------
+    max_run_duration_sec = 60.0 * max_run_duration_minutes if max_run_duration_minutes else None
+
     # --- determine scope ---------------------------------
     if target_max_minutes:
         speed, scope = determine_benchmark_scope_for_max_duration(
@@ -113,6 +124,7 @@ def presets(
             problems=problems,
             size=size,
             max_duration_sec=60.0 * target_max_minutes,
+            max_run_duration_sec=max_run_duration_sec,
         )
     else:
         scope = determine_benchmark_scope(
@@ -120,6 +132,7 @@ def presets(
             problems=problems,
             size=size,
             speed=speed,
+            max_run_duration_sec=max_run_duration_sec,
         )
 
     # --- report scope & estimated duration ---------------
