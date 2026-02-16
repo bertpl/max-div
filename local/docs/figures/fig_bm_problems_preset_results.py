@@ -161,7 +161,7 @@ def create_single_figure(
                         x_transform=LogTransform(),
                         y_transform=y_transform,
                         q50_reg=1.0,
-                        q10_q90_reg=2.0,
+                        q10_q90_reg=5.0,
                     )
                     # Add to quantiles table for markdown generation
                     quantiles_table.add_quantile_curves(
