@@ -31,7 +31,7 @@ class BenchmarkProblem_C3(BenchmarkProblem):
     def get_example_parameters(cls) -> dict[str, Any]:
         return dict(
             size=1,
-            diversity_metric=DiversityMetric.approx_geomean_separation(),
+            diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
         )
 
     @classmethod

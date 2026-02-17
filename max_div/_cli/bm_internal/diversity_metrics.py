@@ -35,11 +35,11 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
 
     # --- create diversity metrics --------------------
     metrics = [
-        DiversityMetric.min_separation(),
-        DiversityMetric.mean_separation(),
-        DiversityMetric.geomean_separation(),
-        DiversityMetric.approx_geomean_separation(),
-        DiversityMetric.non_zero_separation_frac(),
+        DiversityMetric.MIN_SEPARATION,
+        DiversityMetric.MEAN_SEPARATION,
+        DiversityMetric.GEOMEAN_SEPARATION,
+        DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+        DiversityMetric.NON_ZERO_SEPARATION_FRAC,
     ]
 
     # --- benchmark ------------------------------------

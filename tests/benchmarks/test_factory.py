@@ -61,7 +61,7 @@ def test_benchmark_problem_factory_get_problem_dimensions(benchmark_name: str, s
     problem = BenchmarkProblemFactory.construct_problem(
         benchmark_name,
         size=size,
-        diversity_metric=DiversityMetric.min_separation(),
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
     )
     d, n, k, m, n_con_indices = BenchmarkProblemFactory.get_problem_dimensions(benchmark_name, size=size)
 

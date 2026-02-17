@@ -9,7 +9,7 @@ from ._base import BenchmarkSolverConstructor
 #  Main class
 # =================================================================================================
 class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
-    def __init__(self, problem_name: str, diversity_metric: DiversityMetric = DiversityMetric.geomean_separation()):
+    def __init__(self, problem_name: str, diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION):
         super().__init__(
             benchmark_type="initialization",
             problem_name=problem_name,

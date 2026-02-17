@@ -25,7 +25,7 @@ def dummy_problem() -> MaxDivProblem:
     return MaxDivProblem.new(
         vectors=np.random.rand(10, 5).astype(np.float32),
         k=3,
-        diversity_metric=DiversityMetric.geomean_separation(),
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
     )
 
 
@@ -86,12 +86,12 @@ def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expect
     "diversity_metric, expected_tie_breakers",
     [
         (
-            DiversityMetric.min_separation(),
-            [DiversityMetric.approx_geomean_separation(), DiversityMetric.non_zero_separation_frac()],
+            DiversityMetric.MIN_SEPARATION,
+            [DiversityMetric.APPROX_GEOMEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC],
         ),
-        (DiversityMetric.geomean_separation(), [DiversityMetric.non_zero_separation_frac()]),
-        (DiversityMetric.approx_geomean_separation(), [DiversityMetric.non_zero_separation_frac()]),
-        (DiversityMetric.mean_separation(), []),
+        (DiversityMetric.GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+        (DiversityMetric.APPROX_GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+        (DiversityMetric.MEAN_SEPARATION, []),
     ],
 )
 def test_max_div_solver_builder_tie_breaker_metrics_defaults(
@@ -119,9 +119,9 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
     # --- arrange -----------------------------------------
     builder = MaxDivSolverBuilder(dummy_problem).with_diversity_tie_breakers(
         [
-            DiversityMetric.approx_geomean_separation(),
-            DiversityMetric.non_zero_separation_frac(),
-            DiversityMetric.mean_separation(),
+            DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+            DiversityMetric.NON_ZERO_SEPARATION_FRAC,
+            DiversityMetric.MEAN_SEPARATION,
         ]
     )
 
@@ -129,11 +129,11 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
     solver = builder.build()
 
     # --- assert ------------------------------------------
-    assert solver._diversity_metric == DiversityMetric.geomean_separation()
+    assert solver._diversity_metric == DiversityMetric.GEOMEAN_SEPARATION
     assert len(solver._diversity_tie_breakers) == 3
-    assert solver._diversity_tie_breakers[0] == DiversityMetric.approx_geomean_separation()
-    assert solver._diversity_tie_breakers[1] == DiversityMetric.non_zero_separation_frac()
-    assert solver._diversity_tie_breakers[2] == DiversityMetric.mean_separation()
+    assert solver._diversity_tie_breakers[0] == DiversityMetric.APPROX_GEOMEAN_SEPARATION
+    assert solver._diversity_tie_breakers[1] == DiversityMetric.NON_ZERO_SEPARATION_FRAC
+    assert solver._diversity_tie_breakers[2] == DiversityMetric.MEAN_SEPARATION
 
 
 # =================================================================================================
@@ -160,7 +160,7 @@ def test_max_div_solver_builder_end_to_end():
                 vectors=vectors,
                 k=k,
                 distance_metric=DistanceMetric.L1_MANHATTAN,
-                diversity_metric=DiversityMetric.min_separation(),
+                diversity_metric=DiversityMetric.MIN_SEPARATION,
                 constraints=constraints,
             )
         )
@@ -179,7 +179,7 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._solver_steps[1].name() == solver_steps[0].name()
     assert solver._solver_steps[2].name() == solver_steps[1].name()
     assert solver._distance_metric == DistanceMetric.L1_MANHATTAN
-    assert solver._diversity_metric.name == DiversityMetric.min_separation().name
+    assert solver._diversity_metric == DiversityMetric.MIN_SEPARATION
     assert solver._constraints == constraints
     assert solver._seed == 123
 
@@ -201,7 +201,7 @@ def test_max_div_solver_builder_preset(problem_name: str, size: int, preset: Sol
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
         name=problem_name,
         size=size,
-        diversity_metric=DiversityMetric.approx_geomean_separation(),
+        diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
     )
 
     # --- act ---------------------------------------------

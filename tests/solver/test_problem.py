@@ -10,7 +10,7 @@ def test_problem_properties():
         vectors=np.ones((13, 7), dtype=np.float32),
         k=5,
         distance_metric=DistanceMetric.L2_EUCLIDEAN,
-        diversity_metric=DiversityMetric.geomean_separation(),
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         constraints=[],
     )
 
@@ -41,7 +41,7 @@ def test_problem_new_happy_path(con_type: str):
         vectors=np.ones((13, 7), dtype=np.float64),
         k=5,
         distance_metric=DistanceMetric.L1_MANHATTAN,
-        diversity_metric=DiversityMetric.approx_geomean_separation(),
+        diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
         constraints=constraints,
     )
 
@@ -50,7 +50,7 @@ def test_problem_new_happy_path(con_type: str):
     assert np.array_equal(problem.vectors, np.ones((13, 7), dtype=np.float64))
     assert problem.k == 5
     assert problem.distance_metric == DistanceMetric.L1_MANHATTAN
-    assert problem.diversity_metric == DiversityMetric.approx_geomean_separation()
+    assert problem.diversity_metric == DiversityMetric.APPROX_GEOMEAN_SEPARATION
     if constraints is not None:
         assert problem.m == 2
         assert problem.constraints[0] == Constraint(int_set={1, 2, 3}, min_count=1, max_count=2)

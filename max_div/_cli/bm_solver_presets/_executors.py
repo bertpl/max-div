@@ -56,7 +56,7 @@ def _execute_single_run(params: SolverPresetBenchmarkParams) -> SolverPresetBenc
             BenchmarkProblemFactory.construct_problem(
                 name=params.problem_name,
                 size=params.problem_size,
-                diversity_metric=DiversityMetric.approx_geomean_separation(),
+                diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
             ),
         )
         .with_preset(target_duration=params.duration, preset=params.preset)

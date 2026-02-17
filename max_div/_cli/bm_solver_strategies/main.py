@@ -35,7 +35,7 @@ def run_solver_strategies_benchmark(
         executor = SolverBenchmarkExecutor(
             scope=SolverBenchmarkScope(
                 solver_constructor=BenchmarkSolverConstructor_Initialization(
-                    problem_name=name, diversity_metric=DiversityMetric.geomean_separation()
+                    problem_name=name, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
                 ),
                 speed=speed,
                 leave_pbar=file,
@@ -49,7 +49,7 @@ def run_solver_strategies_benchmark(
             scope=SolverBenchmarkScope(
                 solver_constructor=BenchmarkSolverConstructor_Optimization(
                     problem_name=name,
-                    diversity_metric=DiversityMetric.geomean_separation(),
+                    diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
                     n_iterations=round(1000 ** (1.0 - speed)),
                 ),
                 speed=speed,

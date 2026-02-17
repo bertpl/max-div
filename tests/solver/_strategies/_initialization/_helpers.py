@@ -22,7 +22,7 @@ def new_solver_state(has_constraints: bool) -> SolverState:
         vectors=vectors,
         k=50,
         distance_metric=DistanceMetric.L2_EUCLIDEAN,
-        diversity_metric=DiversityMetric.geomean_separation(),
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],
         constraints=constraints,
     )

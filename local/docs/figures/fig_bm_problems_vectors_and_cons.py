@@ -99,7 +99,7 @@ def create_figures(target_folder: Path, show_plots: bool = True) -> None:
         problem = BenchmarkProblemFactory.construct_problem(
             problem_name,
             size=2,
-            diversity_metric=DiversityMetric.geomean_separation(),
+            diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         )
 
         # determine example solution

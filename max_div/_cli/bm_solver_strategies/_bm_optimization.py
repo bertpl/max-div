@@ -15,7 +15,7 @@ class BenchmarkSolverConstructor_Optimization(BenchmarkSolverConstructor):
     def __init__(
         self,
         problem_name: str,
-        diversity_metric: DiversityMetric = DiversityMetric.geomean_separation(),
+        diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
         n_iterations: int = 1000,
     ):
         super().__init__(

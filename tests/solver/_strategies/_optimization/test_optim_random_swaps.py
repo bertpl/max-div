@@ -22,7 +22,7 @@ def test_optim_random_swaps(problem_name: str, size: int):
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
         name=problem_name,
         size=size,
-        diversity_metric=DiversityMetric.approx_geomean_separation(),
+        diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
     )
     solver_state = SolverState.new(
         vectors=problem.vectors,

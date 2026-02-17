@@ -101,7 +101,7 @@ def test_score_generator_size():
     generator = ScoreGenerator(
         n=20,
         k=3,
-        diversity_metric=DiversityMetric.min_separation(),
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -129,7 +129,7 @@ def test_score_generator_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_metric=DiversityMetric.min_separation(),
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[],
         constraints=[
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -165,7 +165,7 @@ def test_score_generator_constraints_no_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_metric=DiversityMetric.min_separation(),
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -182,10 +182,10 @@ def test_score_generator_diversity_scores():
     generator = ScoreGenerator(
         n=100,
         k=5,
-        diversity_metric=DiversityMetric.min_separation(),
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[
-            DiversityMetric.mean_separation(),
-            DiversityMetric.non_zero_separation_frac(),
+            DiversityMetric.MEAN_SEPARATION,
+            DiversityMetric.NON_ZERO_SEPARATION_FRAC,
         ],
         constraints=[],
     )

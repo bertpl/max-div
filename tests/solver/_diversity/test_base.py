@@ -7,19 +7,19 @@ from max_div.solver._diversity import DiversityMetric
 @pytest.mark.parametrize(
     "metric, separation, expected_result, tol",
     [
-        (DiversityMetric.min_separation(), [], 0.0, 1e-6),
-        (DiversityMetric.mean_separation(), [], 0.0, 1e-6),
-        (DiversityMetric.geomean_separation(), [], 0.0, 1e-6),
-        (DiversityMetric.approx_geomean_separation(), [], 0.0, 1e-6),
-        (DiversityMetric.min_separation(), [0.1, 0.4], 0.1, 1e-6),
-        (DiversityMetric.mean_separation(), [0.1, 0.4], 0.25, 1e-6),
-        (DiversityMetric.geomean_separation(), [0.1, 0.4], 0.2, 1e-6),
-        (DiversityMetric.geomean_separation(), [0.1, 0.0], 0.0, 1e-6),
-        (DiversityMetric.approx_geomean_separation(), [0.1, 0.4], 0.2, 0.01),
-        (DiversityMetric.approx_geomean_separation(), [0.1, 0.0], 0.0, 1e-6),
-        (DiversityMetric.non_zero_separation_frac(), [0.1, 0.4], 1.0, 1e-6),
-        (DiversityMetric.non_zero_separation_frac(), [0.1, 0.0], 0.5, 1e-6),
-        (DiversityMetric.non_zero_separation_frac(), [0.0, 0.0], 0.0, 1e-6),
+        (DiversityMetric.MIN_SEPARATION, [], 0.0, 1e-6),
+        (DiversityMetric.MEAN_SEPARATION, [], 0.0, 1e-6),
+        (DiversityMetric.GEOMEAN_SEPARATION, [], 0.0, 1e-6),
+        (DiversityMetric.APPROX_GEOMEAN_SEPARATION, [], 0.0, 1e-6),
+        (DiversityMetric.MIN_SEPARATION, [0.1, 0.4], 0.1, 1e-6),
+        (DiversityMetric.MEAN_SEPARATION, [0.1, 0.4], 0.25, 1e-6),
+        (DiversityMetric.GEOMEAN_SEPARATION, [0.1, 0.4], 0.2, 1e-6),
+        (DiversityMetric.GEOMEAN_SEPARATION, [0.1, 0.0], 0.0, 1e-6),
+        (DiversityMetric.APPROX_GEOMEAN_SEPARATION, [0.1, 0.4], 0.2, 0.01),
+        (DiversityMetric.APPROX_GEOMEAN_SEPARATION, [0.1, 0.0], 0.0, 1e-6),
+        (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.1, 0.4], 1.0, 1e-6),
+        (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.1, 0.0], 0.5, 1e-6),
+        (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.0, 0.0], 0.0, 1e-6),
     ],
 )
 def test_diversity_compute(metric: DiversityMetric, separation: list[float], expected_result: float, tol: float):
@@ -35,40 +35,40 @@ def test_diversity_compute(metric: DiversityMetric, separation: list[float], exp
 
 def test_diversity_metric_unique_names():
     # --- arrange -----------------------------------------
-    all_metrics = DiversityMetric.all_metrics()
+    metrics = list(DiversityMetric)
 
     # --- act ---------------------------------------------
-    all_metric_names = [metric.name for metric in all_metrics]
+    all_metric_names = [metric.name for metric in metrics]
 
     # --- assert ------------------------------------------
-    assert len(set(all_metric_names)) == len(all_metrics)
+    assert len(set(all_metric_names)) == len(metrics)
 
 
-def test_diversity_metric_unique_functions():
+def test_diversity_metric_unique_values():
     # --- arrange -----------------------------------------
-    all_metrics = DiversityMetric.all_metrics()
+    metrics = list(DiversityMetric)
 
     # --- act ---------------------------------------------
-    all_metric_functions = [metric.f for metric in all_metrics]
+    all_metric_values = [metric.value for metric in metrics]
 
     # --- assert ------------------------------------------
-    assert len(set(all_metric_functions)) == len(all_metrics)
+    assert len(set(all_metric_values)) == len(metrics)
 
 
 def test_diversity_metric_equals():
     # --- arrange -----------------------------------------
-    all_metrics = DiversityMetric.all_metrics()
+    metrics = list(DiversityMetric)
 
     # --- act & assert ------------------------------------
-    for i, metric_1 in enumerate(all_metrics):
-        for j, metric_2 in enumerate(all_metrics):
+    for i, metric_1 in enumerate(metrics):
+        for j, metric_2 in enumerate(metrics):
             if i == j:
                 assert metric_1 == metric_2
             else:
                 assert metric_1 != metric_2
 
 
-@pytest.mark.parametrize("metric", DiversityMetric.all_metrics())
+@pytest.mark.parametrize("metric", list(DiversityMetric))
 @pytest.mark.parametrize(
     "sep_array",
     [

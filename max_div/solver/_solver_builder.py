@@ -121,15 +121,15 @@ class MaxDivSolverBuilder:
             return self._diversity_tie_breakers
         else:
             # default tie-breakers based on the main diversity metric
-            if self._diversity_metric == DiversityMetric.min_separation():
+            if self._diversity_metric == DiversityMetric.MIN_SEPARATION:
                 return [
-                    DiversityMetric.approx_geomean_separation(),
-                    DiversityMetric.non_zero_separation_frac(),
+                    DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+                    DiversityMetric.NON_ZERO_SEPARATION_FRAC,
                 ]
-            elif (self._diversity_metric == DiversityMetric.geomean_separation()) or (
-                self._diversity_metric == DiversityMetric.approx_geomean_separation()
+            elif (self._diversity_metric == DiversityMetric.GEOMEAN_SEPARATION) or (
+                self._diversity_metric == DiversityMetric.APPROX_GEOMEAN_SEPARATION
             ):
-                return [DiversityMetric.non_zero_separation_frac()]
+                return [DiversityMetric.NON_ZERO_SEPARATION_FRAC]
             else:
                 return []
 

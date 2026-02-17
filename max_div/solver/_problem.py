@@ -43,7 +43,7 @@ class MaxDivProblem:
         vectors: np.ndarray,
         k: int,
         distance_metric: DistanceMetric = DistanceMetric.L2_EUCLIDEAN,
-        diversity_metric: DiversityMetric = DiversityMetric.geomean_separation(),
+        diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
         constraints: list[Constraint] | None = None,
     ) -> Self:
         # --- validate ----------------

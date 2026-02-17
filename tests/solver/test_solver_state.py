@@ -15,8 +15,8 @@ def new_solver_state() -> SolverState:
         vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
         k=3,
         distance_metric=DistanceMetric.L1_MANHATTAN,
-        diversity_metric=DiversityMetric.geomean_separation(),
-        diversity_tie_breakers=[DiversityMetric.non_zero_separation_frac()],
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
         constraints=[
             Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2),
             Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
@@ -30,8 +30,8 @@ def new_solver_state_unconstrained() -> SolverState:
         vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
         k=3,
         distance_metric=DistanceMetric.L1_MANHATTAN,
-        diversity_metric=DiversityMetric.geomean_separation(),
-        diversity_tie_breakers=[DiversityMetric.non_zero_separation_frac()],
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
         constraints=[],
     )
 

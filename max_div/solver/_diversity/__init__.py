@@ -1,1 +1,1 @@
-from ._base import DiversityMetric
+from ._enum import DiversityMetric

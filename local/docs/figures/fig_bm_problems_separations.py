@@ -185,7 +185,7 @@ def compute_separations(problem_name: str, size: int) -> np.ndarray:
     problem = BenchmarkProblemFactory.construct_problem(
         problem_name,
         size=size,
-        diversity_metric=DiversityMetric.geomean_separation(),
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
     )
 
     # compute separations
