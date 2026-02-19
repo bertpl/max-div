@@ -43,7 +43,7 @@ dev = [
 ]
 
 [project.scripts]
-max-div = "max_div._cli._cli:cli"
+max-div = "max_div._core._cli._cli:cli"
 
 [project.urls]
 Documentation = "https://max-div.readthedocs.io/"

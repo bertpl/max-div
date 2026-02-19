@@ -9,10 +9,10 @@ from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
 from local.docs.utils import LogTransform, PresetQuantilesTable, QuantileCurves, UpperLogTransform
-from max_div._cli.bm_solver_presets._models import SolverPresetBenchmarkResult, results_from_json
-from max_div.benchmarks import BenchmarkProblemFactory
-from max_div.internal.formatting import format_long_time_duration
-from max_div.solver import SolverPreset
+from max_div._core._cli.bm_solver_presets._models import SolverPresetBenchmarkResult, results_from_json
+from max_div._core._utils import format_long_time_duration
+from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from max_div._core.solver import SolverPreset
 
 
 # =================================================================================================

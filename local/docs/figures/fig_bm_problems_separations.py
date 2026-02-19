@@ -7,9 +7,9 @@ from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
 from local.docs.utils import univariate_kde_adaptive
-from max_div.benchmarks import BenchmarkProblemFactory
-from max_div.solver import DiversityMetric
-from max_div.solver._distance import compute_pdist, compute_separation
+from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics._distance import compute_pdist, compute_separation
 
 
 # =================================================================================================

@@ -1,0 +1,265 @@
+import numpy as np
+import pytest
+from numpy import random
+
+from max_div._core.constraints import Constraint
+from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.solver._solver_state import SolverState, _build_con_membership
+
+
+# =================================================================================================
+#  Fixtures
+# =================================================================================================
+@pytest.fixture(scope="function")
+def new_solver_state() -> SolverState:
+    return SolverState.new(
+        vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
+        k=3,
+        distance_metric=DistanceMetric.L1_MANHATTAN,
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        constraints=[
+            Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2),
+            Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
+        ],
+    )
+
+
+@pytest.fixture(scope="function")
+def new_solver_state_unconstrained() -> SolverState:
+    return SolverState.new(
+        vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
+        k=3,
+        distance_metric=DistanceMetric.L1_MANHATTAN,
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        constraints=[],
+    )
+
+
+# =================================================================================================
+#  Tests
+# =================================================================================================
+def test_solver_state_properties(new_solver_state, new_solver_state_unconstrained):
+    # with constraints
+    assert new_solver_state.has_constraints == True
+    assert new_solver_state.k == 3
+    assert new_solver_state.m == 2
+    assert new_solver_state.n == 6
+
+    assert new_solver_state.score.constraints < 1.0  # constraints present and not all satisfied --> <1.0
+
+    # without constraints
+    assert new_solver_state_unconstrained.has_constraints == False
+    assert new_solver_state_unconstrained.k == 3
+    assert new_solver_state_unconstrained.m == 0
+    assert new_solver_state_unconstrained.n == 6
+
+    assert new_solver_state_unconstrained.score.constraints == 1.0  # no constraints -> perfect score
+
+
+def test_solver_state_add_remove_validation(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        state.remove(3)  # never added
+
+    with pytest.raises(ValueError):
+        state.remove_many(np.array([3, 4], dtype=np.int32))  # never added
+
+    state.add(0)
+    with pytest.raises(ValueError):
+        state.add(0)  # already selected
+
+    with pytest.raises(ValueError):
+        state.add_many(np.array([0, 1], dtype=np.int32))  # 0 is already selected
+
+    state.add(1)  # this should be possible, since validation errors invalidate the entire batch
+
+    state.remove(0)
+    with pytest.raises(ValueError):
+        state.remove(0)  # already not selected
+
+
+def test_solver_state_end_to_end(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+
+    # --- assert 1 ----------------------------------------
+    assert state.selected_index_array.size == 0
+    assert state.not_selected_index_array.size == 6
+    assert state.score.size < 1.0  # insufficient vectors selected
+    assert state.score.constraints < 1.0  # constraints not satisfied
+    assert np.array_equal(state.con_values, state._con_values)
+    assert np.array_equal(state.con_indices, state._con_indices)
+    assert np.array_equal(state.global_separation_array, state._sep_global)
+    assert state.n_selected == 0
+    assert state.n_not_selected == 6
+
+    # --- act 1 -------------------------------------------
+    state.add(0)
+    state.add(2)
+    state.add(5)
+
+    # --- assert 2 ----------------------------------------
+    assert np.array_equal(state.selected_index_array, [0, 2, 5])
+    assert np.array_equal(state.not_selected_index_array, [1, 3, 4])
+    assert np.allclose(state.selected_separation_array, [2, 2, 3])
+    assert state.score.size == 1.0  # correct number of vectors selected
+    assert state.score.constraints == 1.0  # all constraints satisfied
+    assert state.score.diversity == pytest.approx((2 * 2 * 3) ** (1 / 3))  # geomean of separations 2, 2, 3
+    assert state.n_selected == 3
+    assert state.n_not_selected == 3
+
+    # --- act 2 -------------------------------------------
+    state.remove(5)
+    state.add(4)
+
+    # --- assert 3 ----------------------------------------
+    assert np.array_equal(state.selected_index_array, [0, 2, 4])
+    assert np.array_equal(state.not_selected_index_array, [1, 3, 5])
+    assert np.allclose(state.selected_separation_array, [2, 2, 2])
+    assert np.allclose(state.not_selected_separation_array, [1, 1, 1])
+    assert state.score.size == 1.0  # correct number of vectors selected
+    assert state.score.constraints == 1.0  # all constraints satisfied
+    assert state.score.diversity == pytest.approx(2.0)  # geomean of separations 2, 2, 2
+    assert state.n_selected == 3
+    assert state.n_not_selected == 3
+
+
+def test_solver_state_snapshot(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state.add(0)
+    state.add(2)
+
+    # current state so we can compare with state after
+    orig_selected_array = state.selected_index_array.copy()
+    orig_not_selected_array = state.not_selected_index_array.copy()
+    orig_separation_array = state.selected_separation_array.copy()
+    orig_con_values = state._con_values.copy()
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        state.restore_snapshot()  # none taken yet
+
+    # the below should be a no-op
+    state.set_snapshot()
+    state.add(5)
+    state.restore_snapshot()
+
+    with pytest.raises(ValueError):
+        state.restore_snapshot()  # restoring a snapshot invalidates it
+
+    # --- assert ------------------------------------------
+    assert np.array_equal(state.selected_index_array, orig_selected_array)
+    assert np.array_equal(state.not_selected_index_array, orig_not_selected_array)
+    assert np.allclose(state.selected_separation_array, orig_separation_array)
+    assert np.array_equal(state.con_values, orig_con_values)
+
+
+@pytest.mark.parametrize("seed", list(range(1, 100)))
+def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
+    """Check solver state consistency after a large series of add/remove operations."""
+
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state_ref = new_solver_state.copy()  # we'll leave this untouched until the end
+    n_iters = 100
+
+    # --- act ---------------------------------------------
+    random.seed(seed)
+    for it in range(n_iters):
+        # take snapshot
+        state.set_snapshot()
+
+        # add random number of items
+        n_to_add = random.randint(0, len(state.not_selected_index_array) + 1)
+        indices_to_select = state.not_selected_index_array.copy()
+        random.shuffle(indices_to_select)
+        if it % 2 == 0:
+            # use add()
+            for idx in indices_to_select[:n_to_add]:
+                state.add(idx)
+        else:
+            # use add_many()
+            state.add_many(indices_to_select[:n_to_add])
+
+        # remove random number of items
+        n_to_remove = random.randint(0, len(state.selected_index_array) + 1)
+        indices_to_remove = state.selected_index_array.copy()
+        random.shuffle(indices_to_remove)
+        if it % 2 == 0:
+            # use remove()
+            for idx in indices_to_remove[:n_to_remove]:
+                state.remove(idx)
+        else:
+            # use remove_many()
+            state.remove_many(indices_to_remove[:n_to_remove])
+
+        # restore snapshot with some probability
+        if random.rand() < 0.5:
+            state.restore_snapshot()
+
+    # --- assert ------------------------------------------
+
+    # double check state_ref was not changed
+    assert len(state_ref.selected_index_array) == 0
+    assert len(state_ref.not_selected_index_array) == state.n
+
+    # sync state_ref with state
+    for idx in state.selected_index_array:
+        state_ref.add(idx)
+
+    # check if they're the same
+    assert np.array_equal(state.selected_index_array, state_ref.selected_index_array)
+    assert np.array_equal(state.not_selected_index_array, state_ref.not_selected_index_array)
+    assert np.array_equal(state.global_separation_array, state_ref.global_separation_array)
+    assert np.array_equal(state.not_selected_separation_array, state_ref.not_selected_separation_array)
+    assert np.array_equal(state.selected_separation_array, state_ref.selected_separation_array)
+    assert np.array_equal(state.con_values, state_ref.con_values)
+    assert np.array_equal(state.con_indices, state_ref.con_indices)
+
+    assert state.score == state_ref.score
+
+    assert state.n_selected == state_ref.n_selected
+    assert state.n_not_selected == state_ref.n_not_selected
+
+
+def test_build_con_membership():
+    # --- arrange -----------------------------------------
+    cons = [
+        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
+        Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
+        Constraint(int_set={3, 11}, min_count=2, max_count=2),
+    ]
+    m = np.int32(14)
+    expected_membership = {
+        0: [0],
+        1: [0],
+        2: [0],
+        3: [0, 2],
+        4: [0],
+        5: [],
+        6: [],
+        7: [],
+        8: [],
+        9: [],
+        10: [1],
+        11: [1, 2],
+        12: [1],
+        13: [1],
+    }
+    expected_membership = {k: np.array(v, dtype=np.int32) for k, v in expected_membership.items()}
+
+    # --- act ---------------------------------------------
+    con_membership = _build_con_membership(m, cons)
+
+    # --- assert ------------------------------------------
+    assert con_membership.keys() == expected_membership.keys()
+    for key, value in con_membership.items():
+        assert isinstance(value, np.ndarray)
+        assert value.dtype == np.int32
+        assert np.array_equal(value, expected_membership[key])

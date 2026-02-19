@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Literal
 
 from local.docs.utils.quantile_curves import QuantileCurves
-from max_div.internal.formatting import format_long_time_duration
-from max_div.internal.markdown import Report, Table, TableElement, TableValueRange, h4
-from max_div.solver import SolverPreset
+from max_div._core._markdown import Report, Table, TableElement, TableValueRange, h4
+from max_div._core._utils import format_long_time_duration
+from max_div._core.solver import SolverPreset
 
 
 @dataclass

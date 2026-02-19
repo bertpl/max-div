@@ -7,8 +7,10 @@ from matplotlib.pyplot import Axes
 from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
-from max_div.benchmarks import BenchmarkProblemFactory
-from max_div.solver import DiversityMetric, MaxDivProblem, MaxDivSolution, MaxDivSolverBuilder, SolverPreset, iterations
+from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from max_div._core.metrics import DiversityMetric
+from max_div._core.problem import MaxDivProblem
+from max_div._core.solver import MaxDivSolution, MaxDivSolverBuilder, SolverPreset, iterations
 
 # =================================================================================================
 #  Config data

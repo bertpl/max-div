@@ -1,6 +1,6 @@
 file_path=
 
-.PHONY: help build test coverage format format-single-file splash docs show-coverage show-docs
+.PHONY: help build test coverage test-and-coverage format format-single-file splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -10,11 +10,13 @@ help:
 	@echo '  build                                  (Re)build package using uv.'
 	@echo ''
 	@echo '  test                                   Run pytest unit tests.'
+	@echo '  coverage                               Generate test coverage report. (./reports/coverage)'
+	@echo '  test-and-coverage                      Run unit tests (=with numba) + generate coverage report (=without numba).'
+	@echo ''
 	@echo '  format                                 Format source code using ruff.'
 	@echo '  format-single-file                     Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
 	@echo '  splash                                 Build splash screen using current version of package. (./images/splash_with_version.webp)'
-	@echo '  coverage                               Generate test coverage report. (./reports/coverage)'
 	@echo '  docs                                   Update mkdocs site. (./reports/docs)'
 	@echo ''
 	@echo '  show-coverage                          Open test coverage report in browser.'
@@ -42,6 +44,10 @@ coverage:
 	mkdir -p ./reports
 	# run tests with Python 3.14; WITH ALL optional dependencies & append to report
 	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --all-extras --python 3.13 pytest ./tests --cov --cov-report=html:./reports/coverage --durations=20 --disable-warnings
+
+test-and-coverage:
+	$(MAKE) test;
+	$(MAKE) coverage;
 
 format:
 	uvx ruff format .;
