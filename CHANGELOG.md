@@ -8,6 +8,7 @@
 - **improved**:
   - docs
     - extend solver preset benchmarking data (U1-U4, C1-C4)
+    - minor improvements to docs figures layout
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.4
