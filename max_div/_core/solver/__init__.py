@@ -12,3 +12,4 @@ from ._score import Score
 from ._solution import MaxDivSolution
 from ._solver import MaxDivSolver
 from ._solver_builder import MaxDivSolverBuilder
+from ._strategies import InitializationStrategy, OptimizationStrategy

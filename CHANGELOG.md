@@ -9,6 +9,7 @@
   - API
     - improve usage ergonomics of `DiversityMetric` by making it a plain StrEnum. 
     - reorganize internal, non-public-API functionality into `max_div._core` 
+    - create top-level `max_div.solver`, ... modules for user-facing API 
   - docs
     - extend solver preset benchmarking data (U1-U4, C1-C4)
     - minor improvements to docs figures layout
