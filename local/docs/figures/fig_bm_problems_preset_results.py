@@ -160,8 +160,8 @@ def create_single_figure(
                         y_data=np.array(y),
                         n_knots=10,
                         x_transform=LogTransform(),
-                        y_transform=y_transform,
-                        q50_reg=1.0,
+                        y_transform=UpperLogTransform.from_values(np.array(y)),  # specific to this curve
+                        q50_reg=0.25,
                         q10_q90_reg=5.0,
                     )
                     # Add to quantiles table for markdown generation
