@@ -33,7 +33,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [max_div]
+          paths: [.]
           options:
             # These options specifically help with complex signatures
             separate_signature: true
@@ -56,15 +56,6 @@ plugins:
               - "!^__[^_]"     # Exclude protected (double underscore, but not dunder)
               - "!_internal$"  # Exclude functions ending with _internal, which are purely internal
 
-  - mkdocs-autoapi:
-      autoapi_dir: ./max_div
-      autoapi_ignore:
-        - "**/internal/**"
-        - "**/_*/**"        # Exclude all directories starting with _ and their contents
-        - "**/_*.py"        # Exclude files starting with _
-      autoapi_file_patterns: ['*.py']
-      autoapi_add_nav_entry: Reference
-      autoapi_root: ./docs/reference
 
 markdown_extensions:
   - toc:
@@ -142,6 +133,30 @@ nav:
         - randint: benchmarks/internal/bm_randint.md
         - randint_constrained: benchmarks/internal/bm_randint_constrained.md
         - modify_p_selectivity: benchmarks/internal/bm_modify_p_selectivity.md
+  - API Reference:
+    - Metrics:
+      - DistanceMetric: reference/metrics/DistanceMetric.md
+      - DiversityMetric: reference/metrics/DiversityMetric.md
+    - Problem:
+      - Constraint: reference/problem/Constraint.md
+      - MaxDivProblem: reference/problem/MaxDivProblem.md
+    - Solver:
+      - MaxDivSolver: reference/solver/MaxDivSolver.md
+      - MaxDivSolverBuilder: reference/solver/MaxDivSolverBuilder.md
+      - SolverPreset: reference/solver/SolverPreset.md
+      - InitializationStrategy: reference/solver/InitializationStrategy.md
+      - OptimizationStrategy: reference/solver/OptimizationStrategy.md
+      - TargetDuration: reference/solver/TargetDuration.md
+      - TargetIterationCount: reference/solver/TargetIterationCount.md
+      - TargetTimeDuration: reference/solver/TargetTimeDuration.md
+      - Duration helpers: reference/solver/duration_helpers.md
+    - Solution:
+      - MaxDivSolution: reference/solution/MaxDivSolution.md
+      - Score: reference/solution/Score.md
+      - Elapsed: reference/solution/Elapsed.md
+    - Benchmark Problems:
+      - BenchmarkProblem: reference/benchmark_problems/BenchmarkProblem.md
+      - BenchmarkProblemFactory: reference/benchmark_problems/BenchmarkProblemFactory.md
   - About:
     - Roadmap: roadmap.md
     - Change Log: changelog.md

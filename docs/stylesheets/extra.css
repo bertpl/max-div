@@ -61,3 +61,43 @@ img.center75 {
     margin-right: auto;
     max-width: min(100%, max(75%, 600px));
 }
+
+/* Changelog version header blockquotes  */
+[data-md-color-scheme="default"] .changelog .md-typeset blockquote,
+[data-md-color-scheme="default"] .md-typeset .changelog blockquote {
+    background-color: rgba(0, 0, 0, 0.04);
+    border-left: 4px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    padding: 0.4em 0.8em;
+    color: inherit;
+}
+
+[data-md-color-scheme="slate"] .changelog .md-typeset blockquote,
+[data-md-color-scheme="slate"] .md-typeset .changelog blockquote {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-left: 4px solid rgba(255, 255, 255, 0.20);
+    border-radius: 4px;
+    padding: 0.4em 0.8em;
+    color: inherit;
+}
+
+/* Bolder h2 inside blockquotes */
+.md-typeset .changelog blockquote h2 {
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.md-typeset .changelog blockquote :last-child {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+[data-md-color-scheme="default"] .md-typeset .changelog blockquote :last-child {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .changelog blockquote :last-child {
+    color: rgba(255, 255, 255, 0.45);
+}
+

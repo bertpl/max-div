@@ -5,150 +5,152 @@
 > *(under development)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**:
-  - docs
-    - minor improvements to docs figures layout
+- **improved**
+    - docs
+        - initial structure for API reference
+        - minor improvements to docs figures layout
+        - minor improvements to ChangeLog layout
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.5
 > *(2026-02-23)*
 <!-------------------------------------------------------------------------------------------------> 
 
-- **improved**:
-  - API
-    - improve usage ergonomics of `DiversityMetric` by making it a plain StrEnum. 
-    - reorganize internal, non-public-API functionality into `max_div._core` 
-    - create top-level `max_div.solver`, ... modules for user-facing API 
-  - docs
-    - extend solver preset benchmarking data (U1-U4, C1-C4)
-    - minor improvements to docs figures layout
+- **improved**
+    - API
+        - improve usage ergonomics of `DiversityMetric` by making it a plain StrEnum. 
+        - reorganize internal, non-public-API functionality into `max_div._core` 
+        - create top-level `max_div.solver`, ... modules for user-facing API 
+    - docs
+        - extend solver preset benchmarking data (U1-U4, C1-C4)
+        - minor improvements to docs figures layout
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.4
 > *(2026-02-16)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
-  - add `--max-run-duration-minutes` option to `benchmark solver presets` CLI command.
+- **new**
+    - add `--max-run-duration-minutes` option to `benchmark solver presets` CLI command.
 
-- **improved**:
-  - simplify: remove `glightbox` mkdocs plugin; due to limited zoom functionality and awkward ergonomics on mobile.   
-  - improved q10-q90 solver preset results uncertainty estimation
-  - extend solver preset benchmarking data (U3, U4)
+- **improved**
+    - simplify: remove `glightbox` mkdocs plugin; due to limited zoom functionality and awkward ergonomics on mobile.   
+    - improved q10-q90 solver preset results uncertainty estimation
+    - extend solver preset benchmarking data (U3, U4)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.3
 > *(2026-02-14)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
-  - add tabular solver preset benchmark results to docs
+- **new**
+    - add tabular solver preset benchmark results to docs
 
-- **improved**:
-  - tweaks to docs figures layout
+- **improved**
+    - tweaks to docs figures layout
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.2
 > *(2026-02-11)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
-  - docs: add solver preset benchmarking results
+- **new**
+    - docs: add solver preset benchmarking results
 
-- **improved**:
-  - tweaks to docs figures layout 
-  - improve how solver preset benchmarks are set up and executed
+- **improved**
+    - tweaks to docs figures layout 
+    - improve how solver preset benchmarks are set up and executed
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.1
 > *(2026-02-09)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
   - docs: add illustrations to all 8 solver benchmark problems & restructure for clarity
 
-- **improved**:
-  - use `InitRandomOneShot` instead of `InitFast` for all presets, to allow seed to more strongly affect outcome,
+- **improved**
+    - use `InitRandomOneShot` instead of `InitFast` for all presets, to allow seed to more strongly affect outcome,
       increasing the chance to get good results across multiple seeds   
-  - solver preset benchmarking functionality
-    - improved scope calculations (higher accuracy for target duration; avoid too short durations)
-    - improved result reporting (case-specific number formatting; no constraint score for unconstrained problems)
+    - solver preset benchmarking functionality
+        - improved scope calculations (higher accuracy for target duration; avoid too short durations)
+        - improved result reporting (case-specific number formatting; no constraint score for unconstrained problems)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.5.0
 > *(2026-02-01)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
-  - add solver preset benchmarking capabilities to CLI  
+- **new**
+    - add solver preset benchmarking capabilities to CLI  
 
-- **improved**:
-  - rename cli command `benchmark solver run` to `benchmark solver strategies` to accommodate future additions.
+- **improved**
+    - rename cli command `benchmark solver run` to `benchmark solver strategies` to accommodate future additions.
 
-- **deprecated**:
-  - remove platform benchmarking functionality (formerly used to estimate duration of initialization strategies in presets) 
+- **deprecated**
+    - remove platform benchmarking functionality (formerly used to estimate duration of initialization strategies in presets) 
 
-- **internal**:
-  - refactor Markdown formatting functionality for easier reuse 
+- **internal**
+    - refactor Markdown formatting functionality for easier reuse 
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.7
 > *(2026-01-27)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**:
-  - general solver (`SolverState`) low-level speed optimizations (factor ~2-3x)
-    - keep track of selection as a boolean numpy array, instead of a SortedSet 
-    - keep track of constraint membership as numpy arrays instead of Python lists
-    - implement `SolverState.add_many`, `SolverState.remove_many` methods for more efficient batch modifications
-  - solver presets
-    - streamline RANDOM & GUIDED presets to always use 'fast' initialization, like all other presets.
+- **improved**
+    - general solver (`SolverState`) low-level speed optimizations (factor ~2-3x)
+        - keep track of selection as a boolean numpy array, instead of a SortedSet 
+        - keep track of constraint membership as numpy arrays instead of Python lists
+        - implement `SolverState.add_many`, `SolverState.remove_many` methods for more efficient batch modifications
+    - solver presets
+        - streamline RANDOM & GUIDED presets to always use 'fast' initialization, like all other presets.
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.6
 > *(2026-01-26)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
-  - make adaptive Poisson-based sampling (used for swap size and # candidates meta-parameter sampling) cost-aware, by penalizing adapting towards larger, more expensive values.
-  - extend solver benchmark problems A1-A5 to extended set of 4 unconstrained (U1-U4) and 4 constrained (C1-C4) problems
+- **new**
+    - make adaptive Poisson-based sampling (used for swap size and # candidates meta-parameter sampling) cost-aware, by penalizing adapting towards larger, more expensive values.
+    - extend solver benchmark problems A1-A5 to extended set of 4 unconstrained (U1-U4) and 4 constrained (C1-C4) problems
 
-- **improved**:
-  - solver presets
-    - tweaks to SMART & THOROUGH presets for faster convergence
-      - increase adaptive sampling learning rate by ~10x
-      - make adaptive sampling cost-aware (SMART: 0.5, THOROUGH: 0.1)
-  - make solver debug info reporting (verbosity=25) more informative (a.o., added swap success %)
-  - make all numbs.njit-decorated functions cached
+- **improved**
+    - solver presets
+        - tweaks to SMART & THOROUGH presets for faster convergence
+            - increase adaptive sampling learning rate by ~10x
+            - make adaptive sampling cost-aware (SMART: 0.5, THOROUGH: 0.1)
+    - make solver debug info reporting (verbosity=25) more informative (a.o., added swap success %)
+    - make all numbs.njit-decorated functions cached
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.5
 > *(2026-01-20)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
-  - add ability to ignore diversity if constraints are not yet satisfied, the first 'f' fraction of optimization step progress  
-  - add new optimization strategy 'OptimSmartSwaps', leading to more robust & faster convergence across the board
-  - add new solver presets:
-    - `RANDOM`: baseline strategy for reference (using `OptimRandomSwaps`)
-    - `GUIDED` former default
-    - `SMART`: new default
-    - `THOROUGH`: same as `SMART` but with significantly wider sampling ranges for `swap_size`, `nc_add` & `nc_remove`.
+- **new**
+    - add ability to ignore diversity if constraints are not yet satisfied, the first 'f' fraction of optimization step progress  
+    - add new optimization strategy 'OptimSmartSwaps', leading to more robust & faster convergence across the board
+    - add new solver presets:
+        - `RANDOM`: baseline strategy for reference (using `OptimRandomSwaps`)
+        - `GUIDED` former default
+        - `SMART`: new default
+        - `THOROUGH`: same as `SMART` but with significantly wider sampling ranges for `swap_size`, `nc_add` & `nc_remove`.
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.4.4
 > *(2026-01-18)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - support sampled parameters (using `AdaptiveSampler` class) in optimization strategies, similar to `ParameterSchedule`, but stochastic in nature.
 
-- **improved**:
+- **improved**
     - full refactor of sampling functionality, for improved flexibility, performance & future-readiness
     - `MaxDivSolver.solver()`: improve granularity of `verbosity` parameter wrt reporting frequency, including debug mode.
     - `solve` CLI command: add ability to specify which preset to use.
 
-- **deprecated**:
+- **deprecated**
     - remove unneeded `randint_constrained_robust` function and associated functionality. 
 
 <!------------------------------------------------------------------------------------------------->
@@ -156,10 +158,10 @@
 > *(2026-01-02)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - implement `verbosity` parameter in `MaxDivSolver.solver()` and add option for more detailed tabular progress reporting.
 
-- **improved**:
+- **improved**
     - ci: show slow tests in CI when running tests or generating coverage (badge generation) 
     - cli: 
         - add `benchmark platform` command to benchmark platform speed
@@ -171,7 +173,7 @@
 > *(2026-01-02)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**:
+- **improved**
     - `TargetDuration` now implements `__eq__` and more informative `__repr__` and `__str__` for time-based durations.
     - `MaxDivSolverBuilder`: add config options to default preset + improve test coverage
     - `estimate_platform_speed` 
@@ -184,14 +186,14 @@
 > *(2025-12-31)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - notebooks for automated estimation of time models of init. and optim. strategies for different problem sizes
 
-- **improved**:
+- **improved**
     - make default preset in `MaxDivSolverBuilder` smart, taking into account expected duration of strategies
     - make solver benchmarks explicitly tied to presets, reducing duplication of code
 
-- **fixed**:
+- **fixed**
     - corner case where `randint_constrained` could return duplicate samples due to `int32` overflow/underflow wrap-around
 
 <!------------------------------------------------------------------------------------------------->
@@ -199,7 +201,7 @@
 > *(2025-12-28)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - implement initial `default` preset in `MaxDivSolverBuilder`, allowing low-threshold initialization of a solver for any given problem.
 
 <!------------------------------------------------------------------------------------------------->
@@ -207,12 +209,12 @@
 > *(2025-12-28)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - solver strategies
        - implement `OptimGuidedSwaps` optimization strategy, the intended workhorse strategy for the solver 
     - extend solver benchmarking implementation & docs with new strategy
 
-- **improved**:
+- **improved**
     - solver strategies
         - switch to more generic and faster `exponential_selectivity` in initialization strategies     
     - solver benchmarking
@@ -226,7 +228,7 @@
 > *(2025-12-25)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - solver framework
        - implement `SwapBasedOptimizationStrategy` base class for swap-based optimization strategies
     - solver strategies 
@@ -235,7 +237,7 @@
     - benchmarks
        - extend solver benchmarks with testing of optimization strategies + test up to larger problem sizes
 
-- **improved**: 
+- **improved** 
     - solver framework
       - speed improvement of score computation in case of soft constraints
       - improve unit test coverage & depth of `SolverState` 
@@ -247,14 +249,14 @@
 > *(2025-12-24)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - solver framework
       - extend `OptimizationStrategy` implementation to support scheduled parameters, that evolve according to a schedule during multi-iteration execution of a strategy 
     - low-level math
       - add `exponential` p-selectivity modification method  
       - add truncated Poisson sampling
 
-- **improved**:
+- **improved**
     - docs
       - tweak layout of solver benchmark docs 
     - diversity metrics
@@ -268,7 +270,7 @@
 > *(2025-12-22)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - implement `InitEager` initialization strategy
       - core implementation
       - extend solver benchmarking implementation & docs with new strategy
@@ -278,7 +280,7 @@
 > *(2025-12-22)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - implement `InitRandomBatched` initialization strategy
       - core implementation
       - extend solver benchmarking implementation & docs with new strategy
@@ -291,7 +293,7 @@
       - add fast-power based implementation (method=20)
       - add accuracy estimation to `modify_p_selectivity` benchmark
 
-- **improved**:
+- **improved**
     - rename initialization strategy `InitOneShotRandom` -> `InitRandomOneShot`, in preparation of other random init strategies
     - `benchmark internal` CLI command
         - Redirect output to file using `--file` flag 
@@ -305,11 +307,11 @@
 > *(2025-12-13)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - Add 5th solver benchmark problem with simpler constraints, to complete the spectrum
     - Add benchmarking results to documentation & add `make` command to automatically regenerate benchmark results
 
-- **improved**:
+- **improved**
     - `benchmark solver run` CLI command
         - Add constraint score reporting 
         - Add uncertainty ranges to reported metrics
@@ -323,12 +325,12 @@
 > *(2025-12-12)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - implement `InitOneShotRandom` initialization strategy
     - make `SolverStep`, `InitializationStrategy` & `OptimizationStrategy` instances have a settable random seed
     - add distinction between `internal` and `solver` benchmarks in CLI & implement `benchmark solver` commands
 
-- **improved**:
+- **improved**
     - add initialization of `SolverState` to the reported results  
     - reliability & testing of DiversityMetric implementations for sub-standard array sizes
     - improve docs structure
@@ -338,11 +340,11 @@
 > *(2025-12-11)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - Framework for built-in benchmark suite for `MaxDivSolver` problems & strategies 
     - First 4 benchmark problems (A1, A2, A3, A4)
 
-- **improved**:
+- **improved**
     - structure of CLI implementation; improving encapsulation of internal, low-level, CLI-only benchmarking functionality
     - various low-level algorithmic tweaks & test coverage improvements
 
@@ -351,11 +353,11 @@
 > *(2025-12-10)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - add support for Python 3.14 
     - `MaxDivProblem` class, so problems can be formulated outside of the `MaxDivSolver` and `MaxDivSolverBuilder` classes, paving the way for a built-in benchmark suite.
 
-- **improved**:
+- **improved**
     - improve consistency of dimension notations `n`, `d`, `k`, `m` across codebase
 
 <!------------------------------------------------------------------------------------------------->
@@ -363,14 +365,14 @@
 > *(2025-12-10)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - methods for modifying 'selectivity' of an array of probabilities (more or less uniform) 
         - `modify_p_selectivity_power` & `modify_p_selectivity_pwl2`
         - add benchmarking of these methods to CLI & docs
     - make strategies aware of progress fraction within execution of a `SolverStep` to allow scheduling various
        parameters (constraint softness, wide vs selective search, ...)
   
-- **improved**:
+- **improved**
     - add caching of `Score` object in `SolverState` to avoid redundant score computations when state hasn't changed
 
 <!------------------------------------------------------------------------------------------------->
@@ -378,7 +380,7 @@
 > *(2025-12-09)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - full support for structured multi-component scoring & diversity tie-breaker metrics 
         - implement structured `Score` object with optional `div_tie_breakers` field
         - add support for manual or preset tie-breaker metrics in `MaxDivSolverBuilder`
@@ -388,7 +390,7 @@
     - make `MaxDivSolver` return extensive meta-data via `MaxDivSolution`
     - add `non_zero_separation_frac` to `DiversityMetric` implementations and benchmarking suite
 
-- **improved**:
+- **improved**
     - ~20% speed improvement of `min_separation` diversity metric  
 
 
@@ -397,7 +399,7 @@
 > *(2025-12-06)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**:
+- **improved**
     - Improve progress tracking implementation for future use in `MaxDivSolver` overall progress reporting
     - Introduction of `SolverStep`, combining a strategy & a duration
     - Introduction of `Score` class for more structured scoring enabling more advanced future strategies
@@ -407,11 +409,11 @@
 > *(2025-12-05)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - `SolverStrategy` progress bar support 
     - First version of main `MaxDivSolver` loop
 
-- **improved**:
+- **improved**
     - test coverage of `SolverState` and `SolverStrategy` modules
 
 <!------------------------------------------------------------------------------------------------->
@@ -419,7 +421,7 @@
 > *(2025-12-04)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - add `SolverState` snapshot management, so `SolverStrategy` modules can perform trial-modifications to the state.
     - implement first version of `SolverStrategy` API
 
@@ -429,11 +431,11 @@
 > *(2025-12-03)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - add `DiversityMetric.approx_geomean_separation()` based on `fast_log2` and `fast_exp2`
     - add benchmarking of different `DiversityMetric` implementations to CLI & docs
 
-- **improved**:
+- **improved**
     - further improve test coverage of `fast_log*` & `fast_exp*` functions
     - make `DiversityMetric` implementation more flexible 
 
@@ -442,10 +444,10 @@
 > *(2025-12-02)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - `fast_exp*` functions in the same spirit as the updated `fast_log*` functions
 
-- **improved**:
+- **improved**
     - `fast_log_*` & `fast_log2_*`
         - simplify & speedup by only supporting degree 2 (we don't need more accuracy)
         - update computation of coefficients to guarantee continuity and smoothness of the approximation
@@ -455,7 +457,7 @@
 > *(2025-11-30)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - initial `MaxDivSolver` framework
 
 <!------------------------------------------------------------------------------------------------->
@@ -463,7 +465,7 @@
 > *(2025-11-27)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**:
+- **improved**
     - further speed up test coverage generation
     - add ReadTheDocs build status badge to README
     - add License badge to README
@@ -473,11 +475,11 @@
 > *(2025-11-25)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - implement `randint_constrained_robust`
     - remove excessively slow pure-Python `randint_constrained` & promote `randint_constrained_numba` -> `randint_constrained`
 
-- **improved**:
+- **improved**
     - speed up test coverage generation
     - improve visual clarity of `randint_constrained` benchmarking output
     - add benchmarking for `randint_constrained_robust` to `benchmark randint_constrained` CLI command
@@ -488,7 +490,7 @@
 > *(2025-11-23)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - implement `Constraints` class
     - implement `sampling.con.randint_constrained_numba` function, offering a 10-100x speedup over the non-`numba` version
 
@@ -497,13 +499,13 @@
 > *(2025-11-22)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - add `benchmark randint_constrained` command to CLI
 
-- **improved**:
+- **improved**
     - various minor improvements to docs 
 
-- **internal**:
+- **internal**
     - improve test coverage of cli functionality
 
 <!------------------------------------------------------------------------------------------------->
@@ -511,14 +513,14 @@
 > *(2025-11-21)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - add `sampling.con.randint_constrained`, which is like `randint` but supporting constraints
 
-- **improved**:
+- **improved**
     - make naming more consistent with other known functionality: `sampling.discrete.sample_int` -> `sampling.uncon.randint`
     - ensure `randint` also works with non-normalized probabilities (with minimal loss of efficiency, especially in `numba`-flavor)
 
-- **internal**:
+- **internal**
     - update local dev tooling to declutter project root 
 
 <!------------------------------------------------------------------------------------------------->
@@ -526,7 +528,7 @@
 > *(2025-11-18)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**:
+- **improved**
     - `sampling.discrete.sample_int`: speedup for non-uniform sampling without replacement (custom min-heap implementation)
 
 <!------------------------------------------------------------------------------------------------->
@@ -534,11 +536,11 @@
 > *(2025-11-17)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**:
+- **improved**
     - test coverage of internal rng functionality
     - improve speed of generating `int32` arrays in `sampling.discrete.sample_int`
   
-- **internal**:
+- **internal**
     - add `pytest-xdist` and `pytest-rerunfailures` to improve test performance & robustness
 
 <!------------------------------------------------------------------------------------------------->
@@ -546,11 +548,11 @@
 > *(2025-11-16)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - make `numba` and non-`numba` versions of `sampling.discrete.sample_int` public and self-sustained (full-featured)
     - CLI command `numba-status` to report on `numba` installation and configuration status
 
-- **improved**:
+- **improved**
     - `sampling.discrete.sample_int`: 
         - significant speedup
         - improve benchmarking + add notes on optimization efforts
@@ -564,10 +566,10 @@
 > *(2025-11-08)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**:
+- **new**
     - implement `max-div` CLI, allowing package to be installed as tool to define system-wide command 'max-div'
 
-- **improved**:
+- **improved**
     - allow benchmarking functionality to output results in Markdown format 
     - switch docs to use `readthedocs` theme
   
@@ -576,7 +578,7 @@
 > *(2025-11-08)*
 <!------------------------------------------------------------------------------------------------->
 
-- **improved**: 
+- **improved** 
     - further improvements to CI/CD pipeline
 
 <!------------------------------------------------------------------------------------------------->
@@ -584,7 +586,7 @@
 > *(2025-11-07)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**: 
+- **new** 
     - move to trunk-based development workflow with release branches
 
 <!------------------------------------------------------------------------------------------------->
@@ -592,7 +594,7 @@
 > *(2025-11-02)*
 <!------------------------------------------------------------------------------------------------->
 
-- **new**: 
+- **new** 
     - `sampling.discrete.sample_int`
     - `benchmark.benchmark_sample_int` 
 
