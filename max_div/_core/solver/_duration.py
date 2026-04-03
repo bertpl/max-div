@@ -76,7 +76,7 @@ class TargetTimeDuration(TargetDuration):
         return self._t_target_sec
 
     def __str__(self):
-        return format_time_duration(self._t_target_sec, n_chars=8).strip()
+        return format_time_duration(self._t_target_sec, n_chars=8, pad=False)
 
     def track(self) -> ProgressTracker:
         return _TimeTracker(self._t_target_sec)
@@ -275,6 +275,9 @@ class Elapsed:
 
     def __radd__(self, other: Elapsed | int) -> Elapsed:
         return self + other
+
+    def __str__(self) -> str:
+        return f"{format_time_duration(self.t_elapsed_sec, n_chars=6, pad=False)} ({self.n_iterations:_} iterations)"
 
 
 __ALL__ = [

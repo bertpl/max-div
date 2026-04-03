@@ -168,3 +168,15 @@ def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
             # too many samples for this constraint
             s = s - con_values[i_con, 1]
     return s
+
+
+def _np_con_count_satisfied(con_values: NDArray[np.int32]) -> int:
+    """
+    Return the number of individually satisfied constraints, assuming con_values represents how many _additional_
+    samples to select from each constraint. A constraint is satisfied when min_remaining <= 0 and max_remaining >= 0.
+    """
+    n_satisfied = 0
+    for i_con in range(con_values.shape[0]):
+        if con_values[i_con, 0] <= 0 and con_values[i_con, 1] >= 0:
+            n_satisfied += 1
+    return n_satisfied

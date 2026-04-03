@@ -36,7 +36,7 @@ def test_new_rng_state():
 #  rand_float32
 # -------------------------------------------------------------------------
 def test_rand_float32_seed():
-    # --- arrange ----------------------------------------
+    # --- arrange -----------------------------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
@@ -133,7 +133,7 @@ def test_rand_nz_float32_exact_range(rng_state: list[int], expected_uint64: int,
 #  rand_float64
 # -------------------------------------------------------------------------
 def test_rand_float64_seed():
-    # --- arrange ----------------------------------------
+    # --- arrange -----------------------------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
@@ -232,7 +232,7 @@ def test_rand_nz_float64_exact_range(rng_state: list[int], expected_uint64: int,
 #  rand_int32
 # -------------------------------------------------------------------------
 def test_rand_int32_seed():
-    # --- arrange ----------------------------------------
+    # --- arrange -----------------------------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
@@ -287,7 +287,7 @@ def test_rand_int32_range():
 #  rand_int64
 # -------------------------------------------------------------------------
 def test_rand_int64_seed():
-    # --- arrange ----------------------------------------
+    # --- arrange -----------------------------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
@@ -359,7 +359,7 @@ def test_rand_int64_large_range():
 #  rand_int32_array
 # -------------------------------------------------------------------------
 def test_rand_int32_array_seed():
-    # --- arrange ----------------------------------------
+    # --- arrange -----------------------------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
@@ -374,7 +374,7 @@ def test_rand_int32_array_seed():
 
 
 def test_rand_int32_array_different_calls():
-    # --- arrange ----------------------------------------
+    # --- arrange -----------------------------------------
     rng_state = new_rng_state(1)
 
     # --- act ---------------------------------------------

@@ -246,3 +246,24 @@ def test_score_comparison_invalid_types():
 
     with pytest.raises(TypeError):
         _ = score >= 42  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "score, expected_str",
+    [
+        (
+            Score(size=1.0, constraints=1.0, diversity=0.7705, div_tie_breakers=(1.0,)),
+            "size=1.0000 | constraints=1.0000 | diversity=0.7705",
+        ),
+        (
+            Score(size=0.5, constraints=0.8, diversity=0.0, div_tie_breakers=tuple()),
+            "size=0.5000 | constraints=0.8000 | diversity=0.0000",
+        ),
+    ],
+)
+def test_score_str(score: Score, expected_str: str):
+    # --- act ---------------------------------------------
+    result = str(score)
+
+    # --- assert ------------------------------------------
+    assert result == expected_str

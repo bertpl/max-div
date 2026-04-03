@@ -155,7 +155,7 @@ def presets(
     n_seeds = len({s.seed for s in scope})
     min_seed = min([s.seed for s in scope])
     max_seed = max([s.seed for s in scope])
-    est_duration_str = format_time_duration(estimate_execution_time_sec_multi(scope), n_chars=8).strip()
+    est_duration_str = format_time_duration(estimate_execution_time_sec_multi(scope), n_chars=8, pad=False)
     start_time = datetime.now()
     end_time = start_time + timedelta(seconds=estimate_execution_time_sec_multi(scope))
     start_time_str = start_time.strftime("%a %Y-%m-%d %H:%M:%S")

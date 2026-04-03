@@ -33,4 +33,5 @@ Thumbs.db
 
 # other
 .local
-AGENTS.md
+CLAUDE.md
+.claude

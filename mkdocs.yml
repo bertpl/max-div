@@ -81,6 +81,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Getting Started: getting_started.md
   - Documentation:
     - CLI: cli.md
     - Benchmark Results:

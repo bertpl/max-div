@@ -409,6 +409,23 @@ def test_progress_update_tqdm():
 # =================================================================================================
 #  Elapsed
 # =================================================================================================
+@pytest.mark.parametrize(
+    "elapsed, expected_str",
+    [
+        (Elapsed(t_elapsed_sec=2.17, n_iterations=14854), "2.17s (14_854 iterations)"),
+        (Elapsed(t_elapsed_sec=0.005, n_iterations=42), "5.00ms (42 iterations)"),
+        (Elapsed(t_elapsed_sec=65.3, n_iterations=100000), "1m5.3s (100_000 iterations)"),
+        (Elapsed(t_elapsed_sec=0.0, n_iterations=0), "0.00ns (0 iterations)"),
+    ],
+)
+def test_elapsed_str(elapsed: Elapsed, expected_str: str):
+    # --- act ---------------------------------------------
+    result = str(elapsed)
+
+    # --- assert ------------------------------------------
+    assert result == expected_str
+
+
 def test_elapsed_math():
     # --- arrange -----------------------------------------
     d1 = Elapsed(1.0, 10)

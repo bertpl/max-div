@@ -5,6 +5,7 @@ from max_div._core.constraints._constraints import (
     Constraint,
     ConstraintList,
     _build_array_repr,
+    _np_con_count_satisfied,
     _np_con_indices,
     _np_con_max_value,
     _np_con_min_value,
@@ -140,3 +141,33 @@ def test_np_con_total_violation():
 
     # --- assert ------------------------------------------
     assert total_violation == 7
+
+
+def test_np_con_count_satisfied():
+    # --- arrange -----------------------------------------
+    con_values = np.array(
+        [
+            [-7, 11],  # satisfied (min_remaining <= 0, max_remaining >= 0)
+            [0, 0],  # satisfied (boundary case)
+            [3, 10],  # not satisfied (min_remaining > 0)
+            [-30, -4],  # not satisfied (max_remaining < 0)
+        ],
+        dtype=np.int32,
+    )
+
+    # --- act ---------------------------------------------
+    n_satisfied = _np_con_count_satisfied(con_values)
+
+    # --- assert ------------------------------------------
+    assert n_satisfied == 2
+
+
+def test_np_con_count_satisfied_empty():
+    # --- arrange -----------------------------------------
+    con_values = np.zeros((0, 2), dtype=np.int32)
+
+    # --- act ---------------------------------------------
+    n_satisfied = _np_con_count_satisfied(con_values)
+
+    # --- assert ------------------------------------------
+    assert n_satisfied == 0

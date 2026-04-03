@@ -6,12 +6,19 @@ from ._precision import HALF_EPS
 # =================================================================================================
 #  Main entrypoints
 # =================================================================================================
-def format_time_duration(dt_sec: float, n_chars: int = 10) -> str:
-    """Format a time duration in seconds."""
+def format_time_duration(dt_sec: float, n_chars: int = 10, pad: bool = True) -> str:
+    """
+    Format a time duration in seconds.
+
+    :param dt_sec: (float) Time duration in seconds.
+    :param n_chars: (int) Controls output precision; higher values yield more decimal places.
+    :param pad: (bool) If True (default), right-justify to n_chars for tabular alignment.
+    """
     if dt_sec < 1.0:
-        return format_short_time_duration(dt_sec, n_chars=n_chars, spaced=False, long_units=False, right_aligned=False)
+        result = format_short_time_duration(dt_sec, n_chars=n_chars, spaced=False, long_units=False, right_aligned=False)
     else:
-        return format_long_time_duration(dt_sec, n_chars=n_chars)
+        result = format_long_time_duration(dt_sec, n_chars=n_chars)
+    return result if pad else result.strip()
 
 
 def format_long_time_duration(dt_sec: float, n_chars: int = 10) -> str:

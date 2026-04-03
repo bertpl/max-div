@@ -62,15 +62,15 @@ def test_randint1_invariants(n: int, uniform: bool):
     # --- act & assert ------------------------------------
     all_values = set()
     for _ in range(n_repeats):
-        # --- arrange ---------------------------
+        # --- arrange -----------------------------------------
         p_before = p.copy()
         rng_state_before = rng_state.copy()
 
-        # --- act -------------------------------
+        # --- act ---------------------------------------------
         sample = randint1(n=np.int32(n), p=p, rng_state=rng_state)
         all_values.add(sample)
 
-        # --- assert ----------------------------
+        # --- assert ------------------------------------------
         assert isinstance(
             sample, numbers.Integral
         )  # numba converts int32 -> int when called from plain Python function

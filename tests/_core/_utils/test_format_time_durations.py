@@ -43,6 +43,23 @@ def test_format_time_duration_length(value: float, n_chars: int):
     assert len(result) == n_chars
 
 
+@pytest.mark.parametrize(
+    "dt_sec, n_chars, pad, expected",
+    [
+        (2.17, 8, True, "   2.17s"),
+        (2.17, 8, False, "2.17s"),
+        (0.005, 6, True, "5.00ms"),
+        (0.005, 6, False, "5.00ms"),
+    ],
+)
+def test_format_time_duration_pad(dt_sec: float, n_chars: int, pad: bool, expected: str):
+    # --- act ---------------------------------------------
+    result = format_time_duration(dt_sec, n_chars=n_chars, pad=pad)
+
+    # --- assert ------------------------------------------
+    assert result == expected
+
+
 # =================================================================================================
 #  LONG duration
 # =================================================================================================

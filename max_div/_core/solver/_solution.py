@@ -29,3 +29,18 @@ class MaxDivSolution:
     def duration(self) -> Elapsed:
         """Return the total elapsed time and iterations taken to compute the solution."""
         return self.score_checkpoints[-1][1]
+
+    # --- constraints -------------------------------------
+    n_constraints: int = 0
+    n_constraints_satisfied: int = 0
+
+    # --- string representation ---------------------------
+    def __str__(self) -> str:
+        parts = [
+            f"MaxDivSolution: {len(self.i_selected)} vectors selected",
+            f"diversity={self.score.diversity:.4f}",
+        ]
+        if self.n_constraints > 0:
+            parts.append(f"constraints: {self.n_constraints_satisfied}/{self.n_constraints} satisfied")
+        parts.append(str(self.duration))
+        return " | ".join(parts)

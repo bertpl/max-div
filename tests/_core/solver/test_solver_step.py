@@ -113,15 +113,15 @@ def test_initialization_step_name():
 
 
 def test_initialization_step_run():
-    # --- arrange ---
+    # --- arrange -----------------------------------------
     strategy = InitTest()
     step = InitializationStep(strategy)
     state = DummySolverState(n=100, k=10)
 
-    # --- act ---
+    # --- act ---------------------------------------------
     result = step.run(state)
 
-    # --- assert ---
+    # --- assert ------------------------------------------
     assert strategy._n_iterations == 1, "This initialization should take exactly 1 iteration"
     assert isinstance(result, SolverStepResult)
     assert result.elapsed.n_iterations == 1, "This initialization should take exactly 1 iteration"
@@ -153,15 +153,15 @@ def test_optimization_step_name():
 
 
 def test_optimization_step_run_iterations():
-    # --- arrange ---
+    # --- arrange -----------------------------------------
     strategy = OptimTest()
     step = OptimizationStep(strategy, duration=iterations(123))
     state = Mock()
 
-    # --- act ---
+    # --- act ---------------------------------------------
     result = step.run(state)
 
-    # --- assert ---
+    # --- assert ------------------------------------------
     assert strategy._n_iterations == 123
     for i, progress_frac in enumerate(strategy._progress_fracs):
         assert math.isclose(i / 123, progress_frac)
@@ -172,16 +172,16 @@ def test_optimization_step_run_iterations():
 
 
 def test_optimization_step_run_seconds():
-    # --- arrange ---
+    # --- arrange -----------------------------------------
     strategy = OptimTest()
     step = OptimizationStep(strategy, duration=seconds(0.1))
     state = Mock()
 
-    # --- act ---
+    # --- act ---------------------------------------------
     with Timer() as t:
         result = step.run(state)
 
-    # --- assert ---
+    # --- assert ------------------------------------------
     assert t.t_elapsed_sec() >= 0.1
     assert isinstance(result, SolverStepResult)
     assert result.elapsed.t_elapsed_sec >= 0.1

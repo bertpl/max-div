@@ -58,6 +58,15 @@ def test_solver_minimal(example_solver):
     assert solution.score == solution.score_checkpoints[-1][2]
 
 
+def test_solver_solution_constraint_counts(example_solver):
+    # --- act ---------------------------------------------
+    solution = example_solver.solve(verbosity=0)
+
+    # --- assert ------------------------------------------
+    assert solution.n_constraints == 2
+    assert solution.n_constraints_satisfied == 2
+
+
 @pytest.mark.parametrize(
     "verbosity,error_expected",
     [

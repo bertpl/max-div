@@ -92,6 +92,9 @@ class Score:
             return self.as_tuple() == other.as_tuple()
         return NotImplemented
 
+    def __str__(self) -> str:
+        return f"size={self.size:.4f} | constraints={self.constraints:.4f} | diversity={self.diversity:.4f}"
+
 
 # =================================================================================================
 #  ScoreGenerator

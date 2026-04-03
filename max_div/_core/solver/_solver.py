@@ -2,6 +2,7 @@ import numpy as np
 
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
+from max_div._core.constraints._constraints import _np_con_count_satisfied
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 
 from ._duration import Elapsed
@@ -174,9 +175,15 @@ class MaxDivSolver:
             # Update elapsed_from_previous_steps to include this step's total elapsed time
             elapsed_from_previous_steps += result.elapsed
 
+        # --- constraint satisfaction ----------------------
+        n_constraints = state.m
+        n_constraints_satisfied = _np_con_count_satisfied(state.con_values)
+
         # --- construct solution --------------------------
         return MaxDivSolution(
             i_selected=state.selected_index_array.copy(),
             score_checkpoints=score_checkpoints,
             step_durations=step_durations,
+            n_constraints=int(n_constraints),
+            n_constraints_satisfied=n_constraints_satisfied,
         )
