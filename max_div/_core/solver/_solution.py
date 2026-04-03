@@ -9,6 +9,13 @@ from max_div._core.solver._score import Score
 
 @dataclass
 class MaxDivSolution:
+    """
+    Result of solving a Maximum Diversity Problem.
+
+    Contains the selected vector indices, the final [`Score`][max_div.solution.Score], timing information,
+    and a history of score checkpoints recorded during the solve.
+    """
+
     # --- final solution ----------------------------------
     i_selected: NDArray[np.int32]
 

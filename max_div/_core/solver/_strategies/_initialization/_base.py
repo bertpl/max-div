@@ -14,6 +14,13 @@ from max_div._core.solver._strategies._base import StrategyBase
 #  InitializationStrategy
 # =================================================================================================
 class InitializationStrategy(StrategyBase, ABC):
+    """
+    Base class for strategies that produce an initial selection of ``k`` vectors.
+
+    Use the factory methods (`fast`, `random_one_shot`, `random_batched`,
+    `eager`) to create instances.
+    """
+
     @abstractmethod
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         """
@@ -35,14 +42,20 @@ class InitializationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
     @classmethod
     def fast(cls) -> Self:
-        """Create a InitFast initialization strategy."""
+        """Deterministic greedy initialization. Selects vectors one-by-one, always picking the one
+        that maximizes separation from the current selection. Fast but seed-independent."""
         from ._init_fast import InitFast
 
         return InitFast()
 
     @classmethod
     def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> Self:
-        """Create a InitRandomOneShot initialization strategy."""
+        """Random initialization that selects all ``k`` vectors in a single batch,
+        with probabilities biased by global separation (unless ``uniform=True``).
+
+        :param uniform: If True, sample uniformly instead of using separation-based probabilities.
+        :param ignore_constraints: If True, ignore constraints during sampling.
+        """
         from ._init_random_one_shot import InitRandomOneShot
 
         return InitRandomOneShot(
@@ -52,7 +65,12 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def random_batched(cls, b: int, ignore_constraints: bool = False) -> Self:
-        """Create a InitRandomBatched initialization strategy."""
+        """Random initialization that selects vectors in batches of ``b``,
+        re-evaluating separations between batches.
+
+        :param b: Batch size (number of vectors to select per batch).
+        :param ignore_constraints: If True, ignore constraints during sampling.
+        """
         from ._init_random_batched import InitRandomBatched
 
         return InitRandomBatched(
@@ -62,7 +80,12 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def eager(cls, nc: int, ignore_constraints: bool = False) -> Self:
-        """Create a InitEager initialization strategy."""
+        """Greedy initialization that evaluates ``nc`` random candidates per step
+        and picks the best one. Higher ``nc`` gives better quality but is slower.
+
+        :param nc: Number of candidates to evaluate at each step.
+        :param ignore_constraints: If True, ignore constraints during sampling.
+        """
         from ._init_eager import InitEager
 
         return InitEager(

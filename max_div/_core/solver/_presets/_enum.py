@@ -4,6 +4,19 @@ from enum import StrEnum
 
 
 class SolverPreset(StrEnum):
+    """
+    Predefined solver configurations that bundle initialization and optimization strategies.
+
+    Members
+    -------
+
+        - DEFAULT:   Alias for SMART.
+        - RANDOM:    Random initialization + random swap optimization. Fast but lower quality.
+        - GUIDED:    Distance-guided swaps, biased towards removing low-separation and adding high-separation vectors.
+        - SMART:     Adaptive swap-based optimization that learns effective swap sizes and candidate strategies.
+        - THOROUGH:  Like SMART but with wider parameter ranges. Best for long runs (minutes to hours).
+    """
+
     DEFAULT = "default"
     RANDOM = "random"
     GUIDED = "guided"

@@ -14,12 +14,20 @@ from ._strategies import InitializationStrategy
 
 
 class MaxDivSolverBuilder:
+    """
+    Builder for configuring and creating [`MaxDivSolver`][max_div.solver.MaxDivSolver] instances.
+
+    Provides a fluent API for setting up initialization and optimization strategies,
+    diversity tie-breakers, random seed, and solver presets. The simplest usage is
+    to call `with_preset` with a time budget, then `build`.
+    """
+
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem):
         """
-        Initialize the MaxDivSolverBuilder.
+        :param problem: The MaxDivProblem to solve.
         """
 
         # --- problem ---------------------------
@@ -44,31 +52,37 @@ class MaxDivSolverBuilder:
     #  Builder API
     # -------------------------------------------------------------------------
     def with_diversity_tie_breakers(self, diversity_tie_breakers: list[DiversityMetric]) -> Self:
+        """Set custom diversity tie-breaker metrics, overriding the defaults."""
         self._diversity_tie_breakers = diversity_tie_breakers
         self._default_diversity_tie_breakers = False
         return self
 
     def with_default_diversity_tie_breakers(self) -> Self:
+        """Reset to automatically chosen tie-breakers based on the main diversity metric."""
         self._diversity_tie_breakers = []
         self._default_diversity_tie_breakers = True
         return self
 
     def set_initialization_strategy(self, init_strategy: InitializationStrategy) -> Self:
+        """Set the initialization strategy for the first solver step."""
         self._solver_steps[0] = InitializationStep(init_strategy)
         return self
 
     def add_solver_step(self, solver_step: OptimizationStep) -> Self:
+        """Append an optimization step to the solver pipeline."""
         if not isinstance(solver_step, OptimizationStep):
             raise TypeError("Only OptimizationStep instances can be added as solver steps.")
         self._solver_steps.append(solver_step)
         return self
 
     def add_solver_steps(self, solver_steps: list[OptimizationStep]) -> Self:
+        """Append multiple optimization steps to the solver pipeline."""
         for solver_step in solver_steps:
             self.add_solver_step(solver_step)
         return self
 
     def with_seed(self, seed: int) -> Self:
+        """Set the random seed for reproducibility (default: 42)."""
         self._seed = seed
         return self
 

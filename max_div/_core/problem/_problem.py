@@ -10,6 +10,15 @@ from max_div._core.metrics import DistanceMetric, DiversityMetric
 
 @dataclass(frozen=True, slots=True)
 class MaxDivProblem:
+    """
+    Immutable definition of a Maximum Diversity Problem.
+
+    A problem consists of ``n`` vectors in ``d`` dimensions, a target selection size ``k``,
+    a distance metric, a diversity metric, and optionally a list of fairness constraints.
+
+    Use the `new` factory method to create instances with validation.
+    """
+
     # --- primary fields ----------------------------------
     vectors: NDArray[np.float32]
     k: int
@@ -44,6 +53,16 @@ class MaxDivProblem:
         diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
         constraints: list[Constraint] | None = None,
     ) -> Self:
+        """
+        Create a new MaxDivProblem with validation.
+
+        :param vectors: 2D numpy array of shape ``(n, d)`` with at least 3 rows.
+                        Converted to ``float32`` automatically if needed.
+        :param k: Number of vectors to select (must satisfy ``2 <= k <= n``).
+        :param distance_metric: Distance metric for pairwise distances.
+        :param diversity_metric: Diversity metric to maximize.
+        :param constraints: Optional list of fairness constraints.
+        """
         # --- validate ----------------
         if vectors.ndim != 2:
             raise ValueError("Vectors must be a 2D numpy array.")

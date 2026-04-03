@@ -14,14 +14,10 @@ from ._solver_step import SolverStep, SolverStepResult
 
 class MaxDivSolver:
     """
-    Class that represents a combination of...
-      - a maximum diversity problem (potentially with fairness constraints)
-      - a solver configuration for that problem
+    Solver that combines a maximum diversity problem with a solver configuration.
 
-    The class allows solving the said problem with the said configuration, resulting in a MaxDivSolution object.
-
-    It is STRONGLY recommended to use the MaxDivSolverBuilder class to create instances of this class,
-      since it provides convenient defaults, presets and validation of the configuration.
+    Use [`MaxDivSolverBuilder`][max_div.solver.MaxDivSolverBuilder] to create instances --
+    it provides convenient defaults, presets and validation.
     """
 
     # -------------------------------------------------------------------------

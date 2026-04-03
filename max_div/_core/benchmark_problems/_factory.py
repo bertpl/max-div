@@ -36,10 +36,12 @@ class BenchmarkProblemFactory:
 
     @classmethod
     def get_all_benchmark_problems(cls) -> dict[str, Type[BenchmarkProblem]]:
+        """Return a dict mapping benchmark problem names to their classes."""
         return BenchmarkProblemRegistry.get_registered_classes()
 
     @classmethod
     def get_all_benchmark_names(cls) -> list[str]:
+        """Return a sorted list of all registered benchmark problem names."""
         return sorted(cls.get_all_benchmark_problems().keys())
 
     @classmethod

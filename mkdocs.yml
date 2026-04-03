@@ -142,15 +142,18 @@ nav:
       - Constraint: reference/problem/Constraint.md
       - MaxDivProblem: reference/problem/MaxDivProblem.md
     - Solver:
-      - MaxDivSolver: reference/solver/MaxDivSolver.md
-      - MaxDivSolverBuilder: reference/solver/MaxDivSolverBuilder.md
-      - SolverPreset: reference/solver/SolverPreset.md
-      - InitializationStrategy: reference/solver/InitializationStrategy.md
-      - OptimizationStrategy: reference/solver/OptimizationStrategy.md
-      - TargetDuration: reference/solver/TargetDuration.md
-      - TargetIterationCount: reference/solver/TargetIterationCount.md
-      - TargetTimeDuration: reference/solver/TargetTimeDuration.md
-      - Duration helpers: reference/solver/duration_helpers.md
+      - Core:
+        - MaxDivSolver: reference/solver/MaxDivSolver.md
+        - MaxDivSolverBuilder: reference/solver/MaxDivSolverBuilder.md
+      - Presets & Strategies:
+        - SolverPreset: reference/solver/SolverPreset.md
+        - InitializationStrategy: reference/solver/InitializationStrategy.md
+        - OptimizationStrategy: reference/solver/OptimizationStrategy.md
+      - Duration:
+        - TargetDuration: reference/solver/TargetDuration.md
+        - TargetTimeDuration: reference/solver/TargetTimeDuration.md
+        - TargetIterationCount: reference/solver/TargetIterationCount.md
+        - Duration helpers: reference/solver/duration_helpers.md
     - Solution:
       - MaxDivSolution: reference/solution/MaxDivSolution.md
       - Score: reference/solution/Score.md

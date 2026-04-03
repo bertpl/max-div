@@ -25,6 +25,13 @@ ParamValueType = ParameterValueSource | float | int | np.float32 | np.int32 | bo
 #  OptimizationStrategy
 # =================================================================================================
 class OptimizationStrategy(StrategyBase, ABC):
+    """
+    Base class for strategies that iteratively improve a selection via swap operations.
+
+    Use the factory methods (`random_swaps`, `guided_swaps`, `smart_swaps`)
+    to create instances, or use solver presets which select appropriate strategies automatically.
+    """
+
     # -------------------------------------------------------------------------
     #  Constructor / Configuration
     # -------------------------------------------------------------------------
@@ -203,6 +210,7 @@ class OptimizationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
     @classmethod
     def random_swaps(cls) -> Self:
+        """Baseline strategy: randomly removes and adds vectors, keeping swaps that improve the score."""
         from ._optim_random_swaps import OptimRandomSwaps
 
         return OptimRandomSwaps()
@@ -218,6 +226,8 @@ class OptimizationStrategy(StrategyBase, ABC):
         remove_selectivity_modifier: float | ParameterSchedule = 0.0,
         add_selectivity_modifier: float | ParameterSchedule = 0.0,
     ) -> Self:
+        """Distance-guided swap strategy: biased towards removing low-separation vectors and adding
+        high-separation ones. Supports scheduled parameters for constraint softness and selectivity."""
         from ._optim_guided_swaps import OptimGuidedSwaps
 
         return OptimGuidedSwaps(
@@ -240,6 +250,8 @@ class OptimizationStrategy(StrategyBase, ABC):
         ignore_infeasible_diversity_up_to_fraction: float = -1.0,
         cost_awareness: float = 0.0,
     ) -> Self:
+        """Adaptive swap strategy that learns effective swap sizes and candidate selection strategies
+        during optimization. Used by the SMART and THOROUGH presets."""
         from ._optim_smart_swaps import OptimSmartSwaps
 
         return OptimSmartSwaps(

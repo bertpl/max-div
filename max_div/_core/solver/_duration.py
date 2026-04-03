@@ -23,6 +23,13 @@ from max_div._core._utils import format_time_duration
 #  TargetDuration
 # =================================================================================================
 class TargetDuration(ABC):
+    """
+    Base class specifying how long a solver step should run.
+
+    Use the factory methods `seconds`, `minutes`, `hours` for wall-clock
+    durations, or `iterations` for a fixed iteration count.
+    """
+
     @abstractmethod
     def track(self) -> ProgressTracker:
         raise NotImplementedError()
@@ -67,6 +74,8 @@ class TargetDuration(ABC):
 
 
 class TargetTimeDuration(TargetDuration):
+    """Wall-clock time duration target, created via `seconds`, `minutes`, or `hours`."""
+
     def __init__(self, t_target_sec: float):
         if t_target_sec <= 0:
             raise ValueError("t_target_sec must be > 0")
@@ -91,6 +100,8 @@ class TargetTimeDuration(TargetDuration):
 
 
 class TargetIterationCount(TargetDuration):
+    """Fixed iteration count duration target, created via `iterations`."""
+
     def __init__(self, n_iters: int):
         if n_iters <= 0:
             raise ValueError("n_iters must be > 0")
