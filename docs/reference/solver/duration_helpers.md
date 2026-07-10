@@ -9,4 +9,3 @@ Convenience constructors for solver target durations.
 ::: max_div.solver.seconds
 
 ::: max_div.solver.iterations
-

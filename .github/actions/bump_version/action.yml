@@ -8,7 +8,7 @@ inputs:
         description: "GitHub token with permissions to push to selected branch (git_ref)."
     git_ref:
         required: false
-        description: "git ref (tag/commmit/branch) where to bump version  (default: develop)"
+        description: "git ref (tag/commit/branch) where to bump version  (default: develop)"
         default: "develop"
     only_if_equal_to_version:
         required: false
@@ -40,31 +40,31 @@ runs:
                     echo "VERSION_BUMP_NEEDED=false" >> $GITHUB_ENV
                 fi
             else
-                echo "VERSION_BUMP_NEEDED=true" >> $GITHUB_ENV    
+                echo "VERSION_BUMP_NEEDED=true" >> $GITHUB_ENV
             fi
 
       - name: Bump if needed
         shell: bash
         run: |
             git config --local user.name "GitHub Actions"
-            git config --local user.email ""          
+            git config --local user.email ""
             git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/${{ github.repository }}.git
             git pull origin ${{ inputs.git_ref }}
-          
+
             if [[ $VERSION_BUMP_NEEDED == "true" ]]; then
 
                 ver_before="$(uv version --short)"
                 uv version --bump ${{ inputs.bump_type }}
                 ver_after="$(uv version --short)"
-                echo "Bumping version ${ver_before} -> ${ver_after}."          
-                
+                echo "Bumping version ${ver_before} -> ${ver_after}."
+
                 git add pyproject.toml
                 git commit -m "Bump package version ${ver_before} -> ${ver_after}"
-                git push origin          
-          
+                git push origin
+
             else
-                
+
                 ver_before="$(uv version --short)"
                 echo "Not bumping version ${ver_before}."
-            
+
             fi

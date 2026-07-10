@@ -18,7 +18,7 @@ This image shows problem C1 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=2
 
 ![Problem C1](./images/problem_C1.webp){ .center }
 
-The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations 
+The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations
 using the L2 distance metric and the `geomean_separation` diversity metric:
 
 ![Problem C1 with Solution](./images/problem_C1_with_solution.webp){ .center }

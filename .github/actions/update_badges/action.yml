@@ -33,7 +33,7 @@ runs:
 
       - name: Generate badges
         shell: bash
-        run: |            
+        run: |
             uv run genbadge tests -i junit.xml -o "./badges/badge-test-count.svg"
             uv run genbadge coverage -i coverage.xml -o "./badges/badge-coverage.svg"
 

@@ -15,7 +15,9 @@ def format_time_duration(dt_sec: float, n_chars: int = 10, pad: bool = True) -> 
     :param pad: (bool) If True (default), right-justify to n_chars for tabular alignment.
     """
     if dt_sec < 1.0:
-        result = format_short_time_duration(dt_sec, n_chars=n_chars, spaced=False, long_units=False, right_aligned=False)
+        result = format_short_time_duration(
+            dt_sec, n_chars=n_chars, spaced=False, long_units=False, right_aligned=False
+        )
     else:
         result = format_long_time_duration(dt_sec, n_chars=n_chars)
     return result if pad else result.strip()

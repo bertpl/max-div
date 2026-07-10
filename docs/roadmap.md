@@ -19,7 +19,7 @@
 - First version of the `MaxDivSolver` framework all core classes (metrics, distances, constraints, solver state, ...)
 
 ## v0.2.x
- 
+
 - Implement all remaining parts of framework
   - multi-component prioritized constraints
   - soft constraint handling

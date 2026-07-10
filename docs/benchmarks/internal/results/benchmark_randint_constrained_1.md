@@ -49,4 +49,3 @@ Varying n & k with 10 non-overlapping constraints spanning equal portions of the
 | 128 | 1000 | 10        | 0.5%                                    | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
 | 256 | 1000 | 10        | 0.5%                                    | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
 |     |      | **Mean:** | 35.68%                                  | <span style="color:#00aa00">**100.00%**</span> | <span style="color:#00aa00">**100.00%**</span> |
-

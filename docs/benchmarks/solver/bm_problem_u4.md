@@ -16,7 +16,7 @@ This image shows problem U4 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=2
 
 ![Problem U4](./images/problem_U4.webp){ .center }
 
-The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations 
+The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations
 using the L2 distance metric and the `geomean_separation` diversity metric:
 
 ![Problem U4 with Solution](./images/problem_U4_with_solution.webp){ .center }

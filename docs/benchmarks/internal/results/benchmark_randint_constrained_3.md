@@ -39,4 +39,3 @@ Fixed n=1000 & k=100 with varying number of constraints spanning random 1% porti
 | 100 | 1000 | 768       | <span style="color:#00aa00">**0.0%**</span> | <span style="color:#00aa00">**0.0%**</span>   | <span style="color:#00aa00">**0.0%**</span>   |
 | 100 | 1000 | 1024      | <span style="color:#00aa00">**0.0%**</span> | <span style="color:#00aa00">**0.0%**</span>   | <span style="color:#00aa00">**0.0%**</span>   |
 |     |      | **Mean:** | 0.00%                                 | 66.50%                                        | <span style="color:#00aa00">**79.17%**</span> |
-

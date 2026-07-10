@@ -25,7 +25,7 @@ This image shows problem C4 with size parameter $s=2$ (thus $d=2$, $n=300$, $k=2
 
 ![Problem C4](./images/problem_C4.webp){ .center }
 
-The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations 
+The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations
 using the L2 distance metric and the `geomean_separation` diversity metric:
 
 ![Problem C4 with Solution](./images/problem_C4_with_solution.webp){ .center }

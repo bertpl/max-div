@@ -7,7 +7,7 @@ Command:
 uv tool install max-div
 max-div benchmark --markdown randint
 ```
-or 
+or
 ```bash
 uv run max-div benchmark --markdown randint
 ```

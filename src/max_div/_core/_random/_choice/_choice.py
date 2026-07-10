@@ -14,7 +14,7 @@ def choice(
     rng_state: NDArray[np.uint64],
 ) -> NDArray[np.int32]:
     """
-    Identical in behavior to max_div.random.randint, except that it samples fro the 'values' array,
+    Identical in behavior to max_div.random.randint, except that it samples from the 'values' array,
     instead of the range [0, n).
 
     This method is nearly a drop-in replacement for numpy.random.choice with similar parameters, optimized for speed.

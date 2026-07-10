@@ -26,4 +26,3 @@ Tested methods:
 | 20000         | 140.4 μsec ± 0.2%                            | 34.56 μsec ± 0.4% | 34.42 μsec ± 0.2% | <span style="color:#00aa00">**15.80 μsec ± 1.4%**</span> | 24.83 μsec ± 0.1% |
 | **Geomean:**  | 4.323 μsec ± 0.2%                            | 1.536 μsec ± 0.4% | 1.531 μsec ± 0.2% | <span style="color:#00aa00">**945.7 nsec ± 0.7%**</span> | 1.408 μsec ± 0.5% |
 | **e_approx:** | <span style="color:#00aa00">**0.00%**</span> | 0.89%             | 0.41%             | 16.33%                                                   | N/A               |
-

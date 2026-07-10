@@ -36,10 +36,10 @@ runs:
         shell: bash
         run: |
           git config --local user.name "GitHub Actions"
-          git config --local user.email ""          
-          git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/${{ github.repository }}.git          
+          git config --local user.email ""
+          git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/${{ github.repository }}.git
           git pull origin "$GITHUB_REF"
-          
+
           uv run --python 3.14 .github/scripts/update_readme_urls.py "$GITHUB_WORKSPACE/.python-versions" "$GITHUB_WORKSPACE/pyproject.toml" "$GITHUB_WORKSPACE/README.md" "${{ steps.build_type.outputs.build_type }}"
           echo "----------------------------------------------------------"
           cat "$GITHUB_WORKSPACE/README.md" | head -n 10
@@ -55,7 +55,7 @@ runs:
               git push
               echo "readme_updated=true" >> $GITHUB_OUTPUT
               echo "Changes committed and pushed"
-              
+
               if [ "${{ inputs.fail_if_updated }}" = "true" ]; then
                   echo "ERROR: README.md was updated & fail_if_updated is set to true."
                   exit 1
