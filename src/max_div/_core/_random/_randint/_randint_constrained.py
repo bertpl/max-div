@@ -144,8 +144,7 @@ def randint_constrained(
                 f"Cannot sample {k} unique integers from [0, {n}) when {n_forbidden} integers are forbidden."
                 f"  ({k} > {n}-{n_forbidden})"
             )
-        else:
-            raise ValueError(f"Cannot sample {k} unique integers from [0, {n}). ({k} > {n})")
+        raise ValueError(f"Cannot sample {k} unique integers from [0, {n}). ({k} > {n})")
 
     # --- initialize --------------------------------------
     if k_context < k:

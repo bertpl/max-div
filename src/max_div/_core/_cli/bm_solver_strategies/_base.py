@@ -305,14 +305,14 @@ class BenchmarkSolverConstructor(ABC):
     @abstractmethod
     def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
         """Constructs and returns a Solver for given (size, strat_name, seed)-tuple."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def strategy_names(self) -> list[str]:
         """Returns list of strategy names that can be constructed by this class."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def build_strategies_table(self) -> list[ReportElement | str]:
         """Builds a Table object summarizing the strategies that can be constructed by this class."""
-        raise NotImplementedError()
+        raise NotImplementedError

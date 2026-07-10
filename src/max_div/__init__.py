@@ -1,12 +1,12 @@
-from max_div.benchmark_problems import *  # noqa: F401, F403
+from max_div.benchmark_problems import *  # noqa: F403
 from max_div.benchmark_problems import __all__ as _all_benchmark_problems
-from max_div.metrics import *  # noqa: F401, F403
+from max_div.metrics import *  # noqa: F403
 from max_div.metrics import __all__ as _all_metrics
-from max_div.problem import *  # noqa: F401, F403
+from max_div.problem import *  # noqa: F403
 from max_div.problem import __all__ as _all_problem
-from max_div.solution import *  # noqa: F401, F403
+from max_div.solution import *  # noqa: F403
 from max_div.solution import __all__ as _all_solution
-from max_div.solver import *  # noqa: F401, F403
+from max_div.solver import *  # noqa: F403
 from max_div.solver import __all__ as _all_solver
 
 __all__ = sorted(

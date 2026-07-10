@@ -105,15 +105,14 @@ def randint(
         if replace:
             # UNIFORM sampling with replacement
             return rand_int32_array(rng_state, 0, n, k)  # O(k)
-        else:
-            # UNIFORM sampling without replacement using Fisher-Yates shuffle
-            population = np.arange(n, dtype=np.int32)  # O(n)
-            for i in range(k):  # k x O(1)
-                j = rand_int32(rng_state, i, n)
-                population[i], population[j] = population[j], population[i]
-            return population[:k]  # O(k)
+        # UNIFORM sampling without replacement using Fisher-Yates shuffle
+        population = np.arange(n, dtype=np.int32)  # O(n)
+        for i in range(k):  # k x O(1)
+            j = rand_int32(rng_state, i, n)
+            population[i], population[j] = population[j], population[i]
+        return population[:k]  # O(k)
 
-    elif p.size == n:
+    if p.size == n:
         if replace:
             # NON-UNIFORM sampling with replacement using CDF
             cdf = np.cumsum(p)  # O(n)
@@ -144,48 +143,44 @@ def randint(
                 idx = np.searchsorted(cdf, r)
                 samples[i] = idx
             return samples
-        else:
-            # NON-UNIFORM sampling without replacement using Efraimidis-Spirakis + Exponential keys
-            # algorithm description:
-            #   Efraimidis:       select k elements corresponding to k largest values of  u_i^{1/p_i} (u_i ~ U(0,1))
-            #   Gumbel-Max Trick: select k smallest values of  -log(u_i)/p_i  (u_i ~ U(0,1))
-            #   Ziggurat:         INVESTIGATE: generate log(u_i) more efficiently, applying the Ziggurat algorithm
-            #                            to the exponential distribution, which avoids usage of transcendental
-            #                            functions for the majority of the samples.
-            #                     (Initial testing surprisingly did not show improvements)
-            if k < n:
-                keys = np.empty(n, dtype=np.float32)  # O(n)
-                # notes:
-                #  - computing -np.log(u[i]) does not seem to be noticeably slower than np.random.standard_exponential().
-                #  - implementing & calling a rand_float32_array outside the loop once is not faster
-                for i in range(n):  # n x O(1)
-                    if p[i] <= 0.0:
-                        keys[i] = np.inf
-                    else:
-                        ui = rand_nz_float32(rng_state)  # float in (0.0, 1.0)
-                        # NOTE: we use a fast log2 approximation here for speed; log2 vs log is irrelevant since
-                        #       it's just a scaling factor, and we are only interested in the order of the final list
-                        keys[i] = -fast_log2_f32(ui) / p[i]  # using fast log2 approximation
-
-                # Get indices of k smallest keys
-                if k <= (10 + n // 20):
-                    return select_k_min(keys, np.int32(k))  # most efficient for small k and k/n
+        # NON-UNIFORM sampling without replacement using Efraimidis-Spirakis + Exponential keys
+        # algorithm description:
+        #   Efraimidis:       select k elements corresponding to k largest values of  u_i^{1/p_i} (u_i ~ U(0,1))
+        #   Gumbel-Max Trick: select k smallest values of  -log(u_i)/p_i  (u_i ~ U(0,1))
+        #   Ziggurat:         INVESTIGATE: generate log(u_i) more efficiently, applying the Ziggurat algorithm
+        #                            to the exponential distribution, which avoids usage of transcendental
+        #                            functions for the majority of the samples.
+        #                     (Initial testing surprisingly did not show improvements)
+        if k < n:
+            keys = np.empty(n, dtype=np.float32)  # O(n)
+            # notes:
+            #  - computing -np.log(u[i]) does not seem to be noticeably slower than np.random.standard_exponential().
+            #  - implementing & calling a rand_float32_array outside the loop once is not faster
+            for i in range(n):  # n x O(1)
+                if p[i] <= 0.0:
+                    keys[i] = np.inf
                 else:
-                    return np.argpartition(keys, k)[:k].astype(np.int32)  # O(n) average case
+                    ui = rand_nz_float32(rng_state)  # float in (0.0, 1.0)
+                    # NOTE: we use a fast log2 approximation here for speed; log2 vs log is irrelevant since
+                    #       it's just a scaling factor, and we are only interested in the order of the final list
+                    keys[i] = -fast_log2_f32(ui) / p[i]  # using fast log2 approximation
 
-            else:
-                # corner case: return all elements in random order
-                # to this end we perform 1 full Fisher-Yates shuffle
-                population = np.arange(n, dtype=np.int32)  # O(n)
-                for i in range(n):  # n x O(1)
-                    j = rand_int32(rng_state, i, n)
-                    population[i], population[j] = population[j], population[i]
-                return population[:k]  # O(k)
+            # Get indices of k smallest keys
+            if k <= (10 + n // 20):
+                return select_k_min(keys, np.int32(k))  # most efficient for small k and k/n
+            return np.argpartition(keys, k)[:k].astype(np.int32)  # O(n) average case
 
-    else:
-        raise ValueError(
-            f"p must be of size 0 (uniform sampling) or size n={n} (non-uniform sampling). (here: size={p.size})"
-        )
+        # corner case: return all elements in random order
+        # to this end we perform 1 full Fisher-Yates shuffle
+        population = np.arange(n, dtype=np.int32)  # O(n)
+        for i in range(n):  # n x O(1)
+            j = rand_int32(rng_state, i, n)
+            population[i], population[j] = population[j], population[i]
+        return population[:k]  # O(k)
+
+    raise ValueError(
+        f"p must be of size 0 (uniform sampling) or size n={n} (non-uniform sampling). (here: size={p.size})"
+    )
 
 
 # =================================================================================================
@@ -223,7 +218,7 @@ def randint1(
         # UNIFORM sampling
         return rand_int32(rng_state, 0, n)
 
-    elif p.size == n:
+    if p.size == n:
         # NON-UNIFORM sampling
         cdf = np.cumsum(p)  # O(n)
         p_sum = cdf[-1]
@@ -236,7 +231,6 @@ def randint1(
         # return single result
         return np.int32(np.searchsorted(cdf, r))
 
-    else:
-        raise ValueError(
-            f"p must be of size 0 (uniform sampling) or size n={n} (non-uniform sampling). (here: size={p.size})"
-        )
+    raise ValueError(
+        f"p must be of size 0 (uniform sampling) or size n={n} (non-uniform sampling). (here: size={p.size})"
+    )

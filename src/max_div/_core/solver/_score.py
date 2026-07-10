@@ -64,17 +64,16 @@ class Score:
             # set scores of diversity & tie-breakers to 0.0 in case of infeasible solution
             # (also, don't perform 'soft constraint' computation, since that also takes into account diversity)
             return self.size, self.constraints, 0.0, *[0.0 for tb in self.div_tie_breakers]
+        if soft == 0.0:
+            constraint_score = self.constraints  # 100% hard constraints (no influence from diversity)
+        elif soft == 1.0:
+            constraint_score = self.diversity  # 100% soft constraints (ignoring constraint score)
+        elif self.constraints == 0.0 or self.diversity == 0.0:
+            constraint_score = 0.0  # shortcut to avoid zero-division issues & unnecessary **soft computation
         else:
-            if soft == 0.0:
-                constraint_score = self.constraints  # 100% hard constraints (no influence from diversity)
-            elif soft == 1.0:
-                constraint_score = self.diversity  # 100% soft constraints (ignoring constraint score)
-            elif self.constraints == 0.0 or self.diversity == 0.0:
-                constraint_score = 0.0  # shortcut to avoid zero-division issues & unnecessary **soft computation
-            else:
-                constraint_score = self.constraints * ((self.diversity / self.constraints) ** soft)
+            constraint_score = self.constraints * ((self.diversity / self.constraints) ** soft)
 
-            return self.size, constraint_score, self.diversity, *self.div_tie_breakers
+        return self.size, constraint_score, self.diversity, *self.div_tie_breakers
 
     # --- math overloads --------------
     def __lt__(self, other: Any) -> bool:

@@ -52,30 +52,27 @@ class InitRandomOneShot(InitializationStrategy):
                     con_indices=state.con_indices,
                     rng_state=self._rng_state,
                 )
-            else:
-                return randint_constrained(
-                    n=state.n,
-                    k=state.k,
-                    con_values=state.con_values,
-                    con_indices=state.con_indices,
-                    p=state.global_separation_array,
-                    rng_state=self._rng_state,
-                )
-        else:
-            # don't take constraints into account
-            if self.uniform:
-                return randint(
-                    n=state.n,
-                    k=state.k,
-                    replace=False,
-                    p=P_UNIFORM,
-                    rng_state=self._rng_state,
-                )
-            else:
-                return randint(
-                    n=state.n,
-                    k=state.k,
-                    replace=False,
-                    p=state.global_separation_array,
-                    rng_state=self._rng_state,
-                )
+            return randint_constrained(
+                n=state.n,
+                k=state.k,
+                con_values=state.con_values,
+                con_indices=state.con_indices,
+                p=state.global_separation_array,
+                rng_state=self._rng_state,
+            )
+        # don't take constraints into account
+        if self.uniform:
+            return randint(
+                n=state.n,
+                k=state.k,
+                replace=False,
+                p=P_UNIFORM,
+                rng_state=self._rng_state,
+            )
+        return randint(
+            n=state.n,
+            k=state.k,
+            replace=False,
+            p=state.global_separation_array,
+            rng_state=self._rng_state,
+        )

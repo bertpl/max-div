@@ -180,5 +180,4 @@ def _format_short_time_duration_to_spec(
     # --- final result ------------------------------------
     if spaced:
         return f"{value_str} {unit_str}"
-    else:
-        return f"{value_str}{unit_str}"
+    return f"{value_str}{unit_str}"

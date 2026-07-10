@@ -21,7 +21,7 @@ def example_solver() -> MaxDivSolver:
         OptimizationStep(OptimizationStrategy.random_swaps(), iterations(1234)),
     ]
     constraints = [
-        Constraint(set(range(0, 5)), min_count=2, max_count=3),
+        Constraint(set(range(5)), min_count=2, max_count=3),
         Constraint(set(range(5, 10)), min_count=2, max_count=3),
     ]
 

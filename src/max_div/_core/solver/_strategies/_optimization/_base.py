@@ -187,7 +187,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         :param progress_frac: (float) Fraction in [0.0, 1.0] indicating current overall progress through total
                                  duration (iterations or time) configured for this SolverStep.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # -------------------------------------------------------------------------
     #  Helpers
@@ -202,8 +202,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         """
         if isinstance(param, ParameterValueSource):
             return param.get_initial_value()
-        else:
-            return float(param)
+        return float(param)
 
     # -------------------------------------------------------------------------
     #  Factory Methods
@@ -401,7 +400,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         Determine the swap size n for the current iteration.
         :return: (np.int32) swap size n
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
@@ -416,7 +415,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         :param n_to_remove: (np.int32) number of samples to be removed  (swap size)
         :return: (int32 ndarray) of shape (n,) with indices of samples to be REMOVED
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def _samples_to_be_added(
@@ -435,7 +434,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
                                      NEVER return samples that are not in this array.
         :return: (int32 ndarray) of shape (n,) with indices of samples to be ADDED
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # -------------------------------------------------------------------------
     #  Debug info

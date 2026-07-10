@@ -44,12 +44,11 @@ def get_pdist_el(pdist: NDArray[np.float32], i: np.int32, j: np.int32, n: np.int
     """Return element from 'pdist' array representing distance between vectors i & j, given n vectors in total."""
     if i == j:
         return np.float32(0.0)
-    elif i < j:
+    if i < j:
         index = (n * i) + j - ((i + 2) * (i + 1)) // 2
         return pdist[index]
-    else:
-        index = (n * j) + i - ((j + 2) * (j + 1)) // 2
-        return pdist[index]
+    index = (n * j) + i - ((j + 2) * (j + 1)) // 2
+    return pdist[index]
 
 
 @numba.njit("float32[::1](float32[::1], int32)", cache=True)

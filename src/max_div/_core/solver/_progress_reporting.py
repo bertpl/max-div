@@ -3,8 +3,8 @@ from __future__ import annotations
 import math
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from time import perf_counter
-from typing import Callable
 
 import numpy as np
 from numpy._typing import NDArray
@@ -24,7 +24,6 @@ class ProgressReporter(ABC):
     @abstractmethod
     def solver_step_started(self, step_name: str):
         """Notify that a new solver step with the provided name has started."""
-        pass
 
     @abstractmethod
     def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs):
@@ -32,14 +31,12 @@ class ProgressReporter(ABC):
         Update progress reporter with current progress and state.
         Reporters can choose to not report certain updates they receive, if they come too frequently.
         """
-        pass
 
     @abstractmethod
     def solver_step_finished(
         self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs
     ):
         """Notify that the current solver step has finished."""
-        pass
 
     # -------------------------------------------------------------------------
     #  Factory methods

@@ -27,9 +27,8 @@ class Timer:
         if self._end is None:
             # timer still running
             return time.perf_counter_ns() - self._start
-        else:
-            # timer finished
-            return self._end - self._start
+        # timer finished
+        return self._end - self._start
 
     def t_elapsed_sec(self) -> float:
         return self.t_elapsed_nsec() / 1e9

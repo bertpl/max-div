@@ -1,4 +1,3 @@
-from typing import Type
 
 from max_div._core._utils import ljust_str_list
 from max_div._core.problem import MaxDivProblem
@@ -31,11 +30,10 @@ class BenchmarkProblemFactory:
                 f"Benchmark problem '{name}' is not registered."
                 f" Available benchmark problems: {sorted(registered.keys())}"
             )
-        else:
-            return problem_cls.create_problem_instance(**params)
+        return problem_cls.create_problem_instance(**params)
 
     @classmethod
-    def get_all_benchmark_problems(cls) -> dict[str, Type[BenchmarkProblem]]:
+    def get_all_benchmark_problems(cls) -> dict[str, type[BenchmarkProblem]]:
         """Return a dict mapping benchmark problem names to their classes."""
         return BenchmarkProblemRegistry.get_registered_classes()
 

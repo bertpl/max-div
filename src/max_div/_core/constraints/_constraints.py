@@ -51,7 +51,6 @@ from dataclasses import dataclass
 
 import numba
 import numpy as np
-from numba.typed import List
 from numpy.typing import NDArray
 
 

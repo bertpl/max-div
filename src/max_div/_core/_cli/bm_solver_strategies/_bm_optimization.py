@@ -58,7 +58,7 @@ class BenchmarkSolverConstructor_Optimization(BenchmarkSolverConstructor):
                 [
                     f"`{name}`",
                     preset.class_name(),
-                    "\n".join([f"{k}={str(v)}" for k, v in preset.class_kwargs().items()]),
+                    "\n".join([f"{k}={v!s}" for k, v in preset.class_kwargs().items()]),
                 ]
                 + ([str(preset.is_constraint_aware())] if self.has_constraints else [])
             )

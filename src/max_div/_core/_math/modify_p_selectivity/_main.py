@@ -89,7 +89,7 @@ def modify_p_selectivity(p: NDArray[np.float32], modifier: np.float32, method: n
     p_max = _p_max(p)
     if p_max <= 0.0:
         # p array is degenerate -> just copy input to output, if needed & return
-        if not (p is p_out):
+        if p is not p_out:
             for i in range(p.size):
                 p_out[i] = p[i]
         return

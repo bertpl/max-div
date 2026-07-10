@@ -290,11 +290,11 @@ class Scenario(ABC):
 
     @abstractmethod
     def n_k_m_tuples(self) -> list[tuple[int, int, int]]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def build_constraints(self, n: int, k: int, m: int, seed: int) -> list[Constraint]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class ScenarioA(Scenario):

@@ -81,10 +81,9 @@ def rand_int64(rng_state: NDArray[uint64], low: np.int64, high: np.int64) -> np.
     if low == 0:
         rnd_uint64 = _xoroshiro128plus_next(rng_state)
         return int64(rnd_uint64 % uint64(high))
-    else:
-        range_size = high - low
-        rnd_uint64 = _xoroshiro128plus_next(rng_state)
-        return low + int64(rnd_uint64 % uint64(range_size))
+    range_size = high - low
+    rnd_uint64 = _xoroshiro128plus_next(rng_state)
+    return low + int64(rnd_uint64 % uint64(range_size))
 
 
 @numba.njit("int32(uint64[:], int32, int32)", fastmath=True, inline="always", cache=True)
@@ -96,10 +95,9 @@ def rand_int32(rng_state: NDArray[uint64], low: np.int32, high: np.int32) -> np.
     if low == 0:
         rnd_uint64 = _xoroshiro128plus_next(rng_state)
         return int32(rnd_uint64 % uint64(high))
-    else:
-        range_size = high - low
-        rnd_uint64 = _xoroshiro128plus_next(rng_state)
-        return low + int32(rnd_uint64 % uint64(range_size))
+    range_size = high - low
+    rnd_uint64 = _xoroshiro128plus_next(rng_state)
+    return low + int32(rnd_uint64 % uint64(range_size))
 
 
 @numba.njit("int32[:](uint64[:], int32, int32, int32)", fastmath=True, inline="always", cache=True)

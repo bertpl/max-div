@@ -109,7 +109,35 @@ line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["I"]
+# Broad rule set; PLC/PLR (pylint conventions/refactors) are deliberately excluded as
+# noisy on this numerical domain, and specific carve-outs live in `ignore` below.
+select = [
+    "F",       # pyflakes
+    "E", "W",  # pycodestyle (incl. E501 line-too-long)
+    "I",       # isort
+    "UP",      # pyupgrade
+    "C4",      # flake8-comprehensions
+    "PIE",     # flake8-pie
+    "RET",     # flake8-return
+    "PTH",     # flake8-use-pathlib
+    "TC",      # flake8-type-checking
+    "RUF",     # ruff-native
+    "PLE", "PLW",  # pylint errors + warnings (PLC/PLR excluded — noisy on this domain)
+    "PGH",     # pygrep-hooks: no blanket `noqa` / `type: ignore`
+    "BLE",     # flake8-blind-except
+    "A",       # flake8-builtins: shadowing
+    "RSE",     # flake8-raise: no needless parens on `raise`
+    "FLY",     # flynt: static str-join → f-string
+    "INP",     # flake8-no-pep420: every package dir has an __init__.py
+    "SLF",     # flake8-self: private-member access
+    "S",       # flake8-bandit: security lint
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["SLF001", "S101", "S311"]  # AAA tests: asserts, private access, random data
+"__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
+"scripts/**" = ["INP001", "S"]           # maintainer tooling, not the shipped library
+".github/scripts/**" = ["INP001", "S"]   # maintainer tooling, not held to shipped-source style
 
 [tool.coverage.run]
 source_pkgs = ["max_div"]

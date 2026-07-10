@@ -148,7 +148,7 @@ def test_max_div_solver_builder_end_to_end():
         OptimizationStep(OptimizationStrategy.random_swaps(), iterations(100)),
     ]
     constraints = [
-        Constraint(set(range(0, 5)), min_count=2, max_count=3),
+        Constraint(set(range(5)), min_count=2, max_count=3),
         Constraint(set(range(5, 10)), min_count=2, max_count=3),
     ]
 

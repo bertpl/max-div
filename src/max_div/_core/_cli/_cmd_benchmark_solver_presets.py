@@ -214,13 +214,12 @@ def resolve_problems(problem: str) -> list[str]:
     """Resolve problem string into list of problem names."""
     if problem == "all":
         return BenchmarkProblemFactory.get_all_benchmark_names()
+    if "," in problem:
+        problems = [p.strip() for p in problem.split(",")]
     else:
-        if "," in problem:
-            problems = [p.strip() for p in problem.split(",")]
-        else:
-            problems = [problem]
-        all_supported_problem_names = BenchmarkProblemFactory.get_all_benchmark_names()
-        for problem in problems:
-            if problem not in all_supported_problem_names:
-                raise ValueError(f"Unknown problem name '{problem}'. Available problems: {all_supported_problem_names}")
-        return problems
+        problems = [problem]
+    all_supported_problem_names = BenchmarkProblemFactory.get_all_benchmark_names()
+    for problem in problems:
+        if problem not in all_supported_problem_names:
+            raise ValueError(f"Unknown problem name '{problem}'. Available problems: {all_supported_problem_names}")
+    return problems

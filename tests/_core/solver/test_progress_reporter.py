@@ -1,4 +1,4 @@
-from typing import Callable, Type
+from collections.abc import Callable
 
 import numpy as np
 import pytest
@@ -19,7 +19,7 @@ from max_div._core.solver._progress_reporting import (
         (ProgressReporter.tabular, TabularProgressReporter),
     ],
 )
-def test_progress_reporter_factory_methods(factory_method: Callable, expected_class: Type[ProgressReporter]):
+def test_progress_reporter_factory_methods(factory_method: Callable, expected_class: type[ProgressReporter]):
     # --- act ---------------------------------------------
     reporter = factory_method()
 

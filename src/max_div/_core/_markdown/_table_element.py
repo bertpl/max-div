@@ -25,7 +25,7 @@ class TableElement(ABC):
 
     @abstractmethod
     def to_mark_down(self) -> str:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def to_plain_text(self) -> list[str]:
         return [self.to_mark_down()]
@@ -248,8 +248,7 @@ class TableValueRange(_QuantiledTableElement):
         if suffix_min or suffix_max:
             if prefix:
                 return f"{prefix}({suffix_min}...{suffix_max})"
-            else:
-                return f"{suffix_min}...{suffix_max}"
+            return f"{suffix_min}...{suffix_max}"
         return prefix
 
     @classmethod

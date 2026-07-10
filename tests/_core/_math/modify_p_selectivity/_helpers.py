@@ -9,5 +9,4 @@ def normalize_p(p: np.ndarray) -> np.ndarray:
         for i in range(p.size):
             p_out[i] /= p_max
         return p_out
-    else:
-        return p_out
+    return p_out

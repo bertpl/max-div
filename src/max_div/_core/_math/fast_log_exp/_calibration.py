@@ -167,19 +167,18 @@ def log2_approx(x: float, c0: float, c1: float, c2: float) -> float:
     """Only efficient for x in or close to [0.5, 1]"""
     if x <= 0:
         return -1e6
-    else:
-        offset = 0.0
+    offset = 0.0
 
-        # make sure x is in [0.5, 1.0]
-        while x < 0.5:
-            x = 2 * x
-            offset -= 1.0
-        while x > 1.0:
-            x = x * 0.5
-            offset += 1.0
+    # make sure x is in [0.5, 1.0]
+    while x < 0.5:
+        x = 2 * x
+        offset -= 1.0
+    while x > 1.0:
+        x = x * 0.5
+        offset += 1.0
 
-        # formula valid in [0.5, 1]
-        return offset + (c0 + (c1 * x) + (c2 * x * x))
+    # formula valid in [0.5, 1]
+    return offset + (c0 + (c1 * x) + (c2 * x * x))
 
 
 @numba.njit(inline="always", cache=True)

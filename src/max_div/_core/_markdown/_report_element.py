@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 class ReportElement(ABC):
     @abstractmethod
     def render(self, markdown: bool) -> list[str]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 # =================================================================================================

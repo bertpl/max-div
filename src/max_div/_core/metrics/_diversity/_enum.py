@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from enum import StrEnum
 from functools import cached_property
-from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -65,5 +65,4 @@ class DiversityMetric(StrEnum):
         if separations.size < 2:
             # we can only meaningfully compute diversity metrics with at least 2 separation values
             return np.float32(0.0)
-        else:
-            return self._f(separations)
+        return self._f(separations)
