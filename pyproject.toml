@@ -15,10 +15,10 @@ dependencies = [
     # Per-Python floors: each is the earliest release shipping a wheel for that CPython,
     # so `lowest-direct` CI legs install wheels instead of attempting source builds.
     "numpy>=2.0.0; python_version < '3.13'",
-    "numpy>=2.1.0; python_version == '3.13'",
+    "numpy>=2.3.2; python_version == '3.13'",
     "numpy>=2.3.2; python_version >= '3.14'",
     "scipy>=1.10.0; python_version < '3.13'",
-    "scipy>=1.14.1; python_version == '3.13'",
+    "scipy>=1.16.1; python_version == '3.13'",
     "scipy>=1.16.1; python_version >= '3.14'",
     "numba>=0.57; python_version < '3.12'",
     "numba>=0.59; python_version == '3.12'",
