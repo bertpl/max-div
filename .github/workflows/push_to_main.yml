@@ -1,25 +1,16 @@
 name: Push to Main
+
 on:
   push:
     branches: ["main"]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     uses: ./.github/workflows/_unit_tests.yml
-
-  update-images:
-    uses: ./.github/workflows/_update_images.yml
-    secrets:
-      gh_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
-  update-readme:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - uses: ./.github/actions/update_readme
-        with:
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}

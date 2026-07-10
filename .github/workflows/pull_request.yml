@@ -1,0 +1,92 @@
+name: Pull Request
+
+on:
+  pull_request:
+    # No base-branch filter: stacked PRs (base = another feature branch) get the
+    # same pipeline as main-based ones. `edited` re-runs the PR-title check on
+    # title edits.
+    types: [opened, synchronize, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Cheap PR-metadata gates bundled into one job, so the expensive jobs fail
+  # fast behind a single check.
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if [[ ! "$BRANCH" =~ ^(feat|fix|chore|docs|refactor|test)/[a-z0-9-]+$ ]]; then
+            echo "::error::Branch name '$BRANCH' does not match ^(feat|fix|chore|docs|refactor|test)/[a-z0-9-]+\$"
+            exit 1
+          fi
+
+      # The repo squash-merges, so the PR title becomes the commit subject on
+      # main — the CI complement to the local commit-msg hook.
+      - name: Check PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|chore|docs|refactor|test):[[:space:]].+ ]]; then
+            echo "::error::PR title '$PR_TITLE' does not match '<type>: <summary>' (type in feat|fix|chore|docs|refactor|test)"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check changelog updated for feat/ and fix/ branches
+        env:
+          BRANCH: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ ! "$BRANCH" =~ ^(feat|fix)/ ]]; then
+            echo "Branch '$BRANCH' is not feat/ or fix/; changelog entry not required."
+            exit 0
+          fi
+          if git diff --name-only "$BASE_SHA...HEAD" | grep -q '^CHANGELOG\.md$'; then
+            echo "CHANGELOG.md was modified — OK."
+            exit 0
+          fi
+          echo "::error::feat/ and fix/ PRs must update CHANGELOG.md."
+          exit 1
+
+  pre-commit:
+    needs: [preflight]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/pre_commit
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+
+  test:
+    needs: [preflight]
+    uses: ./.github/workflows/_unit_tests.yml
+
+  ci-gate:
+    name: CI gate
+    # The single stable required check on main: branch protection requires only
+    # this, so the job set can change without re-touching repo settings.
+    # `always()` is load-bearing — without it the gate is skipped when an
+    # upstream job fails, and GitHub treats a skipped required check as passing.
+    if: always()
+    needs: [preflight, pre-commit, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job did not succeed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          echo "::error::One or more required jobs failed."
+          exit 1
