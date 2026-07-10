@@ -1,21 +1,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
-from numpy.typing import NDArray
-
-from max_div._core.constraints import Constraint
 from max_div._core.constraints._constraints import _np_con_total_violation
-from max_div._core.metrics._diversity import DiversityMetric
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
+    from max_div._core.constraints import Constraint
+    from max_div._core.metrics._diversity import DiversityMetric
 
 
 # =================================================================================================
 #  Score
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
-class Score:
+class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; deliberately unhashable
     """
     Object representing the multi-component score of a selection, i.e. of a final or intermediate solution to a
     max-div problem with fairness constraints.
@@ -24,7 +26,8 @@ class Score:
 
                                     size > constraints > diversity > div_non_zero > div_fgm.
 
-    Only in case of a tie in a lower-priority component, the next higher-priority component is considered for comparisons.
+    Only in case of a tie in a lower-priority component, the next higher-priority component is considered for
+    comparisons.
 
     All scores are >= 0.0, with higher being better.
 
@@ -64,17 +67,16 @@ class Score:
             # set scores of diversity & tie-breakers to 0.0 in case of infeasible solution
             # (also, don't perform 'soft constraint' computation, since that also takes into account diversity)
             return self.size, self.constraints, 0.0, *[0.0 for tb in self.div_tie_breakers]
+        if soft == 0.0:
+            constraint_score = self.constraints  # 100% hard constraints (no influence from diversity)
+        elif soft == 1.0:
+            constraint_score = self.diversity  # 100% soft constraints (ignoring constraint score)
+        elif self.constraints == 0.0 or self.diversity == 0.0:
+            constraint_score = 0.0  # shortcut to avoid zero-division issues & unnecessary **soft computation
         else:
-            if soft == 0.0:
-                constraint_score = self.constraints  # 100% hard constraints (no influence from diversity)
-            elif soft == 1.0:
-                constraint_score = self.diversity  # 100% soft constraints (ignoring constraint score)
-            elif self.constraints == 0.0 or self.diversity == 0.0:
-                constraint_score = 0.0  # shortcut to avoid zero-division issues & unnecessary **soft computation
-            else:
-                constraint_score = self.constraints * ((self.diversity / self.constraints) ** soft)
+            constraint_score = self.constraints * ((self.diversity / self.constraints) ** soft)
 
-            return self.size, constraint_score, self.diversity, *self.div_tie_breakers
+        return self.size, constraint_score, self.diversity, *self.div_tie_breakers
 
     # --- math overloads --------------
     def __lt__(self, other: Any) -> bool:

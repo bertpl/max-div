@@ -13,10 +13,12 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-
-from tqdm import tqdm
+from typing import TYPE_CHECKING
 
 from max_div._core._utils import format_time_duration
+
+if TYPE_CHECKING:
+    from tqdm import tqdm
 
 
 # =================================================================================================
@@ -32,15 +34,15 @@ class TargetDuration(ABC):
 
     @abstractmethod
     def track(self) -> ProgressTracker:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def value(self) -> float:
         """numerical value (without unit) of the target duration"""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __repr__(self):
-        return f"TargetDuration({str(self)})"
+        return f"TargetDuration({self!s})"
 
     def __eq__(self, other):
         return isinstance(other, TargetDuration) and (type(self) is type(other)) and (self.value() == other.value())
@@ -158,12 +160,11 @@ class ProgressTracker(ABC):
         t_elapsed = time.perf_counter() - self._t_start
         if (t_elapsed > 0.0) and (self._iter_count > 0):
             return self._iter_count / t_elapsed
-        else:
-            return 0.0
+        return 0.0
 
     @abstractmethod
     def get_progress(self) -> Progress:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class _TimeTracker(ProgressTracker):
@@ -231,9 +232,8 @@ class Progress:
     def tqdm_n_current(self) -> int:
         if self.fraction >= 1.0:
             return self.tqdm_n_total
-        else:
-            # report fractional progress, but limited to tqdm_n_total-1 in case we're not finished yet.
-            return max(0, min(self.tqdm_n_total - 1, round(self.fraction * self.tqdm_n_total)))
+        # report fractional progress, but limited to tqdm_n_total-1 in case we're not finished yet.
+        return max(0, min(self.tqdm_n_total - 1, round(self.fraction * self.tqdm_n_total)))
 
     @property
     def est_progress_fraction_per_iter(self) -> float:
@@ -257,7 +257,7 @@ class Progress:
 #  Elapsed
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
-class Elapsed:
+class Elapsed:  # noqa: PLW1641 — value-semantics-only hot-path object; deliberately unhashable
     # --- data fields -----------------
     t_elapsed_sec: float
     n_iterations: int
@@ -277,7 +277,7 @@ class Elapsed:
     def __add__(self, other: Elapsed) -> Elapsed:
         if other == 0:
             return self  # helps ensure sum() works correctly
-        elif not isinstance(other, Elapsed):
+        if not isinstance(other, Elapsed):
             return NotImplemented
         return Elapsed(
             t_elapsed_sec=self.t_elapsed_sec + other.t_elapsed_sec,

@@ -1,12 +1,16 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DiversityMetric
-from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._strategies._initialization import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
+
+if TYPE_CHECKING:
+    from max_div._core.problem import MaxDivProblem
 
 
 @pytest.mark.parametrize("size", [1, 2, 10])

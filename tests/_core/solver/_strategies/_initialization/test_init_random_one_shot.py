@@ -35,10 +35,10 @@ def test_init_random_one_shot(problem_has_constraints: bool, arg_ignore_constrai
 @pytest.mark.parametrize(
     "kwargs, expected_name",
     [
-        (dict(uniform=True, ignore_constraints=False), "InitRandomOneShot(u)"),
-        (dict(uniform=False, ignore_constraints=False), "InitRandomOneShot(nu)"),
-        (dict(uniform=True, ignore_constraints=True), "InitRandomOneShot(u,uncon)"),
-        (dict(uniform=False, ignore_constraints=True), "InitRandomOneShot(nu,uncon)"),
+        ({"uniform": True, "ignore_constraints": False}, "InitRandomOneShot(u)"),
+        ({"uniform": False, "ignore_constraints": False}, "InitRandomOneShot(nu)"),
+        ({"uniform": True, "ignore_constraints": True}, "InitRandomOneShot(u,uncon)"),
+        ({"uniform": False, "ignore_constraints": True}, "InitRandomOneShot(nu,uncon)"),
     ],
 )
 def test_init_random_one_shot_name(kwargs: dict[str, Any], expected_name: str):

@@ -92,8 +92,9 @@ def randint_constrained(
 
     NOTES:
 
-    * no guarantees are given that the solution will satisfy all constraints; a best-effort attempt will be made, with the
-    probability of the result satisfying the constraints increasing the simpler & less strict the constraints are.
+    * no guarantees are given that the solution will satisfy all constraints; a best-effort attempt will be made,
+    with the probability of the result satisfying the constraints increasing the simpler & less strict the
+    constraints are.
 
     * `randint_constrained` is essentially a version of randint that supports constraints.
 
@@ -144,8 +145,7 @@ def randint_constrained(
                 f"Cannot sample {k} unique integers from [0, {n}) when {n_forbidden} integers are forbidden."
                 f"  ({k} > {n}-{n_forbidden})"
             )
-        else:
-            raise ValueError(f"Cannot sample {k} unique integers from [0, {n}). ({k} > {n})")
+        raise ValueError(f"Cannot sample {k} unique integers from [0, {n}). ({k} > {n})")
 
     # --- initialize --------------------------------------
     if k_context < k:

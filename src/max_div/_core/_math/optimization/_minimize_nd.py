@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from functools import lru_cache
-from typing import Callable
 
 import numpy as np
 
@@ -30,7 +30,7 @@ def minimize_nd(
 
     # general
     lb_orig, ub_orig = lb, ub
-    size = tuple(abs(l - u) for l, u in zip(lb, ub))
+    size = tuple(abs(lo - hi) for lo, hi in zip(lb, ub))
     n = len(lb)  # dimensionality
     fun = lru_cache(maxsize=5 * n * n_grid)(fun)  # cache function evaluations
     n_digits = int(-np.log10(acc) + 2)  # nr of digits to display
@@ -47,7 +47,7 @@ def minimize_nd(
     progress_table.show_header()
 
     # optimal point
-    x_opt = tuple((l + u) / 2.0 for l, u in zip(lb, ub))  # center of grid
+    x_opt = tuple((lo + hi) / 2.0 for lo, hi in zip(lb, ub))  # center of grid
     f_opt = fun(x_opt)
 
     # --- main loop -----------------------------------------------------------

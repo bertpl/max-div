@@ -15,4 +15,4 @@ class ParameterValueSource(ABC):
     @abstractmethod
     def get_initial_value(self) -> float:
         """Return a valid initial value (any) for the parameter."""
-        raise NotImplementedError()
+        raise NotImplementedError

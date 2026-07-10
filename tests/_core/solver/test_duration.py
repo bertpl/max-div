@@ -108,8 +108,8 @@ def test_target_duration_mul(duration: TargetDuration, multiplier: float | int, 
     # --- assert ------------------------------------------
 
     # check type
-    assert type(result_duration_1) == type(expected_duration)
-    assert type(result_duration_2) == type(expected_duration)
+    assert type(result_duration_1) is type(expected_duration)
+    assert type(result_duration_2) is type(expected_duration)
 
     # check equality (roughly) in type-independent way
     assert str(result_duration_1) == str(expected_duration)
@@ -210,9 +210,9 @@ def test_progress_tracker_iteration_based():
     assert tracker_2.get_progress().est_iters_per_second == 0.0  # unchanged
     assert tracker_3.get_progress().est_iters_per_second == 0.0  # unchanged
 
-    assert tracker_1.get_progress().is_finished == False
-    assert tracker_2.get_progress().is_finished == False
-    assert tracker_3.get_progress().is_finished == False
+    assert not tracker_1.get_progress().is_finished
+    assert not tracker_2.get_progress().is_finished
+    assert not tracker_3.get_progress().is_finished
 
     # --- act & assert 2 ----------------------------------
     tracker_1.report_iterations_done(1)
@@ -235,9 +235,9 @@ def test_progress_tracker_iteration_based():
     assert tracker_2.get_progress().fraction == pytest.approx(1 / 5)
     assert tracker_3.get_progress().fraction == pytest.approx(1 / 1000)
 
-    assert tracker_1.get_progress().is_finished == True
-    assert tracker_2.get_progress().is_finished == False
-    assert tracker_3.get_progress().is_finished == False
+    assert tracker_1.get_progress().is_finished
+    assert not tracker_2.get_progress().is_finished
+    assert not tracker_3.get_progress().is_finished
 
     # --- act & assert 3 ----------------------------------
     tracker_1.report_iterations_done(4)
@@ -256,9 +256,9 @@ def test_progress_tracker_iteration_based():
     assert tracker_2.get_progress().fraction == pytest.approx(1)
     assert tracker_3.get_progress().fraction == pytest.approx(5 / 1000)
 
-    assert tracker_1.get_progress().is_finished == True
-    assert tracker_2.get_progress().is_finished == True
-    assert tracker_3.get_progress().is_finished == False
+    assert tracker_1.get_progress().is_finished
+    assert tracker_2.get_progress().is_finished
+    assert not tracker_3.get_progress().is_finished
 
     # --- assert 4 ----------------------------------------
     elapsed_1 = tracker_1.elapsed()
@@ -298,9 +298,9 @@ def test_progress_tracker_time_based():
     assert tracker_2.get_progress().est_n_iters_remaining >= 1
     assert tracker_3.get_progress().est_n_iters_remaining >= 1
 
-    assert tracker_1.get_progress().is_finished == False
-    assert tracker_2.get_progress().is_finished == False
-    assert tracker_3.get_progress().is_finished == False
+    assert not tracker_1.get_progress().is_finished
+    assert not tracker_2.get_progress().is_finished
+    assert not tracker_3.get_progress().is_finished
 
     # --- act & assert 2 ----------------------------------
     time.sleep(0.002)
@@ -313,9 +313,9 @@ def test_progress_tracker_time_based():
     assert tracker_2.get_progress().est_n_iters_remaining >= 1
     assert tracker_3.get_progress().est_n_iters_remaining >= 1
 
-    assert tracker_1.get_progress().is_finished == True
-    assert tracker_2.get_progress().is_finished == False
-    assert tracker_3.get_progress().is_finished == False
+    assert tracker_1.get_progress().is_finished
+    assert not tracker_2.get_progress().is_finished
+    assert not tracker_3.get_progress().is_finished
 
     # --- act & assert 3 ----------------------------------
     time.sleep(0.02)
@@ -328,9 +328,9 @@ def test_progress_tracker_time_based():
     assert tracker_2.get_progress().est_n_iters_remaining == 0
     assert tracker_3.get_progress().est_n_iters_remaining >= 1
 
-    assert tracker_1.get_progress().is_finished == True
-    assert tracker_2.get_progress().is_finished == True
-    assert tracker_3.get_progress().is_finished == False
+    assert tracker_1.get_progress().is_finished
+    assert tracker_2.get_progress().is_finished
+    assert not tracker_3.get_progress().is_finished
 
     # --- assert 4 ----------------------------------------
     elapsed_1 = tracker_1.elapsed()
@@ -375,16 +375,16 @@ def test_progress_corner_cases(
 #  Progress
 # =================================================================================================
 def test_progress_is_finished():
-    dummy_kwargs = dict(iter_count=ANY, est_n_iters_remaining=ANY, est_iters_per_second=ANY)
+    dummy_kwargs = {"iter_count": ANY, "est_n_iters_remaining": ANY, "est_iters_per_second": ANY}
     progress_1 = Progress(tqdm_n_total=5, fraction=0.0, **dummy_kwargs)
     progress_2 = Progress(tqdm_n_total=5, fraction=0.999, **dummy_kwargs)
     progress_3 = Progress(tqdm_n_total=5, fraction=1.0, **dummy_kwargs)
     progress_4 = Progress(tqdm_n_total=5, fraction=1.1, **dummy_kwargs)
 
-    assert progress_1.is_finished == False
-    assert progress_2.is_finished == False
-    assert progress_3.is_finished == True
-    assert progress_4.is_finished == True
+    assert not progress_1.is_finished
+    assert not progress_2.is_finished
+    assert progress_3.is_finished
+    assert progress_4.is_finished
 
 
 def test_progress_update_tqdm():

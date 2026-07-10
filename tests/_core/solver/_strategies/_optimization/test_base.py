@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 from unittest.mock import Mock
 
 import numpy as np
@@ -70,10 +70,10 @@ class StrategyWithDynamicParameters(OptimizationStrategy):
         self.param_a = param_a
         self.param_b = param_b
         super().__init__(
-            dynamic_params=dict(
-                param_a=param_a,
-                param_b=param_b,
-            )
+            dynamic_params={
+                "param_a": param_a,
+                "param_b": param_b,
+            }
         )
 
         # add observability for testing
@@ -177,8 +177,8 @@ def test_optimization_strategy_dynamic_params_sampled(param_b_sampled: bool):
     assert strategy.has_sampled_params == param_b_sampled
     assert not strategy.has_scheduled_params
 
-    assert all([a_value == 1.5 for a_value in strategy.observed_a_values])
+    assert all(a_value == 1.5 for a_value in strategy.observed_a_values)
     if param_b_sampled:
-        assert all([min(param_b_range) <= b_value <= max(param_b_range) for b_value in strategy.observed_b_values])
+        assert all(min(param_b_range) <= b_value <= max(param_b_range) for b_value in strategy.observed_b_values)
     else:
-        assert all([b_value == 0.9 for b_value in strategy.observed_b_values])
+        assert all(b_value == 0.9 for b_value in strategy.observed_b_values)

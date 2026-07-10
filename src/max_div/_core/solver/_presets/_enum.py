@@ -26,8 +26,7 @@ class SolverPreset(StrEnum):
     def resolve_alias(self) -> SolverPreset:
         if self == SolverPreset.DEFAULT:
             return SolverPreset.SMART
-        else:
-            return self
+        return self
 
     def __lt__(self, other: SolverPreset) -> bool:
         order = {

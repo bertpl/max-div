@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
@@ -9,6 +9,9 @@ from max_div._core._utils import format_short_time_duration
 
 from ._clip import clip
 from ._timer import Timer
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 # =================================================================================================
@@ -22,8 +25,7 @@ class BenchmarkResult:
 
     @property
     def t_sec_str(self) -> str:
-        s_median = format_short_time_duration(dt_sec=self.t_sec_q_50, right_aligned=True, spaced=True, long_units=True)
-        return s_median
+        return format_short_time_duration(dt_sec=self.t_sec_q_50, right_aligned=True, spaced=True, long_units=True)
 
     @property
     def t_sec_with_uncertainty_str(self) -> str:

@@ -21,7 +21,7 @@ def test_optim_preset_properties(optim_preset: OptimPreset):
     assert isinstance(optim_strat, OptimizationStrategy)
     assert optim_strat.__class__.__name__ == optim_preset.class_name()
     assert isinstance(optim_preset.class_kwargs(), dict)
-    assert all([isinstance(k, str) for k in optim_preset.class_kwargs().keys()])
+    assert all(isinstance(k, str) for k in optim_preset.class_kwargs().keys())
 
     assert isinstance(optim_preset.is_constraint_aware(), bool)
     assert isinstance(optim_preset.is_relevant_for_problem(problem_has_constraints=True), bool)

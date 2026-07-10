@@ -1,4 +1,4 @@
-from typing import Callable, Type
+from collections.abc import Callable
 
 import numpy as np
 import pytest
@@ -19,7 +19,7 @@ from max_div._core.solver._progress_reporting import (
         (ProgressReporter.tabular, TabularProgressReporter),
     ],
 )
-def test_progress_reporter_factory_methods(factory_method: Callable, expected_class: Type[ProgressReporter]):
+def test_progress_reporter_factory_methods(factory_method: Callable, expected_class: type[ProgressReporter]):
     # --- act ---------------------------------------------
     reporter = factory_method()
 
@@ -46,10 +46,10 @@ def test_progress_reporter_selection_hash(selection: np.ndarray, n: int):
 
     # --- assert ------------------------------------------
     assert len(hash_str_1) == n
-    assert all([char in "0123456789abcdef" for char in hash_str_1])
+    assert all(char in "0123456789abcdef" for char in hash_str_1)
 
     assert len(hash_str_2) == n
-    assert all([char in "0123456789abcdef" for char in hash_str_2])
+    assert all(char in "0123456789abcdef" for char in hash_str_2)
 
     assert hash_str_1 != hash_str_2
     assert hash_str_1[:8] != hash_str_2[:8]  # even first part should be different, if just the last input digit changed

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._strategies._initialization._init_eager import InitEager
 from max_div._core.solver._strategies._initialization._init_fast import InitFast
 from max_div._core.solver._strategies._initialization._init_random_batched import InitRandomBatched
 from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
+
+if TYPE_CHECKING:
+    from max_div._core.solver._strategies import InitializationStrategy
 
 
 # =================================================================================================
@@ -51,17 +53,14 @@ class InitPreset(StrEnum):
     def is_constraint_aware(self) -> bool:
         if self in [InitPreset.FAST, InitPreset.ROS_U_UNCON, InitPreset.ROS_NU_UNCON]:
             return False
-        else:
-            return True
+        return True
 
     def is_relevant_for_problem(self, problem_has_constraints: bool) -> bool:
         if problem_has_constraints:
             return True
-        else:
-            if self in [InitPreset.ROS_U_UNCON, InitPreset.ROS_NU_UNCON]:
-                return False  # the constraint-aware versions will behave the same as these on unconstrained problems
-            else:
-                return True
+        if self in [InitPreset.ROS_U_UNCON, InitPreset.ROS_NU_UNCON]:
+            return False  # the constraint-aware versions will behave the same as these on unconstrained problems
+        return True
 
     def class_name(self) -> str:
         cls, _ = _INIT_CLASSES_AND_KWARGS[self]
@@ -81,17 +80,17 @@ class InitPreset(StrEnum):
 #  Classes & Arguments
 # =================================================================================================
 _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], dict[str, Any]]] = {
-    InitPreset.FAST: (InitFast, dict()),
-    InitPreset.ROS_U: (InitRandomOneShot, dict(uniform=True, ignore_constraints=False)),
-    InitPreset.ROS_NU: (InitRandomOneShot, dict(uniform=False, ignore_constraints=False)),
-    InitPreset.ROS_U_UNCON: (InitRandomOneShot, dict(uniform=True, ignore_constraints=True)),
-    InitPreset.ROS_NU_UNCON: (InitRandomOneShot, dict(uniform=False, ignore_constraints=True)),
-    InitPreset.RB_2: (InitRandomBatched, dict(b=2, ignore_constraints=False)),
-    InitPreset.RB_4: (InitRandomBatched, dict(b=4, ignore_constraints=False)),
-    InitPreset.RB_8: (InitRandomBatched, dict(b=8, ignore_constraints=False)),
-    InitPreset.RB_16: (InitRandomBatched, dict(b=16, ignore_constraints=False)),
-    InitPreset.E_2: (InitEager, dict(nc=2, ignore_constraints=False)),
-    InitPreset.E_4: (InitEager, dict(nc=4, ignore_constraints=False)),
-    InitPreset.E_8: (InitEager, dict(nc=8, ignore_constraints=False)),
-    InitPreset.E_16: (InitEager, dict(nc=16, ignore_constraints=False)),
+    InitPreset.FAST: (InitFast, {}),
+    InitPreset.ROS_U: (InitRandomOneShot, {"uniform": True, "ignore_constraints": False}),
+    InitPreset.ROS_NU: (InitRandomOneShot, {"uniform": False, "ignore_constraints": False}),
+    InitPreset.ROS_U_UNCON: (InitRandomOneShot, {"uniform": True, "ignore_constraints": True}),
+    InitPreset.ROS_NU_UNCON: (InitRandomOneShot, {"uniform": False, "ignore_constraints": True}),
+    InitPreset.RB_2: (InitRandomBatched, {"b": 2, "ignore_constraints": False}),
+    InitPreset.RB_4: (InitRandomBatched, {"b": 4, "ignore_constraints": False}),
+    InitPreset.RB_8: (InitRandomBatched, {"b": 8, "ignore_constraints": False}),
+    InitPreset.RB_16: (InitRandomBatched, {"b": 16, "ignore_constraints": False}),
+    InitPreset.E_2: (InitEager, {"nc": 2, "ignore_constraints": False}),
+    InitPreset.E_4: (InitEager, {"nc": 4, "ignore_constraints": False}),
+    InitPreset.E_8: (InitEager, {"nc": 8, "ignore_constraints": False}),
+    InitPreset.E_16: (InitEager, {"nc": 16, "ignore_constraints": False}),
 }

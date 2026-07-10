@@ -35,7 +35,7 @@ def randint_python(
     if p is not None:
         if (p.size > 0) and (p.size != n):
             raise ValueError(f"p must be of size n=0 or n={n}. (here: size={p.size})")
-        elif p.size == 0:
+        if p.size == 0:
             p = None  # indicates no probabilities were specified
 
     # --- sampling ------------------------------------

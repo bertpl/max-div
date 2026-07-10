@@ -22,7 +22,7 @@ def test_boolean_adaptive_sampler_construction():
 
     assert sampler.summary_statistic() == pytest.approx(0.2)
 
-    assert all([isinstance(sampler.new_sample(), bool) for _ in range(1000)])  # all should be of type 'bool'
+    assert all(isinstance(sampler.new_sample(), bool) for _ in range(1000))  # all should be of type 'bool'
     assert 150 < sum([1 for _ in range(1000) if sampler.new_sample()]) < 250  # roughly 20% True
     assert 750 < sum([1 for _ in range(1000) if not sampler.new_sample()]) < 850  # roughly 80% False
 

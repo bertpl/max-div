@@ -33,22 +33,20 @@ from max_div._core._random._rng import rand_float32
 def sample_modified_power_distribution(m: np.float32, rng_state: NDArray[np.uint64]) -> np.float32:
     if m == 0.0:
         return np.float32(0.0)
-    elif m == 1.0:
+    if m == 1.0:
         return np.float32(1.0)
-    else:
-        # we need to sample a uniform value u in [0, 1]
-        u = rand_float32(rng_state)
+    # we need to sample a uniform value u in [0, 1]
+    u = rand_float32(rng_state)
 
-        # now transform u to the desired distribution
-        if m == 0.5:
-            # uniform distribution, no transformation
-            return u
-        elif m < 0.5:
-            return _modified_power_transform(u, m)
-        else:
-            # NOTE: in principle we need to also use 1-u instead of u, but both are random uniform in [0,1],
-            #       so it's equivalent.
-            return np.float32(1.0) - _modified_power_transform(u, np.float32(1.0) - m)
+    # now transform u to the desired distribution
+    if m == 0.5:
+        # uniform distribution, no transformation
+        return u
+    if m < 0.5:
+        return _modified_power_transform(u, m)
+    # NOTE: in principle we need to also use 1-u instead of u, but both are random uniform in [0,1],
+    #       so it's equivalent.
+    return np.float32(1.0) - _modified_power_transform(u, np.float32(1.0) - m)
 
 
 @njit(fastmath=True, inline="always")
@@ -65,9 +63,8 @@ def _modified_power_transform(u: np.float32, m: np.float32) -> np.float32:
     """
     if u == np.float32(0.0):
         return np.float32(0.0)
-    elif u == np.float32(1.0):
+    if u == np.float32(1.0):
         return np.float32(1.0)
-    else:
-        one_minus_m = np.float32(1.0) - m
-        p = -np.log2(m / one_minus_m) + np.float32(1.0)
-        return (m * u) + one_minus_m * (u**p)
+    one_minus_m = np.float32(1.0) - m
+    p = -np.log2(m / one_minus_m) + np.float32(1.0)
+    return (m * u) + one_minus_m * (u**p)

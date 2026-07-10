@@ -10,4 +10,3 @@ import click
 @click.group()
 def cli():
     """max-div: Flexible Solver for Maximum Diversity Problems with Fairness Constraints."""
-    ...

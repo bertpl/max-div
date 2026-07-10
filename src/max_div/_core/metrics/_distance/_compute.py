@@ -44,12 +44,11 @@ def get_pdist_el(pdist: NDArray[np.float32], i: np.int32, j: np.int32, n: np.int
     """Return element from 'pdist' array representing distance between vectors i & j, given n vectors in total."""
     if i == j:
         return np.float32(0.0)
-    elif i < j:
+    if i < j:
         index = (n * i) + j - ((i + 2) * (i + 1)) // 2
         return pdist[index]
-    else:
-        index = (n * j) + i - ((j + 2) * (j + 1)) // 2
-        return pdist[index]
+    index = (n * j) + i - ((j + 2) * (j + 1)) // 2
+    return pdist[index]
 
 
 @numba.njit("float32[::1](float32[::1], int32)", cache=True)
@@ -69,7 +68,7 @@ def compute_separation(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.fl
 
 @numba.njit("void(float32[::1], float32[::1], int32, int32)", cache=True)
 def update_separation_add(sep: NDArray[np.float32], pdist: NDArray[np.float32], n: np.int32, i_added: np.int32) -> None:
-    """Update separation of each vector wrt selection, given pdist array and n vectors in total, after adding i_added."""
+    """Update separation of each vector wrt selection, given pdist array and n vectors, after adding i_added."""
     for j in np.arange(n, dtype=np.int32):
         if j != i_added:
             dist = get_pdist_el(pdist, i_added, j, n)
@@ -85,7 +84,7 @@ def update_separation_remove(
     i_removed: np.int32,
     new_selection: NDArray[np.int32],
 ) -> None:
-    """Update separation of each vector wrt selection, given pdist array and n vectors in total, after removing i_removed."""
+    """Update separation of each vector wrt selection, given pdist array and n vectors, after removing i_removed."""
     for j in np.arange(n, dtype=np.int32):
         if j != i_removed:
             dist = get_pdist_el(pdist, i_removed, j, n)

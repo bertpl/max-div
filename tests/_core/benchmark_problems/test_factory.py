@@ -46,7 +46,7 @@ def test_benchmark_problem_factory_create_problem_invalid_name():
 
 def test_benchmark_problem_factory_create_problem_invalid_params():
     # --- arrange -----------------------------------------
-    valid_name = list(BenchmarkProblemFactory.get_all_benchmark_problems().keys())[0]
+    valid_name = next(iter(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
     invalid_params = {"non_existent_param": 42}
 
     # --- act & assert ------------------------------------

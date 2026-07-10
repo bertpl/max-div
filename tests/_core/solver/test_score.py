@@ -12,7 +12,7 @@ from max_div._core.solver._score import Score, ScoreGenerator
 def test_score_as_tuple():
     # --- arrange -----------------------------------------
     score_1 = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
-    score_2 = Score(size=0.1, constraints=0.2, diversity=0.3, div_tie_breakers=tuple())
+    score_2 = Score(size=0.1, constraints=0.2, diversity=0.3, div_tie_breakers=())
 
     # --- act ---------------------------------------------
     score_tuple_1 = score_1.as_tuple()
@@ -236,16 +236,16 @@ def test_score_comparison_invalid_types():
     _ = score == object()  # == is implemented in object()
 
     with pytest.raises(TypeError):
-        _ = score < 42  # type: ignore
+        _ = score < 42  # type: ignore[operator]
 
     with pytest.raises(TypeError):
-        _ = score <= 42  # type: ignore
+        _ = score <= 42  # type: ignore[operator]
 
     with pytest.raises(TypeError):
-        _ = score > 42  # type: ignore
+        _ = score > 42  # type: ignore[operator]
 
     with pytest.raises(TypeError):
-        _ = score >= 42  # type: ignore
+        _ = score >= 42  # type: ignore[operator]
 
 
 @pytest.mark.parametrize(
@@ -256,7 +256,7 @@ def test_score_comparison_invalid_types():
             "size=1.0000 | constraints=1.0000 | diversity=0.7705",
         ),
         (
-            Score(size=0.5, constraints=0.8, diversity=0.0, div_tie_breakers=tuple()),
+            Score(size=0.5, constraints=0.8, diversity=0.0, div_tie_breakers=()),
             "size=0.5000 | constraints=0.8000 | diversity=0.0000",
         ),
     ],

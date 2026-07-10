@@ -1,5 +1,5 @@
 import math
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from numpy import random
@@ -30,7 +30,7 @@ def minimize_nd_random(
     # general
     random.seed(42)
     lb_orig, ub_orig = lb, ub
-    size = tuple(abs(l - u) for l, u in zip(lb, ub))
+    size = tuple(abs(lo - hi) for lo, hi in zip(lb, ub))
     n = len(lb)  # dimensionality
     n_digits = int(-np.log10(acc) + 2)  # nr of digits to display
     c_reduce = (acc / max(size)) ** (1.0 / (n_evals - 1))  # reduction factor per iteration
@@ -47,7 +47,7 @@ def minimize_nd_random(
     progress_table.show_header()
 
     # optimal point
-    x_opt = tuple((l + u) / 2.0 for l, u in zip(lb, ub))  # center of grid
+    x_opt = tuple((lo + hi) / 2.0 for lo, hi in zip(lb, ub))  # center of grid
     f_opt = fun(x_opt)
 
     # --- main loop -----------------------------------------------------------

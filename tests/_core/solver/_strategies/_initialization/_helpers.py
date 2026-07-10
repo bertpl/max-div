@@ -9,7 +9,7 @@ def new_solver_state(has_constraints: bool) -> SolverState:
     constraints = []
     if has_constraints:
         # Constraint 1: exactly 10 items from indices 0...49
-        constraints.append(Constraint(int_set=set(range(0, 50)), min_count=10, max_count=10))
+        constraints.append(Constraint(int_set=set(range(50)), min_count=10, max_count=10))
         # Constraint 2: exactly 40 items from indices 50...99
         constraints.append(Constraint(int_set=set(range(50, 100)), min_count=40, max_count=40))
 

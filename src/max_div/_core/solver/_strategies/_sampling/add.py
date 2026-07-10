@@ -85,40 +85,38 @@ def select_items_to_add(
             p=p,
             rng_state=rng_state,
         )
-    else:
-        # CONSTRAINED
-        if sampling_type == SamplingType.GROUP:
-            # these samples are intended to be added as a GROUP, so jointly should try to satisfy constraints
-            return choice_constrained(
-                n=state.n,
-                values=candidates,
-                k=np.int32(k),
-                p=p,
-                rng_state=rng_state,
-                con_values=state.con_values,
-                con_indices=state.con_indices,
-                eager=False,
-                k_context=state.k - state.n_selected,
-            )
-        else:
-            # these samples are intended to be individual CANDIDATES, from which only one will be actually added
-            samples = np.empty(k, dtype=np.int32)
-            for i in range(k):
-                # obtain new sample
-                samples[i] = choice_constrained(
-                    n=state.n,
-                    values=candidates,
-                    k=np.int32(1),
-                    p=p,
-                    rng_state=rng_state,
-                    con_values=state.con_values,
-                    con_indices=state.con_indices,
-                    eager=False,
-                    k_context=state.k - state.n_selected,
-                )[0]
+    # CONSTRAINED
+    if sampling_type == SamplingType.GROUP:
+        # these samples are intended to be added as a GROUP, so jointly should try to satisfy constraints
+        return choice_constrained(
+            n=state.n,
+            values=candidates,
+            k=np.int32(k),
+            p=p,
+            rng_state=rng_state,
+            con_values=state.con_values,
+            con_indices=state.con_indices,
+            eager=False,
+            k_context=state.k - state.n_selected,
+        )
+    # these samples are intended to be individual CANDIDATES, from which only one will be actually added
+    samples = np.empty(k, dtype=np.int32)
+    for i in range(k):
+        # obtain new sample
+        samples[i] = choice_constrained(
+            n=state.n,
+            values=candidates,
+            k=np.int32(1),
+            p=p,
+            rng_state=rng_state,
+            con_values=state.con_values,
+            con_indices=state.con_indices,
+            eager=False,
+            k_context=state.k - state.n_selected,
+        )[0]
 
-                # remove sample from candidates & p to prevent duplicates
-                candidates, p = remove_sample_from_candidates_and_p(candidates, p, samples[i])
+        # remove sample from candidates & p to prevent duplicates
+        candidates, p = remove_sample_from_candidates_and_p(candidates, p, samples[i])
 
-            # return final array of sample candidates
-            return samples
+    # return final array of sample candidates
+    return samples

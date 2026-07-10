@@ -200,5 +200,4 @@ def compute_accuracy(method: int, n: int) -> float:
         total_error += np.sum(np.abs(p_out_target - p_out))
         total_pmod += np.sum(p_out_target)
 
-    error_frac = total_error / total_pmod
-    return error_frac
+    return total_error / total_pmod

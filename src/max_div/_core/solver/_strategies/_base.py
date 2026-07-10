@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 import numpy as np
-from numpy.typing import NDArray
 
 from max_div._core._random import new_rng_state
 from max_div._core._utils import deterministic_hash_int64, int_to_int64
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 class StrategyBase:

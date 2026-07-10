@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import numba
 import numpy as np
-from numpy.typing import NDArray
 
 from max_div._core._utils import ALMOST_ONE_F32
 from max_div._core.solver._parameters import (
@@ -15,8 +14,12 @@ from max_div._core.solver._parameters import (
     _evaluate_schedules,
     _schedules_to_2d_numpy_array,
 )
-from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._strategies._base import StrategyBase
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from max_div._core.solver._solver_state import SolverState
 
 ParamValueType = ParameterValueSource | float | int | np.float32 | np.int32 | bool
 
@@ -81,7 +84,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         # --- adaptively sampled parameters ---
         #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params
         self.has_sampled_params = False
-        self.sampled_params: dict[str, AdaptiveSampler] = dict()
+        self.sampled_params: dict[str, AdaptiveSampler] = {}
 
         # --- now actually configure them ---
         if dynamic_params:
@@ -140,8 +143,8 @@ class OptimizationStrategy(StrategyBase, ABC):
         :param current_progress_frac: (float) fraction in [0.0, 1.0] indicating current overall progress through total
                                       duration (iterations or time) configured for this SolverStep.
         :param progress_frac_per_iter: (float) fraction in [0.0, 1.0] indicating how much progress each iteration
-                                       contributes towards the total duration configured for this SolverStep.  For time-based
-                                       solver step configurations, this can be an estimate.
+                                       contributes towards the total duration configured for this SolverStep.
+                                       For time-based solver step configurations, this can be an estimate.
         """
 
         # --- prep ----------------------------------------
@@ -187,7 +190,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         :param progress_frac: (float) Fraction in [0.0, 1.0] indicating current overall progress through total
                                  duration (iterations or time) configured for this SolverStep.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # -------------------------------------------------------------------------
     #  Helpers
@@ -202,8 +205,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         """
         if isinstance(param, ParameterValueSource):
             return param.get_initial_value()
-        else:
-            return float(param)
+        return float(param)
 
     # -------------------------------------------------------------------------
     #  Factory Methods
@@ -295,10 +297,10 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     ):
         super().__init__(
             name=name,
-            dynamic_params=(dynamic_params or dict())
-            | dict(
-                constraint_softness=constraint_softness,
-            ),
+            dynamic_params=(dynamic_params or {})
+            | {
+                "constraint_softness": constraint_softness,
+            },
             ignore_infeasible_diversity_up_to_fraction=ignore_infeasible_diversity_up_to_fraction,
         )
         self.constraint_softness: float = self.initial_param_value(constraint_softness)
@@ -401,7 +403,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         Determine the swap size n for the current iteration.
         :return: (np.int32) swap size n
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
@@ -416,7 +418,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         :param n_to_remove: (np.int32) number of samples to be removed  (swap size)
         :return: (int32 ndarray) of shape (n,) with indices of samples to be REMOVED
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def _samples_to_be_added(
@@ -435,7 +437,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
                                      NEVER return samples that are not in this array.
         :return: (int32 ndarray) of shape (n,) with indices of samples to be ADDED
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # -------------------------------------------------------------------------
     #  Debug info
@@ -491,5 +493,4 @@ def _estimate_success_rate(success_rate_state: NDArray[np.int64]) -> np.float64:
     it = max(success_rate_state[n - 1], success_rate_state[-1]) + 1
     success_rate_proxy = 1.0 / (it - np.mean(success_rate_state[0:n]))
     failure_rate_proxy = 1.0 / (it - np.mean(success_rate_state[n : 2 * n]))
-    success_rate = success_rate_proxy / (success_rate_proxy + failure_rate_proxy)
-    return success_rate
+    return success_rate_proxy / (success_rate_proxy + failure_rate_proxy)

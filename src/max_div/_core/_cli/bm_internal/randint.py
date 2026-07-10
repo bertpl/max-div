@@ -66,11 +66,11 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
 
                 if use_numba:
                     rng_state = new_rng_state(np.int64(42))
-                    n = np.int32(n)
-                    k = np.int32(k)
+                    n_nb = np.int32(n)
+                    k_nb = np.int32(k)
 
                     def func_to_benchmark():
-                        randint(n=n, k=k, replace=replace, p=p, rng_state=rng_state)
+                        randint(n=n_nb, k=k_nb, replace=replace, p=p, rng_state=rng_state)
                 else:
 
                     def func_to_benchmark():

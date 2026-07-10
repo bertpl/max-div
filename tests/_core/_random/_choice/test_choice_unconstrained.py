@@ -48,7 +48,7 @@ def test_choice(n_values: int, k: int, replace: bool, uniform: bool) -> None:
     assert isinstance(results, np.ndarray)
     assert results.dtype == np.int32
     assert results.shape == (k,)
-    assert all([result in values_set for result in results])
+    assert all(result in values_set for result in results)
     assert np.array_equal(p, p_copy), "p should remain unmodified"
     assert not np.array_equal(rng_state, new_rng_state(123456)), "rng_state should be modified in-place"
 
@@ -78,7 +78,7 @@ def test_choice1(n_values: int, k: int, uniform: bool) -> None:
     ]
 
     # --- assert ------------------------------------------
-    assert all([isinstance(result, numbers.Integral) for result in results])
-    assert all([result in values_set for result in results])
+    assert all(isinstance(result, numbers.Integral) for result in results)
+    assert all(result in values_set for result in results)
     assert np.array_equal(p, p_copy), "p should remain unmodified"
     assert not np.array_equal(rng_state, new_rng_state(123456)), "rng_state should be modified in-place"

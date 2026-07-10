@@ -290,11 +290,11 @@ class Scenario(ABC):
 
     @abstractmethod
     def n_k_m_tuples(self) -> list[tuple[int, int, int]]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def build_constraints(self, n: int, k: int, m: int, seed: int) -> list[Constraint]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class ScenarioA(Scenario):
@@ -327,7 +327,8 @@ class ScenarioB(Scenario):
     def __init__(self):
         super().__init__(
             name="Scenario B",
-            description="Fixed n=1000 & k=100 with varying number of constraints spanning random 1% portions of the n-range",
+            description="Fixed n=1000 & k=100 with varying number of constraints "
+            "spanning random 1% portions of the n-range",
         )
 
     def n_k_m_tuples(self) -> list[tuple[int, int, int]]:

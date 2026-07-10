@@ -1,6 +1,6 @@
 import random
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from ._executors import executor_multi_parallel
 from ._models import SolverPresetBenchmarkParams, SolverPresetBenchmarkResult, results_to_json
@@ -42,7 +42,7 @@ def execute_solver_presets_benchmark(
 
     # --- save --------------------------------------------
     if json_file_name:
-        with open(json_file_name, "w") as f:
+        with Path(json_file_name).open("w") as f:
             f.write(results_to_json(results))
 
     # --- return ------------------------------------------

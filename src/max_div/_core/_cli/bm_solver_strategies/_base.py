@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 from tqdm import tqdm
 
@@ -16,9 +17,11 @@ from max_div._core._markdown import (
 )
 from max_div._core._utils import stdout_to_file
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
-from max_div._core.metrics import DiversityMetric
-from max_div._core.problem import MaxDivProblem
-from max_div._core.solver import MaxDivSolver
+
+if TYPE_CHECKING:
+    from max_div._core.metrics import DiversityMetric
+    from max_div._core.problem import MaxDivProblem
+    from max_div._core.solver import MaxDivSolver
 
 
 # =================================================================================================
@@ -281,7 +284,7 @@ class BenchmarkSolverConstructor(ABC):
     @property
     def has_constraints(self) -> bool:
         """Determine if problems with 'problem_name' have constraints, assuming this property is size-independent."""
-        d, n, k, m, n_con_indices = self.get_problem_dimensions(size=10)
+        _d, _n, _k, m, _n_con_indices = self.get_problem_dimensions(size=10)
         return m > 0
 
     @property
@@ -305,14 +308,14 @@ class BenchmarkSolverConstructor(ABC):
     @abstractmethod
     def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
         """Constructs and returns a Solver for given (size, strat_name, seed)-tuple."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def strategy_names(self) -> list[str]:
         """Returns list of strategy names that can be constructed by this class."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def build_strategies_table(self) -> list[ReportElement | str]:
         """Builds a Table object summarizing the strategies that can be constructed by this class."""
-        raise NotImplementedError()
+        raise NotImplementedError

@@ -4,17 +4,22 @@ import math
 import sys
 from abc import ABC, abstractmethod
 from time import perf_counter
-from typing import Callable
+from typing import TYPE_CHECKING
 
-import numpy as np
-from numpy._typing import NDArray
 from tqdm.auto import tqdm
 
 from max_div._core._utils import format_long_time_duration, np_int32_array_var_length_hash
 from max_div._core._utils._progress_table import ProgressTable
-from max_div._core.solver._duration import Progress
-from max_div._core.solver._score import Score
-from max_div._core.solver._solver_state import SolverState
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import numpy as np
+    from numpy._typing import NDArray
+
+    from max_div._core.solver._duration import Progress
+    from max_div._core.solver._score import Score
+    from max_div._core.solver._solver_state import SolverState
 
 
 # =================================================================================================
@@ -24,7 +29,6 @@ class ProgressReporter(ABC):
     @abstractmethod
     def solver_step_started(self, step_name: str):
         """Notify that a new solver step with the provided name has started."""
-        pass
 
     @abstractmethod
     def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs):
@@ -32,14 +36,12 @@ class ProgressReporter(ABC):
         Update progress reporter with current progress and state.
         Reporters can choose to not report certain updates they receive, if they come too frequently.
         """
-        pass
 
     @abstractmethod
     def solver_step_finished(
         self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs
     ):
         """Notify that the current solver step has finished."""
-        pass
 
     # -------------------------------------------------------------------------
     #  Factory methods
@@ -277,5 +279,4 @@ class TabularProgressReporter(ProgressReporter):
 
         # --- generate hash ---
         hash_array = np_int32_array_var_length_hash(selection, n)
-        hash_str = "".join(f"{val & 0xF:x}" for val in hash_array)
-        return hash_str
+        return "".join(f"{val & 0xF:x}" for val in hash_array)

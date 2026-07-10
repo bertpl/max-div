@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
-import numpy as np
-from numpy.typing import NDArray
-
-from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._strategies._base import StrategyBase
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
+    from max_div._core.solver._solver_state import SolverState
 
 
 # =================================================================================================
@@ -35,7 +37,7 @@ class InitializationStrategy(StrategyBase, ABC):
         :return: np.array of unique np.int32 values, shape=(b,), with indices of samples to be added to the selection.
                   b can be any value in range [1, k_remaining].  Samples should be unique and not yet selected.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # -------------------------------------------------------------------------
     #  Factory Methods

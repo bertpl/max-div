@@ -9,4 +9,3 @@ def solver():
     """
     Benchmarking functionality for individual solver strategies & solver presets, based on built-in benchmark problems.
     """
-    pass

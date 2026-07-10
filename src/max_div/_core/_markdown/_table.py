@@ -224,9 +224,8 @@ class Table(ReportElement):
         if markdown:
             # in this case, there will be no row duplication; .to_mark_down() always returns a single string
             return [[el.to_mark_down()] for el in row]
-        else:
-            # in this case, there might be row duplication; .to_plain_text() can return multiple lines for 1 element
-            return [el.to_plain_text() for el in row]
+        # in this case, there might be row duplication; .to_plain_text() can return multiple lines for 1 element
+        return [el.to_plain_text() for el in row]
 
     @staticmethod
     def _split_row_spanning_multiple_lines(row: list[list[str]]) -> list[list[str]]:
@@ -280,7 +279,7 @@ class Table(ReportElement):
                 col_widths[col_idx] = max(col_widths[col_idx], len(cell))
 
         # --- insert header separator -----------
-        contents = contents[:n_header_rows] + [["-" * cw for cw in col_widths]] + contents[n_header_rows:]
+        contents = [*contents[:n_header_rows], ["-" * cw for cw in col_widths], *contents[n_header_rows:]]
 
         # --- left justify all cells ------------
         contents = [[el.ljust(col_widths[col_idx]) for col_idx, el in enumerate(row)] for row in contents]

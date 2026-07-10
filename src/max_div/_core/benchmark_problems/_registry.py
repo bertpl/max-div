@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Type
+from typing import Any, ClassVar
 
 from max_div._core.problem import MaxDivProblem
 
@@ -23,13 +23,13 @@ class BenchmarkProblem(ABC):
     @abstractmethod
     def name(cls) -> str:
         """Return name of this benchmark problem."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
     def description(cls) -> str:
         """Return single-line description of this benchmark problem."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
@@ -38,7 +38,7 @@ class BenchmarkProblem(ABC):
         Return a dictionary of supported parameters for this benchmark problem,
         as (param_name, param_description) key-value pairs in a dict.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
@@ -47,7 +47,7 @@ class BenchmarkProblem(ABC):
         Return a dictionary of example acceptable parameter values for this benchmark problem,
         as (param_name, example_value) key-value pairs in a dict.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
@@ -60,7 +60,7 @@ class BenchmarkProblem(ABC):
 
         :param kwargs: parameters passed to create_problem_instance() for which we want to know resulting dimensions.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # -------------------------------------------------------------------------
     #  Problem creation
@@ -87,7 +87,7 @@ class BenchmarkProblem(ABC):
     @classmethod
     @abstractmethod
     def _create_problem_instance(cls, **kwargs) -> MaxDivProblem:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 # =================================================================================================
@@ -96,12 +96,12 @@ class BenchmarkProblem(ABC):
 class BenchmarkProblemRegistry:
     """Minimal class to register all defined BenchmarkProblem subclasses; used by the factory class."""
 
-    _registry: dict[str, Type[BenchmarkProblem]] = dict()  # name -> class
+    _registry: ClassVar[dict[str, type[BenchmarkProblem]]] = {}  # name -> class
 
     @classmethod
-    def register(cls, problem_class: Type[BenchmarkProblem]):
+    def register(cls, problem_class: type[BenchmarkProblem]):
         cls._registry[problem_class.name()] = problem_class
 
     @classmethod
-    def get_registered_classes(cls) -> dict[str, Type[BenchmarkProblem]]:
+    def get_registered_classes(cls) -> dict[str, type[BenchmarkProblem]]:
         return cls._registry.copy()
