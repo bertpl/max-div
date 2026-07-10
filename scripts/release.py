@@ -1,8 +1,8 @@
 """Release driver for max-div.
 
 Run via ``make release VERSION=X.Y.Z``.  Validates state, bumps version, stamps
-the README badges, finalizes the changelog, commits, tags, opens a fresh
-Unreleased section, and pushes main + tag atomically.
+the versioned splash + README badges, finalizes the changelog, commits, tags,
+opens a fresh Unreleased section, and pushes main + tag atomically.
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -23,6 +24,8 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 README = REPO_ROOT / "README.md"
 PYTHON_VERSIONS_FILE = REPO_ROOT / ".python-versions"
+SPLASH_SCRIPT = REPO_ROOT / "images" / "splash" / "create_splash_with_version.sh"
+SPLASH_WEBP = REPO_ROOT / "images" / "splash_with_version.webp"
 
 PACKAGE_NAME = "max-div"
 CATEGORIES = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
@@ -302,11 +305,24 @@ def refresh_readme_badges() -> None:
     README.write_text(text)
 
 
+def stamp_splash(version: str) -> None:
+    """Stamp the release version onto the committed splash webp (needs ImageMagick).
+
+    Runs the version-overlay stage of ``create_splash_with_version.sh`` on the
+    committed, version-independent base image. Fails loudly if ``magick`` is
+    absent, since a maintainer-driven release must produce the real asset.
+    """
+    if shutil.which("magick") is None:
+        fail_with_message("ImageMagick ('magick') is required to stamp the release splash but was not found")
+    run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)
+
+
 def step_11_commit_release(version: str) -> None:
-    """Refresh README badges, then create the release commit."""
-    print_step(11, f"refresh README badges + commit 'release: {version}'")
+    """Refresh README badges, stamp the splash, then create the release commit."""
+    print_step(11, f"refresh README badges + stamp splash + commit 'release: {version}'")
     refresh_readme_badges()
-    run_command(["git", "add", "pyproject.toml", "uv.lock", "CHANGELOG.md", "README.md"])
+    stamp_splash(version)
+    run_command(["git", "add", "pyproject.toml", "uv.lock", "CHANGELOG.md", "README.md", str(SPLASH_WEBP)])
     run_command(["git", "commit", "-m", f"release: {version}"])
 
 
