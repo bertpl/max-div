@@ -1,0 +1,46 @@
+name: Scorecard
+
+# OpenSSF Scorecard: continuously scores the repo's security posture (branch
+# protection, pinned dependencies, SAST presence, signed releases, …) and
+# publishes the result so the README badge stays live. It makes that posture
+# externally visible and tracked; it does not itself change any individual check.
+
+on:
+  workflow_dispatch:        # allow an on-demand re-score from the Actions tab
+  branch_protection_rule:   # re-score when branch-protection settings change
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 3"     # weekly, Wednesday 06:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write  # upload SARIF results to code scanning
+      id-token: write         # publish results to the public Scorecard API (OIDC)
+      contents: read          # checkout
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Run analysis
+        uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true  # required for the badge + the public scorecard.dev viewer
+      - name: Upload SARIF as an artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: scorecard-sarif
+          path: results.sarif
+          retention-days: 5
+      - name: Upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        with:
+          sarif_file: results.sarif
