@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- PyPI classifiers and license metadata; the PyPI page now renders the README with tag-pinned links
 
 ### Changed
 - README badges are now served via shields.io and the splash image is version-stamped at release time (both previously hosted on gh-pages)

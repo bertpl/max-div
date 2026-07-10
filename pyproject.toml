@@ -2,10 +2,14 @@
 name = "max-div"
 version = "0.5.6"
 description = "Configurable Solver for Maximum Diversity Problems with Fairness Constraints."
-readme = "README.md"
+# readme is dynamic: hatch-fancy-pypi-readme builds the PyPI long-description from README.md,
+# rewriting the relative splash link to a tag-pinned absolute URL (config below).
+dynamic = ["readme"]
 authors = [
     { name = "Bert Pluymers", email = "bert.pluymers@gmail.com" }
 ]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     # Per-Python floors: each is the earliest release shipping a wheel for that CPython,
@@ -24,6 +28,18 @@ dependencies = [
     "tqdm>=4.66.0",
     "icc-rt; platform_machine == 'x86_64' and platform_system == 'Linux'",
     "intel-cmplr-lib-rt; platform_machine == 'x86_64' and platform_system == 'Linux'",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    # Python versions kept in sync with .python-versions (release.py enforces this)
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Mathematics",
 ]
 
 [project.optional-dependencies]
@@ -66,8 +82,20 @@ Issues = "https://github.com/bertpl/max-div/issues"
 Roadmap = "https://github.com/bertpl/max-div/milestones"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# splash image: relative link -> tag-pinned raw URL so each release's PyPI page
+# renders that release's stamped splash, not whatever main's is at view time.
+pattern = 'src="(images/[^"]+)"'
+replacement = 'src="https://raw.githubusercontent.com/bertpl/max-div/v$HFPR_VERSION/\1"'
 
 [tool.hatch.build.targets.sdist]
 only-include = ["src/max_div"]
