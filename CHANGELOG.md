@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- README badges are now served via shields.io and the splash image is version-stamped at release time (both previously hosted on gh-pages)
 - Releases are now driven by a local validated release flow instead of CI-side version bumping
 - Changelog migrated to the Keep a Changelog format (whole history restructured)
 - docs: initial structure for API reference
