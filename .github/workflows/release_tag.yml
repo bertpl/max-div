@@ -48,8 +48,10 @@ jobs:
     environment: prod
     permissions:
       contents: read
-      # mandatory for PyPI Trusted Publishing (OIDC)
+      # mandatory for PyPI Trusted Publishing (OIDC); also signs the keyless provenance
       id-token: write
+      # store SLSA build provenance for the wheel + sdist
+      attestations: write
     steps:
       - name: Download the tested distribution artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -57,7 +59,65 @@ jobs:
           name: dist
           path: dist
 
+      # SLSA build provenance over the exact artifacts we publish. Complements
+      # (does not replace) the PEP 740 attestations gh-action-pypi-publish emits
+      # on PyPI: this one is verifiable from the GitHub side via
+      # `gh attestation verify <artifact> --repo bertpl/max-div`, and its
+      # bundle is attached to the GitHub Release by the github-release job below.
+      - name: Attest SLSA build provenance for the wheel + sdist
+        id: attest
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          # List the artifact patterns explicitly rather than `dist/*`, so stray
+          # non-distribution files in the artifact can never be swept into the
+          # provenance as spurious subjects.
+          subject-path: |
+            dist/*.whl
+            dist/*.tar.gz
+      # Extension is `.intoto.jsonl`, not `.sigstore.jsonl`: OpenSSF Scorecard's
+      # Signed-Releases check credits provenance purely by this filename suffix
+      # (it never opens the file). Do not "correct" it — the suffix is what scores.
+      - name: Stage the provenance bundle under a stable name
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}  # via env, not inline — keep it out of the run: template
+        run: cp "$BUNDLE_PATH" provenance.intoto.jsonl
+      - name: Hand the provenance bundle to the release job
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: provenance-bundle
+          path: provenance.intoto.jsonl
+          if-no-files-found: error
+
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           repository-url: https://upload.pypi.org/legacy/
+
+  github-release:
+    needs: publish-to-prod
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the GitHub Release (implies the read the checkout needs)
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          version: ${{ vars.UV_VERSION }}
+          enable-cache: false  # release path never restores from a poisonable cache
+      - name: Download the provenance bundle from the publish job
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: provenance-bundle
+      - name: Extract release notes from CHANGELOG.md
+        run: uv run python scripts/extract_changelog.py > release_notes.md
+      - name: Create GitHub Release with the provenance bundle attached
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file release_notes.md \
+            provenance.intoto.jsonl
