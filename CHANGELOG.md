@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Releases are now driven by a local validated release flow instead of CI-side version bumping
 - Changelog migrated to the Keep a Changelog format (whole history restructured)
 - docs: initial structure for API reference
 - docs: minor improvements to figures layout

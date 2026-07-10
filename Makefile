@@ -1,6 +1,6 @@
 file_path=
 
-.PHONY: help build test coverage test-and-coverage format format-single-file lint dev-setup splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
+.PHONY: help build test coverage test-and-coverage format format-single-file lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -17,6 +17,8 @@ help:
 	@echo '  format-single-file                     Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo '  lint                                   Run all pre-commit hooks on all files.'
 	@echo '  dev-setup                              Sync dev environment & install pre-commit hooks.'
+	@echo ''
+	@echo '  release                                Release a new version. Usage: make release VERSION=X.Y.Z'
 	@echo ''
 	@echo '  splash                                 Build splash screen using current version of package. (./images/splash_with_version.webp)'
 	@echo '  docs                                   Update mkdocs site. (./reports/docs)'
@@ -65,6 +67,13 @@ lint:
 dev-setup:
 	uv sync --all-extras
 	uv run pre-commit install
+
+release:
+ifndef VERSION
+	$(error VERSION is required: make release VERSION=X.Y.Z)
+endif
+	$(MAKE) test
+	uv run python scripts/release.py $(VERSION)
 
 splash:
 	./images/splash/create_splash_with_version.sh "$$(uv version --short)-dev";

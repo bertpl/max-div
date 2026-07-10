@@ -1,59 +1,62 @@
-name: Release tag created
+name: Release tag
+
 on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: read
+
+# no concurrency guard: a release run must never be auto-cancelled
+
 jobs:
-  version-checks:
-    name: Version checks
+  validate-tag-version:
+    name: Validate tag matches package version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - id: validate_version_trigger
-        uses: ./.github/actions/validate_version_trigger
-      - uses: ./.github/actions/check_if_tag_exists
         with:
-          tag: "v${{ steps.validate_version_trigger.outputs.package_version }}"
-          fail_if_not_exists: "true"
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ vars.UV_VERSION }}
+          enable-cache: false  # release path never restores from a poisonable cache
+      - name: Compare tag to pyproject version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          PKG_VERSION="$(uv version --short)"
+          if [ "$TAG" != "v$PKG_VERSION" ]; then
+            echo "::error::tag '$TAG' does not match package version 'v$PKG_VERSION'"
+            exit 1
+          fi
+
+  test:
+    needs: validate-tag-version
+    uses: ./.github/workflows/_unit_tests.yml
 
   publish-to-prod:
     name: Publish "${{ github.ref_name }}" to PyPI
-    needs: version-checks
+    needs: test
     runs-on: ubuntu-latest
     environment: prod
     permissions:
-      # IMPORTANT: this permission is mandatory for Trusted Publishing
+      contents: read
+      # mandatory for PyPI Trusted Publishing (OIDC)
       id-token: write
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ vars.UV_VERSION }}
+          enable-cache: false  # release path never restores from a poisonable cache
 
-      - name: Build package with uv
-        shell: bash
+      - name: Build package
         run: uv build
 
-      - name: Publish package distributions to PyPI   [---PROD---]
+      - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://upload.pypi.org/legacy/
-
-
-  bump-version:
-    name: Bump version
-    needs: publish-to-prod
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v7
-
-      - name: Check current version
-        run: |
-            PACKAGE_VERSION=$( uv version --short )
-            echo "CURRENT_PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
-
-      - uses: ./.github/actions/bump_version
-        with:
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-          git_ref: 'main'
-          bump_type: 'patch'
-          only_if_equal_to_version: ${{ env.CURRENT_PACKAGE_VERSION }}
