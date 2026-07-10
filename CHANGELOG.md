@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.6.0 (2026-07-10)
 
 ### Added
 - PyPI classifiers and license metadata; the PyPI page now renders the README with tag-pinned links
@@ -17,15 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs: initial structure for API reference
 - docs: minor improvements to figures layout
 - docs: minor improvements to changelog layout
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.5.5 (2026-02-23)
 
 ### Changed
