@@ -22,8 +22,8 @@ def test_truncated_poisson_adaptive_sampler_construction():
     assert isinstance(sampler, AdaptiveSampler)
     assert isinstance(sampler, TruncatedPoissonAdaptiveSampler)
 
-    assert all([isinstance(sampler.new_sample(), int) for _ in range(1000)])  # all should be of type 'int'
-    assert all([1 <= sampler.new_sample() <= 8 for _ in range(1000)])  # all should be in [1, 8]
+    assert all(isinstance(sampler.new_sample(), int) for _ in range(1000))  # all should be of type 'int'
+    assert all(1 <= sampler.new_sample() <= 8 for _ in range(1000))  # all should be in [1, 8]
 
     # expected value checks
     assert sampler.summary_statistic() == pytest.approx(2.0)  # returns lambda

@@ -22,8 +22,8 @@ def test_skewed_interval_adaptive_sampler_construction():
     assert isinstance(sampler, AdaptiveSampler)
     assert isinstance(sampler, SkewedIntervalAdaptiveSampler)
 
-    assert all([isinstance(sampler.new_sample(), np.float32) for _ in range(1000)])  # all should be of type 'float32'
-    assert all([1.0 <= sampler.new_sample() <= 5.0 for _ in range(1000)])  # all should be in [1.0, 5.0]
+    assert all(isinstance(sampler.new_sample(), np.float32) for _ in range(1000))  # all should be of type 'float32'
+    assert all(1.0 <= sampler.new_sample() <= 5.0 for _ in range(1000))  # all should be in [1.0, 5.0]
 
     # expected value checks
     assert sampler.summary_statistic() == pytest.approx(3.0)

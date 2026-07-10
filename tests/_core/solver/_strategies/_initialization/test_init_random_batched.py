@@ -45,10 +45,10 @@ def test_init_random_batched(problem_has_constraints: bool, arg_ignore_constrain
 @pytest.mark.parametrize(
     "kwargs, expected_name",
     [
-        (dict(b=2, ignore_constraints=False), "InitRandomBatched(b=2)"),
-        (dict(b=3, ignore_constraints=False), "InitRandomBatched(b=3)"),
-        (dict(b=4, ignore_constraints=True), "InitRandomBatched(b=4,uncon)"),
-        (dict(b=5, ignore_constraints=True), "InitRandomBatched(b=5,uncon)"),
+        ({"b": 2, "ignore_constraints": False}, "InitRandomBatched(b=2)"),
+        ({"b": 3, "ignore_constraints": False}, "InitRandomBatched(b=3)"),
+        ({"b": 4, "ignore_constraints": True}, "InitRandomBatched(b=4,uncon)"),
+        ({"b": 5, "ignore_constraints": True}, "InitRandomBatched(b=5,uncon)"),
     ],
 )
 def test_init_random_batched_name(kwargs: dict[str, Any], expected_name: str):

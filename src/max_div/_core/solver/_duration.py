@@ -13,10 +13,12 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-
-from tqdm import tqdm
+from typing import TYPE_CHECKING
 
 from max_div._core._utils import format_time_duration
+
+if TYPE_CHECKING:
+    from tqdm import tqdm
 
 
 # =================================================================================================
@@ -255,7 +257,7 @@ class Progress:
 #  Elapsed
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
-class Elapsed:
+class Elapsed:  # noqa: PLW1641 — value-semantics-only hot-path object; deliberately unhashable
     # --- data fields -----------------
     t_elapsed_sec: float
     n_iterations: int

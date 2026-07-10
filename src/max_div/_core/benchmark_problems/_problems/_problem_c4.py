@@ -24,17 +24,17 @@ class BenchmarkProblem_C4(BenchmarkProblem):
 
     @classmethod
     def supported_params(cls) -> dict[str, str]:
-        return dict(
-            size="(int) value in [1, ...].  Problem size, with d=size, n=100*size, k=10*size, m=3*size",
-            diversity_metric="(DiversityMetric) diversity metric to be maximized",
-        )
+        return {
+            "size": "(int) value in [1, ...].  Problem size, with d=size, n=100*size, k=10*size, m=3*size",
+            "diversity_metric": "(DiversityMetric) diversity metric to be maximized",
+        }
 
     @classmethod
     def get_example_parameters(cls) -> dict[str, Any]:
-        return dict(
-            size=1,
-            diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-        )
+        return {
+            "size": 1,
+            "diversity_metric": DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+        }
 
     @classmethod
     def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
@@ -48,7 +48,7 @@ class BenchmarkProblem_C4(BenchmarkProblem):
 
     @classmethod
     def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
-        d, n, k, m, _ = cls.get_problem_dimensions(size=size)
+        d, n, k, _m, _ = cls.get_problem_dimensions(size=size)
 
         # Generate gaussian random vectors, such that in each dimension...
         #   ~31% of values are <=0

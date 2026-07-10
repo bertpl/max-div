@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, ClassVar
 
 from max_div._core.problem import MaxDivProblem
 
@@ -96,7 +96,7 @@ class BenchmarkProblem(ABC):
 class BenchmarkProblemRegistry:
     """Minimal class to register all defined BenchmarkProblem subclasses; used by the factory class."""
 
-    _registry: dict[str, type[BenchmarkProblem]] = dict()  # name -> class
+    _registry: ClassVar[dict[str, type[BenchmarkProblem]]] = {}  # name -> class
 
     @classmethod
     def register(cls, problem_class: type[BenchmarkProblem]):

@@ -135,6 +135,7 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["SLF001", "S101", "S311"]  # AAA tests: asserts, private access, random data
+"tests/_core/_markdown/test_table.py" = ["E501"]  # expected-output literals: exact rendered table rows
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
 "scripts/**" = ["INP001", "S"]           # maintainer tooling, not the shipped library
 ".github/scripts/**" = ["INP001", "S"]   # maintainer tooling, not held to shipped-source style

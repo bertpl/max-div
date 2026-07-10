@@ -1,8 +1,5 @@
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
-import numpy as np
-
-from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.problem import MaxDivProblem
 
@@ -11,6 +8,11 @@ from ._presets import SolverPreset, get_preset_strategies
 from ._solver import MaxDivSolver
 from ._solver_step import InitializationStep, OptimizationStep, SolverStep
 from ._strategies import InitializationStrategy
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from max_div._core.constraints import Constraint
 
 
 class MaxDivSolverBuilder:

@@ -94,7 +94,7 @@ def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, unif
     assert samples.shape == (k,)
     assert samples.dtype == np.int32
 
-    assert all([s in values for s in samples])
+    assert all(s in values for s in samples)
     assert len(samples) == len(set(samples))
 
     for con in constraints:

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from max_div._core.solver._parameters import ease_in_out, linear
-from max_div._core.solver._strategies import OptimizationStrategy
 from max_div._core.solver._strategies._optimization._optim_guided_swaps import OptimGuidedSwaps
 from max_div._core.solver._strategies._optimization._optim_random_swaps import OptimRandomSwaps
 from max_div._core.solver._strategies._optimization._optim_smart_swaps import OptimSmartSwaps
+
+if TYPE_CHECKING:
+    from max_div._core.solver._strategies import OptimizationStrategy
 
 
 # =================================================================================================
@@ -68,87 +70,87 @@ class OptimPreset(StrEnum):
 #  Classes & Arguments
 # =================================================================================================
 _OPTIM_CLASSES_AND_KWARGS: dict[OptimPreset, tuple[type[OptimizationStrategy], dict[str, Any]]] = {
-    OptimPreset.RS: (OptimRandomSwaps, dict()),
-    OptimPreset.GS_1: (OptimGuidedSwaps, dict(min_swap_size=1, max_swap_size=1)),
-    OptimPreset.GS_2: (OptimGuidedSwaps, dict(min_swap_size=2, max_swap_size=2)),
-    OptimPreset.GS_3: (OptimGuidedSwaps, dict(min_swap_size=3, max_swap_size=3)),
-    OptimPreset.GS_1_3: (OptimGuidedSwaps, dict(min_swap_size=1, max_swap_size=3)),
+    OptimPreset.RS: (OptimRandomSwaps, {}),
+    OptimPreset.GS_1: (OptimGuidedSwaps, {"min_swap_size": 1, "max_swap_size": 1}),
+    OptimPreset.GS_2: (OptimGuidedSwaps, {"min_swap_size": 2, "max_swap_size": 2}),
+    OptimPreset.GS_3: (OptimGuidedSwaps, {"min_swap_size": 3, "max_swap_size": 3}),
+    OptimPreset.GS_1_3: (OptimGuidedSwaps, {"min_swap_size": 1, "max_swap_size": 3}),
     OptimPreset.GS_1_3_SOFT: (
         OptimGuidedSwaps,
-        dict(
-            min_swap_size=1,
-            max_swap_size=3,
-            constraint_softness=ease_in_out(1.0, 0.0),
-            p_add_constraint_aware=ease_in_out(0.0, 1.0),
-        ),
+        {
+            "min_swap_size": 1,
+            "max_swap_size": 3,
+            "constraint_softness": ease_in_out(1.0, 0.0),
+            "p_add_constraint_aware": ease_in_out(0.0, 1.0),
+        },
     ),
     OptimPreset.GS_1_3_WIDE: (
         OptimGuidedSwaps,
-        dict(
-            min_swap_size=1,
-            max_swap_size=3,
-            remove_selectivity_modifier=-0.8,
-            add_selectivity_modifier=-0.8,
-        ),
+        {
+            "min_swap_size": 1,
+            "max_swap_size": 3,
+            "remove_selectivity_modifier": -0.8,
+            "add_selectivity_modifier": -0.8,
+        },
     ),
     OptimPreset.GS_1_3_NARROW: (
         OptimGuidedSwaps,
-        dict(
-            min_swap_size=1,
-            max_swap_size=3,
-            remove_selectivity_modifier=+0.8,
-            add_selectivity_modifier=+0.8,
-        ),
+        {
+            "min_swap_size": 1,
+            "max_swap_size": 3,
+            "remove_selectivity_modifier": +0.8,
+            "add_selectivity_modifier": +0.8,
+        },
     ),
     OptimPreset.GS_1_3_WI_NA: (
         OptimGuidedSwaps,
-        dict(
-            min_swap_size=1,
-            max_swap_size=3,
-            remove_selectivity_modifier=linear(-0.8, +0.8),
-            add_selectivity_modifier=linear(-0.8, +0.8),
-        ),
+        {
+            "min_swap_size": 1,
+            "max_swap_size": 3,
+            "remove_selectivity_modifier": linear(-0.8, +0.8),
+            "add_selectivity_modifier": linear(-0.8, +0.8),
+        },
     ),
     OptimPreset.GS_1_3_NA_WI: (
         OptimGuidedSwaps,
-        dict(
-            min_swap_size=1,
-            max_swap_size=3,
-            remove_selectivity_modifier=linear(+0.8, -0.8),
-            add_selectivity_modifier=linear(+0.8, -0.8),
-        ),
+        {
+            "min_swap_size": 1,
+            "max_swap_size": 3,
+            "remove_selectivity_modifier": linear(+0.8, -0.8),
+            "add_selectivity_modifier": linear(+0.8, -0.8),
+        },
     ),
     OptimPreset.SM_2: (
         OptimSmartSwaps,
-        dict(
-            swap_size_max=2,
-            nc_remove_max=2,
-            nc_add_max=2,
-            tau_learn=10,
-            ignore_infeasible_diversity_up_to_fraction=0.8,
-            cost_awareness=0.5,
-        ),
+        {
+            "swap_size_max": 2,
+            "nc_remove_max": 2,
+            "nc_add_max": 2,
+            "tau_learn": 10,
+            "ignore_infeasible_diversity_up_to_fraction": 0.8,
+            "cost_awareness": 0.5,
+        },
     ),
     OptimPreset.SM_4: (
         OptimSmartSwaps,
-        dict(
-            swap_size_max=4,
-            nc_remove_max=4,
-            nc_add_max=4,
-            tau_learn=10,
-            ignore_infeasible_diversity_up_to_fraction=0.8,
-            cost_awareness=0.5,
-        ),
+        {
+            "swap_size_max": 4,
+            "nc_remove_max": 4,
+            "nc_add_max": 4,
+            "tau_learn": 10,
+            "ignore_infeasible_diversity_up_to_fraction": 0.8,
+            "cost_awareness": 0.5,
+        },
     ),
     OptimPreset.SM_8: (
         OptimSmartSwaps,
-        dict(
-            swap_size_max=8,
-            nc_remove_max=8,
-            nc_add_max=8,
-            tau_learn=10,
-            ignore_infeasible_diversity_up_to_fraction=0.8,
-            cost_awareness=0.5,
-        ),
+        {
+            "swap_size_max": 8,
+            "nc_remove_max": 8,
+            "nc_add_max": 8,
+            "tau_learn": 10,
+            "ignore_infeasible_diversity_up_to_fraction": 0.8,
+            "cost_awareness": 0.5,
+        },
     ),
 }

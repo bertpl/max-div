@@ -53,7 +53,7 @@ def test_build_array_repr():
 
 def test_np_con_min_value():
     # --- arrange -----------------------------------------
-    con_values, con_indices = ConstraintList(
+    con_values, _con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
@@ -69,7 +69,7 @@ def test_np_con_min_value():
 
 def test_np_con_max_value():
     # --- arrange -----------------------------------------
-    con_values, con_indices = ConstraintList(
+    con_values, _con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
@@ -85,7 +85,7 @@ def test_np_con_max_value():
 
 def test_np_con_indices():
     # --- arrange -----------------------------------------
-    con_values, con_indices = ConstraintList(
+    _con_values, con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),

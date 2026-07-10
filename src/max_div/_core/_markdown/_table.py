@@ -279,7 +279,7 @@ class Table(ReportElement):
                 col_widths[col_idx] = max(col_widths[col_idx], len(cell))
 
         # --- insert header separator -----------
-        contents = contents[:n_header_rows] + [["-" * cw for cw in col_widths]] + contents[n_header_rows:]
+        contents = [*contents[:n_header_rows], ["-" * cw for cw in col_widths], *contents[n_header_rows:]]
 
         # --- left justify all cells ------------
         contents = [[el.ljust(col_widths[col_idx]) for col_idx, el in enumerate(row)] for row in contents]

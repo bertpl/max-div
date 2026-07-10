@@ -3,18 +3,23 @@ from __future__ import annotations
 import math
 import sys
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from time import perf_counter
+from typing import TYPE_CHECKING
 
-import numpy as np
-from numpy._typing import NDArray
 from tqdm.auto import tqdm
 
 from max_div._core._utils import format_long_time_duration, np_int32_array_var_length_hash
 from max_div._core._utils._progress_table import ProgressTable
-from max_div._core.solver._duration import Progress
-from max_div._core.solver._score import Score
-from max_div._core.solver._solver_state import SolverState
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    import numpy as np
+    from numpy._typing import NDArray
+
+    from max_div._core.solver._duration import Progress
+    from max_div._core.solver._score import Score
+    from max_div._core.solver._solver_state import SolverState
 
 
 # =================================================================================================
@@ -274,5 +279,4 @@ class TabularProgressReporter(ProgressReporter):
 
         # --- generate hash ---
         hash_array = np_int32_array_var_length_hash(selection, n)
-        hash_str = "".join(f"{val & 0xF:x}" for val in hash_array)
-        return hash_str
+        return "".join(f"{val & 0xF:x}" for val in hash_array)

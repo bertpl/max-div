@@ -35,12 +35,12 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
         super().__init__(
             name=name,
             constraint_softness=constraint_softness,
-            dynamic_params=dict(
-                swap_size_lambda=swap_size_lambda,
-                p_add_constraint_aware=p_add_constraint_aware,
-                remove_selectivity_modifier=remove_selectivity_modifier,
-                add_selectivity_modifier=add_selectivity_modifier,
-            ),
+            dynamic_params={
+                "swap_size_lambda": swap_size_lambda,
+                "p_add_constraint_aware": p_add_constraint_aware,
+                "remove_selectivity_modifier": remove_selectivity_modifier,
+                "add_selectivity_modifier": add_selectivity_modifier,
+            },
         )
         self.min_swap_size: np.int32 = np.int32(min_swap_size)
         self.max_swap_size: np.int32 = np.int32(max_swap_size)

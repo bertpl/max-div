@@ -1,9 +1,9 @@
-from ._cli import *
-from ._cmd_benchmark import *
-from ._cmd_benchmark_internal import *
-from ._cmd_benchmark_solver import *
-from ._cmd_benchmark_solver_list_problems import *
-from ._cmd_benchmark_solver_presets import *
-from ._cmd_benchmark_solver_strategies import *
-from ._cmd_numba_status import *
-from ._cmd_solve import *
+from ._cli import *  # noqa: F403
+from ._cmd_benchmark import *  # noqa: F403
+from ._cmd_benchmark_internal import *  # noqa: F403
+from ._cmd_benchmark_solver import *  # noqa: F403
+from ._cmd_benchmark_solver_list_problems import *  # noqa: F403
+from ._cmd_benchmark_solver_presets import *  # noqa: F403
+from ._cmd_benchmark_solver_strategies import *  # noqa: F403
+from ._cmd_numba_status import *  # noqa: F403
+from ._cmd_solve import *  # noqa: F403

@@ -10,8 +10,7 @@ class ProgressTable:
         values_adjusted = []
         for value, header in zip(values, self.headers):
             target_len = len(header)
-            value = value.rjust(target_len)[:target_len]
-            values_adjusted.append(value)
+            values_adjusted.append(value.rjust(target_len)[:target_len])
 
         self.print_row(values_adjusted)
 

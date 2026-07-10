@@ -42,7 +42,7 @@ def new_solver_state_unconstrained() -> SolverState:
 # =================================================================================================
 def test_solver_state_properties(new_solver_state, new_solver_state_unconstrained):
     # with constraints
-    assert new_solver_state.has_constraints == True
+    assert new_solver_state.has_constraints
     assert new_solver_state.k == 3
     assert new_solver_state.m == 2
     assert new_solver_state.n == 6
@@ -50,7 +50,7 @@ def test_solver_state_properties(new_solver_state, new_solver_state_unconstraine
     assert new_solver_state.score.constraints < 1.0  # constraints present and not all satisfied --> <1.0
 
     # without constraints
-    assert new_solver_state_unconstrained.has_constraints == False
+    assert not new_solver_state_unconstrained.has_constraints
     assert new_solver_state_unconstrained.k == 3
     assert new_solver_state_unconstrained.m == 0
     assert new_solver_state_unconstrained.n == 6

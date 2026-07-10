@@ -1,16 +1,18 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DiversityMetric
-from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._parameters import ParameterSchedule, linear
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._strategies._initialization import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
 from max_div._core.solver._strategies._optimization._optim_guided_swaps import OptimGuidedSwaps
+
+if TYPE_CHECKING:
+    from max_div._core.problem import MaxDivProblem
 
 
 @pytest.mark.parametrize(
@@ -99,11 +101,11 @@ def test_optim_guided_swaps(
 @pytest.mark.parametrize(
     "kwargs, expected_name",
     [
-        (dict(min_swap_size=1, max_swap_size=1), "OptimGuidedSwaps(1)"),
-        (dict(min_swap_size=2, max_swap_size=2), "OptimGuidedSwaps(2)"),
-        (dict(min_swap_size=3, max_swap_size=3), "OptimGuidedSwaps(3)"),
-        (dict(min_swap_size=1, max_swap_size=3), "OptimGuidedSwaps(1-3)"),
-        (dict(min_swap_size=2, max_swap_size=5), "OptimGuidedSwaps(2-5)"),
+        ({"min_swap_size": 1, "max_swap_size": 1}, "OptimGuidedSwaps(1)"),
+        ({"min_swap_size": 2, "max_swap_size": 2}, "OptimGuidedSwaps(2)"),
+        ({"min_swap_size": 3, "max_swap_size": 3}, "OptimGuidedSwaps(3)"),
+        ({"min_swap_size": 1, "max_swap_size": 3}, "OptimGuidedSwaps(1-3)"),
+        ({"min_swap_size": 2, "max_swap_size": 5}, "OptimGuidedSwaps(2-5)"),
     ],
 )
 def test_optim_guided_swaps_name(kwargs: dict[str, Any], expected_name: str):

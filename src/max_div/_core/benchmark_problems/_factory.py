@@ -1,4 +1,3 @@
-
 from max_div._core._utils import ljust_str_list
 from max_div._core.problem import MaxDivProblem
 

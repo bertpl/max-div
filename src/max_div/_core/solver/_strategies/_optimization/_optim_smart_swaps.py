@@ -99,13 +99,13 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         super().__init__(
             name=name,
             constraint_softness=0.0,
-            dynamic_params=dict(
-                swap_size=_swap_size,
-                nc_remove=_nc_remove,
-                nc_add=_nc_add,
-                selectivity_modifier_remove=_selectivity_modifier_remove,
-                selectivity_modifier_add=_selectivity_modifier_add,
-            ),
+            dynamic_params={
+                "swap_size": _swap_size,
+                "nc_remove": _nc_remove,
+                "nc_add": _nc_add,
+                "selectivity_modifier_remove": _selectivity_modifier_remove,
+                "selectivity_modifier_add": _selectivity_modifier_add,
+            },
             ignore_infeasible_diversity_up_to_fraction=ignore_infeasible_diversity_up_to_fraction,
         )
 

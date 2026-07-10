@@ -38,8 +38,7 @@ def format_long_time_duration(dt_sec: float, n_chars: int = 10) -> str:
             result = cand
 
     # --- final result ------------------------------------
-    result = result.rjust(n_chars)  # pad with spaces on the left, if too short
-    return result
+    return result.rjust(n_chars)  # pad with spaces on the left, if too short
 
 
 def format_short_time_duration(
@@ -82,8 +81,7 @@ def format_short_time_duration(
             result = cand
 
     # --- final result ------------------------------------
-    result = result.rjust(n_chars)  # pad with spaces on the left, if too short
-    return result
+    return result.rjust(n_chars)  # pad with spaces on the left, if too short
 
 
 # =================================================================================================
@@ -114,7 +112,7 @@ def _format_long_time_duration_to_spec(
     d, h = divmod(rem_h, 24)
 
     # --- construct string-valued components --------------
-    d, h, m, s = int(d), int(h), int(m), s  # convert to int where appropriate
+    d, h, m = int(d), int(h), int(m)  # convert to int where appropriate
     match precision:
         case "d":
             components = [f"{d}d"]

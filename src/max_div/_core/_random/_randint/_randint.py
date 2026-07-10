@@ -48,7 +48,7 @@ def randint(
     | No             | `False`    | *any* | k-element Fisher-Yates shuffle           | O(n)            |
     | Yes            | *any*      | 1     | Multinomial sampling using CDF           | O(n + log(n))   |
     | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
-    | Yes            | `False`    | >1    | Efraimidis-Spirakis sampling + exponential key sampling (Gumbel-Max Trick).  | O(n) |
+    | Yes            | `False`    | >1    | Efraimidis-Spirakis + exp. key sampling (Gumbel-Max Trick) | O(n) |
 
     NOTES:
 
@@ -63,10 +63,10 @@ def randint(
             However, we do require that sum(p) > 0, such that it can be guaranteed we always return a sample
             with p[i] > 0.
 
-          - given the intended use-case within max_div, it is acceptable that provided probabilities are only approximately
-            taken into account.  Therefore, we use float32 representation and use a fast-approx-log function in the
-            Efraimidis-Spirakis sampling method.  Overall this can result in <1% deviation from target probabilities, i.e.
-              p[3] = 0.1 --> actual frequency in samples = [0.099 to 0.101].
+          - given the intended use-case within max_div, it is acceptable that provided probabilities are only
+            approximately taken into account.  Therefore, we use float32 representation and use a fast-approx-log
+            function in the Efraimidis-Spirakis sampling method.  Overall this can result in <1% deviation from
+            target probabilities, i.e. p[3] = 0.1 --> actual frequency in samples = [0.099 to 0.101].
 
     ALTERNATIVES CONSIDERED:
 

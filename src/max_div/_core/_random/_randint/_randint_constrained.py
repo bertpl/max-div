@@ -92,8 +92,9 @@ def randint_constrained(
 
     NOTES:
 
-    * no guarantees are given that the solution will satisfy all constraints; a best-effort attempt will be made, with the
-    probability of the result satisfying the constraints increasing the simpler & less strict the constraints are.
+    * no guarantees are given that the solution will satisfy all constraints; a best-effort attempt will be made,
+    with the probability of the result satisfying the constraints increasing the simpler & less strict the
+    constraints are.
 
     * `randint_constrained` is essentially a version of randint that supports constraints.
 

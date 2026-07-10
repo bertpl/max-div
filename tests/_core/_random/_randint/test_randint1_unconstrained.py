@@ -150,5 +150,5 @@ def test_randint1_non_uniform_probs(factor: float, sum_of_p: float):
 
     # --- assert ------------------------------------------
     assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
-    assert all([p[i] > 0 for i in samples])
+    assert all(p[i] > 0 for i in samples)
     assert np.array_equal(p, p_before), "p array should never be modified."

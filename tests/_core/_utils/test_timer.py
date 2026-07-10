@@ -12,7 +12,7 @@ def test_timer():
 
     # --- assert 1 ----------------------------------------
     with pytest.raises(RuntimeError):
-        t = timer.t_elapsed_sec()
+        timer.t_elapsed_sec()
 
     # --- act ---------------------------------------------
     with timer:
@@ -29,7 +29,7 @@ def test_timer_running():
     timer = Timer()
 
     # --- act ---------------------------------------------
-    with timer as t:
+    with timer:
         t_before = timer.t_elapsed_sec()
         time.sleep(0.1)
         t_after = timer.t_elapsed_sec()

@@ -113,7 +113,7 @@ def test_parameter_schedule_child_classes_well_behaved(cls):
     # --- assert ------------------------------------------
     assert v0 == pytest.approx(v0_exact)
     assert v1 == pytest.approx(v1_exact)
-    assert all([1.23 < v < 4.56 for v in v_internal])
+    assert all(1.23 < v < 4.56 for v in v_internal)
 
 
 @pytest.mark.parametrize("cls", [EaseInSchedule, EaseInOutSchedule])

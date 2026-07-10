@@ -77,7 +77,7 @@ def choice_constrained(
             idx += 1
 
     # --- call randint_constrained ------------------------
-    i_samples = randint_constrained(
+    return randint_constrained(
         n=n,
         k=k,
         p=p_full,
@@ -90,4 +90,3 @@ def choice_constrained(
     )
 
     # --- return values -----------------------------------
-    return i_samples

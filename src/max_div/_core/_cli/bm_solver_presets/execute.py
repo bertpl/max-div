@@ -42,7 +42,7 @@ def execute_solver_presets_benchmark(
 
     # --- save --------------------------------------------
     if json_file_name:
-        with open(json_file_name, "w") as f:
+        with Path(json_file_name).open("w") as f:
             f.write(results_to_json(results))
 
     # --- return ------------------------------------------

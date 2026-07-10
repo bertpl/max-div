@@ -19,13 +19,13 @@ class SolverPresetBenchmarkParams:
     seed: int
 
     def to_dict(self) -> dict:
-        return dict(
-            preset=self.preset.value,
-            problem_name=self.problem_name,
-            problem_size=self.problem_size,
-            duration_sec=self.duration.value(),
-            seed=self.seed,
-        )
+        return {
+            "preset": self.preset.value,
+            "problem_name": self.problem_name,
+            "problem_size": self.problem_size,
+            "duration_sec": self.duration.value(),
+            "seed": self.seed,
+        }
 
     @classmethod
     def from_dict(cls, data: dict) -> SolverPresetBenchmarkParams:

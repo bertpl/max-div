@@ -20,7 +20,7 @@ def estimate_execution_time_sec_multi(
 
     # --- per problem? ----------------
     if per_problem_execution:
-        all_problem_names = set(p.problem_name for p in params)
+        all_problem_names = {p.problem_name for p in params}
         return sum(
             [
                 estimate_execution_time_sec_multi(

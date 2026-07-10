@@ -15,7 +15,7 @@ def stdout_to_file(enabled: bool = True, filename: str | Path | None = None):
     old_stdout = sys.stdout
     f = None
     if enabled:
-        f = open(filename, "w")
+        f = Path(filename).open("w")
         sys.stdout = f
 
     try:

@@ -105,7 +105,7 @@ class MaxDivSolver:
         n_steps = len(self._solver_steps)
         step_names = self._get_step_names()  # includes solver state init step (hence length n_steps+1)
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
-        step_results: dict[str, SolverStepResult] = dict()
+        step_results: dict[str, SolverStepResult] = {}
 
         # --- solver state ---
         with Timer() as timer:

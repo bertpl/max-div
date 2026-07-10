@@ -327,7 +327,8 @@ class ScenarioB(Scenario):
     def __init__(self):
         super().__init__(
             name="Scenario B",
-            description="Fixed n=1000 & k=100 with varying number of constraints spanning random 1% portions of the n-range",
+            description="Fixed n=1000 & k=100 with varying number of constraints "
+            "spanning random 1% portions of the n-range",
         )
 
     def n_k_m_tuples(self) -> list[tuple[int, int, int]]:

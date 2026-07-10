@@ -1,21 +1,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
-from numpy.typing import NDArray
-
-from max_div._core.constraints import Constraint
 from max_div._core.constraints._constraints import _np_con_total_violation
-from max_div._core.metrics._diversity import DiversityMetric
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
+    from max_div._core.constraints import Constraint
+    from max_div._core.metrics._diversity import DiversityMetric
 
 
 # =================================================================================================
 #  Score
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
-class Score:
+class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; deliberately unhashable
     """
     Object representing the multi-component score of a selection, i.e. of a final or intermediate solution to a
     max-div problem with fairness constraints.
@@ -24,7 +26,8 @@ class Score:
 
                                     size > constraints > diversity > div_non_zero > div_fgm.
 
-    Only in case of a tie in a lower-priority component, the next higher-priority component is considered for comparisons.
+    Only in case of a tie in a lower-priority component, the next higher-priority component is considered for
+    comparisons.
 
     All scores are >= 0.0, with higher being better.
 

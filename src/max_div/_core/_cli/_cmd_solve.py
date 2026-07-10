@@ -53,9 +53,7 @@ def solve(
         duration = TargetDuration.seconds(float(seconds))
 
     # --- show what we'll do ------------------------------
-    click.echo(
-        f"Solving test problem '{test_problem}' for a duration of {duration!s} using {preset.upper()} preset..."
-    )
+    click.echo(f"Solving test problem '{test_problem}' for a duration of {duration!s} using {preset.upper()} preset...")
 
     # --- construct solver --------------------------------
     solver = (
