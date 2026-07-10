@@ -76,10 +76,7 @@ def test_problem_new_happy_path(con_type: str):
 )
 def test_problem_new_value_error(ndims: int, n: int, d: int, k: int):
     # --- arrange -----------------------------------------
-    if ndims == 1:
-        vectors = np.ones(100, dtype=np.float64)
-    else:
-        vectors = np.ones((n, d), dtype=np.float64)
+    vectors = np.ones(100, dtype=np.float64) if ndims == 1 else np.ones((n, d), dtype=np.float64)
 
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):

@@ -120,8 +120,8 @@ def test_randint1_uniform_rng_state(n: int, k: int, uniform: bool):
     np.testing.assert_array_equal(samples_1, samples_2)
     if k >= 10:
         # in this case, it's very unlikely that samples_3 matches samples_1 or samples_2
-        assert not list(samples_1) == list(samples_3)
-        assert not list(samples_2) == list(samples_3)
+        assert list(samples_1) != list(samples_3)
+        assert list(samples_2) != list(samples_3)
 
     # check p unmodified
     assert np.array_equal(p, p_before), "p array should never be modified."

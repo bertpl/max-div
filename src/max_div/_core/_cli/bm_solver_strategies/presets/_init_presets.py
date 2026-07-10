@@ -51,16 +51,13 @@ class InitPreset(StrEnum):
     #  Meta-Data
     # -------------------------------------------------------------------------
     def is_constraint_aware(self) -> bool:
-        if self in [InitPreset.FAST, InitPreset.ROS_U_UNCON, InitPreset.ROS_NU_UNCON]:
-            return False
-        return True
+        return self not in [InitPreset.FAST, InitPreset.ROS_U_UNCON, InitPreset.ROS_NU_UNCON]
 
     def is_relevant_for_problem(self, problem_has_constraints: bool) -> bool:
         if problem_has_constraints:
             return True
-        if self in [InitPreset.ROS_U_UNCON, InitPreset.ROS_NU_UNCON]:
-            return False  # the constraint-aware versions will behave the same as these on unconstrained problems
-        return True
+        # the constraint-aware versions will behave the same as these on unconstrained problems
+        return self not in [InitPreset.ROS_U_UNCON, InitPreset.ROS_NU_UNCON]
 
     def class_name(self) -> str:
         cls, _ = _INIT_CLASSES_AND_KWARGS[self]

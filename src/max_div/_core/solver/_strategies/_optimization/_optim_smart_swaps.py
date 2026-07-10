@@ -214,7 +214,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         best_score_tuple: tuple | None = None
 
         # a) repeat 'nc' times...
-        for i in range(self.nc_add):
+        for _i in range(self.nc_add):
             # 1) select group of 'n_to_add' samples
             candidate_samples_to_add = select_items_to_add(
                 state=state,

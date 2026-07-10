@@ -197,10 +197,7 @@ class _IterationTracker(ProgressTracker):
         self._max_iters = max_iters
 
     def get_progress(self) -> Progress:
-        if self._iter_count >= self._max_iters:
-            fraction = 1.0
-        else:
-            fraction = self._iter_count / self._max_iters
+        fraction = 1.0 if self._iter_count >= self._max_iters else self._iter_count / self._max_iters
 
         return Progress(
             tqdm_n_total=self._max_iters,

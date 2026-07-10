@@ -155,8 +155,8 @@ def test_randint_uniform_with_replacement_rng_state(n: int, k: int, p: np.ndarra
     np.testing.assert_array_equal(samples_1, samples_2)
     if k >= 10:
         # in this case, it's very unlikely that samples_3 matches samples_1 or samples_2
-        assert not list(samples_1) == list(samples_3)
-        assert not list(samples_2) == list(samples_3)
+        assert list(samples_1) != list(samples_3)
+        assert list(samples_2) != list(samples_3)
 
     # check p unmodified
     assert np.array_equal(p, p_before), "p array should never be modified."
@@ -233,8 +233,8 @@ def test_randint_uniform_without_replacement_rng_state(n: int, k: int, p: np.nda
     np.testing.assert_array_equal(samples_1, samples_2)
     if k >= 10:
         # in this case, it's very unlikely that samples_3 matches samples_1 or samples_2
-        assert not list(samples_1) == list(samples_3)
-        assert not list(samples_2) == list(samples_3)
+        assert list(samples_1) != list(samples_3)
+        assert list(samples_2) != list(samples_3)
 
     # check p unmodified
     assert np.array_equal(p, p_before), "p array should never be modified."
@@ -328,8 +328,8 @@ def test_randint_non_uniform_with_replacement_rng_state(n: int, k: int):
     np.testing.assert_array_equal(samples_1, samples_2)
     if k >= 10:
         # in this case, it's very unlikely that samples_3 matches samples_1 or samples_2
-        assert not list(samples_1) == list(samples_3)
-        assert not list(samples_2) == list(samples_3)
+        assert list(samples_1) != list(samples_3)
+        assert list(samples_2) != list(samples_3)
 
     # check p unmodified
     assert np.array_equal(p, p_before), "p array should never be modified."
@@ -430,8 +430,8 @@ def test_randint_non_uniform_without_replacement_rng_state(n: int, k: int):
     np.testing.assert_array_equal(samples_1, samples_2)
     if k >= 10:
         # in this case, it's very unlikely that samples_3 matches samples_1 or samples_2
-        assert not list(samples_1) == list(samples_3)
-        assert not list(samples_2) == list(samples_3)
+        assert list(samples_1) != list(samples_3)
+        assert list(samples_2) != list(samples_3)
 
     # check p unmodified
     assert np.array_equal(p, p_before), "p array should never be modified."

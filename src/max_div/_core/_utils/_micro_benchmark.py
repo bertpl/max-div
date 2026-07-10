@@ -81,7 +81,7 @@ class BenchmarkResult:
 # =================================================================================================
 #  Main benchmarking function
 # =================================================================================================
-def benchmark(
+def benchmark(  # noqa: C901 — case-dispatch structure is clearer un-split
     f: Callable,
     t_per_run: float = 0.1,
     n_warmup: int = 5,
@@ -105,10 +105,8 @@ def benchmark(
     # --- init --------------------------------------------
     lst_t = []  # list of measured times per execution in seconds
     n_executions = 1  # number of executions per run, adjusted dynamically
-    if index_range is None:
-        f_baseline = _baseline_fun  # baseline function to subtract overhead
-    else:
-        f_baseline = _baseline_fun_indexed  # baseline function to subtract overhead, with index
+    # baseline function to subtract overhead (indexed variant when an index is cycled)
+    f_baseline = _baseline_fun if index_range is None else _baseline_fun_indexed
 
     if not silent:
         print("Benchmarking: ", end="")

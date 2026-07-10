@@ -21,7 +21,7 @@ def test_init_preset_properties(init_preset: InitPreset):
     assert isinstance(init_strat, InitializationStrategy)
     assert init_strat.__class__.__name__ == init_preset.class_name()
     assert isinstance(init_preset.class_kwargs(), dict)
-    assert all(isinstance(k, str) for k in init_preset.class_kwargs().keys())
+    assert all(isinstance(k, str) for k in init_preset.class_kwargs())
 
     assert isinstance(init_preset.is_constraint_aware(), bool)
     assert isinstance(init_preset.is_relevant_for_problem(problem_has_constraints=True), bool)

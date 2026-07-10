@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 #  select_k_min
 # =================================================================================================
 @numba.njit("int32[:](float32[:], int32)", fastmath=True, inline="always", cache=True)
-def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:
+def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
     """Find indices of k smallest elements in a float32 array using Numba.
 
     This implementation uses a max-heap approach with O(n log k) complexity,
@@ -130,7 +130,7 @@ def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:
 #  select_k_max
 # =================================================================================================
 @numba.njit("int32[:](float32[:], int32)", fastmath=True, inline="always", cache=True)
-def select_k_max(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:
+def select_k_max(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
     """Find indices of k largest elements in a float32 array using Numba.
 
     This implementation uses a min-heap approach with O(n log k) complexity,

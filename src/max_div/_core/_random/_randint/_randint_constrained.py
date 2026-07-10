@@ -46,10 +46,7 @@ def _compute_score(
     m = con_values.shape[0]
 
     # --- init --------------------------------------------
-    if hard_max_constraints:
-        max_count_penalty = _SCORE_PENALTY_HARD_CONSTRAINT
-    else:
-        max_count_penalty = np.int32(1)
+    max_count_penalty = _SCORE_PENALTY_HARD_CONSTRAINT if hard_max_constraints else np.int32(1)
     scores = np.zeros(n, dtype=np.int32)
 
     # --- min_count / max_count ---------------------------
@@ -77,16 +74,16 @@ def _compute_score(
 
 
 @numba.njit(fastmath=True, cache=True)
-def randint_constrained(
+def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un-split
     n: np.int32,
     k: np.int32,
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
     rng_state: NDArray[np.uint64],
-    p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),
+    p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),  # noqa: B008 — numba needs a concrete typed default
     eager: bool = False,
-    k_context: np.int32 = np.int32(-1),
-    i_forbidden: NDArray[np.int32] = np.empty(0, dtype=np.int32),
+    k_context: np.int32 = np.int32(-1),  # noqa: B008 — numba needs a concrete typed default
+    i_forbidden: NDArray[np.int32] = np.empty(0, dtype=np.int32),  # noqa: B008 — numba needs a concrete typed default
 ) -> NDArray[np.int32]:
     """Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
 
@@ -186,10 +183,7 @@ def randint_constrained(
 
         # Get already sampled integers
         # (we include i_forbidden, since they're excluded from sampling, with equal priority as already sampled values)
-        if n_forbidden:
-            already_sampled = np.concatenate((samples[:sample_idx], i_forbidden))
-        else:
-            already_sampled = samples[:sample_idx]
+        already_sampled = np.concatenate((samples[:sample_idx], i_forbidden)) if n_forbidden else samples[:sample_idx]
 
         # determine how much each integer would help us satisfy min_count constraints
         score = _compute_score(n, con_values_working, con_indices, already_sampled, True)

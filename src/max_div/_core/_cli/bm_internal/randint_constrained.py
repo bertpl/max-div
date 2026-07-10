@@ -174,10 +174,7 @@ def _benchmark(
         lst_con_values.append(con_values)
         lst_con_indices.append(con_indices)
 
-    if p is None:
-        p = np.zeros(0, dtype=np.float32)
-    else:
-        p = p.astype(np.float32)
+    p = np.zeros(0, dtype=np.float32) if p is None else p.astype(np.float32)
 
     rng_state = new_rng_state(np.int64(42))
 
@@ -229,10 +226,7 @@ def _determine_precision(
     mode: str,
 ) -> TablePercentage:
     """Determines how often (%) the constraints are satisfied when sampling."""
-    if p is None:
-        p = np.zeros(0, dtype=np.float32)
-    else:
-        p = p.astype(np.float32)
+    p = np.zeros(0, dtype=np.float32) if p is None else p.astype(np.float32)
 
     # Calculate number of runs based on speed (200 at speed=0, 1 at speed=1)
     n_runs = round(200 ** (1 - speed))

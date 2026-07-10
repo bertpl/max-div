@@ -54,7 +54,7 @@ def test_sample_truncated_poisson_distribution(min_value: int, max_value: int, _
 
     # --- act ---------------------------------------------
     rng_state = new_rng_state(np.int64(42))
-    for i in range(n_samples):
+    for _ in range(n_samples):
         sample = sample_truncated_poisson(
             min_value=np.int32(min_value),
             max_value=np.int32(max_value),

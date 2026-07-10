@@ -72,7 +72,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         """
         super().__init__(name)
         self.ignore_infeasible_diversity_up_to_fraction = ignore_infeasible_diversity_up_to_fraction
-        self.ignore_infeasible_diversity = 0.0 <= ignore_infeasible_diversity_up_to_fraction
+        self.ignore_infeasible_diversity = ignore_infeasible_diversity_up_to_fraction >= 0.0
 
         # --- initialize scheduled parameters ---
         #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params

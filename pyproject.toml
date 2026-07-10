@@ -133,7 +133,22 @@ select = [
     "S",       # flake8-bandit: security lint
     "D",       # pydocstyle (Google convention)
     "ANN",     # flake8-annotations
+    "SIM",     # flake8-simplify
+    "B",       # flake8-bugbear
+    "N",       # pep8-naming
+    "PT",      # flake8-pytest-style
+    "C901",    # mccabe complexity gate (threshold in [tool.ruff.lint.mccabe])
 ]
+ignore = [
+    "B905",    # numba nopython mode can't take zip()'s strict= kwarg
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"                     # names given as a single "a, b" string
+raises-require-match-for = ["Exception", "BaseException"]  # only the truly broad base exceptions need match=
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -144,6 +159,15 @@ convention = "google"
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
 "scripts/**" = ["INP001", "S", "D", "ANN"]           # maintainer tooling, not the shipped library
 ".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
+# benchmark closures are constructed and invoked within the same loop iteration, so late binding never bites
+"src/max_div/_core/_cli/bm_internal/**" = ["B023"]
+# problem-ID / benchmark-ID class-name suffixes (C1..C4, U1..U4, _Initialization, ...) are deliberate
+"src/max_div/_core/benchmark_problems/_problems/**" = ["N801"]
+"src/max_div/_core/_cli/bm_solver_strategies/**" = ["N801"]
+# calibration tooling & tests import the currently-committed constants under working-variable aliases
+"src/max_div/_core/_math/fast_pow/_calibration.py" = ["N811"]
+"tests/_core/_math/fast_log_exp/test_calibration.py" = ["N811"]
+"tests/_core/_math/fast_pow/test_calibration.py" = ["N811"]
 
 [tool.coverage.run]
 source_pkgs = ["max_div"]

@@ -10,7 +10,7 @@ from max_div._core.solver._solver_state import SolverState, _build_con_membershi
 # =================================================================================================
 #  Fixtures
 # =================================================================================================
-@pytest.fixture(scope="function")
+@pytest.fixture
 def new_solver_state() -> SolverState:
     return SolverState.new(
         vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
@@ -25,7 +25,7 @@ def new_solver_state() -> SolverState:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def new_solver_state_unconstrained() -> SolverState:
     return SolverState.new(
         vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
