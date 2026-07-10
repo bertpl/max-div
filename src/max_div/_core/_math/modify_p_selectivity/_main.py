@@ -22,7 +22,9 @@ __MODIFIER_MAX = np.float32(1.0 - 10.0 * EPS_F32)
 #  Main Numba entrypoint
 # =================================================================================================
 @njit("void(float32[::1], float32, int32, float32[::1])", fastmath=True, inline="always")
-def modify_p_selectivity(p: NDArray[np.float32], modifier: np.float32, method: np.int32, p_out: NDArray[np.float32]):
+def modify_p_selectivity(
+    p: NDArray[np.float32], modifier: np.float32, method: np.int32, p_out: NDArray[np.float32]
+) -> None:
     """Modify the p array by applying a selectivity modification.
 
     "Selectivity Modification" = changing the distribution of probabilities to be more uniform or more
@@ -69,7 +71,7 @@ def modify_p_selectivity(p: NDArray[np.float32], modifier: np.float32, method: n
                   100 = 2-segment piecewise linear approximation of p**t
                           (computed such that area-under-the-curve of transformation f(p) is identical to method=0)
 
-    NOTES
+    Notes:
     -----
         - probability arrays are not assumed to be normalized (i.e., sum to 1)
         - output arrays should not be assumed to be normalized
@@ -84,7 +86,6 @@ def modify_p_selectivity(p: NDArray[np.float32], modifier: np.float32, method: n
                        If p needs to be modified in-place, also provide p as this argument.
     :return: (1D array) Modified p values.
     """
-
     # --- prep transformation -----------------------------
     p_max = _p_max(p)
     if p_max <= 0.0:

@@ -1,6 +1,7 @@
-"""
-numba-accelerated function for constrained sampled.  This function is roughly equivalent with randint,
-but supports defining constraints via the `con_values` and `con_indices` parameters.
+"""Numba-accelerated function for constrained sampling.
+
+This function is roughly equivalent with randint, but supports defining constraints via the `con_values` and
+`con_indices` parameters.
 """
 
 import numba
@@ -26,12 +27,12 @@ def _compute_score(
     already_sampled: NDArray[np.int32],
     hard_max_constraints: bool,
 ) -> NDArray[np.int32]:
-    """
-    Score each integer in `[0, n)` based on how sampling each integer helps toward satisfying the constraints
+    """Score each integer in `[0, n)` based on how sampling each integer helps toward satisfying the constraints.
+
       - if it helps achieve a min_count that is not satisfied yet:    +1
       - if it would violate a max_count that we already hit:          -1      if hard_max_constraints=False
                                                                       -2**24  if hard_max_constraints=True
-      - if we already sampled it:                                     -2**30  if hard_max_constraints=True
+      - if we already sampled it:                                     -2**30  if hard_max_constraints=True.
 
     The basic idea behind the scoring is that -if at all possible- integers with score <= 0 will not be sampled.
 
@@ -87,11 +88,9 @@ def randint_constrained(
     k_context: np.int32 = np.int32(-1),
     i_forbidden: NDArray[np.int32] = np.empty(0, dtype=np.int32),
 ) -> NDArray[np.int32]:
-    """
-    Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
+    """Generate `k` unique random integers from the range `[0, n)` while satisfying given constraints.
 
-    NOTES:
-
+    Notes:
     * no guarantees are given that the solution will satisfy all constraints; a best-effort attempt will be made,
     with the probability of the result satisfying the constraints increasing the simpler & less strict the
     constraints are.
@@ -136,7 +135,6 @@ def randint_constrained(
 
     :return: array of samples
     """
-
     # --- parameter validation ----------------------------
     n_forbidden = i_forbidden.shape[0]
     if k > (n - n_forbidden):

@@ -57,9 +57,8 @@ def strategies(
     markdown: bool,
     optimization_only: bool,
     initialization_only: bool,
-):
+) -> None:
     """Benchmark initialization/optimization strategies on specific solver benchmark problem."""
-
     # --- argument handling -------------------------------
     if turbo:
         speed = 1.0

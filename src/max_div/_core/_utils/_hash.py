@@ -9,24 +9,19 @@ from numpy.typing import NDArray
 #  hash functions
 # =================================================================================================
 def deterministic_hash(obj: object) -> int:
-    """
-    Generate a deterministic type-aware 256-bit int hash for a given object, based on its string representation.
-    """
+    """Generate a deterministic type-aware 256-bit int hash for a given object, based on its string representation."""
     hash_str = f"{type(obj)}|{obj!s}"
     return int.from_bytes(sha256(hash_str.encode()).digest()) - (2**255)  # center around 0
 
 
 def deterministic_hash_int64(obj: object) -> np.int64:
-    """
-    Generate a deterministic type-aware int64 hash for a given object, based on its string representation.
-    """
+    """Generate a deterministic type-aware int64 hash for a given object, based on its string representation."""
     return int_to_int64(deterministic_hash(obj))
 
 
 @numba.njit(fastmath=True, inline="always", cache=True)
 def np_int32_array_var_length_hash(arr: NDArray[np.int32], n: int) -> NDArray[np.int32]:
     """Takes the input array and creates an output array of length n, that represents a var-length hash of the input."""
-
     # create output array
     result = np.zeros(n, dtype=np.int32)
 

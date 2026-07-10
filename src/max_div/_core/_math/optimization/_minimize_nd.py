@@ -15,17 +15,16 @@ def minimize_nd(
     n_grid: int = 9,
     c_reduce: float = 0.5,
 ) -> tuple[float, ...]:
-    """
-    Minimize a black-box function in n-dimensions using a grid-like search with iterative bounding box reduction.
+    """Minimize a black-box function in n-dimensions using a grid-like search with iterative bounding box reduction.
+
     :param fun: Function to minimize. Takes a tuple of floats and returns a float.
     :param lb: Lower bounds for each dimension as a tuple of floats.
     :param ub: Upper bounds for each dimension as a tuple of floats.
     :param acc: accuracy parameter; stop when the largest side of the bounding box is <= acc
     :param n_grid: number of points in each dimension to evaluate per iteration
     :param c_reduce: factor (<1) with which to reduce the bounding box size each iteration, centered around current opt.
-    :return: tuple of floats with optimal solution
+    :return: tuple of floats with optimal solution.
     """
-
     # --- init ----------------------------------------------------------------
 
     # general

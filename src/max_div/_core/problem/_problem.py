@@ -10,8 +10,7 @@ from max_div._core.metrics import DistanceMetric, DiversityMetric
 
 @dataclass(frozen=True, slots=True)
 class MaxDivProblem:
-    """
-    Immutable definition of a Maximum Diversity Problem.
+    """Immutable definition of a Maximum Diversity Problem.
 
     A problem consists of ``n`` vectors in ``d`` dimensions, a target selection size ``k``,
     a distance metric, a diversity metric, and optionally a list of fairness constraints.
@@ -53,8 +52,7 @@ class MaxDivProblem:
         diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
         constraints: list[Constraint] | None = None,
     ) -> Self:
-        """
-        Create a new MaxDivProblem with validation.
+        """Create a new MaxDivProblem with validation.
 
         :param vectors: 2D numpy array of shape ``(n, d)`` with at least 3 rows.
                         Converted to ``float32`` automatically if needed.

@@ -14,9 +14,9 @@ from ._table_aggregation import TableAggregationType
 #  Base class
 # =================================================================================================
 class TableElement(ABC):
-    """Element that can be placed in a table cell (regular rows, not headers)"""
+    """Element that can be placed in a table cell (regular rows, not headers)."""
 
-    def __init__(self, supports_aggregation: bool = False):
+    def __init__(self, supports_aggregation: bool = False) -> None:
         self._supports_aggregation = supports_aggregation
 
     @property
@@ -34,14 +34,14 @@ class TableElement(ABC):
     def aggregate(cls, elements: list[Self], agg_type: TableAggregationType) -> Self:
         raise NotImplementedError("Aggregation not supported for this TableElement type")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.to_mark_down()
 
-    def __lt__(self, other):
+    def __lt__(self, other: TableElement) -> bool:
         """Comparison operator, for table highlighting purposes."""
         return str(self) < str(other)
 
-    def is_equalish(self, other):
+    def is_equalish(self, other: TableElement) -> bool:
         """To check if two TableElements are equal enough to be considered ties (lowest or highest) for highlighting."""
         return str(self).lower() == str(other).lower()
 
@@ -50,7 +50,7 @@ class TableElement(ABC):
 #  Basic Elements
 # =================================================================================================
 class TableText(TableElement):
-    def __init__(self, txt: str | list[str]):
+    def __init__(self, txt: str | list[str]) -> None:
         super().__init__(supports_aggregation=False)
         if isinstance(txt, str):
             txt = txt.splitlines()
@@ -69,7 +69,7 @@ class TableText(TableElement):
 
 
 class TablePercentage(TableElement):
-    def __init__(self, frac: float, decimals: int = 1):
+    def __init__(self, frac: float, decimals: int = 1) -> None:
         super().__init__(supports_aggregation=True)
         self.frac = frac  # fraction between 0.0 and 1.0
         self.decimals = decimals  # number of decimals to display
@@ -77,7 +77,7 @@ class TablePercentage(TableElement):
     def to_mark_down(self) -> str:
         return f"{(self.frac * 100):.{self.decimals}f}%"
 
-    def __lt__(self, other: TablePercentage):
+    def __lt__(self, other: TablePercentage) -> bool:
         return self.frac < other.frac
 
     @classmethod
@@ -94,16 +94,16 @@ class TablePercentage(TableElement):
 #  Elements with uncertainties
 # =================================================================================================
 class _QuantiledTableElement(TableElement, ABC):
-    def __init__(self, q_25: float, q_50: float, q_75: float):
+    def __init__(self, q_25: float, q_50: float, q_75: float) -> None:
         super().__init__(supports_aggregation=True)
         self.q_25 = q_25
         self.q_50 = q_50
         self.q_75 = q_75
 
-    def __lt__(self, other: _QuantiledTableElement):
+    def __lt__(self, other: _QuantiledTableElement) -> bool:
         return self.q_50 < other.q_50
 
-    def is_equalish(self, other: _QuantiledTableElement):
+    def is_equalish(self, other: _QuantiledTableElement) -> bool:
         """True of both medians are in range of the other's 25-75 percentile."""
         return (self.q_25 <= other.q_50 <= self.q_75) and (other.q_25 <= self.q_50 <= other.q_75)
 
@@ -118,7 +118,7 @@ class _QuantiledTableElement(TableElement, ABC):
 
 
 class TableTimeElapsed(_QuantiledTableElement):
-    def __init__(self, t_sec_q_25: float, t_sec_q_50: float, t_sec_q_75: float):
+    def __init__(self, t_sec_q_25: float, t_sec_q_50: float, t_sec_q_75: float) -> None:
         super().__init__(q_25=t_sec_q_25, q_50=t_sec_q_50, q_75=t_sec_q_75)
 
     def to_mark_down(self) -> str:
@@ -151,7 +151,7 @@ class TableTimeElapsed(_QuantiledTableElement):
 class TableValueWithUncertainty(_QuantiledTableElement):
     def __init__(
         self, value_q_25: float, value_q_50: float, value_q_75: float, decimals: int = 3, scientific: bool = False
-    ):
+    ) -> None:
         super().__init__(q_25=value_q_25, q_50=value_q_50, q_75=value_q_75)
         self.decimals = decimals
         self.scientific = scientific  # False = float representation, True = scientific notation
@@ -198,7 +198,7 @@ class TableValueWithUncertainty(_QuantiledTableElement):
 class TableValueRange(_QuantiledTableElement):
     def __init__(
         self, value_q_25: float, value_q_50: float, value_q_75: float, max_decimals: int = 20, diff_decimals: int = 2
-    ):
+    ) -> None:
         super().__init__(q_25=value_q_25, q_50=value_q_50, q_75=value_q_75)
         self.max_decimals = max_decimals
         self.diff_decimals = diff_decimals

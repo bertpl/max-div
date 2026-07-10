@@ -1,3 +1,5 @@
+from typing import Any
+
 from max_div._core._utils import ljust_str_list
 from max_div._core.problem import MaxDivProblem
 
@@ -5,20 +7,18 @@ from ._registry import BenchmarkProblem, BenchmarkProblemRegistry
 
 
 class BenchmarkProblemFactory:
-    """
-    Factory class for conveniently constructing MaxDivProblem instances for benchmarking purposes.
+    """Factory class for conveniently constructing MaxDivProblem instances for benchmarking purposes.
 
     This class makes all registered (and discovered) BenchmarkProblem subclasses available (see show_all)
       and allows creating corresponding MaxDivProblem instances by name & parameter values (see create_problem).
     """
 
     @classmethod
-    def construct_problem(cls, name: str, **params) -> MaxDivProblem:
-        """
-        Create and return an instance of MaxDivProblem for the benchmark problem with the given name,
-        using the provided parameters as needed.
-        """
+    def construct_problem(cls, name: str, **params: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+        """Create and return an instance of MaxDivProblem for the benchmark problem with the given name.
 
+        The provided parameters are used as needed.
+        """
         # find BenchmarkProblem subclass
         registered = BenchmarkProblemRegistry.get_registered_classes()
         problem_cls = registered.get(name)
@@ -42,17 +42,16 @@ class BenchmarkProblemFactory:
         return sorted(cls.get_all_benchmark_problems().keys())
 
     @classmethod
-    def get_problem_dimensions(cls, name: str, **params) -> tuple[int, int, int, int, int]:
-        """
-        Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with the given name,
-        using the provided parameters as needed.
+    def get_problem_dimensions(cls, name: str, **params: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
+        """Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with the given name.
+
+        The provided parameters are used as needed.
         """
         return cls.get_all_benchmark_problems().get(name).get_problem_dimensions(**params)
 
     @classmethod
-    def show_all(cls):
-        """Show all registered benchmark problems and their parameters"""
-
+    def show_all(cls) -> None:
+        """Show all registered benchmark problems and their parameters."""
         # --- get all registered classes ---
         registered = cls.get_all_benchmark_problems()
 

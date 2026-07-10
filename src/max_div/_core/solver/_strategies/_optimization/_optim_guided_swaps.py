@@ -11,11 +11,12 @@ from ._base import SwapBasedOptimizationStrategy
 
 
 class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
-    """
-    This swap-based optimization strategy allows...
-       - performing 1- or multiple-element swaps per iteration
-       - uses guiding heuristics to preferentially select appropriate samples for removal and addition
-       - allows choosing samples to be added in constraint-aware or un-aware manner, with configurable probabilities
+    """Swap-based optimization strategy with guiding heuristics.
+
+    This strategy allows...
+    - performing 1- or multiple-element swaps per iteration
+    - uses guiding heuristics to preferentially select appropriate samples for removal and addition
+    - allows choosing samples to be added in constraint-aware or un-aware manner, with configurable probabilities.
     """
 
     # -------------------------------------------------------------------------
@@ -30,7 +31,7 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
         p_add_constraint_aware: float | ParameterSchedule = 1.0,
         remove_selectivity_modifier: float | ParameterSchedule = 0.0,
         add_selectivity_modifier: float | ParameterSchedule = 0.0,
-    ):
+    ) -> None:
         name = f"OptimGuidedSwaps({min_swap_size}" + (f"-{max_swap_size})" if max_swap_size > min_swap_size else ")")
         super().__init__(
             name=name,

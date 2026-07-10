@@ -5,5 +5,5 @@ from ._cli import cli
 #  benchmark
 # =================================================================================================
 @cli.group()
-def benchmark():
+def benchmark() -> None:
     """Benchmarking commands."""

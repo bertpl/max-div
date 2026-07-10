@@ -1,12 +1,12 @@
 import sys
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
 
 @contextmanager
-def stdout_to_file(enabled: bool = True, filename: str | Path | None = None):
+def stdout_to_file(enabled: bool = True, filename: str | Path | None = None) -> Iterator[None]:
     """Context manager to redirect stdout to file, if enabled."""
-
     # --- argument validation -----------------------------
     if enabled and not filename:
         raise ValueError("`filename` must be provided when 'enabled' is True.")

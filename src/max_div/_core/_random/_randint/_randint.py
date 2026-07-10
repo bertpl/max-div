@@ -1,7 +1,7 @@
-"""
-Numba-accelerated implementation of a function roughly equivalent to `numpy.random.randint`, but significantly faster
-due to use of faster underlying RNG functionality (see `max_div.random.rng`), and optimized algorithms for each case,
-making use of a.o. the fact that we only want to sample int32 values here.
+"""Numba-accelerated implementation of a function roughly equivalent to `numpy.random.randint`.
+
+Significantly faster due to use of faster underlying RNG functionality (see `max_div.random.rng`), and optimized
+algorithms for each case, making use of a.o. the fact that we only want to sample int32 values here.
 """
 
 import numba
@@ -35,8 +35,8 @@ def randint(
     p: NDArray[np.float32],
     rng_state: NDArray[np.uint64],
 ) -> NDArray[np.int32]:
-    """
-    Randomly sample `k` int32 values from range `[0, n-1]`, optionally with replacement and per-value probabilities.
+    """Randomly sample `k` int32 values from range `[0, n-1]`, optionally with replacement and per-value probabilities.
+
     This function mimics the behavior of `numpy.random.randint` in that it provides values in range [0, n), but offers
     the additional options of sampling without replacement and with per-value probabilities that random.choice offers.
 
@@ -50,8 +50,7 @@ def randint(
     | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
     | Yes            | `False`    | >1    | Efraimidis-Spirakis + exp. key sampling (Gumbel-Max Trick) | O(n) |
 
-    NOTES:
-
+    Notes:
       - For benchmark results, see [here](../../../../benchmarks/internal/bm_randint.md)
 
       - When providing `p`...
@@ -192,8 +191,7 @@ def randint1(
     p: NDArray[np.float32],
     rng_state: NDArray[np.uint64],
 ) -> np.int32:
-    """
-    This is a dedicated, simplified and faster version of randint for the special case k=1.
+    """This is a dedicated, simplified and faster version of randint for the special case k=1.
 
     Differences:
       - hard assumption of k=1, eliminating this argument

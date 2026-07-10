@@ -9,7 +9,7 @@ from ._cmd_benchmark_solver import solver
 #  benchmark solver - list problems
 # =================================================================================================
 @solver.command(name="list_problems")
-def list_problems():
+def list_problems() -> None:
     """List available test problems."""
     problem_classes = BenchmarkProblemFactory.get_all_benchmark_problems()
     click.echo("Available benchmark problems:")

@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 
 
 class MaxDivSolverBuilder:
-    """
-    Builder for configuring and creating [`MaxDivSolver`][max_div.solver.MaxDivSolver] instances.
+    """Builder for configuring and creating [`MaxDivSolver`][max_div.solver.MaxDivSolver] instances.
 
     Provides a fluent API for setting up initialization and optimization strategies,
     diversity tie-breakers, random seed, and solver presets. The simplest usage is
@@ -27,11 +26,8 @@ class MaxDivSolverBuilder:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, problem: MaxDivProblem):
-        """
-        :param problem: The MaxDivProblem to solve.
-        """
-
+    def __init__(self, problem: MaxDivProblem) -> None:
+        """:param problem: The MaxDivProblem to solve."""
         # --- problem ---------------------------
         self._problem = problem
 
@@ -96,11 +92,12 @@ class MaxDivSolverBuilder:
         target_duration: TargetDuration,
         preset: SolverPreset = SolverPreset.DEFAULT,
     ) -> Self:
-        """
-        Configure the builder with specified preset settings (overriding any previous settings):
+        """Configure the builder with specified preset settings (overriding any previous settings).
+
+        This sets:
           - Appropriate initialization strategy (most accurate strategy+settings taking est. <5% of total time)
           - Appropriate optimization strategy
-          - Default diversity tie-breakers
+          - Default diversity tie-breakers.
 
         Please make sure to set diversity metric prior to calling this method, as it influences the choices.
 
@@ -108,7 +105,6 @@ class MaxDivSolverBuilder:
                                        --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
         :param preset: Preset to use (default: SolverPreset.DEFAULT)
         """
-
         # --- apply main preset logic -----------
         init_strategy, optim_steps = get_preset_strategies(
             preset=preset,

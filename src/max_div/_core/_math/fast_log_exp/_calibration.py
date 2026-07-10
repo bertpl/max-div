@@ -10,8 +10,7 @@ from max_div._core._math.optimization import minimize_nd_random
 def calibrate_fast_log_exp(
     n_data: int, acc: float, n_evals: int = 10_000
 ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
-    """
-    Jointly calibrates the quadratic coefficients of fast_log2 and fast_exp2 to minimize the overall error.
+    """Jointly calibrates the quadratic coefficients of fast_log2 and fast_exp2 to minimize the overall error.
 
     PARAMETERS
     ----------
@@ -44,7 +43,6 @@ def calibrate_fast_log_exp(
         - `e_log_exp` is maximum error of `g(f(x)+1)/2` wrt `x` over [0.5, 1]
 
     """
-
     cost_fun = Cost(n=n_data)
     # k1_k2_opt = minimize_nd(
     #     fun=cost_fun,
@@ -95,7 +93,7 @@ def calibrate_fast_log_exp(
 #  Cost Function
 # =================================================================================================
 class Cost:
-    def __init__(self, n: int):
+    def __init__(self, n: int) -> None:
         self._x_log2 = np.linspace(0.5, 1.0, n)
         self._x_exp2 = np.linspace(0.0, 1.0, n)
         self._x_log_exp = np.linspace(0.5, 1.0, n)
@@ -114,15 +112,15 @@ class Cost:
         return e_log + e_exp + e_log_exp
 
     def e_log(self, c0: float, c1: float, c2: float) -> float:
-        """Max. abs error over [0.5, 1.0] -> translates to same max abs error over entire range"""
+        """Max. abs error over [0.5, 1.0] -> translates to same max abs error over entire range."""
         return float(np.max(np.abs(self._fx_log2 - log2_approx_array(self._x_log2, c0, c1, c2))))
 
     def e_exp(self, d0: float, d1: float, d2: float) -> float:
-        """Max. rel error over [0.0, 1.0] -> translates to same max rel error over entire range"""
+        """Max. rel error over [0.0, 1.0] -> translates to same max rel error over entire range."""
         return float(np.max(np.abs(self._fx_exp2 - exp2_approx_array(self._x_exp2, d0, d1, d2)) / self._fx_exp2))
 
     def e_log_exp(self, c0: float, c1: float, c2: float, d0: float, d1: float, d2: float) -> float:
-        """Max. abs error over [0.5, 1.0]"""
+        """Max. abs error over [0.5, 1.0]."""
         return float(
             np.max(
                 np.abs(
@@ -164,7 +162,7 @@ def exp2_approx_array(x_arr: np.ndarray, c0: float, c1: float, c2: float) -> np.
 
 @numba.njit(inline="always", cache=True)
 def log2_approx(x: float, c0: float, c1: float, c2: float) -> float:
-    """Only efficient for x in or close to [0.5, 1]"""
+    """Only efficient for x in or close to [0.5, 1]."""
     if x <= 0:
         return -1e6
     offset = 0.0
@@ -183,8 +181,7 @@ def log2_approx(x: float, c0: float, c1: float, c2: float) -> float:
 
 @numba.njit(inline="always", cache=True)
 def exp2_approx(x: float, d0: float, d1: float, d2: float) -> float:
-    """Only efficient for x in or close to [0, 1]"""
-
+    """Only efficient for x in or close to [0, 1]."""
     # make sure x is in [0.0, 1.0]
     factor = 1.0
     while x < 0:

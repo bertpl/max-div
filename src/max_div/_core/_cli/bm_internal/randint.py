@@ -14,8 +14,7 @@ from max_div._core._utils import benchmark, stdout_to_file
 
 
 def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
-    """
-    Benchmarks the `randint` function from `max_div.sampling.uncon`.
+    """Benchmarks the `randint` function from `max_div.sampling.uncon`.
 
     Different scenarios are tested:
 
@@ -30,7 +29,6 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
     :param markdown: If `True`, outputs the results as a Markdown table.
     :param file: If `True`, redirects output to a file instead of console.
     """
-
     print("Benchmarking `randint`...")
 
     # --- speed-dependent settings --------------------
@@ -69,11 +67,11 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
                     n_nb = np.int32(n)
                     k_nb = np.int32(k)
 
-                    def func_to_benchmark():
+                    def func_to_benchmark() -> None:
                         randint(n=n_nb, k=k_nb, replace=replace, p=p, rng_state=rng_state)
                 else:
 
-                    def func_to_benchmark():
+                    def func_to_benchmark() -> None:
                         randint_python(n=n, k=k, replace=replace, p=p)
 
                 table_row.append(

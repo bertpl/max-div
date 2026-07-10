@@ -8,9 +8,9 @@ from ._base import InitializationStrategy
 
 
 class InitRandomOneShot(InitializationStrategy):
-    """
-    Initialize by taking a single (hence: one-shot) random sample of k items.  This is among the fastest
-    initialization strategies, but potentially also with the lowest quality.
+    """Initialize by taking a single (hence: one-shot) random sample of k items.
+
+    This is among the fastest initialization strategies, but potentially also with the lowest quality.
 
     Suggested use: if time constraints are severe or problem dimensions `n` or `k` are very large.
 
@@ -34,7 +34,7 @@ class InitRandomOneShot(InitializationStrategy):
        - with constraints:    ~O(kn)
     """
 
-    def __init__(self, uniform: bool = False, ignore_constraints: bool = False):
+    def __init__(self, uniform: bool = False, ignore_constraints: bool = False) -> None:
         name = "InitRandomOneShot(" + ("u" if uniform else "nu") + (",uncon)" if ignore_constraints else ")")
         super().__init__(name)
         self.uniform = uniform

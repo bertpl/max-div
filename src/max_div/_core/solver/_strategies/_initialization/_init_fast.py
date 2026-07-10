@@ -7,8 +7,8 @@ from ._base import InitializationStrategy
 
 
 class InitFast(InitializationStrategy):
-    """
-    Initialize by taking the first 'k' items (indices 0 to k-1).
+    """Initialize by taking the first 'k' items (indices 0 to k-1).
+
     This strategy is mainly intended as a baseline method for testing and benchmarking purposes, or for use cases
     where time is very constrained.
     """

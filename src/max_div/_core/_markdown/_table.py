@@ -14,23 +14,23 @@ class Table(ReportElement):
     # -------------------------------------------------------------------------
     #  Construction / Configuration
     # -------------------------------------------------------------------------
-    def __init__(self, headers: list[str]):
+    def __init__(self, headers: list[str]) -> None:
         self.headers: list[TableText] = [TableText(h) for h in headers]
         self.rows: list[list[TableElement]] = []
         self._text_layout: dict[tuple[int, int], TextLayout] = defaultdict(TextLayout)  # (row_idx, col_idx) -> layout
 
     def n_cols(self) -> int:
-        """# of table columns"""
+        """# of table columns."""
         return len(self.headers)
 
     def n_rows(self) -> int:
-        """# of table rows, excluding header"""
+        """# of table rows, excluding header."""
         return len(self.rows)
 
     # -------------------------------------------------------------------------
     #  Build
     # -------------------------------------------------------------------------
-    def add_row(self, row: list[str | TableElement]):
+    def add_row(self, row: list[str | TableElement]) -> None:
         if len(row) < self.n_cols():
             row += [""] * (self.n_cols() - len(row))
         if len(row) > self.n_cols():
@@ -42,7 +42,7 @@ class Table(ReportElement):
         self,
         agg_type: TableAggregationType,
         restrict_to_types: list[type[TableElement]] | None = None,
-    ):
+    ) -> None:
         # Identify which columns contain Aggregatable objects
         has_aggregatable = [False] * self.n_cols()
         for row in self.rows:
@@ -101,9 +101,7 @@ class Table(ReportElement):
     #  Modify
     # -------------------------------------------------------------------------
     def layout(self, i_row: int, i_col: int) -> TextLayout:
-        """
-        Get the TextLayout object for the specified cell, allowing to modify its layout properties.
-        """
+        """Get the TextLayout object for the specified cell, allowing to modify its layout properties."""
         return self._text_layout[i_row, i_col]
 
     def highlight_results(
@@ -114,12 +112,10 @@ class Table(ReportElement):
         make_bold: bool = True,
         make_italic: bool = False,
         highlight_single_values: bool = True,
-    ):
-        """
-        For each ROW, highlights the lowest and/or highest values in the table for the specified element type.
+    ) -> None:
+        """For each ROW, highlights the lowest and/or highest values in the table for the specified element type.
 
-        EXAMPLE:
-
+        Example:
             table.highlight_results(TablePercentage, clr_lowest=table.RED, clr_highest=table.GREEN, make_bold=True)
 
                 --> Highlights lowest percentages in red and highest percentages in green, making both bold.
@@ -131,7 +127,6 @@ class Table(ReportElement):
         :param make_italic: Whether to make highlighted values italic.
         :param highlight_single_values: If False, skip highlighting rows with only one value to compare.
         """
-
         for row_idx in range(self.n_rows()):
             # collect all elements of the specified type in this row
             elements_in_row = [cell for cell in self.rows[row_idx] if isinstance(cell, element_type)]
@@ -168,8 +163,7 @@ class Table(ReportElement):
     #  Render
     # -------------------------------------------------------------------------
     def render(self, markdown: bool) -> list[str]:
-        """
-        Convert the table into a list of lines that can be shown in the terminal or written to a Markdown file.
+        """Convert the table into a list of lines that can be shown in the terminal or written to a Markdown file.
 
         The following steps are taken:
             1. Convert all cell elements to a single- or multi-line string representation
@@ -177,7 +171,6 @@ class Table(ReportElement):
             3. Split rows than span multiple lines, removing 1 level of our nested list
             4. Convert final cell contents into table lines with proper padding and header separator.
         """
-
         # --- 1. Render all cells -------------------------
         # header indices  --> s =     headers[i_col][i_cell_line]
         # rows indices    --> s = rows[i_row][i_col][i_cell_line]
@@ -208,8 +201,8 @@ class Table(ReportElement):
     # -------------------------------------------------------------------------
     @staticmethod
     def _render_single_elements_of_single_row(markdown: bool, row: list[TableElement]) -> list[list[str]]:
-        """
-        Renders elements of a single row, possibly spanning multiple lines (if markdown==False)
+        """Renders elements of a single row, possibly spanning multiple lines (if markdown==False).
+
         In the return list[list[str]], the outer list spans all columns, while each inner list represents multiple
         lines of a single cell.
 
@@ -229,9 +222,9 @@ class Table(ReportElement):
 
     @staticmethod
     def _split_row_spanning_multiple_lines(row: list[list[str]]) -> list[list[str]]:
-        """
-        Takes a single row (list[list[str]]) representing cell contents that may span multiple lines,
-        and splits it into multiple rows (list[list[str]]), such that each row only spans a single line.
+        """Takes a single row (list[list[str]]) of cells that may span multiple lines and splits it into single lines.
+
+        The result is a list of rows (list[list[str]]), such that each row only spans a single line.
 
         'row' indices:    --> s = row[i_col][i_cell_line]
         'result' indices: --> s = result[i_row][i_col]
@@ -258,15 +251,14 @@ class Table(ReportElement):
 
     @staticmethod
     def _render_cell_contents_to_table_lines(headers: list[list[str]], rows: list[list[str]]) -> list[str]:
-        """
-        Takes headers & rows (both list[list[str]]) representing cell contents of the entire table and
-        renders it into a Markdown table...
+        """Takes headers & rows (both list[list[str]]) with cell contents of the entire table and renders it.
+
+        The result is a Markdown table...
           - with a horizontal separator after the header row(s)
-          - ensure that all columns are properly aligned by padding with spaces
+          - ensure that all columns are properly aligned by padding with spaces.
 
         `headers` & `rows` nested lists are such that the outer list spans rows, while inner lists represents 1 line.
         """
-
         # --- init -------------------------------
         n_header_rows = len(headers)
         contents = headers + rows

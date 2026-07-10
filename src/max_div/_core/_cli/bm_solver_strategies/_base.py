@@ -19,6 +19,8 @@ from max_div._core._utils import stdout_to_file
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from max_div._core.metrics import DiversityMetric
     from max_div._core.problem import MaxDivProblem
     from max_div._core.solver import MaxDivSolver
@@ -31,13 +33,13 @@ class SolverBenchmarkExecutor:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, scope: SolverBenchmarkScope):
+    def __init__(self, scope: SolverBenchmarkScope) -> None:
         self._scope = scope
 
     # -------------------------------------------------------------------------
     #  Main API
     # -------------------------------------------------------------------------
-    def execute(self, markdown: bool, file: bool = False):
+    def execute(self, markdown: bool, file: bool = False) -> None:
         # --- run benchmarks ------------------------------
         with self._scope as scope:
             for size, strat_name, seed in scope.params():
@@ -69,8 +71,7 @@ class SolverBenchmarkExecutor:
 #  Benchmark Scope
 # =================================================================================================
 class SolverBenchmarkScope:
-    """
-    Base class for Scope of benchmarks to run for a solver benchmark, limited to a specific test problem.
+    """Base class for Scope of benchmarks to run for a solver benchmark, limited to a specific test problem.
 
     A scope spans all (size, seed, strat_name)-tuples for one test problem.
 
@@ -84,7 +85,7 @@ class SolverBenchmarkScope:
     # -------------------------------------------------------------------------
     #  Constructor / Configuration
     # -------------------------------------------------------------------------
-    def __init__(self, solver_constructor: BenchmarkSolverConstructor, speed: float, leave_pbar: bool):
+    def __init__(self, solver_constructor: BenchmarkSolverConstructor, speed: float, leave_pbar: bool) -> None:
         # arguments influencing scope
         self._solver_constructor = solver_constructor
         self._constraints = solver_constructor.has_constraints
@@ -121,7 +122,12 @@ class SolverBenchmarkScope:
 
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         self._context_active = False
         if not self._leave_pbar:
             self._pbar.close()
@@ -132,7 +138,6 @@ class SolverBenchmarkScope:
     # -------------------------------------------------------------------------
     def params(self) -> list[tuple[int, str, int]]:
         """Returns list of (size, strat_name, seed)-tuples to benchmark."""
-
         # --- calibrate -------------------------
         n_seeds_min = 3  # we don't execute benchmarks if n_seeds < n_seeds_min
         n_seeds_max = 16  # we never do more than n_seeds_max
@@ -173,9 +178,8 @@ class SolverBenchmarkScope:
         t_elapsed_sec: float,
         diversity_score: float,
         constraint_score: float,
-    ):
+    ) -> None:
         """Register benchmark results for given (size, strat_name, seed)-tuple."""
-
         # --- register results ---
         self._t_elapsed[size, strat_name].append(t_elapsed_sec)
         self._diversity_scores[size, strat_name].append(diversity_score)
@@ -186,7 +190,7 @@ class SolverBenchmarkScope:
             self._pbar.n += 1
             self._pbar.refresh()
 
-    def show_results_tables(self, markdown: bool, file: bool):
+    def show_results_tables(self, markdown: bool, file: bool) -> None:
         benchmark_type = self.benchmark_type.lower()
         problem_name = self._solver_constructor.problem_name
 
@@ -256,8 +260,7 @@ class SolverBenchmarkScope:
 #  BenchmarkSolverConstructor
 # =================================================================================================
 class BenchmarkSolverConstructor(ABC):
-    """
-    Base class for constructing Solvers for given benchmark scope and (size, strat_name, seed)-tuple.
+    """Base class for constructing Solvers for given benchmark scope and (size, strat_name, seed)-tuple.
 
     The SolverBenchmarkExecutor can use this info to construct a pre-configured Solver for said problem with given size,
     such that it can be benchmarked.  Such class will typically focus on testing...
@@ -269,7 +272,7 @@ class BenchmarkSolverConstructor(ABC):
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, benchmark_type: str, problem_name: str, diversity_metric: DiversityMetric):
+    def __init__(self, benchmark_type: str, problem_name: str, diversity_metric: DiversityMetric) -> None:
         self._benchmark_type = benchmark_type
         self._problem_name = problem_name
         self._diversity_metric = diversity_metric

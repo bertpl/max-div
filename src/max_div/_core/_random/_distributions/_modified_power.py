@@ -1,5 +1,4 @@
-"""
-This module implements a distribution inspired by the 'power distribution', but modified to be symmetric around 0.5.
+"""This module implements a distribution inspired by the 'power distribution', but modified to be symmetric around 0.5.
 
 Properties:
     - Support: [0, 1]
@@ -51,8 +50,7 @@ def sample_modified_power_distribution(m: np.float32, rng_state: NDArray[np.uint
 
 @njit(fastmath=True, inline="always")
 def _modified_power_transform(u: np.float32, m: np.float32) -> np.float32:
-    """
-    Transform a uniform value u in [0,1] to the modified power distribution with median m in (0,0.5).
+    """Transform a uniform value u in [0,1] to the modified power distribution with median m in (0,0.5).
 
     We construct f(u) such that...
       f(0.0) = 0

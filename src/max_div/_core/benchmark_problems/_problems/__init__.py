@@ -1,6 +1,4 @@
-"""
-Package containing the actual definitions of benchmark problems.
-"""
+"""Package containing the actual definitions of benchmark problems."""
 
 # import actual benchmark problems to register them
 from ._problem_c1 import BenchmarkProblem_C1

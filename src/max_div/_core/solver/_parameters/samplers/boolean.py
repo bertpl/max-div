@@ -14,9 +14,9 @@ class BooleanAdaptiveSampler(AdaptiveSampler[bool]):
         tau_learn: float,
         tau_forget: float,
         seed: int | np.int64 = 42,
-    ):
-        """
-        Class that performs adaptive sampling of boolean values (True/False),
+    ) -> None:
+        """Class that performs adaptive sampling of boolean values (True/False).
+
         :param p_true_prior: (float in (0,1)) prior expectation of probability of sampling True.
         :param tau_learn: (float) time constant for learning from successful samples.
         :param tau_forget: (float) time constant for forgetting learned probability
@@ -42,7 +42,7 @@ class BooleanAdaptiveSampler(AdaptiveSampler[bool]):
         """Return probability of sampling True (which can be seen as the expected value if False=0, True=1)."""
         return float(self._p_true)
 
-    def feedback(self, success: bool):
+    def feedback(self, success: bool) -> None:
         if success:
             self._p_true += self._c_learn_f32 * (np.float32(self._last_sample) - self._p_true)
         elif self._forgetting_enabled:

@@ -10,7 +10,9 @@ from .presets import InitPreset
 #  Main class
 # =================================================================================================
 class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
-    def __init__(self, problem_name: str, diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION):
+    def __init__(
+        self, problem_name: str, diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION
+    ) -> None:
         super().__init__(
             benchmark_type="initialization",
             problem_name=problem_name,

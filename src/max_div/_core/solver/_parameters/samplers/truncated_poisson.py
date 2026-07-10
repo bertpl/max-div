@@ -17,10 +17,10 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
         tau_forget: float,
         large_value_penalty_exponent: float = 0.0,
         seed: int | np.int64 = 42,
-    ):
-        """
-        Class that performs adaptive sampling of a truncated Poisson distribution over interval [min_value, max_value]
-        with a prior on the Lambda parameter.  The Lambda parameter is adapted based on feedback.
+    ) -> None:
+        """Class that performs adaptive sampling of a truncated Poisson distribution over [min_value, max_value].
+
+        A prior is placed on the Lambda parameter, which is adapted based on feedback.
 
         :param min_value: (int) minimum value to sample.
         :param max_value: (int) maximum value to sample.
@@ -57,13 +57,13 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
         return sample
 
     def summary_statistic(self) -> float:
-        """
-        Returns value of the lambda parameter of the truncated Poisson distribution, which is a fast proxy
-        for the expected value of the distribution. (in the non-truncated case they are equal).
+        """Returns the value of the lambda parameter of the truncated Poisson distribution.
+
+        This is a fast proxy for the expected value of the distribution (in the non-truncated case they are equal).
         """
         return float(self._lambda)
 
-    def feedback(self, success: bool):
+    def feedback(self, success: bool) -> None:
         if success:
             c_correction = np.pow(self._lambda / np.float32(self._last_sample), self._large_value_penalty_exponent_f32)
             c_learn_f32 = self._c_learn_f32 * c_correction

@@ -9,8 +9,8 @@ from max_div._core.solver._solver_state import SolverState
 def select_items_to_remove(
     state: SolverState, k: np.int32 | int, selectivity_modifier: float, rng_state: NDArray[np.uint64]
 ) -> NDArray[np.int32]:
-    """
-    Select k items to be removed from the current selection in the provided SolverState.
+    """Select k items to be removed from the current selection in the provided SolverState.
+
     :param state: (SolverState) The current solver state containing selected items and other relevant information.
     :param k: (int) number of items to remove from the selection.
     :param selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the separation-based
@@ -21,7 +21,6 @@ def select_items_to_remove(
     :param rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
     :return: list of np.int32 indices of the items to be removed from the selection (unique values, unsorted).
     """
-
     # --- guiding probabilities for removal ---
     p = state.selected_separation_array  # this creates a copy
     exponential_selectivity(

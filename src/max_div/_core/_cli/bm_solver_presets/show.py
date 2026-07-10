@@ -27,7 +27,7 @@ def show_solver_presets_benchmark_results(
     results: list[SolverPresetBenchmarkResult],
     markdown: bool,
     markdown_file_name: str | None,
-):
+) -> None:
     # --- extract scope -----------------------------------
     problem_size = results[0].params.problem_size
     problem_names = sorted({result.params.problem_name for result in results})

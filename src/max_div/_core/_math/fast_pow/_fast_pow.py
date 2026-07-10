@@ -48,14 +48,12 @@ _S_E2 = np.float32(_D_E2)
 # -------------------------------------------------------------------------
 @numba.njit(numba.float32(numba.float32, numba.float32), fastmath=True, inline="always", cache=True)
 def fast_pow_f32(x: np.float32, t: np.float32) -> np.float32:
-    """
-    Fast 'pow' approximation using 2nd order polynomial after range reduction.
+    """Fast 'pow' approximation using 2nd order polynomial after range reduction.
 
     Approximation coefficients have been calibrated to minimize max. absolute error for...
        -->  x in [0.001, 0.999]
        -->  t in [0.05, 20.0]
     """
-
     # ---------------------------------------------------------------
     #  Approximate log2(x)
     # ---------------------------------------------------------------

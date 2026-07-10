@@ -1,5 +1,5 @@
-"""
-Custom simple random number generation module for integration in numba oriented code.
+"""Custom simple random number generation module for integration in numba oriented code.
+
 This core RNG functionality is used in the methods of ._public.py, which provides alternatives to some fundamental
 methods in numpy.random, but with significantly better performance when used inside numba.njit functions.
 
@@ -32,13 +32,13 @@ _TINY_F32 = np.float32((2**-8) * np.finfo(float32).eps)  # small (<< EPS_F32) no
 # =================================================================================================
 @numba.njit("uint64(uint64,uint64)", fastmath=True, inline="always", cache=True)
 def rotl(x: uint64, k: uint64) -> uint64:
-    """Rotate left operation"""
+    """Rotate left operation."""
     return (x << k) | (x >> (uint64(64) - k))
 
 
 @numba.njit("uint64(uint64[:])", fastmath=True, inline="always", cache=True)
 def _xoroshiro128plus_next(rng_state: NDArray[uint64]) -> uint64:
-    """Generate next random uint64 and update state in-place"""
+    """Generate next random uint64 and update state in-place."""
     s0 = rng_state[0]
     s1 = rng_state[1]
     result = s0 + s1

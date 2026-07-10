@@ -1,6 +1,4 @@
-"""
-Methods for computing pair-wise distances between vectors, along the lines of scipy's pdist.
-"""
+"""Methods for computing pair-wise distances between vectors, along the lines of scipy's pdist."""
 
 import numba
 import numpy as np
@@ -14,8 +12,7 @@ from ._enum import DistanceMetric
 #  pdist computation
 # =================================================================================================
 def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
-    """
-    Compute the pair-wise Euclidean distances between a set of n vectors in d dimensions.
+    """Compute the pair-wise Euclidean distances between a set of n vectors in d dimensions.
 
     NOTE: scipy's pdist always returns float64 arrays by default, even when input is float32.
           This represents an inefficiency (both computational & memory), but is not expected to be dominant.
@@ -26,7 +23,6 @@ def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArr
                                          with (i,j)-distance at index m*i + j - ((i+2)*(i+1))//2   for   i<j.
                                               (i,j)-distance at index m*j + i - ((j+2)*(j+1))//2   for   i>j.
     """
-
     match metric:
         case DistanceMetric.L1_MANHATTAN:
             return scipy_pdist(vectors, metric="cityblock").astype(np.float32)

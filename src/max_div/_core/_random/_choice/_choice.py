@@ -13,9 +13,7 @@ def choice(
     p: NDArray[np.float32],
     rng_state: NDArray[np.uint64],
 ) -> NDArray[np.int32]:
-    """
-    Identical in behavior to max_div.random.randint, except that it samples from the 'values' array,
-    instead of the range [0, n).
+    """Sample like max_div.random.randint, except from the 'values' array instead of the range [0, n).
 
     This method is nearly a drop-in replacement for numpy.random.choice with similar parameters, optimized for speed.
 
@@ -27,7 +25,6 @@ def choice(
     :param rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
     :return: (NDArray[np.int32]) The array of samples, size (k,), taken from the provided 'values' array.
     """
-
     # first, sample k values from range [0, n)
     n = np.int32(values.shape[0])
     samples = randint(n, k, replace, p, rng_state)
@@ -46,8 +43,7 @@ def choice1(
     p: NDArray[np.float32],
     rng_state: NDArray[np.uint64],
 ) -> np.int32:
-    """
-    Special case of choice for k=1.
+    """Special case of choice for k=1.
 
     NOTE: this method guarantees that when probabilities are provided, the returned sample will always have p[i]>0.0.
 

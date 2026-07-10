@@ -33,11 +33,10 @@ _S22 = np.float32(_D22)
 # -------------------------------------------------------------------------
 @numba.njit(numba.float64(numba.float64), fastmath=True, inline="always", cache=True)
 def fast_exp2_f64(x: np.float64) -> np.float64:
-    """
-    Fast exp approximation using 2nd order polynomial after range reduction.
-    (max rel error ~0.0026 over entire range.)
-    """
+    """Fast exp approximation using 2nd order polynomial after range reduction.
 
+    (Max rel error ~0.0026 over entire range.)
+    """
     # --- split in int + fraction -------------------------
     k = np.floor(x)  # float64
     f = x - k  # f is in [0, 1)
@@ -51,11 +50,10 @@ def fast_exp2_f64(x: np.float64) -> np.float64:
 
 @numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
 def fast_exp2_f32(x: np.float32) -> np.float32:
-    """
-    Fast log approximation using 2nd order polynomial after range reduction.
-    (max rel error ~0.0026 over entire range.)
-    """
+    """Fast exp2 approximation using 2nd order polynomial after range reduction.
 
+    (Max rel error ~0.0026 over entire range.)
+    """
     # --- split in int + fraction -------------------------
     k = np.floor(x)  # float32
     f = x - k  # f is in [0, 1)
@@ -72,18 +70,18 @@ def fast_exp2_f32(x: np.float32) -> np.float32:
 # -------------------------------------------------------------------------
 @numba.njit(numba.float64(numba.float64), fastmath=True, inline="always", cache=True)
 def fast_exp_f64(x: np.float64) -> np.float64:
-    """
-    Fast exp approximation using 2nd order polynomial after range reduction.
-    (max rel error ~0.0026 over entire range.)
+    """Fast exp approximation using 2nd order polynomial after range reduction.
+
+    (Max rel error ~0.0026 over entire range.)
     """
     return fast_exp2_f64(_D_LOG2_E * x)
 
 
 @numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
 def fast_exp_f32(x: np.float32) -> np.float32:
-    """
-    Fast exp approximation using 2nd order polynomial after range reduction.
-    (max rel error ~0.0026 over entire range.)
+    """Fast exp approximation using 2nd order polynomial after range reduction.
+
+    (Max rel error ~0.0026 over entire range.)
     """
     return fast_exp2_f32(_S_LOG2_E * x)
 

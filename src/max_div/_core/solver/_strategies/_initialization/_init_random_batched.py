@@ -10,9 +10,10 @@ from ._base import InitializationStrategy
 
 
 class InitRandomBatched(InitializationStrategy):
-    """
-    Initialize by taking `b` (hence: batches) random samples of ~round(k/n_batches) items.  After each batch,
-      the SolverState updates distances and separations, influencing sampling probabilities of the next batch.
+    """Initialize by taking `b` (hence: batches) random samples of ~round(k/n_batches) items.
+
+    After each batch, the SolverState updates distances and separations, influencing sampling probabilities
+      of the next batch.
 
     When sampling a batch, we use probabilities p[i] ~= (separation of i wrt already selected items)
                                                                             + (separation of i wrt all items)
@@ -42,15 +43,14 @@ class InitRandomBatched(InitializationStrategy):
     __MODIFY_P_METHOD: np.int32 = np.int32(20)  # method using fast_pow_f32(p[i], t)
     __SAMPLE_EAGER: bool = True  # always use eager sampling for this case
 
-    def __init__(self, b: int, ignore_constraints: bool = False):
-        """
-        Constructor for InitRandomBatched class.
+    def __init__(self, b: int, ignore_constraints: bool = False) -> None:
+        """Constructor for InitRandomBatched class.
+
         :param b: (int) Number of batches to sample (must be > 1).
         :param ignore_constraints: (bool, default=False)
                                 If `False`, respects problem constraints during initialization, if present.
                                 If `True`, constraints are ignored.
         """
-
         # --- parameter validation --------------
         if b <= 1:
             raise ValueError("InitRandomBatched requires b > 1; for b=1 use InitRandomOneShot instead.")

@@ -41,7 +41,6 @@ def solve(
     preset: str = "default",
 ) -> None:
     """Run the solver on requested benchmark problem."""
-
     # --- argument handling -------------------------------
     if (iterations is not None) and (seconds is not None):
         raise click.UsageError("Please provide only one of --iterations or --seconds.")

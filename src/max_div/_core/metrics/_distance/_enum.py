@@ -2,8 +2,7 @@ from enum import StrEnum
 
 
 class DistanceMetric(StrEnum):
-    """
-    Enum for different distance metrics.
+    """Enum for different distance metrics.
 
     Members
     -------

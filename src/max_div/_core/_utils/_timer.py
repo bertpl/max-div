@@ -1,22 +1,26 @@
 import time
+from types import TracebackType
 
 
 class Timer:
-    """
-    Class acting as a context manager to measure time elapsed.  Elapsed time can be retrieved using t_elapsed().
-    """
+    """Class acting as a context manager to measure time elapsed.  Elapsed time can be retrieved using t_elapsed()."""
 
     # --- constructor -------------------------------------
-    def __init__(self):
+    def __init__(self) -> None:
         self._start: float | None = None
         self._end: float | None = None
 
     # --- context manager ---------------------------------
-    def __enter__(self):
+    def __enter__(self) -> "Timer":
         self._start = time.perf_counter_ns()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         self._end = time.perf_counter_ns()
 
     # --- extract results ---------------------------------

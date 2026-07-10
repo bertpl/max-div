@@ -11,7 +11,7 @@ class BenchmarkProblem(ABC):
     # -------------------------------------------------------------------------
     #  Registration hook
     # -------------------------------------------------------------------------
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any) -> None:  # noqa: ANN401 -- forwarded to type.__init_subclass__
         """This method ensures each child class is registered in the BenchmarkProblemRegistry upon import."""
         super().__init_subclass__(**kwargs)
         BenchmarkProblemRegistry.register(cls)
@@ -34,29 +34,29 @@ class BenchmarkProblem(ABC):
     @classmethod
     @abstractmethod
     def supported_params(cls) -> dict[str, str]:
-        """
-        Return a dictionary of supported parameters for this benchmark problem,
-        as (param_name, param_description) key-value pairs in a dict.
+        """Return a dictionary of supported parameters for this benchmark problem.
+
+        Parameters are returned as (param_name, param_description) key-value pairs in a dict.
         """
         raise NotImplementedError
 
     @classmethod
     @abstractmethod
     def get_example_parameters(cls) -> dict[str, Any]:
-        """
-        Return a dictionary of example acceptable parameter values for this benchmark problem,
-        as (param_name, example_value) key-value pairs in a dict.
+        """Return a dictionary of example acceptable parameter values for this benchmark problem.
+
+        Values are returned as (param_name, example_value) key-value pairs in a dict.
         """
         raise NotImplementedError
 
     @classmethod
     @abstractmethod
-    def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
-        """
-        Returns problem dimensions as (d, n, k, m, n_con_indices)-tuple for this benchmark problem,
-        given the provided parameters.  These dimensions can be indicative (especially n_con_indices), if
-        they are stochastic.  Main goal of this method is to get an idea of dimensions without needing to create
-        the full problem instance.
+    def get_problem_dimensions(cls, **kwargs: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
+        """Returns problem dimensions as (d, n, k, m, n_con_indices)-tuple for this benchmark problem.
+
+        Dimensions are computed given the provided parameters.  These dimensions can be indicative
+        (especially n_con_indices), if they are stochastic.  Main goal of this method is to get an idea of
+        dimensions without needing to create the full problem instance.
 
         :param kwargs: parameters passed to create_problem_instance() for which we want to know resulting dimensions.
         """
@@ -66,12 +66,11 @@ class BenchmarkProblem(ABC):
     #  Problem creation
     # -------------------------------------------------------------------------
     @classmethod
-    def create_problem_instance(cls, **kwargs) -> MaxDivProblem:
-        """
-        Create and return an instance of MaxDivProblem for this benchmark problem,
-        using the provided parameters as needed.
-        """
+    def create_problem_instance(cls, **kwargs: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+        """Create and return an instance of MaxDivProblem for this benchmark problem.
 
+        The provided parameters are used as needed.
+        """
         # --- validate ----------------
         supported_params = cls.supported_params().keys()
         for key in kwargs.keys():
@@ -86,7 +85,7 @@ class BenchmarkProblem(ABC):
 
     @classmethod
     @abstractmethod
-    def _create_problem_instance(cls, **kwargs) -> MaxDivProblem:
+    def _create_problem_instance(cls, **kwargs: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
         raise NotImplementedError
 
 
@@ -99,7 +98,7 @@ class BenchmarkProblemRegistry:
     _registry: ClassVar[dict[str, type[BenchmarkProblem]]] = {}  # name -> class
 
     @classmethod
-    def register(cls, problem_class: type[BenchmarkProblem]):
+    def register(cls, problem_class: type[BenchmarkProblem]) -> None:
         cls._registry[problem_class.name()] = problem_class
 
     @classmethod

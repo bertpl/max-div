@@ -16,7 +16,7 @@ def execute_solver_presets_benchmark(
     executor: Callable[
         [list[SolverPresetBenchmarkParams], int], list[SolverPresetBenchmarkResult]
     ] = executor_multi_parallel,
-):
+) -> list[SolverPresetBenchmarkResult]:
     # --- semi-randomization ------------------------------
     # first we shuffle, and then we sort from long to short durations
     # --> this way we will shuffle presets and problems, but still process short duration runs last

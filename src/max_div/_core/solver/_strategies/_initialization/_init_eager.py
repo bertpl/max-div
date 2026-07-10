@@ -8,10 +8,11 @@ from ._base import InitializationStrategy
 
 
 class InitEager(InitializationStrategy):
-    """
-    Initialize by adding 1 sample at a time (`k` iterations), where each for each added sample we...
+    """Initialize by adding 1 sample at a time (`k` iterations).
+
+    For each added sample we...
       - start from a set of `nc` randomly sampled candidates
-      - we take the candidate which results in the highest score
+      - we take the candidate which results in the highest score.
 
     After each iteration, the SolverState updates distances and separations, influencing sampling probabilities
       of the next batch of candidates.
@@ -42,15 +43,14 @@ class InitEager(InitializationStrategy):
     __MODIFY_P_METHOD: np.int32 = np.int32(20)  # method using fast_pow_f32(p[i], t)
     __SAMPLE_EAGER: bool = True  # always use eager sampling for this case
 
-    def __init__(self, nc: int, ignore_constraints: bool = False):
-        """
-        Constructor for InitRandomBatched class.
+    def __init__(self, nc: int, ignore_constraints: bool = False) -> None:
+        """Constructor for InitEager class.
+
         :param nc: (int) Number of candidates to sample in each iteration.
         :param ignore_constraints: (bool, default=False)
                         If `False`, respects problem constraints during initialization, if present.
                         If `True`, constraints are ignored when sampling candidates and when comparing scores.
         """
-
         # --- parameter validation --------------
         if nc <= 1:
             raise ValueError("InitEager requires nc > 1; for nc=1 use InitRandomBatched with b=k instead.")

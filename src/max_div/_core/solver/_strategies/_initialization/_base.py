@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 #  InitializationStrategy
 # =================================================================================================
 class InitializationStrategy(StrategyBase, ABC):
-    """
-    Base class for strategies that produce an initial selection of ``k`` vectors.
+    """Base class for strategies that produce an initial selection of ``k`` vectors.
 
     Use the factory methods (`fast`, `random_one_shot`, `random_batched`,
     `eager`) to create instances.
@@ -25,8 +24,7 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @abstractmethod
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
-        """
-        Return next batch of samples to be added to the initial selection.
+        """Return next batch of samples to be added to the initial selection.
 
         This method is called repeatedly by the Solver, until enough samples have been selected to
         reach the desired selection size.
@@ -44,16 +42,20 @@ class InitializationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
     @classmethod
     def fast(cls) -> Self:
-        """Deterministic greedy initialization. Selects vectors one-by-one, always picking the one
-        that maximizes separation from the current selection. Fast but seed-independent."""
+        """Deterministic greedy initialization.
+
+        Selects vectors one-by-one, always picking the one that maximizes separation from the current selection.
+        Fast but seed-independent.
+        """
         from ._init_fast import InitFast
 
         return InitFast()
 
     @classmethod
     def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> Self:
-        """Random initialization that selects all ``k`` vectors in a single batch,
-        with probabilities biased by global separation (unless ``uniform=True``).
+        """Random initialization that selects all ``k`` vectors in a single batch.
+
+        Probabilities are biased by global separation (unless ``uniform=True``).
 
         :param uniform: If True, sample uniformly instead of using separation-based probabilities.
         :param ignore_constraints: If True, ignore constraints during sampling.
@@ -67,8 +69,9 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def random_batched(cls, b: int, ignore_constraints: bool = False) -> Self:
-        """Random initialization that selects vectors in batches of ``b``,
-        re-evaluating separations between batches.
+        """Random initialization that selects vectors in batches of ``b``.
+
+        Separations are re-evaluated between batches.
 
         :param b: Batch size (number of vectors to select per batch).
         :param ignore_constraints: If True, ignore constraints during sampling.
@@ -82,8 +85,9 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def eager(cls, nc: int, ignore_constraints: bool = False) -> Self:
-        """Greedy initialization that evaluates ``nc`` random candidates per step
-        and picks the best one. Higher ``nc`` gives better quality but is slower.
+        """Greedy initialization that evaluates ``nc`` random candidates per step and picks the best one.
+
+        Higher ``nc`` gives better quality but is slower.
 
         :param nc: Number of candidates to evaluate at each step.
         :param ignore_constraints: If True, ignore constraints during sampling.

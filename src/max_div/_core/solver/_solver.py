@@ -13,8 +13,7 @@ from ._solver_step import SolverStep, SolverStepResult
 
 
 class MaxDivSolver:
-    """
-    Solver that combines a maximum diversity problem with a solver configuration.
+    """Solver that combines a maximum diversity problem with a solver configuration.
 
     Use [`MaxDivSolverBuilder`][max_div.solver.MaxDivSolverBuilder] to create instances --
     it provides convenient defaults, presets and validation.
@@ -33,9 +32,8 @@ class MaxDivSolver:
         constraints: list[Constraint],
         solver_steps: list[SolverStep],
         seed: int = 42,
-    ):
-        """
-        Initialize the MaxDivSolver with the given configuration.
+    ) -> None:
+        """Initialize the MaxDivSolver with the given configuration.
 
         :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
         :param k: (int) The number of vectors to be selected from the input set ('universe').
@@ -48,7 +46,6 @@ class MaxDivSolver:
                                        while all latter ones need to be OptimizationSteps.
         :param seed: (int) Random seed for the solver.
         """
-
         # --- problem description -------------------------
         self._vectors = vectors
         self._k = k
@@ -65,8 +62,8 @@ class MaxDivSolver:
     #  API
     # -------------------------------------------------------------------------
     def solve(self, verbosity: int = 10) -> MaxDivSolution:
-        """
-        Solve the maximum diversity problem with the given configuration.
+        """Solve the maximum diversity problem with the given configuration.
+
         :param verbosity: (int) The verbosity level.
                              0 = silent,
                             10 = tqdm progress bar per solver step
@@ -74,7 +71,7 @@ class MaxDivSolver:
                                    20  -->  slowest updates  (spacing increasing with 10%)
                                    21  -->  slower  updates  (spacing increasing with  5%)
                                    22  -->  faster  updates  (spacing increasing with  2%)
-                                   23  -->  fastest updates  (spacing increasing with  1%)
+                                   23  -->  fastest updates  (spacing increasing with  1%).
 
                                    25  -->  debug mode       (1% spacing + debug info column)
         :return: A MaxDivSolution object representing the solution found.
@@ -151,7 +148,6 @@ class MaxDivSolver:
     @staticmethod
     def _construct_final_solution(state: SolverState, step_results: dict[str, SolverStepResult]) -> MaxDivSolution:
         """Construct the final MaxDivSolution from the current state & step results."""
-
         # --- collect step durations --------------------
         step_durations = {step_name: result.elapsed for step_name, result in step_results.items()}
 

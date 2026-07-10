@@ -1,3 +1,5 @@
+"""Public API for building and running Maximum Diversity solvers."""
+
 from ._core.solver import (
     InitializationStrategy,
     MaxDivSolver,

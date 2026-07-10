@@ -1,3 +1,5 @@
+"""Public API for solver solutions, scores, and elapsed-time reporting."""
+
 from ._core.solver import MaxDivSolution, Score
 from ._core.solver._duration import Elapsed
 

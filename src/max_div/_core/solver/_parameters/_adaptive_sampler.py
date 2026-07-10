@@ -1,6 +1,6 @@
-"""
-Functionality for adaptively sampling from histograms, where through RL-style feedback, we influence future samples,
-with the goal of maximizing 'successful' samples.  We provide a base class with core sampling & feedback API,
+"""Functionality for adaptively sampling from histograms, influencing future samples through RL-style feedback.
+
+The goal is to maximize 'successful' samples.  We provide a base class with core sampling & feedback API,
 with specific implementations found in the 'samplers' sub-package.
 
 The following common elements are imposed / assumed:
@@ -19,7 +19,7 @@ The following common elements are imposed / assumed:
 """
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic, Never, TypeVar
 
 import numpy as np
 
@@ -46,7 +46,7 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
         tau_learn: float,
         tau_forget: float,
         seed: int | np.int64 = 42,
-    ):
+    ) -> None:
         # --- dummy initial values --------------
         self._tau_learn, self._tau_forget = -1.0, -1.0
         self._c_learn, self._c_forget = 0.0, 0.0
@@ -58,11 +58,11 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
         self.update_tau(tau_learn, tau_forget)
         self.update_seed(seed)
 
-    def update_seed(self, seed: np.int64 | int):
+    def update_seed(self, seed: np.int64 | int) -> None:
         """Update the seed for the random number generator used by the sampler."""
         self._rng_state = new_rng_state(int_to_int64(seed))  # rng_state matches better with downstream usage than seed
 
-    def update_tau(self, tau_learn: float | None = None, tau_forget: float | None = None):
+    def update_tau(self, tau_learn: float | None = None, tau_forget: float | None = None) -> None:
         """Update the time constants for learning and forgetting."""
         if (tau_learn is not None) and (tau_learn != self._tau_learn):
             self._tau_learn = tau_learn
@@ -90,11 +90,11 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
 
     @abstractmethod
     def summary_statistic(self) -> float:
-        """Return summary statistic of the distribution (expected value, mode, median or a proxy)"""
+        """Return summary statistic of the distribution (expected value, mode, median or a proxy)."""
         raise NotImplementedError
 
     @abstractmethod
-    def feedback(self, success: bool):
+    def feedback(self, success: bool) -> Never:
         """Provide feedback to the sampler whether the last sample was successful."""
         raise NotImplementedError
 

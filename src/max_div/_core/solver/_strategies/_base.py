@@ -15,9 +15,9 @@ class StrategyBase:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, name: str | None = None):
-        """
-        Initialize the strategy.
+    def __init__(self, name: str | None = None) -> None:
+        """Initialize the strategy.
+
         :param name: optional name of the strategy; if omitted class name is used.
         """
         self._name: str = name or self.__class__.__name__
