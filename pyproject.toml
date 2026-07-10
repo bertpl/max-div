@@ -8,11 +8,20 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "numpy>=2.0.0",
-    "scipy>=1.10.0",
+    # Per-Python floors: each is the earliest release shipping a wheel for that CPython,
+    # so `lowest-direct` CI legs install wheels instead of attempting source builds.
+    "numpy>=2.0.0; python_version < '3.13'",
+    "numpy>=2.1.0; python_version == '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
+    "scipy>=1.10.0; python_version < '3.13'",
+    "scipy>=1.14.1; python_version == '3.13'",
+    "scipy>=1.16.1; python_version >= '3.14'",
+    "numba>=0.57; python_version < '3.12'",
+    "numba>=0.59; python_version == '3.12'",
+    "numba>=0.61; python_version == '3.13'",
+    "numba>=0.63; python_version >= '3.14'",
     "click>=8.2.0",
     "tqdm>=4.66.0",
-    "numba>=0.57",
     "icc-rt; platform_machine == 'x86_64' and platform_system == 'Linux'",
     "intel-cmplr-lib-rt; platform_machine == 'x86_64' and platform_system == 'Linux'",
 ]
@@ -37,10 +46,14 @@ dev = [
     "pytest-xdist>=3.5.0",
     "pytest-rerunfailures>=14.0",
     "scipy-stubs>=1.10.0",
+]
+# notebook/analysis tooling — not needed to run the test suite, so kept out of the
+# dev group that CI installs (and out of the lowest-direct resolution surface)
+notebooks = [
     "jupyter>=1.1.0",
     "ipywidgets>=8.0.0",
     "matplotlib>=3.3.0",
-    "cvxpy[ECOS,OSQP]>=1.7.1"
+    "cvxpy[ECOS,OSQP]>=1.7.1",
 ]
 
 [project.scripts]

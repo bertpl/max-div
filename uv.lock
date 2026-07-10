@@ -3,7 +3,9 @@ revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14'",
-    "python_full_version < '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version == '3.12.*'",
+    "python_full_version < '3.12'",
 ]
 
 [[package]]
@@ -1673,11 +1675,7 @@ docs = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "cvxpy", extra = ["ecos"] },
     { name = "genbadge", extra = ["all"] },
-    { name = "ipywidgets" },
-    { name = "jupyter" },
-    { name = "matplotlib" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1685,6 +1683,12 @@ dev = [
     { name = "pytest-xdist" },
     { name = "ruff" },
     { name = "scipy-stubs" },
+]
+notebooks = [
+    { name = "cvxpy", extra = ["ecos"] },
+    { name = "ipywidgets" },
+    { name = "jupyter" },
+    { name = "matplotlib" },
 ]
 
 [package.metadata]
@@ -1697,21 +1701,24 @@ requires-dist = [
     { name = "mkdocs-include-markdown-plugin", marker = "extra == 'docs'", specifier = ">=7.2.0" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.0.0" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.24.0" },
-    { name = "numba", specifier = ">=0.57" },
-    { name = "numpy", specifier = ">=2.0.0" },
+    { name = "numba", marker = "python_full_version < '3.12'", specifier = ">=0.57" },
+    { name = "numba", marker = "python_full_version == '3.12.*'", specifier = ">=0.59" },
+    { name = "numba", marker = "python_full_version == '3.13.*'", specifier = ">=0.61" },
+    { name = "numba", marker = "python_full_version >= '3.14'", specifier = ">=0.63" },
+    { name = "numpy", marker = "python_full_version < '3.13'", specifier = ">=2.0.0" },
+    { name = "numpy", marker = "python_full_version == '3.13.*'", specifier = ">=2.1.0" },
+    { name = "numpy", marker = "python_full_version >= '3.14'", specifier = ">=2.3.2" },
     { name = "ruff", marker = "extra == 'docs'", specifier = ">=0.14.0" },
-    { name = "scipy", specifier = ">=1.10.0" },
+    { name = "scipy", marker = "python_full_version < '3.13'", specifier = ">=1.10.0" },
+    { name = "scipy", marker = "python_full_version == '3.13.*'", specifier = ">=1.14.1" },
+    { name = "scipy", marker = "python_full_version >= '3.14'", specifier = ">=1.16.1" },
     { name = "tqdm", specifier = ">=4.66.0" },
 ]
 provides-extras = ["docs"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "cvxpy", extras = ["ecos", "osqp"], specifier = ">=1.7.1" },
     { name = "genbadge", extras = ["all"], specifier = ">=1.1.2" },
-    { name = "ipywidgets", specifier = ">=8.0.0" },
-    { name = "jupyter", specifier = ">=1.1.0" },
-    { name = "matplotlib", specifier = ">=3.3.0" },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=6.0" },
@@ -1719,6 +1726,12 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.5.0" },
     { name = "ruff", specifier = ">=0.14.0" },
     { name = "scipy-stubs", specifier = ">=1.10.0" },
+]
+notebooks = [
+    { name = "cvxpy", extras = ["ecos", "osqp"], specifier = ">=1.7.1" },
+    { name = "ipywidgets", specifier = ">=8.0.0" },
+    { name = "jupyter", specifier = ">=1.1.0" },
+    { name = "matplotlib", specifier = ">=3.3.0" },
 ]
 
 [[package]]
