@@ -1,0 +1,84 @@
+# Reusable package-integrity check: build the distribution once, verify the
+# wheel statically, then blind-install it into a bare environment and run the
+# test suite against it. Guards the packaging layer (empty wheel, missing
+# modules, broken entry point) that editable-install test runs can never see.
+# Called from the PR pipeline (behind ci-gate) and from the release pipeline
+# (before publish, which reuses the exact artifact tested here).
+name: Package check
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      # Static gate: catches structurally broken wheels (empty, missing the
+      # declared import package, ...) before the install job spins up.
+      - name: Check wheel contents
+        run: uv run --frozen check-wheel-contents dist/*.whl
+
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  install-test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Download distribution artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      # Blind environment: test deps come lockfile-pinned from the dev group
+      # (--no-emit-project keeps the project itself out), and max_div can only
+      # come from the built wheel — never an editable/source install.
+      - name: Install the built wheel into a bare environment
+        run: |
+          uv export --frozen --no-emit-project --only-group dev -o requirements.txt
+          uv venv blind-venv
+          uv pip install --python blind-venv/bin/python -r requirements.txt
+          WHEEL=(dist/*.whl)
+          uv pip install --python blind-venv/bin/python "max-div @ file://$PWD/${WHEEL[0]}"
+
+      - name: Assert the environment is blind
+        run: |
+          blind-venv/bin/python -c "
+          import max_div
+          path = max_div.__file__
+          assert 'site-packages' in path, f'max_div resolves outside site-packages: {path}'
+          print(f'OK: max_div imported from {path}')
+          "
+
+      - name: Run the test suite against the installed wheel
+        run: blind-venv/bin/python -m pytest tests/
+
+      - name: Smoke-test the CLI entry point
+        run: blind-venv/bin/max-div --help
