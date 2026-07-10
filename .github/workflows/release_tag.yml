@@ -35,9 +35,15 @@ jobs:
     needs: validate-tag-version
     uses: ./.github/workflows/_unit_tests.yml
 
+  # Build + blind-install gate: the same package check PRs run behind ci-gate.
+  # Publishing below reuses the exact artifact this job built and tested.
+  package-check:
+    needs: validate-tag-version
+    uses: ./.github/workflows/_package_check.yml
+
   publish-to-prod:
     name: Publish "${{ github.ref_name }}" to PyPI
-    needs: test
+    needs: [test, package-check]
     runs-on: ubuntu-latest
     environment: prod
     permissions:
@@ -45,16 +51,11 @@ jobs:
       # mandatory for PyPI Trusted Publishing (OIDC)
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - name: Download the tested distribution artifact
+        uses: actions/download-artifact@v8
         with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ vars.UV_VERSION }}
-          enable-cache: false  # release path never restores from a poisonable cache
-
-      - name: Build package
-        run: uv build
+          name: dist
+          path: dist
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

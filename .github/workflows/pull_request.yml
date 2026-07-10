@@ -75,6 +75,13 @@ jobs:
     needs: [preflight]
     uses: ./.github/workflows/_unit_tests.yml
 
+  # Package-integrity gate: build once, verify the wheel statically, then
+  # blind-install the artifact and test against it — catches packaging holes
+  # (empty wheel, missing modules) that editable-install runs cannot see.
+  package:
+    needs: [preflight]
+    uses: ./.github/workflows/_package_check.yml
+
   ci-gate:
     name: CI gate
     # The single stable required check on main: branch protection requires only
@@ -82,7 +89,7 @@ jobs:
     # `always()` is load-bearing — without it the gate is skipped when an
     # upstream job fails, and GitHub treats a skipped required check as passing.
     if: always()
-    needs: [preflight, pre-commit, test]
+    needs: [preflight, pre-commit, test, package]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed
