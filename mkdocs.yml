@@ -33,7 +33,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [.]
+          paths: [src]
           options:
             # These options specifically help with complex signatures
             separate_signature: true
