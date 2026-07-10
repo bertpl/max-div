@@ -11,10 +11,11 @@ from ._helpers import remove_sample_from_candidates_and_p
 
 
 class SamplingType(StrEnum):
-    """
-    When sampling 'k' elements for addition to the selection, this can happen in 2 different contexts:
+    """Context in which 'k' elements are sampled for addition to the selection.
+
+    Sampling can happen in 2 different contexts:
      - we want 'k' items to be added as a 'group' (all or nothing)             --> GROUP
-     - we want 'k' candidate items, only one of which (the best) will be added --> CANDIDATES
+     - we want 'k' candidate items, only one of which (the best) will be added --> CANDIDATES.
 
     In case of a constrained problem, the expected behavior of how to take constraints into account will differ:
      - GROUP      -> we try to select the 'k' items such that, as a whole, they will satisfy the constraints
@@ -36,9 +37,10 @@ def select_items_to_add(
     include_within_group_separation: bool = True,
     ignore_constraints: bool = False,
 ) -> NDArray[np.int32]:
-    """
-    Select k items from 'candidates' to be added to the provided SolverState.  candidates are guaranteed to be a subset
-    of the not-selected items in the SolverState.
+    """Select k items from 'candidates' to be added to the provided SolverState.
+
+    Candidates are guaranteed to be a subset of the not-selected items in the SolverState.
+
     :param state: (SolverState) The current solver state containing selected items and other relevant information.
     :param candidates: (NDArray[np.int32]) array of candidate item indices to choose from
                                                     (must be a subset of not-selected items; must be of size>=k)
@@ -56,7 +58,6 @@ def select_items_to_add(
     :param ignore_constraints: (bool) If True, constraints are ignored even if present in the SolverState.
     :return: list of np.int32 indices of the items to be added to the selection (unique values, unsorted).
     """
-
     # --- prepare probabilities ---------------------------
     if state.n_selected == 0:
         # the only option is to look at separation wrt all other items, as we don't have a selection yet

@@ -1,5 +1,4 @@
-"""
-Module with scheduling-related classes and functions for the max_div package.
+"""Module with scheduling-related classes and functions for the max_div package.
 
 With 'scheduling' we refer to letting parameters evolve according to a certain schedule over the duration of
  executing of a SolverStep, based on the progress fraction in [0.0, 1.0].
@@ -16,10 +15,10 @@ from .base import ParameterValueSource
 #  Base class
 # =================================================================================================
 class ParameterSchedule(ParameterValueSource):
-    def __init__(self, v0: float, v1: float, c_poly: list[float], name: str = ""):
-        """
-        Initializes a ScheduledParameter instance, where the parameter value `v` as a function of
-          progress fraction `f` in [0.0, 1.0] is defined as follows:
+    def __init__(self, v0: float, v1: float, c_poly: list[float], name: str = "") -> None:
+        """Initializes a ScheduledParameter instance.
+
+        The parameter value `v` as a function of progress fraction `f` in [0.0, 1.0] is defined as follows:
 
             v(f) = v0 + (v1 - v0) * s(f)
         with
@@ -41,12 +40,11 @@ class ParameterSchedule(ParameterValueSource):
         self.name = name or f"ParameterSchedule(v0={v0}, v1={v1}, c_poly={c_poly})"
 
     def get_value(self, f: float) -> float:
-        """
-        Compute the value of the parameter at progress fraction f in [0.0, 1.0].
+        """Compute the value of the parameter at progress fraction f in [0.0, 1.0].
+
         NOTE: this function is provided as a reference implementation for computing the scheduled value;
               in performance-critical code paths, more efficient implementations should be preferred.
         """
-
         # --- compute v(f) ----------------------
         f = max(0.0, min(1.0, f))  # clip f to [0.0, 1.0]
         sf = self.c_poly[0] + self.c_poly[1] * f + self.c_poly[2] * (f * f) + self.c_poly[3] * (f * f * f)
@@ -80,22 +78,22 @@ class ParameterSchedule(ParameterValueSource):
 #  Child classes
 # =================================================================================================
 class LinearSchedule(ParameterSchedule):
-    def __init__(self, v0: float, v1: float):
+    def __init__(self, v0: float, v1: float) -> None:
         super().__init__(v0, v1, [0.0, 1.0, 0.0, 0.0], f"linear({v0:.2f},{v1:.2f})")
 
 
 class EaseInSchedule(ParameterSchedule):
-    def __init__(self, v0: float, v1: float):
+    def __init__(self, v0: float, v1: float) -> None:
         super().__init__(v0, v1, [0.0, 0.0, 1.0, 0.0], f"ease_in({v0:.2f},{v1:.2f})")
 
 
 class EaseOutSchedule(ParameterSchedule):
-    def __init__(self, v0: float, v1: float):
+    def __init__(self, v0: float, v1: float) -> None:
         super().__init__(v0, v1, [0.0, 2.0, -1.0, 0.0], f"ease_out({v0:.2f},{v1:.2f})")
 
 
 class EaseInOutSchedule(ParameterSchedule):
-    def __init__(self, v0: float, v1: float):
+    def __init__(self, v0: float, v1: float) -> None:
         super().__init__(v0, v1, [0.0, 0.0, 3.0, -2.0], f"ease_in_out({v0:.2f},{v1:.2f})")
 
 
@@ -126,14 +124,14 @@ def ease_in_out(v0: float, v1: float) -> ParameterSchedule:
 #  NUMBA-acceleration
 # =================================================================================================
 def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[np.float64]:
-    """
-    Convert a list of ParameterSchedule instances to a 2D numpy array for use in low-level numba-optimized
-      schedule evaluation functions.
+    """Convert a list of ParameterSchedule instances to a 2D numpy array.
+
+    The array is intended for use in low-level numba-optimized schedule evaluation functions.
+
     :param schedules: list of ParameterSchedule instances
     :return: 2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
-                        [min_value, max_value, d0, d1, d2, d3]
+                        [min_value, max_value, d0, d1, d2, d3].
     """
-
     # --- prep ------------------------
     n_schedules = len(schedules)
     arr = np.empty((n_schedules, 6), dtype=np.float64)
@@ -162,14 +160,13 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
 
 @numba.njit(fastmath=True, inline="always", cache=True)
 def _evaluate_schedules(schedules_array: NDArray[np.float64], f: float) -> NDArray[np.float64]:
-    """
-    Evaluate multiple ParameterSchedule instances at once, given their numpy array representation.
+    """Evaluate multiple ParameterSchedule instances at once, given their numpy array representation.
+
     :param schedules_array: 2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
                         [min_value, max_value, d0, d1, d2, d3]
     :param f: progress fraction in [0.0, 1.0]
-    :return: 1D numpy array of shape (n_schedules,) with evaluated parameter values
+    :return: 1D numpy array of shape (n_schedules,) with evaluated parameter values.
     """
-
     # --- prep ------------------------
     n_schedules = schedules_array.shape[0]
     values = np.empty(n_schedules, dtype=np.float64)

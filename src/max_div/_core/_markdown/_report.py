@@ -7,13 +7,13 @@ class Report:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self) -> None:
         self._elements: list[ReportElement] = []
 
     # -------------------------------------------------------------------------
     #  Build Report
     # -------------------------------------------------------------------------
-    def add(self, elements: ReportElement | str | list[ReportElement | str]):
+    def add(self, elements: ReportElement | str | list[ReportElement | str]) -> None:
         if not isinstance(elements, list):
             elements = [elements]
         elements = [ReportText(el) if isinstance(el, str) else el for el in elements]
@@ -50,6 +50,6 @@ class Report:
         # --- done ----------------------------------------
         return cleaned_lines
 
-    def print(self, markdown: bool):
+    def print(self, markdown: bool) -> None:
         for line in self.render(markdown):
             print(line)

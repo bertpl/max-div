@@ -1,3 +1,5 @@
+"""max-div: a configurable solver for Maximum Diversity Problems with optional fairness constraints."""
+
 from max_div.benchmark_problems import *  # noqa: F403
 from max_div.benchmark_problems import __all__ as _all_benchmark_problems
 from max_div.metrics import *  # noqa: F403

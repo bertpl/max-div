@@ -13,10 +13,10 @@ def determine_benchmark_scope_for_max_duration(
     max_duration_sec: float,
     max_run_duration_sec: float | None = None,
 ) -> tuple[float, list[SolverPresetBenchmarkParams]]:
-    """
-    Compute full list of benchmark runs to be executed based on presets, problems, size, and target duration.
+    """Compute full list of benchmark runs to be executed based on presets, problems, size, and target duration.
+
     This method auto-tunes speed to fall just within the target duration.
-    Returns (speed, scope)-tuple
+    Returns (speed, scope)-tuple.
     """
 
     def _get_scope_for_speed(_speed: float) -> list[SolverPresetBenchmarkParams]:
@@ -59,7 +59,6 @@ def determine_benchmark_scope(
     max_run_duration_sec: float | None = None,
 ) -> list[SolverPresetBenchmarkParams]:
     """Compute full list of benchmark runs to be executed based on presets, problems, size, and speed."""
-
     # --- speed-dependent settings ------------------------
     interp_speed = [0.0, 0.5, 0.99, 1.0]
     interp_max_duration_sec = [24 * 3600.0, 2 * 3600.0, 2.0, 1e-3]

@@ -1,3 +1,5 @@
+"""Public API for defining Maximum Diversity problems and constraints."""
+
 from ._core.constraints import Constraint
 from ._core.problem import MaxDivProblem
 

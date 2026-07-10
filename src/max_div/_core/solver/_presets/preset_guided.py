@@ -10,16 +10,15 @@ from max_div._core.solver._strategies import InitializationStrategy, Optimizatio
 def get_preset_strategies_guided(
     target_duration: TargetDuration,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
-    """
+    """Get strategies for the GUIDED preset.
+
     This preset consists of...
       - InitFast initialization strategy
       - GuidedSwaps optimization strategy
-          --> parameters chosen to be reasonable for both unconstrained & constrained problems
+          --> parameters chosen to be reasonable for both unconstrained & constrained problems.
 
-    :param problem: (MaxDivProblem) The problem for which we want to determine a solver configuration.
     :param target_duration: (TargetDuration) The target duration to aim for.  (iteration- or time-based)
     """
-
     # --- initialization ----------------------------------
     init_strategy = InitializationStrategy.random_one_shot(uniform=True, ignore_constraints=True)
 

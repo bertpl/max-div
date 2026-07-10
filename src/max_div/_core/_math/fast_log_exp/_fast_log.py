@@ -29,11 +29,10 @@ _S22 = np.float32(_D22)
 # -------------------------------------------------------------------------
 @numba.njit(numba.float64(numba.float64), fastmath=True, inline="always", cache=True)
 def fast_log2_f64(x: np.float64) -> np.float64:
-    """
-    Fast log approximation using 2nd order polynomial after range reduction.
-    (max abs error ~0.0075 over entire range.)
-    """
+    """Fast log approximation using 2nd order polynomial after range reduction.
 
+    (Max abs error ~0.0075 over entire range.)
+    """
     # --- extract mantissa & exponent ---------------------
     # exponent
     xi = np.int64(np.float64(x).view(np.int64))
@@ -51,11 +50,10 @@ def fast_log2_f64(x: np.float64) -> np.float64:
 
 @numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
 def fast_log2_f32(x: np.float32) -> np.float32:
-    """
-    Fast log approximation using 2nd order polynomial after range reduction.
-    (max abs error ~0.0075 over entire range.)
-    """
+    """Fast log approximation using 2nd order polynomial after range reduction.
 
+    (Max abs error ~0.0075 over entire range.)
+    """
     # --- extract mantissa & exponent ---------------------
     # exponent
     xi = np.int32(np.float32(x).view(np.int32))
@@ -76,18 +74,18 @@ def fast_log2_f32(x: np.float32) -> np.float32:
 # -------------------------------------------------------------------------
 @numba.njit(numba.float64(numba.float64), fastmath=True, inline="always", cache=True)
 def fast_log_f64(x: np.float64) -> np.float64:
-    """
-    Fast log approximation using 2nd order polynomial after range reduction.
-    (max abs error ~0.0052 over entire range)
+    """Fast log approximation using 2nd order polynomial after range reduction.
+
+    (Max abs error ~0.0052 over entire range.)
     """
     return _D_LOG_2 * fast_log2_f64(x)
 
 
 @numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
 def fast_log_f32(x: np.float32) -> np.float32:
-    """
-    Fast log approximation using 2nd order polynomial after range reduction.
-    (max abs error ~0.0052 over entire range)
+    """Fast log approximation using 2nd order polynomial after range reduction.
+
+    (Max abs error ~0.0052 over entire range.)
     """
     return _S_LOG_2 * fast_log2_f32(x)
 

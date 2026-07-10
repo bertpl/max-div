@@ -25,8 +25,7 @@ from max_div._core.constraints import Constraint, ConstraintList
 #  Main benchmark function
 # =================================================================================================
 def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
-    """
-    Benchmarks the `randint_constrained` function from `max_div.sampling.con`.
+    """Benchmarks the `randint_constrained` function from `max_div.sampling.con`.
 
     Different scenarios are tested across different values of `k`, `n` & `m` (# of constraints):
 
@@ -54,7 +53,6 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
     :param markdown: If `True`, outputs the results as a Markdown table.
     :param file: If `True`, redirects output to a file instead of console.
     """
-
     # --- speed-dependent settings --------------------
     max_count = int(100 * (0.01**speed))  # max_count=100 if speed=0;  max_count=1 at speed=1
 
@@ -155,9 +153,7 @@ def _benchmark(
     speed: float,
     mode: str,
 ) -> TableTimeElapsed:
-    """
-    Runs a benchmark and returns the BenchmarkResult.
-    """
+    """Runs a benchmark and returns the BenchmarkResult."""
     n = np.int32(n)
     k = np.int32(k)
 
@@ -187,7 +183,7 @@ def _benchmark(
 
     if mode == "no_cons":
         # Benchmark randint
-        def benchmark_func(_idx: int):
+        def benchmark_func(_idx: int) -> np.ndarray:
             return randint(
                 n=n,
                 k=k,
@@ -200,7 +196,7 @@ def _benchmark(
         # Benchmark randint_constrained
         eager = mode == "eager"
 
-        def benchmark_func(_idx: int):
+        def benchmark_func(_idx: int) -> np.ndarray:
             return randint_constrained(
                 n=n,
                 k=k,
@@ -232,10 +228,7 @@ def _determine_precision(
     speed: float,
     mode: str,
 ) -> TablePercentage:
-    """
-    Determines how often (%) the constraints are satisfied when sampling.
-    """
-
+    """Determines how often (%) the constraints are satisfied when sampling."""
     if p is None:
         p = np.zeros(0, dtype=np.float32)
     else:
@@ -284,7 +277,7 @@ def _determine_precision(
 #  Testing Scenarios
 # =================================================================================================
 class Scenario(ABC):
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str) -> None:
         self.name = name
         self.description = description
 
@@ -298,7 +291,7 @@ class Scenario(ABC):
 
 
 class ScenarioA(Scenario):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="Scenario A",
             description="Varying n & k with 10 non-overlapping constraints spanning equal portions of the n-range",
@@ -324,7 +317,7 @@ class ScenarioA(Scenario):
 
 
 class ScenarioB(Scenario):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="Scenario B",
             description="Fixed n=1000 & k=100 with varying number of constraints "

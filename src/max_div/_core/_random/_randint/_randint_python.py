@@ -9,8 +9,8 @@ def randint_python(
     p: NDArray[np.float32] | None = None,
     seed: int | None = None,
 ) -> NDArray[np.int32]:
-    """
-    This is the non-numba, numpy-based equivalent of randint, purely implemented for speed comparison purposes.
+    """Sample integers with the non-numba, numpy-based equivalent of randint, purely for speed comparison purposes.
+
     :param n: (int) upper bound of range to sample from [0, n)
     :param k: (int) number of samples to be returned
     :param replace: (bool) whether sampling is with replacement
@@ -18,7 +18,6 @@ def randint_python(
     :param seed: (int|None) optional random seed for reproducibility.
     :return: np.array[np.int32] of shape (k,) containing the sampled integers.
     """
-
     # --- argument handling ---------------------------
     if k is None:
         k = 1  # indicates single sample

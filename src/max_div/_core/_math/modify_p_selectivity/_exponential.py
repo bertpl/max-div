@@ -12,9 +12,10 @@ def exponential_selectivity(
     modifier: np.float32,
     reverse: bool = False,
     low_value: np.float32 = np.float32(0.1),
-):
-    """
-    Takes float32-array p_in of shape (n,) containing non-normalized probabilities in range [p_min, p_max].
+) -> None:
+    """Populate p_out with values depending exponentially on the non-normalized probabilities in p_in.
+
+    p_in is a float32-array of shape (n,) containing non-normalized probabilities in range [p_min, p_max].
     p_out is populated with values exponentially depending on the corresponding p_in values, such that p_out values
     are in range [1.0, low_value**t], where t is computed as in the other modification methods:
 
@@ -34,7 +35,6 @@ def exponential_selectivity(
     :param reverse: (bool, default False) if True, higher p_in values result in lower p_out values
     :param low_value: (float, default 0.1) the lowest value in p_out
     """
-
     # --- init ----------------------------------
     n = p_in.shape[0]
     p_min = np.float32(np.inf)

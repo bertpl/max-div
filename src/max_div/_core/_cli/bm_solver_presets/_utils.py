@@ -17,7 +17,6 @@ def estimate_execution_time_sec_multi(
     params: list[SolverPresetBenchmarkParams], per_problem_execution: bool = True
 ) -> float:
     """Estimate total execution time in seconds for multiple benchmark runs, taking multiprocessing into account."""
-
     # --- per problem? ----------------
     if per_problem_execution:
         all_problem_names = {p.problem_name for p in params}

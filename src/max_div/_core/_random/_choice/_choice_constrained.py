@@ -17,11 +17,11 @@ def choice_constrained(
     eager: bool = False,
     k_context: np.int32 = np.int32(-1),
 ) -> NDArray[np.int32]:
-    """
-    This function is to 'randint_constrained' what 'choice' is to 'randint': it samples from a provided 'values' array,
-    instead of the range [0, n), while respecting the provided constraints.
+    """Sample from a provided 'values' array instead of the range [0, n), respecting the provided constraints.
 
-    NOTES:
+    This function is to 'randint_constrained' what 'choice' is to 'randint'.
+
+    Notes:
       - `con_values` and `con_indices` can be constructed using ConstraintList(constraints).to_numpy()
       - `con_indices` refers to values of the `values` array, not indices into it.
 
@@ -47,7 +47,6 @@ def choice_constrained(
                         b) provided and >k:      the algorithm knows that more samples will be drawn later.
     :return: (NDArray[np.int32]) The array of samples, size (k,), taken from the provided 'values' array.
     """
-
     # --- argument handling -------------------------------
     if not ((p.size == 0) or (p.size == values.size)):
         raise ValueError(f"p array size should be either 0 or same size as 'values' ({values.size}). [here: {p.size}]")

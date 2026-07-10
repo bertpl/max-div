@@ -8,10 +8,10 @@ from ._base import SwapBasedOptimizationStrategy
 
 
 class OptimRandomSwaps(SwapBasedOptimizationStrategy):
-    """
-    This optimization strategy simply consists of removing 1 _fully_ random sample from the current solution,
-    and replacing it with 1 new _fully_ random sample not currently in the solution.  Problem constraints,
-    if present, are fully ignored.
+    """Optimization strategy performing fully random single-element swaps.
+
+    It simply consists of removing 1 _fully_ random sample from the current solution, and replacing it with
+    1 new _fully_ random sample not currently in the solution.  Problem constraints, if present, are fully ignored.
 
     This strategy is not intended for actual use, but rather as a baseline to compare more advanced strategies against.
     """
@@ -19,7 +19,7 @@ class OptimRandomSwaps(SwapBasedOptimizationStrategy):
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self) -> None:
         # don't expose any parameters; this strategy is not intended for actual use.
         super().__init__()
 

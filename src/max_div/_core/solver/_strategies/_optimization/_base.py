@@ -28,8 +28,7 @@ ParamValueType = ParameterValueSource | float | int | np.float32 | np.int32 | bo
 #  OptimizationStrategy
 # =================================================================================================
 class OptimizationStrategy(StrategyBase, ABC):
-    """
-    Base class for strategies that iteratively improve a selection via swap operations.
+    """Base class for strategies that iteratively improve a selection via swap operations.
 
     Use the factory methods (`random_swaps`, `guided_swaps`, `smart_swaps`)
     to create instances, or use solver presets which select appropriate strategies automatically.
@@ -43,9 +42,9 @@ class OptimizationStrategy(StrategyBase, ABC):
         name: str | None = None,
         dynamic_params: dict[str, ParamValueType] | None = None,
         ignore_infeasible_diversity_up_to_fraction: float = -1.0,
-    ):
-        """
-        Initialize the optimization strategy.
+    ) -> None:
+        """Initialize the optimization strategy.
+
         :param name: optional name of the strategy; if omitted class name is used.
         :param dynamic_params: optional dictionary of parameters that are potentially adjusted each iteration.
 
@@ -93,12 +92,11 @@ class OptimizationStrategy(StrategyBase, ABC):
         # --- iteration counts ---
         self.iter = 0
 
-    def _configure_dynamic_params(self, dynamic_params: dict[str, ParamValueType]):
-        """
-        Internal method to configure dynamic parameters (scheduled and/or sampled).
-        :param dynamic_params: (dict) dictionary of dynamic parameters to configure
-        """
+    def _configure_dynamic_params(self, dynamic_params: dict[str, ParamValueType]) -> None:
+        """Internal method to configure dynamic parameters (scheduled and/or sampled).
 
+        :param dynamic_params: (dict) dictionary of dynamic parameters to configure.
+        """
         # --- schedule parameters ---------------
         scheduled_parameters = {
             param_name: param_value
@@ -135,10 +133,11 @@ class OptimizationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
     def perform_n_iterations(
         self, state: SolverState, n_iters: int, current_progress_frac: float, progress_frac_per_iter: float
-    ):
-        """
-        Perform n iterations of the optimization strategy, modifying the solver state in-place.
-        :param state: (SolverState) current solver state to be modified and used to extract properties of current state.
+    ) -> None:
+        """Perform n iterations of the optimization strategy, modifying the solver state in-place.
+
+        :param state: (SolverState) current solver state to be modified and used to extract properties
+                      of current state.
         :param n_iters: (int) number of iterations to perform.
         :param current_progress_frac: (float) fraction in [0.0, 1.0] indicating current overall progress through total
                                       duration (iterations or time) configured for this SolverStep.
@@ -146,7 +145,6 @@ class OptimizationStrategy(StrategyBase, ABC):
                                        contributes towards the total duration configured for this SolverStep.
                                        For time-based solver step configurations, this can be an estimate.
         """
-
         # --- prep ----------------------------------------
         if n_iters > 1:
             progress_frac_per_iter = min(
@@ -183,9 +181,10 @@ class OptimizationStrategy(StrategyBase, ABC):
 
     @abstractmethod
     def _perform_single_iteration(self, state: SolverState, progress_frac: float) -> bool:
-        """
-        Perform one iteration of the strategy, modifying the solver state in-place,
-          trying to reach a more optimal solution.
+        """Perform one iteration of the strategy, modifying the solver state in-place.
+
+        The goal of each iteration is to try to reach a more optimal solution.
+
         :param state: (SolverState) The current solver state.
         :param progress_frac: (float) Fraction in [0.0, 1.0] indicating current overall progress through total
                                  duration (iterations or time) configured for this SolverStep.
@@ -197,11 +196,12 @@ class OptimizationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
     @staticmethod
     def initial_param_value(param: ParamValueType) -> float:
-        """
-        Helper method to get the initial value of a parameter that may be either dynamic or fixed.
+        """Helper method to get the initial value of a parameter that may be either dynamic or fixed.
+
         Intended for use inside constructors of child classes.
+
         :param param: (ParamValueType) parameter to get initial value for
-        :return: (float) initial value of the parameter
+        :return: (float) initial value of the parameter.
         """
         if isinstance(param, ParameterValueSource):
             return param.get_initial_value()
@@ -228,8 +228,10 @@ class OptimizationStrategy(StrategyBase, ABC):
         remove_selectivity_modifier: float | ParameterSchedule = 0.0,
         add_selectivity_modifier: float | ParameterSchedule = 0.0,
     ) -> Self:
-        """Distance-guided swap strategy: biased towards removing low-separation vectors and adding
-        high-separation ones. Supports scheduled parameters for constraint softness and selectivity."""
+        """Distance-guided swap strategy: biased towards removing low- and adding high-separation vectors.
+
+        Supports scheduled parameters for constraint softness and selectivity.
+        """
         from ._optim_guided_swaps import OptimGuidedSwaps
 
         return OptimGuidedSwaps(
@@ -252,8 +254,10 @@ class OptimizationStrategy(StrategyBase, ABC):
         ignore_infeasible_diversity_up_to_fraction: float = -1.0,
         cost_awareness: float = 0.0,
     ) -> Self:
-        """Adaptive swap strategy that learns effective swap sizes and candidate selection strategies
-        during optimization. Used by the SMART and THOROUGH presets."""
+        """Adaptive swap strategy that learns effective swap sizes and candidate selection strategies.
+
+        Learning happens during optimization.  Used by the SMART and THOROUGH presets.
+        """
         from ._optim_smart_swaps import OptimSmartSwaps
 
         return OptimSmartSwaps(
@@ -270,9 +274,10 @@ class OptimizationStrategy(StrategyBase, ABC):
 #  Swap-Based Optimization Strategy base class
 # =================================================================================================
 class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
-    """
-    Base class for swap-based optimization strategies, where in each iteration 'n' items are removed from the current
-    selection and replaced by 'n' new items, but only if the swap improves the overall score.
+    """Base class for swap-based optimization strategies.
+
+    In each iteration 'n' items are removed from the current selection and replaced by 'n' new items,
+    but only if the swap improves the overall score.
 
     n is sampled from a truncated Poisson distribution with range [min_swap_size, max_swap_size] and lambda
     parameter swap_size_lambda, the latter of which can be set to a ParameterSchedule or a fixed value.
@@ -294,7 +299,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         constraint_softness: float | ParameterValueSource = 0.0,
         dynamic_params: dict[str, ParamValueType] | None = None,
         ignore_infeasible_diversity_up_to_fraction: float = -1.0,
-    ):
+    ) -> None:
         super().__init__(
             name=name,
             dynamic_params=(dynamic_params or {})
@@ -307,9 +312,9 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         self._success_rate_state = np.zeros(20, dtype=np.int64)  # buffer for last 10 success & 10 fail iters
 
     def get_success_rate(self) -> float:
-        """
-        Estimate the swap success rate of the optimization strategy, based on recent history of successes and failures.
-        :return: (float) estimated success rate in range [0.0, 1.0]
+        """Estimate the swap success rate of the strategy, based on recent history of successes and failures.
+
+        :return: (float) estimated success rate in range [0.0, 1.0].
         """
         return float(_estimate_success_rate(self._success_rate_state))
 
@@ -317,14 +322,14 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     #  Single Iteration
     # -------------------------------------------------------------------------
     def _perform_single_iteration(self, state: SolverState, progress_frac: float) -> bool:
-        """
-        Perform one iteration of the swap-based optimization strategy:
-          - determine swap size n
-          - remove n samples from current selection
-          - add n new samples to current selection
-          - if this swap did not improve the score -> revert to previous selection
-        """
+        """Perform one iteration of the swap-based optimization strategy.
 
+        Steps:
+        - determine swap size n
+        - remove n samples from current selection
+        - add n new samples to current selection
+        - if this swap did not improve the score -> revert to previous selection.
+        """
         # --- init ---
         n_swap = min(
             self._determine_swap_size(),
@@ -377,9 +382,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     #  Internal methods that can be overridden
     # -------------------------------------------------------------------------
     def _remove_samples(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
-        """
-        REMOVE n samples and return the indices of removed samples.
-        """
+        """REMOVE n samples and return the indices of removed samples."""
         samples_to_remove = self._samples_to_be_removed(state, n_to_remove)
         state.remove_many(samples_to_remove)
         return samples_to_remove
@@ -387,9 +390,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     def _add_samples(
         self, state: SolverState, n_to_add: np.int32, candidate_samples: NDArray[np.int32]
     ) -> NDArray[np.int32]:
-        """
-        ADD n samples and return the indices of added samples.
-        """
+        """ADD n samples and return the indices of added samples."""
         samples_to_add = self._samples_to_be_added(state, n_to_add, candidate_samples)
         state.add_many(samples_to_add)
         return samples_to_add
@@ -399,17 +400,17 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     # -------------------------------------------------------------------------
     @abstractmethod
     def _determine_swap_size(self) -> np.int32:
-        """
-        Determine the swap size n for the current iteration.
-        :return: (np.int32) swap size n
+        """Determine the swap size n for the current iteration.
+
+        :return: (np.int32) swap size n.
         """
         raise NotImplementedError
 
     @abstractmethod
     def _samples_to_be_removed(self, state: SolverState, n_to_remove: np.int32) -> NDArray[np.int32]:
-        """
-        Determine which n samples to remove from the current selection.  The values returned should be indices present
-        in state.selected_index_array.
+        """Determine which n samples to remove from the current selection.
+
+        The values returned should be indices present in state.selected_index_array.
 
         NOTE: for reproducibility, any random sampling inside this method should use self.next_seed() method of the
               strategy to get a new seed.
@@ -424,8 +425,8 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     def _samples_to_be_added(
         self, state: SolverState, n_to_add: np.int32, candidate_samples: NDArray[np.int32]
     ) -> NDArray[np.int32]:
-        """
-        Determine which n samples to add to the current selection, right after having removed n samples.
+        """Determine which n samples to add to the current selection, right after having removed n samples.
+
         The values returned should be indices present in state.not_selected_index_array.
 
         NOTE: for reproducibility, any random sampling inside this method should use self.next_seed() method of the
@@ -451,14 +452,16 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
 #  Helper classes
 # =================================================================================================
 @numba.njit("void(int64[:], boolean)", fastmath=True, inline="always", cache=True)
-def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: bool):
-    """
-    Update success rate state in-place, based on provided success flag.  Current iteration # is estimated based on
-    values found in the state (current iter = max(success_rate_state) + 1).
+def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: bool) -> None:
+    """Update success rate state in-place, based on provided success flag.
+
+    Current iteration # is estimated based on values found in the state
+    (current iter = max(success_rate_state) + 1).
+
     :param success_rate_state: 2n-sized np.int64 array representing buffer of
                                  - n last success iters (in order)
                                  - n last fail iters (in order)
-    :param success: (bool) True if latest iteration was a success, False otherwise
+    :param success: (bool) True if latest iteration was a success, False otherwise.
     """
     n = int(success_rate_state.shape[0] // 2)
     it = max(success_rate_state[n - 1], success_rate_state[-1]) + 1
@@ -474,8 +477,7 @@ def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: b
 
 @numba.njit("float64(int64[:])", fastmath=True, inline="always", cache=True)
 def _estimate_success_rate(success_rate_state: NDArray[np.int64]) -> np.float64:
-    """
-    Estimates the success rate based on the provided success rate state.
+    """Estimates the success rate based on the provided success rate state.
 
     success_rate is computed as:
 

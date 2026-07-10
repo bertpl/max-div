@@ -27,20 +27,30 @@ if TYPE_CHECKING:
 # =================================================================================================
 class ProgressReporter(ABC):
     @abstractmethod
-    def solver_step_started(self, step_name: str):
+    def solver_step_started(self, step_name: str) -> None:
         """Notify that a new solver step with the provided name has started."""
 
     @abstractmethod
-    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs):
-        """
-        Update progress reporter with current progress and state.
+    def update(
+        self,
+        progress: Progress,
+        state: SolverState,
+        get_debug_info: Callable[[], str] | None = None,
+        **kwargs: bool,
+    ) -> None:
+        """Update progress reporter with current progress and state.
+
         Reporters can choose to not report certain updates they receive, if they come too frequently.
         """
 
     @abstractmethod
     def solver_step_finished(
-        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs
-    ):
+        self,
+        progress: Progress | None,
+        state: SolverState,
+        get_debug_info: Callable[[], str] | None = None,
+        **kwargs: bool,
+    ) -> None:
         """Notify that the current solver step has finished."""
 
     # -------------------------------------------------------------------------
@@ -68,20 +78,20 @@ class ProgressReporter(ABC):
 class SilentProgressReporter(ProgressReporter):
     """A progress reporter that is fully silent and doesn't output anything."""
 
-    def solver_step_started(self, step_name: str): ...  # no-op
+    def solver_step_started(self, step_name: str) -> None: ...  # no-op
     def update(
-        self, progress: Progress, score: Score, get_debug_info: Callable[[], str] | None = None, **kwargs
-    ): ...  # no-op
+        self, progress: Progress, score: Score, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
+    ) -> None: ...  # no-op
     def solver_step_finished(
-        self, progress: Progress | None, score: Score, get_debug_info: Callable[[], str] | None = None, **kwargs
-    ): ...  # no-op
+        self, progress: Progress | None, score: Score, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
+    ) -> None: ...  # no-op
 
 
 # =================================================================================================
 #  TQDM
 # =================================================================================================
 class TqdmProgressReporter(ProgressReporter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._current_step_name: str = ""
         self._current_pbar: tqdm | None = None
@@ -89,13 +99,15 @@ class TqdmProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  main API
     # -------------------------------------------------------------------------
-    def solver_step_started(self, step_name: str):
+    def solver_step_started(self, step_name: str) -> None:
         if (step_name != self._current_step_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
             self._current_pbar = tqdm(desc=f"{step_name} ", total=1, file=sys.stdout)  # initialize new pbar
             self._current_step_name = step_name
 
-    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs):
+    def update(
+        self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
+    ) -> None:
         if self._current_pbar is not None:
             # ignore updates coming in before starting a new step or after finishing the current step
             n = progress.tqdm_n_current
@@ -105,14 +117,18 @@ class TqdmProgressReporter(ProgressReporter):
                 self._current_pbar.refresh()
 
     def solver_step_finished(
-        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs
-    ):
+        self,
+        progress: Progress | None,
+        state: SolverState,
+        get_debug_info: Callable[[], str] | None = None,
+        **kwargs: bool,
+    ) -> None:
         self._close_current_pbar()
 
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
-    def _close_current_pbar(self):
+    def _close_current_pbar(self) -> None:
         if self._current_pbar is not None:
             # make sure pbar shows 100%
             self._current_pbar.total = max(1, self._current_pbar.total)
@@ -131,8 +147,9 @@ class TabularProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, c_slowdown: float = 1.05, debug_info: bool = False):
-        """
+    def __init__(self, c_slowdown: float = 1.05, debug_info: bool = False) -> None:
+        """Initializes a TabularProgressReporter.
+
         :param c_slowdown: Factor by which to slow down reporting frequency:
 
             Updates are shown only when both
@@ -145,7 +162,6 @@ class TabularProgressReporter(ProgressReporter):
 
         :param debug_info: If `True`, includes additional column with solver step debug info.
         """
-
         # settings
         self._c_slowdown = c_slowdown
         self._debug_info = debug_info
@@ -167,7 +183,7 @@ class TabularProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Main API
     # -------------------------------------------------------------------------
-    def solver_step_started(self, step_name: str):
+    def solver_step_started(self, step_name: str) -> None:
         # make sure table is initialized
         self._step_name = step_name
         if not self._progress_table:
@@ -183,7 +199,9 @@ class TabularProgressReporter(ProgressReporter):
         if self._t_start_solver < 0:
             self._t_start_solver = self._t_start_step
 
-    def update(self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs):
+    def update(
+        self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
+    ) -> None:
         iter_now = progress.iter_count
         t_now = perf_counter()
         t_elapsed_step = t_now - self._t_start_step
@@ -201,8 +219,12 @@ class TabularProgressReporter(ProgressReporter):
             self._next_report_t += t_increment * math.ceil((t_elapsed_step - self._next_report_t) / t_increment)
 
     def solver_step_finished(
-        self, progress: Progress | None, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs
-    ):
+        self,
+        progress: Progress | None,
+        state: SolverState,
+        get_debug_info: Callable[[], str] | None = None,
+        **kwargs: bool,
+    ) -> None:
         # show final metrics + horizontal table line
         debug_info = get_debug_info() if (self._debug_info and (get_debug_info is not None)) else ""
         ignore_infeasible_diversity = kwargs.get("ignore_infeasible_diversity", False)
@@ -212,8 +234,8 @@ class TabularProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
-    def _initialize_table(self, step_name_width: int):
-        """Initialize self._progress_table"""
+    def _initialize_table(self, step_name_width: int) -> None:
+        """Initialize self._progress_table."""
         self._progress_table = ProgressTable(
             headers=[
                 "Solver t.".ljust(10),
@@ -236,7 +258,7 @@ class TabularProgressReporter(ProgressReporter):
         state: SolverState,
         debug_info: str = "",
         ignore_infeasible_diversity: bool = False,
-    ):
+    ) -> None:
         t_now = perf_counter()
         t_elapsed_solver = t_now - self._t_start_solver
         t_elapsed_step = t_now - self._t_start_step
@@ -265,14 +287,13 @@ class TabularProgressReporter(ProgressReporter):
             + ([debug_info] if self._debug_info else [])
         )
 
-    def _show_table_line(self):
+    def _show_table_line(self) -> None:
         if self._progress_table:
             self._progress_table.print_line()
 
     @staticmethod
     def _get_selection_hash(selection: NDArray[np.int32], n: int) -> str:
         """Get a hex hash string representing the current selection in the solver state."""
-
         # --- shortcut ---
         if n == 0:
             return ""

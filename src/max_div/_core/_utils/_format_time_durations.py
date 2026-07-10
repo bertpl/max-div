@@ -7,8 +7,7 @@ from ._precision import HALF_EPS
 #  Main entrypoints
 # =================================================================================================
 def format_time_duration(dt_sec: float, n_chars: int = 10, pad: bool = True) -> str:
-    """
-    Format a time duration in seconds.
+    """Format a time duration in seconds.
 
     :param dt_sec: (float) Time duration in seconds.
     :param n_chars: (int) Controls output precision; higher values yield more decimal places.
@@ -24,8 +23,7 @@ def format_time_duration(dt_sec: float, n_chars: int = 10, pad: bool = True) -> 
 
 
 def format_long_time_duration(dt_sec: float, n_chars: int = 10) -> str:
-    """
-    Format a time duration that is expected to be ~1sec or larger.
+    """Format a time duration that is expected to be ~1sec or larger.
 
     The max lengths of the resulting string (n_chars) will always be exactly matched if n_chars>=5 and dt_sec<100d.
     """
@@ -48,9 +46,9 @@ def format_short_time_duration(
     spaced: bool | None = None,
     long_units: bool | None = None,
 ) -> str:
-    """
-    Format a time duration that is expected to be <<1sec.  Different styling options are chosen to optimally meet
-    the given character count.
+    """Format a time duration that is expected to be <<1sec.
+
+    Different styling options are chosen to optimally meet the given character count.
 
     The options 'right_aligned', 'spaced', and 'long_units' are optional and, when omitted, automatically chosen
      based on heuristics.
@@ -63,7 +61,6 @@ def format_short_time_duration(
     :param spaced: (bool) If True, a space is added between the number and the unit.
     :param long_units: (bool) If True, long unit names are used (e.g. "nsec" instead of "ns").
     """
-
     # --- styling heuristics ------------------------------
     if right_aligned is None:
         right_aligned = n_chars > 6
@@ -138,8 +135,8 @@ def _format_long_time_duration_to_spec(
 def _format_short_time_duration_to_spec(
     dt_sec: float, n_digits: int, right_aligned: bool, spaced: bool, long_units: bool
 ) -> str:
-    """
-    Format a time duration that is expected to be <<1sec to the given specification.
+    """Format a time duration that is expected to be <<1sec to the given specification.
+
     :param dt_sec: (float) Time duration in seconds.
     :param n_digits: (int >= 0) Number of digits to show after the decimal point.
     :param right_aligned: (bool) If True, the result is right-aligned such that values & units align vertically.
@@ -147,7 +144,6 @@ def _format_short_time_duration_to_spec(
     :param long_units: (bool) If True, long unit names are used (e.g. "nsec" instead of "ns").
     :return: string representation of the time duration.
     """
-
     # --- init --------------------------------------------
     if long_units:
         c_and_unit = [

@@ -20,9 +20,9 @@ from max_div._core._math.optimization import minimize_nd_random
 def calibrate_fast_pow(
     n_data: int, acc: float, n_evals: int, start_from_current_optimum: bool = False
 ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
-    """
-    Jointly calibrates the quadratic coefficients for the fast_log2 and fast_exp2 parts of the fast_pow function,
-      to calibrate the overall approximation error of fast_pow(x, t) = fast_exp2(t * fast_log2(x)).
+    """Jointly calibrate the quadratic coefficients for the fast_log2 and fast_exp2 parts of fast_pow.
+
+    This calibrates the overall approximation error of fast_pow(x, t) = fast_exp2(t * fast_log2(x)).
 
     For this purpose (not used in any scoring functions), we don't need smoothness at the interval boundaries,
       only continuity, which frees up 2 extra degrees of freedom, to further optimize the cost.
@@ -56,7 +56,6 @@ def calibrate_fast_pow(
     We want to optimize k1, k2 such that we minimize the mean abs error over a set of calibration-tuples (x,t).
 
     """
-
     if start_from_current_optimum:
         lb = (c0_current - 0.1, c1_current - 0.1, d0_current - 0.1, d1_current - 0.1)
         ub = (c0_current + 0.1, c1_current + 0.1, d0_current + 0.1, d1_current + 0.1)
@@ -100,7 +99,7 @@ def calibrate_fast_pow(
 #  Cost Function
 # =================================================================================================
 class Cost:
-    def __init__(self, n: int):
+    def __init__(self, n: int) -> None:
         n_squared = int(math.sqrt(n))
         x_values, t_values, xt_values = construct_calibration_data(n_squared)
 
@@ -149,9 +148,9 @@ def pow2_approx_array(
 # -------------------------------------------------------------------------
 @lru_cache(maxsize=4)
 def construct_calibration_data(n: int) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
-    """
-    Construct calibration data for fast_pow_f32 testing & calibration of coefficients in the form of a
-    (x, t, x**t)-tuple of float64 arrays (can be downcast to float32 as needed).
+    """Construct calibration data for fast_pow_f32 testing & calibration of coefficients.
+
+    The data takes the form of a (x, t, x**t)-tuple of float64 arrays (can be downcast to float32 as needed).
 
     These data points are intended to be used to ensure / check similarity between x**t and fast_pow_f32(x, t)
 
@@ -160,7 +159,6 @@ def construct_calibration_data(n: int) -> tuple[NDArray[np.float64], NDArray[np.
 
     :param n: (int) size parameter, with resulting arrays of size n^2   (!!!)
     """
-
     # --- init ----------------------------------
     x_values = np.empty(n * n, dtype=np.float64)
     t_values = np.empty(n * n, dtype=np.float64)

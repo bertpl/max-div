@@ -1,5 +1,5 @@
-"""
-Custom simple random number generation module for integration in numba oriented code.
+"""Custom simple random number generation module for integration in numba oriented code.
+
 Significantly faster than equivalent numpy.random methods, even when the latter is used in numba.njit functions.
 
 All methods accept an rng_state (random number generator state), which is a 2-element uint64 array representing the
@@ -74,8 +74,8 @@ def rand_nz_float32(rng_state: NDArray[uint64]) -> float32:
 
 @numba.njit("int64(uint64[:], int64, int64)", fastmath=True, inline="always", cache=True)
 def rand_int64(rng_state: NDArray[uint64], low: np.int64, high: np.int64) -> np.int64:
-    """
-    Generate a random int64 in [low, high) using the provided rng_state.
+    """Generate a random int64 in [low, high) using the provided rng_state.
+
     There might be a small bias for large (high-low) if the range is not a power of two.
     """
     if low == 0:
@@ -88,8 +88,8 @@ def rand_int64(rng_state: NDArray[uint64], low: np.int64, high: np.int64) -> np.
 
 @numba.njit("int32(uint64[:], int32, int32)", fastmath=True, inline="always", cache=True)
 def rand_int32(rng_state: NDArray[uint64], low: np.int32, high: np.int32) -> np.int32:
-    """
-    Generate a random int32 in [low, high) using the provided rng_state.
+    """Generate a random int32 in [low, high) using the provided rng_state.
+
     There might be a small bias for large (high-low) if the range is not a power of two.
     """
     if low == 0:
@@ -102,8 +102,8 @@ def rand_int32(rng_state: NDArray[uint64], low: np.int32, high: np.int32) -> np.
 
 @numba.njit("int32[:](uint64[:], int32, int32, int32)", fastmath=True, inline="always", cache=True)
 def rand_int32_array(rng_state: NDArray[uint64], low: np.int32, high: np.int32, size: np.int32) -> NDArray[np.int32]:
-    """
-    Generate an array of random int32 values in [low, high) using the provided rng_state.
+    """Generate an array of random int32 values in [low, high) using the provided rng_state.
+
     Optimized to generate 2 values per RNG call by using upper and lower 32 bits.
     There might be a small bias for large (high-low) if the range is not a power of two.
     """

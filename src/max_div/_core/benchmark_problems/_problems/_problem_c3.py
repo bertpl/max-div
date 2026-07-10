@@ -37,7 +37,7 @@ class BenchmarkProblem_C3(BenchmarkProblem):
         }
 
     @classmethod
-    def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
+    def get_problem_dimensions(cls, **kwargs: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
         size = kwargs.get("size")
         d = size
         n = 150 * size
@@ -47,7 +47,7 @@ class BenchmarkProblem_C3(BenchmarkProblem):
         return d, n, k, m, n_con_indices
 
     @classmethod
-    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
+    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
         d, n, k, _m, _ = cls.get_problem_dimensions(size=size)
 
         # Generate gaussian random vectors

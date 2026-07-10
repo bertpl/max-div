@@ -100,9 +100,8 @@ def presets(
     dry_run: bool,
     max_run_duration_minutes: float | None,
     markdown: bool,
-):
+) -> None:
     """Benchmark solver presets on specific solver benchmark problem."""
-
     # --- argument handling - speed -----------------------
     if turbo:
         speed = 1.0

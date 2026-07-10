@@ -1,3 +1,5 @@
+"""Public API for built-in benchmark problems."""
+
 from ._core.benchmark_problems import BenchmarkProblem, BenchmarkProblemFactory
 
 __all__ = [

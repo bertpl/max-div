@@ -4,8 +4,7 @@ from enum import StrEnum
 
 
 class SolverPreset(StrEnum):
-    """
-    Predefined solver configurations that bundle initialization and optimization strategies.
+    """Predefined solver configurations that bundle initialization and optimization strategies.
 
     Members
     -------

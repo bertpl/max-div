@@ -36,7 +36,7 @@ class BenchmarkProblem_U4(BenchmarkProblem):
         }
 
     @classmethod
-    def get_problem_dimensions(cls, **kwargs) -> tuple[int, int, int, int, int]:
+    def get_problem_dimensions(cls, **kwargs: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
         size = kwargs.get("size")
         d = size
         n = 100 * size
@@ -46,16 +46,13 @@ class BenchmarkProblem_U4(BenchmarkProblem):
         return d, n, k, m, n_con_indices
 
     @classmethod
-    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs) -> MaxDivProblem:
-        """
-        We will generate vectors in d-dim. space as follows:
-          - a * ([1, 1, 1, ..., 1] + (r * [x1, x2, ..., xd]))
+    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+        """We will generate vectors in d-dim. space as a * ([1, 1, 1, ..., 1] + (r * [x1, x2, ..., xd])).
 
         - a is sampled uniformly in [0,1]
         - xi-values are sampled uniformly in the hyper-box [-1, +1]^d and then rescaled to have L2 norm = 1
         - r = 0.1 * sqrt(d), such that the perceived angle of the cone from the origin remains constant as d increases
         """
-
         d, n, k, _, _ = cls.get_problem_dimensions(size=size)
         r = 0.1 * np.sqrt(d)
 

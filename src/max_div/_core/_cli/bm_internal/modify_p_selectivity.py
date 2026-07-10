@@ -20,9 +20,9 @@ MODIFY_P_METHODS = [np.int32(0), np.int32(10), np.int32(20), np.int32(100)]
 #  Main benchmark
 # =================================================================================================
 def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
-    """
-    Benchmarks the modify_p_selectivity function from `max_div._core._math.modify_p_selectivity`,
-      for various different 'method'-values across different sizes of probability arrays.
+    """Benchmarks the modify_p_selectivity function from `max_div._core._math.modify_p_selectivity`.
+
+    Various different 'method'-values are benchmarked across different sizes of probability arrays.
 
     Array sizes tested: [2, 4, 8, ..., 4096, 8192]
 
@@ -33,7 +33,6 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
     :param markdown: If `True`, outputs the results as a Markdown table.
     :param file: If `True`, redirects output to a file instead of console.
     """
-
     print("Benchmarking `modify_p_selectivity`...")
 
     # --- speed-dependent settings --------------------
@@ -69,7 +68,7 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
         # test modify_p_selectivity for all defined methods
         for method in MODIFY_P_METHODS:
             # define function to be benchmarked
-            def benchmark_fun(_idx: int):
+            def benchmark_fun(_idx: int) -> None:
                 modify_p_selectivity(p_in, random_modifiers[_idx], method, p_out)
 
             # run benchmark
@@ -87,7 +86,7 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
             )
 
         # test order_based_selectivity
-        def benchmark_fun(_idx: int):
+        def benchmark_fun(_idx: int) -> None:
             exponential_selectivity(p_in, p_out, random_modifiers[_idx])
 
         # run benchmark
@@ -183,7 +182,6 @@ def get_methods_table() -> Table:
 
 def compute_accuracy(method: int, n: int) -> float:
     """Computes accuracy of a given method as a fraction in [0.0, 1.0]."""
-
     total_error = 0.0  # total sum of abs errors
     total_pmod = 0.0  # total sum of target values (wrt which we computed errors)
 

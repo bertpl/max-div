@@ -7,8 +7,7 @@ from max_div._core.metrics import DiversityMetric
 
 
 def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
-    """
-    Benchmarks the 4 DiversityMetric flavors from `max_div.solver._diversity`.
+    """Benchmarks the 4 DiversityMetric flavors from `max_div.solver._diversity`.
 
     Tests all 4 metric types across different sizes of separation vectors:
      * `min_separation`
@@ -23,7 +22,6 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
     :param markdown: If `True`, outputs the results as a Markdown table.
     :param file: If `True`, redirects output to a file instead of console.
     """
-
     print("Benchmarking `DiversityMetric`...")
 
     # --- speed-dependent settings --------------------
@@ -65,7 +63,7 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
 
         for metric in metrics:
 
-            def func_to_benchmark():
+            def func_to_benchmark() -> None:
                 metric.compute(test_separations)
 
             table_row.append(

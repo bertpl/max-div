@@ -1,5 +1,4 @@
-"""
-This module contains all methods that actually modify the p selectivity in different ways.
+"""This module contains all methods that actually modify the p selectivity in different ways.
 
 All the methods here are numba-accelerated and modify in-place for performance reasons
   (allocating new np arrays in numba is slow).
@@ -19,18 +18,16 @@ from max_div._core._math.fast_pow import fast_pow_f32
 #  Boundary methods
 # =================================================================================================
 @njit("void(float32[::1])", fastmath=True, inline="always")
-def _uniform(p: NDArray[np.float32]):
+def _uniform(p: NDArray[np.float32]) -> None:
     """Transform p in [0,1] in-place to uniform distribution (all values equal to 1.0)."""
-
     # --- fill with 1.0 values ---
     for i in range(p.size):
         p[i] = np.float32(1.0)
 
 
 @njit("void(float32[::1])", fastmath=True, inline="always")
-def _max_selective(p: NDArray[np.float32]):
+def _max_selective(p: NDArray[np.float32]) -> None:
     """Transform p in [0,1] in-place to maximally selective distribution (all values equal to 0.0 or 1.0)."""
-
     # --- fill with 1.0 or 0.0 ---
     for i in range(p.size):
         p[i] = np.float32(1.0) if (p[i] >= np.float32(1.0)) else np.float32(0.0)
@@ -41,10 +38,10 @@ def _max_selective(p: NDArray[np.float32]):
 # =================================================================================================
 @njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always")
 def _power_exact(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
-    """
-    Modify p in [0,1] in-place using exact p[i] <-- p[i] ** t.
+    """Modify p in [0,1] in-place using exact p[i] <-- p[i] ** t.
+
     with...   t = (1 + modifier)/(1 - modifier)
-              modifier in (-1, +1)
+              modifier in (-1, +1).
     """
     t = (1 + modifier) / (1 - modifier)
     for i in range(p.size):
@@ -54,10 +51,10 @@ def _power_exact(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.flo
 
 @njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always")
 def _power_fast_log2_exp2(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
-    """
-    Modify p in [0,1] in-place using approximation p[i] <-- fast_exp2(t * fast_log2(p[i])).
+    """Modify p in [0,1] in-place using approximation p[i] <-- fast_exp2(t * fast_log2(p[i])).
+
     with...   t = (1 + modifier)/(1 - modifier)
-              modifier in (-1, +1)
+              modifier in (-1, +1).
     """
     t = (1 + modifier) / (1 - modifier)
     for i in range(p.size):
@@ -67,10 +64,10 @@ def _power_fast_log2_exp2(p: NDArray[np.float32], modifier: np.float32) -> NDArr
 
 @njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always")
 def _power_fast_pow(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
-    """
-    Modify p in [0,1] in-place using approximation p[i] <-- fast_pow(p[i], t).
+    """Modify p in [0,1] in-place using approximation p[i] <-- fast_pow(p[i], t).
+
     with...   t = (1 + modifier)/(1 - modifier)
-              modifier in (-1, +1)
+              modifier in (-1, +1).
     """
     t = (1 + modifier) / (1 - modifier)
     for i in range(p.size):
@@ -83,8 +80,7 @@ def _power_fast_pow(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.
 # =================================================================================================
 @njit("float32[::1](float32[::1], float32)", fastmath=True, inline="always")
 def _pwl_2_segment(p: NDArray[np.float32], modifier: np.float32) -> NDArray[np.float32]:
-    r"""
-    Modify p in [0,1] in-place using 2-segment piecewise linear approximation of p[i] = p[i] ** t.
+    r"""Modify p in [0,1] in-place using 2-segment piecewise linear approximation of p[i] = p[i] ** t.
 
             Assuming for simplicity that max(p)==1.0, the transformation f(p[i]) used here is defined as follows:
 

@@ -7,8 +7,7 @@ from numpy.typing import NDArray
 
 
 class DiversityMetric(StrEnum):
-    """
-    Enum for different diversity metrics.
+    """Enum for different diversity metrics.
 
     Members
     -------
@@ -49,15 +48,14 @@ class DiversityMetric(StrEnum):
         return _functions[self]
 
     def compute(self, separations: NDArray[np.float32]) -> np.float32:
-        """
-        Compute diversity metric given separations of each vector wrt all others in selection.
+        """Compute diversity metric given separations of each vector wrt all others in selection.
 
         Parameters
         ----------
         separations : NDArray[np.float32]
             Array of separation values.
 
-        Returns
+        Returns:
         -------
         np.float32
             The computed diversity score.

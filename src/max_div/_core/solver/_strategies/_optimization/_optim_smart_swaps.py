@@ -15,10 +15,11 @@ from ._base import SwapBasedOptimizationStrategy
 
 
 class OptimSmartSwaps(SwapBasedOptimizationStrategy):
-    """
-    This swap-based optimization strategy can be seen as an evolution of OptimGuidedSwaps...
-       - allowing adaptively sampling most parameters
-       - perform removal and addition of samples by chosen best of 'nc' candidates
+    """Swap-based optimization strategy that can be seen as an evolution of OptimGuidedSwaps.
+
+    It improves on OptimGuidedSwaps by...
+    - allowing adaptively sampling most parameters
+    - perform removal and addition of samples by chosen best of 'nc' candidates.
     """
 
     def __init__(
@@ -29,10 +30,10 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         tau_learn: float = 100.0,
         ignore_infeasible_diversity_up_to_fraction: float = -1.0,
         cost_awareness: float = 0.0,
-    ):
-        """
-        Optimization-based strategy that performs 'smart' swaps, that combine
-        adaptive parameter sampling, selectivity-modification and best-of-nc selection
+    ) -> None:
+        """Optimization-based strategy that performs 'smart' swaps.
+
+        These swaps combine adaptive parameter sampling, selectivity-modification and best-of-nc selection
         of removed and added samples.
 
         :param swap_size_max: (int) maximum swap sizes to be adaptively sampled from.
@@ -44,7 +45,6 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
                                should be avoided, since they incur additional computational cost.  Non-0 values
                                make it such that larger values are only used if they provide sufficient benefit.
         """
-
         # --- swap_size ---
         _swap_size = sampled_poisson(
             min_value=1,
@@ -127,9 +127,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         state: SolverState,
         n_to_remove: np.int32,
     ) -> NDArray[np.int32]:
-        """
-        REMOVE n samples and return the indices of removed samples.
-        """
+        """REMOVE n samples and return the indices of removed samples."""
         # NOTE: we override parent class method, since in this implementation, the _samples_to_be_removed method
         #       already actually removes the samples.
         return self._samples_to_be_removed(state, n_to_remove)
@@ -140,9 +138,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         n_to_add: np.int32,
         candidate_samples: NDArray[np.int32],
     ) -> NDArray[np.int32]:
-        """
-        ADD n samples and return the indices of removed samples.
-        """
+        """ADD n samples and return the indices of removed samples."""
         # NOTE: we override parent class method, since in this implementation, the _samples_to_be_added method
         #       already actually adds the samples.
         return self._samples_to_be_added(state, n_to_add, candidate_samples)

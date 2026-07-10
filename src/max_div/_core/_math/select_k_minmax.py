@@ -8,8 +8,7 @@ from numpy.typing import NDArray
 # =================================================================================================
 @numba.njit("int32[:](float32[:], int32)", fastmath=True, inline="always", cache=True)
 def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:
-    """
-    Find indices of k smallest elements in a float32 array using Numba.
+    """Find indices of k smallest elements in a float32 array using Numba.
 
     This implementation uses a max-heap approach with O(n log k) complexity,
     which is efficient when k << n. The heap maintains the k smallest elements
@@ -132,8 +131,7 @@ def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:
 # =================================================================================================
 @numba.njit("int32[:](float32[:], int32)", fastmath=True, inline="always", cache=True)
 def select_k_max(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:
-    """
-    Find indices of k largest elements in a float32 array using Numba.
+    """Find indices of k largest elements in a float32 array using Numba.
 
     This implementation uses a min-heap approach with O(n log k) complexity,
     which is efficient when k << n. The heap maintains the k largest elements

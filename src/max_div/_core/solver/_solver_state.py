@@ -45,9 +45,8 @@ class SolverState:
         con_values: NDArray[np.int32],
         con_indices: NDArray[np.int32],
         con_membership: dict[np.int32, list[np.int32]],
-    ):
-        """
-        Initialize the SolverState.  The constructor is not intended to be used directly, instead use new().
+    ) -> None:
+        """Initialize the SolverState.  The constructor is not intended to be used directly, instead use new().
 
         Problem Dimensions:
 
@@ -118,13 +117,12 @@ class SolverState:
     # -------------------------------------------------------------------------
     #  Main API - used by solver strategies to modify state
     # -------------------------------------------------------------------------
-    def set_snapshot(self):
-        """
-        When called, this method internally saves the current state as a snapshot (possibly overwriting any previous
-        snapshot).  Such a snapshot can be restored using the restore_snapshot() method,  with any actions that happened
+    def set_snapshot(self) -> None:
+        """Internally saves the current state as a snapshot (possibly overwriting any previous snapshot).
+
+        Such a snapshot can be restored using the restore_snapshot() method, with any actions that happened
         in between (add, remove) being undone.
         """
-
         # NOTE: we create copies, such that add(.) and remove(.) cannot influence the snapshot after it was taken
         self._snapshot.selected = self._selected.copy()
         self._snapshot.n_selected = self._n_selected
@@ -132,9 +130,9 @@ class SolverState:
         self._snapshot.con_values = self._con_values.copy()
         self._snapshot.is_valid = True
 
-    def restore_snapshot(self):
-        """
-        This method restores the state of this object to the state saved in the last call to set_snapshot().
+    def restore_snapshot(self) -> None:
+        """Restores the state of this object to the state saved in the last call to set_snapshot().
+
         Any actions that happened in between (add, remove) are undone.  If set_snapshot() hasn't been called before,
         a ValueError is raised.  After restoring the snapshot, it gets cleared, such that subsequent calls to
         restore_snapshot() without an intermediate call to set_snapshot() will again raise a ValueError.
@@ -154,7 +152,7 @@ class SolverState:
         # clear snapshot after restoring
         self._snapshot.clear()
 
-    def add(self, index: int | np.int32):
+    def add(self, index: int | np.int32) -> None:
         # --- validation ----------------------------------
         index = np.int32(index)
         if self._selected[index]:
@@ -174,7 +172,7 @@ class SolverState:
         # --- score ---------------------------------------
         self._update_score()
 
-    def add_many(self, indices: NDArray[np.int32]):
+    def add_many(self, indices: NDArray[np.int32]) -> None:
         # --- validation ----------------------------------
         if any(self._selected[indices]):
             raise ValueError(f"Cannot add index that is already selected ({list(indices)}).")
@@ -195,7 +193,7 @@ class SolverState:
         # --- score ---------------------------------------
         self._update_score()
 
-    def remove(self, index: int | np.int32):
+    def remove(self, index: int | np.int32) -> None:
         # --- validation ----------------------------------
         index = np.int32(index)
         if not self._selected[index]:
@@ -215,7 +213,7 @@ class SolverState:
         # --- score ---------------------------------------
         self._update_score()
 
-    def remove_many(self, indices: NDArray[np.int32]):
+    def remove_many(self, indices: NDArray[np.int32]) -> None:
         # --- validation ----------------------------------
         if any(~self._selected[indices]):
             raise ValueError(f"Cannot remove index that is not selected ({list(indices)}).")
@@ -312,7 +310,7 @@ class SolverState:
     # -------------------------------------------------------------------------
     #  Scoring
     # -------------------------------------------------------------------------
-    def _update_score(self):
+    def _update_score(self) -> None:
         self._score = self._score_generator.compute_score(
             n_selected=self._n_selected,
             con_values=self._con_values,
@@ -321,9 +319,7 @@ class SolverState:
 
     @property
     def score(self) -> Score:
-        """
-        Return overall score of the current selection as a multi-component prioritized Score object.
-        """
+        """Return overall score of the current selection as a multi-component prioritized Score object."""
         return self._score
 
     # -------------------------------------------------------------------------
@@ -381,9 +377,10 @@ class SolverState:
 # =================================================================================================
 @dataclass(slots=True)
 class Snapshot:
-    """
-    Class internally used by SolverState to store snapshots of its state.  This class models a subset of the fields
-    of the SolverState class, restricting itself to those that can be modified after construction.
+    """Class internally used by SolverState to store snapshots of its state.
+
+    This class models a subset of the fields of the SolverState class, restricting itself to those that can be
+    modified after construction.
     """
 
     is_valid: bool
@@ -397,7 +394,7 @@ class Snapshot:
     # -------------------------------------------------------------------------
     #  Modification / Factory
     # -------------------------------------------------------------------------
-    def clear(self):
+    def clear(self) -> None:
         """Clear the snapshot, making it invalid."""
         self.is_valid = False
         self.selected = _EMPTY_NP_ARRAY_BOOL
@@ -431,7 +428,6 @@ def _build_con_membership(
     constraints: list[Constraint],
 ) -> dict[np.int32, NDArray[np.int32]]:
     """Build a mapping from each index to the list of constraints it belongs to."""
-
     # map index -> list
     con_membership_lst: dict[np.int32, list[np.int32]] = {i: [] for i in np.arange(m, dtype=np.int32)}
     for i_con, con in enumerate(constraints):

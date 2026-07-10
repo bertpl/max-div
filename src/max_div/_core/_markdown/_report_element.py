@@ -14,7 +14,7 @@ class ReportElement(ABC):
 #  Some common elements
 # =================================================================================================
 class ReportText(ReportElement):
-    def __init__(self, txt: str):
+    def __init__(self, txt: str) -> None:
         self.txt = txt
 
     def render(self, markdown: bool) -> list[str]:
@@ -28,7 +28,7 @@ class ReportText(ReportElement):
 
 
 class ReportHeader(ReportElement):
-    def __init__(self, txt: str, level: int = 1):
+    def __init__(self, txt: str, level: int = 1) -> None:
         self.txt = txt
         self.level = level
 

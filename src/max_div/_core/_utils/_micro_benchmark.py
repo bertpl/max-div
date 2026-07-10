@@ -35,8 +35,7 @@ class BenchmarkResult:
 
     @classmethod
     def from_list(cls, lst: list[float]) -> BenchmarkResult:
-        """
-        Create a BenchmarkResult from a list of measured times.
+        """Create a BenchmarkResult from a list of measured times.
 
         :param lst: List of measured times in seconds
         :return: BenchmarkResult with computed q25, q50, q75
@@ -46,8 +45,7 @@ class BenchmarkResult:
 
     @classmethod
     def aggregate(cls, results: list[BenchmarkResult], method: Literal["mean", "geomean", "sum"]) -> BenchmarkResult:
-        """
-        Aggregate multiple BenchmarkResult objects into a single result, by aggregating q25, q50, 75 values separately.
+        """Aggregate multiple BenchmarkResults into one, by aggregating q25, q50, q75 values separately.
 
         :param results: List of BenchmarkResult objects to aggregate
         :param method: Aggregation method - "mean", "geomean" (geometric mean), or "sum"
@@ -91,8 +89,7 @@ def benchmark(
     silent: bool = False,
     index_range: int | None = None,
 ) -> BenchmarkResult:
-    """
-    Adaptive micro-benchmarking function, to determine the duration/execution of the provided callable `f`.
+    """Adaptive micro-benchmarking function, to determine the duration/execution of the provided callable `f`.
 
     :param f: (Callable) Function to benchmark. Should take no arguments.
     :param t_per_run: (float, default=0.1) time in seconds we want to target per benchmarking run.
@@ -105,7 +102,6 @@ def benchmark(
                          through this range to allow for more diverse execution paths.
     :return: Median estimate of duration/execution of `f` in seconds.
     """
-
     # --- init --------------------------------------------
     lst_t = []  # list of measured times per execution in seconds
     n_executions = 1  # number of executions per run, adjusted dynamically
@@ -181,9 +177,9 @@ def benchmark(
 # =================================================================================================
 #  Baseline benchmarks
 # =================================================================================================
-def _baseline_fun():
+def _baseline_fun() -> None:
     pass
 
 
-def _baseline_fun_indexed(i: int):
+def _baseline_fun_indexed(i: int) -> None:
     pass

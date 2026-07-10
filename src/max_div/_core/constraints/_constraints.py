@@ -1,12 +1,10 @@
-"""
-Helper functions for handling constraints in numpy-based representation.
+"""Helper functions for handling constraints in numpy-based representation.
 
 In order to be able to implement efficient numba-accelerated algorithms that deal with Constraint objects,
 we need to convert them to numpy-based representations that numba can work with, so we can avoid numba object-mode,
 which is dramatically slower.
 
-EXAMPLE:
-
+Example:
   Constraints:
      [
           Constraint(int_set={0,1,2,3,4},   min_count=2, max_count=3),
@@ -38,8 +36,7 @@ EXAMPLE:
                     |        +------------->      |        con 1 indices
                     +-------------------->    con 0 indices
 
-NOTES:
-
+Notes:
     - use ConstraintList(constraints).to_numpy() to convert a list of Constraint objects to (con_values, con_indices)
     - con_indices is usually treated as a read-only data structure that models membership of indices to constraints
     - con_values, however, is often modified during sampling to reflect how many more samples are needed, hence to keep
@@ -69,7 +66,7 @@ class Constraint:
 class ConstraintList:
     """Simple helper class to facilitate conversion of list of Constraint objects to numpy-based representation."""
 
-    def __init__(self, constraints: list[Constraint]):
+    def __init__(self, constraints: list[Constraint]) -> None:
         self._cons = constraints
 
     def to_numpy(self) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
@@ -82,15 +79,14 @@ class ConstraintList:
 def _build_array_repr(
     cons: list[Constraint],
 ) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
-    """
-    Convert list of Constraint objects to numba-compatible representation:
+    """Convert list of Constraint objects to numba-compatible representation.
+
       - con_values: 2D numpy array of shape (m, 2) with min_count and max_count for each constraint
       - con_indices: 1D numpy array of shape (2*m + n_indices,) with indexed, concatenated indices of all cons.
 
     :param cons: list of Constraint objects
     :return: tuple of (con_values, con_indices)
     """
-
     # get dimensions
     m = len(cons)
     n_indices = sum([len(con.int_set) for con in cons])
@@ -154,9 +150,9 @@ def _np_largest_con_index(con_indices: NDArray[np.int32]) -> np.int32:
 
 @numba.njit("int32(int32[:,:])", inline="always", fastmath=True, cache=True)
 def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
-    """
-    Return in total by how much constraints are not satisfied, assuming they represent how many _additional_ samples
-    to select from each constraint.
+    """Return in total by how much constraints are not satisfied.
+
+    This assumes con_values represents how many _additional_ samples to select from each constraint.
     """
     s = np.int32(0)
     for i_con in range(con_values.shape[0]):
@@ -170,9 +166,10 @@ def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
 
 
 def _np_con_count_satisfied(con_values: NDArray[np.int32]) -> int:
-    """
-    Return the number of individually satisfied constraints, assuming con_values represents how many _additional_
-    samples to select from each constraint. A constraint is satisfied when min_remaining <= 0 and max_remaining >= 0.
+    """Return the number of individually satisfied constraints.
+
+    This assumes con_values represents how many _additional_ samples to select from each constraint.
+    A constraint is satisfied when min_remaining <= 0 and max_remaining >= 0.
     """
     n_satisfied = 0
     for i_con in range(con_values.shape[0]):

@@ -37,7 +37,7 @@ from .bm_internal import (
     help="Output benchmark results in Markdown table format.",
 )
 @click.pass_context
-def internal(ctx, file: bool, turbo: bool, speed: float, markdown: bool):
+def internal(ctx: click.Context, file: bool, turbo: bool, speed: float, markdown: bool) -> None:
     """Internal benchmarks for max-div implementation details."""
     # Store flags in context so subcommands can access them
     ctx.ensure_object(dict)
@@ -54,7 +54,7 @@ def internal(ctx, file: bool, turbo: bool, speed: float, markdown: bool):
 # =================================================================================================
 @internal.command(name="all")
 @click.pass_context
-def cmd_all(ctx):
+def cmd_all(ctx: click.Context) -> None:
     """Runs all internal benchmarks."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
@@ -67,7 +67,7 @@ def cmd_all(ctx):
 
 @internal.command(name="randint")
 @click.pass_context
-def cmd_randint(ctx):
+def cmd_randint(ctx: click.Context) -> None:
     """Benchmarks the `randint` function from `max_div.sampling.uncon`."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
@@ -77,7 +77,7 @@ def cmd_randint(ctx):
 
 @internal.command(name="randint_constrained")
 @click.pass_context
-def cmd_randint_constrained(ctx):
+def cmd_randint_constrained(ctx: click.Context) -> None:
     """Benchmarks the `randint_constrained` function from `max_div.sampling.con`."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
@@ -87,7 +87,7 @@ def cmd_randint_constrained(ctx):
 
 @internal.command(name="diversity_metrics")
 @click.pass_context
-def cmd_diversity_metrics(ctx):
+def cmd_diversity_metrics(ctx: click.Context) -> None:
     """Benchmarks computation of DiversityMetrics."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
@@ -97,7 +97,7 @@ def cmd_diversity_metrics(ctx):
 
 @internal.command(name="modify_p_selectivity")
 @click.pass_context
-def cmd_modify_p_selectivity(ctx):
+def cmd_modify_p_selectivity(ctx: click.Context) -> None:
     """Benchmark different modify_p_selectivity flavors."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]

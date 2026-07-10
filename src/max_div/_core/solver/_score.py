@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from max_div._core.constraints._constraints import _np_con_total_violation
 
@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
 class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; deliberately unhashable
-    """
-    Object representing the multi-component score of a selection, i.e. of a final or intermediate solution to a
-    max-div problem with fairness constraints.
+    """Object representing the multi-component score of a selection.
+
+    A selection is a final or intermediate solution to a max-div problem with fairness constraints.
 
     The different components have strict priorities in order of appearance:
 
@@ -54,8 +54,7 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 
     # --- helpers ---------------------
     def as_tuple(self, soft: float = 0.0, ignore_infeasible_diversity: bool = False) -> tuple[float, ...]:
-        """
-        Return score as tuple, in order of descending priority, such that tuple-comparison yields correct results.
+        """Return score as tuple, in order of descending priority, such that tuple-comparison yields correct results.
 
         :param soft: Softness parameter in [0.0 ,1.0] indicating how soft constraints should be treated.
                       0.0 = hard constraints (i.e. constraints score is absolute higher prio than diversity)
@@ -79,17 +78,17 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
         return self.size, constraint_score, self.diversity, *self.div_tie_breakers
 
     # --- math overloads --------------
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: object) -> bool:
         if isinstance(other, Score):
             return self.as_tuple() < other.as_tuple()
         return NotImplemented
 
-    def __le__(self, other: Any) -> bool:
+    def __le__(self, other: object) -> bool:
         if isinstance(other, Score):
             return self.as_tuple() <= other.as_tuple()
         return NotImplemented
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Score):
             return self.as_tuple() == other.as_tuple()
         return NotImplemented
@@ -102,9 +101,9 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 #  ScoreGenerator
 # =================================================================================================
 class ScoreGenerator:
-    """
-    Utility class to generate Score objects from core metrics & data structures, allowing repetitive, duplicate
-    computations to be performed & cached at object instantiation.
+    """Utility class to generate Score objects from core metrics & data structures.
+
+    This allows repetitive, duplicate computations to be performed & cached at object instantiation.
     """
 
     # -------------------------------------------------------------------------
@@ -117,9 +116,8 @@ class ScoreGenerator:
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
-    ):
-        """
-        Initialize the ScoreGenerator.
+    ) -> None:
+        """Initialize the ScoreGenerator.
 
         :param n: (int) number of vectors in the max-div problem.
         :param k: (int) The target selection size for the max-div problem.
@@ -127,7 +125,6 @@ class ScoreGenerator:
         :param diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
         :param constraints: (list[Constraint]) The list of constraints used in the max-div problem.
         """
-
         # --- size score computation ------------
         self._n = n
         self._k = k

@@ -11,9 +11,8 @@ def sample_truncated_poisson(
     max_value: np.int32,
     _lambda: np.float32,
     rng_state: NDArray[np.uint64],
-):
-    """
-    Generate single int32 sample from a two-sided truncated Poisson distribution with given min and max values
+) -> np.int32:
+    """Generate single int32 sample from a two-sided truncated Poisson distribution with given min and max values.
 
     Regular Poisson distribution formula:
         P(X=k) = (λ^k * e^(-λ)) / k!
@@ -29,7 +28,6 @@ def sample_truncated_poisson(
     :param rng_state: (np.uint64 array) RNG state for underlying random sampling
     :return: (np.int32) single sample from the truncated Poisson distribution in range [min_value, max_value]
     """
-
     # --- generate p ------------------
     p = np.zeros(max_value - min_value + 1, dtype=np.float32)
     for k in range(min_value, max_value + 1):
@@ -44,15 +42,13 @@ def sample_truncated_poisson(
 
 @njit(fastmath=True, inline="always")
 def truncated_poisson_expected_value(min_value: np.int32, max_value: np.int32, _lambda: np.float32) -> np.float32:
-    """
-    Compute expected value of a two-sided truncated Poisson distribution with given min, max & lambda values
+    """Compute expected value of a two-sided truncated Poisson distribution with given min, max & lambda values.
 
     :param min_value: (np.int32) minimum value (inclusive)
     :param max_value: (np.int32) maximum value (inclusive)
     :param _lambda: (np.float32) lambda parameter of the Poisson distribution
     :return: (np.float32) expected value of the truncated Poisson distribution in range [min_value, max_value]
     """
-
     # --- compute p -------------------
     p = np.zeros(max_value - min_value + 1, dtype=np.float32)
     for k in range(min_value, max_value + 1):

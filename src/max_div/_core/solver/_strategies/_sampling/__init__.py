@@ -1,6 +1,6 @@
-"""
-Helper methods that centralize functionality to sample items to be removed from the selection (remove.py)
-or added to the selection (add.py).
+"""Helper methods that centralize functionality to sample items for selection changes.
+
+Items can be sampled to be removed from the selection (remove.py) or added to the selection (add.py).
 
 These methods bridge the gap between following 3 pieces of functionality:
     1) SolverState offering information about...

@@ -33,13 +33,13 @@ S = TypeVar("S", bound=StrategyBase)
 
 
 class SolverStep(ABC, Generic[S]):
-    def __init__(self, strategy: S):
+    def __init__(self, strategy: S) -> None:
         self._strategy: S = strategy
 
     def name(self) -> str:
         return self._strategy.name
 
-    def set_seed(self, seed: int):
+    def set_seed(self, seed: int) -> None:
         self._strategy.set_seed(seed)
 
     @abstractmethod
@@ -55,7 +55,7 @@ class SolverStep(ABC, Generic[S]):
 #  InitializationStep
 # =================================================================================================
 class InitializationStep(SolverStep[InitializationStrategy]):
-    def __init__(self, init_strategy: InitializationStrategy):
+    def __init__(self, init_strategy: InitializationStrategy) -> None:
         if not isinstance(init_strategy, InitializationStrategy):
             raise TypeError(
                 "The provided strategy is not an InitializationStrategy. "
@@ -108,7 +108,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
 #  OptimizationStep
 # =================================================================================================
 class OptimizationStep(SolverStep[OptimizationStrategy]):
-    def __init__(self, optim_strategy: OptimizationStrategy, duration: TargetDuration):
+    def __init__(self, optim_strategy: OptimizationStrategy, duration: TargetDuration) -> None:
         if not isinstance(optim_strategy, OptimizationStrategy):
             raise TypeError(
                 "The provided strategy is not an OptimizationStrategy. "
@@ -174,8 +174,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
     @staticmethod
     def _determine_n_iterations(progress: Progress, next_checkpoint_iter_count: int) -> int:
-        """
-        Determine number of iterations to execute in the next inner loop.
+        """Determine number of iterations to execute in the next inner loop.
 
         We take into account:
           - estimated total number of iterations left in tracked duration

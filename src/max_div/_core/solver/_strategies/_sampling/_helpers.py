@@ -7,11 +7,11 @@ from numpy.typing import NDArray
 def remove_sample_from_candidates_and_p(
     candidates: NDArray[np.int32], p: NDArray[np.float32], sample: np.int32
 ) -> tuple[NDArray[np.int32], NDArray[np.float32]]:
-    """
-    Locates the position of 'sample' in 'candidates' and removes it from 'candidates' + removes the corresponding value
-    from identically sized 'p'.
+    """Locates the position of 'sample' in 'candidates' and removes it from 'candidates' and 'p'.
 
-    NOTES:
+    The corresponding value is removed from the identically sized 'p'.
+
+    Notes:
      - original arrays are not modified; new arrays are returned
      - if 'sample' is not found in 'candidates', a ValueError is raised.
 
@@ -20,7 +20,6 @@ def remove_sample_from_candidates_and_p(
     :param sample: (int32) value to be removed from candidates (and corresponding p)
     :return: (new_candidates, new_p), each of size n-1
     """
-
     # --- init ---
     n = np.int32(candidates.shape[0])
     n_minus_1 = n - np.int32(1)
@@ -45,7 +44,6 @@ def remove_sample_from_candidates_and_p(
 @numba.njit("int32[:](int32[:], int32)", inline="always", fastmath=True, cache=True)
 def remove_sample_from_candidates(candidates: NDArray[np.int32], sample: np.int32) -> NDArray[np.int32]:
     """Simplified version of remove_sample_from_candidates_and_p that only modifies 'candidates', not 'p'."""
-
     # --- init ---
     n = np.int32(candidates.shape[0])
     n_minus_1 = n - np.int32(1)

@@ -4,7 +4,7 @@ from ._cli import cli
 
 
 @cli.command()
-def numba_status():
+def numba_status() -> None:
     """Show Numba version, llvmlite version, and configuration including SVML status."""
     import llvmlite
     import numba
