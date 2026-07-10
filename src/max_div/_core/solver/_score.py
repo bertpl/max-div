@@ -177,10 +177,8 @@ class ScoreGenerator:
         else:
             size_score = 1.0 - self._size_c1 * (n_selected - self._k)
 
-        if self._con_c == 0.0:
-            con_score = 1.0  # no constraints -> perfect score
-        else:
-            con_score = 1.0 - self._con_c * _np_con_total_violation(con_values)
+        # no constraints -> perfect score
+        con_score = 1.0 if self._con_c == 0.0 else 1.0 - self._con_c * _np_con_total_violation(con_values)
 
         # --- construct Score object ----------------------
         return Score(

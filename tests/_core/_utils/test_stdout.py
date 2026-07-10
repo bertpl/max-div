@@ -22,6 +22,5 @@ def test_stdout_to_file(tmp_path, enabled):
 
 def test_stdout_to_file_no_filename():
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError):
-        with stdout_to_file(enabled=True, filename=None):
-            pass
+    with pytest.raises(ValueError), stdout_to_file(enabled=True, filename=None):
+        pass

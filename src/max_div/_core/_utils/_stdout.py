@@ -15,7 +15,7 @@ def stdout_to_file(enabled: bool = True, filename: str | Path | None = None) -> 
     old_stdout = sys.stdout
     f = None
     if enabled:
-        f = Path(filename).open("w")
+        f = Path(filename).open("w")  # noqa: SIM115 — closed in the finally block of this context manager
         sys.stdout = f
 
     try:

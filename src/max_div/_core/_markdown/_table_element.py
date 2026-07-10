@@ -160,10 +160,7 @@ class TableValueWithUncertainty(_QuantiledTableElement):
         if self.decimals == 0:
             s_median = f"{round(self.q_50):_}"
         else:
-            if self.scientific:
-                s_median = f"{self.q_50:.{self.decimals}e}"
-            else:
-                s_median = f"{self.q_50:.{self.decimals}f}"
+            s_median = f"{self.q_50:.{self.decimals}e}" if self.scientific else f"{self.q_50:.{self.decimals}f}"
         s_perc = f"{50 * (self.q_75 - self.q_25) / self.q_50:.1f}%"
         return f"{s_median} ± {s_perc}"
 
@@ -203,7 +200,7 @@ class TableValueRange(_QuantiledTableElement):
         self.max_decimals = max_decimals
         self.diff_decimals = diff_decimals
 
-    def to_mark_down(self) -> str:
+    def to_mark_down(self) -> str:  # noqa: C901 — case-dispatch structure is clearer un-split
         prefix = suffix_min = suffix_max = ""
         for n_decimals in range(self.max_decimals, -1, -1):
             # Render q25 and q75 with n_decimals

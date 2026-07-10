@@ -28,7 +28,7 @@ P_UNIFORM = np.zeros(0, dtype=np.float32)
 #  randint
 # =================================================================================================
 @numba.njit("int32[:](int32, int32, bool, float32[:], uint64[:])", fastmath=True, cache=True)
-def randint(
+def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
     n: np.int32,
     k: np.int32,
     replace: bool,

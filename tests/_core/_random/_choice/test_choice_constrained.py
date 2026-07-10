@@ -67,10 +67,7 @@ def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, unif
     values = [0, 1, 2, 3, 4, 10, 11, 12, 13, 14] + [round(i) for i in np.linspace(14, n - 1, 10)]
     values = np.array(sorted(set(values)), dtype=np.int32)
 
-    if uniform:
-        p = P_UNIFORM
-    else:
-        p = np.array(np.random.random(values.size), dtype=np.float32)  # random probabilities
+    p = P_UNIFORM if uniform else np.array(np.random.random(values.size), dtype=np.float32)
 
     # copies to check for modification later
     p_before = p.copy()

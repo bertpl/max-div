@@ -11,7 +11,7 @@ def exponential_selectivity(
     p_out: NDArray[np.float32],
     modifier: np.float32,
     reverse: bool = False,
-    low_value: np.float32 = np.float32(0.1),
+    low_value: np.float32 = np.float32(0.1),  # noqa: B008 — numba needs a concrete typed default
 ) -> None:
     """Populate p_out with values depending exponentially on the non-normalized probabilities in p_in.
 

@@ -28,10 +28,7 @@ def test_choice(n_values: int, k: int, replace: bool, uniform: bool) -> None:
     # --- arrange -----------------------------------------
     values = randint(10000, np.int32(n_values), replace=False, p=P_UNIFORM, rng_state=new_rng_state(42))
     values_set = set(values)
-    if uniform:
-        p = P_UNIFORM
-    else:
-        p = get_probabilities(values.size)
+    p = P_UNIFORM if uniform else get_probabilities(values.size)
     p_copy = p.copy()
     rng_state = new_rng_state(123456)
 
@@ -60,10 +57,7 @@ def test_choice1(n_values: int, k: int, uniform: bool) -> None:
     # --- arrange -----------------------------------------
     values = randint(10000, np.int32(n_values), replace=False, p=P_UNIFORM, rng_state=new_rng_state(42))
     values_set = set(values)
-    if uniform:
-        p = P_UNIFORM
-    else:
-        p = get_probabilities(values.size)
+    p = P_UNIFORM if uniform else get_probabilities(values.size)
     p_copy = p.copy()
     rng_state = new_rng_state(123456)
 

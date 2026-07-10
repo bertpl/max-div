@@ -21,10 +21,7 @@ def test_calibrate_fast_pow(start_from_current: bool):
 
     # --- assert ------------------------------------------
 
-    if start_from_current:
-        tol = 0.05
-    else:
-        tol = 0.25
+    tol = 0.05 if start_from_current else 0.25
 
     # fast_log coefficients
     assert abs(c0 - c0_actual) <= tol

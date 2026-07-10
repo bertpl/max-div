@@ -37,10 +37,7 @@ class ReportHeader(ReportElement):
             lines = ["", f"{'#' * self.level} {self.txt}", ""]
         else:
             txt = self.txt.replace("`", "'")
-            if self.level == 1:
-                lines = ["", txt.upper(), ""]
-            else:
-                lines = ["", txt, ""]
+            lines = ["", txt.upper(), ""] if self.level == 1 else ["", txt, ""]
 
         return lines
 

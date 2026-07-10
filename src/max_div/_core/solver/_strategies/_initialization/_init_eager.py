@@ -90,10 +90,8 @@ class InitEager(InitializationStrategy):
             state.restore_snapshot()
 
             # see if sample is better
-            if self.ignore_constraints:
-                score_tuple = score.as_tuple(soft=1.0)  # ignore constraint score
-            else:
-                score_tuple = score.as_tuple()  # consider full score, including constraints
+            # soft=1.0 ignores the constraint score; otherwise consider the full score, including constraints
+            score_tuple = score.as_tuple(soft=1.0) if self.ignore_constraints else score.as_tuple()
 
             if (best_score_tuple is None) or (score_tuple > best_score_tuple):
                 best_score_tuple = score_tuple

@@ -73,7 +73,7 @@ class BenchmarkProblem(ABC):
         """
         # --- validate ----------------
         supported_params = cls.supported_params().keys()
-        for key in kwargs.keys():
+        for key in kwargs:
             if key not in supported_params:
                 raise ValueError(
                     f"Parameter '{key}' is not supported by benchmark problem '{cls.name()}'."

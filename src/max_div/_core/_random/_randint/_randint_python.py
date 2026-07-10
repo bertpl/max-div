@@ -2,7 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def randint_python(
+def randint_python(  # noqa: C901 — case-dispatch structure is clearer un-split
     n: np.int32 | int,
     k: np.int32 | int,
     replace: bool,

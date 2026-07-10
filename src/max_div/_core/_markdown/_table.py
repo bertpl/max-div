@@ -38,7 +38,7 @@ class Table(ReportElement):
         row = [TableText(str(cell)) if not isinstance(cell, TableElement) else cell for cell in row]
         self.rows.append(row)
 
-    def add_aggregate_row(
+    def add_aggregate_row(  # noqa: C901 — case-dispatch structure is clearer un-split
         self,
         agg_type: TableAggregationType,
         restrict_to_types: list[type[TableElement]] | None = None,

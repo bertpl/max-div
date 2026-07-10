@@ -84,7 +84,7 @@ def format_short_time_duration(
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def _format_long_time_duration_to_spec(
+def _format_long_time_duration_to_spec(  # noqa: C901 — case-dispatch structure is clearer un-split
     dt_sec: float, precision: str = Literal["d", "h", "m", "s", "s.s", "s.ss", "s.sss"]
 ) -> str:
     # --- rounding ----------------------------------------
@@ -166,10 +166,7 @@ def _format_short_time_duration_to_spec(
         value = round(dt_sec * c, ndigits=n_digits)
         if (value < 1000) or (value_str == ""):
             unit_str = unit
-            if n_digits > 0:
-                value_str = f"{value:.{n_digits}f}".lstrip()
-            else:
-                value_str = str(int(value))
+            value_str = f"{value:.{n_digits}f}".lstrip() if n_digits > 0 else str(int(value))
 
     # --- final result ------------------------------------
     if spaced:

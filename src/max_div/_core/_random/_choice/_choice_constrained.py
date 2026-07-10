@@ -15,7 +15,7 @@ def choice_constrained(
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
     eager: bool = False,
-    k_context: np.int32 = np.int32(-1),
+    k_context: np.int32 = np.int32(-1),  # noqa: B008 — numba needs a concrete typed default
 ) -> NDArray[np.int32]:
     """Sample from a provided 'values' array instead of the range [0, n), respecting the provided constraints.
 
