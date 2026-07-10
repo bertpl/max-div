@@ -1,35 +1,80 @@
-name: Unit Test Matrix
+name: Unit tests (full matrix)
+
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
-  determine_python_versions:
+  core:
+    name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }}
     runs-on: ubuntu-latest
-    name: Python versions
-    outputs:
-      python_versions: ${{ steps.get_python_versions.outputs.python_versions }}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/python_versions
-        id: get_python_versions
-
-
-  test_matrix:
-    runs-on: ubuntu-latest
-    name: ${{ matrix.python_version }} - ${{ startsWith(matrix.dependency_resolution, 'lo') && 'low' || 'high' }} - ${{ matrix.include_all_extra_deps }}
-    needs: determine_python_versions
     strategy:
       fail-fast: false
       matrix:
-          python_version: ${{ fromJson(needs.determine_python_versions.outputs.python_versions) }}
-          dependency_resolution: ["lowest-direct", "highest"]
-          include_all_extra_deps: ["false", "true"]
+        # ubuntu-only: pure Python + numpy/scipy/numba, no OS-specific code paths, so one
+        # OS exercises everything. Strategic combos cover every axis (all four Pythons,
+        # both resolution ends) rather than their full product. numba is a mandatory
+        # dependency; the jit axis distinguishes compiled (representative) from
+        # interpreted execution — coverage comes from the two jit-off legs, since numba
+        # only yields line coverage with the JIT disabled.
+        include:
+          - { python: "3.11", resolution: highest,       jit: "on"  }
+          - { python: "3.12", resolution: highest,       jit: "on"  }
+          - { python: "3.13", resolution: highest,       jit: "on"  }
+          - { python: "3.14", resolution: highest,       jit: "on"  }
+          - { python: "3.11", resolution: lowest-direct, jit: "on"  }
+          - { python: "3.14", resolution: lowest-direct, jit: "on"  }
+          - { python: "3.11", resolution: highest,       jit: "off" }  # coverage leg
+          - { python: "3.14", resolution: highest,       jit: "off" }  # coverage leg
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/unit_test
         with:
-          python_version: ${{ matrix.python_version }}
-          dependency_resolution: ${{ matrix.dependency_resolution }}
-          include_all_extra_deps: ${{ matrix.include_all_extra_deps }}
+          uv_version: ${{ vars.UV_VERSION }}
+          python_version: ${{ matrix.python }}
+          dependency_resolution: ${{ matrix.resolution }}
+          jit: ${{ matrix.jit }}
+          # the jit-off legs upload their data; the coverage job combines + gates
+          coverage: ${{ matrix.jit == 'off' && 'true' || 'false' }}
+
+  coverage:
+    name: coverage
+    # Cumulative gate: combine the coverage legs' data into one picture before checking
+    # the floor, so version-divergent code paths don't read as uncovered.
+    needs: [core]
+    # always() so a cancelled/failed combo makes this job FAIL explicitly rather than
+    # skip — GitHub doesn't reliably propagate a cancelled leg through needs.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every matrix combo to have succeeded
+        if: needs.core.result != 'success'
+        run: |
+          echo "::error::test matrix did not fully succeed (core result: ${{ needs.core.result }})"
+          exit 1
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ vars.UV_VERSION }}
+      - name: Download coverage data from all matrix combos
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-data-*
+          merge-multiple: true
+      - name: Combine and report (fails below the [tool.coverage.report] floor)
+        run: |
+          uv run --group dev coverage combine
+          uv run --group dev coverage report
+      - name: Compute release metrics (coverage % + test count)
+        run: uv run --group dev python .github/scripts/ci_compute_metrics.py metrics.json
+      - name: Upload release metrics
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-metrics
+          path: metrics.json

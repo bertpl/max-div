@@ -76,6 +76,7 @@ relative_files = true
 
 [tool.coverage.report]
 precision = 2
+fail_under = 98
 exclude_also = [
     "@abstractmethod",
     "@abc.abstractmethod",

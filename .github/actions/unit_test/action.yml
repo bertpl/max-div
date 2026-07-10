@@ -1,56 +1,92 @@
 name: Unit Tests
 author: Bert Pluymers
-description: Run unit tests with specific python version, extras, dependency resolution
+description: Run unit tests at a specific Python version, dependency resolution, and numba JIT mode.
 
 inputs:
+    uv_version:
+        required: true
+        description: "Version of uv to be used. Empty installs the latest."
     python_version:
         required: false
-        description: "Version of Python to be used.  If omitted will default to version in .python-version"
+        description: "Python version. Empty string uses .python-version."
         default: ""
     dependency_resolution:
         required: false
-        description: "Type of dependency resolution to use.  One of 'highest' (default), 'lowest-direct', 'lowest' (discouraged)."
+        description: "uv resolution strategy: 'highest' (default) or 'lowest-direct'."
         default: "highest"
-    include_all_extra_deps:
+    jit:
         required: false
-        description: "Set to 'true' (default) to include all optional package dependencies. 'false' otherwise."
-        default: "true"
+        description: "'on' (default) runs numba-compiled; 'off' sets NUMBA_DISABLE_JIT=1 (interpreted, line-coverage capable)."
+        default: "on"
+    coverage:
+        required: false
+        description: "'true' runs under coverage and uploads the per-combo data file for a cross-matrix combine; 'false' (default) runs plain pytest."
+        default: "false"
 
 runs:
-    using: "composite"
+    using: composite
     steps:
-      - uses: astral-sh/setup-uv@v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ inputs.uv_version }}
+          # Distinct cache key per combo (incl. Python, since wheels are cpXY-specific) so
+          # parallel legs don't race to save one shared key or restore the wrong interpreter's wheels.
+          cache-suffix: py${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}
 
       - name: Determine Python version
         shell: bash
-        run: |
-            if [ -n "${{ inputs.python_version }}" ]; then
-                echo "PYTHON_EFFECTIVE_VERSION=${{ inputs.python_version }}" >> $GITHUB_ENV
-            else
-                PYTHON_VERSION=$(cat .python-version)
-                echo "PYTHON_EFFECTIVE_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
-            fi
-            echo "Using PYTHON ${{ env.PYTHON_EFFECTIVE_VERSION }}."
+        env:
+          REQUESTED: ${{ inputs.python_version }}
+        run: |  # zizmor: ignore[github-env] value is a workflow-controlled Python version, not user input
+          PY="${REQUESTED:-$(cat .python-version)}"
+          echo "PYTHON_EFFECTIVE_VERSION=$PY" >> "$GITHUB_ENV"
+          echo "Using Python $PY."
 
-      - name: Set up venv, Python ${{ env.PYTHON_EFFECTIVE_VERSION }} & dependencies
+      - name: Drop the checked-out lock so each combo resolves fresh from pyproject
         shell: bash
-        run:  |
-            uv python install ${{ env.PYTHON_EFFECTIVE_VERSION }}
-            uv venv --python ${{ env.PYTHON_EFFECTIVE_VERSION }}
-            source .venv/bin/activate
-            if [ "${{ inputs.include_all_extra_deps }}" = "true" ]; then
-                uv pip compile --resolution ${{ inputs.dependency_resolution }} --all-extras --group dev pyproject.toml
-                uv sync --all-extras --dev
-            else
-                uv pip compile --resolution ${{ inputs.dependency_resolution }} --group dev pyproject.toml
-                uv sync --dev
-            fi
+        # `uv run --resolution` re-resolves per the requested strategy even with a lock present,
+        # but removing the committed lock guarantees the matrix leg is never pinned by it.
+        run: rm -f uv.lock
 
       - name: Run tests
         shell: bash
-        run:  |
-            if [ "${{ inputs.include_all_extra_deps }}" = "true" ]; then
-                uv run --all-extras --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests --durations=20
-            else
-                uv run --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests --durations=20
-            fi
+        env:
+          PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
+          RES: ${{ inputs.dependency_resolution }}
+          JIT: ${{ inputs.jit }}
+          COV: ${{ inputs.coverage }}
+          # distinct per-combo data file so the coverage job combines rather than overwrites
+          COVERAGE_FILE: .coverage.${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}
+        run: |
+          # NUMBA_DISABLE_JIT: interpreted execution, required for line coverage of njit functions
+          [ "$JIT" = "off" ] && export NUMBA_DISABLE_JIT=1
+          COV_FLAG=""
+          # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
+          [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
+          uv run --python "$PY" --resolution "$RES" --group dev pytest ./tests $COV_FLAG --durations=20
+
+      - name: Dump collected node-ids (for the cross-combo test-count union)
+        if: inputs.coverage == 'true'
+        shell: bash
+        env:
+          PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
+          RES: ${{ inputs.dependency_resolution }}
+          JIT: ${{ inputs.jit }}
+        run: |
+          # -o addopts="" clears `-n auto`, so collection runs single-process (xdist off);
+          # each combo records its own collected set so the coverage job can union them.
+          uv run --python "$PY" --resolution "$RES" --group dev \
+            pytest ./tests --collect-only -q -o addopts="" \
+            | grep '::' > "test-ids-${PY}-${RES}-${JIT}.txt"
+
+      - name: Upload coverage + node-id data
+        if: inputs.coverage == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-data-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}
+          path: |
+            .coverage.*
+            test-ids-*.txt
+          include-hidden-files: true  # .coverage.* are dotfiles, excluded by default
+          if-no-files-found: error
