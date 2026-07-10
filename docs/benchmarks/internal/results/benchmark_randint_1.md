@@ -23,4 +23,3 @@
 | 1000  | 10000        | 12.25 μsec ± 0.5% | <span style="color:#00aa00">**1.247 μsec ± 0.4%**</span>  |
 | 10000 | 10000        | 81.67 μsec ± 0.7% | <span style="color:#00aa00">**7.759 μsec ± 0.7%**</span>  |
 |       | **Geomean:** | 8.216 μsec ± 0.5% | <span style="color:#00aa00">**1.113 μsec ± 1.7%**</span>  |
-

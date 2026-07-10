@@ -1,6 +1,6 @@
 file_path=
 
-.PHONY: help build test coverage test-and-coverage format format-single-file splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
+.PHONY: help build test coverage test-and-coverage format format-single-file lint dev-setup splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -15,6 +15,8 @@ help:
 	@echo ''
 	@echo '  format                                 Format source code using ruff.'
 	@echo '  format-single-file                     Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
+	@echo '  lint                                   Run all pre-commit hooks on all files.'
+	@echo '  dev-setup                              Sync dev environment & install pre-commit hooks.'
 	@echo ''
 	@echo '  splash                                 Build splash screen using current version of package. (./images/splash_with_version.webp)'
 	@echo '  docs                                   Update mkdocs site. (./reports/docs)'
@@ -50,12 +52,19 @@ test-and-coverage:
 	$(MAKE) coverage;
 
 format:
-	uvx ruff format .;
-	uvx ruff check --fix .;
+	uv run ruff format .;
+	uv run ruff check --fix .;
 
 format-single-file:
-	uvx ruff format ${file_path};
-	uvx ruff check --fix ${file_path};
+	uv run ruff format ${file_path};
+	uv run ruff check --fix ${file_path};
+
+lint:
+	uv run pre-commit run --all-files
+
+dev-setup:
+	uv sync --all-extras
+	uv run pre-commit install
 
 splash:
 	./images/splash/create_splash_with_version.sh "$$(uv version --short)-dev";

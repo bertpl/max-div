@@ -5,7 +5,7 @@ Command:
 uv tool install max-div
 max-div benchmark --markdown modify_p_selectivity
 ```
-or 
+or
 ```bash
 uv run max-div benchmark --markdown modify_p_selectivity
 ```

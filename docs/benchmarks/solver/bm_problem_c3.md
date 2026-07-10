@@ -23,7 +23,7 @@ This image shows problem C3 with size parameter $s=2$ (thus $d=2$, $n=300$, $k=2
 
 ![Problem C3](./images/problem_C3.webp){ .center }
 
-The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations 
+The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations
 using the L2 distance metric and the `geomean_separation` diversity metric:
 
 ![Problem C3 with Solution](./images/problem_C3_with_solution.webp){ .center }

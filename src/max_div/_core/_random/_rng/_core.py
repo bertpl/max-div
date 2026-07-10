@@ -1,7 +1,7 @@
 """
 Custom simple random number generation module for integration in numba oriented code.
 This core RNG functionality is used in the methods of ._public.py, which provides alternatives to some fundamental
-methods in numpy.random, but with signficantly better performance when used inside numba.njit functions.
+methods in numpy.random, but with significantly better performance when used inside numba.njit functions.
 
 This is based on the following:
   - https://www.pcg-random.org/posts/bounded-rands.html

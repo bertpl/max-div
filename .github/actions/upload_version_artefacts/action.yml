@@ -47,7 +47,7 @@ runs:
         shell: bash
         run: |
             cp -r ./badges/* "$VERSION_FOLDER"
-            cp -r ./splash/* "$VERSION_FOLDER"        
+            cp -r ./splash/* "$VERSION_FOLDER"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

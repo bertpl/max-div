@@ -22,4 +22,3 @@ runs:
             echo "build_type=develop" >> $GITHUB_OUTPUT
             echo "Build type: develop"
           fi
-

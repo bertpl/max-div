@@ -33,13 +33,13 @@ runs:
         shell: bash
         run: |
           TAG="${{ inputs.tag }}"
-          
+
           echo "Checking if tag '${TAG}' exists..."
-          
+
           if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
             echo "tag_exists=true" >> $GITHUB_OUTPUT
             echo "✓ Tag '${TAG}' exists"
-            
+
             if [[ "${{ inputs.fail_if_exists }}" == "true" ]]; then
               echo "ERROR: Tag '${TAG}' exists and fail_if_exists is set to true"
               exit 1
@@ -47,10 +47,9 @@ runs:
           else
             echo "tag_exists=false" >> $GITHUB_OUTPUT
             echo "✗ Tag '${TAG}' does not exist"
-            
+
             if [[ "${{ inputs.fail_if_not_exists }}" == "true" ]]; then
               echo "ERROR: Tag '${TAG}' does not exist and fail_if_not_exists is set to true"
               exit 1
             fi
           fi
-

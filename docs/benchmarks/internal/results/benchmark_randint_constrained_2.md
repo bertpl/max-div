@@ -45,4 +45,3 @@
 | 128 | 1000 | 10        | 0.0%                                    | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
 | 256 | 1000 | 10        | 0.0%                                    | <span style="color:#00aa00">**100.0%**</span>  | <span style="color:#00aa00">**100.0%**</span>  |
 |     |      | **Mean:** | 32.85%                                  | <span style="color:#00aa00">**100.00%**</span> | <span style="color:#00aa00">**100.00%**</span> |
-

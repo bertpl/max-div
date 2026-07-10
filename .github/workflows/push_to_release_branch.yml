@@ -85,7 +85,7 @@ jobs:
         run: |
           TAG="v$(uv version --short)"
           COMMIT_SHA="${{ github.sha }}"
-          
+
           gh api repos/${{ github.repository }}/git/refs \
             -f ref="refs/tags/${TAG}" \
             -f sha="${COMMIT_SHA}"

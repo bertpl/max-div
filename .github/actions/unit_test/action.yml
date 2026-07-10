@@ -28,7 +28,7 @@ runs:
                 echo "PYTHON_EFFECTIVE_VERSION=${{ inputs.python_version }}" >> $GITHUB_ENV
             else
                 PYTHON_VERSION=$(cat .python-version)
-                echo "PYTHON_EFFECTIVE_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV                
+                echo "PYTHON_EFFECTIVE_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
             fi
             echo "Using PYTHON ${{ env.PYTHON_EFFECTIVE_VERSION }}."
 
@@ -40,10 +40,10 @@ runs:
             source .venv/bin/activate
             if [ "${{ inputs.include_all_extra_deps }}" = "true" ]; then
                 uv pip compile --resolution ${{ inputs.dependency_resolution }} --all-extras --group dev pyproject.toml
-                uv sync --all-extras --dev 
+                uv sync --all-extras --dev
             else
                 uv pip compile --resolution ${{ inputs.dependency_resolution }} --group dev pyproject.toml
-                uv sync --dev 
+                uv sync --dev
             fi
 
       - name: Run tests

@@ -19,7 +19,7 @@ class SkewedIntervalAdaptiveSampler(AdaptiveSampler[np.float32]):
     ):
         """
         Class that performs adaptive sampling from a fixed interval, where the median value is adapted using feedback,
-        resulting in a skewed distribution over the interval.  Underlying, a modfied power distribution over [0,1]
+        resulting in a skewed distribution over the interval.  Underlying, a modified power distribution over [0,1]
         is used, which is then scaled to [min_value, max_value].
 
         For numerical robustness, the median parameter of the underlying distribution, is limited to [0.01, 0.99].

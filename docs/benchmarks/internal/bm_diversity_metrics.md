@@ -5,7 +5,7 @@ Command:
 uv tool install max-div
 max-div benchmark --markdown diversity_metrics
 ```
-or 
+or
 ```bash
 uv run max-div benchmark --markdown diversity_metrics
 ```

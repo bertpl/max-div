@@ -12,7 +12,7 @@ This image shows problem U2 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=2
 
 ![Problem U2](./images/problem_U2.webp){ .center }
 
-The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations 
+The image below shows an example solution, obtained by using the `DEFAULT` solver preset over 10.000 iterations
 using the L2 distance metric and the `geomean_separation` diversity metric:
 
 ![Problem U2 with Solution](./images/problem_U2_with_solution.webp){ .center }
