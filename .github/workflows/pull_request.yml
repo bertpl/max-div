@@ -21,6 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check branch name
+        # PR author, not github.actor — a human re-running checks on a Dependabot
+        # PR must not un-exempt it (Dependabot branches don't follow the convention)
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
@@ -32,6 +35,8 @@ jobs:
       # The repo squash-merges, so the PR title becomes the commit subject on
       # main — the CI complement to the local commit-msg hook.
       - name: Check PR title
+        # Skipped for Dependabot, whose PR titles don't follow the <type>: convention.
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
