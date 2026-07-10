@@ -38,7 +38,7 @@ class StrategyBase:
 
     def set_seed(self, seed: int | np.int64) -> None:
         """Sets the random seed for the strategy, to be used by child classes."""
-        self._seed = int_to_int64(seed)
+        self._seed = int_to_int64(int(seed))  # int() since int_to_int64 accepts Python int only; cold path
         self._rng_state = new_rng_state(self._seed)
 
     # -------------------------------------------------------------------------

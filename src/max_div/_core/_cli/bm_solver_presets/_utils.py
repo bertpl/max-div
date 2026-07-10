@@ -51,4 +51,4 @@ def estimate_execution_time_sec_single(params: SolverPresetBenchmarkParams) -> f
 # =================================================================================================
 def get_n_processes(n_scope: int) -> int:
     """Determine appropriate number of processes for multiprocessing using scope size & core count."""
-    return min(n_scope, round(0.75 * os.cpu_count()))
+    return min(n_scope, round(0.75 * (os.cpu_count() or 1)))  # cpu_count() can return None

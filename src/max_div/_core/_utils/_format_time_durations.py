@@ -1,5 +1,3 @@
-from typing import Literal
-
 from ._precision import HALF_EPS
 
 
@@ -85,7 +83,7 @@ def format_short_time_duration(
 #  Helpers
 # =================================================================================================
 def _format_long_time_duration_to_spec(  # noqa: C901 — case-dispatch structure is clearer un-split
-    dt_sec: float, precision: str = Literal["d", "h", "m", "s", "s.s", "s.ss", "s.sss"]
+    dt_sec: float, precision: str
 ) -> str:
     # --- rounding ----------------------------------------
     match precision:

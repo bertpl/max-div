@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 import numpy as np
 
@@ -75,7 +75,7 @@ class BenchmarkResult:
         else:
             raise ValueError(f"Unknown aggregation method: {method}")
 
-        return BenchmarkResult(t_sec_q_25=agg_q25, t_sec_q_50=agg_q50, t_sec_q_75=agg_q75)
+        return BenchmarkResult(t_sec_q_25=float(agg_q25), t_sec_q_50=float(agg_q50), t_sec_q_75=float(agg_q75))
 
 
 # =================================================================================================
@@ -106,7 +106,7 @@ def benchmark(  # noqa: C901 — case-dispatch structure is clearer un-split
     lst_t = []  # list of measured times per execution in seconds
     n_executions = 1  # number of executions per run, adjusted dynamically
     # baseline function to subtract overhead (indexed variant when an index is cycled)
-    f_baseline = _baseline_fun if index_range is None else _baseline_fun_indexed
+    f_baseline = cast("Callable[..., None]", _baseline_fun if index_range is None else _baseline_fun_indexed)
 
     if not silent:
         print("Benchmarking: ", end="")

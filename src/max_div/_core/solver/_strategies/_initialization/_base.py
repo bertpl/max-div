@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from max_div._core.solver._strategies._base import StrategyBase
 
@@ -10,6 +10,11 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from max_div._core.solver._solver_state import SolverState
+
+    from ._init_eager import InitEager
+    from ._init_fast import InitFast
+    from ._init_random_batched import InitRandomBatched
+    from ._init_random_one_shot import InitRandomOneShot
 
 
 # =================================================================================================
@@ -41,7 +46,7 @@ class InitializationStrategy(StrategyBase, ABC):
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def fast(cls) -> Self:
+    def fast(cls) -> InitFast:
         """Deterministic greedy initialization.
 
         Selects vectors one-by-one, always picking the one that maximizes separation from the current selection.
@@ -52,7 +57,7 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitFast()
 
     @classmethod
-    def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> Self:
+    def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:
         """Random initialization that selects all ``k`` vectors in a single batch.
 
         Probabilities are biased by global separation (unless ``uniform=True``).
@@ -68,7 +73,7 @@ class InitializationStrategy(StrategyBase, ABC):
         )
 
     @classmethod
-    def random_batched(cls, b: int, ignore_constraints: bool = False) -> Self:
+    def random_batched(cls, b: int, ignore_constraints: bool = False) -> InitRandomBatched:
         """Random initialization that selects vectors in batches of ``b``.
 
         Separations are re-evaluated between batches.
@@ -84,7 +89,7 @@ class InitializationStrategy(StrategyBase, ABC):
         )
 
     @classmethod
-    def eager(cls, nc: int, ignore_constraints: bool = False) -> Self:
+    def eager(cls, nc: int, ignore_constraints: bool = False) -> InitEager:
         """Greedy initialization that evaluates ``nc`` random candidates per step and picks the best one.
 
         Higher ``nc`` gives better quality but is slower.

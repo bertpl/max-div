@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- PEP 561 `py.typed` marker: the package's type annotations are now visible to downstream type checkers
 
 ### Changed
 

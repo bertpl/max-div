@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import click
 
@@ -178,7 +179,7 @@ def presets(
     else:
         for problem in problems:
             # file names for this problem
-            json_file_name = f"preset_results_{problem}_{size}.json" if json_file else None
+            json_file_name = Path(f"preset_results_{problem}_{size}.json") if json_file else None
             markdown_file_name = f"preset_results_{problem}_{size}.md" if markdown_file else None
 
             # execute for this problem

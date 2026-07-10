@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from numpy._typing import NDArray
 
     from max_div._core.solver._duration import Progress
-    from max_div._core.solver._score import Score
     from max_div._core.solver._solver_state import SolverState
 
 
@@ -80,10 +79,14 @@ class SilentProgressReporter(ProgressReporter):
 
     def solver_step_started(self, step_name: str) -> None: ...  # no-op
     def update(
-        self, progress: Progress, score: Score, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
+        self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
     ) -> None: ...  # no-op
     def solver_step_finished(
-        self, progress: Progress | None, score: Score, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
+        self,
+        progress: Progress | None,
+        state: SolverState,
+        get_debug_info: Callable[[], str] | None = None,
+        **kwargs: bool,
     ) -> None: ...  # no-op
 
 
@@ -131,7 +134,7 @@ class TqdmProgressReporter(ProgressReporter):
     def _close_current_pbar(self) -> None:
         if self._current_pbar is not None:
             # make sure pbar shows 100%
-            self._current_pbar.total = max(1, self._current_pbar.total)
+            self._current_pbar.total = max(1, self._current_pbar.total or 0)  # tqdm annotates total as int | None
             self._current_pbar.n = self._current_pbar.total
             self._current_pbar.refresh()
 
@@ -269,7 +272,7 @@ class TabularProgressReporter(ProgressReporter):
         else:
             diversity_str = f"{score.diversity:.6e}"
 
-        self._progress_table.show_progress(
+        self._progress_table.show_progress(  # ty: ignore[unresolved-attribute]  # table is initialized in solver_step_started before any row is shown
             values=[
                 format_long_time_duration(t_elapsed_solver, n_chars=8),
                 self._step_name,

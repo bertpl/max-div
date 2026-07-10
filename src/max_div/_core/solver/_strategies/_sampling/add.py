@@ -34,7 +34,7 @@ def select_items_to_add(
     selectivity_modifier: float,
     rng_state: NDArray[np.uint64],
     sampling_type: SamplingType = SamplingType.GROUP,
-    include_within_group_separation: bool = True,
+    include_within_group_separation: bool | np.bool_ = True,
     ignore_constraints: bool = False,
 ) -> NDArray[np.int32]:
     """Select k items from 'candidates' to be added to the provided SolverState.

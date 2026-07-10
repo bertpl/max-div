@@ -40,6 +40,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
 ]
 
 [project.optional-dependencies]
@@ -62,6 +63,7 @@ dev = [
     "pytest-xdist>=3.5.0",
     "pytest-rerunfailures>=14.0",
     "scipy-stubs>=1.10.0",
+    "ty==0.0.58",  # pre-1.0 type checker — pin exactly; its ruleset is still evolving
 ]
 # notebook/analysis tooling — not needed to run the test suite, so kept out of the
 # dev group that CI installs (and out of the lowest-direct resolution surface)
@@ -168,6 +170,9 @@ convention = "google"
 "src/max_div/_core/_math/fast_pow/_calibration.py" = ["N811"]
 "tests/_core/_math/fast_log_exp/test_calibration.py" = ["N811"]
 "tests/_core/_math/fast_pow/test_calibration.py" = ["N811"]
+
+[tool.ty.src]
+include = ["src/max_div"]
 
 [tool.coverage.run]
 source_pkgs = ["max_div"]

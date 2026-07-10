@@ -45,7 +45,9 @@ def fast_log2_f64(x: np.float64) -> np.float64:
     log2_mantissa = _D20 + m * (_D21 + m * _D22)
 
     # Return log2(x) = exponent + log2(m)
-    return exponent + log2_mantissa
+    # NOTE: statically, `.view()` can yield an integer type, so the inferred type of this sum is
+    #       `float64 | signedinteger`; at runtime (and under numba) it is always a float64.
+    return exponent + log2_mantissa  # ty: ignore[invalid-return-type]
 
 
 @numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)

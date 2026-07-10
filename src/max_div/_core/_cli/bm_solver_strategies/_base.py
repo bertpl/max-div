@@ -130,7 +130,8 @@ class SolverBenchmarkScope:
     ) -> None:
         self._context_active = False
         if not self._leave_pbar:
-            self._pbar.close()
+            # `_pbar` is always set in __enter__, but ty cannot see the link
+            self._pbar.close()  # ty: ignore[unresolved-attribute]
         self._pbar = None
 
     # -------------------------------------------------------------------------

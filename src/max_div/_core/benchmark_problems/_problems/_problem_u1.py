@@ -37,7 +37,7 @@ class BenchmarkProblem_U1(BenchmarkProblem):
 
     @classmethod
     def get_problem_dimensions(cls, **kwargs: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
-        size = kwargs.get("size")
+        size: int = kwargs["size"]  # required parameter, see supported_params()
         d = size
         n = 100 * size
         k = 10 * size
@@ -46,7 +46,12 @@ class BenchmarkProblem_U1(BenchmarkProblem):
         return d, n, k, m, n_con_indices
 
     @classmethod
-    def _create_problem_instance(cls, size: int, diversity_metric: DiversityMetric, **kwargs: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+    def _create_problem_instance(  # ty: ignore[invalid-method-override] -- factory always dispatches with matching named kwargs
+        cls,
+        size: int,
+        diversity_metric: DiversityMetric,
+        **kwargs: Any,  # noqa: ANN401 -- heterogeneous per-problem parameters
+    ) -> MaxDivProblem:
         d, n, k, _, _ = cls.get_problem_dimensions(size=size)
 
         # Generate uniform random vectors

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Sequence
 from itertools import chain
 
 from ._report_element import ReportElement
@@ -35,8 +36,10 @@ class Table(ReportElement):
             row += [""] * (self.n_cols() - len(row))
         if len(row) > self.n_cols():
             row = row[: self.n_cols()]
-        row = [TableText(str(cell)) if not isinstance(cell, TableElement) else cell for cell in row]
-        self.rows.append(row)
+        cells: list[TableElement] = [
+            TableText(str(cell)) if not isinstance(cell, TableElement) else cell for cell in row
+        ]
+        self.rows.append(cells)
 
     def add_aggregate_row(  # noqa: C901 — case-dispatch structure is clearer un-split
         self,
@@ -59,13 +62,13 @@ class Table(ReportElement):
 
         # Find the right_most non-Aggregatable column before the first Aggregatable column
         label_col: int | None = None
-        for col_idx in range(first_aggregatable_col - 1, -1, -1):
+        for col_idx in range(first_aggregatable_col - 1, -1, -1):  # ty: ignore[unsupported-operator] -- only called on tables with at least one aggregatable column
             if not has_aggregatable[col_idx]:
                 label_col = col_idx
                 break
 
         # Create the aggregate row
-        agg_row: list[TableElement] = [TableText("")] * self.n_cols()
+        agg_row: list[str | TableElement] = [TableText("")] * self.n_cols()
 
         # Set the label if we found a label column
         if label_col is not None:
@@ -200,7 +203,7 @@ class Table(ReportElement):
     #  Internal
     # -------------------------------------------------------------------------
     @staticmethod
-    def _render_single_elements_of_single_row(markdown: bool, row: list[TableElement]) -> list[list[str]]:
+    def _render_single_elements_of_single_row(markdown: bool, row: Sequence[TableElement]) -> list[list[str]]:
         """Renders elements of a single row, possibly spanning multiple lines (if markdown==False).
 
         In the return list[list[str]], the outer list spans all columns, while each inner list represents multiple

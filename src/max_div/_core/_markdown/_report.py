@@ -14,10 +14,9 @@ class Report:
     #  Build Report
     # -------------------------------------------------------------------------
     def add(self, elements: ReportElement | str | list[ReportElement | str]) -> None:
-        if not isinstance(elements, list):
-            elements = [elements]
-        elements = [ReportText(el) if isinstance(el, str) else el for el in elements]
-        self._elements.extend(elements)
+        element_list: list[ReportElement | str] = [elements] if isinstance(elements, ReportElement | str) else elements
+        for el in element_list:
+            self._elements.append(ReportText(el) if isinstance(el, str) else el)
 
     def __iadd__(self, elements: ReportElement | str | list[ReportElement | str]) -> Report:
         self.add(elements)

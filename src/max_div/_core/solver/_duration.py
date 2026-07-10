@@ -270,7 +270,7 @@ class Elapsed:  # noqa: PLW1641 — value-semantics-only hot-path object; delibe
         )
 
     # --- math ------------------------
-    def __add__(self, other: Elapsed) -> Elapsed:
+    def __add__(self, other: Elapsed | int) -> Elapsed:
         if other == 0:
             return self  # helps ensure sum() works correctly
         if not isinstance(other, Elapsed):

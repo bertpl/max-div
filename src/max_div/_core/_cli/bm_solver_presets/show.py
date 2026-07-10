@@ -87,7 +87,7 @@ def show_solver_presets_benchmark_results(
                 )
                 table_iters_row.append(
                     TableValueWithUncertainty.from_values(
-                        agg.n_iterations,
+                        [float(n) for n in agg.n_iterations],
                         decimals=0,
                     )
                 )
