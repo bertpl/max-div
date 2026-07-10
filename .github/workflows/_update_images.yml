@@ -43,7 +43,7 @@ jobs:
               FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
 
               # Soft reset to first commit (keeps all files staged)
-              git reset --soft $FIRST_COMMIT
+              git reset --soft "$FIRST_COMMIT"
 
               # Amend the first commit to include all changes
               git commit --amend -m "Squashed gh-pages history - $(date +'%Y-%m-%d')"

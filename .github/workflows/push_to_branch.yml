@@ -1,0 +1,56 @@
+name: Push to branch
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Skip the suite when the branch already has an open PR: the Pull Request
+  # workflow covers it there. Branches without a PR yet still get full CI.
+  check-open-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      has_pr: ${{ steps.q.outputs.has_pr }}
+    steps:
+      - id: q
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          n=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number --jq 'length')
+          echo "has_pr=$([ "$n" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  pre-commit:
+    needs: [check-open-pr]
+    if: needs.check-open-pr.outputs.has_pr == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/pre_commit
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+
+  test:  # latest-only here; the full matrix runs on PR / push-to-main / release
+    needs: [check-open-pr]
+    if: needs.check-open-pr.outputs.has_pr == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/unit_test
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
