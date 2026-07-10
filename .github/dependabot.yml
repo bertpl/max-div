@@ -9,6 +9,11 @@ updates:
       - "/.github/actions/pre_commit"
     schedule:
       interval: "weekly"
+    # `chore` prefix makes the PR title (and thus the squash commit on main)
+    # follow the repo's `<type>: <summary>` convention, so the preflight
+    # title check needs no Dependabot exemption.
+    commit-message:
+      prefix: "chore"
     groups:
       actions:  # one batched PR for all action bumps
         patterns: ["*"]
@@ -24,6 +29,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "chore"
     groups:
       python:  # one batched PR for all Python-dependency bumps
         patterns: ["*"]
