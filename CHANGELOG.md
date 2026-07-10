@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- GitHub Releases with changelog notes and SLSA build provenance for every release
 
 ### Changed
 

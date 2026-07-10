@@ -174,6 +174,10 @@ convention = "google"
 [tool.ty.src]
 include = ["src/max_div"]
 
+[tool.codespell]
+# "intoto": the in-toto attestation format (provenance.intoto.jsonl).
+ignore-words-list = "intoto"
+
 [tool.coverage.run]
 source_pkgs = ["max_div"]
 relative_files = true
