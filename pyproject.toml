@@ -38,7 +38,6 @@ docs = [
 
 [dependency-groups]
 dev = [
-    "genbadge[all]>=1.1.2",
     "pre-commit>=4.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
