@@ -19,17 +19,14 @@ The following common elements are imposed / assumed:
 """
 
 from abc import ABC, abstractmethod
-from typing import Generic, Never, TypeVar
+from typing import Generic, TypeVar
 
 import numpy as np
 
 from max_div._core._random._rng import new_rng_state
 from max_div._core._utils import int_to_int64
 
-from .base import ParameterValueSource
-
-# shorthand type alias
-Floatable = int | float | np.int32 | np.float32 | bool  # all of these can be converted to float32
+from .base import Floatable, ParameterValueSource
 
 S = TypeVar("S", bound=Floatable)
 
@@ -60,7 +57,7 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
 
     def update_seed(self, seed: np.int64 | int) -> None:
         """Update the seed for the random number generator used by the sampler."""
-        self._rng_state = new_rng_state(int_to_int64(seed))  # rng_state matches better with downstream usage than seed
+        self._rng_state = new_rng_state(int_to_int64(int(seed)))  # rng_state matches downstream usage better than seed
 
     def update_tau(self, tau_learn: float | None = None, tau_forget: float | None = None) -> None:
         """Update the time constants for learning and forgetting."""
@@ -94,7 +91,7 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
         raise NotImplementedError
 
     @abstractmethod
-    def feedback(self, success: bool) -> Never:
+    def feedback(self, success: bool) -> None:
         """Provide feedback to the sampler whether the last sample was successful."""
         raise NotImplementedError
 

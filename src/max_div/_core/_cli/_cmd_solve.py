@@ -49,7 +49,8 @@ def solve(
     elif iterations is not None:
         duration = TargetDuration.iterations(int(iterations))
     else:
-        duration = TargetDuration.seconds(float(seconds))
+        # `seconds` is guaranteed non-None here by the branches above, but ty cannot see the link
+        duration = TargetDuration.seconds(float(seconds))  # ty: ignore[invalid-argument-type]
 
     # --- show what we'll do ------------------------------
     click.echo(f"Solving test problem '{test_problem}' for a duration of {duration!s} using {preset.upper()} preset...")

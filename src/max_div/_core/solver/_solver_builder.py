@@ -39,7 +39,7 @@ class MaxDivSolverBuilder:
         self._constraints: list[Constraint] = problem.constraints
 
         # --- solver configuration --------------
-        self._diversity_tie_breakers: list[DiversityMetric | object] = []
+        self._diversity_tie_breakers: list[DiversityMetric] = []
         self._default_diversity_tie_breakers: bool = True
         self._solver_steps: list[SolverStep] = [
             InitializationStep(InitializationStrategy.random_one_shot()),  # Default initialization strategy

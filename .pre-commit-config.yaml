@@ -28,6 +28,15 @@ repos:
         types: [python]
         files: ^(src/max_div|tests|scripts)/|^\.github/scripts/
         pass_filenames: true
+      - id: ty
+        name: ty check
+        entry: uv run ty check
+        language: system
+        types: [python]
+        # ty is a whole-program checker: a staged-files-only run would miss
+        # cross-module breakage, so it runs the project as configured by
+        # [tool.ty] (not the staged subset) whenever any Python file changes.
+        pass_filenames: false
       - id: uv-lock
         name: uv lock --check
         entry: uv lock --check

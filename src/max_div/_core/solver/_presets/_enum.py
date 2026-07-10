@@ -27,7 +27,7 @@ class SolverPreset(StrEnum):
             return SolverPreset.SMART
         return self
 
-    def __lt__(self, other: SolverPreset) -> bool:
+    def __lt__(self, other: SolverPreset) -> bool:  # ty: ignore[invalid-method-override]  # deliberate narrowing vs str.__lt__: presets are only ordered among themselves
         order = {
             SolverPreset.RANDOM: 0,
             SolverPreset.GUIDED: 1,

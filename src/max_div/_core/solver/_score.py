@@ -111,7 +111,7 @@ class ScoreGenerator:
     # -------------------------------------------------------------------------
     def __init__(
         self,
-        n: int,
+        n: int | np.int32,
         k: int,
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
@@ -119,7 +119,7 @@ class ScoreGenerator:
     ) -> None:
         """Initialize the ScoreGenerator.
 
-        :param n: (int) number of vectors in the max-div problem.
+        :param n: (int | np.int32) number of vectors in the max-div problem.
         :param k: (int) The target selection size for the max-div problem.
         :param diversity_metric: (DiversityMetric) The diversity metric used to compute diversity scores.
         :param diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
@@ -169,7 +169,7 @@ class ScoreGenerator:
     #  Score computation
     # -------------------------------------------------------------------------
     def compute_score(
-        self, n_selected: int, con_values: NDArray[np.int32], selected_separation_array: NDArray[np.float32]
+        self, n_selected: int | np.int32, con_values: NDArray[np.int32], selected_separation_array: NDArray[np.float32]
     ) -> Score:
         # --- individual scores ---------------------------
         if n_selected <= self._k:

@@ -47,7 +47,14 @@ class BenchmarkProblemFactory:
 
         The provided parameters are used as needed.
         """
-        return cls.get_all_benchmark_problems().get(name).get_problem_dimensions(**params)
+        registered = cls.get_all_benchmark_problems()
+        problem_cls = registered.get(name)
+        if problem_cls is None:
+            raise ValueError(
+                f"Benchmark problem '{name}' is not registered."
+                f" Available benchmark problems: {sorted(registered.keys())}"
+            )
+        return problem_cls.get_problem_dimensions(**params)
 
     @classmethod
     def show_all(cls) -> None:

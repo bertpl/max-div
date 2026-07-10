@@ -180,7 +180,7 @@ def get_methods_table() -> Table:
     return table
 
 
-def compute_accuracy(method: int, n: int) -> float:
+def compute_accuracy(method: int | np.int32, n: int) -> float:
     """Computes accuracy of a given method as a fraction in [0.0, 1.0]."""
     total_error = 0.0  # total sum of abs errors
     total_pmod = 0.0  # total sum of target values (wrt which we computed errors)

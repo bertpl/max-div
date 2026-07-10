@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import numpy as np
 
 from max_div._core._utils import BenchmarkResult, format_short_time_duration
 
 from ._table_aggregation import TableAggregationType
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 # =================================================================================================
@@ -77,11 +80,11 @@ class TablePercentage(TableElement):
     def to_mark_down(self) -> str:
         return f"{(self.frac * 100):.{self.decimals}f}%"
 
-    def __lt__(self, other: TablePercentage) -> bool:
+    def __lt__(self, other: TablePercentage) -> bool:  # ty: ignore[invalid-method-override] -- Table only compares same-type elements
         return self.frac < other.frac
 
     @classmethod
-    def aggregate(cls, elements: list[TablePercentage], agg_type: TableAggregationType) -> TablePercentage:
+    def aggregate(cls, elements: list[TablePercentage], agg_type: TableAggregationType) -> TablePercentage:  # ty: ignore[invalid-method-override] -- Table.add_aggregate_row dispatches with same-type elements only
         frac_values = [el.frac for el in elements]
         max_decimals = max(el.decimals for el in elements)
         return TablePercentage(
@@ -100,16 +103,16 @@ class _QuantiledTableElement(TableElement, ABC):
         self.q_50 = q_50
         self.q_75 = q_75
 
-    def __lt__(self, other: _QuantiledTableElement) -> bool:
+    def __lt__(self, other: _QuantiledTableElement) -> bool:  # ty: ignore[invalid-method-override] -- Table only compares same-type elements
         return self.q_50 < other.q_50
 
-    def is_equalish(self, other: _QuantiledTableElement) -> bool:
+    def is_equalish(self, other: _QuantiledTableElement) -> bool:  # ty: ignore[invalid-method-override] -- Table only compares same-type elements
         """True of both medians are in range of the other's 25-75 percentile."""
         return (self.q_25 <= other.q_50 <= self.q_75) and (other.q_25 <= self.q_50 <= other.q_75)
 
     @classmethod
     def _aggregate_quantiles(
-        cls, elements: list[_QuantiledTableElement], agg_type: TableAggregationType
+        cls, elements: Sequence[_QuantiledTableElement], agg_type: TableAggregationType
     ) -> tuple[float, float, float]:
         q_25_agg = agg_type.aggregate_values([el.q_25 for el in elements])
         q_50_agg = agg_type.aggregate_values([el.q_50 for el in elements])
@@ -127,7 +130,7 @@ class TableTimeElapsed(_QuantiledTableElement):
         return f"{s_median.strip()} ± {s_perc}"
 
     @classmethod
-    def aggregate(cls, elements: list[TableTimeElapsed], agg_type: TableAggregationType) -> TableTimeElapsed:
+    def aggregate(cls, elements: list[TableTimeElapsed], agg_type: TableAggregationType) -> TableTimeElapsed:  # ty: ignore[invalid-method-override] -- Table.add_aggregate_row dispatches with same-type elements only
         q_25_agg, q_50_agg, q_75_agg = cls._aggregate_quantiles(elements, agg_type)
         return TableTimeElapsed(t_sec_q_25=q_25_agg, t_sec_q_50=q_50_agg, t_sec_q_75=q_75_agg)
 
@@ -165,7 +168,7 @@ class TableValueWithUncertainty(_QuantiledTableElement):
         return f"{s_median} ± {s_perc}"
 
     @classmethod
-    def aggregate(
+    def aggregate(  # ty: ignore[invalid-method-override] -- Table.add_aggregate_row dispatches with same-type elements only
         cls, elements: list[TableValueWithUncertainty], agg_type: TableAggregationType
     ) -> TableValueWithUncertainty:
         q_25_agg, q_50_agg, q_75_agg = cls._aggregate_quantiles(elements, agg_type)
@@ -249,7 +252,7 @@ class TableValueRange(_QuantiledTableElement):
         return prefix
 
     @classmethod
-    def aggregate(cls, elements: list[TableValueRange], agg_type: TableAggregationType) -> TableValueRange:
+    def aggregate(cls, elements: list[TableValueRange], agg_type: TableAggregationType) -> TableValueRange:  # ty: ignore[invalid-method-override] -- Table.add_aggregate_row dispatches with same-type elements only
         q_25_agg, q_50_agg, q_75_agg = cls._aggregate_quantiles(elements, agg_type)
         max_max_decimals = max(el.max_decimals for el in elements)
         max_diff_decimals = max(el.diff_decimals for el in elements)

@@ -15,7 +15,8 @@ def stdout_to_file(enabled: bool = True, filename: str | Path | None = None) -> 
     old_stdout = sys.stdout
     f = None
     if enabled:
-        f = Path(filename).open("w")  # noqa: SIM115 — closed in the finally block of this context manager
+        # `filename` is guaranteed non-None here by the argument validation above, but ty cannot see the link
+        f = Path(filename).open("w")  # noqa: SIM115 — closed in the finally block  # ty: ignore[invalid-argument-type]
         sys.stdout = f
 
     try:

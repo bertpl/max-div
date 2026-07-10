@@ -146,8 +146,8 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
 # =================================================================================================
 def _benchmark(
     s: Scenario,
-    n: int,
-    k: int,
+    n: int | np.int32,
+    k: int | np.int32,
     m: int,
     p: np.ndarray | None,
     speed: float,
@@ -168,7 +168,7 @@ def _benchmark(
     lst_con_values = []
     lst_con_indices = []
     for i in range(index_range):
-        cons = s.build_constraints(n, k, m, seed=424242 * i)
+        cons = s.build_constraints(int(n), int(k), m, seed=424242 * i)
         con_values, con_indices = ConstraintList(cons).to_numpy()
         lst_cons.append(cons)
         lst_con_values.append(con_values)

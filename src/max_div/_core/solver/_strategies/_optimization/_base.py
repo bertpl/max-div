@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 import numba
 import numpy as np
@@ -20,6 +20,10 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from max_div._core.solver._solver_state import SolverState
+
+    from ._optim_guided_swaps import OptimGuidedSwaps
+    from ._optim_random_swaps import OptimRandomSwaps
+    from ._optim_smart_swaps import OptimSmartSwaps
 
 ParamValueType = ParameterValueSource | float | int | np.float32 | np.int32 | bool
 
@@ -204,14 +208,14 @@ class OptimizationStrategy(StrategyBase, ABC):
         :return: (float) initial value of the parameter.
         """
         if isinstance(param, ParameterValueSource):
-            return param.get_initial_value()
+            return float(param.get_initial_value())  # float() since samplers may yield numpy scalars; cold path
         return float(param)
 
     # -------------------------------------------------------------------------
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def random_swaps(cls) -> Self:
+    def random_swaps(cls) -> OptimRandomSwaps:
         """Baseline strategy: randomly removes and adds vectors, keeping swaps that improve the score."""
         from ._optim_random_swaps import OptimRandomSwaps
 
@@ -227,7 +231,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         p_add_constraint_aware: float | ParameterSchedule = 1.0,
         remove_selectivity_modifier: float | ParameterSchedule = 0.0,
         add_selectivity_modifier: float | ParameterSchedule = 0.0,
-    ) -> Self:
+    ) -> OptimGuidedSwaps:
         """Distance-guided swap strategy: biased towards removing low- and adding high-separation vectors.
 
         Supports scheduled parameters for constraint softness and selectivity.
@@ -253,7 +257,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         tau_learn: float = 100.0,
         ignore_infeasible_diversity_up_to_fraction: float = -1.0,
         cost_awareness: float = 0.0,
-    ) -> Self:
+    ) -> OptimSmartSwaps:
         """Adaptive swap strategy that learns effective swap sizes and candidate selection strategies.
 
         Learning happens during optimization.  Used by the SMART and THOROUGH presets.

@@ -17,10 +17,12 @@ def numba_status() -> None:
 
     click.echo("\nNumba Configuration:")
     click.echo("-" * 50)
-    click.echo(f"SVML enabled       : {config.USING_SVML}")
-    click.echo(f"Threading layer    : {config.THREADING_LAYER}")
-    click.echo(f"Number of threads  : {config.NUMBA_NUM_THREADS}")
-    click.echo(f"Optimization level : {config.OPT}")
-    click.echo(f"Debug mode         : {config.DEBUG}")
-    click.echo(f"Disable JIT        : {config.DISABLE_JIT}")
+    # NOTE: numba.core.config members are generated dynamically at import time, so they are
+    #       invisible to static type checkers — hence the per-line suppressions below.
+    click.echo(f"SVML enabled       : {config.USING_SVML}")  # ty: ignore[unresolved-attribute]
+    click.echo(f"Threading layer    : {config.THREADING_LAYER}")  # ty: ignore[unresolved-attribute]
+    click.echo(f"Number of threads  : {config.NUMBA_NUM_THREADS}")  # ty: ignore[unresolved-attribute]
+    click.echo(f"Optimization level : {config.OPT}")  # ty: ignore[unresolved-attribute]
+    click.echo(f"Debug mode         : {config.DEBUG}")  # ty: ignore[unresolved-attribute]
+    click.echo(f"Disable JIT        : {config.DISABLE_JIT}")  # ty: ignore[unresolved-attribute]
     click.echo("-" * 50)

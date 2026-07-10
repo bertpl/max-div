@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Self
 
 import numpy as np
 from numpy.typing import NDArray
@@ -51,7 +50,7 @@ class MaxDivProblem:
         distance_metric: DistanceMetric = DistanceMetric.L2_EUCLIDEAN,
         diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
         constraints: list[Constraint] | None = None,
-    ) -> Self:
+    ) -> "MaxDivProblem":
         """Create a new MaxDivProblem with validation.
 
         :param vectors: 2D numpy array of shape ``(n, d)`` with at least 3 rows.

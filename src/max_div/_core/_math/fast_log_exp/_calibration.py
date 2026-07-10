@@ -101,7 +101,7 @@ class Cost:
         self._fx_log2 = np.array([np.log2(x) for x in self._x_log2])
         self._fx_exp2 = np.array([np.exp2(x) for x in self._x_exp2])
 
-    def __call__(self, k1_k2: tuple[float, float]) -> float:
+    def __call__(self, k1_k2: tuple[float, ...]) -> float:
         c0, c1, c2 = self.compute_c(k1_k2[0])
         d0, d1, d2 = self.compute_d(k1_k2[1])
 
