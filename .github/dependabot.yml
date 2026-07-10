@@ -19,9 +19,9 @@ updates:
         patterns: ["*"]
     # Let releases age before PRs open: auto-merged patch/minor bumps then sit
     # long enough for upstream compromises to surface before they can land.
+    # (semver-specific cooldowns are not supported for github-actions.)
     cooldown:
       default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
-      semver-major-days: 14
 
   - package-ecosystem: "uv"
     # Bumps uv.lock (and pyproject pins) for the runtime + dev/lint/type tooling
