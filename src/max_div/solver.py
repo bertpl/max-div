@@ -1,6 +1,7 @@
 """Public API for building and running Maximum Diversity solvers."""
 
 from ._core.solver import (
+    ConstraintPenalty,
     InitializationStrategy,
     MaxDivSolver,
     MaxDivSolverBuilder,
@@ -16,6 +17,7 @@ from ._core.solver import (
 )
 
 __all__ = [
+    "ConstraintPenalty",
     "InitializationStrategy",
     "MaxDivSolver",
     "MaxDivSolverBuilder",

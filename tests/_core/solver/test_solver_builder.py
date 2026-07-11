@@ -6,6 +6,7 @@ from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import (
+    ConstraintPenalty,
     MaxDivSolver,
     MaxDivSolverBuilder,
     SolverPreset,
@@ -181,6 +182,50 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._diversity_metric == DiversityMetric.MIN_SEPARATION
     assert solver._constraints == constraints
     assert solver._seed == 123
+
+
+# =================================================================================================
+#  MaxDivSolverBuilder - Constraint penalty
+# =================================================================================================
+def test_solver_builder_constraint_penalty_default(dummy_problem):
+    # --- act ---------------------------------------------
+    solver = MaxDivSolverBuilder(dummy_problem).build()
+
+    # --- assert ------------------------------------------
+    assert solver._constraint_penalty == ConstraintPenalty.LINEAR
+
+
+def test_solver_builder_constraint_penalty_quadratic(dummy_problem):
+    # --- act ---------------------------------------------
+    solver = MaxDivSolverBuilder(dummy_problem).with_constraint_penalty(ConstraintPenalty.QUADRATIC).build()
+
+    # --- assert ------------------------------------------
+    assert solver._constraint_penalty == ConstraintPenalty.QUADRATIC
+
+
+def test_max_div_solver_quadratic_penalty_end_to_end():
+    # --- arrange -----------------------------------------
+    problem = MaxDivProblem.new(
+        vectors=np.random.rand(20, 5).astype(np.float32),
+        k=5,
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        constraints=[Constraint(set(range(10)), min_count=2, max_count=3)],
+    )
+    solver = (
+        MaxDivSolverBuilder(problem)
+        .with_seed(7)
+        .with_preset(iterations(100))
+        .with_constraint_penalty(ConstraintPenalty.QUADRATIC)
+    ).build()
+
+    # --- act ---------------------------------------------
+    result = solver.solve(verbosity=0)
+
+    # --- assert ------------------------------------------
+    assert len(result.i_selected) == problem.k
+    score_after_initialization = result.score_checkpoints[1][2]
+    score_after_optimization = result.score_checkpoints[-1][2]
+    assert score_after_optimization >= score_after_initialization
 
 
 # =================================================================================================

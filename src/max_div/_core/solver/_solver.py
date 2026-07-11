@@ -5,6 +5,7 @@ from max_div._core.constraints import Constraint
 from max_div._core.constraints._constraints import _np_con_count_satisfied
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 
+from ._constraint_penalty import ConstraintPenalty
 from ._duration import Elapsed
 from ._progress_reporting import ProgressReporter
 from ._solution import MaxDivSolution
@@ -32,6 +33,7 @@ class MaxDivSolver:
         constraints: list[Constraint],
         solver_steps: list[SolverStep],
         seed: int = 42,
+        constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -45,6 +47,7 @@ class MaxDivSolver:
                                        the first of which needs to be an InitializationStep,
                                        while all latter ones need to be OptimizationSteps.
         :param seed: (int) Random seed for the solver.
+        :param constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
         """
         # --- problem description -------------------------
         self._vectors = vectors
@@ -57,6 +60,7 @@ class MaxDivSolver:
         self._diversity_tie_breakers = diversity_tie_breakers
         self._solver_steps = solver_steps
         self._seed = seed
+        self._constraint_penalty = constraint_penalty
 
     # -------------------------------------------------------------------------
     #  API
@@ -114,6 +118,7 @@ class MaxDivSolver:
                 diversity_metric=self._diversity_metric,
                 diversity_tie_breakers=self._diversity_tie_breakers,
                 constraints=self._constraints,
+                penalty_quadratic=(self._constraint_penalty == ConstraintPenalty.QUADRATIC),
             )
             progress_reporter.solver_step_finished(None, state)
 

@@ -334,6 +334,7 @@ class SolverState:
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
+        penalty_quadratic: bool = False,
     ) -> SolverState:
         # --- distances ---
         n = np.int32(vectors.shape[0])
@@ -355,6 +356,7 @@ class SolverState:
             diversity_metric=diversity_metric,
             diversity_tie_breakers=diversity_tie_breakers,
             constraints=constraints,
+            penalty_quadratic=penalty_quadratic,
         )
 
         # --- construct & return ---
