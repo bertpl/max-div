@@ -5,22 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.7.0 (2026-07-11)
 
 ### Added
 - Per-constraint weights: each `Constraint` can be weighted (default 1) to scale its influence on feasibility scoring
 - Constraint-violation penalty is now configurable as linear (default) or quadratic via `MaxDivSolverBuilder.with_constraint_penalty`
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.6.2 (2026-07-10)
 
 ### Added

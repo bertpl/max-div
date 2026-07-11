@@ -1,6 +1,6 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/bertpl/max-div/push_to_main.yml?branch=main&label=CI)](https://github.com/bertpl/max-div/actions/workflows/push_to_main.yml)
 ![coverage](https://img.shields.io/badge/coverage-99.98%25-brightgreen)
-![tests](https://img.shields.io/badge/tests-3390-blue)
+![tests](https://img.shields.io/badge/tests-3412-blue)
 [![docs-build-status](https://app.readthedocs.org/projects/max-div/badge/?version=latest)](https://max-div.readthedocs.io/en/stable)
 [![PyPI](https://img.shields.io/pypi/v/max-div.svg)](https://pypi.org/project/max-div/)
 [![Python](https://img.shields.io/pypi/pyversions/max-div.svg)](https://pypi.org/project/max-div/)
