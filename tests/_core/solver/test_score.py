@@ -204,6 +204,32 @@ def test_score_generator_constraints_linear_vs_quadratic():
     assert con_quad == pytest.approx(1 - 8 / 30)  # 1 - (1/30)·(2² + 2²)
 
 
+def test_score_generator_constraints_weighted():
+    # --- arrange -----------------------------------------
+    # max_con_violations = [2, 5], weights = [1, 2] -> _con_c = 1 / (1 + 1·2 + 2·5) = 1/13
+    constraints = [
+        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
+        Constraint(int_set=set(range(5, 16)), min_count=2, max_count=3, weight=2.0),
+    ]
+    gen = ScoreGenerator(
+        n=100, k=8, diversity_metric=DiversityMetric.MIN_SEPARATION, diversity_tie_breakers=[], constraints=constraints
+    )
+    sep = np.ones(5, dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    con_violate_light = gen.compute_score(
+        8, np.array([[1, 3], [0, 1]], dtype=np.int32), sep
+    ).constraints  # con0 short 1
+    con_violate_heavy = gen.compute_score(
+        8, np.array([[0, 1], [1, 3]], dtype=np.int32), sep
+    ).constraints  # con1 short 1
+
+    # --- assert ------------------------------------------
+    assert con_violate_light == pytest.approx(1 - 1 / 13)
+    assert con_violate_heavy == pytest.approx(1 - 2 / 13)
+    assert con_violate_heavy < con_violate_light  # violating the higher-weight constraint hurts more
+
+
 def test_score_generator_constraints_no_constraints():
     # --- arrange -----------------------------------------
     generator = ScoreGenerator(

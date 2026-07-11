@@ -15,6 +15,21 @@ from max_div._core.constraints._constraints import (
 )
 
 
+def test_constraint_default_weight():
+    # --- act ---------------------------------------------
+    con = Constraint(int_set={0, 1}, min_count=1, max_count=2)
+
+    # --- assert ------------------------------------------
+    assert con.weight == 1.0
+
+
+@pytest.mark.parametrize("weight", [0, 0.0, -1.0, -0.001])
+def test_constraint_rejects_non_positive_weight(weight: float):
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError, match="weight must be > 0"):
+        Constraint(int_set={0, 1}, min_count=1, max_count=2, weight=weight)
+
+
 def test_build_array_repr():
     # --- arrange -----------------------------------------
     cons = [

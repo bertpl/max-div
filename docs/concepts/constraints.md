@@ -8,6 +8,7 @@ from specific groups. Each constraint is defined by:
 - **`int_set`** -- a set of vector indices that form the group
 - **`min_count`** -- minimum number of vectors to select from this group
 - **`max_count`** -- maximum number of vectors to select from this group
+- **`weight`** -- how strongly this constraint counts toward feasibility (default `1`, must be `> 0`)
 
 ```python
 from max_div import Constraint
@@ -15,6 +16,23 @@ from max_div import Constraint
 # At least 3 and at most 7 vectors from indices 0-49
 Constraint(int_set=set(range(50)), min_count=3, max_count=7)
 ```
+
+## Weighting Constraints
+
+By default every constraint counts equally toward the feasibility score. Raise a constraint's
+`weight` above `1` to make the solver prioritize satisfying it over lower-weight constraints when
+they cannot all be satisfied at once:
+
+```python
+constraints = [
+    Constraint(int_set=must_have_indices, min_count=2, max_count=5, weight=3.0),  # prioritized
+    Constraint(int_set=nice_to_have_indices, min_count=1, max_count=4),           # weight 1
+]
+```
+
+A violation of a weight-3 constraint counts three times as much as an equal violation of a weight-1
+constraint. Weights must be strictly positive -- a zero weight would let a genuine violation go
+unpenalized and be reported as feasible.
 
 ## Overlapping Constraints
 
