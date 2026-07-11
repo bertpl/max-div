@@ -10,6 +10,7 @@ from max_div._core.metrics._distance import (
     update_separation_add,
     update_separation_remove,
 )
+from max_div._core.metrics._distance._compute import _pdist_index
 
 
 # -------------------------------------------------------------------------
@@ -71,6 +72,29 @@ def test_get_pdist_values(i: int, j: int):
 
     # --- assert ------------------------------------------
     assert value == pytest.approx(expected_value)
+
+
+@pytest.mark.parametrize(
+    "i, j, n",
+    [
+        (0, 1, 4),  # first pair, small n
+        (2, 3, 4),  # last pair, small n
+        (30_000, 45_000, 50_000),  # off-diagonal in the int32-overflow regime
+        (49_998, 49_999, 50_000),  # last pair at n where 32-bit index math overflows
+    ],
+)
+def test_pdist_index_no_int32_overflow(i: int, j: int, n: int):
+    """_pdist_index must return the exact condensed offset even where int32 arithmetic would overflow."""
+
+    # --- arrange -----------------------------------------
+    # reference offset computed with unbounded Python ints (the value the kernel must match)
+    expected = (n * i) + j - ((i + 2) * (i + 1)) // 2
+
+    # --- act ---------------------------------------------
+    index = _pdist_index(np.int32(i), np.int32(j), np.int32(n))
+
+    # --- assert ------------------------------------------
+    assert int(index) == expected
 
 
 def test_compute_separation():

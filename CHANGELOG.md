@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Pairwise-distance index lookups overflowed 32-bit arithmetic on large problems (n ≳ 46k), causing wrong distances or crashes; indexing is now 64-bit
 
 ### Security
 

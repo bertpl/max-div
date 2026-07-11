@@ -35,16 +35,25 @@ def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArr
 # =================================================================================================
 #  Low-level
 # =================================================================================================
+@numba.njit("int64(int32, int32, int32)", inline="always", cache=True)
+def _pdist_index(i_lo: np.int32, i_hi: np.int32, n: np.int32) -> np.int64:
+    """Return the condensed-vector offset of the (i_lo, i_hi) distance, with i_lo < i_hi, for n vectors.
+
+    The offset is evaluated in int64: the intermediate ``n * i_lo`` grows like n² and overflows int32
+    for n above ~46k, so the operands are widened before the multiply even though the final offset fits.
+    """
+    i_lo64 = np.int64(i_lo)
+    return (np.int64(n) * i_lo64) + np.int64(i_hi) - ((i_lo64 + 2) * (i_lo64 + 1)) // 2
+
+
 @numba.njit("float32(float32[::1], int32, int32, int32)", inline="always", cache=True)
 def get_pdist_el(pdist: NDArray[np.float32], i: np.int32, j: np.int32, n: np.int32) -> np.float32:
     """Return element from 'pdist' array representing distance between vectors i & j, given n vectors in total."""
     if i == j:
         return np.float32(0.0)
     if i < j:
-        index = (n * i) + j - ((i + 2) * (i + 1)) // 2
-        return pdist[index]
-    index = (n * j) + i - ((j + 2) * (j + 1)) // 2
-    return pdist[index]
+        return pdist[_pdist_index(i, j, n)]
+    return pdist[_pdist_index(j, i, n)]
 
 
 @numba.njit("float32[::1](float32[::1], int32)", cache=True)
