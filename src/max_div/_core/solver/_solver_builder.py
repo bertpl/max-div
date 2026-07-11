@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Self
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.problem import MaxDivProblem
 
+from ._constraint_penalty import ConstraintPenalty
 from ._duration import TargetDuration
 from ._presets import SolverPreset, get_preset_strategies
 from ._solver import MaxDivSolver
@@ -45,6 +46,7 @@ class MaxDivSolverBuilder:
             InitializationStep(InitializationStrategy.random_one_shot()),  # Default initialization strategy
         ]
         self._seed = 42
+        self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
 
     # -------------------------------------------------------------------------
     #  Builder API
@@ -82,6 +84,11 @@ class MaxDivSolverBuilder:
     def with_seed(self, seed: int) -> Self:
         """Set the random seed for reproducibility (default: 42)."""
         self._seed = seed
+        return self
+
+    def with_constraint_penalty(self, penalty: ConstraintPenalty) -> Self:
+        """Set how constraint violations are penalized in the feasibility score (default: LINEAR)."""
+        self._constraint_penalty = penalty
         return self
 
     # -------------------------------------------------------------------------
@@ -152,4 +159,5 @@ class MaxDivSolverBuilder:
             constraints=self._constraints,
             solver_steps=self._solver_steps,
             seed=self._seed,
+            constraint_penalty=self._constraint_penalty,
         )

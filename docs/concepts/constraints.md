@@ -34,6 +34,26 @@ A violation of a weight-3 constraint counts three times as much as an equal viol
 constraint. Weights must be strictly positive -- a zero weight would let a genuine violation go
 unpenalized and be reported as feasible.
 
+## Penalizing Large Violations
+
+By default, a constraint's contribution to the score grows *linearly* with the size of its
+violation. Switch to *quadratic* penalization to push the solver harder away from large individual
+violations (preferring several small violations over one large one):
+
+```python
+from max_div import MaxDivSolverBuilder
+from max_div.solver import ConstraintPenalty
+
+solver = (
+    MaxDivSolverBuilder(problem)
+    .with_constraint_penalty(ConstraintPenalty.QUADRATIC)  # default is ConstraintPenalty.LINEAR
+    .with_preset(seconds(5))
+    .build()
+)
+```
+
+This is a single global setting for the whole solve, independent of any per-constraint weights.
+
 ## Overlapping Constraints
 
 A single vector can belong to multiple constraint groups. This is useful for modeling
