@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from scipy.spatial.distance import pdist as scipy_pdist
 from scipy.spatial.distance import squareform
 
 from max_div._core.metrics._distance import (
@@ -11,6 +12,12 @@ from max_div._core.metrics._distance import (
     update_separation_remove,
 )
 from max_div._core.metrics._distance._compute import _pdist_index
+
+_SCIPY_METRIC = {
+    "L1_MANHATTAN": "cityblock",
+    "L2_EUCLIDEAN": "euclidean",
+    "L2S_EUCLIDEAN_SQUARED": "sqeuclidean",
+}
 
 
 # -------------------------------------------------------------------------
@@ -50,6 +57,37 @@ def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
 
     # --- assert ------------------------------------------
     assert d[0] == pytest.approx(expected_value)
+
+
+@pytest.mark.parametrize("metric", list(DistanceMetric))
+def test_compute_pdist_matches_scipy(metric: DistanceMetric):
+    """The hand-rolled float32 kernel matches scipy's float64→float32 result within float32 tolerance."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260711)
+    vectors = rng.standard_normal((60, 8)).astype(np.float32)
+    expected = scipy_pdist(vectors, metric=_SCIPY_METRIC[metric.value]).astype(np.float32)
+
+    # --- act ---------------------------------------------
+    result = compute_pdist(vectors, metric=metric)
+
+    # --- assert ------------------------------------------
+    assert result.dtype == np.float32
+    np.testing.assert_allclose(result, expected, rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.parametrize("metric", list(DistanceMetric))
+def test_compute_pdist_zero_for_identical_vectors(metric: DistanceMetric):
+    """Identical vectors have exactly-zero distance under every metric."""
+
+    # --- arrange -----------------------------------------
+    vectors = np.array([[1.5, -2.0, 3.0], [1.5, -2.0, 3.0], [4.0, 4.0, 4.0]], dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    result = compute_pdist(vectors, metric=metric)
+
+    # --- assert ------------------------------------------
+    assert result[0] == np.float32(0.0)  # distance between the two identical vectors
 
 
 # -------------------------------------------------------------------------

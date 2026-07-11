@@ -3,7 +3,6 @@
 import numba
 import numpy as np
 from numpy.typing import NDArray
-from scipy.spatial.distance import pdist as scipy_pdist
 
 from ._enum import DistanceMetric
 
@@ -12,24 +11,83 @@ from ._enum import DistanceMetric
 #  pdist computation
 # =================================================================================================
 def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
-    """Compute the pair-wise Euclidean distances between a set of n vectors in d dimensions.
+    """Compute the pair-wise distances between a set of n vectors in d dimensions.
 
-    NOTE: scipy's pdist always returns float64 arrays by default, even when input is float32.
-          This represents an inefficiency (both computational & memory), but is not expected to be dominant.
+    Computed directly in float32 by a numba kernel — each pair accumulates in float64 across the d
+    dimensions and narrows to float32 on store — avoiding the float64 distance matrix scipy would
+    otherwise materialize and cast (a ~3x transient in peak setup memory).
 
     :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
     :param metric: (DistanceMetric) The distance metric to use.
-    :return: ((n*(n-1))/2 ndarray) condensed pair-wise distance vector,
-                                         with (i,j)-distance at index m*i + j - ((i+2)*(i+1))//2   for   i<j.
-                                              (i,j)-distance at index m*j + i - ((j+2)*(j+1))//2   for   i>j.
+    :return: ((n*(n-1))//2 ndarray) condensed pair-wise distance vector, in scipy's layout: the
+                                         (i,j)-distance for i<j sits at the offset given by `_pdist_index`.
     """
+    vectors = np.ascontiguousarray(vectors, dtype=np.float32)
+    n = vectors.shape[0]
+    out = np.empty((n * (n - 1)) // 2, dtype=np.float32)
     match metric:
         case DistanceMetric.L1_MANHATTAN:
-            return scipy_pdist(vectors, metric="cityblock").astype(np.float32)
+            _pdist_l1(vectors, out)
         case DistanceMetric.L2_EUCLIDEAN:
-            return scipy_pdist(vectors, metric="euclidean").astype(np.float32)
+            _pdist_l2(vectors, out)
         case DistanceMetric.L2S_EUCLIDEAN_SQUARED:
-            return scipy_pdist(vectors, metric="sqeuclidean").astype(np.float32)
+            _pdist_l2s(vectors, out)
+    return out
+
+
+# =================================================================================================
+#  pdist kernels
+# =================================================================================================
+@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+def _l1_pair(vectors: NDArray[np.float32], i: int, j: int) -> np.float64:
+    """Return the L1 (Manhattan) distance between vectors i and j, accumulated in float64."""
+    acc = np.float64(0.0)
+    for c in range(vectors.shape[1]):
+        acc += abs(np.float64(vectors[i, c]) - np.float64(vectors[j, c]))
+    return acc
+
+
+@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+def _l2sq_pair(vectors: NDArray[np.float32], i: int, j: int) -> np.float64:
+    """Return the squared L2 (Euclidean) distance between vectors i and j, accumulated in float64."""
+    acc = np.float64(0.0)
+    for c in range(vectors.shape[1]):
+        diff = np.float64(vectors[i, c]) - np.float64(vectors[j, c])
+        acc += diff * diff
+    return acc
+
+
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+def _pdist_l1(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write the condensed L1 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
+    n = vectors.shape[0]
+    idx = np.int64(0)
+    for i in range(n):
+        for j in range(i + 1, n):
+            out[idx] = np.float32(_l1_pair(vectors, i, j))
+            idx += 1
+
+
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+def _pdist_l2(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write the condensed L2 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
+    n = vectors.shape[0]
+    idx = np.int64(0)
+    for i in range(n):
+        for j in range(i + 1, n):
+            out[idx] = np.float32(np.sqrt(_l2sq_pair(vectors, i, j)))
+            idx += 1
+
+
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+def _pdist_l2s(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write the condensed squared-L2 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
+    n = vectors.shape[0]
+    idx = np.int64(0)
+    for i in range(n):
+        for j in range(i + 1, n):
+            out[idx] = np.float32(_l2sq_pair(vectors, i, j))
+            idx += 1
 
 
 # =================================================================================================
