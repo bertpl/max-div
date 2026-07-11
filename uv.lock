@@ -953,10 +953,10 @@ wheels = [
 
 [[package]]
 name = "intel-cmplr-lib-rt"
-version = "2026.0.0"
+version = "2026.1.0"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/61/50d3fb0deb97f5d57803c6bd9dcd1b6ac638e761ae16bea9d71c5187c3a3/intel_cmplr_lib_rt-2026.0.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:a8ff1f8ec28a50dddd02e47c6d47eb6b758842103571956f419a53ebb6513d2d", size = 45377143, upload-time = "2026-04-24T14:10:21.194Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/f4/c59236000ce3a470bfcae4053ad96e97c3c9febf2b38e5487046b7f4505f/intel_cmplr_lib_rt-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:8e002aaf89741de3b424bdad51ce60ead21cc8f4dee970fccba88ee3c845692d", size = 40190806, upload-time = "2026-07-01T15:14:46.979Z" },
 ]
 
 [[package]]
