@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Per-constraint weights: each `Constraint` can be weighted (default 1) to scale its influence on feasibility scoring
 
 ### Changed
 

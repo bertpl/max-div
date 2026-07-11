@@ -56,11 +56,21 @@ from numpy.typing import NDArray
 # =================================================================================================
 @dataclass
 class Constraint:
-    """Constraint indicating we want to sample at least `min_count` and at most `max_count` integers from `int_set`."""
+    """Constraint indicating we want to sample at least `min_count` and at most `max_count` integers from `int_set`.
+
+    `weight` scales how strongly this constraint's violations count toward the feasibility score
+    (default 1); a larger weight makes the solver prioritize satisfying it over lower-weight constraints.
+    """
 
     int_set: set[int]
     min_count: int
     max_count: int
+    weight: float = 1.0
+
+    def __post_init__(self) -> None:
+        """Validate that the weight is strictly positive (a zero weight would hide a real violation)."""
+        if self.weight <= 0:
+            raise ValueError(f"Constraint weight must be > 0 (got {self.weight}).")
 
 
 class ConstraintList:

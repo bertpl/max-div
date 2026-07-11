@@ -151,7 +151,7 @@ class ScoreGenerator:
 
         # --- constraint score computation ------
         self._penalty_quadratic = penalty_quadratic
-        self._con_weights = np.ones(len(constraints), dtype=np.float32)  # per-constraint weights (all 1 for now)
+        self._con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
         if len(constraints) > 0:
             max_con_violations = [
                 max(
@@ -164,8 +164,8 @@ class ScoreGenerator:
             self._con_c = _con_norm_constant(max_con_violations, self._con_weights, penalty_quadratic)
         else:
             self._con_c = 0.0  # no constraints -> always perfect score
-        # fast unweighted-linear aggregation applies while weights are all 1 and penalization is linear
-        self._use_fast_con_path = not penalty_quadratic
+        # fast unweighted-linear aggregation applies only when all weights are 1 and penalization is linear
+        self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers ----------
         self._diversity_metric = diversity_metric
