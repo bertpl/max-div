@@ -74,7 +74,7 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
     ) -> NDArray[np.int32]:
         # --- ignore constraints or not? ---
         r = rand_float32(self._rng_state)  # random float in [0.0, 1.0)
-        ignore_constraints = r > self.p_add_constraint_aware
+        ignore_constraints = bool(r > self.p_add_constraint_aware)
 
         # --- select items to add ---
         return select_items_to_add(
