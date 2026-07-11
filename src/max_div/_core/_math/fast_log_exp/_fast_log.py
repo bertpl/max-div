@@ -6,7 +6,7 @@ import numpy as np
 # -------------------------------------------------------------------------
 
 # --- float64 ---------------------------------------------
-_D_LOG_2 = 0.6931471805599453  # np.log(2)
+_D_LOG_2 = np.float64(0.6931471805599453)  # np.log(2)
 
 # Obtained via minimax polynomial fitting over [0.5, 1.0) with additional
 # continuity & smoothness constraints imposed on boundary points.
@@ -45,9 +45,7 @@ def fast_log2_f64(x: np.float64) -> np.float64:
     log2_mantissa = _D20 + m * (_D21 + m * _D22)
 
     # Return log2(x) = exponent + log2(m)
-    # NOTE: statically, `.view()` can yield an integer type, so the inferred type of this sum is
-    #       `float64 | signedinteger`; at runtime (and under numba) it is always a float64.
-    return exponent + log2_mantissa  # ty: ignore[invalid-return-type]
+    return exponent + log2_mantissa
 
 
 @numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)

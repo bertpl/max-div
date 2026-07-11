@@ -45,7 +45,9 @@ class DiversityMetric(StrEnum):
             DiversityMetric.APPROX_GEOMEAN_SEPARATION: approx_geomean_separation,
             DiversityMetric.NON_ZERO_SEPARATION_FRAC: non_zero_separation_frac,
         }
-        return _functions[self]
+        # NOTE: statically, a numba `Dispatcher` does not unify with the plain `Callable`
+        #       return type; at runtime it is called exactly like one.
+        return _functions[self]  # ty: ignore[invalid-return-type]
 
     def compute(self, separations: NDArray[np.float32]) -> np.float32:
         """Compute diversity metric given separations of each vector wrt all others in selection.

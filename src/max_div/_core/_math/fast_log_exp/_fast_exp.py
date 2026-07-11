@@ -10,7 +10,7 @@ from max_div._core._math.powers_of_2 import power_of_2_f32
 # -------------------------------------------------------------------------
 
 # --- float64 ---------------------------------------------
-_D_LOG2_E = 1.4426950408889634  # np.log2(e)
+_D_LOG2_E = np.float64(1.4426950408889634)  # np.log2(e)
 
 # Obtained via minimax polynomial fitting over [0.0, 1.0) with additional
 # continuity & smoothness constraints imposed on boundary points.

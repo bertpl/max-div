@@ -87,7 +87,7 @@ def rand_int64(rng_state: NDArray[uint64], low: np.int64, high: np.int64) -> np.
 
 
 @numba.njit("int32(uint64[:], int32, int32)", fastmath=True, inline="always", cache=True)
-def rand_int32(rng_state: NDArray[uint64], low: np.int32, high: np.int32) -> np.int32:
+def rand_int32(rng_state: NDArray[uint64], low: np.int32 | int, high: np.int32 | int) -> np.int32:
     """Generate a random int32 in [low, high) using the provided rng_state.
 
     There might be a small bias for large (high-low) if the range is not a power of two.
@@ -101,7 +101,9 @@ def rand_int32(rng_state: NDArray[uint64], low: np.int32, high: np.int32) -> np.
 
 
 @numba.njit("int32[:](uint64[:], int32, int32, int32)", fastmath=True, inline="always", cache=True)
-def rand_int32_array(rng_state: NDArray[uint64], low: np.int32, high: np.int32, size: np.int32) -> NDArray[np.int32]:
+def rand_int32_array(
+    rng_state: NDArray[uint64], low: np.int32 | int, high: np.int32 | int, size: np.int32 | int
+) -> NDArray[np.int32]:
     """Generate an array of random int32 values in [low, high) using the provided rng_state.
 
     Optimized to generate 2 values per RNG call by using upper and lower 32 bits.
