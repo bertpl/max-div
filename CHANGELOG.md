@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Pairwise distances are now computed directly in float32 instead of via a float64 matrix, cutting peak setup memory roughly 3x->1x on large problems
 
 ### Deprecated
 
