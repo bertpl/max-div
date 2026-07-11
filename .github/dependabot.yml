@@ -24,13 +24,17 @@ updates:
       default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
 
   - package-ecosystem: "uv"
-    # Bumps uv.lock (and pyproject pins) for the runtime + dev/lint/type tooling
-    # the lockfile deliberately pins — those rot without automated updates.
+    # Refreshes uv.lock for the runtime + dev/lint/type tooling the lockfile
+    # deliberately pins — those rot without automated updates.
     directory: "/"
     schedule:
       interval: "weekly"
     commit-message:
       prefix: "chore"
+    # Never touch pyproject.toml requirement ranges: the per-Python floors are
+    # a deliberate compatibility contract (earliest release shipping a wheel),
+    # not something to ratchet up to the latest version.
+    versioning-strategy: lockfile-only
     groups:
       python:  # one batched PR for all Python-dependency bumps
         patterns: ["*"]

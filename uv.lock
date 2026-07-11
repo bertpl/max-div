@@ -1687,11 +1687,11 @@ requires-dist = [
     { name = "numba", marker = "python_full_version == '3.13.*'", specifier = ">=0.61" },
     { name = "numba", marker = "python_full_version >= '3.14'", specifier = ">=0.63" },
     { name = "numpy", marker = "python_full_version < '3.13'", specifier = ">=2.0.0" },
-    { name = "numpy", marker = "python_full_version == '3.13.*'", specifier = ">=2.3.2" },
+    { name = "numpy", marker = "python_full_version == '3.13.*'", specifier = ">=2.1.0" },
     { name = "numpy", marker = "python_full_version >= '3.14'", specifier = ">=2.3.2" },
     { name = "ruff", marker = "extra == 'docs'", specifier = ">=0.14.0" },
     { name = "scipy", marker = "python_full_version < '3.13'", specifier = ">=1.10.0" },
-    { name = "scipy", marker = "python_full_version == '3.13.*'", specifier = ">=1.16.1" },
+    { name = "scipy", marker = "python_full_version == '3.13.*'", specifier = ">=1.14.1" },
     { name = "scipy", marker = "python_full_version >= '3.14'", specifier = ">=1.16.1" },
     { name = "tqdm", specifier = ">=4.66.0" },
 ]
