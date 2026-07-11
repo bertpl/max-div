@@ -5,22 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.7.1 (2026-07-12)
 
 ### Changed
 - Pairwise distances are now computed directly in float32 instead of via a float64 matrix, cutting peak setup memory roughly 3x->1x on large problems
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - Pairwise-distance index lookups overflowed 32-bit arithmetic on large problems (n ≳ 46k), causing wrong distances or crashes; indexing is now 64-bit
-
-### Security
-
 ## 0.7.0 (2026-07-11)
 
 ### Added
