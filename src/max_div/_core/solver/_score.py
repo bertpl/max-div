@@ -104,17 +104,16 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 #  ScoreGenerator
 # =================================================================================================
 def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
-    """Return the constraint-score normalization constant `1 / (1 + Σ wᵢ·pen(max_violationᵢ))`.
+    """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
 
-    `max_violationᵢ` is the worst-case violation of constraint i and `pen` is the square when
-    `quadratic` else the identity.  Kept in lockstep with `_np_con_total_weighted_violation` so the
-    constraint score stays within [0, 1] under any weights / penalization mode.
+    The worst-case total violation is computed with the *same* aggregation used for live scoring: each
+    constraint's worst-case violation (`max_violationsᵢ`) is encoded as a pure shortfall (magnitude in
+    column 0) and run through `_np_con_total_weighted_violation`. Reusing the accelerator this way keeps
+    the normalization from ever drifting out of lockstep with the score under any weights / penalty mode.
     """
-    if quadratic:
-        total = sum(float(w) * float(mv) * float(mv) for w, mv in zip(con_weights, max_violations, strict=True))
-    else:
-        total = sum(float(w) * float(mv) for w, mv in zip(con_weights, max_violations, strict=True))
-    return 1.0 / (1.0 + total)
+    worst_case_con_values = np.zeros((len(max_violations), 2), dtype=np.int32)
+    worst_case_con_values[:, 0] = max_violations
+    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
 
 
 class ScoreGenerator:
