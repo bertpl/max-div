@@ -150,7 +150,10 @@ def _np_largest_con_index(con_indices: NDArray[np.int32]) -> np.int32:
 
 @numba.njit("int32(int32[:,:])", inline="always", fastmath=True, cache=True)
 def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
-    """Return in total by how much constraints are not satisfied.
+    """Return in total by how much constraints are not satisfied (unweighted, linear).
+
+    Fast path for the common case (all weights 1, linear penalization); the weighted / quadratic
+    generalization lives in `_np_con_total_weighted_violation`.
 
     This assumes con_values represents how many _additional_ samples to select from each constraint.
     """
@@ -162,6 +165,45 @@ def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
         if con_values[i_con, 1] < 0:
             # too many samples for this constraint
             s = s - con_values[i_con, 1]
+    return s
+
+
+@numba.njit(
+    numba.float32(numba.int32[:, :], numba.float32[:], numba.boolean),
+    inline="always",
+    fastmath=True,
+    cache=True,
+)
+def _np_con_total_weighted_violation(
+    con_values: NDArray[np.int32], con_weights: NDArray[np.float32], quadratic: bool
+) -> np.float32:
+    """Return the weighted total constraint violation `Σ wᵢ·pen(vᵢ)`.
+
+    `vᵢ` is the per-constraint shortfall-plus-excess (as in `_np_con_total_violation`); `pen` is the
+    square when `quadratic` else the identity.  The mode is branched once, outside the loop, so the
+    per-constraint work never re-checks it.  The unweighted-linear case is served by the faster
+    integer `_np_con_total_violation`; this function runs only when a weight differs from 1 or
+    quadratic penalization is requested.
+
+    This assumes con_values represents how many _additional_ samples to select from each constraint.
+    """
+    s = np.float32(0.0)
+    if quadratic:
+        for i_con in range(con_values.shape[0]):
+            v = np.float32(0.0)
+            if con_values[i_con, 0] > 0:
+                v += np.float32(con_values[i_con, 0])
+            if con_values[i_con, 1] < 0:
+                v -= np.float32(con_values[i_con, 1])
+            s += con_weights[i_con] * v * v
+    else:
+        for i_con in range(con_values.shape[0]):
+            v = np.float32(0.0)
+            if con_values[i_con, 0] > 0:
+                v += np.float32(con_values[i_con, 0])
+            if con_values[i_con, 1] < 0:
+                v -= np.float32(con_values[i_con, 1])
+            s += con_weights[i_con] * v
     return s
 
 

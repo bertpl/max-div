@@ -3,10 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from max_div._core.constraints._constraints import _np_con_total_violation
+import numpy as np
+
+from max_div._core.constraints._constraints import _np_con_total_violation, _np_con_total_weighted_violation
 
 if TYPE_CHECKING:
-    import numpy as np
+    from collections.abc import Sequence
+
     from numpy.typing import NDArray
 
     from max_div._core.constraints import Constraint
@@ -100,6 +103,19 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 # =================================================================================================
 #  ScoreGenerator
 # =================================================================================================
+def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
+    """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
+
+    The worst-case total violation is computed with the *same* aggregation used for live scoring: each
+    constraint's worst-case violation (`max_violationsᵢ`) is encoded as a pure shortfall (magnitude in
+    column 0) and run through `_np_con_total_weighted_violation`. Reusing the accelerator this way keeps
+    the normalization from ever drifting out of lockstep with the score under any weights / penalty mode.
+    """
+    worst_case_con_values = np.zeros((len(max_violations), 2), dtype=np.int32)
+    worst_case_con_values[:, 0] = max_violations
+    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
+
+
 class ScoreGenerator:
     """Utility class to generate Score objects from core metrics & data structures.
 
@@ -116,6 +132,7 @@ class ScoreGenerator:
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
+        penalty_quadratic: bool = False,
     ) -> None:
         """Initialize the ScoreGenerator.
 
@@ -124,6 +141,7 @@ class ScoreGenerator:
         :param diversity_metric: (DiversityMetric) The diversity metric used to compute diversity scores.
         :param diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
         :param constraints: (list[Constraint]) The list of constraints used in the max-div problem.
+        :param penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
         # --- size score computation ------------
         self._n = n
@@ -132,6 +150,8 @@ class ScoreGenerator:
         self._size_c1 = 1 / (1 + n - k)
 
         # --- constraint score computation ------
+        self._penalty_quadratic = penalty_quadratic
+        self._con_weights = np.ones(len(constraints), dtype=np.float32)  # per-constraint weights (all 1 for now)
         if len(constraints) > 0:
             max_con_violations = [
                 max(
@@ -141,9 +161,11 @@ class ScoreGenerator:
                 )
                 for con in constraints
             ]
-            self._con_c = 1 / (1 + sum(max_con_violations))
+            self._con_c = _con_norm_constant(max_con_violations, self._con_weights, penalty_quadratic)
         else:
             self._con_c = 0.0  # no constraints -> always perfect score
+        # fast unweighted-linear aggregation applies while weights are all 1 and penalization is linear
+        self._use_fast_con_path = not penalty_quadratic
 
         # --- diversity & tie-breakers ----------
         self._diversity_metric = diversity_metric
@@ -163,6 +185,7 @@ class ScoreGenerator:
             diversity_metric=self._diversity_metric,
             diversity_tie_breakers=self._diversity_tie_breakers.copy(),
             constraints=self._constraints.copy(),
+            penalty_quadratic=self._penalty_quadratic,
         )
 
     # -------------------------------------------------------------------------
@@ -177,8 +200,15 @@ class ScoreGenerator:
         else:
             size_score = 1.0 - self._size_c1 * (n_selected - self._k)
 
-        # no constraints -> perfect score
-        con_score = 1.0 if self._con_c == 0.0 else 1.0 - self._con_c * _np_con_total_violation(con_values)
+        # --- constraint score --------------------------- (fast unweighted-linear path, else general)
+        if self._con_c == 0.0:
+            con_score = 1.0  # no constraints -> perfect score
+        elif self._use_fast_con_path:
+            con_score = 1.0 - self._con_c * _np_con_total_violation(con_values)
+        else:
+            con_score = 1.0 - self._con_c * float(
+                _np_con_total_weighted_violation(con_values, self._con_weights, self._penalty_quadratic)
+            )
 
         # --- construct Score object ----------------------
         return Score(

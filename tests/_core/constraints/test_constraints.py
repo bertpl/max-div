@@ -10,6 +10,7 @@ from max_div._core.constraints._constraints import (
     _np_con_max_value,
     _np_con_min_value,
     _np_con_total_violation,
+    _np_con_total_weighted_violation,
     _np_largest_con_index,
 )
 
@@ -141,6 +142,59 @@ def test_np_con_total_violation():
 
     # --- assert ------------------------------------------
     assert total_violation == 7
+
+
+@pytest.mark.parametrize(
+    "weights,quadratic,expected",
+    [
+        # per-constraint violations for the con_values below are v = [0, 0, 3, 4]
+        ([1.0, 1.0, 1.0, 1.0], False, 7.0),  # Σ v            = 3 + 4
+        ([1.0, 1.0, 1.0, 1.0], True, 25.0),  # Σ v²           = 9 + 16
+        ([1.0, 1.0, 2.0, 0.5], False, 8.0),  # Σ w·v          = 2·3 + 0.5·4
+        ([1.0, 1.0, 2.0, 0.5], True, 26.0),  # Σ w·v²         = 2·9 + 0.5·16
+    ],
+)
+def test_np_con_total_weighted_violation(weights: list[float], quadratic: bool, expected: float):
+    # --- arrange -----------------------------------------
+    con_values = np.array(
+        [
+            [-7, 11],  # satisfied            -> v = 0
+            [0, 0],  # satisfied            -> v = 0
+            [3, 10],  # need 3 more          -> v = 3
+            [-30, -4],  # need 4 less          -> v = 4
+        ],
+        dtype=np.int32,
+    )
+    con_weights = np.array(weights, dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    total = _np_con_total_weighted_violation(con_values, con_weights, quadratic)
+
+    # --- assert ------------------------------------------
+    assert total == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "con_values",
+    [
+        [[-7, 11], [0, 0], [3, 10], [-30, -4]],
+        [[2, 3], [2, 3]],
+        [[0, 0]],
+        [[-1, -1], [5, 9]],
+    ],
+)
+def test_np_con_total_weighted_violation_matches_fast_path(con_values: list[list[int]]):
+    """Regression guard: unit weights + linear must reproduce the integer fast path exactly."""
+    # --- arrange -----------------------------------------
+    cv = np.array(con_values, dtype=np.int32)
+    unit_weights = np.ones(cv.shape[0], dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    general = _np_con_total_weighted_violation(cv, unit_weights, False)
+    fast = _np_con_total_violation(cv)
+
+    # --- assert ------------------------------------------
+    assert float(general) == float(fast)
 
 
 def test_np_con_count_satisfied():
