@@ -31,10 +31,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 from numba import config as numba_config
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._solution import MaxDivSolution
@@ -73,6 +75,16 @@ def _solve(problem_name: str, preset: SolverPreset, seed: int) -> MaxDivSolution
     params = BenchmarkProblemFactory.get_all_benchmark_problems()[problem_name].get_example_parameters()
     params["size"] = 1
     problem = BenchmarkProblemFactory.construct_problem(problem_name, **params)
+    # quantize the vectors: problem generation may involve transcendental functions (e.g. a power
+    # mapping) whose SIMD implementations differ ~1 ULP across CPU generations; rounding to a coarse
+    # grid absorbs that, so the solver runs on bit-identical inputs on every machine
+    problem = MaxDivProblem(
+        vectors=np.round(problem.vectors, 2).astype(np.float32),
+        k=problem.k,
+        distance_metric=problem.distance_metric,
+        diversity_metric=problem.diversity_metric,
+        constraints=problem.constraints,
+    )
     solver = MaxDivSolverBuilder(problem).with_preset(iterations(N_ITERATIONS), preset).with_seed(seed).build()
     return solver.solve(verbosity=0)
 
