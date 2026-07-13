@@ -344,3 +344,20 @@ def test_solver_state_consistency_invariant(seed: int):
     for _ in range(60):
         snapshot_is_valid = _apply_random_operation(state, rng, snapshot_is_valid)
         _assert_state_matches_fresh_rebuild(state)
+
+
+def test_solver_state_score_lazy_recompute(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state.add_many(np.array([0, 2, 4], dtype=np.int32))
+    expected_score = state.score
+
+    # --- act ---------------------------------------------
+    # force the lazy branch: invalidate the cached score and mark it dirty
+    state._score = None
+    state._score_dirty = True
+    observed_score = state.score
+
+    # --- assert ------------------------------------------
+    assert observed_score == expected_score  # recomputed on read
+    assert not state._score_dirty  # flag cleared by the recompute
