@@ -4,7 +4,7 @@ import numpy as np
 
 from max_div._core.benchmark_problems._registry import BenchmarkProblem
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.problem import MaxDivProblem
+from max_div._core.problem import VectorMaxDivProblem
 
 from ._helpers import sort_vectors
 
@@ -51,7 +51,7 @@ class BenchmarkProblem_U4(BenchmarkProblem):
         size: int,
         diversity_metric: DiversityMetric,
         **kwargs: Any,  # noqa: ANN401 -- heterogeneous per-problem parameters
-    ) -> MaxDivProblem:
+    ) -> VectorMaxDivProblem:
         """We will generate vectors in d-dim. space as a * ([1, 1, 1, ..., 1] + (r * [x1, x2, ..., xd])).
 
         - a is sampled uniformly in [0,1]
@@ -77,7 +77,7 @@ class BenchmarkProblem_U4(BenchmarkProblem):
 
         # step 3 - sort vectors by increasing L2 norm of rows & return problem instance
         vectors = sort_vectors(vectors)  # sort by increasing L2 norm of rows
-        return MaxDivProblem(
+        return VectorMaxDivProblem(
             vectors=vectors,
             k=k,
             distance_metric=DistanceMetric.L2_EUCLIDEAN,

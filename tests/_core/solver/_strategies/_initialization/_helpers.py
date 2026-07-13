@@ -2,6 +2,7 @@ import numpy as np
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics._distance import compute_pdist
 from max_div._core.solver._solver_state import SolverState
 
 
@@ -18,9 +19,9 @@ def new_solver_state(has_constraints: bool) -> SolverState:
     vectors = np.random.rand(100, 5).astype(np.float32)
 
     return SolverState.new(
-        vectors=vectors,
+        n=vectors.shape[0],
+        pdist=compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN),
         k=50,
-        distance_metric=DistanceMetric.L2_EUCLIDEAN,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],
         constraints=constraints,

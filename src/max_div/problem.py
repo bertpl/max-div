@@ -1,11 +1,13 @@
 """Public API for defining Maximum Diversity problems and constraints."""
 
 from ._core.constraints import Constraint
-from ._core.problem import MaxDivProblem
+from ._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
 __all__ = [
     "Constraint",
+    "DistanceMaxDivProblem",
     "MaxDivProblem",
+    "VectorMaxDivProblem",
 ]
 
 

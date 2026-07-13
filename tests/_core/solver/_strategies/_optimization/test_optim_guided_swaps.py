@@ -63,9 +63,9 @@ def test_optim_guided_swaps(
         diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
     )
     solver_state = SolverState.new(
-        vectors=problem.vectors,
+        n=problem.n,
+        pdist=problem.condensed_distances(),
         k=problem.k,
-        distance_metric=problem.distance_metric,
         diversity_metric=problem.diversity_metric,
         diversity_tie_breakers=[],
         constraints=problem.constraints,

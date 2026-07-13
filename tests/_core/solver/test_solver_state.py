@@ -4,6 +4,7 @@ from numpy import random
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics._distance import compute_pdist
 from max_div._core.solver._solver_state import SolverState, _build_con_membership
 
 
@@ -12,10 +13,11 @@ from max_div._core.solver._solver_state import SolverState, _build_con_membershi
 # =================================================================================================
 @pytest.fixture
 def new_solver_state() -> SolverState:
+    vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
     return SolverState.new(
-        vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
+        n=vectors.shape[0],
+        pdist=compute_pdist(vectors, DistanceMetric.L1_MANHATTAN),
         k=3,
-        distance_metric=DistanceMetric.L1_MANHATTAN,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
         constraints=[
@@ -27,10 +29,11 @@ def new_solver_state() -> SolverState:
 
 @pytest.fixture
 def new_solver_state_unconstrained() -> SolverState:
+    vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
     return SolverState.new(
-        vectors=np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32),
+        n=vectors.shape[0],
+        pdist=compute_pdist(vectors, DistanceMetric.L1_MANHATTAN),
         k=3,
-        distance_metric=DistanceMetric.L1_MANHATTAN,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
         constraints=[],
@@ -273,9 +276,9 @@ def _make_reference_state() -> SolverState:
     rng = random.default_rng(seed=123)
     vectors = rng.random((30, 3)).astype(np.float32)
     return SolverState.new(
-        vectors=vectors,
+        n=vectors.shape[0],
+        pdist=compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN),
         k=8,
-        distance_metric=DistanceMetric.L2_EUCLIDEAN,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
         constraints=[

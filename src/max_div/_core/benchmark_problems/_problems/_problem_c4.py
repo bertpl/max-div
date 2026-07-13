@@ -5,7 +5,7 @@ import numpy as np
 from max_div._core.benchmark_problems._registry import BenchmarkProblem
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.problem import MaxDivProblem
+from max_div._core.problem import VectorMaxDivProblem
 
 from ._helpers import sort_vectors
 
@@ -52,7 +52,7 @@ class BenchmarkProblem_C4(BenchmarkProblem):
         size: int,
         diversity_metric: DiversityMetric,
         **kwargs: Any,  # noqa: ANN401 -- heterogeneous per-problem parameters
-    ) -> MaxDivProblem:
+    ) -> VectorMaxDivProblem:
         d, n, k, _m, _ = cls.get_problem_dimensions(size=size)
 
         # Generate gaussian random vectors, such that in each dimension...
@@ -96,7 +96,7 @@ class BenchmarkProblem_C4(BenchmarkProblem):
                 )
             )
 
-        return MaxDivProblem(
+        return VectorMaxDivProblem(
             vectors=vectors,
             k=k,
             distance_metric=DistanceMetric.L2_EUCLIDEAN,

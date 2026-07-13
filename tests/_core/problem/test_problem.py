@@ -1,14 +1,16 @@
 import numpy as np
 import pytest
+from scipy.spatial.distance import squareform
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.problem import MaxDivProblem
+from max_div._core.metrics._distance import compute_pdist
+from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
 
 def test_problem_properties():
     # --- arrange -----------------------------------------
-    problem = MaxDivProblem(
+    problem = VectorMaxDivProblem(
         vectors=np.ones((13, 7), dtype=np.float32),
         k=5,
         distance_metric=DistanceMetric.L2_EUCLIDEAN,
@@ -107,3 +109,92 @@ def test_problem_new_cosine_non_zero_vectors_ok():
 
     # --- assert ------------------------------------------
     assert problem.distance_metric == DistanceMetric.COSINE
+
+
+# -------------------------------------------------------------------------
+#  from_distances
+# -------------------------------------------------------------------------
+@pytest.mark.parametrize("form", ["square", "condensed"])
+def test_problem_from_distances_happy_path(form: str):
+    """from_distances accepts square and condensed input and normalizes both to condensed float32."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260713)
+    vectors = rng.standard_normal((10, 4)).astype(np.float32)
+    condensed = compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN)
+    distances = squareform(condensed) if form == "square" else condensed
+
+    # --- act ---------------------------------------------
+    problem = MaxDivProblem.from_distances(distances, k=4)
+
+    # --- assert ------------------------------------------
+    assert isinstance(problem, DistanceMaxDivProblem)
+    assert problem.n == 10
+    assert problem.k == 4
+    assert problem.pdist.dtype == np.float32
+    np.testing.assert_allclose(problem.condensed_distances(), condensed, rtol=1e-6)
+
+
+def test_problem_from_distances_new_returns_vector_flavor():
+    """The two factories return their respective flavors, both subtypes of MaxDivProblem."""
+
+    # --- arrange / act -----------------------------------
+    vector_problem = MaxDivProblem.new(np.ones((5, 2), dtype=np.float32), k=2)
+    distance_problem = MaxDivProblem.from_distances(np.ones(10, dtype=np.float32), k=2)
+
+    # --- assert ------------------------------------------
+    assert isinstance(vector_problem, VectorMaxDivProblem)
+    assert isinstance(distance_problem, DistanceMaxDivProblem)
+    assert isinstance(vector_problem, MaxDivProblem)
+    assert isinstance(distance_problem, MaxDivProblem)
+
+
+def test_problem_from_distances_condensed_distances_returns_input():
+    """For distance-input problems, condensed_distances returns the validated input distances."""
+
+    # --- arrange -----------------------------------------
+    condensed = np.arange(1, 11, dtype=np.float32)  # n=5
+
+    # --- act ---------------------------------------------
+    problem = MaxDivProblem.from_distances(condensed, k=3)
+
+    # --- assert ------------------------------------------
+    assert problem.n == 5
+    np.testing.assert_array_equal(problem.condensed_distances(), condensed)
+
+
+def _mutated_square(i: int, j: int, value: float) -> np.ndarray:
+    """Return the reference 5x5 distance matrix with one entry overwritten (unmirrored, so asymmetric if i != j)."""
+    square = squareform(np.arange(1, 11, dtype=np.float32))
+    square[i, j] = value
+    return square
+
+
+def _mutated_square_symmetric(i: int, j: int, value: float) -> np.ndarray:
+    """Return the reference 5x5 distance matrix with one entry pair overwritten symmetrically."""
+    square = squareform(np.arange(1, 11, dtype=np.float32))
+    square[i, j] = square[j, i] = value
+    return square
+
+
+@pytest.mark.parametrize(
+    "case, distances, k",
+    [
+        ("asymmetric", _mutated_square(0, 1, 99.0), 3),
+        ("non_zero_diagonal", _mutated_square(2, 2, 1.0), 3),
+        ("negative", _mutated_square_symmetric(0, 1, -1.0), 3),
+        ("nan", _mutated_square_symmetric(0, 1, np.nan), 3),
+        ("inf", _mutated_square_symmetric(0, 1, np.inf), 3),
+        ("bad_condensed_length", np.arange(1, 12, dtype=np.float32), 3),  # length 11 is not triangular
+        ("non_square", np.ones((5, 4), dtype=np.float32), 3),
+        ("3d", np.ones((5, 5, 5), dtype=np.float32), 3),
+        ("too_few_items", np.zeros((2, 2), dtype=np.float32), 2),
+        ("k_too_large", squareform(np.arange(1, 11, dtype=np.float32)), 6),
+    ],
+)
+def test_problem_from_distances_value_error(case: str, distances: np.ndarray, k: int):
+    """from_distances rejects malformed distance input with a ValueError."""
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        _ = MaxDivProblem.from_distances(distances, k=k)

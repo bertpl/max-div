@@ -138,6 +138,20 @@ problem = MaxDivProblem.new(
 | `L2S_EUCLIDEAN_SQUARED` | Squared Euclidean -- avoids the square root, produces identical solutions when used with `GEOMEAN_SEPARATION` |
 | `COSINE` | Cosine distance (1 &minus; cosine similarity) -- angular, magnitude-invariant, for embedding-style vectors; zero vectors are rejected |
 
+#### Precomputed distances
+
+If none of the built-in metrics fit -- custom similarity functions, non-Euclidean data, or
+distances produced by another tool -- you can supply pairwise distances directly instead of
+vectors. Both a square symmetric `(n, n)` matrix and a condensed vector (as produced by
+`scipy.spatial.distance.pdist`) are accepted:
+
+```python
+problem = MaxDivProblem.from_distances(distance_matrix, k=20)
+```
+
+Everything else -- diversity metrics, constraints, solver configuration -- works identically for
+both problem flavors.
+
 ### Diversity metrics
 
 The diversity metric defines what "diverse" means for the selected subset. It operates on the

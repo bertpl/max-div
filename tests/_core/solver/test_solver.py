@@ -1,8 +1,11 @@
+import numpy as np
 import pytest
 
 from max_div._core._utils import stdout_to_file
-from max_div._core.solver import MaxDivSolution
-from max_div._core.solver._duration import Elapsed
+from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.problem import MaxDivProblem
+from max_div._core.solver import MaxDivSolution, MaxDivSolverBuilder
+from max_div._core.solver._duration import Elapsed, iterations
 from max_div._core.solver._score import Score
 
 
@@ -103,3 +106,24 @@ def test_solver_verbosity(example_solver, tmp_path, verbosity: int, error_expect
         # act & assert
         with pytest.raises(ValueError):
             _ = example_solver.solve(verbosity=verbosity)
+
+
+def test_solver_vector_and_distance_input_bit_identical():
+    """Solving via from_distances with the vector flavor's own pdist gives bit-identical solutions."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260713)
+    vectors = rng.random((40, 4)).astype(np.float32)
+    kwargs: dict = {"k": 8, "diversity_metric": DiversityMetric.GEOMEAN_SEPARATION}
+    problem_vec = MaxDivProblem.new(vectors, distance_metric=DistanceMetric.L2_EUCLIDEAN, **kwargs)
+    problem_dist = MaxDivProblem.from_distances(problem_vec.condensed_distances(), **kwargs)
+
+    # --- act ---------------------------------------------
+    solutions = [
+        MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build().solve(verbosity=0)
+        for problem in (problem_vec, problem_dist)
+    ]
+
+    # --- assert ------------------------------------------
+    assert list(solutions[0].i_selected) == list(solutions[1].i_selected)
+    assert solutions[0].score == solutions[1].score

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Self
 
-from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
 
 from ._constraint_penalty import ConstraintPenalty
@@ -33,9 +33,9 @@ class MaxDivSolverBuilder:
         self._problem = problem
 
         # --- problem properties ----------------
-        self._vectors: np.ndarray = problem.vectors
+        self._n: int = problem.n
+        self._pdist: np.ndarray = problem.condensed_distances()
         self._k: int = problem.k
-        self._distance_metric: DistanceMetric = problem.distance_metric
         self._diversity_metric: DiversityMetric = problem.diversity_metric
         self._constraints: list[Constraint] = problem.constraints
 
@@ -151,9 +151,9 @@ class MaxDivSolverBuilder:
 
     def build(self) -> MaxDivSolver:
         return MaxDivSolver(
-            vectors=self._vectors,
+            n=self._n,
+            pdist=self._pdist,
             k=self._k,
-            distance_metric=self._distance_metric,
             diversity_metric=self._diversity_metric,
             diversity_tie_breakers=self._determine_diversity_tie_breakers(),
             constraints=self._constraints,

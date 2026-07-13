@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Cosine distance metric (`DistanceMetric.COSINE`) for embedding-style workloads
+- Problems can now be constructed from a precomputed distance matrix (square or condensed) via `MaxDivProblem.from_distances`, enabling custom and non-Euclidean metrics
 
 ### Changed
 

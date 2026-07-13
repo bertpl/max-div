@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from max_div._core.problem import MaxDivProblem
+from max_div._core.problem import VectorMaxDivProblem
 
 
 # =================================================================================================
@@ -66,7 +66,7 @@ class BenchmarkProblem(ABC):
     #  Problem creation
     # -------------------------------------------------------------------------
     @classmethod
-    def create_problem_instance(cls, **kwargs: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+    def create_problem_instance(cls, **kwargs: Any) -> VectorMaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
         """Create and return an instance of MaxDivProblem for this benchmark problem.
 
         The provided parameters are used as needed.
@@ -85,7 +85,7 @@ class BenchmarkProblem(ABC):
 
     @classmethod
     @abstractmethod
-    def _create_problem_instance(cls, **kwargs: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+    def _create_problem_instance(cls, **kwargs: Any) -> VectorMaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
         raise NotImplementedError
 
 

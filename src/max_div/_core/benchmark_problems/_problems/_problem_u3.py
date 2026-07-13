@@ -4,7 +4,7 @@ import numpy as np
 
 from max_div._core.benchmark_problems._registry import BenchmarkProblem
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.problem import MaxDivProblem
+from max_div._core.problem import VectorMaxDivProblem
 
 from ._helpers import sort_vectors
 
@@ -51,7 +51,7 @@ class BenchmarkProblem_U3(BenchmarkProblem):
         size: int,
         diversity_metric: DiversityMetric,
         **kwargs: Any,  # noqa: ANN401 -- heterogeneous per-problem parameters
-    ) -> MaxDivProblem:
+    ) -> VectorMaxDivProblem:
         d, n, k, _, _ = cls.get_problem_dimensions(size=size)
 
         # Generate log-uniform random vectors in [0.1, 10] along each axis
@@ -60,7 +60,7 @@ class BenchmarkProblem_U3(BenchmarkProblem):
         vectors = np.power(10.0, (vectors * 2.0) - 1.0)  # map [0,1] to [0.1,10]
         vectors = sort_vectors(vectors)  # sort by increasing L2 norm of rows
 
-        return MaxDivProblem(
+        return VectorMaxDivProblem(
             vectors=vectors,
             k=k,
             distance_metric=DistanceMetric.L2_EUCLIDEAN,

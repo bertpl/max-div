@@ -9,8 +9,6 @@ import numpy as np
 
 from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.metrics._distance import (
-    DistanceMetric,
-    compute_pdist,
     compute_separation,
     update_separation_add,
     update_separation_remove,
@@ -336,30 +334,29 @@ class SolverState:
     @classmethod
     def new(
         cls,
-        vectors: np.ndarray,
+        n: int,
+        pdist: NDArray[np.float32],
         k: int,
-        distance_metric: DistanceMetric,
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> SolverState:
         # --- distances ---
-        n = np.int32(vectors.shape[0])
-        pdist = compute_pdist(vectors, distance_metric)
-        sep_global = compute_separation(pdist, n)
-        sep_selected = np.full(n, fill_value=np.inf, dtype=np.float32)
+        n_np = np.int32(n)
+        sep_global = compute_separation(pdist, n_np)
+        sep_selected = np.full(n_np, fill_value=np.inf, dtype=np.float32)
 
         # --- selection ---
-        selected = np.full(n, False, dtype=np.bool)
+        selected = np.full(n_np, False, dtype=np.bool)
 
         # --- constraints ---
         con_values, con_indices = ConstraintList(constraints).to_numpy()
-        con_membership = _build_con_membership(n, constraints)
+        con_membership = _build_con_membership(n_np, constraints)
 
         # --- score generator ---
         score_generator = ScoreGenerator(
-            n=n,
+            n=n_np,
             k=k,
             diversity_metric=diversity_metric,
             diversity_tie_breakers=diversity_tie_breakers,
@@ -369,7 +366,7 @@ class SolverState:
 
         # --- construct & return ---
         return SolverState(
-            n=n,
+            n=n_np,
             k=np.int32(k),
             pdist=pdist,
             score_generator=score_generator,

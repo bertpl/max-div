@@ -145,6 +145,8 @@ nav:
     - Problem:
       - Constraint: reference/problem/Constraint.md
       - MaxDivProblem: reference/problem/MaxDivProblem.md
+      - VectorMaxDivProblem: reference/problem/VectorMaxDivProblem.md
+      - DistanceMaxDivProblem: reference/problem/DistanceMaxDivProblem.md
     - Solver:
       - Core:
         - MaxDivSolver: reference/solver/MaxDivSolver.md

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from max_div._core.metrics import DiversityMetric
-    from max_div._core.problem import MaxDivProblem
+    from max_div._core.problem import VectorMaxDivProblem
     from max_div._core.solver import MaxDivSolver
 
 
@@ -295,7 +295,7 @@ class BenchmarkSolverConstructor(ABC):
     def benchmark_type(self) -> str:
         return self._benchmark_type
 
-    def construct_problem(self, size: int) -> MaxDivProblem:
+    def construct_problem(self, size: int) -> VectorMaxDivProblem:
         return BenchmarkProblemFactory.construct_problem(
             name=self._problem_name,
             size=size,
