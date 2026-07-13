@@ -84,7 +84,7 @@ class SolverState:
 
         # selection
         self._selected = selected
-        self._n_selected: np.int32 = np.int32(sum(selected))
+        self._n_selected: np.int32 = np.int32(selected.sum())
 
         # constraints
         self._con_values = con_values  # min/max counts of extra samples needed on top of current selection
@@ -179,7 +179,7 @@ class SolverState:
 
     def add_many(self, indices: NDArray[np.int32]) -> None:
         # --- validation ----------------------------------
-        if any(self._selected[indices]):
+        if self._selected[indices].any():
             raise ValueError(f"Cannot add index that is already selected ({list(indices)}).")
 
         # --- selection -----------------------------------
@@ -220,7 +220,7 @@ class SolverState:
 
     def remove_many(self, indices: NDArray[np.int32]) -> None:
         # --- validation ----------------------------------
-        if any(~self._selected[indices]):
+        if (~self._selected[indices]).any():
             raise ValueError(f"Cannot remove index that is not selected ({list(indices)}).")
 
         # --- selection -----------------------------------
