@@ -80,6 +80,7 @@ class SolverState:
         # scoring
         self._score_generator = score_generator  # READ-ONLY
         self._score: Score | None = None
+        self._score_dirty: bool = False  # when True, _score is stale and recomputed on next 'score' read
 
         # selection
         self._selected = selected
@@ -319,10 +320,13 @@ class SolverState:
             con_values=self._con_values,
             selected_separation_array=self.selected_separation_array,
         )
+        self._score_dirty = False
 
     @property
     def score(self) -> Score:
         """Return overall score of the current selection as a multi-component prioritized Score object."""
+        if self._score_dirty:
+            self._update_score()
         return self._score  # ty: ignore[invalid-return-type]  # always set via _update_score in __init__; hot path, so no assert
 
     # -------------------------------------------------------------------------
