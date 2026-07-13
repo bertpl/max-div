@@ -10,12 +10,14 @@ import numpy as np
 from max_div._core.constraints import Constraint, ConstraintList
 
 from ._score import Score, ScoreGenerator
-from ._signals import DiversitySignalTracker, SeparationTracker
+from ._signals import build_tracker
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityMetric
+    from max_div._core.metrics import DiversityMetric, DiversitySignalFamily
+
+    from ._signals import DiversitySignalTracker
 
 
 # =================================================================================================
@@ -31,7 +33,8 @@ class SolverState:
         self,
         n: np.int32,
         k: np.int32,
-        signal_tracker: DiversitySignalTracker,
+        signal_trackers: dict[DiversitySignalFamily, DiversitySignalTracker],
+        main_signal_family: DiversitySignalFamily,
         score_generator: ScoreGenerator,
         selected: NDArray[np.bool],
         con_values: NDArray[np.int32],
@@ -44,14 +47,18 @@ class SolverState:
 
             n  : total number of vectors
           ( d  : dimensionality of each vector  (not visible here, since distances are pre-digested
-                 into the signal tracker) )
+                 into the signal trackers) )
             k  : target selection size
             m : number of constraints
 
         :param n: (np.int32) number of vectors
         :param k: (np.int32) target number of selected vectors
-        :param signal_tracker: (DiversitySignalTracker) per-point diversity-signal tracking, incrementally
-                               updated on every selection mutation.
+        :param signal_trackers: (dict[DiversitySignalFamily, DiversitySignalTracker]) per-point diversity-signal
+                                tracking, one tracker per signal family needed by the configured metrics; all are
+                                incrementally updated on every selection mutation.  Trackers of families no metric
+                                needs are simply absent, so their maintenance costs nothing.
+        :param main_signal_family: (DiversitySignalFamily) family of the main diversity metric; its tracker feeds
+                                   the strategy-facing signal properties.
         :param score_generator: (ScoreGenerator) score generator to compute scores for current state
         :param selected: (np.ndarray[np.bool]) array indicating which of the n vectors are initially selected.
         :param con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)
@@ -65,7 +72,10 @@ class SolverState:
         self._k = k  # READ-ONLY
 
         # diversity signals
-        self._signal_tracker = signal_tracker
+        self._signal_trackers_by_family = signal_trackers  # READ-ONLY
+        self._main_signal_family = main_signal_family  # READ-ONLY
+        self._signal_trackers = tuple(signal_trackers.values())  # iteration order for mutations
+        self._signal_tracker = signal_trackers[main_signal_family]  # strategy-facing tracker
 
         # scoring
         self._score_generator = score_generator  # READ-ONLY
@@ -95,7 +105,8 @@ class SolverState:
         return SolverState(
             n=self._n,
             k=self._k,
-            signal_tracker=self._signal_tracker.copy(),
+            signal_trackers={family: t.copy() for family, t in self._signal_trackers_by_family.items()},
+            main_signal_family=self._main_signal_family,
             score_generator=self._score_generator.copy(),
             selected=self._selected.copy(),
             con_values=self._con_values.copy(),
@@ -116,7 +127,8 @@ class SolverState:
         self._snapshot.selected = self._selected.copy()
         self._snapshot.n_selected = self._n_selected
         self._snapshot.con_values = self._con_values.copy()
-        self._signal_tracker.set_snapshot()
+        for tracker in self._signal_trackers:
+            tracker.set_snapshot()
         # NOTE: Score is immutable and mutators reassign self._score (never modify in place),
         #       so storing the reference is safe — no copy needed.
         self._snapshot.score = self.score
@@ -136,7 +148,8 @@ class SolverState:
         self._selected = self._snapshot.selected
         self._n_selected = self._snapshot.n_selected
         self._con_values = self._snapshot.con_values
-        self._signal_tracker.restore_snapshot()
+        for tracker in self._signal_trackers:
+            tracker.restore_snapshot()
 
         # restore score (cached at set_snapshot time; avoids a full recompute)
         self._score = self._snapshot.score
@@ -156,7 +169,8 @@ class SolverState:
         self._n_selected += np.int32(1)
 
         # --- diversity signals ---------------------------
-        self._signal_tracker.add(index)
+        for tracker in self._signal_trackers:
+            tracker.add(index)
 
         # --- constraints ---------------------------------
         # decrease both min_count and max_count for all constraints that include 'index'
@@ -175,7 +189,8 @@ class SolverState:
         self._n_selected += np.int32(len(indices))
 
         # --- diversity signals ---------------------------
-        self._signal_tracker.add_many(indices)
+        for tracker in self._signal_trackers:
+            tracker.add_many(indices)
 
         # --- constraints ---------------------------------
         # decrease both min_count and max_count for all constraints that include any of 'indices'
@@ -196,7 +211,9 @@ class SolverState:
         self._n_selected -= np.int32(1)
 
         # --- diversity signals ---------------------------
-        self._signal_tracker.remove(index, self.selected_index_array)
+        new_selection = self.selected_index_array
+        for tracker in self._signal_trackers:
+            tracker.remove(index, new_selection)
 
         # --- constraints ---------------------------------
         # increase both min_count and max_count for all constraints that include 'index'
@@ -215,7 +232,9 @@ class SolverState:
         self._n_selected -= np.int32(len(indices))
 
         # --- diversity signals ---------------------------
-        self._signal_tracker.remove_many(indices, self.selected_index_array)
+        new_selection = self.selected_index_array
+        for tracker in self._signal_trackers:
+            tracker.remove_many(indices, new_selection)
 
         # --- constraints ---------------------------------
         # increase both min_count and max_count for all constraints that include any of 'indices'
@@ -331,8 +350,12 @@ class SolverState:
         penalty_quadratic: bool = False,
     ) -> SolverState:
         # --- diversity signals ---
+        # one tracker per signal family needed by the configured metrics (main metric's family first,
+        # so the strategy-facing tracker is always present); unneeded families are never constructed
         n_np = np.int32(n)
-        signal_tracker = SeparationTracker(pdist, n_np)
+        main_signal_family = diversity_metric.signal_family
+        families = dict.fromkeys([main_signal_family, *(tb.signal_family for tb in diversity_tie_breakers)])
+        signal_trackers = {family: build_tracker(family, pdist, n_np) for family in families}
 
         # --- selection ---
         selected = np.full(n_np, False, dtype=np.bool)
@@ -355,7 +378,8 @@ class SolverState:
         return SolverState(
             n=n_np,
             k=np.int32(k),
-            signal_tracker=signal_tracker,
+            signal_trackers=signal_trackers,
+            main_signal_family=main_signal_family,
             score_generator=score_generator,
             selected=selected,
             con_values=con_values,

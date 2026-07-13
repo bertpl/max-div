@@ -6,6 +6,20 @@ import numpy as np
 from numpy.typing import NDArray
 
 
+class DiversitySignalFamily(StrEnum):
+    """Enum for the per-point diversity-signal families that diversity metrics consume.
+
+    Members
+    -------
+
+        - SEPARATION:     signal = distance to the nearest selected vector
+        - MEAN_DISTANCE:  signal = mean distance to the selected vectors
+    """
+
+    SEPARATION = "SEPARATION"
+    MEAN_DISTANCE = "MEAN_DISTANCE"
+
+
 class DiversityMetric(StrEnum):
     """Enum for different diversity metrics.
 
@@ -25,6 +39,11 @@ class DiversityMetric(StrEnum):
     GEOMEAN_SEPARATION = "GEOMEAN_SEPARATION"
     APPROX_GEOMEAN_SEPARATION = "APPROX_GEOMEAN_SEPARATION"
     NON_ZERO_SEPARATION_FRAC = "NON_ZERO_SEPARATION_FRAC"
+
+    @cached_property
+    def signal_family(self) -> DiversitySignalFamily:
+        """Return the diversity-signal family whose per-point values this metric consumes."""
+        return DiversitySignalFamily.SEPARATION
 
     @cached_property
     def _f(self) -> Callable[[NDArray[np.float32]], np.float32]:
