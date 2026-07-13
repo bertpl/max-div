@@ -263,3 +263,84 @@ def test_build_con_membership():
         assert isinstance(value, np.ndarray)
         assert value.dtype == np.int32
         assert np.array_equal(value, expected_membership[key])
+
+
+# =================================================================================================
+#  Consistency invariant
+# =================================================================================================
+def _make_reference_state() -> SolverState:
+    """Build a fresh, empty-selection state on a fixed random problem with overlapping constraints."""
+    rng = random.default_rng(seed=123)
+    vectors = rng.random((30, 3)).astype(np.float32)
+    return SolverState.new(
+        vectors=vectors,
+        k=8,
+        distance_metric=DistanceMetric.L2_EUCLIDEAN,
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        constraints=[
+            Constraint(int_set=set(range(12)), min_count=2, max_count=5),
+            Constraint(int_set=set(range(8, 22)), min_count=1, max_count=6),
+            Constraint(int_set=set(range(18, 30)), min_count=2, max_count=4),
+        ],
+    )
+
+
+def _assert_state_matches_fresh_rebuild(state: SolverState) -> None:
+    """Assert score & internals of 'state' exactly match a freshly built state with the same selection."""
+    fresh = _make_reference_state()
+    selection = state.selected_index_array
+    if selection.size > 0:
+        fresh.add_many(selection)
+
+    assert state.score == fresh.score
+    assert state._n_selected == fresh._n_selected
+    assert np.array_equal(state._selected, fresh._selected)
+    assert np.array_equal(state._sep_selected, fresh._sep_selected)
+    assert np.array_equal(state._con_values, fresh._con_values)
+
+
+def _apply_random_operation(state: SolverState, rng: random.Generator, snapshot_is_valid: bool) -> bool:
+    """Apply one randomly chosen valid operation to 'state'; return whether a snapshot is valid afterwards."""
+    selected = state.selected_index_array
+    not_selected = state.not_selected_index_array
+    operations = ["set_snapshot"]
+    if snapshot_is_valid:
+        operations.append("restore_snapshot")
+    if not_selected.size > 0:
+        operations += ["add", "add_many"]
+    if selected.size > 0:
+        operations += ["remove", "remove_many"]
+
+    match rng.choice(operations):
+        case "set_snapshot":
+            state.set_snapshot()
+            return True
+        case "restore_snapshot":
+            state.restore_snapshot()
+            return False
+        case "add":
+            state.add(rng.choice(not_selected))
+        case "add_many":
+            n_add = int(rng.integers(1, min(4, not_selected.size) + 1))
+            state.add_many(rng.choice(not_selected, size=n_add, replace=False).astype(np.int32))
+        case "remove":
+            state.remove(rng.choice(selected))
+        case "remove_many":
+            n_remove = int(rng.integers(1, min(4, selected.size) + 1))
+            state.remove_many(rng.choice(selected, size=n_remove, replace=False).astype(np.int32))
+    return snapshot_is_valid
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2])
+def test_solver_state_consistency_invariant(seed: int):
+    """Apply a random operation sequence; after EVERY op, state must equal a fresh rebuild bit-for-bit."""
+    # --- arrange -----------------------------------------
+    state = _make_reference_state()
+    rng = random.default_rng(seed=seed)
+    snapshot_is_valid = False
+
+    # --- act & assert ------------------------------------
+    for _ in range(60):
+        snapshot_is_valid = _apply_random_operation(state, rng, snapshot_is_valid)
+        _assert_state_matches_fresh_rebuild(state)
