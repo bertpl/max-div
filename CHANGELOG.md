@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Solver iterations no longer recompute the selection score when reverting a rejected swap (measured up to ~8% faster iterations for the GUIDED preset)
 
 ### Deprecated
 
