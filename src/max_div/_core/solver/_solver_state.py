@@ -128,6 +128,9 @@ class SolverState:
         self._snapshot.n_selected = self._n_selected
         self._snapshot.sep_selected = self._sep_selected.copy()
         self._snapshot.con_values = self._con_values.copy()
+        # NOTE: Score is immutable and mutators reassign self._score (never modify in place),
+        #       so storing the reference is safe — no copy needed.
+        self._snapshot.score = self.score
         self._snapshot.is_valid = True
 
     def restore_snapshot(self) -> None:
@@ -146,8 +149,8 @@ class SolverState:
         self._sep_selected = self._snapshot.sep_selected
         self._con_values = self._snapshot.con_values
 
-        # restore score
-        self._update_score()
+        # restore score (cached at set_snapshot time; avoids a full recompute)
+        self._score = self._snapshot.score
 
         # clear snapshot after restoring
         self._snapshot.clear()
@@ -393,6 +396,8 @@ class Snapshot:
     sep_selected: NDArray[np.float32]  # m-sized 1D array with separation of each vector wrt selected set
     con_values: NDArray[np.int32]  # (nc x 2)-sized array with current status of constraint bounds
 
+    score: Score  # score of the snapshotted selection (immutable, stored by reference)
+
     # -------------------------------------------------------------------------
     #  Modification / Factory
     # -------------------------------------------------------------------------
@@ -403,6 +408,7 @@ class Snapshot:
         self.n_selected = np.int32(0)
         self.sep_selected = _EMPTY_NP_ARRAY_FLOAT32
         self.con_values = _EMPTY_NP_ARRAY_INT32
+        self.score = _PLACEHOLDER_SCORE
 
     @classmethod
     def empty(cls) -> Snapshot:
@@ -413,13 +419,16 @@ class Snapshot:
             n_selected=np.int32(0),
             sep_selected=_EMPTY_NP_ARRAY_FLOAT32,
             con_values=_EMPTY_NP_ARRAY_INT32,
+            score=_PLACEHOLDER_SCORE,
         )
 
 
 # singletons to avoid repeated, unnecessary allocations
+# (an invalid snapshot's score is never read — restore_snapshot guards on is_valid)
 _EMPTY_NP_ARRAY_BOOL = np.array([], dtype=np.bool)
 _EMPTY_NP_ARRAY_INT32 = np.array([], dtype=np.int32)
 _EMPTY_NP_ARRAY_FLOAT32 = np.array([], dtype=np.float32)
+_PLACEHOLDER_SCORE = Score(size=0.0, constraints=0.0, diversity=0.0, div_tie_breakers=())
 
 
 # =================================================================================================
