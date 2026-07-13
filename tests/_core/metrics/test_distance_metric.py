@@ -5,9 +5,12 @@ from scipy.spatial.distance import squareform
 
 from max_div._core.metrics._distance import (
     DistanceMetric,
+    compute_distance_sums,
     compute_pdist,
     compute_separation,
     get_pdist_el,
+    update_distance_sums_add,
+    update_distance_sums_remove,
     update_separation_add,
     update_separation_remove,
 )
@@ -274,3 +277,74 @@ def test_update_separation_remove():
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)
+
+
+# -------------------------------------------------------------------------
+#  Distance sums
+# -------------------------------------------------------------------------
+def test_compute_distance_sums():
+    """Check if compute_distance_sums matches a brute-force row-sum of the full distance matrix."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260713)
+    vectors = rng.standard_normal((30, 4)).astype(np.float32)
+    m = vectors.shape[0]
+    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    expected = squareform(d).astype(np.float64).sum(axis=1)
+
+    # --- act ---------------------------------------------
+    dist_sums = compute_distance_sums(d, np.int32(m))
+
+    # --- assert ------------------------------------------
+    assert dist_sums.dtype == np.float64
+    np.testing.assert_allclose(dist_sums, expected, rtol=1e-6)
+
+
+def test_update_distance_sums_add_remove():
+    """Incremental add/remove updates match brute-force sums over the selection at every step."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260713)
+    vectors = rng.standard_normal((20, 3)).astype(np.float32)
+    m = vectors.shape[0]
+    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d_squared = squareform(d).astype(np.float64)
+
+    dist_sums = np.zeros(m, dtype=np.float64)
+    selection: list[int] = []
+
+    def expected_sums() -> np.ndarray:
+        # brute-force: each point's sum of distances to the selected points (self-distance is 0)
+        return d_squared[:, selection].sum(axis=1) if selection else np.zeros(m, dtype=np.float64)
+
+    # --- act / assert ------------------------------------
+    for index in [3, 17, 0, 9, 12]:
+        update_distance_sums_add(dist_sums, d, np.int32(m), np.int32(index))
+        selection.append(index)
+        np.testing.assert_allclose(dist_sums, expected_sums(), rtol=1e-6)
+
+    for index in [0, 3, 12]:
+        update_distance_sums_remove(dist_sums, d, np.int32(m), np.int32(index))
+        selection.remove(index)
+        np.testing.assert_allclose(dist_sums, expected_sums(), rtol=1e-6)
+
+
+def test_update_distance_sums_own_entry_untouched():
+    """A point's own entry is unchanged by adding/removing that point (its self-distance is 0)."""
+
+    # --- arrange -----------------------------------------
+    vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
+    m = vectors.shape[0]
+    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    dist_sums = np.zeros(m, dtype=np.float64)
+
+    # selection {1}: point 1's own entry stays 0 (no other selected points yet)
+    update_distance_sums_add(dist_sums, d, np.int32(m), np.int32(1))
+    assert dist_sums[1] == 0.0
+
+    # --- act ---------------------------------------------
+    # selection {1, 2}: point 2's own entry must equal its distance to point 1 only
+    update_distance_sums_add(dist_sums, d, np.int32(m), np.int32(2))
+
+    # --- assert ------------------------------------------
+    assert dist_sums[2] == pytest.approx(squareform(d)[2, 1])

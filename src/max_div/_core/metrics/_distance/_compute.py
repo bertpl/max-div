@@ -206,3 +206,46 @@ def update_separation_remove(
                         if dist_jk < new_sep_j:
                             new_sep_j = dist_jk
                 sep[j] = new_sep_j
+
+
+# =================================================================================================
+#  Distance sums
+# =================================================================================================
+# Per-point sums of distances to a selection — the pairwise-distance counterpart of the separation
+# kernels above.  Sums accumulate in float64: entries undergo long add/subtract chains over solver
+# iterations, and float32 drift there would change scores with iteration count.  Distances of a
+# point to itself are 0, so a point's own entry never needs special-casing: it always equals the
+# sum of its distances to the *other* selected points.
+@numba.njit("float64[::1](float32[::1], int32)", cache=True)
+def compute_distance_sums(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.float64]:
+    """Compute sum of distances of each vector wrt all others, given pairwise distance array pdist and n vectors."""
+    dist_sums = np.zeros(n, dtype=np.float64)
+    pdist_idx = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            # note: the way we iterate over i & j represents the exact order in which pdist stores distances
+            dist_ij = np.float64(pdist[pdist_idx])
+            pdist_idx += 1
+            dist_sums[i] += dist_ij
+            dist_sums[j] += dist_ij
+    return dist_sums
+
+
+@numba.njit("void(float64[::1], float32[::1], int32, int32)", cache=True)
+def update_distance_sums_add(
+    dist_sums: NDArray[np.float64], pdist: NDArray[np.float32], n: np.int32, i_added: np.int32
+) -> None:
+    """Update distance sums of each vector wrt selection, given pdist array and n vectors, after adding i_added."""
+    for j in np.arange(n, dtype=np.int32):
+        if j != i_added:
+            dist_sums[j] += np.float64(get_pdist_el(pdist, i_added, j, n))
+
+
+@numba.njit("void(float64[::1], float32[::1], int32, int32)", cache=True)
+def update_distance_sums_remove(
+    dist_sums: NDArray[np.float64], pdist: NDArray[np.float32], n: np.int32, i_removed: np.int32
+) -> None:
+    """Update distance sums of each vector wrt selection, given pdist array and n vectors, after removing i_removed."""
+    for j in np.arange(n, dtype=np.int32):
+        if j != i_removed:
+            dist_sums[j] -= np.float64(get_pdist_el(pdist, i_removed, j, n))
