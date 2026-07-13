@@ -110,7 +110,7 @@ def regenerate_active_regime() -> None:
                 records[_case_key(problem_name, preset, seed)] = _as_record(_solve(problem_name, preset, seed))
     data_file = _data_file(_active_regime())
     data_file.write_text(json.dumps(records, indent=1) + "\n")
-    print(f"wrote {len(records)} cases to {data_file}")  # noqa: T201 -- script mode
+    print(f"wrote {len(records)} cases to {data_file}")
 
 
 if __name__ == "__main__":
