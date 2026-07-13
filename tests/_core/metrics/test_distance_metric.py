@@ -17,6 +17,7 @@ _SCIPY_METRIC = {
     "L1_MANHATTAN": "cityblock",
     "L2_EUCLIDEAN": "euclidean",
     "L2S_EUCLIDEAN_SQUARED": "sqeuclidean",
+    "COSINE": "cosine",
 }
 
 
@@ -28,7 +29,8 @@ def test_compute_pdist_metrics(metric: DistanceMetric):
     """Check if compute_pdist implements all metrics."""
 
     # --- arrange -----------------------------------------
-    vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 1]], dtype=np.float32)
+    # note: no all-zero row — COSINE rejects zero vectors
+    vectors = np.array([[2, 2], [3, 4], [1, 0], [0, 1]], dtype=np.float32)
 
     # --- act ---------------------------------------------
     d = compute_pdist(vectors, metric=metric)
@@ -74,6 +76,39 @@ def test_compute_pdist_matches_scipy(metric: DistanceMetric):
     # --- assert ------------------------------------------
     assert result.dtype == np.float32
     np.testing.assert_allclose(result, expected, rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.parametrize(
+    "x, y, expected_value",
+    [
+        ([1, 0], [0, 1], 1.0),  # orthogonal
+        ([1, 0], [-1, 0], 2.0),  # opposite
+        ([1, 0], [1, 1], 1.0 - 1.0 / np.sqrt(2.0)),  # 45 degrees
+        ([1, 0], [100, 0], 0.0),  # parallel: magnitude-invariant
+    ],
+)
+def test_compute_pdist_cosine_values(x: list[float], y: list[float], expected_value: float):
+    """Cosine distance produces the expected angular values."""
+
+    # --- arrange -----------------------------------------
+    vectors = np.array([x, y], dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    d = compute_pdist(vectors, metric=DistanceMetric.COSINE)
+
+    # --- assert ------------------------------------------
+    assert d[0] == pytest.approx(expected_value, abs=1e-6)
+
+
+def test_compute_pdist_cosine_zero_vector_raises():
+    """Cosine distance rejects all-zero vectors with a clear error naming the row."""
+
+    # --- arrange -----------------------------------------
+    vectors = np.array([[1, 2], [0, 0], [3, 4]], dtype=np.float32)
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match=r"zero vector.*row 1"):
+        compute_pdist(vectors, metric=DistanceMetric.COSINE)
 
 
 @pytest.mark.parametrize("metric", list(DistanceMetric))

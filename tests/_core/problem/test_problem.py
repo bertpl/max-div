@@ -81,3 +81,29 @@ def test_problem_new_value_error(ndims: int, n: int, d: int, k: int):
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):
         _ = MaxDivProblem.new(vectors, k)
+
+
+def test_problem_new_cosine_zero_vector_raises():
+    """COSINE problems reject all-zero vectors at construction time."""
+
+    # --- arrange -----------------------------------------
+    vectors = np.ones((10, 3), dtype=np.float32)
+    vectors[4, :] = 0.0
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError, match=r"zero vector.*row 4"):
+        _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.COSINE)
+
+
+def test_problem_new_cosine_non_zero_vectors_ok():
+    """COSINE problems accept vector sets without zero rows."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260713)
+    vectors = rng.standard_normal((10, 3)).astype(np.float32)
+
+    # --- act ---------------------------------------------
+    problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.COSINE)
+
+    # --- assert ------------------------------------------
+    assert problem.distance_metric == DistanceMetric.COSINE

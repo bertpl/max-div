@@ -127,6 +127,7 @@ problem = MaxDivProblem.new(
     distance_metric=DistanceMetric.L2_EUCLIDEAN,       # default
     # distance_metric=DistanceMetric.L1_MANHATTAN,
     # distance_metric=DistanceMetric.L2S_EUCLIDEAN_SQUARED,
+    # distance_metric=DistanceMetric.COSINE,
 )
 ```
 
@@ -135,6 +136,7 @@ problem = MaxDivProblem.new(
 | `L2_EUCLIDEAN` | Standard Euclidean distance (default) |
 | `L1_MANHATTAN` | Sum of absolute differences |
 | `L2S_EUCLIDEAN_SQUARED` | Squared Euclidean -- avoids the square root, produces identical solutions when used with `GEOMEAN_SEPARATION` |
+| `COSINE` | Cosine distance (1 &minus; cosine similarity) -- angular, magnitude-invariant, for embedding-style vectors; zero vectors are rejected |
 
 ### Diversity metrics
 
