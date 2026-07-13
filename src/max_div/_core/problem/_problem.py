@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics import DistanceMetric, DiversityMetric, validate_cosine_vectors
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +69,8 @@ class MaxDivProblem:
             raise ValueError("Vectors must have at least one dimension.")
         if vectors.dtype != np.float32:
             vectors = vectors.astype(np.float32)
+        if distance_metric == DistanceMetric.COSINE:
+            validate_cosine_vectors(vectors)  # fail fast: zero vectors have no defined angle
 
         if not (2 <= k <= vectors.shape[0]):
             raise ValueError(f"k must be in range [2, number of vectors (={vectors.shape[0]})]; here: {k}.")
