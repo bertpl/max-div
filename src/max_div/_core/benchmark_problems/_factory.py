@@ -1,7 +1,7 @@
 from typing import Any
 
 from max_div._core._utils import ljust_str_list
-from max_div._core.problem import MaxDivProblem
+from max_div._core.problem import VectorMaxDivProblem
 
 from ._registry import BenchmarkProblem, BenchmarkProblemRegistry
 
@@ -14,7 +14,7 @@ class BenchmarkProblemFactory:
     """
 
     @classmethod
-    def construct_problem(cls, name: str, **params: Any) -> MaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+    def construct_problem(cls, name: str, **params: Any) -> VectorMaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
         """Create and return an instance of MaxDivProblem for the benchmark problem with the given name.
 
         The provided parameters are used as needed.

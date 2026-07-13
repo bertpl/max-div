@@ -3,7 +3,7 @@ import numpy as np
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
 from max_div._core.constraints._constraints import _np_con_count_satisfied
-from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics import DiversityMetric
 
 from ._constraint_penalty import ConstraintPenalty
 from ._duration import Elapsed
@@ -25,9 +25,9 @@ class MaxDivSolver:
     # -------------------------------------------------------------------------
     def __init__(
         self,
-        vectors: np.ndarray,
+        n: int,
+        pdist: np.ndarray,
         k: int,
-        distance_metric: DistanceMetric,
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
@@ -37,9 +37,9 @@ class MaxDivSolver:
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
-        :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
-        :param k: (int) The number of vectors to be selected from the input set ('universe').
-        :param distance_metric: (DistanceMetric) The distance metric to use.
+        :param n: (int) The number of items in the problem ('universe').
+        :param pdist: ((n*(n-1))//2 ndarray) Condensed pairwise-distance vector (scipy layout).
+        :param k: (int) The number of items to be selected from the input set ('universe').
         :param diversity_metric: (DiversityMetric) The diversity metric to use.
         :param diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
         :param constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
@@ -50,9 +50,9 @@ class MaxDivSolver:
         :param constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
         """
         # --- problem description -------------------------
-        self._vectors = vectors
+        self._n = n
+        self._pdist = pdist
         self._k = k
-        self._distance_metric = distance_metric
         self._diversity_metric = diversity_metric
         self._constraints = constraints
 
@@ -112,9 +112,9 @@ class MaxDivSolver:
         with Timer() as timer:
             progress_reporter.solver_step_started(step_names[0])
             state = SolverState.new(
-                vectors=self._vectors,
+                n=self._n,
+                pdist=self._pdist,
                 k=self._k,
-                distance_metric=self._distance_metric,
                 diversity_metric=self._diversity_metric,
                 diversity_tie_breakers=self._diversity_tie_breakers,
                 constraints=self._constraints,

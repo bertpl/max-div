@@ -172,13 +172,13 @@ def test_max_div_solver_builder_end_to_end():
 
     # --- assert ------------------------------------------
     assert isinstance(solver, MaxDivSolver)
-    assert solver._vectors.shape == vectors.shape
+    assert solver._n == vectors.shape[0]
+    assert solver._pdist.shape == ((vectors.shape[0] * (vectors.shape[0] - 1)) // 2,)
     assert solver._k == k
     assert len(solver._solver_steps) == 3
     assert solver._solver_steps[0].name() == init_strategy.name
     assert solver._solver_steps[1].name() == solver_steps[0].name()
     assert solver._solver_steps[2].name() == solver_steps[1].name()
-    assert solver._distance_metric == DistanceMetric.L1_MANHATTAN
     assert solver._diversity_metric == DiversityMetric.MIN_SEPARATION
     assert solver._constraints == constraints
     assert solver._seed == 123

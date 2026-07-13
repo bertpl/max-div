@@ -1,1 +1,1 @@
-from ._problem import MaxDivProblem
+from ._problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem

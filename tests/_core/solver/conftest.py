@@ -3,7 +3,7 @@ import pytest
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.problem import MaxDivProblem
+from max_div._core.problem import VectorMaxDivProblem
 from max_div._core.solver import MaxDivSolver, MaxDivSolverBuilder
 from max_div._core.solver._duration import iterations, seconds
 from max_div._core.solver._solver_step import OptimizationStep
@@ -28,7 +28,7 @@ def example_solver() -> MaxDivSolver:
     # return built solver
     builder = (
         MaxDivSolverBuilder(
-            MaxDivProblem(
+            VectorMaxDivProblem(
                 vectors=vectors,
                 k=selection_size,
                 distance_metric=DistanceMetric.L1_MANHATTAN,
