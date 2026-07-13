@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.metrics import DiversitySignalFamily
 
 from ._score import Score, ScoreGenerator
 from ._signals import build_tracker
@@ -15,7 +16,7 @@ from ._signals import build_tracker
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityMetric, DiversitySignalFamily
+    from max_div._core.metrics import DiversityMetric
 
     from ._signals import DiversitySignalTracker
 
@@ -76,6 +77,9 @@ class SolverState:
         self._main_signal_family = main_signal_family  # READ-ONLY
         self._signal_trackers = tuple(signal_trackers.values())  # iteration order for mutations
         self._signal_tracker = signal_trackers[main_signal_family]  # strategy-facing tracker
+        # per-family trackers for scoring (resolved once here; None = family not needed by any metric)
+        self._separation_tracker = signal_trackers.get(DiversitySignalFamily.SEPARATION)
+        self._mean_distance_tracker = signal_trackers.get(DiversitySignalFamily.MEAN_DISTANCE)
 
         # scoring
         self._score_generator = score_generator  # READ-ONLY
@@ -321,10 +325,23 @@ class SolverState:
     #  Scoring
     # -------------------------------------------------------------------------
     def _update_score(self) -> None:
+        # pass the selected vectors' signal values of every family a configured metric consumes
+        # (a family's tracker is None exactly when no metric needs it)
+        sep_tracker = self._separation_tracker
+        mean_tracker = self._mean_distance_tracker
         self._score = self._score_generator.compute_score(
             n_selected=self._n_selected,
             con_values=self._con_values,
-            selected_separation_array=self.selected_signal_array,
+            separation_signals=(
+                sep_tracker.full_signal(self._selected, self._n_selected)[self._selected]
+                if sep_tracker is not None
+                else None
+            ),
+            mean_distance_signals=(
+                mean_tracker.full_signal(self._selected, self._n_selected)[self._selected]
+                if mean_tracker is not None
+                else None
+            ),
         )
         self._score_dirty = False
 

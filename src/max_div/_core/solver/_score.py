@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from max_div._core.constraints._constraints import _np_con_total_violation, _np_con_total_weighted_violation
+from max_div._core.metrics._diversity import DiversitySignalFamily
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -168,8 +169,12 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers ----------
+        # each metric is bound to its signal family here, once — compute_score then just picks the
+        # matching signal array per metric, without any per-call family lookups
         self._diversity_metric = diversity_metric
+        self._diversity_metric_family: DiversitySignalFamily = diversity_metric.signal_family
         self._diversity_tie_breakers = diversity_tie_breakers
+        self._tie_breakers_with_family = [(tb, tb.signal_family) for tb in diversity_tie_breakers]
 
         # --- store other params ---------------
         self._constraints = constraints
@@ -192,8 +197,24 @@ class ScoreGenerator:
     #  Score computation
     # -------------------------------------------------------------------------
     def compute_score(
-        self, n_selected: int | np.int32, con_values: NDArray[np.int32], selected_separation_array: NDArray[np.float32]
+        self,
+        n_selected: int | np.int32,
+        con_values: NDArray[np.int32],
+        separation_signals: NDArray[np.float32] | None = None,
+        mean_distance_signals: NDArray[np.float32] | None = None,
     ) -> Score:
+        """Compute the multi-component Score of a selection.
+
+        :param n_selected: (int | np.int32) current number of selected vectors.
+        :param con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
+        :param separation_signals: (np.ndarray[np.float32] | None) the selected vectors' separation-family
+                                   signal values; may be omitted when no configured metric consumes them.
+        :param mean_distance_signals: (np.ndarray[np.float32] | None) the selected vectors' mean-distance-family
+                                      signal values; may be omitted when no configured metric consumes them.
+
+        The caller must pass the signal array of every family that the configured metrics (main +
+        tie-breakers) consume; families no metric consumes may be omitted.
+        """
         # --- individual scores ---------------------------
         if n_selected <= self._k:
             size_score = 1.0 - self._size_c0 * (self._k - n_selected)
@@ -211,9 +232,22 @@ class ScoreGenerator:
             )
 
         # --- construct Score object ----------------------
+        # each metric reads the signal array of the family it was bound to at construction
+        main_signals = (
+            separation_signals
+            if self._diversity_metric_family == DiversitySignalFamily.SEPARATION
+            else mean_distance_signals
+        )
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=float(self._diversity_metric.compute(selected_separation_array)),
-            div_tie_breakers=tuple(float(tb.compute(selected_separation_array)) for tb in self._diversity_tie_breakers),
+            diversity=float(self._diversity_metric.compute(main_signals)),  # ty: ignore[invalid-argument-type]  # caller passes required families; hot path, so no assert
+            div_tie_breakers=tuple(
+                float(
+                    tb.compute(
+                        separation_signals if family == DiversitySignalFamily.SEPARATION else mean_distance_signals  # ty: ignore[invalid-argument-type]  # caller passes required families; hot path, so no assert
+                    )
+                )
+                for tb, family in self._tie_breakers_with_family
+            ),
         )

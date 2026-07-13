@@ -337,3 +337,25 @@ def test_score_str(score: Score, expected_str: str):
 
     # --- assert ------------------------------------------
     assert result == expected_str
+
+
+def test_compute_score_binds_metrics_to_their_signal_family():
+    """Separation-family metrics must read separation_signals, regardless of what else is passed."""
+
+    # --- arrange -----------------------------------------
+    generator = ScoreGenerator(
+        n=10,
+        k=4,
+        diversity_metric=DiversityMetric.MEAN_SEPARATION,
+        diversity_tie_breakers=[DiversityMetric.MIN_SEPARATION],
+        constraints=[],
+    )
+    separation_signals = np.array([2.0, 4.0, 6.0], dtype=np.float32)
+    decoy_signals = np.array([100.0, 100.0, 100.0], dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), separation_signals, decoy_signals)
+
+    # --- assert ------------------------------------------
+    assert score.diversity == pytest.approx(4.0)  # mean of separation signals, not of the decoy
+    assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of separation signals, not of the decoy
