@@ -5,21 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.7.2 (2026-07-13)
 
 ### Changed
 - Solver iterations skip redundant selection-score computations (when reverting a rejected swap and for intermediate scores that are never read), measured up to ~18% faster iterations depending on preset and problem size
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.7.1 (2026-07-12)
 
 ### Changed
