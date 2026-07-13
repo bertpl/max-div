@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Solver iterations no longer recompute the selection score when reverting a rejected swap (measured up to ~8% faster iterations for the GUIDED preset)
+- Solver iterations skip redundant selection-score computations (when reverting a rejected swap and for intermediate scores that are never read), measured up to ~18% faster iterations depending on preset and problem size
 
 ### Deprecated
 

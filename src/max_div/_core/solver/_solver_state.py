@@ -152,6 +152,7 @@ class SolverState:
 
         # restore score (cached at set_snapshot time; avoids a full recompute)
         self._score = self._snapshot.score
+        self._score_dirty = False
 
         # clear snapshot after restoring
         self._snapshot.clear()
@@ -174,7 +175,7 @@ class SolverState:
         self._con_values[self._con_membership[index], :] -= 1
 
         # --- score ---------------------------------------
-        self._update_score()
+        self._score_dirty = True
 
     def add_many(self, indices: NDArray[np.int32]) -> None:
         # --- validation ----------------------------------
@@ -195,7 +196,7 @@ class SolverState:
             self._con_values[self._con_membership[index], :] -= 1
 
         # --- score ---------------------------------------
-        self._update_score()
+        self._score_dirty = True
 
     def remove(self, index: int | np.int32) -> None:
         # --- validation ----------------------------------
@@ -215,7 +216,7 @@ class SolverState:
         self._con_values[self._con_membership[index], :] += 1
 
         # --- score ---------------------------------------
-        self._update_score()
+        self._score_dirty = True
 
     def remove_many(self, indices: NDArray[np.int32]) -> None:
         # --- validation ----------------------------------
@@ -236,7 +237,7 @@ class SolverState:
             self._con_values[self._con_membership[index], :] += 1
 
         # --- score ---------------------------------------
-        self._update_score()
+        self._score_dirty = True
 
     # -------------------------------------------------------------------------
     #  Properties
