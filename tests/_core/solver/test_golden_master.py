@@ -9,7 +9,15 @@ change (see below) so the drift is explicit.
 JIT-compiled and NUMBA_DISABLE_JIT execution produce identical selections but slightly different
 score floats (float32 register arithmetic vs numpy's float64 scalar promotion), while each
 regime is bit-stable across runs. The expected data is therefore committed per regime, and the
-test asserts against the dataset matching the active regime.
+test asserts against the dataset matching the active regime:
+
+- 'nojit' (interpreted) output is environment-independent (verified across platforms and
+  Python versions), so it is asserted unconditionally — including on the coverage legs.
+- 'jit' output depends on numba's codegen, which varies with Python and numba version (numba
+  compiles from Python bytecode; e.g. Python 3.11 produces different float rounding than
+  3.12+ with the same numba). The jit dataset therefore records the fingerprint of the
+  environment it was generated in, and the test skips when the runtime doesn't match —
+  a version-driven codegen change is numba's business, not a regression of this codebase.
 
 To regenerate the expected data (both regimes) after an intentional numeric change:
 
@@ -45,6 +53,16 @@ N_ITERATIONS = 30
 
 def _active_regime() -> str:
     return "nojit" if numba_config.DISABLE_JIT else "jit"
+
+
+def _runtime_fingerprint() -> dict[str, str]:
+    """Identify the properties of the runtime that jit-compiled numeric output depends on."""
+    import numba
+
+    return {
+        "python": f"{sys.version_info.major}.{sys.version_info.minor}",
+        "numba": numba.__version__,
+    }
 
 
 def _data_file(regime: str) -> Path:
@@ -88,8 +106,13 @@ def _case_key(problem_name: str, preset: SolverPreset, seed: int) -> str:
 @pytest.mark.parametrize("problem_name", PROBLEMS)
 def test_golden_master(problem_name: str, preset: SolverPreset, seed: int):
     # --- arrange -----------------------------------------
-    expected_data = json.loads(_data_file(_active_regime()).read_text())
-    expected = expected_data[_case_key(problem_name, preset, seed)]
+    regime = _active_regime()
+    expected_data = json.loads(_data_file(regime).read_text())
+    if regime == "jit" and expected_data["fingerprint"] != _runtime_fingerprint():
+        pytest.skip(
+            f"jit-compiled output is fingerprint-specific; data was generated with {expected_data['fingerprint']}"
+        )
+    expected = expected_data["cases"][_case_key(problem_name, preset, seed)]
 
     # --- act ---------------------------------------------
     solution = _solve(problem_name, preset, seed)
@@ -109,7 +132,8 @@ def regenerate_active_regime() -> None:
             for seed in SEEDS:
                 records[_case_key(problem_name, preset, seed)] = _as_record(_solve(problem_name, preset, seed))
     data_file = _data_file(_active_regime())
-    data_file.write_text(json.dumps(records, indent=1) + "\n")
+    data = {"fingerprint": _runtime_fingerprint(), "cases": records}
+    data_file.write_text(json.dumps(data, indent=1) + "\n")
     print(f"wrote {len(records)} cases to {data_file}")
 
 
