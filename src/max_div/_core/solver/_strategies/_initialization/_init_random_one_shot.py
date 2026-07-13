@@ -22,7 +22,8 @@ class InitRandomOneShot(InitializationStrategy):
                                  If `True`, constraints are ignored. (default: `False`)
 
     Notes:
-        - using the global diversity signal as sampling weights is a heuristic, not an exactly optimal solution, with known limitations:
+        - using the global diversity signal as sampling weights is a heuristic, not an exactly optimal
+          solution, with known limitations:
             - in 1D problems this heuristic should be probabilistically optimal, but in higher dimensions (the more
               likely scenario) it is not.  E.g. in 2D where vectors have half the separation as in other regions, we
               should sample 4x fewer, not 2x fewer vectors.

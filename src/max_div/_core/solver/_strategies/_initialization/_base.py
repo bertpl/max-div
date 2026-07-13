@@ -49,7 +49,8 @@ class InitializationStrategy(StrategyBase, ABC):
     def fast(cls) -> InitFast:
         """Deterministic greedy initialization.
 
-        Selects vectors one-by-one, always picking the one that maximizes the diversity signal wrt the current selection.
+        Selects vectors one-by-one, always picking the one that maximizes the diversity signal wrt the
+        current selection.
         Fast but seed-independent.
         """
         from ._init_fast import InitFast
