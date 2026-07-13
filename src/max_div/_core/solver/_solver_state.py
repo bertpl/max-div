@@ -279,23 +279,23 @@ class SolverState:
         return np.flatnonzero(~self._selected).astype(np.int32)
 
     @property
-    def selected_separation_array(self) -> NDArray[np.float32]:
-        """Return separation of selected vectors wrt other selected vectors as a numpy array of np.float32."""
+    def selected_signal_array(self) -> NDArray[np.float32]:
+        """Return diversity signal of selected vectors wrt the current selection as a numpy array of np.float32."""
         return self._signal_tracker.full_signal(self._selected, self._n_selected)[self._selected]
 
     @property
-    def not_selected_separation_array(self) -> NDArray[np.float32]:
-        """Return separation of not selected vectors wrt selected vectors as a numpy array of np.float32."""
+    def not_selected_signal_array(self) -> NDArray[np.float32]:
+        """Return diversity signal of not selected vectors wrt the current selection as a numpy array of np.float32."""
         return self._signal_tracker.full_signal(self._selected, self._n_selected)[~self._selected]
 
     @property
-    def full_separation_array(self) -> NDArray[np.float32]:
-        """Return separation of all vectors wrt selected vectors as a numpy array of np.float32."""
+    def full_signal_array(self) -> NDArray[np.float32]:
+        """Return diversity signal of all vectors wrt the current selection as a numpy array of np.float32."""
         return self._signal_tracker.full_signal(self._selected, self._n_selected)  # should not be modified (!)
 
     @property
-    def global_separation_array(self) -> NDArray[np.float32]:
-        """Return global separation of all vectors wrt all other vectors as a numpy array of np.float32."""
+    def global_signal_array(self) -> NDArray[np.float32]:
+        """Return static diversity signal of all vectors wrt the whole dataset as a numpy array of np.float32."""
         return self._signal_tracker.global_signal  # should not be modified (!)
 
     # -------------------------------------------------------------------------
@@ -305,7 +305,7 @@ class SolverState:
         self._score = self._score_generator.compute_score(
             n_selected=self._n_selected,
             con_values=self._con_values,
-            selected_separation_array=self.selected_separation_array,
+            selected_separation_array=self.selected_signal_array,
         )
         self._score_dirty = False
 

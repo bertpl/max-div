@@ -14,11 +14,11 @@ class InitEager(InitializationStrategy):
       - start from a set of `nc` randomly sampled candidates
       - we take the candidate which results in the highest score.
 
-    After each iteration, the SolverState updates distances and separations, influencing sampling probabilities
+    After each iteration, the SolverState updates its diversity signals, influencing sampling probabilities
       of the next batch of candidates.
 
-    When sampling a batch, we use probabilities p[i] ~= (separation of i wrt already selected items)
-                                                                            + (separation of i wrt all items)
+    When sampling a batch, we use probabilities p[i] ~= (signal of i wrt already selected items)
+                                                                            + (signal of i wrt all items)
 
     This drives each batch to be sampled from elements that are both well-separated from the selection so far, to
       promote diversity, and also well-separated from each other, to avoid samples within a batch that are far from
@@ -74,7 +74,7 @@ class InitEager(InitializationStrategy):
             selectivity_modifier=modifier,
             rng_state=self._rng_state,
             sampling_type=SamplingType.CANDIDATES,
-            include_within_group_separation=True,
+            include_within_group_signal=True,
             ignore_constraints=self.ignore_constraints,
         )
 

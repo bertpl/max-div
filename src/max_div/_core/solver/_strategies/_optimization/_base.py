@@ -232,7 +232,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         remove_selectivity_modifier: float | ParameterSchedule = 0.0,
         add_selectivity_modifier: float | ParameterSchedule = 0.0,
     ) -> OptimGuidedSwaps:
-        """Distance-guided swap strategy: biased towards removing low- and adding high-separation vectors.
+        """Signal-guided swap strategy: biased towards removing low- and adding high-diversity-signal vectors.
 
         Supports scheduled parameters for constraint softness and selectivity.
         """

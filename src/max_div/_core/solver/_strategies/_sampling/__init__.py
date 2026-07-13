@@ -5,7 +5,7 @@ Items can be sampled to be removed from the selection (remove.py) or added to th
 These methods bridge the gap between following 3 pieces of functionality:
     1) SolverState offering information about...
         - selected and unselected items
-        - separation distances between items
+        - per-point diversity signals (higher = contributes more diversity)
         - constraints
     2) Methods to modify selectivity of an array of probabilities
     3) Sampling strategies that decide which items to sample based on the above information

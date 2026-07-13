@@ -49,20 +49,21 @@ class DiversityMetric(StrEnum):
         #       return type; at runtime it is called exactly like one.
         return _functions[self]  # ty: ignore[invalid-return-type]
 
-    def compute(self, separations: NDArray[np.float32]) -> np.float32:
-        """Compute diversity metric given separations of each vector wrt all others in selection.
+    def compute(self, signal_values: NDArray[np.float32]) -> np.float32:
+        """Compute diversity metric given the selected vectors' per-point diversity-signal values.
 
         Parameters
         ----------
-        separations : NDArray[np.float32]
-            Array of separation values.
+        signal_values : NDArray[np.float32]
+            Per-point diversity-signal values of the selected vectors (for separation-family
+            metrics: each vector's separation wrt the others in the selection).
 
         Returns:
         -------
         np.float32
             The computed diversity score.
         """
-        if separations.size < 2:
-            # we can only meaningfully compute diversity metrics with at least 2 separation values
+        if signal_values.size < 2:
+            # we can only meaningfully compute diversity metrics with at least 2 signal values
             return np.float32(0.0)
-        return self._f(separations)
+        return self._f(signal_values)

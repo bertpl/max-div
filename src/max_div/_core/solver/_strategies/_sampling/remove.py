@@ -13,21 +13,21 @@ def select_items_to_remove(
 
     :param state: (SolverState) The current solver state containing selected items and other relevant information.
     :param k: (int) number of items to remove from the selection.
-    :param selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the separation-based
+    :param selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the diversity-signal-based
                                  probabilities used for sampling items to be removed.
                                     -1: maximally un-selective --> uniform
-                                     0: no modification to the separation-based probabilities
-                                    +1: maximally selective --> only the items with very lowest separation are sampled
+                                     0: no modification to the signal-based probabilities
+                                    +1: maximally selective --> only the items with very lowest signal are sampled
     :param rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
     :return: list of np.int32 indices of the items to be removed from the selection (unique values, unsorted).
     """
     # --- guiding probabilities for removal ---
-    p = state.selected_separation_array  # this creates a copy
+    p = state.selected_signal_array  # this creates a copy
     exponential_selectivity(
         p_in=p,
         p_out=p,  # in-place
         modifier=np.float32(selectivity_modifier),
-        reverse=True,  # for removal, we want to have vectors with small separation have higher probability
+        reverse=True,  # for removal, we want to have vectors with small diversity signal have higher probability
     )
 
     # --- sample ---
