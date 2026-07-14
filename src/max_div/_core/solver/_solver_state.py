@@ -9,7 +9,7 @@ import numpy as np
 
 from max_div._core.constraints import Constraint, ConstraintList
 
-from ._diversity_contribution import DiversityContributionTracker, SeparationTracker
+from ._diversity_contribution import DiversityContributionTrackers
 from ._score import Score, ScoreGenerator
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ class SolverState:
         self,
         n: np.int32,
         k: np.int32,
-        contribution_tracker: DiversityContributionTracker,
+        contribution_trackers: DiversityContributionTrackers,
         score_generator: ScoreGenerator,
         selected: NDArray[np.bool],
         con_values: NDArray[np.int32],
@@ -44,14 +44,14 @@ class SolverState:
 
             n  : total number of vectors
           ( d  : dimensionality of each vector  (not visible here, since distances are pre-digested
-                 into the contribution tracker) )
+                 into the contribution trackers) )
             k  : target selection size
             m : number of constraints
 
         :param n: (np.int32) number of vectors
         :param k: (np.int32) target number of selected vectors
-        :param contribution_tracker: (DiversityContributionTracker) per-point diversity-contribution tracking,
-                                     incrementally updated on every selection mutation.
+        :param contribution_trackers: (DiversityContributionTrackers) the tracker set backing this state's
+                                       per-point diversity contributions, updated on every selection mutation.
         :param score_generator: (ScoreGenerator) score generator to compute scores for current state
         :param selected: (np.ndarray[np.bool]) array indicating which of the n vectors are initially selected.
         :param con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)
@@ -65,7 +65,8 @@ class SolverState:
         self._k = k  # READ-ONLY
 
         # diversity contributions
-        self._contribution_tracker = contribution_tracker
+        self._contribution_trackers = contribution_trackers
+        self._contribution_tracker = contribution_trackers.main  # strategy-facing tracker (cached hop)
 
         # scoring
         self._score_generator = score_generator  # READ-ONLY
@@ -95,7 +96,7 @@ class SolverState:
         return SolverState(
             n=self._n,
             k=self._k,
-            contribution_tracker=self._contribution_tracker.copy(),
+            contribution_trackers=self._contribution_trackers.copy(),
             score_generator=self._score_generator.copy(),
             selected=self._selected.copy(),
             con_values=self._con_values.copy(),
@@ -116,7 +117,7 @@ class SolverState:
         self._snapshot.selected = self._selected.copy()
         self._snapshot.n_selected = self._n_selected
         self._snapshot.con_values = self._con_values.copy()
-        self._contribution_tracker.set_snapshot()
+        self._contribution_trackers.set_snapshot()
         # NOTE: Score is immutable and mutators reassign self._score (never modify in place),
         #       so storing the reference is safe — no copy needed.
         self._snapshot.score = self.score
@@ -136,7 +137,7 @@ class SolverState:
         self._selected = self._snapshot.selected
         self._n_selected = self._snapshot.n_selected
         self._con_values = self._snapshot.con_values
-        self._contribution_tracker.restore_snapshot()
+        self._contribution_trackers.restore_snapshot()
 
         # restore score (cached at set_snapshot time; avoids a full recompute)
         self._score = self._snapshot.score
@@ -155,8 +156,8 @@ class SolverState:
         self._selected[index] = True
         self._n_selected += np.int32(1)
 
-        # --- diversity contributions ---------------------------
-        self._contribution_tracker.add(index)
+        # --- diversity contributions ---------------------
+        self._contribution_trackers.add(index)
 
         # --- constraints ---------------------------------
         # decrease both min_count and max_count for all constraints that include 'index'
@@ -174,8 +175,8 @@ class SolverState:
         self._selected[indices] = True
         self._n_selected += np.int32(len(indices))
 
-        # --- diversity contributions ---------------------------
-        self._contribution_tracker.add_many(indices)
+        # --- diversity contributions ---------------------
+        self._contribution_trackers.add_many(indices)
 
         # --- constraints ---------------------------------
         # decrease both min_count and max_count for all constraints that include any of 'indices'
@@ -195,8 +196,8 @@ class SolverState:
         self._selected[index] = False
         self._n_selected -= np.int32(1)
 
-        # --- diversity contributions ---------------------------
-        self._contribution_tracker.remove(index, self.selected_index_array)
+        # --- diversity contributions ---------------------
+        self._contribution_trackers.remove(index, self.selected_index_array)
 
         # --- constraints ---------------------------------
         # increase both min_count and max_count for all constraints that include 'index'
@@ -214,8 +215,8 @@ class SolverState:
         self._selected[indices] = False
         self._n_selected -= np.int32(len(indices))
 
-        # --- diversity contributions ---------------------------
-        self._contribution_tracker.remove_many(indices, self.selected_index_array)
+        # --- diversity contributions ---------------------
+        self._contribution_trackers.remove_many(indices, self.selected_index_array)
 
         # --- constraints ---------------------------------
         # increase both min_count and max_count for all constraints that include any of 'indices'
@@ -334,7 +335,9 @@ class SolverState:
     ) -> SolverState:
         # --- diversity contributions ---
         n_np = np.int32(n)
-        contribution_tracker = SeparationTracker(pdist, n_np)
+        contribution_trackers = DiversityContributionTrackers.for_metrics(
+            diversity_metric, diversity_tie_breakers, pdist, n_np
+        )
 
         # --- selection ---
         selected = np.full(n_np, False, dtype=np.bool)
@@ -357,7 +360,7 @@ class SolverState:
         return SolverState(
             n=n_np,
             k=np.int32(k),
-            contribution_tracker=contribution_tracker,
+            contribution_trackers=contribution_trackers,
             score_generator=score_generator,
             selected=selected,
             con_values=con_values,
@@ -374,8 +377,8 @@ class Snapshot:
     """Class internally used by SolverState to store snapshots of its state.
 
     This class models a subset of the fields of the SolverState class, restricting itself to those that can be
-    modified after construction.  Diversity-contribution state is snapshotted by the contribution tracker
-    itself, in lockstep with this snapshot's life cycle.
+    modified after construction.  Diversity-contribution state is snapshotted by the contribution trackers
+    themselves, in lockstep with this snapshot's life cycle.
     """
 
     is_valid: bool
