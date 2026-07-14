@@ -88,6 +88,7 @@ nav:
     - Constraints: concepts/constraints.md
     - Diversity & Distance: concepts/diversity.md
     - Objectives & the Landscape: concepts/objectives.md
+  - Comparison: comparison.md
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/_index.md
