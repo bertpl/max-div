@@ -47,6 +47,33 @@ table th {
   white-space: nowrap;
 }
 
+/* Comparison table: compact, wrapping cells (overrides the site-wide nowrap), tidy header */
+.md-typeset .comparison table {
+    font-size: 0.68rem;
+    line-height: 1.35;
+}
+.comparison table td,
+.comparison table th {
+    white-space: normal;
+    vertical-align: top;
+    min-width: 6.5em;
+}
+.comparison table td:first-child,
+.comparison table th:first-child {
+    white-space: nowrap;
+}
+.comparison table thead th {
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 0.92em;
+}
+[data-md-color-scheme="default"] .comparison table tbody tr:first-child {
+    background-color: rgba(68, 138, 255, 0.08);
+}
+[data-md-color-scheme="slate"] .comparison table tbody tr:first-child {
+    background-color: rgba(68, 138, 255, 0.15);
+}
+
 /* Center images with .center class */
 img.center {
     display: block;
