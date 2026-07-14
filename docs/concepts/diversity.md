@@ -5,19 +5,26 @@
 The solver evaluates how diverse a selection is through a three-step process:
 
 ```
-Vectors  ──>  Pairwise Distances  ──>  Separations  ──>  Diversity Score
- (n x d)        (n*(n-1)/2)              (k x 1)           (scalar)
+Vectors  ──>  Pairwise Distances  ──>  Contributions  ──>  Diversity Score
+ (n x d)        (n*(n-1)/2)               (k x 1)                (scalar)
 ```
 
 1. **Pairwise distances** are computed once upfront between all `n` vectors using the chosen
    distance metric. These are stored as a condensed distance vector (like scipy's `pdist`).
 
-2. **Separations** are computed for each selected vector: the distance to its *nearest neighbor*
-   within the current selection. This is the key quantity -- a vector with high separation is
-   well-spread from the rest of the selection; a vector with low separation is close to at
-   least one other selected vector.
+2. A **diversity contribution** is computed for each selected vector -- a per-vector quantity where
+   higher means "contributes more diversity". Which quantity that is depends on the diversity metric's
+   family:
 
-3. The **diversity score** aggregates the `k` separation values into a single scalar using the
+    - **Separation family** (all `*_SEPARATION` metrics): the distance to the vector's
+      *nearest neighbor* within the current selection. A vector with high separation is
+      well-spread from the rest of the selection; a vector with low separation is close to at
+      least one other selected vector.
+    - **Mean-distance family** (`MEAN_PAIRWISE_DISTANCE`): the vector's *mean distance to the
+      other selected vectors* -- exactly how much the vector contributes to the total spread
+      of the selection.
+
+3. The **diversity score** aggregates the `k` contribution values into a single scalar using the
    chosen diversity metric.
 
 ## Distance Metrics
@@ -49,6 +56,16 @@ Separation is maintained incrementally during optimization:
 This incremental update is much cheaper than recomputing all separations from scratch after
 each swap.
 
+## Mean Distance
+
+The **mean distance** of a selected vector is its mean distance to the other selected vectors:
+
+$$\text{md}(v) = \frac{1}{k - 1} \sum_{u \in S,\; u \neq v} d(v, u)$$
+
+It is maintained incrementally as well, and even more cheaply than separation: adding a vector
+adds one distance to every vector's running sum, and removing one subtracts it exactly -- no
+rescan of the selection is ever needed.
+
 ## Diversity Metrics
 
 Each diversity metric aggregates the `k` separation values differently:
@@ -59,6 +76,7 @@ Each diversity metric aggregates the `k` separation values differently:
 | `MIN_SEPARATION` | $$\min_{v \in S} \text{sep}(v)$$ | Only considers the worst-off vector (the closest pair). Equivalent to the *p-dispersion* problem. Many swaps produce tied scores. |
 | `MEAN_SEPARATION` | $$\frac{1}{k}\sum_{v \in S} \text{sep}(v)$$ | Averages all separations. Less sensitive to individual outliers than geomean, but can be dominated by a few very high separations. |
 | `APPROX_GEOMEAN_SEPARATION` | Same as geomean but using fast log/exp approximations | Slightly less accurate but faster per iteration. Useful for large-scale problems where iteration speed matters more than per-iteration precision. |
+| `MEAN_PAIRWISE_DISTANCE` | $$\frac{2}{k(k-1)}\sum_{\{u,v\} \subseteq S} d(u, v)$$ | Mean distance over all selected *pairs* -- the classical **max-sum diversity** objective (MaxSum MDP, also known as *remote-clique*). Maximizes total spread: selections gravitate to the outer regions of the data, and near-duplicates are tolerated if both sit far from everything else. |
 
 ### Which metric to choose?
 
@@ -71,3 +89,11 @@ Each diversity metric aggregates the `k` separation values differently:
   other vectors compensate with large separations.
 - **`APPROX_GEOMEAN_SEPARATION`** is a drop-in replacement for `GEOMEAN_SEPARATION` when
   you want to trade a small amount of precision for more iterations per second.
+- **`MEAN_PAIRWISE_DISTANCE`** is the objective to pick when you want classical max-sum
+  diversity semantics ("maximize total spread") or want results comparable with the MaxSum
+  MDP literature. Unlike every separation metric it does *not* penalize near-duplicates per
+  se -- two nearly identical vectors at the data's boundary can both be kept. Note that the
+  solver's swap heuristics were originally designed and tuned around separation contributions; they
+  are correct for this metric (its per-vector contribution is the vector's exact marginal
+  contribution to the objective), but the separation metrics remain the most battle-tested
+  choice.
