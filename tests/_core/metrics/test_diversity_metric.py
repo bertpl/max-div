@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityContributionFamily, DiversityMetric
 
 
 @pytest.mark.parametrize(
@@ -86,3 +86,10 @@ def test_diversity_metric_small_arrays(metric: DiversityMetric, sep_array: np.nd
 
     # --- assert ------------------------------------------
     assert result == 0.0
+
+
+@pytest.mark.parametrize("metric", list(DiversityMetric))
+def test_diversity_metric_contribution_family(metric: DiversityMetric):
+    """Every separation-named metric consumes the SEPARATION contribution family."""
+    # --- act / assert ------------------------------------
+    assert metric.contribution_family == DiversityContributionFamily.SEPARATION

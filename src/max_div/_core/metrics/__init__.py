@@ -1,2 +1,2 @@
 from ._distance import DistanceMetric, validate_cosine_vectors
-from ._diversity import DiversityMetric
+from ._diversity import DiversityContributionFamily, DiversityMetric

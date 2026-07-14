@@ -5,6 +5,7 @@ from numpy import random
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
+from max_div._core.solver._diversity_contribution import SeparationTracker
 from max_div._core.solver._solver_state import SolverState, _build_con_membership
 
 
@@ -229,6 +230,17 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
 
     assert state.n_selected == state_ref.n_selected
     assert state.n_not_selected == state_ref.n_not_selected
+
+
+def test_solver_state_tracker_set_dormancy(new_solver_state):
+    """Separation-only metric configurations construct exactly one tracker: dormancy by absence."""
+    # --- act ---------------------------------------------
+    trackers = new_solver_state._contribution_trackers._trackers
+
+    # --- assert ------------------------------------------
+    assert len(trackers) == 1
+    assert type(trackers[0]) is SeparationTracker
+    assert new_solver_state._contribution_tracker is trackers[0]
 
 
 def test_build_con_membership():
