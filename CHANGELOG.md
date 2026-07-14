@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- New `MEAN_PAIRWISE_DISTANCE` diversity metric: maximize the mean pairwise distance among selected vectors (the classical max-sum diversity objective), alongside the existing separation-based metrics
 
 ### Changed
 

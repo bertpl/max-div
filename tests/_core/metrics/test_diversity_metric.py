@@ -20,6 +20,9 @@ from max_div._core.metrics import DiversityContributionFamily, DiversityMetric
         (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.1, 0.4], 1.0, 1e-6),
         (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.1, 0.0], 0.5, 1e-6),
         (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.0, 0.0], 0.0, 1e-6),
+        (DiversityMetric.MEAN_PAIRWISE_DISTANCE, [], 0.0, 1e-6),
+        (DiversityMetric.MEAN_PAIRWISE_DISTANCE, [0.1, 0.4], 0.25, 1e-6),
+        (DiversityMetric.MEAN_PAIRWISE_DISTANCE, [2.0, 3.0, 4.0], 3.0, 1e-6),
     ],
 )
 def test_diversity_compute(metric: DiversityMetric, separation: list[float], expected_result: float, tol: float):
@@ -90,6 +93,13 @@ def test_diversity_metric_small_arrays(metric: DiversityMetric, sep_array: np.nd
 
 @pytest.mark.parametrize("metric", list(DiversityMetric))
 def test_diversity_metric_contribution_family(metric: DiversityMetric):
-    """Every separation-named metric consumes the SEPARATION contribution family."""
+    """Each metric maps to the contribution family its name implies."""
+    # --- arrange -----------------------------------------
+    expected = (
+        DiversityContributionFamily.MEAN_DISTANCE
+        if metric == DiversityMetric.MEAN_PAIRWISE_DISTANCE
+        else DiversityContributionFamily.SEPARATION
+    )
+
     # --- act / assert ------------------------------------
-    assert metric.contribution_family == DiversityContributionFamily.SEPARATION
+    assert metric.contribution_family == expected

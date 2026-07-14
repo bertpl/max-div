@@ -127,3 +127,86 @@ def test_solver_vector_and_distance_input_bit_identical():
     # --- assert ------------------------------------------
     assert list(solutions[0].i_selected) == list(solutions[1].i_selected)
     assert solutions[0].score == solutions[1].score
+
+
+# =================================================================================================
+#  MEAN_PAIRWISE_DISTANCE metric
+# =================================================================================================
+def _mean_pairwise_distance_of(vectors: np.ndarray, indices: np.ndarray) -> float:
+    """Brute-force mean pairwise L2 distance among the vectors at 'indices'."""
+    selected = vectors[indices].astype(np.float64)
+    dists = [
+        float(np.linalg.norm(selected[i] - selected[j]))
+        for i in range(len(selected))
+        for j in range(i + 1, len(selected))
+    ]
+    return float(np.mean(dists))
+
+
+def _make_mean_pairwise_distance_problem(n: int = 60, k: int = 8) -> tuple[MaxDivProblem, np.ndarray]:
+    rng = np.random.default_rng(seed=20260713)
+    vectors = rng.random((n, 3)).astype(np.float32)
+    problem = MaxDivProblem.new(
+        vectors=vectors,
+        k=k,
+        distance_metric=DistanceMetric.L2_EUCLIDEAN,
+        diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+    )
+    return problem, vectors
+
+
+def test_solver_mean_pairwise_distance_end_to_end():
+    # --- arrange -----------------------------------------
+    problem, vectors = _make_mean_pairwise_distance_problem()
+    solver = MaxDivSolverBuilder(problem).with_preset(iterations(300)).with_seed(42).build()
+
+    # --- act ---------------------------------------------
+    solution = solver.solve(verbosity=0)
+
+    # --- assert ------------------------------------------
+    assert len(solution.i_selected) == problem.k
+    assert len(set(solution.i_selected)) == problem.k
+    # reported diversity equals brute-force mean pairwise distance of the returned selection
+    expected = _mean_pairwise_distance_of(vectors, solution.i_selected)
+    assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
+
+
+def test_solver_mean_pairwise_distance_deterministic():
+    # --- arrange -----------------------------------------
+    problem, _ = _make_mean_pairwise_distance_problem()
+
+    # --- act ---------------------------------------------
+    solutions = [
+        MaxDivSolverBuilder(problem).with_preset(iterations(300)).with_seed(7).build().solve(verbosity=0)
+        for _ in range(2)
+    ]
+
+    # --- assert ------------------------------------------
+    assert np.array_equal(solutions[0].i_selected, solutions[1].i_selected)
+    assert solutions[0].score == solutions[1].score
+
+
+def _greedy_max_sum_selection(vectors: np.ndarray, k: int) -> np.ndarray:
+    """Classical greedy insertion for max-sum diversity (1/2-approximation baseline)."""
+    v = vectors.astype(np.float64)
+    d = np.sqrt(((v[:, None, :] - v[None, :, :]) ** 2).sum(axis=2))
+    selection = list(np.unravel_index(np.argmax(d), d.shape))  # start from the farthest pair
+    while len(selection) < k:
+        sums = d[:, selection].sum(axis=1)
+        sums[selection] = -np.inf  # already selected
+        selection.append(int(np.argmax(sums)))
+    return np.array(selection, dtype=np.int32)
+
+
+def test_solver_mean_pairwise_distance_meets_greedy_baseline():
+    """The solver must meet or beat the classical greedy max-sum baseline on a modest budget."""
+
+    # --- arrange -----------------------------------------
+    problem, vectors = _make_mean_pairwise_distance_problem()
+    greedy_score = _mean_pairwise_distance_of(vectors, _greedy_max_sum_selection(vectors, problem.k))
+
+    # --- act ---------------------------------------------
+    solution = MaxDivSolverBuilder(problem).with_preset(iterations(1500)).with_seed(3).build().solve(verbosity=0)
+
+    # --- assert ------------------------------------------
+    assert solution.score.diversity >= greedy_score * (1.0 - 1e-6)
