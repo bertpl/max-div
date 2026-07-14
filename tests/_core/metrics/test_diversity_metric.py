@@ -20,6 +20,9 @@ from max_div._core.metrics import DiversityMetric, DiversitySignalFamily
         (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.1, 0.4], 1.0, 1e-6),
         (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.1, 0.0], 0.5, 1e-6),
         (DiversityMetric.NON_ZERO_SEPARATION_FRAC, [0.0, 0.0], 0.0, 1e-6),
+        (DiversityMetric.MEAN_PAIRWISE_DISTANCE, [], 0.0, 1e-6),
+        (DiversityMetric.MEAN_PAIRWISE_DISTANCE, [0.1, 0.4], 0.25, 1e-6),
+        (DiversityMetric.MEAN_PAIRWISE_DISTANCE, [2.0, 3.0, 4.0], 3.0, 1e-6),
     ],
 )
 def test_diversity_compute(metric: DiversityMetric, separation: list[float], expected_result: float, tol: float):
@@ -90,6 +93,13 @@ def test_diversity_metric_small_arrays(metric: DiversityMetric, sep_array: np.nd
 
 @pytest.mark.parametrize("metric", list(DiversityMetric))
 def test_diversity_metric_signal_family(metric: DiversityMetric):
-    """Every separation-named metric consumes the SEPARATION signal family."""
+    """Each metric maps to the signal family its name implies."""
+    # --- arrange -----------------------------------------
+    expected = (
+        DiversitySignalFamily.MEAN_DISTANCE
+        if metric == DiversityMetric.MEAN_PAIRWISE_DISTANCE
+        else DiversitySignalFamily.SEPARATION
+    )
+
     # --- act / assert ------------------------------------
-    assert metric.signal_family == DiversitySignalFamily.SEPARATION
+    assert metric.signal_family == expected

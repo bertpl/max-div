@@ -22,6 +22,16 @@ def mean_separation(sep: NDArray[np.float32]) -> np.float32:
 
 
 @njit("float32(float32[::1])", fastmath=True, inline="always")
+def mean_pairwise_distance(mean_dists: NDArray[np.float32]) -> np.float32:
+    """Mean pairwise distance among all selected vectors, from their mean-distance signal values.
+
+    Each selected vector's signal is its mean distance to the other selected vectors; averaging
+    those per-vector means over the selection yields exactly the mean over all selected pairs.
+    """
+    return np.mean(mean_dists)
+
+
+@njit("float32(float32[::1])", fastmath=True, inline="always")
 def geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Geometric mean separation of all selected vectors."""
     log_sum = np.float32(0.0)

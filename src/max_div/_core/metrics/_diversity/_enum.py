@@ -32,6 +32,8 @@ class DiversityMetric(StrEnum):
         - APPROX_GEOMEAN_SEPARATION:  Approximate geometric mean separation of all selected vectors
                                           (uses faster, but still smooth approximations of log(.) and exp(.))
         - NON_ZERO_SEPARATION_FRAC:   Fraction of separation values that are non-zero
+        - MEAN_PAIRWISE_DISTANCE:     Mean distance over all pairs of selected vectors
+                                          (the classical max-sum diversity objective)
     """
 
     MIN_SEPARATION = "MIN_SEPARATION"
@@ -39,10 +41,13 @@ class DiversityMetric(StrEnum):
     GEOMEAN_SEPARATION = "GEOMEAN_SEPARATION"
     APPROX_GEOMEAN_SEPARATION = "APPROX_GEOMEAN_SEPARATION"
     NON_ZERO_SEPARATION_FRAC = "NON_ZERO_SEPARATION_FRAC"
+    MEAN_PAIRWISE_DISTANCE = "MEAN_PAIRWISE_DISTANCE"
 
     @cached_property
     def signal_family(self) -> DiversitySignalFamily:
         """Return the diversity-signal family whose per-point values this metric consumes."""
+        if self == DiversityMetric.MEAN_PAIRWISE_DISTANCE:
+            return DiversitySignalFamily.MEAN_DISTANCE
         return DiversitySignalFamily.SEPARATION
 
     @cached_property
@@ -52,6 +57,7 @@ class DiversityMetric(StrEnum):
         from ._numba import (
             approx_geomean_separation,
             geomean_separation,
+            mean_pairwise_distance,
             mean_separation,
             min_separation,
             non_zero_separation_frac,
@@ -63,6 +69,7 @@ class DiversityMetric(StrEnum):
             DiversityMetric.GEOMEAN_SEPARATION: geomean_separation,
             DiversityMetric.APPROX_GEOMEAN_SEPARATION: approx_geomean_separation,
             DiversityMetric.NON_ZERO_SEPARATION_FRAC: non_zero_separation_frac,
+            DiversityMetric.MEAN_PAIRWISE_DISTANCE: mean_pairwise_distance,
         }
         # NOTE: statically, a numba `Dispatcher` does not unify with the plain `Callable`
         #       return type; at runtime it is called exactly like one.

@@ -5,7 +5,7 @@ from numpy import random
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
-from max_div._core.solver._signals import SeparationTracker
+from max_div._core.solver._signals import MeanDistanceTracker, SeparationTracker
 from max_div._core.solver._solver_state import SolverState, _build_con_membership
 
 
@@ -241,6 +241,57 @@ def test_solver_state_tracker_set_dormancy(new_solver_state):
     assert len(trackers) == 1
     assert type(trackers[0]) is SeparationTracker
     assert new_solver_state._signal_tracker is trackers[0]
+
+
+def test_solver_state_tracker_set_mean_distance(new_solver_state):
+    """A mean-distance main metric constructs only a MeanDistanceTracker; mixed metrics construct both."""
+    # --- arrange -----------------------------------------
+    vectors = np.array([[0.0], [1.0], [2.0], [3.0]], dtype=np.float32)
+    pdist = compute_pdist(vectors, DistanceMetric.L1_MANHATTAN)
+
+    # --- act ---------------------------------------------
+    state_pure = SolverState.new(
+        n=4,
+        pdist=pdist,
+        k=2,
+        diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+        diversity_tie_breakers=[],
+        constraints=[],
+    )
+    state_mixed = SolverState.new(
+        n=4,
+        pdist=pdist,
+        k=2,
+        diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        constraints=[],
+    )
+
+    # --- assert ------------------------------------------
+    assert [type(t) for t in state_pure._signal_trackers] == [MeanDistanceTracker]
+    assert type(state_pure._signal_tracker) is MeanDistanceTracker
+    assert {type(t) for t in state_mixed._signal_trackers} == {MeanDistanceTracker, SeparationTracker}
+    assert type(state_mixed._signal_tracker) is MeanDistanceTracker  # main metric's tracker faces the strategies
+
+
+def test_solver_state_mean_pairwise_distance_score():
+    """The diversity score under MEAN_PAIRWISE_DISTANCE equals the brute-force mean over selected pairs."""
+    # --- arrange -----------------------------------------
+    vectors = np.array([[0.0], [1.0], [3.0], [7.0]], dtype=np.float32)
+    state = SolverState.new(
+        n=4,
+        pdist=compute_pdist(vectors, DistanceMetric.L1_MANHATTAN),
+        k=3,
+        diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+        diversity_tie_breakers=[],
+        constraints=[],
+    )
+
+    # --- act ---------------------------------------------
+    state.add_many(np.array([0, 1, 3], dtype=np.int32))  # points 0, 1, 7 -> pair distances 1, 7, 6
+
+    # --- assert ------------------------------------------
+    assert state.score.diversity == pytest.approx((1 + 7 + 6) / 3)
 
 
 def test_build_con_membership():
