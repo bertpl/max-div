@@ -97,7 +97,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.score.constraints < 1.0  # constraints not satisfied
     assert np.array_equal(state.con_values, state._con_values)
     assert np.array_equal(state.con_indices, state._con_indices)
-    assert np.array_equal(state.global_separation_array, state._sep_global)
+    assert np.array_equal(state.global_separation_array, state._contribution_tracker.contribution_wrt_dataset)
     assert state.n_selected == 0
     assert state.n_not_selected == 6
 
@@ -299,7 +299,7 @@ def _assert_state_matches_fresh_rebuild(state: SolverState) -> None:
     assert state.score == fresh.score
     assert state._n_selected == fresh._n_selected
     assert np.array_equal(state._selected, fresh._selected)
-    assert np.array_equal(state._sep_selected, fresh._sep_selected)
+    assert np.array_equal(state._contribution_tracker._sep_selected, fresh._contribution_tracker._sep_selected)
     assert np.array_equal(state._con_values, fresh._con_values)
 
 
