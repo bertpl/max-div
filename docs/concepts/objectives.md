@@ -71,19 +71,23 @@ important way: it maximizes *total* spread and does not penalize near-duplicates
 
 ## References
 
-- Erkut, E. (1990). The discrete p-dispersion problem. *European Journal of Operational
-  Research*, 46(1), 48-60.
-- Ravi, S. S., Rosenkrantz, D. J., & Tayi, G. K. (1994). Heuristic and special case algorithms
-  for dispersion problems. *Operations Research*, 42(2), 299-310.
-- Chandra, B., & Halldórsson, M. M. (2001). Approximation algorithms for dispersion problems.
-  *Journal of Algorithms*, 38(2), 438-465. (Source of the *remote-edge* / *remote-pseudoforest* /
-  *remote-clique* / *remote-star* taxonomy.)
-- Lei, T. L., & Church, R. L. (2015). On the unified dispersion problem: Efficient formulations
-  and exact algorithms. *European Journal of Operational Research*, 241(3), 622-630.
-- Bhaskara, A., Ghadiri, M., Mirrokni, V., & Svensson, O. (2016). Linear relaxations for finding
-  diverse elements in metric spaces. *NIPS 2016*.
-- Mahabadi, S., & Narayanan, S. (2023). Improved diversity maximization algorithms for matching
-  and pseudoforest. *APPROX 2023*.
-- Martí, R., Martínez-Gavara, A., Pérez-Peló, S., & Sánchez-Oro, J. (2022). A review on discrete
-  diversity and dispersion maximization from an OR perspective. *European Journal of Operational
-  Research*, 299(3), 795-813. (MDPLIB 2.0.)
+- Erkut, E. (1990). [The discrete p-dispersion problem](https://doi.org/10.1016/0377-2217%2890%2990297-O).
+  *European Journal of Operational Research*, 46(1), 48-60.
+- Ravi, S. S., Rosenkrantz, D. J., & Tayi, G. K. (1994). [Heuristic and special case algorithms
+  for dispersion problems](https://doi.org/10.1287/opre.42.2.299). *Operations Research*, 42(2),
+  299-310.
+- Chandra, B., & Halldórsson, M. M. (2001). [Approximation algorithms for dispersion
+  problems](https://doi.org/10.1006/jagm.2000.1145). *Journal of Algorithms*, 38(2), 438-465.
+  (Source of the *remote-edge* / *remote-pseudoforest* / *remote-clique* / *remote-star*
+  taxonomy.)
+- Lei, T. L., & Church, R. L. (2015). [On the unified dispersion problem: Efficient formulations
+  and exact algorithms](https://doi.org/10.1016/j.ejor.2014.10.020). *European Journal of
+  Operational Research*, 241(3), 622-630.
+- Bhaskara, A., Ghadiri, M., Mirrokni, V., & Svensson, O. (2016). [Linear relaxations for finding
+  diverse elements in metric spaces](https://proceedings.neurips.cc/paper_files/paper/2016/hash/d79c6256b9bdac53a55801a066b70da3-Abstract.html).
+  *NIPS 2016*.
+- Mahabadi, S., & Narayanan, S. (2023). [Improved diversity maximization algorithms for matching
+  and pseudoforest](https://doi.org/10.4230/LIPIcs.APPROX/RANDOM.2023.25). *APPROX 2023*.
+- Martí, R., Martínez-Gavara, A., Pérez-Peló, S., & Sánchez-Oro, J. (2022). [A review on discrete
+  diversity and dispersion maximization from an OR perspective](https://doi.org/10.1016/j.ejor.2021.07.044).
+  *European Journal of Operational Research*, 299(3), 795-813. (MDPLIB 2.0.)
