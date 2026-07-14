@@ -279,25 +279,25 @@ class SolverState:
         return np.flatnonzero(~self._selected).astype(np.int32)
 
     @property
-    def selected_separation_array(self) -> NDArray[np.float32]:
-        """Return separation of selected vectors wrt other selected vectors as a numpy array of np.float32."""
+    def selected_contribution_array(self) -> NDArray[np.float32]:
+        """Return diversity contribution of selected vectors wrt the current selection (np.float32 ndarray)."""
         return self._contribution_tracker.contribution_wrt_selection(self._selected, self._n_selected)[self._selected]
 
     @property
-    def not_selected_separation_array(self) -> NDArray[np.float32]:
-        """Return separation of not selected vectors wrt selected vectors as a numpy array of np.float32."""
+    def not_selected_contribution_array(self) -> NDArray[np.float32]:
+        """Return diversity contribution of not selected vectors wrt the current selection (np.float32 ndarray)."""
         return self._contribution_tracker.contribution_wrt_selection(self._selected, self._n_selected)[~self._selected]
 
     @property
-    def full_separation_array(self) -> NDArray[np.float32]:
-        """Return separation of all vectors wrt selected vectors as a numpy array of np.float32."""
+    def full_contribution_array(self) -> NDArray[np.float32]:
+        """Return diversity contribution of all vectors wrt the current selection (np.float32 ndarray)."""
         return self._contribution_tracker.contribution_wrt_selection(
             self._selected, self._n_selected
         )  # should not be modified (!)
 
     @property
-    def global_separation_array(self) -> NDArray[np.float32]:
-        """Return global separation of all vectors wrt all other vectors as a numpy array of np.float32."""
+    def global_contribution_array(self) -> NDArray[np.float32]:
+        """Return static diversity contribution of all vectors wrt the whole dataset (np.float32 ndarray)."""
         return self._contribution_tracker.contribution_wrt_dataset  # should not be modified (!)
 
     # -------------------------------------------------------------------------
@@ -307,7 +307,7 @@ class SolverState:
         self._score = self._score_generator.compute_score(
             n_selected=self._n_selected,
             con_values=self._con_values,
-            selected_separation_array=self.selected_separation_array,
+            selected_separation_array=self.selected_contribution_array,
         )
         self._score_dirty = False
 
@@ -374,8 +374,8 @@ class Snapshot:
     """Class internally used by SolverState to store snapshots of its state.
 
     This class models a subset of the fields of the SolverState class, restricting itself to those that can be
-    modified after construction.  Diversity-contribution state is snapshotted by the signal tracker itself, in lockstep
-    with this snapshot's life cycle.
+    modified after construction.  Diversity-contribution state is snapshotted by the contribution tracker
+    itself, in lockstep with this snapshot's life cycle.
     """
 
     is_valid: bool

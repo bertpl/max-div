@@ -34,7 +34,7 @@ def select_items_to_add(
     selectivity_modifier: float,
     rng_state: NDArray[np.uint64],
     sampling_type: SamplingType = SamplingType.GROUP,
-    include_within_group_separation: bool | np.bool_ = True,
+    include_within_group_contribution: bool | np.bool_ = True,
     ignore_constraints: bool = False,
 ) -> NDArray[np.int32]:
     """Select k items from 'candidates' to be added to the provided SolverState.
@@ -45,35 +45,35 @@ def select_items_to_add(
     :param candidates: (NDArray[np.int32]) array of candidate item indices to choose from
                                                     (must be a subset of not-selected items; must be of size>=k)
     :param k: (int) number of items to add to the selection.
-    :param selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the separation-based
-                                 probabilities used for sampling items to be added.
+    :param selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the
+                                 diversity-contribution-based probabilities used for sampling items to be added.
                                     -1: maximally un-selective --> uniform
-                                     0: no modification to the separation-based probabilities
-                                    +1: maximally selective --> only the items with very lowest separation are sampled
+                                     0: no modification to the contribution-based probabilities
+                                    +1: maximally selective --> only the items with very lowest contribution are sampled
     :param rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
     :param sampling_type: (SamplingType) context in which the k items are being sampled (GROUP vs CANDIDATES)
-    :param include_within_group_separation: (bool) flag that influences how sampling probabilities are built.
-                                            True: start from sep. to already selected items + within-group separation
-                                            False: start from sep. to already selected items only
+    :param include_within_group_contribution: (bool) flag that influences how sampling probabilities are built.
+                                 True: start from contribution wrt already selected items + within-group contribution
+                                 False: start from contribution wrt already selected items only
     :param ignore_constraints: (bool) If True, constraints are ignored even if present in the SolverState.
     :return: list of np.int32 indices of the items to be added to the selection (unique values, unsorted).
     """
     # --- prepare probabilities ---------------------------
     if state.n_selected == 0:
-        # the only option is to look at separation wrt all other items, as we don't have a selection yet
+        # the only option is to look at the global contribution (wrt all other items), as we don't have a selection yet
         # this branch is only taken in the first iteration of initialization strategies
-        p = state.global_separation_array[candidates]  # add separation of candidates wrt to all other items
+        p = state.global_contribution_array[candidates]  # contribution of candidates wrt all other items
     else:
         # standard path
-        p = state.full_separation_array[candidates]  # new array; separation of candidates to selected items
-        if include_within_group_separation:
-            p += state.global_separation_array[candidates]  # add separation of candidates wrt to all other items
+        p = state.full_contribution_array[candidates]  # new array; contribution of candidates wrt selected items
+        if include_within_group_contribution:
+            p += state.global_contribution_array[candidates]  # add contribution of candidates wrt all other items
 
     exponential_selectivity(
         p_in=p,
         p_out=p,  # in-place
         modifier=np.float32(selectivity_modifier),
-        reverse=False,  # for adding, we want to have vectors with high separation have higher probability
+        reverse=False,  # for adding, we want to have vectors with high diversity contribution have higher probability
     )
 
     # --- actual sampling ---------------------------------
