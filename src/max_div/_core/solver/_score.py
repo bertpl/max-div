@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from max_div._core.constraints._constraints import _np_con_total_violation, _np_con_total_weighted_violation
+from max_div._core.solver._diversity_contribution import selected_contributions_slot
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
 
     from max_div._core.constraints import Constraint
     from max_div._core.metrics._diversity import DiversityMetric
+    from max_div._core.solver._diversity_contribution import SelectedContributions
 
 
 # =================================================================================================
@@ -168,8 +170,14 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers ----------
+        # each metric is bound here, once, to the SelectedContributions slot of its contribution
+        # family — compute_score then just indexes, without any per-call family lookups
         self._diversity_metric = diversity_metric
+        self._diversity_metric_slot = selected_contributions_slot(diversity_metric.contribution_family)
         self._diversity_tie_breakers = diversity_tie_breakers
+        self._tie_breakers_with_slot = [
+            (tb, selected_contributions_slot(tb.contribution_family)) for tb in diversity_tie_breakers
+        ]
 
         # --- store other params ---------------
         self._constraints = constraints
@@ -192,8 +200,19 @@ class ScoreGenerator:
     #  Score computation
     # -------------------------------------------------------------------------
     def compute_score(
-        self, n_selected: int | np.int32, con_values: NDArray[np.int32], selected_separation_array: NDArray[np.float32]
+        self,
+        n_selected: int | np.int32,
+        con_values: NDArray[np.int32],
+        selected_contributions: SelectedContributions,
     ) -> Score:
+        """Compute the multi-component Score of a selection.
+
+        :param n_selected: (int | np.int32) current number of selected vectors.
+        :param con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
+        :param selected_contributions: (SelectedContributions) the selected vectors' per-family
+                                       contribution values; slots of families no configured metric
+                                       consumes are never read.
+        """
         # --- individual scores ---------------------------
         if n_selected <= self._k:
             size_score = 1.0 - self._size_c0 * (self._k - n_selected)
@@ -211,9 +230,12 @@ class ScoreGenerator:
             )
 
         # --- construct Score object ----------------------
+        # each metric reads the contribution slot it was bound to at construction
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=float(self._diversity_metric.compute(selected_separation_array)),
-            div_tie_breakers=tuple(float(tb.compute(selected_separation_array)) for tb in self._diversity_tie_breakers),
+            diversity=float(self._diversity_metric.compute(selected_contributions[self._diversity_metric_slot])),
+            div_tie_breakers=tuple(
+                float(tb.compute(selected_contributions[slot])) for tb, slot in self._tie_breakers_with_slot
+            ),
         )
