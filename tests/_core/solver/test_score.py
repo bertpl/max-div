@@ -5,6 +5,13 @@ from max_div._core.constraints import Constraint
 from max_div._core.metrics import DiversityMetric
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
 
+_NO_CONTRIBUTIONS = np.array([], dtype=np.float32)
+
+
+def _as_contributions(separation_values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Wrap separation-family contribution values into a SelectedContributions tuple."""
+    return (separation_values, _NO_CONTRIBUTIONS)
+
 
 # =================================================================================================
 #  Score
@@ -107,17 +114,17 @@ def test_score_generator_size():
     )
 
     con_values = np.zeros((0, 2), dtype=np.int32)
-    selected_separation_array = np.ones(4, dtype=np.float32)
+    selected_contributions = _as_contributions(np.ones(4, dtype=np.float32))
 
     # --- act ---------------------------------------------
-    size_score_0 = generator.compute_score(0, con_values, selected_separation_array).size
-    size_score_1 = generator.compute_score(1, con_values, selected_separation_array).size
-    size_score_2 = generator.compute_score(2, con_values, selected_separation_array).size
-    size_score_3 = generator.compute_score(3, con_values, selected_separation_array).size
-    size_score_4 = generator.compute_score(4, con_values, selected_separation_array).size
-    size_score_8 = generator.compute_score(8, con_values, selected_separation_array).size
-    size_score_12 = generator.compute_score(12, con_values, selected_separation_array).size
-    size_score_20 = generator.compute_score(20, con_values, selected_separation_array).size
+    size_score_0 = generator.compute_score(0, con_values, selected_contributions).size
+    size_score_1 = generator.compute_score(1, con_values, selected_contributions).size
+    size_score_2 = generator.compute_score(2, con_values, selected_contributions).size
+    size_score_3 = generator.compute_score(3, con_values, selected_contributions).size
+    size_score_4 = generator.compute_score(4, con_values, selected_contributions).size
+    size_score_8 = generator.compute_score(8, con_values, selected_contributions).size
+    size_score_12 = generator.compute_score(12, con_values, selected_contributions).size
+    size_score_20 = generator.compute_score(20, con_values, selected_contributions).size
 
     # --- assert ------------------------------------------
     assert 0.0 < size_score_0 < size_score_1 < size_score_2 < size_score_3 == 1.0
@@ -137,7 +144,7 @@ def test_score_generator_constraints():
         ],
     )
 
-    sep = np.ones(5, dtype=np.float32)
+    sep = _as_contributions(np.ones(5, dtype=np.float32))
 
     # --- act ---------------------------------------------
 
@@ -193,7 +200,7 @@ def test_score_generator_constraints_linear_vs_quadratic():
     gen_quad = ScoreGenerator(constraints=constraints, penalty_quadratic=True, **kwargs)
 
     con_values = np.array([[2, 3], [2, 3]], dtype=np.int32)  # need 2 more from each -> v = [2, 2]
-    sep = np.ones(5, dtype=np.float32)
+    sep = _as_contributions(np.ones(5, dtype=np.float32))
 
     # --- act ---------------------------------------------
     con_linear = gen_linear.compute_score(8, con_values, sep).constraints
@@ -214,7 +221,7 @@ def test_score_generator_constraints_weighted():
     gen = ScoreGenerator(
         n=100, k=8, diversity_metric=DiversityMetric.MIN_SEPARATION, diversity_tie_breakers=[], constraints=constraints
     )
-    sep = np.ones(5, dtype=np.float32)
+    sep = _as_contributions(np.ones(5, dtype=np.float32))
 
     # --- act ---------------------------------------------
     con_violate_light = gen.compute_score(
@@ -241,7 +248,9 @@ def test_score_generator_constraints_no_constraints():
     )
 
     # --- act ---------------------------------------------
-    score = generator.compute_score(8, np.zeros((0, 2), dtype=np.int32), np.ones(5, dtype=np.float32))
+    score = generator.compute_score(
+        8, np.zeros((0, 2), dtype=np.int32), _as_contributions(np.ones(5, dtype=np.float32))
+    )
 
     # --- assert ------------------------------------------
     assert score.constraints == 1.0, "In case of no constraints, we expect a perfect 1.0 constraint score."
@@ -261,7 +270,7 @@ def test_score_generator_diversity_scores():
     )
 
     con_values = np.zeros((0, 2), dtype=np.int32)
-    sep = np.array([0, 2, 3, 4, 6], dtype=np.float32)
+    sep = _as_contributions(np.array([0, 2, 3, 4, 6], dtype=np.float32))
 
     # --- act ---------------------------------------------
     score = generator.compute_score(5, con_values, sep)
@@ -337,3 +346,25 @@ def test_score_str(score: Score, expected_str: str):
 
     # --- assert ------------------------------------------
     assert result == expected_str
+
+
+def test_compute_score_binds_metrics_to_their_contribution_slot():
+    """Separation-family metrics must read the separation slot, regardless of what else is passed."""
+
+    # --- arrange -----------------------------------------
+    generator = ScoreGenerator(
+        n=10,
+        k=4,
+        diversity_metric=DiversityMetric.MEAN_SEPARATION,
+        diversity_tie_breakers=[DiversityMetric.MIN_SEPARATION],
+        constraints=[],
+    )
+    separation_values = np.array([2.0, 4.0, 6.0], dtype=np.float32)
+    decoy_values = np.array([100.0, 100.0, 100.0], dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), (separation_values, decoy_values))
+
+    # --- assert ------------------------------------------
+    assert score.diversity == pytest.approx(4.0)  # mean of the separation slot, not of the decoy
+    assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of the separation slot, not of the decoy

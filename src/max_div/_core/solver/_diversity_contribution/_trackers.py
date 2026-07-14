@@ -2,15 +2,35 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
+
+from max_div._core.metrics import DiversityContributionFamily
+
 from ._factory import build_diversity_contribution_tracker
 
 if TYPE_CHECKING:
-    import numpy as np
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityContributionFamily, DiversityMetric
+    from max_div._core.metrics import DiversityMetric
 
     from ._base import DiversityContributionTracker
+
+
+# =================================================================================================
+#  SelectedContributions
+# =================================================================================================
+# A selection's per-family contribution values of the *selected* vectors: a fixed-order tuple with
+# one slot per DiversityContributionFamily, in enum definition order (see selected_contributions_slot).
+# Families no metric consumes hold a shared empty array.  A plain tuple instead of a value object
+# keeps this hot-path payload as cheap as possible.
+SelectedContributions = tuple["NDArray[np.float32]", "NDArray[np.float32]"]
+
+_FAMILY_SLOTS = {family: slot for slot, family in enumerate(DiversityContributionFamily)}
+
+
+def selected_contributions_slot(family: DiversityContributionFamily) -> int:
+    """Return the SelectedContributions tuple slot holding the given family's contribution values."""
+    return _FAMILY_SLOTS[family]
 
 
 # =================================================================================================
@@ -41,6 +61,9 @@ class DiversityContributionTrackers:
         self._main_family = main_family  # READ-ONLY
         self._trackers = tuple(trackers_by_family.values())  # iteration order for mutation fan-out
         self._main = trackers_by_family[main_family]
+        # per-family trackers for scoring reads (None = family not tracked)
+        self._separation_tracker = trackers_by_family.get(DiversityContributionFamily.SEPARATION)
+        self._mean_distance_tracker = trackers_by_family.get(DiversityContributionFamily.MEAN_DISTANCE)
 
     @classmethod
     def for_metrics(
@@ -114,3 +137,30 @@ class DiversityContributionTrackers:
         """Restore all trackers to the state saved by the last `set_snapshot` call and invalidate it."""
         for tracker in self._trackers:
             tracker.restore_snapshot()
+
+    # -------------------------------------------------------------------------
+    #  Scoring reads
+    # -------------------------------------------------------------------------
+    def selected_contributions(self, selected: NDArray[np.bool], n_selected: np.int32) -> SelectedContributions:
+        """Return the selected vectors' contribution values, one SelectedContributions slot per family.
+
+        Slots of families this set does not track hold a shared empty array (never read, since the
+        score generator only consumes the families its metrics were bound to).
+
+        :param selected: (n-sized bool ndarray) current selection mask.
+        :param n_selected: (np.int32) number of True values in `selected`.
+        """
+        sep_tracker = self._separation_tracker
+        mean_tracker = self._mean_distance_tracker
+        return (
+            sep_tracker.contribution_wrt_selection(selected, n_selected)[selected]
+            if sep_tracker is not None
+            else _EMPTY_NP_ARRAY_FLOAT32,
+            mean_tracker.contribution_wrt_selection(selected, n_selected)[selected]
+            if mean_tracker is not None
+            else _EMPTY_NP_ARRAY_FLOAT32,
+        )
+
+
+# shared placeholder for the contribution values of untracked families
+_EMPTY_NP_ARRAY_FLOAT32 = np.array([], dtype=np.float32)

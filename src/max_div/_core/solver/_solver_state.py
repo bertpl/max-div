@@ -308,7 +308,7 @@ class SolverState:
         self._score = self._score_generator.compute_score(
             n_selected=self._n_selected,
             con_values=self._con_values,
-            selected_separation_array=self.selected_contribution_array,
+            selected_contributions=self._contribution_trackers.selected_contributions(self._selected, self._n_selected),
         )
         self._score_dirty = False
 
