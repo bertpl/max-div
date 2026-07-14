@@ -35,9 +35,9 @@ guarantee (Ravi, Rosenkrantz & Tayi, 1994) -- the best possible unless P = NP.
 
 Maximize the *sum (equivalently, mean) of each selected point's nearest-neighbor distance* within
 the selection. Known as **Max-SumMin** dispersion or *remote-pseudoforest*, and as "p-defense-sum"
-in the facility-location strand (Lei & Church, 2015). Strongly NP-hard; a constant-factor
-approximation was only established in 2023 (Mahabadi & Narayanan, APPROX 2023) -- a markedly
-less-charted objective than p-dispersion.
+in the facility-location strand (Lei & Church, 2015). Strongly NP-hard, and markedly less charted
+than p-dispersion: the first constant-factor approximation dates only from 2016 (Bhaskara et al.,
+NIPS 2016), with the composable-coreset gap closed in 2023 (Mahabadi & Narayanan, APPROX 2023).
 
 Beware a naming trap when searching the literature: **Max-MinSum** dispersion (also written
 "MaxMinSum", *remote-star*) is a *different* objective -- the minimum over selected points of the
@@ -80,8 +80,10 @@ important way: it maximizes *total* spread and does not penalize near-duplicates
   *remote-clique* / *remote-star* taxonomy.)
 - Lei, T. L., & Church, R. L. (2015). On the unified dispersion problem: Efficient formulations
   and exact algorithms. *European Journal of Operational Research*, 241(3), 622-630.
+- Bhaskara, A., Ghadiri, M., Mirrokni, V., & Svensson, O. (2016). Linear relaxations for finding
+  diverse elements in metric spaces. *NIPS 2016*.
 - Mahabadi, S., & Narayanan, S. (2023). Improved diversity maximization algorithms for matching
   and pseudoforest. *APPROX 2023*.
-- Martí, R., Martínez-Gavara, A., Pérez-Peló, S., & Sánchez-Oro, J. (2021). A review on discrete
+- Martí, R., Martínez-Gavara, A., Pérez-Peló, S., & Sánchez-Oro, J. (2022). A review on discrete
   diversity and dispersion maximization from an OR perspective. *European Journal of Operational
   Research*, 299(3), 795-813. (MDPLIB 2.0.)
