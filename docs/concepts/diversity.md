@@ -68,7 +68,9 @@ rescan of the selection is ever needed.
 
 ## Diversity Metrics
 
-Each diversity metric aggregates the `k` separation values differently:
+Each diversity metric aggregates the `k` separation values differently. (For how these objectives
+map onto the operations-research literature -- p-dispersion, Max-SumMin, classical MaxSum MDP --
+see [Objectives & the Diversity-Problem Landscape](objectives.md).)
 
 | Metric | Formula | Characteristics |
 |--------|---------|-----------------|
