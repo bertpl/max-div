@@ -16,13 +16,14 @@ class InitRandomOneShot(InitializationStrategy):
 
     Parameters:
     - uniform (bool): If `True`, samples uniformly at random.
-                      If `False`, uses vector separations as sampling weights, sampling well-separated vectors
-                                         with higher probability (default: `False`)
+                      If `False`, uses global diversity contributions as sampling weights, favoring
+                                         high-contribution vectors with higher probability (default: `False`)
     - ignore_constraints (bool): If `False`, respects problem constraints during initialization, if present.
                                  If `True`, constraints are ignored. (default: `False`)
 
     Notes:
-        - using separation as sampling weights is a heuristic, not an exactly optimal solution, with known limitations:
+        - using the global diversity contribution as sampling weights is a heuristic, not an exactly optimal
+          solution, with known limitations:
             - in 1D problems this heuristic should be probabilistically optimal, but in higher dimensions (the more
               likely scenario) it is not.  E.g. in 2D where vectors have half the separation as in other regions, we
               should sample 4x fewer, not 2x fewer vectors.
@@ -57,7 +58,7 @@ class InitRandomOneShot(InitializationStrategy):
                 k=state.k,
                 con_values=state.con_values,
                 con_indices=state.con_indices,
-                p=state.global_separation_array,
+                p=state.global_contribution_array,
                 rng_state=self._rng_state,
             )
         # don't take constraints into account
@@ -73,6 +74,6 @@ class InitRandomOneShot(InitializationStrategy):
             n=state.n,
             k=state.k,
             replace=False,
-            p=state.global_separation_array,
+            p=state.global_contribution_array,
             rng_state=self._rng_state,
         )

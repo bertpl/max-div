@@ -97,7 +97,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.score.constraints < 1.0  # constraints not satisfied
     assert np.array_equal(state.con_values, state._con_values)
     assert np.array_equal(state.con_indices, state._con_indices)
-    assert np.array_equal(state.global_separation_array, state._contribution_tracker.contribution_wrt_dataset)
+    assert np.array_equal(state.global_contribution_array, state._contribution_tracker.contribution_wrt_dataset)
     assert state.n_selected == 0
     assert state.n_not_selected == 6
 
@@ -109,7 +109,7 @@ def test_solver_state_end_to_end(new_solver_state):
     # --- assert 2 ----------------------------------------
     assert np.array_equal(state.selected_index_array, [0, 2, 5])
     assert np.array_equal(state.not_selected_index_array, [1, 3, 4])
-    assert np.allclose(state.selected_separation_array, [2, 2, 3])
+    assert np.allclose(state.selected_contribution_array, [2, 2, 3])
     assert state.score.size == 1.0  # correct number of vectors selected
     assert state.score.constraints == 1.0  # all constraints satisfied
     assert state.score.diversity == pytest.approx((2 * 2 * 3) ** (1 / 3))  # geomean of separations 2, 2, 3
@@ -123,8 +123,8 @@ def test_solver_state_end_to_end(new_solver_state):
     # --- assert 3 ----------------------------------------
     assert np.array_equal(state.selected_index_array, [0, 2, 4])
     assert np.array_equal(state.not_selected_index_array, [1, 3, 5])
-    assert np.allclose(state.selected_separation_array, [2, 2, 2])
-    assert np.allclose(state.not_selected_separation_array, [1, 1, 1])
+    assert np.allclose(state.selected_contribution_array, [2, 2, 2])
+    assert np.allclose(state.not_selected_contribution_array, [1, 1, 1])
     assert state.score.size == 1.0  # correct number of vectors selected
     assert state.score.constraints == 1.0  # all constraints satisfied
     assert state.score.diversity == pytest.approx(2.0)  # geomean of separations 2, 2, 2
@@ -141,7 +141,7 @@ def test_solver_state_snapshot(new_solver_state):
     # current state so we can compare with state after
     orig_selected_array = state.selected_index_array.copy()
     orig_not_selected_array = state.not_selected_index_array.copy()
-    orig_separation_array = state.selected_separation_array.copy()
+    orig_separation_array = state.selected_contribution_array.copy()
     orig_con_values = state._con_values.copy()
 
     # --- act & assert ------------------------------------
@@ -159,7 +159,7 @@ def test_solver_state_snapshot(new_solver_state):
     # --- assert ------------------------------------------
     assert np.array_equal(state.selected_index_array, orig_selected_array)
     assert np.array_equal(state.not_selected_index_array, orig_not_selected_array)
-    assert np.allclose(state.selected_separation_array, orig_separation_array)
+    assert np.allclose(state.selected_contribution_array, orig_separation_array)
     assert np.array_equal(state.con_values, orig_con_values)
 
 
@@ -219,9 +219,9 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
     # check if they're the same
     assert np.array_equal(state.selected_index_array, state_ref.selected_index_array)
     assert np.array_equal(state.not_selected_index_array, state_ref.not_selected_index_array)
-    assert np.array_equal(state.global_separation_array, state_ref.global_separation_array)
-    assert np.array_equal(state.not_selected_separation_array, state_ref.not_selected_separation_array)
-    assert np.array_equal(state.selected_separation_array, state_ref.selected_separation_array)
+    assert np.array_equal(state.global_contribution_array, state_ref.global_contribution_array)
+    assert np.array_equal(state.not_selected_contribution_array, state_ref.not_selected_contribution_array)
+    assert np.array_equal(state.selected_contribution_array, state_ref.selected_contribution_array)
     assert np.array_equal(state.con_values, state_ref.con_values)
     assert np.array_equal(state.con_indices, state_ref.con_indices)
 

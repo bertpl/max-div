@@ -49,7 +49,8 @@ class InitializationStrategy(StrategyBase, ABC):
     def fast(cls) -> InitFast:
         """Deterministic greedy initialization.
 
-        Selects vectors one-by-one, always picking the one that maximizes separation from the current selection.
+        Selects vectors one-by-one, always picking the one that maximizes the diversity contribution wrt the
+        current selection.
         Fast but seed-independent.
         """
         from ._init_fast import InitFast
@@ -60,9 +61,9 @@ class InitializationStrategy(StrategyBase, ABC):
     def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:
         """Random initialization that selects all ``k`` vectors in a single batch.
 
-        Probabilities are biased by global separation (unless ``uniform=True``).
+        Probabilities are biased by the global diversity contribution (unless ``uniform=True``).
 
-        :param uniform: If True, sample uniformly instead of using separation-based probabilities.
+        :param uniform: If True, sample uniformly instead of using contribution-based probabilities.
         :param ignore_constraints: If True, ignore constraints during sampling.
         """
         from ._init_random_one_shot import InitRandomOneShot
@@ -76,7 +77,7 @@ class InitializationStrategy(StrategyBase, ABC):
     def random_batched(cls, b: int, ignore_constraints: bool = False) -> InitRandomBatched:
         """Random initialization that selects vectors in batches of ``b``.
 
-        Separations are re-evaluated between batches.
+        Diversity contributions are re-evaluated between batches.
 
         :param b: Batch size (number of vectors to select per batch).
         :param ignore_constraints: If True, ignore constraints during sampling.

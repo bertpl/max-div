@@ -12,11 +12,11 @@ from ._base import InitializationStrategy
 class InitRandomBatched(InitializationStrategy):
     """Initialize by taking `b` (hence: batches) random samples of ~round(k/n_batches) items.
 
-    After each batch, the SolverState updates distances and separations, influencing sampling probabilities
+    After each batch, the SolverState updates its diversity contributions, influencing sampling probabilities
       of the next batch.
 
-    When sampling a batch, we use probabilities p[i] ~= (separation of i wrt already selected items)
-                                                                            + (separation of i wrt all items)
+    When sampling a batch, we use probabilities p[i] ~= (contribution of i wrt already selected items)
+                                                                            + (contribution of i wrt all items)
 
     This drives each batch to be sampled from elements that are both well-separated from the selection so far, to
       promote diversity, and also well-separated from each other, to avoid samples within a batch that are far from
@@ -83,6 +83,6 @@ class InitRandomBatched(InitializationStrategy):
             selectivity_modifier=modifier,
             rng_state=self._rng_state,
             sampling_type=SamplingType.GROUP,
-            include_within_group_separation=True,
+            include_within_group_contribution=True,
             ignore_constraints=self.ignore_constraints,
         )

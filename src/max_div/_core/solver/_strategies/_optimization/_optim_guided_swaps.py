@@ -84,7 +84,7 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
             selectivity_modifier=self.add_selectivity_modifier,
             rng_state=self._rng_state,
             sampling_type=SamplingType.GROUP,
-            include_within_group_separation=(n_to_add > 1),
+            include_within_group_contribution=(n_to_add > 1),
             ignore_constraints=ignore_constraints,
         )
 
