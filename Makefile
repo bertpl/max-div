@@ -42,6 +42,10 @@ test:
 	# run all tests - with numba & just 1 python version
 	uv run --all-extras --python 3.13 pytest ./tests --durations=20 --disable-warnings
 
+test-benchmarks:
+	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps group)
+	uv run --group benchmarks --python 3.13 pytest ./benchmarks/tests --durations=20 --disable-warnings
+
 coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
