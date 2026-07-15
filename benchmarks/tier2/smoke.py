@@ -7,7 +7,17 @@ not performance; real runs are configured separately.
 
 from pathlib import Path
 
-from benchmarks.adapters import RandomBaseline
+from benchmarks.adapters import (
+    ApricotFacilityLocation,
+    FpsampleFPS,
+    GreedyMaxSum,
+    KMedoidsFasterPAM,
+    QcSelectorMaxMin,
+    RandomBaseline,
+    RdkitMaxMin,
+    SelectionAdapter,
+    SkmatterFPS,
+)
 from benchmarks.common import build_problem, save_records, time_ladder
 from benchmarks.figures import plot_anytime_curve
 from benchmarks.runners import run_adapter, run_maxdiv_ladder
@@ -18,25 +28,39 @@ OUTPUT_DIR = Path("reports/benchmarks/smoke")
 
 def main() -> None:
     """Run the smoke scenario and write records + one figure."""
-    problem = build_problem("U1", size=1, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+    problem = build_problem("U1", size=2, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
     seeds = (0, 1)
 
     records = run_maxdiv_ladder(
         problem,
         problem_name="U1",
-        size=1,
+        size=2,
         time_budgets_sec=time_ladder(0.001, 0.064),
         iteration_budgets=[100, 1000],
         seeds=seeds,
     )
-    records += run_adapter(RandomBaseline(), problem, problem_name="U1", size=1, seeds=seeds)
+    adapters: list[SelectionAdapter] = [
+        RandomBaseline(),
+        FpsampleFPS(),
+        SkmatterFPS(),
+        RdkitMaxMin(),
+        ApricotFacilityLocation(),
+        KMedoidsFasterPAM(),
+        GreedyMaxSum(),
+        QcSelectorMaxMin(),  # GPL opt-in group; skipped below when not installed
+    ]
+    for adapter in adapters:
+        try:
+            records += run_adapter(adapter, problem, problem_name="U1", size=2, seeds=seeds)
+        except ImportError:
+            print(f"skipped (not installed): {adapter.name}")
 
     save_records(records, OUTPUT_DIR / "records.jsonl")
     plot_anytime_curve(
         [r for r in records if not r.budget.startswith("iterations:")],
         metric_name=DiversityMetric.GEOMEAN_SEPARATION.name,
-        path=OUTPUT_DIR / "anytime_u1_s1.svg",
-        title="smoke: U1 size=1 (validation only, not a published result)",
+        path=OUTPUT_DIR / "anytime_u1_s2.svg",
+        title="smoke: U1 size=2 (validation only, not a published result)",
     )
     print(f"smoke OK: {len(records)} records -> {OUTPUT_DIR}")
 
