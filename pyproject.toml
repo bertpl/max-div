@@ -62,6 +62,8 @@ benchmarks = [
     "rdkit>=2025.3",
     "apricot-select>=0.6",
     "kmedoids>=0.5",
+    "networkx>=3.0",       # runtime dependency of the code-FDM research code
+    "scikit-learn>=1.4",   # runtime dependency of the code-FDM research code
 ]
 # GPL-3 competitor kept in its own opt-in group so the default benchmarks group stays GPL-free.
 benchmarks-gpl = [
