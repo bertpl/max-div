@@ -1654,6 +1654,9 @@ docs = [
 ]
 
 [package.dev-dependencies]
+benchmarks = [
+    { name = "matplotlib" },
+]
 dev = [
     { name = "check-wheel-contents" },
     { name = "pre-commit" },
@@ -1698,6 +1701,7 @@ requires-dist = [
 provides-extras = ["docs"]
 
 [package.metadata.requires-dev]
+benchmarks = [{ name = "matplotlib", specifier = ">=3.9" }]
 dev = [
     { name = "check-wheel-contents", specifier = ">=0.6.2" },
     { name = "pre-commit", specifier = ">=4.0" },
