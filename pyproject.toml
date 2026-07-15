@@ -57,6 +57,15 @@ docs = [
 # Comparison-benchmark harness (see benchmarks/README.md); never part of the published package.
 benchmarks = [
     "matplotlib>=3.9",
+    "fpsample>=1.0",
+    "skmatter>=0.3",
+    "rdkit>=2025.3",
+    "apricot-select>=0.6",
+    "kmedoids>=0.5",
+]
+# GPL-3 competitor kept in its own opt-in group so the default benchmarks group stays GPL-free.
+benchmarks-gpl = [
+    "qc-selector>=0.1",
 ]
 dev = [
     "check-wheel-contents>=0.6.2",
