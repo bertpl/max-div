@@ -1,0 +1,45 @@
+"""Tiny end-to-end validation run: proves ladder runner, adapter runner, records, and figure wiring.
+
+Run with: ``uv run --group benchmarks python -m benchmarks.tier2.smoke``.
+Deliberately minuscule (one problem, short ladder, two seeds) — this validates plumbing,
+not performance; real runs are configured separately.
+"""
+
+from pathlib import Path
+
+from benchmarks.adapters import RandomBaseline
+from benchmarks.common import build_problem, save_records, time_ladder
+from benchmarks.figures import plot_anytime_curve
+from benchmarks.runners import run_adapter, run_maxdiv_ladder
+from max_div.metrics import DiversityMetric
+
+OUTPUT_DIR = Path("reports/benchmarks/smoke")
+
+
+def main() -> None:
+    """Run the smoke scenario and write records + one figure."""
+    problem = build_problem("U1", size=1, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+    seeds = (0, 1)
+
+    records = run_maxdiv_ladder(
+        problem,
+        problem_name="U1",
+        size=1,
+        time_budgets_sec=time_ladder(0.001, 0.064),
+        iteration_budgets=[100, 1000],
+        seeds=seeds,
+    )
+    records += run_adapter(RandomBaseline(), problem, problem_name="U1", size=1, seeds=seeds)
+
+    save_records(records, OUTPUT_DIR / "records.jsonl")
+    plot_anytime_curve(
+        [r for r in records if not r.budget.startswith("iterations:")],
+        metric_name=DiversityMetric.GEOMEAN_SEPARATION.name,
+        path=OUTPUT_DIR / "anytime_u1_s1.svg",
+        title="smoke: U1 size=1 (validation only, not a published result)",
+    )
+    print(f"smoke OK: {len(records)} records -> {OUTPUT_DIR}")
+
+
+if __name__ == "__main__":
+    main()

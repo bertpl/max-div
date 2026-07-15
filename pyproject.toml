@@ -54,6 +54,10 @@ docs = [
 ]
 
 [dependency-groups]
+# Comparison-benchmark harness (see benchmarks/README.md); never part of the published package.
+benchmarks = [
+    "matplotlib>=3.9",
+]
 dev = [
     "check-wheel-contents>=0.6.2",
     "pre-commit>=4.0",
