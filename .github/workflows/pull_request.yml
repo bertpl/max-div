@@ -84,7 +84,7 @@ jobs:
   # carries no obligations; only distributing it would) — deliberately outside the
   # package test matrix. Network-dependent tests (MDPLIB fetch, code-FDM fetch)
   # skip on fetch failure, so upstream availability can never block a merge.
-  benchmarks-harness:
+  test-benchmarks-harness:
     needs: [preflight]
     runs-on: ubuntu-latest
     steps:
@@ -137,7 +137,7 @@ jobs:
     # `always()` is load-bearing — without it the gate is skipped when an
     # upstream job fails, and GitHub treats a skipped required check as passing.
     if: always()
-    needs: [preflight, pre-commit, test, benchmarks-harness, package, pip-audit]
+    needs: [preflight, pre-commit, test, test-benchmarks-harness, package, pip-audit]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed
