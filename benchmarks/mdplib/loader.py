@@ -1,6 +1,7 @@
 """Fetch and parse the MDPLIB MMDP (MaxMin diversity) instance sets.
 
-The archive (Glover / Geo / Ran sets, 195 instances, plus published best-known values)
+The archive (Glover / Geo / Ran sets — 135 instance files, paired with multiple k
+values in the published results — plus the best-known-value tables)
 is downloaded from the maintainers' site at run time and cached locally — MDPLIB's
 citation-based terms mean instances are never committed to this repo. When using these
 instances, cite: Marti, Martinez-Gavara, Perez-Pelo & Sanchez-Oro (2022), "A review on
