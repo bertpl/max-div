@@ -79,6 +79,25 @@ jobs:
     needs: [preflight]
     uses: ./.github/workflows/_unit_tests.yml
 
+  # Comparison-benchmark harness tests: single leg (py3.13, numba on) with the
+  # `benchmarks` dependency groups (incl. the GPL one: running GPL software in CI
+  # carries no obligations; only distributing it would) — deliberately outside the
+  # package test matrix. Network-dependent tests (MDPLIB fetch, code-FDM fetch)
+  # skip on fetch failure, so upstream availability can never block a merge.
+  test-benchmarks-harness:
+    needs: [preflight]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Set up uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          version: ${{ vars.UV_VERSION }}
+      - name: Run harness tests
+        run: make test-benchmarks
+
   # Package-integrity gate: build once, verify the wheel statically, then
   # blind-install the artifact and test against it — catches packaging holes
   # (empty wheel, missing modules) that editable-install runs cannot see.
@@ -118,7 +137,7 @@ jobs:
     # `always()` is load-bearing — without it the gate is skipped when an
     # upstream job fails, and GitHub treats a skipped required check as passing.
     if: always()
-    needs: [preflight, pre-commit, test, package, pip-audit]
+    needs: [preflight, pre-commit, test, test-benchmarks-harness, package, pip-audit]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed
