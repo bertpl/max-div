@@ -65,6 +65,7 @@ benchmarks = [
     "networkx>=3.0",       # runtime dependency of the code-FDM research code
     "scikit-learn>=1.4",   # runtime dependency of the code-FDM research code
     "ortools>=9.10",       # CP-SAT: exact max-min reference
+    "pyscipopt>=5.0",      # SCIP: exact mean/geomean-of-NN reference
 ]
 # GPL-3 competitor kept in its own opt-in group so the default benchmarks group stays GPL-free.
 benchmarks-gpl = [
