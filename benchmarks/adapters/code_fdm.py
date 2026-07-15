@@ -30,7 +30,7 @@ class CodeFdmFairFlow(SelectionAdapter):
     """Fair max-min selection via code-FDM's FairFlow algorithm.
 
     code-FDM's fairness model is disjoint color groups with an exact per-group count;
-    the adapter maps max-div constraints onto that model (validating disjointness and
+    the adapter maps max-div constraints onto that model (validating that groups are disjoint and
     deriving per-group counts within each constraint's min/max bounds) and treats
     items outside every constraint as one remainder group.
     """
