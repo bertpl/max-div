@@ -26,6 +26,7 @@ class RunRecord:
     quality: dict[str, float] = field(default_factory=dict)
     n_constraints: int = 0
     n_constraints_satisfied: int = 0
+    proven_optimal: bool | None = None  # exact solvers only: optimality certified within the timeout
 
 
 def save_records(records: list[RunRecord], path: Path) -> None:
