@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 from max_div._core._math.fast_log_exp import fast_exp2_f32
 
 
-@njit(fastmath=True, inline="always")
+@njit(inline="always")
 def exponential_selectivity(
     p_in: NDArray[np.float32],
     p_out: NDArray[np.float32],
@@ -46,12 +46,33 @@ def exponential_selectivity(
     p_range = p_max - p_min
 
     # --- corner case ---------------------------
-    if p_range == 0.0:
+    # Degenerate ranges fall back to uniform: all-equal inputs (p_range == 0) and
+    # non-finite inputs (e.g. the +inf contribution of a sole selected item, which
+    # makes p_range inf or nan) — the transform would emit NaNs for those.
+    # NOTE: this guard is why the function is not compiled with fastmath: fastmath
+    # lets LLVM assume no NaN/inf exists and optimize the isfinite check away.
+    if (p_range == 0.0) or (not np.isfinite(p_range)):
         for i in range(n):
             p_out[i] = np.float32(1.0)
         return
 
     # --- actual transformation -----------------
+    _exponential_transform(p_in, p_out, modifier, reverse, low_value, p_min, p_max, p_range)
+
+
+@njit(fastmath=True, inline="always")
+def _exponential_transform(
+    p_in: NDArray[np.float32],
+    p_out: NDArray[np.float32],
+    modifier: np.float32,
+    reverse: bool,
+    low_value: np.float32,
+    p_min: np.float32,
+    p_max: np.float32,
+    p_range: np.float32,
+) -> None:
+    """Apply the exponential transform for finite, non-degenerate p_in (see exponential_selectivity)."""
+    n = p_in.shape[0]
 
     # precompute values
     t = (np.float32(1.0) + modifier) / (np.float32(1.0) - modifier)

@@ -40,3 +40,26 @@ def test_order_based_selectivity_corner_case():
 
     # --- assert ------------------------------------------
     assert np.array_equal(p_out, expected_p_out)
+
+
+@pytest.mark.parametrize(
+    "p_in",
+    [
+        np.array([np.inf], dtype=np.float32),
+        np.array([np.inf, 3.0], dtype=np.float32),
+        np.array([np.inf, np.inf], dtype=np.float32),
+        np.array([np.nan, 1.0], dtype=np.float32),
+    ],
+)
+def test_non_finite_inputs_fall_back_to_uniform(p_in: np.ndarray):
+    # a sole selected item has +inf diversity contribution; the transform must
+    # degrade to uniform probabilities instead of emitting NaNs (solver crash)
+    # --- arrange -----------------------------------------
+    expected_p_out = np.ones_like(p_in)
+
+    # --- act ---------------------------------------------
+    p_out = np.empty_like(p_in)
+    exponential_selectivity(p_in, p_out, np.float32(0.5), reverse=True, low_value=np.float32(0.1))
+
+    # --- assert ------------------------------------------
+    assert np.array_equal(p_out, expected_p_out)
