@@ -305,6 +305,21 @@ def refresh_readme_badges() -> None:
     README.write_text(text)
 
 
+def stamp_readme_splash_url(version: str) -> None:
+    """Pin the README splash image URL to the release tag.
+
+    The README references the splash via a raw.githubusercontent.com URL pinned to a tag,
+    so GitHub, PyPI, and Read the Docs all render the splash belonging to their version.
+    """
+    text = README.read_text()
+    text = re.sub(
+        r"raw\.githubusercontent\.com/bertpl/max-div/v[\d.]+/images/splash_with_version\.webp",
+        f"raw.githubusercontent.com/bertpl/max-div/v{version}/images/splash_with_version.webp",
+        text,
+    )
+    README.write_text(text)
+
+
 def stamp_splash(version: str) -> None:
     """Stamp the release version onto the committed splash webp (needs ImageMagick).
 
@@ -321,6 +336,7 @@ def step_11_commit_release(version: str) -> None:
     """Refresh README badges, stamp the splash, then create the release commit."""
     print_step(11, f"refresh README badges + stamp splash + commit 'release: {version}'")
     refresh_readme_badges()
+    stamp_readme_splash_url(version)
     stamp_splash(version)
     run_command(["git", "add", "pyproject.toml", "uv.lock", "CHANGELOG.md", "README.md", str(SPLASH_WEBP)])
     run_command(["git", "commit", "-m", f"release: {version}"])

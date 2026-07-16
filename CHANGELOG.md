@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `SolverPreset.SMART` no longer crashes on very small problems where an adaptive swap can remove all but one selected item
+- Documentation site: removed the defunct polyfill.io script (which triggered login popups) and fixed the broken splash image on Read the Docs and PyPI
 
 ### Security
 
