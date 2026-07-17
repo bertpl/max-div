@@ -1,15 +1,23 @@
 """Subset-quality evaluation: score any tool's selection under max-div's own diversity metrics.
 
 Every compared tool is judged with the functions here, so quality numbers are comparable
-across tools by construction. Evaluation works from the problem's condensed distance
-vector, so it applies to vector-based and precomputed-distance problems alike.
+across tools by construction. Evaluation only ever touches the k x k distances among the
+selected items — never the full n^2 pairwise matrix — so scoring stays cheap even at the
+largest benchmark sizes: vector problems compute the k x k block directly from the selected
+vectors (respecting the problem's distance metric), and precomputed-distance problems gather
+it from their stored condensed vector.
 """
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.spatial.distance import squareform
 
+# The library-internal pdist kernel is used on purpose: selections must be scored under
+# exactly the distance semantics the solver itself uses (incl. float32 behavior), and the
+# public API only exposes distances via whole problems.
+from max_div._core.metrics._distance import compute_pdist
 from max_div.metrics import DiversityMetric
-from max_div.problem import MaxDivProblem
+from max_div.problem import MaxDivProblem, VectorMaxDivProblem
 
 # The four canonical metrics every selection is scored under (APPROX_GEOMEAN is a speed
 # variant of GEOMEAN, not a distinct objective, so it is not evaluated separately).
@@ -56,13 +64,21 @@ def n_constraints_satisfied(problem: MaxDivProblem, i_selected: NDArray[np.integ
 
 
 def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.integer]) -> NDArray[np.float64]:
-    """Build the k x k distance matrix among selected items from the condensed distance vector."""
+    """Build the k x k distance matrix among selected items, never materializing all n^2 distances.
+
+    Vector problems compute pairwise distances over just the selected vectors (their
+    ``condensed_distances()`` would recompute the full n^2 pdist on every call — at the
+    largest benchmark sizes that costs seconds and ~1 GB per evaluation). Distance problems
+    already store the condensed vector, so gathering the k x k block from it is cheap.
+    """
     idx = np.asarray(i_selected, dtype=np.int64)
     k = idx.shape[0]
     if k < 2:
         raise ValueError("A selection needs at least 2 items to evaluate diversity.")
     if len(np.unique(idx)) != k:
         raise ValueError("Selection contains duplicate indices.")
+    if isinstance(problem, VectorMaxDivProblem):
+        return squareform(compute_pdist(problem.vectors[idx], problem.distance_metric)).astype(np.float64)
     n = problem.n
     condensed = problem.condensed_distances()
     ii, jj = np.meshgrid(idx, idx, indexing="ij")
