@@ -2,11 +2,12 @@
 
 The archive (Glover / Geo / Ran sets — 135 instance files, paired with multiple k
 values in the published results — plus the best-known-value tables)
-is downloaded from the maintainers' site at run time and cached locally — MDPLIB's
-citation-based terms mean instances are never committed to this repo. When using these
-instances, cite: Marti, Martinez-Gavara, Perez-Pelo & Sanchez-Oro (2022), "A review on
-discrete diversity and dispersion maximization from an OR perspective", EJOR 299(3)
-(MDPLIB 2.0).
+is downloaded from the maintainers' site at run time and cached locally — the
+citation-based distribution terms mean instances are never committed to this repo. The
+instance sets and the accompanying best-known values originate from Resende, Marti,
+Gallego & Duarte (2010), "GRASP and path relinking for the max-min diversity problem",
+Computers & Operations Research 37(3); the hosting library (MDPLIB) is surveyed in Marti,
+Martinez-Gavara, Perez-Pelo & Sanchez-Oro (2022), EJOR 299(3).
 
 Formats (verified against the archive):
   - Glover / Geo: line 1 = n, line 2 = d, then n rows ``index coord_1 ... coord_d``.
