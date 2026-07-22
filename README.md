@@ -12,6 +12,74 @@
 </p>
 
 # max-div
-Configurable Solver for Maximum Diversity Problems with Fairness Constraints.
 
-### --- ***Under Development*** ---
+Configurable solver for **Maximum Diversity Problems** with optional **fairness constraints**:
+given `n` items — vectors or precomputed distances — select the `k` most diverse, optionally
+subject to per-group minimum/maximum quotas.
+
+max-div is an **anytime heuristic**: it returns a good selection quickly and keeps improving it
+for as long as you allow (wall-clock time or iteration count). Two things set it apart among
+freely available tools: it is the only
+**dedicated diversity solver** with native support for **overlapping fairness constraints**, and
+the only one offering a **geometric-mean separation** objective — one of four diversity metrics
+it provides (minimum, mean, and geometric-mean separation, plus mean pairwise distance).
+
+It fills the gap between exact MIP/CP solvers, which prove optimal answers but do not scale, and
+single-shot pickers, which are fast but cannot honor selection constraints. The
+[benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) show where
+it leads and where it does not.
+
+## Installation
+
+```bash
+pip install max-div
+```
+
+## Quick start
+
+```python
+import numpy as np
+from max_div import MaxDivProblem, MaxDivSolverBuilder, seconds
+
+rng = np.random.default_rng(42)
+vectors = rng.random((200, 5))               # 200 points in 5 dimensions
+
+# select the 20 most diverse, improving for up to 5 seconds
+problem = MaxDivProblem.new(vectors, k=20)
+solution = MaxDivSolverBuilder(problem).with_preset(seconds(5)).build().solve()
+
+print(solution.i_selected)                   # indices of the selected items
+```
+
+### With fairness constraints
+
+Require a minimum and/or maximum number of selected items from given subsets — useful for fair
+representation across groups. Groups may overlap, and infeasible constraints degrade gracefully
+to the least-infeasible selection rather than failing.
+
+```python
+from max_div import Constraint
+
+# require between 8 and 12 of the selected items from each half of the data
+constraints = [
+    Constraint(int_set=set(range(0, 100)),   min_count=8, max_count=12),
+    Constraint(int_set=set(range(100, 200)), min_count=8, max_count=12),
+]
+problem = MaxDivProblem.new(vectors, k=20, constraints=constraints)
+```
+
+## Documentation
+
+Full documentation lives at **[max-div.readthedocs.io](https://max-div.readthedocs.io)**,
+including:
+
+- [Getting started](https://max-div.readthedocs.io/en/stable/getting_started/) — installation,
+  distance and diversity metrics, solver presets
+- [Comparison with other tools](https://max-div.readthedocs.io/en/stable/comparison/) — how
+  max-div relates to exact solvers, greedy pickers, and samplers
+- [Benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) — the
+  measured comparison against third-party tools
+
+## License
+
+Licensed under the [Apache License 2.0](https://github.com/bertpl/max-div/blob/main/LICENSE).

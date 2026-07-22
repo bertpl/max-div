@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Comparison benchmarks against third-party tools (Python heuristics, exact solvers, and MDPLIB best-known values) in the documentation
 
 ### Changed
 
