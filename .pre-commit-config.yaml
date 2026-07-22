@@ -55,8 +55,12 @@ repos:
         # syntax only instead of instantiating tags.
         args: [--unsafe]
       - id: check-toml
+      # Generated matplotlib figures are committed as-is; their emitted whitespace
+      # is not hand-maintained source, so the whitespace hooks skip them.
       - id: end-of-file-fixer
+        exclude: ^docs/benchmarks/comparison/images/.*\.svg$
       - id: trailing-whitespace
+        exclude: ^docs/benchmarks/comparison/images/.*\.svg$
       - id: check-added-large-files
         args: [--maxkb=512]
       - id: check-merge-conflict
