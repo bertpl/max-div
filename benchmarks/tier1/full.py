@@ -1,0 +1,160 @@
+"""The published tier-1 run: max-div vs. exact-solver references.
+
+Run with: ``uv run --group benchmarks python -m benchmarks.tier1.full``.
+Emits JSON/JSONL result files into ``reports/benchmarks/tier1/``; the docs artifacts are
+generated separately by ``benchmarks.tier1.report``. Expect a ~6 h sequential run, most of
+it spent in the two long exact reference solves.
+
+Three experiments:
+
+1. **Max-min gap to proven optimum** — CP-SAT (threshold binary search) proves the optimum
+   on U1 + C1 at n = 100/200/300; max-div runs its budget ladder on the same problems.
+   Above n ~ 300 CP-SAT no longer proves within the cap, which bounds the experiment.
+2. **Backend scaling ladder (mean/geomean)** — how far SCIP and CP-SAT push the
+   NN-assignment model before proofs stop, on a d=4 random family below the generators'
+   n = 100 floor. This substantiates why no mean/geomean gap-to-optimum is published.
+3. **Incumbent-at-budget geomean panel** — on shipped problems no solver can certify
+   (U3 and C4 at size 1), CP-SAT runs at a generous cap and its best-found solution is
+   compared against max-div's ladder. Uncertified by construction.
+"""
+
+import json
+import time
+from dataclasses import asdict
+from pathlib import Path
+
+import numpy as np
+
+from benchmarks.common import build_problem, save_records, time_ladder
+from benchmarks.exact import solve_maxmin_cpsat, solve_nn_assignment_cpsat, solve_nn_separation_scip
+from benchmarks.runners import run_maxdiv_ladder
+from max_div.metrics import DiversityMetric
+from max_div.problem import MaxDivProblem
+
+OUTPUT_DIR = Path("reports/benchmarks/tier1")
+
+SEEDS = (0, 1, 2)
+TIME_BUDGETS_SEC = time_ladder(0.001, 10.0)
+
+# Experiment 1: max-min gap to proven optimum.
+MAXMIN_PROBLEMS = ("U1", "C1")
+MAXMIN_SIZES = (1, 2, 3)  # n = 100 / 200 / 300; the CP-SAT proof cliff sits at n ~ 400
+MAXMIN_CAP_SEC = 120.0
+
+# Experiment 2: backend scaling ladder (custom d=4 family; k = n // 10).
+SCALING_NS = (40, 50, 60, 70, 80, 90, 100)
+SCALING_DIMENSIONS = 4
+SCALING_CAPS_SEC = {"SCIP (1 thread)": 900.0, "CP-SAT (1 worker)": 3600.0, "CP-SAT (8 workers)": 3600.0}
+
+# Experiment 3: incumbent-at-budget geomean panel on shipped problems.
+INCUMBENT_CASES = (("U3", 1, 10_800.0), ("C4", 1, 900.0))  # C4's bound is dead by 900 s already
+
+
+def scaling_problem(n: int) -> MaxDivProblem:
+    """The custom sub-n=100 problem family used for the backend scaling ladder."""
+    rng = np.random.default_rng(0)
+    vectors = rng.random((n, SCALING_DIMENSIONS), dtype=np.float32)
+    return MaxDivProblem.new(vectors, k=max(2, n // 10), diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+
+
+def run_maxmin_gap() -> None:
+    """Experiment 1: prove max-min optima with CP-SAT and ladder max-div on the same problems."""
+    exact_rows, records = [], []
+    for name in MAXMIN_PROBLEMS:
+        for size in MAXMIN_SIZES:
+            problem = build_problem(name, size=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
+            res = solve_maxmin_cpsat(problem, time_limit_sec=MAXMIN_CAP_SEC)
+            exact_rows.append(
+                {
+                    "problem": name,
+                    "size": size,
+                    "n": problem.n,
+                    "k": problem.k,
+                    "m": problem.m,
+                    "optimum": res.min_separation,
+                    "proven_optimal": res.proven_optimal,
+                    "measured_sec": res.measured_sec,
+                }
+            )
+            records += run_maxdiv_ladder(
+                problem, problem_name=name, size=size, time_budgets_sec=TIME_BUDGETS_SEC, seeds=SEEDS
+            )
+            print(
+                f"maxmin {name} size={size}: optimum={res.min_separation:.5f} proven={res.proven_optimal}", flush=True
+            )
+    (OUTPUT_DIR / "maxmin_exact.json").write_text(json.dumps(exact_rows, indent=2))
+    save_records(records, OUTPUT_DIR / "maxmin_records.jsonl")
+
+
+def run_scaling_ladder() -> None:
+    """Experiment 2: walk each backend up the n-ladder until its first failed proof."""
+    rows = []
+    for backend, cap in SCALING_CAPS_SEC.items():
+        for n in SCALING_NS:
+            problem = scaling_problem(n)
+            t0 = time.perf_counter()
+            if backend.startswith("SCIP"):
+                try:
+                    res = solve_nn_separation_scip(problem, DiversityMetric.GEOMEAN_SEPARATION, time_limit_sec=cap)
+                    proven, measured = res.proven_optimal, res.measured_sec
+                except RuntimeError:
+                    proven, measured = False, time.perf_counter() - t0
+            else:
+                workers = 1 if "1 worker" in backend else 8
+                try:
+                    res = solve_nn_assignment_cpsat(
+                        problem, DiversityMetric.GEOMEAN_SEPARATION, time_limit_sec=cap, num_workers=workers
+                    )
+                    proven, measured = res.proven_optimal, res.measured_sec
+                except RuntimeError:
+                    proven, measured = False, time.perf_counter() - t0
+            rows.append({"backend": backend, "n": n, "k": problem.k, "measured_sec": measured, "proven": proven})
+            print(f"scaling {backend} n={n}: proven={proven} in {measured:.1f}s", flush=True)
+            if not proven:
+                break  # larger n would only re-prove the wall at full cap cost
+    (OUTPUT_DIR / "scaling.json").write_text(json.dumps(rows, indent=2))
+
+
+def run_incumbent_panel() -> None:
+    """Experiment 3: long-cap CP-SAT incumbents vs. the max-div ladder, geomean objective."""
+    panel_rows, records = [], []
+    for name, size, cap in INCUMBENT_CASES:
+        problem = build_problem(name, size=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+        res = solve_nn_assignment_cpsat(problem, DiversityMetric.GEOMEAN_SEPARATION, time_limit_sec=cap)
+        panel_rows.append(
+            {
+                "problem": name,
+                "size": size,
+                "n": problem.n,
+                "k": problem.k,
+                "m": problem.m,
+                "cap_sec": cap,
+                **asdict(res) | {"i_selected": res.i_selected.tolist()},
+            }
+        )
+        records += run_maxdiv_ladder(
+            problem, problem_name=name, size=size, time_budgets_sec=TIME_BUDGETS_SEC, seeds=SEEDS
+        )
+        print(
+            f"incumbent {name} size={size}: value={res.objective_value:.5f} bound={res.objective_bound:.5f} "
+            f"proven={res.proven_optimal} in {res.measured_sec:.0f}s",
+            flush=True,
+        )
+    (OUTPUT_DIR / "incumbent.json").write_text(json.dumps(panel_rows, indent=2))
+    save_records(records, OUTPUT_DIR / "incumbent_records.jsonl")
+
+
+def main() -> None:
+    """Run all three tier-1 experiments and persist their results."""
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    print("tier-1 experiment 1: max-min gap to proven optimum ...", flush=True)
+    run_maxmin_gap()
+    print("tier-1 experiment 2: backend scaling ladder ...", flush=True)
+    run_scaling_ladder()
+    print("tier-1 experiment 3: incumbent-at-budget panel ...", flush=True)
+    run_incumbent_panel()
+    print("tier-1 complete", flush=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -135,6 +135,7 @@ nav:
           - Solver Presets: benchmarks/solver/bm_problem_c4_presets.md
     - Comparison:
       - vs. Python Heuristics: benchmarks/comparison/tier2.md
+      - vs. Exact Solvers: benchmarks/comparison/tier1.md
     - Internal:
       - Overview: benchmarks/internal/overview.md
       - DiversityMetric: benchmarks/internal/bm_diversity_metrics.md

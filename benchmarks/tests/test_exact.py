@@ -5,7 +5,7 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from benchmarks.common import evaluate_selection
-from benchmarks.exact import solve_maxmin_cpsat, solve_nn_separation_scip
+from benchmarks.exact import solve_maxmin_cpsat, solve_nn_assignment_cpsat, solve_nn_separation_scip
 from max_div._core.constraints import Constraint
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
@@ -72,3 +72,30 @@ def test_scip_rejects_unsupported_metric():
     # --- act / assert ------------------------------------
     with pytest.raises(ValueError, match="Unsupported metric"):
         solve_nn_separation_scip(problem, DiversityMetric.MIN_SEPARATION)
+
+
+@pytest.mark.parametrize("metric", [DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION])
+def test_cpsat_nn_assignment_matches_brute_force(metric):
+    # the CP-SAT rebuild of the assignment model must agree with the brute-force oracle,
+    # which also validates its integer weight scaling end to end
+    # --- arrange -----------------------------------------
+    problem = _tiny_problem(metric)
+    oracle = _brute_force_optimum(problem, metric.name)
+
+    # --- act ---------------------------------------------
+    result = solve_nn_assignment_cpsat(problem, metric, time_limit_sec=60, num_workers=1)
+    achieved = evaluate_selection(problem, result.i_selected)[metric.name]
+
+    # --- assert ------------------------------------------
+    assert result.proven_optimal
+    assert achieved == pytest.approx(oracle, rel=1e-5)
+    assert result.objective_bound == pytest.approx(result.objective_value, rel=1e-5)
+
+
+def test_cpsat_nn_assignment_rejects_unsupported_metric():
+    # --- arrange -----------------------------------------
+    problem = _tiny_problem(DiversityMetric.MIN_SEPARATION)
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="Unsupported metric"):
+        solve_nn_assignment_cpsat(problem, DiversityMetric.MIN_SEPARATION)
