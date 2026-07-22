@@ -90,8 +90,13 @@ nav:
   - Comparison: comparison.md
   - CLI: cli.md
   - Benchmarks:
-    - Overview: benchmarks/_index.md
-    - Solver:
+    - Overview: benchmarks/index.md
+    - 3rd Party Solvers:
+      - Overview: benchmarks/comparison/overview.md
+      - vs. Python Heuristics: benchmarks/comparison/tier2.md
+      - vs. Exact Solvers: benchmarks/comparison/tier1.md
+      - vs. MDPLIB Best-Known: benchmarks/comparison/tier3.md
+    - Solver Presets:
       - Test Problems: benchmarks/solver/test_problems.md
       - Problem U1:
           - Description: benchmarks/solver/bm_problem_u1.md
@@ -133,11 +138,7 @@ nav:
           - Initialization Strategies: benchmarks/solver/bm_problem_c4_init.md
           - Optimization Strategies: benchmarks/solver/bm_problem_c4_optim.md
           - Solver Presets: benchmarks/solver/bm_problem_c4_presets.md
-    - Comparison:
-      - vs. Python Heuristics: benchmarks/comparison/tier2.md
-      - vs. Exact Solvers: benchmarks/comparison/tier1.md
-      - vs. MDPLIB Best-Known: benchmarks/comparison/tier3.md
-    - Internal:
+    - Internal Primitives:
       - Overview: benchmarks/internal/overview.md
       - DiversityMetric: benchmarks/internal/bm_diversity_metrics.md
       - randint: benchmarks/internal/bm_randint.md

@@ -239,5 +239,5 @@ way to improve solution quality.
 
 - **[Concepts](concepts/solver.md)** -- how the solver pipeline, scoring, constraints, and diversity metrics work under the hood
 - **[API Reference](reference/solver/MaxDivSolverBuilder.md)** -- full details on all configuration options
-- **[Benchmark Results](benchmarks/_index.md)** -- see how different strategies and presets perform across various test problems
+- **[Benchmark Results](benchmarks/index.md)** -- see how different strategies and presets perform across various test problems
 - **[CLI](cli.md)** -- run benchmarks and solve problems from the command line
