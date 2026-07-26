@@ -39,6 +39,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    # Free-threaded builds are supported and CI-tested. Deliberately NOT mirrored in
+    # .python-versions: no trove classifier exists for a free-threaded interpreter, and
+    # release.py validates that file against the numeric version classifiers above.
+    "Programming Language :: Python :: Free Threading :: 3 - Stable",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Typing :: Typed",
 ]
