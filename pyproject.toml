@@ -121,6 +121,14 @@ path = "README.md"
 pattern = 'src="(images/[^"]+)"'
 replacement = 'src="https://raw.githubusercontent.com/bertpl/max-div/v$HFPR_VERSION/\1"'
 
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# The hero table needs a `<picture>` to switch on the reader's color scheme, and its paths live
+# in attributes -- including `srcset`, which the rule above does not match. PyPI's sanitizer
+# drops `<picture>`/`<source>` and keeps the `<img>`, so PyPI shows the light variant, which is
+# right for a page with no dark mode -- but only if that URL is absolute.
+pattern = '(src|srcset)="(docs/images/[^"]+)"'
+replacement = '\1="https://raw.githubusercontent.com/bertpl/max-div/v$HFPR_VERSION/\2"'
+
 [tool.hatch.build.targets.sdist]
 only-include = ["src/max_div"]
 

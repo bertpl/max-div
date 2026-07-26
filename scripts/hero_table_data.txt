@@ -1,0 +1,35 @@
+# Capability data for the README hero table. Rendered by scripts/build_hero_table.py.
+#
+# Marks:  Y = implemented as a feature      ~ = reachable, but the caller supplies
+#                                               a model / kernel / callback / normalization
+#         . = not reachable
+#
+# Columns, in order:
+#   L1  L2  cos cust    distance metrics
+#   mm  mnn gnn ms      objectives: max-min, mean-of-NN, geomean-of-NN, max-sum
+#   dsj ovl rng         constraints: disjoint groups, overlapping groups, ranged counts
+#   it  wc  imp         budgets: iteration count, wall clock, improves with budget
+#   scale               max practical n, as a power of ten
+#
+# One source URL per tool. Every mark on a row must be defensible from it.
+# Keep rows within a category in the order they should render.
+# "category" deliberately avoids the word "tier": the benchmark pages use tier 1/2/3 for
+# comparison targets, which is a different taxonomy (max-div is never a tier there, and
+# tier 3 is a published dataset rather than a tool).
+
+[category] Anytime optimizers
+max-div            | Y Y Y Y | Y Y Y Y | Y Y Y | Y Y Y | 4-5 | https://max-div.readthedocs.io/
+
+[category] Exact solvers
+OR-Tools CP-SAT    | ~ ~ ~ Y | ~ ~ ~ ~ | ~ ~ ~ | Y Y ~ | 3   | https://developers.google.com/optimization/cp/cp_solver
+SCIP               | ~ ~ ~ Y | ~ ~ ~ ~ | ~ ~ ~ | Y Y ~ | 3   | https://www.scipopt.org/
+HiGHS              | ~ ~ ~ Y | ~ ~ ~ ~ | ~ ~ ~ | Y Y ~ | 3   | https://ergo-code.github.io/HiGHS/
+
+[category] One-shot pickers & samplers
+RDKit MaxMinPicker | ~ ~ ~ Y | Y . . . | . . . | . . . | 6   | https://www.rdkit.org/docs/source/rdkit.SimDivFilters.rdSimDivPickers.html
+skmatter           | . Y ~ . | Y . . . | . . . | . . . | 5   | https://scikit-matter.readthedocs.io/
+fpsample           | . Y ~ . | Y . . . | . . . | . . . | 6   | https://github.com/leonardodalinky/fpsample
+apricot-select     | Y Y Y Y | . . . Y | . . . | . . . | 5   | https://apricot-select.readthedocs.io/
+qc-selector        | Y Y ~ Y | Y . . Y | Y . . | ~ . . | 4   | https://selector.qcdevs.org/
+DPPy               | ~ ~ ~ Y | . . . . | . . . | ~ . . | 4   | https://dppy.readthedocs.io/
+code-FDM           | ~ Y ~ Y | Y . . . | Y . . | . . . | 4   | https://github.com/yhwang1990/code-FDM

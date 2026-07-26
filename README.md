@@ -29,6 +29,17 @@ single-shot pickers, which are fast but cannot honor selection constraints. The
 [benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) show where
 it leads and where it does not.
 
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero_dark.svg">
+    <img src="docs/images/hero_light.svg" alt="Feature comparison of max-div against exact solvers and one-shot pickers: distance metrics, diversity objectives, constraint handling, time budgets and practical scale" style="max-width: 100%; height: auto;">
+  </picture>
+</p>
+
+<sub>&#10003; built in &nbsp;·&nbsp; ~ reachable, but you supply the model, kernel or metric. The
+surveyed tools and their categories are described in the
+<a href="https://max-div.readthedocs.io/en/stable/comparison/">docs comparison</a>.</sub>
+
 ## Installation
 
 ```bash
