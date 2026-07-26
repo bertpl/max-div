@@ -4,7 +4,8 @@
 
 When you call `solver.solve()`, the solver executes a pipeline of **steps**:
 
-1. **Initialization step** -- builds the initial selection of `k` vectors
+1. **Initialization step** -- builds the initial [selection](glossary.md#selection) of `k`
+   [items](glossary.md#item)
 2. **One or more optimization steps** -- iteratively improves the selection
 
 Each step runs for a configured duration (wall-clock time or iteration count) and operates
@@ -20,26 +21,26 @@ satisfaction.
 
 ## Initialization Strategies
 
-The initialization step selects the initial `k` vectors. Different strategies trade off
+The initialization step selects the initial `k` items. Different strategies trade off
 speed vs quality of the starting point:
 
 | Strategy | How it works |
 |----------|-------------|
-| `random_one_shot` | Selects all `k` vectors in one batch, with probabilities biased by global separation. **Default for all presets.** |
+| `random_one_shot` | Selects all `k` items in one batch, with probabilities biased by global separation. **Default for all presets.** |
 | `random_batched` | Selects in batches of `b`, re-evaluating separations between batches. |
 | `eager` | Evaluates `nc` random candidates per step, picks the best. Slower but higher quality. |
-| `fast` | Deterministic greedy: always picks the vector maximizing separation. Fast but seed-independent. |
+| `fast` | Deterministic greedy: always picks the item maximizing separation. Fast but seed-independent. |
 
 ## Optimization Strategies
 
-Optimization steps iteratively improve the selection through **swap operations**: in each
-iteration, the strategy removes one or more vectors from the current selection and replaces
+Optimization steps iteratively improve the selection through [**swap operations**](glossary.md#swap): in each
+iteration, the strategy removes one or more items from the current selection and replaces
 them with new ones. The swap is kept only if it improves the score.
 
 | Strategy | How it works |
 |----------|-------------|
-| `random_swaps` | Randomly selects vectors to remove and add. Simple baseline. |
-| `guided_swaps` | Biased towards removing low-separation vectors and adding high-separation ones. |
+| `random_swaps` | Randomly selects items to remove and add. Simple baseline. |
+| `guided_swaps` | Biased towards removing low-separation items and adding high-separation ones. |
 | `smart_swaps` | Adaptively learns which swap sizes and candidate selection strategies work best during the run. |
 
 ## Presets vs Custom Configuration

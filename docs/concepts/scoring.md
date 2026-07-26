@@ -7,7 +7,7 @@ Every selection (intermediate or final) is evaluated by a `Score` with four comp
 
 | Component | Range | Meaning |
 |-----------|-------|---------|
-| `size` | 0 to 1 | 1.0 when exactly `k` vectors are selected. Used internally during initialization; always 1.0 in a final solution. |
+| `size` | 0 to 1 | 1.0 when exactly `k` [items](glossary.md#item) are selected. Used internally during initialization; always 1.0 in a final solution. |
 | `constraints` | 0 to 1 | 1.0 when all fairness constraints are satisfied. Lower values indicate more constraint violations. |
 | `diversity` | 0+ | The main diversity metric value (higher is better). |
 | `div_tie_breakers` | 0+ | Secondary diversity metrics, used to break ties. |
@@ -35,8 +35,8 @@ The solver automatically selects appropriate tie-breakers based on your chosen d
 
 | Primary Metric | Default Tie-Breakers | Why |
 |---------------|---------------------|-----|
-| `MIN_SEPARATION` | `APPROX_GEOMEAN_SEPARATION`, `NON_ZERO_SEPARATION_FRAC` | Min-separation only depends on the closest pair. Swapping any other vector doesn't change the score, causing many ties. The geomean tie-breaker guides the solver towards improving the overall spread. |
-| `GEOMEAN_SEPARATION` | `NON_ZERO_SEPARATION_FRAC` | Geomean is zero if any separation is zero. When multiple separations are zero, single swaps can't improve the score. The non-zero fraction tie-breaker guides the solver towards eliminating zero-distance vectors. |
+| `MIN_SEPARATION` | `APPROX_GEOMEAN_SEPARATION`, `NON_ZERO_SEPARATION_FRAC` | Min-separation only depends on the closest pair. Swapping any other item doesn't change the score, causing many ties. The geomean tie-breaker guides the solver towards improving the overall spread. |
+| `GEOMEAN_SEPARATION` | `NON_ZERO_SEPARATION_FRAC` | Geomean is zero if any separation is zero. When multiple separations are zero, single swaps can't improve the score. The non-zero fraction tie-breaker guides the solver towards eliminating zero-distance items. |
 | `MEAN_SEPARATION` | *(none)* | Mean separation rarely produces ties. |
 
 You can override the defaults via `MaxDivSolverBuilder.with_diversity_tie_breakers()`.
