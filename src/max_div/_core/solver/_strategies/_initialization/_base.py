@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 #  InitializationStrategy
 # =================================================================================================
 class InitializationStrategy(StrategyBase, ABC):
-    """Base class for strategies that produce an initial selection of ``k`` vectors.
+    """Base class for strategies that produce an initial selection of ``k`` items.
 
     Use the factory methods (`fast`, `random_one_shot`, `random_batched`,
     `eager`) to create instances.
@@ -49,7 +49,7 @@ class InitializationStrategy(StrategyBase, ABC):
     def fast(cls) -> InitFast:
         """Deterministic greedy initialization.
 
-        Selects vectors one-by-one, always picking the one that maximizes the diversity contribution wrt the
+        Selects items one-by-one, always picking the one that maximizes the diversity contribution wrt the
         current selection.
         Fast but seed-independent.
         """
@@ -59,7 +59,7 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:
-        """Random initialization that selects all ``k`` vectors in a single batch.
+        """Random initialization that selects all ``k`` items in a single batch.
 
         Probabilities are biased by the global diversity contribution (unless ``uniform=True``).
 
@@ -75,11 +75,11 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def random_batched(cls, b: int, ignore_constraints: bool = False) -> InitRandomBatched:
-        """Random initialization that selects vectors in batches of ``b``.
+        """Random initialization that selects items in batches of ``b``.
 
         Diversity contributions are re-evaluated between batches.
 
-        :param b: Batch size (number of vectors to select per batch).
+        :param b: Batch size (number of items to select per batch).
         :param ignore_constraints: If True, ignore constraints during sampling.
         """
         from ._init_random_batched import InitRandomBatched

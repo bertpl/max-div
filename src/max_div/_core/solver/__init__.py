@@ -1,9 +1,9 @@
 """Solver package: pipeline, strategies, presets, and scoring.
 
 General usage of dimensions:
-n: number of initial vectors to choose from ('universe')
+n: number of initial items to choose from ('universe')
 d: dimensionality of the vectors
-k: number of vectors to be selected
+k: number of items to be selected
 m: number of (group) constraints imposed on the problem.
 """
 

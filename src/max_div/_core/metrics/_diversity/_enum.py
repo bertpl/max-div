@@ -12,8 +12,8 @@ class DiversityContributionFamily(StrEnum):
     Members
     -------
 
-        - SEPARATION:     contribution = distance to the nearest selected vector
-        - MEAN_DISTANCE:  contribution = mean distance to the selected vectors
+        - SEPARATION:     contribution = distance to the nearest selected item
+        - MEAN_DISTANCE:  contribution = mean distance to the selected items
     """
 
     SEPARATION = "SEPARATION"
@@ -26,13 +26,13 @@ class DiversityMetric(StrEnum):
     Members
     -------
 
-        - MIN_SEPARATION:             Minimum separation of all selected vectors
-        - MEAN_SEPARATION:            Arithmetic mean separation of all selected vectors
-        - GEOMEAN_SEPARATION:         Geometric mean separation of all selected vectors
-        - APPROX_GEOMEAN_SEPARATION:  Approximate geometric mean separation of all selected vectors
+        - MIN_SEPARATION:             Minimum separation of all selected items
+        - MEAN_SEPARATION:            Arithmetic mean separation of all selected items
+        - GEOMEAN_SEPARATION:         Geometric mean separation of all selected items
+        - APPROX_GEOMEAN_SEPARATION:  Approximate geometric mean separation of all selected items
                                           (uses faster, but still smooth approximations of log(.) and exp(.))
         - NON_ZERO_SEPARATION_FRAC:   Fraction of separation values that are non-zero
-        - MEAN_PAIRWISE_DISTANCE:     Mean distance over all pairs of selected vectors
+        - MEAN_PAIRWISE_DISTANCE:     Mean distance over all pairs of selected items
                                           (the classical max-sum diversity objective)
     """
 
@@ -76,13 +76,13 @@ class DiversityMetric(StrEnum):
         return _functions[self]  # ty: ignore[invalid-return-type]
 
     def compute(self, contribution_values: NDArray[np.float32]) -> np.float32:
-        """Compute diversity metric given the selected vectors' per-point diversity-contribution values.
+        """Compute diversity metric given the selected items' per-point diversity-contribution values.
 
         Parameters
         ----------
         contribution_values : NDArray[np.float32]
-            Per-point diversity-contribution values of the selected vectors (for separation-family
-            metrics: each vector's separation wrt the others in the selection).
+            Per-point diversity-contribution values of the selected items (for separation-family
+            metrics: each item's separation wrt the others in the selection).
 
         Returns:
         -------

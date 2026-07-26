@@ -7,7 +7,7 @@ from max_div._core._math.fast_log_exp import fast_exp2_f32, fast_log2_f32
 
 @njit("float32(float32[::1])", fastmath=True, inline="always")
 def min_separation(sep: NDArray[np.float32]) -> np.float32:
-    """Minimum separation of all selected vectors."""
+    """Minimum separation of all selected items."""
     n = sep.shape[0]
     min_value = np.float32(np.inf)
     for i in range(n):
@@ -17,23 +17,23 @@ def min_separation(sep: NDArray[np.float32]) -> np.float32:
 
 @njit("float32(float32[::1])", fastmath=True, inline="always")
 def mean_separation(sep: NDArray[np.float32]) -> np.float32:
-    """Arithmetic mean separation of all selected vectors."""
+    """Arithmetic mean separation of all selected items."""
     return np.mean(sep)
 
 
 @njit("float32(float32[::1])", fastmath=True, inline="always")
 def mean_pairwise_distance(mean_dists: NDArray[np.float32]) -> np.float32:
-    """Mean pairwise distance among all selected vectors, from their mean-distance contribution values.
+    """Mean pairwise distance among all selected items, from their mean-distance contribution values.
 
-    Each selected vector's contribution is its mean distance to the other selected vectors; averaging
-    those per-vector means over the selection yields exactly the mean over all selected pairs.
+    Each selected item's contribution is its mean distance to the other selected items; averaging
+    those per-item means over the selection yields exactly the mean over all selected pairs.
     """
     return np.mean(mean_dists)
 
 
 @njit("float32(float32[::1])", fastmath=True, inline="always")
 def geomean_separation(sep: NDArray[np.float32]) -> np.float32:
-    """Geometric mean separation of all selected vectors."""
+    """Geometric mean separation of all selected items."""
     log_sum = np.float32(0.0)
     n = sep.shape[0]
     for i in range(n):
@@ -43,7 +43,7 @@ def geomean_separation(sep: NDArray[np.float32]) -> np.float32:
 
 @njit("float32(float32[::1])", fastmath=True, inline="always")
 def approx_geomean_separation(sep: NDArray[np.float32]) -> np.float32:
-    """Approximate geometric mean separation of all selected vectors."""
+    """Approximate geometric mean separation of all selected items."""
     log_sum = np.float32(0.0)
     n = sep.shape[0]
     for i in range(n):

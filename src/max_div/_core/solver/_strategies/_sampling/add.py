@@ -73,7 +73,7 @@ def select_items_to_add(
         p_in=p,
         p_out=p,  # in-place
         modifier=np.float32(selectivity_modifier),
-        reverse=False,  # for adding, we want to have vectors with high diversity contribution have higher probability
+        reverse=False,  # for adding, we want to have items with high diversity contribution have higher probability
     )
 
     # --- actual sampling ---------------------------------

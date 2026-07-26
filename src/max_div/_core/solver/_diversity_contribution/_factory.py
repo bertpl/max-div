@@ -21,7 +21,7 @@ def build_diversity_contribution_tracker(
 
     :param family: (DiversityContributionFamily) the contribution family to track.
     :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
-    :param n: (np.int32) number of vectors
+    :param n: (np.int32) number of items
     """
     match family:
         case DiversityContributionFamily.SEPARATION:

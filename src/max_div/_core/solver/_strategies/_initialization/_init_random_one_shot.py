@@ -17,7 +17,7 @@ class InitRandomOneShot(InitializationStrategy):
     Parameters:
     - uniform (bool): If `True`, samples uniformly at random.
                       If `False`, uses global diversity contributions as sampling weights, favoring
-                                         high-contribution vectors with higher probability (default: `False`)
+                                         high-contribution items with higher probability (default: `False`)
     - ignore_constraints (bool): If `False`, respects problem constraints during initialization, if present.
                                  If `True`, constraints are ignored. (default: `False`)
 
@@ -25,9 +25,9 @@ class InitRandomOneShot(InitializationStrategy):
         - using the global diversity contribution as sampling weights is a heuristic, not an exactly optimal
           solution, with known limitations:
             - in 1D problems this heuristic should be probabilistically optimal, but in higher dimensions (the more
-              likely scenario) it is not.  E.g. in 2D where vectors have half the separation as in other regions, we
-              should sample 4x fewer, not 2x fewer vectors.
-            - when multiple vectors (e.g. 5) are identical and hence have 0 separation, we will not sample any of them
+              likely scenario) it is not.  E.g. in 2D where items have half the separation as in other regions, we
+              should sample 4x fewer, not 2x fewer items.
+            - when multiple items (e.g. 5) are identical and hence have 0 separation, we will not sample any of them
               (unless k is high enough), while optimal solutions might in fact contain exactly 1 of them.
 
     Time Complexity:

@@ -40,15 +40,15 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 
       - these are optional additional metrics that can be added in case of ties in the main diversity score.
 
-         - EX 1: min-dist only depends on the smallest distance.  Hence, swapping out any other vector
+         - EX 1: min-dist only depends on the smallest distance.  Hence, swapping out any other item
                  in the selection can have no effect on the diversity score, leading to many ties.
                --> Adding a tie-breaker such as geo-mean separation, can help pure swap-based algorithm converge
                    towards a more optimal solution.
 
          - EX 2: geo-mean will be 0.0 if any separation-value in the selection is 0.  If more than 1 such value is 0.0,
-                 we have a situation where any single-vector swap will not affect the diversity score.
+                 we have a situation where any single-item swap will not affect the diversity score.
                --> Adding a tie-breaker that counts how many non-zero distances there are, helps guide the solver
-                   towards removing vectors causing 0-distances.
+                   towards removing items causing 0-distances.
     """
 
     # --- score components ------------
@@ -138,7 +138,7 @@ class ScoreGenerator:
     ) -> None:
         """Initialize the ScoreGenerator.
 
-        :param n: (int | np.int32) number of vectors in the max-div problem.
+        :param n: (int | np.int32) number of items in the max-div problem.
         :param k: (int) The target selection size for the max-div problem.
         :param diversity_metric: (DiversityMetric) The diversity metric used to compute diversity scores.
         :param diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
@@ -207,9 +207,9 @@ class ScoreGenerator:
     ) -> Score:
         """Compute the multi-component Score of a selection.
 
-        :param n_selected: (int | np.int32) current number of selected vectors.
+        :param n_selected: (int | np.int32) current number of selected items.
         :param con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
-        :param selected_contributions: (SelectedContributions) the selected vectors' per-family
+        :param selected_contributions: (SelectedContributions) the selected items' per-family
                                        contribution values; slots of families no configured metric
                                        consumes are never read.
         """
