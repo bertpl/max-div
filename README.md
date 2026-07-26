@@ -35,6 +35,10 @@ it leads and where it does not.
 pip install max-div
 ```
 
+Python 3.11+; free-threaded builds (3.14t) are supported and CI-tested (see the
+[installation notes](https://max-div.readthedocs.io/en/stable/getting_started/#installation) for
+the numba version they require).
+
 ## Quick start
 
 ```python

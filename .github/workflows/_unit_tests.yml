@@ -28,6 +28,13 @@ jobs:
           - { python: "3.14", resolution: lowest-direct, jit: "on"  }
           - { python: "3.11", resolution: highest,       jit: "off" }  # coverage leg
           - { python: "3.14", resolution: highest,       jit: "off" }  # coverage leg
+          # Free-threaded build. `highest` only, deliberately: the numba floor for 3.14 is 0.63,
+          # which predates numba's free-threaded wheels (first shipped in 0.65), and no PEP 508
+          # marker can raise that floor for free-threaded builds alone — so a lowest-direct leg
+          # would try to source-build a numba with no usable wheel. Do not "complete the matrix"
+          # by adding one. The quoted "3.14t" is what makes uv resolve the free-threaded
+          # interpreter rather than the GIL one.
+          - { python: "3.14t", resolution: highest,      jit: "on"  }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
