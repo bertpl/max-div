@@ -83,9 +83,8 @@ splash:
 	./images/splash/create_splash_with_version.sh "$$(uv version --short)-dev";
 
 docs:
-	mkdir -p ./reports
-	uv sync --extra docs;
-	mkdocs build;
+	# output dir comes from mkdocs.yml (site_dir: ./reports/docs)
+	uv run --extra docs mkdocs build;
 
 show-coverage:
 	# trigger browser to open coverage report
