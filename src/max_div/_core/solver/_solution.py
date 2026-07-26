@@ -11,7 +11,7 @@ from max_div._core.solver._score import Score
 class MaxDivSolution:
     """Result of solving a Maximum Diversity Problem.
 
-    Contains the selected vector indices, the final [`Score`][max_div.solution.Score], timing information,
+    Contains the selected item indices, the final [`Score`][max_div.solution.Score], timing information,
     and a history of score checkpoints recorded during the solve.
     """
 
@@ -43,7 +43,7 @@ class MaxDivSolution:
     # --- string representation ---------------------------
     def __str__(self) -> str:
         parts = [
-            f"MaxDivSolution: {len(self.i_selected)} vectors selected",
+            f"MaxDivSolution: {len(self.i_selected)} items selected",
             f"diversity={self.score.diversity:.4f}",
         ]
         if self.n_constraints > 0:

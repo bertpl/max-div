@@ -66,7 +66,7 @@ class MaxDivProblem(ABC):
 
         :param vectors: 2D numpy array of shape ``(n, d)`` with at least 3 rows.
                         Converted to ``float32`` automatically if needed.
-        :param k: Number of vectors to select (must satisfy ``2 <= k <= n``).
+        :param k: Number of items to select (must satisfy ``2 <= k <= n``).
         :param distance_metric: Distance metric for pairwise distances.
         :param diversity_metric: Diversity metric to maximize.
         :param constraints: Optional list of fairness constraints.

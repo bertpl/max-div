@@ -216,7 +216,7 @@ class OptimizationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
     @classmethod
     def random_swaps(cls) -> OptimRandomSwaps:
-        """Baseline strategy: randomly removes and adds vectors, keeping swaps that improve the score."""
+        """Baseline strategy: randomly removes and adds items, keeping swaps that improve the score."""
         from ._optim_random_swaps import OptimRandomSwaps
 
         return OptimRandomSwaps()
@@ -232,7 +232,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         remove_selectivity_modifier: float | ParameterSchedule = 0.0,
         add_selectivity_modifier: float | ParameterSchedule = 0.0,
     ) -> OptimGuidedSwaps:
-        """Contribution-guided swap strategy: biased towards removing low- and adding high-contribution vectors.
+        """Contribution-guided swap strategy: biased towards removing low- and adding high-contribution items.
 
         Supports scheduled parameters for constraint softness and selectivity.
         """

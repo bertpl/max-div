@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Glossary page defining the terms used across the documentation
 
 ### Changed
+- Solution summaries now say "items selected" rather than "vectors selected"
 
 ### Deprecated
 

@@ -94,7 +94,7 @@ def test_solver_state_end_to_end(new_solver_state):
     # --- assert 1 ----------------------------------------
     assert state.selected_index_array.size == 0
     assert state.not_selected_index_array.size == 6
-    assert state.score.size < 1.0  # insufficient vectors selected
+    assert state.score.size < 1.0  # insufficient items selected
     assert state.score.constraints < 1.0  # constraints not satisfied
     assert np.array_equal(state.con_values, state._con_values)
     assert np.array_equal(state.con_indices, state._con_indices)
@@ -111,7 +111,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert np.array_equal(state.selected_index_array, [0, 2, 5])
     assert np.array_equal(state.not_selected_index_array, [1, 3, 4])
     assert np.allclose(state.selected_contribution_array, [2, 2, 3])
-    assert state.score.size == 1.0  # correct number of vectors selected
+    assert state.score.size == 1.0  # correct number of items selected
     assert state.score.constraints == 1.0  # all constraints satisfied
     assert state.score.diversity == pytest.approx((2 * 2 * 3) ** (1 / 3))  # geomean of separations 2, 2, 3
     assert state.n_selected == 3
@@ -126,7 +126,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert np.array_equal(state.not_selected_index_array, [1, 3, 5])
     assert np.allclose(state.selected_contribution_array, [2, 2, 2])
     assert np.allclose(state.not_selected_contribution_array, [1, 1, 1])
-    assert state.score.size == 1.0  # correct number of vectors selected
+    assert state.score.size == 1.0  # correct number of items selected
     assert state.score.constraints == 1.0  # all constraints satisfied
     assert state.score.diversity == pytest.approx(2.0)  # geomean of separations 2, 2, 2
     assert state.n_selected == 3

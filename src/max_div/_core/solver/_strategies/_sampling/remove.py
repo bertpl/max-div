@@ -27,7 +27,7 @@ def select_items_to_remove(
         p_in=p,
         p_out=p,  # in-place
         modifier=np.float32(selectivity_modifier),
-        reverse=True,  # for removal, we want to have vectors with small diversity contribution have higher probability
+        reverse=True,  # for removal, we want to have items with small diversity contribution have higher probability
     )
 
     # --- sample ---

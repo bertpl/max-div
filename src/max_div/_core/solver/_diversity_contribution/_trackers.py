@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 # =================================================================================================
 #  SelectedContributions
 # =================================================================================================
-# A selection's per-family contribution values of the *selected* vectors: a fixed-order tuple with
+# A selection's per-family contribution values of the *selected* items: a fixed-order tuple with
 # one slot per DiversityContributionFamily, in enum definition order (see selected_contributions_slot).
 # Families no metric consumes hold a shared empty array.  A plain tuple instead of a value object
 # keeps this hot-path payload as cheap as possible.
@@ -78,7 +78,7 @@ class DiversityContributionTrackers:
         :param diversity_metric: (DiversityMetric) the main diversity metric.
         :param diversity_tie_breakers: (list[DiversityMetric]) the configured tie-breaker metrics.
         :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
-        :param n: (np.int32) number of vectors
+        :param n: (np.int32) number of items
         """
         main_family = diversity_metric.contribution_family
         families = dict.fromkeys([main_family, *(tb.contribution_family for tb in diversity_tie_breakers)])
@@ -142,7 +142,7 @@ class DiversityContributionTrackers:
     #  Scoring reads
     # -------------------------------------------------------------------------
     def selected_contributions(self, selected: NDArray[np.bool], n_selected: np.int32) -> SelectedContributions:
-        """Return the selected vectors' contribution values, one SelectedContributions slot per family.
+        """Return the selected items' contribution values, one SelectedContributions slot per family.
 
         Slots of families this set does not track hold a shared empty array (never read, since the
         score generator only consumes the families its metrics were bound to).

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 # =================================================================================================
 @numba.njit("float32[::1](float32[::1], int32)", cache=True)
 def compute_separation(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.float32]:
-    """Compute separation of each vector wrt all others, given pairwise distance array pdist and n vectors in total."""
+    """Compute separation of each item wrt all others, given pairwise distance array pdist and n items in total."""
     sep = np.full(n, fill_value=np.inf, dtype=np.float32)
     pdist_idx = 0
     for i in range(n):
@@ -33,7 +33,7 @@ def compute_separation(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.fl
 
 @numba.njit("void(float32[::1], float32[::1], int32, int32)", cache=True)
 def update_separation_add(sep: NDArray[np.float32], pdist: NDArray[np.float32], n: np.int32, i_added: np.int32) -> None:
-    """Update separation of each vector wrt selection, given pdist array and n vectors, after adding i_added."""
+    """Update separation of each item wrt selection, given pdist array and n items, after adding i_added."""
     for j in np.arange(n, dtype=np.int32):
         if j != i_added:
             dist = get_pdist_el(pdist, i_added, j, n)
@@ -49,7 +49,7 @@ def update_separation_remove(
     i_removed: np.int32,
     new_selection: NDArray[np.int32],
 ) -> None:
-    """Update separation of each vector wrt selection, given pdist array and n vectors, after removing i_removed."""
+    """Update separation of each item wrt selection, given pdist array and n items, after removing i_removed."""
     for j in np.arange(n, dtype=np.int32):
         if j != i_removed:
             dist = get_pdist_el(pdist, i_removed, j, n)
@@ -57,7 +57,7 @@ def update_separation_remove(
                 # need to recompute sep[j]
                 new_sep_j = np.inf
                 for k in new_selection:
-                    # only compute distance to currently selected vectors
+                    # only compute distance to currently selected items
                     if k != j:
                         dist_jk = get_pdist_el(pdist, j, k, n)
                         if dist_jk < new_sep_j:
@@ -89,7 +89,7 @@ class SeparationTracker(DiversityContributionTracker):
         """Initialize the SeparationTracker for an empty selection.
 
         :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
-        :param n: (np.int32) number of vectors
+        :param n: (np.int32) number of items
         :param sep_global: (np.ndarray[np.float32] | None) precomputed global separations; computed if omitted.
         :param sep_selected: (np.ndarray[np.float32] | None) current separations wrt selection; fresh (all +inf,
                              i.e. empty selection) if omitted.  Together with `sep_global` this enables copies

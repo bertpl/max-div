@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 # sum of its distances to the *other* selected points.
 @numba.njit("float64[::1](float32[::1], int32)", cache=True)
 def compute_distance_sums(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.float64]:
-    """Compute sum of distances of each vector wrt all others, given pairwise distance array pdist and n vectors."""
+    """Compute sum of distances of each item wrt all others, given pairwise distance array pdist and n items."""
     dist_sums = np.zeros(n, dtype=np.float64)
     pdist_idx = 0
     for i in range(n):
@@ -40,7 +40,7 @@ def compute_distance_sums(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np
 def update_distance_sums_add(
     dist_sums: NDArray[np.float64], pdist: NDArray[np.float32], n: np.int32, i_added: np.int32
 ) -> None:
-    """Update distance sums of each vector wrt selection, given pdist array and n vectors, after adding i_added."""
+    """Update distance sums of each item wrt selection, given pdist array and n items, after adding i_added."""
     for j in np.arange(n, dtype=np.int32):
         if j != i_added:
             dist_sums[j] += np.float64(get_pdist_el(pdist, i_added, j, n))
@@ -50,7 +50,7 @@ def update_distance_sums_add(
 def update_distance_sums_remove(
     dist_sums: NDArray[np.float64], pdist: NDArray[np.float32], n: np.int32, i_removed: np.int32
 ) -> None:
-    """Update distance sums of each vector wrt selection, given pdist array and n vectors, after removing i_removed."""
+    """Update distance sums of each item wrt selection, given pdist array and n items, after removing i_removed."""
     for j in np.arange(n, dtype=np.int32):
         if j != i_removed:
             dist_sums[j] -= np.float64(get_pdist_el(pdist, i_removed, j, n))
@@ -85,7 +85,7 @@ class MeanDistanceTracker(DiversityContributionTracker):
         """Initialize the MeanDistanceTracker for an empty selection.
 
         :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
-        :param n: (np.int32) number of vectors
+        :param n: (np.int32) number of items
         :param contribution_wrt_dataset: (np.ndarray[np.float32] | None) precomputed global contribution;
                                     computed if omitted.
         :param dist_sums: (np.ndarray[np.float64] | None) current distance sums wrt selection; fresh (all 0.0,

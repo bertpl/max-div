@@ -21,7 +21,7 @@ def test_solution_str_with_constraints():
     result = str(solution)
 
     # --- assert ------------------------------------------
-    assert "5 vectors selected" in result
+    assert "5 items selected" in result
     assert "diversity=0.7705" in result
     assert "constraints: 2/3 satisfied" in result
     assert "456 iterations" in result
@@ -41,7 +41,7 @@ def test_solution_str_without_constraints():
     result = str(solution)
 
     # --- assert ------------------------------------------
-    assert "3 vectors selected" in result
+    assert "3 items selected" in result
     assert "diversity=0.5000" in result
     assert "constraints" not in result
     assert "100 iterations" in result
