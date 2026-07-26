@@ -2,14 +2,10 @@
 
 Terms used across the documentation, defined once. Each entry carries a stable anchor for linking.
 
-The intended reader is a developer comfortable with basic mathematics but new to dispersion
-problems — so each entry says what the term means *and* why it matters here, rather than giving a
-one-line dictionary gloss.
-
 [Anytime algorithm](#anytime-algorithm) ·
-[Condensed distance matrix](#condensed-distance-matrix) ·
 [Constraint group](#constraint-group) ·
 [Constraint weight](#constraint-weight) ·
+[Constraint-violation penalty](#constraint-violation-penalty) ·
 [Dispersion](#dispersion) ·
 [Distance metric](#distance-metric) ·
 [Diversity contribution](#diversity-contribution) ·
@@ -22,7 +18,7 @@ one-line dictionary gloss.
 [Max-min objective](#max-min-objective) ·
 [Max-sum objective](#max-sum-objective) ·
 [Overlapping constraints](#overlapping-constraints) ·
-[Penalty shape](#penalty-shape) ·
+[Precomputed distances](#precomputed-distances) ·
 [Preset](#preset) ·
 [Score components](#score-components) ·
 [Selection](#selection) ·
@@ -40,23 +36,13 @@ anytime by design: you give it a time budget or an iteration count, and it retur
 single-shot pickers, which produce one answer in one pass and cannot use a larger budget — see
 [Comparison with Other Tools](../comparison.md).
 
-## Condensed distance matrix { #condensed-distance-matrix }
-
-The pairwise distances between all *n* items, stored as a flat array of the *n*(*n*−1)/2 unique
-values rather than a full *n*×*n* square — the layout `scipy.spatial.distance.pdist` returns.
-max-div computes this once at problem construction and reads from it throughout solving, which is
-what makes each [swap](#swap) cheap. It is also the memory bottleneck: the array grows with the
-square of *n*, so problem size is limited by memory long before it is limited by solving time. A
-problem can be constructed directly from such a matrix instead of from
-[vectors](#vector).
-
 ## Constraint group { #constraint-group }
 
 A set of [item](#item) indices, together with a minimum and/or maximum number of them that the
 [selection](#selection) must contain. This is how fairness requirements are expressed: "at least 3
 and at most 7 from this group". A group is defined purely by *which items belong to it* and never
 by their coordinates, so constraints apply identically whether the problem was built from vectors
-or from a [condensed distance matrix](#condensed-distance-matrix). See
+or from [precomputed distances](#precomputed-distances). See
 [Constraints](constraints.md).
 
 ## Constraint weight { #constraint-weight }
@@ -65,6 +51,13 @@ A per-group multiplier, 1 by default, scaling how much that group's violations m
 constraint component of the [score](#score-components). Raising one group's weight makes the
 solver prioritize satisfying it when it cannot satisfy everything. Weights matter only in relation
 to each other — scaling all of them changes nothing.
+
+## Constraint-violation penalty { #constraint-violation-penalty }
+
+How the size of a constraint violation translates into lost constraint score — linear by default,
+or quadratic. Linear treats every unit of violation alike; quadratic punishes one large violation
+far more than several small ones, which pushes the solver toward spreading its shortfalls when it
+cannot satisfy everything.
 
 ## Dispersion { #dispersion }
 
@@ -79,8 +72,9 @@ its literature family.
 ## Distance metric { #distance-metric }
 
 The rule for measuring how far apart two items are: Euclidean, squared Euclidean, Manhattan, or
-cosine. It is chosen once per problem and determines every distance in the
-[condensed distance matrix](#condensed-distance-matrix). The choice interacts with the
+cosine. It is chosen once per problem and determines every pairwise distance the solver reads,
+so it is moot when distances are supplied as [precomputed distances](#precomputed-distances)
+instead. The choice interacts with the
 [diversity metric](#diversity-metric): squared Euclidean and plain Euclidean, for instance, yield
 identical selections under the [geometric-mean objective](#geometric-mean-objective), because
 squaring preserves the ordering of distances. See [Diversity & Distance](diversity.md).
@@ -139,8 +133,8 @@ tools of different kinds:
 
 One of the *n* candidates the solver chooses from — the unit that gets selected, that
 [constraint groups](#constraint-group) range over, and that a [selection](#selection) is made of.
-*Item* is deliberately geometry-free: a problem may be defined by [vectors](#vector) or by a
-[condensed distance matrix](#condensed-distance-matrix) alone, and in the latter case items have
+*Item* is deliberately geometry-free: a problem may be defined by [vectors](#vector) or by
+[precomputed distances](#precomputed-distances) alone, and in the latter case items have
 no coordinates at all.
 
 ## Local search { #local-search }
@@ -174,12 +168,15 @@ requirements at once — for example a demographic group and a geographic region
 these directly, which is unusual: most alternative tools support either no selection constraints
 or only a partition into disjoint strata. See [Constraints](constraints.md).
 
-## Penalty shape { #penalty-shape }
+## Precomputed distances { #precomputed-distances }
 
-How a constraint violation's size translates into lost constraint score — linear by default, or
-quadratic. Linear treats every unit of violation alike; quadratic punishes one large violation far
-more than several small ones, which pushes the solver toward spreading its shortfalls when it
-cannot satisfy everything.
+Pairwise distances supplied directly, instead of [vectors](#vector) for max-div to compute them
+from — the way to use a custom or non-Euclidean measure. Either a square *n*×*n* symmetric matrix
+or a condensed array of the *n*(*n*−1)/2 unique values (the layout
+`scipy.spatial.distance.pdist` returns) is accepted. Internally the condensed form is what the
+solver reads from throughout, which is what makes each [swap](#swap) cheap; it is also the memory
+bottleneck, growing with the square of *n*, so problem size is limited by memory long before it is
+limited by solving time.
 
 ## Preset { #preset }
 
@@ -232,7 +229,7 @@ already good, while large ones cost more per iteration.
 
 The coordinates of an [item](#item), when the problem has any. A vector-defined problem takes an
 *n*×*d* array and computes distances from it with the chosen
-[distance metric](#distance-metric); a problem built from a
-[condensed distance matrix](#condensed-distance-matrix) has distances but no vectors. Use *vector*
+[distance metric](#distance-metric); a problem built from
+[precomputed distances](#precomputed-distances) has distances but no vectors. Use *vector*
 only where the coordinates themselves matter — how distances are computed, or what gets passed in
 — and [item](#item) everywhere the selection is what is being discussed.
