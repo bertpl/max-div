@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Support for free-threaded Python 3.14 (3.14t)
+- Glossary page defining the terms used across the documentation
 
 ### Changed
 
