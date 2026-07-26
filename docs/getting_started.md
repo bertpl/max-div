@@ -22,8 +22,8 @@ itself is single-threaded.
 
 ### 1. Define a problem
 
-A Maximum Diversity Problem consists of a set of `n` vectors in `d` dimensions, from which you want
-to select `k` that are as diverse as possible.
+A Maximum Diversity Problem consists of a set of `n` [items](concepts/glossary.md#item) -- here,
+vectors in `d` dimensions -- from which you want to select `k` that are as diverse as possible.
 
 ```python
 import numpy as np
@@ -59,7 +59,7 @@ The solver will print progress as it runs. Pass `verbosity=0` for silent operati
 print(solution)
 # MaxDivSolution: 20 vectors selected | diversity=0.7792 | 5.17s (39_008 iterations)
 
-# Indices of the selected vectors
+# Indices of the selected items
 print(solution.i_selected)       # e.g. array([ 3,  7, 14, ...], dtype=int32)
 
 # The selected vectors themselves
@@ -77,7 +77,7 @@ The `score` has three main components, shown in strict priority order.
 In a final solution, `size` is always 1.0. For an unconstrained problem, `constraints` is also
 always 1.0:
 
-- **`size`** -- 1.0 when exactly `k` vectors are selected
+- **`size`** -- 1.0 when exactly `k` items are selected
 - **`constraints`** -- 1.0 when all fairness constraints are satisfied
 - **`diversity`** -- the main diversity score (higher is better)
 
@@ -87,13 +87,13 @@ preferred over solutions with higher diversity.
 
 ## Adding Fairness Constraints
 
-Constraints let you enforce that a minimum and/or maximum number of selected vectors come from
+Constraints let you enforce that a minimum and/or maximum number of selected items come from
 specific subsets. This is useful for ensuring fair representation across groups.
 
 ```python
 from max_div import Constraint
 
-# Vectors 0-99 are "group A", vectors 100-199 are "group B"
+# Items 0-99 are "group A", items 100-199 are "group B"
 # Require at least 8 and at most 12 from each group
 constraints = [
     Constraint(int_set=set(range(0, 100)),   min_count=8, max_count=12),
@@ -111,7 +111,7 @@ print(solution)
 Note that the diversity is slightly lower than the unconstrained solution (0.7702 vs 0.7792) --
 this is expected, since satisfying constraints restricts the search space.
 
-Constraints can overlap -- a single vector can belong to multiple constraint groups.
+Constraints can overlap -- a single item can belong to multiple constraint groups.
 
 If constraints are infeasible (or jointly infeasible), the solver will not fail. Instead, it
 gracefully finds the *least infeasible* solution -- the one that violates constraints as little as
@@ -161,9 +161,9 @@ both problem flavors.
 ### Diversity metrics
 
 The diversity metric defines what "diverse" means for the selected subset. It operates on the
-*separation* of each selected vector -- its distance to its nearest neighbor in the selection.
-A well-spread selection will have high separations across all vectors; a clustered selection will
-have low separations for the vectors that are close together.
+*separation* of each selected item -- its distance to its nearest neighbor in the selection.
+A well-spread selection will have high separations across all items; a clustered selection will
+have low separations for the items that are close together.
 
 ```python
 from max_div import DiversityMetric
@@ -179,7 +179,7 @@ problem = MaxDivProblem.new(
 
 | Metric | Description | Best for |
 |--------|-------------|----------|
-| `GEOMEAN_SEPARATION` | Geometric mean of all separations (default) | General use -- balances spread across all selected vectors |
+| `GEOMEAN_SEPARATION` | Geometric mean of all separations (default) | General use -- balances spread across all selected items |
 | `MIN_SEPARATION` | Minimum separation (= p-dispersion) | When the closest pair matters most |
 | `MEAN_SEPARATION` | Arithmetic mean of all separations | When total spread is the objective |
 | `APPROX_GEOMEAN_SEPARATION` | Fast approximation of `GEOMEAN_SEPARATION` | Large-scale problems where speed matters |
@@ -212,7 +212,7 @@ solver = (
 | Preset | Description |
 |--------|-------------|
 | `RANDOM` | Baseline -- random initialization + random swap optimization. Fast but lower quality. |
-| `GUIDED` | Distance-guided swaps -- biased towards removing low-separation vectors and adding high-separation ones. |
+| `GUIDED` | Distance-guided swaps -- biased towards removing low-separation items and adding high-separation ones. |
 | `SMART` | **Default.** Adaptive swap-based optimization that learns which swap sizes and candidate selection strategies work best. |
 | `THOROUGH` | Like `SMART` but with wider parameter ranges, exploring more of the search space at the cost of slower convergence. Best for long runs. |
 

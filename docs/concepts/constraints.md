@@ -2,18 +2,18 @@
 
 ## What Are Constraints?
 
-Constraints enforce that the selected subset includes a minimum and/or maximum number of vectors
-from specific groups. Each constraint is defined by:
+Constraints enforce that the selected subset includes a minimum and/or maximum number of
+[items](glossary.md#item) from specific groups. Each constraint is defined by:
 
-- **`int_set`** -- a set of vector indices that form the group
-- **`min_count`** -- minimum number of vectors to select from this group
-- **`max_count`** -- maximum number of vectors to select from this group
+- **`int_set`** -- a set of item indices that form the group
+- **`min_count`** -- minimum number of items to select from this group
+- **`max_count`** -- maximum number of items to select from this group
 - **`weight`** -- how strongly this constraint counts toward feasibility (default `1`, must be `> 0`)
 
 ```python
 from max_div import Constraint
 
-# At least 3 and at most 7 vectors from indices 0-49
+# At least 3 and at most 7 items from indices 0-49
 Constraint(int_set=set(range(50)), min_count=3, max_count=7)
 ```
 
@@ -56,7 +56,8 @@ This is a single global setting for the whole solve, independent of any per-cons
 
 ## Overlapping Constraints
 
-A single vector can belong to multiple constraint groups. This is useful for modeling
+A single item can belong to multiple [constraint groups](glossary.md#overlapping-constraints).
+This is useful for modeling
 multi-dimensional fairness requirements.
 
 For example, you might have demographic groups and geographic groups:
@@ -72,7 +73,7 @@ constraints = [
 ]
 ```
 
-A vector can be in both `group_a_indices` and `region_north`, and both constraints will
+An item can be in both `group_a_indices` and `region_north`, and both constraints will
 be tracked independently.
 
 ## Infeasible Constraints
@@ -94,8 +95,8 @@ numba-compiled solver code. For each constraint, the solver tracks how many *add
 selections are needed (`min_remaining`) and how many more are *allowed* (`max_remaining`):
 
 - A constraint is **satisfied** when `min_remaining <= 0` and `max_remaining >= 0`
-- Adding a vector from a constraint group decreases both counters by 1
-- Removing a vector increases both counters by 1
+- Adding an item from a constraint group decreases both counters by 1
+- Removing an item increases both counters by 1
 
 This incremental tracking avoids recomputing constraint satisfaction from scratch after each
 swap, keeping the per-iteration cost constant regardless of constraint complexity.
