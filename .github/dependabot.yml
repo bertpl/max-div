@@ -7,8 +7,20 @@ updates:
       - "/"
       - "/.github/actions/unit_test"
       - "/.github/actions/pre_commit"
+    # Deliberately a different day from the uv entry below: both ecosystems used to
+    # fire in the same minute, and since patch/minor bumps auto-merge, whichever
+    # landed first left its sibling behind main — unmergeable under the
+    # up-to-date-branch rule until someone updated the branch by hand.
+    # Local overnight time (Dependabot applies the timezone incl. DST), so a PR
+    # opens and merges while nothing else is being pushed to main. Treat it as a
+    # preference, not a guarantee: observed firing times have varied by hours and
+    # have landed off the nominal day, so the day separation above is what the
+    # collision fix actually rests on.
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "01:00"
+      timezone: "Europe/Zurich"
     # `chore` prefix makes the PR title (and thus the squash commit on main)
     # follow the repo's `<type>: <summary>` convention, so the preflight
     # title check needs no Dependabot exemption.
@@ -27,8 +39,12 @@ updates:
     # Refreshes uv.lock for the runtime + dev/lint/type tooling the lockfile
     # deliberately pins — those rot without automated updates.
     directory: "/"
+    # Tuesday: see the day/time rationale on the github-actions entry above.
     schedule:
       interval: "weekly"
+      day: "tuesday"
+      time: "01:00"
+      timezone: "Europe/Zurich"
     commit-message:
       prefix: "chore"
     # Never touch pyproject.toml requirement ranges: the per-Python floors are
