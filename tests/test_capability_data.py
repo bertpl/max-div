@@ -81,6 +81,38 @@ def test_committed_fragments_match_a_fresh_render(cd, real):
         )
 
 
+def test_a_stale_fragment_is_reported_by_the_dry_run(cd, real, tmp_path, monkeypatch):
+    """The drift guard has to fire from `--check` too, not only from this suite.
+
+    Otherwise the commit hook — which runs at the one moment the author still has the record in
+    mind — reports everything fine while the committed table shows the previous marks.
+    """
+    # --- arrange -----------------------------------------
+    axes, registry, records = real
+    monkeypatch.setattr(cd, "FRAGMENTS_DIR", tmp_path)
+    for tool in cd.registered_tools(registry):
+        if tool.get("reference", True):
+            (tmp_path / f"{tool['key']}.md").write_text("stale content", encoding="utf-8")
+
+    # --- act ---------------------------------------------
+    structural, _near_duplicates = cd.validate(axes, registry, records)
+
+    # --- assert ------------------------------------------
+    assert any("is stale" in p for p in structural)
+
+
+def test_a_missing_fragment_is_reported(cd, real, tmp_path, monkeypatch):
+    # --- arrange -----------------------------------------
+    axes, registry, records = real
+    monkeypatch.setattr(cd, "FRAGMENTS_DIR", tmp_path)
+
+    # --- act ---------------------------------------------
+    structural, _near_duplicates = cd.validate(axes, registry, records)
+
+    # --- assert ------------------------------------------
+    assert any("no generated feature table" in p for p in structural)
+
+
 def test_excluded_tools_get_no_fragment(cd, real):
     """A record kept out of the reference has no page to include a table into."""
     # --- arrange -----------------------------------------

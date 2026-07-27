@@ -247,8 +247,48 @@ def inline(text: str) -> str:
 # =================================================================================================
 #  Entry point
 # =================================================================================================
+def check_fragments_are_current(axes: dict, registry: dict, records: dict) -> list[str]:
+    """Report committed fragments that no longer match what the records would render.
+
+    Structural validity says nothing about this: editing a mark leaves the data perfectly well
+    formed while the committed table still shows the old one. The test suite catches it, but only
+    once the change reaches CI — this puts the same finding in front of whoever edited the record,
+    at the moment they edited it.
+    """
+    problems: list[str] = []
+    for tool in registered_tools(registry):
+        if not tool.get("reference", True):
+            continue
+        key = tool["key"]
+        if key not in records:
+            continue
+        path = FRAGMENTS_DIR / f"{key}.md"
+        fresh = render_feature_table(axes, records[key][0], key)
+        if not path.exists():
+            problems.append(f"{key}: no generated feature table — run scripts/capability_data.py")
+        elif path.read_text(encoding="utf-8") != fresh:
+            problems.append(
+                f"{key}: {_display_path(path)} is stale — the record has changed since it was "
+                f"generated. Run scripts/capability_data.py."
+            )
+    return problems
+
+
+def _display_path(path: Path) -> str:
+    """Repo-relative where possible. Reporting a problem must never itself raise."""
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def validate(axes: dict, registry: dict, records: dict) -> tuple[list[str], list[str]]:
-    return check_structure(axes, registry, records), check_near_duplicate_notes(records)
+    structural = check_structure(axes, registry, records)
+    # Only worth rendering once the data is sound; a malformed record would raise here rather than
+    # report, and the structural problems are the ones to fix first anyway.
+    if not structural:
+        structural += check_fragments_are_current(axes, registry, records)
+    return structural, check_near_duplicate_notes(records)
 
 
 def write_fragments(axes: dict, registry: dict, records: dict) -> list[Path]:
