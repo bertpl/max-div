@@ -59,19 +59,26 @@ def registered_tools(registry: dict) -> list[dict]:
     return [{**tool, "category": category["key"]} for category in registry["categories"] for tool in category["tools"]]
 
 
-def load_record(path: Path) -> tuple[dict, str]:
-    """Split a record into its front-matter data and its markdown body."""
+def load_record(path: Path) -> tuple[dict, str] | None:
+    """Split a record into its front-matter data and its markdown body.
+
+    Returns None for a page that is not a record. The section holds ordinary pages too — its own
+    landing page, for one — so carrying a `solver:` block is what makes a file a record rather than
+    living in the right directory. A record whose block is missing or misspelled is then reported
+    by the registry correspondence check, which knows what should have been there.
+    """
     match = FRONT_MATTER.match(path.read_text(encoding="utf-8"))
     if not match:
-        raise ValueError(f"{path.name}: no YAML front matter")
-    front_matter = yaml.safe_load(match.group(1))
+        return None
+    front_matter = yaml.safe_load(match.group(1)) or {}
     if "solver" not in front_matter:
-        raise ValueError(f"{path.name}: front matter has no `solver:` key")
+        return None
     return front_matter["solver"], match.group(2)
 
 
 def load_records(directory: Path = RECORDS_DIR) -> dict[str, tuple[dict, str]]:
-    return {path.stem: load_record(path) for path in sorted(directory.glob("*.md"))}
+    loaded = ((path.stem, load_record(path)) for path in sorted(directory.glob("*.md")))
+    return {stem: record for stem, record in loaded if record is not None}
 
 
 # =================================================================================================

@@ -130,6 +130,19 @@ def test_excluded_tools_get_no_fragment(cd, real):
         assert not (cd.FRAGMENTS_DIR / f"{key}.md").exists()
 
 
+def test_a_page_without_a_solver_block_is_not_a_record(cd, tmp_path):
+    """The section holds ordinary pages too; carrying the block is what makes a file a record."""
+    # --- arrange -----------------------------------------
+    (tmp_path / "index.md").write_text("# Overview\n\nprose, no front matter\n", encoding="utf-8")
+    (tmp_path / "other.md").write_text("---\ntitle: Something\n---\n\nprose\n", encoding="utf-8")
+
+    # --- act ---------------------------------------------
+    records = cd.load_records(tmp_path)
+
+    # --- assert ------------------------------------------
+    assert records == {}
+
+
 # =================================================================================================
 #  The committed data is well formed
 # =================================================================================================
