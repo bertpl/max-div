@@ -24,8 +24,8 @@ runs:
 
       - name: Install dependencies
         shell: bash
-        run: uv sync --group dev
+        run: uv sync --no-default-groups --group lint
 
       - name: Run pre-commit
         shell: bash
-        run: uv run pre-commit run --all-files --show-diff-on-failure
+        run: uv run --no-default-groups --group lint pre-commit run --all-files --show-diff-on-failure

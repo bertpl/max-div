@@ -1837,11 +1837,26 @@ dev = [
     { name = "scipy-stubs" },
     { name = "ty" },
 ]
+lint = [
+    { name = "pre-commit" },
+    { name = "ruff" },
+    { name = "scipy-stubs" },
+    { name = "ty" },
+]
 notebooks = [
     { name = "cvxpy", extra = ["ecos"] },
     { name = "ipywidgets" },
     { name = "jupyter" },
     { name = "matplotlib" },
+]
+package = [
+    { name = "check-wheel-contents" },
+]
+test = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-rerunfailures" },
+    { name = "pytest-xdist" },
 ]
 
 [package.metadata]
@@ -1892,13 +1907,26 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.5.0" },
     { name = "ruff", specifier = ">=0.14.0" },
     { name = "scipy-stubs", specifier = ">=1.10.0" },
-    { name = "ty", specifier = "==0.0.58" },
+    { name = "ty", specifier = ">=0.0.58" },
+]
+lint = [
+    { name = "pre-commit", specifier = ">=4.0" },
+    { name = "ruff", specifier = ">=0.14.0" },
+    { name = "scipy-stubs", specifier = ">=1.10.0" },
+    { name = "ty", specifier = ">=0.0.58" },
 ]
 notebooks = [
     { name = "cvxpy", extras = ["ecos", "osqp"], specifier = ">=1.7.1" },
     { name = "ipywidgets", specifier = ">=8.0.0" },
     { name = "jupyter", specifier = ">=1.1.0" },
     { name = "matplotlib", specifier = ">=3.3.0" },
+]
+package = [{ name = "check-wheel-contents", specifier = ">=0.6.2" }]
+test = [
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-cov", specifier = ">=6.0" },
+    { name = "pytest-rerunfailures", specifier = ">=14.0" },
+    { name = "pytest-xdist", specifier = ">=3.5.0" },
 ]
 
 [[package]]

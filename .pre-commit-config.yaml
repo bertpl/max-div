@@ -16,21 +16,21 @@ repos:
     hooks:
       - id: ruff-format
         name: ruff format
-        entry: uv run ruff format
+        entry: uv run --no-default-groups --group lint ruff format
         language: system
         types: [python]
         files: ^(src/max_div|tests|scripts)/|^\.github/scripts/
         pass_filenames: true
       - id: ruff
         name: ruff check
-        entry: uv run ruff check
+        entry: uv run --no-default-groups --group lint ruff check
         language: system
         types: [python]
         files: ^(src/max_div|tests|scripts)/|^\.github/scripts/
         pass_filenames: true
       - id: ty
         name: ty check
-        entry: uv run ty check
+        entry: uv run --no-default-groups --group lint ty check
         language: system
         types: [python]
         # ty is a whole-program checker: a staged-files-only run would miss

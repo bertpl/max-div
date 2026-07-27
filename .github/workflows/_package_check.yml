@@ -30,7 +30,7 @@ jobs:
       # Static gate: catches structurally broken wheels (empty, missing the
       # declared import package, ...) before the install job spins up.
       - name: Check wheel contents
-        run: uv run --frozen check-wheel-contents dist/*.whl
+        run: uv run --frozen --no-default-groups --group package check-wheel-contents dist/*.whl
 
       - name: Upload distribution artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -57,12 +57,12 @@ jobs:
           name: dist
           path: dist
 
-      # Blind environment: test deps come lockfile-pinned from the dev group
-      # (--no-emit-project keeps the project itself out), and max_div can only
-      # come from the built wheel — never an editable/source install.
+      # Blind environment: test deps come lockfile-pinned from the test group
+      # (--only-group keeps the project and its runtime dependencies out), and
+      # max_div can only come from the built wheel — never an editable/source install.
       - name: Install the built wheel into a bare environment
         run: |
-          uv export --frozen --no-emit-project --only-group dev -o requirements.txt
+          uv export --frozen --no-emit-project --only-group test -o requirements.txt
           uv venv blind-venv
           uv pip install --python blind-venv/bin/python -r requirements.txt
           WHEEL=(dist/*.whl)

@@ -75,16 +75,32 @@ benchmarks = [
 benchmarks-gpl = [
     "qc-selector>=0.1",
 ]
-dev = [
-    "check-wheel-contents>=0.6.2",
-    "pre-commit>=4.0",
+# Split by activity, so what each one needs is a stated fact rather than a shared pile: the test
+# matrix installs no linters, and a test reaching for a lint-only or docs-only package fails as the
+# category error it is.
+test = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
-    "ruff>=0.14.0",
     "pytest-xdist>=3.5.0",
     "pytest-rerunfailures>=14.0",
+]
+# The pre-commit config drives ruff and ty as local `uv run` hooks rather than pinned pre-commit
+# environments, so both tools — and the stubs ty needs to check scipy usage — belong here.
+lint = [
+    "pre-commit>=4.0",
+    "ruff>=0.14.0",
     "scipy-stubs>=1.10.0",
-    "ty==0.0.58",  # pre-1.0 type checker — pin exactly; its ruleset is still evolving
+    "ty>=0.0.58",  # pre-1.0 type checker — floor only; uv.lock pins the version actually used
+]
+package = [
+    "check-wheel-contents>=0.6.2",
+]
+# Union only — never add a requirement here directly. `dev` is what a developer syncs and what the
+# dependency audit exports, and it stays a derived fact so it cannot disagree with the groups above.
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "package" },
 ]
 # notebook/analysis tooling — not needed to run the test suite, so kept out of the
 # dev group that CI installs (and out of the lowest-direct resolution surface)
