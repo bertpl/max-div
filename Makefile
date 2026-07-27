@@ -40,7 +40,9 @@ build:
 
 test:
 	# run all tests - with numba & just 1 python version
-	uv run --all-extras --python 3.13 pytest ./tests --durations=20 --disable-warnings
+	# --group dev, NOT --all-extras: the same install surface the CI matrix uses, so a test that
+	# reaches for an optional dependency (e.g. anything in the docs extra) fails here too
+	uv run --group dev --python 3.13 pytest ./tests --durations=20 --disable-warnings
 
 test-benchmarks:
 	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps groups)
@@ -50,8 +52,8 @@ coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
 	mkdir -p ./reports
-	# run tests with Python 3.14; WITH ALL optional dependencies & append to report
-	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --all-extras --python 3.13 pytest ./tests --cov --cov-report=html:./reports/coverage --durations=20 --disable-warnings
+	# run tests on the same install surface as the CI coverage legs (see the note under `test`)
+	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --group dev --python 3.13 pytest ./tests --cov --cov-report=html:./reports/coverage --durations=20 --disable-warnings
 
 test-and-coverage:
 	$(MAKE) test;
