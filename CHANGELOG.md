@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.8.3 (2026-07-27)
 
 ### Added
 - Support for free-threaded Python 3.14 (3.14t)
@@ -15,15 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Solution summaries now say "items selected" rather than "vectors selected"
 
-### Deprecated
-
 ### Removed
 - Roadmap page from the documentation site
-
-### Fixed
-
-### Security
-
 ## 0.8.2 (2026-07-22)
 
 ### Added
