@@ -94,8 +94,21 @@ nav:
     - Glossary: concepts/glossary.md
   - Comparison: comparison.md
   - Solver Reference:
-    - SCIP: solvers/scip.md
-    - DPPy: solvers/dppy.md
+    - Overview: solvers/index.md
+    - Exact Solvers:
+      - OR-Tools CP-SAT: solvers/ortools-cpsat.md
+      - SCIP: solvers/scip.md
+      - HiGHS: solvers/highs.md
+    - One-Shot Pickers:
+      - RDKit MaxMinPicker: solvers/rdkit.md
+      - fpsample: solvers/fpsample.md
+      - skmatter: solvers/skmatter.md
+      - apricot-select: solvers/apricot-select.md
+      - qc-selector: solvers/qc-selector.md
+    - Samplers:
+      - DPPy: solvers/dppy.md
+    - Fair Selection:
+      - code-FDM: solvers/code-fdm.md
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/index.md

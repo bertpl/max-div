@@ -126,6 +126,6 @@ $$
 **Guarantee: proven optimum.** SCIP terminates with a certificate that no better selection
 exists, which is what distinguishes it from every heuristic in this comparison.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/scip.md"

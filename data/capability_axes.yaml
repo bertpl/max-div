@@ -31,6 +31,22 @@ marks:
     hero_glyph: ""
     legend: not available
 
+# Metadata fields — the per-tool facts that are not capability marks. They render as a second table
+# on each solver's page and as the comparison page's companion table; the hero SVG shows none of
+# them, which is the whole reason they are declared apart from the axes above.
+#
+# `kind` tells the renderer how to read the value: `release` is a version/date pair, `url` becomes a
+# link, and anything else is prose. A key is looked up in the record's `metadata:` block first and
+# then at the top level, so a tool's source and verification date stay where they belong.
+metadata:
+  - {key: guarantee, label: Guarantee}
+  - {key: license, label: License}
+  - {key: last_release, label: Last release, kind: release}
+  - {key: determinism, label: Determinism}
+  - {key: input, label: Input}
+  - {key: source, label: Source, kind: url}
+  - {key: verified, label: Last verified}
+
 groups:
   - key: distance
     label: distance metrics

@@ -59,19 +59,26 @@ def registered_tools(registry: dict) -> list[dict]:
     return [{**tool, "category": category["key"]} for category in registry["categories"] for tool in category["tools"]]
 
 
-def load_record(path: Path) -> tuple[dict, str]:
-    """Split a record into its front-matter data and its markdown body."""
+def load_record(path: Path) -> tuple[dict, str] | None:
+    """Split a record into its front-matter data and its markdown body.
+
+    Returns None for a page that is not a record. The section holds ordinary pages too — its own
+    landing page, for one — so carrying a `solver:` block is what makes a file a record rather than
+    living in the right directory. A record whose block is missing or misspelled is then reported
+    by the registry correspondence check, which knows what should have been there.
+    """
     match = FRONT_MATTER.match(path.read_text(encoding="utf-8"))
     if not match:
-        raise ValueError(f"{path.name}: no YAML front matter")
-    front_matter = yaml.safe_load(match.group(1))
+        return None
+    front_matter = yaml.safe_load(match.group(1)) or {}
     if "solver" not in front_matter:
-        raise ValueError(f"{path.name}: front matter has no `solver:` key")
+        return None
     return front_matter["solver"], match.group(2)
 
 
 def load_records(directory: Path = RECORDS_DIR) -> dict[str, tuple[dict, str]]:
-    return {path.stem: load_record(path) for path in sorted(directory.glob("*.md"))}
+    loaded = ((path.stem, load_record(path)) for path in sorted(directory.glob("*.md")))
+    return {stem: record for stem, record in loaded if record is not None}
 
 
 # =================================================================================================
@@ -90,6 +97,12 @@ def iter_notes(record: dict):
             yield axis_key, cell["note"]
     for field, note in ((record.get("metadata") or {}).get("notes") or {}).items():
         yield f"metadata.{field}", note
+
+
+def metadata_value(record: dict, key: str):
+    """A metadata field, from the record's `metadata:` block or from its top level."""
+    block = record.get("metadata") or {}
+    return block[key] if key in block else record.get(key)
 
 
 def check_note(location: str, note) -> list[str]:
@@ -124,14 +137,26 @@ def check_structure(axes: dict, registry: dict, records: dict) -> list[str]:
         if tool["key"] not in records:
             continue
         record, body = records[tool["key"]]
-        problems += check_record(tool, record, body, expected_axes, set(axes["marks"]))
+        problems += check_record(tool, record, body, expected_axes, set(axes["marks"]), axes["metadata"])
     return problems
 
 
-def check_record(tool: dict, record: dict, body: str, expected_axes: set[str], marks: set[str]) -> list[str]:
+def check_record(
+    tool: dict, record: dict, body: str, expected_axes: set[str], marks: set[str], axes_metadata: list[dict]
+) -> list[str]:
+    """Every rule a single record must satisfy, gathered from the four things a record declares."""
     key = tool["key"]
-    problems: list[str] = []
+    return [
+        *check_cells(key, record, expected_axes, marks),
+        *check_metadata(key, record, axes_metadata),
+        *check_scale(key, record),
+        *check_include(tool, body),
+    ]
 
+
+def check_cells(key: str, record: dict, expected_axes: set[str], marks: set[str]) -> list[str]:
+    """One cell per declared axis, no others, each with a mark from the vocabulary."""
+    problems: list[str] = []
     cells = record.get("capabilities") or {}
     for missing in sorted(expected_axes - set(cells)):
         problems.append(f"{key}: no cell for axis `{missing}`")
@@ -142,20 +167,41 @@ def check_record(tool: dict, record: dict, body: str, expected_axes: set[str], m
         if mark not in marks:
             problems.append(f"{key}: `{axis_key}` has mark {mark!r}, expected one of {sorted(marks)}")
         problems += check_note(f"{key}: `{axis_key}`", (cell or {}).get("note"))
+    return problems
 
+
+def check_metadata(key: str, record: dict, axes_metadata: list[dict]) -> list[str]:
+    """Every declared metadata field present, and every metadata note well formed."""
+    problems = [
+        f"{key}: no `{field['key']}` metadata"
+        for field in axes_metadata
+        if metadata_value(record, field["key"]) in (None, "")
+    ]
+    for field, note in ((record.get("metadata") or {}).get("notes") or {}).items():
+        problems += check_note(f"{key}: metadata `{field}`", note)
+    return problems
+
+
+def check_scale(key: str, record: dict) -> list[str]:
+    """A power of ten (or a range of them), and always an explanation of the value claimed."""
+    problems: list[str] = []
     scale = record.get("scale") or {}
-    value = str(scale.get("max_practical_n", ""))
-    if not SCALE_PATTERN.match(value):
-        problems.append(f"{key}: scale {value!r} is not a power of ten or a range of them")
+    if not SCALE_PATTERN.match(str(scale.get("max_practical_n", ""))):
+        problems.append(
+            f"{key}: scale {str(scale.get('max_practical_n', ''))!r} is not a power of ten or a range of them"
+        )
     if not (scale.get("rationale") or "").strip():
         problems.append(f"{key}: scale has no rationale")
-
-    if tool.get("reference", True):
-        include = f'--8<-- "generated/features/{key}.md"'
-        if include not in body:
-            problems.append(f"{key}: page does not include its generated feature table")
-
     return problems
+
+
+def check_include(tool: dict, body: str) -> list[str]:
+    """A published record must pull in its generated table; an excluded one has no page to."""
+    key = tool["key"]
+    if not tool.get("reference", True):
+        return []
+    include = f'--8<-- "generated/features/{key}.md"'
+    return [] if include in body else [f"{key}: page does not include its generated feature table"]
 
 
 def check_near_duplicate_notes(records: dict) -> list[str]:
@@ -193,6 +239,12 @@ def render_feature_table(axes: dict, record: dict, key: str) -> str:
     """
     marks = axes["marks"]
     notes = _NoteIndex(key)
+    metadata_notes = (record.get("metadata") or {}).get("notes") or {}
+    facts = [
+        f"| {field['label']} | {_metadata_markup(field, metadata_value(record, field['key']))} "
+        f"| {notes.reference(metadata_notes.get(field['key']))} |"
+        for field in axes["metadata"]
+    ]
     rows = []
 
     for group in axes["groups"]:
@@ -212,6 +264,18 @@ def render_feature_table(axes: dict, record: dict, key: str) -> str:
     legend = " · ".join(f"{m['glyph']} {m['legend']}" for m in marks.values())
     lines = [
         "<!-- Generated by scripts/capability_data.py — do not edit. -->",
+        "",
+        "### At a glance",
+        "",
+        '<div class="solver-features" markdown>',
+        "",
+        "| | | |",
+        "|---|---|---|",
+        *facts,
+        "",
+        "</div>",
+        "",
+        "### Capabilities",
         "",
         f"Support: {legend}",
         "",
@@ -249,6 +313,16 @@ class _NoteIndex:
             body = inline(text) + (f" [Source]({url})" if url else "")
             self.definitions.append(f"[^{self.key}-{self.numbers[fingerprint]}]: {body}")
         return f"[^{self.key}-{self.numbers[fingerprint]}]"
+
+
+def _metadata_markup(field: dict, value) -> str:
+    """Render one metadata value according to its declared kind."""
+    if field.get("kind") == "release":
+        version, date = (value or {}).get("version"), (value or {}).get("date")
+        return "none published" if version in (None, "none") else f"`{version}` · {date}"
+    if field.get("kind") == "url":
+        return f"[{value}]({value})"
+    return inline(str(value))
 
 
 def inline(text: str) -> str:

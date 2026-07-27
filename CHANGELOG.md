@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Reference page for each compared third-party tool, covering what it solves, its problem formulation, and its feature set
 
 ### Changed
 

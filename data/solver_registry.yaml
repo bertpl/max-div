@@ -24,11 +24,27 @@ categories:
   - key: exact
     label: Exact solvers
     tools:
+      - key: ortools-cpsat
+        name: OR-Tools CP-SAT
       - key: scip
         name: SCIP (PySCIPOpt)
+      - key: highs
+        name: HiGHS
 
   - key: oneshot
     label: One-shot pickers & samplers
     tools:
+      - key: rdkit
+        name: RDKit MaxMinPicker
+      - key: fpsample
+        name: fpsample
+      - key: skmatter
+        name: skmatter
+      - key: apricot-select
+        name: apricot-select
+      - key: qc-selector
+        name: qc-selector
       - key: dppy
         name: DPPy
+      - key: code-fdm
+        name: code-FDM
