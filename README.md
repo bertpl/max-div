@@ -24,8 +24,15 @@ freely available tools: it is the only
 the only one offering a **geometric-mean separation** objective — one of four diversity metrics
 it provides (minimum, mean, and geometric-mean separation, plus mean pairwise distance).
 
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero_dark.svg">
+    <img src="docs/images/hero_light.svg" alt="Feature comparison of max-div against exact solvers and one-shot pickers: distance metrics, diversity objectives, constraint handling, time budgets and practical scale" style="max-width: max(60%, min(100%,800px)); height: auto;">
+  </picture>
+</p>
+
 It fills the gap between exact MIP/CP solvers, which prove optimal answers but do not scale, and
-single-shot pickers, which are fast but cannot honor selection constraints. The
+single-shot pickers, which are fast but at best have very limited support for constraints. The
 [benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) show where
 it leads and where it does not.
 
