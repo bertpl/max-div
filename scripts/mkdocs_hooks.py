@@ -22,6 +22,18 @@ import re
 # rule would silently leave the dark variant broken.
 DOCS_RELATIVE_ATTR = re.compile(r'\b(src|srcset)="docs/([^"]+)"')
 
+# max-div has a capability record like every compared tool, because both the hero table and the
+# comparison page need its row — but the third-party solver reference deliberately does not
+# profile the package those tools are being compared against. Omitting it from the nav is not
+# enough: MkDocs builds every page under the docs tree regardless, so it would still get a URL
+# and land in site search. Dropping the file here is what actually keeps it unpublished.
+UNPUBLISHED_RECORDS = ("solvers/max-div.md",)
+
+
+def on_files(files, config):
+    """Drop the records that exist as data but are not published as pages."""
+    return files.__class__([f for f in files if f.src_uri not in UNPUBLISHED_RECORDS])
+
 
 def _relative_prefix(page_url: str) -> str:
     """Return the `../` chain that walks from a page back up to the site root.

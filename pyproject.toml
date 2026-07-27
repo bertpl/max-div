@@ -83,6 +83,7 @@ test = [
     "pytest-cov>=6.0",
     "pytest-xdist>=3.5.0",
     "pytest-rerunfailures>=14.0",
+    { include-group = "tooling" },
 ]
 # The pre-commit config drives ruff and ty as local `uv run` hooks rather than pinned pre-commit
 # environments, so both tools — and the stubs ty needs to check scipy usage — belong here.
@@ -95,12 +96,26 @@ lint = [
 package = [
     "check-wheel-contents>=0.6.2",
 ]
+# Maintainer tooling under scripts/. Include-grouped into `test` as well as `dev` because the
+# tests import those scripts, and a group the test matrix does not install is exactly how a
+# script's dependency goes missing in CI while passing locally.
+tooling = [
+    # Per-Python floors, same rationale as the runtime dependencies above: each is the earliest
+    # release shipping a wheel for that CPython, so the `lowest-direct` legs install a wheel
+    # instead of attempting a source build. A flat `>=6.0` floor fails on 3.14, where that
+    # version has no wheel and does not build.
+    "pyyaml>=6.0; python_version < '3.12'",
+    "pyyaml>=6.0.1; python_version == '3.12'",
+    "pyyaml>=6.0.2; python_version == '3.13'",
+    "pyyaml>=6.0.3; python_version >= '3.14'",
+]
 # Union only — never add a requirement here directly. `dev` is what a developer syncs and what the
 # dependency audit exports, and it stays a derived fact so it cannot disagree with the groups above.
 dev = [
     { include-group = "test" },
     { include-group = "lint" },
     { include-group = "package" },
+    { include-group = "tooling" },
 ]
 # notebook/analysis tooling — not needed to run the test suite, so kept out of the
 # dev group that CI installs (and out of the lowest-direct resolution surface)

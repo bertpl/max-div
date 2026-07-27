@@ -21,7 +21,7 @@ UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-g
 # to pass coverage flags, and deliberately keeps the warnings visible.
 PYTEST_ARGS ?= --disable-warnings
 
-.PHONY: help build test collect-test-ids coverage test-and-coverage format format-single-file lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
+.PHONY: help build test collect-test-ids check-capability-data build-capability-data coverage test-and-coverage format format-single-file lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -32,6 +32,8 @@ help:
 	@echo ''
 	@echo '  test                                   Run pytest unit tests.'
 	@echo '  collect-test-ids                       List collected test node-ids without running them.'
+	@echo '  check-capability-data                  Validate the solver capability data without writing anything.'
+	@echo '  build-capability-data                  Validate it and regenerate the feature tables.'
 	@echo '  coverage                               Generate test coverage report. (./reports/coverage)'
 	@echo '  test-and-coverage                      Run unit tests (=with numba) + generate coverage report (=without numba).'
 	@echo ''
@@ -74,6 +76,15 @@ test:
 # -o addopts="" clears `-n auto`, so collection runs in-process instead of under xdist.
 collect-test-ids:
 	@$(UV_RUN) pytest ./tests --collect-only -q -o addopts=""
+
+# The capability data behind the comparison surfaces. `check` is the dry run to reach for while
+# authoring a record — it reports the same problems the pre-commit hook and CI would, at the point
+# where the record is still fresh in mind.
+check-capability-data:
+	uv run --no-default-groups --group tooling python scripts/capability_data.py --check
+
+build-capability-data:
+	uv run --no-default-groups --group tooling python scripts/capability_data.py
 
 test-benchmarks:
 	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps groups)

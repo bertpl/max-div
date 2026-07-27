@@ -37,6 +37,12 @@ repos:
         # cross-module breakage, so it runs the project as configured by
         # [tool.ty] (not the staged subset) whenever any Python file changes.
         pass_filenames: false
+      - id: capability-data
+        name: capability data
+        entry: uv run --no-default-groups --group tooling python scripts/capability_data.py --check
+        language: system
+        files: ^(data/(capability_axes|solver_registry)\.yaml|docs/solvers/.*\.md)$
+        pass_filenames: false
       - id: uv-lock
         name: uv lock --check
         entry: uv lock --check
