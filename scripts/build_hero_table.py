@@ -40,8 +40,9 @@ SCALE_W = 90  # wide enough for the group label "max practical n" to sit over it
 ROW_H = 23
 HEADER_H = 132  # room for the 45-degree labels
 GROUP_H = 18
-CAPTION_H = 26
+CAPTION_H = 21  # band under the table holding the mark legend
 CAT_H = 20
+BOTTOM_PAD = 5  # less than PAD: the legend should sit close under the table, not centred
 CORNER_LIFT = 15  # where the band edge turns diagonal, above the first row
 PAD = 14
 HEADER_FS = 12  # header font size; the width estimate below is calibrated to it
@@ -172,7 +173,9 @@ class _Layout:
         self.header_h = self.overhang + 18
 
         self.width = PAD + LABEL_W + self.grid_w + self.overhang + PAD
-        self.height = PAD + GROUP_H + self.header_h + len(categories) * CAT_H + len(rows) * ROW_H + CAPTION_H + PAD
+        self.height = (
+            PAD + GROUP_H + self.header_h + len(categories) * CAT_H + len(rows) * ROW_H + CAPTION_H + BOTTOM_PAD
+        )
 
         self.y_group = PAD + GROUP_H - 6
         self.y_top = PAD + GROUP_H  # bands start here, just under the group labels

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="718" height="491" viewBox="0 0 718 491" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
-<rect width="718" height="491" fill="#0d1117"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="718" height="477" viewBox="0 0 718 477" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="718" height="477" fill="#0d1117"/>
 <polygon points="253,32 357,32 266,123 266,451 162,451 162,123" fill="#161b22"/>
 <text x="305" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle">distance</text>
 <line x1="255" y1="31" x2="355" y2="31" stroke="#30363d" stroke-width="1"/>
@@ -159,5 +159,5 @@
 <text x="383" y="444" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="571" y="444" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">4</tspan></text>
 <line x1="14" y1="451" x2="616" y2="451" stroke="#30363d" stroke-width="1"/>
-<text x="14" y="469" font-size="11"><tspan fill="#3fb950" font-weight="700">✓</tspan><tspan fill="#8b949e" dx="5">built in</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">~</tspan><tspan fill="#8b949e" dx="5">reachable, but you supply the model, transform or metric</tspan></text>
+<text x="14" y="464" font-size="11"><tspan fill="#3fb950" font-weight="700">✓</tspan><tspan fill="#8b949e" dx="5">built in</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">~</tspan><tspan fill="#8b949e" dx="5">reachable, but you supply the model, transform or metric</tspan></text>
 </svg>

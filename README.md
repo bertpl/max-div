@@ -24,21 +24,17 @@ freely available tools: it is the only
 the only one offering a **geometric-mean separation** objective — one of four diversity metrics
 it provides (minimum, mean, and geometric-mean separation, plus mean pairwise distance).
 
-It fills the gap between exact MIP/CP solvers, which prove optimal answers but do not scale, and
-single-shot pickers, which are fast but cannot honor selection constraints. The
-[benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) show where
-it leads and where it does not.
-
 <p>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero_dark.svg">
-    <img src="docs/images/hero_light.svg" alt="Feature comparison of max-div against exact solvers and one-shot pickers: distance metrics, diversity objectives, constraint handling, time budgets and practical scale" style="max-width: 100%; height: auto;">
+    <img src="docs/images/hero_light.svg" alt="Feature comparison of max-div against exact solvers and one-shot pickers: distance metrics, diversity objectives, constraint handling, time budgets and practical scale" style="max-width: max(60%, min(100%,800px)); height: auto;">
   </picture>
 </p>
 
-<sub>&#10003; built in &nbsp;·&nbsp; ~ reachable, but you supply the model, kernel or metric. The
-surveyed tools and their categories are described in the
-<a href="https://max-div.readthedocs.io/en/stable/comparison/">docs comparison</a>.</sub>
+It fills the gap between exact MIP/CP solvers, which prove optimal answers but do not scale, and
+single-shot pickers, which are fast but at best have very limited support for constraints. The
+[benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) show where
+it leads and where it does not.
 
 ## Installation
 
