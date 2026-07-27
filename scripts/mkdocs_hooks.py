@@ -18,18 +18,28 @@ page is still a one-line include directive and none of the README's paths exist 
 
 import re
 
-from mkdocs.utils import get_relative_url
-
 # `src` and `srcset` both carry paths in the README's <picture> element; a plain `src`-only
 # rule would silently leave the dark variant broken.
 DOCS_RELATIVE_ATTR = re.compile(r'\b(src|srcset)="docs/([^"]+)"')
 
 
+def _relative_prefix(page_url: str) -> str:
+    """Return the `../` chain that walks from a page back up to the site root.
+
+    Deliberately not MkDocs' own `get_relative_url`: importing mkdocs here would make the test
+    suite depend on the documentation extra, which the test matrix does not install. Counting
+    separators is equivalent for the site-root-relative targets this module produces, and holds
+    whether or not the site is built with directory URLs.
+    """
+    return "../" * page_url.count("/")
+
+
 def on_page_content(html: str, *, page, config, files) -> str:
     """Re-anchor repo-root-relative image paths onto the rendered page."""
+    prefix = _relative_prefix(page.url)
 
     def rewrite(match: re.Match) -> str:
         attribute, path = match.group(1), match.group(2)
-        return f'{attribute}="{get_relative_url(path, page.url)}"'
+        return f'{attribute}="{prefix}{path}"'
 
     return DOCS_RELATIVE_ATTR.sub(rewrite, html)
