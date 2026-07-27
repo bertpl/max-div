@@ -6,9 +6,12 @@ file_path=
 # strategy and the dependency group cannot drift between a developer machine and CI, because
 # there is only one place that names them. CI overrides PY and RESOLUTION per matrix leg; the
 # defaults are the single representative combo to run locally.
+# --no-default-groups is what makes the narrowing real: `--group test` alone only ADDS to the
+# default set, which still contains `dev`, so the linters would come along anyway. `--only-group`
+# is the wrong tool here — it drops the project and its runtime dependencies too.
 PY ?= 3.13
 RESOLUTION ?= highest
-UV_RUN = uv run --python $(PY) --resolution $(RESOLUTION) --group dev
+UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-groups --group test
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
 # to pass coverage flags, and deliberately keeps the warnings visible.
@@ -83,16 +86,19 @@ test-and-coverage:
 	$(MAKE) test;
 	$(MAKE) coverage;
 
+# The two format targets name the lint group but deliberately do NOT pass --exact: they are wired
+# to editor save actions, and pruning the environment on every keystroke-triggered format would
+# yank packages out from under a docs server or test run in another terminal.
 format:
-	uv run ruff format .;
-	uv run ruff check --fix .;
+	uv run --no-default-groups --group lint ruff format .;
+	uv run --no-default-groups --group lint ruff check --fix .;
 
 format-single-file:
-	uv run ruff format ${file_path};
-	uv run ruff check --fix ${file_path};
+	uv run --no-default-groups --group lint ruff format ${file_path};
+	uv run --no-default-groups --group lint ruff check --fix ${file_path};
 
 lint:
-	uv run pre-commit run --all-files
+	uv run --exact --no-default-groups --group lint pre-commit run --all-files
 
 dev-setup:
 	uv sync --all-extras
@@ -110,7 +116,7 @@ splash:
 
 docs:
 	# output dir comes from mkdocs.yml (site_dir: ./reports/docs)
-	uv run --extra docs mkdocs build;
+	uv run --exact --no-default-groups --extra docs mkdocs build;
 
 show-coverage:
 	# trigger browser to open coverage report
