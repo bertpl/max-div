@@ -1,0 +1,34 @@
+# Solver registry — the ROWS of the capability grid, in the order they render.
+#
+# Categories render top to bottom in the order given here, and the tools within each category
+# in the order listed. This file is the authority on both: the hero table highlights the first
+# row of the first category as the subject of the comparison, so max-div leading its category
+# is a stated fact here rather than an assumption living in a test.
+#
+# `key` is the record's file stem under docs/solvers/. Every entry must have a record and every
+# record must have an entry — scripts/capability_data.py fails on either mismatch.
+#
+# `reference: false` keeps a tool out of the per-solver reference while keeping its row in both
+# tables. Only max-div uses it: it needs a record so the tables can describe it, but a section
+# surveying third-party tools should not carry a profile of the package those tools are being
+# compared against.
+
+categories:
+  - key: anytime
+    label: Anytime optimizers
+    tools:
+      - key: max-div
+        name: max-div
+        reference: false
+
+  - key: exact
+    label: Exact solvers
+    tools:
+      - key: scip
+        name: SCIP (PySCIPOpt)
+
+  - key: oneshot
+    label: One-shot pickers & samplers
+    tools:
+      - key: dppy
+        name: DPPy

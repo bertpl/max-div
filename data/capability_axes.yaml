@@ -1,0 +1,114 @@
+# Capability axes — the COLUMNS of the capability grid.
+#
+# The rows live in solver_registry.yaml; the cells live in each tool's record under
+# docs/solvers/. Every record must carry exactly one cell per axis declared here, and may
+# carry no others; scripts/capability_data.py enforces both directions.
+#
+# `hero: true` means the axis appears in the README hero table as well as on the comparison
+# page. Every axis is hero-visible today — the flag exists so the comparison page can grow an
+# axis the hero does not show, without either surface being redesigned.
+#
+# `hero_label` is the rotated single-column header in the SVG, so it stays short. `label` is
+# what the comparison page and the per-solver feature tables use, where there is room.
+
+# The mark vocabulary, shared by every surface that renders a cell. The hero SVG currently
+# hard-codes these glyphs and this wording; wiring it to read them from here is what finally makes
+# a divergence impossible rather than merely discouraged.
+#
+# `none` is the one deliberate difference between surfaces: the hero draws nothing at all, because
+# in a dense grid an empty cell unambiguously reads as absence. A per-solver table has one row per
+# capability and no such context, so a blank there reads as "we forgot" rather than "not
+# supported" — hence an explicit dash.
+marks:
+  full:
+    glyph: "✓"
+    legend: built in
+  partial:
+    glyph: "~"
+    legend: reachable, but you supply the model, transform or metric
+  none:
+    glyph: "—"
+    hero_glyph: ""
+    legend: not available
+
+groups:
+  - key: distance
+    label: distance metrics
+    axes:
+      - key: l1
+        hero_label: L1
+        label: L1 (Manhattan) distance
+        hero: true
+      - key: l2
+        hero_label: L2
+        label: L2 (Euclidean) distance
+        hero: true
+      - key: cosine
+        hero_label: cosine
+        label: cosine distance
+        hero: true
+      - key: custom
+        hero_label: custom
+        label: caller-supplied distances
+        hero: true
+
+  - key: objective
+    label: diversity objectives
+    axes:
+      - key: max_min
+        hero_label: max-min
+        label: maximize the minimum separation
+        hero: true
+      - key: mean_nn
+        hero_label: mean-of-NN
+        label: maximize the mean nearest-neighbor separation
+        hero: true
+      - key: geomean_nn
+        hero_label: geomean-of-NN
+        label: maximize the geometric-mean nearest-neighbor separation
+        hero: true
+      - key: max_sum
+        hero_label: max-sum
+        label: maximize the mean pairwise distance
+        hero: true
+
+  - key: constraints
+    label: constraints beyond k
+    axes:
+      - key: disjoint_groups
+        hero_label: disjoint groups
+        label: per-group counts over disjoint groups
+        hero: true
+      - key: overlapping_groups
+        hero_label: overlapping groups
+        label: per-group counts over overlapping groups
+        hero: true
+      - key: ranged_counts
+        hero_label: ranged counts
+        label: minimum and maximum counts per group
+        hero: true
+
+  - key: budget
+    label: time budget
+    axes:
+      - key: iterations
+        hero_label: iterations
+        label: budget expressed as an iteration count
+        hero: true
+      - key: wall_clock
+        hero_label: wall clock
+        label: budget expressed as wall-clock time
+        hero: true
+      - key: improves
+        hero_label: improves with budget
+        label: the answer improves when given more budget
+        hero: true
+
+# The scale column is not a mark: its value is a power of ten (or a range of them), and every
+# record must explain the value it claims. It renders as the last column of the hero table and
+# as a row of each per-solver feature table.
+scale:
+  key: max_practical_n
+  hero_label: max practical n
+  label: largest practical problem size
+  hero: true

@@ -70,6 +70,7 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - admonition
+  - footnotes
   - pymdownx.details
   - attr_list
   - md_in_html
@@ -92,6 +93,9 @@ nav:
     - Objectives & the Landscape: concepts/objectives.md
     - Glossary: concepts/glossary.md
   - Comparison: comparison.md
+  - Solver Reference:
+    - SCIP: solvers/scip.md
+    - DPPy: solvers/dppy.md
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/index.md

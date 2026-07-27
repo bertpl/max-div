@@ -74,6 +74,43 @@ table th {
     background-color: rgba(68, 138, 255, 0.15);
 }
 
+/* Per-solver feature tables (generated into each reference page).
+   The theme's default `white-space: nowrap` would give the notes column its full sentence
+   width; these tables are three columns of prose and need to wrap instead. */
+.solver-features table td,
+.solver-features table th {
+    white-space: normal;
+    vertical-align: top;
+}
+.solver-features table td:first-child,
+.solver-features table th:first-child {
+    min-width: 14em;
+}
+.solver-features table td:nth-child(2),
+.solver-features table th:nth-child(2) {
+    white-space: nowrap;
+}
+.md-typeset .solver-features table {
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+/* Footnote markers in the notes column read as plain (1), (2), ... rather than superscripts.
+   They are the cell's whole content here, not an aside attached to a word, so raising and
+   shrinking them makes the one thing in the column the hardest thing to read. Presentation only:
+   these stay real footnote links, so the definitions keep their backlinks. The `:has()` scope
+   matters: the scale row's exponent is a <sup> too, and a blanket rule flattened 10³ to 103. */
+.solver-features table sup:has(> .footnote-ref) {
+    vertical-align: baseline;
+    font-size: inherit;
+    top: 0;
+}
+.solver-features table .footnote-ref::before {
+    content: "(";
+}
+.solver-features table .footnote-ref::after {
+    content: ")";
+}
+
 /* Center images with .center class */
 img.center {
     display: block;

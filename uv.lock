@@ -1833,6 +1833,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-rerunfailures" },
     { name = "pytest-xdist" },
+    { name = "pyyaml" },
     { name = "ruff" },
     { name = "scipy-stubs" },
     { name = "ty" },
@@ -1857,6 +1858,10 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-rerunfailures" },
     { name = "pytest-xdist" },
+    { name = "pyyaml" },
+]
+tooling = [
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
@@ -1905,6 +1910,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=6.0" },
     { name = "pytest-rerunfailures", specifier = ">=14.0" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", specifier = ">=0.14.0" },
     { name = "scipy-stubs", specifier = ">=1.10.0" },
     { name = "ty", specifier = ">=0.0.58" },
@@ -1927,7 +1933,9 @@ test = [
     { name = "pytest-cov", specifier = ">=6.0" },
     { name = "pytest-rerunfailures", specifier = ">=14.0" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
 ]
+tooling = [{ name = "pyyaml", specifier = ">=6.0" }]
 
 [[package]]
 name = "mergedeep"
