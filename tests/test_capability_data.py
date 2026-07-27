@@ -48,6 +48,11 @@ def synthetic(cd):
             {"key": "distance", "label": "distance metrics", "axes": [{"key": "l2", "label": "L2", "hero": True}]}
         ],
         "scale": {"key": "max_practical_n", "label": "largest practical problem size", "hero": True},
+        "marks": {
+            "full": {"glyph": "Y", "legend": "built in"},
+            "partial": {"glyph": "~", "legend": "reachable"},
+            "none": {"glyph": "-", "legend": "not available"},
+        },
     }
     axes["keys"] = ["distance.l2"]
     registry = {"categories": [{"key": "c", "label": "C", "tools": [{"key": "tool", "name": "Tool"}]}]}
@@ -209,6 +214,36 @@ def test_a_single_value_and_a_range_are_both_accepted(cd, synthetic, value):
 
     # --- act / assert ------------------------------------
     assert problems(cd, synthetic) == []
+
+
+@pytest.mark.parametrize("note", ["a bare string", 42, ["a", "list"]])
+def test_a_note_that_is_not_a_mapping_is_rejected(cd, synthetic, note):
+    """A bare string reads like a note but silently loses its URL and its `distinct` flag."""
+    # --- arrange -----------------------------------------
+    synthetic[2]["tool"][0]["capabilities"]["distance.l2"] = {"mark": "full", "note": note}
+
+    # --- act / assert ------------------------------------
+    assert any("expected a mapping" in p for p in problems(cd, synthetic))
+
+
+def test_a_note_without_text_is_rejected(cd, synthetic):
+    """Otherwise it raises mid-render, detached from the record that caused it."""
+    # --- arrange -----------------------------------------
+    synthetic[2]["tool"][0]["capabilities"]["distance.l2"] = {"mark": "full", "note": {"url": "https://x"}}
+
+    # --- act / assert ------------------------------------
+    assert any("no `text`" in p for p in problems(cd, synthetic))
+
+
+def test_the_mark_vocabulary_comes_from_the_axes_file(cd, synthetic):
+    """Validation and rendering must read one declaration, not two that can disagree."""
+    # --- arrange -----------------------------------------
+    axes, registry, records = synthetic
+    axes["marks"]["reachable"] = {"glyph": "?", "legend": "invented"}
+    records["tool"][0]["capabilities"]["distance.l2"] = {"mark": "reachable"}
+
+    # --- act / assert ------------------------------------
+    assert cd.check_structure(axes, registry, records) == []
 
 
 def test_page_without_its_include_is_rejected(cd, synthetic):
