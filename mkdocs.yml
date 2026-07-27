@@ -27,6 +27,9 @@ theme:
     - navigation.sections
     - toc.integrate
 
+hooks:
+  - scripts/mkdocs_hooks.py
+
 plugins:
   - search
   - mkdocstrings:
