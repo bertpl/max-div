@@ -27,8 +27,8 @@ HiGHS              | ~ ~ ~ Y | ~ ~ ~ ~ | ~ ~ ~ | Y Y ~ | 3   | https://ergo-code
 
 [category] One-shot pickers & samplers
 RDKit MaxMinPicker | ~ ~ ~ Y | Y . . . | . . . | . . . | 6   | https://www.rdkit.org/docs/source/rdkit.SimDivFilters.rdSimDivPickers.html
-skmatter           | . Y ~ . | Y . . . | . . . | . . . | 5   | https://scikit-matter.readthedocs.io/
 fpsample           | . Y ~ . | Y . . . | . . . | . . . | 6   | https://github.com/leonardodalinky/fpsample
+skmatter           | . Y ~ . | Y . . . | . . . | . . . | 5   | https://scikit-matter.readthedocs.io/
 apricot-select     | Y Y Y Y | . . . Y | . . . | . . . | 5   | https://apricot-select.readthedocs.io/
 qc-selector        | Y Y ~ Y | Y . . Y | Y . . | ~ . . | 4   | https://selector.qcdevs.org/
 DPPy               | ~ ~ ~ Y | . . . . | . . . | ~ . . | 4   | https://dppy.readthedocs.io/

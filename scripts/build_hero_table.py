@@ -56,7 +56,7 @@ THEMES = {
         "rule": "#d8dee4",
         "band": "#f6f8fa",
         "mark": "#1a7f37",
-        "partial": "#9a6700",
+        "partial": "#8c959f",
         "own_band": "#ddf4e4",
         "cat_band": "#57606a",
         "cat_band_opacity": "0.06",
@@ -69,7 +69,7 @@ THEMES = {
         "rule": "#30363d",
         "band": "#161b22",
         "mark": "#3fb950",
-        "partial": "#d29922",
+        "partial": "#8b949e",
         "own_band": "#12261e",
         "cat_band": "#c9d1d9",
         "cat_band_opacity": "0.05",
@@ -130,12 +130,16 @@ SUP_DY = 4  # how far the exponent is raised
 def scale_markup(spec):
     """`4-5` -> `~10^4 en-dash 10^5` as SVG markup, `3` -> `~10^3`.
 
+    The leading tilde is the same glyph as the `partial` mark, which is a deliberate choice
+    rather than an oversight: an approximation sign was tried and read worse. The two senses are
+    told apart by column, and by the marks being grey while the figures are ink or green.
+
     Exponents are `<tspan>`s rather than unicode superscript characters: those are locked to
     roughly 0.6x the surrounding size, which is too small to read at this scale. `dy` shifts are
     cumulative in SVG, so every raised span is followed by an equal lowering span.
 
-    Every figure carries a leading `~`: these are indicative orders of magnitude, not measured
-    ceilings, and the binding limit differs per tool (memory, runtime, dimensionality).
+    The figures are indicative orders of magnitude, not measured ceilings, and the binding limit
+    differs per tool (memory, runtime, dimensionality).
     """
 
     def sup(digits):
@@ -179,6 +183,15 @@ class _Layout:
         self.y_corner = self.y_header_base - CORNER_LIFT
         self.skew = self.y_corner - self.y_top  # a 45-degree edge shifts right by its own height
         self.table_w = LABEL_W + self.grid_w
+
+    def leads_on_scale(self, row):
+        """True for the row(s) carrying the highest scale figure.
+
+        Deliberately not keyed to max-div: the leader here is a competitor, and saying so is the
+        point of showing the column at all.
+        """
+        best = max(int(r["scale"].split("-")[-1]) for r in self.rows)
+        return int(row["scale"].split("-")[-1]) == best
 
     def col_x(self, i):
         """Left edge of mark column i."""
@@ -284,6 +297,8 @@ def _data_rows(lay):
         y += CAT_H
         for row in [r for r in lay.rows if r["category"] == ci]:
             own = row["name"] == "max-div"
+            # `own` drives exactly two things: this weight, applied to the row name, and the band
+            # below. The mark glyphs are styled uniformly across all rows.
             weight = "700" if own else "400"
             if own:
                 out.append(f'<rect x="{PAD}" y="{y}" width="{lay.table_w}" height="{ROW_H}" fill="{t["own_band"]}"/>')
@@ -293,9 +308,15 @@ def _data_rows(lay):
                 f'font-size="{NAME_FS}" font-weight="{weight}">{esc(row["name"])}</text>'
             )
             out.extend(_row_marks(lay, row, y))
+            leads = lay.leads_on_scale(row)
+            scale_fill = t["mark"] if leads else t["ink"]
+            # Bold in this column means "leads on scale" and nothing else. The row-name weight is
+            # a separate signal (the subject), so inheriting it here would imply max-div leads a
+            # column it does not.
+            scale_weight = "700" if leads else "400"
             out.append(
-                f'<text x="{lay.col_x(lay.n_marks) + SCALE_W // 2}" y="{y + ROW_H - 7}" fill="{t["ink"]}" '
-                f'font-size="{SCALE_FS}" font-weight="{weight}" text-anchor="middle">'
+                f'<text x="{lay.col_x(lay.n_marks) + SCALE_W // 2}" y="{y + ROW_H - 7}" fill="{scale_fill}" '
+                f'font-size="{SCALE_FS}" font-weight="{scale_weight}" text-anchor="middle">'
                 f"{scale_markup(row['scale'])}</text>"
             )
             y += ROW_H
@@ -311,7 +332,7 @@ def _legend(lay, y):
         f'<tspan fill="{t["muted"]}" dx="5">built in</tspan>'
         f'<tspan fill="{t["muted"]}" dx="9">·</tspan>'
         f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">~</tspan>'
-        f'<tspan fill="{t["muted"]}" dx="5">reachable, but you supply the model, kernel or metric</tspan>'
+        f'<tspan fill="{t["muted"]}" dx="5">reachable, but you supply the model, transform or metric</tspan>'
         f"</text>"
     ]
 
