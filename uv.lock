@@ -1910,7 +1910,10 @@ dev = [
     { name = "pytest-cov", specifier = ">=6.0" },
     { name = "pytest-rerunfailures", specifier = ">=14.0" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "pyyaml", marker = "python_full_version < '3.12'", specifier = ">=6.0" },
+    { name = "pyyaml", marker = "python_full_version == '3.12.*'", specifier = ">=6.0.1" },
+    { name = "pyyaml", marker = "python_full_version == '3.13.*'", specifier = ">=6.0.2" },
+    { name = "pyyaml", marker = "python_full_version >= '3.14'", specifier = ">=6.0.3" },
     { name = "ruff", specifier = ">=0.14.0" },
     { name = "scipy-stubs", specifier = ">=1.10.0" },
     { name = "ty", specifier = ">=0.0.58" },
@@ -1933,9 +1936,17 @@ test = [
     { name = "pytest-cov", specifier = ">=6.0" },
     { name = "pytest-rerunfailures", specifier = ">=14.0" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "pyyaml", marker = "python_full_version < '3.12'", specifier = ">=6.0" },
+    { name = "pyyaml", marker = "python_full_version == '3.12.*'", specifier = ">=6.0.1" },
+    { name = "pyyaml", marker = "python_full_version == '3.13.*'", specifier = ">=6.0.2" },
+    { name = "pyyaml", marker = "python_full_version >= '3.14'", specifier = ">=6.0.3" },
 ]
-tooling = [{ name = "pyyaml", specifier = ">=6.0" }]
+tooling = [
+    { name = "pyyaml", marker = "python_full_version < '3.12'", specifier = ">=6.0" },
+    { name = "pyyaml", marker = "python_full_version == '3.12.*'", specifier = ">=6.0.1" },
+    { name = "pyyaml", marker = "python_full_version == '3.13.*'", specifier = ">=6.0.2" },
+    { name = "pyyaml", marker = "python_full_version >= '3.14'", specifier = ">=6.0.3" },
+]
 
 [[package]]
 name = "mergedeep"
