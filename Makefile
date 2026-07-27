@@ -1,6 +1,20 @@
 file_path=
 
-.PHONY: help build test coverage test-and-coverage format format-single-file lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
+# --- how the package suite is installed and run ------------
+# Single definition, shared by every target below AND by the CI test matrix, which calls these
+# targets rather than repeating the command. That is the point: the interpreter, the resolution
+# strategy and the dependency group cannot drift between a developer machine and CI, because
+# there is only one place that names them. CI overrides PY and RESOLUTION per matrix leg; the
+# defaults are the single representative combo to run locally.
+PY ?= 3.13
+RESOLUTION ?= highest
+UV_RUN = uv run --python $(PY) --resolution $(RESOLUTION) --group dev
+
+# Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
+# to pass coverage flags, and deliberately keeps the warnings visible.
+PYTEST_ARGS ?= --disable-warnings
+
+.PHONY: help build test collect-test-ids coverage test-and-coverage format format-single-file lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -10,6 +24,7 @@ help:
 	@echo '  build                                  (Re)build package using uv.'
 	@echo ''
 	@echo '  test                                   Run pytest unit tests.'
+	@echo '  collect-test-ids                       List collected test node-ids without running them.'
 	@echo '  coverage                               Generate test coverage report. (./reports/coverage)'
 	@echo '  test-and-coverage                      Run unit tests (=with numba) + generate coverage report (=without numba).'
 	@echo ''
@@ -34,15 +49,24 @@ help:
 	@echo 'Options:'
 	@echo ''
 	@echo '  format-single-file             - accepts `file_path=<path>` to pass the relative path of the file to be formatted.'
+	@echo '  test / collect-test-ids / coverage'
+	@echo '                                 - accept `PY=<version>` and `RESOLUTION=highest|lowest-direct` to pick the'
+	@echo '                                   interpreter and uv resolution strategy, and `PYTEST_ARGS=<flags>` to replace'
+	@echo '                                   the default pytest flags. The CI matrix drives these targets that way.'
 
 build:
 	uv build;
 
 test:
-	# run all tests - with numba & just 1 python version
-	# --group dev, NOT --all-extras: the same install surface the CI matrix uses, so a test that
-	# reaches for an optional dependency (e.g. anything in the docs extra) fails here too
-	uv run --group dev --python 3.13 pytest ./tests --durations=20 --disable-warnings
+	# run all tests - with numba & one interpreter (see PY / RESOLUTION above)
+	$(UV_RUN) pytest ./tests --durations=20 $(PYTEST_ARGS)
+
+# Collected node-ids, one per line. CI unions these across matrix legs to count the suite, so this
+# target's stdout is data: it is written with `@` and its commentary lives here rather than in the
+# recipe, since an echoed recipe line would land in whatever consumes the list.
+# -o addopts="" clears `-n auto`, so collection runs in-process instead of under xdist.
+collect-test-ids:
+	@$(UV_RUN) pytest ./tests --collect-only -q -o addopts=""
 
 test-benchmarks:
 	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps groups)
@@ -52,8 +76,8 @@ coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions
     #       NUMBA_JIT_COVERAGE is another option, but would incorrectly emit coverage info for ALL compiled lines, when a function is triggered.
 	mkdir -p ./reports
-	# run tests on the same install surface as the CI coverage legs (see the note under `test`)
-	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage uv run --group dev --python 3.13 pytest ./tests --cov --cov-report=html:./reports/coverage --durations=20 --disable-warnings
+	# same install surface as `test` and as the CI coverage legs (see PY / RESOLUTION above)
+	NUMBA_DISABLE_JIT=1 COVERAGE_FILE=./reports/.coverage $(UV_RUN) pytest ./tests --cov --cov-report=html:./reports/coverage --durations=20 $(PYTEST_ARGS)
 
 test-and-coverage:
 	$(MAKE) test;

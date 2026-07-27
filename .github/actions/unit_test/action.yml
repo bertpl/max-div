@@ -49,6 +49,10 @@ runs:
         # but removing the committed lock guarantees the matrix leg is never pinned by it.
         run: rm -f uv.lock
 
+      # `make test`, not a bare `uv run`: the interpreter, resolution strategy and dependency
+      # group are defined once, in the Makefile, so this matrix and a developer's local run
+      # cannot drift apart. Only the genuinely CI-side concerns stay here — the JIT toggle, the
+      # coverage flags, and the per-combo data file.
       - name: Run tests
         shell: bash
         env:
@@ -64,7 +68,8 @@ runs:
           COV_FLAG=""
           # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
-          uv run --python "$PY" --resolution "$RES" --group dev pytest ./tests $COV_FLAG --durations=20
+          # PYTEST_ARGS replaces the Makefile default, so warnings stay visible in CI
+          make test PY="$PY" RESOLUTION="$RES" PYTEST_ARGS="$COV_FLAG"
 
       - name: Dump collected node-ids (for the cross-combo test-count union)
         if: inputs.coverage == 'true'
@@ -74,10 +79,8 @@ runs:
           RES: ${{ inputs.dependency_resolution }}
           JIT: ${{ inputs.jit }}
         run: |
-          # -o addopts="" clears `-n auto`, so collection runs single-process (xdist off);
-          # each combo records its own collected set so the coverage job can union them.
-          uv run --python "$PY" --resolution "$RES" --group dev \
-            pytest ./tests --collect-only -q -o addopts="" \
+          # each combo records its own collected set so the coverage job can union them
+          make collect-test-ids PY="$PY" RESOLUTION="$RES" \
             | grep '::' > "test-ids-${PY}-${RES}-${JIT}.txt"
 
       - name: Upload coverage + node-id data
