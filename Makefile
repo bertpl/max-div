@@ -6,9 +6,13 @@ file_path=
 # strategy and the dependency group cannot drift between a developer machine and CI, because
 # there is only one place that names them. CI overrides PY and RESOLUTION per matrix leg; the
 # defaults are the single representative combo to run locally.
-# --no-default-groups is what makes the narrowing real: `--group test` alone only ADDS to the
-# default set, which still contains `dev`, so the linters would come along anyway. `--only-group`
-# is the wrong tool here — it drops the project and its runtime dependencies too.
+#
+# On the uv flags. Every `uv run` / `uv sync` implicitly activates a set of dependency groups —
+# uv's "default groups", which is `dev` unless a project configures otherwise. `--group` ADDS to
+# that set rather than replacing it, so `--group test` on its own installs test AND dev, and the
+# narrowing would be cosmetic. `--no-default-groups` empties the implicit set, leaving only what
+# is named. `--only-group` narrows as well, but additionally drops the project and its runtime
+# dependencies, which leaves pytest with nothing to import.
 PY ?= 3.13
 RESOLUTION ?= highest
 UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-groups --group test

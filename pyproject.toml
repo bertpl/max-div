@@ -90,7 +90,7 @@ lint = [
     "pre-commit>=4.0",
     "ruff>=0.14.0",
     "scipy-stubs>=1.10.0",
-    "ty==0.0.58",  # pre-1.0 type checker — pin exactly; its ruleset is still evolving
+    "ty>=0.0.58",  # pre-1.0 type checker — floor only; uv.lock pins the version actually used
 ]
 package = [
     "check-wheel-contents>=0.6.2",
