@@ -96,6 +96,6 @@ defining a quantity being maximized.
 library as a whole makes no optimality claims, and its procedural methods have no objective for a
 bound to be stated against.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/qc-selector.md"

@@ -105,6 +105,6 @@ $$
 **Guarantee: proven optimum.** On termination the reported selection is optimal for the model as
 written — which makes the modelling, not the solving, the place errors live.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/highs.md"

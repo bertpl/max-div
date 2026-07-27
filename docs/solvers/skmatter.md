@@ -67,6 +67,6 @@ selecting at each step the candidate whose nearest already-selected neighbor is 
 non-diversity selectors (CUR, PCovR-based) whose objectives are different problems entirely and
 are out of scope here.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/skmatter.md"

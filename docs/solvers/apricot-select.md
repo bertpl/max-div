@@ -89,6 +89,6 @@ the objective rewards a selection that leaves nothing far from everything.
 a factor $1 - 1/e \approx 0.63$ of optimal — a bound that holds for this objective, not for the
 dispersion objectives the other tools target.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/apricot-select.md"

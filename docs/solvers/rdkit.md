@@ -83,6 +83,6 @@ $$
 optimal minimum separation, and no better ratio is achievable in polynomial time unless P = NP. In
 practice it usually lands far closer to optimal than the bound suggests.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/rdkit.md"

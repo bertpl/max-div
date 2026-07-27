@@ -71,6 +71,6 @@ index rather than evaluated lazily.
 **Guarantee: 2-approximation.** Identical to any farthest-point traversal — the implementation
 changes the speed, not the bound.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/fpsample.md"

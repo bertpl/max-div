@@ -48,6 +48,7 @@ def synthetic(cd):
             {"key": "distance", "label": "distance metrics", "axes": [{"key": "l2", "label": "L2", "hero": True}]}
         ],
         "scale": {"key": "max_practical_n", "label": "largest practical problem size", "hero": True},
+        "metadata": [{"key": "guarantee", "label": "Guarantee"}],
         "marks": {
             "full": {"glyph": "Y", "legend": "built in"},
             "partial": {"glyph": "~", "legend": "reachable"},
@@ -58,6 +59,7 @@ def synthetic(cd):
     registry = {"categories": [{"key": "c", "label": "C", "tools": [{"key": "tool", "name": "Tool"}]}]}
     record = {
         "name": "Tool",
+        "metadata": {"guarantee": "heuristic"},
         "scale": {"max_practical_n": "3", "rationale": "because"},
         "capabilities": {"distance.l2": {"mark": "full"}},
     }
@@ -200,6 +202,26 @@ def test_registry_entry_without_a_record_is_rejected(cd, synthetic):
 
     # --- act / assert ------------------------------------
     assert any("has no record" in p for p in cd.check_structure(axes, registry, records))
+
+
+def test_a_missing_metadata_field_is_rejected(cd, synthetic):
+    """The declared fields are what the comparison table and each profile promise to show."""
+    # --- arrange -----------------------------------------
+    synthetic[2]["tool"][0]["metadata"] = {}
+
+    # --- act / assert ------------------------------------
+    assert any("no `guarantee` metadata" in p for p in problems(cd, synthetic))
+
+
+def test_metadata_falls_back_to_the_record_top_level(cd, synthetic):
+    """Source and verification date live at the top level, not inside the metadata block."""
+    # --- arrange -----------------------------------------
+    axes, registry, records = synthetic
+    axes["metadata"].append({"key": "verified", "label": "Last verified"})
+    records["tool"][0]["verified"] = "2026-07-27"
+
+    # --- act / assert ------------------------------------
+    assert cd.check_structure(axes, registry, records) == []
 
 
 def test_missing_scale_rationale_is_rejected(cd, synthetic):

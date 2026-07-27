@@ -99,6 +99,6 @@ and searching for a group-feasible independent set — then adjusting the thresh
 implementation is a research artifact, so treat published ratios as claims about the algorithms
 rather than about this code.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/code-fdm.md"

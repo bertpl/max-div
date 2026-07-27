@@ -101,6 +101,6 @@ for the $S$ that maximizes $\det(L_S)$ — that problem is NP-hard.
 draws from precisely the distribution above, with no claim whatsoever about any individual
 draw's diversity relative to the best possible subset.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/dppy.md"

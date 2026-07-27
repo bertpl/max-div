@@ -99,6 +99,6 @@ driven by a binary search over $t$ with each feasibility question handed to the 
 **Guarantee: proven optimum.** Each feasibility answer is exact, so the resulting threshold is the
 true optimum rather than a bound on it.
 
-## Capabilities
+## Reference
 
 --8<-- "generated/features/ortools-cpsat.md"
