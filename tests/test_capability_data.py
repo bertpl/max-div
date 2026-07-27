@@ -8,6 +8,8 @@ a check that returned nothing at all.
 """
 
 import importlib.util
+import shutil
+import subprocess
 import sys
 from copy import deepcopy
 from pathlib import Path
@@ -81,7 +83,7 @@ def test_committed_fragments_match_a_fresh_render(cd, real):
         )
 
 
-def test_a_stale_fragment_is_reported_by_the_dry_run(cd, real, tmp_path, monkeypatch):
+def test_a_stale_fragment_is_reported_by_the_dry_run(cd, real, tmp_path):
     """The drift guard has to fire from `--check` too, not only from this suite.
 
     Otherwise the commit hook — which runs at the one moment the author still has the record in
@@ -89,28 +91,26 @@ def test_a_stale_fragment_is_reported_by_the_dry_run(cd, real, tmp_path, monkeyp
     """
     # --- arrange -----------------------------------------
     axes, registry, records = real
-    monkeypatch.setattr(cd, "FRAGMENTS_DIR", tmp_path)
     for tool in cd.registered_tools(registry):
         if tool.get("reference", True):
             (tmp_path / f"{tool['key']}.md").write_text("stale content", encoding="utf-8")
 
     # --- act ---------------------------------------------
-    structural, _near_duplicates = cd.validate(axes, registry, records)
+    problems = cd.check_fragments_are_current(axes, registry, records, tmp_path)
 
     # --- assert ------------------------------------------
-    assert any("is stale" in p for p in structural)
+    assert any("is stale" in p for p in problems)
 
 
-def test_a_missing_fragment_is_reported(cd, real, tmp_path, monkeypatch):
+def test_a_missing_fragment_is_reported(cd, real, tmp_path):
     # --- arrange -----------------------------------------
     axes, registry, records = real
-    monkeypatch.setattr(cd, "FRAGMENTS_DIR", tmp_path)
 
     # --- act ---------------------------------------------
-    structural, _near_duplicates = cd.validate(axes, registry, records)
+    problems = cd.check_fragments_are_current(axes, registry, records, tmp_path)
 
     # --- assert ------------------------------------------
-    assert any("no generated feature table" in p for p in structural)
+    assert any("no generated feature table" in p for p in problems)
 
 
 def test_excluded_tools_get_no_fragment(cd, real):
@@ -287,3 +287,78 @@ def test_the_same_text_under_different_urls_is_two_notes(cd, synthetic):
 
     # --- act / assert ------------------------------------
     assert cd.check_near_duplicate_notes(records) == []
+
+
+# =================================================================================================
+#  The command, not just the functions
+# =================================================================================================
+@pytest.fixture
+def repo_copy(tmp_path):
+    """A throwaway copy of everything the generator reads and writes.
+
+    The subprocess tests need to make the data wrong on purpose, and the suite runs in parallel —
+    so they work on a copy rather than the checkout, where a tampered file would be read by
+    whatever other test happened to be running at the time.
+    """
+    for relative in ("data", "docs/solvers", "generated/features"):
+        source = REPO_ROOT / relative
+        destination = tmp_path / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, destination)
+    return tmp_path
+
+
+def _run(root, *args):
+    """Invoke the generator the way the make target, the commit hook and CI all do."""
+    return subprocess.run(  # noqa: S603 -- fixed, repo-local command
+        [sys.executable, str(SCRIPT), "--root", str(root), *args],
+        capture_output=True,
+        encoding="utf-8",
+        check=False,  # the return code is what these tests assert on
+    )
+
+
+def test_the_check_command_passes_on_the_committed_data(repo_copy):
+    # --- act ---------------------------------------------
+    result = _run(repo_copy, "--check")
+
+    # --- assert ------------------------------------------
+    assert result.returncode == 0, result.stderr
+
+
+def test_the_check_command_fails_on_a_stale_fragment(repo_copy):
+    """Guards main()'s wiring, which no in-process test reaches.
+
+    Every check is reachable as a function, so a regression in how the command reports or exits —
+    a narrowed failure condition, a lost return code — would leave the suite green while the
+    commit hook and CI wave the problem through.
+    """
+    # --- arrange -----------------------------------------
+    fragment = repo_copy / "generated" / "features" / "scip.md"
+    fragment.write_text(fragment.read_text(encoding="utf-8") + "\nstale\n", encoding="utf-8")
+
+    # --- act ---------------------------------------------
+    result = _run(repo_copy, "--check")
+
+    # --- assert ------------------------------------------
+    assert result.returncode == 1
+    assert "is stale" in result.stderr
+
+
+def test_the_write_command_regenerates_a_stale_fragment(repo_copy):
+    """Writing is what resolves drift, so the write path must not refuse on it.
+
+    Folding the drift check into shared validation made this command fail with an error telling
+    the reader to run the command that had just refused.
+    """
+    # --- arrange -----------------------------------------
+    fragment = repo_copy / "generated" / "features" / "scip.md"
+    intended = fragment.read_text(encoding="utf-8")
+    fragment.write_text("stale\n", encoding="utf-8")
+
+    # --- act ---------------------------------------------
+    result = _run(repo_copy)
+
+    # --- assert ------------------------------------------
+    assert result.returncode == 0, result.stderr
+    assert fragment.read_text(encoding="utf-8") == intended

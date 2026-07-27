@@ -247,7 +247,9 @@ def inline(text: str) -> str:
 # =================================================================================================
 #  Entry point
 # =================================================================================================
-def check_fragments_are_current(axes: dict, registry: dict, records: dict) -> list[str]:
+def check_fragments_are_current(
+    axes: dict, registry: dict, records: dict, fragments_dir: Path = FRAGMENTS_DIR
+) -> list[str]:
     """Report committed fragments that no longer match what the records would render.
 
     Structural validity says nothing about this: editing a mark leaves the data perfectly well
@@ -262,7 +264,7 @@ def check_fragments_are_current(axes: dict, registry: dict, records: dict) -> li
         key = tool["key"]
         if key not in records:
             continue
-        path = FRAGMENTS_DIR / f"{key}.md"
+        path = fragments_dir / f"{key}.md"
         fresh = render_feature_table(axes, records[key][0], key)
         if not path.exists():
             problems.append(f"{key}: no generated feature table — run scripts/capability_data.py")
@@ -283,23 +285,25 @@ def _display_path(path: Path) -> str:
 
 
 def validate(axes: dict, registry: dict, records: dict) -> tuple[list[str], list[str]]:
-    structural = check_structure(axes, registry, records)
-    # Only worth rendering once the data is sound; a malformed record would raise here rather than
-    # report, and the structural problems are the ones to fix first anyway.
-    if not structural:
-        structural += check_fragments_are_current(axes, registry, records)
-    return structural, check_near_duplicate_notes(records)
+    """Everything wrong with the data itself, split into the two severities.
+
+    Deliberately excludes the fragment-drift check. Drift is a property of the *committed output*,
+    not of the data, and writing is what resolves it — folding it in here would make the generator
+    refuse to regenerate precisely when regeneration is what is needed, with an error telling the
+    reader to run the command that just refused.
+    """
+    return check_structure(axes, registry, records), check_near_duplicate_notes(records)
 
 
-def write_fragments(axes: dict, registry: dict, records: dict) -> list[Path]:
+def write_fragments(axes: dict, registry: dict, records: dict, fragments_dir: Path = FRAGMENTS_DIR) -> list[Path]:
     """Write one fragment per tool that has a reference page. Excluded tools get none."""
-    FRAGMENTS_DIR.mkdir(parents=True, exist_ok=True)
+    fragments_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for tool in registered_tools(registry):
         if not tool.get("reference", True):
             continue
         record, _body = records[tool["key"]]
-        path = FRAGMENTS_DIR / f"{tool['key']}.md"
+        path = fragments_dir / f"{tool['key']}.md"
         path.write_text(render_feature_table(axes, record, tool["key"]), encoding="utf-8")
         written.append(path)
     return written
@@ -308,10 +312,24 @@ def write_fragments(axes: dict, registry: dict, records: dict) -> list[Path]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="validate and report only; write nothing")
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=REPO_ROOT,
+        help="repository root to operate on; defaults to this checkout. Lets the checks run against "
+        "a copy instead of the working tree.",
+    )
     args = parser.parse_args()
 
-    axes, registry, records = load_axes(), load_registry(), load_records()
+    axes = load_axes(args.root / "data" / "capability_axes.yaml")
+    registry = load_registry(args.root / "data" / "solver_registry.yaml")
+    records = load_records(args.root / "docs" / "solvers")
+    fragments_dir = args.root / "generated" / "features"
     structural, near_duplicates = validate(axes, registry, records)
+    # Drift is only a problem in --check mode; in write mode the write is the fix. Rendering needs
+    # sound data, so it is skipped when the structure is already broken.
+    if args.check and not structural:
+        structural += check_fragments_are_current(axes, registry, records, fragments_dir)
 
     for problem in structural:
         print(f"ERROR  {problem}", file=sys.stderr)
@@ -328,8 +346,8 @@ def main() -> int:
         print(f"capability data OK: {len(records)} record(s), {len(axes['keys'])} axes")
         return 0
 
-    written = write_fragments(axes, registry, records)
-    print(f"wrote {len(written)} feature table(s) to {FRAGMENTS_DIR.relative_to(REPO_ROOT)}/")
+    written = write_fragments(axes, registry, records, fragments_dir)
+    print(f"wrote {len(written)} feature table(s) to {_display_path(fragments_dir)}/")
     return 0
 
 
