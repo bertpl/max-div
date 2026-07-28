@@ -45,9 +45,18 @@ def synthetic(cd):
     """A minimal, valid axes/registry/records triple that each rejection test then breaks."""
     axes = {
         "groups": [
-            {"key": "distance", "label": "distance metrics", "axes": [{"key": "l2", "label": "L2", "hero": True}]}
+            {
+                "key": "distance",
+                "label": "distance metrics",
+                "axes": [{"key": "l2", "label": "L2", "hero_label": "L2", "hero": True}],
+            }
         ],
-        "scale": {"key": "max_practical_n", "label": "largest practical problem size", "hero": True},
+        "scale": {
+            "key": "max_practical_n",
+            "label": "largest practical problem size",
+            "hero_label": "max practical n",
+            "hero": True,
+        },
         "metadata": [{"key": "guarantee", "label": "Guarantee"}],
         "marks": {
             "full": {"glyph": "Y", "legend": "built in"},
@@ -69,7 +78,9 @@ def synthetic(cd):
 
 def problems(cd, synthetic_triple):
     axes, registry, records = synthetic_triple
-    return cd.check_structure(axes, registry, records)
+    # The committed comparison page carries its include, so passing it keeps these tests focused on
+    # the record rule each one breaks. The include rule has its own tests below.
+    return cd.check_structure(axes, registry, records, cd.COMPARISON_PAGE)
 
 
 # =================================================================================================
@@ -81,7 +92,7 @@ def test_committed_fragments_match_a_fresh_render(cd, real):
 
     # --- act / assert ------------------------------------
     for tool in cd.registered_tools(registry):
-        if not tool.get("reference", True):
+        if not tool.get("profile", True):
             continue
         record, _body = records[tool["key"]]
         committed = cd.FRAGMENTS_DIR / f"{tool['key']}.md"
@@ -99,7 +110,7 @@ def test_a_stale_fragment_is_reported_by_the_dry_run(cd, real, tmp_path):
     # --- arrange -----------------------------------------
     axes, registry, records = real
     for tool in cd.registered_tools(registry):
-        if tool.get("reference", True):
+        if tool.get("profile", True):
             (tmp_path / f"{tool['key']}.md").write_text("stale content", encoding="utf-8")
 
     # --- act ---------------------------------------------
@@ -121,15 +132,38 @@ def test_a_missing_fragment_is_reported(cd, real, tmp_path):
 
 
 def test_excluded_tools_get_no_fragment(cd, real):
-    """A record kept out of the reference has no page to include a table into."""
+    """A record kept out of the profiles has no page to include a table into."""
     # --- arrange -----------------------------------------
     _axes, registry, _records = real
-    excluded = [t["key"] for t in cd.registered_tools(registry) if not t.get("reference", True)]
+    excluded = [t["key"] for t in cd.registered_tools(registry) if not t.get("profile", True)]
 
     # --- act / assert ------------------------------------
-    assert excluded, "expected at least one record to be excluded from the reference"
+    assert excluded, "expected at least one record to be excluded from the profiles"
     for key in excluded:
         assert not (cd.FRAGMENTS_DIR / f"{key}.md").exists()
+
+
+def test_the_committed_comparison_tables_match_a_fresh_render(cd, real):
+    # --- arrange -----------------------------------------
+    axes, registry, records = real
+
+    # --- act / assert ------------------------------------
+    assert cd.COMPARISON_FRAGMENT.read_text(encoding="utf-8") == cd.render_comparison(axes, registry, records), (
+        "generated/comparison.md is stale — re-run scripts/capability_data.py"
+    )
+
+
+def test_a_stale_comparison_fragment_is_reported_by_the_dry_run(cd, real, tmp_path):
+    # --- arrange -----------------------------------------
+    axes, registry, records = real
+    stale = tmp_path / "comparison.md"
+    stale.write_text("stale content", encoding="utf-8")
+
+    # --- act ---------------------------------------------
+    problems = cd.check_fragments_are_current(axes, registry, records, tmp_path, stale)
+
+    # --- assert ------------------------------------------
+    assert any(p.startswith("comparison:") and "is stale" in p for p in problems)
 
 
 def test_a_page_without_a_solver_block_is_not_a_record(cd, tmp_path):
@@ -292,14 +326,137 @@ def test_page_without_its_include_is_rejected(cd, synthetic):
 
 
 def test_an_excluded_record_needs_no_include(cd, synthetic):
-    """A record that is not published has no page for the fragment to land in."""
+    """A record without a profile has no page for the fragment to land in."""
     # --- arrange -----------------------------------------
     axes, registry, records = synthetic
-    registry["categories"][0]["tools"][0]["reference"] = False
+    registry["categories"][0]["tools"][0]["profile"] = False
     records["tool"] = (records["tool"][0], "no include here")
 
     # --- act / assert ------------------------------------
     assert cd.check_structure(axes, registry, records) == []
+
+
+# =================================================================================================
+#  The comparison page
+# =================================================================================================
+def test_comparison_page_without_its_include_is_rejected(cd, tmp_path):
+    # --- arrange -----------------------------------------
+    page = tmp_path / "comparison.md"
+    page.write_text("# Comparison\n\nprose, but no include\n", encoding="utf-8")
+
+    # --- act / assert ------------------------------------
+    assert any("does not include" in p for p in cd.check_comparison_include(page))
+
+
+def test_a_missing_comparison_page_is_rejected(cd, tmp_path):
+    """Reported rather than raised: the check runs from a commit hook, where a traceback is noise."""
+    # --- act / assert ------------------------------------
+    assert any("is missing" in p for p in cd.check_comparison_include(tmp_path / "gone.md"))
+
+
+def test_every_registered_tool_is_a_row(cd, real):
+    """Including the one kept out of the reference — needing a row here is why its record exists."""
+    # --- arrange -----------------------------------------
+    axes, registry, records = real
+
+    # --- act ---------------------------------------------
+    rendered = cd.render_comparison(axes, registry, records)
+
+    # --- assert ------------------------------------------
+    for tool in cd.registered_tools(registry):
+        assert tool["name"] in rendered
+
+
+def test_every_capability_axis_is_a_column(cd, real):
+    """The bar this page is held to: it shows at least everything the README table shows."""
+    # --- arrange -----------------------------------------
+    axes, registry, records = real
+
+    # --- act ---------------------------------------------
+    rendered = cd.render_comparison(axes, registry, records)
+
+    # --- assert ------------------------------------------
+    for group in axes["groups"]:
+        for axis in group["axes"]:
+            assert f">{axis['hero_label']}</th>" in rendered
+    assert f">{axes['scale']['hero_label']}</th>" in rendered
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [("3", "n ≈ 10<sup>3</sup>"), ("4-5", "n ≈ 10<sup>4</sup>&ndash;10<sup>5</sup>")],
+)
+def test_a_scale_range_renders_as_two_powers(cd, value, expected):
+    """`10<sup>4-5</sup>` reads as a single exponent of `4-5` rather than as a range."""
+    # --- act / assert ------------------------------------
+    assert cd._scale_markup({"max_practical_n": value}) == expected
+
+
+def test_each_group_heading_spans_its_own_columns(cd, real):
+    """A markdown table cannot express this, which is why the grid is rendered as HTML.
+
+    Asserted because a heading whose span drifts from its group silently mislabels every column
+    to its right — the failure is invisible in the data and obvious only on the built page.
+    """
+    # --- arrange -----------------------------------------
+    axes, registry, records = real
+
+    # --- act ---------------------------------------------
+    rendered = cd.render_comparison(axes, registry, records)
+
+    # --- assert ------------------------------------------
+    for group in axes["groups"]:
+        assert f'colspan="{len(group["axes"])}">{group["label"]}</th>' in rendered
+
+
+def test_a_metadata_field_can_be_kept_off_the_comparison_page(cd, real):
+    """The source URL is reached through the link on each tool's name instead of its own column."""
+    # --- arrange -----------------------------------------
+    axes, registry, records = real
+    hidden = [field for field in axes["metadata"] if not field.get("comparison", True)]
+
+    # --- act ---------------------------------------------
+    rendered = cd.render_comparison(axes, registry, records)
+    per_solver = cd.render_feature_table(axes, records["scip"][0], "scip")
+
+    # --- assert ------------------------------------------
+    assert hidden, "expected at least one metadata field to be comparison-hidden"
+    for field in hidden:
+        assert f"| {field['label']} |" not in rendered
+        assert f"| {field['label']} |" in per_solver
+
+
+def test_a_note_shared_by_two_tools_becomes_one_footnote(cd, synthetic):
+    """Dedupe runs across the whole page, which is the point of one footnote sequence for both
+    tables — the same reason stated by two tools should not print twice."""
+    # --- arrange -----------------------------------------
+    axes, registry, records = synthetic
+    shared = {"text": "Reachable, but you build the model."}
+    records["tool"][0]["capabilities"]["distance.l2"] = {"mark": "partial", "note": shared}
+    records["other"] = deepcopy(records["tool"])
+    records["other"][0]["name"] = "Other"
+    registry["categories"][0]["tools"].append({"key": "other", "name": "Other"})
+
+    # --- act ---------------------------------------------
+    rendered = cd.render_comparison(axes, registry, records)
+
+    # --- assert ------------------------------------------
+    assert rendered.count("[^cmp-1]:") == 1
+    assert rendered.count("[^cmp-1]") == 3  # one definition, one reference per tool
+
+
+def test_only_the_excluded_tool_is_unlinked(cd, real):
+    """Every other name links to its profile; max-div has none among third-party tools."""
+    # --- arrange -----------------------------------------
+    _axes, registry, _records = real
+
+    # --- act ---------------------------------------------
+    rendered = cd.render_comparison(*real)
+
+    # --- assert ------------------------------------------
+    for tool in cd.registered_tools(registry):
+        linked = f"[{tool['name']}](solvers/{tool['key']}.md)" in rendered
+        assert linked is tool.get("profile", True)
 
 
 # =================================================================================================
@@ -375,6 +532,8 @@ def repo_copy(tmp_path):
         destination = tmp_path / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(source, destination)
+    for relative in ("generated/comparison.md", "docs/comparison.md"):
+        shutil.copy(REPO_ROOT / relative, tmp_path / relative)
     return tmp_path
 
 
@@ -413,6 +572,20 @@ def test_the_check_command_fails_on_a_stale_fragment(repo_copy):
     # --- assert ------------------------------------------
     assert result.returncode == 1
     assert "is stale" in result.stderr
+
+
+def test_the_check_command_fails_on_a_comparison_page_missing_its_include(repo_copy):
+    """The include is the only thing tying the generated tables to the page that shows them."""
+    # --- arrange -----------------------------------------
+    page = repo_copy / "docs" / "comparison.md"
+    page.write_text(page.read_text(encoding="utf-8").replace('--8<-- "generated/comparison.md"', ""), encoding="utf-8")
+
+    # --- act ---------------------------------------------
+    result = _run(repo_copy, "--check")
+
+    # --- assert ------------------------------------------
+    assert result.returncode == 1
+    assert "does not include" in result.stderr
 
 
 def test_the_write_command_regenerates_a_stale_fragment(repo_copy):

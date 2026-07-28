@@ -8,7 +8,8 @@
 |---|---|---|
 | Guarantee | proven optimum |  |
 | License | Apache-2.0 (SCIP) | [^scip-1] |
-| Last release | `6.2.1` · 2026-05-16 |  |
+| Version | <span class="release-part">6.2.1</span> |  |
+| Released | <span class="release-part">2026-05-16</span> |  |
 | Determinism | deterministic |  |
 | Input | a hand-built model |  |
 | Source | [https://www.scipopt.org/](https://www.scipopt.org/) |  |
@@ -18,26 +19,26 @@
 
 ### Capabilities
 
-Support: ✓ built in · ~ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
 
 <div class="solver-features" markdown>
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | ~ | [^scip-2] |
-| distance metrics · L2 (Euclidean) distance | ~ | [^scip-2] |
-| distance metrics · cosine distance | ~ | [^scip-2] |
-| distance metrics · caller-supplied distances | ✓ | [^scip-3] |
-| diversity objectives · maximize the minimum separation | ~ | [^scip-4] |
-| diversity objectives · maximize the mean nearest-neighbor separation | ~ | [^scip-5] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | ~ | [^scip-5] |
-| diversity objectives · maximize the mean pairwise distance | ~ | [^scip-4] |
-| constraints beyond k · per-group counts over disjoint groups | ~ | [^scip-6] |
-| constraints beyond k · per-group counts over overlapping groups | ~ | [^scip-6] |
-| constraints beyond k · minimum and maximum counts per group | ~ | [^scip-6] |
-| time budget · budget expressed as an iteration count | ✓ |  |
-| time budget · budget expressed as wall-clock time | ✓ |  |
-| time budget · the answer improves when given more budget | ~ | [^scip-7] |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
+| distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^scip-3] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^scip-4] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^scip-5] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^scip-5] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^scip-4] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^scip-6] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^scip-6] |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^scip-6] |
+| time budget · budget expressed as an iteration count | <span class="mark mark-full">✔</span> |  |
+| time budget · budget expressed as wall-clock time | <span class="mark mark-full">✔</span> |  |
+| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^scip-7] |
 | largest practical problem size | n ≈ 10<sup>3</sup> | [^scip-8] |
 
 </div>

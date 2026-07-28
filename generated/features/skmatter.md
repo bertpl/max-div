@@ -8,7 +8,8 @@
 |---|---|---|
 | Guarantee | 2-approximation (farthest-point traversal) |  |
 | License | BSD-3-Clause |  |
-| Last release | `0.3.3` · 2026-01-06 |  |
+| Version | <span class="release-part">0.3.3</span> |  |
+| Released | <span class="release-part">2026-01-06</span> |  |
 | Determinism | deterministic |  |
 | Input | vectors |  |
 | Source | [https://scikit-matter.readthedocs.io/](https://scikit-matter.readthedocs.io/) |  |
@@ -18,26 +19,26 @@
 
 ### Capabilities
 
-Support: ✓ built in · ~ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
 
 <div class="solver-features" markdown>
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | — |  |
-| distance metrics · L2 (Euclidean) distance | ✓ |  |
-| distance metrics · cosine distance | ~ | [^skmatter-1] |
-| distance metrics · caller-supplied distances | — |  |
-| diversity objectives · maximize the minimum separation | ✓ |  |
-| diversity objectives · maximize the mean nearest-neighbor separation | — |  |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | — |  |
-| diversity objectives · maximize the mean pairwise distance | — |  |
-| constraints beyond k · per-group counts over disjoint groups | — |  |
-| constraints beyond k · per-group counts over overlapping groups | — |  |
-| constraints beyond k · minimum and maximum counts per group | — |  |
-| time budget · budget expressed as an iteration count | — |  |
-| time budget · budget expressed as wall-clock time | — |  |
-| time budget · the answer improves when given more budget | — | [^skmatter-2] |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-none">—</span> |  |
+| distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^skmatter-1] |
+| distance metrics · caller-supplied distances | <span class="mark mark-none">—</span> |  |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^skmatter-2] |
 | largest practical problem size | n ≈ 10<sup>5</sup> | [^skmatter-3] |
 
 </div>

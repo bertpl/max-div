@@ -23,7 +23,7 @@ import re
 DOCS_RELATIVE_ATTR = re.compile(r'\b(src|srcset)="docs/([^"]+)"')
 
 # max-div has a capability record like every compared tool, because both the hero table and the
-# comparison page need its row — but the third-party solver reference deliberately does not
+# comparison page need its row — but the third-party solver profiles deliberately do not
 # profile the package those tools are being compared against. Omitting it from the nav is not
 # enough: MkDocs builds every page under the docs tree regardless, so it would still get a URL
 # and land in site search. Dropping the file here is what actually keeps it unpublished.

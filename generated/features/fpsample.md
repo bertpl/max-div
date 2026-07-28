@@ -8,7 +8,8 @@
 |---|---|---|
 | Guarantee | 2-approximation (farthest-point traversal) |  |
 | License | MIT |  |
-| Last release | `1.0.2` · 2025-12-20 |  |
+| Version | <span class="release-part">1.0.2</span> |  |
+| Released | <span class="release-part">2025-12-20</span> |  |
 | Determinism | deterministic |  |
 | Input | vectors |  |
 | Source | [https://github.com/leonardodalinky/fpsample](https://github.com/leonardodalinky/fpsample) |  |
@@ -18,26 +19,26 @@
 
 ### Capabilities
 
-Support: ✓ built in · ~ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
 
 <div class="solver-features" markdown>
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | — |  |
-| distance metrics · L2 (Euclidean) distance | ✓ |  |
-| distance metrics · cosine distance | ~ | [^fpsample-1] |
-| distance metrics · caller-supplied distances | — | [^fpsample-2] |
-| diversity objectives · maximize the minimum separation | ✓ |  |
-| diversity objectives · maximize the mean nearest-neighbor separation | — |  |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | — |  |
-| diversity objectives · maximize the mean pairwise distance | — |  |
-| constraints beyond k · per-group counts over disjoint groups | — |  |
-| constraints beyond k · per-group counts over overlapping groups | — |  |
-| constraints beyond k · minimum and maximum counts per group | — |  |
-| time budget · budget expressed as an iteration count | — |  |
-| time budget · budget expressed as wall-clock time | — |  |
-| time budget · the answer improves when given more budget | — | [^fpsample-3] |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-none">—</span> |  |
+| distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^fpsample-1] |
+| distance metrics · caller-supplied distances | <span class="mark mark-none">—</span> | [^fpsample-2] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^fpsample-3] |
 | largest practical problem size | n ≈ 10<sup>6</sup> | [^fpsample-4] |
 
 </div>

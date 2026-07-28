@@ -8,7 +8,8 @@
 |---|---|---|
 | Guarantee | 1−1/e (lazy greedy on a monotone submodular function) |  |
 | License | MIT |  |
-| Last release | `0.6.1` · 2021-02-18 | [^apricot-select-1] |
+| Version | <span class="release-part">0.6.1</span> |  |
+| Released | <span class="release-part">2021-02-18</span> | [^apricot-select-1] |
 | Determinism | deterministic |  |
 | Input | vectors or a precomputed similarity matrix |  |
 | Source | [https://apricot-select.readthedocs.io/](https://apricot-select.readthedocs.io/) |  |
@@ -18,26 +19,26 @@
 
 ### Capabilities
 
-Support: ✓ built in · ~ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
 
 <div class="solver-features" markdown>
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | ✓ |  |
-| distance metrics · L2 (Euclidean) distance | ✓ |  |
-| distance metrics · cosine distance | ✓ |  |
-| distance metrics · caller-supplied distances | ✓ | [^apricot-select-2] |
-| diversity objectives · maximize the minimum separation | — | [^apricot-select-3] |
-| diversity objectives · maximize the mean nearest-neighbor separation | — | [^apricot-select-3] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | — | [^apricot-select-3] |
-| diversity objectives · maximize the mean pairwise distance | ✓ | [^apricot-select-4] |
-| constraints beyond k · per-group counts over disjoint groups | — |  |
-| constraints beyond k · per-group counts over overlapping groups | — |  |
-| constraints beyond k · minimum and maximum counts per group | — |  |
-| time budget · budget expressed as an iteration count | — |  |
-| time budget · budget expressed as wall-clock time | — |  |
-| time budget · the answer improves when given more budget | — | [^apricot-select-5] |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> |  |
+| distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
+| distance metrics · cosine distance | <span class="mark mark-full">✔</span> |  |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^apricot-select-2] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^apricot-select-3] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-3] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-3] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-full">✔</span> | [^apricot-select-4] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^apricot-select-5] |
 | largest practical problem size | n ≈ 10<sup>5</sup> | [^apricot-select-6] |
 
 </div>

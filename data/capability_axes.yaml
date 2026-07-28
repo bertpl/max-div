@@ -15,16 +15,29 @@
 # hard-codes these glyphs and this wording; wiring it to read them from here is what finally makes
 # a divergence impossible rather than merely discouraged.
 #
-# `none` is the one deliberate difference between surfaces: the hero draws nothing at all, because
-# in a dense grid an empty cell unambiguously reads as absence. A per-solver table has one row per
-# capability and no such context, so a blank there reads as "we forgot" rather than "not
-# supported" — hence an explicit dash.
+# `hero_glyph` records where a surface deliberately draws a mark differently, so the difference is
+# a stated fact rather than a drift. All three marks use it:
+#
+# `full` is the heavy check mark in the docs, where it is the one mark drawn at full ink and has to
+# carry a column on its own — the light check does not hold that weight beside a half-disc. Raising
+# the font weight cannot substitute: the glyph falls back to a face with no bolder cut, so 900
+# renders identically to 700. The hero keeps the light check it shipped with.
+#
+# `partial` is a half-filled circle in the docs, where it sits beside a footnote marker and has to
+# stay distinct from it at a glance. The hero draws a tilde instead: it has no footnotes to compete
+# with, and the tilde matches the one that prefixes every practical-scale figure there.
+#
+# `none` is drawn as nothing at all in the hero, because in a dense grid an empty cell
+# unambiguously reads as absence. A per-solver table has one row per capability and no such
+# context, so a blank there reads as "we forgot" rather than "not supported" — hence a dash.
 marks:
   full:
-    glyph: "✓"
+    glyph: "✔"
+    hero_glyph: "✓"
     legend: built in
   partial:
-    glyph: "~"
+    glyph: "◐"
+    hero_glyph: "~"
     legend: reachable, but you supply the model, transform or metric
   none:
     glyph: "—"
@@ -35,16 +48,29 @@ marks:
 # on each solver's page and as the comparison page's companion table; the hero SVG shows none of
 # them, which is the whole reason they are declared apart from the axes above.
 #
-# `kind` tells the renderer how to read the value: `release` is a version/date pair, `url` becomes a
-# link, and anything else is prose. A key is looked up in the record's `metadata:` block first and
-# then at the top level, so a tool's source and verification date stay where they belong.
+# `kind` tells the renderer how to read the value: `release_version` and `release_date` each take
+# one half of a record's version/date pair, `url` becomes a link, and anything else is prose. A key
+# is looked up in the record's `metadata:` block first and then at the top level, so a tool's source
+# and verification date stay where they belong.
+#
+# The release is one record field shown as two columns, because a version and a date are read for
+# different reasons — "how current is this" and "how alive is this" — and a single cell holding both
+# answers neither cleanly. `note: false` keeps the field's note against the date alone: the notes
+# here explain a stale or absent release, which is a question the date raises and the version does
+# not, and repeating one note in adjacent cells says nothing the first one did not.
+#
+# `comparison: false` keeps a field off the comparison page while keeping it on the solver's own
+# page — the counterpart of `hero:` on the axes below. Only the source URL uses it: eleven upstream
+# links would dominate a table read across tools, and the comparison page reaches each tool's
+# source through the link on its name.
 metadata:
   - {key: guarantee, label: Guarantee}
   - {key: license, label: License}
-  - {key: last_release, label: Last release, kind: release}
+  - {key: last_release, label: Version, kind: release_version, note: false}
+  - {key: last_release, label: Released, kind: release_date}
   - {key: determinism, label: Determinism}
   - {key: input, label: Input}
-  - {key: source, label: Source, kind: url}
+  - {key: source, label: Source, kind: url, comparison: false}
   - {key: verified, label: Last verified}
 
 groups:

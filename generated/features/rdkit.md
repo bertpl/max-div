@@ -8,7 +8,8 @@
 |---|---|---|
 | Guarantee | 2-approximation (farthest-point traversal) |  |
 | License | BSD-3-Clause |  |
-| Last release | `2026.3.4` · 2026-07-16 |  |
+| Version | <span class="release-part">2026.3.4</span> |  |
+| Released | <span class="release-part">2026-07-16</span> |  |
 | Determinism | seeded |  |
 | Input | a caller-supplied distance function |  |
 | Source | [https://www.rdkit.org/docs/source/rdkit.SimDivFilters.rdSimDivPickers.html](https://www.rdkit.org/docs/source/rdkit.SimDivFilters.rdSimDivPickers.html) |  |
@@ -18,26 +19,26 @@
 
 ### Capabilities
 
-Support: ✓ built in · ~ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
 
 <div class="solver-features" markdown>
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | ~ | [^rdkit-1] |
-| distance metrics · L2 (Euclidean) distance | ~ | [^rdkit-1] |
-| distance metrics · cosine distance | ~ | [^rdkit-1] |
-| distance metrics · caller-supplied distances | ✓ | [^rdkit-2] |
-| diversity objectives · maximize the minimum separation | ✓ |  |
-| diversity objectives · maximize the mean nearest-neighbor separation | — |  |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | — |  |
-| diversity objectives · maximize the mean pairwise distance | — |  |
-| constraints beyond k · per-group counts over disjoint groups | — | [^rdkit-3] |
-| constraints beyond k · per-group counts over overlapping groups | — |  |
-| constraints beyond k · minimum and maximum counts per group | — |  |
-| time budget · budget expressed as an iteration count | — |  |
-| time budget · budget expressed as wall-clock time | — |  |
-| time budget · the answer improves when given more budget | — | [^rdkit-4] |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
+| distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^rdkit-2] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> | [^rdkit-3] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^rdkit-4] |
 | largest practical problem size | n ≈ 10<sup>6</sup> | [^rdkit-5] |
 
 </div>

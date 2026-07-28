@@ -47,31 +47,140 @@ table th {
   white-space: nowrap;
 }
 
-/* Comparison table: compact, wrapping cells (overrides the site-wide nowrap), tidy header */
-.md-typeset .comparison table {
+/* The tint behind the subject of the comparison, matching the band the README table draws behind
+   its own row. Kept as one pair of variables so the two surfaces cannot drift to different greens.
+   The literals are the hero renderer's `own_band` values; there is no theme variable to derive
+   them from, since the docs palette has no "this row is ours" color. */
+[data-md-color-scheme="default"] {
+    --subject-row-bg: #ddf4e4;
+}
+[data-md-color-scheme="slate"] {
+    --subject-row-bg: #12261e;
+}
+/* Selected through the tagged name because neither a markdown table nor the generated HTML one can
+   carry a class on the row itself. Matching the theme's own `:not([class])` shape is what wins over
+   its zebra striping, which otherwise repaints the row. The sticky tool column paints its own
+   background as well, so it has to be told about the tint too or it covers it. */
+.md-typeset .comparison-grid table:not([class]) tbody tr:has(.subject-name),
+.md-typeset .comparison-meta table:not([class]) tbody tr:has(.subject-name),
+.md-typeset .comparison-grid table:not([class]) tbody tr:has(.subject-name) td:first-child {
+    background-color: var(--subject-row-bg);
+}
+.subject-name {
+    font-weight: 700;
+}
+
+/* Comparison capability grid (generated): one row per tool, one narrow column per capability.
+   Sixteen columns do not fit a page, so the grid scrolls sideways within the content column
+   while the tool names stay pinned — a mark is meaningless once its row label has scrolled off. */
+.md-typeset .comparison-grid table {
+    font-size: 0.62rem;
+    line-height: 1.3;
+    /* The theme lays tables out as `inline-block`, under which the sticky tool column below does
+       not stick — it scrolls away with the rest, leaving unlabelled marks. */
+    display: table;
+}
+/* The theme floors every table cell at 100px, which for fifteen single-glyph columns is roughly
+   twice the width they need and pushes the grid well past the content column. Matching the
+   theme's own `:not([class])` selector is what makes this override win — the class lives on the
+   wrapping div, not on the table, so the theme's rule applies here too. */
+.md-typeset .comparison-grid table:not([class]) th,
+.md-typeset .comparison-grid table:not([class]) td {
+    min-width: 0;
+    padding: 0.35em 0.5em;
+}
+.md-typeset .comparison-grid table:not([class]) th {
+    vertical-align: bottom;
+    white-space: normal;
+}
+/* The tool column, pinned. Scoped to the body cells and to the `Tool` heading specifically: the
+   second header row has no tool cell, so a plain `th:first-child` would paint the page background
+   over the first capability heading and leave it looking unstyled next to its neighbours. */
+.md-typeset .comparison-grid table:not([class]) tbody td:first-child,
+.md-typeset .comparison-grid table:not([class]) thead tr:first-child th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    white-space: nowrap;
+    padding-right: 1em;
+    background-color: var(--md-default-bg-color);
+}
+/* A rule where one capability group ends and the next begins — a spanning heading alone leaves the
+   reader counting columns to see how far it reaches. */
+.md-typeset .comparison-grid table:not([class]) .group-edge {
+    border-left: 1px solid var(--md-typeset-table-color);
+}
+/* Group band: one heading spanning the columns it owns, as the README table draws it. Muted and
+   in lower case so the axis names under it read as the labels and this reads as the grouping. */
+.md-typeset .comparison-grid table:not([class]) thead tr:first-child th[colspan] {
+    text-align: center;
+    font-weight: 400;
+    opacity: 0.6;
+}
+/* Category headings sit in the body, spanning the full width, and label the rows beneath them
+   rather than any column — so they are left-aligned like the tool names they introduce. */
+.md-typeset .comparison-grid table:not([class]) tbody th[colspan] {
+    text-align: left;
+    vertical-align: middle;
+}
+.comparison-grid .row-group-label {
+    position: sticky;
+    /* Matches the cell's own horizontal padding, so the pinned label keeps the indent it has when
+       the grid is not scrolled rather than jumping flush against the edge. */
+    left: 0.5em;
+    display: inline-block;
+}
+/* Footnote markers are asides on a mark, not content. At link color and weight they compete with
+   the glyph they annotate, and in the scale column they read as part of the exponent — so they are
+   muted to the tone of the group headings and kept off the exponent by a small gap. The accent
+   color on hover is what keeps them legible as links. */
+.comparison-grid .footnote-ref,
+.comparison-meta .footnote-ref {
+    margin-left: 0.25em;
+    font-weight: 400;
+    color: var(--md-default-fg-color--light);
+}
+.comparison-grid .footnote-ref:hover,
+.comparison-meta .footnote-ref:hover {
+    color: var(--md-accent-fg-color);
+}
+/* The marks are what the grid is for, so they carry the weight. The scale column is excluded: its
+   value is a number rather than a glyph, and bold makes a dense column of them harder to scan. */
+.md-typeset .comparison-grid table:not([class]) tbody td:not(:first-child):not(:last-child) {
+    font-weight: 700;
+}
+/* Only `built in` is drawn at full ink and bold. Both other marks recede to the same muted tone,
+   so a column scans as "what this tool actually does" with everything else as background; the two
+   are told apart by glyph — a half-disc against a dash — rather than by weight. Applied on both
+   surfaces that draw marks, since the claims are the same either way. */
+.comparison-grid .mark-partial,
+.comparison-grid .mark-none,
+.solver-features .mark-partial,
+.solver-features .mark-none {
+    font-weight: 400;
+    /* Mixed down from the theme's own muted foreground rather than written as a literal, so the
+       light and dark palettes stay in step instead of one restating the other. */
+    color: color-mix(in srgb, var(--md-default-fg-color--light) 91%, transparent);
+}
+
+/* Comparison metadata table (generated): prose fields, so cells wrap instead. */
+.md-typeset .comparison-meta table {
     font-size: 0.68rem;
     line-height: 1.35;
 }
-.comparison table td,
-.comparison table th {
+.comparison-meta table td,
+.comparison-meta table th {
     white-space: normal;
     vertical-align: top;
     min-width: 6.5em;
 }
-.comparison table td:first-child,
-.comparison table th:first-child {
+.comparison-meta table td:first-child,
+.comparison-meta table th:first-child {
     white-space: nowrap;
 }
-.comparison table thead th {
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    font-size: 0.92em;
-}
-[data-md-color-scheme="default"] .comparison table tbody tr:first-child {
-    background-color: rgba(68, 138, 255, 0.08);
-}
-[data-md-color-scheme="slate"] .comparison table tbody tr:first-child {
-    background-color: rgba(68, 138, 255, 0.15);
+/* A version or a date is a single value; the surrounding cells wrap, these must not. */
+.release-part {
+    white-space: nowrap;
 }
 
 /* Per-solver feature tables (generated into each reference page).

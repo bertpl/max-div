@@ -30,6 +30,12 @@ theme:
 hooks:
   - scripts/mkdocs_hooks.py
 
+# The generated fragments are pulled in by snippet from outside docs/, which `mkdocs serve` does
+# not watch on its own — without this, regenerating them leaves the served pages showing the
+# previous render until something inside docs/ happens to change.
+watch:
+  - generated
+
 plugins:
   - search
   - mkdocstrings:
@@ -92,23 +98,6 @@ nav:
     - Diversity & Distance: concepts/diversity.md
     - Objectives & the Landscape: concepts/objectives.md
     - Glossary: concepts/glossary.md
-  - Comparison: comparison.md
-  - Solver Reference:
-    - Overview: solvers/index.md
-    - Exact Solvers:
-      - OR-Tools CP-SAT: solvers/ortools-cpsat.md
-      - SCIP: solvers/scip.md
-      - HiGHS: solvers/highs.md
-    - One-Shot Pickers:
-      - RDKit MaxMinPicker: solvers/rdkit.md
-      - fpsample: solvers/fpsample.md
-      - skmatter: solvers/skmatter.md
-      - apricot-select: solvers/apricot-select.md
-      - qc-selector: solvers/qc-selector.md
-    - Samplers:
-      - DPPy: solvers/dppy.md
-    - Fair Selection:
-      - code-FDM: solvers/code-fdm.md
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/index.md
@@ -194,5 +183,22 @@ nav:
     - Benchmark Problems:
       - BenchmarkProblem: reference/benchmark_problems/BenchmarkProblem.md
       - BenchmarkProblemFactory: reference/benchmark_problems/BenchmarkProblemFactory.md
+  - 3rd Party Solvers:
+    - Comparison: comparison.md
+    - Profiles: solvers/index.md
+    - Exact Solvers:
+      - OR-Tools CP-SAT: solvers/ortools-cpsat.md
+      - SCIP: solvers/scip.md
+      - HiGHS: solvers/highs.md
+    - One-Shot Pickers:
+      - RDKit MaxMinPicker: solvers/rdkit.md
+      - fpsample: solvers/fpsample.md
+      - skmatter: solvers/skmatter.md
+      - apricot-select: solvers/apricot-select.md
+      - qc-selector: solvers/qc-selector.md
+    - Samplers:
+      - DPPy: solvers/dppy.md
+    - Fair Selection:
+      - code-FDM: solvers/code-fdm.md
   - About:
     - Change Log: changelog.md
