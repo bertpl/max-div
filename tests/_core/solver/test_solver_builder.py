@@ -15,6 +15,7 @@ from max_div._core.solver import (
 )
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
+from tests.helpers import swept_benchmark_problems
 
 
 # =================================================================================================
@@ -232,7 +233,7 @@ def test_max_div_solver_quadratic_penalty_end_to_end():
 #  Presets
 # =================================================================================================
 @pytest.mark.parametrize("size", [1, 5])
-@pytest.mark.parametrize("problem_name", BenchmarkProblemFactory.get_all_benchmark_names())
+@pytest.mark.parametrize("problem_name", swept_benchmark_problems())
 @pytest.mark.parametrize("preset", list(SolverPreset))
 def test_max_div_solver_builder_preset(problem_name: str, size: int, preset: SolverPreset):
     """

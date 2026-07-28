@@ -8,13 +8,14 @@ from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._strategies._initialization import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
+from tests.helpers import swept_benchmark_problems
 
 if TYPE_CHECKING:
     from max_div._core.problem import MaxDivProblem
 
 
 @pytest.mark.parametrize("size", [1, 2, 10])
-@pytest.mark.parametrize("problem_name", BenchmarkProblemFactory.get_all_benchmark_names())
+@pytest.mark.parametrize("problem_name", swept_benchmark_problems())
 def test_optim_random_swaps(problem_name: str, size: int):
     """
     Test OptimRandomSwaps strategy on reference problems, with very rudimentary initialization,
