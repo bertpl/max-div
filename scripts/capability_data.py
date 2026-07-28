@@ -12,7 +12,9 @@ Generated feature tables are written under ``generated/features/`` and pulled in
 a snippet line, which keeps the seam between hand-authored and generated content visible. The
 comparison page's two tables come from the same records and are written the same way, to
 ``generated/comparison.md`` — so the capability grid read across tools and the feature table read
-down one tool cannot disagree.
+down one tool cannot disagree. The README hero SVGs are rendered from these same three files by
+``scripts/build_hero_table.py``, which is why the rules below are worth enforcing here rather than
+per surface.
 
 Two severities are reported. **Structural problems always fail**: an unknown axis, a missing
 cell, a mark outside the vocabulary, a record that is not registered (or a registration with no

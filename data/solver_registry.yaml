@@ -15,6 +15,10 @@
 # tables. Only max-div uses it: it needs a record so the tables can describe it, but a section
 # surveying third-party tools should not carry a profile of the package those tools are being
 # compared against.
+#
+# `hero_name` is the short name for the README table, whose name gutter is a fixed-width column in
+# a dense grid. Where a tool is named for both the solver and the Python binding that installs it,
+# the reference tables carry the full name and the hero carries the solver's.
 
 categories:
   - key: anytime
@@ -32,6 +36,7 @@ categories:
         name: OR-Tools CP-SAT
       - key: scip
         name: SCIP (PySCIPOpt)
+        hero_name: SCIP
       - key: highs
         name: HiGHS
 

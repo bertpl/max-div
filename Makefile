@@ -80,11 +80,16 @@ collect-test-ids:
 # The capability data behind the comparison surfaces. `check` is the dry run to reach for while
 # authoring a record — it reports the same problems the pre-commit hook and CI would, at the point
 # where the record is still fresh in mind.
+#
+# The README hero SVGs are build products of the same records, so both targets cover them too: a
+# record edit that leaves the images behind is the same drift, whichever surface shows it first.
 check-capability-data:
 	uv run --no-default-groups --group tooling python scripts/capability_data.py --check
+	uv run --no-default-groups --group tooling python scripts/build_hero_table.py --check
 
 build-capability-data:
 	uv run --no-default-groups --group tooling python scripts/capability_data.py
+	uv run --no-default-groups --group tooling python scripts/build_hero_table.py
 
 test-benchmarks:
 	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps groups)

@@ -43,6 +43,14 @@ repos:
         language: system
         files: ^(data/(capability_axes|solver_registry)\.yaml|docs/solvers/.*\.md)$
         pass_filenames: false
+      - id: hero-table
+        name: hero table
+        entry: uv run --no-default-groups --group tooling python scripts/build_hero_table.py --check
+        language: system
+        # The same data, one surface further on: the README images are rendered from the records
+        # too, so editing one leaves them stale exactly as it leaves the feature tables stale.
+        files: ^(data/(capability_axes|solver_registry)\.yaml|docs/solvers/.*\.md)$
+        pass_filenames: false
       - id: uv-lock
         name: uv lock --check
         entry: uv lock --check
