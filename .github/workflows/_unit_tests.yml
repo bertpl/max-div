@@ -20,12 +20,9 @@ jobs:
         # interpreted execution, and line coverage of njit functions is only possible with
         # the JIT disabled.
         #
-        # One jit-off leg, not one per Python version. A second was carried on the
-        # assumption that versions cover divergent lines; measured, they do not — nothing
-        # in the package branches on the Python version, and both legs reported an
-        # identical 99.96% over 2 missed statements. 3.14 is the one kept because it is
-        # markedly the cheaper: coverage traces through `sys.monitoring` from 3.12 onward,
-        # where 3.11 still pays for `sys.settrace`.
+        # One jit-off leg suffices: nothing in the package branches on the Python version,
+        # so a second covers no extra lines. 3.14 because coverage traces through
+        # `sys.monitoring` there, far cheaper than the `sys.settrace` 3.11 still uses.
         include:
           - { python: "3.11", resolution: highest,       jit: "on"  }
           - { python: "3.12", resolution: highest,       jit: "on"  }
@@ -33,12 +30,9 @@ jobs:
           - { python: "3.14", resolution: highest,       jit: "on"  }
           - { python: "3.11", resolution: lowest-direct, jit: "on"  }
           - { python: "3.14", resolution: lowest-direct, jit: "on"  }
-          # On ARM, where the same work measured 2m46s against 5m04s on the x64 runner in a
-          # single side-by-side run. Safe for this leg specifically because it runs with the
-          # JIT disabled: the kernels are plain Python there, so nothing architecture-
-          # dependent is being exercised. The jit-on legs stay on x64 for the opposite
-          # reason — those do compile through LLVM, where the target is part of what is
-          # under test, so moving them is a separate question rather than a free win.
+          # ARM is roughly twice as fast here, and safe because this leg runs JIT-disabled,
+          # so the kernels are plain Python. The jit-on legs stay on x64, where the
+          # compilation target is part of what is under test.
           - { python: "3.14", resolution: highest,       jit: "off", coverage: true, runner: ubuntu-24.04-arm }
           # Free-threaded build. `highest` only, deliberately: the numba floor for 3.14 is 0.63,
           # which predates numba's free-threaded wheels (first shipped in 0.65), and no PEP 508
@@ -57,16 +51,14 @@ jobs:
           python_version: ${{ matrix.python }}
           dependency_resolution: ${{ matrix.resolution }}
           jit: ${{ matrix.jit }}
-          # Declared per combo rather than derived from the jit axis: with a single jit-off
-          # leg the two are no longer the same statement, and a second jit-off combo that
-          # must not upload (the ARM probe) would silently collide on the artifact name.
+          # Declared per combo rather than derived from the jit axis, which stopped being
+          # the same statement once a single leg carried coverage.
           coverage: ${{ matrix.coverage && 'true' || 'false' }}
 
   coverage:
     name: coverage
-    # Kept as a combine-then-gate rather than folded into the leg itself: the gate belongs to
-    # the matrix as a whole, so a second coverage leg can be added back by declaring one,
-    # without moving where the floor is enforced.
+    # Combine-then-gate rather than gating in the leg: the floor belongs to the matrix as a
+    # whole, so a second coverage leg can be added back without moving where it is enforced.
     needs: [core]
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather than
     # skip — GitHub doesn't reliably propagate a cancelled leg through needs.
