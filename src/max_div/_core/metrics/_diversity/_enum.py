@@ -71,9 +71,7 @@ class DiversityMetric(StrEnum):
             DiversityMetric.NON_ZERO_SEPARATION_FRAC: non_zero_separation_frac,
             DiversityMetric.MEAN_PAIRWISE_DISTANCE: mean_pairwise_distance,
         }
-        # NOTE: statically, a numba `Dispatcher` does not unify with the plain `Callable`
-        #       return type; at runtime it is called exactly like one.
-        return _functions[self]  # ty: ignore[invalid-return-type]
+        return _functions[self]
 
     def compute(self, contribution_values: NDArray[np.float32]) -> np.float32:
         """Compute diversity metric given the selected items' per-point diversity-contribution values.
