@@ -51,14 +51,13 @@ jobs:
           python_version: ${{ matrix.python }}
           dependency_resolution: ${{ matrix.resolution }}
           jit: ${{ matrix.jit }}
-          # Declared per combo rather than derived from the jit axis, which stopped being
-          # the same statement once a single leg carried coverage.
+          # Only combos that opt in upload coverage data; the jit setting does not imply it.
           coverage: ${{ matrix.coverage && 'true' || 'false' }}
 
   coverage:
     name: coverage
-    # Combine-then-gate rather than gating in the leg: the floor belongs to the matrix as a
-    # whole, so a second coverage leg can be added back without moving where it is enforced.
+    # The coverage floor is checked here, on the combined data, rather than inside a test
+    # job — so it stays one gate over the matrix however many legs feed it.
     needs: [core]
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather than
     # skip — GitHub doesn't reliably propagate a cancelled leg through needs.
