@@ -1,7 +1,12 @@
 """Render the README hero capability table to light and dark SVGs.
 
-Reads scripts/hero_table_data.txt and writes docs/images/hero_light.svg and
-docs/images/hero_dark.svg.
+Reads the same capability data as the documentation surfaces — the axes file, the solver registry
+and the per-tool records under docs/solvers/ — and writes docs/images/hero_light.svg and
+docs/images/hero_dark.svg. Every cell the README shows therefore traces back to the record that
+defends it, and a capability cannot say one thing here and another on the comparison page.
+
+Validation belongs to scripts/capability_data.py: this renders what it is given, and data that
+would not pass there is reported by the tool that knows the rules rather than half-caught here.
 
 Two properties are deliberate:
 
@@ -19,19 +24,16 @@ import argparse
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-DATA_FILE = REPO_ROOT / "scripts" / "hero_table_data.txt"
+SCRIPTS_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPTS_DIR.parent
 OUT_DIR = REPO_ROOT / "docs" / "images"
 
-# --- column definitions ------------------------------------
-# (group label, [(short header, width)]) — headers render at 45 degrees.
-GROUPS = [
-    ("distance", [("L1", 1), ("L2", 1), ("cosine", 1), ("custom", 1)]),
-    ("objective", [("max-min", 1), ("mean-of-NN", 1), ("geomean-of-NN", 1), ("max-sum", 1)]),
-    ("constraints", [("disjoint groups", 1), ("overlapping groups", 1), ("ranged counts", 1)]),
-    ("budget", [("iterations", 1), ("wall clock", 1), ("improves with budget", 1)]),
-    ("max practical n", [("", 2)]),
-]
+# `scripts/` is maintainer tooling rather than an importable package, so the sibling loader is
+# reached by putting this directory on the path. Running the script does that already; importing
+# it, as the tests do, does not.
+sys.path.insert(0, str(SCRIPTS_DIR))
+
+import capability_data  # noqa: E402
 
 # --- geometry (all integers; no float formatting anywhere) --
 LABEL_W = 148  # solver-name gutter
@@ -77,36 +79,53 @@ THEMES = {
     },
 }
 
+# How each drawn mark is painted: its palette key, and a font weight where it needs one. The glyphs
+# and the legend wording come from the axes file; only the styling is this surface's own business,
+# so it sits with the themes. A mark the hero draws as nothing needs no entry.
+MARK_STYLE = {"full": ("mark", "700"), "partial": ("partial", None)}
 
-def parse_data(text):
-    """Parse the companion file into (categories, rows). Rows carry marks in column order."""
-    categories, rows = [], []
-    for raw in text.splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("[category]"):
-            categories.append(line[len("[category]") :].strip())
-            continue
-        name, *rest = [p.strip() for p in line.split("|")]
-        *mark_groups, scale, source = rest
-        marks = []
-        for grp in mark_groups:
-            marks.extend(grp.split())
-        rows.append(
+
+# ==================================================================================================
+#  HeroTable
+# ==================================================================================================
+class HeroTable:
+    """The hero's view of the capability data: its columns, its rows, and its mark vocabulary.
+
+    The README table is a narrower reading of what the documentation surfaces render — only the
+    hero-visible axes, only the short labels, and none of the metadata. Resolving that view once,
+    here, lets the geometry below speak in columns and rows rather than in axes and records.
+    """
+
+    def __init__(self, axes: dict, registry: dict, records: dict):
+        self.marks = axes["marks"]
+        axis_keys = [
+            f"{group['key']}.{axis['key']}" for group in axes["groups"] for axis in group["axes"] if axis.get("hero")
+        ]
+        self.groups = [
+            (group["hero_label"], [(axis["hero_label"], 1) for axis in group["axes"] if axis.get("hero")])
+            for group in axes["groups"]
+        ]
+        # The scale column is not a mark column: it is wider, it carries no rotated header, and its
+        # group label is the only thing naming it. It is a group of one so the band that carries
+        # that label is drawn by the same code as every other group's.
+        self.groups.append((axes["scale"]["hero_label"], [("", 2)]))
+        self.categories = [category["label"] for category in registry["categories"]]
+        self.rows = [
             {
-                "category": len(categories) - 1,
-                "name": name,
-                "marks": marks,
-                "scale": scale,
-                "source": source,
+                "category": index,
+                "name": tool.get("hero_name") or tool["name"],
+                "subject": bool(tool.get("subject")),
+                "marks": [records[tool["key"]][0]["capabilities"][key]["mark"] for key in axis_keys],
+                "scale": str(records[tool["key"]][0]["scale"]["max_practical_n"]),
             }
-        )
-    n_cols = sum(len(cols) for _, cols in GROUPS) - 1  # scale is not a mark column
-    for row in rows:
-        if len(row["marks"]) != n_cols:
-            raise ValueError(f"{row['name']}: expected {n_cols} marks, got {len(row['marks'])}")
-    return categories, rows
+            for index, category in enumerate(registry["categories"])
+            for tool in category["tools"]
+        ]
+
+    @classmethod
+    def from_repo(cls) -> "HeroTable":
+        """Build the table from the committed data files."""
+        return cls(capability_data.load_axes(), capability_data.load_registry(), capability_data.load_records())
 
 
 def esc(text):
@@ -158,11 +177,13 @@ def scale_markup(spec):
 class _Layout:
     """Resolved geometry and palette for one render. Every value is an integer."""
 
-    def __init__(self, categories, rows, theme_name):
+    def __init__(self, table, theme_name):
         self.t = THEMES[theme_name]
-        self.rows = rows
-        self.categories = categories
-        self.mark_cols = [(h, w) for _, cols in GROUPS for (h, w) in cols][:-1]
+        self.marks = table.marks
+        self.groups = table.groups
+        self.rows = table.rows
+        self.categories = table.categories
+        self.mark_cols = [(h, w) for _, cols in self.groups for (h, w) in cols][:-1]
         self.n_marks = len(self.mark_cols)
         self.grid_w = self.n_marks * COL_W + SCALE_W
 
@@ -174,13 +195,19 @@ class _Layout:
 
         self.width = PAD + LABEL_W + self.grid_w + self.overhang + PAD
         self.height = (
-            PAD + GROUP_H + self.header_h + len(categories) * CAT_H + len(rows) * ROW_H + CAPTION_H + BOTTOM_PAD
+            PAD
+            + GROUP_H
+            + self.header_h
+            + len(self.categories) * CAT_H
+            + len(self.rows) * ROW_H
+            + CAPTION_H
+            + BOTTOM_PAD
         )
 
         self.y_group = PAD + GROUP_H - 6
         self.y_top = PAD + GROUP_H  # bands start here, just under the group labels
         self.y_header_base = PAD + GROUP_H + self.header_h
-        self.y_end = self.y_header_base + len(categories) * CAT_H + len(rows) * ROW_H
+        self.y_end = self.y_header_base + len(self.categories) * CAT_H + len(self.rows) * ROW_H
         # The bands turn from vertical to 45 degrees a little above the first row, so the corner
         # sits clear of the top row rather than flush against it.
         self.y_corner = self.y_header_base - CORNER_LIFT
@@ -216,7 +243,7 @@ def _group_bands(lay):
     sits `skew` px right of its bottom, which is why the labels are offset by the same amount.
     """
     out, idx, t = [], 0, lay.t
-    for gi, (glabel, cols) in enumerate(GROUPS):
+    for gi, (glabel, cols) in enumerate(lay.groups):
         span = sum(COL_W if w == 1 else SCALE_W for _, w in cols)
         x0 = lay.col_x(idx)
         x1 = x0 + span
@@ -264,20 +291,20 @@ def _column_headers(lay):
 
 
 def _row_marks(lay, row, y):
-    """The mark glyphs and the scale figure for one row."""
+    """The mark glyphs for one row. A mark the hero draws as nothing leaves its cell empty."""
     t, out = lay.t, []
     cy = y + ROW_H - 7
     for i, mark in enumerate(row["marks"]):
+        glyph = lay.marks[mark]["hero_glyph"]
+        if not glyph:
+            continue
+        color, weight = MARK_STYLE[mark]
+        bold = f' font-weight="{weight}"' if weight else ""
         cx = lay.col_x(i) + COL_W // 2
-        if mark == "Y":
-            out.append(
-                f'<text x="{cx}" y="{cy}" fill="{t["mark"]}" font-size="{MARK_FS}" '
-                f'font-weight="700" text-anchor="middle">✓</text>'
-            )
-        elif mark == "~":
-            out.append(
-                f'<text x="{cx}" y="{cy}" fill="{t["partial"]}" font-size="{MARK_FS}" text-anchor="middle">~</text>'
-            )
+        out.append(
+            f'<text x="{cx}" y="{cy}" fill="{t[color]}" font-size="{MARK_FS}"{bold} '
+            f'text-anchor="middle">{esc(glyph)}</text>'
+        )
     return out
 
 
@@ -299,7 +326,7 @@ def _data_rows(lay):
         )
         y += CAT_H
         for row in [r for r in lay.rows if r["category"] == ci]:
-            own = row["name"] == "max-div"
+            own = row["subject"]
             # `own` drives exactly two things: this weight, applied to the row name, and the band
             # below. The mark glyphs are styled uniformly across all rows.
             weight = "700" if own else "400"
@@ -327,22 +354,26 @@ def _data_rows(lay):
 
 
 def _legend(lay, y):
-    """The mark legend under the table."""
-    t = lay.t
-    return [
-        f'<text x="{PAD}" y="{y + CAPTION_H - 8}" font-size="{SMALL_FS}">'
-        f'<tspan fill="{t["mark"]}" font-weight="700">✓</tspan>'
-        f'<tspan fill="{t["muted"]}" dx="5">built in</tspan>'
-        f'<tspan fill="{t["muted"]}" dx="9">·</tspan>'
-        f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">~</tspan>'
-        f'<tspan fill="{t["muted"]}" dx="5">reachable, but you supply the model, transform or metric</tspan>'
-        f"</text>"
-    ]
+    """The mark legend under the table — every mark the hero draws, in declaration order.
+
+    Both glyphs are bolded here whatever weight they carry in the grid: at legend size they sit
+    inline in a line of prose, where the grid's lighter tilde would disappear.
+    """
+    t, spans = lay.t, []
+    for mark, spec in lay.marks.items():
+        if not spec["hero_glyph"]:
+            continue
+        gap = ' dx="9"' if spans else ""
+        if spans:
+            spans.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
+        spans.append(f'<tspan fill="{t[MARK_STYLE[mark][0]]}" font-weight="700"{gap}>{esc(spec["hero_glyph"])}</tspan>')
+        spans.append(f'<tspan fill="{t["muted"]}" dx="5">{esc(spec["legend"])}</tspan>')
+    return [f'<text x="{PAD}" y="{y + CAPTION_H - 8}" font-size="{SMALL_FS}">' + "".join(spans) + "</text>"]
 
 
-def build_svg(categories, rows, theme_name):
+def build_svg(table, theme_name):
     """Return the SVG document for one theme."""
-    lay = _Layout(categories, rows, theme_name)
+    lay = _Layout(table, theme_name)
     font = "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif"
     out = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{lay.width}" height="{lay.height}" '
@@ -364,12 +395,12 @@ def main():
     parser.add_argument("--check", action="store_true", help="fail if the committed SVGs differ from a fresh render")
     args = parser.parse_args()
 
-    categories, rows = parse_data(DATA_FILE.read_text(encoding="utf-8"))
+    table = HeroTable.from_repo()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     stale = []
     for theme in THEMES:
         target = OUT_DIR / f"hero_{theme}.svg"
-        svg = build_svg(categories, rows, theme)
+        svg = build_svg(table, theme)
         if args.check:
             if not target.exists() or target.read_text(encoding="utf-8") != svg:
                 stale.append(target.name)

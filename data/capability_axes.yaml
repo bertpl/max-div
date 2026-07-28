@@ -9,11 +9,12 @@
 # axis the hero does not show, without either surface being redesigned.
 #
 # `hero_label` is the rotated single-column header in the SVG, so it stays short. `label` is
-# what the comparison page and the per-solver feature tables use, where there is room.
+# what the comparison page and the per-solver feature tables use, where there is room. Groups
+# carry the same pair for the same reason: the hero writes a group's name on a band spanning only
+# its own columns, so "objective" fits where "diversity objectives" would run into its neighbor.
 
-# The mark vocabulary, shared by every surface that renders a cell. The hero SVG currently
-# hard-codes these glyphs and this wording; wiring it to read them from here is what finally makes
-# a divergence impossible rather than merely discouraged.
+# The mark vocabulary, shared by every surface that renders a cell — including the hero SVG, whose
+# renderer reads its glyphs and its legend wording from here.
 #
 # `hero_glyph` records where a surface deliberately draws a mark differently, so the difference is
 # a stated fact rather than a drift. All three marks use it:
@@ -75,6 +76,7 @@ metadata:
 
 groups:
   - key: distance
+    hero_label: distance
     label: distance metrics
     axes:
       - key: l1
@@ -95,6 +97,7 @@ groups:
         hero: true
 
   - key: objective
+    hero_label: objective
     label: diversity objectives
     axes:
       - key: max_min
@@ -115,6 +118,7 @@ groups:
         hero: true
 
   - key: constraints
+    hero_label: constraints
     label: constraints beyond k
     axes:
       - key: disjoint_groups
@@ -131,6 +135,7 @@ groups:
         hero: true
 
   - key: budget
+    hero_label: budget
     label: time budget
     axes:
       - key: iterations
