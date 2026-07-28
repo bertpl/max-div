@@ -33,7 +33,7 @@ jobs:
           # ARM is roughly twice as fast here, and safe because this leg runs JIT-disabled,
           # so the kernels are plain Python. The jit-on legs stay on x64, where the
           # compilation target is part of what is under test.
-          - { python: "3.14", resolution: highest,       jit: "off", coverage: true, runner: ubuntu-24.04-arm }
+          - { python: "3.14", resolution: highest,       jit: "off", runner: ubuntu-24.04-arm }
           # Free-threaded build. `highest` only, deliberately: the numba floor for 3.14 is 0.63,
           # which predates numba's free-threaded wheels (first shipped in 0.65), and no PEP 508
           # marker can raise that floor for free-threaded builds alone — so a lowest-direct leg
@@ -51,8 +51,8 @@ jobs:
           python_version: ${{ matrix.python }}
           dependency_resolution: ${{ matrix.resolution }}
           jit: ${{ matrix.jit }}
-          # Only combos that opt in upload coverage data; the jit setting does not imply it.
-          coverage: ${{ matrix.coverage && 'true' || 'false' }}
+          # the jit-off leg uploads its data; the coverage job combines + gates
+          coverage: ${{ matrix.jit == 'off' && 'true' || 'false' }}
 
   coverage:
     name: coverage
