@@ -2,7 +2,7 @@ import pytest
 from click.testing import CliRunner
 
 from max_div._core._cli import solve
-from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from tests.helpers import swept_benchmark_problems
 
 
 # =================================================================================================
@@ -18,7 +18,7 @@ from max_div._core.benchmark_problems import BenchmarkProblemFactory
         (["--seconds=0.001", "--iterations=1000"], 2),
     ],
 )
-@pytest.mark.parametrize("test_problem", list(BenchmarkProblemFactory.get_all_benchmark_names()))
+@pytest.mark.parametrize("test_problem", swept_benchmark_problems())
 def test_cli_solve(options: list[str], test_problem: str, expected_exit_code: int):
     # --- arrange -----------------------------------------
     runner = CliRunner()

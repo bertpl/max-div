@@ -5,6 +5,7 @@ from max_div._core._cli import benchmark
 from max_div._core._cli._cmd_benchmark_solver_presets import resolve_presets, resolve_problems
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.solver import SolverPreset
+from tests.helpers import swept_benchmark_problems
 
 
 # =================================================================================================
@@ -31,7 +32,7 @@ def test_cli_benchmark_solver_list_problems():
         ["--turbo", "--initialization-only"],
     ],
 )
-@pytest.mark.parametrize("test_problem", [*list(BenchmarkProblemFactory.get_all_benchmark_names()), "all"])
+@pytest.mark.parametrize("test_problem", [*swept_benchmark_problems(), "all"])
 def test_cli_benchmark_solver_strategies(options: list[str], test_problem: str):
     # --- arrange -----------------------------------------
     runner = CliRunner()
@@ -57,7 +58,7 @@ def test_cli_benchmark_solver_strategies(options: list[str], test_problem: str):
         ["--size=1", "--json-file", "--preset=random", "--speed=1.0"],
     ],
 )
-@pytest.mark.parametrize("test_problem", [*BenchmarkProblemFactory.get_all_benchmark_names(), "all"])
+@pytest.mark.parametrize("test_problem", [*swept_benchmark_problems(), "all"])
 def test_cli_benchmark_solver_presets(options: list[str], test_problem: str):
     # --- arrange -----------------------------------------
     runner = CliRunner()
