@@ -9,7 +9,10 @@ permissions:
 jobs:
   core:
     name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }}
-    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
+    # ARM, which runs this suite about twice as fast as the x64 runner for the same work.
+    # Standardized rather than mixed: the matrix does not set out to test architectures, and
+    # picking x64 for some legs would be the old default dressed up as a decision.
+    runs-on: ubuntu-24.04-arm
     strategy:
       fail-fast: false
       matrix:
@@ -26,12 +29,8 @@ jobs:
           - { python: "3.14", resolution: highest,       jit: "on"  }
           - { python: "3.11", resolution: lowest-direct, jit: "on"  }
           - { python: "3.14", resolution: lowest-direct, jit: "on"  }
-          # The coverage legs run on ARM, which is roughly twice as fast for the same work.
-          # Safe for these two specifically because they run JIT-disabled, so the kernels are
-          # plain Python; the jit-on legs stay on x64, where the compilation target is part of
-          # what is under test.
-          - { python: "3.11", resolution: highest,       jit: "off", runner: ubuntu-24.04-arm }  # coverage leg
-          - { python: "3.14", resolution: highest,       jit: "off", runner: ubuntu-24.04-arm }  # coverage leg
+          - { python: "3.11", resolution: highest,       jit: "off" }  # coverage leg
+          - { python: "3.14", resolution: highest,       jit: "off" }  # coverage leg
           # Free-threaded build. `highest` only, deliberately: the numba floor for 3.14 is 0.63,
           # which predates numba's free-threaded wheels (first shipped in 0.65), and no PEP 508
           # marker can raise that floor for free-threaded builds alone — so a lowest-direct leg
