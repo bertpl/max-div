@@ -1,9 +1,12 @@
-# Solver Reference
+# Third-Party Solver Profiles
 
 One profile per freely available tool that selects diverse subsets, in a uniform shape: what it is
 and how it approaches the problem, the problem it actually targets stated in a shared notation with
 its guarantee type, and a feature table generated from the same data that drives the capability
 table in the README.
+
+Read these alongside the [comparison](../comparison.md), which puts every tool's capabilities on one
+grid; a profile is where a mark on that grid turns into an explanation.
 
 **max-div itself is not profiled here.** It appears as a row in the
 [comparison table](../comparison.md), where it belongs — a section surveying third-party tools

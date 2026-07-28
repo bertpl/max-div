@@ -8,7 +8,8 @@
 |---|---|---|
 | Guarantee | heuristic |  |
 | License | GPL-3.0 |  |
-| Last release | `0.1.4` · 2026-02-03 |  |
+| Version | <span class="release-part">0.1.4</span> |  |
+| Released | <span class="release-part">2026-02-03</span> |  |
 | Determinism | seeded |  |
 | Input | vectors or a distance matrix |  |
 | Source | [https://selector.qcdevs.org/](https://selector.qcdevs.org/) |  |
@@ -18,26 +19,26 @@
 
 ### Capabilities
 
-Support: ✓ built in · ~ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
 
 <div class="solver-features" markdown>
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | ✓ |  |
-| distance metrics · L2 (Euclidean) distance | ✓ |  |
-| distance metrics · cosine distance | ~ | [^qc-selector-1] |
-| distance metrics · caller-supplied distances | ✓ | [^qc-selector-2] |
-| diversity objectives · maximize the minimum separation | ✓ |  |
-| diversity objectives · maximize the mean nearest-neighbor separation | — | [^qc-selector-3] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | — | [^qc-selector-3] |
-| diversity objectives · maximize the mean pairwise distance | ✓ |  |
-| constraints beyond k · per-group counts over disjoint groups | ✓ | [^qc-selector-4] |
-| constraints beyond k · per-group counts over overlapping groups | — |  |
-| constraints beyond k · minimum and maximum counts per group | — |  |
-| time budget · budget expressed as an iteration count | ~ | [^qc-selector-5] |
-| time budget · budget expressed as wall-clock time | — |  |
-| time budget · the answer improves when given more budget | — | [^qc-selector-6] |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> |  |
+| distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^qc-selector-1] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^qc-selector-2] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^qc-selector-3] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^qc-selector-3] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-full">✔</span> |  |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^qc-selector-4] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^qc-selector-5] |
+| time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^qc-selector-6] |
 | largest practical problem size | n ≈ 10<sup>4</sup> | [^qc-selector-7] |
 
 </div>

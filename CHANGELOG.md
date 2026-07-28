@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reference page for each compared third-party tool, covering what it solves, its problem formulation, and its feature set
 
 ### Changed
+- The comparison page now covers every capability shown in the README table, with footnotes explaining partial support
 
 ### Deprecated
 

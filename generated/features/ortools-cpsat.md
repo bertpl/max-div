@@ -8,7 +8,8 @@
 |---|---|---|
 | Guarantee | proven optimum |  |
 | License | Apache-2.0 |  |
-| Last release | `9.15.6755` · 2026-01-14 |  |
+| Version | <span class="release-part">9.15.6755</span> |  |
+| Released | <span class="release-part">2026-01-14</span> |  |
 | Determinism | deterministic with a fixed worker count |  |
 | Input | a hand-built model |  |
 | Source | [https://developers.google.com/optimization/cp/cp_solver](https://developers.google.com/optimization/cp/cp_solver) |  |
@@ -18,26 +19,26 @@
 
 ### Capabilities
 
-Support: ✓ built in · ~ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
 
 <div class="solver-features" markdown>
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | ~ | [^ortools-cpsat-1] |
-| distance metrics · L2 (Euclidean) distance | ~ | [^ortools-cpsat-1] |
-| distance metrics · cosine distance | ~ | [^ortools-cpsat-1] |
-| distance metrics · caller-supplied distances | ✓ | [^ortools-cpsat-2] |
-| diversity objectives · maximize the minimum separation | ~ | [^ortools-cpsat-3] |
-| diversity objectives · maximize the mean nearest-neighbor separation | ~ | [^ortools-cpsat-4] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | ~ | [^ortools-cpsat-4] |
-| diversity objectives · maximize the mean pairwise distance | ~ | [^ortools-cpsat-4] |
-| constraints beyond k · per-group counts over disjoint groups | ~ | [^ortools-cpsat-5] |
-| constraints beyond k · per-group counts over overlapping groups | ~ | [^ortools-cpsat-5] |
-| constraints beyond k · minimum and maximum counts per group | ~ | [^ortools-cpsat-5] |
-| time budget · budget expressed as an iteration count | ✓ |  |
-| time budget · budget expressed as wall-clock time | ✓ |  |
-| time budget · the answer improves when given more budget | ~ | [^ortools-cpsat-6] |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-1] |
+| distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-1] |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-1] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^ortools-cpsat-2] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-3] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
+| time budget · budget expressed as an iteration count | <span class="mark mark-full">✔</span> |  |
+| time budget · budget expressed as wall-clock time | <span class="mark mark-full">✔</span> |  |
+| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-6] |
 | largest practical problem size | n ≈ 10<sup>3</sup> | [^ortools-cpsat-7] |
 
 </div>

@@ -8,7 +8,8 @@
 |---|---|---|
 | Guarantee | sampler, not optimizer |  |
 | License | MIT |  |
-| Last release | `0.3.3` · 2024-08-14 |  |
+| Version | <span class="release-part">0.3.3</span> |  |
+| Released | <span class="release-part">2024-08-14</span> |  |
 | Determinism | seeded sampling |  |
 | Input | a similarity kernel matrix |  |
 | Source | [https://dppy.readthedocs.io/](https://dppy.readthedocs.io/) |  |
@@ -18,26 +19,26 @@
 
 ### Capabilities
 
-Support: ✓ built in · ~ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
 
 <div class="solver-features" markdown>
 
 | Capability | Support | Notes |
 |---|:---:|---|
-| distance metrics · L1 (Manhattan) distance | ~ | [^dppy-1] |
-| distance metrics · L2 (Euclidean) distance | ~ | [^dppy-1] |
-| distance metrics · cosine distance | ~ | [^dppy-1] |
-| distance metrics · caller-supplied distances | ✓ | [^dppy-2] |
-| diversity objectives · maximize the minimum separation | — | [^dppy-3] |
-| diversity objectives · maximize the mean nearest-neighbor separation | — | [^dppy-3] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | — | [^dppy-3] |
-| diversity objectives · maximize the mean pairwise distance | — | [^dppy-3] |
-| constraints beyond k · per-group counts over disjoint groups | — |  |
-| constraints beyond k · per-group counts over overlapping groups | — |  |
-| constraints beyond k · minimum and maximum counts per group | — |  |
-| time budget · budget expressed as an iteration count | ~ | [^dppy-4] |
-| time budget · budget expressed as wall-clock time | — |  |
-| time budget · the answer improves when given more budget | — |  |
+| distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
+| distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^dppy-2] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^dppy-3] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^dppy-3] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^dppy-3] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> | [^dppy-3] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
+| time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^dppy-4] |
+| time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> |  |
 | largest practical problem size | n ≈ 10<sup>4</sup> | [^dppy-5] |
 
 </div>

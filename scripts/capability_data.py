@@ -5,11 +5,14 @@ Three kinds of file feed this, split by what they describe:
 * ``data/capability_axes.yaml`` — the columns: which axes exist, their labels, hero visibility.
 * ``data/solver_registry.yaml`` — the rows: categories in order, tools in order within each.
 * ``docs/solvers/<key>.md`` — the cells and the prose. Each record's front matter is its data;
-  its body is its reference page. One file, so a capability and the text defending it cannot
+  its body is its profile page. One file, so a capability and the text defending it cannot
   drift apart.
 
 Generated feature tables are written under ``generated/features/`` and pulled into each page by
-a snippet line, which keeps the seam between hand-authored and generated content visible.
+a snippet line, which keeps the seam between hand-authored and generated content visible. The
+comparison page's two tables come from the same records and are written the same way, to
+``generated/comparison.md`` — so the capability grid read across tools and the feature table read
+down one tool cannot disagree.
 
 Two severities are reported. **Structural problems always fail**: an unknown axis, a missing
 cell, a mark outside the vocabulary, a record that is not registered (or a registration with no
@@ -35,6 +38,9 @@ AXES_FILE = REPO_ROOT / "data" / "capability_axes.yaml"
 REGISTRY_FILE = REPO_ROOT / "data" / "solver_registry.yaml"
 RECORDS_DIR = REPO_ROOT / "docs" / "solvers"
 FRAGMENTS_DIR = REPO_ROOT / "generated" / "features"
+COMPARISON_FRAGMENT = REPO_ROOT / "generated" / "comparison.md"
+COMPARISON_PAGE = REPO_ROOT / "docs" / "comparison.md"
+COMPARISON_INCLUDE = '--8<-- "generated/comparison.md"'
 
 SCALE_PATTERN = re.compile(r"^\d(-\d)?$")
 FRONT_MATTER = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.DOTALL)
@@ -121,9 +127,9 @@ def check_note(location: str, note) -> list[str]:
     return []
 
 
-def check_structure(axes: dict, registry: dict, records: dict) -> list[str]:
+def check_structure(axes: dict, registry: dict, records: dict, comparison_page: Path = COMPARISON_PAGE) -> list[str]:
     """Return every structural problem found. An empty list means the data is well formed."""
-    problems: list[str] = []
+    problems = check_comparison_include(comparison_page)
     tools = registered_tools(registry)
     registered = {tool["key"] for tool in tools}
 
@@ -196,12 +202,25 @@ def check_scale(key: str, record: dict) -> list[str]:
 
 
 def check_include(tool: dict, body: str) -> list[str]:
-    """A published record must pull in its generated table; an excluded one has no page to."""
+    """A profiled record must pull in its generated table; an excluded one has no page to."""
     key = tool["key"]
-    if not tool.get("reference", True):
+    if not tool.get("profile", True):
         return []
     include = f'--8<-- "generated/features/{key}.md"'
     return [] if include in body else [f"{key}: page does not include its generated feature table"]
+
+
+def check_comparison_include(page_path: Path) -> list[str]:
+    """The comparison page must pull in its generated tables.
+
+    The same reasoning as `check_include`, one level up: the page keeps its hand-written framing,
+    so dropping the include leaves a page that still reads as complete while both tables are gone.
+    """
+    if not page_path.exists():
+        return [f"{_display_path(page_path)}: comparison page is missing"]
+    if COMPARISON_INCLUDE not in page_path.read_text(encoding="utf-8"):
+        return [f"{_display_path(page_path)}: page does not include its generated comparison tables"]
+    return []
 
 
 def check_near_duplicate_notes(records: dict) -> list[str]:
@@ -227,7 +246,7 @@ def check_near_duplicate_notes(records: dict) -> list[str]:
 
 
 # =================================================================================================
-#  Rendering
+#  Rendering — the per-solver feature tables
 # =================================================================================================
 def render_feature_table(axes: dict, record: dict, key: str) -> str:
     """Render one tool's feature table: every axis, one row each, notes as numbered footnotes.
@@ -242,7 +261,7 @@ def render_feature_table(axes: dict, record: dict, key: str) -> str:
     metadata_notes = (record.get("metadata") or {}).get("notes") or {}
     facts = [
         f"| {field['label']} | {_metadata_markup(field, metadata_value(record, field['key']))} "
-        f"| {notes.reference(metadata_notes.get(field['key']))} |"
+        f"| {notes.reference(_metadata_note(field, metadata_notes))} |"
         for field in axes["metadata"]
     ]
     rows = []
@@ -251,12 +270,11 @@ def render_feature_table(axes: dict, record: dict, key: str) -> str:
         for axis in group["axes"]:
             cell = record["capabilities"][f"{group['key']}.{axis['key']}"]
             label = f"{group['label']} · {axis['label']}"
-            rows.append(f"| {label} | {marks[cell['mark']]['glyph']} | {notes.reference(cell.get('note'))} |")
+            rows.append(f"| {label} | {_mark_markup(marks, cell['mark'])} | {notes.reference(cell.get('note'))} |")
 
     scale = record["scale"]
     rows.append(
-        f"| {axes['scale']['label']} | n ≈ 10<sup>{scale['max_practical_n']}</sup> "
-        f"| {notes.reference({'text': scale['rationale']})} |"
+        f"| {axes['scale']['label']} | {_scale_markup(scale)} | {notes.reference({'text': scale['rationale']})} |"
     )
 
     # Declaration order in the axes file, so a mark added there cannot render in the table while
@@ -315,12 +333,213 @@ class _NoteIndex:
         return f"[^{self.key}-{self.numbers[fingerprint]}]"
 
 
+# =================================================================================================
+#  Rendering — the comparison page
+# =================================================================================================
+def render_comparison(axes: dict, registry: dict, records: dict) -> str:
+    """Render the comparison page's two tables and the footnotes they share.
+
+    One footnote sequence serves both, because the two tables answer different questions about the
+    same tool — what it can do, and what it costs to adopt — and a single fact can be the reason
+    behind an entry in either. Splitting the sequence would print such a fact twice.
+    """
+    notes = _NoteIndex("cmp")
+    lines = [
+        "<!-- Generated by scripts/capability_data.py — do not edit. -->",
+        "",
+        *_capability_grid(axes, registry, records, notes),
+        "",
+        *_metadata_table(axes, registry, records, notes),
+    ]
+    if notes.definitions:
+        lines += ["", *notes.definitions]
+    return "\n".join(lines) + "\n"
+
+
+def _capability_grid(axes: dict, registry: dict, records: dict, notes: "_NoteIndex") -> list[str]:
+    """The what-it-can-do half: one row per tool, one column per axis, marks in the shared glyphs.
+
+    Written as HTML rather than as a markdown table, for the one thing markdown tables cannot
+    express: a heading spanning the columns of a group, which is how the README table presents the
+    same grid. The `markdown` attributes are what keep the cells' links and footnote references
+    live inside the raw HTML.
+    """
+    marks = axes["marks"]
+    width = 2 + sum(len(group["axes"]) for group in axes["groups"])
+
+    def tool_row(tool: dict, record: dict) -> str:
+        cells = [
+            f'<td{_edge(axis is group["axes"][0])} markdown="span">'
+            f"{_mark_markup(marks, cell['mark'])}{notes.reference(cell.get('note'))}</td>"
+            for group in axes["groups"]
+            for axis in group["axes"]
+            for cell in [record["capabilities"][f"{group['key']}.{axis['key']}"]]
+        ]
+        scale = record["scale"]
+        cells.append(
+            f'<td{_edge(True)} markdown="span">{_scale_markup(scale)}'
+            f"{notes.reference({'text': scale['rationale']})}</td>"
+        )
+        return f'<tr markdown="block"><td markdown="span">{_tool_label(tool)}</td>{"".join(cells)}</tr>'
+
+    def category_row(category: dict) -> str:
+        # The label is wrapped so it can be pinned alongside the tool column: the cell spans the
+        # full width, so once the grid is scrolled sideways an unpinned label sits off-screen and
+        # the row reads as an unexplained gap.
+        label = f'<span class="row-group-label">{category["label"]}</span>'
+        return f'<tr><th colspan="{width}" scope="rowgroup">{label}</th></tr>'
+
+    band = ['<th rowspan="2">Tool</th>']
+    band += [f'<th{_edge(True)} colspan="{len(group["axes"])}">{group["label"]}</th>' for group in axes["groups"]]
+    band.append(f'<th{_edge(True)} rowspan="2">{axes["scale"]["hero_label"]}</th>')
+    axis_names = "".join(
+        f"<th{_edge(axis is group['axes'][0])}>{axis['hero_label']}</th>"
+        for group in axes["groups"]
+        for axis in group["axes"]
+    )
+
+    legend = " · ".join(f"{m['glyph']} {m['legend']}" for m in marks.values())
+    return [
+        '<div class="comparison-grid" markdown>',
+        "",
+        '<table markdown="block">',
+        "<thead>",
+        f"<tr>{''.join(band)}</tr>",
+        f"<tr>{axis_names}</tr>",
+        "</thead>",
+        '<tbody markdown="block">',
+        *_tool_rows(registry, records, category_row, tool_row),
+        "</tbody>",
+        "</table>",
+        "",
+        "</div>",
+        "",
+        f"Support: {legend}",
+    ]
+
+
+def _metadata_table(axes: dict, registry: dict, records: dict, notes: "_NoteIndex") -> list[str]:
+    """The what-it-costs-to-adopt half: the prose fields, for the tools in the same order."""
+    fields = [field for field in axes["metadata"] if field.get("comparison", True)]
+
+    def tool_row(tool: dict, record: dict) -> str:
+        record_notes = (record.get("metadata") or {}).get("notes") or {}
+        cells = [
+            _metadata_markup(field, metadata_value(record, field["key"]))
+            + notes.reference(_metadata_note(field, record_notes))
+            for field in fields
+        ]
+        return _row([_tool_label(tool), *cells])
+
+    labels = [field["label"] for field in fields]
+
+    def category_row(category: dict) -> str:
+        return _row([f"**{category['label']}**", *([""] * len(labels))])
+
+    return [
+        '<div class="comparison-meta" markdown>',
+        "",
+        _row(["Tool", *labels]),
+        _row(["---"] * (len(labels) + 1)),
+        *_tool_rows(registry, records, category_row, tool_row),
+        "",
+        "</div>",
+        "",
+        f"*Every fact above was verified on or after {_oldest_verification(registry, records)}; "
+        f"each tool's own date is in the table.*",
+    ]
+
+
+def _tool_rows(registry: dict, records: dict, category_row, tool_row) -> list[str]:
+    """Rows for every registered tool, each category announced by a row of its own.
+
+    The categories are the comparison's main point — a flat ranking across an exact solver, a
+    one-shot picker and an anytime optimizer would be misleading — so they are structure in the
+    table rather than something the surrounding prose has to keep saying. The two tables render a
+    row differently, so each supplies its own row builders; the ordering lives here.
+    """
+    rows = []
+    for category in registry["categories"]:
+        rows.append(category_row(category))
+        for tool in category["tools"]:
+            rows.append(tool_row(tool, records[tool["key"]][0]))
+    return rows
+
+
+def _tool_label(tool: dict) -> str:
+    """A tool's name, linked to its profile where it has one and tagged when it is the subject.
+
+    The tag is what lets the stylesheet tint the subject's whole row, in a markdown table as
+    readily as in the generated HTML one — neither can carry a class on the row itself, but both
+    can be selected through a cell's content. Position is deliberately not the hook: it would tie
+    the highlight to an ordering the registry is free to change.
+    """
+    name = f"[{tool['name']}](solvers/{tool['key']}.md)" if tool.get("profile", True) else tool["name"]
+    return f'<span class="subject-name">{name}</span>' if tool.get("subject") else name
+
+
+def _oldest_verification(registry: dict, records: dict) -> str:
+    """The staleness of the whole table is the staleness of its least recently checked tool."""
+    return min(str(metadata_value(records[tool["key"]][0], "verified")) for tool in registered_tools(registry))
+
+
+def _row(cells: list[str]) -> str:
+    return "| " + " | ".join(cells) + " |"
+
+
+# =================================================================================================
+#  Rendering — shared
+# =================================================================================================
+def _mark_markup(marks: dict, mark: str) -> str:
+    """A mark's glyph, tagged with which mark it is so the stylesheet can weight the three apart.
+
+    Without the tag a stylesheet cannot tell a dash from a tilde — CSS has no way to select on a
+    cell's text — and the three marks are forced to share one treatment even though they do not
+    carry equal weight: `not available` is the quietest claim of the three.
+    """
+    return f'<span class="mark mark-{mark}">{marks[mark]["glyph"]}</span>'
+
+
+def _edge(starts_group: bool) -> str:
+    """Mark the column that opens a group, so the rule between groups can be drawn in CSS.
+
+    A markdown table would have to count columns for this; here the renderer already knows which
+    cell is first in its group, so the fact travels with the cell instead of being re-derived.
+    """
+    return ' class="group-edge"' if starts_group else ""
+
+
+def _scale_markup(scale: dict) -> str:
+    """Render a practical-scale value as a power of ten, or a range spelled out as two of them.
+
+    A range is written as two full powers rather than as `10<sup>4-5</sup>`, which renders as a
+    single exponent reading `4-5`.
+    """
+    lo, _, hi = str(scale["max_practical_n"]).partition("-")
+    power = f"10<sup>{lo}</sup>"
+    return f"n ≈ {power}&ndash;10<sup>{hi}</sup>" if hi else f"n ≈ {power}"
+
+
+def _metadata_note(field: dict, record_notes: dict):
+    """A field's note, unless this column opts out.
+
+    One record field can back more than one column — the release is a version and a date — and the
+    note explaining it belongs against one of them rather than repeated in both.
+    """
+    return record_notes.get(field["key"]) if field.get("note", True) else None
+
+
 def _metadata_markup(field: dict, value) -> str:
     """Render one metadata value according to its declared kind."""
-    if field.get("kind") == "release":
-        version, date = (value or {}).get("version"), (value or {}).get("date")
-        return "none published" if version in (None, "none") else f"`{version}` · {date}"
-    if field.get("kind") == "url":
+    kind = field.get("kind")
+    if kind in ("release_version", "release_date"):
+        part = (value or {}).get("version" if kind == "release_version" else "date")
+        if part in (None, "none"):
+            return "&mdash;"
+        # Tagged so the cell can be kept off wrapping: these columns are narrow, and a date broken
+        # across two lines reads as two numbers.
+        return f'<span class="release-part">{part}</span>'
+    if kind == "url":
         return f"[{value}]({value})"
     return inline(str(value))
 
@@ -334,7 +553,11 @@ def inline(text: str) -> str:
 #  Entry point
 # =================================================================================================
 def check_fragments_are_current(
-    axes: dict, registry: dict, records: dict, fragments_dir: Path = FRAGMENTS_DIR
+    axes: dict,
+    registry: dict,
+    records: dict,
+    fragments_dir: Path = FRAGMENTS_DIR,
+    comparison_fragment: Path = COMPARISON_FRAGMENT,
 ) -> list[str]:
     """Report committed fragments that no longer match what the records would render.
 
@@ -345,7 +568,7 @@ def check_fragments_are_current(
     """
     problems: list[str] = []
     for tool in registered_tools(registry):
-        if not tool.get("reference", True):
+        if not tool.get("profile", True):
             continue
         key = tool["key"]
         if key not in records:
@@ -359,6 +582,14 @@ def check_fragments_are_current(
                 f"{key}: {_display_path(path)} is stale — the record has changed since it was "
                 f"generated. Run scripts/capability_data.py."
             )
+
+    if not comparison_fragment.exists():
+        problems.append("comparison: no generated tables — run scripts/capability_data.py")
+    elif comparison_fragment.read_text(encoding="utf-8") != render_comparison(axes, registry, records):
+        problems.append(
+            f"comparison: {_display_path(comparison_fragment)} is stale — a record has changed "
+            f"since it was generated. Run scripts/capability_data.py."
+        )
     return problems
 
 
@@ -370,7 +601,9 @@ def _display_path(path: Path) -> str:
         return str(path)
 
 
-def validate(axes: dict, registry: dict, records: dict) -> tuple[list[str], list[str]]:
+def validate(
+    axes: dict, registry: dict, records: dict, comparison_page: Path = COMPARISON_PAGE
+) -> tuple[list[str], list[str]]:
     """Everything wrong with the data itself, split into the two severities.
 
     Deliberately excludes the fragment-drift check. Drift is a property of the *committed output*,
@@ -378,20 +611,34 @@ def validate(axes: dict, registry: dict, records: dict) -> tuple[list[str], list
     refuse to regenerate precisely when regeneration is what is needed, with an error telling the
     reader to run the command that just refused.
     """
-    return check_structure(axes, registry, records), check_near_duplicate_notes(records)
+    return check_structure(axes, registry, records, comparison_page), check_near_duplicate_notes(records)
 
 
-def write_fragments(axes: dict, registry: dict, records: dict, fragments_dir: Path = FRAGMENTS_DIR) -> list[Path]:
-    """Write one fragment per tool that has a reference page. Excluded tools get none."""
+def write_fragments(
+    axes: dict,
+    registry: dict,
+    records: dict,
+    fragments_dir: Path = FRAGMENTS_DIR,
+    comparison_fragment: Path = COMPARISON_FRAGMENT,
+) -> list[Path]:
+    """Write one fragment per tool that has a profile page, plus the comparison page's tables.
+
+    Excluded tools get no feature table — they have no page for one to land in — but they are still
+    rows in the comparison tables, which is the reason their records exist at all.
+    """
     fragments_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for tool in registered_tools(registry):
-        if not tool.get("reference", True):
+        if not tool.get("profile", True):
             continue
         record, _body = records[tool["key"]]
         path = fragments_dir / f"{tool['key']}.md"
         path.write_text(render_feature_table(axes, record, tool["key"]), encoding="utf-8")
         written.append(path)
+
+    comparison_fragment.parent.mkdir(parents=True, exist_ok=True)
+    comparison_fragment.write_text(render_comparison(axes, registry, records), encoding="utf-8")
+    written.append(comparison_fragment)
     return written
 
 
@@ -411,11 +658,13 @@ def main() -> int:
     registry = load_registry(args.root / "data" / "solver_registry.yaml")
     records = load_records(args.root / "docs" / "solvers")
     fragments_dir = args.root / "generated" / "features"
-    structural, near_duplicates = validate(axes, registry, records)
+    comparison_fragment = args.root / "generated" / "comparison.md"
+    comparison_page = args.root / "docs" / "comparison.md"
+    structural, near_duplicates = validate(axes, registry, records, comparison_page)
     # Drift is only a problem in --check mode; in write mode the write is the fix. Rendering needs
     # sound data, so it is skipped when the structure is already broken.
     if args.check and not structural:
-        structural += check_fragments_are_current(axes, registry, records, fragments_dir)
+        structural += check_fragments_are_current(axes, registry, records, fragments_dir, comparison_fragment)
 
     for problem in structural:
         print(f"ERROR  {problem}", file=sys.stderr)
@@ -432,8 +681,8 @@ def main() -> int:
         print(f"capability data OK: {len(records)} record(s), {len(axes['keys'])} axes")
         return 0
 
-    written = write_fragments(axes, registry, records, fragments_dir)
-    print(f"wrote {len(written)} feature table(s) to {_display_path(fragments_dir)}/")
+    written = write_fragments(axes, registry, records, fragments_dir, comparison_fragment)
+    print(f"wrote {len(written)} fragment(s) under {_display_path(args.root / 'generated')}/")
     return 0
 
 
