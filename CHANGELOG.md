@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.8.4 (2026-07-28)
 
 ### Added
 - Reference page for each compared third-party tool, covering what it solves, its problem formulation, and its feature set
@@ -13,15 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The comparison page now covers every capability shown in the README table, with footnotes explaining partial support
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - Documentation site: the README capability table now renders instead of showing a broken image
-
-### Security
-
 ## 0.8.3 (2026-07-27)
 
 ### Added
