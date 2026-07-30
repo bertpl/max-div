@@ -82,8 +82,10 @@ class SolverState:
         self._con_indices = con_indices  # READ-ONLY
         self._con_membership = con_membership  # READ-ONLY
 
-        # snapshot
-        self._snapshot: Snapshot = Snapshot.empty()
+        # snapshots — a stack, so provisional changes can nest (see savepoint())
+        self._snapshots: list[Snapshot] = []  # entries 0.._depth-1 are live, the rest are reusable spares
+        self._savepoints: list[Savepoint] = []  # one reusable scope object per depth, so entry allocates nothing
+        self._depth: int = 0
 
         # finalize
         self._update_score()
@@ -107,44 +109,61 @@ class SolverState:
     # -------------------------------------------------------------------------
     #  Main API - used by solver strategies to modify state
     # -------------------------------------------------------------------------
-    def set_snapshot(self) -> None:
-        """Internally saves the current state as a snapshot (possibly overwriting any previous snapshot).
+    def savepoint(self) -> Savepoint:
+        """Open a scope in which every change to this state is provisional.
 
-        Such a snapshot can be restored using the restore_snapshot() method, with any actions that happened
-        in between (add, remove) being undone.
+        On leaving the scope the changes are rolled back, unless the scope was explicitly kept:
+
+            with state.savepoint() as sp:   # everything in here is provisional
+                state.remove(i)
+                if state.score > best:
+                    sp.keep()               # ... unless we say otherwise
+
+        Rollback is the default, so a trial reads as nothing more than a `with` block, and an
+        exception inside the scope leaves the state untouched.  Scopes nest: the solver evaluates
+        candidates provisionally inside a swap that is itself provisional.
         """
+        depth = self._depth
+        if depth == len(self._savepoints):
+            self._savepoints.append(Savepoint(self))
+        return self._savepoints[depth]
+
+    def _push_snapshot(self) -> None:
+        """Save the current state on top of the snapshot stack."""
+        depth = self._depth
+        if depth == len(self._snapshots):
+            self._snapshots.append(Snapshot.empty())
+        snapshot = self._snapshots[depth]
+
         # NOTE: we create copies, such that add(.) and remove(.) cannot influence the snapshot after it was taken
-        self._snapshot.selected = self._selected.copy()
-        self._snapshot.n_selected = self._n_selected
-        self._snapshot.con_values = self._con_values.copy()
-        self._contribution_trackers.set_snapshot()
+        snapshot.selected = self._selected.copy()
+        snapshot.n_selected = self._n_selected
+        snapshot.con_values = self._con_values.copy()
+        self._contribution_trackers.push_snapshot()
         # NOTE: Score is immutable and mutators reassign self._score (never modify in place),
         #       so storing the reference is safe — no copy needed.
-        self._snapshot.score = self.score
-        self._snapshot.is_valid = True
+        snapshot.score = self.score
 
-    def restore_snapshot(self) -> None:
-        """Restores the state of this object to the state saved in the last call to set_snapshot().
+        self._depth = depth + 1
 
-        Any actions that happened in between (add, remove) are undone.  If set_snapshot() hasn't been called before,
-        a ValueError is raised.  After restoring the snapshot, it gets cleared, such that subsequent calls to
-        restore_snapshot() without an intermediate call to set_snapshot() will again raise a ValueError.
-        """
-        if not self._snapshot.is_valid:
-            raise ValueError("Cannot restore snapshot: set_snapshot() not called before.")
+    def _pop_snapshot(self, restore: bool) -> None:
+        """Discard the top snapshot, first restoring this state from it if `restore`."""
+        depth = self._depth - 1
+        snapshot = self._snapshots[depth]
+        self._contribution_trackers.pop_snapshot(restore)
 
-        # restore snapshot (no copy needed; we will clear the snapshot)
-        self._selected = self._snapshot.selected
-        self._n_selected = self._snapshot.n_selected
-        self._con_values = self._snapshot.con_values
-        self._contribution_trackers.restore_snapshot()
+        if restore:
+            # no copy needed; the snapshot is cleared below, so the restored arrays cannot alias a live snapshot
+            self._selected = snapshot.selected
+            self._n_selected = snapshot.n_selected
+            self._con_values = snapshot.con_values
 
-        # restore score (cached at set_snapshot time; avoids a full recompute)
-        self._score = self._snapshot.score
-        self._score_dirty = False
+            # restore score (cached at push time; avoids a full recompute)
+            self._score = snapshot.score
+            self._score_dirty = False
 
-        # clear snapshot after restoring
-        self._snapshot.clear()
+        snapshot.clear()
+        self._depth = depth
 
     def add(self, index: int | np.int32) -> None:
         # --- validation ----------------------------------
@@ -372,6 +391,38 @@ class SolverState:
 # =================================================================================================
 #  Helper Classes
 # =================================================================================================
+class Savepoint:
+    """Scope over provisional changes to a SolverState; see SolverState.savepoint().
+
+    Written as a class with __enter__/__exit__ rather than a @contextmanager generator: the solver
+    enters one of these tens of times per iteration, and generator-based context managers cost
+    noticeably more per entry.  One instance is reused per nesting depth, so entering a scope
+    allocates nothing.
+    """
+
+    __slots__ = ("_keep", "_state")
+
+    def __init__(self, state: SolverState) -> None:
+        """Bind the scope to its state.  Not intended to be constructed directly."""
+        self._state = state
+        self._keep = False
+
+    def keep(self) -> None:
+        """Keep the changes made inside this scope instead of rolling them back on exit."""
+        self._keep = True
+
+    def __enter__(self) -> Savepoint:
+        """Snapshot the state, so everything until __exit__ can be undone."""
+        self._keep = False  # this object is reused across scopes; never inherit the previous outcome
+        self._state._push_snapshot()  # noqa: SLF001 -- Savepoint is SolverState's own scope object
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> bool:  # noqa: ANN001 -- standard context-manager signature
+        """Roll back unless the scope was kept; an exception always rolls back and always propagates."""
+        self._state._pop_snapshot(restore=not self._keep or exc_type is not None)  # noqa: SLF001 -- as above
+        return False  # never swallow an exception
+
+
 @dataclass(slots=True)
 class Snapshot:
     """Class internally used by SolverState to store snapshots of its state.
@@ -380,8 +431,6 @@ class Snapshot:
     modified after construction.  Diversity-contribution state is snapshotted by the contribution trackers
     themselves, in lockstep with this snapshot's life cycle.
     """
-
-    is_valid: bool
 
     selected: NDArray[np.bool]  # boolean array representing the selection
     n_selected: np.int32  # number of True values in 'selected'
@@ -394,8 +443,7 @@ class Snapshot:
     #  Modification / Factory
     # -------------------------------------------------------------------------
     def clear(self) -> None:
-        """Clear the snapshot, making it invalid."""
-        self.is_valid = False
+        """Release the state held by this snapshot, returning it to the spare pool."""
         self.selected = _EMPTY_NP_ARRAY_BOOL
         self.n_selected = np.int32(0)
         self.con_values = _EMPTY_NP_ARRAY_INT32
@@ -403,9 +451,8 @@ class Snapshot:
 
     @classmethod
     def empty(cls) -> Snapshot:
-        """Create and return an empty/invalid snapshot."""
+        """Create and return a cleared snapshot, ready to be filled by a push."""
         return Snapshot(
-            is_valid=False,
             selected=_EMPTY_NP_ARRAY_BOOL,
             n_selected=np.int32(0),
             con_values=_EMPTY_NP_ARRAY_INT32,
@@ -414,7 +461,7 @@ class Snapshot:
 
 
 # singletons to avoid repeated, unnecessary allocations
-# (an invalid snapshot's score is never read — restore_snapshot guards on is_valid)
+# (a cleared snapshot's fields are never read — the depth counter delimits the live stack entries)
 _EMPTY_NP_ARRAY_BOOL = np.array([], dtype=np.bool)
 _EMPTY_NP_ARRAY_INT32 = np.array([], dtype=np.int32)
 _PLACEHOLDER_SCORE = Score(size=0.0, constraints=0.0, diversity=0.0, div_tie_breakers=())

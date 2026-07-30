@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Solver iterations run more than 2× faster on separation-based metrics, so time-budgeted runs reach better selections
 
 ### Deprecated
 

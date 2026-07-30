@@ -6,7 +6,7 @@ from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker, SeparationTracker
-from max_div._core.solver._solver_state import SolverState, _build_con_membership
+from max_div._core.solver._solver_state import Savepoint, SolverState, _build_con_membership
 
 
 # =================================================================================================
@@ -133,7 +133,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.n_not_selected == 3
 
 
-def test_solver_state_snapshot(new_solver_state):
+def test_savepoint_rolls_back_by_default(new_solver_state):
     # --- arrange -----------------------------------------
     state = new_solver_state
     state.add(0)
@@ -145,23 +145,101 @@ def test_solver_state_snapshot(new_solver_state):
     orig_separation_array = state.selected_contribution_array.copy()
     orig_con_values = state._con_values.copy()
 
-    # --- act & assert ------------------------------------
-    with pytest.raises(ValueError):
-        state.restore_snapshot()  # none taken yet
-
-    # the below should be a no-op
-    state.set_snapshot()
-    state.add(5)
-    state.restore_snapshot()
-
-    with pytest.raises(ValueError):
-        state.restore_snapshot()  # restoring a snapshot invalidates it
+    # --- act ---------------------------------------------
+    # the below should be a no-op: the scope is never kept
+    with state.savepoint():
+        state.add(5)
 
     # --- assert ------------------------------------------
     assert np.array_equal(state.selected_index_array, orig_selected_array)
     assert np.array_equal(state.not_selected_index_array, orig_not_selected_array)
     assert np.allclose(state.selected_contribution_array, orig_separation_array)
     assert np.array_equal(state.con_values, orig_con_values)
+
+
+def test_savepoint_keep(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state.add(0)
+
+    # --- act ---------------------------------------------
+    with state.savepoint() as sp:
+        state.add(5)
+        sp.keep()
+
+    # --- assert ------------------------------------------
+    assert np.array_equal(state.selected_index_array, [0, 5])
+
+
+def test_savepoint_nesting(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state.add(0)
+
+    # --- act ---------------------------------------------
+    # kept outer scope, with one rolled-back and one kept scope nested inside it
+    with state.savepoint() as outer:
+        state.add(2)
+        with state.savepoint():
+            state.add(4)  # rolled back
+        with state.savepoint() as inner:
+            state.add(5)
+            inner.keep()
+        outer.keep()
+
+    # --- assert ------------------------------------------
+    assert np.array_equal(state.selected_index_array, [0, 2, 5])
+
+
+def test_savepoint_rolled_back_outer_discards_kept_inner(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state.add(0)
+
+    # --- act ---------------------------------------------
+    with state.savepoint(), state.savepoint() as inner:
+        state.add(5)
+        inner.keep()
+
+    # --- assert ------------------------------------------
+    # keeping a scope only survives up to its parent; the rolled-back outer scope undoes it all
+    assert np.array_equal(state.selected_index_array, [0])
+
+
+def test_savepoint_exception_rolls_back_and_propagates(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state.add(0)
+
+    def trial_that_raises() -> None:
+        with state.savepoint() as sp:
+            state.add(5)
+            sp.keep()  # an exception rolls back even a kept scope
+            raise RuntimeError("boom")
+
+    # --- act ---------------------------------------------
+    with pytest.raises(RuntimeError, match="boom"):
+        trial_that_raises()
+
+    # --- assert ------------------------------------------
+    assert np.array_equal(state.selected_index_array, [0])
+
+
+def test_savepoint_restores_cached_score(new_solver_state):
+    # --- arrange -----------------------------------------
+    state = new_solver_state
+    state.add(0)
+    score_before = state.score  # cached, clean
+
+    # --- act ---------------------------------------------
+    with state.savepoint():
+        state.add(5)
+        _ = state.score
+
+    # --- assert ------------------------------------------
+    # rollback reinstates the score cached at scope entry (by reference; Score is immutable), clean
+    assert state._score is score_before
+    assert not state._score_dirty
 
 
 @pytest.mark.parametrize("seed", list(range(1, 100)))
@@ -176,36 +254,35 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
     # --- act ---------------------------------------------
     random.seed(seed)
     for it in range(n_iters):
-        # take snapshot
-        state.set_snapshot()
+        # every iteration's changes are provisional; roughly half the scopes are kept
+        with state.savepoint() as sp:
+            # add random number of items
+            n_to_add = random.randint(0, len(state.not_selected_index_array) + 1)
+            indices_to_select = state.not_selected_index_array.copy()
+            random.shuffle(indices_to_select)
+            if it % 2 == 0:
+                # use add()
+                for idx in indices_to_select[:n_to_add]:
+                    state.add(idx)
+            else:
+                # use add_many()
+                state.add_many(indices_to_select[:n_to_add])
 
-        # add random number of items
-        n_to_add = random.randint(0, len(state.not_selected_index_array) + 1)
-        indices_to_select = state.not_selected_index_array.copy()
-        random.shuffle(indices_to_select)
-        if it % 2 == 0:
-            # use add()
-            for idx in indices_to_select[:n_to_add]:
-                state.add(idx)
-        else:
-            # use add_many()
-            state.add_many(indices_to_select[:n_to_add])
+            # remove random number of items
+            n_to_remove = random.randint(0, len(state.selected_index_array) + 1)
+            indices_to_remove = state.selected_index_array.copy()
+            random.shuffle(indices_to_remove)
+            if it % 2 == 0:
+                # use remove()
+                for idx in indices_to_remove[:n_to_remove]:
+                    state.remove(idx)
+            else:
+                # use remove_many()
+                state.remove_many(indices_to_remove[:n_to_remove])
 
-        # remove random number of items
-        n_to_remove = random.randint(0, len(state.selected_index_array) + 1)
-        indices_to_remove = state.selected_index_array.copy()
-        random.shuffle(indices_to_remove)
-        if it % 2 == 0:
-            # use remove()
-            for idx in indices_to_remove[:n_to_remove]:
-                state.remove(idx)
-        else:
-            # use remove_many()
-            state.remove_many(indices_to_remove[:n_to_remove])
-
-        # restore snapshot with some probability
-        if random.rand() < 0.5:
-            state.restore_snapshot()
+            # keep the scope with some probability
+            if random.rand() >= 0.5:
+                sp.keep()
 
     # --- assert ------------------------------------------
 
@@ -366,25 +443,36 @@ def _assert_state_matches_fresh_rebuild(state: SolverState) -> None:
     assert np.array_equal(state._con_values, fresh._con_values)
 
 
-def _apply_random_operation(state: SolverState, rng: random.Generator, snapshot_is_valid: bool) -> bool:
-    """Apply one randomly chosen valid operation to 'state'; return whether a snapshot is valid afterwards."""
+def _apply_savepoint_operation(state: SolverState, operation: str, open_savepoints: list[Savepoint]) -> None:
+    """Enter or exit a savepoint on 'state' per 'operation', maintaining the open-savepoint stack.
+
+    Savepoints are entered and exited through their context-manager protocol directly: a random
+    walk opens and closes scopes at arbitrary points, which lexical `with` blocks cannot express.
+    """
+    if operation == "enter_savepoint":
+        open_savepoints.append(state.savepoint().__enter__())
+    else:
+        savepoint = open_savepoints.pop()
+        if operation == "exit_keep":
+            savepoint.keep()
+        savepoint.__exit__(None, None, None)
+
+
+def _apply_random_operation(state: SolverState, rng: random.Generator, open_savepoints: list[Savepoint]) -> None:
+    """Apply one randomly chosen valid operation to 'state', maintaining the open-savepoint stack."""
     selected = state.selected_index_array
     not_selected = state.not_selected_index_array
-    operations = ["set_snapshot"]
-    if snapshot_is_valid:
-        operations.append("restore_snapshot")
+    operations = ["enter_savepoint"]
+    if open_savepoints:
+        operations += ["exit_rollback", "exit_keep"]
     if not_selected.size > 0:
         operations += ["add", "add_many"]
     if selected.size > 0:
         operations += ["remove", "remove_many"]
 
     match rng.choice(operations):
-        case "set_snapshot":
-            state.set_snapshot()
-            return True
-        case "restore_snapshot":
-            state.restore_snapshot()
-            return False
+        case ("enter_savepoint" | "exit_rollback" | "exit_keep") as operation:
+            _apply_savepoint_operation(state, operation, open_savepoints)
         case "add":
             state.add(rng.choice(not_selected))
         case "add_many":
@@ -395,7 +483,6 @@ def _apply_random_operation(state: SolverState, rng: random.Generator, snapshot_
         case "remove_many":
             n_remove = int(rng.integers(1, min(4, selected.size) + 1))
             state.remove_many(rng.choice(selected, size=n_remove, replace=False).astype(np.int32))
-    return snapshot_is_valid
 
 
 @pytest.mark.parametrize("seed", [0, 1, 2])
@@ -404,11 +491,11 @@ def test_solver_state_consistency_invariant(seed: int):
     # --- arrange -----------------------------------------
     state = _make_reference_state()
     rng = random.default_rng(seed=seed)
-    snapshot_is_valid = False
+    open_savepoints: list[Savepoint] = []
 
     # --- act & assert ------------------------------------
     for _ in range(60):
-        snapshot_is_valid = _apply_random_operation(state, rng, snapshot_is_valid)
+        _apply_random_operation(state, rng, open_savepoints)
         _assert_state_matches_fresh_rebuild(state)
 
 

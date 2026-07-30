@@ -83,11 +83,10 @@ class InitEager(InitializationStrategy):
         best_score_tuple: tuple | None = None
 
         for sample in candidates:
-            # take snapshot -> add and remember score -> revert
-            state.set_snapshot()
-            state.add(sample)
-            score = state.score
-            state.restore_snapshot()
+            # provisionally add and remember the score; leaving the scope reverts it
+            with state.savepoint():
+                state.add(sample)
+                score = state.score
 
             # see if sample is better
             # soft=1.0 ignores the constraint score; otherwise consider the full score, including constraints

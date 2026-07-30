@@ -27,10 +27,10 @@ class _CallRecordingTracker(DiversityContributionTracker):
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         self.calls.append(("remove", int(index), list(new_selection)))
 
-    def set_snapshot(self) -> None:
+    def push_snapshot(self) -> None:
         pass  # pragma: no cover - not exercised by these tests
 
-    def restore_snapshot(self) -> None:
+    def pop_snapshot(self, restore: bool) -> None:
         pass  # pragma: no cover - not exercised by these tests
 
     def copy(self) -> DiversityContributionTracker:
