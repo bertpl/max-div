@@ -130,12 +130,11 @@ def test_invariant_random_operations_match_recompute(tracker: MeanDistanceTracke
     # --- arrange -----------------------------------------
     rng = random.default_rng(seed=7)
     selection: list[int] = []
-    snapshot_selection: list[int] | None = None
+    snapshot_selections: list[list[int]] = []  # mirrors the tracker's snapshot stack
 
     # --- act / assert ------------------------------------
     for _ in range(200):
-        can_restore = snapshot_selection is not None
-        options = ["add", "remove", "set_snapshot"] + (["restore_snapshot"] if can_restore else [])
+        options = ["add", "remove", "push_snapshot"] + (["pop_restore", "pop_keep"] if snapshot_selections else [])
         match rng.choice(options):
             case "add" if len(selection) < N:
                 index = int(rng.choice([i for i in range(N) if i not in selection]))
@@ -145,13 +144,15 @@ def test_invariant_random_operations_match_recompute(tracker: MeanDistanceTracke
                 index = int(rng.choice(selection))
                 selection.remove(index)
                 tracker.remove(np.int32(index), new_selection=np.array(selection, dtype=np.int32))
-            case "set_snapshot":
-                tracker.set_snapshot()
-                snapshot_selection = selection.copy()
-            case "restore_snapshot":
-                tracker.restore_snapshot()
-                selection = snapshot_selection.copy()  # ty: ignore[possibly-unbound-attribute]  # gated by can_restore
-                snapshot_selection = None
+            case "push_snapshot":
+                tracker.push_snapshot()
+                snapshot_selections.append(selection.copy())
+            case "pop_restore":
+                tracker.pop_snapshot(restore=True)
+                selection = snapshot_selections.pop()
+            case "pop_keep":
+                tracker.pop_snapshot(restore=False)
+                snapshot_selections.pop()
 
         selected, n_selected = _selection_args(selection)
         np.testing.assert_allclose(

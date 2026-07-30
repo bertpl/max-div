@@ -74,9 +74,9 @@ def test_mutations_fan_out_to_all_trackers(pdist: np.ndarray):
     # --- act ---------------------------------------------
     trackers.add(np.int32(0))
     trackers.add_many(np.array([2, 3], dtype=np.int32))
-    trackers.set_snapshot()
+    trackers.push_snapshot()
     trackers.remove_many(np.array([2, 3], dtype=np.int32), new_selection=np.array([0], dtype=np.int32))
-    trackers.restore_snapshot()
+    trackers.pop_snapshot(restore=True)
     trackers.remove(np.int32(2), new_selection=np.array([0, 3], dtype=np.int32))
 
     for ref in (sep_ref, mean_ref):

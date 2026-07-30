@@ -128,15 +128,15 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     #  Snapshot
     # -------------------------------------------------------------------------
-    def set_snapshot(self) -> None:
-        """Save the current contribution state of all trackers, overwriting any previous snapshot."""
+    def push_snapshot(self) -> None:
+        """Save the current contribution state of all trackers on top of their snapshot stacks."""
         for tracker in self._trackers:
-            tracker.set_snapshot()
+            tracker.push_snapshot()
 
-    def restore_snapshot(self) -> None:
-        """Restore all trackers to the state saved by the last `set_snapshot` call and invalidate it."""
+    def pop_snapshot(self, restore: bool) -> None:
+        """Discard every tracker's top snapshot, first restoring from it if `restore`."""
         for tracker in self._trackers:
-            tracker.restore_snapshot()
+            tracker.pop_snapshot(restore)
 
     # -------------------------------------------------------------------------
     #  Scoring reads

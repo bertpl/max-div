@@ -115,19 +115,28 @@ def test_copy_is_independent(tracker: SeparationTracker):
     assert clone.contribution_wrt_dataset is not tracker.contribution_wrt_dataset
 
 
-def test_snapshot_restore(tracker: SeparationTracker):
+def test_snapshot_stack(tracker: SeparationTracker):
     # --- arrange -----------------------------------------
     tracker.add(np.int32(0))
-    selected, n_selected = _selection_args([0], 5)
-    contribution_before = tracker.contribution_wrt_selection(selected, n_selected).copy()
 
-    # --- act ---------------------------------------------
-    tracker.set_snapshot()
+    # --- act & assert ------------------------------------
+    # two nested snapshots: pop the inner one restoring, the outer one keeping
+    tracker.push_snapshot()
     tracker.add(np.int32(3))
-    tracker.restore_snapshot()
+    selected_inner, n_selected_inner = _selection_args([0, 3], 5)
+    contribution_inner = tracker.contribution_wrt_selection(selected_inner, n_selected_inner).copy()
 
-    # --- assert ------------------------------------------
-    np.testing.assert_array_equal(tracker.contribution_wrt_selection(selected, n_selected), contribution_before)
+    tracker.push_snapshot()
+    tracker.add(np.int32(4))
+    tracker.pop_snapshot(restore=True)  # restore to the inner snapshot ({0, 3})
+    np.testing.assert_array_equal(
+        tracker.contribution_wrt_selection(selected_inner, n_selected_inner), contribution_inner
+    )
+
+    tracker.pop_snapshot(restore=False)  # keep {0, 3}; the outer snapshot is only discarded
+    np.testing.assert_array_equal(
+        tracker.contribution_wrt_selection(selected_inner, n_selected_inner), contribution_inner
+    )
 
 
 # =================================================================================================

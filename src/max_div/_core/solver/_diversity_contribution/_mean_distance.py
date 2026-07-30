@@ -99,7 +99,8 @@ class MeanDistanceTracker(DiversityContributionTracker):
         else:
             self._contribution_wrt_dataset = (compute_distance_sums(pdist, n) / max(int(n) - 1, 1)).astype(np.float32)
         self._dist_sums = dist_sums if dist_sums is not None else np.zeros(n, dtype=np.float64)
-        self._snapshot_dist_sums: NDArray[np.float64] = _EMPTY_NP_ARRAY_FLOAT64
+        # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
+        self._snapshot_dist_sums: list[NDArray[np.float64]] = []
 
     def copy(self) -> MeanDistanceTracker:
         """Return a deep copy of this tracker (without recomputing the global contribution)."""
@@ -141,16 +142,13 @@ class MeanDistanceTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     #  Snapshot
     # -------------------------------------------------------------------------
-    def set_snapshot(self) -> None:
-        """Save a copy of the current distance sums, overwriting any previous snapshot."""
-        self._snapshot_dist_sums = self._dist_sums.copy()
+    def push_snapshot(self) -> None:
+        """Save a copy of the current distance sums on top of the snapshot stack."""
+        self._snapshot_dist_sums.append(self._dist_sums.copy())
 
-    def restore_snapshot(self) -> None:
-        """Restore the distance sums saved by the last `set_snapshot` call and invalidate the snapshot."""
-        # no copy needed: the snapshot slot is cleared, so the restored array cannot alias a live snapshot
-        self._dist_sums = self._snapshot_dist_sums
-        self._snapshot_dist_sums = _EMPTY_NP_ARRAY_FLOAT64
-
-
-# singleton to avoid repeated, unnecessary allocations for the invalid-snapshot placeholder
-_EMPTY_NP_ARRAY_FLOAT64 = np.array([], dtype=np.float64)
+    def pop_snapshot(self, restore: bool) -> None:
+        """Discard the top snapshot, first restoring the distance sums from it if `restore`."""
+        # no copy needed: the entry leaves the stack, so the restored array cannot alias a live snapshot
+        snapshot = self._snapshot_dist_sums.pop()
+        if restore:
+            self._dist_sums = snapshot

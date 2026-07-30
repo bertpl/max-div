@@ -99,7 +99,8 @@ class SeparationTracker(DiversityContributionTracker):
         self._n = n  # READ-ONLY
         self._sep_global = sep_global if sep_global is not None else compute_separation(pdist, n)  # READ-ONLY
         self._sep_selected = sep_selected if sep_selected is not None else np.full(n, np.inf, dtype=np.float32)
-        self._snapshot_sep_selected: NDArray[np.float32] = _EMPTY_NP_ARRAY_FLOAT32
+        # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
+        self._snapshot_sep_selected: list[NDArray[np.float32]] = []
 
     def copy(self) -> SeparationTracker:
         """Return a deep copy of this tracker (without recomputing global separations)."""
@@ -136,16 +137,13 @@ class SeparationTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     #  Snapshot
     # -------------------------------------------------------------------------
-    def set_snapshot(self) -> None:
-        """Save a copy of the current separations, overwriting any previous snapshot."""
-        self._snapshot_sep_selected = self._sep_selected.copy()
+    def push_snapshot(self) -> None:
+        """Save a copy of the current separations on top of the snapshot stack."""
+        self._snapshot_sep_selected.append(self._sep_selected.copy())
 
-    def restore_snapshot(self) -> None:
-        """Restore the separations saved by the last `set_snapshot` call and invalidate the snapshot."""
-        # no copy needed: the snapshot slot is cleared, so the restored array cannot alias a live snapshot
-        self._sep_selected = self._snapshot_sep_selected
-        self._snapshot_sep_selected = _EMPTY_NP_ARRAY_FLOAT32
-
-
-# singleton to avoid repeated, unnecessary allocations for the invalid-snapshot placeholder
-_EMPTY_NP_ARRAY_FLOAT32 = np.array([], dtype=np.float32)
+    def pop_snapshot(self, restore: bool) -> None:
+        """Discard the top snapshot, first restoring the separations from it if `restore`."""
+        # no copy needed: the entry leaves the stack, so the restored array cannot alias a live snapshot
+        snapshot = self._snapshot_sep_selected.pop()
+        if restore:
+            self._sep_selected = snapshot

@@ -345,36 +345,34 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         # just-removed ones to be selected to be added again immediately.
         candidate_samples_to_add = state.not_selected_index_array
 
-        # --- take snapshot & remove n samples ---
+        # --- the whole swap is provisional until it proves itself ---
 
-        # score before
-        state.set_snapshot()
-        score_before = state.score
-        score_tuple_before = score_before.as_tuple(
-            soft=self.constraint_softness,
-            ignore_infeasible_diversity=self.ignore_infeasible_diversity,
-        )
+        with state.savepoint() as swap:
+            # score before
+            score_before = state.score
+            score_tuple_before = score_before.as_tuple(
+                soft=self.constraint_softness,
+                ignore_infeasible_diversity=self.ignore_infeasible_diversity,
+            )
 
-        # remove
-        _ = self._remove_samples(state, n_swap)
+            # remove
+            _ = self._remove_samples(state, n_swap)
 
-        # add
-        _ = self._add_samples(state, n_swap, candidate_samples_to_add)
+            # add
+            _ = self._add_samples(state, n_swap, candidate_samples_to_add)
 
-        # evaluate
-        score_after = state.score
-        score_tuple_after = score_after.as_tuple(
-            soft=self.constraint_softness,
-            ignore_infeasible_diversity=self.ignore_infeasible_diversity,
-        )
-        if score_tuple_after < score_tuple_before:
-            # score deteriorated -> revert; failure
-            state.restore_snapshot()
-            success = False
-        else:
-            # score did improve or stayed equal -> do not revert; success
+            # evaluate
+            score_after = state.score
+            score_tuple_after = score_after.as_tuple(
+                soft=self.constraint_softness,
+                ignore_infeasible_diversity=self.ignore_infeasible_diversity,
+            )
+
+            # score improved or stayed equal -> keep the swap; otherwise the scope reverts it on exit
             # NOTE: for the sake of exploring the search space, swaps with equal score are not reverted.
-            success = True
+            success = score_tuple_after >= score_tuple_before
+            if success:
+                swap.keep()
 
         # --- update fail/success history ---
         _update_success_rate_state(self._success_rate_state, success)

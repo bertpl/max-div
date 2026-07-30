@@ -170,24 +170,22 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             best_sample: np.int32 = np.int32(-1)
             best_score_tuple: tuple | None = None
             for i_cand in candidates_for_removal:
-                # temporarily remove candidate from selection
-                state.remove(i_cand)
+                # trial removal: provisional, so leaving the scope undoes it
+                with state.savepoint():
+                    state.remove(i_cand)
 
-                # compute new score
-                cand_score = state.score
+                    # compute new score
+                    cand_score = state.score
+                    cand_score_tuple = cand_score.as_tuple(
+                        soft=self.constraint_softness,
+                        ignore_infeasible_diversity=self.ignore_infeasible_diversity,
+                    )
 
                 # if best score so far, remember candidate
-                cand_score_tuple = cand_score.as_tuple(
-                    soft=self.constraint_softness,
-                    ignore_infeasible_diversity=self.ignore_infeasible_diversity,
-                )
                 if (best_score_tuple is None) or (cand_score_tuple >= best_score_tuple):
                     # NOTE: also accept equal candidates, to encourage diversity in selections and hence exploration
                     best_score_tuple = cand_score_tuple
                     best_sample = i_cand
-
-                # re-add candidate to selection
-                state.add(i_cand)
 
             # 3) now actually remove best sample from selection
             state.remove(best_sample)
@@ -228,21 +226,21 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             )
 
             # 2) evaluate this candidate group of samples
-            #  --> temporarily add all samples
-            state.add_many(candidate_samples_to_add)
+            #  --> provisionally add all samples; leaving the scope undoes them
+            with state.savepoint():
+                state.add_many(candidate_samples_to_add)
 
-            #  --> compute new score & update best score/samples
-            cand_score_tuple = state.score.as_tuple(
-                soft=self.constraint_softness,
-                ignore_infeasible_diversity=self.ignore_infeasible_diversity,
-            )
+                #  --> compute new score
+                cand_score_tuple = state.score.as_tuple(
+                    soft=self.constraint_softness,
+                    ignore_infeasible_diversity=self.ignore_infeasible_diversity,
+                )
+
+            #  --> update best score/samples
             if (best_score_tuple is None) or (cand_score_tuple >= best_score_tuple):
                 # NOTE: also accept equal candidates, to encourage diversity in selections and hence exploration
                 best_score_tuple = cand_score_tuple
                 best_samples = candidate_samples_to_add
-
-            #  --> re-remove all samples
-            state.remove_many(candidate_samples_to_add)
 
         # b) now actually add best sample set to selection
         state.add_many(best_samples)

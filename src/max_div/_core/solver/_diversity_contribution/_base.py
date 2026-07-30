@@ -24,8 +24,9 @@ class DiversityContributionTracker(ABC):
 
     Mutations mirror the solver-state mutators (`add`, `remove`, `..._many`) and must be called
     with the same indices, in the same order.  Snapshot methods mirror the solver-state snapshot
-    life cycle: `set_snapshot` overwrites any previous snapshot; `restore_snapshot` restores and
-    invalidates it.  Numba kernels are only ever handed bare numpy arrays, never tracker objects.
+    life cycle, which is a *stack*: `push_snapshot` saves the current contributions on top of any
+    already saved, and `pop_snapshot` discards the top entry, restoring from it or not.  Numba
+    kernels are only ever handed bare numpy arrays, never tracker objects.
     """
 
     # -------------------------------------------------------------------------
@@ -89,13 +90,17 @@ class DiversityContributionTracker(ABC):
     #  Snapshot & copy
     # -------------------------------------------------------------------------
     @abstractmethod
-    def set_snapshot(self) -> None:
-        """Internally save the current contribution state, overwriting any previous snapshot."""
+    def push_snapshot(self) -> None:
+        """Save the current contribution state on top of the snapshot stack."""
         raise NotImplementedError
 
     @abstractmethod
-    def restore_snapshot(self) -> None:
-        """Restore the contribution state saved by the last `set_snapshot` call and invalidate it."""
+    def pop_snapshot(self, restore: bool) -> None:
+        """Discard the top snapshot, first restoring the contribution state from it if `restore`.
+
+        :param restore: (bool) True to restore the snapshotted state, False to keep the
+                        current state and drop the snapshot.
+        """
         raise NotImplementedError
 
     @abstractmethod
