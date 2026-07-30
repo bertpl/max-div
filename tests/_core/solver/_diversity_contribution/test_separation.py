@@ -128,7 +128,7 @@ def test_snapshot_stack(tracker: SeparationTracker):
 
     tracker.push_snapshot()
     tracker.add(np.int32(4))
-    tracker.pop_snapshot(restore=True)  # roll back to the inner snapshot ({0, 3})
+    tracker.pop_snapshot(restore=True)  # restore to the inner snapshot ({0, 3})
     np.testing.assert_array_equal(
         tracker.contribution_wrt_selection(selected_inner, n_selected_inner), contribution_inner
     )

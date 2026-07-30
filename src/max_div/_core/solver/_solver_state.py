@@ -41,12 +41,12 @@ class SolverState:
                 ...
                 with state.savepoint():  # depth 1 -> 2: state saved into _snapshots[1]
                     ...
-                # inner exit             # depth 2 -> 1: state restored from _snapshots[1]
-                                         #   (rolled back) or left as-is (kept); either way
-                                         #   _snapshots[1] is cleared back to a spare
+                # inner exit             # depth 2 -> 1: state restored from _snapshots[1],
+                                         #   or left as-is (kept); either way _snapshots[1]
+                                         #   is cleared back to a spare
             # outer exit                 # depth 1 -> 0: same, against _snapshots[0]
 
-        Keeping and rolling back thus leave the lists themselves identical — they differ only in
+        Keeping and restoring thus leave the lists themselves identical — they differ only in
         whether the state was first restored from the top entry before that entry was cleared.
     """
 
@@ -138,14 +138,14 @@ class SolverState:
     def savepoint(self) -> Savepoint:
         """Open a scope in which every change to this state is provisional.
 
-        On leaving the scope the changes are rolled back, unless the scope was explicitly kept:
+        On leaving the scope the pre-scope state is restored, unless the scope was explicitly kept:
 
             with state.savepoint() as sp:   # everything in here is provisional
                 state.remove(i)
                 if state.score > best:
                     sp.keep()               # ... unless we say otherwise
 
-        Rollback is the default, so a trial reads as nothing more than a `with` block, and an
+        Restoring is the default, so a trial reads as nothing more than a `with` block, and an
         exception inside the scope leaves the state untouched.  Scopes nest: the solver evaluates
         candidates provisionally inside a swap that is itself provisional.
         """
@@ -436,7 +436,7 @@ class Savepoint:
         self._keep = False
 
     def keep(self) -> None:
-        """Keep the changes made inside this scope instead of rolling them back on exit."""
+        """Keep the changes made inside this scope instead of restoring the pre-scope state on exit."""
         self._keep = True
 
     def __enter__(self) -> Savepoint:
@@ -446,7 +446,7 @@ class Savepoint:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> bool:  # noqa: ANN001 -- standard context-manager signature
-        """Roll back unless the scope was kept; an exception always rolls back and always propagates."""
+        """Restore the pre-scope state unless the scope was kept; an exception always restores and always propagates."""
         self._state._pop_snapshot(restore=not self._keep or exc_type is not None)  # noqa: SLF001 -- as above
         return False  # never swallow an exception
 

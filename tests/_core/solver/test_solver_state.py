@@ -133,7 +133,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.n_not_selected == 3
 
 
-def test_savepoint_rolls_back_by_default(new_solver_state):
+def test_savepoint_restores_by_default(new_solver_state):
     # --- arrange -----------------------------------------
     state = new_solver_state
     state.add(0)
@@ -177,11 +177,11 @@ def test_savepoint_nesting(new_solver_state):
     state.add(0)
 
     # --- act ---------------------------------------------
-    # kept outer scope, with one rolled-back and one kept scope nested inside it
+    # kept outer scope, with one restored and one kept scope nested inside it
     with state.savepoint() as outer:
         state.add(2)
         with state.savepoint():
-            state.add(4)  # rolled back
+            state.add(4)  # dropped: this scope is not kept, so its exit restores {0, 2}
         with state.savepoint() as inner:
             state.add(5)
             inner.keep()
@@ -191,7 +191,7 @@ def test_savepoint_nesting(new_solver_state):
     assert np.array_equal(state.selected_index_array, [0, 2, 5])
 
 
-def test_savepoint_rolled_back_outer_discards_kept_inner(new_solver_state):
+def test_savepoint_restoring_outer_discards_kept_inner(new_solver_state):
     # --- arrange -----------------------------------------
     state = new_solver_state
     state.add(0)
@@ -202,11 +202,11 @@ def test_savepoint_rolled_back_outer_discards_kept_inner(new_solver_state):
         inner.keep()
 
     # --- assert ------------------------------------------
-    # keeping a scope only survives up to its parent; the rolled-back outer scope undoes it all
+    # keeping a scope only survives up to its parent; the outer exit restores the state from before it
     assert np.array_equal(state.selected_index_array, [0])
 
 
-def test_savepoint_exception_rolls_back_and_propagates(new_solver_state):
+def test_savepoint_exception_restores_and_propagates(new_solver_state):
     # --- arrange -----------------------------------------
     state = new_solver_state
     state.add(0)
@@ -214,7 +214,7 @@ def test_savepoint_exception_rolls_back_and_propagates(new_solver_state):
     def trial_that_raises() -> None:
         with state.savepoint() as sp:
             state.add(5)
-            sp.keep()  # an exception rolls back even a kept scope
+            sp.keep()  # an exception restores even a kept scope
             raise RuntimeError("boom")
 
     # --- act ---------------------------------------------
@@ -237,7 +237,7 @@ def test_savepoint_restores_cached_score(new_solver_state):
         _ = state.score
 
     # --- assert ------------------------------------------
-    # rollback reinstates the score cached at scope entry (by reference; Score is immutable), clean
+    # the exit restores the score cached at scope entry (by reference; Score is immutable), clean
     assert state._score is score_before
     assert not state._score_dirty
 
@@ -464,14 +464,14 @@ def _apply_random_operation(state: SolverState, rng: random.Generator, open_save
     not_selected = state.not_selected_index_array
     operations = ["enter_savepoint"]
     if open_savepoints:
-        operations += ["exit_rollback", "exit_keep"]
+        operations += ["exit_restore", "exit_keep"]
     if not_selected.size > 0:
         operations += ["add", "add_many"]
     if selected.size > 0:
         operations += ["remove", "remove_many"]
 
     match rng.choice(operations):
-        case ("enter_savepoint" | "exit_rollback" | "exit_keep") as operation:
+        case ("enter_savepoint" | "exit_restore" | "exit_keep") as operation:
             _apply_savepoint_operation(state, operation, open_savepoints)
         case "add":
             state.add(rng.choice(not_selected))

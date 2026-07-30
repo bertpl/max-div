@@ -98,7 +98,7 @@ class DiversityContributionTracker(ABC):
     def pop_snapshot(self, restore: bool) -> None:
         """Discard the top snapshot, first restoring the contribution state from it if `restore`.
 
-        :param restore: (bool) True to roll back to the snapshotted state, False to keep the
+        :param restore: (bool) True to restore the snapshotted state, False to keep the
                         current state and drop the snapshot.
         """
         raise NotImplementedError
