@@ -22,7 +22,33 @@ if TYPE_CHECKING:
 #  Solver State
 # =================================================================================================
 class SolverState:
-    """Abstract base class for solver state management."""
+    """Mutable state of a solver run: selection, constraint status, diversity contributions, and score.
+
+    Savepoint mechanics:
+
+        Provisional changes are managed by three fields that always move together:
+
+            _depth       number of currently open scopes
+            _snapshots   entries 0.._depth-1 hold the state saved at each open scope, innermost
+                         last; entries at _depth and above are cleared spares kept for reuse
+            _savepoints  the scope object handed out at each depth, one per depth ever reached
+
+        Both lists only ever grow: reaching a depth for the first time appends its entry, every
+        later visit reuses it, so steady-state operation allocates nothing.  A nested trial
+        evolves like this:
+
+            with state.savepoint():      # depth 0 -> 1: state saved into _snapshots[0]
+                ...
+                with state.savepoint():  # depth 1 -> 2: state saved into _snapshots[1]
+                    ...
+                # inner exit             # depth 2 -> 1: state restored from _snapshots[1]
+                                         #   (rolled back) or left as-is (kept); either way
+                                         #   _snapshots[1] is cleared back to a spare
+            # outer exit                 # depth 1 -> 0: same, against _snapshots[0]
+
+        Keeping and rolling back thus leave the lists themselves identical — they differ only in
+        whether the state was first restored from the top entry before that entry was cleared.
+    """
 
     # -------------------------------------------------------------------------
     #  Construction & Configuration
@@ -82,9 +108,9 @@ class SolverState:
         self._con_indices = con_indices  # READ-ONLY
         self._con_membership = con_membership  # READ-ONLY
 
-        # snapshots — a stack, so provisional changes can nest (see savepoint())
-        self._snapshots: list[Snapshot] = []  # entries 0.._depth-1 are live, the rest are reusable spares
-        self._savepoints: list[Savepoint] = []  # one reusable scope object per depth, so entry allocates nothing
+        # snapshots — a stack, so provisional changes can nest ("Savepoint mechanics" in the class docstring)
+        self._snapshots: list[Snapshot] = []
+        self._savepoints: list[Savepoint] = []
         self._depth: int = 0
 
         # finalize
@@ -125,6 +151,7 @@ class SolverState:
         """
         depth = self._depth
         if depth == len(self._savepoints):
+            # first time this nesting depth is reached: allocate its scope object; later visits reuse it
             self._savepoints.append(Savepoint(self))
         return self._savepoints[depth]
 
@@ -132,6 +159,7 @@ class SolverState:
         """Save the current state on top of the snapshot stack."""
         depth = self._depth
         if depth == len(self._snapshots):
+            # first time this nesting depth is reached: allocate its entry; later visits refill the spare in place
             self._snapshots.append(Snapshot.empty())
         snapshot = self._snapshots[depth]
 
@@ -461,7 +489,7 @@ class Snapshot:
 
 
 # singletons to avoid repeated, unnecessary allocations
-# (a cleared snapshot's fields are never read — the depth counter delimits the live stack entries)
+# (a cleared snapshot's fields are never read — SolverState._depth delimits the live stack entries)
 _EMPTY_NP_ARRAY_BOOL = np.array([], dtype=np.bool)
 _EMPTY_NP_ARRAY_INT32 = np.array([], dtype=np.int32)
 _PLACEHOLDER_SCORE = Score(size=0.0, constraints=0.0, diversity=0.0, div_tie_breakers=())
