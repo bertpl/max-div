@@ -5,21 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.8.5 (2026-07-30)
 
 ### Changed
 - Due to internal optimizations, solver iterations run more than 2× faster on separation-based metrics, so time-budgeted runs reach better selections
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.8.4 (2026-07-28)
 
 ### Added
