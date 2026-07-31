@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityContributionFamily, DiversityMetric
-from max_div._core.metrics._distance import compute_pdist
+from max_div._core.metrics._distance import DistanceStore, compute_pdist, condensed_store
 from max_div._core.solver._diversity_contribution import (
     DiversityContributionTrackers,
     MeanDistanceTracker,
@@ -17,21 +17,20 @@ N = 6
 
 
 @pytest.fixture
-def pdist() -> np.ndarray:
+def store() -> DistanceStore:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0], [15.0]], dtype=np.float32)
-    return compute_pdist(vectors, DistanceMetric.L1_MANHATTAN)
+    return condensed_store(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=N)
 
 
 # =================================================================================================
 #  Tests
 # =================================================================================================
-def test_for_metrics_single_family(pdist: np.ndarray):
+def test_for_metrics_single_family(store: DistanceStore):
     # --- act ---------------------------------------------
     trackers = DiversityContributionTrackers.for_metrics(
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
-        pdist=pdist,
-        n=np.int32(N),
+        store=store,
     )
 
     # --- assert ------------------------------------------
@@ -41,13 +40,12 @@ def test_for_metrics_single_family(pdist: np.ndarray):
     assert trackers.main is trackers._trackers[0]
 
 
-def test_for_metrics_mixed_families(pdist: np.ndarray):
+def test_for_metrics_mixed_families(store: DistanceStore):
     # --- act ---------------------------------------------
     trackers = DiversityContributionTrackers.for_metrics(
         diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION],
-        pdist=pdist,
-        n=np.int32(N),
+        store=store,
     )
 
     # --- assert ------------------------------------------
@@ -56,10 +54,10 @@ def test_for_metrics_mixed_families(pdist: np.ndarray):
     assert type(trackers.main) is SeparationTracker
 
 
-def test_mutations_fan_out_to_all_trackers(pdist: np.ndarray):
+def test_mutations_fan_out_to_all_trackers(store: DistanceStore):
     # --- arrange -----------------------------------------
     # hand-built two-family set, mirroring what a mixed-metric configuration would construct
-    sep, mean = SeparationTracker(pdist, np.int32(N)), MeanDistanceTracker(pdist, np.int32(N))
+    sep, mean = SeparationTracker(store), MeanDistanceTracker(store)
     trackers = DiversityContributionTrackers(
         trackers_by_family={
             DiversityContributionFamily.SEPARATION: sep,
@@ -67,7 +65,7 @@ def test_mutations_fan_out_to_all_trackers(pdist: np.ndarray):
         },
         main_family=DiversityContributionFamily.MEAN_DISTANCE,
     )
-    sep_ref, mean_ref = SeparationTracker(pdist, np.int32(N)), MeanDistanceTracker(pdist, np.int32(N))
+    sep_ref, mean_ref = SeparationTracker(store), MeanDistanceTracker(store)
     selected = np.full(N, False, dtype=np.bool)
     selected[[0, 3]] = True
 
@@ -96,13 +94,12 @@ def test_mutations_fan_out_to_all_trackers(pdist: np.ndarray):
     )
 
 
-def test_copy_is_independent(pdist: np.ndarray):
+def test_copy_is_independent(store: DistanceStore):
     # --- arrange -----------------------------------------
     trackers = DiversityContributionTrackers.for_metrics(
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],
-        pdist=pdist,
-        n=np.int32(N),
+        store=store,
     )
     trackers.add(np.int32(0))
     clone = trackers.copy()
@@ -118,15 +115,14 @@ def test_copy_is_independent(pdist: np.ndarray):
     np.testing.assert_array_equal(clone.main.contribution_wrt_selection(selected, np.int32(1)), before)
 
 
-def test_selected_contributions_slots(pdist: np.ndarray):
+def test_selected_contributions_slots(store: DistanceStore):
     """Active families fill their slot with the selected vectors' values; untracked slots are empty."""
 
     # --- arrange -----------------------------------------
     trackers = DiversityContributionTrackers.for_metrics(
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],
-        pdist=pdist,
-        n=np.int32(N),
+        store=store,
     )
     trackers.add(np.int32(0))
     trackers.add(np.int32(2))  # selection: points 0.0 and 3.0 on a line

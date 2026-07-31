@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numba
 import numpy as np
 
-from max_div._core.metrics._distance import get_pdist_el
+from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 
 from ._base import DiversityContributionTracker
 
@@ -16,50 +16,48 @@ if TYPE_CHECKING:
 # =================================================================================================
 #  Separation kernels
 # =================================================================================================
-@numba.njit("float32[::1](float32[::1], int32)", cache=True)
-def compute_separation(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.float32]:
-    """Compute separation of each item wrt all others, given pairwise distance array pdist and n items in total."""
+@numba.njit(numba.float32[::1](DISTANCE_STORE_TYPE), cache=True)
+def compute_separation(store: DistanceStore) -> NDArray[np.float32]:
+    """Compute separation of each item wrt all others, given the distance store."""
+    n = store.n
     sep = np.full(n, fill_value=np.inf, dtype=np.float32)
-    pdist_idx = 0
-    for i in range(n):
-        for j in range(i + 1, n):
-            # note: the way we iterate over i & j represents the exact order in which pdist stores distances
-            dist_ij = pdist[pdist_idx]
-            pdist_idx += 1
-            sep[i] = min(sep[i], dist_ij)
-            sep[j] = min(sep[j], dist_ij)
+    for i in np.arange(n, dtype=np.int32):
+        for j in np.arange(n, dtype=np.int32):
+            if j != i:
+                dist_ij = get_distance(store, i, j)
+                if dist_ij < sep[i]:
+                    sep[i] = dist_ij
     return sep
 
 
-@numba.njit("void(float32[::1], float32[::1], int32, int32)", cache=True)
-def update_separation_add(sep: NDArray[np.float32], pdist: NDArray[np.float32], n: np.int32, i_added: np.int32) -> None:
-    """Update separation of each item wrt selection, given pdist array and n items, after adding i_added."""
-    for j in np.arange(n, dtype=np.int32):
+@numba.njit(numba.void(numba.float32[::1], DISTANCE_STORE_TYPE, numba.int32), cache=True)
+def update_separation_add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> None:
+    """Update separation of each item wrt selection, given the distance store, after adding i_added."""
+    for j in np.arange(store.n, dtype=np.int32):
         if j != i_added:
-            dist = get_pdist_el(pdist, i_added, j, n)
+            dist = get_distance(store, i_added, j)
             if dist < sep[j]:
                 sep[j] = dist
 
 
-@numba.njit("void(float32[::1], float32[::1], int32, int32, int32[::1])", cache=True)
+@numba.njit(numba.void(numba.float32[::1], DISTANCE_STORE_TYPE, numba.int32, numba.int32[::1]), cache=True)
 def update_separation_remove(
     sep: NDArray[np.float32],
-    pdist: NDArray[np.float32],
-    n: np.int32,
+    store: DistanceStore,
     i_removed: np.int32,
     new_selection: NDArray[np.int32],
 ) -> None:
-    """Update separation of each item wrt selection, given pdist array and n items, after removing i_removed."""
-    for j in np.arange(n, dtype=np.int32):
+    """Update separation of each item wrt selection, given the distance store, after removing i_removed."""
+    for j in np.arange(store.n, dtype=np.int32):
         if j != i_removed:
-            dist = get_pdist_el(pdist, i_removed, j, n)
+            dist = get_distance(store, i_removed, j)
             if dist <= sep[j]:
                 # need to recompute sep[j]
                 new_sep_j = np.inf
                 for k in new_selection:
                     # only compute distance to currently selected items
                     if k != j:
-                        dist_jk = get_pdist_el(pdist, j, k, n)
+                        dist_jk = get_distance(store, j, k)
                         if dist_jk < new_sep_j:
                             new_sep_j = dist_jk
                 sep[j] = new_sep_j
@@ -81,33 +79,29 @@ class SeparationTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     def __init__(
         self,
-        pdist: NDArray[np.float32],
-        n: np.int32,
+        store: DistanceStore,
         sep_global: NDArray[np.float32] | None = None,
         sep_selected: NDArray[np.float32] | None = None,
     ) -> None:
         """Initialize the SeparationTracker for an empty selection.
 
-        :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
-        :param n: (np.int32) number of items
+        :param store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
         :param sep_global: (np.ndarray[np.float32] | None) precomputed global separations; computed if omitted.
         :param sep_selected: (np.ndarray[np.float32] | None) current separations wrt selection; fresh (all +inf,
                              i.e. empty selection) if omitted.  Together with `sep_global` this enables copies
                              without recomputation.
         """
-        self._pdist = pdist  # READ-ONLY
-        self._n = n  # READ-ONLY
-        self._sep_global = sep_global if sep_global is not None else compute_separation(pdist, n)  # READ-ONLY
-        self._sep_selected = sep_selected if sep_selected is not None else np.full(n, np.inf, dtype=np.float32)
+        self._store = store  # READ-ONLY
+        self._sep_global = sep_global if sep_global is not None else compute_separation(store)  # READ-ONLY
+        self._sep_selected = sep_selected if sep_selected is not None else np.full(store.n, np.inf, dtype=np.float32)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_sep_selected: list[NDArray[np.float32]] = []
 
     def copy(self) -> SeparationTracker:
-        """Return a deep copy of this tracker (without recomputing global separations)."""
+        """Return an independent copy of this tracker; the immutable store and global separations are shared."""
         return SeparationTracker(
-            pdist=self._pdist.copy(),
-            n=self._n,
-            sep_global=self._sep_global.copy(),
+            store=self._store,
+            sep_global=self._sep_global,
             sep_selected=self._sep_selected.copy(),
         )
 
@@ -128,11 +122,11 @@ class SeparationTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     def add(self, index: np.int32) -> None:
         """Update separations after adding point `index` to the selection."""
-        update_separation_add(self._sep_selected, self._pdist, self._n, index)
+        update_separation_add(self._sep_selected, self._store, index)
 
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Update separations after removing point `index`, rescanning against `new_selection` where needed."""
-        update_separation_remove(self._sep_selected, self._pdist, self._n, index, new_selection)
+        update_separation_remove(self._sep_selected, self._store, index, new_selection)
 
     # -------------------------------------------------------------------------
     #  Snapshot

@@ -3,7 +3,7 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import compute_pdist
+from max_div._core.metrics._distance import compute_pdist, condensed_store
 from max_div._core.solver._diversity_contribution import SeparationTracker
 from max_div._core.solver._diversity_contribution._separation import (
     compute_separation,
@@ -18,8 +18,8 @@ from max_div._core.solver._diversity_contribution._separation import (
 @pytest.fixture
 def tracker() -> SeparationTracker:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
-    pdist = compute_pdist(vectors, DistanceMetric.L1_MANHATTAN)
-    return SeparationTracker(pdist, np.int32(vectors.shape[0]))
+    store = condensed_store(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0])
+    return SeparationTracker(store)
 
 
 def _selection_args(indices: list[int], n: int) -> tuple[np.ndarray, np.int32]:
@@ -46,12 +46,12 @@ def test_construction_fresh(tracker: SeparationTracker):
 def test_construction_precomputed_arrays_skip_recompute():
     # --- arrange -----------------------------------------
     vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
-    pdist = compute_pdist(vectors, DistanceMetric.L1_MANHATTAN)
-    sep_global = compute_separation(pdist, np.int32(3))
+    store = condensed_store(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=3)
+    sep_global = compute_separation(store)
     sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
 
     # --- act ---------------------------------------------
-    tracker = SeparationTracker(pdist, np.int32(3), sep_global=sep_global, sep_selected=sep_selected)
+    tracker = SeparationTracker(store, sep_global=sep_global, sep_selected=sep_selected)
 
     # --- assert ------------------------------------------
     assert tracker.contribution_wrt_dataset is sep_global  # taken as-is, not recomputed
@@ -112,7 +112,9 @@ def test_copy_is_independent(tracker: SeparationTracker):
     # --- assert ------------------------------------------
     selected, n_selected = _selection_args([0], 5)
     np.testing.assert_allclose(clone.contribution_wrt_selection(selected, n_selected), [np.inf, 1, 3, 6, 10])
-    assert clone.contribution_wrt_dataset is not tracker.contribution_wrt_dataset
+    # the immutable store and global contributions are shared by contract, not duplicated
+    assert clone._store is tracker._store
+    assert clone.contribution_wrt_dataset is tracker.contribution_wrt_dataset
 
 
 def test_snapshot_stack(tracker: SeparationTracker):
@@ -160,7 +162,7 @@ def test_compute_separation():
                     expected_separation[i] = dist
 
     # --- act ---------------------------------------------
-    separation = compute_separation(d, np.int32(m))
+    separation = compute_separation(condensed_store(d, n=m))
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)
@@ -201,7 +203,7 @@ def test_update_separation_add():
     )
 
     # --- act ---------------------------------------------
-    update_separation_add(separation, d, np.int32(m), np.int32(i_added))
+    update_separation_add(separation, condensed_store(d, n=m), np.int32(i_added))
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)
@@ -242,7 +244,7 @@ def test_update_separation_remove():
     )
 
     # --- act ---------------------------------------------
-    update_separation_remove(separation, d, np.int32(m), np.int32(i_removed), np.array([0], dtype=np.int32))
+    update_separation_remove(separation, condensed_store(d, n=m), np.int32(i_removed), np.array([0], dtype=np.int32))
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)

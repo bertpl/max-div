@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from max_div._core.metrics import DiversityMetric
+    from max_div._core.metrics._distance import DistanceStore
 
     from ._base import DiversityContributionTracker
 
@@ -70,20 +71,18 @@ class DiversityContributionTrackers:
         cls,
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
-        pdist: NDArray[np.float32],
-        n: np.int32,
+        store: DistanceStore,
     ) -> DiversityContributionTrackers:
         """Build the tracker set required by the given metrics (main metric's family first).
 
         :param diversity_metric: (DiversityMetric) the main diversity metric.
         :param diversity_tie_breakers: (list[DiversityMetric]) the configured tie-breaker metrics.
-        :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
-        :param n: (np.int32) number of items
+        :param store: (DistanceStore) pairwise-distance storage the trackers read from.
         """
         main_family = diversity_metric.contribution_family
         families = dict.fromkeys([main_family, *(tb.contribution_family for tb in diversity_tie_breakers)])
         return cls(
-            trackers_by_family={family: build_diversity_contribution_tracker(family, pdist, n) for family in families},
+            trackers_by_family={family: build_diversity_contribution_tracker(family, store) for family in families},
             main_family=main_family,
         )
 

@@ -4,7 +4,7 @@ from numpy import random
 from scipy.spatial.distance import squareform
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import compute_pdist
+from max_div._core.metrics._distance import compute_pdist, condensed_store
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker
 from max_div._core.solver._diversity_contribution._mean_distance import (
     compute_distance_sums,
@@ -27,7 +27,7 @@ def pdist() -> np.ndarray:
 
 @pytest.fixture
 def tracker(pdist: np.ndarray) -> MeanDistanceTracker:
-    return MeanDistanceTracker(pdist, np.int32(N))
+    return MeanDistanceTracker(condensed_store(pdist, n=N))
 
 
 def _selection_args(indices: list[int]) -> tuple[np.ndarray, np.int32]:
@@ -71,7 +71,7 @@ def test_construction_precomputed_arrays_skip_recompute(pdist: np.ndarray):
 
     # --- act ---------------------------------------------
     tracker = MeanDistanceTracker(
-        pdist, np.int32(N), contribution_wrt_dataset=contribution_wrt_dataset, dist_sums=dist_sums
+        condensed_store(pdist, n=N), contribution_wrt_dataset=contribution_wrt_dataset, dist_sums=dist_sums
     )
 
     # --- assert ------------------------------------------
@@ -174,7 +174,9 @@ def test_copy_is_independent(tracker: MeanDistanceTracker):
 
     # --- assert ------------------------------------------
     np.testing.assert_array_equal(clone.contribution_wrt_selection(selected, n_selected), contribution_before)
-    assert clone.contribution_wrt_dataset is not tracker.contribution_wrt_dataset
+    # the immutable store and global contributions are shared by contract, not duplicated
+    assert clone._store is tracker._store
+    assert clone.contribution_wrt_dataset is tracker.contribution_wrt_dataset
 
 
 # =================================================================================================
@@ -191,7 +193,7 @@ def test_compute_distance_sums():
     expected = squareform(d).astype(np.float64).sum(axis=1)
 
     # --- act ---------------------------------------------
-    dist_sums = compute_distance_sums(d, np.int32(m))
+    dist_sums = compute_distance_sums(condensed_store(d, n=m))
 
     # --- assert ------------------------------------------
     assert dist_sums.dtype == np.float64
@@ -217,12 +219,12 @@ def test_update_distance_sums_add_remove():
 
     # --- act / assert ------------------------------------
     for index in [3, 17, 0, 9, 12]:
-        update_distance_sums_add(dist_sums, d, np.int32(m), np.int32(index))
+        update_distance_sums_add(dist_sums, condensed_store(d, n=m), np.int32(index))
         selection.append(index)
         np.testing.assert_allclose(dist_sums, expected_sums(), rtol=1e-6)
 
     for index in [0, 3, 12]:
-        update_distance_sums_remove(dist_sums, d, np.int32(m), np.int32(index))
+        update_distance_sums_remove(dist_sums, condensed_store(d, n=m), np.int32(index))
         selection.remove(index)
         np.testing.assert_allclose(dist_sums, expected_sums(), rtol=1e-6)
 
@@ -237,12 +239,12 @@ def test_update_distance_sums_own_entry_untouched():
     dist_sums = np.zeros(m, dtype=np.float64)
 
     # selection {1}: point 1's own entry stays 0 (no other selected points yet)
-    update_distance_sums_add(dist_sums, d, np.int32(m), np.int32(1))
+    update_distance_sums_add(dist_sums, condensed_store(d, n=m), np.int32(1))
     assert dist_sums[1] == 0.0
 
     # --- act ---------------------------------------------
     # selection {1, 2}: point 2's own entry must equal its distance to point 1 only
-    update_distance_sums_add(dist_sums, d, np.int32(m), np.int32(2))
+    update_distance_sums_add(dist_sums, condensed_store(d, n=m), np.int32(2))
 
     # --- assert ------------------------------------------
     assert dist_sums[2] == pytest.approx(squareform(d)[2, 1])

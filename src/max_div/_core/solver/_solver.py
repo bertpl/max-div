@@ -1,9 +1,8 @@
-import numpy as np
-
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
 from max_div._core.constraints._constraints import _np_con_count_satisfied
 from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
 from ._duration import Elapsed
@@ -26,7 +25,7 @@ class MaxDivSolver:
     def __init__(
         self,
         n: int,
-        pdist: np.ndarray,
+        store: DistanceStore,
         k: int,
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
@@ -38,7 +37,7 @@ class MaxDivSolver:
         """Initialize the MaxDivSolver with the given configuration.
 
         :param n: (int) The number of items in the problem ('universe').
-        :param pdist: ((n*(n-1))//2 ndarray) Condensed pairwise-distance vector (scipy layout).
+        :param store: (DistanceStore) Pairwise-distance storage the solver reads from.
         :param k: (int) The number of items to be selected from the input set ('universe').
         :param diversity_metric: (DiversityMetric) The diversity metric to use.
         :param diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
@@ -51,7 +50,7 @@ class MaxDivSolver:
         """
         # --- problem description -------------------------
         self._n = n
-        self._pdist = pdist
+        self._store = store
         self._k = k
         self._diversity_metric = diversity_metric
         self._constraints = constraints
@@ -113,7 +112,7 @@ class MaxDivSolver:
             progress_reporter.solver_step_started(step_names[0])
             state = SolverState.new(
                 n=self._n,
-                pdist=self._pdist,
+                store=self._store,
                 k=self._k,
                 diversity_metric=self._diversity_metric,
                 diversity_tie_breakers=self._diversity_tie_breakers,
