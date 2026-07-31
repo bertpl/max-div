@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Lazy distance computation for vector problems: solve without ever materializing the pairwise-distance matrix, removing the O(n²) memory requirement
 
 ### Changed
 

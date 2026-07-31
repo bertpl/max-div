@@ -54,7 +54,7 @@ def validate_cosine_vectors(vectors: NDArray[np.float32]) -> None:
 #  pdist kernels
 # =================================================================================================
 @numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
-def _l1_pair(vectors: NDArray[np.float32], i: int, j: int) -> np.float64:
+def _l1_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the L1 (Manhattan) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
     for c in range(vectors.shape[1]):
@@ -63,7 +63,7 @@ def _l1_pair(vectors: NDArray[np.float32], i: int, j: int) -> np.float64:
 
 
 @numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
-def _l2sq_pair(vectors: NDArray[np.float32], i: int, j: int) -> np.float64:
+def _l2sq_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the squared L2 (Euclidean) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
     for c in range(vectors.shape[1]):
@@ -105,20 +105,16 @@ def _pdist_l2s(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
             idx += 1
 
 
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
-def _pdist_cos(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write the condensed cosine distances of `vectors` into pre-allocated `out`, in condensed i<j order.
+@numba.njit("float32[:, ::1](float32[:, ::1])", cache=True)
+def normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
+    """Return a fresh float32 array with each row of `vectors` scaled to unit L2 norm.
 
-    Computed as ``0.5 * ||x^ - y^||^2`` on unit-normalized vectors, which equals ``1 - cos(x, y)``
-    algebraically but — unlike the dot-product form — is non-negative by construction and exactly
-    0.0 for identical vectors. Rows are normalized once (norm accumulated in float64) into a
-    float32 scratch array, so the pair loop reuses the squared-L2 accumulation.
-
-    Vectors must contain no all-zero rows (`validate_cosine_vectors` guards the public entry point).
+    Norms accumulate in float64 and each element narrows to float32 on store, so the result is the
+    exact normalization the cosine pairwise kernels operate on.  Rows must not be all-zero
+    (`validate_cosine_vectors` guards the public entry points).
     """
     n = vectors.shape[0]
     d = vectors.shape[1]
-    # --- normalize rows --------------------------
     normalized = np.empty((n, d), dtype=np.float32)
     for i in range(n):
         acc = np.float64(0.0)
@@ -127,7 +123,22 @@ def _pdist_cos(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
         norm = np.sqrt(acc)
         for c in range(d):
             normalized[i, c] = np.float32(np.float64(vectors[i, c]) / norm)
-    # --- pairwise distances ----------------------
+    return normalized
+
+
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+def _pdist_cos(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write the condensed cosine distances of `vectors` into pre-allocated `out`, in condensed i<j order.
+
+    Computed as ``0.5 * ||x^ - y^||^2`` on unit-normalized vectors, which equals ``1 - cos(x, y)``
+    algebraically but — unlike the dot-product form — is non-negative by construction and exactly
+    0.0 for identical vectors. Rows are normalized once (`normalize_rows`), so the pair loop
+    reuses the squared-L2 accumulation.
+
+    Vectors must contain no all-zero rows (`validate_cosine_vectors` guards the public entry point).
+    """
+    n = vectors.shape[0]
+    normalized = normalize_rows(vectors)
     idx = np.int64(0)
     for i in range(n):
         for j in range(i + 1, n):
