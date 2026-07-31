@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numba
 import numpy as np
 
-from max_div._core.metrics._distance import get_pdist_el
+from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 
 from ._base import DiversityContributionTracker
 
@@ -21,39 +21,34 @@ if TYPE_CHECKING:
 # iterations, and float32 drift there would change scores with iteration count.  Distances of a
 # point to itself are 0, so a point's own entry never needs special-casing: it always equals the
 # sum of its distances to the *other* selected points.
-@numba.njit("float64[::1](float32[::1], int32)", cache=True)
-def compute_distance_sums(pdist: NDArray[np.float32], n: np.int32) -> NDArray[np.float64]:
-    """Compute sum of distances of each item wrt all others, given pairwise distance array pdist and n items."""
+@numba.njit(numba.float64[::1](DISTANCE_STORE_TYPE), cache=True)
+def compute_distance_sums(store: DistanceStore) -> NDArray[np.float64]:
+    """Compute sum of distances of each item wrt all others, given the distance store."""
+    n = store.n
     dist_sums = np.zeros(n, dtype=np.float64)
-    pdist_idx = 0
-    for i in range(n):
-        for j in range(i + 1, n):
-            # note: the way we iterate over i & j represents the exact order in which pdist stores distances
-            dist_ij = np.float64(pdist[pdist_idx])
-            pdist_idx += 1
-            dist_sums[i] += dist_ij
-            dist_sums[j] += dist_ij
+    # partners are visited in ascending index per item, so each float64 sum accumulates in the
+    # same order however the store lays distances out — sums stay bit-equal across backends
+    for i in np.arange(n, dtype=np.int32):
+        for j in np.arange(n, dtype=np.int32):
+            if j != i:
+                dist_sums[i] += np.float64(get_distance(store, i, j))
     return dist_sums
 
 
-@numba.njit("void(float64[::1], float32[::1], int32, int32)", cache=True)
-def update_distance_sums_add(
-    dist_sums: NDArray[np.float64], pdist: NDArray[np.float32], n: np.int32, i_added: np.int32
-) -> None:
-    """Update distance sums of each item wrt selection, given pdist array and n items, after adding i_added."""
-    for j in np.arange(n, dtype=np.int32):
+@numba.njit(numba.void(numba.float64[::1], DISTANCE_STORE_TYPE, numba.int32), cache=True)
+def update_distance_sums_add(dist_sums: NDArray[np.float64], store: DistanceStore, i_added: np.int32) -> None:
+    """Update distance sums of each item wrt selection, given the distance store, after adding i_added."""
+    for j in np.arange(store.n, dtype=np.int32):
         if j != i_added:
-            dist_sums[j] += np.float64(get_pdist_el(pdist, i_added, j, n))
+            dist_sums[j] += np.float64(get_distance(store, i_added, j))
 
 
-@numba.njit("void(float64[::1], float32[::1], int32, int32)", cache=True)
-def update_distance_sums_remove(
-    dist_sums: NDArray[np.float64], pdist: NDArray[np.float32], n: np.int32, i_removed: np.int32
-) -> None:
-    """Update distance sums of each item wrt selection, given pdist array and n items, after removing i_removed."""
-    for j in np.arange(n, dtype=np.int32):
+@numba.njit(numba.void(numba.float64[::1], DISTANCE_STORE_TYPE, numba.int32), cache=True)
+def update_distance_sums_remove(dist_sums: NDArray[np.float64], store: DistanceStore, i_removed: np.int32) -> None:
+    """Update distance sums of each item wrt selection, given the distance store, after removing i_removed."""
+    for j in np.arange(store.n, dtype=np.int32):
         if j != i_removed:
-            dist_sums[j] -= np.float64(get_pdist_el(pdist, i_removed, j, n))
+            dist_sums[j] -= np.float64(get_distance(store, i_removed, j))
 
 
 # =================================================================================================
@@ -77,37 +72,34 @@ class MeanDistanceTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     def __init__(
         self,
-        pdist: NDArray[np.float32],
-        n: np.int32,
+        store: DistanceStore,
         contribution_wrt_dataset: NDArray[np.float32] | None = None,
         dist_sums: NDArray[np.float64] | None = None,
     ) -> None:
         """Initialize the MeanDistanceTracker for an empty selection.
 
-        :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
-        :param n: (np.int32) number of items
+        :param store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
         :param contribution_wrt_dataset: (np.ndarray[np.float32] | None) precomputed global contribution;
                                     computed if omitted.
         :param dist_sums: (np.ndarray[np.float64] | None) current distance sums wrt selection; fresh (all 0.0,
                           i.e. empty selection) if omitted.  Together with `contribution_wrt_dataset` this
                           enables copies without recomputation.
         """
-        self._pdist = pdist  # READ-ONLY
-        self._n = n  # READ-ONLY
+        self._store = store  # READ-ONLY
         if contribution_wrt_dataset is not None:
             self._contribution_wrt_dataset = contribution_wrt_dataset  # READ-ONLY
         else:
-            self._contribution_wrt_dataset = (compute_distance_sums(pdist, n) / max(int(n) - 1, 1)).astype(np.float32)
-        self._dist_sums = dist_sums if dist_sums is not None else np.zeros(n, dtype=np.float64)
+            n = int(store.n)
+            self._contribution_wrt_dataset = (compute_distance_sums(store) / max(n - 1, 1)).astype(np.float32)
+        self._dist_sums = dist_sums if dist_sums is not None else np.zeros(store.n, dtype=np.float64)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_dist_sums: list[NDArray[np.float64]] = []
 
     def copy(self) -> MeanDistanceTracker:
-        """Return a deep copy of this tracker (without recomputing the global contribution)."""
+        """Return an independent copy of this tracker; the immutable store and global contributions are shared."""
         return MeanDistanceTracker(
-            pdist=self._pdist.copy(),
-            n=self._n,
-            contribution_wrt_dataset=self._contribution_wrt_dataset.copy(),
+            store=self._store,
+            contribution_wrt_dataset=self._contribution_wrt_dataset,
             dist_sums=self._dist_sums.copy(),
         )
 
@@ -130,14 +122,14 @@ class MeanDistanceTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     def add(self, index: np.int32) -> None:
         """Update distance sums after adding point `index` to the selection."""
-        update_distance_sums_add(self._dist_sums, self._pdist, self._n, index)
+        update_distance_sums_add(self._dist_sums, self._store, index)
 
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Update distance sums after removing point `index`.
 
         `new_selection` is not needed by this tracker: removal is exact subtraction.
         """
-        update_distance_sums_remove(self._dist_sums, self._pdist, self._n, index)
+        update_distance_sums_remove(self._dist_sums, self._store, index)
 
     # -------------------------------------------------------------------------
     #  Snapshot

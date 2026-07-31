@@ -1,14 +1,11 @@
 import numpy as np
 import pytest
 from scipy.spatial.distance import pdist as scipy_pdist
-from scipy.spatial.distance import squareform
 
 from max_div._core.metrics._distance import (
     DistanceMetric,
     compute_pdist,
-    get_pdist_el,
 )
-from max_div._core.metrics._distance._compute import _pdist_index
 
 _SCIPY_METRIC = {
     "L1_MANHATTAN": "cityblock",
@@ -120,48 +117,3 @@ def test_compute_pdist_zero_for_identical_vectors(metric: DistanceMetric):
 
     # --- assert ------------------------------------------
     assert result[0] == np.float32(0.0)  # distance between the two identical vectors
-
-
-# -------------------------------------------------------------------------
-#  Low-level
-# -------------------------------------------------------------------------
-@pytest.mark.parametrize("i", [0, 1, 2, 3])
-@pytest.mark.parametrize("j", [0, 1, 2, 3])
-def test_get_pdist_values(i: int, j: int):
-    """Check if get_pdist produces correct values."""
-
-    # --- arrange -----------------------------------------
-    vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
-    m = vectors.shape[0]
-
-    expected_value = squareform(d)[i, j]
-
-    # --- act ---------------------------------------------
-    value = get_pdist_el(d, np.int32(i), np.int32(j), np.int32(m))
-
-    # --- assert ------------------------------------------
-    assert value == pytest.approx(expected_value)
-
-
-@pytest.mark.parametrize(
-    "i, j, n",
-    [
-        (0, 1, 4),  # first pair, small n
-        (2, 3, 4),  # last pair, small n
-        (30_000, 45_000, 50_000),  # off-diagonal in the int32-overflow regime
-        (49_998, 49_999, 50_000),  # last pair at n where 32-bit index math overflows
-    ],
-)
-def test_pdist_index_no_int32_overflow(i: int, j: int, n: int):
-    """_pdist_index must return the exact condensed offset even where int32 arithmetic would overflow."""
-
-    # --- arrange -----------------------------------------
-    # reference offset computed with unbounded Python ints (the value the kernel must match)
-    expected = (n * i) + j - ((i + 2) * (i + 1)) // 2
-
-    # --- act ---------------------------------------------
-    index = _pdist_index(np.int32(i), np.int32(j), np.int32(n))
-
-    # --- assert ------------------------------------------
-    assert int(index) == expected

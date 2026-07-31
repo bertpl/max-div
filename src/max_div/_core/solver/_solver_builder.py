@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Self
 
 from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.problem import MaxDivProblem
 
 from ._constraint_penalty import ConstraintPenalty
@@ -11,8 +12,6 @@ from ._solver_step import InitializationStep, OptimizationStep, SolverStep
 from ._strategies import InitializationStrategy
 
 if TYPE_CHECKING:
-    import numpy as np
-
     from max_div._core.constraints import Constraint
 
 
@@ -34,7 +33,7 @@ class MaxDivSolverBuilder:
 
         # --- problem properties ----------------
         self._n: int = problem.n
-        self._pdist: np.ndarray = problem.condensed_distances()
+        self._store: DistanceStore = DistanceStore.condensed(problem.condensed_distances(), problem.n)
         self._k: int = problem.k
         self._diversity_metric: DiversityMetric = problem.diversity_metric
         self._constraints: list[Constraint] = problem.constraints
@@ -152,7 +151,7 @@ class MaxDivSolverBuilder:
     def build(self) -> MaxDivSolver:
         return MaxDivSolver(
             n=self._n,
-            pdist=self._pdist,
+            store=self._store,
             k=self._k,
             diversity_metric=self._diversity_metric,
             diversity_tie_breakers=self._determine_diversity_tie_breakers(),

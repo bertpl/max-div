@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from max_div._core.metrics import DiversityMetric
+    from max_div._core.metrics._distance import DistanceStore
 
 
 # =================================================================================================
@@ -373,7 +374,7 @@ class SolverState:
     def new(
         cls,
         n: int,
-        pdist: NDArray[np.float32],
+        store: DistanceStore,
         k: int,
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
@@ -383,7 +384,7 @@ class SolverState:
         # --- diversity contributions ---
         n_np = np.int32(n)
         contribution_trackers = DiversityContributionTrackers.for_metrics(
-            diversity_metric, diversity_tie_breakers, pdist, n_np
+            diversity_metric, diversity_tie_breakers, store
         )
 
         # --- selection ---

@@ -8,23 +8,21 @@ from ._mean_distance import MeanDistanceTracker
 from ._separation import SeparationTracker
 
 if TYPE_CHECKING:
-    import numpy as np
-    from numpy.typing import NDArray
+    from max_div._core.metrics._distance import DistanceStore
 
     from ._base import DiversityContributionTracker
 
 
 def build_diversity_contribution_tracker(
-    family: DiversityContributionFamily, pdist: NDArray[np.float32], n: np.int32
+    family: DiversityContributionFamily, store: DistanceStore
 ) -> DiversityContributionTracker:
     """Build a fresh (empty-selection) diversity-contribution tracker for the given contribution family.
 
     :param family: (DiversityContributionFamily) the contribution family to track.
-    :param pdist: (np.ndarray[np.float32]) condensed pair-wise distance vector (1D array of size (n*(n-1))//2)
-    :param n: (np.int32) number of items
+    :param store: (DistanceStore) pairwise-distance storage the tracker reads from.
     """
     match family:
         case DiversityContributionFamily.SEPARATION:
-            return SeparationTracker(pdist, n)
+            return SeparationTracker(store)
         case DiversityContributionFamily.MEAN_DISTANCE:
-            return MeanDistanceTracker(pdist, n)
+            return MeanDistanceTracker(store)
