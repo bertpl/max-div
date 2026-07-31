@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric, validate_cosine_vectors
-from max_div._core.metrics._distance import DistanceStore, compute_pdist, condensed_store, full_matrix_store
+from max_div._core.metrics._distance import DistanceStore, compute_pdist
 
 from ._validate_distances import _n_from_condensed_size, validated_condensed_distances, validated_square_distances
 
@@ -181,7 +181,7 @@ class VectorMaxDivProblem(MaxDivProblem):
         return compute_pdist(self.vectors, self.distance_metric)
 
     def distance_store(self) -> DistanceStore:
-        return condensed_store(self.condensed_distances(), self.n)
+        return DistanceStore.condensed(self.condensed_distances(), self.n)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -209,8 +209,8 @@ class DistanceMaxDivProblem(MaxDivProblem):
 
     def distance_store(self) -> DistanceStore:
         if self.distances.ndim == 2:
-            return full_matrix_store(self.distances)
-        return condensed_store(self.distances, self.n)
+            return DistanceStore.full_matrix(self.distances)
+        return DistanceStore.condensed(self.distances, self.n)
 
 
 # =================================================================================================

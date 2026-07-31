@@ -246,7 +246,7 @@ def test_problem_distance_store_matches_input_format(form: str):
         assert store.matrix is problem.distances
     else:
         assert store.kind == KIND_CONDENSED
-        assert store.condensed is problem.distances
+        assert store.pdist is problem.distances
     assert store.n == np.int32(5)
 
 
