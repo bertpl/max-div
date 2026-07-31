@@ -18,13 +18,7 @@ import os
 from enum import StrEnum
 from typing import ClassVar
 
-from max_div._core.metrics._distance import (
-    DistanceStore,
-    condensed_store,
-    full_matrix_store_from_condensed,
-    full_matrix_store_from_vectors,
-    lazy_store,
-)
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.problem import MaxDivProblem, VectorMaxDivProblem
 
 # fraction of total physical RAM a stored backend may claim under AUTO
@@ -96,16 +90,16 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
         case DistanceStorage.CONDENSED:
             if is_vector_problem:
                 _check_fits_physical_memory(resolved, 2 * n * n, is_vector_problem)
-            return condensed_store(problem.condensed_distances(), n)
+            return DistanceStore.condensed(problem.condensed_distances(), n)
         case DistanceStorage.FULL_MATRIX:
             if is_vector_problem:
                 _check_fits_physical_memory(resolved, 4 * n * n, is_vector_problem)
-                return full_matrix_store_from_vectors(problem.vectors, problem.distance_metric)
+                return DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric)
             as_given = problem.distance_store()
             if as_given.matrix.size:
                 return as_given  # square input: already a full matrix, zero-copy
             _check_fits_physical_memory(resolved, 4 * n * n, is_vector_problem)
-            return full_matrix_store_from_condensed(as_given.condensed, n)
+            return DistanceStore.full_matrix_from_condensed(as_given.pdist, n)
         case DistanceStorage.LAZY:
             if not is_vector_problem:
                 raise ValueError(
@@ -113,7 +107,7 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
                     "problem does not have; choose CONDENSED or FULL_MATRIX, or construct the "
                     "problem from vectors."
                 )
-            return lazy_store(problem.vectors, problem.distance_metric)
+            return DistanceStore.lazy(problem.vectors, problem.distance_metric)
         case _:
             raise ValueError(f"Distance storage must be resolved before building a store; got {resolved}.")
 
