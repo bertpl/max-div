@@ -87,6 +87,10 @@ groups:
         hero_label: L2
         label: L2 (Euclidean) distance
         hero: true
+      - key: linf
+        hero_label: Linf
+        label: Linf (Chebyshev) distance
+        hero: true
       - key: cosine
         hero_label: cosine
         label: cosine distance

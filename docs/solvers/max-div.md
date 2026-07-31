@@ -14,10 +14,11 @@ solver:
     license: Apache-2.0
     last_release: {version: "0.8.3", date: "2026-07-27"}
     determinism: seeded, fully reproducible
-    input: vectors (L1 / L2 / L2² / cosine) or a precomputed distance matrix
+    input: vectors (L1 / L2 / L2² / Linf / cosine) or a precomputed distance matrix
   capabilities:
     distance.l1: {mark: full}
     distance.l2: {mark: full}
+    distance.linf: {mark: full}
     distance.cosine: {mark: full}
     distance.custom:
       mark: full

@@ -33,6 +33,9 @@ solver:
     distance.l2:
       mark: partial
       note: *coefficients
+    distance.linf:
+      mark: partial
+      note: *coefficients
     distance.cosine:
       mark: partial
       note: *coefficients

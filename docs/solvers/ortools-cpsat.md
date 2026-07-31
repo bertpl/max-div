@@ -24,6 +24,9 @@ solver:
     distance.l2:
       mark: partial
       note: *integer_scaled
+    distance.linf:
+      mark: partial
+      note: *integer_scaled
     distance.cosine:
       mark: partial
       note: *integer_scaled

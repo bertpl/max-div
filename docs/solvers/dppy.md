@@ -26,6 +26,9 @@ solver:
     distance.l2:
       mark: partial
       note: *via_kernel
+    distance.linf:
+      mark: partial
+      note: *via_kernel
     distance.cosine:
       mark: partial
       note: *via_kernel
