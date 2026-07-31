@@ -4,7 +4,7 @@ from numpy import random
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import compute_pdist, condensed_store
+from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker, SeparationTracker
 from max_div._core.solver._solver_state import Savepoint, SolverState, _build_con_membership
 
@@ -17,7 +17,7 @@ def new_solver_state() -> SolverState:
     vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        store=condensed_store(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
         k=3,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
@@ -33,7 +33,7 @@ def new_solver_state_unconstrained() -> SolverState:
     vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        store=condensed_store(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
         k=3,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
@@ -329,7 +329,7 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
     # --- act ---------------------------------------------
     state_pure = SolverState.new(
         n=4,
-        store=condensed_store(pdist, n=4),
+        store=DistanceStore.condensed(pdist, n=4),
         k=2,
         diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
         diversity_tie_breakers=[],
@@ -337,7 +337,7 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
     )
     state_mixed = SolverState.new(
         n=4,
-        store=condensed_store(pdist, n=4),
+        store=DistanceStore.condensed(pdist, n=4),
         k=2,
         diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
@@ -357,7 +357,7 @@ def test_solver_state_mean_pairwise_distance_score():
     vectors = np.array([[0.0], [1.0], [3.0], [7.0]], dtype=np.float32)
     state = SolverState.new(
         n=4,
-        store=condensed_store(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=4),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=4),
         k=3,
         diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
         diversity_tie_breakers=[],
@@ -417,7 +417,7 @@ def _make_reference_state() -> SolverState:
     vectors = rng.random((30, 3)).astype(np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        store=condensed_store(compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN), n=vectors.shape[0]),
         k=8,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],

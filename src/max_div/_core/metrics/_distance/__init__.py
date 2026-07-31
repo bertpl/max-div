@@ -6,6 +6,5 @@ from ._enum import DistanceMetric
 from ._store import (
     DISTANCE_STORE_TYPE,
     DistanceStore,
-    condensed_store,
     get_distance,
 )

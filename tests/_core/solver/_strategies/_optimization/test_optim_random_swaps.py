@@ -4,7 +4,7 @@ import pytest
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DiversityMetric
-from max_div._core.metrics._distance import condensed_store
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._strategies._initialization import InitializationStrategy
@@ -33,7 +33,7 @@ def test_optim_random_swaps(problem_name: str, size: int):
     )
     solver_state = SolverState.new(
         n=problem.n,
-        store=condensed_store(problem.condensed_distances(), n=problem.n),
+        store=DistanceStore.condensed(problem.condensed_distances(), n=problem.n),
         k=problem.k,
         diversity_metric=problem.diversity_metric,
         diversity_tie_breakers=[],

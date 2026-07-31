@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Self
 
 from max_div._core.metrics import DiversityMetric
-from max_div._core.metrics._distance import DistanceStore, condensed_store
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.problem import MaxDivProblem
 
 from ._constraint_penalty import ConstraintPenalty
@@ -33,7 +33,7 @@ class MaxDivSolverBuilder:
 
         # --- problem properties ----------------
         self._n: int = problem.n
-        self._store: DistanceStore = condensed_store(problem.condensed_distances(), problem.n)
+        self._store: DistanceStore = DistanceStore.condensed(problem.condensed_distances(), problem.n)
         self._k: int = problem.k
         self._diversity_metric: DiversityMetric = problem.diversity_metric
         self._constraints: list[Constraint] = problem.constraints

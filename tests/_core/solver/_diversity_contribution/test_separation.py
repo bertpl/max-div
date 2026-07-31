@@ -3,7 +3,7 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import compute_pdist, condensed_store
+from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._diversity_contribution import SeparationTracker
 from max_div._core.solver._diversity_contribution._separation import (
     compute_separation,
@@ -18,7 +18,7 @@ from max_div._core.solver._diversity_contribution._separation import (
 @pytest.fixture
 def tracker() -> SeparationTracker:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
-    store = condensed_store(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0])
+    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0])
     return SeparationTracker(store)
 
 
@@ -46,7 +46,7 @@ def test_construction_fresh(tracker: SeparationTracker):
 def test_construction_precomputed_arrays_skip_recompute():
     # --- arrange -----------------------------------------
     vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
-    store = condensed_store(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=3)
+    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=3)
     sep_global = compute_separation(store)
     sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
 
@@ -162,7 +162,7 @@ def test_compute_separation():
                     expected_separation[i] = dist
 
     # --- act ---------------------------------------------
-    separation = compute_separation(condensed_store(d, n=m))
+    separation = compute_separation(DistanceStore.condensed(d, n=m))
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)
@@ -203,7 +203,7 @@ def test_update_separation_add():
     )
 
     # --- act ---------------------------------------------
-    update_separation_add(separation, condensed_store(d, n=m), np.int32(i_added))
+    update_separation_add(separation, DistanceStore.condensed(d, n=m), np.int32(i_added))
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)
@@ -244,7 +244,9 @@ def test_update_separation_remove():
     )
 
     # --- act ---------------------------------------------
-    update_separation_remove(separation, condensed_store(d, n=m), np.int32(i_removed), np.array([0], dtype=np.int32))
+    update_separation_remove(
+        separation, DistanceStore.condensed(d, n=m), np.int32(i_removed), np.array([0], dtype=np.int32)
+    )
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)

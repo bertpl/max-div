@@ -6,16 +6,15 @@ from max_div._core.metrics._distance import (
     DistanceMetric,
     DistanceStore,
     compute_pdist,
-    condensed_store,
     get_distance,
 )
 from max_div._core.metrics._distance._store import KIND_CONDENSED, _condensed_index
 
 
 # -------------------------------------------------------------------------
-#  condensed_store
+#  DistanceStore.condensed
 # -------------------------------------------------------------------------
-def test_condensed_store_fields():
+def test_condensed_factory_fields():
     """A condensed store holds the given distances and n; unused backend fields are zero-size."""
 
     # --- arrange -----------------------------------------
@@ -23,13 +22,13 @@ def test_condensed_store_fields():
     d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
 
     # --- act ---------------------------------------------
-    store = condensed_store(d, n=4)
+    store = DistanceStore.condensed(d, n=4)
 
     # --- assert ------------------------------------------
     assert isinstance(store, DistanceStore)
     assert store.kind == KIND_CONDENSED
     assert store.n == np.int32(4)
-    assert store.condensed is d
+    assert store.pdist is d
     assert store.matrix.size == 0
     assert store.vectors.size == 0
 
@@ -45,7 +44,7 @@ def test_get_distance_condensed_values(i: int, j: int):
     # --- arrange -----------------------------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
     d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
-    store = condensed_store(d, n=vectors.shape[0])
+    store = DistanceStore.condensed(d, n=vectors.shape[0])
 
     expected_value = squareform(d)[i, j]
 
