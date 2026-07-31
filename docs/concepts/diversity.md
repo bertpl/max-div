@@ -36,6 +36,7 @@ The distance metric determines how the distance between two vectors is measured.
 | `L2_EUCLIDEAN` | $$d = \sqrt{\sum_i (x_i - y_i)^2}$$ | Standard Euclidean distance. Default. |
 | `L1_MANHATTAN` | $$d = \sum_i \lvert x_i - y_i \rvert$$ | Less sensitive to outlier dimensions. |
 | `L2S_EUCLIDEAN_SQUARED` | $$d = \sum_i (x_i - y_i)^2$$ | Avoids the square root. Produces identical solutions to `L2_EUCLIDEAN` when used with `GEOMEAN_SEPARATION`, since the geometric mean preserves distance ordering regardless of squaring. |
+| `LINF_CHEBYSHEV` | $$d = \max_i \lvert x_i - y_i \rvert$$ | Chebyshev distance: set by the single largest per-dimension gap, so no dimension's difference is averaged away by the others. |
 | `COSINE` | $$d = 1 - \frac{x \cdot y}{\lVert x \rVert \, \lVert y \rVert}$$ | Angular distance in $[0, 2]$, invariant to vector magnitude -- the natural choice for embedding-style vectors. Undefined for zero vectors, which are rejected at problem construction. |
 
 ## Separation

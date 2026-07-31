@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `CONDENSED` remains the memory-lean stored layout (previously the only option)
   - `AUTO` (default) picks the fastest layout that fits in memory for vector problems, and keeps the provided format for distance-input problems; the solution summary reports the resolved choice
   - all layouts produce bit-identical distances, so backend choice never changes which items get selected
+- Linf (Chebyshev) distance metric: `DistanceMetric.LINF_CHEBYSHEV` measures each pair by its largest per-dimension difference
 
 ### Changed
 - Square distance inputs are now kept in full-matrix form rather than condensed (zero-copy when possible), and asymmetric input is repaired to exact symmetry with a warning instead of rejected
