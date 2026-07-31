@@ -45,7 +45,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform or m
 </div>
 
 [^rdkit-1]: Reachable through the distance callback you supply — RDKit itself has no opinion about the metric, it only calls your function.
-[^rdkit-2]: The callback is the native interface rather than an escape hatch, which is why this picker scales further than any other tool here: it never needs all n² distances to exist at once.
+[^rdkit-2]: The callback is the native interface rather than an escape hatch: it never needs all n² distances to exist at once, which is what lets this picker scale into the millions.
 [^rdkit-3]: No per-group counting of any kind. It does accept a set of items that must appear in the result, which is a different guarantee entirely: membership for named items, not proportions across groups.
 [^rdkit-4]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^rdkit-5]: The only tool here that never materializes a distance matrix: it calls your distance function lazily and keeps one running nearest-selected distance per candidate, so memory is O(n) and the ceiling is set by how fast your callback is rather than by n² storage.
+[^rdkit-5]: Never materializes a distance matrix: it calls your distance function lazily and keeps one running nearest-selected distance per candidate, so memory is O(n) and the ceiling is set by how fast your callback is rather than by n² storage.

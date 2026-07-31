@@ -6,9 +6,9 @@ solver:
   scale:
     max_practical_n: "6"
     rationale: >-
-      The only tool here that never materializes a distance matrix: it calls your distance function
-      lazily and keeps one running nearest-selected distance per candidate, so memory is O(n) and
-      the ceiling is set by how fast your callback is rather than by n² storage.
+      Never materializes a distance matrix: it calls your distance function lazily and keeps one
+      running nearest-selected distance per candidate, so memory is O(n) and the ceiling is set by
+      how fast your callback is rather than by n² storage.
   metadata:
     guarantee: 2-approximation (farthest-point traversal)
     license: BSD-3-Clause
@@ -34,7 +34,7 @@ solver:
       mark: full
       note:
         text: >-
-          The callback is the native interface rather than an escape hatch, which is why this picker scales further than any other tool here: it never needs all n² distances to exist at once.
+          The callback is the native interface rather than an escape hatch: it never needs all n² distances to exist at once, which is what lets this picker scale into the millions.
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}
@@ -62,8 +62,8 @@ somewhere, then repeatedly take whichever remaining item is furthest from everyt
 
 Its distinguishing feature here is not the algorithm — several tools implement the same traversal —
 but the interface. It takes a *distance function*, not a matrix, and evaluates it lazily. That
-single decision is why it is the only tool in this comparison that stays practical into the
-millions: nothing ever needs all $n^2$ distances to exist simultaneously.
+single decision is what keeps it practical into the millions: nothing ever needs all $n^2$
+distances to exist simultaneously.
 
 The trade is that it does one thing. One objective, no constraints, no budget to spend, and no way
 to improve the answer by waiting.

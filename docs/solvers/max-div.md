@@ -4,11 +4,12 @@ solver:
   source: https://max-div.readthedocs.io/
   verified: 2026-07-27
   scale:
-    max_practical_n: "4-5"
+    max_practical_n: "5-6"
     rationale: >-
-      Bounded by the pairwise distance matrix, which is materialized once at O(n²)/2 float32
-      entries; beyond n ≈ 10⁵ that no longer fits comfortably in memory. The solver itself is
-      anytime, so the practical ceiling is memory rather than time.
+      Vector problems can be solved with lazy distance storage, which computes pair distances on
+      demand and never materializes the O(n²) matrix, so the ceiling is time rather than memory:
+      each solver iteration costs O(n), and the iteration count a useful anytime run needs grows
+      with n as well. Precomputed-distance problems keep the stored-matrix ceiling of n ≈ 10⁵.
   metadata:
     guarantee: heuristic
     license: Apache-2.0
