@@ -82,9 +82,9 @@ def _condensed_index(i_lo: np.int32, i_hi: np.int32, n: np.int32) -> np.int64:
 def get_distance(store: DistanceStore, i: np.int32, j: np.int32) -> np.float32:
     """Return the distance between items i and j from whichever backend the store holds.
 
-    Access-pattern note for loops over many pairs: fix one index and sweep the other in ascending
-    order — stored backends then read (mostly) contiguous memory, where sweeping the *fixed* index
-    instead strides ~n elements per step.  The tracker kernels all follow this fix-i-sweep-j shape.
+    Access-pattern note for loops over many pairs: keep `i` fixed and sweep `j` in ascending
+    order (the shape all tracker kernels follow).  Stored backends then read (mostly) contiguous
+    memory; the swapped nesting — sweeping `i` under a fixed `j` — strides ~n elements per read.
     """
     if i == j:
         return np.float32(0.0)
