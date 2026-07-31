@@ -90,9 +90,7 @@ def _scan_square(matrix: NDArray[np.float32]) -> tuple[int, int, float, int, flo
             max_abs_diag = max(max_abs_diag, np.float64(abs(v)))
     for ib in range(0, n, _BLOCK):
         for jb in range(ib, n, _BLOCK):
-            nf, neg, asym, d_abs, d_rel = _scan_square_block(
-                matrix, ib, jb, min(ib + _BLOCK, n), min(jb + _BLOCK, n)
-            )
+            nf, neg, asym, d_abs, d_rel = _scan_square_block(matrix, ib, jb, min(ib + _BLOCK, n), min(jb + _BLOCK, n))
             n_nonfinite += nf
             n_negative += neg
             n_asym += asym
