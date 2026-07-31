@@ -40,6 +40,10 @@ class MaxDivSolution:
     n_constraints: int = 0
     n_constraints_satisfied: int = 0
 
+    # --- distance storage --------------------------------
+    # resolved backend label, e.g. "full_matrix (auto)" or "condensed"; empty when unreported
+    distance_storage: str = ""
+
     # --- string representation ---------------------------
     def __str__(self) -> str:
         parts = [
@@ -48,5 +52,7 @@ class MaxDivSolution:
         ]
         if self.n_constraints > 0:
             parts.append(f"constraints: {self.n_constraints_satisfied}/{self.n_constraints} satisfied")
+        if self.distance_storage:
+            parts.append(f"storage={self.distance_storage}")
         parts.append(str(self.duration))
         return " | ".join(parts)

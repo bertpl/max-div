@@ -70,3 +70,35 @@ solver = (
 ```
 
 This gives you full control over which strategies run, in what order, and for how long.
+
+## Distance Storage
+
+During search the solver reads pairwise distances constantly, and how they are stored is
+selectable on the builder:
+
+```python
+from max_div.solver import DistanceStorage
+
+solver = (
+    MaxDivSolverBuilder(problem)
+    .with_preset(seconds(5))
+    .with_distance_storage(DistanceStorage.FULL_MATRIX)  # optional; AUTO is the default
+    .build()
+)
+```
+
+- **`CONDENSED`** — one entry per pair (`n·(n-1)/2` values); the most memory-lean stored layout.
+- **`FULL_MATRIX`** — a full `n x n` matrix; twice the memory of condensed, but distance reads
+  become contiguous row scans, which speeds up solving roughly 2x at large problem sizes.
+- **`LAZY`** — no stored distances at all: each distance is computed on demand from the vectors.
+  Slower per read, but removes the O(n²) memory requirement entirely, so much larger problems
+  become feasible. Available only when the problem is built from vectors.
+- **`AUTO`** (default) — for vector problems, picks the fastest layout that fits comfortably in
+  memory (full matrix, else condensed, else lazy); for problems built via `from_distances`, keeps
+  the format the distances were provided in. The resolved backend is reported in the solution
+  summary, e.g. `storage=full_matrix (auto)` — pin a backend explicitly to override.
+
+All backends produce bit-identical distance values, so with an iteration budget the selected
+items are the same whichever backend runs; the choice only affects speed and memory. (With a
+time budget, a faster backend completes more iterations — the same machine-dependence time
+budgets always have.)

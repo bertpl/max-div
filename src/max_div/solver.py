@@ -2,6 +2,7 @@
 
 from ._core.solver import (
     ConstraintPenalty,
+    DistanceStorage,
     InitializationStrategy,
     MaxDivSolver,
     MaxDivSolverBuilder,
@@ -18,6 +19,7 @@ from ._core.solver import (
 
 __all__ = [
     "ConstraintPenalty",
+    "DistanceStorage",
     "InitializationStrategy",
     "MaxDivSolver",
     "MaxDivSolverBuilder",
