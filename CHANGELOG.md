@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.0 (2026-07-31)
 
 ### Added
 - More flexible distance storage and computation: how pairwise distances are held during solving is now selectable on the solver builder (`DistanceStorage`), with an automatic default —
@@ -18,15 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Square distance inputs are now kept in full-matrix form rather than condensed (zero-copy when possible), and asymmetric input is repaired to exact symmetry with a warning instead of rejected
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.8.5 (2026-07-30)
 
 ### Changed

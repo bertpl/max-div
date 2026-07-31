@@ -1,6 +1,6 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/bertpl/max-div/push_to_main.yml?branch=main&label=CI)](https://github.com/bertpl/max-div/actions/workflows/push_to_main.yml)
-![coverage](https://img.shields.io/badge/coverage-99.96%25-brightgreen)
-![tests](https://img.shields.io/badge/tests-3641-blue)
+![coverage](https://img.shields.io/badge/coverage-99.54%25-brightgreen)
+![tests](https://img.shields.io/badge/tests-3692-blue)
 [![docs-build-status](https://app.readthedocs.org/projects/max-div/badge/?version=latest)](https://max-div.readthedocs.io/en/stable)
 [![PyPI](https://img.shields.io/pypi/v/max-div.svg)](https://pypi.org/project/max-div/)
 [![Python](https://img.shields.io/pypi/pyversions/max-div.svg)](https://pypi.org/project/max-div/)
@@ -8,7 +8,7 @@
 [![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/bertpl/max-div/badge)](https://scorecard.dev/viewer/?uri=github.com/bertpl/max-div)
 <p>
-  <img src="https://raw.githubusercontent.com/bertpl/max-div/v0.8.5/images/splash_with_version.webp" alt="max-div logo" style="max-width: max(60%, min(100%,800px)); height: auto;">
+  <img src="https://raw.githubusercontent.com/bertpl/max-div/v0.9.0/images/splash_with_version.webp" alt="max-div logo" style="max-width: max(60%, min(100%,800px)); height: auto;">
 </p>
 
 # max-div
