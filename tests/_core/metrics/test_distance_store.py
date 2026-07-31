@@ -8,7 +8,7 @@ from max_div._core.metrics._distance import (
     compute_pdist,
     get_distance,
 )
-from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_LAZY, _condensed_index
+from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY, _condensed_index
 
 
 # -------------------------------------------------------------------------
@@ -96,16 +96,57 @@ def test_lazy_factory_cosine_zero_vector_raises():
 
 
 # -------------------------------------------------------------------------
+#  DistanceStore.full_matrix
+# -------------------------------------------------------------------------
+def test_full_matrix_factory_fields():
+    """A full-matrix store holds the given matrix and n; other backend fields are zero-size."""
+
+    # --- arrange -----------------------------------------
+    matrix = np.zeros((4, 4), dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    store = DistanceStore.full_matrix(matrix)
+
+    # --- assert ------------------------------------------
+    assert store.kind == KIND_FULL_MATRIX
+    assert store.n == np.int32(4)
+    assert store.matrix is matrix
+    assert store.pdist.size == 0
+    assert store.vectors.size == 0
+
+
+@pytest.mark.parametrize("metric", list(DistanceMetric))
+def test_full_matrix_construction_exactly_symmetric(metric: DistanceMetric):
+    """Both full-matrix construction paths produce exactly symmetric matrices with zero diagonals."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260731)
+    vectors = (rng.standard_normal((12, 3)) * 5).astype(np.float32)
+
+    # --- act ---------------------------------------------
+    from_vectors = DistanceStore.full_matrix_from_vectors(vectors, metric)
+    from_condensed = DistanceStore.full_matrix_from_condensed(compute_pdist(vectors, metric), n=12)
+
+    # --- assert ------------------------------------------
+    for store in (from_vectors, from_condensed):
+        np.testing.assert_array_equal(store.matrix, store.matrix.T)  # bit-exact symmetry
+        np.testing.assert_array_equal(np.diag(store.matrix), np.zeros(12, dtype=np.float32))
+
+
+# -------------------------------------------------------------------------
 #  Cross-backend bit-equality
 # -------------------------------------------------------------------------
 # The invariant every backend must uphold: get_distance returns bit-identical float32 values for
 # every (i, j) pair, whichever storage layout the store holds.  Assertions use exact equality on
 # purpose — bit-equality is what keeps solver trajectories identical across backends.
 def _all_backend_stores(vectors: np.ndarray, metric: DistanceMetric) -> dict[str, DistanceStore]:
-    """Build one store per available backend over the same data."""
+    """Build one store per available backend (and construction path) over the same data."""
+    condensed = compute_pdist(vectors, metric)
     return {
-        "condensed": DistanceStore.condensed(compute_pdist(vectors, metric), n=vectors.shape[0]),
+        "condensed": DistanceStore.condensed(condensed, n=vectors.shape[0]),
         "lazy": DistanceStore.lazy(vectors, metric),
+        "full_from_vectors": DistanceStore.full_matrix_from_vectors(vectors, metric),
+        "full_from_condensed": DistanceStore.full_matrix_from_condensed(condensed, n=vectors.shape[0]),
     }
 
 
