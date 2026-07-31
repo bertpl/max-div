@@ -18,6 +18,13 @@ solver:
   capabilities:
     distance.l1: {mark: full}
     distance.l2: {mark: full}
+    distance.linf:
+      mark: full
+      note:
+        text: >-
+          Available through the same Minkowski-exponent parameter that provides L1: its radius-based
+          methods forward `p` to scipy, which treats p=∞ as the Chebyshev norm; the greedy pickers
+          accept any metric as a precomputed distance matrix or callable.
     distance.cosine:
       mark: partial
       note:

@@ -29,6 +29,9 @@ solver:
         text: >-
           The implementation is written around Euclidean distance; another metric means editing the source rather than passing an argument.
     distance.l2: {mark: full}
+    distance.linf:
+      mark: partial
+      note: *edit_source
     distance.cosine:
       mark: partial
       note: *edit_source

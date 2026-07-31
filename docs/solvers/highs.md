@@ -24,6 +24,9 @@ solver:
     distance.l2:
       mark: partial
       note: *coeffs
+    distance.linf:
+      mark: partial
+      note: *coeffs
     distance.cosine:
       mark: partial
       note: *coeffs

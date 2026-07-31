@@ -24,6 +24,9 @@ solver:
     distance.l2:
       mark: partial
       note: *callback
+    distance.linf:
+      mark: partial
+      note: *callback
     distance.cosine:
       mark: partial
       note: *callback

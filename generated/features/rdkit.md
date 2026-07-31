@@ -27,6 +27,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform or m
 |---|:---:|---|
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
+| distance metrics · Linf (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^rdkit-2] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
