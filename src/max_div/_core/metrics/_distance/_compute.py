@@ -32,6 +32,8 @@ def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArr
             _pdist_l2(vectors, out)
         case DistanceMetric.L2S_EUCLIDEAN_SQUARED:
             _pdist_l2s(vectors, out)
+        case DistanceMetric.LINF_CHEBYSHEV:
+            _pdist_linf(vectors, out)
         case DistanceMetric.COSINE:
             validate_cosine_vectors(vectors)
             _pdist_cos(vectors, out)
@@ -72,6 +74,17 @@ def _l2sq_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
     return acc
 
 
+@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
+    """Return the Linf (Chebyshev) distance between vectors i and j, accumulated in float64."""
+    acc = np.float64(0.0)
+    for c in range(vectors.shape[1]):
+        diff = abs(np.float64(vectors[i, c]) - np.float64(vectors[j, c]))
+        if diff > acc:
+            acc = diff
+    return acc
+
+
 @numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
 def _pdist_l1(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
     """Write the condensed L1 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
@@ -102,6 +115,17 @@ def _pdist_l2s(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
     for i in range(n):
         for j in range(i + 1, n):
             out[idx] = np.float32(_l2sq_pair(vectors, i, j))
+            idx += 1
+
+
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+def _pdist_linf(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write the condensed Linf distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
+    n = vectors.shape[0]
+    idx = np.int64(0)
+    for i in range(n):
+        for j in range(i + 1, n):
+            out[idx] = np.float32(_linf_pair(vectors, i, j))
             idx += 1
 
 

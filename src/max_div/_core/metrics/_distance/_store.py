@@ -11,7 +11,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from ._compute import _l1_pair, _l2sq_pair, normalize_rows, validate_cosine_vectors
+from ._compute import _l1_pair, _l2sq_pair, _linf_pair, normalize_rows, validate_cosine_vectors
 from ._enum import DistanceMetric
 
 # =================================================================================================
@@ -28,12 +28,14 @@ _METRIC_KIND_L1 = np.int32(0)
 _METRIC_KIND_L2 = np.int32(1)
 _METRIC_KIND_L2S = np.int32(2)
 _METRIC_KIND_COS = np.int32(3)
+_METRIC_KIND_LINF = np.int32(4)
 
 _METRIC_KINDS = {
     DistanceMetric.L1_MANHATTAN: _METRIC_KIND_L1,
     DistanceMetric.L2_EUCLIDEAN: _METRIC_KIND_L2,
     DistanceMetric.L2S_EUCLIDEAN_SQUARED: _METRIC_KIND_L2S,
     DistanceMetric.COSINE: _METRIC_KIND_COS,
+    DistanceMetric.LINF_CHEBYSHEV: _METRIC_KIND_LINF,
 }
 
 # shared placeholders for the fields a backend does not use, so empty stores cost nothing
@@ -182,6 +184,8 @@ def _lazy_pair(vectors: NDArray[np.float32], metric_kind: np.int32, i: np.int32,
         return np.float32(np.sqrt(_l2sq_pair(vectors, i, j)))
     if metric_kind == _METRIC_KIND_L2S:
         return np.float32(_l2sq_pair(vectors, i, j))
+    if metric_kind == _METRIC_KIND_LINF:
+        return np.float32(_linf_pair(vectors, i, j))
     return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
 
 

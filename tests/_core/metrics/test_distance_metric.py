@@ -11,6 +11,7 @@ _SCIPY_METRIC = {
     "L1_MANHATTAN": "cityblock",
     "L2_EUCLIDEAN": "euclidean",
     "L2S_EUCLIDEAN_SQUARED": "sqeuclidean",
+    "LINF_CHEBYSHEV": "chebyshev",
     "COSINE": "cosine",
 }
 
@@ -40,6 +41,7 @@ def test_compute_pdist_metrics(metric: DistanceMetric):
         (DistanceMetric.L1_MANHATTAN, 7.0),
         (DistanceMetric.L2_EUCLIDEAN, 5.0),
         (DistanceMetric.L2S_EUCLIDEAN_SQUARED, 25.0),
+        (DistanceMetric.LINF_CHEBYSHEV, 4.0),
     ],
 )
 def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
