@@ -57,7 +57,7 @@ The solver will print progress as it runs. Pass `verbosity=0` for silent operati
 ```python
 # One-line summary
 print(solution)
-# MaxDivSolution: 20 items selected | diversity=0.7792 | 5.17s (39_008 iterations)
+# MaxDivSolution: 20 items selected | diversity=0.7792 | storage=full_matrix (auto) | 5.17s (39_008 iterations)
 
 # Indices of the selected items
 print(solution.i_selected)       # e.g. array([ 3,  7, 14, ...], dtype=int32)
@@ -105,7 +105,7 @@ solver = MaxDivSolverBuilder(problem).with_preset(seconds(5)).build()
 solution = solver.solve(verbosity=0)
 
 print(solution)
-# MaxDivSolution: 20 items selected | diversity=0.7702 | constraints: 2/2 satisfied | ...
+# MaxDivSolution: 20 items selected | diversity=0.7702 | constraints: 2/2 satisfied | storage=full_matrix (auto) | ...
 ```
 
 Note that the diversity is slightly lower than the unconstrained solution (0.7702 vs 0.7792) --

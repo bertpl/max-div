@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Lazy distance computation for vector problems: solve without ever materializing the pairwise-distance matrix, removing the O(n²) memory requirement
 - Full-matrix distance storage: roughly 2× faster solving at large problem sizes, for twice the distance-storage memory
+- Distance storage is selectable on the solver builder (condensed, full-matrix, lazy), with an automatic default that picks the fastest layout fitting in memory for vector problems and keeps the provided format for distance problems
 
 ### Changed
 - Square distance inputs are now kept in full-matrix form (previously condensed), adopted zero-copy when possible, and repaired to exact symmetry with a warning when asymmetric

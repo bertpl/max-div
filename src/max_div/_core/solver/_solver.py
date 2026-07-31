@@ -33,6 +33,7 @@ class MaxDivSolver:
         solver_steps: list[SolverStep],
         seed: int = 42,
         constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
+        distance_storage_label: str = "",
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -47,10 +48,12 @@ class MaxDivSolver:
                                        while all latter ones need to be OptimizationSteps.
         :param seed: (int) Random seed for the solver.
         :param constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
+        :param distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
         """
         # --- problem description -------------------------
         self._n = n
         self._store = store
+        self._distance_storage_label = distance_storage_label
         self._k = k
         self._diversity_metric = diversity_metric
         self._constraints = constraints
@@ -149,8 +152,9 @@ class MaxDivSolver:
         n_steps = len(self._solver_steps)
         return ljust_str_list([f"step {i}/{n_steps} - {name}" for i, name in enumerate(names)])
 
-    @staticmethod
-    def _construct_final_solution(state: SolverState, step_results: dict[str, SolverStepResult]) -> MaxDivSolution:
+    def _construct_final_solution(
+        self, state: SolverState, step_results: dict[str, SolverStepResult]
+    ) -> MaxDivSolution:
         """Construct the final MaxDivSolution from the current state & step results."""
         # --- collect step durations --------------------
         step_durations = {step_name: result.elapsed for step_name, result in step_results.items()}
@@ -182,4 +186,5 @@ class MaxDivSolver:
             step_durations=step_durations,
             n_constraints=int(n_constraints),
             n_constraints_satisfied=n_constraints_satisfied,
+            distance_storage=self._distance_storage_label,
         )

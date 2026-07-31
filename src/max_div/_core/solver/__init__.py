@@ -8,6 +8,7 @@ m: number of (group) constraints imposed on the problem.
 """
 
 from ._constraint_penalty import ConstraintPenalty
+from ._distance_storage import DistanceStorage
 from ._duration import TargetDuration, TargetIterationCount, TargetTimeDuration, hours, iterations, minutes, seconds
 from ._presets import SolverPreset
 from ._score import Score

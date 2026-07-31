@@ -174,7 +174,8 @@ def test_max_div_solver_builder_end_to_end():
     # --- assert ------------------------------------------
     assert isinstance(solver, MaxDivSolver)
     assert solver._n == vectors.shape[0]
-    assert solver._store.pdist.shape == ((vectors.shape[0] * (vectors.shape[0] - 1)) // 2,)
+    # AUTO resolves to the full matrix for a problem this small
+    assert solver._store.matrix.shape == (vectors.shape[0], vectors.shape[0])
     assert solver._k == k
     assert len(solver._solver_steps) == 3
     assert solver._solver_steps[0].name() == init_strategy.name

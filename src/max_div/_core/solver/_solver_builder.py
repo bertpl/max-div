@@ -4,6 +4,12 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
 
 from ._constraint_penalty import ConstraintPenalty
+from ._distance_storage import (
+    DistanceStorage,
+    build_distance_store,
+    resolve_distance_storage,
+    total_physical_memory_bytes,
+)
 from ._duration import TargetDuration
 from ._presets import SolverPreset, get_preset_strategies
 from ._solver import MaxDivSolver
@@ -12,7 +18,6 @@ from ._strategies import InitializationStrategy
 
 if TYPE_CHECKING:
     from max_div._core.constraints import Constraint
-    from max_div._core.metrics._distance import DistanceStore
 
 
 class MaxDivSolverBuilder:
@@ -33,7 +38,6 @@ class MaxDivSolverBuilder:
 
         # --- problem properties ----------------
         self._n: int = problem.n
-        self._store: DistanceStore = problem.distance_store()
         self._k: int = problem.k
         self._diversity_metric: DiversityMetric = problem.diversity_metric
         self._constraints: list[Constraint] = problem.constraints
@@ -46,6 +50,7 @@ class MaxDivSolverBuilder:
         ]
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
+        self._distance_storage: DistanceStorage = DistanceStorage.AUTO
 
     # -------------------------------------------------------------------------
     #  Builder API
@@ -88,6 +93,11 @@ class MaxDivSolverBuilder:
     def with_constraint_penalty(self, penalty: ConstraintPenalty) -> Self:
         """Set how constraint violations are penalized in the feasibility score (default: LINEAR)."""
         self._constraint_penalty = penalty
+        return self
+
+    def with_distance_storage(self, storage: DistanceStorage) -> Self:
+        """Set how pairwise distances are stored during search (default: DistanceStorage.AUTO)."""
+        self._distance_storage = storage
         return self
 
     # -------------------------------------------------------------------------
@@ -149,9 +159,12 @@ class MaxDivSolverBuilder:
         return []
 
     def build(self) -> MaxDivSolver:
+        resolved = resolve_distance_storage(self._problem, self._distance_storage, total_physical_memory_bytes())
+        label = resolved.value + (" (auto)" if self._distance_storage == DistanceStorage.AUTO else "")
         return MaxDivSolver(
             n=self._n,
-            store=self._store,
+            store=build_distance_store(self._problem, resolved),
+            distance_storage_label=label,
             k=self._k,
             diversity_metric=self._diversity_metric,
             diversity_tie_breakers=self._determine_diversity_tie_breakers(),
