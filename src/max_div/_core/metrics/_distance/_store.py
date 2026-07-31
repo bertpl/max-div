@@ -75,28 +75,28 @@ class DistanceStore(NamedTuple):
             metric_kind=np.int32(0),
         )
 
+    @classmethod
+    def lazy(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
+        """Return a DistanceStore computing distances on demand from the given vectors.
 
-def lazy_store(vectors: NDArray[np.float32], metric: DistanceMetric) -> DistanceStore:
-    """Return a DistanceStore computing distances on demand from the given vectors.
+        Cosine holds the rows pre-normalized (the exact normalization the pairwise kernels use), so
+        the on-demand pair read reuses the squared-L2 accumulation.
 
-    Cosine holds the rows pre-normalized (the exact normalization the pairwise kernels use), so the
-    on-demand pair read reuses the squared-L2 accumulation.
-
-    :param vectors: (n x d ndarray) the vectors to compute distances from.
-    :param metric: (DistanceMetric) the distance metric to use.
-    """
-    vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-    if metric == DistanceMetric.COSINE:
-        validate_cosine_vectors(vectors)
-        vectors = normalize_rows(vectors)
-    return DistanceStore(
-        kind=KIND_LAZY,
-        n=np.int32(vectors.shape[0]),
-        condensed=_EMPTY_1D,
-        matrix=_EMPTY_2D,
-        vectors=vectors,
-        metric_kind=_METRIC_KINDS[metric],
-    )
+        :param vectors: (n x d ndarray) the vectors to compute distances from.
+        :param metric: (DistanceMetric) the distance metric to use.
+        """
+        vectors = np.ascontiguousarray(vectors, dtype=np.float32)
+        if metric == DistanceMetric.COSINE:
+            validate_cosine_vectors(vectors)
+            vectors = normalize_rows(vectors)
+        return cls(
+            kind=KIND_LAZY,
+            n=np.int32(vectors.shape[0]),
+            pdist=_EMPTY_1D,
+            matrix=_EMPTY_2D,
+            vectors=vectors,
+            metric_kind=_METRIC_KINDS[metric],
+        )
 
 
 # The numba type of every DistanceStore instance (all stores share it: field dtypes are fixed and

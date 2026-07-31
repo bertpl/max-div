@@ -3,7 +3,7 @@ import pytest
 
 from max_div._core._utils import stdout_to_file
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import lazy_store
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolution, MaxDivSolverBuilder
 from max_div._core.solver._duration import Elapsed, iterations
@@ -131,7 +131,7 @@ def test_solver_vector_and_distance_input_bit_identical():
 
 
 @pytest.mark.parametrize("distance_metric", [DistanceMetric.L2_EUCLIDEAN, DistanceMetric.COSINE])
-def test_solver_lazy_store_bit_identical_selection(distance_metric: DistanceMetric):
+def test_solver_lazy_backend_bit_identical_selection(distance_metric: DistanceMetric):
     """A solve reading distances on demand selects exactly what the condensed-store solve selects."""
 
     # --- arrange -----------------------------------------
@@ -143,7 +143,7 @@ def test_solver_lazy_store_bit_identical_selection(distance_metric: DistanceMetr
     solver_condensed = MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build()
     solver_lazy = MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build()
     # the builder always constructs a condensed store; swap in the lazy backend directly
-    solver_lazy._store = lazy_store(vectors, distance_metric)
+    solver_lazy._store = DistanceStore.lazy(vectors, distance_metric)
 
     # --- act ---------------------------------------------
     solution_condensed = solver_condensed.solve(verbosity=0)

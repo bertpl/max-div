@@ -7,7 +7,6 @@ from max_div._core.metrics._distance import (
     DistanceStore,
     compute_pdist,
     get_distance,
-    lazy_store,
 )
 from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_LAZY, _condensed_index
 
@@ -57,26 +56,35 @@ def test_get_distance_condensed_values(i: int, j: int):
 
 
 # -------------------------------------------------------------------------
-#  lazy_store
+#  DistanceStore.lazy
 # -------------------------------------------------------------------------
-def test_lazy_store_fields():
+def test_lazy_factory_fields():
     """A lazy store holds the vectors and metric selector; stored-distance fields are zero-size."""
 
     # --- arrange -----------------------------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
 
     # --- act ---------------------------------------------
-    store = lazy_store(vectors, DistanceMetric.L2_EUCLIDEAN)
+    store = DistanceStore.lazy(vectors, DistanceMetric.L2_EUCLIDEAN)
 
     # --- assert ------------------------------------------
     assert store.kind == KIND_LAZY
     assert store.n == np.int32(4)
-    assert store.condensed.size == 0
+    assert store.pdist.size == 0
     assert store.matrix.size == 0
     assert store.vectors.shape == (4, 2)
 
 
-def test_lazy_store_cosine_zero_vector_raises():
+def test_metric_kinds_cover_every_distance_metric():
+    """Every DistanceMetric member must have an on-demand pair-kernel mapping (drift guard)."""
+
+    # --- act / assert ------------------------------------
+    from max_div._core.metrics._distance._store import _METRIC_KINDS
+
+    assert set(_METRIC_KINDS) == set(DistanceMetric)
+
+
+def test_lazy_factory_cosine_zero_vector_raises():
     """The cosine zero-vector guard applies to lazy stores exactly as to precomputed distances."""
 
     # --- arrange -----------------------------------------
@@ -84,7 +92,7 @@ def test_lazy_store_cosine_zero_vector_raises():
 
     # --- act / assert ------------------------------------
     with pytest.raises(ValueError, match="zero vector"):
-        lazy_store(vectors, DistanceMetric.COSINE)
+        DistanceStore.lazy(vectors, DistanceMetric.COSINE)
 
 
 # -------------------------------------------------------------------------
@@ -96,8 +104,8 @@ def test_lazy_store_cosine_zero_vector_raises():
 def _all_backend_stores(vectors: np.ndarray, metric: DistanceMetric) -> dict[str, DistanceStore]:
     """Build one store per available backend over the same data."""
     return {
-        "condensed": condensed_store(compute_pdist(vectors, metric), n=vectors.shape[0]),
-        "lazy": lazy_store(vectors, metric),
+        "condensed": DistanceStore.condensed(compute_pdist(vectors, metric), n=vectors.shape[0]),
+        "lazy": DistanceStore.lazy(vectors, metric),
     }
 
 
