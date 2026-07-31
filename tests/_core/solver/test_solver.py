@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from scipy.spatial.distance import squareform
 
 from max_div._core._utils import stdout_to_file
 from max_div._core.metrics import DistanceMetric, DiversityMetric
@@ -109,15 +110,22 @@ def test_solver_verbosity(example_solver, tmp_path, verbosity: int, error_expect
             _ = example_solver.solve(verbosity=verbosity)
 
 
-def test_solver_vector_and_distance_input_bit_identical():
-    """Solving via from_distances with the vector flavor's own pdist gives bit-identical solutions."""
+@pytest.mark.parametrize("form", ["condensed", "square"])
+def test_solver_vector_and_distance_input_bit_identical(form: str):
+    """Solving via from_distances with the vector flavor's own distances gives bit-identical solutions.
+
+    Square input is retained as a full matrix, so this also exercises the full-matrix store on the
+    distance-input path.
+    """
 
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(20260713)
     vectors = rng.random((40, 4)).astype(np.float32)
     kwargs: dict = {"k": 8, "diversity_metric": DiversityMetric.GEOMEAN_SEPARATION}
     problem_vec = MaxDivProblem.new(vectors, distance_metric=DistanceMetric.L2_EUCLIDEAN, **kwargs)
-    problem_dist = MaxDivProblem.from_distances(problem_vec.condensed_distances(), **kwargs)
+    condensed = problem_vec.condensed_distances()
+    distances = np.ascontiguousarray(squareform(condensed)) if form == "square" else condensed
+    problem_dist = MaxDivProblem.from_distances(distances, **kwargs)
 
     # --- act ---------------------------------------------
     solutions = [

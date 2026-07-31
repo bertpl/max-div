@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full-matrix distance storage: roughly 2× faster solving at large problem sizes, for twice the distance-storage memory
 
 ### Changed
+- Square distance inputs are now kept in full-matrix form (previously condensed), adopted zero-copy when possible, and repaired to exact symmetry with a warning when asymmetric
 
 ### Deprecated
 

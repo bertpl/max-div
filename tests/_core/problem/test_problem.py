@@ -1,10 +1,14 @@
+import warnings
+
 import numpy as np
 import pytest
 from scipy.spatial.distance import squareform
 
+from max_div._core._warnings import DistanceInputWarning
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
+from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX
 from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
 
@@ -116,7 +120,7 @@ def test_problem_new_cosine_non_zero_vectors_ok():
 # -------------------------------------------------------------------------
 @pytest.mark.parametrize("form", ["square", "condensed"])
 def test_problem_from_distances_happy_path(form: str):
-    """from_distances accepts square and condensed input and normalizes both to condensed float32."""
+    """from_distances accepts square and condensed input, keeping each in the format provided."""
 
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(20260713)
@@ -131,7 +135,8 @@ def test_problem_from_distances_happy_path(form: str):
     assert isinstance(problem, DistanceMaxDivProblem)
     assert problem.n == 10
     assert problem.k == 4
-    assert problem.pdist.dtype == np.float32
+    assert problem.distances.dtype == np.float32
+    assert problem.distances.ndim == (2 if form == "square" else 1)
     np.testing.assert_allclose(problem.condensed_distances(), condensed, rtol=1e-6)
 
 
@@ -180,8 +185,8 @@ def _mutated_square_symmetric(i: int, j: int, value: float) -> np.ndarray:
 @pytest.mark.parametrize(
     "case, distances, k",
     [
-        ("asymmetric", _mutated_square(0, 1, 99.0), 3),
         ("non_zero_diagonal", _mutated_square(2, 2, 1.0), 3),
+        ("negative_asymmetric_raw", _mutated_square(0, 1, -0.5), 3),  # raw value checked before averaging
         ("negative", _mutated_square_symmetric(0, 1, -1.0), 3),
         ("nan", _mutated_square_symmetric(0, 1, np.nan), 3),
         ("inf", _mutated_square_symmetric(0, 1, np.inf), 3),
@@ -198,3 +203,120 @@ def test_problem_from_distances_value_error(case: str, distances: np.ndarray, k:
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):
         _ = MaxDivProblem.from_distances(distances, k=k)
+
+
+# -------------------------------------------------------------------------
+#  from_distances: format retention, zero-copy, and repair
+# -------------------------------------------------------------------------
+def _reference_square() -> np.ndarray:
+    """Return a well-formed 5x5 float32 C-contiguous distance matrix."""
+    return np.ascontiguousarray(squareform(np.arange(1, 11, dtype=np.float32)))
+
+
+@pytest.mark.parametrize("form", ["square", "condensed"])
+def test_problem_from_distances_zero_copy_adoption(form: str):
+    """Well-formed float32 C-contiguous input is adopted zero-copy, without any warning."""
+
+    # --- arrange -----------------------------------------
+    distances = _reference_square() if form == "square" else np.arange(1, 11, dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # any warning fails the test
+        problem = MaxDivProblem.from_distances(distances, k=3)
+
+    # --- assert ------------------------------------------
+    assert problem.distances is distances
+
+
+@pytest.mark.parametrize("form", ["square", "condensed"])
+def test_problem_distance_store_matches_input_format(form: str):
+    """The as-given store wraps the retained input directly: square -> full matrix, 1D -> condensed."""
+
+    # --- arrange -----------------------------------------
+    distances = _reference_square() if form == "square" else np.arange(1, 11, dtype=np.float32)
+    problem = MaxDivProblem.from_distances(distances, k=3)
+
+    # --- act ---------------------------------------------
+    store = problem.distance_store()
+
+    # --- assert ------------------------------------------
+    if form == "square":
+        assert store.kind == KIND_FULL_MATRIX
+        assert store.matrix is problem.distances
+    else:
+        assert store.kind == KIND_CONDENSED
+        assert store.pdist is problem.distances
+    assert store.n == np.int32(5)
+
+
+def test_problem_from_distances_asymmetric_repaired_with_warning():
+    """Asymmetric square input is symmetrized in place by averaging, disclosed with delta figures."""
+
+    # --- arrange -----------------------------------------
+    distances = _reference_square()
+    distances[0, 1] = 1.5  # partner [1, 0] stays 1.0 -> mean 1.25
+
+    # --- act ---------------------------------------------
+    with pytest.warns(DistanceInputWarning, match=r"max \|delta\| = 5\.000e-01"):
+        problem = MaxDivProblem.from_distances(distances, k=3)
+
+    # --- assert ------------------------------------------
+    assert problem.distances is distances  # zero-copy adoption, hence in-place repair
+    assert distances[0, 1] == distances[1, 0] == np.float32(1.25)
+    np.testing.assert_array_equal(distances, distances.T)
+
+
+def test_problem_from_distances_conversion_copy_warns_and_leaves_input_untouched():
+    """Input needing a dtype cast warns about the conversion copy; the user's array is not modified."""
+
+    # --- arrange -----------------------------------------
+    distances = _reference_square().astype(np.float64)
+    distances[0, 1] = 1.5  # asymmetric, so the repair must land in the cast copy only
+    original = distances.copy()
+
+    # --- act ---------------------------------------------
+    with pytest.warns(DistanceInputWarning, match="conversion copy"):
+        problem = MaxDivProblem.from_distances(distances, k=3)
+
+    # --- assert ------------------------------------------
+    np.testing.assert_array_equal(distances, original)  # user's array untouched
+    assert problem.distances.dtype == np.float32
+    assert problem.distances[0, 1] == problem.distances[1, 0] == np.float32(1.25)
+
+
+def test_problem_from_distances_condensed_conversion_copy_warns():
+    """A condensed vector needing a dtype cast warns about the conversion copy."""
+
+    # --- arrange -----------------------------------------
+    distances = np.arange(1, 11, dtype=np.float64)
+
+    # --- act ---------------------------------------------
+    with pytest.warns(DistanceInputWarning, match="conversion copy"):
+        problem = MaxDivProblem.from_distances(distances, k=3)
+
+    # --- assert ------------------------------------------
+    assert problem.distances.dtype == np.float32
+
+
+def test_problem_from_distances_condensed_negative_raises():
+    """Negative values in condensed input are rejected, as for square input."""
+
+    # --- arrange -----------------------------------------
+    distances = np.arange(1, 11, dtype=np.float32)
+    distances[3] = -0.001
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError, match="non-negative"):
+        _ = MaxDivProblem.from_distances(distances, k=3)
+
+
+def test_problem_square_condensed_distances_extracts_upper_triangle():
+    """condensed_distances() on a retained square matrix returns the exact condensed values."""
+
+    # --- arrange -----------------------------------------
+    condensed = np.arange(1, 11, dtype=np.float32)
+    problem = MaxDivProblem.from_distances(squareform(condensed), k=3)
+
+    # --- act / assert ------------------------------------
+    np.testing.assert_array_equal(problem.condensed_distances(), condensed)
