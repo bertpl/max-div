@@ -16,6 +16,7 @@ concedes a narrow band of problem sizes that explicit pinning recovers.
 
 import os
 from enum import StrEnum
+from typing import ClassVar
 
 from max_div._core.metrics._distance import (
     DistanceStore,
@@ -150,7 +151,8 @@ def total_physical_memory_bytes() -> int | None:
         import ctypes
 
         class _MemoryStatusEx(ctypes.Structure):
-            _fields_ = [  # noqa: RUF012  # ctypes protocol attribute, not a mutable default
+            # ClassVar: the ctypes protocol reads _fields_ from the class, never per-instance
+            _fields_: ClassVar = [
                 ("dwLength", ctypes.c_ulong),
                 ("dwMemoryLoad", ctypes.c_ulong),
                 ("ullTotalPhys", ctypes.c_uint64),
