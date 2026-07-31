@@ -20,6 +20,7 @@ from ._enum import DistanceMetric
 # Backend selector values for DistanceStore.kind.
 KIND_CONDENSED = np.int32(0)
 KIND_LAZY = np.int32(1)
+KIND_FULL_MATRIX = np.int32(2)
 
 # Pair-kernel selector values for DistanceStore.metric_kind (lazy backend only).  Cosine holds
 # pre-normalized vectors, so its pair read is the half-squared-L2 form on those.
@@ -52,7 +53,7 @@ class DistanceStore(NamedTuple):
     kind: np.int32
     n: np.int32
     pdist: NDArray[np.float32]  # (n*(n-1)/2,) condensed distances (scipy layout), KIND_CONDENSED
-    matrix: NDArray[np.float32]  # placeholder for a full (n, n) distance matrix backend
+    matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
     vectors: NDArray[np.float32]  # (n, d) vectors distances are computed from, KIND_LAZY
     metric_kind: np.int32  # pair-kernel selector, KIND_LAZY only
 
@@ -97,6 +98,55 @@ class DistanceStore(NamedTuple):
             vectors=vectors,
             metric_kind=_METRIC_KINDS[metric],
         )
+
+    @classmethod
+    def full_matrix(cls, matrix: NDArray[np.float32]) -> "DistanceStore":
+        """Return a DistanceStore reading from a full (n, n) distance matrix.
+
+        The matrix must be float32, C-contiguous, and exactly symmetric with a zero diagonal —
+        kernels read whichever of (i, j)/(j, i) suits their access pattern, so the two halves must
+        be bit-equal.  Construction paths that cannot guarantee this by construction must repair
+        or validate before wrapping.
+
+        :param matrix: ((n, n) ndarray) full pairwise-distance matrix.
+        """
+        return cls(
+            kind=KIND_FULL_MATRIX,
+            n=np.int32(matrix.shape[0]),
+            pdist=_EMPTY_1D,
+            matrix=matrix,
+            vectors=_EMPTY_2D,
+            metric_kind=np.int32(0),
+        )
+
+    @classmethod
+    def full_matrix_from_vectors(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
+        """Return a full-matrix DistanceStore computed from vectors, exactly symmetric by construction.
+
+        Each pair is computed once through the same pair kernels the condensed and lazy paths use,
+        and written to both halves — so values are bit-equal across backends and symmetry is
+        structural.
+
+        :param vectors: (n x d ndarray) the vectors to compute distances from.
+        :param metric: (DistanceMetric) the distance metric to use.
+        """
+        vectors = np.ascontiguousarray(vectors, dtype=np.float32)
+        if metric == DistanceMetric.COSINE:
+            validate_cosine_vectors(vectors)
+            vectors = normalize_rows(vectors)
+        return cls.full_matrix(_fill_matrix_from_vectors(vectors, _METRIC_KINDS[metric]))
+
+    @classmethod
+    def full_matrix_from_condensed(cls, pdist: NDArray[np.float32], n: int) -> "DistanceStore":
+        """Return a full-matrix DistanceStore expanded from a condensed distance vector (scipy layout).
+
+        Each condensed value is written to both halves, so the matrix is exactly symmetric and
+        bit-equal to the condensed source.
+
+        :param pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
+        :param n: (int) number of items.
+        """
+        return cls.full_matrix(_expand_condensed(pdist, np.int32(n)))
 
 
 # The numba type of every DistanceStore instance (all stores share it: field dtypes are fixed and
@@ -145,8 +195,40 @@ def get_distance(store: DistanceStore, i: np.int32, j: np.int32) -> np.float32:
     """
     if i == j:
         return np.float32(0.0)
+    if store.kind == KIND_FULL_MATRIX:
+        return store.matrix[i, j]
     if store.kind == KIND_LAZY:
         return _lazy_pair(store.vectors, store.metric_kind, i, j)
     if i < j:
         return store.pdist[_condensed_index(i, j, store.n)]
     return store.pdist[_condensed_index(j, i, store.n)]
+
+
+# =================================================================================================
+#  Full-matrix construction kernels
+# =================================================================================================
+@numba.njit(numba.float32[:, ::1](numba.float32[:, ::1], numba.int32), cache=True)
+def _fill_matrix_from_vectors(vectors: NDArray[np.float32], metric_kind: np.int32) -> NDArray[np.float32]:
+    """Fill a full (n, n) distance matrix from vectors: each pair computed once, written to both halves."""
+    n = vectors.shape[0]
+    matrix = np.zeros((n, n), dtype=np.float32)
+    for i in np.arange(n, dtype=np.int32):
+        for j in np.arange(i + 1, n, dtype=np.int32):
+            value = _lazy_pair(vectors, metric_kind, i, j)
+            matrix[i, j] = value
+            matrix[j, i] = value
+    return matrix
+
+
+@numba.njit(numba.float32[:, ::1](numba.float32[::1], numba.int32), cache=True)
+def _expand_condensed(condensed: NDArray[np.float32], n: np.int32) -> NDArray[np.float32]:
+    """Expand a condensed distance vector into a full (n, n) matrix: each value written to both halves."""
+    matrix = np.zeros((n, n), dtype=np.float32)
+    idx = np.int64(0)
+    for i in range(n):
+        for j in range(i + 1, n):
+            value = condensed[idx]
+            idx += 1
+            matrix[i, j] = value
+            matrix[j, i] = value
+    return matrix

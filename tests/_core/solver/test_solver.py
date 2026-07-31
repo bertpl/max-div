@@ -130,9 +130,10 @@ def test_solver_vector_and_distance_input_bit_identical():
     assert solutions[0].score == solutions[1].score
 
 
+@pytest.mark.parametrize("backend", ["lazy", "full_matrix"])
 @pytest.mark.parametrize("distance_metric", [DistanceMetric.L2_EUCLIDEAN, DistanceMetric.COSINE])
-def test_solver_lazy_backend_bit_identical_selection(distance_metric: DistanceMetric):
-    """A solve reading distances on demand selects exactly what the condensed-store solve selects."""
+def test_solver_alternative_backend_bit_identical_selection(backend: str, distance_metric: DistanceMetric):
+    """A solve on any alternative distance backend selects exactly what the condensed solve selects."""
 
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(20260731)
@@ -141,17 +142,20 @@ def test_solver_lazy_backend_bit_identical_selection(distance_metric: DistanceMe
         vectors, k=8, distance_metric=distance_metric, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
     )
     solver_condensed = MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build()
-    solver_lazy = MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build()
-    # the builder always constructs a condensed store; swap in the lazy backend directly
-    solver_lazy._store = DistanceStore.lazy(vectors, distance_metric)
+    solver_other = MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build()
+    # the builder always constructs a condensed store; swap in the alternative backend directly
+    if backend == "lazy":
+        solver_other._store = DistanceStore.lazy(vectors, distance_metric)
+    else:
+        solver_other._store = DistanceStore.full_matrix_from_vectors(vectors, distance_metric)
 
     # --- act ---------------------------------------------
     solution_condensed = solver_condensed.solve(verbosity=0)
-    solution_lazy = solver_lazy.solve(verbosity=0)
+    solution_other = solver_other.solve(verbosity=0)
 
     # --- assert ------------------------------------------
-    assert list(solution_lazy.i_selected) == list(solution_condensed.i_selected)
-    assert solution_lazy.score == solution_condensed.score
+    assert list(solution_other.i_selected) == list(solution_condensed.i_selected)
+    assert solution_other.score == solution_condensed.score
 
 
 # =================================================================================================
