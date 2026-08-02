@@ -25,7 +25,7 @@ from max_div._core.constraints import Constraint, ConstraintList
 #  Main benchmark function
 # =================================================================================================
 def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
-    """Benchmarks the `randint_constrained` function from `max_div.sampling.con`.
+    """Benchmarks the internal `randint_constrained` sampling function.
 
     Different scenarios are tested across different values of `k`, `n` & `m` (# of constraints):
 

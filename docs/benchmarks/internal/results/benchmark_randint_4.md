@@ -1,19 +1,19 @@
 ## D. WITHOUT replacement, CUSTOM probabilities
 
-| `k`   | `n`          | `randint_python`   | `randint`                                                |
-| ----- | ------------ | ------------------ | -------------------------------------------------------- |
-| 1     | 10           | 8.665 μsec ± 17.1% | <span style="color:#00aa00">**547.1 nsec ± 2.6%**</span> |
-| 10    | 10           | 28.81 μsec ± 0.4%  | <span style="color:#00aa00">**522.8 nsec ± 1.5%**</span> |
-| 1     | 100          | 9.100 μsec ± 0.2%  | <span style="color:#00aa00">**631.7 nsec ± 0.8%**</span> |
-| 10    | 100          | 17.78 μsec ± 0.4%  | <span style="color:#00aa00">**1.212 μsec ± 0.5%**</span> |
-| 100   | 100          | 57.69 μsec ± 0.3%  | <span style="color:#00aa00">**759.2 nsec ± 0.9%**</span> |
-| 1     | 1000         | 15.33 μsec ± 0.6%  | <span style="color:#00aa00">**1.281 μsec ± 0.6%**</span> |
-| 10    | 1000         | 22.13 μsec ± 0.6%  | <span style="color:#00aa00">**3.042 μsec ± 7.1%**</span> |
-| 100   | 1000         | 37.07 μsec ± 2.9%  | <span style="color:#00aa00">**10.24 μsec ± 0.6%**</span> |
-| 1000  | 1000         | 264.0 μsec ± 0.8%  | <span style="color:#00aa00">**2.070 μsec ± 0.2%**</span> |
-| 1     | 10000        | 68.22 μsec ± 1.5%  | <span style="color:#00aa00">**7.745 μsec ± 0.6%**</span> |
-| 10    | 10000        | 63.08 μsec ± 9.4%  | <span style="color:#00aa00">**17.13 μsec ± 1.4%**</span> |
-| 100   | 10000        | 79.58 μsec ± 2.3%  | <span style="color:#00aa00">**32.22 μsec ± 0.9%**</span> |
-| 1000  | 10000        | 220.9 μsec ± 1.6%  | <span style="color:#00aa00">**84.74 μsec ± 2.2%**</span> |
-| 10000 | 10000        | 2.607 msec ± 2.5%  | <span style="color:#00aa00">**14.33 μsec ± 0.3%**</span> |
-|       | **Geomean:** | 53.38 μsec ± 2.7%  | <span style="color:#00aa00">**3.639 μsec ± 1.4%**</span> |
+| `k`   | `n`          | `randint_python`   | `randint`                                                 |
+| ----- | ------------ | ------------------ | --------------------------------------------------------- |
+| 1     | 10           | 7.377 μsec ± 15.4% | <span style="color:#00aa00">**601.6 nsec ± 3.6%**</span>  |
+| 10    | 10           | 25.64 μsec ± 0.7%  | <span style="color:#00aa00">**605.4 nsec ± 1.8%**</span>  |
+| 1     | 100          | 7.872 μsec ± 0.7%  | <span style="color:#00aa00">**674.8 nsec ± 0.6%**</span>  |
+| 10    | 100          | 16.12 μsec ± 0.7%  | <span style="color:#00aa00">**1.388 μsec ± 1.4%**</span>  |
+| 100   | 100          | 52.85 μsec ± 0.6%  | <span style="color:#00aa00">**767.1 nsec ± 0.6%**</span>  |
+| 1     | 1000         | 12.62 μsec ± 0.8%  | <span style="color:#00aa00">**1.229 μsec ± 0.7%**</span>  |
+| 10    | 1000         | 19.83 μsec ± 1.9%  | <span style="color:#00aa00">**3.120 μsec ± 1.8%**</span>  |
+| 100   | 1000         | 36.44 μsec ± 0.9%  | <span style="color:#00aa00">**11.26 μsec ± 0.9%**</span>  |
+| 1000  | 1000         | 258.2 μsec ± 1.7%  | <span style="color:#00aa00">**2.064 μsec ± 3.9%**</span>  |
+| 1     | 10000        | 56.14 μsec ± 4.1%  | <span style="color:#00aa00">**8.060 μsec ± 1.2%**</span>  |
+| 10    | 10000        | 74.80 μsec ± 3.1%  | <span style="color:#00aa00">**17.07 μsec ± 28.2%**</span> |
+| 100   | 10000        | 92.73 μsec ± 3.6%  | <span style="color:#00aa00">**31.52 μsec ± 0.7%**</span>  |
+| 1000  | 10000        | 217.0 μsec ± 5.5%  | <span style="color:#00aa00">**97.62 μsec ± 1.0%**</span>  |
+| 10000 | 10000        | 2.587 msec ± 1.0%  | <span style="color:#00aa00">**13.93 μsec ± 0.2%**</span>  |
+|       | **Geomean:** | 50.24 μsec ± 2.8%  | <span style="color:#00aa00">**3.814 μsec ± 3.0%**</span>  |

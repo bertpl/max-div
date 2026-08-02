@@ -173,8 +173,13 @@ def test_randint_uniform_with_replacement_rng_state(n: int, k: int, p: np.ndarra
         (1000, 1),
         (1000, 10),
         (1000, 100),
+        (1000, 15),  # 64k <= n: last case on the rejection-sampling path
+        (1000, 16),  # 64k > n: first case on the Fisher-Yates path
         (1000, 500),
         (1000, 1000),
+        (80, 10),  # small range on the Fisher-Yates path
+        (2000, 20),  # rejection path with collisions likely across repeated draws
+        (100000, 250),  # rejection path in its target regime: k far below n
     ],
 )
 @pytest.mark.parametrize("p", [P_UNIFORM, np.zeros(0, np.float32)])
@@ -203,8 +208,13 @@ def test_randint_uniform_without_replacement_invariants(n: int, k: int, p: np.nd
         (1000, 1),
         (1000, 10),
         (1000, 100),
+        (1000, 15),
+        (1000, 16),
         (1000, 500),
         (1000, 1000),
+        (80, 10),
+        (2000, 20),
+        (100000, 250),
     ],
 )
 @pytest.mark.parametrize("p", [P_UNIFORM, np.zeros(0, np.float32)])
@@ -238,6 +248,29 @@ def test_randint_uniform_without_replacement_rng_state(n: int, k: int, p: np.nda
 
     # check p unmodified
     assert np.array_equal(p, p_before), "p array should never be modified."
+
+
+@pytest.mark.parametrize("n,k", [(2000, 20), (1280, 10)])  # both on the rejection-sampling path (64k <= n)
+def test_randint_uniform_without_replacement_frequency(n: int, k: int):
+    """Selection frequencies match the uniform k/n rate on the rejection-sampling path (z-score bounds)."""
+
+    # --- arrange -----------------------------------------
+    rng_state = new_rng_state(42)
+    n_draws = 5_000
+    counts = np.zeros(n, dtype=np.int64)
+
+    # --- act ---------------------------------------------
+    for _ in range(n_draws):
+        counts[randint(np.int32(n), np.int32(k), replace=False, p=P_UNIFORM, rng_state=rng_state)] += 1
+
+    # --- assert ------------------------------------------
+    # per-value z-scores against the binomial(n_draws, k/n) expectation: no single value may
+    # deviate strongly, and the mean |z| must look like noise (half-normal mean ≈ 0.8) — catching
+    # both a biased value and systematic over-dispersion, which a per-value tolerance cannot
+    p_value = k / n
+    z = (counts - n_draws * p_value) / np.sqrt(n_draws * p_value * (1 - p_value))
+    assert np.abs(z).max() < 5.0
+    assert np.abs(z).mean() < 1.1
 
 
 # =================================================================================================
