@@ -16,17 +16,31 @@ if TYPE_CHECKING:
 # =================================================================================================
 #  Separation kernels
 # =================================================================================================
+@numba.njit(numba.void(numba.float32[::1], DISTANCE_STORE_TYPE, numba.int32[::1]), cache=True)
+def compute_separation_elements(sep: NDArray[np.float32], store: DistanceStore, indices: NDArray[np.int32]) -> None:
+    """Fill the given elements of `sep` with each item's separation wrt all others.
+
+    Each element requires scanning that item's full row of the pairwise-distance matrix.
+    Elements are independent, so any subset can be computed in any order; a filled element
+    equals what a full sweep would produce for it.
+    """
+    n = store.n
+    for idx in indices:
+        row_min = np.float32(np.inf)
+        for j in np.arange(n, dtype=np.int32):
+            if j != idx:
+                dist_ij = get_distance(store, idx, j)
+                if dist_ij < row_min:
+                    row_min = dist_ij
+        sep[idx] = row_min
+
+
 @numba.njit(numba.float32[::1](DISTANCE_STORE_TYPE), cache=True)
 def compute_separation(store: DistanceStore) -> NDArray[np.float32]:
     """Compute separation of each item wrt all others, given the distance store."""
     n = store.n
     sep = np.full(n, fill_value=np.inf, dtype=np.float32)
-    for i in np.arange(n, dtype=np.int32):
-        for j in np.arange(n, dtype=np.int32):
-            if j != i:
-                dist_ij = get_distance(store, i, j)
-                if dist_ij < sep[i]:
-                    sep[i] = dist_ij
+    compute_separation_elements(sep, store, np.arange(n, dtype=np.int32))
     return sep
 
 
@@ -86,19 +100,26 @@ class SeparationTracker(DiversityContributionTracker):
         """Initialize the SeparationTracker for an empty selection.
 
         :param store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
-        :param sep_global: (np.ndarray[np.float32] | None) precomputed global separations; computed if omitted.
+        :param sep_global: (np.ndarray[np.float32] | None) global-separation array to adopt; a fresh lazy
+                           (all-NaN) array if omitted.
         :param sep_selected: (np.ndarray[np.float32] | None) current separations wrt selection; fresh (all +inf,
                              i.e. empty selection) if omitted.  Together with `sep_global` this enables copies
                              without recomputation.
         """
         self._store = store  # READ-ONLY
-        self._sep_global = sep_global if sep_global is not None else compute_separation(store)  # READ-ONLY
+        # lazily filled cache: NaN marks a not-yet-computed element; elements are computed on read
+        # and never change afterwards, which is what makes sharing the array across copies safe
+        self._sep_global = sep_global if sep_global is not None else np.full(store.n, np.nan, dtype=np.float32)
         self._sep_selected = sep_selected if sep_selected is not None else np.full(store.n, np.inf, dtype=np.float32)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_sep_selected: list[NDArray[np.float32]] = []
 
     def copy(self) -> SeparationTracker:
-        """Return an independent copy of this tracker; the immutable store and global separations are shared."""
+        """Return an independent copy of this tracker; store and lazily filled cache are shared.
+
+        Sharing the global-separation cache is safe because its elements are computed once and
+        never rewritten, so copies can only ever benefit from each other's computed elements.
+        """
         return SeparationTracker(
             store=self._store,
             sep_global=self._sep_global,
@@ -114,8 +135,23 @@ class SeparationTracker(DiversityContributionTracker):
 
     @property
     def contribution_wrt_dataset(self) -> NDArray[np.float32]:
-        """Return separation of all points wrt all other points (reference; do not modify)."""
+        """Return separation of all points wrt all other points (reference; do not modify).
+
+        Computes every not-yet-computed element first; see the base class for the lazy contract.
+        """
+        self._ensure_global_elements(np.arange(self._store.n, dtype=np.int32))
         return self._sep_global
+
+    def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
+        """Return global separations for `indices`, computing missing elements first (fresh array)."""
+        self._ensure_global_elements(indices)
+        return self._sep_global[indices]
+
+    def _ensure_global_elements(self, indices: NDArray[np.int32]) -> None:
+        """Compute any not-yet-computed global-separation elements among `indices`."""
+        missing = indices[np.isnan(self._sep_global[indices])]
+        if missing.size > 0:
+            compute_separation_elements(self._sep_global, self._store, np.ascontiguousarray(missing, dtype=np.int32))
 
     # -------------------------------------------------------------------------
     #  Mutations

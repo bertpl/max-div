@@ -62,12 +62,12 @@ def select_items_to_add(
     if state.n_selected == 0:
         # the only option is to look at the global contribution (wrt all other items), as we don't have a selection yet
         # this branch is only taken in the first iteration of initialization strategies
-        p = state.global_contribution_array[candidates]  # contribution of candidates wrt all other items
+        p = state.global_contribution_for(candidates)  # contribution of candidates wrt all other items
     else:
         # standard path
         p = state.full_contribution_array[candidates]  # new array; contribution of candidates wrt selected items
         if include_within_group_contribution:
-            p += state.global_contribution_array[candidates]  # add contribution of candidates wrt all other items
+            p += state.global_contribution_for(candidates)  # add contribution of candidates wrt all other items
 
     exponential_selectivity(
         p_in=p,
