@@ -21,6 +21,9 @@ class _CallRecordingTracker(DiversityContributionTracker):
     def contribution_wrt_dataset(self) -> NDArray[np.float32]:
         return np.array([], dtype=np.float32)
 
+    def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
+        return np.array([], dtype=np.float32)  # pragma: no cover - not exercised by these tests
+
     def add(self, index: np.int32) -> None:
         self.calls.append(("add", int(index)))
 

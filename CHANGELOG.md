@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Solver setup no longer computes all-pairs contribution data up front; it is computed on demand by the strategies that use it
 
 ### Deprecated
 

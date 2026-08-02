@@ -50,7 +50,24 @@ class DiversityContributionTracker(ABC):
     def contribution_wrt_dataset(self) -> NDArray[np.floating]:
         """Return static per-point contribution of each point wrt the whole dataset (selection-independent).
 
+        Dataset-wide contributions are computed lazily, one point's row scan at a time; this
+        property first computes every not-yet-computed entry, so it is always safe to read but
+        costs the full O(n²) sweep on first access.  Callers needing only some entries use
+        `contribution_wrt_dataset_for`, which computes just the rows it returns.
+
         The returned array is a reference to internal state — callers must not modify it.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
+        """Return dataset-wide contributions for `indices`, computing missing entries first.
+
+        The targeted counterpart of `contribution_wrt_dataset`: only the requested rows are
+        guaranteed computed afterwards, so the cost is proportional to the not-yet-computed rows
+        among `indices` rather than to n.
+
+        Returns a freshly allocated array (safe for in-place mutation by the caller).
         """
         raise NotImplementedError
 

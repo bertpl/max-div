@@ -346,8 +346,20 @@ class SolverState:
 
     @property
     def global_contribution_array(self) -> NDArray[np.float32]:
-        """Return static diversity contribution of all items wrt the whole dataset (np.float32 ndarray)."""
+        """Return static diversity contribution of all items wrt the whole dataset (np.float32 ndarray).
+
+        Accessing this computes any not-yet-computed entries first (the full O(n²) sweep on first
+        access); callers needing only some entries use `global_contribution_for`.
+        """
         return self._contribution_tracker.contribution_wrt_dataset  # should not be modified (!)
+
+    def global_contribution_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
+        """Return dataset-wide contributions for `indices`, computing missing entries first.
+
+        Returns a freshly allocated array (safe for in-place mutation by the caller); cost is
+        proportional to the not-yet-computed rows among `indices` rather than to n.
+        """
+        return self._contribution_tracker.contribution_wrt_dataset_for(indices)
 
     # -------------------------------------------------------------------------
     #  Scoring

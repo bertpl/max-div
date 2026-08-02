@@ -21,18 +21,22 @@ if TYPE_CHECKING:
 # iterations, and float32 drift there would change scores with iteration count.  Distances of a
 # point to itself are 0, so a point's own entry never needs special-casing: it always equals the
 # sum of its distances to the *other* selected points.
-@numba.njit(numba.float64[::1](DISTANCE_STORE_TYPE), cache=True)
-def compute_distance_sums(store: DistanceStore) -> NDArray[np.float64]:
-    """Compute sum of distances of each item wrt all others, given the distance store."""
+@numba.njit(numba.void(numba.float32[::1], DISTANCE_STORE_TYPE, numba.int32[::1]), cache=True)
+def compute_mean_distance_rows(out: NDArray[np.float32], store: DistanceStore, indices: NDArray[np.int32]) -> None:
+    """Fill the given rows of `out` with each item's mean distance to all others.
+
+    Rows are independent, so any subset can be computed in any order.  Per row: a float64 sum over
+    partners in ascending index (so sums stay bit-equal across store layouts), one divide by
+    (n-1), one cast to float32.
+    """
     n = store.n
-    dist_sums = np.zeros(n, dtype=np.float64)
-    # partners are visited in ascending index per item, so each float64 sum accumulates in the
-    # same order however the store lays distances out — sums stay bit-equal across backends
-    for i in np.arange(n, dtype=np.int32):
+    den = np.float64(max(n - 1, 1))
+    for idx in indices:
+        row_sum = np.float64(0.0)
         for j in np.arange(n, dtype=np.int32):
-            if j != i:
-                dist_sums[i] += np.float64(get_distance(store, i, j))
-    return dist_sums
+            if j != idx:
+                row_sum += np.float64(get_distance(store, idx, j))
+        out[idx] = np.float32(row_sum / den)
 
 
 @numba.njit(numba.void(numba.float64[::1], DISTANCE_STORE_TYPE, numba.int32), cache=True)
@@ -79,24 +83,29 @@ class MeanDistanceTracker(DiversityContributionTracker):
         """Initialize the MeanDistanceTracker for an empty selection.
 
         :param store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
-        :param contribution_wrt_dataset: (np.ndarray[np.float32] | None) precomputed global contribution;
-                                    computed if omitted.
+        :param contribution_wrt_dataset: (np.ndarray[np.float32] | None) global-contribution array to adopt;
+                                    a fresh lazy (all-NaN) array if omitted.
         :param dist_sums: (np.ndarray[np.float64] | None) current distance sums wrt selection; fresh (all 0.0,
                           i.e. empty selection) if omitted.  Together with `contribution_wrt_dataset` this
                           enables copies without recomputation.
         """
         self._store = store  # READ-ONLY
         if contribution_wrt_dataset is not None:
-            self._contribution_wrt_dataset = contribution_wrt_dataset  # READ-ONLY
+            self._contribution_wrt_dataset = contribution_wrt_dataset
         else:
-            n = int(store.n)
-            self._contribution_wrt_dataset = (compute_distance_sums(store) / max(n - 1, 1)).astype(np.float32)
+            # lazy memo: NaN = not yet computed; rows are filled on read and never change once
+            # written (monotone), which is what makes sharing the array across copies safe
+            self._contribution_wrt_dataset = np.full(store.n, np.nan, dtype=np.float32)
         self._dist_sums = dist_sums if dist_sums is not None else np.zeros(store.n, dtype=np.float64)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_dist_sums: list[NDArray[np.float64]] = []
 
     def copy(self) -> MeanDistanceTracker:
-        """Return an independent copy of this tracker; the immutable store and global contributions are shared."""
+        """Return an independent copy of this tracker; the store and the global-contribution memo are shared.
+
+        Sharing the memo is safe because its rows are monotone: filled on read, never rewritten,
+        so copies can only ever benefit from each other's computed rows.
+        """
         return MeanDistanceTracker(
             store=self._store,
             contribution_wrt_dataset=self._contribution_wrt_dataset,
@@ -114,8 +123,25 @@ class MeanDistanceTracker(DiversityContributionTracker):
 
     @property
     def contribution_wrt_dataset(self) -> NDArray[np.float32]:
-        """Return mean distance of all points wrt all other points (reference; do not modify)."""
+        """Return mean distance of all points wrt all other points (reference; do not modify).
+
+        Computes every not-yet-computed row first; see the base class for the lazy contract.
+        """
+        self._ensure_global_rows(np.arange(self._store.n, dtype=np.int32))
         return self._contribution_wrt_dataset
+
+    def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
+        """Return global mean-distance contributions for `indices`, computing missing rows first (fresh array)."""
+        self._ensure_global_rows(indices)
+        return self._contribution_wrt_dataset[indices]
+
+    def _ensure_global_rows(self, indices: NDArray[np.int32]) -> None:
+        """Compute any not-yet-computed global-contribution rows among `indices`."""
+        missing = indices[np.isnan(self._contribution_wrt_dataset[indices])]
+        if missing.size:
+            compute_mean_distance_rows(
+                self._contribution_wrt_dataset, self._store, np.ascontiguousarray(missing, dtype=np.int32)
+            )
 
     # -------------------------------------------------------------------------
     #  Mutations

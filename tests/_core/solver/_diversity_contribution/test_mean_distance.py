@@ -7,7 +7,7 @@ from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker
 from max_div._core.solver._diversity_contribution._mean_distance import (
-    compute_distance_sums,
+    compute_mean_distance_rows,
     update_distance_sums_add,
     update_distance_sums_remove,
 )
@@ -162,6 +162,36 @@ def test_invariant_random_operations_match_recompute(tracker: MeanDistanceTracke
         )
 
 
+def test_lazy_global_targeted_read_computes_only_requested(tracker: MeanDistanceTracker, pdist: np.ndarray):
+    # --- arrange -----------------------------------------
+    expected_global = (squareform(pdist).astype(np.float64).sum(axis=1) / (N - 1)).astype(np.float32)
+    requested = np.array([2, 11, 5], dtype=np.int32)
+
+    # --- act ---------------------------------------------
+    values = tracker.contribution_wrt_dataset_for(requested)
+
+    # --- assert ------------------------------------------
+    np.testing.assert_allclose(values, expected_global[requested], rtol=1e-6)
+    # only the requested rows are computed; the rest of the memo is still pending
+    untouched = np.setdiff1d(np.arange(N), requested)
+    assert np.all(np.isnan(tracker._contribution_wrt_dataset[untouched]))
+    # the returned array is a fresh copy, not a view into the memo
+    values[0] = -1.0
+    assert tracker._contribution_wrt_dataset[2] != -1.0
+
+
+def test_lazy_global_memo_shared_across_copies(tracker: MeanDistanceTracker):
+    # --- arrange -----------------------------------------
+    clone = tracker.copy()
+
+    # --- act ---------------------------------------------
+    clone.contribution_wrt_dataset_for(np.array([4], dtype=np.int32))
+
+    # --- assert ------------------------------------------
+    # a row computed through the clone is visible through the original (one shared, monotone memo)
+    assert not np.isnan(tracker._contribution_wrt_dataset[4])
+
+
 def test_copy_is_independent(tracker: MeanDistanceTracker):
     # --- arrange -----------------------------------------
     tracker.add(np.int32(0))
@@ -182,22 +212,25 @@ def test_copy_is_independent(tracker: MeanDistanceTracker):
 # =================================================================================================
 #  Kernels
 # =================================================================================================
-def test_compute_distance_sums():
-    """Check if compute_distance_sums matches a brute-force row-sum of the full distance matrix."""
+def test_compute_mean_distance_rows_partial_fill():
+    """The rows kernel fills exactly the requested rows, with brute-force row-mean values."""
 
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((30, 4)).astype(np.float32)
     m = vectors.shape[0]
     d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
-    expected = squareform(d).astype(np.float64).sum(axis=1)
+    expected = (squareform(d).astype(np.float64).sum(axis=1) / (m - 1)).astype(np.float32)
+    out = np.full(m, np.nan, dtype=np.float32)
+    requested = np.array([0, 7, 29, 13], dtype=np.int32)
 
     # --- act ---------------------------------------------
-    dist_sums = compute_distance_sums(DistanceStore.condensed(d, n=m))
+    compute_mean_distance_rows(out, DistanceStore.condensed(d, n=m), requested)
 
     # --- assert ------------------------------------------
-    assert dist_sums.dtype == np.float64
-    np.testing.assert_allclose(dist_sums, expected, rtol=1e-6)
+    np.testing.assert_allclose(out[requested], expected[requested], rtol=1e-6)
+    untouched = np.setdiff1d(np.arange(m), requested)
+    assert np.all(np.isnan(out[untouched]))  # only the requested rows were written
 
 
 def test_update_distance_sums_add_remove():
