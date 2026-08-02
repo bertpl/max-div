@@ -15,6 +15,7 @@ from max_div._core.solver._parameters import (
     _schedules_to_2d_numpy_array,
 )
 from max_div._core.solver._strategies._base import StrategyBase
+from max_div._core.solver._strategies._sampling import candidate_samples_to_add
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -343,7 +344,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
 
         # do this now, before the just-removed ones get added to the not_selected ones; we don't want these
         # just-removed ones to be selected to be added again immediately.
-        candidate_samples_to_add = state.not_selected_index_array
+        add_candidates = candidate_samples_to_add(state, self.iter, self._rng_state)
 
         # --- the whole swap is provisional until it proves itself ---
 
@@ -359,7 +360,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
             _ = self._remove_samples(state, n_swap)
 
             # add
-            _ = self._add_samples(state, n_swap, candidate_samples_to_add)
+            _ = self._add_samples(state, n_swap, add_candidates)
 
             # evaluate
             score_after = state.score

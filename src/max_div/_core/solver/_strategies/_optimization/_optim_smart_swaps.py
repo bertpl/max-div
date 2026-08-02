@@ -221,7 +221,8 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
                 selectivity_modifier=self.selectivity_modifier_add,
                 rng_state=self._rng_state,
                 sampling_type=SamplingType.GROUP,
-                include_within_group_contribution=(n_to_add > 1),
+                # no dataset-wide prior here: O(n²) to obtain, no measurable benefit for swap sampling
+                include_within_group_contribution=False,
                 ignore_constraints=False,
             )
 
