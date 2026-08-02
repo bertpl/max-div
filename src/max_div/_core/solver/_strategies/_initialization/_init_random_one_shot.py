@@ -13,6 +13,11 @@ class InitRandomOneShot(InitializationStrategy):
     This is among the fastest initialization strategies, but potentially also with the lowest quality.
 
     Suggested use: if time constraints are severe or problem dimensions `n` or `k` are very large.
+    For very large `n`, prefer `uniform=True` (what the solver presets use): contribution-weighted
+    sampling (`uniform=False`) computes every pairwise distance, which with distances computed on
+    demand from vectors takes roughly a minute at n ≈ 20,000 and grows quadratically — hours
+    before solving starts by n ≈ 100,000 with high-dimensional vectors. With a stored distance
+    matrix: seconds up to n ≈ 20,000, with the same quadratic growth.
 
     Parameters:
     - uniform (bool): If `True`, samples uniformly at random.
