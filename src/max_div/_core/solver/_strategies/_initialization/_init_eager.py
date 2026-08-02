@@ -27,6 +27,12 @@ class InitEager(InitializationStrategy):
     As we progress through the batches, selectivity of p[i] is modified with modifier = #sampled / #to_sample.
         (see modify_p_selectivity for details)
 
+    NOTE: the "contribution wrt all items" term computes every pairwise distance, which with
+    distances computed on demand from vectors takes roughly a minute at n ≈ 20,000 and grows
+    quadratically — hours by n ≈ 100,000 with high-dimensional vectors; with a stored distance
+    matrix, seconds up to n ≈ 20,000. The presets' uniform one-shot initialization avoids this
+    entirely.
+
     Suggested use: when highest quality results are desired and time permits.  This method is computationally more
                    expensive than most other methods.
 
