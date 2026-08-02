@@ -84,8 +84,7 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
             selectivity_modifier=self.add_selectivity_modifier,
             rng_state=self._rng_state,
             sampling_type=SamplingType.GROUP,
-            # contribution wrt the current selection carries the sampling signal for swap adds;
-            # the dataset-wide prior is not consulted on this path
+            # no dataset-wide prior here: O(n²) to obtain, no measurable benefit for swap sampling
             include_within_group_contribution=False,
             ignore_constraints=ignore_constraints,
         )

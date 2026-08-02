@@ -1,21 +1,24 @@
 """Construction of the add-candidate pool for swap-based optimization strategies.
 
-Every swap iteration needs a pool of candidate items to sample additions from. Passing all
-non-selected items makes each sampling call cost O(n), which dominates early-run time on large
-problems; this module centralizes the alternative: a uniformly drawn, gradually growing subsample.
+Every swap iteration needs a pool of candidate items to sample additions from. The natural pool is
+all non-selected items (n-k items), but passing all of them makes each sampling call cost O(n),
+which dominates early-run time on large problems. This module centralizes the alternative: each
+iteration, the pool is reduced to a uniform random subset of min(cap, n-k) items, where
 
-The cap on the pool starts small and grows linearly with the strategy's iteration count,
-saturating at the full pool. Iteration-indexing is deliberate: runs that converge (tens of
-thousands of iterations) reach the full pool while meaningful iterations remain — preserving
-end-of-run quality, which needs the best few candidates once improving swaps become rare — while
-runs whose budget affords only a few hundred iterations at very large n stay capped for their
-whole life and never pay for exploration breadth they cannot use.
+    cap = CAP_INITIAL + CAP_GROWTH_PER_ITER * iteration
+
+The cap thus starts small and grows linearly with the strategy's iteration count, saturating at
+the full n-k pool. Iteration-indexing is deliberate: runs that converge (tens of thousands of
+iterations) reach the full pool while meaningful iterations remain — preserving end-of-run
+quality, which needs the best few candidates once improving swaps become rare — while runs whose
+budget affords only a few hundred iterations at very large n stay capped for their whole life and
+never pay for exploration breadth they cannot use.
 """
 
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._random import P_UNIFORM, randint
+from max_div._core._random import P_UNIFORM, choice
 from max_div._core.solver._solver_state import SolverState
 
 # Cap on the add-candidate pool: CAP_INITIAL + CAP_GROWTH_PER_ITER * iteration, saturating at the
@@ -45,5 +48,4 @@ def candidate_samples_to_add(
     cap = CAP_INITIAL + CAP_GROWTH_PER_ITER * iteration
     if pool.size <= cap:
         return pool
-    sub = randint(n=np.int32(pool.size), k=np.int32(cap), replace=False, p=P_UNIFORM, rng_state=rng_state)
-    return pool[sub]
+    return choice(pool, np.int32(cap), False, P_UNIFORM, rng_state)
