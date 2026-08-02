@@ -49,7 +49,7 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
     | No             | `False`    | k > n/64  | k-element Fisher-Yates shuffle           | O(n)            |
     | Yes            | *any*      | 1         | Multinomial sampling using CDF           | O(n + log(n))   |
     | Yes            | `True`     | >1        | Multinomial sampling using CDF           | O(n + k log(n)) |
-    | Yes            | `False`    | >1        | Efraimidis-Spirakis + exp. key sampling (Gumbel-Max Trick) | O(n) |
+    | Yes            | `False`    | >1        | Efraimidis-Spirakis + exp. key sampling (Gumbel-Max Trick) | O(n) avg |
 
     The n/64 threshold is benchmark-derived: collisions are already rare well before it, but the
     rejection path's per-round sort plus final shuffle overtake one O(n) Fisher-Yates pass around
