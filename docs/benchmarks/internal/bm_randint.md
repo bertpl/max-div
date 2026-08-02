@@ -1,7 +1,5 @@
 # `randint`
 
-([API reference][max_div.sampling.uncon.randint])
-
 Command:
 ```bash
 uv tool install max-div

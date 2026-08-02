@@ -42,16 +42,21 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
 
     This implementation uses numba, and is speed-optimized using a different algorithm depending on the case:
 
-    | `p` specified  | `replace`  | `k`   | Method Used                              | Complexity      |
-    |----------------|------------|-------|------------------------------------------|-----------------|
-    | No             | `True`     | *any* | `np.random.randint`, uniform sampling    | O(k)            |
-    | No             | `False`    | *any* | k-element Fisher-Yates shuffle           | O(n)            |
-    | Yes            | *any*      | 1     | Multinomial sampling using CDF           | O(n + log(n))   |
-    | Yes            | `True`     | >1    | Multinomial sampling using CDF           | O(n + k log(n)) |
-    | Yes            | `False`    | >1    | Efraimidis-Spirakis + exp. key sampling (Gumbel-Max Trick) | O(n) |
+    | `p` specified  | `replace`  | `k`       | Method Used                              | Complexity      |
+    |----------------|------------|-----------|------------------------------------------|-----------------|
+    | No             | `True`     | *any*     | `np.random.randint`, uniform sampling    | O(k)            |
+    | No             | `False`    | k ≤ n/64  | batched rejection sampling + k-shuffle   | expected O(k log k) |
+    | No             | `False`    | k > n/64  | k-element Fisher-Yates shuffle           | O(n)            |
+    | Yes            | *any*      | 1         | Multinomial sampling using CDF           | O(n + log(n))   |
+    | Yes            | `True`     | >1        | Multinomial sampling using CDF           | O(n + k log(n)) |
+    | Yes            | `False`    | >1        | Efraimidis-Spirakis + exp. key sampling (Gumbel-Max Trick) | O(n) |
+
+    The n/64 threshold is benchmark-derived: collisions are already rare well before it, but the
+    rejection path's per-round sort plus final shuffle overtake one O(n) Fisher-Yates pass around
+    k ≈ n/32 on the benchmark grid, so the switch happens with margin below that.
 
     Notes:
-      - For benchmark results, see [here](../../../../benchmarks/internal/bm_randint.md)
+      - For benchmark results, see [here](../../../../../docs/benchmarks/internal/bm_randint.md)
 
       - When providing `p`...
 
@@ -104,6 +109,34 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
         if replace:
             # UNIFORM sampling with replacement
             return rand_int32_array(rng_state, 0, n, k)  # O(k)
+        if 64 * k <= n:
+            # UNIFORM sampling without replacement using batched rejection sampling:
+            # draw k values with replacement, then repeatedly sort and redraw the duplicates
+            # until a round finds none.  Kept values (each duplicate group's first occurrence)
+            # are never redrawn, so every accepted value is uniform over the not-yet-taken
+            # range — the same distribution the sequential draw-until-new scheme produces.
+            samples = rand_int32_array(rng_state, 0, n, k)
+            while True:
+                samples.sort()
+                n_dup = 0
+                prev = samples[0]
+                for i in range(1, k):
+                    # compare against the previous *pre-redraw* value: a redrawn entry must not
+                    # mask a duplicate of the value it replaced
+                    cur = samples[i]
+                    if cur == prev:
+                        samples[i] = rand_int32(rng_state, 0, n)
+                        n_dup += 1
+                    else:
+                        prev = cur
+                if n_dup == 0:
+                    break
+            # sorting is part of the dedup; a k-element shuffle restores the uniformly random
+            # order the Fisher-Yates path returns
+            for i in range(k - 1):
+                j = rand_int32(rng_state, i, k)
+                samples[i], samples[j] = samples[j], samples[i]
+            return samples
         # UNIFORM sampling without replacement using Fisher-Yates shuffle
         population = np.arange(n, dtype=np.int32)  # O(n)
         for i in range(k):  # k x O(1)

@@ -14,7 +14,7 @@ from max_div._core._utils import benchmark, stdout_to_file
 
 
 def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
-    """Benchmarks the `randint` function from `max_div.sampling.uncon`.
+    """Benchmarks the internal `randint` sampling function.
 
     Different scenarios are tested:
 

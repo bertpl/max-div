@@ -68,7 +68,7 @@ def cmd_all(ctx: click.Context) -> None:
 @internal.command(name="randint")
 @click.pass_context
 def cmd_randint(ctx: click.Context) -> None:
-    """Benchmarks the `randint` function from `max_div.sampling.uncon`."""
+    """Benchmarks the internal `randint` sampling function."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
     file = ctx.obj["file"]
@@ -78,7 +78,7 @@ def cmd_randint(ctx: click.Context) -> None:
 @internal.command(name="randint_constrained")
 @click.pass_context
 def cmd_randint_constrained(ctx: click.Context) -> None:
-    """Benchmarks the `randint_constrained` function from `max_div.sampling.con`."""
+    """Benchmarks the internal `randint_constrained` sampling function."""
     speed = ctx.obj["speed"]
     markdown = ctx.obj["markdown"]
     file = ctx.obj["file"]
