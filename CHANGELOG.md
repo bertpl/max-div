@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Solver setup no longer computes dataset-wide diversity contributions (requiring all pairwise distances) up front; they are computed on demand by the strategies that use them
+- Swap candidates are sampled from a bounded, gradually growing pool and no longer weighted by dataset-wide contributions, substantially improving results at short time budgets and on large problems
 
 ### Deprecated
 

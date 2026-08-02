@@ -138,6 +138,22 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
     assert solutions[0].score == solutions[1].score
 
 
+def test_solver_deterministic_above_candidate_cap():
+    """Same seed → identical selections on a problem large enough that swap candidates are subsampled."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260802)
+    vectors = rng.random((600, 3)).astype(np.float32)  # pool of ~590 non-selected items exceeds the initial cap
+    problem = MaxDivProblem.new(vectors, k=10, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+
+    # --- act ---------------------------------------------
+    solution_1 = MaxDivSolverBuilder(problem).with_preset(iterations(100)).with_seed(7).build().solve(verbosity=0)
+    solution_2 = MaxDivSolverBuilder(problem).with_preset(iterations(100)).with_seed(7).build().solve(verbosity=0)
+
+    # --- assert ------------------------------------------
+    assert list(solution_1.i_selected) == list(solution_2.i_selected)
+
+
 @pytest.mark.parametrize("backend", ["lazy", "full_matrix"])
 @pytest.mark.parametrize("distance_metric", [DistanceMetric.L2_EUCLIDEAN, DistanceMetric.COSINE])
 def test_solver_alternative_backend_bit_identical_selection(backend: str, distance_metric: DistanceMetric):
