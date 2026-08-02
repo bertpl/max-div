@@ -94,18 +94,18 @@ class MeanDistanceTracker(DiversityContributionTracker):
         if contribution_wrt_dataset is not None:
             self._contribution_wrt_dataset = contribution_wrt_dataset
         else:
-            # lazy memo: NaN = not yet computed; elements are filled on read and never change
-            # once written (monotone), which is what makes sharing the array across copies safe
+            # lazily filled cache: NaN marks a not-yet-computed element; elements are computed on
+            # read and never change afterwards, which is what makes sharing the array across copies safe
             self._contribution_wrt_dataset = np.full(store.n, np.nan, dtype=np.float32)
         self._dist_sums = dist_sums if dist_sums is not None else np.zeros(store.n, dtype=np.float64)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_dist_sums: list[NDArray[np.float64]] = []
 
     def copy(self) -> MeanDistanceTracker:
-        """Return an independent copy of this tracker; the store and the global-contribution memo are shared.
+        """Return an independent copy of this tracker; store and lazily filled cache are shared.
 
-        Sharing the memo is safe because its elements are monotone: filled on read, never
-        rewritten, so copies can only ever benefit from each other's computed elements.
+        Sharing the global-contribution cache is safe because its elements are computed once and
+        never rewritten, so copies can only ever benefit from each other's computed elements.
         """
         return MeanDistanceTracker(
             store=self._store,

@@ -107,18 +107,18 @@ class SeparationTracker(DiversityContributionTracker):
                              without recomputation.
         """
         self._store = store  # READ-ONLY
-        # lazy memo: NaN = not yet computed; elements are filled on read and never change once
-        # written (monotone), which is what makes sharing the array across copies safe
+        # lazily filled cache: NaN marks a not-yet-computed element; elements are computed on read
+        # and never change afterwards, which is what makes sharing the array across copies safe
         self._sep_global = sep_global if sep_global is not None else np.full(store.n, np.nan, dtype=np.float32)
         self._sep_selected = sep_selected if sep_selected is not None else np.full(store.n, np.inf, dtype=np.float32)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_sep_selected: list[NDArray[np.float32]] = []
 
     def copy(self) -> SeparationTracker:
-        """Return an independent copy of this tracker; the store and the global-separation memo are shared.
+        """Return an independent copy of this tracker; store and lazily filled cache are shared.
 
-        Sharing the memo is safe because its elements are monotone: filled on read, never
-        rewritten, so copies can only ever benefit from each other's computed elements.
+        Sharing the global-separation cache is safe because its elements are computed once and
+        never rewritten, so copies can only ever benefit from each other's computed elements.
         """
         return SeparationTracker(
             store=self._store,

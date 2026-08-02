@@ -50,9 +50,10 @@ class DiversityContributionTracker(ABC):
     def contribution_wrt_dataset(self) -> NDArray[np.floating]:
         """Return static per-point contribution of each point wrt the whole dataset (selection-independent).
 
-        Dataset-wide contributions are computed lazily, element by element — each element requiring
-        a scan of one full row of the pairwise-distance matrix; this property first computes every
-        not-yet-computed element, so it is always safe to read but costs the full O(n²) sweep on
+        Dataset-wide contributions live in a lazily filled cache: elements start as NaN (not yet
+        computed), are computed on first read — each requiring a scan of one full row of the
+        pairwise-distance matrix — and never change afterwards.  This property first computes
+        every missing element, so it is always safe to read but costs the full O(n²) sweep on
         first access.  Callers needing only some elements use `contribution_wrt_dataset_for`,
         which computes just the elements it returns.
 

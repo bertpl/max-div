@@ -155,14 +155,14 @@ def test_lazy_global_targeted_read_computes_only_requested(tracker: SeparationTr
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(values, [1, 3])
-    # only the requested elements are computed; the rest of the memo is still pending
+    # only the requested elements are computed; the rest of the cache is still pending
     assert np.all(np.isnan(tracker._sep_global[[1, 2, 4]]))
-    # the returned array is a fresh copy, not a view into the memo
+    # the returned array is a fresh copy, not a view into the cache
     values[0] = -1.0
     assert tracker._sep_global[0] != -1.0
 
 
-def test_lazy_global_memo_shared_across_copies(tracker: SeparationTracker):
+def test_lazy_global_cache_shared_across_copies(tracker: SeparationTracker):
     # --- arrange -----------------------------------------
     clone = tracker.copy()
 
@@ -170,7 +170,7 @@ def test_lazy_global_memo_shared_across_copies(tracker: SeparationTracker):
     clone.contribution_wrt_dataset_for(np.array([2], dtype=np.int32))
 
     # --- assert ------------------------------------------
-    # an element computed through the clone is visible through the original (one shared, monotone memo)
+    # an element computed through the clone is visible through the original (one shared cache)
     assert not np.isnan(tracker._sep_global[2])
 
 
