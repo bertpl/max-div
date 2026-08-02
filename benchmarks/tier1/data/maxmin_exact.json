@@ -1,0 +1,62 @@
+[
+  {
+    "problem": "U1",
+    "size": 1,
+    "n": 100,
+    "k": 10,
+    "m": 0,
+    "optimum": 0.09967416524887085,
+    "proven_optimal": true,
+    "measured_sec": 0.24161495827138424
+  },
+  {
+    "problem": "U1",
+    "size": 2,
+    "n": 200,
+    "k": 20,
+    "m": 0,
+    "optimum": 0.23060274124145508,
+    "proven_optimal": true,
+    "measured_sec": 0.31645379215478897
+  },
+  {
+    "problem": "U1",
+    "size": 3,
+    "n": 300,
+    "k": 30,
+    "m": 0,
+    "optimum": 0.3548988997936249,
+    "proven_optimal": true,
+    "measured_sec": 10.456889292225242
+  },
+  {
+    "problem": "C1",
+    "size": 1,
+    "n": 100,
+    "k": 10,
+    "m": 2,
+    "optimum": 0.8815005421638489,
+    "proven_optimal": true,
+    "measured_sec": 0.12159483134746552
+  },
+  {
+    "problem": "C1",
+    "size": 2,
+    "n": 200,
+    "k": 20,
+    "m": 4,
+    "optimum": 0.5126553773880005,
+    "proven_optimal": true,
+    "measured_sec": 0.45850695483386517
+  },
+  {
+    "problem": "C1",
+    "size": 3,
+    "n": 300,
+    "k": 30,
+    "m": 6,
+    "optimum": 0.3970380425453186,
+    "proven_optimal": true,
+    "measured_sec": 1.3391335420310497
+  }
+]

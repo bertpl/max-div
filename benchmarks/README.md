@@ -14,7 +14,10 @@ dependencies live in the `benchmarks` dependency group, never in package metadat
 - `runners/` — drivers that execute max-div (anytime ladder) or an adapter
   (single-shot) against a problem and emit run records.
 - `figures/` — plotting of anytime curves (max-div) vs. single-shot dots (competitors).
+- `tier1/` — benchmark scenarios vs. exact solvers (CP-SAT, SCIP).
 - `tier2/` — benchmark scenarios vs. Python subset-selection heuristics.
+- `tier3/` — benchmark scenarios vs. MDPLIB best-known values.
+- `mdplib/` — MDPLIB instance loader plus the vendored best-known-value table.
 
 ## Running
 
@@ -24,7 +27,12 @@ uv run --group benchmarks python -m benchmarks.tier2.smoke
 ```
 
 Outputs (JSONL records + figures) are written under `./reports/benchmarks/` (gitignored);
-only curated result tables/figures are ever promoted into `docs/`.
+only curated result tables/figures are ever promoted into `docs/`. The exception is
+third-party reference data: competitor and exact-solver results are tracked under
+`tier1/data/` and `tier2/data/` (alongside `mdplib/data/`), because the published
+comparison pages keep those values fixed across re-measurements of max-div —
+republishing must not depend on files that exist only on the machine of the original
+run.
 
 ## Measurement protocol
 
