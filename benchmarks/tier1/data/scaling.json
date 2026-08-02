@@ -1,0 +1,128 @@
+[
+  {
+    "backend": "SCIP (1 thread)",
+    "n": 40,
+    "k": 4,
+    "measured_sec": 36.872869627550244,
+    "proven": true
+  },
+  {
+    "backend": "SCIP (1 thread)",
+    "n": 50,
+    "k": 5,
+    "measured_sec": 66.28484887629747,
+    "proven": true
+  },
+  {
+    "backend": "SCIP (1 thread)",
+    "n": 60,
+    "k": 6,
+    "measured_sec": 38.16768437437713,
+    "proven": true
+  },
+  {
+    "backend": "SCIP (1 thread)",
+    "n": 70,
+    "k": 7,
+    "measured_sec": 176.19076399877667,
+    "proven": true
+  },
+  {
+    "backend": "SCIP (1 thread)",
+    "n": 80,
+    "k": 8,
+    "measured_sec": 317.65430933237076,
+    "proven": true
+  },
+  {
+    "backend": "SCIP (1 thread)",
+    "n": 90,
+    "k": 9,
+    "measured_sec": 900.1751110851765,
+    "proven": false
+  },
+  {
+    "backend": "CP-SAT (1 worker)",
+    "n": 40,
+    "k": 4,
+    "measured_sec": 1.220282208174467,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (1 worker)",
+    "n": 50,
+    "k": 5,
+    "measured_sec": 5.7660690397024155,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (1 worker)",
+    "n": 60,
+    "k": 6,
+    "measured_sec": 124.46854012645781,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (1 worker)",
+    "n": 70,
+    "k": 7,
+    "measured_sec": 3499.2307402510196,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (1 worker)",
+    "n": 80,
+    "k": 8,
+    "measured_sec": 3600.2287832908332,
+    "proven": false
+  },
+  {
+    "backend": "CP-SAT (8 workers)",
+    "n": 40,
+    "k": 4,
+    "measured_sec": 0.8295429162681103,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (8 workers)",
+    "n": 50,
+    "k": 5,
+    "measured_sec": 2.2039913777261972,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (8 workers)",
+    "n": 60,
+    "k": 6,
+    "measured_sec": 10.490915209054947,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (8 workers)",
+    "n": 70,
+    "k": 7,
+    "measured_sec": 38.43514008447528,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (8 workers)",
+    "n": 80,
+    "k": 8,
+    "measured_sec": 159.41029054112732,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (8 workers)",
+    "n": 90,
+    "k": 9,
+    "measured_sec": 886.3025238309056,
+    "proven": true
+  },
+  {
+    "backend": "CP-SAT (8 workers)",
+    "n": 100,
+    "k": 10,
+    "measured_sec": 3600.9619767908007,
+    "proven": false
+  }
+]
