@@ -7,7 +7,7 @@ from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker
 from max_div._core.solver._diversity_contribution._mean_distance import (
-    compute_mean_distance_rows,
+    compute_mean_distance_elements,
     update_distance_sums_add,
     update_distance_sums_remove,
 )
@@ -172,7 +172,7 @@ def test_lazy_global_targeted_read_computes_only_requested(tracker: MeanDistance
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(values, expected_global[requested], rtol=1e-6)
-    # only the requested rows are computed; the rest of the memo is still pending
+    # only the requested elements are computed; the rest of the memo is still pending
     untouched = np.setdiff1d(np.arange(N), requested)
     assert np.all(np.isnan(tracker._contribution_wrt_dataset[untouched]))
     # the returned array is a fresh copy, not a view into the memo
@@ -188,7 +188,7 @@ def test_lazy_global_memo_shared_across_copies(tracker: MeanDistanceTracker):
     clone.contribution_wrt_dataset_for(np.array([4], dtype=np.int32))
 
     # --- assert ------------------------------------------
-    # a row computed through the clone is visible through the original (one shared, monotone memo)
+    # an element computed through the clone is visible through the original (one shared, monotone memo)
     assert not np.isnan(tracker._contribution_wrt_dataset[4])
 
 
@@ -212,8 +212,8 @@ def test_copy_is_independent(tracker: MeanDistanceTracker):
 # =================================================================================================
 #  Kernels
 # =================================================================================================
-def test_compute_mean_distance_rows_partial_fill():
-    """The rows kernel fills exactly the requested rows, with brute-force row-mean values."""
+def test_compute_mean_distance_elements_partial_fill():
+    """The elements kernel fills exactly the requested elements, with brute-force mean values."""
 
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(20260713)
@@ -225,12 +225,12 @@ def test_compute_mean_distance_rows_partial_fill():
     requested = np.array([0, 7, 29, 13], dtype=np.int32)
 
     # --- act ---------------------------------------------
-    compute_mean_distance_rows(out, DistanceStore.condensed(d, n=m), requested)
+    compute_mean_distance_elements(out, DistanceStore.condensed(d, n=m), requested)
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(out[requested], expected[requested], rtol=1e-6)
     untouched = np.setdiff1d(np.arange(m), requested)
-    assert np.all(np.isnan(out[untouched]))  # only the requested rows were written
+    assert np.all(np.isnan(out[untouched]))  # only the requested elements were written
 
 
 def test_update_distance_sums_add_remove():

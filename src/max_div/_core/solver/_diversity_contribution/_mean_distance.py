@@ -22,10 +22,11 @@ if TYPE_CHECKING:
 # point to itself are 0, so a point's own entry never needs special-casing: it always equals the
 # sum of its distances to the *other* selected points.
 @numba.njit(numba.void(numba.float32[::1], DISTANCE_STORE_TYPE, numba.int32[::1]), cache=True)
-def compute_mean_distance_rows(out: NDArray[np.float32], store: DistanceStore, indices: NDArray[np.int32]) -> None:
-    """Fill the given rows of `out` with each item's mean distance to all others.
+def compute_mean_distance_elements(out: NDArray[np.float32], store: DistanceStore, indices: NDArray[np.int32]) -> None:
+    """Fill the given elements of `out` with each item's mean distance to all others.
 
-    Rows are independent, so any subset can be computed in any order.  Per row: a float64 sum over
+    Each element requires scanning that item's full row of the pairwise-distance matrix; elements
+    are independent, so any subset can be computed in any order.  Per element: a float64 sum over
     partners in ascending index (so sums stay bit-equal across store layouts), one divide by
     (n-1), one cast to float32.
     """
@@ -93,8 +94,8 @@ class MeanDistanceTracker(DiversityContributionTracker):
         if contribution_wrt_dataset is not None:
             self._contribution_wrt_dataset = contribution_wrt_dataset
         else:
-            # lazy memo: NaN = not yet computed; rows are filled on read and never change once
-            # written (monotone), which is what makes sharing the array across copies safe
+            # lazy memo: NaN = not yet computed; elements are filled on read and never change
+            # once written (monotone), which is what makes sharing the array across copies safe
             self._contribution_wrt_dataset = np.full(store.n, np.nan, dtype=np.float32)
         self._dist_sums = dist_sums if dist_sums is not None else np.zeros(store.n, dtype=np.float64)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
@@ -103,8 +104,8 @@ class MeanDistanceTracker(DiversityContributionTracker):
     def copy(self) -> MeanDistanceTracker:
         """Return an independent copy of this tracker; the store and the global-contribution memo are shared.
 
-        Sharing the memo is safe because its rows are monotone: filled on read, never rewritten,
-        so copies can only ever benefit from each other's computed rows.
+        Sharing the memo is safe because its elements are monotone: filled on read, never
+        rewritten, so copies can only ever benefit from each other's computed elements.
         """
         return MeanDistanceTracker(
             store=self._store,
@@ -125,21 +126,21 @@ class MeanDistanceTracker(DiversityContributionTracker):
     def contribution_wrt_dataset(self) -> NDArray[np.float32]:
         """Return mean distance of all points wrt all other points (reference; do not modify).
 
-        Computes every not-yet-computed row first; see the base class for the lazy contract.
+        Computes every not-yet-computed element first; see the base class for the lazy contract.
         """
-        self._ensure_global_rows(np.arange(self._store.n, dtype=np.int32))
+        self._ensure_global_elements(np.arange(self._store.n, dtype=np.int32))
         return self._contribution_wrt_dataset
 
     def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
-        """Return global mean-distance contributions for `indices`, computing missing rows first (fresh array)."""
-        self._ensure_global_rows(indices)
+        """Return global mean-distance contributions for `indices`, computing missing elements first (fresh array)."""
+        self._ensure_global_elements(indices)
         return self._contribution_wrt_dataset[indices]
 
-    def _ensure_global_rows(self, indices: NDArray[np.int32]) -> None:
-        """Compute any not-yet-computed global-contribution rows among `indices`."""
+    def _ensure_global_elements(self, indices: NDArray[np.int32]) -> None:
+        """Compute any not-yet-computed global-contribution elements among `indices`."""
         missing = indices[np.isnan(self._contribution_wrt_dataset[indices])]
-        if missing.size:
-            compute_mean_distance_rows(
+        if missing.size > 0:
+            compute_mean_distance_elements(
                 self._contribution_wrt_dataset, self._store, np.ascontiguousarray(missing, dtype=np.int32)
             )
 

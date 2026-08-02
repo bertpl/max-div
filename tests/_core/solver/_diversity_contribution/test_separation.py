@@ -7,7 +7,7 @@ from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._diversity_contribution import SeparationTracker
 from max_div._core.solver._diversity_contribution._separation import (
     compute_separation,
-    compute_separation_rows,
+    compute_separation_elements,
     update_separation_add,
     update_separation_remove,
 )
@@ -155,7 +155,7 @@ def test_lazy_global_targeted_read_computes_only_requested(tracker: SeparationTr
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(values, [1, 3])
-    # only the requested rows are computed; the rest of the memo is still pending
+    # only the requested elements are computed; the rest of the memo is still pending
     assert np.all(np.isnan(tracker._sep_global[[1, 2, 4]]))
     # the returned array is a fresh copy, not a view into the memo
     values[0] = -1.0
@@ -170,12 +170,12 @@ def test_lazy_global_memo_shared_across_copies(tracker: SeparationTracker):
     clone.contribution_wrt_dataset_for(np.array([2], dtype=np.int32))
 
     # --- assert ------------------------------------------
-    # a row computed through the clone is visible through the original (one shared, monotone memo)
+    # an element computed through the clone is visible through the original (one shared, monotone memo)
     assert not np.isnan(tracker._sep_global[2])
 
 
-def test_compute_separation_rows_partial_fill():
-    """The rows kernel fills exactly the requested rows; untouched rows keep their sentinel."""
+def test_compute_separation_elements_partial_fill():
+    """The elements kernel fills exactly the requested elements; untouched ones keep their sentinel."""
 
     # --- arrange -----------------------------------------
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
@@ -184,11 +184,11 @@ def test_compute_separation_rows_partial_fill():
     requested = np.array([1, 4], dtype=np.int32)
 
     # --- act ---------------------------------------------
-    compute_separation_rows(sep, store, requested)
+    compute_separation_elements(sep, store, requested)
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(sep[requested], [1, 4])
-    assert np.all(np.isnan(sep[[0, 2, 3]]))  # only the requested rows were written
+    assert np.all(np.isnan(sep[[0, 2, 3]]))  # only the requested elements were written
 
 
 def test_compute_separation():

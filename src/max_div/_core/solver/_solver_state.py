@@ -357,7 +357,7 @@ class SolverState:
         """Return dataset-wide contributions for `indices`, computing missing entries first.
 
         Returns a freshly allocated array (safe for in-place mutation by the caller); cost is
-        proportional to the not-yet-computed rows among `indices` rather than to n.
+        proportional to the not-yet-computed elements among `indices` rather than to n.
         """
         return self._contribution_tracker.contribution_wrt_dataset_for(indices)
 
