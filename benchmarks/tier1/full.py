@@ -5,6 +5,12 @@ Emits JSON/JSONL result files into ``reports/benchmarks/tier1/``; the docs artif
 generated separately by ``benchmarks.tier1.report``. Expect a ~6 h sequential run, most of
 it spent in the two long exact reference solves.
 
+Each experiment's exact-solver half and max-div half write separate files, so max-div can
+be re-measured alone (``benchmarks.tier1.rerun``) while the exact references stay fixed.
+The exact outputs (``*.json``) share their names with the tracked reference copies under
+``benchmarks/tier1/data/``: promoting a fresh exact measurement is copying the files over,
+a deliberate act rather than a side effect of re-running.
+
 Three experiments:
 
 1. **Max-min gap to proven optimum** — CP-SAT (threshold binary search) proves the optimum
@@ -57,9 +63,9 @@ def scaling_problem(n: int) -> MaxDivProblem:
     return MaxDivProblem.new(vectors, k=max(2, n // 10), diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
 
 
-def run_maxmin_gap() -> None:
-    """Experiment 1: prove max-min optima with CP-SAT and ladder max-div on the same problems."""
-    exact_rows, records = [], []
+def run_maxmin_exact(out_path: Path = OUTPUT_DIR / "maxmin_exact.json") -> None:
+    """Experiment 1, exact half: prove the max-min optima with CP-SAT."""
+    exact_rows = []
     for name in MAXMIN_PROBLEMS:
         for size in MAXMIN_SIZES:
             problem = build_problem(name, size=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
@@ -76,14 +82,33 @@ def run_maxmin_gap() -> None:
                     "measured_sec": res.measured_sec,
                 }
             )
-            records += run_maxdiv_ladder(
-                problem, problem_name=name, size=size, time_budgets_sec=TIME_BUDGETS_SEC, seeds=SEEDS
-            )
             print(
                 f"maxmin {name} size={size}: optimum={res.min_separation:.5f} proven={res.proven_optimal}", flush=True
             )
-    (OUTPUT_DIR / "maxmin_exact.json").write_text(json.dumps(exact_rows, indent=2))
-    save_records(records, OUTPUT_DIR / "maxmin_records.jsonl")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(exact_rows, indent=2))
+
+
+def run_maxmin_maxdiv(
+    problems: tuple[str, ...] = MAXMIN_PROBLEMS,
+    sizes: tuple[int, ...] = MAXMIN_SIZES,
+    time_budgets_sec: list[float] = TIME_BUDGETS_SEC,
+    seeds: tuple[int, ...] = SEEDS,
+    out_path: Path = OUTPUT_DIR / "maxmin_records.jsonl",
+) -> None:
+    """Experiment 1, max-div half: ladder max-div on the proven-optimum problems.
+
+    Defaults are the published protocol; pass smaller values only for validation runs.
+    """
+    records = []
+    for name in problems:
+        for size in sizes:
+            problem = build_problem(name, size=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
+            records += run_maxdiv_ladder(
+                problem, problem_name=name, size=size, time_budgets_sec=time_budgets_sec, seeds=seeds
+            )
+            print(f"maxmin max-div {name} size={size} done", flush=True)
+    save_records(records, out_path)
 
 
 def run_scaling_ladder() -> None:
@@ -115,9 +140,9 @@ def run_scaling_ladder() -> None:
     (OUTPUT_DIR / "scaling.json").write_text(json.dumps(rows, indent=2))
 
 
-def run_incumbent_panel() -> None:
-    """Experiment 3: long-cap CP-SAT incumbents vs. the max-div ladder, geomean objective."""
-    panel_rows, records = [], []
+def run_incumbent_exact(out_path: Path = OUTPUT_DIR / "incumbent.json") -> None:
+    """Experiment 3, exact half: long-cap CP-SAT incumbents on the uncertifiable problems."""
+    panel_rows = []
     for name, size, cap in INCUMBENT_CASES:
         problem = build_problem(name, size=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
         res = solve_nn_assignment_cpsat(problem, DiversityMetric.GEOMEAN_SEPARATION, time_limit_sec=cap)
@@ -132,27 +157,46 @@ def run_incumbent_panel() -> None:
                 **asdict(res) | {"i_selected": res.i_selected.tolist()},
             }
         )
-        records += run_maxdiv_ladder(
-            problem, problem_name=name, size=size, time_budgets_sec=TIME_BUDGETS_SEC, seeds=SEEDS
-        )
         print(
             f"incumbent {name} size={size}: value={res.objective_value:.5f} bound={res.objective_bound:.5f} "
             f"proven={res.proven_optimal} in {res.measured_sec:.0f}s",
             flush=True,
         )
-    (OUTPUT_DIR / "incumbent.json").write_text(json.dumps(panel_rows, indent=2))
-    save_records(records, OUTPUT_DIR / "incumbent_records.jsonl")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(panel_rows, indent=2))
+
+
+def run_incumbent_maxdiv(
+    cases: tuple[tuple[str, int, float], ...] = INCUMBENT_CASES,
+    time_budgets_sec: list[float] = TIME_BUDGETS_SEC,
+    seeds: tuple[int, ...] = SEEDS,
+    out_path: Path = OUTPUT_DIR / "incumbent_records.jsonl",
+) -> None:
+    """Experiment 3, max-div half: ladder max-div on the incumbent-panel problems.
+
+    Defaults are the published protocol; pass smaller values only for validation runs.
+    """
+    records = []
+    for name, size, _cap in cases:
+        problem = build_problem(name, size=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+        records += run_maxdiv_ladder(
+            problem, problem_name=name, size=size, time_budgets_sec=time_budgets_sec, seeds=seeds
+        )
+        print(f"incumbent max-div {name} size={size} done", flush=True)
+    save_records(records, out_path)
 
 
 def main() -> None:
-    """Run all three tier-1 experiments and persist their results."""
+    """Run all three tier-1 experiments, exact and max-div halves alike."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     print("tier-1 experiment 1: max-min gap to proven optimum ...", flush=True)
-    run_maxmin_gap()
+    run_maxmin_exact()
+    run_maxmin_maxdiv()
     print("tier-1 experiment 2: backend scaling ladder ...", flush=True)
     run_scaling_ladder()
     print("tier-1 experiment 3: incumbent-at-budget panel ...", flush=True)
-    run_incumbent_panel()
+    run_incumbent_exact()
+    run_incumbent_maxdiv()
     print("tier-1 complete", flush=True)
 
 

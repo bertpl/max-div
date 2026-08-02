@@ -1,9 +1,11 @@
-"""Tier-2 report emission: turn the full-scenario records into docs figures and tables.
+"""Tier-2 report emission: turn the recorded runs into docs figures and tables.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.report``.
-Reads the JSONL records written by ``benchmarks.tier2.full`` and emits the curated docs
-artifacts (anytime-curve figures + margin tables) into ``docs/benchmarks/comparison/``.
-Only this curated set is committed; the raw records stay untracked but reproducible.
+Merges two record sources: max-div's ladders as measured by ``benchmarks.tier2.full`` or
+``benchmarks.tier2.rerun`` (untracked, re-measured whenever the solver changes), and the
+competitor single-shots from the tracked reference records in ``benchmarks/tier2/data/``
+(fixed across max-div re-measurements). Emits the curated docs artifacts (anytime-curve
+figures + margin tables) into ``docs/benchmarks/comparison/``.
 """
 
 from collections import defaultdict
@@ -15,6 +17,7 @@ from benchmarks.common.records import RunRecord, load_records
 from benchmarks.figures import plot_anytime_curve
 
 RECORDS_DIR = Path("reports/benchmarks/tier2")
+DATA_DIR = Path(__file__).parent / "data"
 DOCS_DIR = Path("docs/benchmarks/comparison")
 
 # Figures are curated to one representative problem per scenario (U1 uniform / C1 simple
@@ -97,12 +100,16 @@ def build_margin_table(records: list[RunRecord], metric_name: str, problems: lis
     return header + "\n" + "\n".join(lines) + "\n"
 
 
-def main() -> None:
-    """Emit all curated tier-2 docs artifacts from the recorded runs."""
-    unconstrained = load_records(RECORDS_DIR / "records_unconstrained.jsonl")
-    constrained = load_records(RECORDS_DIR / "records_constrained.jsonl")
-    images_dir = DOCS_DIR / "images"
-    results_dir = DOCS_DIR / "results"
+def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR) -> None:
+    """Emit all curated tier-2 docs artifacts from the merged record sources."""
+    unconstrained = load_records(DATA_DIR / "third_party_unconstrained.jsonl") + load_records(
+        records_dir / "maxdiv_unconstrained.jsonl"
+    )
+    constrained = load_records(DATA_DIR / "third_party_constrained.jsonl") + load_records(
+        records_dir / "maxdiv_constrained.jsonl"
+    )
+    images_dir = docs_dir / "images"
+    results_dir = docs_dir / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     sizes = sorted({r.size for r in unconstrained})
@@ -137,7 +144,7 @@ def main() -> None:
     )
     (results_dir / "tier2_margins_constrained.md").write_text(table)
 
-    print(f"tier-2 report emitted into {DOCS_DIR}", flush=True)
+    print(f"tier-2 report emitted into {docs_dir}", flush=True)
 
 
 if __name__ == "__main__":
