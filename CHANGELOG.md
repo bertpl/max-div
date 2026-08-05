@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Substantially faster distance lookups, speeding up solving at every problem size, most of all on large problems
 
 ### Deprecated
 

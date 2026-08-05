@@ -5,12 +5,7 @@ from scipy.spatial.distance import squareform
 from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._diversity_contribution import SeparationTracker
-from max_div._core.solver._diversity_contribution._separation import (
-    compute_separation,
-    compute_separation_elements,
-    update_separation_add,
-    update_separation_remove,
-)
+from max_div._core.solver._diversity_contribution._separation import backend_for
 
 
 # =================================================================================================
@@ -21,6 +16,13 @@ def tracker() -> SeparationTracker:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
     store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0])
     return SeparationTracker(store)
+
+
+def _all_separations(store: DistanceStore) -> np.ndarray:
+    """Separation of every item wrt all others, via the layout's own elements calculation."""
+    sep = np.full(store.n, np.inf, dtype=np.float32)
+    backend_for(store).elements(sep, store, np.arange(store.n, dtype=np.int32))
+    return sep
 
 
 def _selection_args(indices: list[int], n: int) -> tuple[np.ndarray, np.int32]:
@@ -48,7 +50,7 @@ def test_construction_precomputed_arrays_skip_recompute():
     # --- arrange -----------------------------------------
     vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
     store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=3)
-    sep_global = compute_separation(store)
+    sep_global = _all_separations(store)
     sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
 
     # --- act ---------------------------------------------
@@ -184,15 +186,15 @@ def test_compute_separation_elements_partial_fill():
     requested = np.array([1, 4], dtype=np.int32)
 
     # --- act ---------------------------------------------
-    compute_separation_elements(sep, store, requested)
+    backend_for(store).elements(sep, store, requested)
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(sep[requested], [1, 4])
     assert np.all(np.isnan(sep[[0, 2, 3]]))  # only the requested elements were written
 
 
-def test_compute_separation():
-    """Check if compute_separation produces correct separation values."""
+def test_elements_over_every_item():
+    """`elements` fills a whole array with each item's separation wrt all others."""
 
     # --- arrange -----------------------------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
@@ -209,7 +211,7 @@ def test_compute_separation():
                     expected_separation[i] = dist
 
     # --- act ---------------------------------------------
-    separation = compute_separation(DistanceStore.condensed(d, n=m))
+    separation = _all_separations(DistanceStore.condensed(d, n=m))
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)
@@ -250,7 +252,8 @@ def test_update_separation_add():
     )
 
     # --- act ---------------------------------------------
-    update_separation_add(separation, DistanceStore.condensed(d, n=m), np.int32(i_added))
+    store = DistanceStore.condensed(d, n=m)
+    backend_for(store).add(separation, store, np.int32(i_added))
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)
@@ -291,9 +294,92 @@ def test_update_separation_remove():
     )
 
     # --- act ---------------------------------------------
-    update_separation_remove(
-        separation, DistanceStore.condensed(d, n=m), np.int32(i_removed), np.array([0], dtype=np.int32)
-    )
+    store = DistanceStore.condensed(d, n=m)
+    backend_for(store).remove(separation, store, np.int32(i_removed), np.array([0], dtype=np.int32))
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(separation, expected_separation)
+
+
+# =================================================================================================
+#  Backend equivalence
+# =================================================================================================
+# One backend module per storage layout means the same logic exists three times, so a fix applied
+# to two of them would pass review looking complete.  These are the guard against that: every
+# backend is driven through the same operations and checked against a brute-force recompute,
+# which catches a divergent copy and also catches all three drifting together.
+def _stores_for(vectors: np.ndarray, metric: DistanceMetric) -> dict[str, DistanceStore]:
+    """One store per layout over identical distances."""
+    condensed = compute_pdist(vectors, metric)
+    return {
+        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, metric),
+        "condensed": DistanceStore.condensed(condensed, n=vectors.shape[0]),
+        "lazy": DistanceStore.lazy(vectors, metric),
+    }
+
+
+def _brute_force_separation(vectors: np.ndarray, metric: DistanceMetric, selection: list[int]) -> np.ndarray:
+    """Separation of every item wrt `selection`, computed independently of the backends."""
+    n = vectors.shape[0]
+    squared = squareform(compute_pdist(vectors, metric)).astype(np.float64)
+    expected = np.full(n, np.inf, dtype=np.float64)
+    for j in range(n):
+        for k in selection:
+            if k != j:
+                expected[j] = min(expected[j], squared[j, k])
+    return expected
+
+
+@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+def test_backend_matches_brute_force_over_random_operations(backend: str):
+    """Random add/remove sequences must match a brute-force recompute, on every layout."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260805)
+    vectors = rng.random((25, 3)).astype(np.float32)
+    store = _stores_for(vectors, DistanceMetric.L2_EUCLIDEAN)[backend]
+    tracker = SeparationTracker(store)
+    selection: list[int] = []
+    rescans_triggered = 0
+
+    # --- act / assert ------------------------------------
+    for _ in range(120):
+        must_remove = len(selection) == 25  # nothing left to add once everything is selected
+        if selection and (must_remove or rng.random() < 0.4):
+            index = int(rng.choice(selection))
+            selection.remove(index)
+            # a removal whose item was someone's nearest is what exercises the rescan branch
+            before = tracker.contribution_wrt_selection(*_selection_args([*selection, index], 25)).copy()
+            tracker.remove(np.int32(index), new_selection=np.array(selection, dtype=np.int32))
+            after = tracker.contribution_wrt_selection(*_selection_args(selection, 25))
+            rescans_triggered += int(np.any(before != after))
+        else:
+            index = int(rng.choice([i for i in range(25) if i not in selection]))
+            tracker.add(np.int32(index))
+            selection.append(index)
+
+        expected = _brute_force_separation(vectors, DistanceMetric.L2_EUCLIDEAN, selection)
+        actual = tracker.contribution_wrt_selection(*_selection_args(selection, 25))
+        np.testing.assert_allclose(actual, expected, rtol=1e-5, err_msg=f"{backend} diverged")
+
+    assert rescans_triggered > 0, "the rescan branch was never exercised, so this proves little"
+
+
+def test_every_backend_computes_the_same_separations():
+    """The three layouts agree with each other, to within summation rounding."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260805)
+    vectors = rng.random((30, 4)).astype(np.float32)
+    stores = _stores_for(vectors, DistanceMetric.L2_EUCLIDEAN)
+    tolerance = 8.0 * np.sqrt(vectors.shape[1]) * np.finfo(np.float32).eps
+
+    # --- act ---------------------------------------------
+    results = {name: _all_separations(store) for name, store in stores.items()}
+
+    # --- assert ------------------------------------------
+    reference = results.pop("condensed")
+    for name, values in results.items():
+        np.testing.assert_allclose(
+            values, reference, rtol=tolerance, atol=tolerance * float(np.max(reference)), err_msg=f"{name} disagrees"
+        )
