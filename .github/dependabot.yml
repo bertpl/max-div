@@ -74,5 +74,9 @@ updates:
     # release with compromised publishing credentials. Resolving only past that point means the
     # file set installed is the one the release is stuck with — a shorter wait leaves the loophole
     # of picking up a file added days after the release looked settled.
+    #   https://blog.pypi.org/posts/2026-07-22-releases-now-reject-new-files-after-14-days/
+    # That announcement is the reference because there is no other: the rule has no page under
+    # docs.pypi.org, its formal semantics being left to PEP 694. Re-check it before changing this
+    # number, since the two are meant to stay equal.
     cooldown:
       default-days: 14  # covers every semver level; no per-level override needed
