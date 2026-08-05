@@ -7,9 +7,7 @@ from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker
 from max_div._core.solver._diversity_contribution._mean_distance import (
-    compute_mean_distance_elements,
-    update_distance_sums_add,
-    update_distance_sums_remove,
+    backend_for,
 )
 
 # =================================================================================================
@@ -225,7 +223,8 @@ def test_compute_mean_distance_elements_partial_fill():
     requested = np.array([0, 7, 29, 13], dtype=np.int32)
 
     # --- act ---------------------------------------------
-    compute_mean_distance_elements(out, DistanceStore.condensed(d, n=m), requested)
+    store = DistanceStore.condensed(d, n=m)
+    backend_for(store).elements(out, store, requested)
 
     # --- assert ------------------------------------------
     np.testing.assert_allclose(out[requested], expected[requested], rtol=1e-6)
@@ -252,12 +251,14 @@ def test_update_distance_sums_add_remove():
 
     # --- act / assert ------------------------------------
     for index in [3, 17, 0, 9, 12]:
-        update_distance_sums_add(dist_sums, DistanceStore.condensed(d, n=m), np.int32(index))
+        store = DistanceStore.condensed(d, n=m)
+        backend_for(store).add(dist_sums, store, np.int32(index))
         selection.append(index)
         np.testing.assert_allclose(dist_sums, expected_sums(), rtol=1e-6)
 
     for index in [0, 3, 12]:
-        update_distance_sums_remove(dist_sums, DistanceStore.condensed(d, n=m), np.int32(index))
+        store = DistanceStore.condensed(d, n=m)
+        backend_for(store).remove(dist_sums, store, np.int32(index))
         selection.remove(index)
         np.testing.assert_allclose(dist_sums, expected_sums(), rtol=1e-6)
 
@@ -272,12 +273,56 @@ def test_update_distance_sums_own_entry_untouched():
     dist_sums = np.zeros(m, dtype=np.float64)
 
     # selection {1}: point 1's own entry stays 0 (no other selected points yet)
-    update_distance_sums_add(dist_sums, DistanceStore.condensed(d, n=m), np.int32(1))
+    store = DistanceStore.condensed(d, n=m)
+    backend_for(store).add(dist_sums, store, np.int32(1))
     assert dist_sums[1] == 0.0
 
     # --- act ---------------------------------------------
     # selection {1, 2}: point 2's own entry must equal its distance to point 1 only
-    update_distance_sums_add(dist_sums, DistanceStore.condensed(d, n=m), np.int32(2))
+    backend_for(store).add(dist_sums, store, np.int32(2))
 
     # --- assert ------------------------------------------
     assert dist_sums[2] == pytest.approx(squareform(d)[2, 1])
+
+
+# =================================================================================================
+#  Backend equivalence
+# =================================================================================================
+# One backend module per storage layout means the same logic exists three times, so a fix applied
+# to two of them would pass review looking complete.  Driving every backend through the same
+# operations against a brute-force recompute is the guard against that.
+@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+def test_backend_matches_brute_force_over_random_operations(backend: str):
+    """Random add/remove sequences must match a brute-force recompute, on every layout."""
+
+    # --- arrange -----------------------------------------
+    rng = random.default_rng(20260805)
+    vectors = rng.random((N, 3)).astype(np.float32)
+    condensed = compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN)
+    store = {
+        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.L2_EUCLIDEAN),
+        "condensed": DistanceStore.condensed(condensed, n=N),
+        "lazy": DistanceStore.lazy(vectors, DistanceMetric.L2_EUCLIDEAN),
+    }[backend]
+    tracker = MeanDistanceTracker(store)
+    selection: list[int] = []
+
+    # --- act / assert ------------------------------------
+    for _ in range(120):
+        must_remove = len(selection) == N  # nothing left to add once everything is selected
+        if selection and (must_remove or rng.random() < 0.4):
+            index = int(rng.choice(selection))
+            selection.remove(index)
+            tracker.remove(np.int32(index), new_selection=np.array(selection, dtype=np.int32))
+        else:
+            index = int(rng.choice([i for i in range(N) if i not in selection]))
+            tracker.add(np.int32(index))
+            selection.append(index)
+
+        selected, n_selected = _selection_args(selection)
+        np.testing.assert_allclose(
+            tracker.contribution_wrt_selection(selected, n_selected),
+            _brute_force_contribution(condensed, selection),
+            rtol=1e-5,
+            err_msg=f"{backend} diverged",
+        )

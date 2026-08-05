@@ -1,59 +1,18 @@
+"""The mean-distance tracker: contribution = mean distance to the selected items."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numba
 import numpy as np
 
-from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
-
-from ._base import DiversityContributionTracker
+from .._base import DiversityContributionTracker
+from ._backends import backend_for
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-
-# =================================================================================================
-#  Distance sums
-# =================================================================================================
-# Per-point sums of distances to a selection — the pairwise-distance counterpart of the separation
-# kernels above.  Sums accumulate in float64: entries undergo long add/subtract chains over solver
-# iterations, and float32 drift there would change scores with iteration count.  Distances of a
-# point to itself are 0, so a point's own entry never needs special-casing: it always equals the
-# sum of its distances to the *other* selected points.
-@numba.njit(numba.void(numba.float32[::1], DISTANCE_STORE_TYPE, numba.int32[::1]), cache=True)
-def compute_mean_distance_elements(out: NDArray[np.float32], store: DistanceStore, indices: NDArray[np.int32]) -> None:
-    """Fill the given elements of `out` with each item's mean distance to all others.
-
-    Each element requires scanning that item's full row of the pairwise-distance matrix; elements
-    are independent, so any subset can be computed in any order.  Per element: a float64 sum over
-    partners in ascending index (so sums stay bit-equal across store layouts), one divide by
-    (n-1), one cast to float32.
-    """
-    n = store.n
-    den = np.float64(max(n - 1, 1))
-    for idx in indices:
-        row_sum = np.float64(0.0)
-        for j in np.arange(n, dtype=np.int32):
-            if j != idx:
-                row_sum += np.float64(get_distance(store, idx, j))
-        out[idx] = np.float32(row_sum / den)
-
-
-@numba.njit(numba.void(numba.float64[::1], DISTANCE_STORE_TYPE, numba.int32), cache=True)
-def update_distance_sums_add(dist_sums: NDArray[np.float64], store: DistanceStore, i_added: np.int32) -> None:
-    """Update distance sums of each item wrt selection, given the distance store, after adding i_added."""
-    for j in np.arange(store.n, dtype=np.int32):
-        if j != i_added:
-            dist_sums[j] += np.float64(get_distance(store, i_added, j))
-
-
-@numba.njit(numba.void(numba.float64[::1], DISTANCE_STORE_TYPE, numba.int32), cache=True)
-def update_distance_sums_remove(dist_sums: NDArray[np.float64], store: DistanceStore, i_removed: np.int32) -> None:
-    """Update distance sums of each item wrt selection, given the distance store, after removing i_removed."""
-    for j in np.arange(store.n, dtype=np.int32):
-        if j != i_removed:
-            dist_sums[j] -= np.float64(get_distance(store, i_removed, j))
+    from max_div._core.metrics._distance import DistanceStore
 
 
 # =================================================================================================
@@ -91,6 +50,10 @@ class MeanDistanceTracker(DiversityContributionTracker):
                           enables copies without recomputation.
         """
         self._store = store  # READ-ONLY
+        # the layout is a property of the store, so which calculations apply is settled here
+        # rather than tested inside them; see `_backends` for why that test cannot live in
+        # compiled code
+        self._backend = backend_for(store)
         if contribution_wrt_dataset is not None:
             self._contribution_wrt_dataset = contribution_wrt_dataset
         else:
@@ -140,7 +103,7 @@ class MeanDistanceTracker(DiversityContributionTracker):
         """Compute any not-yet-computed global-contribution elements among `indices`."""
         missing = indices[np.isnan(self._contribution_wrt_dataset[indices])]
         if missing.size > 0:
-            compute_mean_distance_elements(
+            self._backend.elements(
                 self._contribution_wrt_dataset, self._store, np.ascontiguousarray(missing, dtype=np.int32)
             )
 
@@ -149,14 +112,14 @@ class MeanDistanceTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     def add(self, index: np.int32) -> None:
         """Update distance sums after adding point `index` to the selection."""
-        update_distance_sums_add(self._dist_sums, self._store, index)
+        self._backend.add(self._dist_sums, self._store, index)
 
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Update distance sums after removing point `index`.
 
         `new_selection` is not needed by this tracker: removal is exact subtraction.
         """
-        update_distance_sums_remove(self._dist_sums, self._store, index)
+        self._backend.remove(self._dist_sums, self._store, index)
 
     # -------------------------------------------------------------------------
     #  Snapshot
