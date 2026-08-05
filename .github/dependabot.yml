@@ -26,14 +26,22 @@ updates:
     # title check needs no Dependabot exemption.
     commit-message:
       prefix: "chore"
+    # Split by update type rather than one batch for everything: auto-merge is decided per PR
+    # from its update type, and a batch containing a single major resolves to major — so one
+    # major bump parks every minor and patch alongside it until a human gets to them.
     groups:
-      actions:  # one batched PR for all action bumps
+      actions:  # minor/patch batch: auto-merges once checks pass
         patterns: ["*"]
-    # Let releases age before PRs open: auto-merged patch/minor bumps then sit
-    # long enough for upstream compromises to surface before they can land.
-    # (semver-specific cooldowns are not supported for github-actions.)
+        update-types: ["minor", "patch"]
+      actions-major:  # majors batch separately and wait for review
+        patterns: ["*"]
+        update-types: ["major"]
+    # Matches the 14 days the uv entry uses, for consistency rather than for the same reason:
+    # PyPI's file-addition window has no counterpart here, since action bumps resolve to a commit
+    # SHA. What the wait buys is the weaker but still useful property that a compromised or broken
+    # release has time to surface upstream before a bump can auto-merge.
     cooldown:
-      default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
+      default-days: 14  # covers every semver level; no per-level override needed
 
   - package-ecosystem: "uv"
     # Refreshes uv.lock for the runtime + dev/lint/type tooling the lockfile
@@ -51,9 +59,24 @@ updates:
     # a deliberate compatibility contract (earliest release shipping a wheel),
     # not something to ratchet up to the latest version.
     versioning-strategy: lockfile-only
+    # Split by update type, as on the github-actions entry above and for the same reason. Here
+    # it also lets the longer major cooldown below do its job: a mixed batch would hold the
+    # minor and patch bumps back for the major's cooldown too.
     groups:
-      python:  # one batched PR for all Python-dependency bumps
+      python:  # minor/patch batch: auto-merges once checks pass
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      python-major:  # majors batch separately and wait for review
+        patterns: ["*"]
+        update-types: ["major"]
+    # 14 days, chosen to match PyPI's own window rather than as a general soak: a PyPI release
+    # rejects new files once it is 14 days old, a rule aimed squarely at poisoning an existing
+    # release with compromised publishing credentials. Resolving only past that point means the
+    # file set installed is the one the release is stuck with — a shorter wait leaves the loophole
+    # of picking up a file added days after the release looked settled.
+    #   https://blog.pypi.org/posts/2026-07-22-releases-now-reject-new-files-after-14-days/
+    # That announcement is the reference because there is no other: the rule has no page under
+    # docs.pypi.org, its formal semantics being left to PEP 694. Re-check it before changing this
+    # number, since the two are meant to stay equal.
     cooldown:
-      default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
-      semver-major-days: 14
+      default-days: 14  # covers every semver level; no per-level override needed
