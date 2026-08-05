@@ -1031,7 +1031,7 @@ name = "icc-rt"
 version = "2020.0.133"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "intel-openmp", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "intel-openmp" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/2d/3a308249f7e9d322a8858af3930670c8de7ebb131090a6e62473db844fdd/icc_rt-2020.0.133-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:17a173e65cee0c516358172b9cc96fe297dd54f4d6b23d57f79c62d9e105e3cf", size = 11241236, upload-time = "2019-11-13T12:01:50.643Z" },
@@ -1788,7 +1788,7 @@ wheels = [
 
 [[package]]
 name = "max-div"
-version = "0.9.1"
+version = "0.10.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -2564,7 +2564,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "ptyprocess" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [

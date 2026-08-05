@@ -5,21 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.10.0 (2026-08-05)
 
 ### Changed
 - Substantially faster distance lookups and computations, most of all on large problems; the faster computation rounds differently across storage backends and across CPU architectures, so the same input can now yield different but equally diverse selections — results repeat exactly only within one machine, build and backend
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.9.1 (2026-08-02)
 
 ### Changed
