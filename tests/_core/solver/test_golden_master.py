@@ -6,6 +6,18 @@ expected data, with exact equality. Any drift is a regression, unless it comes f
 intentional numeric change, in which case the expected data must be regenerated in the same
 change (see below) so the drift is explicit.
 
+What it guards is the *search*: the RNG, the scoring, the swap sequence, the tie-breaks. It
+deliberately does not guard distance computation, and is built so it cannot. Each case is
+solved from a precomputed distance matrix, so no pair kernel runs during the solve, and that
+matrix is built here with plain numpy rather than through the library's own kernels. Distance
+computation is guarded separately, by the cross-backend agreement tests.
+
+That separation is what keeps this guard meaningful. A compiler is free to reassociate the
+sums inside a distance kernel, and reassociation is target- and toolchain-dependent — so a
+bit-exact pin over computed distances would go red on a new numba release or a different CPU
+for reasons that are not regressions, and the habit of regenerating it to restore a green
+build would leave it guarding nothing.
+
 JIT-compiled and NUMBA_DISABLE_JIT execution produce identical selections but slightly different
 score floats (float32 register arithmetic vs numpy's float64 scalar promotion), while each
 regime is bit-stable across runs. The expected data is therefore committed per regime, and the
@@ -34,9 +46,11 @@ from typing import Any
 import numpy as np
 import pytest
 from numba import config as numba_config
+from numpy.typing import NDArray
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
-from max_div._core.problem import VectorMaxDivProblem
+from max_div._core.metrics import DistanceMetric
+from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._solution import MaxDivSolution
@@ -71,19 +85,42 @@ def _data_file(regime: str) -> Path:
     return Path(__file__).parent / f"golden_master_data_{regime}.json"
 
 
+def _distances_from(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
+    """Build a distance matrix with plain numpy, independent of the library's own kernels.
+
+    Computing it here rather than through the library is what makes this guard indifferent to
+    changes in distance kernels: it pins the search given fixed distances. The result is
+    quantized and symmetrized so the matrix is bit-identical on every machine — the same
+    reasoning that quantizes the vectors below, applied one step later.
+    """
+    diff = vectors[:, None, :].astype(np.float64) - vectors[None, :, :].astype(np.float64)
+    if metric == DistanceMetric.L1_MANHATTAN:
+        raw = np.abs(diff).sum(axis=-1)
+    elif metric == DistanceMetric.LINF_CHEBYSHEV:
+        raw = np.abs(diff).max(axis=-1)
+    elif metric == DistanceMetric.L2S_EUCLIDEAN_SQUARED:
+        raw = (diff * diff).sum(axis=-1)
+    else:  # euclidean, and cosine's pre-normalized rows reduce to it monotonically
+        raw = np.sqrt((diff * diff).sum(axis=-1))
+    matrix = np.round(raw, 4).astype(np.float32)
+    matrix = np.minimum(matrix, matrix.T)  # exact symmetry, structurally rather than by tolerance
+    np.fill_diagonal(matrix, np.float32(0.0))
+    return np.ascontiguousarray(matrix)
+
+
 def _solve(problem_name: str, preset: SolverPreset, seed: int) -> MaxDivSolution:
     params = BenchmarkProblemFactory.get_all_benchmark_problems()[problem_name].get_example_parameters()
     params["size"] = 1
-    problem = BenchmarkProblemFactory.construct_problem(problem_name, **params)
+    generated = BenchmarkProblemFactory.construct_problem(problem_name, **params)
     # quantize the vectors: problem generation may involve transcendental functions (e.g. a power
     # mapping) whose SIMD implementations differ ~1 ULP across CPU generations; rounding to a coarse
     # grid absorbs that, so the solver runs on bit-identical inputs on every machine
-    problem = VectorMaxDivProblem(
-        vectors=np.round(problem.vectors, 2).astype(np.float32),
-        k=problem.k,
-        distance_metric=problem.distance_metric,
-        diversity_metric=problem.diversity_metric,
-        constraints=problem.constraints,
+    vectors = np.round(generated.vectors, 2).astype(np.float32)
+    problem = MaxDivProblem.from_distances(
+        distances=_distances_from(vectors, generated.distance_metric),
+        k=generated.k,
+        diversity_metric=generated.diversity_metric,
+        constraints=generated.constraints,
     )
     solver = MaxDivSolverBuilder(problem).with_preset(iterations(N_ITERATIONS), preset).with_seed(seed).build()
     return solver.solve(verbosity=0)
