@@ -26,9 +26,16 @@ updates:
     # title check needs no Dependabot exemption.
     commit-message:
       prefix: "chore"
+    # Split by update type rather than one batch for everything: auto-merge is decided per PR
+    # from its update type, and a batch containing a single major resolves to major — so one
+    # major bump parks every minor and patch alongside it until a human gets to them.
     groups:
-      actions:  # one batched PR for all action bumps
+      actions:  # minor/patch batch: auto-merges once checks pass
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      actions-major:  # majors batch separately and wait for review
+        patterns: ["*"]
+        update-types: ["major"]
     # Let releases age before PRs open: auto-merged patch/minor bumps then sit
     # long enough for upstream compromises to surface before they can land.
     # (semver-specific cooldowns are not supported for github-actions.)
@@ -51,9 +58,16 @@ updates:
     # a deliberate compatibility contract (earliest release shipping a wheel),
     # not something to ratchet up to the latest version.
     versioning-strategy: lockfile-only
+    # Split by update type, as on the github-actions entry above and for the same reason. Here
+    # it also lets the longer major cooldown below do its job: a mixed batch would hold the
+    # minor and patch bumps back for the major's cooldown too.
     groups:
-      python:  # one batched PR for all Python-dependency bumps
+      python:  # minor/patch batch: auto-merges once checks pass
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      python-major:  # majors batch separately and wait for review
+        patterns: ["*"]
+        update-types: ["major"]
     cooldown:
       default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
       semver-major-days: 14
