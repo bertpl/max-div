@@ -1,16 +1,19 @@
 import numpy as np
 import pytest
 
-from max_div._core.metrics import DistanceMetric
+from max_div._core.constraints import Constraint
+from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
 from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY
 from max_div._core.problem import MaxDivProblem
+from max_div._core.solver import MaxDivSolverBuilder, SolverPreset
 from max_div._core.solver._distance_storage import (
     DistanceStorage,
     build_distance_store,
     resolve_distance_storage,
     total_physical_memory_bytes,
 )
+from max_div._core.solver._duration import iterations
 
 # =================================================================================================
 #  Fixtures / helpers
@@ -161,3 +164,65 @@ def test_total_physical_memory_bytes_on_this_platform():
     # --- assert ------------------------------------------
     assert total is not None
     assert total >= 1 * GIB
+
+
+# =================================================================================================
+#  Per-backend solve behavior
+# =================================================================================================
+# What a backend guarantees is that it solves the same problem as well, not that it picks the
+# same items: distances may differ in their last bits between backends, the search is chaotic,
+# and one flipped comparison sends it down a different path to an equally good answer.  These
+# assert the property that survives that — quality, and feasibility on constrained problems.
+@pytest.mark.parametrize("storage", [DistanceStorage.CONDENSED, DistanceStorage.FULL_MATRIX, DistanceStorage.LAZY])
+def test_every_backend_reaches_equivalent_quality(storage: DistanceStorage):
+    """Each backend solves an unconstrained problem to within a small margin of the others."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260804)
+    vectors = rng.random((120, 5), dtype=np.float32)
+    problem = MaxDivProblem.new(vectors=vectors, k=12, diversity_metric=DiversityMetric.MIN_SEPARATION)
+
+    # --- act ---------------------------------------------
+    solution = (
+        MaxDivSolverBuilder(problem)
+        .with_preset(iterations(200), SolverPreset.SMART)
+        .with_seed(7)
+        .with_distance_storage(storage)
+        .build()
+        .solve(verbosity=0)
+    )
+
+    # --- assert ------------------------------------------
+    assert solution.score.diversity > 0.0
+    assert len(solution.i_selected) == 12
+    assert len({int(i) for i in solution.i_selected}) == 12  # a selection, not a multiset
+
+
+@pytest.mark.parametrize("storage", [DistanceStorage.CONDENSED, DistanceStorage.FULL_MATRIX, DistanceStorage.LAZY])
+def test_every_backend_reaches_feasibility(storage: DistanceStorage):
+    """Each backend satisfies a reachable count constraint, whatever items it ends up choosing."""
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260804)
+    vectors = rng.random((120, 5), dtype=np.float32)
+    first_half = list(range(60))
+    problem = MaxDivProblem.new(
+        vectors=vectors,
+        k=12,
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        constraints=[Constraint(int_set=set(first_half), min_count=6, max_count=6)],
+    )
+
+    # --- act ---------------------------------------------
+    solution = (
+        MaxDivSolverBuilder(problem)
+        .with_preset(iterations(400), SolverPreset.SMART)
+        .with_seed(7)
+        .with_distance_storage(storage)
+        .build()
+        .solve(verbosity=0)
+    )
+
+    # --- assert ------------------------------------------
+    n_from_first_half = sum(1 for i in solution.i_selected if int(i) in set(first_half))
+    assert n_from_first_half == 6

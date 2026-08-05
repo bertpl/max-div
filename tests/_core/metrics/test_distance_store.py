@@ -150,26 +150,66 @@ def _all_backend_stores(vectors: np.ndarray, metric: DistanceMetric) -> dict[str
     }
 
 
+def _distances_per_backend(vectors: np.ndarray, metric: DistanceMetric) -> dict[str, np.ndarray]:
+    """Every pair distance, from every backend, as one matrix per backend."""
+    n = vectors.shape[0]
+    return {
+        name: np.array([[get_distance(store, np.int32(i), np.int32(j)) for j in range(n)] for i in range(n)])
+        for name, store in _all_backend_stores(vectors, metric).items()
+    }
+
+
 @pytest.mark.parametrize("metric", list(DistanceMetric))
-def test_get_distance_bit_equal_across_backends(metric: DistanceMetric):
-    """Every backend returns bit-identical values for every pair, on random float32 vectors."""
+def test_get_distance_agrees_across_backends(metric: DistanceMetric):
+    """Every backend returns the same distance for every pair, to within summation rounding.
+
+    This is the contract. It is a tolerance rather than an equality because a distance is a sum
+    over dimensions, and a compiler may sum it in a different order per backend — the loops have
+    different shapes, so they vectorize differently. Two orderings of d terms drift by about
+    sqrt(d) units in the last place, which is why the bound scales with d rather than being a
+    fixed epsilon: a fixed one would be a flake generator at high dimensionality.
+    """
 
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(20260731)
     vectors = (rng.standard_normal((15, 4)) * 10).astype(np.float32)
-    stores = _all_backend_stores(vectors, metric)
-    n = vectors.shape[0]
+    n_dimensions = vectors.shape[1]
+    tolerance = 8.0 * np.sqrt(n_dimensions) * np.finfo(np.float32).eps
 
     # --- act ---------------------------------------------
-    values = {
-        name: np.array([[get_distance(store, np.int32(i), np.int32(j)) for j in range(n)] for i in range(n)])
-        for name, store in stores.items()
-    }
+    values = _distances_per_backend(vectors, metric)
+
+    # --- assert ------------------------------------------
+    reference = values.pop("condensed")
+    scale = float(np.max(reference))
+    for name, vals in values.items():
+        np.testing.assert_allclose(
+            vals, reference, rtol=tolerance, atol=tolerance * scale, err_msg=f"backend {name} disagrees with condensed"
+        )
+
+
+@pytest.mark.parametrize("metric", list(DistanceMetric))
+def test_get_distance_bit_equal_across_backends_canary(metric: DistanceMetric):
+    """Canary: the backends currently agree bit-for-bit, which is stronger than they promise.
+
+    Not a contract — the contract is the tolerance test above. A failure here means the
+    toolchain started vectorizing one of these loops differently, which is information worth
+    having at the moment it happens, not a defect in this codebase. The response is to record
+    the change and confirm the tolerance test still passes, never to widen this one until it
+    goes green.
+    """
+
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(20260731)
+    vectors = (rng.standard_normal((15, 4)) * 10).astype(np.float32)
+
+    # --- act ---------------------------------------------
+    values = _distances_per_backend(vectors, metric)
 
     # --- assert ------------------------------------------
     reference = values.pop("condensed")
     for name, vals in values.items():
-        np.testing.assert_array_equal(vals, reference, err_msg=f"backend {name} not bit-equal to condensed")
+        np.testing.assert_array_equal(vals, reference, err_msg=f"backend {name} no longer bit-equal to condensed")
 
 
 # -------------------------------------------------------------------------
