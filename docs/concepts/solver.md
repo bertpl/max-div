@@ -98,7 +98,26 @@ solver = (
   the format the distances were provided in. The resolved backend is reported in the solution
   summary, e.g. `storage=full_matrix (auto)` — pin a backend explicitly to override.
 
-All backends produce bit-identical distance values, so with an iteration budget the selected
-items are the same whichever backend runs; the choice only affects speed and memory. (With a
-time budget, a faster backend completes more iterations — the same machine-dependence time
-budgets always have.)
+### Reproducibility
+
+**On one machine, with the same installed versions — max-div's and numba's — and the same
+backend, a seeded solve is exactly reproducible**: run it again and you get the same selection,
+bit for bit.
+
+**Change any of those three and you may get a different — equally diverse — selection.**
+Distances are accumulated sums, and the compiler is allowed to reorder such a sum to vectorize it;
+how it does so depends on the processor and on the numba version that compiled the kernels, which
+is why a numba upgrade counts here as much as a max-div one. The resulting differences are in the
+last bits, but the search is a chaotic process, so one differing comparison can send it down a
+different path to an equally good answer. The difference is not a slightly different selection —
+it is a different one of comparable quality.
+
+Two practical consequences:
+
+- **`AUTO` picks a backend from available memory**, so the same problem can resolve differently on
+  a machine with more or less RAM. Pin the backend explicitly if you want that variable removed —
+  though on its own that does not make results portable across different machines.
+- **Comparing runs meaningfully** means comparing achieved diversity, not selected indices.
+
+(With a time budget rather than an iteration budget, a faster backend also completes more
+iterations — the machine-dependence any time budget carries.)

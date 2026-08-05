@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@numba.njit(ELEMENTS_SIGNATURE, cache=True)
+@numba.njit(ELEMENTS_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})
 def elements(sep: NDArray[np.float32], store: DistanceStore, indices: NDArray[np.int32]) -> None:
     """Fill the given elements of `sep` with each item's separation wrt all others."""
     for idx in indices:
@@ -32,7 +32,7 @@ def elements(sep: NDArray[np.float32], store: DistanceStore, indices: NDArray[np
         sep[idx] = row_min
 
 
-@numba.njit(ADD_SIGNATURE, cache=True)
+@numba.njit(ADD_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})
 def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> None:
     """Update separation of each item wrt selection after adding i_added."""
     for j in range(i_added):
@@ -45,6 +45,7 @@ def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> No
     numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int32[::1]),
     inline="always",
     cache=True,
+    fastmath={"reassoc", "contract"},
 )
 def _nearest_selected(store: DistanceStore, j: int | np.integer, selection: NDArray[np.int32]) -> np.float32:
     """Return the distance from item j to its nearest neighbor within `selection`, or +inf."""
@@ -55,7 +56,7 @@ def _nearest_selected(store: DistanceStore, j: int | np.integer, selection: NDAr
     return nearest
 
 
-@numba.njit(REMOVE_SIGNATURE, cache=True)
+@numba.njit(REMOVE_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})
 def remove(
     sep: NDArray[np.float32],
     store: DistanceStore,

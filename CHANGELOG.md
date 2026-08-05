@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Substantially faster distance lookups, speeding up solving at every problem size, most of all on large problems
+- Substantially faster distance lookups and computations, most of all on large problems; the faster computation rounds differently across storage backends and across CPU architectures, so the same input can now yield different but equally diverse selections — results repeat exactly only within one machine, build and backend
 
 ### Deprecated
 

@@ -246,7 +246,7 @@ def get_distance(store: DistanceStore, i: np.int32, j: np.int32) -> np.float32:
 # =================================================================================================
 #  Full-matrix construction kernels
 # =================================================================================================
-@numba.njit(numba.float32[:, ::1](numba.float32[:, ::1], numba.int32), cache=True)
+@numba.njit(numba.float32[:, ::1](numba.float32[:, ::1], numba.int32), cache=True, fastmath={"reassoc", "contract"})
 def _fill_matrix_from_vectors(vectors: NDArray[np.float32], metric_kind: np.int32) -> NDArray[np.float32]:
     """Fill a full (n, n) distance matrix from vectors: each pair computed once, written to both halves."""
     n = vectors.shape[0]
