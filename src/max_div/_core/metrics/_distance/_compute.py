@@ -55,7 +55,22 @@ def validate_cosine_vectors(vectors: NDArray[np.float32]) -> None:
 # =================================================================================================
 #  pdist kernels
 # =================================================================================================
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+# These kernels sum one term per dimension.  Adding those terms in a different order gives a
+# very slightly different answer in floating point, so by default the compiler must add them
+# strictly left to right — one at a time, each waiting for the previous.  `reassoc` lifts that
+# restriction ("reassociate" = regroup the additions), letting the compiler add several terms in
+# parallel; `contract` lets a multiply and an add become one instruction.  Together they are what
+# make these loops vectorize.
+#
+# Granted here rather than the full fastmath set, which would also assert that no value is ever
+# infinite — untrue, since the separation arrays use +inf to mean "no selected neighbor yet".
+#
+# Accepted consequence: a distance is no longer a fixed function of this source, so values can
+# differ in their last bits between machines or numba versions.  See the reproducibility section
+# of the solver documentation.
+
+
+@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _l1_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the L1 (Manhattan) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -64,7 +79,7 @@ def _l1_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | n
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _l2sq_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the squared L2 (Euclidean) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -74,7 +89,7 @@ def _l2sq_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
     return acc
 
 
-@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
 def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the Linf (Chebyshev) distance between vectors i and j, accumulated in float64."""
     acc = np.float64(0.0)
@@ -85,7 +100,7 @@ def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
     return acc
 
 
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
 def _pdist_l1(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
     """Write the condensed L1 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
     n = vectors.shape[0]
@@ -96,7 +111,7 @@ def _pdist_l1(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
             idx += 1
 
 
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
 def _pdist_l2(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
     """Write the condensed L2 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
     n = vectors.shape[0]
@@ -107,7 +122,7 @@ def _pdist_l2(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
             idx += 1
 
 
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
 def _pdist_l2s(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
     """Write the condensed squared-L2 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
     n = vectors.shape[0]
@@ -118,7 +133,7 @@ def _pdist_l2s(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
             idx += 1
 
 
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
+@numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
 def _pdist_linf(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
     """Write the condensed Linf distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
     n = vectors.shape[0]
