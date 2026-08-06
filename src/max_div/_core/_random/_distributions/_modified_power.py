@@ -28,26 +28,8 @@ from numpy.typing import NDArray
 from max_div._core._random._rng import rand_float32
 
 
-@njit(fastmath=True, inline="always", cache=True)
-def sample_modified_power_distribution(m: np.float32, rng_state: NDArray[np.uint64]) -> np.float32:
-    if m == 0.0:
-        return np.float32(0.0)
-    if m == 1.0:
-        return np.float32(1.0)
-    # we need to sample a uniform value u in [0, 1]
-    u = rand_float32(rng_state)
-
-    # now transform u to the desired distribution
-    if m == 0.5:
-        # uniform distribution, no transformation
-        return u
-    if m < 0.5:
-        return _modified_power_transform(u, m)
-    # NOTE: in principle we need to also use 1-u instead of u, but both are random uniform in [0,1],
-    #       so it's equivalent.
-    return np.float32(1.0) - _modified_power_transform(u, np.float32(1.0) - m)
-
-
+# Defined ahead of its caller: the caller declares a signature, so it compiles when the decorator
+# runs and every function it calls has to exist by then.
 @njit(fastmath=True, inline="always", cache=True)
 def _modified_power_transform(u: np.float32, m: np.float32) -> np.float32:
     """Transform a uniform value u in [0,1] to the modified power distribution with median m in (0,0.5).
@@ -66,3 +48,23 @@ def _modified_power_transform(u: np.float32, m: np.float32) -> np.float32:
     one_minus_m = np.float32(1.0) - m
     p = -np.log2(m / one_minus_m) + np.float32(1.0)
     return (m * u) + one_minus_m * (u**p)
+
+
+@njit("float32(float32, uint64[:])", fastmath=True, inline="always", cache=True)
+def sample_modified_power_distribution(m: np.float32, rng_state: NDArray[np.uint64]) -> np.float32:
+    if m == 0.0:
+        return np.float32(0.0)
+    if m == 1.0:
+        return np.float32(1.0)
+    # we need to sample a uniform value u in [0, 1]
+    u = rand_float32(rng_state)
+
+    # now transform u to the desired distribution
+    if m == 0.5:
+        # uniform distribution, no transformation
+        return u
+    if m < 0.5:
+        return _modified_power_transform(u, m)
+    # NOTE: in principle we need to also use 1-u instead of u, but both are random uniform in [0,1],
+    #       so it's equivalent.
+    return np.float32(1.0) - _modified_power_transform(u, np.float32(1.0) - m)

@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 from max_div._core._random import randint1
 
 
-@njit(fastmath=True, inline="always", cache=True)
+@njit("int32(int32, int32, float32, uint64[:])", fastmath=True, inline="always", cache=True)
 def sample_truncated_poisson(
     min_value: np.int32,
     max_value: np.int32,

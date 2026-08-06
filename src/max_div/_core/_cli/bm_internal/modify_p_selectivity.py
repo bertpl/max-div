@@ -10,7 +10,11 @@ from max_div._core._markdown import (
     TableTimeElapsed,
     h2,
 )
-from max_div._core._math.modify_p_selectivity import exponential_selectivity, modify_p_selectivity
+from max_div._core._math.modify_p_selectivity import (
+    DEFAULT_LOW_VALUE,
+    exponential_selectivity,
+    modify_p_selectivity,
+)
 from max_div._core._utils import benchmark, stdout_to_file
 
 MODIFY_P_METHODS = [np.int32(0), np.int32(10), np.int32(20), np.int32(100)]
@@ -87,7 +91,7 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
 
         # test order_based_selectivity
         def benchmark_fun(_idx: int) -> None:
-            exponential_selectivity(p_in, p_out, random_modifiers[_idx])
+            exponential_selectivity(p_in, p_out, random_modifiers[_idx], False, DEFAULT_LOW_VALUE)
 
         # run benchmark
         table_row.append(
