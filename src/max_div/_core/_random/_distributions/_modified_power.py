@@ -28,7 +28,7 @@ from numpy.typing import NDArray
 from max_div._core._random._rng import rand_float32
 
 
-@njit(fastmath=True, inline="always")
+@njit(fastmath=True, inline="always", cache=True)
 def sample_modified_power_distribution(m: np.float32, rng_state: NDArray[np.uint64]) -> np.float32:
     if m == 0.0:
         return np.float32(0.0)
@@ -48,7 +48,7 @@ def sample_modified_power_distribution(m: np.float32, rng_state: NDArray[np.uint
     return np.float32(1.0) - _modified_power_transform(u, np.float32(1.0) - m)
 
 
-@njit(fastmath=True, inline="always")
+@njit(fastmath=True, inline="always", cache=True)
 def _modified_power_transform(u: np.float32, m: np.float32) -> np.float32:
     """Transform a uniform value u in [0,1] to the modified power distribution with median m in (0,0.5).
 
