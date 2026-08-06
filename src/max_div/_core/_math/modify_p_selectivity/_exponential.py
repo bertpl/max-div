@@ -55,14 +55,14 @@ def exponential_selectivity(
 
     p_in is a float32-array of shape (n,) containing non-normalized probabilities in range [p_min, p_max].
     p_out is populated with values exponentially depending on the corresponding p_in values, such that p_out values
-    are in range [1.0, low_value**t], where t is computed as in the other modification methods:
+    all lie in the interval [low_value**t, 1.0], where t is computed as in the other modification methods:
 
             t = (1.0 + modifier) / (1.0 - modifier)
 
     This then boils down to the following formulas:
 
-     - descending=False (default)    p_out[i] = low_value ** (t * (p_max - p_in[i]) / (p_max - p_min))
-     - descending=True               p_out[i] = low_value ** (t * (p_max - p_in[i]) / (p_max - p_min))
+     - reverse=False    p_out[i] = low_value ** (t * (p_max - p_in[i]) / (p_max - p_min))
+     - reverse=True     p_out[i] = low_value ** (t * (p_in[i] - p_min) / (p_max - p_min))
 
     The approximate function fast_exp2(exponent * np.log2(base)) is used to compute the exponentiation efficiently,
       taking into account that np.log2(low_value) can be precomputed outside the loop.
@@ -71,7 +71,7 @@ def exponential_selectivity(
     :param p_out: np.ndarray of shape (n,) to be populated with the transformed probabilities.
     :param modifier: float32 in (-1, 1) indicating how to modify selectivity
     :param reverse: (bool) if True, higher p_in values result in lower p_out values
-    :param low_value: (float32) the lowest value in p_out
+    :param low_value: (float32) base of the exponential
     """
     # --- init ----------------------------------
     n = p_in.shape[0]
