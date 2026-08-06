@@ -3,7 +3,7 @@ from numba import njit
 from numpy.typing import NDArray
 
 
-@njit("float32(float32[::1])", fastmath=True, inline="always")
+@njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
 def _p_max(p: NDArray[np.float32]) -> np.float32:
     """Return the maximum value in p array."""
     n = p.size

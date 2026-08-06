@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Faster startup: importing the package and running the first solve in a process together take roughly a quarter of the time they did, because routines that were rebuilt on every run are now compiled once and reused
 
 ### Deprecated
 

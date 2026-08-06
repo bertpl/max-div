@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 from max_div._core._random import randint1
 
 
-@njit(fastmath=True, inline="always")
+@njit(fastmath=True, inline="always", cache=True)
 def sample_truncated_poisson(
     min_value: np.int32,
     max_value: np.int32,
@@ -40,7 +40,7 @@ def sample_truncated_poisson(
     return randint1(n=np.int32(p.shape[0]), p=p, rng_state=rng_state) + min_value
 
 
-@njit(fastmath=True, inline="always")
+@njit(fastmath=True, inline="always", cache=True)
 def truncated_poisson_expected_value(min_value: np.int32, max_value: np.int32, _lambda: np.float32) -> np.float32:
     """Compute expected value of a two-sided truncated Poisson distribution with given min, max & lambda values.
 

@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 from max_div._core._math.fast_log_exp import fast_exp2_f32
 
 
-@njit(inline="always")
+@njit(inline="always", cache=True)
 def exponential_selectivity(
     p_in: NDArray[np.float32],
     p_out: NDArray[np.float32],
@@ -60,7 +60,7 @@ def exponential_selectivity(
     _exponential_transform(p_in, p_out, modifier, reverse, low_value, p_min, p_max, p_range)
 
 
-@njit(fastmath=True, inline="always")
+@njit(fastmath=True, inline="always", cache=True)
 def _exponential_transform(
     p_in: NDArray[np.float32],
     p_out: NDArray[np.float32],
