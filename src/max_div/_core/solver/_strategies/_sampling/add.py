@@ -3,7 +3,7 @@ from enum import StrEnum
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._math.modify_p_selectivity import exponential_selectivity
+from max_div._core._math.modify_p_selectivity import DEFAULT_LOW_VALUE, exponential_selectivity
 from max_div._core._random import choice, choice_constrained
 from max_div._core.solver._solver_state import SolverState
 
@@ -74,6 +74,7 @@ def select_items_to_add(
         p_out=p,  # in-place
         modifier=np.float32(selectivity_modifier),
         reverse=False,  # for adding, we want to have items with high diversity contribution have higher probability
+        low_value=DEFAULT_LOW_VALUE,
     )
 
     # --- actual sampling ---------------------------------
