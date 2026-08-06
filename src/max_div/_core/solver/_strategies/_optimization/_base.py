@@ -15,7 +15,6 @@ from max_div._core.solver._parameters import (
     _schedules_to_2d_numpy_array,
 )
 from max_div._core.solver._strategies._base import StrategyBase
-from max_div._core.solver._strategies._sampling import candidate_samples_to_add
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -93,9 +92,6 @@ class OptimizationStrategy(StrategyBase, ABC):
         # --- now actually configure them ---
         if dynamic_params:
             self._configure_dynamic_params(dynamic_params)
-
-        # --- iteration counts ---
-        self.iter = 0
 
     def _configure_dynamic_params(self, dynamic_params: dict[str, ParamValueType]) -> None:
         """Internal method to configure dynamic parameters (scheduled and/or sampled).
@@ -181,7 +177,6 @@ class OptimizationStrategy(StrategyBase, ABC):
                     sampler.feedback(success)
 
             # --- update progress ---
-            self.iter += 1
             current_progress_frac += progress_frac_per_iter
 
     @abstractmethod
@@ -344,7 +339,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
 
         # do this now, before the just-removed ones get added to the not_selected ones; we don't want these
         # just-removed ones to be selected to be added again immediately.
-        add_candidates = candidate_samples_to_add(state, self.iter, self._rng_state)
+        add_candidates = state.not_selected_index_array
 
         # --- the whole swap is provisional until it proves itself ---
 
