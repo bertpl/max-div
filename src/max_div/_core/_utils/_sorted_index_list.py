@@ -38,7 +38,12 @@ def _llvm_memmove(typingctx, dest, dest_offset, src, src_offset, count):  # noqa
     return signature, codegen
 
 
-def move_within(buffer: NDArray[np.int32], dest_offset: int, src_offset: int, count: int) -> None:
+def move_within(
+    buffer: NDArray[np.int32],
+    dest_offset: int | np.signedinteger,
+    src_offset: int | np.signedinteger,
+    count: int | np.signedinteger,
+) -> None:
     """Move `count` entries of `buffer` from `src_offset` to `dest_offset`, correct on overlap."""
     buffer[dest_offset : dest_offset + count] = buffer[src_offset : src_offset + count]
 
@@ -48,6 +53,7 @@ def _move_within_compiled(buffer, dest_offset, src_offset, count):  # noqa: ANN0
     """Compiled form of `move_within`, reaching llvm.memmove rather than a copy loop."""
 
     def implementation(buffer, dest_offset, src_offset, count):  # noqa: ANN001, ANN202
+        # ty: ignore[missing-argument] -- the stub counts the typingctx parameter, which callers do not pass
         _llvm_memmove(buffer, dest_offset, buffer, src_offset, count)
 
     return implementation
