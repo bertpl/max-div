@@ -5,15 +5,39 @@ shift a run of entries by one position, and since that run moves within a single
 and destination overlap.  The shift therefore needs a move whose behavior on overlapping ranges is
 defined — `memcpy` is the one that is not, `memmove` is the one that is.
 
-That move is written twice under the single name `move_within`, because this code runs two ways:
+## Why the shift is written twice
 
-  - **Compiled**, it emits `llvm.memmove` directly.  Reaching that instruction takes an intrinsic,
-    since neither an element loop nor a slice assignment written inside numba compiles down to one.
-  - **Interpreted** — how the coverage run and the JIT-disabled test legs execute — it is numpy
-    slice assignment, which buffers its source and is safe on overlap for the same reason.
+This module runs two ways, and no single implementation serves both:
 
-Which one a caller gets is decided by numba while it compiles that caller; `move_within` and the
-`overload` beneath it document the mechanics.
+  - **Compiled** — production, and every test leg but coverage.  Nothing written in Python compiles
+    to a `memmove`: numba lowers an element loop and a slice assignment alike to a copy loop, which
+    is several times slower at large `n_live`.  Reaching the instruction takes an intrinsic.
+  - **Interpreted** — the coverage run and the JIT-disabled legs, where compilation is switched off
+    so coverage can see inside these functions.  An intrinsic does not exist in this mode at all: it
+    produces instructions for a compiler, and no compiler is running.  numpy slice assignment stands
+    in, and buffers its source, so it is equally safe on overlap.
+
+## How the right one gets picked
+
+Two decorators, each doing one half of the job, because neither does both:
+
+  - `@intrinsic` (`_llvm_memmove`) supplies **the instruction**.  What it defines is callable only
+    from compiled code and has no Python body to fall back on, so it cannot be called directly by
+    the two functions below without breaking the interpreted mode.
+  - `@overload(move_within)` supplies **the dispatch**.  It tells numba that a compiled caller of
+    `move_within` should get the registered implementation — the one calling the intrinsic — instead
+    of a compilation of the plain function.
+
+The plain `move_within` is therefore the interpreted implementation, and the overload redirects away
+from it whenever the caller is being compiled:
+
+  - **JIT on:** `insert_sorted` is compiled, numba resolves its `move_within` call through the
+    overload registry, and the memmove is emitted inline into `insert_sorted`.
+  - **JIT off:** `njit` hands back the undecorated function, so `insert_sorted` is ordinary Python
+    and its `move_within` call is an ordinary Python call.  The overload registry is never consulted,
+    because nothing is being compiled.
+
+Both paths are live, and the tests exercise this module in each mode.
 """
 
 import numba
@@ -31,14 +55,15 @@ from numpy.typing import NDArray
 def _llvm_memmove(typingctx, dest, dest_offset, src, src_offset, count):  # noqa: ANN001, ANN202
     """Emit a call to `llvm.memmove` over the data pointers of `dest` and `src`.
 
-    `@intrinsic` is numba's hook for generating machine code directly, for cases where no Python
-    source compiles to the instruction wanted.  It does not behave like `@njit`: this body never
-    runs at call time.  numba runs it *while compiling a caller*, and expects two things back —
-    the type signature of the call, and `codegen`, which writes the instructions.
+    The body runs while numba compiles a caller, not when the function is called, and returns the
+    call's type signature plus the `codegen` that writes the instructions.  Inside `codegen`,
+    `builder` is an LLVM instruction writer and `args` holds the caller's compiled arguments.
 
-    Inside `codegen`, `builder` is an LLVM instruction writer and `args` holds the caller's
-    already-compiled arguments.  The block therefore emits a memmove call into the caller; it does
-    not perform one.  The final argument to that call is LLVM's `isvolatile` flag, kept false.
+    The `False` ending the emitted call is LLVM's `isvolatile` flag.  Marking an access volatile
+    forbids the optimizer from reordering, merging or discarding it, which is what memory needs when
+    the accesses themselves are observable — a memory-mapped hardware register being the standard
+    case.  A shift within an ordinary array is not that, so the flag stays false and the optimizer
+    keeps its freedom.
     """
     signature = types.void(dest, dest_offset, src, src_offset, count)
 
@@ -70,16 +95,9 @@ def move_within(
 
 @overload(move_within)
 def _move_within_compiled(buffer, dest_offset, src_offset, count):  # noqa: ANN001, ANN202
-    """Supply the implementation numba uses for `move_within` in compiled code.
+    """Register what numba compiles in place of `move_within`; the module docstring has the mechanism.
 
-    `@overload` registers a substitute: when numba compiles a function that calls `move_within`, it
-    compiles this instead of the Python body above.  As with `@intrinsic`, this outer body runs at
-    compile time — the inner `implementation` is what ends up in the caller.
-
-    Nothing registered here reaches interpreted execution, which is what gives the two paths.  Under
-    `NUMBA_DISABLE_JIT=1` the `njit` decorators below become no-ops, `insert_sorted` runs as ordinary
-    Python, and its call resolves to `move_within` itself — the numpy version.  Both are therefore
-    live, and the tests cover the module in each mode.
+    This outer body runs at compile time — the inner `implementation` is what lands in the caller.
     """
 
     def implementation(buffer, dest_offset, src_offset, count):  # noqa: ANN001, ANN202
