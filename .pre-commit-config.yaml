@@ -23,7 +23,8 @@ repos:
         pass_filenames: true
       - id: ruff
         name: ruff check
-        entry: uv run --no-default-groups --group lint ruff check
+        # --fix lets pre-commit be run to fix; it still blocks, since it detects rewritten files.
+        entry: uv run --no-default-groups --group lint ruff check --fix
         language: system
         types: [python]
         files: ^(src/max_div|tests|scripts)/|^\.github/scripts/
