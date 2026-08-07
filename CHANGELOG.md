@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Faster startup: importing the package and running the first solve in a process together take roughly a quarter of the time they did, because routines that were rebuilt on every run are now compiled once and reused
+- Swap candidates are drawn from the full pool of non-selected items, so a given seed now selects different items than before; solution quality is unchanged once a run has converged
 
 ### Deprecated
 

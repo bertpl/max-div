@@ -13,5 +13,4 @@ These methods bridge the gap between following 3 pieces of functionality:
 
 from ._helpers import remove_sample_from_candidates, remove_sample_from_candidates_and_p
 from .add import SamplingType, select_items_to_add
-from .candidates import candidate_samples_to_add
 from .remove import select_items_to_remove
