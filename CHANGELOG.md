@@ -5,23 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.10.1 (2026-08-07)
 
 ### Changed
 - Solving is up to about 10% faster on stored distance backends, from cheaper bookkeeping of which items are selected
 - Faster startup: importing the package and running the first solve in a process together take roughly a quarter of the time they did, because routines that were rebuilt on every run are now compiled once and reused
 - Swap candidates are drawn from the full pool of non-selected items, so a given seed now selects different items than before; solution quality is unchanged once a run has converged
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.10.0 (2026-08-05)
 
 ### Changed
