@@ -1,14 +1,9 @@
 """Insertion into and deletion from an ascending index list held in a fixed-capacity buffer.
 
-The list occupies the first `n_live` entries of its buffer; the entries beyond that are scratch.
-Both operations shift a run of entries by one position, and the source and destination of that
-shift overlap, so the move has to be one that defines its behaviour on overlap.
-
-Compiled, that move is `llvm.memmove`, whose whole purpose is to be correct on overlapping
-ranges — reaching it needs an intrinsic, because neither an element loop nor a slice assignment
-inside numba produces one.  Interpreted, it is numpy slice assignment, which buffers the source
-for the same reason.  `move_within` is the single name for both: the plain function below runs
-when numba is disabled, the `overload` when it is not.
+The list occupies the first `n_live` entries; the rest is scratch.  Both operations shift a run
+of entries by one, source and destination overlapping, so the move must be overlap-safe.
+`move_within` has two implementations of it: an intrinsic emitting `llvm.memmove` when compiled,
+numpy slice assignment when numba is disabled.
 """
 
 import numba
@@ -65,9 +60,7 @@ def _move_within_compiled(buffer, dest_offset, src_offset, count):  # noqa: ANN0
 def insert_sorted(index_list: NDArray[np.int32], n_live: np.int32, value: np.int32) -> None:
     """Insert `value` into the ascending `index_list` of length `n_live`, growing it by one.
 
-    The buffer must hold at least `n_live + 1` entries.  `value` must not already be present;
-    inserting a duplicate places it next to its twin and leaves the list ascending, but the
-    callers of this function treat their lists as sets.
+    `value` must not already be present, and the buffer must hold at least `n_live + 1` entries.
     """
     position = np.searchsorted(index_list[:n_live], value)
     move_within(index_list, position + 1, position, n_live - position)
@@ -78,8 +71,8 @@ def insert_sorted(index_list: NDArray[np.int32], n_live: np.int32, value: np.int
 def delete_sorted(index_list: NDArray[np.int32], n_live: np.int32, value: np.int32) -> None:
     """Remove `value` from the ascending `index_list` of length `n_live`, shrinking it by one.
 
-    `value` must be present.  The entry vacated at the end of the list is left as it was; the
-    list is defined by its first `n_live - 1` entries once the caller has shrunk its own count.
+    `value` must be present.  The vacated last entry keeps its old contents, so the list is the
+    first `n_live - 1` entries once the caller has shrunk its count.
     """
     position = np.searchsorted(index_list[:n_live], value)
     move_within(index_list, position, position + 1, n_live - position - 1)
