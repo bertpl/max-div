@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from max_div._core._utils import delete_sorted, insert_sorted
 from max_div._core.constraints import Constraint, ConstraintList
 
 from ._diversity_contribution import DiversityContributionTrackers
@@ -103,6 +104,11 @@ class SolverState:
         # selection
         self._selected = selected
         self._n_selected: np.int32 = np.int32(selected.sum())
+        # The same selection as an ascending index list, kept in step with the mask above.  The
+        # ascending order is load-bearing: candidates are drawn from this list *by position*, so a
+        # different order selects different items.
+        self._selected_indices = np.empty(len(selected), dtype=np.int32)
+        self._selected_indices[: self._n_selected] = np.flatnonzero(selected)
 
         # constraints
         self._con_values = con_values  # min/max counts of extra samples needed on top of current selection
@@ -167,6 +173,7 @@ class SolverState:
         # NOTE: we create copies, such that add(.) and remove(.) cannot influence the snapshot after it was taken
         snapshot.selected = self._selected.copy()
         snapshot.n_selected = self._n_selected
+        snapshot.selected_indices = self._selected_indices[: self._n_selected].copy()
         snapshot.con_values = self._con_values.copy()
         self._contribution_trackers.push_snapshot()
         # NOTE: Score is immutable and mutators reassign self._score (never modify in place),
@@ -185,6 +192,8 @@ class SolverState:
             # no copy needed; the snapshot is cleared below, so the restored arrays cannot alias a live snapshot
             self._selected = snapshot.selected
             self._n_selected = snapshot.n_selected
+            # written back into the buffer rather than rebound, so it keeps its full capacity
+            self._selected_indices[: snapshot.n_selected] = snapshot.selected_indices
             self._con_values = snapshot.con_values
 
             # restore score (cached at push time; avoids a full recompute)
@@ -194,6 +203,14 @@ class SolverState:
         snapshot.clear()
         self._depth = depth
 
+    def _insert_selected_index(self, index: np.int32) -> None:
+        """Insert `index` into the ascending index list; call before `_n_selected` grows."""
+        insert_sorted(self._selected_indices, self._n_selected, index)
+
+    def _delete_selected_index(self, index: np.int32) -> None:
+        """Remove `index` from the ascending index list; call before `_n_selected` shrinks."""
+        delete_sorted(self._selected_indices, self._n_selected, index)
+
     def add(self, index: int | np.int32) -> None:
         # --- validation ----------------------------------
         index = np.int32(index)
@@ -202,6 +219,7 @@ class SolverState:
 
         # --- selection -----------------------------------
         self._selected[index] = True
+        self._insert_selected_index(index)
         self._n_selected += np.int32(1)
 
         # --- diversity contributions ---------------------
@@ -221,7 +239,11 @@ class SolverState:
 
         # --- selection -----------------------------------
         self._selected[indices] = True
-        self._n_selected += np.int32(len(indices))
+        # the count advances inside the loop because each insert reads it as the list's current
+        # length; raising it once afterwards would give every insert but the first a stale length
+        for index in indices:
+            self._insert_selected_index(index)
+            self._n_selected += np.int32(1)
 
         # --- diversity contributions ---------------------
         self._contribution_trackers.add_many(indices)
@@ -242,6 +264,7 @@ class SolverState:
 
         # --- selection -----------------------------------
         self._selected[index] = False
+        self._delete_selected_index(index)
         self._n_selected -= np.int32(1)
 
         # --- diversity contributions ---------------------
@@ -261,7 +284,10 @@ class SolverState:
 
         # --- selection -----------------------------------
         self._selected[indices] = False
-        self._n_selected -= np.int32(len(indices))
+        # same reason as in add_many: each delete reads the count as the list's current length
+        for index in indices:
+            self._delete_selected_index(index)
+            self._n_selected -= np.int32(1)
 
         # --- diversity contributions ---------------------
         self._contribution_trackers.remove_many(indices, self.selected_index_array)
@@ -319,8 +345,8 @@ class SolverState:
 
     @property
     def selected_index_array(self) -> NDArray[np.int32]:
-        """Return selected indices as a numpy array of np.int32."""
-        return np.flatnonzero(self._selected).astype(np.int32)
+        """Return the selected indices, ascending (reference; do not modify)."""
+        return self._selected_indices[: self._n_selected]
 
     @property
     def not_selected_index_array(self) -> NDArray[np.int32]:
@@ -475,6 +501,7 @@ class Snapshot:
 
     selected: NDArray[np.bool]  # boolean array representing the selection
     n_selected: np.int32  # number of True values in 'selected'
+    selected_indices: NDArray[np.int32]  # the same selection, ascending; a copy of the live prefix
 
     con_values: NDArray[np.int32]  # (nc x 2)-sized array with current status of constraint bounds
 
@@ -487,6 +514,7 @@ class Snapshot:
         """Release the state held by this snapshot, returning it to the spare pool."""
         self.selected = _EMPTY_NP_ARRAY_BOOL
         self.n_selected = np.int32(0)
+        self.selected_indices = _EMPTY_NP_ARRAY_INT32
         self.con_values = _EMPTY_NP_ARRAY_INT32
         self.score = _PLACEHOLDER_SCORE
 
@@ -496,6 +524,7 @@ class Snapshot:
         return Snapshot(
             selected=_EMPTY_NP_ARRAY_BOOL,
             n_selected=np.int32(0),
+            selected_indices=_EMPTY_NP_ARRAY_INT32,
             con_values=_EMPTY_NP_ARRAY_INT32,
             score=_PLACEHOLDER_SCORE,
         )

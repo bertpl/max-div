@@ -514,3 +514,79 @@ def test_solver_state_score_lazy_recompute(new_solver_state):
     # --- assert ------------------------------------------
     assert observed_score == expected_score  # recomputed on read
     assert not state._score_dirty  # flag cleared by the recompute
+
+
+# =================================================================================================
+#  Selected-index list
+# =================================================================================================
+def _assert_index_list_matches_mask(state: SolverState) -> None:
+    """The maintained index list must always equal what deriving it from the mask would give."""
+    expected = np.flatnonzero(state._selected).astype(np.int32)
+    actual = state.selected_index_array
+    assert actual.tolist() == expected.tolist()
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2, 3, 4])
+def test_selected_index_list_survives_random_mutation_sequences(seed: int):
+    """Long random sequences of every mutation, with nested savepoints kept and rolled back.
+
+    The failure mode this guards is silent: a list that drifts from the mask yields wrong
+    selections rather than an error, so the invariant is asserted after every single step
+    rather than at the end.
+    """
+    # --- arrange ----------------------
+    n = 40
+    vectors = np.arange(n, dtype=np.float32).reshape(n, 1)
+    rng = random.default_rng(seed)
+
+    def fresh() -> SolverState:
+        return SolverState.new(
+            n=n,
+            store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=n),
+            k=8,
+            diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+            diversity_tie_breakers=[],
+            constraints=[],
+        )
+
+    state = fresh()
+
+    # --- act / assert -----------------
+    for _ in range(300):
+        selected = np.flatnonzero(state._selected).astype(np.int32)
+        free = np.flatnonzero(~state._selected).astype(np.int32)
+        action = rng.integers(0, 6)
+        if action == 0 and free.size:
+            state.add(np.int32(rng.choice(free)))
+        elif action == 1 and selected.size:
+            state.remove(np.int32(rng.choice(selected)))
+        elif action == 2 and free.size >= 3:
+            state.add_many(np.ascontiguousarray(rng.choice(free, size=3, replace=False), dtype=np.int32))
+        elif action == 3 and selected.size >= 3:
+            state.remove_many(np.ascontiguousarray(rng.choice(selected, size=3, replace=False), dtype=np.int32))
+        elif action == 4 and free.size:
+            # a rolled-back trial: the list must come back with the mask
+            with state.savepoint():
+                state.add(np.int32(rng.choice(free)))
+                _assert_index_list_matches_mask(state)
+        elif action == 5 and selected.size:
+            # a nested trial that is kept at the inner level and discarded at the outer
+            with state.savepoint():
+                with state.savepoint() as inner:
+                    state.remove(np.int32(rng.choice(selected)))
+                    inner.keep()
+                _assert_index_list_matches_mask(state)
+        _assert_index_list_matches_mask(state)
+
+
+def test_selected_index_array_is_ascending(new_solver_state_unconstrained):
+    """Ascending order is what keeps position-based candidate draws unchanged."""
+    # --- arrange / act ----------------
+    for index in (4, 1, 5, 0):
+        new_solver_state_unconstrained.add(np.int32(index))
+    new_solver_state_unconstrained.remove(np.int32(1))
+
+    # --- assert -----------------------
+    indices = new_solver_state_unconstrained.selected_index_array
+    assert indices.tolist() == sorted(indices.tolist())
+    assert indices.tolist() == [0, 4, 5]
