@@ -34,8 +34,12 @@ from it whenever the caller is being compiled:
   - **JIT on:** `insert_sorted` is compiled, numba resolves its `move_within` call through the
     overload registry, and the memmove is emitted inline into `insert_sorted`.
   - **JIT off:** `njit` hands back the undecorated function, so `insert_sorted` is ordinary Python
-    and its `move_within` call is an ordinary Python call.  The overload registry is never consulted,
-    because nothing is being compiled.
+    and its `move_within` call is an ordinary Python call, landing on the numpy body.  The
+    registration still happened — `@overload` runs at import in either mode — but all it does is
+    file `_move_within_compiled` under `move_within` in numba's *typing* registry, leaving
+    `move_within` itself untouched: not wrapped, not rebound, the same function object either way.
+    That registry is read during type inference, and type inference runs only when numba compiles
+    something, so with compilation off the entry is simply never looked up.
 
 Both paths are live, and the tests exercise this module in each mode.
 """

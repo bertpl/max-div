@@ -104,11 +104,9 @@ class SolverState:
         # selection
         self._selected = selected
         self._n_selected: np.int32 = np.int32(selected.sum())
-        # The same selection as an ascending index list, kept in step with the mask above.  Most
-        # consumers want the selected indices rather than the mask, and deriving them costs a scan
-        # of all n to produce an answer that is k long and moves by one element per mutation.
-        # Ascending order is not incidental: candidates are drawn from this list *by position*, so
-        # a different order would select different items.
+        # The same selection as an ascending index list, kept in step with the mask above.  The
+        # ascending order is load-bearing: candidates are drawn from this list *by position*, so a
+        # different order selects different items.
         self._selected_indices = np.empty(len(selected), dtype=np.int32)
         self._selected_indices[: self._n_selected] = np.flatnonzero(selected)
 
@@ -241,6 +239,8 @@ class SolverState:
 
         # --- selection -----------------------------------
         self._selected[indices] = True
+        # the count advances inside the loop because each insert reads it as the list's current
+        # length; raising it once afterwards would give every insert but the first a stale length
         for index in indices:
             self._insert_selected_index(index)
             self._n_selected += np.int32(1)
@@ -284,6 +284,7 @@ class SolverState:
 
         # --- selection -----------------------------------
         self._selected[indices] = False
+        # same reason as in add_many: each delete reads the count as the list's current length
         for index in indices:
             self._delete_selected_index(index)
             self._n_selected -= np.int32(1)
