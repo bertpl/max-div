@@ -1,5 +1,3 @@
-file_path=
-
 # --- how the package suite is installed and run ------------
 # Single definition, shared by every target below AND by the CI test matrix, which calls these
 # targets rather than repeating the command. That is the point: the interpreter, the resolution
@@ -21,7 +19,7 @@ UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-g
 # to pass coverage flags, and deliberately keeps the warnings visible.
 PYTEST_ARGS ?= --disable-warnings
 
-.PHONY: help build test collect-test-ids check-capability-data build-capability-data coverage test-and-coverage format format-single-file lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
+.PHONY: help build test collect-test-ids check-capability-data build-capability-data coverage test-and-coverage lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -37,9 +35,7 @@ help:
 	@echo '  coverage                               Generate test coverage report. (./reports/coverage)'
 	@echo '  test-and-coverage                      Run unit tests (=with numba) + generate coverage report (=without numba).'
 	@echo ''
-	@echo '  format                                 Format source code using ruff.'
-	@echo '  format-single-file                     Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
-	@echo '  lint                                   Run all pre-commit hooks on all files.'
+	@echo '  lint                                   Run all pre-commit hooks on all files. Formats and applies ruff fixes as it goes.'
 	@echo '  dev-setup                              Sync dev environment & install pre-commit hooks.'
 	@echo ''
 	@echo '  release                                Release a new version. Usage: make release VERSION=X.Y.Z'
@@ -57,7 +53,6 @@ help:
 	@echo ''
 	@echo 'Options:'
 	@echo ''
-	@echo '  format-single-file             - accepts `file_path=<path>` to pass the relative path of the file to be formatted.'
 	@echo '  test / collect-test-ids / coverage'
 	@echo '                                 - accept `PY=<version>` and `RESOLUTION=highest|lowest-direct` to pick the'
 	@echo '                                   interpreter and uv resolution strategy, and `PYTEST_ARGS=<flags>` to replace'
@@ -105,17 +100,6 @@ coverage:
 test-and-coverage:
 	$(MAKE) test;
 	$(MAKE) coverage;
-
-# The two format targets name the lint group but deliberately do NOT pass --exact: they are wired
-# to editor save actions, and pruning the environment on every keystroke-triggered format would
-# yank packages out from under a docs server or test run in another terminal.
-format:
-	uv run --no-default-groups --group lint ruff format .;
-	uv run --no-default-groups --group lint ruff check --fix .;
-
-format-single-file:
-	uv run --no-default-groups --group lint ruff format ${file_path};
-	uv run --no-default-groups --group lint ruff check --fix ${file_path};
 
 lint:
 	uv run --exact --no-default-groups --group lint pre-commit run --all-files
