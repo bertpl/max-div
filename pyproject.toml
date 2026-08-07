@@ -249,6 +249,10 @@ fail_under = 98
 exclude_also = [
     "@abstractmethod",
     "@abc.abstractmethod",
+    # numba compile-time hooks: their bodies run while numba compiles a caller, which never
+    # happens on the coverage run, since that run disables compilation to see inside njit code
+    "@intrinsic",
+    "@overload",
 ]
 
 [tool.pytest.ini_options]

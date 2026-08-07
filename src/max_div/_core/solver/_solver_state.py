@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from max_div._core._utils import delete_sorted, insert_sorted
 from max_div._core.constraints import Constraint, ConstraintList
 
 from ._diversity_contribution import DiversityContributionTrackers
@@ -206,18 +207,11 @@ class SolverState:
 
     def _insert_selected_index(self, index: np.int32) -> None:
         """Insert `index` into the ascending index list; call before `_n_selected` grows."""
-        live = self._selected_indices[: self._n_selected]
-        pos = np.searchsorted(live, index)
-        # numpy buffers a copy whose source and destination overlap, which is what makes this shift
-        # a single assignment rather than a directional loop
-        self._selected_indices[pos + 1 : self._n_selected + 1] = live[pos:]
-        self._selected_indices[pos] = index
+        insert_sorted(self._selected_indices, self._n_selected, index)
 
     def _delete_selected_index(self, index: np.int32) -> None:
         """Remove `index` from the ascending index list; call before `_n_selected` shrinks."""
-        live = self._selected_indices[: self._n_selected]
-        pos = np.searchsorted(live, index)
-        self._selected_indices[pos : self._n_selected - 1] = live[pos + 1 :]
+        delete_sorted(self._selected_indices, self._n_selected, index)
 
     def add(self, index: int | np.int32) -> None:
         # --- validation ----------------------------------

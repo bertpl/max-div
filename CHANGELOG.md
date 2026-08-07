@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Solving is a few percent faster on stored distance backends: the list of selected items is kept up to date as the selection changes, rather than rebuilt from scratch each time it is read
+- Solving is up to about 10% faster on stored distance backends, from cheaper bookkeeping of which items are selected
 - Faster startup: importing the package and running the first solve in a process together take roughly a quarter of the time they did, because routines that were rebuilt on every run are now compiled once and reused
 - Swap candidates are drawn from the full pool of non-selected items, so a given seed now selects different items than before; solution quality is unchanged once a run has converged
 
