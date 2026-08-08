@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
-from max_div._core.metrics._distance._build import BUILD_TILE, parallel_build_enabled
+from max_div._core.metrics._distance import compute_pdist
+from max_div._core.metrics._distance._build import BUILD_BLOCK_WIDTH, compute_full_matrix, parallel_build_enabled
 
 
 @pytest.mark.parametrize(
@@ -27,7 +27,9 @@ def test_parallel_build_enabled(monkeypatch: pytest.MonkeyPatch, env_value: str 
 
 
 @pytest.mark.parametrize("metric", list(DistanceMetric))
-@pytest.mark.parametrize("n", [30, BUILD_TILE * 2 + 2])  # below one tile, and across uneven tiles
+@pytest.mark.parametrize(
+    "n", [30, BUILD_BLOCK_WIDTH, BUILD_BLOCK_WIDTH * 2, BUILD_BLOCK_WIDTH * 2 + 2]
+)  # below one block / exact block multiples / uneven
 def test_condensed_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatch, metric: DistanceMetric, n: int):
     """The parallel condensed build produces exactly the sequential build's values."""
     # --- arrange -----------------------------------------
@@ -45,7 +47,9 @@ def test_condensed_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatch,
 
 
 @pytest.mark.parametrize("metric", list(DistanceMetric))
-@pytest.mark.parametrize("n", [30, BUILD_TILE * 2 + 2])  # below one tile, and across uneven tiles
+@pytest.mark.parametrize(
+    "n", [30, BUILD_BLOCK_WIDTH, BUILD_BLOCK_WIDTH * 2, BUILD_BLOCK_WIDTH * 2 + 2]
+)  # below one block / exact block multiples / uneven
 def test_full_matrix_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatch, metric: DistanceMetric, n: int):
     """The parallel full-matrix build produces exactly the sequential build's values."""
     # --- arrange -----------------------------------------
@@ -54,9 +58,9 @@ def test_full_matrix_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatc
 
     # --- act ---------------------------------------------
     monkeypatch.setenv("MAXDIV_PARALLEL_BUILD", "1")
-    parallel = DistanceStore.full_matrix_from_vectors(vectors, metric)
+    parallel = compute_full_matrix(vectors, metric)
     monkeypatch.setenv("MAXDIV_PARALLEL_BUILD", "0")
-    sequential = DistanceStore.full_matrix_from_vectors(vectors, metric)
+    sequential = compute_full_matrix(vectors, metric)
 
     # --- assert ------------------------------------------
-    assert np.array_equal(parallel.matrix, sequential.matrix)
+    assert np.array_equal(parallel, sequential)

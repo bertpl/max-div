@@ -27,8 +27,8 @@ from numpy.typing import NDArray
 from ._compute import _METRIC_KINDS, _l2sq_pair, _metric_pair, normalize_rows, validate_cosine_vectors
 from ._enum import DistanceMetric
 
-# Column-block width for the parallel fills.
-BUILD_TILE = 64
+# Width in columns of the blocks the parallel fills cut the pair space into.
+BUILD_BLOCK_WIDTH = 64
 
 
 def parallel_build_enabled() -> bool:
@@ -58,12 +58,12 @@ def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArr
         validate_cosine_vectors(vectors)
         normalized = normalize_rows(vectors)
         if parallel_build_enabled():
-            _fill_pdist_cos_parallel(normalized, np.int64(BUILD_TILE), out)
+            _fill_pdist_cos_parallel(normalized, np.int64(BUILD_BLOCK_WIDTH), out)
         else:
             _fill_pdist_cos(normalized, out)
         return out
     if parallel_build_enabled():
-        _fill_pdist_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_TILE), out)
+        _fill_pdist_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_BLOCK_WIDTH), out)
     else:
         _fill_pdist(vectors, _METRIC_KINDS[metric], out)
     return out
@@ -84,7 +84,7 @@ def compute_full_matrix(vectors: NDArray[np.float32], metric: DistanceMetric) ->
         validate_cosine_vectors(vectors)
         vectors = normalize_rows(vectors)
     if parallel_build_enabled():
-        return _fill_matrix_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_TILE))
+        return _fill_matrix_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_BLOCK_WIDTH))
     return _fill_matrix(vectors, _METRIC_KINDS[metric])
 
 
@@ -106,12 +106,12 @@ def _fill_pdist(vectors: NDArray[np.float32], metric_kind: np.int32, out: NDArra
     "void(float32[:, ::1], int32, int64, float32[::1])", parallel=True, cache=True, fastmath={"reassoc", "contract"}
 )
 def _fill_pdist_parallel(
-    vectors: NDArray[np.float32], metric_kind: np.int32, tile: np.int64, out: NDArray[np.float32]
+    vectors: NDArray[np.float32], metric_kind: np.int32, block_width: np.int64, out: NDArray[np.float32]
 ) -> None:
     """Write condensed distances for every metric except cosine into `out`, in parallel."""
     n = vectors.shape[0]
-    for j_block in range(0, n, tile):
-        j_end = min(j_block + tile, n)
+    for j_block in range(0, n, block_width):
+        j_end = min(j_block + block_width, n)
         for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
             base = np.int64(i) * n - (np.int64(i) * (i + 1)) // 2 - i - 1
             for j in range(max(j_block, i + 1), j_end):
@@ -135,11 +135,11 @@ def _fill_pdist_cos(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> N
 
 
 @numba.njit("void(float32[:, ::1], int64, float32[::1])", parallel=True, cache=True)
-def _fill_pdist_cos_parallel(vectors: NDArray[np.float32], tile: np.int64, out: NDArray[np.float32]) -> None:
+def _fill_pdist_cos_parallel(vectors: NDArray[np.float32], block_width: np.int64, out: NDArray[np.float32]) -> None:
     """Write condensed cosine distances of pre-normalized rows into `out`, in parallel."""
     n = vectors.shape[0]
-    for j_block in range(0, n, tile):
-        j_end = min(j_block + tile, n)
+    for j_block in range(0, n, block_width):
+        j_end = min(j_block + block_width, n)
         for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
             base = np.int64(i) * n - (np.int64(i) * (i + 1)) // 2 - i - 1
             for j in range(max(j_block, i + 1), j_end):
@@ -168,12 +168,14 @@ def _fill_matrix(vectors: NDArray[np.float32], metric_kind: np.int32) -> NDArray
     cache=True,
     fastmath={"reassoc", "contract"},
 )
-def _fill_matrix_parallel(vectors: NDArray[np.float32], metric_kind: np.int32, tile: np.int64) -> NDArray[np.float32]:
+def _fill_matrix_parallel(
+    vectors: NDArray[np.float32], metric_kind: np.int32, block_width: np.int64
+) -> NDArray[np.float32]:
     """Fill a full (n, n) distance matrix from vectors, in parallel; each pair written to both halves."""
     n = vectors.shape[0]
     matrix = np.zeros((n, n), dtype=np.float32)
-    for j_block in range(0, n, tile):
-        j_end = min(j_block + tile, n)
+    for j_block in range(0, n, block_width):
+        j_end = min(j_block + block_width, n)
         for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
             for j in range(max(j_block, np.int64(i) + 1), j_end):
                 value = _metric_pair(vectors, metric_kind, np.int32(i), np.int32(j))
