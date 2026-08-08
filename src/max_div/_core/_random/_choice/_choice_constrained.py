@@ -36,7 +36,7 @@ def choice_constrained(
     :param rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
     :param con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
-    :param item_con_indices: 1D array with the transposed membership, same module as con_indices    (never modified!)
+    :param item_con_indices: 1D array with the transposed membership, format in _constraints.py     (never modified!)
     :param eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
                   increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
                   and adherence to the provided p-values.

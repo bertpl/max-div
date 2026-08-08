@@ -76,6 +76,7 @@ def test_compute_score_wrap_around():
 #  ConstraintScoreState
 # =================================================================================================
 def test_new_constraint_score_state_scores_and_counts():
+    """Fresh state: scores match the oracle, penalty counts reflect exhausted max-counts, con_values is a copy."""
     # --- arrange -----------------------------------------
     n = 8
     constraints = [
@@ -96,6 +97,7 @@ def test_new_constraint_score_state_scores_and_counts():
 
 
 def test_apply_draw_updates_working_counts():
+    """A draw decrements the working min/max counts of exactly the drawn item's constraints."""
     # --- arrange -----------------------------------------
     n = 8
     constraints = [
@@ -134,6 +136,7 @@ def test_apply_draw_beyond_covered_items():
 
 
 def test_apply_draw_without_constraints():
+    """With zero constraints, a draw still marks the item and matches the oracle."""
     # --- arrange -----------------------------------------
     n = 5
     con_values, con_indices, item_con_indices = ConstraintList([]).to_numpy()

@@ -62,7 +62,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     :param k: number of unique samples to draw (no replacement)
     :param con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
-    :param item_con_indices: 1D array with the transposed membership, same module as con_indices    (never modified!)
+    :param item_con_indices: 1D array with the transposed membership, format in _constraints.py     (never modified!)
     :param p: optional, target probabilities for each integer in `[0, n)`                            (never modified!)
     :param rng_state: (2-element uint64 array) state for random number generation; updated in-place.
                                 (use new_rng_state(seed) to construct an initial state)            (modified in-place)

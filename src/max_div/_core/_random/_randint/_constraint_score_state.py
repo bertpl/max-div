@@ -7,11 +7,7 @@ The `ConstraintScoreState` bundle removes that repetition: `new_constraint_score
 the scores once per sampling call, and `apply_draw` then updates only the drawn item's constraints
 — plus, when one of them crosses a satisfaction threshold, that constraint's members.
 
-The upkeep is exact: after any sequence of draws, `scores` equals element-for-element what
-`_compute_score` would return for the current working counts with `hard_max_constraints=True`
-(the property test in the corresponding test module pins this against `_compute_score` as oracle).
-`scores_soft` tracks the `hard_max_constraints=False` variant the same way, activated lazily on
-first use, since feasible sampling never reads it.
+The upkeep is exact — see `ConstraintScoreState` for the invariant.
 
 The bundle is a namedtuple of numpy arrays, like `DistanceStore`, so it crosses the njit boundary
 without object-mode.
@@ -38,7 +34,7 @@ _CLAMP_REACHABLE_MIN_PENALTIES = _SCORE_PENALTY_ALREADY_SAMPLED // _SCORE_PENALT
 
 
 # =================================================================================================
-#  _compute_score — from-scratch pricing
+#  _compute_score — from-scratch scoring
 # =================================================================================================
 @numba.njit("int32[:](int32,int32[:,:],int32[:],int32[:],boolean)", fastmath=True, cache=True)
 def _compute_score(
@@ -83,7 +79,7 @@ def _compute_score(
             for idx in indices:
                 scores[idx] = max(
                     scores[idx] - max_count_penalty,
-                    -_SCORE_PENALTY_ALREADY_SAMPLED + 1,  # avoid wrap-around + ensure -already_sampled_penalty is lower
+                    _SCORE_CLAMP_FLOOR,  # avoid wrap-around; stays above the already-sampled marker
                 )
 
     # --- already sampled ---------------------------------
@@ -159,11 +155,9 @@ def new_constraint_score_state(
 def _recompute_item_score(state: ConstraintScoreState, idx: np.int32) -> np.int32:
     """Recompute one item's score exactly as `_compute_score` would.
 
-    Only called for items with `_CLAMP_REACHABLE_MIN_PENALTIES` or more exhausted max-counts,
-    where the per-step clamp can take effect and plain add/subtract no longer matches the
-    from-scratch result.  The replay visits the item's constraints in ascending order —
-    `_compute_score`'s constraint order — with the same per-step clamp, so it lands on the
-    identical value.
+    Only called for items with `_CLAMP_REACHABLE_MIN_PENALTIES` or more exhausted max-counts.  The
+    replay visits the item's constraints in ascending order — `_compute_score`'s constraint order —
+    with the same per-step clamp, so it lands on the identical value.
     """
     score = np.int32(0)
     for i_con in _np_con_indices(state.item_con_indices, idx):
@@ -212,12 +206,12 @@ def apply_draw(state: ConstraintScoreState, s: np.int32) -> None:
       its penalty is applied to them)
     - pins `s` itself at `-_SCORE_PENALTY_ALREADY_SAMPLED`, so it cannot be drawn again
     """
-    # constraints containing s (items beyond the transposed index belong to no constraint)
+    # constraints containing s (items beyond the transposed membership's coverage belong to no constraint)
     n_covered = state.penalty_counts.shape[0]
     s_cons = _np_con_indices(state.item_con_indices, s) if s < n_covered else state.item_con_indices[0:0]
 
     # 1) decrement the working counts of all of s's constraints, so the threshold sweeps below
-    #    (and any re-pricing they trigger) read the fully updated counts
+    #    (and any rescoring they trigger) read the fully updated counts
     for i_con in s_cons:
         state.con_values[i_con, 0] -= 1
         state.con_values[i_con, 1] -= 1
