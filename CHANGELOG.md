@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A farthest-point-sampling initialization strategy (`InitializationStrategy.farthest_point()`): the greedy construction farthest-point-sampling tools use, computed from the solver's own distance store, selectable via `MaxDivSolverBuilder.set_initialization_strategy`
 
 ### Changed
 

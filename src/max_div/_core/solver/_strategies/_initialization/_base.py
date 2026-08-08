@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from max_div._core.solver._solver_state import SolverState
 
     from ._init_eager import InitEager
+    from ._init_farthest_point import InitFarthestPoint
     from ._init_fast import InitFast
     from ._init_random_batched import InitRandomBatched
     from ._init_random_one_shot import InitRandomOneShot
@@ -23,8 +24,8 @@ if TYPE_CHECKING:
 class InitializationStrategy(StrategyBase, ABC):
     """Base class for strategies that produce an initial selection of ``k`` items.
 
-    Use the factory methods (`fast`, `random_one_shot`, `random_batched`,
-    `eager`) to create instances.
+    Use the factory methods (`fast`, `farthest_point`, `random_one_shot`,
+    `random_batched`, `eager`) to create instances.
     """
 
     @abstractmethod
@@ -47,15 +48,23 @@ class InitializationStrategy(StrategyBase, ABC):
     # -------------------------------------------------------------------------
     @classmethod
     def fast(cls) -> InitFast:
-        """Deterministic greedy initialization.
+        """Trivial initialization that selects the first ``k`` items (indices 0 to k-1).
 
-        Selects items one-by-one, always picking the one that maximizes the diversity contribution wrt the
-        current selection.
-        Fast but seed-independent.
+        Deterministic and effectively free; mainly a baseline for testing and benchmarking.
         """
         from ._init_fast import InitFast
 
         return InitFast()
+
+    @classmethod
+    def farthest_point(cls) -> InitFarthestPoint:
+        """Farthest-point-sampling initialization: a seeded random start item, then greedy picks.
+
+        See `InitFarthestPoint` for the per-metric interpretation and constraint handling.
+        """
+        from ._init_farthest_point import InitFarthestPoint
+
+        return InitFarthestPoint()
 
     @classmethod
     def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:
