@@ -1,4 +1,8 @@
-"""Methods for computing pair-wise distances between vectors, along the lines of scipy's pdist."""
+"""Pair-distance arithmetic: the per-pair functions every distance producer builds on.
+
+The builds in `_build` and the on-demand reads in `_store` all go through these, which is what
+keeps stored and on-demand values bit-equal.
+"""
 
 import numba
 import numpy as np
@@ -6,38 +10,21 @@ from numpy.typing import NDArray
 
 from ._enum import DistanceMetric
 
+# Metric selector values, so njit functions can branch on the metric without object-mode.
+# Cosine holds pre-normalized vectors, so its pair read is the half-squared-L2 form on those.
+_METRIC_KIND_L1 = np.int32(0)
+_METRIC_KIND_L2 = np.int32(1)
+_METRIC_KIND_L2S = np.int32(2)
+_METRIC_KIND_COS = np.int32(3)
+_METRIC_KIND_LINF = np.int32(4)
 
-# =================================================================================================
-#  pdist computation
-# =================================================================================================
-def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
-    """Compute the pair-wise distances between a set of n vectors in d dimensions.
-
-    Computed directly in float32 by a numba kernel — each pair accumulates in float64 across the d
-    dimensions and narrows to float32 on store — avoiding the float64 distance matrix scipy would
-    otherwise materialize and cast (a ~3x transient in peak setup memory).
-
-    :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
-    :param metric: (DistanceMetric) The distance metric to use.
-    :return: ((n*(n-1))//2 ndarray) condensed pair-wise distance vector, in scipy's layout: the
-                                         (i,j)-distance for i<j sits at the offset given by `_condensed_index`.
-    """
-    vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-    n = vectors.shape[0]
-    out = np.empty((n * (n - 1)) // 2, dtype=np.float32)
-    match metric:
-        case DistanceMetric.L1_MANHATTAN:
-            _pdist_l1(vectors, out)
-        case DistanceMetric.L2_EUCLIDEAN:
-            _pdist_l2(vectors, out)
-        case DistanceMetric.L2S_EUCLIDEAN_SQUARED:
-            _pdist_l2s(vectors, out)
-        case DistanceMetric.LINF_CHEBYSHEV:
-            _pdist_linf(vectors, out)
-        case DistanceMetric.COSINE:
-            validate_cosine_vectors(vectors)
-            _pdist_cos(vectors, out)
-    return out
+_METRIC_KINDS = {
+    DistanceMetric.L1_MANHATTAN: _METRIC_KIND_L1,
+    DistanceMetric.L2_EUCLIDEAN: _METRIC_KIND_L2,
+    DistanceMetric.L2S_EUCLIDEAN_SQUARED: _METRIC_KIND_L2S,
+    DistanceMetric.COSINE: _METRIC_KIND_COS,
+    DistanceMetric.LINF_CHEBYSHEV: _METRIC_KIND_LINF,
+}
 
 
 def validate_cosine_vectors(vectors: NDArray[np.float32]) -> None:
@@ -53,9 +40,9 @@ def validate_cosine_vectors(vectors: NDArray[np.float32]) -> None:
 
 
 # =================================================================================================
-#  pdist kernels
+#  Pair functions
 # =================================================================================================
-# These kernels sum one term per dimension.  Adding those terms in a different order gives a
+# These functions sum one term per dimension.  Adding those terms in a different order gives a
 # very slightly different answer in floating point, so by default the compiler must add them
 # strictly left to right — one at a time, each waiting for the previous.  `reassoc` lifts that
 # restriction ("reassociate" = regroup the additions), letting the compiler add several terms in
@@ -100,48 +87,18 @@ def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
     return acc
 
 
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
-def _pdist_l1(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write the condensed L1 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
-    n = vectors.shape[0]
-    idx = np.int64(0)
-    for i in range(n):
-        for j in range(i + 1, n):
-            out[idx] = np.float32(_l1_pair(vectors, i, j))
-            idx += 1
-
-
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
-def _pdist_l2(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write the condensed L2 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
-    n = vectors.shape[0]
-    idx = np.int64(0)
-    for i in range(n):
-        for j in range(i + 1, n):
-            out[idx] = np.float32(np.sqrt(_l2sq_pair(vectors, i, j)))
-            idx += 1
-
-
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
-def _pdist_l2s(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write the condensed squared-L2 distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
-    n = vectors.shape[0]
-    idx = np.int64(0)
-    for i in range(n):
-        for j in range(i + 1, n):
-            out[idx] = np.float32(_l2sq_pair(vectors, i, j))
-            idx += 1
-
-
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
-def _pdist_linf(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write the condensed Linf distances of `vectors` into pre-allocated `out`, in condensed i<j order."""
-    n = vectors.shape[0]
-    idx = np.int64(0)
-    for i in range(n):
-        for j in range(i + 1, n):
-            out[idx] = np.float32(_linf_pair(vectors, i, j))
-            idx += 1
+@numba.njit(numba.float32(numba.float32[:, ::1], numba.int32, numba.int32, numba.int32), inline="always", cache=True)
+def _metric_pair(vectors: NDArray[np.float32], metric_kind: np.int32, i: np.int32, j: np.int32) -> np.float32:
+    """Compute the distance between vectors i and j, per the given metric selector."""
+    if metric_kind == _METRIC_KIND_L1:
+        return np.float32(_l1_pair(vectors, i, j))
+    if metric_kind == _METRIC_KIND_L2:
+        return np.float32(np.sqrt(_l2sq_pair(vectors, i, j)))
+    if metric_kind == _METRIC_KIND_L2S:
+        return np.float32(_l2sq_pair(vectors, i, j))
+    if metric_kind == _METRIC_KIND_LINF:
+        return np.float32(_linf_pair(vectors, i, j))
+    return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
 
 
 @numba.njit("float32[:, ::1](float32[:, ::1])", cache=True)
@@ -149,7 +106,7 @@ def normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
     """Return a fresh float32 array with each row of `vectors` scaled to unit L2 norm.
 
     Norms accumulate in float64 and each element narrows to float32 on store, so the result is the
-    exact normalization the cosine pairwise kernels operate on.  Rows must not be all-zero
+    exact normalization the cosine pair functions operate on.  Rows must not be all-zero
     (`validate_cosine_vectors` guards the public entry points).
     """
     n = vectors.shape[0]
@@ -163,23 +120,3 @@ def normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
         for c in range(d):
             normalized[i, c] = np.float32(np.float64(vectors[i, c]) / norm)
     return normalized
-
-
-@numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
-def _pdist_cos(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write the condensed cosine distances of `vectors` into pre-allocated `out`, in condensed i<j order.
-
-    Computed as ``0.5 * ||x^ - y^||^2`` on unit-normalized vectors, which equals ``1 - cos(x, y)``
-    algebraically but — unlike the dot-product form — is non-negative by construction and exactly
-    0.0 for identical vectors. Rows are normalized once (`normalize_rows`), so the pair loop
-    reuses the squared-L2 accumulation.
-
-    Vectors must contain no all-zero rows (`validate_cosine_vectors` guards the public entry point).
-    """
-    n = vectors.shape[0]
-    normalized = normalize_rows(vectors)
-    idx = np.int64(0)
-    for i in range(n):
-        for j in range(i + 1, n):
-            out[idx] = np.float32(0.5 * _l2sq_pair(normalized, i, j))
-            idx += 1

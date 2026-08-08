@@ -1,7 +1,5 @@
-from ._compute import (
-    compute_pdist,
-    validate_cosine_vectors,
-)
+from ._build import compute_pdist
+from ._compute import validate_cosine_vectors
 from ._enum import DistanceMetric
 from ._store import (
     DISTANCE_STORE_TYPE,

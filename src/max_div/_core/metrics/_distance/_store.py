@@ -11,7 +11,8 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from ._compute import _l1_pair, _l2sq_pair, _linf_pair, normalize_rows, validate_cosine_vectors
+from ._build import _expand_condensed, compute_full_matrix
+from ._compute import _METRIC_KINDS, _metric_pair, normalize_rows, validate_cosine_vectors
 from ._enum import DistanceMetric
 
 # =================================================================================================
@@ -21,22 +22,6 @@ from ._enum import DistanceMetric
 KIND_CONDENSED = np.int32(0)
 KIND_LAZY = np.int32(1)
 KIND_FULL_MATRIX = np.int32(2)
-
-# Pair-kernel selector values for DistanceStore.metric_kind (lazy backend only).  Cosine holds
-# pre-normalized vectors, so its pair read is the half-squared-L2 form on those.
-_METRIC_KIND_L1 = np.int32(0)
-_METRIC_KIND_L2 = np.int32(1)
-_METRIC_KIND_L2S = np.int32(2)
-_METRIC_KIND_COS = np.int32(3)
-_METRIC_KIND_LINF = np.int32(4)
-
-_METRIC_KINDS = {
-    DistanceMetric.L1_MANHATTAN: _METRIC_KIND_L1,
-    DistanceMetric.L2_EUCLIDEAN: _METRIC_KIND_L2,
-    DistanceMetric.L2S_EUCLIDEAN_SQUARED: _METRIC_KIND_L2S,
-    DistanceMetric.COSINE: _METRIC_KIND_COS,
-    DistanceMetric.LINF_CHEBYSHEV: _METRIC_KIND_LINF,
-}
 
 # shared placeholders for the fields a backend does not use, so empty stores cost nothing
 _EMPTY_1D = np.empty(0, dtype=np.float32)
@@ -132,11 +117,7 @@ class DistanceStore(NamedTuple):
         :param vectors: (n x d ndarray) the vectors to compute distances from.
         :param metric: (DistanceMetric) the distance metric to use.
         """
-        vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-        if metric == DistanceMetric.COSINE:
-            validate_cosine_vectors(vectors)
-            vectors = normalize_rows(vectors)
-        return cls.full_matrix(_fill_matrix_from_vectors(vectors, _METRIC_KINDS[metric]))
+        return cls.full_matrix(compute_full_matrix(vectors, metric))
 
     @classmethod
     def full_matrix_from_condensed(cls, pdist: NDArray[np.float32], n: int) -> "DistanceStore":
@@ -171,24 +152,6 @@ def _condensed_index(i_lo: np.int32, i_hi: np.int32, n: np.int32) -> np.int64:
     return (np.int64(n) * i_lo64) + np.int64(i_hi) - ((i_lo64 + 2) * (i_lo64 + 1)) // 2
 
 
-@numba.njit(numba.float32(numba.float32[:, ::1], numba.int32, numba.int32, numba.int32), inline="always", cache=True)
-def _lazy_pair(vectors: NDArray[np.float32], metric_kind: np.int32, i: np.int32, j: np.int32) -> np.float32:
-    """Compute the distance between vectors i and j on demand, per the given pair-kernel selector.
-
-    Each branch narrows exactly as the corresponding precomputing kernel does, so on-demand values
-    are bit-equal to stored ones.
-    """
-    if metric_kind == _METRIC_KIND_L1:
-        return np.float32(_l1_pair(vectors, i, j))
-    if metric_kind == _METRIC_KIND_L2:
-        return np.float32(np.sqrt(_l2sq_pair(vectors, i, j)))
-    if metric_kind == _METRIC_KIND_L2S:
-        return np.float32(_l2sq_pair(vectors, i, j))
-    if metric_kind == _METRIC_KIND_LINF:
-        return np.float32(_linf_pair(vectors, i, j))
-    return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
-
-
 # A specialized reader per storage layout, for the loops that read one item's distance to every
 # other.  They exist as a performance optimization over the generic `get_distance`, which measured
 # about fifteen times slower in those loops.
@@ -217,7 +180,7 @@ def get_distance_condensed(store: DistanceStore, i: int | np.integer, j: int | n
 @numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int64), inline="always", cache=True)
 def get_distance_lazy(store: DistanceStore, i: int | np.integer, j: int | np.integer) -> np.float32:
     """Compute the distance between two items from a lazy store's vectors."""
-    return _lazy_pair(store.vectors, store.metric_kind, np.int32(i), np.int32(j))
+    return _metric_pair(store.vectors, store.metric_kind, np.int32(i), np.int32(j))
 
 
 @numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int32, numba.int32), inline="always", cache=True)
@@ -237,37 +200,7 @@ def get_distance(store: DistanceStore, i: np.int32, j: np.int32) -> np.float32:
     if store.kind == KIND_FULL_MATRIX:
         return store.matrix[i, j]
     if store.kind == KIND_LAZY:
-        return _lazy_pair(store.vectors, store.metric_kind, i, j)
+        return _metric_pair(store.vectors, store.metric_kind, i, j)
     if i < j:
         return store.pdist[_condensed_index(i, j, store.n)]
     return store.pdist[_condensed_index(j, i, store.n)]
-
-
-# =================================================================================================
-#  Full-matrix construction kernels
-# =================================================================================================
-@numba.njit(numba.float32[:, ::1](numba.float32[:, ::1], numba.int32), cache=True, fastmath={"reassoc", "contract"})
-def _fill_matrix_from_vectors(vectors: NDArray[np.float32], metric_kind: np.int32) -> NDArray[np.float32]:
-    """Fill a full (n, n) distance matrix from vectors: each pair computed once, written to both halves."""
-    n = vectors.shape[0]
-    matrix = np.zeros((n, n), dtype=np.float32)
-    for i in np.arange(n, dtype=np.int32):
-        for j in np.arange(i + 1, n, dtype=np.int32):
-            value = _lazy_pair(vectors, metric_kind, i, j)
-            matrix[i, j] = value
-            matrix[j, i] = value
-    return matrix
-
-
-@numba.njit(numba.float32[:, ::1](numba.float32[::1], numba.int32), cache=True)
-def _expand_condensed(condensed: NDArray[np.float32], n: np.int32) -> NDArray[np.float32]:
-    """Expand a condensed distance vector into a full (n, n) matrix: each value written to both halves."""
-    matrix = np.zeros((n, n), dtype=np.float32)
-    idx = np.int64(0)
-    for i in range(n):
-        for j in range(i + 1, n):
-            value = condensed[idx]
-            idx += 1
-            matrix[i, j] = value
-            matrix[j, i] = value
-    return matrix
