@@ -3,19 +3,19 @@
 Every build comes in a sequential and a parallel variant with bit-identical output — the parallel
 fills run the same pair arithmetic under the same fastmath flags and write each element exactly
 once, so thread count cannot affect results.  `MAXDIV_PARALLEL_BUILD` picks the variant (parallel
-unless set to ``"0"``): the switch controls resource usage during construction only, never
-results.
+unless set to ``"0"``).
 
 The parallel fills cut the columns into fixed-width blocks and parallelize the row loop within
 each block: every row above a block computes exactly one block-width of pairs, so prange can
-split the work evenly across threads — parallelizing the raw triangle instead leaves one thread
-with roughly twice the work of the average.  Condensed fills address each row's output segment by
-the closed-form condensed offset, since a parallel loop cannot share a running index.
+split the work evenly across threads — parallelizing the outer row loop over the whole i<j pair
+triangle instead leaves one thread with roughly twice the work of the average.  Condensed fills
+address each row's output segment by the closed-form condensed offset, since a parallel loop
+cannot share a running index.
 
 Cosine is the one metric with dedicated condensed fills: its rows are normalized once in the
-entry point, and those fills deliberately carry no fastmath flags — condensed cosine values are a
-fixed function of the source, while the matrix fills compute every metric (cosine included) under
-`reassoc`/`contract`.
+entry point, and those fills deliberately carry no fastmath flags, so condensed cosine values are
+bit-reproducible across machines and numba versions, while the matrix fills compute every metric
+(cosine included) under `reassoc`/`contract`.
 """
 
 import os
@@ -24,7 +24,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from ._compute import _l2sq_pair, _lazy_pair, _METRIC_KINDS, normalize_rows, validate_cosine_vectors
+from ._compute import _METRIC_KINDS, _l2sq_pair, _metric_pair, normalize_rows, validate_cosine_vectors
 from ._enum import DistanceMetric
 
 # Column-block width for the parallel fills.
@@ -98,7 +98,7 @@ def _fill_pdist(vectors: NDArray[np.float32], metric_kind: np.int32, out: NDArra
     idx = np.int64(0)
     for i in range(n):
         for j in range(i + 1, n):
-            out[idx] = _lazy_pair(vectors, metric_kind, np.int32(i), np.int32(j))
+            out[idx] = _metric_pair(vectors, metric_kind, np.int32(i), np.int32(j))
             idx += 1
 
 
@@ -115,7 +115,7 @@ def _fill_pdist_parallel(
         for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
             base = np.int64(i) * n - (np.int64(i) * (i + 1)) // 2 - i - 1
             for j in range(max(j_block, i + 1), j_end):
-                out[base + j] = _lazy_pair(vectors, metric_kind, np.int32(i), np.int32(j))
+                out[base + j] = _metric_pair(vectors, metric_kind, np.int32(i), np.int32(j))
 
 
 @numba.njit("void(float32[:, ::1], float32[::1])", cache=True)
@@ -156,7 +156,7 @@ def _fill_matrix(vectors: NDArray[np.float32], metric_kind: np.int32) -> NDArray
     matrix = np.zeros((n, n), dtype=np.float32)
     for i in np.arange(n, dtype=np.int32):
         for j in np.arange(i + 1, n, dtype=np.int32):
-            value = _lazy_pair(vectors, metric_kind, i, j)
+            value = _metric_pair(vectors, metric_kind, i, j)
             matrix[i, j] = value
             matrix[j, i] = value
     return matrix
@@ -168,9 +168,7 @@ def _fill_matrix(vectors: NDArray[np.float32], metric_kind: np.int32) -> NDArray
     cache=True,
     fastmath={"reassoc", "contract"},
 )
-def _fill_matrix_parallel(
-    vectors: NDArray[np.float32], metric_kind: np.int32, tile: np.int64
-) -> NDArray[np.float32]:
+def _fill_matrix_parallel(vectors: NDArray[np.float32], metric_kind: np.int32, tile: np.int64) -> NDArray[np.float32]:
     """Fill a full (n, n) distance matrix from vectors, in parallel; each pair written to both halves."""
     n = vectors.shape[0]
     matrix = np.zeros((n, n), dtype=np.float32)
@@ -178,7 +176,7 @@ def _fill_matrix_parallel(
         j_end = min(j_block + tile, n)
         for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
             for j in range(max(j_block, np.int64(i) + 1), j_end):
-                value = _lazy_pair(vectors, metric_kind, np.int32(i), np.int32(j))
+                value = _metric_pair(vectors, metric_kind, np.int32(i), np.int32(j))
                 matrix[i, j] = value
                 matrix[j, i] = value
     return matrix

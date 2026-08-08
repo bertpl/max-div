@@ -88,12 +88,8 @@ def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
 
 
 @numba.njit(numba.float32(numba.float32[:, ::1], numba.int32, numba.int32, numba.int32), inline="always", cache=True)
-def _lazy_pair(vectors: NDArray[np.float32], metric_kind: np.int32, i: np.int32, j: np.int32) -> np.float32:
-    """Compute the distance between vectors i and j on demand, per the given metric selector.
-
-    Each branch narrows exactly as the corresponding precomputing function does, so on-demand values
-    are bit-equal to stored ones.
-    """
+def _metric_pair(vectors: NDArray[np.float32], metric_kind: np.int32, i: np.int32, j: np.int32) -> np.float32:
+    """Compute the distance between vectors i and j, per the given metric selector."""
     if metric_kind == _METRIC_KIND_L1:
         return np.float32(_l1_pair(vectors, i, j))
     if metric_kind == _METRIC_KIND_L2:
