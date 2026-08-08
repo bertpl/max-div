@@ -1,6 +1,6 @@
 import datetime
+import multiprocessing
 import os
-from multiprocessing import Pool
 
 from tqdm import tqdm
 
@@ -29,8 +29,11 @@ def executor_multi_parallel(
     pbar = tqdm(desc=desc, total=n_pbar_units, leave=True)
 
     # --- execute -----------------------------------------
+    # spawn, never fork: the parent has usually run numba parallel code by now (the distance-store
+    # builds), and numba's threading layer is not fork-safe — forked children deadlock on their
+    # first parallel call.  spawn starts workers clean on every platform and Python version.
     results = []
-    with Pool(processes=n_processes) as pool:
+    with multiprocessing.get_context("spawn").Pool(processes=n_processes) as pool:
         for result in pool.imap_unordered(_execute_single_run, scope):
             results.append(result)
             pbar.n += get_pbar_units(result.params)
