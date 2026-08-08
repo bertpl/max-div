@@ -5,6 +5,23 @@ import numpy as np
 from numpy.typing import NDArray
 
 from ._enum import DistanceMetric
+from ._parallel_build import BUILD_TILE, parallel_build_enabled
+
+# Pair-kernel selector values, so njit kernels can branch on the metric without object-mode.
+# Cosine holds pre-normalized vectors, so its pair read is the half-squared-L2 form on those.
+_METRIC_KIND_L1 = np.int32(0)
+_METRIC_KIND_L2 = np.int32(1)
+_METRIC_KIND_L2S = np.int32(2)
+_METRIC_KIND_COS = np.int32(3)
+_METRIC_KIND_LINF = np.int32(4)
+
+_METRIC_KINDS = {
+    DistanceMetric.L1_MANHATTAN: _METRIC_KIND_L1,
+    DistanceMetric.L2_EUCLIDEAN: _METRIC_KIND_L2,
+    DistanceMetric.L2S_EUCLIDEAN_SQUARED: _METRIC_KIND_L2S,
+    DistanceMetric.COSINE: _METRIC_KIND_COS,
+    DistanceMetric.LINF_CHEBYSHEV: _METRIC_KIND_LINF,
+}
 
 
 # =================================================================================================
@@ -25,6 +42,13 @@ def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArr
     vectors = np.ascontiguousarray(vectors, dtype=np.float32)
     n = vectors.shape[0]
     out = np.empty((n * (n - 1)) // 2, dtype=np.float32)
+    if parallel_build_enabled():
+        if metric == DistanceMetric.COSINE:
+            validate_cosine_vectors(vectors)
+            _pdist_parallel_cos(normalize_rows(vectors), np.int64(BUILD_TILE), out)
+        else:
+            _pdist_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_TILE), out)
+        return out
     match metric:
         case DistanceMetric.L1_MANHATTAN:
             _pdist_l1(vectors, out)
@@ -98,6 +122,24 @@ def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
         if diff > acc:
             acc = diff
     return acc
+
+
+@numba.njit(numba.float32(numba.float32[:, ::1], numba.int32, numba.int32, numba.int32), inline="always", cache=True)
+def _lazy_pair(vectors: NDArray[np.float32], metric_kind: np.int32, i: np.int32, j: np.int32) -> np.float32:
+    """Compute the distance between vectors i and j on demand, per the given pair-kernel selector.
+
+    Each branch narrows exactly as the corresponding precomputing kernel does, so on-demand values
+    are bit-equal to stored ones.
+    """
+    if metric_kind == _METRIC_KIND_L1:
+        return np.float32(_l1_pair(vectors, i, j))
+    if metric_kind == _METRIC_KIND_L2:
+        return np.float32(np.sqrt(_l2sq_pair(vectors, i, j)))
+    if metric_kind == _METRIC_KIND_L2S:
+        return np.float32(_l2sq_pair(vectors, i, j))
+    if metric_kind == _METRIC_KIND_LINF:
+        return np.float32(_linf_pair(vectors, i, j))
+    return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
 
 
 @numba.njit("void(float32[:, ::1], float32[::1])", cache=True, fastmath={"reassoc", "contract"})
@@ -183,3 +225,46 @@ def _pdist_cos(vectors: NDArray[np.float32], out: NDArray[np.float32]) -> None:
         for j in range(i + 1, n):
             out[idx] = np.float32(0.5 * _l2sq_pair(normalized, i, j))
             idx += 1
+
+
+# =================================================================================================
+#  Parallel pdist kernels
+# =================================================================================================
+# Same pair arithmetic as the sequential kernels above — each mirrors its sequential counterpart's
+# fastmath flags exactly, so parallel and sequential builds are bit-identical (each element is
+# written exactly once, so thread count cannot affect the result either).  The column-block loop
+# converts the triangular pair space into uniform slabs prange can split evenly; see
+# `_parallel_build` for the tile rationale.  Row segments are addressed by the closed-form
+# condensed offset, since a parallel loop cannot share the sequential kernels' running index.
+
+
+@numba.njit(
+    "void(float32[:, ::1], int32, int64, float32[::1])", parallel=True, cache=True, fastmath={"reassoc", "contract"}
+)
+def _pdist_parallel(
+    vectors: NDArray[np.float32], metric_kind: np.int32, tile: np.int64, out: NDArray[np.float32]
+) -> None:
+    """Write condensed distances for the L1/L2/L2S/Linf metrics into `out`, in parallel."""
+    n = vectors.shape[0]
+    for j_block in range(0, n, tile):
+        j_end = min(j_block + tile, n)
+        for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
+            base = np.int64(i) * n - (np.int64(i) * (i + 1)) // 2 - i - 1
+            for j in range(max(j_block, i + 1), j_end):
+                out[base + j] = _lazy_pair(vectors, metric_kind, np.int32(i), np.int32(j))
+
+
+@numba.njit("void(float32[:, ::1], int64, float32[::1])", parallel=True, cache=True)
+def _pdist_parallel_cos(vectors: NDArray[np.float32], tile: np.int64, out: NDArray[np.float32]) -> None:
+    """Write condensed cosine distances into `out`, in parallel.
+
+    Deliberately carries no fastmath flags, mirroring the sequential `_pdist_cos`.  Takes
+    already-normalized rows (the caller normalizes once, as the sequential kernel does).
+    """
+    n = vectors.shape[0]
+    for j_block in range(0, n, tile):
+        j_end = min(j_block + tile, n)
+        for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
+            base = np.int64(i) * n - (np.int64(i) * (i + 1)) // 2 - i - 1
+            for j in range(max(j_block, i + 1), j_end):
+                out[base + j] = np.float32(0.5 * _l2sq_pair(vectors, np.int32(i), np.int32(j)))

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A farthest-point-sampling initialization strategy (`InitializationStrategy.farthest_point()`): the greedy construction farthest-point-sampling tools use, computed from the solver's own distance store, selectable via `MaxDivSolverBuilder.set_initialization_strategy`
 
 ### Changed
+- Distance-store construction is multi-threaded, roughly 7× faster at large problem sizes; results are unchanged (parallel builds are bit-identical to the single-threaded ones), and `MAXDIV_PARALLEL_BUILD=0` disables it
 
 ### Deprecated
 

@@ -11,8 +11,9 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from ._compute import _l1_pair, _l2sq_pair, _linf_pair, normalize_rows, validate_cosine_vectors
+from ._compute import _METRIC_KINDS, _lazy_pair, normalize_rows, validate_cosine_vectors
 from ._enum import DistanceMetric
+from ._parallel_build import BUILD_TILE, parallel_build_enabled
 
 # =================================================================================================
 #  DistanceStore
@@ -21,22 +22,6 @@ from ._enum import DistanceMetric
 KIND_CONDENSED = np.int32(0)
 KIND_LAZY = np.int32(1)
 KIND_FULL_MATRIX = np.int32(2)
-
-# Pair-kernel selector values for DistanceStore.metric_kind (lazy backend only).  Cosine holds
-# pre-normalized vectors, so its pair read is the half-squared-L2 form on those.
-_METRIC_KIND_L1 = np.int32(0)
-_METRIC_KIND_L2 = np.int32(1)
-_METRIC_KIND_L2S = np.int32(2)
-_METRIC_KIND_COS = np.int32(3)
-_METRIC_KIND_LINF = np.int32(4)
-
-_METRIC_KINDS = {
-    DistanceMetric.L1_MANHATTAN: _METRIC_KIND_L1,
-    DistanceMetric.L2_EUCLIDEAN: _METRIC_KIND_L2,
-    DistanceMetric.L2S_EUCLIDEAN_SQUARED: _METRIC_KIND_L2S,
-    DistanceMetric.COSINE: _METRIC_KIND_COS,
-    DistanceMetric.LINF_CHEBYSHEV: _METRIC_KIND_LINF,
-}
 
 # shared placeholders for the fields a backend does not use, so empty stores cost nothing
 _EMPTY_1D = np.empty(0, dtype=np.float32)
@@ -136,6 +121,10 @@ class DistanceStore(NamedTuple):
         if metric == DistanceMetric.COSINE:
             validate_cosine_vectors(vectors)
             vectors = normalize_rows(vectors)
+        if parallel_build_enabled():
+            return cls.full_matrix(
+                _fill_matrix_from_vectors_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_TILE))
+            )
         return cls.full_matrix(_fill_matrix_from_vectors(vectors, _METRIC_KINDS[metric]))
 
     @classmethod
@@ -169,24 +158,6 @@ def _condensed_index(i_lo: np.int32, i_hi: np.int32, n: np.int32) -> np.int64:
     """
     i_lo64 = np.int64(i_lo)
     return (np.int64(n) * i_lo64) + np.int64(i_hi) - ((i_lo64 + 2) * (i_lo64 + 1)) // 2
-
-
-@numba.njit(numba.float32(numba.float32[:, ::1], numba.int32, numba.int32, numba.int32), inline="always", cache=True)
-def _lazy_pair(vectors: NDArray[np.float32], metric_kind: np.int32, i: np.int32, j: np.int32) -> np.float32:
-    """Compute the distance between vectors i and j on demand, per the given pair-kernel selector.
-
-    Each branch narrows exactly as the corresponding precomputing kernel does, so on-demand values
-    are bit-equal to stored ones.
-    """
-    if metric_kind == _METRIC_KIND_L1:
-        return np.float32(_l1_pair(vectors, i, j))
-    if metric_kind == _METRIC_KIND_L2:
-        return np.float32(np.sqrt(_l2sq_pair(vectors, i, j)))
-    if metric_kind == _METRIC_KIND_L2S:
-        return np.float32(_l2sq_pair(vectors, i, j))
-    if metric_kind == _METRIC_KIND_LINF:
-        return np.float32(_linf_pair(vectors, i, j))
-    return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
 
 
 # A specialized reader per storage layout, for the loops that read one item's distance to every
@@ -256,6 +227,34 @@ def _fill_matrix_from_vectors(vectors: NDArray[np.float32], metric_kind: np.int3
             value = _lazy_pair(vectors, metric_kind, i, j)
             matrix[i, j] = value
             matrix[j, i] = value
+    return matrix
+
+
+@numba.njit(
+    numba.float32[:, ::1](numba.float32[:, ::1], numba.int32, numba.int64),
+    parallel=True,
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
+def _fill_matrix_from_vectors_parallel(
+    vectors: NDArray[np.float32], metric_kind: np.int32, tile: np.int64
+) -> NDArray[np.float32]:
+    """Fill a full (n, n) distance matrix from vectors, in parallel; bit-identical to the sequential fill.
+
+    Same pair arithmetic under the same fastmath flags as `_fill_matrix_from_vectors`, and each
+    element is written exactly once, so neither parallelism nor thread count can change the result.
+    The column-block loop converts the triangular pair space into uniform slabs prange splits
+    evenly; see `_parallel_build` for the tile rationale.
+    """
+    n = vectors.shape[0]
+    matrix = np.zeros((n, n), dtype=np.float32)
+    for j_block in range(0, n, tile):
+        j_end = min(j_block + tile, n)
+        for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
+            for j in range(max(j_block, np.int64(i) + 1), j_end):
+                value = _lazy_pair(vectors, metric_kind, np.int32(i), np.int32(j))
+                matrix[i, j] = value
+                matrix[j, i] = value
     return matrix
 
 
