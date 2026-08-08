@@ -70,8 +70,10 @@ runs:
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
           # PYTEST_ARGS replaces the Makefile default, so warnings stay visible in CI
           # faulthandler_timeout: any test stuck past 120s dumps every thread's stack into the
-          # log, so a hang shows the exact blocked line instead of a silent 6h timeout
-          make test PY="$PY" RESOLUTION="$RES" PYTEST_ARGS="$COV_FLAG -o faulthandler_timeout=120"
+          # log; the outer timeout then kills the run so the job fails fast with readable logs
+          # instead of hanging silently to the 6h ceiling
+          timeout --kill-after=30 600 \
+            make test PY="$PY" RESOLUTION="$RES" PYTEST_ARGS="$COV_FLAG -o faulthandler_timeout=120"
 
       - name: Dump collected node-ids (for the cross-combo test-count union)
         if: inputs.coverage == 'true'
