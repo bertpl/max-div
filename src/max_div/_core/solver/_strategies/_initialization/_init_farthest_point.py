@@ -17,21 +17,17 @@ class InitFarthestPoint(InitializationStrategy):
     greedy max-sum construction.  The random start item keeps runs seed-dependent.
 
     Constraints are ignored by design: greedy picks are constraint-unaware, and the optimization
-    phase repairs feasibility afterwards (the same posture the solver presets take when
-    initializing).
+    phase repairs feasibility afterwards (the solver presets also ignore constraints during
+    initialization).
 
     Suggested use: when the strongest possible starting point is desired, e.g. at short time
-    budgets.  The greedy construction matches the quality of dedicated single-shot FPS pickers.
-
-    Time Complexity:
-       - ~O(k * n) contribution reads, on top of the tracker updates any initialization incurs.
+    budgets.  Costs ~O(k * n) contribution reads on top of the tracker updates any initialization
+    incurs.
     """
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         if state.n_selected == 0:
-            # seeded random start item
             return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
-        # greedy pick: the not-selected item with the highest contribution wrt the selection
-        # (both arrays below are ascending-index, so positions align)
+        # both arrays below are ascending-index, so positions align
         contributions = state.not_selected_contribution_array
         return np.array([state.not_selected_index_array[np.argmax(contributions)]], dtype=np.int32)

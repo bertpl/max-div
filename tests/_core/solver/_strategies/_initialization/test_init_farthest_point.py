@@ -9,6 +9,7 @@ from ._helpers import new_solver_state
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
 def test_init_farthest_point(problem_has_constraints: bool):
+    """Initialization reaches the full selection size, with and without constraints."""
     # --- arrange -----------------------------------------
     solver_state = new_solver_state(problem_has_constraints)
     strategy = InitializationStrategy.farthest_point()
@@ -24,14 +25,12 @@ def test_init_farthest_point(problem_has_constraints: bool):
 
 def test_init_farthest_point_first_pick_is_seeded():
     """The start item comes from the strategy's seeded RNG, so different seeds can differ."""
-    # --- arrange -----------------------------------------
+    # --- arrange / act -----------------------------------
     first_items = []
     for seed in (0, 1, 2, 3):
         solver_state = new_solver_state(has_constraints=False)
         strategy = InitializationStrategy.farthest_point()
         strategy.set_seed(seed)
-
-        # --- act -----------------------------------------
         first_items.append(int(strategy.get_next_samples(solver_state, solver_state.k)[0]))
 
     # --- assert ------------------------------------------
@@ -56,7 +55,7 @@ def test_init_farthest_point_picks_are_greedy():
 
 
 def test_init_farthest_point_beats_random_init():
-    """The greedy construction should start from a better min-separation than a random draw."""
+    """The greedy construction should start from a better diversity score than a random draw."""
     # --- arrange -----------------------------------------
     state_fps = new_solver_state(has_constraints=False)
     state_random = new_solver_state(has_constraints=False)

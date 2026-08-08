@@ -60,10 +60,7 @@ class InitializationStrategy(StrategyBase, ABC):
     def farthest_point(cls) -> InitFarthestPoint:
         """Farthest-point-sampling initialization: a seeded random start item, then greedy picks.
 
-        Each pick adds the item with the highest diversity contribution wrt the current selection —
-        classical farthest-point sampling under the separation-family metrics, the greedy max-sum
-        construction under ``MEAN_PAIRWISE_DISTANCE``.  Constraint-unaware by design; the
-        optimization phase repairs feasibility.
+        See `InitFarthestPoint` for the per-metric interpretation and constraint handling.
         """
         from ._init_farthest_point import InitFarthestPoint
 
