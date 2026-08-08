@@ -10,7 +10,7 @@ from numpy.typing import NDArray
 
 from max_div._core.constraints._constraints import _np_con_min_value
 
-from ._constraint_score_state import activate_soft_scores, apply_draw, new_constraint_score_state
+from ._constrained_sampling_state import activate_soft_scores, apply_draw, new_constrained_sampling_state
 from ._randint import randint1
 
 
@@ -46,7 +46,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
        method of the `ConstraintList` class.
 
     * Constraint-satisfaction scores are maintained incrementally across the k draws (see
-      `_constraint_score_state.py`), so the per-draw cost does not depend on the total constraint
+      `_constrained_sampling_state.py`), so the per-draw cost does not depend on the total constraint
       membership size.
 
     *  For benchmark results, see [here](../../../../../docs/benchmarks/internal/bm_randint_constrained.md)
@@ -99,9 +99,9 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     k_remaining = k_context
     m = con_values.shape[0]
 
-    # Score state for this call: scores every integer once, then stays current draw by draw
+    # Sampling state for this call: scores every integer once, then stays current draw by draw
     # (con_values itself is copied inside, honoring the never-modified contract above)
-    state = new_constraint_score_state(n, con_values, con_indices, item_con_indices, i_forbidden)
+    state = new_constrained_sampling_state(n, con_values, con_indices, item_con_indices, i_forbidden)
 
     sample_idx = np.int32(0)
 

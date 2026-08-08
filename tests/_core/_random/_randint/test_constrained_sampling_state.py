@@ -1,13 +1,13 @@
 import numpy as np
 import pytest
 
-from max_div._core._random._randint._constraint_score_state import (
+from max_div._core._random._randint._constrained_sampling_state import (
     _CLAMP_REACHABLE_MIN_PENALTIES,
     _SCORE_PENALTY_ALREADY_SAMPLED,
     _compute_score,
     activate_soft_scores,
     apply_draw,
-    new_constraint_score_state,
+    new_constrained_sampling_state,
 )
 from max_div._core.constraints import Constraint, ConstraintList
 
@@ -73,9 +73,9 @@ def test_compute_score_wrap_around():
 
 
 # =================================================================================================
-#  ConstraintScoreState
+#  ConstrainedSamplingState
 # =================================================================================================
-def test_new_constraint_score_state_scores_and_counts():
+def test_new_constrained_sampling_state_scores_and_counts():
     """Fresh state: scores match the oracle, penalty counts reflect exhausted max-counts, con_values is a copy."""
     # --- arrange -----------------------------------------
     n = 8
@@ -87,7 +87,7 @@ def test_new_constraint_score_state_scores_and_counts():
     i_forbidden = np.array([5], dtype=np.int32)
 
     # --- act ---------------------------------------------
-    state = new_constraint_score_state(np.int32(n), con_values, con_indices, item_con_indices, i_forbidden)
+    state = new_constrained_sampling_state(np.int32(n), con_values, con_indices, item_con_indices, i_forbidden)
 
     # --- assert ------------------------------------------
     _assert_scores_match_oracle(state, n, con_indices, [], i_forbidden)
@@ -105,7 +105,7 @@ def test_apply_draw_updates_working_counts():
         Constraint(int_set={2, 3}, min_count=1, max_count=2),
     ]
     con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
-    state = new_constraint_score_state(np.int32(n), con_values, con_indices, item_con_indices, _NO_FORBIDDEN)
+    state = new_constrained_sampling_state(np.int32(n), con_values, con_indices, item_con_indices, _NO_FORBIDDEN)
 
     # --- act ---------------------------------------------
     apply_draw(state, np.int32(2))  # member of both constraints
@@ -122,7 +122,7 @@ def test_apply_draw_beyond_covered_items():
     n = 10
     constraints = [Constraint(int_set={0, 1}, min_count=1, max_count=2)]
     con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
-    state = new_constraint_score_state(np.int32(n), con_values, con_indices, item_con_indices, _NO_FORBIDDEN)
+    state = new_constrained_sampling_state(np.int32(n), con_values, con_indices, item_con_indices, _NO_FORBIDDEN)
     scores_before = state.scores.copy()
 
     # --- act ---------------------------------------------
@@ -140,7 +140,7 @@ def test_apply_draw_without_constraints():
     # --- arrange -----------------------------------------
     n = 5
     con_values, con_indices, item_con_indices = ConstraintList([]).to_numpy()
-    state = new_constraint_score_state(np.int32(n), con_values, con_indices, item_con_indices, _NO_FORBIDDEN)
+    state = new_constrained_sampling_state(np.int32(n), con_values, con_indices, item_con_indices, _NO_FORBIDDEN)
 
     # --- act ---------------------------------------------
     apply_draw(state, np.int32(3))
@@ -172,7 +172,7 @@ def test_apply_draw_matches_oracle_on_random_problems(seed: int):
     n_forbidden = int(rng.integers(0, n // 3 + 1))
     i_forbidden = rng.choice(n, size=n_forbidden, replace=False).astype(np.int32)
 
-    state = new_constraint_score_state(np.int32(n), con_values, con_indices, item_con_indices, i_forbidden)
+    state = new_constrained_sampling_state(np.int32(n), con_values, con_indices, item_con_indices, i_forbidden)
 
     drawable = [i for i in range(n) if i not in set(i_forbidden.tolist())]
     n_draws = int(rng.integers(1, len(drawable) + 1))
@@ -206,7 +206,7 @@ def test_apply_draw_matches_oracle_with_many_exhausted_max_counts(n_exhaustible:
     constraints.append(Constraint(int_set={1, 2, 3}, min_count=1, max_count=3))
     con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
 
-    state = new_constraint_score_state(np.int32(n), con_values, con_indices, item_con_indices, _NO_FORBIDDEN)
+    state = new_constrained_sampling_state(np.int32(n), con_values, con_indices, item_con_indices, _NO_FORBIDDEN)
 
     # --- act & assert ------------------------------------
     activate_soft_scores(state, np.int32(n), _NO_FORBIDDEN)

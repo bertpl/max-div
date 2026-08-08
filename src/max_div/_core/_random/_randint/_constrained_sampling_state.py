@@ -1,13 +1,18 @@
-"""Constraint-satisfaction scores for constrained sampling: from-scratch computation + incremental upkeep.
+"""Working state of one constrained-sampling call: per-integer draw scores plus outstanding counts.
 
-`_compute_score` scores every item in `[0, n)` from scratch — O(n + total constraint membership)
-work, although a single draw changes only the drawn item's own constraints.
+A `ConstrainedSamplingState` bundles what `randint_constrained` tracks across the k draws of one
+call: the per-integer constraint-satisfaction scores that steer which integers may be drawn (the
+`_compute_score` result), and the working min/max counts of every constraint.  These per-integer
+scores are a sampling-internal heuristic — distinct from the solver-level `Score`, whose
+constraints component grades a whole selection's feasibility.
 
-The `ConstraintScoreState` bundle removes that repetition: `new_constraint_score_state` computes
-the scores once per sampling call, and `apply_draw` then updates only the drawn item's constraints
-— plus, when one of them crosses a satisfaction threshold, that constraint's members.
+The bundle exists for incremental upkeep.  `_compute_score` scores every integer in `[0, n)` from
+scratch — O(n + total constraint membership) work, although a single draw changes only the drawn
+item's own constraints.  So `new_constrained_sampling_state` runs it once per call, and
+`apply_draw` then updates only the drawn item's constraints — plus, when one of them crosses a
+satisfaction threshold, that constraint's members.
 
-The upkeep is exact — see `ConstraintScoreState` for the invariant.
+The upkeep is exact — see `ConstrainedSamplingState` for the invariant.
 
 The bundle is a namedtuple of numpy arrays, like `DistanceStore`, so it crosses the njit boundary
 without object-mode.
@@ -91,10 +96,10 @@ def _compute_score(
 
 
 # =================================================================================================
-#  ConstraintScoreState — incremental upkeep
+#  ConstrainedSamplingState — incremental upkeep
 # =================================================================================================
-class ConstraintScoreState(NamedTuple):
-    """Mutable score state for one constrained-sampling call, passable into njit functions.
+class ConstrainedSamplingState(NamedTuple):
+    """Mutable working state of one constrained-sampling call, passable into njit functions.
 
     `scores` always equals the `_compute_score(..., hard_max_constraints=True)` result for the
     current `con_values` and the draws applied so far; once activated (`soft_active`),
@@ -115,13 +120,13 @@ class ConstraintScoreState(NamedTuple):
 
 
 @numba.njit(cache=True)
-def new_constraint_score_state(
+def new_constrained_sampling_state(
     n: np.int32,
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
     item_con_indices: NDArray[np.int32],
     i_forbidden: NDArray[np.int32],
-) -> ConstraintScoreState:
+) -> ConstrainedSamplingState:
     """Build the score state for a fresh sampling call: full scoring plus penalty bookkeeping.
 
     :param n: range to score [0, n)
@@ -130,7 +135,7 @@ def new_constraint_score_state(
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py
     :param item_con_indices: 1D array with the transposed membership, format described in _constraints.py
     :param i_forbidden: 1D array of integers that must never be drawn; marked as sampled up front
-    :return: the initialized ConstraintScoreState
+    :return: the initialized ConstrainedSamplingState
     """
     con_values_working = con_values.copy()
     scores = _compute_score(n, con_values_working, con_indices, i_forbidden, True)
@@ -146,13 +151,13 @@ def new_constraint_score_state(
             for idx in _np_con_indices(con_indices, i_con):
                 penalty_counts[idx] += 1
 
-    return ConstraintScoreState(
+    return ConstrainedSamplingState(
         scores, scores_soft, soft_active, penalty_counts, con_values_working, con_indices, item_con_indices
     )
 
 
 @numba.njit(cache=True)
-def _recompute_item_score(state: ConstraintScoreState, idx: np.int32) -> np.int32:
+def _recompute_item_score(state: ConstrainedSamplingState, idx: np.int32) -> np.int32:
     """Recompute one item's score exactly as `_compute_score` would.
 
     Only called for items with `_CLAMP_REACHABLE_MIN_PENALTIES` or more exhausted max-counts.  The
@@ -170,7 +175,7 @@ def _recompute_item_score(state: ConstraintScoreState, idx: np.int32) -> np.int3
 
 
 @numba.njit(inline="always", cache=True)
-def _retract_min_bonus(state: ConstraintScoreState, idx: np.int32) -> None:
+def _retract_min_bonus(state: ConstrainedSamplingState, idx: np.int32) -> None:
     """Remove the +1 that a just-satisfied min-count no longer grants to member `idx`."""
     if state.scores[idx] == -_SCORE_PENALTY_ALREADY_SAMPLED:
         return  # drawn/forbidden items stay pinned at the sampled marker
@@ -183,7 +188,7 @@ def _retract_min_bonus(state: ConstraintScoreState, idx: np.int32) -> None:
 
 
 @numba.njit(inline="always", cache=True)
-def _apply_max_penalty(state: ConstraintScoreState, idx: np.int32) -> None:
+def _apply_max_penalty(state: ConstrainedSamplingState, idx: np.int32) -> None:
     """Apply the max-count penalty of a just-exhausted constraint to member `idx` (hard 2**24, soft 1)."""
     if state.scores[idx] == -_SCORE_PENALTY_ALREADY_SAMPLED:
         return  # drawn/forbidden items stay pinned at the sampled marker
@@ -197,7 +202,7 @@ def _apply_max_penalty(state: ConstraintScoreState, idx: np.int32) -> None:
 
 
 @numba.njit(cache=True)
-def apply_draw(state: ConstraintScoreState, s: np.int32) -> None:
+def apply_draw(state: ConstrainedSamplingState, s: np.int32) -> None:
     """Apply a draw of item `s` to the state, updating all arrays in place.
 
     - decrements the working min/max counts of `s`'s constraints
@@ -233,7 +238,7 @@ def apply_draw(state: ConstraintScoreState, s: np.int32) -> None:
 
 
 @numba.njit(cache=True)
-def activate_soft_scores(state: ConstraintScoreState, n: np.int32, already_sampled: NDArray[np.int32]) -> None:
+def activate_soft_scores(state: ConstrainedSamplingState, n: np.int32, already_sampled: NDArray[np.int32]) -> None:
     """Fill `scores_soft` with a fresh soft scoring and start maintaining it in `apply_draw`.
 
     Called on the first draw whose remaining min-counts exceed what the remaining draws can
