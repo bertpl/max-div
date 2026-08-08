@@ -122,7 +122,6 @@ def _build_array_repr(
     # pre-allocate
     con_values = np.empty((m, 2), dtype=np.int32)
     con_indices = np.empty((2 * m) + n_indices, dtype=np.int32)
-    item_con_indices = np.empty((2 * n_covered) + n_indices, dtype=np.int32)
 
     # build con_values
     for i, con in enumerate(cons):
@@ -141,26 +140,53 @@ def _build_array_repr(
         con_indices[i_start:i_end] = segment
         i_start = i_end
 
-    # build item_con_indices, part 1: per-item segment boundaries from per-item membership counts
-    counts = np.zeros(n_covered, dtype=np.int32)
-    for con in cons:
-        for idx in con.int_set:
-            counts[idx] += 1
-    i_start = 2 * n_covered
-    for item in range(n_covered):
-        item_con_indices[2 * item] = np.int32(i_start)
-        item_con_indices[(2 * item) + 1] = np.int32(i_start + counts[item])
-        i_start += counts[item]
-
-    # build item_con_indices, part 2: visiting constraints in ascending order makes each
-    # item's segment come out ascending
-    cursors = item_con_indices[0 : 2 * n_covered : 2].copy()
-    for i_con, con in enumerate(cons):
-        for idx in con.int_set:
-            item_con_indices[cursors[idx]] = np.int32(i_con)
-            cursors[idx] += 1
+    # build item_con_indices — via the compiled counting sort, since total membership can reach
+    # many millions and Python-level loops over it cost seconds
+    if n_covered == 0:
+        return con_values, con_indices, np.empty(0, dtype=np.int32)
+    members = con_indices[2 * m :]
+    con_ids = np.repeat(np.arange(m, dtype=np.int32), [len(con.int_set) for con in cons])
+    item_con_indices = _np_build_item_con_indices(members, con_ids, np.int32(n_covered))
 
     return con_values, con_indices, item_con_indices
+
+
+@numba.njit("int32[:](int32[:],int32[:],int32)", cache=True)
+def _np_build_item_con_indices(
+    members: NDArray[np.int32], con_ids: NDArray[np.int32], n_covered: np.int32
+) -> NDArray[np.int32]:
+    """Counting-sort the concatenated member lists into the transposed two-part layout.
+
+    `members` is con_indices' Part 2 (each constraint's items, constraints in ascending order) and
+    `con_ids` the constraint id of each entry.  Scanning them in order keeps each item's segment
+    ascending in constraint id.
+
+    :param members: concatenated member items of all constraints
+    :param con_ids: constraint id per `members` entry
+    :param n_covered: number of items the transposed layout covers (largest referenced index + 1)
+    :return: the item_con_indices array (format described in the module docstring)
+    """
+    n_indices = members.shape[0]
+    out = np.empty((2 * n_covered) + n_indices, dtype=np.int32)
+
+    # part 1: per-item segment boundaries from per-item membership counts
+    counts = np.zeros(n_covered, dtype=np.int32)
+    for v in members:
+        counts[v] += 1
+    pos = np.int32(2 * n_covered)
+    for item in range(n_covered):
+        out[2 * item] = pos
+        pos += counts[item]
+        out[2 * item + 1] = pos
+
+    # part 2: scatter each entry to its item's cursor
+    cursors = out[0 : 2 * n_covered : 2].copy()
+    for i in range(n_indices):
+        item = members[i]
+        out[cursors[item]] = con_ids[i]
+        cursors[item] += 1
+
+    return out
 
 
 # =================================================================================================
