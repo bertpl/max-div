@@ -110,14 +110,17 @@ def _build_array_repr(
         con_values[i, 0] = np.int32(con.min_count)
         con_values[i, 1] = np.int32(con.max_count)
 
-    # build con_indices
+    # build con_indices  (per-element work stays in numpy: total membership can reach many
+    # millions, where a Python loop over the elements costs seconds)
     i_start = 2 * m  # where we start filling in values from int_set for each constraint
     for i, con in enumerate(cons):
+        i_end = i_start + len(con.int_set)
         con_indices[2 * i] = np.int32(i_start)
-        con_indices[(2 * i) + 1] = np.int32(i_start + len(con.int_set))
-        for idx in sorted(con.int_set):
-            con_indices[i_start] = np.int32(idx)
-            i_start += 1
+        con_indices[(2 * i) + 1] = np.int32(i_end)
+        segment = np.fromiter(con.int_set, dtype=np.int32, count=len(con.int_set))
+        segment.sort()
+        con_indices[i_start:i_end] = segment
+        i_start = i_end
 
     return con_values, con_indices
 
