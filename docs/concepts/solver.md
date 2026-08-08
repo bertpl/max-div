@@ -28,8 +28,9 @@ speed vs quality of the starting point:
 |----------|-------------|
 | `random_one_shot` | Selects all `k` items in one batch, with probabilities biased by global separation. **Default for all presets.** |
 | `random_batched` | Selects in batches of `b`, re-evaluating separations between batches. |
+| `farthest_point` | A seeded random start item, then greedily adds the item farthest from the selection (farthest-point sampling; the greedy max-sum construction under mean pairwise distance). Constraint-unaware. |
 | `eager` | Evaluates `nc` random candidates per step, picks the best. Slower but higher quality. |
-| `fast` | Deterministic greedy: always picks the item maximizing separation. Fast but seed-independent. |
+| `fast` | Selects the first `k` items. Trivial deterministic baseline for testing and benchmarking. |
 
 ## Optimization Strategies
 
