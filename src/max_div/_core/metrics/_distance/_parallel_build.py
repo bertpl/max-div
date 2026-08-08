@@ -8,9 +8,9 @@ switch controls resource usage (thread count during store construction) only, ne
 import os
 
 # Column-block width for the parallel builds.  The block converts the triangular pair loop into
-# uniform slabs (every row above a block computes exactly one block-width of pairs), which is what
-# lets prange split the work evenly across threads — parallelizing the raw triangle leaves one
-# thread with roughly twice the work of the average.
+# uniform slabs (every row above a block computes exactly one block-width of pairs), so prange can
+# split the work evenly across threads — parallelizing the raw triangle leaves one thread with
+# roughly twice the work of the average.
 BUILD_TILE = 64
 
 

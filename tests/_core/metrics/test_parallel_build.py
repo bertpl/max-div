@@ -29,7 +29,7 @@ def test_parallel_build_enabled(monkeypatch: pytest.MonkeyPatch, env_value: str 
 @pytest.mark.parametrize("metric", list(DistanceMetric))
 @pytest.mark.parametrize("n", [30, BUILD_TILE * 2 + 2])  # below one tile, and across uneven tiles
 def test_condensed_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatch, metric: DistanceMetric, n: int):
-    """The parallel condensed build produces exactly the sequential kernel's values."""
+    """The parallel condensed build produces exactly the sequential build's values."""
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(7)
     vectors = rng.random((n, 7), dtype=np.float32)
@@ -47,7 +47,7 @@ def test_condensed_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatch,
 @pytest.mark.parametrize("metric", list(DistanceMetric))
 @pytest.mark.parametrize("n", [30, BUILD_TILE * 2 + 2])  # below one tile, and across uneven tiles
 def test_full_matrix_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatch, metric: DistanceMetric, n: int):
-    """The parallel full-matrix build produces exactly the sequential kernel's values."""
+    """The parallel full-matrix build produces exactly the sequential build's values."""
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(7)
     vectors = rng.random((n, 7), dtype=np.float32)

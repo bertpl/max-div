@@ -241,10 +241,9 @@ def _fill_matrix_from_vectors_parallel(
 ) -> NDArray[np.float32]:
     """Fill a full (n, n) distance matrix from vectors, in parallel; bit-identical to the sequential fill.
 
-    Same pair arithmetic under the same fastmath flags as `_fill_matrix_from_vectors`, and each
-    element is written exactly once, so neither parallelism nor thread count can change the result.
-    The column-block loop converts the triangular pair space into uniform slabs prange splits
-    evenly; see `_parallel_build` for the tile rationale.
+    Each element is written exactly once (as one symmetric pair of writes), so thread count cannot
+    change the result.  The bit-identity and slab reasoning are the parallel-build banner's in
+    `_compute`; the tile rationale is `_parallel_build`'s.
     """
     n = vectors.shape[0]
     matrix = np.zeros((n, n), dtype=np.float32)
