@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.10.3 (2026-08-08)
 
 ### Added
 - A farthest-point-sampling initialization strategy (`InitializationStrategy.farthest_point()`): the greedy construction farthest-point-sampling tools use, computed from the solver's own distance store, selectable via `MaxDivSolverBuilder.set_initialization_strategy`
@@ -13,15 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Distance-store construction is multi-threaded, roughly 7× faster (depending on CPU architecture) at large problem sizes; parallel builds are bit-identical to the single-threaded ones, and `MAXDIV_PARALLEL_BUILD=0` disables it
 - Constrained problems set up roughly 9× faster when the constraints together contain many item indices, via numpy vectorization of the internal constraint-array construction
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.10.2 (2026-08-08)
 
 ### Changed
