@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Distance-store construction is multi-threaded, roughly 7× faster (depending on CPU architecture) at large problem sizes; parallel builds are bit-identical to the single-threaded ones, and `MAXDIV_PARALLEL_BUILD=0` disables it
-- Constrained problems set up roughly 9× faster at large total constraint membership: the internal constraint arrays are built with numpy instead of per-element Python loops
+- Constrained problems set up roughly 9× faster when the constraints together contain many item indices: the internal constraint arrays are built with numpy instead of per-element Python loops
 
 ### Deprecated
 
