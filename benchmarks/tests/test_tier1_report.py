@@ -1,5 +1,7 @@
-from benchmarks.common.records import RunRecord
-from benchmarks.tier1.report import build_incumbent_table, build_maxmin_gap_table, build_scaling_table
+from pathlib import Path
+
+from benchmarks.common.records import RunRecord, save_records
+from benchmarks.tier1.report import build_incumbent_table, build_maxmin_gap_table, build_scaling_table, main
 
 
 def _record(problem: str, size: int, budget: str, quality: dict[str, float]) -> RunRecord:
@@ -77,3 +79,32 @@ def test_build_incumbent_table():
 
     # --- assert ------------------------------------------
     assert "| U3 | 100 | 10 | 0 | 10800 s | 1.0000 | 350% | 0.9900 |" in table
+
+
+def test_main_reads_tracked_exact_references(tmp_path: Path):
+    # --- arrange -----------------------------------------
+    # Fresh max-div records for every cell the tracked exact references cover.
+    maxmin = [
+        _record(problem, size, f"time:{b}s", {"MIN_SEPARATION": 0.05})
+        for problem in ("U1", "C1")
+        for size in (1, 2, 3)
+        for b in (0.016, 0.128, 1.024, 16.384)
+    ]
+    incumbent = [_record(problem, 1, "time:1.024s", {"GEOMEAN_SEPARATION": 0.5}) for problem in ("U3", "C4")]
+    records_dir = tmp_path / "records"
+    results_dir = tmp_path / "results"
+    save_records(maxmin, records_dir / "maxmin_records.jsonl")
+    save_records(incumbent, records_dir / "incumbent_records.jsonl")
+
+    # --- act ---------------------------------------------
+    main(records_dir=records_dir, results_dir=results_dir)
+
+    # --- assert ------------------------------------------
+    gap_table = (results_dir / "tier1_maxmin_gap.md").read_text()
+    data_rows = [line for line in gap_table.splitlines() if line.startswith(("| U1 |", "| C1 |"))]
+    assert len(data_rows) == 6  # every (problem, size) cell of the tracked exact references
+    scaling_table = (results_dir / "tier1_scaling.md").read_text()
+    assert "SCIP (1 thread)" in scaling_table
+    incumbent_table = (results_dir / "tier1_incumbent_geomean.md").read_text()
+    assert "| U3 |" in incumbent_table
+    assert "| C4 |" in incumbent_table

@@ -22,25 +22,36 @@ reach for? This page benchmarks it against the surveyed single-shot heuristics (
 - Hardware: 16" MacBook Pro with M3-class CPU, single sequential run.
 - Reproduce with `uv run --group benchmarks python -m benchmarks.tier2.full` (records),
   then `... -m benchmarks.tier2.report` (figures/tables).
+- max-div figures measured against **v0.10.1**. Competitor values are deterministic
+  single-shot runs, kept as tracked reference records.
 
 ## Key findings
 
-**There is a crossover, and it is driven by k (the selection size).** max-div wins clearly
-on the separation objectives up to n ≈ 1000, wins narrowly at n = 5000 given ~10 s, and
-loses at n = 20000 (k = 2000) — there, farthest-point-sampling pickers reach better
-separation values in a few seconds than the local search reaches at any tried budget. At
-k = 2000, a 1 s budget fits only a few hundred iterations: not even one improvement pass
-over the selected set.
+Both readings matter, depending on whether the user is time-constrained:
 
-**On `MEAN_PAIRWISE_DISTANCE` (classical max-sum), the greedy construction is already at
-par.** max-div matches `greedy[max-sum]` at small-to-mid sizes and trails slightly at the
-largest; it does not beat it. If pure max-sum at scale is the goal, the greedy baseline is
-the pragmatic choice.
+**At a shared ~1 s budget:** max-div is ahead of the best single-shot picker on the
+separation objectives at every size up to n = 5000. At n = 20000 (k = 2000) it trails —
+by 4–13% on most cells, and far more on the hardest (U4 min-separation): a 1 s budget
+fits only a few hundred iterations there, not even one improvement pass over the selected
+set. A user who must answer in a second at that scale is better served by a
+farthest-point picker.
 
-**Where max-div is differentiated:** the separation-family objectives below n ≈ 5000, the
-anytime property (near-plateau quality within ~1 s at most sizes), and constrained
-selection (below) — where the heuristic field thins out to a single competitor that stops
-at n ≈ 2000.
+**Given more time, max-div overtakes.** By ~16 s it matches or exceeds the best picker on
+every problem for every separation metric (margins +0.0…+0.2%, the one exception a −0.4%
+tie on U4 min-separation). The pickers are not free at this size either — `fpsample[FPS]`
+takes ~5 s and `RDKit[MaxMinPicker]` ~10 s of wall clock at n = 20000 — so at parity with
+their own run time max-div is within ~0.2%, and ahead beyond it.
+
+**On `MEAN_PAIRWISE_DISTANCE` (classical max-sum), the greedy construction is the
+benchmark.** max-div matches `greedy[max-sum]` at every size given seconds of budget — at
+n = 20000 it reaches par by ~16 s, comparable to greedy's own ~20 s run time — but it does
+not beat it. If pure max-sum is the only goal, the greedy baseline remains the pragmatic
+choice.
+
+**Where max-div is differentiated:** the separation-family objectives (ahead outright
+below n ≈ 5000, ahead given its rivals' own run time above), the anytime property
+(near-plateau quality within ~1 s at most sizes), and constrained selection (below) —
+where the heuristic field thins out to a single competitor that stops at n ≈ 2000.
 
 ## Unconstrained results (U1, uniform density)
 

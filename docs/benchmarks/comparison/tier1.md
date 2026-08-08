@@ -18,6 +18,9 @@ optimality cost? This page anchors the heuristic quality numbers to exact refere
 - Hardware: 16" MacBook Pro with M3-class CPU, single sequential run.
 - Reproduce with `uv run --group benchmarks python -m benchmarks.tier1.full` (results),
   then `... -m benchmarks.tier1.report` (tables).
+- max-div figures measured against **v0.10.1**. The exact-solver references — optima,
+  proof times, incumbents — are properties of the problems, kept as tracked reference
+  records.
 
 ## Max-min: gap to the proven optimum
 
@@ -27,7 +30,7 @@ certified optimum, mean over 3 seeds:
 
 --8<-- "docs/benchmarks/comparison/results/tier1_maxmin_gap.md"
 
-Reading: max-div lands within roughly 10 % of the proven optimum in ~100 ms and ~3–8 % at
+Reading: max-div lands within roughly 10 % of the proven optimum in ~100 ms and ~2–9 % at
 the ladder top, occasionally hitting the optimum exactly — while the exact solver needs up
 to seconds-to-minutes to *certify*, and stops certifying entirely a factor ~2 above these
 sizes. Note max-min is the harshest gap measure: the objective is the single worst pair, so

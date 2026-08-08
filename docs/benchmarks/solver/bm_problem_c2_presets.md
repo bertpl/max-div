@@ -1,5 +1,10 @@
 # Benchmark Results - Problem C2 - Solver Presets
 
+!!! note "Measurement vintage"
+    These results were measured with max-div v0.5.4 (February 2026). Later releases have
+    changed solver speed and behavior, so the figures below describe that version's
+    solver, not the current one.
+
 ## I. Introduction
 
 We present results of the different built-in solver presets on problem C2, size=100.  We run each preset for

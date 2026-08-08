@@ -1,9 +1,10 @@
-"""Tier-1 report emission: turn the full-scenario results into docs tables.
+"""Tier-1 report emission: turn the recorded results into docs tables.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier1.report``.
-Reads the result files written by ``benchmarks.tier1.full`` and emits markdown tables into
-``docs/benchmarks/comparison/results/``. Only these curated tables are committed; the raw
-results stay untracked but reproducible.
+Merges two result sources: max-div's ladders as measured by ``benchmarks.tier1.full`` or
+``benchmarks.tier1.rerun`` (untracked, re-measured whenever the solver changes), and the
+exact-solver references from the tracked files in ``benchmarks/tier1/data/`` (fixed across
+max-div re-measurements). Emits markdown tables into ``docs/benchmarks/comparison/results/``.
 """
 
 import json
@@ -15,6 +16,7 @@ import numpy as np
 from benchmarks.common.records import RunRecord, load_records
 
 RECORDS_DIR = Path("reports/benchmarks/tier1")
+DATA_DIR = Path(__file__).parent / "data"
 RESULTS_DIR = Path("docs/benchmarks/comparison/results")
 
 # Ladder rungs quoted in the gap table (seconds; must be actual ladder rungs).
@@ -98,22 +100,22 @@ def build_incumbent_table(panel_rows: list[dict], records: list[RunRecord]) -> s
     return "\n".join(lines) + "\n"
 
 
-def main() -> None:
-    """Emit all tier-1 docs tables from the recorded results."""
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+def main(records_dir: Path = RECORDS_DIR, results_dir: Path = RESULTS_DIR) -> None:
+    """Emit all tier-1 docs tables from the merged result sources."""
+    results_dir.mkdir(parents=True, exist_ok=True)
 
-    exact_rows = json.loads((RECORDS_DIR / "maxmin_exact.json").read_text())
-    maxmin_records = load_records(RECORDS_DIR / "maxmin_records.jsonl")
-    (RESULTS_DIR / "tier1_maxmin_gap.md").write_text(build_maxmin_gap_table(exact_rows, maxmin_records))
+    exact_rows = json.loads((DATA_DIR / "maxmin_exact.json").read_text())
+    maxmin_records = load_records(records_dir / "maxmin_records.jsonl")
+    (results_dir / "tier1_maxmin_gap.md").write_text(build_maxmin_gap_table(exact_rows, maxmin_records))
 
-    scaling_rows = json.loads((RECORDS_DIR / "scaling.json").read_text())
-    (RESULTS_DIR / "tier1_scaling.md").write_text(build_scaling_table(scaling_rows))
+    scaling_rows = json.loads((DATA_DIR / "scaling.json").read_text())
+    (results_dir / "tier1_scaling.md").write_text(build_scaling_table(scaling_rows))
 
-    panel_rows = json.loads((RECORDS_DIR / "incumbent.json").read_text())
-    incumbent_records = load_records(RECORDS_DIR / "incumbent_records.jsonl")
-    (RESULTS_DIR / "tier1_incumbent_geomean.md").write_text(build_incumbent_table(panel_rows, incumbent_records))
+    panel_rows = json.loads((DATA_DIR / "incumbent.json").read_text())
+    incumbent_records = load_records(records_dir / "incumbent_records.jsonl")
+    (results_dir / "tier1_incumbent_geomean.md").write_text(build_incumbent_table(panel_rows, incumbent_records))
 
-    print(f"tier-1 report emitted into {RESULTS_DIR}", flush=True)
+    print(f"tier-1 report emitted into {results_dir}", flush=True)
 
 
 if __name__ == "__main__":

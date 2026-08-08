@@ -1,9 +1,16 @@
 """The published tier-2 comparison run: max-div vs. Python subset-selection heuristics.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.full``.
-Emits one JSONL record per measurement into ``reports/benchmarks/tier2/``; figures and
-tables for the docs are generated separately by ``benchmarks.tier2.report`` from those
-records. Expect a multi-hour sequential run on a quiet machine.
+Emits one JSONL record file per (origin, scenario) into ``reports/benchmarks/tier2/`` —
+competitor and max-div records are kept in separate files so max-div can be re-measured
+alone (``benchmarks.tier2.rerun``) while the competitor side stays fixed. Figures and
+tables for the docs are generated separately by ``benchmarks.tier2.report``. Expect a
+multi-hour sequential run on a quiet machine.
+
+The competitor outputs (``third_party_*.jsonl``) share their names with the tracked
+reference copies under ``benchmarks/tier2/data/``: promoting a fresh competitor
+measurement is copying the files over, a deliberate act rather than a side effect of
+re-running.
 
 Protocol (mirrored on the results page):
 
@@ -72,8 +79,10 @@ def unconstrained_adapters() -> list[SelectionAdapter]:
     ]
 
 
-def run_unconstrained() -> list[RunRecord]:
-    """All unconstrained measurements: competitor single-shots + max-div ladder per metric."""
+def run_competitors_unconstrained(
+    out_path: Path = OUTPUT_DIR / "third_party_unconstrained.jsonl",
+) -> list[RunRecord]:
+    """All unconstrained competitor single-shots, one run per seed."""
     records: list[RunRecord] = []
     for name in UNCONSTRAINED_PROBLEMS:
         for size in UNCONSTRAINED_SIZES:
@@ -83,46 +92,91 @@ def run_unconstrained() -> list[RunRecord]:
                     records += run_adapter(adapter, problem, problem_name=name, size=size, seeds=SEEDS)
                 except ImportError:
                     print(f"  skipped (not installed): {adapter.name}", flush=True)
+            print(f"competitors {name} size={size} done ({len(records)} records so far)", flush=True)
+            save_records(records, out_path)
+    return records
+
+
+def run_maxdiv_unconstrained(
+    problems: tuple[str, ...] = UNCONSTRAINED_PROBLEMS,
+    sizes: tuple[int, ...] = UNCONSTRAINED_SIZES,
+    time_budgets_sec: list[float] = TIME_BUDGETS_SEC,
+    seeds: tuple[int, ...] = SEEDS,
+    out_path: Path = OUTPUT_DIR / "maxdiv_unconstrained.jsonl",
+) -> list[RunRecord]:
+    """max-div's budget ladder on every unconstrained cell, one ladder per diversity metric.
+
+    Defaults are the published protocol; pass smaller values only for validation runs.
+    """
+    records: list[RunRecord] = []
+    for name in problems:
+        for size in sizes:
             for metric in EVALUATED_DIVERSITY_METRICS:
                 metric_problem = build_problem(name, size=size, diversity_metric=metric)
                 records += run_maxdiv_ladder(
                     metric_problem,
                     problem_name=name,
                     size=size,
-                    time_budgets_sec=TIME_BUDGETS_SEC,
-                    seeds=SEEDS,
+                    time_budgets_sec=time_budgets_sec,
+                    seeds=seeds,
                 )
-            print(f"{name} size={size} done ({len(records)} records so far)", flush=True)
-            save_records(records, OUTPUT_DIR / "records_unconstrained.jsonl")
+            print(f"max-div {name} size={size} done ({len(records)} records so far)", flush=True)
+            save_records(records, out_path)
     return records
 
 
-def run_constrained() -> list[RunRecord]:
-    """All constrained measurements: max-div ladder vs. code-FDM, MIN_SEPARATION."""
+def run_competitors_constrained(
+    out_path: Path = OUTPUT_DIR / "third_party_constrained.jsonl",
+) -> list[RunRecord]:
+    """code-FDM single-shots on the constrained cells, one run per seed."""
     records: list[RunRecord] = []
     for name in CONSTRAINED_PROBLEMS:
         for size in CONSTRAINED_SIZES:
             problem = build_problem(name, size=size, diversity_metric=CONSTRAINED_METRIC)
             records += run_adapter(CodeFdmFairFlow(), problem, problem_name=name, size=size, seeds=SEEDS)
+            print(f"competitors {name} size={size} done ({len(records)} records so far)", flush=True)
+            save_records(records, out_path)
+    return records
+
+
+def run_maxdiv_constrained(
+    problems: tuple[str, ...] = CONSTRAINED_PROBLEMS,
+    sizes: tuple[int, ...] = CONSTRAINED_SIZES,
+    time_budgets_sec: list[float] = TIME_BUDGETS_SEC,
+    seeds: tuple[int, ...] = SEEDS,
+    out_path: Path = OUTPUT_DIR / "maxdiv_constrained.jsonl",
+) -> list[RunRecord]:
+    """max-div's budget ladder on the constrained cells, MIN_SEPARATION only.
+
+    Defaults are the published protocol; pass smaller values only for validation runs.
+    """
+    records: list[RunRecord] = []
+    for name in problems:
+        for size in sizes:
+            problem = build_problem(name, size=size, diversity_metric=CONSTRAINED_METRIC)
             records += run_maxdiv_ladder(
                 problem,
                 problem_name=name,
                 size=size,
-                time_budgets_sec=TIME_BUDGETS_SEC,
-                seeds=SEEDS,
+                time_budgets_sec=time_budgets_sec,
+                seeds=seeds,
             )
-            print(f"{name} size={size} done ({len(records)} records so far)", flush=True)
-            save_records(records, OUTPUT_DIR / "records_constrained.jsonl")
+            print(f"max-div {name} size={size} done ({len(records)} records so far)", flush=True)
+            save_records(records, out_path)
     return records
 
 
 def main() -> None:
-    """Run the full tier-2 scenario and persist all records."""
-    print("tier-2 unconstrained ...", flush=True)
-    unconstrained = run_unconstrained()
-    print("tier-2 constrained ...", flush=True)
-    constrained = run_constrained()
-    print(f"tier-2 complete: {len(unconstrained)} unconstrained + {len(constrained)} constrained records", flush=True)
+    """Run the full tier-2 scenario, competitors and max-div alike, and persist all records."""
+    print("tier-2 competitors unconstrained ...", flush=True)
+    run_competitors_unconstrained()
+    print("tier-2 max-div unconstrained ...", flush=True)
+    run_maxdiv_unconstrained()
+    print("tier-2 competitors constrained ...", flush=True)
+    run_competitors_constrained()
+    print("tier-2 max-div constrained ...", flush=True)
+    run_maxdiv_constrained()
+    print("tier-2 complete", flush=True)
 
 
 if __name__ == "__main__":

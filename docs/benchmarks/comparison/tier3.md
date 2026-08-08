@@ -18,6 +18,8 @@ comparison is pinned.
 - Hardware: 16" MacBook Pro with M3-class CPU, single sequential run.
 - Reproduce with `uv run --group benchmarks python -m benchmarks.tier3.full` (records),
   then `... -m benchmarks.tier3.report` (tables).
+- max-div figures measured against **v0.10.1**; the reference values are the published
+  2010 ones, vendored.
 
 ## Reading the reference values honestly
 
@@ -45,13 +47,14 @@ seeds and budgets), not percentage gaps. The picture splits by size:
 
 --8<-- "docs/benchmarks/comparison/results/tier3_ran.md"
 
-On the larger instances (n ≥ 250) max-div matches the reference on most and **exceeds** it
-on several — where "exceeded" is non-zero it found a strictly better max-min value than the
-published one, direct evidence the 2010 values are not tight there. On the small, dense
-n = 100 instances it trails on a fair share: those solutions are fully converged well within
-budget (they plateau by ~16 ms), so the shortfall is a genuine quality gap, not a matter of
-more time. This is the honest shape of the result — max-div is strong on the harder,
-larger instances and mixed on the small dense ones.
+On the larger instances (n ≥ 250) max-div matches the reference on most — all 10 of 10 at
+n = 500, k = 150 — and **exceeds** it on a couple: where "exceeded" is non-zero it found a
+strictly better max-min value than the published one, direct evidence the 2010 values are
+not tight there. On the small, dense n = 100 instances it trails on a fair share: those
+solutions are fully converged well within budget (they plateau by ~16 ms), so the
+shortfall is a genuine quality gap, not a matter of more time. This is the honest shape of
+the result — max-div is strong on the harder, larger instances and mixed on the small
+dense ones.
 
 ## Glover — matched / exceeded counts
 
