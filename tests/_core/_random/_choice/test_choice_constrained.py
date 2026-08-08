@@ -15,7 +15,7 @@ def test_choice_constrained_argument_validation():
         Constraint(int_set={10, 11, 12, 13, 14}, min_count=1, max_count=3),
         Constraint(int_set={3, 4, 10, 11}, min_count=2, max_count=2),
     ]
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
     rng_state = new_rng_state(np.int64(42))
     values = np.array([0, 1, 2, 3, 4, 10, 11, 12, 13, 14], dtype=np.int32)
     p = P_UNIFORM
@@ -34,6 +34,7 @@ def test_choice_constrained_argument_validation():
             rng_state=rng_state,
             con_values=con_values,
             con_indices=con_indices,
+            item_con_indices=item_con_indices,
         )
 
     with pytest.raises(ValueError):
@@ -45,6 +46,7 @@ def test_choice_constrained_argument_validation():
             rng_state=rng_state,
             con_values=con_values,
             con_indices=con_indices,
+            item_con_indices=item_con_indices,
         )
 
 
@@ -60,7 +62,7 @@ def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, unif
         Constraint(int_set={10, 11, 12, 13, 14}, min_count=1, max_count=3),
         Constraint(int_set={3, 4, 10, 11}, min_count=2, max_count=2),
     ]
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
     seed = deterministic_hash_int64((k_context, n, eager, uniform))
     rng_state = new_rng_state(np.int64(seed))
 
@@ -80,6 +82,7 @@ def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, unif
         k=np.int32(k),
         con_values=con_values,
         con_indices=con_indices,
+        item_con_indices=item_con_indices,
         p=p,
         rng_state=rng_state,
         eager=eager,
@@ -112,7 +115,7 @@ def test_choice_constrained_p_adherence(seed: int):
         Constraint(int_set={10, 11, 12, 13, 14}, min_count=1, max_count=3),
         Constraint(int_set={3, 4, 10, 11}, min_count=2, max_count=2),
     ]
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
     rng_state = new_rng_state(np.int64(seed))
     values = np.array([0, 1, 2, 3, 4, 10, 11, 12, 13, 14], dtype=np.int32)
     p = np.array([1, 1, 1, 1, 1, 1, 1, 1e3, 1, 1], dtype=np.float32)  # very strongly favor value 12
@@ -124,6 +127,7 @@ def test_choice_constrained_p_adherence(seed: int):
         k=np.int32(k),
         con_values=con_values,
         con_indices=con_indices,
+        item_con_indices=item_con_indices,
         p=p,
         rng_state=rng_state,
     )

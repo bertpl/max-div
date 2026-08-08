@@ -39,8 +39,8 @@ def test_build_array_repr():
     ]
 
     # --- act ---------------------------------------------
-    con_values_1, con_indices_1 = _build_array_repr(cons)
-    con_values_2, con_indices_2 = ConstraintList(cons).to_numpy()
+    con_values_1, con_indices_1, item_con_indices_1 = _build_array_repr(cons)
+    con_values_2, con_indices_2, item_con_indices_2 = ConstraintList(cons).to_numpy()
 
     # --- assert ------------------------------------------
     assert np.array_equal(
@@ -63,13 +63,35 @@ def test_build_array_repr():
         i_end = con_indices_1[2 * i + 1]
         assert list(con_indices_1[i_start:i_end]) == sorted(con.int_set)
 
+    # transposed membership: covers items [0, largest referenced index], one ascending segment each
+    n_covered = 14  # largest referenced index is 13
+    assert item_con_indices_1.shape[0] == (2 * n_covered) + 11
+    assert item_con_indices_1.dtype == np.int32
+    for item in range(n_covered):
+        i_start = item_con_indices_1[2 * item]
+        i_end = item_con_indices_1[2 * item + 1]
+        expected = [i for i, con in enumerate(cons) if item in con.int_set]
+        assert list(item_con_indices_1[i_start:i_end]) == expected
+
     assert np.array_equal(con_values_1, con_values_2)
     assert np.array_equal(con_indices_1, con_indices_2)
+    assert np.array_equal(item_con_indices_1, item_con_indices_2)
+
+
+@pytest.mark.parametrize("cons", [[], [Constraint(int_set=set(), min_count=0, max_count=5)]])
+def test_build_array_repr_no_referenced_items(cons: list[Constraint]):
+    """No constraints or only empty int_sets: the transposed membership array is empty."""
+    # --- act ---------------------------------------------
+    _con_values, _con_indices, item_con_indices = _build_array_repr(cons)
+
+    # --- assert ------------------------------------------
+    assert item_con_indices.shape == (0,)
+    assert item_con_indices.dtype == np.int32
 
 
 def test_np_con_min_value():
     # --- arrange -----------------------------------------
-    con_values, _con_indices = ConstraintList(
+    con_values, _con_indices, _item_con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
@@ -85,7 +107,7 @@ def test_np_con_min_value():
 
 def test_np_con_max_value():
     # --- arrange -----------------------------------------
-    con_values, _con_indices = ConstraintList(
+    con_values, _con_indices, _item_con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
@@ -101,7 +123,7 @@ def test_np_con_max_value():
 
 def test_np_con_indices():
     # --- arrange -----------------------------------------
-    _con_values, con_indices = ConstraintList(
+    _con_values, con_indices, _item_con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
@@ -125,7 +147,7 @@ def test_np_con_indices():
 )
 def test_np_largest_con_index(i1_max: int, i2_max: int, i3_max: int, expected_result: int):
     # --- arrange -----------------------------------------
-    _, con_indices = ConstraintList(
+    _, con_indices, _item_con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, i1_max}, min_count=2, max_count=3),
             Constraint(int_set={10, 11, 12, i2_max}, min_count=0, max_count=7),

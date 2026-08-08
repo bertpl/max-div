@@ -36,9 +36,21 @@ Example:
                     |        +------------->      |        con 1 indices
                     +-------------------->    con 0 indices
 
+  A third array carries the same membership transposed — for each item, the (ascending) ids of the
+  constraints it belongs to — in the identical two-part start/end layout, so `_np_con_indices` reads
+  segments from both.  Its Part 1 covers items `[0, largest referenced index]`; items it lists in no
+  constraint get an empty segment, items beyond its range belong to no constraint at all.
+
+    item_con_indices  (for the constraints above):
+
+          item:      0    1    2      3     4    5..9   10    11     12   13
+        segments:   {0}  {0}  {0}  {0,2}   {0}   {}    {1}  {1,2}   {1}  {1}
+
 Notes:
-    - use ConstraintList(constraints).to_numpy() to convert a list of Constraint objects to (con_values, con_indices)
-    - con_indices is usually treated as a read-only data structure that models membership of indices to constraints
+    - use ConstraintList(constraints).to_numpy() to convert a list of Constraint objects to
+      (con_values, con_indices, item_con_indices)
+    - con_indices and item_con_indices are read-only data structures that model membership of indices
+      to constraints (and its transpose)
     - con_values, however, is often modified during sampling to reflect how many more samples are needed, hence to keep
                   track of constraint satisfaction as sampling / solving a problem is progressing.
 
@@ -79,7 +91,8 @@ class ConstraintList:
     def __init__(self, constraints: list[Constraint]) -> None:
         self._cons = constraints
 
-    def to_numpy(self) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
+    def to_numpy(self) -> tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]:
+        """Return the `(con_values, con_indices, item_con_indices)` numpy representation."""
         return _build_array_repr(self._cons)
 
 
@@ -88,22 +101,26 @@ class ConstraintList:
 # =================================================================================================
 def _build_array_repr(
     cons: list[Constraint],
-) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
+) -> tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]:
     """Convert list of Constraint objects to numba-compatible representation.
 
       - con_values: 2D numpy array of shape (m, 2) with min_count and max_count for each constraint
       - con_indices: 1D numpy array of shape (2*m + n_indices,) with indexed, concatenated indices of all cons.
+      - item_con_indices: 1D numpy array with the transposed membership (item -> ascending constraint
+        ids), in the same two-part layout as con_indices (format details in the module docstring).
 
     :param cons: list of Constraint objects
-    :return: tuple of (con_values, con_indices)
+    :return: tuple of (con_values, con_indices, item_con_indices)
     """
     # get dimensions
     m = len(cons)
     n_indices = sum([len(con.int_set) for con in cons])
+    n_covered = 1 + max((max(con.int_set) for con in cons if con.int_set), default=-1)
 
     # pre-allocate
     con_values = np.empty((m, 2), dtype=np.int32)
     con_indices = np.empty((2 * m) + n_indices, dtype=np.int32)
+    item_con_indices = np.empty((2 * n_covered) + n_indices, dtype=np.int32)
 
     # build con_values
     for i, con in enumerate(cons):
@@ -122,7 +139,26 @@ def _build_array_repr(
         con_indices[i_start:i_end] = segment
         i_start = i_end
 
-    return con_values, con_indices
+    # build item_con_indices, part 1: per-item segment boundaries from per-item membership counts
+    counts = np.zeros(n_covered, dtype=np.int32)
+    for con in cons:
+        for idx in con.int_set:
+            counts[idx] += 1
+    i_start = 2 * n_covered
+    for item in range(n_covered):
+        item_con_indices[2 * item] = np.int32(i_start)
+        item_con_indices[(2 * item) + 1] = np.int32(i_start + counts[item])
+        i_start += counts[item]
+
+    # build item_con_indices, part 2: visiting constraints in ascending order makes each
+    # item's segment come out ascending
+    cursors = item_con_indices[0 : 2 * n_covered : 2].copy()
+    for i_con, con in enumerate(cons):
+        for idx in con.int_set:
+            item_con_indices[cursors[idx]] = np.int32(i_con)
+            cursors[idx] += 1
+
+    return con_values, con_indices, item_con_indices
 
 
 # =================================================================================================

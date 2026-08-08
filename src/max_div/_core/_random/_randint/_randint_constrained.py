@@ -8,77 +8,22 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints._constraints import _np_con_indices, _np_con_max_value, _np_con_min_value
+from max_div._core.constraints._constraints import _np_con_min_value
 
+from ._constraint_score_state import activate_soft_scores, apply_draw, new_constraint_score_state
 from ._randint import randint1
-
-_SCORE_PENALTY_HARD_CONSTRAINT = np.int32(2**24)
-_SCORE_PENALTY_ALREADY_SAMPLED = np.int32(2**30)
 
 
 # =================================================================================================
 #  randint_constrained
 # =================================================================================================
-@numba.njit("int32[:](int32,int32[:,:],int32[:],int32[:],boolean)", fastmath=True, cache=True)
-def _compute_score(
-    n: np.int32,
-    con_values: NDArray[np.int32],
-    con_indices: NDArray[np.int32],
-    already_sampled: NDArray[np.int32],
-    hard_max_constraints: bool,
-) -> NDArray[np.int32]:
-    """Score each integer in `[0, n)` based on how sampling each integer helps toward satisfying the constraints.
-
-      - if it helps achieve a min_count that is not satisfied yet:    +1
-      - if it would violate a max_count that we already hit:          -1      if hard_max_constraints=False
-                                                                      -2**24  if hard_max_constraints=True
-      - if we already sampled it:                                     -2**30  if hard_max_constraints=True.
-
-    The basic idea behind the scoring is that -if at all possible- integers with score <= 0 will not be sampled.
-
-    :param n: range to score [0, n)
-    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint
-    :param con_indices: 1D array with constraint indices in the format described in _constraints.py
-    :param already_sampled: 1D array of integers already sampled (negative values indicate no more samples)
-    :param hard_max_constraints: if True, integers that would violate max_count constraints are heavily penalized
-    :return: array of scores for each integer
-    """
-    m = con_values.shape[0]
-
-    # --- init --------------------------------------------
-    max_count_penalty = _SCORE_PENALTY_HARD_CONSTRAINT if hard_max_constraints else np.int32(1)
-    scores = np.zeros(n, dtype=np.int32)
-
-    # --- min_count / max_count ---------------------------
-    for i_con in np.arange(m, dtype=np.int32):
-        min_val = _np_con_min_value(con_values, i_con)
-        max_val = _np_con_max_value(con_values, i_con)
-        indices = _np_con_indices(con_indices, i_con)
-
-        if min_val > 0:
-            for idx in indices:
-                scores[idx] += 1
-        if max_val <= 0:
-            for idx in indices:
-                scores[idx] = max(
-                    scores[idx] - max_count_penalty,
-                    -_SCORE_PENALTY_ALREADY_SAMPLED + 1,  # avoid wrap-around + ensure -already_sampled_penalty is lower
-                )
-
-    # --- already sampled ---------------------------------
-    for i in already_sampled:
-        if i >= 0:  # negative values indicate end of valid samples
-            scores[i] = -_SCORE_PENALTY_ALREADY_SAMPLED
-
-    return scores
-
-
 @numba.njit(fastmath=True, cache=True)
 def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un-split
     n: np.int32,
     k: np.int32,
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
+    item_con_indices: NDArray[np.int32],
     rng_state: NDArray[np.uint64],
     p: NDArray[np.float32] = np.zeros(0, dtype=np.float32),  # noqa: B008 — numba needs a concrete typed default
     eager: bool = False,
@@ -97,10 +42,14 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     * This version is numba-accelerated and uses efficient numpy-based data structures, resulting in 10-100x speedup
       compared to equivalent pure-Python implementations.
 
-    * `con_values` & `con_indices` can be obtained by using the `to_numpy`
+    * `con_values`, `con_indices` & `item_con_indices` can be obtained by using the `to_numpy`
        method of the `ConstraintList` class.
 
-    *  For benchmark results, see [here](../../../../benchmarks/internal/bm_randint_constrained.md)
+    * Constraint-satisfaction scores are maintained incrementally across the k draws (see
+      `_constraint_score_state.py`), so the per-draw cost does not depend on the total constraint
+      membership size.
+
+    *  For benchmark results, see [here](../../../../../docs/benchmarks/internal/bm_randint_constrained.md)
 
     PRIORITIES that this algorithm adheres to:
 
@@ -113,6 +62,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     :param k: number of unique samples to draw (no replacement)
     :param con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
+    :param item_con_indices: 1D array with the transposed constraint membership (same module)        (never modified!)
     :param p: optional, target probabilities for each integer in `[0, n)`                            (never modified!)
     :param rng_state: (2-element uint64 array) state for random number generation; updated in-place.
                                 (use new_rng_state(seed) to construct an initial state)            (modified in-place)
@@ -149,8 +99,9 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     k_remaining = k_context
     m = con_values.shape[0]
 
-    # Make a copy of con_values to track current min/max counts
-    con_values_working = con_values.copy()
+    # Score state for this call: prices every integer once, then stays current draw by draw
+    # (con_values itself is copied inside, honoring the never-modified contract above)
+    state = new_constraint_score_state(n, con_values, con_indices, item_con_indices, i_forbidden)
 
     sample_idx = np.int32(0)
 
@@ -181,17 +132,14 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     for _ in range(k):
         # --- score & thresholds ----------------
 
-        # Get already sampled integers
-        # (we include i_forbidden, since they're excluded from sampling, with equal priority as already sampled values)
-        already_sampled = np.concatenate((samples[:sample_idx], i_forbidden)) if n_forbidden else samples[:sample_idx]
-
-        # determine how much each integer would help us satisfy min_count constraints
-        score = _compute_score(n, con_values_working, con_indices, already_sampled, True)
+        # how much each integer would help us satisfy min_count constraints (maintained incrementally;
+        # already-drawn and forbidden integers sit at the sampled marker)
+        score = state.scores
 
         # determine how much improvement we need to be able to satisfy all min_count constraints
         total_score_needed = np.int32(0)
         for i_con in range(m):
-            min_val = _np_con_min_value(con_values_working, np.int32(i_con))
+            min_val = _np_con_min_value(state.con_values, np.int32(i_con))
             if min_val > 0:
                 total_score_needed += min_val
 
@@ -215,7 +163,12 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
             # we cannot satisfy all constraints with the k remaining samples.
             #  --> STRATEGY 2: choose samples with best net effect (help achieve min_count vs not violating max_count),
             #                  still hard-excluding already sampled integers.
-            score = _compute_score(n, con_values_working, con_indices, already_sampled, False)
+            if state.soft_active[0] == 0:
+                already_sampled = (
+                    np.concatenate((samples[:sample_idx], i_forbidden)) if n_forbidden else samples[:sample_idx]
+                )
+                activate_soft_scores(state, n, already_sampled)
+            score = state.scores_soft
             max_score = np.int32(-(2**30))
             for s in score:
                 if s > max_score:
@@ -234,14 +187,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
         s = randint1(n=n, p=p_mod, rng_state=rng_state)
 
         # --- update stats --------------------------------
-        for i_con in range(m):
-            indices = _np_con_indices(con_indices, np.int32(i_con))
-            for idx in indices:
-                if idx == s:
-                    # Decrement both min and max count for this constraint
-                    con_values_working[i_con, 0] -= 1
-                    con_values_working[i_con, 1] -= 1
-                    break
+        apply_draw(state, np.int32(s))
 
         samples[sample_idx] = s
         sample_idx += 1

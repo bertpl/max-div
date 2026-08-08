@@ -98,6 +98,7 @@ def select_items_to_add(
             rng_state=rng_state,
             con_values=state.con_values,
             con_indices=state.con_indices,
+            item_con_indices=state.item_con_indices,
             eager=False,
             k_context=state.k - state.n_selected,
         )
@@ -113,6 +114,7 @@ def select_items_to_add(
             rng_state=rng_state,
             con_values=state.con_values,
             con_indices=state.con_indices,
+            item_con_indices=state.item_con_indices,
             eager=False,
             k_context=state.k - state.n_selected,
         )[0]

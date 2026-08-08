@@ -4,11 +4,7 @@ import numpy as np
 import pytest
 
 from max_div._core._random import new_rng_state
-from max_div._core._random._randint._randint_constrained import (
-    _SCORE_PENALTY_ALREADY_SAMPLED,
-    _compute_score,
-    randint_constrained,
-)
+from max_div._core._random._randint._randint_constrained import randint_constrained
 from max_div._core.constraints import Constraint, ConstraintList
 
 
@@ -30,7 +26,7 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
     rng_state = new_rng_state(np.int64(seed))
 
     # convert to numpy format
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
 
     # construct p array
     if p_mode == "random":
@@ -51,6 +47,7 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
         k=np.int32(k),
         con_values=con_values,
         con_indices=con_indices,
+        item_con_indices=item_con_indices,
         p=p,
         rng_state=rng_state,
         eager=eager,
@@ -85,7 +82,7 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
     rng_state = new_rng_state(np.int64(seed))
 
     # convert to numpy format
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
 
     # construct p array
     if p_mode == "random":
@@ -106,6 +103,7 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
         k=np.int32(k),
         con_values=con_values,
         con_indices=con_indices,
+        item_con_indices=item_con_indices,
         p=p,
         rng_state=rng_state,
         eager=eager,
@@ -151,7 +149,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
     rng_state = new_rng_state(np.int64(seed))
 
     # convert to numpy format
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
 
     # copies for later comparison
     con_values_before = con_values.copy()
@@ -164,6 +162,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
         k=np.int32(k),
         con_values=con_values,
         con_indices=con_indices,
+        item_con_indices=item_con_indices,
         p=p,
         rng_state=rng_state,
         eager=False,
@@ -205,7 +204,7 @@ def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_
     constraints = [Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)]
 
     # convert to numpy format
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
 
     p = np.random.rand(n).astype(np.float32)
     rng_state = new_rng_state(42)
@@ -217,6 +216,7 @@ def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_
         k=np.int32(k),
         con_values=con_values,
         con_indices=con_indices,
+        item_con_indices=item_con_indices,
         p=p,
         rng_state=rng_state,
         eager=False,
@@ -244,7 +244,7 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
 
     # set up constraints & p such that sampling is tempted sample forbidden indices 3 or 4
     constraints = [Constraint(int_set={0, 1, 2, 3, 4}, min_count=min_count, max_count=10)]
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
+    con_values, con_indices, item_con_indices = ConstraintList(constraints).to_numpy()
 
     p = np.array([0, 0.1, 0.1, 1, 1, 0.1, 0.1, 0.0, 0.0, 0.0], dtype=np.float32)
 
@@ -260,6 +260,7 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
         k=np.int32(k),
         con_values=con_values,
         con_indices=con_indices,
+        item_con_indices=item_con_indices,
         p=p,
         rng_state=rng_state,
         eager=eager,
@@ -281,39 +282,3 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
     assert np.array_equal(con_values_before, con_values), "con_values array should never be modified."
     assert np.array_equal(con_indices, con_indices_before), "p array should never be modified."
     assert np.array_equal(p, p_before), "p array should never be modified."
-
-
-def test_randint_constrained_score_wrap_around():
-    """
-    In case of very large nr of constraints, very negative scores can theoretically wrap around to positive ones.
-    This could e.g. cause duplicate samples to be generated.
-
-    This test specifically checks if the safeguard against this issue is working as expected.
-    """
-
-    # --- arrange -----------------------------------------
-    n = 10
-    constraints = [
-        Constraint(
-            int_set=set(range(1, n)),  # all samples except index 0
-            min_count=0,
-            max_count=0,
-        )
-        for _ in range(1000)
-    ]
-    con_values, con_indices = ConstraintList(constraints).to_numpy()
-
-    # --- act ---------------------------------------------
-    score = _compute_score(
-        n=np.int32(n),
-        con_values=con_values,
-        con_indices=con_indices,
-        already_sampled=np.array([0], dtype=np.int32),
-        hard_max_constraints=True,
-    )
-
-    # --- assert ------------------------------------------
-    assert max(score) <= 0.0, "Scores should not have wrapped around to positive values."
-    assert score[0] == -_SCORE_PENALTY_ALREADY_SAMPLED
-    for i in range(1, n):
-        assert -_SCORE_PENALTY_ALREADY_SAMPLED < score[i] < 0.0

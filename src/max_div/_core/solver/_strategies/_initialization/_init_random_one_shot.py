@@ -56,6 +56,7 @@ class InitRandomOneShot(InitializationStrategy):
                     k=state.k,
                     con_values=state.con_values,
                     con_indices=state.con_indices,
+                    item_con_indices=state.item_con_indices,
                     rng_state=self._rng_state,
                 )
             return randint_constrained(
@@ -63,6 +64,7 @@ class InitRandomOneShot(InitializationStrategy):
                 k=state.k,
                 con_values=state.con_values,
                 con_indices=state.con_indices,
+                item_con_indices=state.item_con_indices,
                 p=state.global_contribution_array,
                 rng_state=self._rng_state,
             )

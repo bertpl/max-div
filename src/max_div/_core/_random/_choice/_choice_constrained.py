@@ -14,6 +14,7 @@ def choice_constrained(
     rng_state: NDArray[np.uint64],
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
+    item_con_indices: NDArray[np.int32],
     eager: bool = False,
     k_context: np.int32 = np.int32(-1),  # noqa: B008 — numba needs a concrete typed default
 ) -> NDArray[np.int32]:
@@ -22,7 +23,8 @@ def choice_constrained(
     This function is to 'randint_constrained' what 'choice' is to 'randint'.
 
     Notes:
-      - `con_values` and `con_indices` can be constructed using ConstraintList(constraints).to_numpy()
+      - `con_values`, `con_indices` and `item_con_indices` can be constructed using
+        ConstraintList(constraints).to_numpy()
       - `con_indices` refers to values of the `values` array, not indices into it.
 
     :param n: (np.int32) specify the 'encompassing range' [0, n) from which 'values' are drawn and to which
@@ -34,6 +36,7 @@ def choice_constrained(
     :param rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
     :param con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
+    :param item_con_indices: 1D array with the transposed constraint membership (same module)        (never modified!)
     :param eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
                   increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
                   and adherence to the provided p-values.
@@ -83,6 +86,7 @@ def choice_constrained(
         rng_state=rng_state,
         con_values=con_values,
         con_indices=con_indices,
+        item_con_indices=item_con_indices,
         i_forbidden=i_forbidden,
         eager=eager,
         k_context=k_context,

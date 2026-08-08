@@ -167,12 +167,14 @@ def _benchmark(
     lst_cons = []
     lst_con_values = []
     lst_con_indices = []
+    lst_item_con_indices = []
     for i in range(index_range):
         cons = s.build_constraints(int(n), int(k), m, seed=424242 * i)
-        con_values, con_indices = ConstraintList(cons).to_numpy()
+        con_values, con_indices, item_con_indices = ConstraintList(cons).to_numpy()
         lst_cons.append(cons)
         lst_con_values.append(con_values)
         lst_con_indices.append(con_indices)
+        lst_item_con_indices.append(item_con_indices)
 
     p = np.zeros(0, dtype=np.float32) if p is None else p.astype(np.float32)
 
@@ -199,6 +201,7 @@ def _benchmark(
                 k=k,
                 con_values=lst_con_values[_idx],
                 con_indices=lst_con_indices[_idx],
+                item_con_indices=lst_item_con_indices[_idx],
                 p=p,
                 rng_state=rng_state,
                 eager=eager,
@@ -235,7 +238,7 @@ def _determine_precision(
     for run_idx in range(n_runs):
         # --- build constraints ---
         cons = s.build_constraints(n, k, m, seed=424242 * run_idx)
-        con_values, con_indices = ConstraintList(cons).to_numpy()
+        con_values, con_indices, item_con_indices = ConstraintList(cons).to_numpy()
 
         # Run the appropriate function with seed equal to run index
         rng_state = new_rng_state(np.int64(run_idx))
@@ -248,6 +251,7 @@ def _determine_precision(
                 k=np.int32(k),
                 con_values=con_values,
                 con_indices=con_indices,
+                item_con_indices=item_con_indices,
                 p=p,
                 rng_state=rng_state,
                 eager=(mode == "eager"),
