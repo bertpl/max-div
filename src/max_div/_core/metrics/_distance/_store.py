@@ -11,9 +11,9 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from ._build import _expand_condensed, compute_full_matrix
 from ._compute import _METRIC_KINDS, _lazy_pair, normalize_rows, validate_cosine_vectors
 from ._enum import DistanceMetric
-from ._parallel_build import BUILD_TILE, parallel_build_enabled
 
 # =================================================================================================
 #  DistanceStore
@@ -117,15 +117,7 @@ class DistanceStore(NamedTuple):
         :param vectors: (n x d ndarray) the vectors to compute distances from.
         :param metric: (DistanceMetric) the distance metric to use.
         """
-        vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-        if metric == DistanceMetric.COSINE:
-            validate_cosine_vectors(vectors)
-            vectors = normalize_rows(vectors)
-        if parallel_build_enabled():
-            return cls.full_matrix(
-                _fill_matrix_from_vectors_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_TILE))
-            )
-        return cls.full_matrix(_fill_matrix_from_vectors(vectors, _METRIC_KINDS[metric]))
+        return cls.full_matrix(compute_full_matrix(vectors, metric))
 
     @classmethod
     def full_matrix_from_condensed(cls, pdist: NDArray[np.float32], n: int) -> "DistanceStore":
@@ -212,60 +204,3 @@ def get_distance(store: DistanceStore, i: np.int32, j: np.int32) -> np.float32:
     if i < j:
         return store.pdist[_condensed_index(i, j, store.n)]
     return store.pdist[_condensed_index(j, i, store.n)]
-
-
-# =================================================================================================
-#  Full-matrix construction kernels
-# =================================================================================================
-@numba.njit(numba.float32[:, ::1](numba.float32[:, ::1], numba.int32), cache=True, fastmath={"reassoc", "contract"})
-def _fill_matrix_from_vectors(vectors: NDArray[np.float32], metric_kind: np.int32) -> NDArray[np.float32]:
-    """Fill a full (n, n) distance matrix from vectors: each pair computed once, written to both halves."""
-    n = vectors.shape[0]
-    matrix = np.zeros((n, n), dtype=np.float32)
-    for i in np.arange(n, dtype=np.int32):
-        for j in np.arange(i + 1, n, dtype=np.int32):
-            value = _lazy_pair(vectors, metric_kind, i, j)
-            matrix[i, j] = value
-            matrix[j, i] = value
-    return matrix
-
-
-@numba.njit(
-    numba.float32[:, ::1](numba.float32[:, ::1], numba.int32, numba.int64),
-    parallel=True,
-    cache=True,
-    fastmath={"reassoc", "contract"},
-)
-def _fill_matrix_from_vectors_parallel(
-    vectors: NDArray[np.float32], metric_kind: np.int32, tile: np.int64
-) -> NDArray[np.float32]:
-    """Fill a full (n, n) distance matrix from vectors, in parallel; bit-identical to the sequential fill.
-
-    Each element is written exactly once (as one symmetric pair of writes), so thread count cannot
-    change the result.  The bit-identity and slab reasoning are the parallel-build banner's in
-    `_compute`; the tile rationale is `_parallel_build`'s.
-    """
-    n = vectors.shape[0]
-    matrix = np.zeros((n, n), dtype=np.float32)
-    for j_block in range(0, n, tile):
-        j_end = min(j_block + tile, n)
-        for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
-            for j in range(max(j_block, np.int64(i) + 1), j_end):
-                value = _lazy_pair(vectors, metric_kind, np.int32(i), np.int32(j))
-                matrix[i, j] = value
-                matrix[j, i] = value
-    return matrix
-
-
-@numba.njit(numba.float32[:, ::1](numba.float32[::1], numba.int32), cache=True)
-def _expand_condensed(condensed: NDArray[np.float32], n: np.int32) -> NDArray[np.float32]:
-    """Expand a condensed distance vector into a full (n, n) matrix: each value written to both halves."""
-    matrix = np.zeros((n, n), dtype=np.float32)
-    idx = np.int64(0)
-    for i in range(n):
-        for j in range(i + 1, n):
-            value = condensed[idx]
-            idx += 1
-            matrix[i, j] = value
-            matrix[j, i] = value
-    return matrix

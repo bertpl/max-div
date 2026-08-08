@@ -3,7 +3,7 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
-from max_div._core.metrics._distance._parallel_build import BUILD_TILE, parallel_build_enabled
+from max_div._core.metrics._distance._build import BUILD_TILE, parallel_build_enabled
 
 
 @pytest.mark.parametrize(
