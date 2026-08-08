@@ -1,21 +1,20 @@
-"""Constraint-satisfaction scores for constrained sampling: from-scratch pricing + incremental upkeep.
+"""Constraint-satisfaction scores for constrained sampling: from-scratch computation + incremental upkeep.
 
-`_compute_score` prices every item in `[0, n)` from scratch — O(n + total membership) work.  Doing
-that for each of a call's k draws is what made the constrained draw the costliest routine in the
-codebase, although one draw changes only the drawn item's own constraints.  The
-`ConstraintScoreState` bundle therefore keeps one `_compute_score` result up to date across draws:
-`new_constraint_score_state` builds it once per sampling call, and `apply_draw` re-prices only what
-a draw can change — the drawn item's constraints, and, only when such a constraint crosses a
-satisfaction threshold, that constraint's members.
+`_compute_score` scores every item in `[0, n)` from scratch — O(n + total constraint membership)
+work, although a single draw changes only the drawn item's own constraints.
 
-The maintained invariant is exact: after any sequence of draws, `scores` equals element-for-element
-what `_compute_score` would return for the current working counts with `hard_max_constraints=True`
+The `ConstraintScoreState` bundle removes that repetition: `new_constraint_score_state` computes
+the scores once per sampling call, and `apply_draw` then updates only the drawn item's constraints
+— plus, when one of them crosses a satisfaction threshold, that constraint's members.
+
+The upkeep is exact: after any sequence of draws, `scores` equals element-for-element what
+`_compute_score` would return for the current working counts with `hard_max_constraints=True`
 (the property test in the corresponding test module pins this against `_compute_score` as oracle).
-The soft variant (`hard_max_constraints=False`), which the sampler needs on every draw once the
-remaining min-counts exceed what its remaining draws can deliver, is maintained the same way in
-`scores_soft` — activated lazily on first use, since feasible sampling never reads it.
-The bundle is a namedtuple of numpy arrays, the same register as `DistanceStore`, so it crosses the
-njit boundary without object-mode.
+`scores_soft` tracks the `hard_max_constraints=False` variant the same way, activated lazily on
+first use, since feasible sampling never reads it.
+
+The bundle is a namedtuple of numpy arrays, like `DistanceStore`, so it crosses the njit boundary
+without object-mode.
 """
 
 from typing import NamedTuple
@@ -29,12 +28,12 @@ from max_div._core.constraints._constraints import _np_con_indices, _np_con_max_
 _SCORE_PENALTY_HARD_CONSTRAINT = np.int32(2**24)
 _SCORE_PENALTY_ALREADY_SAMPLED = np.int32(2**30)
 
-# Floor `_compute_score` clamps to after each max-count penalty, and the number of such penalties on
-# one item below which that clamp cannot bind (a penalties-first ordering is the earliest it can be
-# reached).  Below the threshold, plain add/subtract arithmetic reproduces the from-scratch fold
-# exactly; from it on, the clamp makes the fold order-sensitive and the item must be re-priced by
-# replaying its constraints in `_compute_score`'s order (`_recompute_item_score`).
+# Floor that `_compute_score` clamps each score to after a max-count penalty.
 _SCORE_CLAMP_FLOOR = -_SCORE_PENALTY_ALREADY_SAMPLED + np.int32(1)
+# Fewest max-count penalties on one item at which the clamp can take effect — reached soonest when
+# every penalty lands before any min-count +1.  Below this, plain add/subtract arithmetic
+# reproduces the from-scratch result exactly; from it on, the item must be recomputed by replaying
+# its constraints in `_compute_score`'s order (`_recompute_item_score`).
 _CLAMP_REACHABLE_MIN_PENALTIES = _SCORE_PENALTY_ALREADY_SAMPLED // _SCORE_PENALTY_HARD_CONSTRAINT
 
 
@@ -103,10 +102,11 @@ class ConstraintScoreState(NamedTuple):
 
     `scores` always equals the `_compute_score(..., hard_max_constraints=True)` result for the
     current `con_values` and the draws applied so far; once activated (`soft_active`),
-    `scores_soft` equally tracks the `hard_max_constraints=False` result.  Drawn and forbidden
-    items sit at the sampled marker `-2**30`, which no constraint-derived score can reach (the
-    clamp floor is one above it), so the marker doubles as the "no longer drawable" flag.  Mutate
-    only through `apply_draw` / `activate_soft_scores`.
+    `scores_soft` equally tracks the `hard_max_constraints=False` result.
+
+    Drawn and forbidden items sit at `-_SCORE_PENALTY_ALREADY_SAMPLED`, which no
+    constraint-derived score can reach (the clamp floor is one above it), so that value doubles as
+    the "no longer drawable" flag.  Mutate only through `apply_draw` / `activate_soft_scores`.
     """
 
     scores: NDArray[np.int32]  # (n,) maintained _compute_score result, hard-max semantics
@@ -126,13 +126,13 @@ def new_constraint_score_state(
     item_con_indices: NDArray[np.int32],
     i_forbidden: NDArray[np.int32],
 ) -> ConstraintScoreState:
-    """Build the score state for a fresh sampling call: full pricing plus penalty bookkeeping.
+    """Build the score state for a fresh sampling call: full scoring plus penalty bookkeeping.
 
     :param n: range to score [0, n)
     :param con_values: 2D array (m, 2) with min_count and max_count for each constraint; copied, the
                        caller's array is never modified
     :param con_indices: 1D array with constraint indices in the format described in _constraints.py
-    :param item_con_indices: 1D array with the transposed membership (same module)
+    :param item_con_indices: 1D array with the transposed membership, format described in _constraints.py
     :param i_forbidden: 1D array of integers that must never be drawn; marked as sampled up front
     :return: the initialized ConstraintScoreState
     """
@@ -141,7 +141,8 @@ def new_constraint_score_state(
     scores_soft = np.empty(n, dtype=np.int32)  # filled by activate_soft_scores on first use
     soft_active = np.zeros(1, dtype=np.int32)
 
-    # count, per item, the constraints whose max-count is already exhausted (clamp-regime detection)
+    # count, per item, the constraints whose max-count is already exhausted (detects items whose
+    # clamp can take effect)
     n_covered = np.int32(item_con_indices[0] // 2) if item_con_indices.shape[0] > 0 else np.int32(0)
     penalty_counts = np.zeros(n_covered, dtype=np.int32)
     for i_con in np.arange(con_values_working.shape[0], dtype=np.int32):
@@ -156,12 +157,13 @@ def new_constraint_score_state(
 
 @numba.njit(cache=True)
 def _recompute_item_score(state: ConstraintScoreState, idx: np.int32) -> np.int32:
-    """Re-price one item by replaying its constraints exactly as `_compute_score` would.
+    """Recompute one item's score exactly as `_compute_score` would.
 
-    Only called for items with `_CLAMP_REACHABLE_MIN_PENALTIES` or more exhausted max-counts, where
-    the per-step clamp can bind and plain arithmetic no longer matches the from-scratch fold.  The
-    replay visits the item's constraints in ascending order — `_compute_score`'s constraint order —
-    with the same per-step clamp, so it lands on the identical value.
+    Only called for items with `_CLAMP_REACHABLE_MIN_PENALTIES` or more exhausted max-counts,
+    where the per-step clamp can take effect and plain add/subtract no longer matches the
+    from-scratch result.  The replay visits the item's constraints in ascending order —
+    `_compute_score`'s constraint order — with the same per-step clamp, so it lands on the
+    identical value.
     """
     score = np.int32(0)
     for i_con in _np_con_indices(state.item_con_indices, idx):
@@ -202,12 +204,13 @@ def _apply_max_penalty(state: ConstraintScoreState, idx: np.int32) -> None:
 
 @numba.njit(cache=True)
 def apply_draw(state: ConstraintScoreState, s: np.int32) -> None:
-    """Fold a draw of item `s` into the state: update working counts and re-price what changed.
+    """Apply a draw of item `s` to the state, updating all arrays in place.
 
-    Decrements the working min/max counts of `s`'s constraints, and sweeps a constraint's member
-    list only when a count crosses its satisfaction threshold (min-count just reached: its +1 is
-    retracted from the members; max-count just exhausted: its penalty is applied to them).  Finally
-    `s` itself is pinned at the sampled marker.  All arrays are updated in place.
+    - decrements the working min/max counts of `s`'s constraints
+    - sweeps a constraint's member list only when a count crosses its satisfaction threshold
+      (min-count just reached: its +1 is retracted from the members; max-count just exhausted:
+      its penalty is applied to them)
+    - pins `s` itself at `-_SCORE_PENALTY_ALREADY_SAMPLED`, so it cannot be drawn again
     """
     # constraints containing s (items beyond the transposed index belong to no constraint)
     n_covered = state.penalty_counts.shape[0]
@@ -237,13 +240,13 @@ def apply_draw(state: ConstraintScoreState, s: np.int32) -> None:
 
 @numba.njit(cache=True)
 def activate_soft_scores(state: ConstraintScoreState, n: np.int32, already_sampled: NDArray[np.int32]) -> None:
-    """Fill `scores_soft` with a fresh soft pricing and start maintaining it in `apply_draw`.
+    """Fill `scores_soft` with a fresh soft scoring and start maintaining it in `apply_draw`.
 
     Called on the first draw whose remaining min-counts exceed what the remaining draws can
     deliver; from then on the soft scores stay current incrementally.  Unlike the hard variant,
-    the soft penalty of 1 can never reach the clamp floor (that would take 2**30 exhausted
-    max-counts on one item), so plain arithmetic reproduces the from-scratch fold exactly and no
-    per-item replay is needed.
+    the soft penalty of 1 can never reach the clamp floor (that would take
+    `_SCORE_PENALTY_ALREADY_SAMPLED` exhausted max-counts on one item), so plain add/subtract
+    reproduces the from-scratch result exactly and no per-item replay is needed.
     """
     state.scores_soft[:] = _compute_score(n, state.con_values, state.con_indices, already_sampled, False)
     state.soft_active[0] = 1

@@ -40,13 +40,10 @@ def _assert_scores_match_oracle(state, n: int, con_indices, drawn: list[int], i_
 #  _compute_score
 # =================================================================================================
 def test_compute_score_wrap_around():
-    """
-    In case of very large nr of constraints, very negative scores can theoretically wrap around to positive ones.
-    This could e.g. cause duplicate samples to be generated.
+    """Pin the wrap-around safeguard: massed max-count penalties never wrap to positive scores.
 
-    This test specifically checks if the safeguard against this issue is working as expected.
+    A wrapped-around (positive) score could cause duplicate samples to be generated.
     """
-
     # --- arrange -----------------------------------------
     n = 10
     constraints = [
@@ -78,7 +75,7 @@ def test_compute_score_wrap_around():
 # =================================================================================================
 #  ConstraintScoreState
 # =================================================================================================
-def test_new_constraint_score_state_prices_and_counts():
+def test_new_constraint_score_state_scores_and_counts():
     # --- arrange -----------------------------------------
     n = 8
     constraints = [
@@ -190,13 +187,15 @@ def test_apply_draw_matches_oracle_on_random_problems(seed: int):
         _assert_scores_match_oracle(state, n, con_indices, drawn, i_forbidden)
 
 
-@pytest.mark.parametrize("n_exhaustible", [int(_CLAMP_REACHABLE_MIN_PENALTIES), int(_CLAMP_REACHABLE_MIN_PENALTIES) + 6])
-def test_apply_draw_matches_oracle_in_clamp_regime(n_exhaustible: int):
-    """Items under `_CLAMP_REACHABLE_MIN_PENALTIES`-or-more exhausted max-counts are re-priced exactly.
+@pytest.mark.parametrize(
+    "n_exhaustible", [int(_CLAMP_REACHABLE_MIN_PENALTIES), int(_CLAMP_REACHABLE_MIN_PENALTIES) + 6]
+)
+def test_apply_draw_matches_oracle_with_many_exhausted_max_counts(n_exhaustible: int):
+    """Items whose exhausted max-counts reach `_CLAMP_REACHABLE_MIN_PENALTIES` are recomputed exactly.
 
     One draw exhausts every max-1 constraint at once (penalty path), and a later draw satisfies the
-    min-count constraint (retraction path) — both hit the exact per-item replay, whose per-step clamp
-    plain arithmetic can no longer reproduce.
+    min-count constraint (retraction path) — both take the per-item replay path, where the per-step
+    clamp makes plain add/subtract wrong.
     """
     # --- arrange -----------------------------------------
     n = 12
@@ -213,5 +212,5 @@ def test_apply_draw_matches_oracle_in_clamp_regime(n_exhaustible: int):
     _assert_scores_match_oracle(state, n, con_indices, [0], _NO_FORBIDDEN)
     assert np.all(state.penalty_counts[1:] >= _CLAMP_REACHABLE_MIN_PENALTIES)
 
-    apply_draw(state, np.int32(2))  # satisfies the min-count: retraction sweeps items in the clamp regime
+    apply_draw(state, np.int32(2))  # satisfies the min-count: retraction sweeps items whose clamp can take effect
     _assert_scores_match_oracle(state, n, con_indices, [0, 2], _NO_FORBIDDEN)

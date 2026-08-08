@@ -36,10 +36,12 @@ Example:
                     |        +------------->      |        con 1 indices
                     +-------------------->    con 0 indices
 
-  A third array carries the same membership transposed — for each item, the (ascending) ids of the
-  constraints it belongs to — in the identical two-part start/end layout, so `_np_con_indices` reads
-  segments from both.  Its Part 1 covers items `[0, largest referenced index]`; items it lists in no
-  constraint get an empty segment, items beyond its range belong to no constraint at all.
+  A third array, item_con_indices, carries the same membership transposed — for each item, the
+  ascending ids of the constraints it belongs to — in the identical two-part start/end layout, so
+  `_np_con_indices` reads segments from both.
+
+  Its Part 1 covers items `[0, largest referenced index]`.  Items in that range that belong to no
+  constraint get an empty segment; items beyond that range belong to no constraint at all.
 
     item_con_indices  (for the constraints above):
 
