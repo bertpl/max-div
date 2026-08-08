@@ -10,19 +10,21 @@ from ._base import InitializationStrategy
 class InitFarthestPoint(InitializationStrategy):
     """Initialize by farthest-point sampling: a seeded random start item, then greedy picks.
 
-    After the start item, each step adds the not-yet-selected item with the highest diversity
-    contribution wrt the current selection.  Under the separation-family metrics that is the item
-    farthest from its nearest selected neighbor — classical farthest-point sampling (FPS); under
-    `MEAN_PAIRWISE_DISTANCE` it is the item with the highest mean distance to the selection — the
-    greedy max-sum construction.  The random start item keeps runs seed-dependent.
+    Each pick adds the not-yet-selected item with the highest diversity contribution wrt the
+    current selection:
 
-    Constraints are ignored by design: greedy picks are constraint-unaware, and the optimization
-    phase repairs feasibility afterwards (the solver presets also ignore constraints during
-    initialization).
+    - separation-family metrics: the item farthest from its nearest selected neighbor
+      (classical farthest-point sampling);
+    - `MEAN_PAIRWISE_DISTANCE`: the item with the highest mean distance to the selection
+      (the greedy max-sum construction).
+
+    Constraints are ignored by design; feasibility is left to the optimization steps.
 
     Suggested use: when the strongest possible starting point is desired, e.g. at short time
-    budgets.  Costs ~O(k * n) contribution reads on top of the tracker updates any initialization
-    incurs.
+    budgets.
+
+    Time Complexity:
+       - ~O(n * k), times d when distances are computed on demand from vectors.
     """
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
