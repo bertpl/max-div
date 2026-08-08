@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Distance-store construction is multi-threaded, roughly 7× faster (depending on CPU architecture) at large problem sizes; parallel builds are bit-identical to the single-threaded ones, and `MAXDIV_PARALLEL_BUILD=0` disables it
 - Constrained problems set up roughly 9× faster when the constraints together contain many item indices, via numpy vectorization of the internal constraint-array construction
-- Constrained problems solve substantially faster — constraint-satisfaction scores are now maintained incrementally during sampling instead of recomputed from scratch per sample (roughly 9× per swap-candidate draw and 90× per initialization draw on heavily overlapping constraint structures); selections are unchanged
+- Constrained sampling is substantially faster — constraint-satisfaction scores are now maintained incrementally instead of recomputed from scratch per draw (roughly 9× per swap-candidate call and 90× per initialization-sized call on heavily overlapping constraint structures); selections are unchanged
 
 ### Deprecated
 

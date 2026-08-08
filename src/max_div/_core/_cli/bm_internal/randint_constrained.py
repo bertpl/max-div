@@ -121,7 +121,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
             accuracy_table.highlight_results(TablePercentage, clr_highest=Table.GREEN)
 
             report = Report()
-            if i_file in [1, 3]:
+            if i_file in [0, 2]:  # first file of each scenario carries the scenario header
                 report += [h2(s.name), s.description]
             if use_p:
                 report += h3("Non-uniform sampling (custom p).")
