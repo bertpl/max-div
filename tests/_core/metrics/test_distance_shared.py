@@ -1,10 +1,10 @@
 import multiprocessing
 import pickle
 from multiprocessing import resource_tracker
+from multiprocessing.shared_memory import SharedMemory
 
 import numpy as np
 import pytest
-from multiprocessing.shared_memory import SharedMemory
 
 from max_div._core.metrics._distance import (
     KIND_CONDENSED,
@@ -29,6 +29,7 @@ _PAIRS = [(0, 1), (2, 7), (5, 5), (11, 3)]
 
 
 def _vectors() -> np.ndarray:
+    """Return the vectors every backend in this module derives its distances from."""
     return np.ascontiguousarray(np.random.default_rng(7).random((_N, 3), dtype=np.float32))
 
 
@@ -43,14 +44,16 @@ def _reference_stores() -> dict[str, DistanceStore]:
 
 
 def _published(store: DistanceStore) -> SharedDistanceStore:
+    """Return a shared-memory owner holding a copy of the given store's data."""
     return publish(store, _N)
 
 
 def _read_pairs(store: DistanceStore) -> list[float]:
+    """Return the distances the store reports for a fixed set of pairs, self-pair included."""
     return [float(get_distance(store, np.int32(i), np.int32(j))) for i, j in _PAIRS]
 
 
-# module level so a spawned child can import it: the child re-imports this module by name
+# the child re-imports this module by name, so its entry point must be at module level
 def _read_in_child(specs: dict[str, SharedStoreSpec], queue: multiprocessing.Queue) -> None:
     """Attach to each published store and report the distances read through it."""
     results = {}
@@ -103,7 +106,7 @@ def test_attached_store_reads_the_published_values(backend: str):
 
 
 @pytest.mark.parametrize(
-    ("backend", "kind"),
+    "backend, kind",
     [("condensed", KIND_CONDENSED), ("full_matrix", KIND_FULL_MATRIX), ("lazy", KIND_LAZY)],
 )
 def test_published_spec_names_the_backend_it_holds(backend: str, kind: np.int32):
@@ -121,7 +124,7 @@ def test_spec_survives_pickling():
     """The spec is picklable, which is what lets it reach a spawned worker as an argument."""
     # --- arrange / act -----------------------------------
     with _published(_reference_stores()["condensed"]) as owner:
-        restored = pickle.loads(pickle.dumps(owner.spec))
+        restored = pickle.loads(pickle.dumps(owner.spec))  # noqa: S301 -- our own spec, not untrusted input
 
     # --- assert ------------------------------------------
     assert restored == owner.spec
@@ -160,12 +163,13 @@ def test_attaching_leaves_the_segment_usable():
 
     # --- act ---------------------------------------------
     with attached_distance_store(owner.spec) as first:
-        assert _read_pairs(first) == expected
+        read_first = _read_pairs(first)
     with attached_distance_store(owner.spec) as second:
         read_after = _read_pairs(second)
     owner.close()
 
     # --- assert ------------------------------------------
+    assert read_first == expected
     assert read_after == expected
 
 
@@ -188,16 +192,17 @@ def test_attaching_without_registering_reads_and_leaves_the_owner_tracked():
     # --- arrange -----------------------------------------
     owner = _published(_reference_stores()["condensed"])
     registered = resource_tracker.register
+    expected = np.array(owner.buffer)
 
     # --- act ---------------------------------------------
     segment = _attach_without_registering(owner.spec.segment_name)
     values = np.ndarray(owner.spec.shape, dtype=np.float32, buffer=segment.buf).copy()
     segment.close()
+    owner.close()  # the owner still holds its own registration, so unlinking stays clean
 
     # --- assert ------------------------------------------
-    np.testing.assert_array_equal(values, owner.buffer)
+    np.testing.assert_array_equal(values, expected)
     assert resource_tracker.register is registered  # suppression lasted one constructor call
-    owner.close()  # the owner still owns its registration, so unlinking stays clean
 
 
 def test_degenerate_shape_still_claims_a_segment():

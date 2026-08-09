@@ -24,8 +24,8 @@ KIND_LAZY = np.int32(1)
 KIND_FULL_MATRIX = np.int32(2)
 
 # Shared placeholders for the fields a backend does not use, so empty stores cost nothing.  Read-only
-# because every store of a given backend hands out the same two objects; see DISTANCE_STORE_TYPE for
-# what that buys beyond the obvious.
+# because every store of a given backend hands out the same two objects, and because it makes every
+# field of DISTANCE_STORE_TYPE read-only — which is what lets a shared-memory store type-check.
 _EMPTY_1D = np.empty(0, dtype=np.float32)
 _EMPTY_1D.flags.writeable = False
 _EMPTY_2D = np.empty((0, 0), dtype=np.float32)
@@ -104,15 +104,15 @@ class DistanceStore(NamedTuple):
 
     @classmethod
     def lazy_prepared(cls, vectors: NDArray[np.float32], metric_kind: np.int32) -> "DistanceStore":
-        """Return a lazy DistanceStore over vectors already in the form the pair kernels expect.
+        """Return a lazy DistanceStore over vectors already in the form the distance reads expect.
 
-        `lazy` prepares its input — for cosine, normalizing the rows into a fresh array — and so
-        cannot be used by a caller that must keep reading the exact array it was handed.  Attaching
-        to a published store is that caller: normalizing there would replace the shared buffer with
-        a private copy, silently undoing the sharing.
+        `lazy` prepares its input — for cosine, normalizing the rows into a fresh array — so it
+        cannot serve a caller that must keep reading the exact array it was handed.  A store over a
+        shared segment is one such caller: normalizing there would replace the shared buffer with a
+        private copy, silently undoing the sharing.
 
         :param vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
-        :param metric_kind: (int32) pair-kernel selector, as `lazy` would have derived from the metric.
+        :param metric_kind: (int32) metric selector, as `lazy` would have derived from the metric.
         """
         return cls(
             kind=KIND_LAZY,
@@ -173,11 +173,9 @@ class DistanceStore(NamedTuple):
 # selectors are runtime values).  Signature strings cannot spell a namedtuple type, so kernels
 # taking a store use signature *objects* built from this constant.
 #
-# Its arrays are typed read-only, which numba treats as the wider type: a store holding writable
-# arrays converts to it, while one holding read-only arrays does not convert the other way.  Typing
-# it writable would therefore reject the read-only views a store attached from shared memory hands
-# to the kernels — and rejecting them is what would force those views to be writable, in a segment
-# several processes read at once.
+# Its arrays are typed read-only so that stores reading shared memory type-check: numba converts a
+# writable array to a read-only parameter but never the reverse, so a writable type here would
+# reject them, which would force the views into a segment several processes read to be writable.
 DISTANCE_STORE_TYPE = numba.typeof(DistanceStore.condensed(_EMPTY_1D, 0))
 
 

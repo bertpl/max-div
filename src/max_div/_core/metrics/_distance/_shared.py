@@ -1,20 +1,17 @@
 """Publishing a distance store into shared memory, so several processes read one copy of it.
 
-A store populates exactly one of its arrays and leaves the others zero-length, so publication does
-not branch per backend: allocate a segment, build into it, and hand out the segment name together
+A store populates exactly one of its arrays and leaves the others zero-length, so one segment holds
+whichever array the backend uses: allocate it, build into it, and hand out the segment name together
 with the scalars needed to rebuild the same store elsewhere.  Readers attach by name, because the
 processes that share a store are spawned rather than forked and inherit nothing.
 
-Two properties of POSIX shared memory shape the rest:
+Two obligations follow from POSIX shared memory:
 
-  - A segment outlives the process that created it.  So the publisher unlinks it and attaching
-    processes close only their own mapping — and the publisher must outlive every reader, since
-    reading through a closed mapping is a use-after-unmap rather than an error.
-  - CPython's resource tracker registers every segment a process touches and unlinks what it holds
-    at exit, which for an attaching process means destroying a segment its owner is still lending
-    out.  Python 3.13 added `track=False` to opt out; earlier versions undo the registration
-    directly.  The publisher stays registered on purpose: that registration is what releases the
-    segment if the owning process dies without cleaning up.
+  - The publisher unlinks the segment and must outlive every reader, since a segment outlives its
+    creator and reading through a closed mapping is a use-after-unmap rather than an error.
+  - An attaching process must not register with CPython's resource tracker, which is shared by the
+    whole process tree; `_attach_without_registering` covers why.  The publisher does register, and
+    that registration is what releases the segment if the publisher dies holding it.
 """
 
 import sys
@@ -81,7 +78,7 @@ class SharedDistanceStore:
         :param shape: shape of the float32 array this backend stores.
         :param kind: the DistanceStore backend selector the buffer holds data for.
         :param n: number of items.
-        :param metric_kind: pair-kernel selector, meaningful for the lazy backend only.
+        :param metric_kind: metric selector, meaningful for the lazy backend only.
         """
         # a zero-size segment is rejected by the OS, so degenerate shapes still claim one byte
         size_bytes = max(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize, 1)
@@ -110,7 +107,8 @@ class SharedDistanceStore:
     # --------------------------------------------------------------------------
     def close(self) -> None:
         """Unmap and destroy the segment; every store reading it becomes invalid."""
-        self._buffer = np.empty(self._spec.shape, dtype=np.float32)[:0]
+        # drop this object's segment-backed view first: reading one after close is a use-after-unmap
+        self._buffer = np.empty(0, dtype=np.float32)
         self._segment.close()
         self._segment.unlink()
 
@@ -170,19 +168,17 @@ def _attach_untracked(segment_name: str) -> SharedMemory:
 def _attach_without_registering(segment_name: str) -> SharedMemory:
     """Attach with registration suppressed, doing what `track=False` does on Python 3.13 and later.
 
-    Registering and then unregistering would be the shorter route and is wrong: one tracker daemon
-    serves the whole process tree, so removing the entry removes the *publisher's* — and with it the
-    cleanup that would have released the segment had the publisher died holding it.  Suppressing the
-    registration instead leaves the publisher's entry alone.
+    Registering and then unregistering would be shorter and is wrong: one tracker daemon serves the
+    whole process tree, so removing the entry removes the publisher's, and with it the cleanup that
+    would have released the segment had the publisher died holding it.
 
-    The suppression is process-wide for the length of one constructor call, so a thread creating a
-    segment at that exact moment would lose its own registration.  Attaching happens once, at worker
-    start-up, before there is anything else to race with.  Windows keeps no tracker.
+    The suppression is process-wide for the length of one constructor call, so callers must not
+    attach while another thread is creating a segment.  Windows keeps no tracker.
     """
     if sys.platform == "win32":
         return SharedMemory(name=segment_name)
     registered = resource_tracker.register
-    # replacing the module's bound method is the suppression itself, hence the assignment ty flags
+    # ty flags the assignment; replacing the module's bound method is the suppression itself
     resource_tracker.register = lambda *args, **kwargs: None  # ty: ignore[invalid-assignment]
     try:
         return SharedMemory(name=segment_name)

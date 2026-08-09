@@ -18,10 +18,8 @@ bit-reproducible across machines and numba versions, while the matrix fills comp
 (cosine included) under `reassoc`/`contract`.
 
 Every fill writes into a buffer the caller supplies, and each entry point allocates one only when
-none is given.  That lets a store be built straight into shared memory rather than built and then
-copied, which at full-matrix sizes would double peak resident memory for the length of the copy.
-Fills write the off-diagonal pairs only, so the entry points zero the diagonal themselves — a
-supplied buffer carries no guarantee of starting at zero.
+none is given.  Fills write the off-diagonal pairs only, so the entry points zero the diagonal
+themselves — a supplied buffer carries no guarantee of starting at zero.
 """
 
 import os
@@ -36,10 +34,9 @@ from ._enum import DistanceMetric
 # Width in columns of the blocks the parallel fills cut the pair space into.
 BUILD_BLOCK_WIDTH = 64
 
-# Condensed distances arrive from a DistanceStore, whose arrays are read-only views.  Numba treats a
-# read-only array parameter as the wider type — it accepts a writable argument too — so typing the
-# input this way costs nothing and keeps store-owned arrays passable.  Signature strings cannot
-# spell it, so the fill using it takes a signature object.
+# Condensed distances arrive from a DistanceStore, whose arrays are read-only views; DISTANCE_STORE_TYPE
+# covers why a read-only parameter accepts writable arguments too.  Signature strings cannot spell a
+# read-only array type, so the fill taking one is given a signature object.
 _READONLY_F32_1D = numba.types.Array(numba.float32, 1, "C", readonly=True)
 
 
@@ -126,11 +123,7 @@ def expand_condensed(
 
 
 def _matrix_buffer(out: NDArray[np.float32] | None, n: int) -> NDArray[np.float32]:
-    """Return the (n, n) buffer the matrix fills write into, allocated when not supplied.
-
-    The diagonal is zeroed here because the fills write off-diagonal pairs only, and a supplied
-    buffer may hold anything.
-    """
+    """Return the (n, n) buffer the matrix fills write into, allocated when not supplied."""
     if out is None:
         out = np.empty((n, n), dtype=np.float32)
     np.fill_diagonal(out, np.float32(0.0))
