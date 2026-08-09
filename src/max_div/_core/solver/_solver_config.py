@@ -1,8 +1,8 @@
 """A solver's configuration, held apart from the distances it will read.
 
-Everything `MaxDivSolver` needs except its store.  The two are separated because a store is
-produced once and read by several processes, while each process assembles its own solver over it
-from a copy of this record — which is why the record must stay small enough to pickle.
+A store and the rest of a solver are separated because a store is produced once and read by several
+processes, while each process assembles its own solver over that store from a copy of this record —
+which is why the record must stay small enough to pickle.
 """
 
 from dataclasses import dataclass, replace

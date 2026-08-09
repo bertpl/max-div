@@ -33,13 +33,12 @@ def run_portfolio(
 ) -> list[WorkerResult]:
     """Solve one configuration per worker over the published store, and return what each reported.
 
-    Returns in worker order rather than arrival order, so the caller sees the same list whichever
-    worker happens to finish first.  A worker that dies without reporting is left out rather than
-    fatal; `best_result` raises when none came back.
+    Results come back in worker order rather than arrival order, so the caller sees the same list
+    whichever worker happens to finish first.  A worker that dies without reporting is left out rather than
+    treated as an error; `best_result` raises when none came back.
 
     :param configs: one solver configuration per worker, in worker order.
-    :param spec: the published store every worker attaches to.
-    :param coordinator: the `WorkerCoordinator` handed to every worker.
+    :param spec: where the published store lives; every worker attaches to it.
     """
     context = multiprocessing.get_context("spawn")
     results: Queue = context.Queue()
@@ -65,8 +64,8 @@ def solve_in_worker(
 ) -> None:
     """Solve one configuration in this process and report the result, then release the store.
 
-    The entry point of a spawned worker, so it must stay importable by name — a spawned child
-    reconstructs it from the module path rather than inheriting it.
+    This function is the entry point of a spawned worker, so it must stay importable by name — a
+    spawned child reconstructs the function from its module path rather than inheriting it.
     """
     with attached_distance_store(spec) as store:
         solution = config.build_solver(store).solve(verbosity=0, coordinator=coordinator)

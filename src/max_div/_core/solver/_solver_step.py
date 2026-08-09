@@ -52,7 +52,7 @@ class SolverStep(ABC, Generic[S]):
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
     ) -> SolverStepResult:
-        """Executes the solver step by executing a strategy 1x or repeatedly and returns a SolverStepResult.
+        """Execute the solver step by running a strategy once or repeatedly, and return its result.
 
         :param coordinator: a `WorkerCoordinator` this step calls at each batch boundary; a step that
                             runs as a single batch ignores it.
@@ -168,7 +168,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             # --- report progress to tracker ---
             tracker.report_iterations_done(n_iters)
 
-            # --- batch boundary ---------------------------
+            # --- batch boundary ---
             if coordinator is not None:
                 coordinator.at_batch_boundary(state)
 

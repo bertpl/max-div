@@ -85,8 +85,7 @@ class MaxDivSolver:
                                    23  -->  fastest updates  (spacing increasing with  1%).
 
                                    25  -->  debug mode       (1% spacing + debug info column)
-        :param coordinator: a `WorkerCoordinator` the solver calls at each batch boundary, so a worker
-                            running alongside others has one place to reach them from.
+        :param coordinator: a `WorkerCoordinator` the solver calls at each batch boundary.
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------

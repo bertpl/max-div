@@ -1,11 +1,7 @@
-"""Several worker processes solve one problem at once, and the best result they find wins.
+"""Several worker processes — a portfolio — solve one problem at once, and the best result wins.
 
 Every worker reads the same distances out of shared memory and runs its own search over them, so
-what varies between workers is the search, never the objective.  The pieces:
-
-  - `_coordinator` is what a worker calls at each batch boundary.
-  - `_result` is what a worker sends back, and the rule that picks a winner.
-  - `_executor` starts the workers, collects what they report, and shuts them down.
+what varies between workers is the search, never the objective.
 """
 
 from ._coordinator import IndependentCoordinator, WorkerCoordinator
