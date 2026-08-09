@@ -4,13 +4,18 @@ A store populates exactly one of its arrays and leaves the others zero-length, s
 whichever array the backend uses.  Readers attach by name: the processes sharing a store are spawned
 rather than forked, and inherit nothing.
 
-Two obligations follow from POSIX shared memory:
+`multiprocessing.shared_memory` is available on every platform the package supports.  What differs is
+how long a segment lives, and POSIX leaves that to the processes, which imposes two obligations:
 
-  - The publisher unlinks the segment and must outlive every reader, since a segment outlives its
-    creator and reading through a closed mapping crashes rather than raising.
+  - The publisher must outlive every reader, because it is the process that destroys the segment.
+    A POSIX segment outlives its creator, and reading one through a closed mapping crashes rather
+    than raising.
   - An attaching process must not register with CPython's resource tracker, which is shared by the
     whole process tree; `_attach_without_registering` covers why.  The publisher does register, and
     that registration releases the segment if the publisher dies holding it.
+
+Windows has neither concern: it keeps no tracker, its `unlink` is documented as having no effect, and
+the block goes away once the last handle closes.
 """
 
 import sys
@@ -38,11 +43,11 @@ class SharedStoreSpec(NamedTuple):
     Small enough to travel to a worker process as an ordinary pickled argument.
     """
 
-    segment_name: str
-    kind: int
-    n: int
-    metric_kind: int
-    shape: tuple[int, ...]
+    segment_name: str  # OS-level name of the segment, which is how another process finds it
+    kind: int  # which DistanceStore backend the segment's array holds data for
+    n: int  # number of items the store covers
+    metric_kind: int  # metric the lazy backend computes with; the stored backends ignore it
+    shape: tuple[int, ...]  # shape of the float32 array in the segment, not of the problem
 
 
 # =================================================================================================
