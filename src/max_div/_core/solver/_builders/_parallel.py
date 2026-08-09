@@ -1,4 +1,4 @@
-"""Configuring and building a portfolio of solvers over one problem."""
+"""A portfolio builder configures and builds several solvers over one problem."""
 
 from collections.abc import Sequence
 from typing import Self
@@ -18,18 +18,20 @@ _SEED_RANGE = 2**63
 
 
 class ParallelMaxDivSolverBuilder(SolverBuilderBase):
-    """Builder for a portfolio: several workers solving one problem at once, best result wins.
+    """This builder configures a portfolio: several workers solve one problem, and the best result wins.
 
-    Carries the settings that define the score, exactly as the single-solver builder does, and adds
-    the workers.  It offers no `with_preset`, because a preset is what a *worker* runs — see
-    `WorkerConfig` — and two workers running different presets is the point.
+    There is no `with_preset`: a preset belongs to a worker (`WorkerConfig`), and workers may run
+    different ones.
     """
 
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
-        """:param problem: The MaxDivProblem every worker solves."""
+        """Configure a portfolio over the given problem.
+
+        :param problem: The MaxDivProblem every worker solves.
+        """
         super().__init__(problem)
         self._worker_configs: list[WorkerConfig] = []
         self._target_duration: TargetDuration | None = None
@@ -79,9 +81,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         """Return the solver configuration for one worker, seeded from the portfolio's own seed.
 
         Worker seeds are derived rather than set, so one seed reproduces the whole portfolio while
-        the workers still search differently.  Each is bounded to 63 bits because a worker's seed is
-        reported back for replaying that worker on its own, and a full-width hash is unwieldy to
-        copy; the derivation stays deterministic and the workers stay distinct either way.
+        the workers still search differently.
         """
         init_strategy, optim_steps = get_preset_strategies(worker.preset, duration)
         return SolverConfig(

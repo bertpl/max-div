@@ -1,4 +1,4 @@
-"""Configuring and building a single solver over a problem."""
+"""A solver builder configures and builds a single solver over a problem."""
 
 from typing import Self
 

@@ -1,4 +1,4 @@
-"""A portfolio solver: several workers over one shared store, and the best result they reach."""
+"""A portfolio solver runs several workers over one shared store and returns the best result they reach."""
 
 import os
 import warnings
@@ -18,7 +18,7 @@ from ._worker_config import WorkerConfig
 
 
 class ParallelMaxDivSolver:
-    """Solves one problem with several workers at once and returns the best selection they found.
+    """A portfolio solver solves one problem with several workers at once, returning the best selection.
 
     Built by `ParallelMaxDivSolverBuilder`, which is where the workers and the shared settings are
     configured.
@@ -34,8 +34,9 @@ class ParallelMaxDivSolver:
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
     ) -> None:
-        """:param problem: the problem every worker solves.
+        """Hold the problem, the resolved backend, and one configuration per worker.
 
+        :param problem: the problem every worker solves.
         :param storage: the already-resolved backend the shared store is built in.
         :param worker_configs: what each worker runs, reported back in the solution.
         :param solver_configs: the solver each worker assembles, in the same order.
@@ -74,11 +75,7 @@ class ParallelMaxDivSolver:
 
 
 def warn_about_worker_count(n_workers: int) -> None:
-    """Warn when a worker count spends resources or forfeits the point of running several.
-
-    One worker is a portfolio that cannot beat a single solve, and more workers than cores makes
-    them compete for the same cores rather than adding search.
-    """
+    """Warn when there are too few workers to help, or more workers than cores."""
     if n_workers < 2:
         warnings.warn(
             f"A portfolio of {n_workers} worker cannot do better than solving once; "

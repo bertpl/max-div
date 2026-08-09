@@ -1,12 +1,17 @@
-"""The settings a solver builder and a portfolio builder both carry.
+"""A solver builder and a portfolio builder both carry the settings defined here.
 
-The split follows one rule: **anything that influences the score is shared**.  Best-of-N compares
-what its workers found, so a single answer to "which selection is better" has to hold across the
-whole portfolio — the metric, the tie-breakers and the constraint penalty all define that answer and
-therefore live here.  Distance storage is here for a different reason: workers read one buffer, so
-per-worker storage could not be honored at all.
+The split follows one rule: **anything that influences the score is shared**.  A portfolio compares
+what its workers found, so one answer to "which selection is better" has to hold across all of them.
+That covers:
 
-What is left to a subclass is the search: which strategies run, and for how long.
+  - the diversity metric and its tie-breakers,
+  - the constraint penalty,
+  - and the problem itself.
+
+Distance storage is here for a different reason: workers read one buffer, so per-worker storage
+could not be honored at all.
+
+A subclass adds the search: which strategies run, and for how long.
 """
 
 from typing import TYPE_CHECKING, Self
@@ -25,7 +30,7 @@ if TYPE_CHECKING:
 
 
 class SolverBuilderBase:
-    """Holds the settings that define the score, plus the problem facts every solver needs."""
+    """A builder base holds the settings that define the score, plus the problem facts every solver needs."""
 
     # -------------------------------------------------------------------------
     #  Constructor
@@ -41,7 +46,7 @@ class SolverBuilderBase:
         self._diversity_metric: DiversityMetric = problem.diversity_metric
         self._constraints: list[Constraint] = problem.constraints
 
-        # --- score-defining configuration ------
+        # --- shared configuration --------------
         self._diversity_tie_breakers: list[DiversityMetric] = []
         self._default_diversity_tie_breakers: bool = True
         self._seed = 42

@@ -64,7 +64,7 @@ def test_workers_may_differ_by_initialization_alone():
 
 
 def test_workers_at_the_best_score_are_counted():
-    """The count says how many workers tied for best, which is what says whether the portfolio helped."""
+    """The count says how many workers tied for best; when every worker ties, the portfolio did not help."""
     # --- arrange / act -----------------------------------
     solution = _portfolio(3)
 
@@ -88,7 +88,7 @@ def test_one_seed_reproduces_the_whole_portfolio():
 
 
 def test_workers_are_seeded_differently_from_each_other():
-    """Derived seeds differ per worker, which is what makes running several worth anything."""
+    """Derived seeds differ per worker, so the workers search differently."""
     # --- arrange / act -----------------------------------
     seeds = [worker.seed for worker in _portfolio(4).workers]
 
@@ -119,7 +119,7 @@ def test_a_worker_can_be_replayed_on_its_own():
 #  Guardrails
 # =================================================================================================
 def test_a_single_worker_warns():
-    """One worker cannot beat a single solve, so configuring one says so rather than pretending."""
+    """One worker cannot beat a single solve, so configuring one worker warns."""
     # --- arrange / act / assert --------------------------
     with pytest.warns(ParallelSolvingWarning, match="cannot do better than solving once"):
         ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 1).build()

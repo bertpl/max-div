@@ -18,4 +18,4 @@ class DistanceInputWarning(MaxDivWarning):
 
 
 class ParallelSolvingWarning(MaxDivWarning):
-    """A portfolio was configured in a way that costs quality or resources for nothing."""
+    """Solving in parallel was configured in a way that cannot help, or that oversubscribes the machine."""

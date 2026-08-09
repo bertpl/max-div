@@ -1,9 +1,4 @@
-"""What a portfolio returns: the winning selection, and what every worker found.
-
-The winner is an ordinary solution — the same type a single solve returns, so code that accepts one
-keeps working.  What a portfolio adds is the per-worker record, which is the only way a user can
-tell whether running several workers bought anything.
-"""
+"""A portfolio returns the winning selection together with what every worker found."""
 
 from dataclasses import dataclass, field
 
@@ -16,10 +11,10 @@ from ._worker_config import WorkerConfig
 
 @dataclass(frozen=True)
 class WorkerSummary:
-    """What one worker ran, what it found, and what it cost.
+    """A summary records what one worker ran, what it found, and what it cost.
 
-    Carries the configuration by value rather than by reference, so a saved result can be reproduced
-    without the code that produced it: the seed alone does not say which solver to replay it with.
+    The configuration is carried by value rather than by reference, so a saved result can be replayed
+    without the code that produced it: a seed alone does not say which solver to replay it with.
     """
 
     worker_index: int
@@ -32,7 +27,10 @@ class WorkerSummary:
 
 @dataclass
 class ParallelMaxDivSolution(MaxDivSolution):
-    """The winning worker's solution, plus a summary of what every worker found."""
+    """A parallel solution is the winning worker's, with a summary of every worker attached.
+
+    Being an ordinary `MaxDivSolution` is deliberate: code written for a single solve keeps working.
+    """
 
     workers: list[WorkerSummary] = field(default_factory=list)
     winning_worker: int = 0
@@ -41,17 +39,13 @@ class ParallelMaxDivSolution(MaxDivSolution):
     def n_workers_with_best_score(self) -> int:
         """Return how many workers reached the best score, the winner included.
 
-        Equal to the worker count when every worker tied, which is the signal that the portfolio
-        bought nothing on this problem.
+        Equal to the worker count when every worker tied, which means the portfolio found nothing a
+        single worker would not have.
         """
         return sum(1 for worker in self.workers if worker.has_best_score)
 
     def __str__(self) -> str:
-        """Return the single-solve summary, plus how many workers reached the best score.
-
-        That count is the one number saying whether running several workers bought anything: equal
-        to the worker count means they all found equally good selections.
-        """
+        """Return the single-solve summary, plus how many workers reached the best score."""
         return (
-            f"{super().__str__()}, best score reached by {self.n_workers_with_best_score}/{len(self.workers)} workers"
+            f"{super().__str__()} | best score reached by {self.n_workers_with_best_score}/{len(self.workers)} workers"
         )
