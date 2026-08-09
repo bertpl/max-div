@@ -28,7 +28,7 @@ def test_condensed_factory_fields():
     assert isinstance(store, DistanceStore)
     assert store.kind == KIND_CONDENSED
     assert store.n == np.int32(4)
-    assert store.pdist is d
+    assert np.shares_memory(store.pdist, d)  # zero-copy: a read-only view, not a copy
     assert store.matrix.size == 0
     assert store.vectors.size == 0
 
@@ -110,7 +110,7 @@ def test_full_matrix_factory_fields():
     # --- assert ------------------------------------------
     assert store.kind == KIND_FULL_MATRIX
     assert store.n == np.int32(4)
-    assert store.matrix is matrix
+    assert np.shares_memory(store.matrix, matrix)  # zero-copy: a read-only view, not a copy
     assert store.pdist.size == 0
     assert store.vectors.size == 0
 

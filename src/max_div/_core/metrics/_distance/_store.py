@@ -11,7 +11,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from ._build import _expand_condensed, compute_full_matrix
+from ._build import compute_full_matrix, expand_condensed
 from ._compute import _METRIC_KINDS, _metric_pair, normalize_rows, validate_cosine_vectors
 from ._enum import DistanceMetric
 
@@ -23,9 +23,20 @@ KIND_CONDENSED = np.int32(0)
 KIND_LAZY = np.int32(1)
 KIND_FULL_MATRIX = np.int32(2)
 
-# shared placeholders for the fields a backend does not use, so empty stores cost nothing
+# Shared placeholders for the fields a backend does not use, so empty stores cost nothing.  Read-only
+# because every store of a given backend hands out the same two objects; see DISTANCE_STORE_TYPE for
+# what that buys beyond the obvious.
 _EMPTY_1D = np.empty(0, dtype=np.float32)
+_EMPTY_1D.flags.writeable = False
 _EMPTY_2D = np.empty((0, 0), dtype=np.float32)
+_EMPTY_2D.flags.writeable = False
+
+
+def _readonly(array: NDArray[np.float32]) -> NDArray[np.float32]:
+    """Return a view of `array` that cannot be written through, sharing its memory."""
+    view = array.view()
+    view.flags.writeable = False
+    return view
 
 
 class DistanceStore(NamedTuple):
@@ -35,6 +46,11 @@ class DistanceStore(NamedTuple):
     arrays.  Instances are immutable by construction — kernels can only read, and copies of
     consuming objects can safely share one store.  Create instances via the factory methods,
     one per backend.
+
+    The factories hold their array as a read-only *view* of what they were given, so a store still
+    shares memory with its source (no copy is made) while nothing can write through the store
+    itself.  That matters most when the source is a shared-memory segment several processes read,
+    where a stray write corrupts every reader rather than failing where it happened.
     """
 
     kind: np.int32
@@ -57,7 +73,7 @@ class DistanceStore(NamedTuple):
         return cls(
             kind=KIND_CONDENSED,
             n=np.int32(n),
-            pdist=pdist,
+            pdist=_readonly(pdist),
             matrix=_EMPTY_2D,
             vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
@@ -82,8 +98,29 @@ class DistanceStore(NamedTuple):
             n=np.int32(vectors.shape[0]),
             pdist=_EMPTY_1D,
             matrix=_EMPTY_2D,
-            vectors=vectors,
+            vectors=_readonly(vectors),
             metric_kind=_METRIC_KINDS[metric],
+        )
+
+    @classmethod
+    def lazy_prepared(cls, vectors: NDArray[np.float32], metric_kind: np.int32) -> "DistanceStore":
+        """Return a lazy DistanceStore over vectors already in the form the pair kernels expect.
+
+        `lazy` prepares its input — for cosine, normalizing the rows into a fresh array — and so
+        cannot be used by a caller that must keep reading the exact array it was handed.  Attaching
+        to a published store is that caller: normalizing there would replace the shared buffer with
+        a private copy, silently undoing the sharing.
+
+        :param vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
+        :param metric_kind: (int32) pair-kernel selector, as `lazy` would have derived from the metric.
+        """
+        return cls(
+            kind=KIND_LAZY,
+            n=np.int32(vectors.shape[0]),
+            pdist=_EMPTY_1D,
+            matrix=_EMPTY_2D,
+            vectors=_readonly(vectors),
+            metric_kind=metric_kind,
         )
 
     @classmethod
@@ -101,7 +138,7 @@ class DistanceStore(NamedTuple):
             kind=KIND_FULL_MATRIX,
             n=np.int32(matrix.shape[0]),
             pdist=_EMPTY_1D,
-            matrix=matrix,
+            matrix=_readonly(matrix),
             vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
         )
@@ -129,12 +166,18 @@ class DistanceStore(NamedTuple):
         :param pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
         :param n: (int) number of items.
         """
-        return cls.full_matrix(_expand_condensed(pdist, np.int32(n)))
+        return cls.full_matrix(expand_condensed(pdist, n))
 
 
 # The numba type of every DistanceStore instance (all stores share it: field dtypes are fixed and
 # selectors are runtime values).  Signature strings cannot spell a namedtuple type, so kernels
 # taking a store use signature *objects* built from this constant.
+#
+# Its arrays are typed read-only, which numba treats as the wider type: a store holding writable
+# arrays converts to it, while one holding read-only arrays does not convert the other way.  Typing
+# it writable would therefore reject the read-only views a store attached from shared memory hands
+# to the kernels — and rejecting them is what would force those views to be writable, in a segment
+# several processes read at once.
 DISTANCE_STORE_TYPE = numba.typeof(DistanceStore.condensed(_EMPTY_1D, 0))
 
 

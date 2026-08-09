@@ -16,6 +16,12 @@ Cosine is the one metric with dedicated condensed fills: its rows are normalized
 entry point, and those fills deliberately carry no fastmath flags, so condensed cosine values are
 bit-reproducible across machines and numba versions, while the matrix fills compute every metric
 (cosine included) under `reassoc`/`contract`.
+
+Every fill writes into a buffer the caller supplies, and each entry point allocates one only when
+none is given.  That lets a store be built straight into shared memory rather than built and then
+copied, which at full-matrix sizes would double peak resident memory for the length of the copy.
+Fills write the off-diagonal pairs only, so the entry points zero the diagonal themselves — a
+supplied buffer carries no guarantee of starting at zero.
 """
 
 import os
@@ -30,6 +36,12 @@ from ._enum import DistanceMetric
 # Width in columns of the blocks the parallel fills cut the pair space into.
 BUILD_BLOCK_WIDTH = 64
 
+# Condensed distances arrive from a DistanceStore, whose arrays are read-only views.  Numba treats a
+# read-only array parameter as the wider type — it accepts a writable argument too — so typing the
+# input this way costs nothing and keeps store-owned arrays passable.  Signature strings cannot
+# spell it, so the fill using it takes a signature object.
+_READONLY_F32_1D = numba.types.Array(numba.float32, 1, "C", readonly=True)
+
 
 def parallel_build_enabled() -> bool:
     """Return whether distance builds may use multiple threads (default: enabled)."""
@@ -39,7 +51,9 @@ def parallel_build_enabled() -> bool:
 # =================================================================================================
 #  Public entry points
 # =================================================================================================
-def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
+def compute_pdist(
+    vectors: NDArray[np.float32], metric: DistanceMetric, out: NDArray[np.float32] | None = None
+) -> NDArray[np.float32]:
     """Compute the pair-wise distances between a set of n vectors in d dimensions.
 
     Computed directly in float32 — each pair accumulates in float64 across the d dimensions and
@@ -48,12 +62,14 @@ def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArr
 
     :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
     :param metric: (DistanceMetric) The distance metric to use.
+    :param out: ((n*(n-1))//2 ndarray) buffer to fill, allocated here when not given.
     :return: ((n*(n-1))//2 ndarray) condensed pair-wise distance vector, in scipy's layout: the
                                          (i,j)-distance for i<j sits at the offset given by `_condensed_index`.
     """
     vectors = np.ascontiguousarray(vectors, dtype=np.float32)
     n = vectors.shape[0]
-    out = np.empty((n * (n - 1)) // 2, dtype=np.float32)
+    if out is None:
+        out = np.empty((n * (n - 1)) // 2, dtype=np.float32)
     if metric == DistanceMetric.COSINE:
         validate_cosine_vectors(vectors)
         normalized = normalize_rows(vectors)
@@ -69,7 +85,9 @@ def compute_pdist(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArr
     return out
 
 
-def compute_full_matrix(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDArray[np.float32]:
+def compute_full_matrix(
+    vectors: NDArray[np.float32], metric: DistanceMetric, out: NDArray[np.float32] | None = None
+) -> NDArray[np.float32]:
     """Compute the full (n, n) pair-wise distance matrix, exactly symmetric by construction.
 
     Each pair is computed once through the same pair arithmetic the condensed and lazy paths use,
@@ -77,15 +95,46 @@ def compute_full_matrix(vectors: NDArray[np.float32], metric: DistanceMetric) ->
 
     :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
     :param metric: (DistanceMetric) The distance metric to use.
+    :param out: ((n, n) ndarray) buffer to fill, allocated here when not given.
     :return: ((n, n) ndarray) full pairwise-distance matrix, float32 C-contiguous.
     """
     vectors = np.ascontiguousarray(vectors, dtype=np.float32)
     if metric == DistanceMetric.COSINE:
         validate_cosine_vectors(vectors)
         vectors = normalize_rows(vectors)
+    out = _matrix_buffer(out, vectors.shape[0])
     if parallel_build_enabled():
-        return _fill_matrix_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_BLOCK_WIDTH))
-    return _fill_matrix(vectors, _METRIC_KINDS[metric])
+        _fill_matrix_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_BLOCK_WIDTH), out)
+    else:
+        _fill_matrix(vectors, _METRIC_KINDS[metric], out)
+    return out
+
+
+def expand_condensed(
+    condensed: NDArray[np.float32], n: int, out: NDArray[np.float32] | None = None
+) -> NDArray[np.float32]:
+    """Expand a condensed distance vector into a full (n, n) matrix, each value written to both halves.
+
+    :param condensed: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
+    :param n: (int) number of items.
+    :param out: ((n, n) ndarray) buffer to fill, allocated here when not given.
+    :return: ((n, n) ndarray) full pairwise-distance matrix, bit-equal to the condensed source.
+    """
+    out = _matrix_buffer(out, n)
+    _fill_matrix_from_condensed(condensed, np.int32(n), out)
+    return out
+
+
+def _matrix_buffer(out: NDArray[np.float32] | None, n: int) -> NDArray[np.float32]:
+    """Return the (n, n) buffer the matrix fills write into, allocated when not supplied.
+
+    The diagonal is zeroed here because the fills write off-diagonal pairs only, and a supplied
+    buffer may hold anything.
+    """
+    if out is None:
+        out = np.empty((n, n), dtype=np.float32)
+    np.fill_diagonal(out, np.float32(0.0))
+    return out
 
 
 # =================================================================================================
@@ -149,50 +198,44 @@ def _fill_pdist_cos_parallel(vectors: NDArray[np.float32], block_width: np.int64
 # =================================================================================================
 #  Full-matrix fills
 # =================================================================================================
-@numba.njit(numba.float32[:, ::1](numba.float32[:, ::1], numba.int32), cache=True, fastmath={"reassoc", "contract"})
-def _fill_matrix(vectors: NDArray[np.float32], metric_kind: np.int32) -> NDArray[np.float32]:
+@numba.njit("void(float32[:, ::1], int32, float32[:, ::1])", cache=True, fastmath={"reassoc", "contract"})
+def _fill_matrix(vectors: NDArray[np.float32], metric_kind: np.int32, out: NDArray[np.float32]) -> None:
     """Fill a full (n, n) distance matrix from vectors, sequentially; each pair written to both halves."""
     n = vectors.shape[0]
-    matrix = np.zeros((n, n), dtype=np.float32)
     for i in np.arange(n, dtype=np.int32):
         for j in np.arange(i + 1, n, dtype=np.int32):
             value = _metric_pair(vectors, metric_kind, i, j)
-            matrix[i, j] = value
-            matrix[j, i] = value
-    return matrix
+            out[i, j] = value
+            out[j, i] = value
 
 
 @numba.njit(
-    numba.float32[:, ::1](numba.float32[:, ::1], numba.int32, numba.int64),
+    "void(float32[:, ::1], int32, int64, float32[:, ::1])",
     parallel=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
 def _fill_matrix_parallel(
-    vectors: NDArray[np.float32], metric_kind: np.int32, block_width: np.int64
-) -> NDArray[np.float32]:
+    vectors: NDArray[np.float32], metric_kind: np.int32, block_width: np.int64, out: NDArray[np.float32]
+) -> None:
     """Fill a full (n, n) distance matrix from vectors, in parallel; each pair written to both halves."""
     n = vectors.shape[0]
-    matrix = np.zeros((n, n), dtype=np.float32)
     for j_block in range(0, n, block_width):
         j_end = min(j_block + block_width, n)
         for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
             for j in range(max(j_block, np.int64(i) + 1), j_end):
                 value = _metric_pair(vectors, metric_kind, np.int32(i), np.int32(j))
-                matrix[i, j] = value
-                matrix[j, i] = value
-    return matrix
+                out[i, j] = value
+                out[j, i] = value
 
 
-@numba.njit(numba.float32[:, ::1](numba.float32[::1], numba.int32), cache=True)
-def _expand_condensed(condensed: NDArray[np.float32], n: np.int32) -> NDArray[np.float32]:
+@numba.njit(numba.void(_READONLY_F32_1D, numba.int32, numba.float32[:, ::1]), cache=True)
+def _fill_matrix_from_condensed(condensed: NDArray[np.float32], n: np.int32, out: NDArray[np.float32]) -> None:
     """Expand a condensed distance vector into a full (n, n) matrix: each value written to both halves."""
-    matrix = np.zeros((n, n), dtype=np.float32)
     idx = np.int64(0)
     for i in range(n):
         for j in range(i + 1, n):
             value = condensed[idx]
             idx += 1
-            matrix[i, j] = value
-            matrix[j, i] = value
-    return matrix
+            out[i, j] = value
+            out[j, i] = value

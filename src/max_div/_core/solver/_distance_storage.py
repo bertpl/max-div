@@ -18,7 +18,16 @@ import os
 from enum import StrEnum
 from typing import ClassVar
 
-from max_div._core.metrics._distance import DistanceStore
+from max_div._core.metrics._distance import (
+    KIND_CONDENSED,
+    KIND_FULL_MATRIX,
+    DistanceStore,
+    SharedDistanceStore,
+    compute_full_matrix,
+    compute_pdist,
+    expand_condensed,
+    publish,
+)
 from max_div._core.problem import MaxDivProblem, VectorMaxDivProblem
 
 # fraction of total physical RAM a stored backend may claim under AUTO
@@ -110,6 +119,48 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
             return DistanceStore.lazy(problem.vectors, problem.distance_metric)
         case _:
             raise ValueError(f"Distance storage must be resolved before building a store; got {resolved}.")
+
+
+def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> SharedDistanceStore:
+    """Build the store for an already-resolved backend in shared memory, for several processes to read.
+
+    Computed backends are built straight into the segment, so no full-size copy exists at any point —
+    at full-matrix sizes a build-then-copy would double peak resident memory for the length of the
+    copy.  Data the problem already holds is copied in instead: `build_distance_store` can adopt such
+    an array where this cannot, since the bytes have to live in the segment.
+
+    The caller owns the returned segment and must keep it open for as long as any process reads it.
+
+    Raises:
+        ValueError: as `build_distance_store`, for a backend the problem cannot provide.
+    """
+    n = problem.n
+    if isinstance(problem, VectorMaxDivProblem):
+        match resolved:
+            case DistanceStorage.CONDENSED:
+                _check_fits_physical_memory(resolved, 2 * n * n, True)
+                shared = SharedDistanceStore.allocate(((n * (n - 1)) // 2,), int(KIND_CONDENSED), n)
+                compute_pdist(problem.vectors, problem.distance_metric, out=shared.buffer)
+                return shared
+            case DistanceStorage.FULL_MATRIX:
+                _check_fits_physical_memory(resolved, 4 * n * n, True)
+                shared = SharedDistanceStore.allocate((n, n), int(KIND_FULL_MATRIX), n)
+                compute_full_matrix(problem.vectors, problem.distance_metric, out=shared.buffer)
+                return shared
+            case DistanceStorage.LAZY:
+                # `lazy` is what knows the per-metric preparation, so the vectors it prepared are
+                # what gets published — the segment must hold them in the form the kernels read.
+                return publish(DistanceStore.lazy(problem.vectors, problem.distance_metric), n)
+    elif resolved == DistanceStorage.FULL_MATRIX:
+        as_given = problem.distance_store()
+        if not as_given.matrix.size:
+            # condensed input, full matrix asked for: expanding into the segment keeps the one
+            # n²-sized allocation this path makes inside it
+            _check_fits_physical_memory(resolved, 4 * n * n, False)
+            shared = SharedDistanceStore.allocate((n, n), int(KIND_FULL_MATRIX), n)
+            expand_condensed(as_given.pdist, n, out=shared.buffer)
+            return shared
+    return publish(build_distance_store(problem, resolved), n)
 
 
 def _check_fits_physical_memory(resolved: DistanceStorage, bytes_needed: int, is_vector_problem: bool) -> None:

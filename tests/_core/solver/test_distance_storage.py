@@ -3,13 +3,14 @@ import pytest
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import compute_pdist
+from max_div._core.metrics._distance import attached_distance_store, compute_pdist, get_distance
 from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset
 from max_div._core.solver._distance_storage import (
     DistanceStorage,
     build_distance_store,
+    build_shared_distance_store,
     resolve_distance_storage,
     total_physical_memory_bytes,
 )
@@ -118,7 +119,7 @@ def test_build_distance_store_square_input_zero_copy():
     store = build_distance_store(problem, DistanceStorage.FULL_MATRIX)
 
     # --- assert ------------------------------------------
-    assert store.matrix is problem.distances  # ty: ignore[unresolved-attribute]
+    assert np.shares_memory(store.matrix, problem.distances)  # ty: ignore[unresolved-attribute]
 
 
 def test_build_distance_store_condensed_input_full_matrix_converts():
@@ -226,3 +227,73 @@ def test_every_backend_reaches_feasibility(storage: DistanceStorage):
     # --- assert ------------------------------------------
     n_from_first_half = sum(1 for i in solution.i_selected if int(i) in set(first_half))
     assert n_from_first_half == 6
+
+
+# =================================================================================================
+#  Shared-memory construction
+# =================================================================================================
+@pytest.mark.parametrize("storage", [DistanceStorage.CONDENSED, DistanceStorage.FULL_MATRIX, DistanceStorage.LAZY])
+def test_build_shared_distance_store_matches_the_unshared_build(storage: DistanceStorage):
+    """A store built into shared memory holds bit-identical distances to the ordinary build."""
+    # --- arrange -----------------------------------------
+    problem = _vector_problem()
+    expected = build_distance_store(problem, storage)
+
+    # --- act ---------------------------------------------
+    with build_shared_distance_store(problem, storage) as shared, attached_distance_store(shared.spec) as attached:
+        pairs = [(i, j) for i in range(problem.n) for j in range(problem.n)]
+        read = [get_distance(attached, np.int32(i), np.int32(j)) for i, j in pairs]
+
+    # --- assert ------------------------------------------
+    assert read == [get_distance(expected, np.int32(i), np.int32(j)) for i, j in pairs]
+
+
+@pytest.mark.parametrize("form", ["square", "condensed"])
+def test_build_shared_distance_store_copies_distance_input(form: str):
+    """Distance-input problems are copied into the segment, since the bytes must live there."""
+    # --- arrange -----------------------------------------
+    problem = _distance_problem(form)
+    resolved = resolve_distance_storage(problem, DistanceStorage.AUTO, 64 * GIB)
+    expected = build_distance_store(problem, resolved)
+
+    # --- act ---------------------------------------------
+    with build_shared_distance_store(problem, resolved) as shared:
+        read = [
+            get_distance(shared.store, np.int32(i), np.int32(j)) for i in range(problem.n) for j in range(problem.n)
+        ]
+
+    # --- assert ------------------------------------------
+    assert read == [
+        get_distance(expected, np.int32(i), np.int32(j)) for i in range(problem.n) for j in range(problem.n)
+    ]
+
+
+def test_build_shared_distance_store_rejects_lazy_on_distance_input():
+    """LAZY has no vectors to compute from on a distance-input problem, shared or not."""
+    # --- arrange / act / assert --------------------------
+    with pytest.raises(ValueError, match="computes distances from vectors"):
+        build_shared_distance_store(_distance_problem("condensed"), DistanceStorage.LAZY)
+
+
+def test_build_shared_distance_store_builds_into_the_segment():
+    """The computed matrix lands in the segment itself, with no full-size copy in between."""
+    # --- arrange / act -----------------------------------
+    with build_shared_distance_store(_vector_problem(), DistanceStorage.FULL_MATRIX) as shared:
+        # --- assert --------------------------------------
+        assert np.shares_memory(shared.store.matrix, shared.buffer)
+
+
+def test_build_shared_distance_store_expands_condensed_input_into_the_segment():
+    """A condensed-input problem asked for FULL_MATRIX expands straight into the shared segment."""
+    # --- arrange -----------------------------------------
+    problem = _distance_problem("condensed")
+    expected = build_distance_store(problem, DistanceStorage.FULL_MATRIX)
+
+    # --- act ---------------------------------------------
+    with build_shared_distance_store(problem, DistanceStorage.FULL_MATRIX) as shared:
+        matrix = np.array(shared.store.matrix)
+        shares_segment = np.shares_memory(shared.store.matrix, shared.buffer)
+
+    # --- assert ------------------------------------------
+    np.testing.assert_array_equal(matrix, expected.matrix)
+    assert shares_segment
