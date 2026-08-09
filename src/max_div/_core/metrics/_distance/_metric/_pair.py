@@ -1,4 +1,4 @@
-"""Pair-distance arithmetic: the per-pair functions every distance producer builds on.
+"""Every distance the package produces is computed by one of the pair functions here.
 
 The builds in `_build` and the on-demand reads in `_store` all go through these, which is what
 keeps stored and on-demand values bit-equal.
@@ -101,7 +101,7 @@ def _metric_pair(vectors: NDArray[np.float32], metric_kind: np.int32, i: np.int3
     return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
 
 
-@numba.njit("float32[:, ::1](float32[:, ::1])", cache=True)
+@numba.njit(numba.float32[:, ::1](numba.types.Array(numba.float32, 2, "C", readonly=True)), cache=True)
 def normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
     """Return a fresh float32 array with each row of `vectors` scaled to unit L2 norm.
 

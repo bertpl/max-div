@@ -243,10 +243,10 @@ def test_problem_distance_store_matches_input_format(form: str):
     # --- assert ------------------------------------------
     if form == "square":
         assert store.kind == KIND_FULL_MATRIX
-        assert store.matrix is problem.distances
+        assert np.shares_memory(store.matrix, problem.distances)
     else:
         assert store.kind == KIND_CONDENSED
-        assert store.pdist is problem.distances
+        assert np.shares_memory(store.pdist, problem.distances)
     assert store.n == np.int32(5)
 
 

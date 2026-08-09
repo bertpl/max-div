@@ -1,8 +1,8 @@
-"""Pluggable pairwise-distance storage: the read-only bundle njit kernels read distances from.
+"""A store holds a problem's pairwise distances read-only, in whichever layout it was built for.
 
-The bundle is a namedtuple of numpy arrays and scalars, so it can cross the njit boundary without
-object-mode; fields a backend does not use hold zero-length arrays.  All solver kernels read
-through `get_distance`, which keeps the storage layout out of every call site.
+A namedtuple of numpy arrays and scalars, so it crosses the njit boundary without object-mode;
+fields a backend does not use hold zero-length arrays.  Which field carries the distances is what
+`kind` selects, and `_reads` is the only place that knows how to index each one.
 """
 
 from typing import NamedTuple
@@ -11,9 +11,13 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from ._build import _expand_condensed, compute_full_matrix
-from ._compute import _METRIC_KINDS, _metric_pair, normalize_rows, validate_cosine_vectors
-from ._enum import DistanceMetric
+from max_div._core.metrics._distance._build import compute_full_matrix, expand_condensed
+from max_div._core.metrics._distance._metric import (
+    _METRIC_KINDS,
+    DistanceMetric,
+    normalize_rows,
+    validate_cosine_vectors,
+)
 
 # =================================================================================================
 #  DistanceStore
@@ -23,9 +27,20 @@ KIND_CONDENSED = np.int32(0)
 KIND_LAZY = np.int32(1)
 KIND_FULL_MATRIX = np.int32(2)
 
-# shared placeholders for the fields a backend does not use, so empty stores cost nothing
+# Shared placeholders for the fields a backend does not use, so empty stores cost nothing.  Read-only
+# because every store of a given backend hands out the same two objects, and because it makes every
+# field of DISTANCE_STORE_TYPE read-only.
 _EMPTY_1D = np.empty(0, dtype=np.float32)
+_EMPTY_1D.flags.writeable = False
 _EMPTY_2D = np.empty((0, 0), dtype=np.float32)
+_EMPTY_2D.flags.writeable = False
+
+
+def _readonly(array: NDArray[np.float32]) -> NDArray[np.float32]:
+    """Return a view of `array` that cannot be written through, sharing its memory."""
+    view = array.view()
+    view.flags.writeable = False
+    return view
 
 
 class DistanceStore(NamedTuple):
@@ -35,6 +50,9 @@ class DistanceStore(NamedTuple):
     arrays.  Instances are immutable by construction — kernels can only read, and copies of
     consuming objects can safely share one store.  Create instances via the factory methods,
     one per backend.
+
+    The factories hold their array as a read-only *view* of what they were given: a store shares
+    memory with its source, and nothing can write through the store itself.
     """
 
     kind: np.int32
@@ -57,7 +75,7 @@ class DistanceStore(NamedTuple):
         return cls(
             kind=KIND_CONDENSED,
             n=np.int32(n),
-            pdist=pdist,
+            pdist=_readonly(pdist),
             matrix=_EMPTY_2D,
             vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
@@ -82,8 +100,28 @@ class DistanceStore(NamedTuple):
             n=np.int32(vectors.shape[0]),
             pdist=_EMPTY_1D,
             matrix=_EMPTY_2D,
-            vectors=vectors,
+            vectors=_readonly(vectors),
             metric_kind=_METRIC_KINDS[metric],
+        )
+
+    @classmethod
+    def lazy_prepared(cls, vectors: NDArray[np.float32], metric_kind: np.int32) -> "DistanceStore":
+        """Return a lazy DistanceStore over vectors already in the form the distance reads expect.
+
+        `lazy` prepares its input — for cosine, normalizing the rows into a fresh array — so it
+        cannot serve a caller that must keep reading the exact array it was handed, such as a store
+        over a shared segment.
+
+        :param vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
+        :param metric_kind: (int32) metric selector, as `lazy` would have derived from the metric.
+        """
+        return cls(
+            kind=KIND_LAZY,
+            n=np.int32(vectors.shape[0]),
+            pdist=_EMPTY_1D,
+            matrix=_EMPTY_2D,
+            vectors=_readonly(vectors),
+            metric_kind=metric_kind,
         )
 
     @classmethod
@@ -101,7 +139,7 @@ class DistanceStore(NamedTuple):
             kind=KIND_FULL_MATRIX,
             n=np.int32(matrix.shape[0]),
             pdist=_EMPTY_1D,
-            matrix=matrix,
+            matrix=_readonly(matrix),
             vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
         )
@@ -129,78 +167,14 @@ class DistanceStore(NamedTuple):
         :param pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
         :param n: (int) number of items.
         """
-        return cls.full_matrix(_expand_condensed(pdist, np.int32(n)))
+        return cls.full_matrix(expand_condensed(pdist, n))
 
 
 # The numba type of every DistanceStore instance (all stores share it: field dtypes are fixed and
 # selectors are runtime values).  Signature strings cannot spell a namedtuple type, so kernels
 # taking a store use signature *objects* built from this constant.
+#
+# Its arrays are typed read-only so that stores reading shared memory type-check: numba converts a
+# writable array to a read-only parameter but never the reverse, so a writable type here would
+# reject them, which would force the views into a segment several processes read to be writable.
 DISTANCE_STORE_TYPE = numba.typeof(DistanceStore.condensed(_EMPTY_1D, 0))
-
-
-# =================================================================================================
-#  Distance reads
-# =================================================================================================
-@numba.njit("int64(int32, int32, int32)", inline="always", cache=True)
-def _condensed_index(i_lo: np.int32, i_hi: np.int32, n: np.int32) -> np.int64:
-    """Return the condensed-vector offset of the (i_lo, i_hi) distance, with i_lo < i_hi, for n items.
-
-    The offset is evaluated in int64: the intermediate ``n * i_lo`` grows like n² and overflows int32
-    for n above ~46k, so the operands are widened before the multiply even though the final offset fits.
-    """
-    i_lo64 = np.int64(i_lo)
-    return (np.int64(n) * i_lo64) + np.int64(i_hi) - ((i_lo64 + 2) * (i_lo64 + 1)) // 2
-
-
-# A specialized reader per storage layout, for the loops that read one item's distance to every
-# other.  They exist as a performance optimization over the generic `get_distance`, which measured
-# about fifteen times slower in those loops.
-#
-# Each requires two preconditions that `get_distance` does not.  Neither is checked, and breaking
-# either is fatal rather than wrong:
-#
-#   - the store holds the layout the reader is named after.  A reader handed another layout reads
-#     a zero-length array.  Settled once per tracker, by looking the reader up by store kind.
-#   - i differs from j.  The condensed layout has no diagonal, so a self-pair lands outside its
-#     array.  Callers satisfy this by looping over a range that skips their own index.
-@numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int64), inline="always", cache=True)
-def get_distance_full_matrix(store: DistanceStore, i: int | np.integer, j: int | np.integer) -> np.float32:
-    """Read the distance between two distinct items from a full-matrix store."""
-    return store.matrix[i, j]
-
-
-@numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int64), inline="always", cache=True)
-def get_distance_condensed(store: DistanceStore, i: int | np.integer, j: int | np.integer) -> np.float32:
-    """Read the distance between two distinct items from a condensed store."""
-    if i < j:
-        return store.pdist[_condensed_index(np.int32(i), np.int32(j), store.n)]
-    return store.pdist[_condensed_index(np.int32(j), np.int32(i), store.n)]
-
-
-@numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int64), inline="always", cache=True)
-def get_distance_lazy(store: DistanceStore, i: int | np.integer, j: int | np.integer) -> np.float32:
-    """Compute the distance between two items from a lazy store's vectors."""
-    return _metric_pair(store.vectors, store.metric_kind, np.int32(i), np.int32(j))
-
-
-@numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int32, numba.int32), inline="always", cache=True)
-def get_distance(store: DistanceStore, i: np.int32, j: np.int32) -> np.float32:
-    """Return the distance between items i and j from whichever backend the store holds.
-
-    For reads of a single pair, and for any caller that may ask for a self-pair.  Loops reading
-    many pairs use `get_stored_distance` / `get_computed_distance` instead, which drop the two
-    branches that would keep such a loop scalar.
-
-    Access-pattern note for loops over many pairs: keep `i` fixed and sweep `j` in ascending
-    order (the shape all tracker kernels follow).  Stored backends then read (mostly) contiguous
-    memory; the swapped nesting — sweeping `i` under a fixed `j` — strides ~n elements per read.
-    """
-    if i == j:
-        return np.float32(0.0)
-    if store.kind == KIND_FULL_MATRIX:
-        return store.matrix[i, j]
-    if store.kind == KIND_LAZY:
-        return _metric_pair(store.vectors, store.metric_kind, i, j)
-    if i < j:
-        return store.pdist[_condensed_index(i, j, store.n)]
-    return store.pdist[_condensed_index(j, i, store.n)]

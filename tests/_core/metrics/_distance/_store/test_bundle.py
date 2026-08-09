@@ -8,7 +8,8 @@ from max_div._core.metrics._distance import (
     compute_pdist,
     get_distance,
 )
-from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY, _condensed_index
+from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY
+from max_div._core.metrics._distance._store._reads import _condensed_index
 
 
 # -------------------------------------------------------------------------
@@ -28,7 +29,7 @@ def test_condensed_factory_fields():
     assert isinstance(store, DistanceStore)
     assert store.kind == KIND_CONDENSED
     assert store.n == np.int32(4)
-    assert store.pdist is d
+    assert np.shares_memory(store.pdist, d)  # zero-copy: a read-only view, not a copy
     assert store.matrix.size == 0
     assert store.vectors.size == 0
 
@@ -79,7 +80,7 @@ def test_metric_kinds_cover_every_distance_metric():
     """Every DistanceMetric member must have an on-demand pair-kernel mapping (drift guard)."""
 
     # --- act / assert ------------------------------------
-    from max_div._core.metrics._distance._store import _METRIC_KINDS
+    from max_div._core.metrics._distance._metric import _METRIC_KINDS
 
     assert set(_METRIC_KINDS) == set(DistanceMetric)
 
@@ -110,7 +111,7 @@ def test_full_matrix_factory_fields():
     # --- assert ------------------------------------------
     assert store.kind == KIND_FULL_MATRIX
     assert store.n == np.int32(4)
-    assert store.matrix is matrix
+    assert np.shares_memory(store.matrix, matrix)  # zero-copy: a read-only view, not a copy
     assert store.pdist.size == 0
     assert store.vectors.size == 0
 
