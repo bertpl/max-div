@@ -1,6 +1,6 @@
 import pytest
 
-from max_div._core.metrics._distance._build import parallel_build_enabled
+from max_div._core.metrics._distance._build._common import parallel_build_enabled
 
 
 @pytest.mark.parametrize(

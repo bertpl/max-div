@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._build import BUILD_BLOCK_WIDTH, compute_pdist
+from max_div._core.metrics._distance._build import compute_pdist
+from max_div._core.metrics._distance._build._common import BUILD_BLOCK_WIDTH
 
 
 @pytest.mark.parametrize("metric", list(DistanceMetric))
