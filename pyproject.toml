@@ -237,7 +237,8 @@ include = ["src/max_div"]
 
 [tool.codespell]
 # "intoto": the in-toto attestation format (provenance.intoto.jsonl).
-ignore-words-list = "intoto"
+# "sais": surname of a cited author (Lakhdar Sais).
+ignore-words-list = "intoto,sais"
 
 [tool.coverage.run]
 source_pkgs = ["max_div"]

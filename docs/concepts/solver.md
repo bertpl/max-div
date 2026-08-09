@@ -122,3 +122,66 @@ Two practical consequences:
 
 (With a time budget rather than an iteration budget, a faster backend also completes more
 iterations — the machine-dependence any time budget carries.)
+
+## Solving in Parallel
+
+`ParallelMaxDivSolverBuilder` runs several workers on one problem at once and keeps the best result
+each of them reached. The workers share one copy of the distances, so running eight of them costs
+eight processes but not eight distance matrices.
+
+**The purpose is variance reduction, not speed.** A run's quality depends on its seed, and the
+spread between good and bad seeds does not shrink as the budget grows — a bad-seed long run can lose
+to a good-seed short one. Running several seeds at once and keeping the best is insurance against
+drawing a bad one. It does not make any single search faster, and it does not substitute for a
+larger budget.
+
+### What varies per worker, and what cannot
+
+Each worker is configured by a `WorkerConfig`: the preset it runs, and optionally the initialization
+strategy it starts from. That second field is what lets two workers run the same preset from
+different starting points.
+
+Everything that decides **which selection is better** — the diversity metric, its tie-breakers, the
+constraint penalty — is set once, on the portfolio. Comparing what workers found requires a single
+answer to that question, so those settings cannot vary between them. Distance storage is fixed for
+a different reason: the workers read one shared buffer.
+
+### Seeds and reproducibility
+
+The portfolio takes one seed and derives a seed per worker from it. So a portfolio is reproducible
+as a whole from a single number, while its workers still search differently. Each worker's derived
+seed is reported back, next to the configuration it ran, which is enough to replay that worker on
+its own with `MaxDivSolverBuilder`.
+
+The reproducibility limits above apply unchanged: exact repetition holds within one machine, build
+and backend.
+
+### Reading the result
+
+The returned solution is an ordinary `MaxDivSolution` — the winner's — with a summary of every
+worker attached. The number worth looking at is `n_workers_with_best_score`:
+
+- **Well below the worker count**: seeds mattered on this problem, and the portfolio earned its
+  cost.
+- **Equal to the worker count**: every worker tied, so the portfolio found nothing a single one
+  would not have. Lower the worker count or solve once.
+
+### On the word "portfolio"
+
+Running several configurations of one solver concurrently and keeping the best is known as an
+**algorithm portfolio**, an idea introduced by Huberman, Lukose and Hogg (1997) and developed by
+Gomes and Selman (2001). The term is also used for per-instance algorithm *selection*, where
+features of the instance pick a single algorithm to run; max-div's sense is the concurrent one.
+
+Portfolio workers may run independently or exchange information as they go — clause-sharing SAT
+solvers such as ManySAT (Hamadi, Jabbour and Sais, 2009) do the latter. max-div's workers are
+independent, which is why the strategy is named for independence rather than for being a portfolio.
+
+**References**
+
+- Huberman, B. A., Lukose, R. M., & Hogg, T. (1997). An economics approach to hard computational
+  problems. *Science*, 275(5296), 51–54.
+- Gomes, C. P., & Selman, B. (2001). Algorithm portfolios. *Artificial Intelligence*, 126(1–2),
+  43–62.
+- Hamadi, Y., Jabbour, S., & Sais, L. (2009). ManySAT: a parallel SAT solver. *Journal on
+  Satisfiability, Boolean Modeling and Computation*, 6(4), 245–262.
