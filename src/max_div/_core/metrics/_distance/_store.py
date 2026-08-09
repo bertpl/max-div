@@ -25,7 +25,7 @@ KIND_FULL_MATRIX = np.int32(2)
 
 # Shared placeholders for the fields a backend does not use, so empty stores cost nothing.  Read-only
 # because every store of a given backend hands out the same two objects, and because it makes every
-# field of DISTANCE_STORE_TYPE read-only — which is what lets a shared-memory store type-check.
+# field of DISTANCE_STORE_TYPE read-only.
 _EMPTY_1D = np.empty(0, dtype=np.float32)
 _EMPTY_1D.flags.writeable = False
 _EMPTY_2D = np.empty((0, 0), dtype=np.float32)
@@ -47,10 +47,8 @@ class DistanceStore(NamedTuple):
     consuming objects can safely share one store.  Create instances via the factory methods,
     one per backend.
 
-    The factories hold their array as a read-only *view* of what they were given, so a store still
-    shares memory with its source (no copy is made) while nothing can write through the store
-    itself.  That matters most when the source is a shared-memory segment several processes read,
-    where a stray write corrupts every reader rather than failing where it happened.
+    The factories hold their array as a read-only *view* of what they were given: a store shares
+    memory with its source, and nothing can write through the store itself.
     """
 
     kind: np.int32
@@ -107,9 +105,8 @@ class DistanceStore(NamedTuple):
         """Return a lazy DistanceStore over vectors already in the form the distance reads expect.
 
         `lazy` prepares its input — for cosine, normalizing the rows into a fresh array — so it
-        cannot serve a caller that must keep reading the exact array it was handed.  A store over a
-        shared segment is one such caller: normalizing there would replace the shared buffer with a
-        private copy, silently undoing the sharing.
+        cannot serve a caller that must keep reading the exact array it was handed, such as a store
+        over a shared segment.
 
         :param vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
         :param metric_kind: (int32) metric selector, as `lazy` would have derived from the metric.

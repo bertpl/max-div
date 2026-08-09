@@ -1,17 +1,16 @@
 """Publishing a distance store into shared memory, so several processes read one copy of it.
 
 A store populates exactly one of its arrays and leaves the others zero-length, so one segment holds
-whichever array the backend uses: allocate it, build into it, and hand out the segment name together
-with the scalars needed to rebuild the same store elsewhere.  Readers attach by name, because the
-processes that share a store are spawned rather than forked and inherit nothing.
+whichever array the backend uses.  Readers attach by name: the processes sharing a store are spawned
+rather than forked, and inherit nothing.
 
 Two obligations follow from POSIX shared memory:
 
   - The publisher unlinks the segment and must outlive every reader, since a segment outlives its
-    creator and reading through a closed mapping is a use-after-unmap rather than an error.
+    creator and reading through a closed mapping crashes rather than raising.
   - An attaching process must not register with CPython's resource tracker, which is shared by the
     whole process tree; `_attach_without_registering` covers why.  The publisher does register, and
-    that registration is what releases the segment if the publisher dies holding it.
+    that registration releases the segment if the publisher dies holding it.
 """
 
 import sys
@@ -26,7 +25,7 @@ from numpy.typing import NDArray
 
 from ._store import KIND_FULL_MATRIX, KIND_LAZY, DistanceStore
 
-# Whether SharedMemory can attach without registering with the resource tracker (Python 3.13+).
+# Whether SharedMemory accepts `track=False`.
 _TRACK_FLAG_SUPPORTED = sys.version_info >= (3, 13)
 
 
@@ -36,8 +35,7 @@ _TRACK_FLAG_SUPPORTED = sys.version_info >= (3, 13)
 class SharedStoreSpec(NamedTuple):
     """Where a published store's bytes live, and how to read them as a DistanceStore.
 
-    Holds nothing but a name, a shape and the store's own scalars, so it travels to a worker
-    process as an ordinary pickled argument.
+    Small enough to travel to a worker process as an ordinary pickled argument.
     """
 
     segment_name: str
@@ -53,9 +51,8 @@ class SharedStoreSpec(NamedTuple):
 class SharedDistanceStore:
     """A distance store whose data lives in a shared-memory segment this process owns.
 
-    Allocate it, fill `buffer` once, then read through `store` and send `spec` to the processes
-    that should share it.  Closing unlinks the segment and invalidates every mapping of it,
-    including those held by attached readers, so close only once the readers are done.
+    Closing unlinks the segment and invalidates every mapping of it, including those held by
+    attached readers, so close only once the readers are done.
     """
 
     # --------------------------------------------------------------------------
@@ -75,9 +72,7 @@ class SharedDistanceStore:
 
         The buffer starts uninitialized: the caller fills it before publishing the spec.
 
-        :param shape: shape of the float32 array this backend stores.
         :param kind: the DistanceStore backend selector the buffer holds data for.
-        :param n: number of items.
         :param metric_kind: metric selector, meaningful for the lazy backend only.
         """
         # a zero-size segment is rejected by the OS, so degenerate shapes still claim one byte
@@ -107,19 +102,21 @@ class SharedDistanceStore:
     # --------------------------------------------------------------------------
     def close(self) -> None:
         """Unmap and destroy the segment; every store reading it becomes invalid."""
-        # drop this object's segment-backed view first: reading one after close is a use-after-unmap
+        # drop this object's segment-backed view first: reading one after close crashes
         self._buffer = np.empty(0, dtype=np.float32)
         self._segment.close()
         self._segment.unlink()
 
     def __enter__(self) -> "SharedDistanceStore":
+        """Return the owner itself, so the segment is scoped to a `with` block."""
         return self
 
     def __exit__(self, *exc_info: object) -> None:
+        """Destroy the segment, invalidating every store reading it."""
         self.close()
 
 
-def publish(store: DistanceStore, n: int) -> SharedDistanceStore:
+def publish_distance_store(store: DistanceStore, n: int) -> SharedDistanceStore:
     """Copy an already-built store's data into a fresh segment and return the owner.
 
     For data that exists before a segment does — a distance matrix the caller supplied.  A store

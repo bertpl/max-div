@@ -26,7 +26,7 @@ from max_div._core.metrics._distance import (
     compute_full_matrix,
     compute_pdist,
     expand_condensed,
-    publish,
+    publish_distance_store,
 )
 from max_div._core.problem import MaxDivProblem, VectorMaxDivProblem
 
@@ -124,10 +124,9 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
 def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> SharedDistanceStore:
     """Build the store for an already-resolved backend in shared memory, for several processes to read.
 
-    Computed backends are built straight into the segment, so no full-size copy exists at any point:
-    at full-matrix sizes a build-then-copy would double peak resident memory for its duration.  Data
-    the problem already holds is copied in instead, since the bytes have to live in the segment —
-    `build_distance_store` adopts such an array zero-copy where this cannot.
+    Computed backends are built straight into the segment: at full-matrix sizes a build-then-copy
+    would double peak resident memory for its duration.  Data the problem already holds is copied in
+    instead, since the bytes have to live in the segment.
 
     The caller owns the returned segment and must keep it open for as long as any process reads it.
 
@@ -150,7 +149,7 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
             case DistanceStorage.LAZY:
                 # `lazy` applies the per-metric preparation, so its output is what gets published:
                 # the segment must hold the vectors in the form the distance reads expect.
-                return publish(DistanceStore.lazy(problem.vectors, problem.distance_metric), n)
+                return publish_distance_store(DistanceStore.lazy(problem.vectors, problem.distance_metric), n)
     elif resolved == DistanceStorage.FULL_MATRIX:
         as_given = problem.distance_store()
         if not as_given.matrix.size:
@@ -160,7 +159,7 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
             shared = SharedDistanceStore.allocate((n, n), int(KIND_FULL_MATRIX), n)
             expand_condensed(as_given.pdist, n, out=shared.buffer)
             return shared
-    return publish(build_distance_store(problem, resolved), n)
+    return publish_distance_store(build_distance_store(problem, resolved), n)
 
 
 def _stored_backend_bytes(resolved: DistanceStorage, n: int) -> int:

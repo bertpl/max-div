@@ -18,8 +18,8 @@ bit-reproducible across machines and numba versions, while the matrix fills comp
 (cosine included) under `reassoc`/`contract`.
 
 Every fill writes into a buffer the caller supplies, and each entry point allocates one only when
-none is given.  Fills write the off-diagonal pairs only, so the entry points zero the diagonal
-themselves — a supplied buffer carries no guarantee of starting at zero.
+none is given.  Fills write the off-diagonal pairs only, so the matrix entry points zero the
+diagonal themselves — a supplied buffer carries no guarantee of starting at zero.
 """
 
 import os
@@ -122,14 +122,6 @@ def expand_condensed(
     return out
 
 
-def _matrix_buffer(out: NDArray[np.float32] | None, n: int) -> NDArray[np.float32]:
-    """Return the (n, n) buffer the matrix fills write into, allocated when not supplied."""
-    if out is None:
-        out = np.empty((n, n), dtype=np.float32)
-    np.fill_diagonal(out, np.float32(0.0))
-    return out
-
-
 # =================================================================================================
 #  Condensed fills
 # =================================================================================================
@@ -191,6 +183,14 @@ def _fill_pdist_cos_parallel(vectors: NDArray[np.float32], block_width: np.int64
 # =================================================================================================
 #  Full-matrix fills
 # =================================================================================================
+def _matrix_buffer(out: NDArray[np.float32] | None, n: int) -> NDArray[np.float32]:
+    """Return the (n, n) buffer the matrix fills write into, allocated when not supplied."""
+    if out is None:
+        out = np.empty((n, n), dtype=np.float32)
+    np.fill_diagonal(out, np.float32(0.0))
+    return out
+
+
 @numba.njit("void(float32[:, ::1], int32, float32[:, ::1])", cache=True, fastmath={"reassoc", "contract"})
 def _fill_matrix(vectors: NDArray[np.float32], metric_kind: np.int32, out: NDArray[np.float32]) -> None:
     """Fill a full (n, n) distance matrix from vectors, sequentially; each pair written to both halves."""

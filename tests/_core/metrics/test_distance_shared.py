@@ -17,7 +17,7 @@ from max_div._core.metrics._distance import (
     attached_distance_store,
     compute_pdist,
     get_distance,
-    publish,
+    publish_distance_store,
 )
 from max_div._core.metrics._distance._shared import _attach_without_registering
 
@@ -45,7 +45,7 @@ def _reference_stores() -> dict[str, DistanceStore]:
 
 def _published(store: DistanceStore) -> SharedDistanceStore:
     """Return a shared-memory owner holding a copy of the given store's data."""
-    return publish(store, _N)
+    return publish_distance_store(store, _N)
 
 
 def _read_pairs(store: DistanceStore) -> list[float]:
@@ -121,7 +121,7 @@ def test_published_spec_names_the_backend_it_holds(backend: str, kind: np.int32)
 
 
 def test_spec_survives_pickling():
-    """The spec is picklable, which is what lets it reach a spawned worker as an argument."""
+    """The spec is picklable, which lets it reach a spawned worker as an argument."""
     # --- arrange / act -----------------------------------
     with _published(_reference_stores()["condensed"]) as owner:
         restored = pickle.loads(pickle.dumps(owner.spec))  # noqa: S301 -- our own spec, not untrusted input
