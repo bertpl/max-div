@@ -12,7 +12,7 @@ from ._solver_state import SolverState
 from ._strategies._base import StrategyBase
 
 if TYPE_CHECKING:
-    from max_div._core.solver._parallel import WorkerCoordinator
+    from ._parallel import WorkerCoordinator
 
 
 # =================================================================================================
@@ -54,9 +54,8 @@ class SolverStep(ABC, Generic[S]):
     ) -> SolverStepResult:
         """Executes the solver step by executing a strategy 1x or repeatedly and returns a SolverStepResult.
 
-        :param coordinator: reached at each batch boundary when this step has batches, so a worker
-                            solving alongside others has one place to share from.  A step that runs
-                            as a single batch ignores it.
+        :param coordinator: a `WorkerCoordinator` this step calls at each batch boundary; a step that
+                            runs as a single batch ignores it.
         """
         raise NotImplementedError
 
@@ -169,7 +168,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             # --- report progress to tracker ---
             tracker.report_iterations_done(n_iters)
 
-            # --- batch boundary: the one place a worker may share with the rest of a portfolio ---
+            # --- batch boundary ---------------------------
             if coordinator is not None:
                 coordinator.at_batch_boundary(state)
 

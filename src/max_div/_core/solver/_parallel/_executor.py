@@ -1,12 +1,12 @@
-"""Running one solver per worker process over a single shared store, and collecting what they find.
+"""One solver runs per worker process over a single shared store, and the executor collects the results.
 
 Workers are **spawned, never forked**.  The parent runs numba parallel code while building the
 distance store, and numba's threading layer does not survive a fork — a forked child deadlocks on
 its first parallel call.
 
 Each worker is a process rather than a thread because the search is Python-level and would contend
-on the interpreter lock.  Only the distances are shared; every worker allocates its own trackers,
-which are small next to the distances.
+on the interpreter lock.  Only the distances are shared; every worker allocates its own bookkeeping,
+which is small next to the distances.
 """
 
 import multiprocessing
@@ -34,13 +34,12 @@ def run_portfolio(
     """Solve one configuration per worker over the published store, and return what each reported.
 
     Returns in worker order rather than arrival order, so the caller sees the same list whichever
-    worker happens to finish first.  A worker that dies without reporting is absent from the result
-    rather than fatal: the portfolio is worth what its survivors found, and `best_result` is what
-    decides whether anything usable came back.
+    worker happens to finish first.  A worker that dies without reporting is left out rather than
+    fatal; `best_result` raises when none came back.
 
     :param configs: one solver configuration per worker, in worker order.
     :param spec: the published store every worker attaches to.
-    :param coordinator: handle each worker reaches at its batch boundaries.
+    :param coordinator: the `WorkerCoordinator` handed to every worker.
     """
     context = multiprocessing.get_context("spawn")
     results: Queue = context.Queue()
@@ -97,7 +96,7 @@ def _collect(results: Queue, workers: Sequence[BaseProcess]) -> list[WorkerResul
 
 
 def _drain(results: Queue, limit: int) -> list[WorkerResult]:
-    """Take whatever is already on the queue, up to `limit` results."""
+    """Take up to `limit` more results, giving each a short wait before giving up."""
     drained: list[WorkerResult] = []
     for _ in range(limit):
         try:

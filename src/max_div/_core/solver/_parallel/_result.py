@@ -1,9 +1,4 @@
-"""What a worker sends back, and how the best of several is chosen.
-
-The payload is the selection and its score rather than a whole solution: a mode that shares an
-incumbent mid-run sends this same record far more often, so it is kept to what a receiver can act
-on.
-"""
+"""A worker sends back a result, and `best_result` picks the winner among several."""
 
 from dataclasses import dataclass
 
@@ -16,7 +11,7 @@ from max_div._core.solver._score import Score
 
 @dataclass(frozen=True)
 class WorkerResult:
-    """One worker's selection, what it scored, and what it cost to get there."""
+    """A result records one worker's selection, what it scored, and what it cost."""
 
     worker_index: int
     i_selected: NDArray[np.int32]
@@ -26,14 +21,12 @@ class WorkerResult:
 
 
 def best_result(results: list[WorkerResult]) -> WorkerResult:
-    """Return the winning result: the highest score, and among equal scores the lowest worker index.
+    """Return the highest-scoring result, ties going to the lowest worker index.
 
-    Breaking ties by index rather than by arrival makes the winner a property of the results instead
-    of a race between processes, so a portfolio run twice over the same seeds returns the same
-    selection both times.
+    Ties break by index rather than by arrival, so the same seeds give the same winner every run.
 
-    Raises:
-        ValueError: If no results were collected, which means every worker failed.
+    :param results: what each worker reported; workers that failed are simply absent.
+    :raises ValueError: If no results were collected, which means every worker failed.
     """
     if not results:
         raise ValueError("A portfolio returned no results at all; every worker failed to report one.")

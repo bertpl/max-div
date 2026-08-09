@@ -48,11 +48,7 @@ def test_results_come_back_in_worker_order(portfolio_results):
 
 
 def test_a_worker_reproduces_the_same_solve_run_alone(portfolio_results):
-    """A worker's selection is what the same configuration and seed produce in a single process.
-
-    The reproducibility contract of independent mode: sharing the distances changes where a worker
-    reads from, never what it searches.
-    """
+    """A worker's selection is what the same configuration and seed produce in a single process."""
     # --- arrange -----------------------------------------
     builder, results = portfolio_results
 
@@ -64,7 +60,7 @@ def test_a_worker_reproduces_the_same_solve_run_alone(portfolio_results):
 
 
 def test_the_best_reported_result_wins(portfolio_results):
-    """The winner is the best-scoring worker, which is the whole point of running several."""
+    """The winner is the best-scoring worker."""
     # --- arrange / act -----------------------------------
     _, results = portfolio_results
     winner = best_result(results)

@@ -14,7 +14,7 @@ from ._solver_state import SolverState
 from ._solver_step import SolverStep, SolverStepResult
 
 if TYPE_CHECKING:
-    from max_div._core.solver._parallel import WorkerCoordinator
+    from ._parallel import WorkerCoordinator
 
 
 class MaxDivSolver:
@@ -85,8 +85,8 @@ class MaxDivSolver:
                                    23  -->  fastest updates  (spacing increasing with  1%).
 
                                    25  -->  debug mode       (1% spacing + debug info column)
-        :param coordinator: reached at each batch boundary, so a worker solving alongside others has
-                            one place to share from.  A solve on its own passes nothing.
+        :param coordinator: a `WorkerCoordinator` the solver calls at each batch boundary, so a worker
+                            running alongside others has one place to reach them from.
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------

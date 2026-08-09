@@ -1,8 +1,8 @@
 """A solver's configuration, held apart from the distances it will read.
 
-Everything `MaxDivSolver` needs except its store, in one record small enough to pickle.  Building a
-solver is two steps for that reason: the distances are produced once and can be shared between
-processes, while each process assembles its own solver over them from a copy of this record.
+Everything `MaxDivSolver` needs except its store.  The two are separated because a store is
+produced once and read by several processes, while each process assembles its own solver over it
+from a copy of this record — which is why the record must stay small enough to pickle.
 """
 
 from dataclasses import dataclass, replace
@@ -18,11 +18,7 @@ from ._solver_step import SolverStep
 
 @dataclass(frozen=True)
 class SolverConfig:
-    """Everything a solver needs apart from the distances it reads.
-
-    Holds no distances and no problem, so it stays small however large the problem is — which is
-    what lets it travel to a worker process while the distances travel through shared memory.
-    """
+    """A config holds everything a solver needs apart from the distances it reads."""
 
     n: int
     k: int

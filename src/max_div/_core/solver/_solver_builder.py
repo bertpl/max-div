@@ -167,9 +167,9 @@ class MaxDivSolverBuilder:
     def resolve(self) -> tuple[DistanceStorage, SolverConfig]:
         """Return the backend this configuration resolves to, and the solver config over it.
 
-        The two halves of `build` kept apart, for callers that produce the distances themselves —
-        a portfolio builds one store into shared memory and assembles a solver per worker over it,
-        where `build` would produce a store per solver.
+        `build` runs these two halves together.  Keeping them apart lets a caller produce the
+        distances once and assemble a solver per worker over them, where `build` would produce a
+        store per solver.
         """
         resolved = resolve_distance_storage(self._problem, self._distance_storage, total_physical_memory_bytes())
         label = resolved.value + (" (auto)" if self._distance_storage == DistanceStorage.AUTO else "")

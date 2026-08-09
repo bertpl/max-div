@@ -32,7 +32,7 @@ def test_resolve_returns_the_backend_and_a_config_over_it():
 
 
 def test_a_config_builds_a_solver_over_any_store():
-    """A config plus a store is a solver, which is what lets several processes share one store."""
+    """A config plus a store is a solver."""
     # --- arrange -----------------------------------------
     builder = _builder()
     resolved, config = builder.resolve()
@@ -60,8 +60,8 @@ def test_with_seed_changes_only_the_seed():
     assert reseeded.distance_storage_label == config.distance_storage_label
 
 
-def test_build_still_produces_a_working_solver():
-    """The two-step split leaves the one-step build behaving as it did."""
+def test_build_produces_a_working_solver():
+    """`build` returns a solver that solves the problem."""
     # --- arrange / act -----------------------------------
     solution = _builder().with_seed(5).build().solve(verbosity=0)
 

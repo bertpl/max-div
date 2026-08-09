@@ -30,7 +30,7 @@ def _solve_with(coordinator: WorkerCoordinator | None):
 
 
 def test_the_batch_boundary_is_reached_during_optimization():
-    """The seam is called while optimizing, so a sharing mode has a hook that actually runs."""
+    """The coordinator is called during optimization, on a path that runs rather than merely exists."""
     # --- arrange -----------------------------------------
     coordinator = _RecordingCoordinator()
 
