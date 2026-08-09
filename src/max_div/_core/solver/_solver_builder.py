@@ -13,6 +13,7 @@ from ._distance_storage import (
 from ._duration import TargetDuration
 from ._presets import SolverPreset, get_preset_strategies
 from ._solver import MaxDivSolver
+from ._solver_config import SolverConfig
 from ._solver_step import InitializationStep, OptimizationStep, SolverStep
 from ._strategies import InitializationStrategy
 
@@ -159,12 +160,21 @@ class MaxDivSolverBuilder:
         return []
 
     def build(self) -> MaxDivSolver:
+        """Build the distance store this configuration calls for, and a solver reading it."""
+        resolved, config = self.resolve()
+        return config.build_solver(build_distance_store(self._problem, resolved))
+
+    def resolve(self) -> tuple[DistanceStorage, SolverConfig]:
+        """Return the backend this configuration resolves to, and the solver config over it.
+
+        The two halves of `build` kept apart, for callers that produce the distances themselves —
+        a portfolio builds one store into shared memory and assembles a solver per worker over it,
+        where `build` would produce a store per solver.
+        """
         resolved = resolve_distance_storage(self._problem, self._distance_storage, total_physical_memory_bytes())
         label = resolved.value + (" (auto)" if self._distance_storage == DistanceStorage.AUTO else "")
-        return MaxDivSolver(
+        return resolved, SolverConfig(
             n=self._n,
-            store=build_distance_store(self._problem, resolved),
-            distance_storage_label=label,
             k=self._k,
             diversity_metric=self._diversity_metric,
             diversity_tie_breakers=self._determine_diversity_tie_breakers(),
@@ -172,4 +182,5 @@ class MaxDivSolverBuilder:
             solver_steps=self._solver_steps,
             seed=self._seed,
             constraint_penalty=self._constraint_penalty,
+            distance_storage_label=label,
         )

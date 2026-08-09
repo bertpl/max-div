@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
 from max_div._core.constraints._constraints import _np_con_count_satisfied
@@ -10,6 +12,9 @@ from ._progress_reporting import ProgressReporter
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
 from ._solver_step import SolverStep, SolverStepResult
+
+if TYPE_CHECKING:
+    from max_div._core.solver._parallel import WorkerCoordinator
 
 
 class MaxDivSolver:
@@ -67,7 +72,7 @@ class MaxDivSolver:
     # -------------------------------------------------------------------------
     #  API
     # -------------------------------------------------------------------------
-    def solve(self, verbosity: int = 10) -> MaxDivSolution:
+    def solve(self, verbosity: int = 10, coordinator: "WorkerCoordinator | None" = None) -> MaxDivSolution:
         """Solve the maximum diversity problem with the given configuration.
 
         :param verbosity: (int) The verbosity level.
@@ -80,6 +85,8 @@ class MaxDivSolver:
                                    23  -->  fastest updates  (spacing increasing with  1%).
 
                                    25  -->  debug mode       (1% spacing + debug info column)
+        :param coordinator: reached at each batch boundary, so a worker solving alongside others has
+                            one place to share from.  A solve on its own passes nothing.
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------
@@ -138,7 +145,7 @@ class MaxDivSolver:
         for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
-            step_results[step_name.strip()] = step.run(state, progress_reporter)
+            step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator)
 
         # --- Construct result ----------------------------
         return self._construct_final_solution(state, step_results)

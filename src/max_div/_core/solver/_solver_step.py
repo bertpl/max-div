@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from max_div._core._utils._timer import Timer
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
@@ -10,6 +10,9 @@ from ._progress_reporting import ProgressReporter, SilentProgressReporter
 from ._score import Score
 from ._solver_state import SolverState
 from ._strategies._base import StrategyBase
+
+if TYPE_CHECKING:
+    from max_div._core.solver._parallel import WorkerCoordinator
 
 
 # =================================================================================================
@@ -43,8 +46,18 @@ class SolverStep(ABC, Generic[S]):
         self._strategy.set_seed(seed)
 
     @abstractmethod
-    def run(self, state: SolverState, progress_reporter: ProgressReporter | None = None) -> SolverStepResult:
-        """Executes the solver step by executing a strategy 1x or repeatedly and returns a SolverStepResult."""
+    def run(
+        self,
+        state: SolverState,
+        progress_reporter: ProgressReporter | None = None,
+        coordinator: "WorkerCoordinator | None" = None,
+    ) -> SolverStepResult:
+        """Executes the solver step by executing a strategy 1x or repeatedly and returns a SolverStepResult.
+
+        :param coordinator: reached at each batch boundary when this step has batches, so a worker
+                            solving alongside others has one place to share from.  A step that runs
+                            as a single batch ignores it.
+        """
         raise NotImplementedError
 
     def get_debug_info(self) -> str:
@@ -63,7 +76,12 @@ class InitializationStep(SolverStep[InitializationStrategy]):
             )
         super().__init__(init_strategy)
 
-    def run(self, state: SolverState, progress_reporter: ProgressReporter | None = None) -> SolverStepResult:
+    def run(
+        self,
+        state: SolverState,
+        progress_reporter: ProgressReporter | None = None,
+        coordinator: "WorkerCoordinator | None" = None,
+    ) -> SolverStepResult:
         # --- set up progress tracking --------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
         duration = TargetDuration.iterations(int(state.k))  # we need to select k items
@@ -117,7 +135,12 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         super().__init__(optim_strategy)
         self._duration = duration
 
-    def run(self, state: SolverState, progress_reporter: ProgressReporter | None = None) -> SolverStepResult:
+    def run(
+        self,
+        state: SolverState,
+        progress_reporter: ProgressReporter | None = None,
+        coordinator: "WorkerCoordinator | None" = None,
+    ) -> SolverStepResult:
         # --- init ----------------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
         tracker = self._duration.track()
@@ -145,6 +168,10 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
             # --- report progress to tracker ---
             tracker.report_iterations_done(n_iters)
+
+            # --- batch boundary: the one place a worker may share with the rest of a portfolio ---
+            if coordinator is not None:
+                coordinator.at_batch_boundary(state)
 
             # --- create checkpoint if needed ---
             if tracker.iter_count() >= next_checkpoint_iter_count:
