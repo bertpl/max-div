@@ -1,4 +1,4 @@
-"""Building full (n, n) distance matrices, from vectors or from a condensed vector.
+"""The full-matrix build writes an (n, n) matrix, either from vectors or by expanding a condensed vector.
 
 Each pair is computed once and written to both halves, so the matrix is exactly symmetric by
 construction rather than by a repair pass — kernels read whichever of (i, j)/(j, i) suits their

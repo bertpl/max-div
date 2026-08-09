@@ -1,4 +1,4 @@
-"""What a distance is: the metrics on offer, and the per-pair arithmetic behind each of them.
+"""The metric layer defines which distances exist and how each one is computed for a pair.
 
 The layer everything else in `_distance` is built on — the builds and the on-demand reads both go
 through the same pair functions, which is what keeps stored and computed values bit-equal.

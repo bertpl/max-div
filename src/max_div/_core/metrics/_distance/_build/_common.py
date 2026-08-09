@@ -1,4 +1,4 @@
-"""What the condensed and full-matrix builds share: the parallel switch, its blocking, and types.
+"""The condensed and full-matrix builds share the parallel switch, its blocking, and the array types here.
 
 Every build comes in a sequential and a parallel variant with bit-identical output — the parallel
 fills run the same pair arithmetic under the same fastmath flags and write each element exactly

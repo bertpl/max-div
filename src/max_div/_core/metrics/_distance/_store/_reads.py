@@ -1,4 +1,4 @@
-"""Reading one distance out of a store, for every layout a store can hold.
+"""Every read of a single distance goes through one of the functions here, whatever layout the store holds.
 
 The single owner of layout knowledge: how a pair maps onto a condensed offset, which half of a full
 matrix to touch, and when a distance is computed rather than looked up.  Everything else treats a

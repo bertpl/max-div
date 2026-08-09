@@ -1,4 +1,4 @@
-"""Pair-distance arithmetic: the per-pair functions every distance producer builds on.
+"""Every distance the package produces is computed by one of the pair functions here.
 
 The builds in `_build` and the on-demand reads in `_store` all go through these, which is what
 keeps stored and on-demand values bit-equal.

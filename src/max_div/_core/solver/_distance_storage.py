@@ -1,4 +1,4 @@
-"""Distance-storage selection: the public choice enum, the AUTO policy, and store construction.
+"""The solver picks its distance backend here, and builds the store that choice implies.
 
 AUTO semantics differ per problem flavor, deliberately:
 

@@ -1,4 +1,4 @@
-"""The read-only bundle that holds a problem's pairwise distances, in whichever layout it uses.
+"""A store holds a problem's pairwise distances read-only, in whichever layout it was built for.
 
 A namedtuple of numpy arrays and scalars, so it crosses the njit boundary without object-mode;
 fields a backend does not use hold zero-length arrays.  Which field carries the distances is what

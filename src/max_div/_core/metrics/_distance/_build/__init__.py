@@ -1,4 +1,4 @@
-"""Construction of distance data from vectors: condensed vectors and full matrices.
+"""The build layer turns vectors into distance data, in either the condensed layout or a full matrix.
 
 The two layouts are built the same way — an entry point that owns validation, cosine normalization
 and the parallel switch, over a sequential and a parallel fill — so each has its own module of that

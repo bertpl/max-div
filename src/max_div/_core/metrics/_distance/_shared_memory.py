@@ -1,4 +1,4 @@
-"""Publishing a distance store into shared memory, so several processes read one copy of it.
+"""A distance store can be published into shared memory, so several processes read one copy of it.
 
 A store populates exactly one of its arrays and leaves the others zero-length, so one segment holds
 whichever array the backend uses.  Readers attach by name: the processes sharing a store are spawned
@@ -33,7 +33,7 @@ _TRACK_FLAG_SUPPORTED = sys.version_info >= (3, 13)
 #  Specification
 # =================================================================================================
 class SharedStoreSpec(NamedTuple):
-    """Where a published store's bytes live, and how to read them as a DistanceStore.
+    """A spec records where a published store's bytes live and how to read them back.
 
     Small enough to travel to a worker process as an ordinary pickled argument.
     """
@@ -49,7 +49,7 @@ class SharedStoreSpec(NamedTuple):
 #  Publishing
 # =================================================================================================
 class SharedDistanceStore:
-    """A distance store whose data lives in a shared-memory segment this process owns.
+    """A shared store keeps its distances in a segment this process created and owns.
 
     Closing unlinks the segment and invalidates every mapping of it, including those held by
     attached readers, so close only once the readers are done.

@@ -1,4 +1,4 @@
-"""Holding a problem's pairwise distances, and reading one back out.
+"""The store layer holds a problem's pairwise distances and reads them back out.
 
 `_bundle` owns what a store *is* — the layouts, and the factories that build one over each; `_reads`
 owns how a distance is fetched from whichever layout a store holds.

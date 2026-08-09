@@ -1,4 +1,4 @@
-"""Building condensed distance vectors from vectors, in scipy's layout.
+"""The condensed build writes every pair's distance into a single vector, in scipy's layout.
 
 The parallel fills address each row's output segment by the closed-form condensed offset, since a
 parallel loop cannot share a running index.
