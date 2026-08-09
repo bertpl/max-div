@@ -4,6 +4,21 @@ A store populates exactly one of its arrays and leaves the others zero-length, s
 whichever array the backend uses.  Readers attach by name: the processes sharing a store are spawned
 rather than forked, and inherit nothing.
 
+A published store is not a second kind of store.  `SharedDistanceStore` owns the segment, and the
+`DistanceStore` it hands out reads that segment like any other, so the trackers and the compiled
+reads downstream cannot tell one from the other.
+
+The whole sequence, across two processes:
+
+  1. The publisher resolves a backend and calls `build_shared_distance_store`, which allocates a
+     segment and builds the distances straight into it.
+  2. It reads through `SharedDistanceStore.store`, and sends `SharedDistanceStore.spec` — a small
+     picklable record — to each worker it spawns.
+  3. A worker opens `attached_distance_store(spec)` and gets an ordinary `DistanceStore` over the
+     same bytes, for the length of that block.
+  4. Workers leave their blocks, each closing only its own mapping.
+  5. The publisher closes last, destroying the segment.
+
 `multiprocessing.shared_memory` is available on every platform the package supports.  What differs is
 how long a segment lives, and POSIX leaves that to the processes, which imposes two obligations:
 
