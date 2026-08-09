@@ -4,17 +4,18 @@ import pytest
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._parallel import WorkerResult, best_result
 from max_div._core.solver._score import Score
+from max_div._core.solver._solution import MaxDivSolution
 
 
 def _result(worker_index: int, diversity: float) -> WorkerResult:
     """Return a result carrying the given diversity, with everything else held equal."""
-    return WorkerResult(
-        worker_index=worker_index,
+    score = Score(size=1.0, constraints=1.0, diversity=diversity, div_tie_breakers=())
+    solution = MaxDivSolution(
         i_selected=np.array([worker_index], dtype=np.int32),
-        score=Score(size=1.0, constraints=1.0, diversity=diversity, div_tie_breakers=()),
-        elapsed=Elapsed(t_elapsed_sec=1.0, n_iterations=10),
-        seed=worker_index,
+        score_checkpoints=[("step", Elapsed(t_elapsed_sec=1.0, n_iterations=10), score)],
+        step_durations={},
     )
+    return WorkerResult(worker_index=worker_index, seed=worker_index, solution=solution)
 
 
 def test_best_result_picks_the_highest_score():

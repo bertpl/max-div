@@ -70,15 +70,7 @@ def solve_in_worker(
     """
     with attached_distance_store(spec) as store:
         solution = config.build_solver(store).solve(verbosity=0, coordinator=coordinator)
-        results.put(
-            WorkerResult(
-                worker_index=worker_index,
-                i_selected=solution.i_selected,
-                score=solution.score,
-                elapsed=solution.duration,
-                seed=config.seed,
-            )
-        )
+        results.put(WorkerResult(worker_index=worker_index, seed=config.seed, solution=solution))
 
 
 def _collect(results: Queue, workers: Sequence[BaseProcess]) -> list[WorkerResult]:

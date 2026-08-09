@@ -1,4 +1,9 @@
-"""A worker sends back a result, and `best_result` picks the winner among several."""
+"""A worker sends back a result, and `best_result` picks the winner among several.
+
+A worker reports its whole solution once, at the end.  That is a different channel from the one a
+worker would share through mid-run, which carries only a selection and its score so that sending it
+often stays cheap.
+"""
 
 from dataclasses import dataclass
 
@@ -7,17 +12,31 @@ from numpy.typing import NDArray
 
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score import Score
+from max_div._core.solver._solution import MaxDivSolution
 
 
 @dataclass(frozen=True)
 class WorkerResult:
-    """A result records what one worker selected, what the selection scored, and what the search cost."""
+    """A result records which worker ran, with which seed, and the solution it reached."""
 
     worker_index: int
-    i_selected: NDArray[np.int32]
-    score: Score
-    elapsed: Elapsed
     seed: int
+    solution: MaxDivSolution
+
+    @property
+    def score(self) -> Score:
+        """Return the score of the solution this worker reached."""
+        return self.solution.score
+
+    @property
+    def i_selected(self) -> NDArray[np.int32]:
+        """Return the items this worker selected."""
+        return self.solution.i_selected
+
+    @property
+    def elapsed(self) -> Elapsed:
+        """Return the time and iterations this worker spent."""
+        return self.solution.duration
 
 
 def best_result(results: list[WorkerResult]) -> WorkerResult:

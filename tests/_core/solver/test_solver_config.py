@@ -2,11 +2,11 @@ import numpy as np
 
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
+from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._distance_storage import DistanceStorage, build_distance_store
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._solver import MaxDivSolver
-from max_div._core.solver._solver_builder import MaxDivSolverBuilder
 
 
 def _builder() -> MaxDivSolverBuilder:

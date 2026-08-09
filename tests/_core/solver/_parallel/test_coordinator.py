@@ -1,10 +1,10 @@
 import numpy as np
 
 from max_div._core.problem import MaxDivProblem
+from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import IndependentCoordinator, WorkerCoordinator
 from max_div._core.solver._presets import SolverPreset
-from max_div._core.solver._solver_builder import MaxDivSolverBuilder
 from max_div._core.solver._solver_state import SolverState
 
 

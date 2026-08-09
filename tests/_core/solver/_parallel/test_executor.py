@@ -2,11 +2,11 @@ import numpy as np
 import pytest
 
 from max_div._core.problem import MaxDivProblem
+from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._distance_storage import build_shared_distance_store
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import IndependentCoordinator, best_result, run_portfolio
 from max_div._core.solver._presets import SolverPreset
-from max_div._core.solver._solver_builder import MaxDivSolverBuilder
 
 _SEEDS = (11, 22, 33)
 

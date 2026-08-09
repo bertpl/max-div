@@ -1,0 +1,97 @@
+"""Configuring and building a portfolio of solvers over one problem."""
+
+from collections.abc import Sequence
+from typing import Self
+
+from max_div._core._utils import deterministic_hash
+from max_div._core.problem import MaxDivProblem
+from max_div._core.solver._duration import TargetDuration
+from max_div._core.solver._parallel import ParallelMaxDivSolver, WorkerConfig, warn_about_worker_count
+from max_div._core.solver._presets import get_preset_strategies
+from max_div._core.solver._solver_config import SolverConfig
+from max_div._core.solver._solver_step import InitializationStep
+
+from ._base import SolverBuilderBase
+
+# Upper bound on a derived worker seed, so it stays short enough to copy into a single-solver rerun.
+_SEED_RANGE = 2**63
+
+
+class ParallelMaxDivSolverBuilder(SolverBuilderBase):
+    """Builder for a portfolio: several workers solving one problem at once, best result wins.
+
+    Carries the settings that define the score, exactly as the single-solver builder does, and adds
+    the workers.  It offers no `with_preset`, because a preset is what a *worker* runs — see
+    `WorkerConfig` — and two workers running different presets is the point.
+    """
+
+    # -------------------------------------------------------------------------
+    #  Constructor
+    # -------------------------------------------------------------------------
+    def __init__(self, problem: MaxDivProblem) -> None:
+        """:param problem: The MaxDivProblem every worker solves."""
+        super().__init__(problem)
+        self._worker_configs: list[WorkerConfig] = []
+        self._target_duration: TargetDuration | None = None
+
+    # -------------------------------------------------------------------------
+    #  Builder API
+    # -------------------------------------------------------------------------
+    def with_workers(self, target_duration: TargetDuration, workers: int | Sequence[WorkerConfig]) -> Self:
+        """Set what the portfolio runs, and for how long each worker runs it.
+
+        One budget covers every worker: they run side by side, so the portfolio takes as long as one
+        of them rather than the sum.
+
+        :param target_duration: how long each worker searches for.
+        :param workers: a worker count, which runs the default preset that many times, or one
+                        configuration per worker when they should differ.
+        """
+        self._target_duration = target_duration
+        self._worker_configs = [WorkerConfig() for _ in range(workers)] if isinstance(workers, int) else list(workers)
+        return self
+
+    # -------------------------------------------------------------------------
+    #  Build
+    # -------------------------------------------------------------------------
+    def build(self) -> ParallelMaxDivSolver:
+        """Build the portfolio: one solver configuration per worker over a store they will share.
+
+        :raises ValueError: If no workers were configured.
+        """
+        if self._target_duration is None or not self._worker_configs:
+            raise ValueError("A portfolio needs workers; call with_workers before build.")
+        warn_about_worker_count(len(self._worker_configs))
+        resolved, label = self._resolve_storage()
+        return ParallelMaxDivSolver(
+            problem=self._problem,
+            storage=resolved,
+            worker_configs=self._worker_configs,
+            solver_configs=[
+                self._solver_config_for(index, worker, self._target_duration, label)
+                for index, worker in enumerate(self._worker_configs)
+            ],
+        )
+
+    def _solver_config_for(
+        self, index: int, worker: WorkerConfig, duration: TargetDuration, storage_label: str
+    ) -> SolverConfig:
+        """Return the solver configuration for one worker, seeded from the portfolio's own seed.
+
+        Worker seeds are derived rather than set, so one seed reproduces the whole portfolio while
+        the workers still search differently.  Each is bounded to 63 bits because a worker's seed is
+        reported back for replaying that worker on its own, and a full-width hash is unwieldy to
+        copy; the derivation stays deterministic and the workers stay distinct either way.
+        """
+        init_strategy, optim_steps = get_preset_strategies(worker.preset, duration)
+        return SolverConfig(
+            n=self._n,
+            k=self._k,
+            diversity_metric=self._diversity_metric,
+            diversity_tie_breakers=self._determine_diversity_tie_breakers(),
+            constraints=self._constraints,
+            solver_steps=[InitializationStep(worker.init_strategy or init_strategy), *optim_steps],
+            seed=deterministic_hash((self._seed, index)) % _SEED_RANGE,
+            constraint_penalty=self._constraint_penalty,
+            distance_storage_label=storage_label,
+        )

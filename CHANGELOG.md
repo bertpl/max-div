@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Parallel solving: `ParallelMaxDivSolverBuilder` runs several configurable workers on one problem at once, sharing one copy of the distances, and returns the best result together with a summary of what every worker found
 
 ### Changed
 
