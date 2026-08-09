@@ -13,8 +13,14 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from .._compute import _METRIC_KINDS, _metric_pair, normalize_rows, validate_cosine_vectors
-from .._enum import DistanceMetric
+from max_div._core.metrics._distance._metric import (
+    _METRIC_KINDS,
+    DistanceMetric,
+    _metric_pair,
+    normalize_rows,
+    validate_cosine_vectors,
+)
+
 from ._common import (
     BUILD_BLOCK_WIDTH,
     READONLY_F32_1D,

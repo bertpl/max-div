@@ -8,7 +8,8 @@ from max_div._core.metrics._distance import (
     compute_pdist,
     get_distance,
 )
-from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY, _condensed_index
+from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY
+from max_div._core.metrics._distance._store._reads import _condensed_index
 
 
 # -------------------------------------------------------------------------
@@ -79,7 +80,7 @@ def test_metric_kinds_cover_every_distance_metric():
     """Every DistanceMetric member must have an on-demand pair-kernel mapping (drift guard)."""
 
     # --- act / assert ------------------------------------
-    from max_div._core.metrics._distance._store import _METRIC_KINDS
+    from max_div._core.metrics._distance._metric import _METRIC_KINDS
 
     assert set(_METRIC_KINDS) == set(DistanceMetric)
 

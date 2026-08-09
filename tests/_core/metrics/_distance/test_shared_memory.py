@@ -19,7 +19,7 @@ from max_div._core.metrics._distance import (
     get_distance,
     publish_distance_store,
 )
-from max_div._core.metrics._distance._shared import _attach_without_registering
+from max_div._core.metrics._distance._shared_memory import _attach_without_registering
 
 # how long a spawned child may take to boot an interpreter, import max_div and answer
 _CHILD_TIMEOUT_S = 120
