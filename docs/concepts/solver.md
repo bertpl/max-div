@@ -130,7 +130,7 @@ portfolio** — and keeps the best result any of them reached. The workers share
 distances, so N workers cost N processes but only one copy.
 
 ```python
-from max_div.solver import ParallelMaxDivSolverBuilder, SolverPreset, WorkerConfig, seconds
+from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
 
 solution = (
     ParallelMaxDivSolverBuilder(problem)
@@ -144,15 +144,17 @@ solution = (
 ### Why Run Several
 
 **The purpose is variance reduction, not speed.** A run's quality depends on its seed, and running
-several seeds at once and keeping the best is insurance against drawing a bad one. It does not make
-any single search faster, and it does not substitute for a larger budget.
+several seeds at once and keeping the best is insurance against drawing a bad one. Running several
+does not make any single search faster, and it does not substitute for a larger budget.
 
-How much it buys depends on the budget. The published preset quantiles show the seed spread
-narrowing sharply as budgets grow — roughly tenfold over the first stretch — and then flattening
-rather than vanishing. Even at that floor the bands of neighboring budgets overlap, so an unlucky
-seed with more budget can still finish below a lucky one with less.
+How much it buys depends on the budget. The [published preset quantiles](../benchmarks/solver/bm_problem_u1_presets.md)
+show the seed spread narrowing sharply as budgets grow — roughly tenfold over the first stretch —
+and then flattening rather than vanishing.
 
-### What Varies Per Worker
+Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
+still finish below a lucky one with less.
+
+### What Varies per Worker
 
 Each worker is configured by a `WorkerConfig`: the preset it runs, and optionally the
 initialization strategy it starts from. `init_strategy` lets two workers run the same preset from
@@ -165,16 +167,16 @@ question.
 
 Distance storage is fixed for a different reason: the workers read one shared buffer.
 
-### Seeds And Reproducibility
+### Seeds and Reproducibility
 
-The portfolio takes one seed and derives a seed per worker from it, so a portfolio is reproducible
+The portfolio takes one seed and derives a seed per worker from that seed, so a portfolio is reproducible
 as a whole from a single number while its workers still search differently.
 
 Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran, which is
-enough to replay that worker on its own with `MaxDivSolverBuilder`. The limits described in the
-Reproducibility section apply unchanged.
+enough to replay that worker on its own with `MaxDivSolverBuilder`. The limits in the
+[Reproducibility](#reproducibility) section apply unchanged.
 
-### Reading The Result
+### Reading the Result
 
 `solve()` returns a `ParallelMaxDivSolution`: the winning worker's solution, with a `WorkerSummary`
 per worker attached. The number worth looking at is `n_workers_with_best_score`:
@@ -187,12 +189,14 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
 
-### On The Word "Portfolio"
+### On the Word "Portfolio"
 
 Running several configurations of one solver concurrently and keeping the best is known as an
 algorithm portfolio, an idea introduced by Huberman, Lukose and Hogg (1997) and developed by Gomes
-and Selman (2001). The term is also used for per-instance algorithm *selection*, where features of
-the instance pick a single algorithm to run; max-div's sense is the concurrent one.
+and Selman (2001).
+
+The term is also used for per-instance algorithm *selection*, where features of the instance pick a
+single algorithm to run; max-div's sense is the concurrent one.
 
 Portfolio workers may run independently or share what they learn as they go — ManySAT (Hamadi,
 Jabbour and Sais, 2009) shares. max-div's workers are independent: they never exchange information.
