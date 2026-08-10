@@ -196,8 +196,9 @@ Running several configurations of one solver concurrently and keeping the best i
 algorithm portfolio, an idea introduced by Huberman, Lukose and Hogg (1997) and developed by Gomes
 and Selman (2001).
 
-The term is also used for per-instance algorithm *selection*, where features of the instance pick a
-single algorithm to run; max-div's sense is the concurrent one.
+The word also names a different technique, **algorithm selection**: reading a problem's features to
+predict, and then run, the single algorithm best suited to it. That is not max-div's sense — max-div
+runs several at once and keeps the best.
 
 Portfolio workers may run independently or share what they learn as they go — ManySAT (Hamadi,
 Jabbour and Sais, 2009) shares. max-div's workers are independent: they never exchange information.
