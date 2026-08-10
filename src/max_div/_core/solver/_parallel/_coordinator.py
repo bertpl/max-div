@@ -1,7 +1,7 @@
 """A worker calls its coordinator at every batch boundary.
 
-Even a worker with nothing to share makes the call, so the path a sharing worker would use already
-runs.
+Independent workers do nothing there; the call exists so cooperative parallelism can reuse this
+path rather than add one.
 """
 
 from abc import ABC, abstractmethod

@@ -1,7 +1,8 @@
 """Several worker processes — a portfolio — solve one problem at once, and the best result wins.
 
-Every worker reads the same distances out of shared memory and runs its own search over them, so
-what varies between workers is the search, never the objective.
+Every worker reads the same distances and runs its own search.  The search varies between workers;
+the objective does not, because comparing what they found needs one answer to which selection is
+better.
 """
 
 from ._coordinator import IndependentCoordinator, WorkerCoordinator
