@@ -21,10 +21,14 @@ from max_div._core.solver._solver_config import SolverConfig
 from ._coordinator import WorkerCoordinator
 from ._result import WorkerResult
 
-# How long to wait on the result queue before checking again whether any worker is still alive.
+# How often the collector wakes to re-check liveness while the result queue is empty.  Results that
+# arrive return at once; this only bounds the wait after the last worker dies before that is noticed —
+# short enough to notice fast, long enough that the poll costs nothing.  Not tied to solver runtime.
 _POLL_SECONDS = 0.2
 
-# How long to wait for a worker that has reported its result to exit on its own.
+# Grace for a worker to exit on its own after reporting — normally immediate, since it just closes
+# its shared-memory view and returns.  This only bounds the wait before force-terminating one that
+# hangs in teardown; generous because it is off the critical path, and unrelated to solver runtime.
 _JOIN_SECONDS = 30.0
 
 
