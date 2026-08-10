@@ -13,8 +13,8 @@ from ._worker_config import WorkerConfig
 class WorkerSummary:
     """A summary records what one worker ran, what it found, and what it cost.
 
-    The configuration is carried by value rather than by reference, so a saved result can be replayed
-    without the code that produced it: a seed alone does not say which solver to replay it with.
+    The summary stores the worker's whole configuration, not just its seed, so a saved result can be
+    replayed without the code that produced it: a seed alone does not say which solver to replay with.
     """
 
     worker_index: int
@@ -29,7 +29,7 @@ class WorkerSummary:
 class ParallelMaxDivSolution(MaxDivSolution):
     """A parallel solution is the winning worker's, with a summary of every worker attached.
 
-    Being an ordinary `MaxDivSolution` is deliberate: code written for a single solve keeps working.
+    Subclassing `MaxDivSolution` keeps code written for a single solve working.
     """
 
     workers: list[WorkerSummary] = field(default_factory=list)
@@ -39,8 +39,8 @@ class ParallelMaxDivSolution(MaxDivSolution):
     def n_workers_with_best_score(self) -> int:
         """Return how many workers reached the best score, the winner included.
 
-        Equal to the worker count when every worker tied, which means the portfolio found nothing a
-        single worker would not have.
+        The count equals the worker count when every worker tied, which means the portfolio found
+        nothing a single worker would not have.
         """
         return sum(1 for worker in self.workers if worker.has_best_score)
 

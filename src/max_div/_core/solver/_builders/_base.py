@@ -1,12 +1,8 @@
 """A solver builder and a portfolio builder both carry the settings defined here.
 
-The split follows one rule: **anything that influences the score is shared**.  A portfolio compares
-what its workers found, so one answer to "which selection is better" has to hold across all of them.
-That covers:
-
-  - the diversity metric and its tie-breakers,
-  - the constraint penalty,
-  - and the problem itself.
+Settings are split by one rule: **anything that influences the score is shared**.  A portfolio
+compares what its workers found, so one answer to "which selection is better" has to hold across all
+of them.
 
 Distance storage is here for a different reason: workers read one buffer, so per-worker storage
 could not be honored at all.
@@ -36,7 +32,10 @@ class SolverBuilderBase:
     #  Constructor
     # -------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
-        """:param problem: The MaxDivProblem to solve."""
+        """Configure a builder over the given problem.
+
+        :param problem: The MaxDivProblem to solve.
+        """
         # --- problem ---------------------------
         self._problem = problem
 

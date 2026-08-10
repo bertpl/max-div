@@ -1,7 +1,7 @@
 """A worker sends back a result, and `best_result` picks the winner among several.
 
-A worker reports its whole solution once, when it finishes; the coordinator is the only channel
-that runs during the search.
+A worker reports once, when it finishes, so the result carries its whole solution rather than a
+trimmed selection and score.
 """
 
 from dataclasses import dataclass

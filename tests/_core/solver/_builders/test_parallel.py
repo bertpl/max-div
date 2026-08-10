@@ -17,7 +17,7 @@ def _problem() -> MaxDivProblem:
     return MaxDivProblem.new(np.random.default_rng(20260809).random((80, 3)).astype(np.float32), k=8)
 
 
-def _portfolio(workers, seed: int = 5) -> ParallelMaxDivSolution:
+def _solve_portfolio(workers, seed: int = 5) -> ParallelMaxDivSolution:
     """Solve the shared test problem with the given workers."""
     return ParallelMaxDivSolverBuilder(_problem()).with_seed(seed).with_workers(_BUDGET, workers).build().solve()
 
@@ -28,7 +28,7 @@ def _portfolio(workers, seed: int = 5) -> ParallelMaxDivSolution:
 def test_a_portfolio_returns_an_ordinary_solution():
     """The winner is a MaxDivSolution, so code written for a single solve keeps working."""
     # --- arrange / act -----------------------------------
-    solution = _portfolio(2)
+    solution = _solve_portfolio(2)
 
     # --- assert ------------------------------------------
     assert solution.i_selected.size == 8
@@ -39,7 +39,7 @@ def test_a_portfolio_returns_an_ordinary_solution():
 def test_every_worker_is_summarized():
     """Each worker reports what it ran, what it scored, and whether it reached the best score."""
     # --- arrange / act -----------------------------------
-    solution = _portfolio([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
+    solution = _solve_portfolio([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
 
     # --- assert ------------------------------------------
     assert [worker.worker_index for worker in solution.workers] == [0, 1]
@@ -56,7 +56,7 @@ def test_workers_may_differ_by_initialization_alone():
     ]
 
     # --- act ---------------------------------------------
-    solution = _portfolio(workers)
+    solution = _solve_portfolio(workers)
 
     # --- assert ------------------------------------------
     assert solution.workers[0].config.init_strategy is None
@@ -66,7 +66,7 @@ def test_workers_may_differ_by_initialization_alone():
 def test_workers_at_the_best_score_are_counted():
     """The count says how many workers tied for best; when every worker ties, the portfolio did not help."""
     # --- arrange / act -----------------------------------
-    solution = _portfolio(3)
+    solution = _solve_portfolio(3)
 
     # --- assert ------------------------------------------
     counted = solution.n_workers_with_best_score
@@ -80,7 +80,7 @@ def test_workers_at_the_best_score_are_counted():
 def test_one_seed_reproduces_the_whole_portfolio():
     """A portfolio run twice from the same seed selects the same items and seeds its workers alike."""
     # --- arrange / act -----------------------------------
-    first, second = _portfolio(2), _portfolio(2)
+    first, second = _solve_portfolio(2), _solve_portfolio(2)
 
     # --- assert ------------------------------------------
     np.testing.assert_array_equal(first.i_selected, second.i_selected)
@@ -90,7 +90,7 @@ def test_one_seed_reproduces_the_whole_portfolio():
 def test_workers_are_seeded_differently_from_each_other():
     """Derived seeds differ per worker, so the workers search differently."""
     # --- arrange / act -----------------------------------
-    seeds = [worker.seed for worker in _portfolio(4).workers]
+    seeds = [worker.seed for worker in _solve_portfolio(4).workers]
 
     # --- assert ------------------------------------------
     assert len(set(seeds)) == len(seeds)
@@ -99,7 +99,7 @@ def test_workers_are_seeded_differently_from_each_other():
 def test_a_worker_can_be_replayed_on_its_own():
     """A summary's preset and seed reproduce that worker's selection in a single solve."""
     # --- arrange -----------------------------------------
-    solution = _portfolio([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
+    solution = _solve_portfolio([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
     winner = solution.workers[solution.winning_worker]
 
     # --- act ---------------------------------------------
@@ -126,7 +126,7 @@ def test_a_single_worker_warns():
 
 
 def test_more_workers_than_cores_warns(monkeypatch: pytest.MonkeyPatch):
-    """Oversubscribing cores makes workers share them, which searches less rather than more."""
+    """Configuring more workers than cores warns, because the workers then share cores."""
     # --- arrange -----------------------------------------
     monkeypatch.setattr("max_div._core.solver._parallel._solver.os.cpu_count", lambda: 2)
 

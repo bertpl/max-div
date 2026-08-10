@@ -18,4 +18,4 @@ class DistanceInputWarning(MaxDivWarning):
 
 
 class ParallelSolvingWarning(MaxDivWarning):
-    """Solving in parallel was configured in a way that cannot help, or that oversubscribes the machine."""
+    """Solving in parallel was configured in a way that cannot help, or that runs more workers than there are cores."""

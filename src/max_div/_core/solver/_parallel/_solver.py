@@ -20,8 +20,8 @@ from ._worker_config import WorkerConfig
 class ParallelMaxDivSolver:
     """A portfolio solver solves one problem with several workers at once, returning the best selection.
 
-    Built by `ParallelMaxDivSolverBuilder`, which is where the workers and the shared settings are
-    configured.
+    `ParallelMaxDivSolverBuilder` builds this solver, and is where the workers and the shared
+    settings are configured.
     """
 
     # -------------------------------------------------------------------------
@@ -36,7 +36,6 @@ class ParallelMaxDivSolver:
     ) -> None:
         """Hold the problem, the resolved backend, and one configuration per worker.
 
-        :param problem: the problem every worker solves.
         :param storage: the already-resolved backend the shared store is built in.
         :param worker_configs: what each worker runs, reported back in the solution.
         :param solver_configs: the solver each worker assembles, in the same order.
@@ -50,7 +49,7 @@ class ParallelMaxDivSolver:
     #  API
     # -------------------------------------------------------------------------
     def solve(self) -> ParallelMaxDivSolution:
-        """Run every worker over one shared store and return the best result, with all of them summarized.
+        """Run every worker over one shared store and return the best result, with every worker summarized.
 
         The distances are built once, into shared memory, and released when the last worker is done.
 
@@ -76,6 +75,7 @@ class ParallelMaxDivSolver:
 
 def warn_about_worker_count(n_workers: int) -> None:
     """Warn when there are too few workers to help, or more workers than cores."""
+    # stacklevel 3 points at the caller of build, two frames up
     if n_workers < 2:
         warnings.warn(
             f"A portfolio of {n_workers} worker cannot do better than solving once; "

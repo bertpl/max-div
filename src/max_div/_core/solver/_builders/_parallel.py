@@ -13,12 +13,12 @@ from max_div._core.solver._solver_step import InitializationStep
 
 from ._base import SolverBuilderBase
 
-# Upper bound on a derived worker seed, so it stays short enough to copy into a single-solver rerun.
+# Bound a derived worker seed so it stays short enough to copy into a single-solver rerun.
 _SEED_RANGE = 2**63
 
 
 class ParallelMaxDivSolverBuilder(SolverBuilderBase):
-    """This builder configures a portfolio: several workers solve one problem, and the best result wins.
+    """A portfolio builder configures several workers over one problem, and the best result wins.
 
     There is no `with_preset`: a preset belongs to a worker (`WorkerConfig`), and workers may run
     different ones.
@@ -42,12 +42,11 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     def with_workers(self, target_duration: TargetDuration, workers: int | Sequence[WorkerConfig]) -> Self:
         """Set what the portfolio runs, and for how long each worker runs it.
 
-        One budget covers every worker: they run side by side, so the portfolio takes as long as one
-        of them rather than the sum.
+        The workers run side by side, so the portfolio takes as long as one of them rather than the
+        sum.
 
-        :param target_duration: how long each worker searches for.
-        :param workers: a worker count, which runs the default preset that many times, or one
-                        configuration per worker when they should differ.
+        :param workers: an integer runs the default configuration that many times; a sequence gives
+                        one configuration per worker.
         """
         self._target_duration = target_duration
         self._worker_configs = [WorkerConfig() for _ in range(workers)] if isinstance(workers, int) else list(workers)
@@ -78,7 +77,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     def _solver_config_for(
         self, index: int, worker: WorkerConfig, duration: TargetDuration, storage_label: str
     ) -> SolverConfig:
-        """Return the solver configuration for one worker, seeded from the portfolio's own seed.
+        """Return the solver configuration for one worker.
 
         Worker seeds are derived rather than set, so one seed reproduces the whole portfolio while
         the workers still search differently.

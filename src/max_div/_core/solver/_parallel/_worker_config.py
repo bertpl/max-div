@@ -1,6 +1,6 @@
 """A worker configuration says what one worker in a portfolio runs.
 
-Only the search varies per worker; `SolverBuilderBase` owns why the rest cannot.
+Only the search varies per worker; the `SolverBuilderBase` docstring explains why the rest cannot.
 """
 
 from dataclasses import dataclass
@@ -13,10 +13,8 @@ from max_div._core.solver._strategies import InitializationStrategy
 class WorkerConfig:
     """A worker configuration holds one worker's search: its preset, and where it starts from.
 
-    :param preset: the preset this worker solves with.
-    :param init_strategy: replaces the preset's own initialization, which two workers running the
-                          same preset need in order to start from different points; None keeps the
-                          preset's.
+    :param init_strategy: replaces the preset's own initialization; None keeps it.  Two workers on
+                          the same preset need this to start from different points.
     """
 
     preset: SolverPreset = SolverPreset.DEFAULT
