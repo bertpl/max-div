@@ -1,7 +1,7 @@
-"""A worker calls its coordinator at each batch boundary, whether or not it has anything to say.
+"""A worker calls its coordinator at every batch boundary.
 
-The call happens on every batch even when it does nothing, so a worker with something to share
-reaches the others through a path that already runs.
+Even a worker with nothing to share makes the call, so the path a sharing worker would use already
+runs.
 """
 
 from abc import ABC, abstractmethod

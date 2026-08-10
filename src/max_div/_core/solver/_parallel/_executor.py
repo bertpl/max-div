@@ -39,6 +39,7 @@ def run_portfolio(
 
     :param configs: one solver configuration per worker, in worker order.
     :param spec: where the published store lives; every worker attaches to it.
+    :param coordinator: reached by every worker at each batch boundary; an independent one shares nothing.
     """
     context = multiprocessing.get_context("spawn")
     results: Queue = context.Queue()
