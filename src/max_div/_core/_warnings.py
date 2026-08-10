@@ -15,3 +15,7 @@ class MaxDivWarning(UserWarning):
 
 class DistanceInputWarning(MaxDivWarning):
     """Distance input needed intervention at the problem boundary: a conversion copy or a symmetry repair."""
+
+
+class ParallelSolvingWarning(MaxDivWarning):
+    """Solving in parallel was configured in a way that cannot help, or that runs more workers than there are cores."""

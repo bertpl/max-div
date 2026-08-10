@@ -1,0 +1,111 @@
+"""One solver runs per worker process over a single shared store, and the executor collects the results.
+
+Workers are **spawned, never forked**.  The parent runs numba parallel code while building the
+distance store, and numba's threading layer does not survive a fork — a forked child deadlocks on
+its first parallel call.
+
+Each worker is a process rather than a thread because the search is Python-level and would contend
+on the interpreter lock.  Only the distances are shared; every worker allocates its own bookkeeping,
+which is small next to the distances.
+"""
+
+import multiprocessing
+import queue as queue_module
+from collections.abc import Sequence
+from multiprocessing.process import BaseProcess
+from multiprocessing.queues import Queue
+
+from max_div._core.metrics._distance import SharedStoreSpec, attached_distance_store
+from max_div._core.solver._solver_config import SolverConfig
+
+from ._coordinator import WorkerCoordinator
+from ._result import WorkerResult
+
+# How often the collector wakes to re-check liveness while the result queue is empty.  Results that
+# arrive return at once; this only bounds the wait after the last worker dies before that is noticed —
+# short enough to notice fast, long enough that the poll costs nothing.  Not tied to solver runtime.
+_POLL_SECONDS = 0.2
+
+# Grace for a worker to exit on its own after reporting — normally immediate, since it just closes
+# its shared-memory view and returns.  This only bounds the wait before force-terminating one that
+# hangs in teardown; generous because it is off the critical path, and unrelated to solver runtime.
+_JOIN_SECONDS = 30.0
+
+
+def run_portfolio(
+    configs: list[SolverConfig], spec: SharedStoreSpec, coordinator: WorkerCoordinator
+) -> list[WorkerResult]:
+    """Solve one configuration per worker over the published store, and return what each reported.
+
+    Results come back in worker order rather than arrival order, so the caller sees the same list
+    whichever worker happens to finish first.  A worker that dies without reporting is left out rather than
+    treated as an error; `best_result` raises when none came back.
+
+    :param configs: one solver configuration per worker, in worker order.
+    :param spec: where the published store lives; every worker attaches to it.
+    :param coordinator: reached by every worker at each batch boundary; an independent one shares nothing.
+    """
+    context = multiprocessing.get_context("spawn")
+    results: Queue = context.Queue()
+    workers = [
+        context.Process(target=solve_in_worker, args=(index, config, spec, coordinator, results), daemon=True)
+        for index, config in enumerate(configs)
+    ]
+    for worker in workers:
+        worker.start()
+    try:
+        collected = _collect(results, workers)
+    finally:
+        _shut_down(workers)
+    return sorted(collected, key=lambda result: result.worker_index)
+
+
+def solve_in_worker(
+    worker_index: int,
+    config: SolverConfig,
+    spec: SharedStoreSpec,
+    coordinator: WorkerCoordinator,
+    results: Queue,
+) -> None:
+    """Solve one configuration in this process and report the result, then release the store.
+
+    This function is the entry point of a spawned worker, so it must stay importable by name — a
+    spawned child reconstructs the function from its module path rather than inheriting it.
+    """
+    with attached_distance_store(spec) as store:
+        solution = config.build_solver(store).solve(verbosity=0, coordinator=coordinator)
+        results.put(WorkerResult(worker_index=worker_index, seed=config.seed, solution=solution))
+
+
+def _collect(results: Queue, workers: Sequence[BaseProcess]) -> list[WorkerResult]:
+    """Take results off the queue until every worker has reported or none is left alive."""
+    collected: list[WorkerResult] = []
+    while len(collected) < len(workers):
+        try:
+            collected.append(results.get(timeout=_POLL_SECONDS))
+        except queue_module.Empty:
+            if not any(worker.is_alive() for worker in workers):
+                # one last look: a worker can exit with its result still in flight through the queue
+                collected.extend(_drain(results, limit=len(workers) - len(collected)))
+                break
+    return collected
+
+
+def _drain(results: Queue, limit: int) -> list[WorkerResult]:
+    """Take up to `limit` more results, giving each a short wait before giving up."""
+    drained: list[WorkerResult] = []
+    for _ in range(limit):
+        try:
+            drained.append(results.get(timeout=_POLL_SECONDS))
+        except queue_module.Empty:
+            break
+    return drained
+
+
+def _shut_down(workers: Sequence[BaseProcess]) -> None:
+    """Wait for each worker to exit, killing any that will not."""
+    for worker in workers:
+        worker.join(timeout=_JOIN_SECONDS)
+        if worker.is_alive():
+            worker.terminate()
+            worker.join(timeout=_JOIN_SECONDS)
