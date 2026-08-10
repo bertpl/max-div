@@ -125,57 +125,77 @@ iterations — the machine-dependence any time budget carries.)
 
 ## Solving in Parallel
 
-`ParallelMaxDivSolverBuilder` runs several workers on one problem at once and keeps the best result
-each of them reached. The workers share one copy of the distances, so running eight of them costs
-eight processes but not eight distance matrices.
+`ParallelMaxDivSolverBuilder` runs several workers on one problem at once — an **algorithm
+portfolio** — and keeps the best result any of them reached. The workers share one copy of the
+distances, so N workers cost N processes but only one copy.
 
-**The purpose is variance reduction, not speed.** A run's quality depends on its seed, and the
-spread between good and bad seeds does not shrink as the budget grows — a bad-seed long run can lose
-to a good-seed short one. Running several seeds at once and keeping the best is insurance against
-drawing a bad one. It does not make any single search faster, and it does not substitute for a
-larger budget.
+```python
+from max_div.solver import ParallelMaxDivSolverBuilder, SolverPreset, WorkerConfig, seconds
 
-### What varies per worker, and what cannot
+solution = (
+    ParallelMaxDivSolverBuilder(problem)
+    .with_seed(42)
+    .with_workers(seconds(60), 8)          # or one WorkerConfig per worker
+    .build()
+    .solve()
+)
+```
 
-Each worker is configured by a `WorkerConfig`: the preset it runs, and optionally the initialization
-strategy it starts from. That second field is what lets two workers run the same preset from
+### Why Run Several
+
+**The purpose is variance reduction, not speed.** A run's quality depends on its seed, and running
+several seeds at once and keeping the best is insurance against drawing a bad one. It does not make
+any single search faster, and it does not substitute for a larger budget.
+
+How much it buys depends on the budget. The published preset quantiles show the seed spread
+narrowing sharply as budgets grow — roughly tenfold over the first stretch — and then flattening
+rather than vanishing. Even at that floor the bands of neighboring budgets overlap, so an unlucky
+seed with more budget can still finish below a lucky one with less.
+
+### What Varies Per Worker
+
+Each worker is configured by a `WorkerConfig`: the preset it runs, and optionally the
+initialization strategy it starts from. `init_strategy` lets two workers run the same preset from
 different starting points.
 
-Everything that decides **which selection is better** — the diversity metric, its tie-breakers, the
-constraint penalty — is set once, on the portfolio. Comparing what workers found requires a single
-answer to that question, so those settings cannot vary between them. Distance storage is fixed for
-a different reason: the workers read one shared buffer.
+Everything that decides **which selection is better** is fixed for the whole portfolio, whether it
+comes from the problem (the diversity metric, the constraints) or from the builder (the
+tie-breakers, the constraint penalty). Comparing what workers found requires a single answer to that
+question.
 
-### Seeds and reproducibility
+Distance storage is fixed for a different reason: the workers read one shared buffer.
 
-The portfolio takes one seed and derives a seed per worker from it. So a portfolio is reproducible
-as a whole from a single number, while its workers still search differently. Each worker's derived
-seed is reported back, next to the configuration it ran, which is enough to replay that worker on
-its own with `MaxDivSolverBuilder`.
+### Seeds And Reproducibility
 
-The reproducibility limits above apply unchanged: exact repetition holds within one machine, build
-and backend.
+The portfolio takes one seed and derives a seed per worker from it, so a portfolio is reproducible
+as a whole from a single number while its workers still search differently.
 
-### Reading the result
+Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran, which is
+enough to replay that worker on its own with `MaxDivSolverBuilder`. The limits described in the
+Reproducibility section apply unchanged.
 
-The returned solution is an ordinary `MaxDivSolution` — the winner's — with a summary of every
-worker attached. The number worth looking at is `n_workers_with_best_score`:
+### Reading The Result
+
+`solve()` returns a `ParallelMaxDivSolution`: the winning worker's solution, with a `WorkerSummary`
+per worker attached. The number worth looking at is `n_workers_with_best_score`:
 
 - **Well below the worker count**: seeds mattered on this problem, and the portfolio earned its
   cost.
 - **Equal to the worker count**: every worker tied, so the portfolio found nothing a single one
   would not have. Lower the worker count or solve once.
 
-### On the word "portfolio"
+A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
+workers than the machine has cores.
+
+### On The Word "Portfolio"
 
 Running several configurations of one solver concurrently and keeping the best is known as an
-**algorithm portfolio**, an idea introduced by Huberman, Lukose and Hogg (1997) and developed by
-Gomes and Selman (2001). The term is also used for per-instance algorithm *selection*, where
-features of the instance pick a single algorithm to run; max-div's sense is the concurrent one.
+algorithm portfolio, an idea introduced by Huberman, Lukose and Hogg (1997) and developed by Gomes
+and Selman (2001). The term is also used for per-instance algorithm *selection*, where features of
+the instance pick a single algorithm to run; max-div's sense is the concurrent one.
 
-Portfolio workers may run independently or exchange information as they go — clause-sharing SAT
-solvers such as ManySAT (Hamadi, Jabbour and Sais, 2009) do the latter. max-div's workers are
-independent, which is why the strategy is named for independence rather than for being a portfolio.
+Portfolio workers may run independently or share what they learn as they go — ManySAT (Hamadi,
+Jabbour and Sais, 2009) shares. max-div's workers are independent: they never exchange information.
 
 **References**
 
