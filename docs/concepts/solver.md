@@ -127,7 +127,8 @@ iterations — the machine-dependence any time budget carries.)
 
 `ParallelMaxDivSolverBuilder` runs several workers on one problem at once — an **algorithm
 portfolio** — and keeps the best result any of them reached. The workers share one copy of the
-distances, so N workers cost N processes but only one copy.
+distances, which are usually the most memory-intensive structure in a solve, so N workers cost N
+processes but not N copies of that data.
 
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
