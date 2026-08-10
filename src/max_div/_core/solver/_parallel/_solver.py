@@ -55,8 +55,8 @@ class ParallelMaxDivSolver:
 
         :raises ValueError: If no worker reported a result, which means every one of them failed.
         """
-        with build_shared_distance_store(self._problem, self._storage) as shared:
-            results = run_portfolio(self._solver_configs, shared.spec, IndependentCoordinator())
+        with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:
+            results = run_portfolio(self._solver_configs, shared_distance_store.spec, IndependentCoordinator())
         winner = best_result(results)
         summaries = [
             WorkerSummary(

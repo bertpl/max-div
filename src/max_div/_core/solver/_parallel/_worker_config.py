@@ -13,8 +13,9 @@ from max_div._core.solver._strategies import InitializationStrategy
 class WorkerConfig:
     """A worker configuration holds one worker's search: its preset, and where it starts from.
 
-    :param init_strategy: replaces the preset's own initialization; None keeps it.  Two workers on
-                          the same preset need this to start from different points.
+    :param init_strategy: replaces the preset's own initialization; None keeps it.  Different
+                          seeds already vary a random initialization, so this is for giving workers a
+                          different kind of start, not merely a different one.
     """
 
     preset: SolverPreset = SolverPreset.DEFAULT

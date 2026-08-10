@@ -97,15 +97,15 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     # -------------------------------------------------------------------------
     def build(self) -> MaxDivSolver:
         """Build the distance store this configuration calls for, and a solver reading it."""
-        resolved, config = self.resolve_storage_and_config()
+        resolved, config = self.prepare_storage_and_config()
         return config.build_solver(build_distance_store(self._problem, resolved))
 
-    def resolve_storage_and_config(self) -> tuple[DistanceStorage, SolverConfig]:
-        """Return the backend this configuration resolves to, and the solver config over it.
+    def prepare_storage_and_config(self) -> tuple[DistanceStorage, SolverConfig]:
+        """Return the backend this configuration selects, and the solver config over it.
 
-        `build` resolves the backend and builds the store in one call.  Keeping the two apart lets
-        a caller produce the distances once and assemble a solver per worker over them, where
-        `build` would produce a store per solver.
+        `build` selects the backend and builds the store in one call.  Keeping the two apart lets a
+        caller produce the distances once and assemble a solver per worker over them, where `build`
+        would produce a store per solver.
         """
         resolved, label = self._select_storage()
         return resolved, SolverConfig(

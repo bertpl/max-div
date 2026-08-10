@@ -22,7 +22,7 @@ def _builder() -> MaxDivSolverBuilder:
 def portfolio_results():
     """Run one portfolio over spawned workers, and hand back its results with the builder used."""
     builder = _builder()
-    resolved, config = builder.resolve_storage_and_config()
+    resolved, config = builder.prepare_storage_and_config()
     with build_shared_distance_store(builder._problem, resolved) as shared:
         yield builder, run_portfolio([config.with_seed(seed) for seed in _SEEDS], shared.spec, IndependentCoordinator())
 

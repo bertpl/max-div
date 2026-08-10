@@ -22,7 +22,7 @@ def test_resolve_returns_the_backend_and_a_config_over_it():
     builder = _builder().with_seed(99)
 
     # --- act ---------------------------------------------
-    resolved, config = builder.resolve_storage_and_config()
+    resolved, config = builder.prepare_storage_and_config()
 
     # --- assert ------------------------------------------
     assert resolved != DistanceStorage.AUTO  # AUTO is resolved to something concrete
@@ -35,7 +35,7 @@ def test_a_config_builds_a_solver_over_any_store():
     """A config plus a store is a solver."""
     # --- arrange -----------------------------------------
     builder = _builder()
-    resolved, config = builder.resolve_storage_and_config()
+    resolved, config = builder.prepare_storage_and_config()
 
     # --- act ---------------------------------------------
     solver = config.build_solver(build_distance_store(builder._problem, resolved))
@@ -48,7 +48,7 @@ def test_a_config_builds_a_solver_over_any_store():
 def test_with_seed_changes_only_the_seed():
     """Reseeding a config leaves every other setting alone, so workers differ in search only."""
     # --- arrange -----------------------------------------
-    _, config = _builder().with_seed(1).resolve_storage_and_config()
+    _, config = _builder().with_seed(1).prepare_storage_and_config()
 
     # --- act ---------------------------------------------
     reseeded = config.with_seed(2)
