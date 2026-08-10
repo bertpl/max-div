@@ -17,7 +17,7 @@ from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
 from max_div._core.solver._distance_storage import (
     DistanceStorage,
-    resolve_distance_storage,
+    select_distance_storage,
     total_physical_memory_bytes,
 )
 
@@ -82,9 +82,9 @@ class SolverBuilderBase:
     # -------------------------------------------------------------------------
     #  Resolution
     # -------------------------------------------------------------------------
-    def _resolve_storage(self) -> tuple[DistanceStorage, str]:
-        """Return the backend this configuration resolves to, and the label reported to the user."""
-        resolved = resolve_distance_storage(self._problem, self._distance_storage, total_physical_memory_bytes())
+    def _select_storage(self) -> tuple[DistanceStorage, str]:
+        """Return the backend this configuration selects, and the label reported to the user."""
+        resolved = select_distance_storage(self._problem, self._distance_storage, total_physical_memory_bytes())
         return resolved, resolved.value + (" (auto)" if self._distance_storage == DistanceStorage.AUTO else "")
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:

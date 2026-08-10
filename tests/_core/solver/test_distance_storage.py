@@ -11,7 +11,7 @@ from max_div._core.solver._distance_storage import (
     DistanceStorage,
     build_distance_store,
     build_shared_distance_store,
-    resolve_distance_storage,
+    select_distance_storage,
     total_physical_memory_bytes,
 )
 from max_div._core.solver._duration import iterations
@@ -44,7 +44,7 @@ def _distance_problem(form: str) -> MaxDivProblem:
 )
 def test_resolve_explicit_choice_passes_through(storage: DistanceStorage):
     # --- act / assert ------------------------------------
-    assert resolve_distance_storage(_vector_problem(), storage, 64 * GIB) == storage
+    assert select_distance_storage(_vector_problem(), storage, 64 * GIB) == storage
 
 
 @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ def test_resolve_auto_vector_ladder(n: int, total_memory: int | None, expected: 
     problem = _vector_problem() if n == 10 else _stub_vector_problem(n)
 
     # --- act ---------------------------------------------
-    resolved = resolve_distance_storage(problem, DistanceStorage.AUTO, total_memory)
+    resolved = select_distance_storage(problem, DistanceStorage.AUTO, total_memory)
 
     # --- assert ------------------------------------------
     assert resolved == expected
@@ -86,7 +86,7 @@ def test_resolve_auto_distance_problem_keeps_format(form: str, expected: Distanc
     """AUTO on distance-input problems resolves to the format the user provided, ignoring memory."""
 
     # --- act / assert ------------------------------------
-    assert resolve_distance_storage(_distance_problem(form), DistanceStorage.AUTO, None) == expected
+    assert select_distance_storage(_distance_problem(form), DistanceStorage.AUTO, None) == expected
 
 
 # =================================================================================================
@@ -253,7 +253,7 @@ def test_build_shared_distance_store_copies_distance_input(form: str):
     """Distance-input problems are copied into the segment, since the bytes must live there."""
     # --- arrange -----------------------------------------
     problem = _distance_problem(form)
-    resolved = resolve_distance_storage(problem, DistanceStorage.AUTO, 64 * GIB)
+    resolved = select_distance_storage(problem, DistanceStorage.AUTO, 64 * GIB)
     expected = build_distance_store(problem, resolved)
 
     # --- act ---------------------------------------------

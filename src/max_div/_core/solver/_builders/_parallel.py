@@ -63,7 +63,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A portfolio needs workers; call with_workers before build.")
         warn_about_worker_count(len(self._worker_configs))
-        resolved, label = self._resolve_storage()
+        resolved, label = self._select_storage()
         return ParallelMaxDivSolver(
             problem=self._problem,
             storage=resolved,

@@ -1,4 +1,4 @@
-"""A solver builder configures and builds a single solver over a problem."""
+"""A single-solver builder configures and builds one solver over a problem."""
 
 from typing import Self
 
@@ -107,7 +107,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         a caller produce the distances once and assemble a solver per worker over them, where
         `build` would produce a store per solver.
         """
-        resolved, label = self._resolve_storage()
+        resolved, label = self._select_storage()
         return resolved, SolverConfig(
             n=self._n,
             k=self._k,

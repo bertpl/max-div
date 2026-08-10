@@ -55,12 +55,12 @@ class DistanceStorage(StrEnum):
 # =================================================================================================
 #  Resolution & construction
 # =================================================================================================
-def resolve_distance_storage(
+def select_distance_storage(
     problem: MaxDivProblem, storage: DistanceStorage, total_memory_bytes: int | None
 ) -> DistanceStorage:
-    """Resolve `AUTO` to a concrete backend for the given problem; explicit choices pass through.
+    """Select a concrete backend for the given problem when the choice is `AUTO`; explicit choices pass through.
 
-    A pure function of its arguments — the memory probe is injected, so resolution is
+    A pure function of its arguments — the memory probe is injected, so the selection is
     deterministic and testable.
 
     :param problem: the problem to be solved.

@@ -2,7 +2,7 @@
 
 from ._base import SolverBuilderBase
 from ._parallel import ParallelMaxDivSolverBuilder
-from ._solver import MaxDivSolverBuilder
+from ._single import MaxDivSolverBuilder
 
 __all__ = [
     "MaxDivSolverBuilder",
