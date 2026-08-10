@@ -32,10 +32,7 @@ class SolverBuilderBase:
     #  Constructor
     # -------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
-        """Configure a builder over the given problem.
-
-        :param problem: The MaxDivProblem to solve.
-        """
+        """Configure a builder over the given problem."""
         # --- problem ---------------------------
         self._problem = problem
 
