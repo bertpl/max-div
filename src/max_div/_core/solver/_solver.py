@@ -82,16 +82,7 @@ class MaxDivSolver:
         """Solve the maximum diversity problem with the given configuration.
 
         :param verbosity: (int | Verbosity) The verbosity level, as a `Verbosity` member or its
-                          plain integer value.
-                             0 = SILENT
-                            10 = PROGRESS_BAR       tqdm progress bar per solver step
-                            2x = progress table with iteration count, metrics, elapsed time, ...
-                                   20  -->  TABULAR          slowest updates  (spacing increasing with 10%)
-                                   21  -->  TABULAR_FAST     slower  updates  (spacing increasing with  5%)
-                                   22  -->  TABULAR_FASTER   faster  updates  (spacing increasing with  2%)
-                                   23  -->  TABULAR_FASTEST  fastest updates  (spacing increasing with  1%)
-
-                                   25  -->  TABULAR_DEBUG    debug mode       (1% spacing + debug info column)
+                          plain integer value; see `Verbosity` for the levels.
         :param coordinator: a `WorkerCoordinator` the solver calls at each batch boundary.
         :param progress_reporter: a ready-made reporter to report into, overriding `verbosity`; this
                                   is how a portfolio worker reports to its parent process.

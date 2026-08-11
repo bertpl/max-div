@@ -126,7 +126,7 @@ def test_solve_in_worker_runs_in_process():
 
 
 class _StubWorker:
-    """A stand-in for a worker process with a fixed liveness answer."""
+    """A stub worker stands in for a worker process, answering liveness checks with a fixed value."""
 
     def __init__(self, alive: bool) -> None:
         self._alive = alive

@@ -1,4 +1,4 @@
-"""The worker side of the progress channel: a reporter that forwards snapshots instead of printing.
+"""A worker-side reporter forwards progress snapshots to the parent process instead of printing.
 
 Workers never write to their own stdout — that invariant is what keeps N workers' progress from
 interleaving. Each worker's solver reports into a `ForwardingProgressReporter`, which materializes
@@ -24,12 +24,12 @@ from max_div._core.solver._progress_reporting import (
 )
 
 # The forwarding cadence: the fastest cadence any rendering reporter uses, so the parent's own
-# display throttle — not this one — is what decides the visible row spacing at every verbosity level.
+# display throttle — not this one — decides the visible row spacing at every verbosity level.
 _FORWARD_C_SLOWDOWN = 1.01
 
 
 class ForwardingProgressReporter(ProgressReporter):
-    """A reporter that forwards materialized snapshots onto a queue instead of rendering them."""
+    """A forwarding reporter puts materialized snapshots onto a queue instead of rendering them."""
 
     def __init__(self, queue: Queue, worker_index: int, requirements: SnapshotRequirements) -> None:
         """Forward this worker's snapshots, materializing what the parent's reporter declared it needs.
@@ -62,9 +62,7 @@ class ForwardingProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
-    def _materialize(
-        self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None
-    ) -> ProgressSnapshot:
+    def _materialize(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None) -> ProgressSnapshot:
         """Return a picklable copy: by-reference fields resolved or dropped, worker index stamped."""
         return replace(
             snapshot,

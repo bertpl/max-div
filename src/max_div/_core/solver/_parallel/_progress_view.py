@@ -1,4 +1,4 @@
-"""The parent side of the progress channel: one composite view over every worker's snapshots.
+"""The parent side of the progress channel composes every worker's snapshots into one live view.
 
 A rendered row never describes a single worker — it combines two independently sourced halves:
 

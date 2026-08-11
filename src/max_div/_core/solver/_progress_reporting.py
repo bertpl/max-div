@@ -28,11 +28,12 @@ if TYPE_CHECKING:
 #  Verbosity
 # =================================================================================================
 class Verbosity(IntEnum):
-    """Verbosity levels for `solve`, named; members are plain ints, so integer literals keep working.
+    """Verbosity names the levels for `solve`; members are plain ints, so integer literals keep working.
 
-    The four `TABULAR*` levels differ only in how quickly the update cadence slows down over a run:
-    `TABULAR` spaces rows out the fastest (fewest rows), `TABULAR_FASTEST` keeps them coming.
-    `TABULAR_DEBUG` is `TABULAR_FASTEST` plus a column of solver-internal statistics.
+    The `TABULAR` through `TABULAR_FASTEST` levels differ only in how quickly the update cadence
+    slows down over a run: `TABULAR` spaces rows out the fastest (fewest rows), `TABULAR_FASTEST`
+    keeps them coming. `TABULAR_DEBUG` is `TABULAR_FASTEST` plus a column of solver-internal
+    statistics.
     """
 
     SILENT = 0
@@ -92,6 +93,7 @@ class ReportThrottle:
     """
 
     def __init__(self, c_slowdown: float) -> None:
+        """Create a throttle whose pass spacing grows by a factor `c_slowdown` per shown update."""
         self._c_slowdown = c_slowdown
         self._next_iter: int = 0
         self._next_t: float = 0.0
@@ -119,12 +121,12 @@ class ReportThrottle:
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
 class SnapshotRequirements:
-    """The requirements record what a reporter needs materialized in snapshots built out of its sight.
+    """The requirements record what a reporter needs materialized in snapshots built in another process.
 
     In-process, a reporter lazily takes what it renders (the selection by reference, the debug
     callable), so nothing needs declaring. When snapshots are produced in another process, the sender
     must materialize up front exactly what the receiving reporter will render — this record, declared
-    by the reporter class about itself, is what tells the sender.
+    by the reporter class about itself, tells the sender what that is.
     """
 
     debug_info: bool  # resolve the debug callable into `ProgressSnapshot.debug_info`
@@ -149,7 +151,7 @@ class ProgressReporter(ABC):
 
     @property
     def snapshot_requirements(self) -> SnapshotRequirements | None:
-        """Return what to materialize in snapshots built out of this reporter's sight.
+        """Return what to materialize in snapshots built in another process for this reporter.
 
         `None` means the reporter renders nothing at all, so no snapshots need to reach it. The
         default declares a renderer that shows progress but neither the selection hash nor debug
@@ -211,8 +213,8 @@ class ProgressReporter(ABC):
         """Render a snapshot that must not be throttled away, set off from the regular stream.
 
         A parallel solve emits one per finishing worker, so that worker's final state is visible in
-        scrollback no matter what later rows show. Rendered by default as nothing: only renderers
-        with a way to set a row apart (the table) override this.
+        scrollback no matter what later rows show. The default renders nothing; only renderers with a
+        way to set a row apart (the table) override this.
         """
 
     # -------------------------------------------------------------------------
@@ -258,9 +260,7 @@ class ProgressReporter(ABC):
     def from_verbosity(cls, verbosity: int | Verbosity, worker_columns: bool = False) -> ProgressReporter:
         """Create the reporter for a verbosity level; the integer levels are decoded only here.
 
-        Accepts the `Verbosity` members or their plain integer values: 0 = silent, 10 = tqdm progress
-        bar, 20-23 = progress table from slowest to fastest update cadence, 25 = fastest cadence plus
-        a debug-info column.
+        Accepts the `Verbosity` members or their plain integer values.
 
         :param worker_columns: If `True`, a tabular reporter is laid out for a multi-worker solve;
                                the other reporters render identically either way.
@@ -362,16 +362,7 @@ class TabularProgressReporter(ProgressReporter):
     def __init__(self, c_slowdown: float = 1.05, debug_info: bool = False, worker_columns: bool = False) -> None:
         """Initializes a TabularProgressReporter.
 
-        :param c_slowdown: Factor by which to slow down reporting frequency:
-
-            Updates are shown only when both
-               a) time elapsed since last report exceeds a threshold
-                    0.1sec initially, increasing to 1.0sec eventually
-               b) number of iterations since start has exceeded a threshold
-                    increasing with factor c_slowdown each report
-
-            c_slowdown influences how quickly both increase.  The closer to 1.0, the more frequents updates keep coming.
-
+        :param c_slowdown: Update-thinning factor; see `ReportThrottle`.
         :param debug_info: If `True`, includes additional column with solver step debug info.
         :param worker_columns: If `True`, lay the table out for a multi-worker solve: a worker column
                                and an active-worker count replace the per-step columns, which have no

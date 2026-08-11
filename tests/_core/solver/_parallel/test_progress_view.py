@@ -12,7 +12,7 @@ from max_div._core.solver._solution import MaxDivSolution
 
 
 class _RecordingReporter(ProgressReporter):
-    """A reporter that records every rendered snapshot, so tests can inspect the composites."""
+    """A recording reporter stores every rendered snapshot, so tests can inspect the composites."""
 
     def __init__(self) -> None:
         super().__init__()

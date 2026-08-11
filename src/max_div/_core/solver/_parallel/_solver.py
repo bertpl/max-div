@@ -55,10 +55,9 @@ class ParallelMaxDivSolver:
         The distances are built once, into shared memory, and released when the last worker is done.
 
         :param verbosity: (int | Verbosity) The verbosity level, with the same levels as a single
-                          solve (see `MaxDivSolver.solve`), rendered as one combined live view:
-                          overall progress follows the slowest still-running worker, and the result
-                          columns show the best score found so far with the worker it came from.
-                          Defaults to the progress table, the level suited to longer runs.
+                          solve (see `Verbosity`), rendered as one combined live view over all
+                          workers (see `ParallelProgressView`). Defaults to the progress table, the
+                          level suited to longer runs.
         :raises ValueError: If no worker reported a result, which means every one of them failed.
         """
         progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)
