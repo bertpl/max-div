@@ -153,7 +153,7 @@ class ProgressReporter(ABC):
 
     @classmethod
     def from_verbosity(cls, verbosity: int) -> ProgressReporter:
-        """Create the reporter a verbosity level names; nothing else decodes the integer levels.
+        """Create the reporter for a verbosity level; the integer levels are decoded only here.
 
         Levels: 0 = silent, 10 = tqdm progress bar, 20-23 = progress table from slowest to fastest
         update cadence, 25 = fastest cadence plus a debug-info column.
@@ -171,7 +171,6 @@ class ProgressReporter(ABC):
                     debug_info=False,
                 )
             case 25:
-                # fastest cadence, plus the debug-info column
                 return cls.tabular(c_slowdown=1.01, debug_info=True)
             case _:
                 raise ValueError(f"Invalid verbosity level: {verbosity}")
