@@ -91,24 +91,7 @@ class MaxDivSolver:
         # --- Init ----------------------------------------
 
         # --- progress reporting ---
-        match verbosity:
-            case 0:
-                progress_reporter = ProgressReporter.silent()
-            case 10:
-                progress_reporter = ProgressReporter.tqdm()
-            case 20 | 21 | 22 | 23:
-                progress_reporter = ProgressReporter.tabular(
-                    c_slowdown=[1.10, 1.05, 1.02, 1.01][verbosity - 20],
-                    debug_info=False,
-                )
-            case 25:
-                # same as 23, but with debug_info enabled
-                progress_reporter = ProgressReporter.tabular(
-                    c_slowdown=1.01,
-                    debug_info=True,
-                )
-            case _:
-                raise ValueError(f"Invalid verbosity level: {verbosity}")
+        progress_reporter = ProgressReporter.from_verbosity(verbosity)
 
         # --- solver steps ---
         n_steps = len(self._solver_steps)

@@ -43,6 +43,7 @@ class DummySolverState:
     def __init__(self, n: int, k: int):
         self.n = n
         self.k = k
+        self.m = 0
         self.n_selected = 0
         self.score = Mock()
 
@@ -53,7 +54,13 @@ class DummySolverState:
         self.n_selected += len(samples)
 
     @property
+    def selected_index_array(self):
+        """Return the indices currently counted as selected."""
+        return np.arange(self.n_selected, dtype=np.int32)
+
+    @property
     def not_selected_index_array(self):
+        """Return the indices not currently counted as selected."""
         return np.arange(self.n, dtype=np.int32)[self.n_selected :]
 
 
