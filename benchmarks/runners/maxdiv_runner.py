@@ -3,7 +3,7 @@
 from benchmarks.common.quality import evaluate_selection, n_constraints_satisfied
 from benchmarks.common.records import RunRecord
 from max_div.problem import MaxDivProblem
-from max_div.solver import MaxDivSolverBuilder, SolverPreset, TargetDuration, iterations, seconds
+from max_div.solver import MaxDivSolverBuilder, SolverPreset, TargetDuration, Verbosity, iterations, seconds
 
 
 def run_maxdiv_ladder(
@@ -39,7 +39,7 @@ def run_maxdiv_ladder(
     for budget_tag, target in budgets:
         for seed in seeds:
             solver = MaxDivSolverBuilder(problem).with_preset(target, preset).with_seed(seed).build()
-            solution = solver.solve(verbosity=0)
+            solution = solver.solve(verbosity=Verbosity.SILENT)
             elapsed = solution.duration
             records.append(
                 RunRecord(

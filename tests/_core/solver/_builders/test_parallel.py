@@ -7,6 +7,7 @@ from max_div._core.solver._builders import MaxDivSolverBuilder, ParallelMaxDivSo
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import ParallelMaxDivSolution, WorkerConfig, default_worker_count
 from max_div._core.solver._presets import SolverPreset
+from max_div._core.solver._progress_reporting import Verbosity
 from max_div._core.solver._strategies import InitializationStrategy
 
 _BUDGET = iterations(120)
@@ -108,7 +109,7 @@ def test_a_worker_can_be_replayed_on_its_own():
         .with_preset(_BUDGET, winner.config.preset)
         .with_seed(winner.seed)
         .build()
-        .solve(verbosity=0)
+        .solve(verbosity=Verbosity.SILENT)
     )
 
     # --- assert ------------------------------------------

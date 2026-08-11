@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Parallel solving can report live progress at the same verbosity levels as a single solve: one non-interleaved view showing overall progress and the best result found so far, tagged with the worker that produced it; a `Verbosity` enum now names the levels for both solvers (plain integers keep working)
 
 ### Changed
 

@@ -190,6 +190,21 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
 
+### Watching Progress
+
+`solve(verbosity=...)` takes the same levels as a single solve (see `Verbosity`), rendered as **one
+combined live view** rather than N interleaved streams; the default is the progress table, the level
+suited to longer runs. A row combines two halves with different sources:
+
+- **Progress** (the fraction, iteration count and elapsed time) follows the *slowest still-running
+  worker* — it tracks when `solve()` will return, and reaches 100% exactly when it does.
+- **The result columns** show the *best score found so far* by any worker, running or finished,
+  with the `Worker` column naming the worker it came from (marked `✓` once that worker finished).
+
+So a frozen best while progress keeps advancing simply means the leading worker is done and nobody
+has beaten it yet — the `Active` column shows how many workers are still trying. Each worker prints
+one set-off row with its final state the moment it finishes.
+
 ### On the Word "Portfolio"
 
 Running several configurations of one solver concurrently and keeping the best is known as an

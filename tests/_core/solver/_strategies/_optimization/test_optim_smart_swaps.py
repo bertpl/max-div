@@ -3,7 +3,7 @@ import numpy as np
 from max_div._core.constraints import Constraint
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
-from max_div.solver import MaxDivSolverBuilder, SolverPreset, iterations
+from max_div.solver import MaxDivSolverBuilder, SolverPreset, Verbosity, iterations
 
 
 def test_smart_preset_survives_tiny_problem_full_swap():
@@ -23,7 +23,7 @@ def test_smart_preset_survives_tiny_problem_full_swap():
     solver = MaxDivSolverBuilder(problem).with_preset(iterations(800), SolverPreset.SMART).with_seed(0).build()
 
     # --- act ---------------------------------------------
-    solution = solver.solve(verbosity=0)
+    solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert ------------------------------------------
     assert len(solution.i_selected) == 6

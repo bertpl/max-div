@@ -10,6 +10,7 @@ from max_div._core.solver import (
     MaxDivSolver,
     MaxDivSolverBuilder,
     SolverPreset,
+    Verbosity,
     iterations,
     seconds,
 )
@@ -221,7 +222,7 @@ def test_max_div_solver_quadratic_penalty_end_to_end():
     ).build()
 
     # --- act ---------------------------------------------
-    result = solver.solve(verbosity=0)
+    result = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert ------------------------------------------
     assert len(result.i_selected) == problem.k
@@ -259,7 +260,7 @@ def test_max_div_solver_builder_preset(problem_name: str, size: int, preset: Sol
             preset=preset,
         )
     ).build()
-    result = solver.solve(verbosity=25)
+    result = solver.solve(verbosity=Verbosity.TABULAR_DEBUG)
 
     # --- assert ------------------------------------------
     score_after_initialization = result.score_checkpoints[1][2]

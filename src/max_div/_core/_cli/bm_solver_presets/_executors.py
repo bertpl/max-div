@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DiversityMetric
-from max_div._core.solver import MaxDivSolverBuilder
+from max_div._core.solver import MaxDivSolverBuilder, Verbosity
 
 from ._models import SolverPresetBenchmarkExecutionInfo, SolverPresetBenchmarkParams, SolverPresetBenchmarkResult
 from ._utils import get_pbar_units
@@ -69,7 +69,7 @@ def _execute_single_run(params: SolverPresetBenchmarkParams) -> SolverPresetBenc
     )
 
     # --- solve -------------------------------------------
-    result = solver.solve(verbosity=0)
+    result = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- return result -----------------------------------
     return SolverPresetBenchmarkResult(

@@ -1,3 +1,5 @@
+import queue
+
 import numpy as np
 import pytest
 
@@ -6,7 +8,11 @@ from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._distance_storage import build_shared_distance_store
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import IndependentCoordinator, best_result, run_portfolio
+from max_div._core.solver._parallel._executor import _drain, _notice_dead_workers, solve_in_worker
+from max_div._core.solver._parallel._progress_view import ParallelProgressView
+from max_div._core.solver._parallel._result import WorkerResult
 from max_div._core.solver._presets import SolverPreset
+from max_div._core.solver._progress_reporting import ProgressReporter, SnapshotRequirements, Verbosity
 
 _SEEDS = (11, 22, 33)
 
@@ -53,7 +59,7 @@ def test_a_worker_reproduces_the_same_solve_run_alone(portfolio_results):
     builder, results = portfolio_results
 
     # --- act ---------------------------------------------
-    alone = builder.with_seed(_SEEDS[0]).build().solve(verbosity=0)
+    alone = builder.with_seed(_SEEDS[0]).build().solve(verbosity=Verbosity.SILENT)
 
     # --- assert ------------------------------------------
     np.testing.assert_array_equal(np.sort(results[0].i_selected), np.sort(alone.i_selected))
@@ -67,3 +73,96 @@ def test_the_best_reported_result_wins(portfolio_results):
 
     # --- assert ------------------------------------------
     assert winner.score == max(result.score for result in results)
+
+
+def test_portfolio_renders_coherent_progress(capsys):
+    """A rendered portfolio prints one non-interleaved table and still collects every result."""
+    # --- arrange -----------------------------------------
+    builder = _builder()
+    resolved, config = builder.prepare_storage_and_config()
+    reporter = ProgressReporter.from_verbosity(Verbosity.TABULAR, worker_columns=True)
+
+    # --- act ---------------------------------------------
+    with build_shared_distance_store(builder._problem, resolved) as shared:
+        results = run_portfolio(
+            [config.with_seed(seed) for seed in _SEEDS],
+            shared.spec,
+            IndependentCoordinator(),
+            progress_reporter=reporter,
+        )
+
+    # --- assert ------------------------------------------
+    assert len(results) == len(_SEEDS)
+    lines = capsys.readouterr().out.splitlines()
+    table_lines = [line for line in lines if line.startswith("|")]
+    assert lines == [line for line in lines if line.startswith("|")]  # nothing but table lines: no interleaving
+    assert "Worker" in table_lines[0]
+    assert "Active" in table_lines[0]
+    assert sum("✓" in line for line in table_lines) >= len(_SEEDS)  # every worker got its finishing row
+
+
+def test_solve_in_worker_runs_in_process():
+    """The worker entry point solves and reports, with and without a forwarding reporter."""
+    # --- arrange -----------------------------------------
+    builder = _builder()
+    resolved, config = builder.prepare_storage_and_config()
+    messages = queue.Queue()
+    requirements = SnapshotRequirements(debug_info=False, selection_hash=True)
+
+    # --- act ---------------------------------------------
+    with build_shared_distance_store(builder._problem, resolved) as shared:
+        solve_in_worker(0, config.with_seed(1), shared.spec, IndependentCoordinator(), messages, None)
+        solve_in_worker(1, config.with_seed(2), shared.spec, IndependentCoordinator(), messages, requirements)
+
+    # --- assert ------------------------------------------
+    received = []
+    while not messages.empty():
+        received.append(messages.get_nowait())
+    results = [message for message in received if isinstance(message, WorkerResult)]
+    snapshots = [message for message in received if not isinstance(message, WorkerResult)]
+    assert [result.worker_index for result in results] == [0, 1]
+    assert len(snapshots) > 0  # only the forwarding-reporter run produced snapshots
+    assert all(snapshot.worker_index == 1 for snapshot in snapshots)
+
+
+class _StubWorker:
+    """A stand-in for a worker process with a fixed liveness answer."""
+
+    def __init__(self, alive: bool) -> None:
+        self._alive = alive
+
+    def is_alive(self) -> bool:
+        return self._alive
+
+
+def test_drain_collects_in_flight_results_of_dead_workers():
+    """Results still in the queue after every worker exited are collected, not lost."""
+    # --- arrange -----------------------------------------
+    builder = _builder()
+    resolved, config = builder.prepare_storage_and_config()
+    messages = queue.Queue()
+    with build_shared_distance_store(builder._problem, resolved) as shared:
+        solve_in_worker(0, config.with_seed(1), shared.spec, IndependentCoordinator(), messages, None)
+    workers = [_StubWorker(alive=False), _StubWorker(alive=False)]  # worker 1 died without reporting
+
+    # --- act ---------------------------------------------
+    collected = _drain(messages, workers, view=None)
+
+    # --- assert ------------------------------------------
+    assert [result.worker_index for result in collected] == [0]
+
+
+def test_dead_workers_are_reported_to_the_view_once():
+    """A worker that stopped without a result is reported dead to the view, exactly once."""
+    # --- arrange -----------------------------------------
+    reporter = ProgressReporter.from_verbosity(Verbosity.TABULAR, worker_columns=True)
+    view = ParallelProgressView(reporter, n_workers=2)
+    workers = [_StubWorker(alive=True), _StubWorker(alive=False)]
+    reported_dead: set[int] = set()
+
+    # --- act ---------------------------------------------
+    _notice_dead_workers(workers, [], reported_dead, view)
+    _notice_dead_workers(workers, [], reported_dead, view)
+
+    # --- assert ------------------------------------------
+    assert reported_dead == {1}

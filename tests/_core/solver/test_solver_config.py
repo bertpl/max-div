@@ -6,6 +6,7 @@ from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._distance_storage import DistanceStorage, build_distance_store
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._presets import SolverPreset
+from max_div._core.solver._progress_reporting import Verbosity
 from max_div._core.solver._solver import MaxDivSolver
 
 
@@ -42,7 +43,7 @@ def test_a_config_builds_a_solver_over_any_store():
 
     # --- assert ------------------------------------------
     assert isinstance(solver, MaxDivSolver)
-    assert solver.solve(verbosity=0).i_selected.size == 4
+    assert solver.solve(verbosity=Verbosity.SILENT).i_selected.size == 4
 
 
 def test_with_seed_changes_only_the_seed():
@@ -63,7 +64,7 @@ def test_with_seed_changes_only_the_seed():
 def test_build_produces_a_working_solver():
     """`build` produces a solver over a store it built itself."""
     # --- arrange / act -----------------------------------
-    solution = _builder().with_seed(5).build().solve(verbosity=0)
+    solution = _builder().with_seed(5).build().solve(verbosity=Verbosity.SILENT)
 
     # --- assert ------------------------------------------
     assert solution.i_selected.size == 4
