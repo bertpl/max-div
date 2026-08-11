@@ -92,3 +92,13 @@ def warn_about_worker_count(n_workers: int) -> None:
             ParallelSolvingWarning,
             stacklevel=3,
         )
+
+
+def default_worker_count() -> int:
+    """Return the default portfolio size when the caller names none: half the logical cores, at least 2.
+
+    Half the logical count is the physical-core count on 2-way-SMT machines — the cores a compute- and
+    bandwidth-bound solve can actually use — and a conservative half on machines without SMT, so it
+    never oversubscribes real cores. An explicit count on `with_workers` overrides it.
+    """
+    return max(2, (os.cpu_count() or 2) // 2)
