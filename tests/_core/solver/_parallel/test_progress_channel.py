@@ -46,9 +46,12 @@ def test_forwarded_snapshot_is_materialized():
     forwarded = messages.get_nowait()
     assert forwarded.worker_index == 3
     assert forwarded.selection is None
-    assert isinstance(forwarded.selection_hash, str) and len(forwarded.selection_hash) > 0
+    assert isinstance(forwarded.selection_hash, str)
+    assert len(forwarded.selection_hash) > 0
     assert forwarded.debug_info == "dbg"
-    assert type(forwarded.n_selected) is int and type(forwarded.k) is int and type(forwarded.m) is int
+    assert type(forwarded.n_selected) is int
+    assert type(forwarded.k) is int
+    assert type(forwarded.m) is int
     assert forwarded.score == _snapshot().score
 
 

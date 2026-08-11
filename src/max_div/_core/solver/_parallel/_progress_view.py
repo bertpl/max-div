@@ -53,16 +53,16 @@ class ParallelProgressView:
         if snapshot.worker_index is None:
             return  # not attributable to a worker; nothing to fold it into
         self._latest[snapshot.worker_index] = snapshot
-        if self._is_new_best(snapshot):
-            self._best = snapshot
-        self._reporter.show_update(self._composite())
+        best = snapshot if ((self._best is None) or self._beats(snapshot, self._best)) else self._best
+        self._best = best
+        self._reporter.show_update(self._composite(best))
 
     def on_worker_finished(self, result: WorkerResult) -> None:
         """Mark the worker finished and render its final state as an unthrottled milestone row."""
         self._finished.add(result.worker_index)
         final = self._latest.get(result.worker_index)
         if final is not None:
-            self._reporter.show_milestone(self._composite(result_half=final))
+            self._reporter.show_milestone(self._composite(final))
 
     def on_worker_died(self, worker_index: int) -> None:
         """Drop a dead worker from the progress half, so the view keeps advancing without it."""
@@ -71,26 +71,22 @@ class ParallelProgressView:
     def finish(self) -> None:
         """Render the closing composite row; called once, after the last worker reported or died."""
         if self._best is not None:
-            self._reporter.show_step_finished(self._composite())
+            self._reporter.show_step_finished(self._composite(self._best))
 
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
-    def _is_new_best(self, snapshot: ProgressSnapshot) -> bool:
-        """Return whether this snapshot takes the result half: better score, ties to the lowest worker."""
-        if self._best is None:
-            return True
-        if snapshot.worker_index == self._best.worker_index:
+    @staticmethod
+    def _beats(challenger: ProgressSnapshot, incumbent: ProgressSnapshot) -> bool:
+        """Return whether the challenger takes the result half: better score, ties to the lowest worker."""
+        if challenger.worker_index == incumbent.worker_index:
             return True  # newer state of the same worker; its score never regresses
-        candidate = (snapshot.score, -snapshot.worker_index)  # ty: ignore[unsupported-operator]  # worker_index is set on every forwarded snapshot
-        incumbent = (self._best.score, -self._best.worker_index)  # ty: ignore[unsupported-operator]  # (same)
-        return candidate > incumbent
+        challenger_key = (challenger.score, -challenger.worker_index)  # ty: ignore[unsupported-operator]  # worker_index is set on every forwarded snapshot
+        incumbent_key = (incumbent.score, -incumbent.worker_index)  # ty: ignore[unsupported-operator]  # (same)
+        return challenger_key > incumbent_key
 
-    def _composite(self, result_half: ProgressSnapshot | None = None) -> ProgressSnapshot:
-        """Compose min-progress across live workers with the best (or given) result into one snapshot."""
-        result = result_half if (result_half is not None) else self._best
-        assert result is not None  # every caller renders only after at least one snapshot arrived
-
+    def _composite(self, result: ProgressSnapshot) -> ProgressSnapshot:
+        """Compose min-progress across live workers with the given result half into one snapshot."""
         # --- progress half: the slowest live worker ------
         live = [i for i in range(self._n_workers) if (i not in self._finished) and (i not in self._dead)]
         if live:
