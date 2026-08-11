@@ -6,8 +6,8 @@ from max_div._core._utils import BenchmarkResult, benchmark
 
 # The benchmark harness adds a fixed per-call cost (function call, timer reads) on top of the timed
 # work — an absolute error that on slow CI runners approaches the smallest workload here. The median
-# ceiling below allows for it additively; a purely multiplicative bound would demand the overhead
-# shrink with the workload.
+# ceiling below allows for that overhead additively; a purely multiplicative bound would demand the
+# overhead shrink with the workload.
 _T_OVERHEAD_ALLOWANCE_SEC = 30e-6
 
 
