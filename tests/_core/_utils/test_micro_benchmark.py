@@ -5,10 +5,9 @@ import pytest
 from max_div._core._utils import BenchmarkResult, benchmark
 
 # The benchmark harness adds a fixed per-call cost (function call, timer reads) on top of the timed
-# work itself. That cost is an ABSOLUTE error, so the median bound below allows for it additively —
-# a purely multiplicative bound would demand the overhead shrink with the workload, which is what
-# made the smallest workload fail on slow CI runners (~10 µs of overhead observed on a 10 µs spin,
-# breaching the 2x ceiling on every same-runner rerun).
+# work — an absolute error that on slow CI runners approaches the smallest workload here. The median
+# ceiling below allows for it additively; a purely multiplicative bound would demand the overhead
+# shrink with the workload.
 _T_OVERHEAD_ALLOWANCE_SEC = 30e-6
 
 
