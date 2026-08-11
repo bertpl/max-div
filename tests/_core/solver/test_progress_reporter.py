@@ -16,7 +16,7 @@ from max_div._core.solver._score import Score
 
 
 def _stub_state(n_selected: int = 3, k: int = 5, m: int = 2) -> SimpleNamespace:
-    """A stand-in for SolverState carrying just the fields snapshot building reads."""
+    """Return a stand-in for SolverState carrying just the fields snapshot building reads."""
     return SimpleNamespace(
         score=Score(size=1.0, constraints=0.5, diversity=0.25, div_tie_breakers=()),
         n_selected=n_selected,
@@ -27,7 +27,7 @@ def _stub_state(n_selected: int = 3, k: int = 5, m: int = 2) -> SimpleNamespace:
 
 
 def _stub_progress(iter_count: int = 7) -> Progress:
-    """A Progress with fixed, easily recognizable values."""
+    """Return a Progress with fixed, easily recognizable values."""
     return Progress(
         tqdm_n_total=100,
         fraction=0.42,
@@ -38,7 +38,7 @@ def _stub_progress(iter_count: int = 7) -> Progress:
 
 
 class _RecordingProgressReporter(ProgressReporter):
-    """Renders nothing; records every show_* call so tests can inspect the snapshots built."""
+    """A reporter that renders nothing and records every show_* call, so tests can inspect the snapshots built."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -116,6 +116,7 @@ def test_from_verbosity(
     expected_c_slowdown: float | None,
     expected_debug_info: bool | None,
 ):
+    """Each verbosity level maps to the expected reporter class and settings."""
     # --- act ---------------------------------------------
     reporter = ProgressReporter.from_verbosity(verbosity)
 
@@ -128,6 +129,7 @@ def test_from_verbosity(
 
 @pytest.mark.parametrize("verbosity", [-1, 1, 11, 24, 26, 42])
 def test_from_verbosity_invalid_level(verbosity: int):
+    """An unknown verbosity level raises ValueError."""
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):
         ProgressReporter.from_verbosity(verbosity)

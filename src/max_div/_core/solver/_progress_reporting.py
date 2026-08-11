@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
 class ProgressSnapshot:
-    """What a reporter can show about one moment of a solve, detached from the solver's live state.
+    """A snapshot records what a reporter can show about one moment of a solve, detached from its live state.
 
     `ProgressReporter` builds one per reporting call and hands it to the rendering methods, so
     renderers never read `SolverState` — a snapshot is self-contained and stays meaningful outside
@@ -52,7 +52,7 @@ class ProgressSnapshot:
 #  Base class
 # =================================================================================================
 class ProgressReporter(ABC):
-    """Reports solver progress; subclasses are pure renderers of `ProgressSnapshot`s.
+    """A progress reporter shows the progress of a running solve; subclasses render `ProgressSnapshot`s.
 
     The solver and its steps call the `solver_step_*`/`update` methods with live state; this base
     class owns the clocks, builds the snapshot, and delegates to the `show_*` methods. Renderers
@@ -83,10 +83,7 @@ class ProgressReporter(ABC):
         *,
         ignore_infeasible_diversity: bool = False,
     ) -> None:
-        """Report current progress and state to the renderer.
-
-        Renderers can choose to not show certain updates they receive, if they come too frequently.
-        """
+        """Report current progress and state to the renderer."""
         self.show_update(self._build_snapshot(progress, state, ignore_infeasible_diversity), get_debug_info)
 
     def solver_step_finished(
@@ -156,7 +153,7 @@ class ProgressReporter(ABC):
 
     @classmethod
     def from_verbosity(cls, verbosity: int) -> ProgressReporter:
-        """Create the reporter a verbosity level names; the only place the integer scheme is decoded.
+        """Create the reporter a verbosity level names; nothing else decodes the integer levels.
 
         Levels: 0 = silent, 10 = tqdm progress bar, 20-23 = progress table from slowest to fastest
         update cadence, 25 = fastest cadence plus a debug-info column.
@@ -174,7 +171,7 @@ class ProgressReporter(ABC):
                     debug_info=False,
                 )
             case 25:
-                # same as 23, but with debug_info enabled
+                # fastest cadence, plus the debug-info column
                 return cls.tabular(c_slowdown=1.01, debug_info=True)
             case _:
                 raise ValueError(f"Invalid verbosity level: {verbosity}")
@@ -199,7 +196,7 @@ class SilentProgressReporter(ProgressReporter):
 #  TQDM
 # =================================================================================================
 class TqdmProgressReporter(ProgressReporter):
-    """A progress reporter showing one tqdm progress bar per solver step."""
+    """A progress reporter that shows one tqdm progress bar per solver step."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -246,7 +243,7 @@ class TqdmProgressReporter(ProgressReporter):
 #  Tabular
 # =================================================================================================
 class TabularProgressReporter(ProgressReporter):
-    """A progress reporter printing one table row per (throttled) update."""
+    """A progress reporter that prints one table row per (throttled) update."""
 
     # -------------------------------------------------------------------------
     #  Constructor

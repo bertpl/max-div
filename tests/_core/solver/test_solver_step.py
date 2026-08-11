@@ -55,10 +55,12 @@ class DummySolverState:
 
     @property
     def selected_index_array(self):
+        """Return the indices currently counted as selected."""
         return np.arange(self.n_selected, dtype=np.int32)
 
     @property
     def not_selected_index_array(self):
+        """Return the indices not currently counted as selected."""
         return np.arange(self.n, dtype=np.int32)[self.n_selected :]
 
 
