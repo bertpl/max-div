@@ -6,7 +6,12 @@ from typing import Self
 from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._duration import TargetDuration
-from max_div._core.solver._parallel import ParallelMaxDivSolver, WorkerConfig, warn_about_worker_count
+from max_div._core.solver._parallel import (
+    ParallelMaxDivSolver,
+    WorkerConfig,
+    default_worker_count,
+    warn_about_worker_count,
+)
 from max_div._core.solver._presets import get_preset_strategies
 from max_div._core.solver._solver_config import SolverConfig
 from max_div._core.solver._solver_step import InitializationStep
@@ -36,7 +41,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     # -------------------------------------------------------------------------
     #  Builder API
     # -------------------------------------------------------------------------
-    def with_workers(self, target_duration: TargetDuration, workers: int | Sequence[WorkerConfig]) -> Self:
+    def with_workers(
+        self, target_duration: TargetDuration, workers: int | Sequence[WorkerConfig] | None = None
+    ) -> Self:
         """Set what the portfolio runs, and for how long each worker runs it.
 
         The workers run side by side, so the portfolio takes as long as one of them rather than the
@@ -44,9 +51,11 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         budget keeps them to the same real time where an iteration count would not.
 
         :param workers: an integer runs the default configuration that many times; a sequence gives
-                        one configuration per worker.
+                        one configuration per worker; omitting it uses `default_worker_count()`.
         """
         self._target_duration = target_duration
+        if workers is None:
+            workers = default_worker_count()
         self._worker_configs = [WorkerConfig() for _ in range(workers)] if isinstance(workers, int) else list(workers)
         return self
 

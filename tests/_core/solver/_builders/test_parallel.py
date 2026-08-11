@@ -5,7 +5,7 @@ from max_div._core._warnings import ParallelSolvingWarning
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder, ParallelMaxDivSolverBuilder
 from max_div._core.solver._duration import iterations
-from max_div._core.solver._parallel import ParallelMaxDivSolution, WorkerConfig
+from max_div._core.solver._parallel import ParallelMaxDivSolution, WorkerConfig, default_worker_count
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._strategies import InitializationStrategy
 
@@ -140,3 +140,31 @@ def test_building_without_workers_is_rejected():
     # --- arrange / act / assert --------------------------
     with pytest.raises(ValueError, match="needs workers"):
         ParallelMaxDivSolverBuilder(_problem()).build()
+
+
+# =================================================================================================
+#  Default worker count
+# =================================================================================================
+def test_omitting_the_count_uses_the_default(monkeypatch: pytest.MonkeyPatch):
+    """With no worker count given, the portfolio runs half the logical cores (here 8/2 = 4)."""
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr("max_div._core.solver._parallel._solver.os.cpu_count", lambda: 8)
+
+    # --- act ---------------------------------------------
+    solution = ParallelMaxDivSolverBuilder(_problem()).with_seed(5).with_workers(_BUDGET).build().solve()
+
+    # --- assert ------------------------------------------
+    assert len(solution.workers) == 4
+
+
+@pytest.mark.parametrize(
+    "logical,expected",
+    [(16, 8), (12, 6), (8, 4), (4, 2), (2, 2), (1, 2), (None, 2)],
+)
+def test_default_worker_count_is_half_the_cores_at_least_two(monkeypatch: pytest.MonkeyPatch, logical, expected):
+    """The count is half the logical cores, floored at two; an unknown core count also falls back to two."""
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr("max_div._core.solver._parallel._solver.os.cpu_count", lambda: logical)
+
+    # --- act / assert ------------------------------------
+    assert default_worker_count() == expected
