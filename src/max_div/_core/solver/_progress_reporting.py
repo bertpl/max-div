@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import sys
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from time import perf_counter
 from typing import TYPE_CHECKING
 
@@ -18,39 +19,122 @@ if TYPE_CHECKING:
     from numpy._typing import NDArray
 
     from max_div._core.solver._duration import Progress
+    from max_div._core.solver._score import Score
     from max_div._core.solver._solver_state import SolverState
+
+
+# =================================================================================================
+#  ProgressSnapshot
+# =================================================================================================
+@dataclass(frozen=True, slots=True)
+class ProgressSnapshot:
+    """What a reporter can show about one moment of a solve, detached from the solver's live state.
+
+    `ProgressReporter` builds one per reporting call and hands it to the rendering methods, so
+    renderers never read `SolverState` — a snapshot is self-contained and stays meaningful outside
+    the solve that produced it. The selection is held by reference (never copied), keeping
+    construction cheap on the many updates that are throttled away without being shown.
+    """
+
+    step_name: str  # name of the solver step this snapshot was taken in
+    progress: Progress | None  # step progress; None when the step reports none (solver-state init)
+    t_elapsed_solver: float  # seconds since the first step started
+    t_elapsed_step: float  # seconds since the current step started
+    score: Score
+    n_selected: int | np.integer
+    k: int | np.integer
+    m: int | np.integer  # number of constraints
+    selection: NDArray[np.int32]  # currently selected indices, by reference into the live state
+    ignore_infeasible_diversity: bool  # render diversity as not-yet-meaningful while infeasible
 
 
 # =================================================================================================
 #  Base class
 # =================================================================================================
 class ProgressReporter(ABC):
-    @abstractmethod
-    def solver_step_started(self, step_name: str) -> None:
-        """Notify that a new solver step with the provided name has started."""
+    """Reports solver progress; subclasses are pure renderers of `ProgressSnapshot`s.
 
-    @abstractmethod
+    The solver and its steps call the `solver_step_*`/`update` methods with live state; this base
+    class owns the clocks, builds the snapshot, and delegates to the `show_*` methods. Renderers
+    therefore work from snapshots alone and can be driven without a solver attached.
+    """
+
+    def __init__(self) -> None:
+        self._t_start_solver = -1.0
+        self._t_start_step = 0.0
+        self._step_name = ""
+
+    # -------------------------------------------------------------------------
+    #  Main API (called by the solver and its steps)
+    # -------------------------------------------------------------------------
+    def solver_step_started(self, step_name: str) -> None:
+        """Record that a new solver step with the provided name has started, and notify the renderer."""
+        self._step_name = step_name
+        self._t_start_step = perf_counter()
+        if self._t_start_solver < 0:
+            self._t_start_solver = self._t_start_step
+        self.show_step_started(step_name)
+
     def update(
         self,
         progress: Progress,
         state: SolverState,
         get_debug_info: Callable[[], str] | None = None,
-        **kwargs: bool,
+        *,
+        ignore_infeasible_diversity: bool = False,
     ) -> None:
-        """Update progress reporter with current progress and state.
+        """Report current progress and state to the renderer.
 
-        Reporters can choose to not report certain updates they receive, if they come too frequently.
+        Renderers can choose to not show certain updates they receive, if they come too frequently.
         """
+        self.show_update(self._build_snapshot(progress, state, ignore_infeasible_diversity), get_debug_info)
 
-    @abstractmethod
     def solver_step_finished(
         self,
         progress: Progress | None,
         state: SolverState,
         get_debug_info: Callable[[], str] | None = None,
-        **kwargs: bool,
+        *,
+        ignore_infeasible_diversity: bool = False,
     ) -> None:
-        """Notify that the current solver step has finished."""
+        """Report that the current solver step has finished."""
+        self.show_step_finished(self._build_snapshot(progress, state, ignore_infeasible_diversity), get_debug_info)
+
+    # -------------------------------------------------------------------------
+    #  Rendering interface (implemented by subclasses, consuming snapshots only)
+    # -------------------------------------------------------------------------
+    @abstractmethod
+    def show_step_started(self, step_name: str) -> None:
+        """Render the start of a new solver step."""
+
+    @abstractmethod
+    def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
+        """Render a progress update, or skip it (e.g. when updates come too frequently)."""
+
+    @abstractmethod
+    def show_step_finished(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
+        """Render the end of the current solver step."""
+
+    # -------------------------------------------------------------------------
+    #  Internal
+    # -------------------------------------------------------------------------
+    def _build_snapshot(
+        self, progress: Progress | None, state: SolverState, ignore_infeasible_diversity: bool
+    ) -> ProgressSnapshot:
+        """Build a snapshot of the current progress and state, stamping the elapsed times."""
+        t_now = perf_counter()
+        return ProgressSnapshot(
+            step_name=self._step_name,
+            progress=progress,
+            t_elapsed_solver=t_now - self._t_start_solver,
+            t_elapsed_step=t_now - self._t_start_step,
+            score=state.score,
+            n_selected=state.n_selected,
+            k=state.k,
+            m=state.m,
+            selection=state.selected_index_array,
+            ignore_infeasible_diversity=ignore_infeasible_diversity,
+        )
 
     # -------------------------------------------------------------------------
     #  Factory methods
@@ -70,6 +154,31 @@ class ProgressReporter(ABC):
         """Create a tabular progress reporter."""
         return TabularProgressReporter(c_slowdown=c_slowdown, debug_info=debug_info)
 
+    @classmethod
+    def from_verbosity(cls, verbosity: int) -> ProgressReporter:
+        """Create the reporter a verbosity level names; the only place the integer scheme is decoded.
+
+        Levels: 0 = silent, 10 = tqdm progress bar, 20-23 = progress table from slowest to fastest
+        update cadence, 25 = fastest cadence plus a debug-info column.
+
+        :raises ValueError: If `verbosity` is not one of the levels above.
+        """
+        match verbosity:
+            case 0:
+                return cls.silent()
+            case 10:
+                return cls.tqdm()
+            case 20 | 21 | 22 | 23:
+                return cls.tabular(
+                    c_slowdown=[1.10, 1.05, 1.02, 1.01][verbosity - 20],
+                    debug_info=False,
+                )
+            case 25:
+                # same as 23, but with debug_info enabled
+                return cls.tabular(c_slowdown=1.01, debug_info=True)
+            case _:
+                raise ValueError(f"Invalid verbosity level: {verbosity}")
+
 
 # =================================================================================================
 #  Silent
@@ -77,16 +186,12 @@ class ProgressReporter(ABC):
 class SilentProgressReporter(ProgressReporter):
     """A progress reporter that is fully silent and doesn't output anything."""
 
-    def solver_step_started(self, step_name: str) -> None: ...  # no-op
-    def update(
-        self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
+    def show_step_started(self, step_name: str) -> None: ...  # no-op
+    def show_update(
+        self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None
     ) -> None: ...  # no-op
-    def solver_step_finished(
-        self,
-        progress: Progress | None,
-        state: SolverState,
-        get_debug_info: Callable[[], str] | None = None,
-        **kwargs: bool,
+    def show_step_finished(
+        self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None
     ) -> None: ...  # no-op
 
 
@@ -94,38 +199,32 @@ class SilentProgressReporter(ProgressReporter):
 #  TQDM
 # =================================================================================================
 class TqdmProgressReporter(ProgressReporter):
+    """A progress reporter showing one tqdm progress bar per solver step."""
+
     def __init__(self) -> None:
         super().__init__()
         self._current_step_name: str = ""
         self._current_pbar: tqdm | None = None
 
     # -------------------------------------------------------------------------
-    #  main API
+    #  Rendering interface
     # -------------------------------------------------------------------------
-    def solver_step_started(self, step_name: str) -> None:
+    def show_step_started(self, step_name: str) -> None:
         if (step_name != self._current_step_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
             self._current_pbar = tqdm(desc=f"{step_name} ", total=1, file=sys.stdout)  # initialize new pbar
             self._current_step_name = step_name
 
-    def update(
-        self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
-    ) -> None:
-        if self._current_pbar is not None:
+    def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
+        if (self._current_pbar is not None) and (snapshot.progress is not None):
             # ignore updates coming in before starting a new step or after finishing the current step
-            n = progress.tqdm_n_current
+            n = snapshot.progress.tqdm_n_current
             if n > self._current_pbar.n:
                 self._current_pbar.n = n
-                self._current_pbar.total = progress.tqdm_n_total
+                self._current_pbar.total = snapshot.progress.tqdm_n_total
                 self._current_pbar.refresh()
 
-    def solver_step_finished(
-        self,
-        progress: Progress | None,
-        state: SolverState,
-        get_debug_info: Callable[[], str] | None = None,
-        **kwargs: bool,
-    ) -> None:
+    def show_step_finished(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         self._close_current_pbar()
 
     # -------------------------------------------------------------------------
@@ -147,6 +246,8 @@ class TqdmProgressReporter(ProgressReporter):
 #  Tabular
 # =================================================================================================
 class TabularProgressReporter(ProgressReporter):
+    """A progress reporter printing one table row per (throttled) update."""
+
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
@@ -165,55 +266,42 @@ class TabularProgressReporter(ProgressReporter):
 
         :param debug_info: If `True`, includes additional column with solver step debug info.
         """
+        super().__init__()
+
         # settings
         self._c_slowdown = c_slowdown
         self._debug_info = debug_info
 
         self._progress_table: ProgressTable | None = None
-        self._step_name = ""
 
         # don't show next table line before passing both thresholds below:
-        self._next_report_t_elapsed: float = 0.0
+        self._next_report_t: float = 0.0
         self._next_report_iter: int = 0
-
-        # start times
-        self._t_start_solver = -1.0
-        self._t_start_step = 0.0
 
         # other stats
         self._n_progress_reports_this_step = 0
 
     # -------------------------------------------------------------------------
-    #  Main API
+    #  Rendering interface
     # -------------------------------------------------------------------------
-    def solver_step_started(self, step_name: str) -> None:
+    def show_step_started(self, step_name: str) -> None:
         # make sure table is initialized
-        self._step_name = step_name
         if not self._progress_table:
             self._initialize_table(step_name_width=len(step_name))
 
         # reset progress reporting thresholds
         self._n_progress_reports_this_step = 0
-        self._next_report_t: float = 0.0
-        self._next_report_iter: int = 0
+        self._next_report_t = 0.0
+        self._next_report_iter = 0
 
-        # record step start time
-        self._t_start_step = perf_counter()
-        if self._t_start_solver < 0:
-            self._t_start_solver = self._t_start_step
-
-    def update(
-        self, progress: Progress, state: SolverState, get_debug_info: Callable[[], str] | None = None, **kwargs: bool
-    ) -> None:
-        iter_now = progress.iter_count
-        t_now = perf_counter()
-        t_elapsed_step = t_now - self._t_start_step
+    def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
+        iter_now = snapshot.progress.iter_count if (snapshot.progress is not None) else 0
+        t_elapsed_step = snapshot.t_elapsed_step
 
         if (iter_now >= self._next_report_iter) and (t_elapsed_step >= self._next_report_t):
             # show table row
             debug_info = get_debug_info() if (self._debug_info and (get_debug_info is not None)) else ""
-            ignore_infeasible_diversity = kwargs.get("ignore_infeasible_diversity", False)
-            self._show_table_row(progress, state, debug_info, ignore_infeasible_diversity)
+            self._show_table_row(snapshot, debug_info)
             self._n_progress_reports_this_step += 1
 
             # update next report thresholds
@@ -221,17 +309,10 @@ class TabularProgressReporter(ProgressReporter):
             t_increment = min(1.0, 0.1 * (self._c_slowdown**self._n_progress_reports_this_step))
             self._next_report_t += t_increment * math.ceil((t_elapsed_step - self._next_report_t) / t_increment)
 
-    def solver_step_finished(
-        self,
-        progress: Progress | None,
-        state: SolverState,
-        get_debug_info: Callable[[], str] | None = None,
-        **kwargs: bool,
-    ) -> None:
+    def show_step_finished(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         # show final metrics + horizontal table line
         debug_info = get_debug_info() if (self._debug_info and (get_debug_info is not None)) else ""
-        ignore_infeasible_diversity = kwargs.get("ignore_infeasible_diversity", False)
-        self._show_table_row(progress, state, debug_info, ignore_infeasible_diversity)
+        self._show_table_row(snapshot, debug_info)
         self._show_table_line()
 
     # -------------------------------------------------------------------------
@@ -255,36 +336,28 @@ class TabularProgressReporter(ProgressReporter):
         )
         self._progress_table.show_header()
 
-    def _show_table_row(
-        self,
-        progress: Progress | None,
-        state: SolverState,
-        debug_info: str = "",
-        ignore_infeasible_diversity: bool = False,
-    ) -> None:
-        t_now = perf_counter()
-        t_elapsed_solver = t_now - self._t_start_solver
-        t_elapsed_step = t_now - self._t_start_step
-        score = state.score
+    def _show_table_row(self, snapshot: ProgressSnapshot, debug_info: str = "") -> None:
+        progress = snapshot.progress
+        score = snapshot.score
 
-        if ignore_infeasible_diversity and (score.constraints < 1.0):
+        if snapshot.ignore_infeasible_diversity and (score.constraints < 1.0):
             diversity_str = f"({score.diversity:.4e})"  # between brackets if we're ignoring it
         else:
             diversity_str = f"{score.diversity:.6e}"
 
-        self._progress_table.show_progress(  # ty: ignore[unresolved-attribute]  # table is initialized in solver_step_started before any row is shown
+        self._progress_table.show_progress(  # ty: ignore[unresolved-attribute]  # table is initialized in show_step_started before any row is shown
             values=[
-                format_long_time_duration(t_elapsed_solver, n_chars=8),
-                self._step_name,
+                format_long_time_duration(snapshot.t_elapsed_solver, n_chars=8),
+                snapshot.step_name,
                 f"{progress.fraction * 100:.2f}%" if progress else "",
                 f"{progress.iter_count:_}".rjust(10) if progress else "",
-                format_long_time_duration(t_elapsed_step, n_chars=8),
-                f"{state.n_selected:>6}/{state.k:>6}",
-                f"{score.constraints:.6f}" if (state.m > 0) else "/",
+                format_long_time_duration(snapshot.t_elapsed_step, n_chars=8),
+                f"{snapshot.n_selected:>6}/{snapshot.k:>6}",
+                f"{score.constraints:.6f}" if (snapshot.m > 0) else "/",
                 diversity_str,
                 self._get_selection_hash(
-                    selection=state.selected_index_array,  # create hash from currently selected indices...
-                    n=math.ceil((32 * state.n_selected) / state.k),  # ...of length proportional to selection size
+                    selection=snapshot.selection,  # create hash from currently selected indices...
+                    n=math.ceil((32 * snapshot.n_selected) / snapshot.k),  # ...of length proportional to selection size
                 ).ljust(32),
             ]
             + ([debug_info] if self._debug_info else [])
