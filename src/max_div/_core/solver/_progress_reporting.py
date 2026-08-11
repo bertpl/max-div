@@ -45,6 +45,16 @@ class Verbosity(IntEnum):
     TABULAR_DEBUG = 25
 
 
+# How quickly each tabular level's update cadence slows down; `from_verbosity` reads it, and the
+# worker-side forwarding cadence is derived from it, so these numbers have exactly one home.
+TABULAR_C_SLOWDOWNS: dict[Verbosity, float] = {
+    Verbosity.TABULAR: 1.10,
+    Verbosity.TABULAR_FAST: 1.05,
+    Verbosity.TABULAR_FASTER: 1.02,
+    Verbosity.TABULAR_FASTEST: 1.01,
+}
+
+
 # =================================================================================================
 #  ProgressSnapshot
 # =================================================================================================
@@ -273,12 +283,16 @@ class ProgressReporter(ABC):
                 return cls.tqdm()
             case 20 | 21 | 22 | 23:
                 return TabularProgressReporter(
-                    c_slowdown=[1.10, 1.05, 1.02, 1.01][verbosity - 20],
+                    c_slowdown=TABULAR_C_SLOWDOWNS[Verbosity(verbosity)],
                     debug_info=False,
                     worker_columns=worker_columns,
                 )
             case 25:
-                return TabularProgressReporter(c_slowdown=1.01, debug_info=True, worker_columns=worker_columns)
+                return TabularProgressReporter(
+                    c_slowdown=TABULAR_C_SLOWDOWNS[Verbosity.TABULAR_FASTEST],
+                    debug_info=True,
+                    worker_columns=worker_columns,
+                )
             case _:
                 raise ValueError(f"Invalid verbosity level: {verbosity}")
 

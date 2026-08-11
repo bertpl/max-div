@@ -16,6 +16,7 @@ from dataclasses import replace
 from multiprocessing.queues import Queue
 
 from max_div._core.solver._progress_reporting import (
+    TABULAR_C_SLOWDOWNS,
     ProgressReporter,
     ProgressSnapshot,
     ReportThrottle,
@@ -23,9 +24,10 @@ from max_div._core.solver._progress_reporting import (
     selection_hash_str,
 )
 
-# The forwarding cadence is the fastest any rendering reporter uses, so the parent's own display
-# throttle — not this one — decides the visible row spacing at every verbosity level.
-_FORWARD_C_SLOWDOWN = 1.01
+# The forwarding cadence is the fastest any rendering reporter uses — derived, so it stays that by
+# construction — and the parent's own display throttle, not this one, decides the visible row
+# spacing at every verbosity level.
+_FORWARD_C_SLOWDOWN = min(TABULAR_C_SLOWDOWNS.values())
 
 
 class ForwardingProgressReporter(ProgressReporter):
