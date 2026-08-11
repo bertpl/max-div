@@ -2,7 +2,7 @@ import click
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DiversityMetric
-from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, TargetDuration
+from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, TargetDuration, Verbosity
 
 from ._cli import cli
 
@@ -36,7 +36,7 @@ def solve(
     test_problem: str,
     iterations: int | None = None,
     seconds: float | None = None,
-    verbosity: int = 20,
+    verbosity: int = Verbosity.TABULAR,
     size: int = 10,
     preset: str = "default",
 ) -> None:

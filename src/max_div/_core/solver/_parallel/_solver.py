@@ -7,6 +7,7 @@ from dataclasses import fields
 from max_div._core._warnings import ParallelSolvingWarning
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._distance_storage import DistanceStorage, build_shared_distance_store
+from max_div._core.solver._progress_reporting import ProgressReporter, Verbosity
 from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
 
@@ -48,15 +49,25 @@ class ParallelMaxDivSolver:
     # -------------------------------------------------------------------------
     #  API
     # -------------------------------------------------------------------------
-    def solve(self) -> ParallelMaxDivSolution:
+    def solve(self, verbosity: int | Verbosity = Verbosity.TABULAR) -> ParallelMaxDivSolution:
         """Run every worker over one shared store and return the best result, with every worker summarized.
 
         The distances are built once, into shared memory, and released when the last worker is done.
 
+        :param verbosity: (int | Verbosity) The verbosity level, with the same levels as a single
+                          solve (see `Verbosity`), rendered as one combined live view over all
+                          workers (see `ParallelProgressView`). The default differs from a single
+                          solve's progress bar because parallel runs are typically longer.
         :raises ValueError: If no worker reported a result, which means every one of them failed.
         """
+        progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)
         with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:
-            results = run_portfolio(self._solver_configs, shared_distance_store.spec, IndependentCoordinator())
+            results = run_portfolio(
+                self._solver_configs,
+                shared_distance_store.spec,
+                IndependentCoordinator(),
+                progress_reporter=progress_reporter,
+            )
         winner = best_result(results)
         summaries = [
             WorkerSummary(

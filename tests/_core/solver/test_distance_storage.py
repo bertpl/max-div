@@ -6,7 +6,7 @@ from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import attached_distance_store, compute_pdist, get_distance
 from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver import MaxDivSolverBuilder, SolverPreset
+from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._distance_storage import (
     DistanceStorage,
     build_distance_store,
@@ -190,7 +190,7 @@ def test_every_backend_reaches_equivalent_quality(storage: DistanceStorage):
         .with_seed(7)
         .with_distance_storage(storage)
         .build()
-        .solve(verbosity=0)
+        .solve(verbosity=Verbosity.SILENT)
     )
 
     # --- assert ------------------------------------------
@@ -221,7 +221,7 @@ def test_every_backend_reaches_feasibility(storage: DistanceStorage):
         .with_seed(7)
         .with_distance_storage(storage)
         .build()
-        .solve(verbosity=0)
+        .solve(verbosity=Verbosity.SILENT)
     )
 
     # --- assert ------------------------------------------

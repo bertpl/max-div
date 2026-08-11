@@ -6,7 +6,7 @@ from max_div._core._utils import stdout_to_file
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver import MaxDivSolution, MaxDivSolverBuilder
+from max_div._core.solver import MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._duration import Elapsed, iterations
 from max_div._core.solver._score import Score
 
@@ -65,7 +65,7 @@ def test_solver_minimal(example_solver):
 
 def test_solver_solution_constraint_counts(example_solver):
     # --- act ---------------------------------------------
-    solution = example_solver.solve(verbosity=0)
+    solution = example_solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert ------------------------------------------
     assert solution.n_constraints == 2
@@ -129,7 +129,7 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
 
     # --- act ---------------------------------------------
     solutions = [
-        MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build().solve(verbosity=0)
+        MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
         for problem in (problem_vec, problem_dist)
     ]
 
@@ -147,8 +147,12 @@ def test_solver_deterministic_above_candidate_cap():
     problem = MaxDivProblem.new(vectors, k=10, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
 
     # --- act ---------------------------------------------
-    solution_1 = MaxDivSolverBuilder(problem).with_preset(iterations(100)).with_seed(7).build().solve(verbosity=0)
-    solution_2 = MaxDivSolverBuilder(problem).with_preset(iterations(100)).with_seed(7).build().solve(verbosity=0)
+    solution_1 = (
+        MaxDivSolverBuilder(problem).with_preset(iterations(100)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
+    )
+    solution_2 = (
+        MaxDivSolverBuilder(problem).with_preset(iterations(100)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
+    )
 
     # --- assert ------------------------------------------
     assert list(solution_1.i_selected) == list(solution_2.i_selected)
@@ -174,8 +178,8 @@ def test_solver_alternative_backend_bit_identical_selection(backend: str, distan
         solver_other._store = DistanceStore.full_matrix_from_vectors(vectors, distance_metric)
 
     # --- act ---------------------------------------------
-    solution_condensed = solver_condensed.solve(verbosity=0)
-    solution_other = solver_other.solve(verbosity=0)
+    solution_condensed = solver_condensed.solve(verbosity=Verbosity.SILENT)
+    solution_other = solver_other.solve(verbosity=Verbosity.SILENT)
 
     # --- assert ------------------------------------------
     assert list(solution_other.i_selected) == list(solution_condensed.i_selected)
@@ -214,7 +218,7 @@ def test_solver_mean_pairwise_distance_end_to_end():
     solver = MaxDivSolverBuilder(problem).with_preset(iterations(300)).with_seed(42).build()
 
     # --- act ---------------------------------------------
-    solution = solver.solve(verbosity=0)
+    solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert ------------------------------------------
     assert len(solution.i_selected) == problem.k
@@ -230,7 +234,7 @@ def test_solver_mean_pairwise_distance_deterministic():
 
     # --- act ---------------------------------------------
     solutions = [
-        MaxDivSolverBuilder(problem).with_preset(iterations(300)).with_seed(7).build().solve(verbosity=0)
+        MaxDivSolverBuilder(problem).with_preset(iterations(300)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
         for _ in range(2)
     ]
 
@@ -259,7 +263,13 @@ def test_solver_mean_pairwise_distance_meets_greedy_baseline():
     greedy_score = _mean_pairwise_distance_of(vectors, _greedy_max_sum_selection(vectors, problem.k))
 
     # --- act ---------------------------------------------
-    solution = MaxDivSolverBuilder(problem).with_preset(iterations(1500)).with_seed(3).build().solve(verbosity=0)
+    solution = (
+        MaxDivSolverBuilder(problem)
+        .with_preset(iterations(1500))
+        .with_seed(3)
+        .build()
+        .solve(verbosity=Verbosity.SILENT)
+    )
 
     # --- assert ------------------------------------------
     assert solution.score.diversity >= greedy_score * (1.0 - 1e-6)

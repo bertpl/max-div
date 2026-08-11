@@ -17,6 +17,7 @@ from max_div._core._markdown import (
 )
 from max_div._core._utils import stdout_to_file
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from max_div._core.solver import Verbosity
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -47,7 +48,7 @@ class SolverBenchmarkExecutor:
                 solver = scope.construct_solver(size, strat_name, seed)
 
                 # --- run solver  ---
-                solution = solver.solve(verbosity=0)
+                solution = solver.solve(verbosity=Verbosity.SILENT)
 
                 # --- get results ---
                 t_elapsed_sec = list(solution.step_durations.values())[-1].t_elapsed_sec

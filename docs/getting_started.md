@@ -49,8 +49,9 @@ solver = MaxDivSolverBuilder(problem).with_preset(seconds(5)).build()
 solution = solver.solve()
 ```
 
-The solver will print progress as it runs. Pass `verbosity=0` for silent operation, or
-`verbosity=20` for a detailed progress table.
+The solver will print progress as it runs. Pass `verbosity=Verbosity.SILENT` for silent operation, or
+`verbosity=Verbosity.TABULAR` for a detailed progress table (the enum members are plain integers, so
+plain `verbosity=0` and `verbosity=20` are accepted too).
 
 ### 3. Interpret the results
 
@@ -91,7 +92,7 @@ Constraints let you enforce that a minimum and/or maximum number of selected ite
 specific subsets. This is useful for ensuring fair representation across groups.
 
 ```python
-from max_div import Constraint
+from max_div import Constraint, Verbosity
 
 # Items 0-99 are "group A", items 100-199 are "group B"
 # Require at least 8 and at most 12 from each group
@@ -102,7 +103,7 @@ constraints = [
 
 problem = MaxDivProblem.new(vectors, k=20, constraints=constraints)
 solver = MaxDivSolverBuilder(problem).with_preset(seconds(5)).build()
-solution = solver.solve(verbosity=0)
+solution = solver.solve(verbosity=Verbosity.SILENT)
 
 print(solution)
 # MaxDivSolution: 20 items selected | diversity=0.7702 | constraints: 2/2 satisfied | storage=full_matrix (auto) | ...

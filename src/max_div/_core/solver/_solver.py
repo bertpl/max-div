@@ -8,7 +8,7 @@ from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
 from ._duration import Elapsed
-from ._progress_reporting import ProgressReporter
+from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
 from ._solver_step import SolverStep, SolverStepResult
@@ -72,26 +72,27 @@ class MaxDivSolver:
     # -------------------------------------------------------------------------
     #  API
     # -------------------------------------------------------------------------
-    def solve(self, verbosity: int = 10, coordinator: "WorkerCoordinator | None" = None) -> MaxDivSolution:
+    def solve(
+        self,
+        verbosity: int | Verbosity = Verbosity.PROGRESS_BAR,
+        coordinator: "WorkerCoordinator | None" = None,
+        *,
+        progress_reporter: ProgressReporter | None = None,
+    ) -> MaxDivSolution:
         """Solve the maximum diversity problem with the given configuration.
 
-        :param verbosity: (int) The verbosity level.
-                             0 = silent,
-                            10 = tqdm progress bar per solver step
-                            2x = progress table with iteration count, metrics, elapsed time, ...
-                                   20  -->  slowest updates  (spacing increasing with 10%)
-                                   21  -->  slower  updates  (spacing increasing with  5%)
-                                   22  -->  faster  updates  (spacing increasing with  2%)
-                                   23  -->  fastest updates  (spacing increasing with  1%).
-
-                                   25  -->  debug mode       (1% spacing + debug info column)
+        :param verbosity: (int | Verbosity) The verbosity level, as a `Verbosity` member or its
+                          plain integer value; see `Verbosity` for the levels.
         :param coordinator: a `WorkerCoordinator` the solver calls at each batch boundary.
+        :param progress_reporter: a ready-made reporter to report into, overriding `verbosity`; this
+                                  is how a portfolio worker reports to its parent process.
         :return: A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------
 
         # --- progress reporting ---
-        progress_reporter = ProgressReporter.from_verbosity(verbosity)
+        if progress_reporter is None:
+            progress_reporter = ProgressReporter.from_verbosity(verbosity)
 
         # --- solver steps ---
         n_steps = len(self._solver_steps)

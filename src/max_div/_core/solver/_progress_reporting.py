@@ -4,6 +4,7 @@ import math
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import IntEnum
 from time import perf_counter
 from typing import TYPE_CHECKING
 
@@ -21,6 +22,37 @@ if TYPE_CHECKING:
     from max_div._core.solver._duration import Progress
     from max_div._core.solver._score import Score
     from max_div._core.solver._solver_state import SolverState
+
+
+# =================================================================================================
+#  Verbosity
+# =================================================================================================
+class Verbosity(IntEnum):
+    """Verbosity names the levels for `solve`; members are plain ints, so plain integers are accepted too.
+
+    The `TABULAR` through `TABULAR_FASTEST` levels differ only in how quickly the update cadence
+    slows down over a run: `TABULAR` spaces rows out the fastest (fewest rows), `TABULAR_FASTEST`
+    keeps them coming. `TABULAR_DEBUG` is `TABULAR_FASTEST` plus a column of solver-internal
+    statistics.
+    """
+
+    SILENT = 0
+    PROGRESS_BAR = 10
+    TABULAR = 20
+    TABULAR_FAST = 21
+    TABULAR_FASTER = 22
+    TABULAR_FASTEST = 23
+    TABULAR_DEBUG = 25
+
+
+# How quickly each tabular level's update cadence slows down; `from_verbosity` reads it, and the
+# worker-side forwarding cadence is derived from it, so these numbers have exactly one home.
+TABULAR_C_SLOWDOWNS: dict[Verbosity, float] = {
+    Verbosity.TABULAR: 1.10,
+    Verbosity.TABULAR_FAST: 1.05,
+    Verbosity.TABULAR_FASTER: 1.02,
+    Verbosity.TABULAR_FASTEST: 1.01,
+}
 
 
 # =================================================================================================
@@ -44,8 +76,71 @@ class ProgressSnapshot:
     n_selected: int | np.integer
     k: int | np.integer
     m: int | np.integer  # number of constraints
-    selection: NDArray[np.int32]  # currently selected indices, by reference into the live state
+    selection: NDArray[np.int32] | None  # currently selected indices, by reference into the live state
     ignore_infeasible_diversity: bool  # render diversity as not-yet-meaningful while infeasible
+
+    # --- materialized / multi-worker fields ---
+    # A snapshot that crosses a process boundary cannot carry the selection by reference or resolve a
+    # debug callable, so the sender materializes these; `selection_hash` replaces `selection` and
+    # `debug_info` replaces the `get_debug_info` callable. The worker fields exist only in the
+    # combined view a parallel solve renders, where one row draws on several workers.
+    selection_hash: str | None = None  # precomputed hash, standing in for `selection`
+    debug_info: str | None = None  # pre-resolved debug string, standing in for the callable
+    worker_index: int | None = None  # worker this snapshot's result fields came from
+    n_active: int | None = None  # number of workers still solving
+    worker_finished: bool = False  # whether the result-fields worker has finished solving
+
+
+# =================================================================================================
+#  ReportThrottle
+# =================================================================================================
+class ReportThrottle:
+    """A throttle decides which progress updates get shown, thinning them out as a run progresses.
+
+    An update passes only when both an iteration threshold and an elapsed-time threshold are met;
+    each pass raises both, the time spacing growing toward a fixed ceiling and the iteration spacing
+    by a factor `c_slowdown` — so the closer `c_slowdown` is to 1.0, the more updates keep coming.
+    """
+
+    def __init__(self, c_slowdown: float) -> None:
+        """Create a throttle whose pass spacing grows by a factor `c_slowdown` per shown update."""
+        self._c_slowdown = c_slowdown
+        self._next_iter: int = 0
+        self._next_t: float = 0.0
+        self._n_passed: int = 0
+
+    def reset(self) -> None:
+        """Reset the thresholds, so the next update passes; called at each step start."""
+        self._next_iter = 0
+        self._next_t = 0.0
+        self._n_passed = 0
+
+    def passes(self, iter_now: int, t_elapsed: float) -> bool:
+        """Return whether this update should be shown, advancing both thresholds when it is."""
+        if (iter_now < self._next_iter) or (t_elapsed < self._next_t):
+            return False
+        self._n_passed += 1
+        self._next_iter = max(iter_now + 1, int(iter_now * self._c_slowdown))
+        t_increment = min(1.0, 0.1 * (self._c_slowdown**self._n_passed))
+        self._next_t += t_increment * math.ceil((t_elapsed - self._next_t) / t_increment)
+        return True
+
+
+# =================================================================================================
+#  SnapshotRequirements
+# =================================================================================================
+@dataclass(frozen=True, slots=True)
+class SnapshotRequirements:
+    """The requirements record what a reporter needs materialized in snapshots built in another process.
+
+    In-process, a reporter lazily takes what it renders (the selection by reference, the debug
+    callable), so nothing needs declaring. When snapshots are produced in another process, the sender
+    must materialize up front exactly what the receiving reporter will render — this record, declared
+    by the reporter class about itself, tells the sender what that is.
+    """
+
+    debug_info: bool  # resolve the debug callable into `ProgressSnapshot.debug_info`
+    selection_hash: bool  # hash the selection into `ProgressSnapshot.selection_hash`
 
 
 # =================================================================================================
@@ -63,6 +158,16 @@ class ProgressReporter(ABC):
         self._t_start_solver = -1.0
         self._t_start_step = 0.0
         self._step_name = ""
+
+    @property
+    def snapshot_requirements(self) -> SnapshotRequirements | None:
+        """Return what to materialize in snapshots built in another process for this reporter.
+
+        `None` means the reporter renders nothing at all, so no snapshots need to reach it. The
+        default declares a renderer that shows progress but neither the selection hash nor debug
+        info; subclasses override where they render more (tabular) or nothing (silent).
+        """
+        return SnapshotRequirements(debug_info=False, selection_hash=False)
 
     # -------------------------------------------------------------------------
     #  Main API (called by the solver and its steps)
@@ -112,6 +217,16 @@ class ProgressReporter(ABC):
     def show_step_finished(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         """Render the end of the current solver step."""
 
+    def show_milestone(  # noqa: B027 — deliberately concrete: rendering nothing is the right default
+        self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None
+    ) -> None:
+        """Render a snapshot that must not be throttled away, set off from the regular stream.
+
+        A parallel solve emits one per finishing worker, so that worker's final state is visible in
+        scrollback no matter what later rows show. The default renders nothing; only renderers with a
+        way to set a row apart (the table) override this.
+        """
+
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
@@ -152,13 +267,14 @@ class ProgressReporter(ABC):
         return TabularProgressReporter(c_slowdown=c_slowdown, debug_info=debug_info)
 
     @classmethod
-    def from_verbosity(cls, verbosity: int) -> ProgressReporter:
+    def from_verbosity(cls, verbosity: int | Verbosity, worker_columns: bool = False) -> ProgressReporter:
         """Create the reporter for a verbosity level; the integer levels are decoded only here.
 
-        Levels: 0 = silent, 10 = tqdm progress bar, 20-23 = progress table from slowest to fastest
-        update cadence, 25 = fastest cadence plus a debug-info column.
+        `verbosity` may be a `Verbosity` member or its plain integer value.
 
-        :raises ValueError: If `verbosity` is not one of the levels above.
+        :param worker_columns: If `True`, a tabular reporter is laid out for a multi-worker solve;
+                               the other reporters render identically either way.
+        :raises ValueError: If `verbosity` is not one of the `Verbosity` levels.
         """
         match verbosity:
             case 0:
@@ -166,12 +282,17 @@ class ProgressReporter(ABC):
             case 10:
                 return cls.tqdm()
             case 20 | 21 | 22 | 23:
-                return cls.tabular(
-                    c_slowdown=[1.10, 1.05, 1.02, 1.01][verbosity - 20],
+                return TabularProgressReporter(
+                    c_slowdown=TABULAR_C_SLOWDOWNS[Verbosity(verbosity)],
                     debug_info=False,
+                    worker_columns=worker_columns,
                 )
             case 25:
-                return cls.tabular(c_slowdown=1.01, debug_info=True)
+                return TabularProgressReporter(
+                    c_slowdown=TABULAR_C_SLOWDOWNS[Verbosity.TABULAR_FASTEST],
+                    debug_info=True,
+                    worker_columns=worker_columns,
+                )
             case _:
                 raise ValueError(f"Invalid verbosity level: {verbosity}")
 
@@ -181,6 +302,11 @@ class ProgressReporter(ABC):
 # =================================================================================================
 class SilentProgressReporter(ProgressReporter):
     """A progress reporter that is fully silent and doesn't output anything."""
+
+    @property
+    def snapshot_requirements(self) -> SnapshotRequirements | None:
+        """Return None: nothing is rendered, so no snapshots need to reach this reporter."""
+        return None
 
     def show_step_started(self, step_name: str) -> None: ...  # no-op
     def show_update(
@@ -247,35 +373,29 @@ class TabularProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, c_slowdown: float = 1.05, debug_info: bool = False) -> None:
+    def __init__(self, c_slowdown: float = 1.05, debug_info: bool = False, worker_columns: bool = False) -> None:
         """Initializes a TabularProgressReporter.
 
-        :param c_slowdown: Factor by which to slow down reporting frequency:
-
-            Updates are shown only when both
-               a) time elapsed since last report exceeds a threshold
-                    0.1sec initially, increasing to 1.0sec eventually
-               b) number of iterations since start has exceeded a threshold
-                    increasing with factor c_slowdown each report
-
-            c_slowdown influences how quickly both increase.  The closer to 1.0, the more frequents updates keep coming.
-
+        :param c_slowdown: Update-thinning factor; see `ReportThrottle`.
         :param debug_info: If `True`, includes additional column with solver step debug info.
+        :param worker_columns: If `True`, lay the table out for a multi-worker solve: a worker column
+                               and an active-worker count replace the per-step columns, which have no
+                               meaning when the rendered rows draw on several workers at once.
         """
         super().__init__()
 
         # settings
         self._c_slowdown = c_slowdown
         self._debug_info = debug_info
+        self._worker_columns = worker_columns
 
         self._progress_table: ProgressTable | None = None
+        self._throttle = ReportThrottle(c_slowdown=c_slowdown)
 
-        # don't show next table line before passing both thresholds below:
-        self._next_report_t: float = 0.0
-        self._next_report_iter: int = 0
-
-        # other stats
-        self._n_progress_reports_this_step = 0
+    @property
+    def snapshot_requirements(self) -> SnapshotRequirements | None:
+        """Return the tabular needs: always the selection hash, plus debug info in debug mode."""
+        return SnapshotRequirements(debug_info=self._debug_info, selection_hash=True)
 
     # -------------------------------------------------------------------------
     #  Rendering interface
@@ -286,43 +406,56 @@ class TabularProgressReporter(ProgressReporter):
             self._initialize_table(step_name_width=len(step_name))
 
         # reset progress reporting thresholds
-        self._n_progress_reports_this_step = 0
-        self._next_report_t = 0.0
-        self._next_report_iter = 0
+        self._throttle.reset()
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         iter_now = snapshot.progress.iter_count if (snapshot.progress is not None) else 0
-        t_elapsed_step = snapshot.t_elapsed_step
-
-        if (iter_now >= self._next_report_iter) and (t_elapsed_step >= self._next_report_t):
-            # show table row
-            debug_info = get_debug_info() if (self._debug_info and (get_debug_info is not None)) else ""
+        if self._throttle.passes(iter_now, snapshot.t_elapsed_step):
+            debug_info = self._resolve_debug_info(snapshot, get_debug_info)
             self._show_table_row(snapshot, debug_info)
-            self._n_progress_reports_this_step += 1
-
-            # update next report thresholds
-            self._next_report_iter = max(iter_now + 1, int(iter_now * self._c_slowdown))
-            t_increment = min(1.0, 0.1 * (self._c_slowdown**self._n_progress_reports_this_step))
-            self._next_report_t += t_increment * math.ceil((t_elapsed_step - self._next_report_t) / t_increment)
 
     def show_step_finished(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         # show final metrics + horizontal table line
-        debug_info = get_debug_info() if (self._debug_info and (get_debug_info is not None)) else ""
+        debug_info = self._resolve_debug_info(snapshot, get_debug_info)
         self._show_table_row(snapshot, debug_info)
         self._show_table_line()
+
+    def show_milestone(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
+        """Render the snapshot as an unthrottled row, set apart by a horizontal line."""
+        self.show_step_finished(snapshot, get_debug_info)
 
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
+    def _resolve_debug_info(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None) -> str:
+        """Return the debug column text: pre-materialized when present, else pulled from the callable."""
+        if not self._debug_info:
+            return ""
+        if snapshot.debug_info is not None:
+            return snapshot.debug_info
+        return get_debug_info() if (get_debug_info is not None) else ""
+
     def _initialize_table(self, step_name_width: int) -> None:
         """Initialize self._progress_table."""
-        self._progress_table = ProgressTable(
-            headers=[
+        if self._worker_columns:
+            leading_headers = [
+                "Solver t.".ljust(10),
+                "Worker".ljust(6),
+                "Active".ljust(6),
+                "Progress".ljust(10),
+                "Iter.".ljust(10),
+            ]
+        else:
+            leading_headers = [
                 "Solver t.".ljust(10),
                 "Solver step".ljust(step_name_width),
                 "Step %".ljust(10),
                 "Step it.".ljust(10),
                 "Step t.".ljust(10),
+            ]
+        self._progress_table = ProgressTable(
+            headers=leading_headers
+            + [
                 "Selected".ljust(13),
                 "Constraints".ljust(11),
                 "Diversity".ljust(14),
@@ -341,20 +474,31 @@ class TabularProgressReporter(ProgressReporter):
         else:
             diversity_str = f"{score.diversity:.6e}"
 
-        self._progress_table.show_progress(  # ty: ignore[unresolved-attribute]  # table is initialized in show_step_started before any row is shown
-            values=[
+        if self._worker_columns:
+            worker_str = "" if (snapshot.worker_index is None) else str(snapshot.worker_index)
+            leading_values = [
+                format_long_time_duration(snapshot.t_elapsed_solver, n_chars=8),
+                f"{worker_str}✓" if snapshot.worker_finished else worker_str,
+                str(snapshot.n_active) if (snapshot.n_active is not None) else "",
+                f"{progress.fraction * 100:.2f}%" if progress else "",
+                f"{progress.iter_count:_}".rjust(10) if progress else "",
+            ]
+        else:
+            leading_values = [
                 format_long_time_duration(snapshot.t_elapsed_solver, n_chars=8),
                 snapshot.step_name,
                 f"{progress.fraction * 100:.2f}%" if progress else "",
                 f"{progress.iter_count:_}".rjust(10) if progress else "",
                 format_long_time_duration(snapshot.t_elapsed_step, n_chars=8),
+            ]
+
+        self._progress_table.show_progress(  # ty: ignore[unresolved-attribute]  # table is initialized in show_step_started before any row is shown
+            values=leading_values
+            + [
                 f"{snapshot.n_selected:>6}/{snapshot.k:>6}",
                 f"{score.constraints:.6f}" if (snapshot.m > 0) else "/",
                 diversity_str,
-                self._get_selection_hash(
-                    selection=snapshot.selection,  # create hash from currently selected indices...
-                    n=math.ceil((32 * snapshot.n_selected) / snapshot.k),  # ...of length proportional to selection size
-                ).ljust(32),
+                self._selection_hash_str(snapshot).ljust(32),
             ]
             + ([debug_info] if self._debug_info else [])
         )
@@ -364,12 +508,37 @@ class TabularProgressReporter(ProgressReporter):
             self._progress_table.print_line()
 
     @staticmethod
+    def _selection_hash_str(snapshot: ProgressSnapshot) -> str:
+        """Return the hash column text: pre-materialized when present, else hashed from the selection."""
+        if snapshot.selection_hash is not None:
+            return snapshot.selection_hash
+        return selection_hash_str(snapshot)
+
+    @staticmethod
     def _get_selection_hash(selection: NDArray[np.int32], n: int) -> str:
         """Get a hex hash string representing the current selection in the solver state."""
-        # --- shortcut ---
-        if n == 0:
-            return ""
+        return _selection_hash_hex(selection, n)
 
-        # --- generate hash ---
-        hash_array = np_int32_array_var_length_hash(selection, n)
-        return "".join(f"{val & 0xF:x}" for val in hash_array)
+
+# =================================================================================================
+#  Helpers
+# =================================================================================================
+def selection_hash_str(snapshot: ProgressSnapshot) -> str:
+    """Return the hash string of a snapshot's selection, its length proportional to selection size."""
+    if snapshot.selection is None:
+        return ""
+    return _selection_hash_hex(
+        selection=snapshot.selection,
+        n=math.ceil((32 * snapshot.n_selected) / snapshot.k),
+    )
+
+
+def _selection_hash_hex(selection: NDArray[np.int32], n: int) -> str:
+    """Return `n` hex characters hashed from the selected indices; empty when nothing is selected."""
+    # --- shortcut ---
+    if n == 0:
+        return ""
+
+    # --- generate hash ---
+    hash_array = np_int32_array_var_length_hash(selection, n)
+    return "".join(f"{val & 0xF:x}" for val in hash_array)

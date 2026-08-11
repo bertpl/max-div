@@ -5,6 +5,7 @@ from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import IndependentCoordinator, WorkerCoordinator
 from max_div._core.solver._presets import SolverPreset
+from max_div._core.solver._progress_reporting import Verbosity
 from max_div._core.solver._solver_state import SolverState
 
 
@@ -26,7 +27,7 @@ def _solve_with(coordinator: WorkerCoordinator | None):
     rng = np.random.default_rng(4)
     problem = MaxDivProblem.new(rng.random((50, 3)).astype(np.float32), k=5)
     builder = MaxDivSolverBuilder(problem).with_preset(iterations(60), SolverPreset.SMART).with_seed(7)
-    return builder.build().solve(verbosity=0, coordinator=coordinator)
+    return builder.build().solve(verbosity=Verbosity.SILENT, coordinator=coordinator)
 
 
 def test_the_batch_boundary_is_reached_during_optimization():

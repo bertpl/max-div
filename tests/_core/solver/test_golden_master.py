@@ -51,7 +51,7 @@ from numpy.typing import NDArray
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DistanceMetric
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver import MaxDivSolverBuilder, SolverPreset
+from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._solution import MaxDivSolution
 
@@ -123,7 +123,7 @@ def _solve(problem_name: str, preset: SolverPreset, seed: int) -> MaxDivSolution
         constraints=generated.constraints,
     )
     solver = MaxDivSolverBuilder(problem).with_preset(iterations(N_ITERATIONS), preset).with_seed(seed).build()
-    return solver.solve(verbosity=0)
+    return solver.solve(verbosity=Verbosity.SILENT)
 
 
 def _as_record(solution: MaxDivSolution) -> dict[str, Any]:

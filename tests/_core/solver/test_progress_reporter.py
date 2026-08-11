@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from dataclasses import replace
 from types import SimpleNamespace
 
 import numpy as np
@@ -8,9 +9,12 @@ from max_div._core.solver._duration import Progress
 from max_div._core.solver._progress_reporting import (
     ProgressReporter,
     ProgressSnapshot,
+    ReportThrottle,
     SilentProgressReporter,
+    SnapshotRequirements,
     TabularProgressReporter,
     TqdmProgressReporter,
+    Verbosity,
 )
 from max_div._core.solver._score import Score
 
@@ -214,3 +218,132 @@ def test_tqdm_show_update_without_progress():
     # --- assert ------------------------------------------
     assert reporter._current_pbar.n == n_before
     reporter.solver_step_finished(None, state)
+
+
+@pytest.mark.parametrize("verbosity", list(Verbosity))
+def test_from_verbosity_accepts_enum_members(verbosity: Verbosity):
+    """Every Verbosity member creates the same reporter as its plain integer value."""
+    # --- act ---------------------------------------------
+    from_member = ProgressReporter.from_verbosity(verbosity)
+    from_int = ProgressReporter.from_verbosity(int(verbosity))
+
+    # --- assert ------------------------------------------
+    assert type(from_member) is type(from_int)
+
+
+@pytest.mark.parametrize(
+    "reporter, expected",
+    [
+        (SilentProgressReporter(), None),
+        (TqdmProgressReporter(), SnapshotRequirements(debug_info=False, selection_hash=False)),
+        (TabularProgressReporter(), SnapshotRequirements(debug_info=False, selection_hash=True)),
+        (TabularProgressReporter(debug_info=True), SnapshotRequirements(debug_info=True, selection_hash=True)),
+    ],
+)
+def test_snapshot_requirements(reporter: ProgressReporter, expected: SnapshotRequirements | None):
+    """Each reporter class declares what must be materialized for it — silent declares nothing at all."""
+    # --- act & assert ------------------------------------
+    assert reporter.snapshot_requirements == expected
+
+
+def test_report_throttle_thins_a_burst_and_resets():
+    """A rapid burst collapses to a few passes; reset makes the next update pass again."""
+    # --- arrange -----------------------------------------
+    throttle = ReportThrottle(c_slowdown=1.05)
+
+    # --- act ---------------------------------------------
+    n_passed = sum(throttle.passes(iter_now=i, t_elapsed=i * 0.01) for i in range(100))
+    blocked_before_reset = not throttle.passes(iter_now=100, t_elapsed=1.0000001)
+    throttle.reset()
+    passes_after_reset = throttle.passes(iter_now=0, t_elapsed=0.0)
+
+    # --- assert ------------------------------------------
+    assert 1 <= n_passed < 50
+    assert blocked_before_reset
+    assert passes_after_reset
+
+
+def test_tabular_worker_columns_layout(capsys):
+    """Worker columns replace the step columns: worker index (with finished marker) and active count."""
+    # --- arrange -----------------------------------------
+    reporter = TabularProgressReporter(worker_columns=True)
+    snapshot_running = ProgressSnapshot(
+        step_name="",
+        progress=_stub_progress(),
+        t_elapsed_solver=1.0,
+        t_elapsed_step=1.0,
+        score=Score(size=1.0, constraints=1.0, diversity=0.5, div_tie_breakers=()),
+        n_selected=5,
+        k=5,
+        m=0,
+        selection=None,
+        ignore_infeasible_diversity=False,
+        selection_hash="cafe",
+        worker_index=2,
+        n_active=4,
+    )
+    snapshot_finished = replace(snapshot_running, worker_index=3, n_active=3, worker_finished=True)
+
+    # --- act ---------------------------------------------
+    reporter.show_step_started("solving (4 workers)")
+    reporter.show_update(snapshot_running)
+    reporter.show_milestone(snapshot_finished)
+
+    # --- assert ------------------------------------------
+    lines = [line for line in capsys.readouterr().out.splitlines() if line.startswith("|")]
+    header, running_row, milestone_row, closing_line = lines[0], lines[2], lines[3], lines[4]
+    assert "Worker" in header
+    assert "Active" in header
+    assert "Solver step" not in header
+    assert "Step %" not in header
+    assert " 2 " in running_row
+    assert "3✓" in milestone_row
+    assert "cafe" in running_row
+    assert set(closing_line.replace("|", "").replace(" ", "")) == {"-"}
+
+
+def test_tabular_prefers_materialized_debug_info(capsys):
+    """A pre-resolved debug string wins over the callable, which is how the parent renders forwarded snapshots."""
+    # --- arrange -----------------------------------------
+    reporter = TabularProgressReporter(debug_info=True)
+    state = _stub_state()
+    reporter.solver_step_started("step A")
+
+    # --- act ---------------------------------------------
+    snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
+    reporter.show_update(replace(snapshot, debug_info="materialized"), get_debug_info=lambda: "callable")
+
+    # --- assert ------------------------------------------
+    assert "materialized" in capsys.readouterr().out
+
+
+def test_milestone_is_a_no_op_by_default():
+    """Only renderers that can set a row apart override show_milestone; the base renders nothing."""
+    # --- arrange -----------------------------------------
+    reporter = _RecordingProgressReporter()
+    state = _stub_state()
+    reporter.solver_step_started("step A")
+    snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
+
+    # --- act ---------------------------------------------
+    ProgressReporter.show_milestone(reporter, snapshot)
+
+    # --- assert ------------------------------------------
+    assert [call[0] for call in reporter.calls] == ["started"]
+
+
+def test_tabular_hash_column_blank_without_selection_or_hash(capsys):
+    """A snapshot with neither the selection nor a precomputed hash renders an empty hash column."""
+    # --- arrange -----------------------------------------
+    reporter = TabularProgressReporter()
+    state = _stub_state()
+    reporter.solver_step_started("step A")
+    snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
+
+    # --- act ---------------------------------------------
+    reporter.show_update(replace(snapshot, selection=None, selection_hash=None))
+
+    # --- assert ------------------------------------------
+    row = capsys.readouterr().out.splitlines()[-1]
+    assert row.rstrip().endswith("|")
+    assert all(char in "| " for char in row.split("|")[-2])  # hash column is blank

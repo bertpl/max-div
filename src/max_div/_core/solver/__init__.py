@@ -13,6 +13,7 @@ from ._distance_storage import DistanceStorage
 from ._duration import TargetDuration, TargetIterationCount, TargetTimeDuration, hours, iterations, minutes, seconds
 from ._parallel import ParallelMaxDivSolution, ParallelMaxDivSolver, WorkerConfig, WorkerSummary
 from ._presets import SolverPreset
+from ._progress_reporting import Verbosity
 from ._score import Score
 from ._solution import MaxDivSolution
 from ._solver import MaxDivSolver
