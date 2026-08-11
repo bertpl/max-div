@@ -39,7 +39,7 @@ marks:
   partial:
     glyph: "◐"
     hero_glyph: "~"
-    legend: reachable, but you supply the model, transform or metric
+    legend: reachable, but you supply the model, transform, metric or custom build
   none:
     glyph: "—"
     hero_glyph: ""
@@ -153,6 +153,21 @@ groups:
       - key: improves
         hero_label: improves with budget
         label: the answer improves when given more budget
+        hero: true
+
+  # One coarse axis — whether a tool solves a single problem with several workers at once. It is a
+  # group so an independent/cooperative split can be added as a second axis under the same band,
+  # without redrawing the surrounding columns. The hero group label is blank: with a single narrow
+  # column the rotated axis header names it, and a horizontal band label would collide with the scale
+  # column's label. The scale column is wide enough to carry a horizontal label; this narrow one is
+  # not.
+  - key: parallelism
+    hero_label: ""
+    label: multi-worker
+    axes:
+      - key: parallel
+        hero_label: multi-worker
+        label: solves one problem with several workers at once
         hero: true
 
 # The scale column is not a mark: its value is a power of ten (or a range of them), and every

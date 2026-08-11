@@ -19,7 +19,7 @@
 
 ### Capabilities
 
-Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform, metric or custom build · — not available
 
 <div class="solver-features" markdown>
 
@@ -40,7 +40,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform or m
 | time budget · budget expressed as an iteration count | <span class="mark mark-full">✔</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-full">✔</span> |  |
 | time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^highs-6] |
-| largest practical problem size | n ≈ 10<sup>3</sup> | [^highs-7] |
+| multi-worker · solves one problem with several workers at once | <span class="mark mark-full">✔</span> | [^highs-7] |
+| largest practical problem size | n ≈ 10<sup>3</sup> | [^highs-8] |
 
 </div>
 
@@ -50,4 +51,5 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform or m
 [^highs-4]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
 [^highs-5]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
 [^highs-6]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
-[^highs-7]: The same big-M max-min formulation SCIP solves, and the same ceiling: the model carries a constraint per pair, so it grows quadratically and stops closing the gap in reasonable time around n ≈ 10³.
+[^highs-7]: The dual simplex, the interior-point factorization and the MIP branch-and-bound each run in parallel, controlled by the parallel and threads options.
+[^highs-8]: The same big-M max-min formulation SCIP solves, and the same ceiling: the model carries a constraint per pair, so it grows quadratically and stops closing the gap in reasonable time around n ≈ 10³.

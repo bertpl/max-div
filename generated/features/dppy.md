@@ -19,7 +19,7 @@
 
 ### Capabilities
 
-Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform, metric or custom build · — not available
 
 <div class="solver-features" markdown>
 
@@ -40,6 +40,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform or m
 | time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^dppy-4] |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> |  |
+| multi-worker · solves one problem with several workers at once | <span class="mark mark-none">—</span> |  |
 | largest practical problem size | n ≈ 10<sup>4</sup> | [^dppy-5] |
 
 </div>

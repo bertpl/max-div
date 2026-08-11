@@ -69,6 +69,12 @@ solver:
       note:
         text: >-
           The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
+    parallelism.parallel:
+      mark: full
+      note:
+        text: >-
+          The dual simplex, the interior-point factorization and the MIP branch-and-bound each run
+          in parallel, controlled by the parallel and threads options.
 ---
 
 # HiGHS

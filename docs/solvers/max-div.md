@@ -2,7 +2,7 @@
 solver:
   name: max-div
   source: https://max-div.readthedocs.io/
-  verified: 2026-07-27
+  verified: 2026-08-11
   scale:
     max_practical_n: "5-6"
     rationale: >-
@@ -13,7 +13,7 @@ solver:
   metadata:
     guarantee: heuristic
     license: Apache-2.0
-    last_release: {version: "0.8.3", date: "2026-07-27"}
+    last_release: {version: "0.11.0", date: "2026-08-11"}
     determinism: seeded, fully reproducible
     input: vectors (L1 / L2 / L2² / Linf / cosine) or a precomputed distance matrix
   capabilities:
@@ -42,6 +42,11 @@ solver:
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves: {mark: full}
+    parallelism.parallel:
+      mark: full
+      note:
+        text: >-
+          Several workers solve the same problem at once and the best result wins.
 ---
 
 # max-div
