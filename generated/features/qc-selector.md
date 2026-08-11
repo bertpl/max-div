@@ -19,7 +19,7 @@
 
 ### Capabilities
 
-Support: ✔ built in · ◐ reachable, but you supply the model, transform or metric · — not available
+Support: ✔ built in · ◐ reachable, but you supply the model, transform, metric or custom build · — not available
 
 <div class="solver-features" markdown>
 
@@ -40,7 +40,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform or m
 | time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^qc-selector-6] |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^qc-selector-7] |
-| largest practical problem size | n ≈ 10<sup>4</sup> | [^qc-selector-8] |
+| multi-worker · solves one problem with several workers at once | <span class="mark mark-none">—</span> | [^qc-selector-8] |
+| largest practical problem size | n ≈ 10<sup>4</sup> | [^qc-selector-9] |
 
 </div>
 
@@ -51,4 +52,5 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform or m
 [^qc-selector-5]: Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.
 [^qc-selector-6]: Several of its methods take a parameter that controls how much work they do — a sphere-exclusion radius, an OptiSim subsample size — but these change the character of the search rather than lengthening it. Raising one does not mean a better answer.
 [^qc-selector-7]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^qc-selector-8]: Its selection methods work from a full distance matrix, and the diversity measures it offers are computed over that matrix rather than incrementally, so both memory and per-pick cost are quadratic. Comfortable in the tens of thousands.
+[^qc-selector-8]: MaxMin and MaxSum selection is sequential; OptiSim and DISE parallelize only their KDTree neighbor queries, not the search over selections.
+[^qc-selector-9]: Its selection methods work from a full distance matrix, and the diversity measures it offers are computed over that matrix rather than incrementally, so both memory and per-pick cost are quadratic. Comfortable in the tens of thousands.

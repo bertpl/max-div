@@ -67,6 +67,7 @@ solver:
           an improvement budget — the tenth draw is no better than the first, merely different.
     budget.wall_clock: {mark: none}
     budget.improves: {mark: none}
+    parallelism.parallel: {mark: none}
 ---
 
 # DPPy

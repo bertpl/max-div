@@ -58,6 +58,12 @@ solver:
       note:
         text: >-
           A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
+    parallelism.parallel:
+      mark: none
+      note:
+        text: >-
+          The optimizers accept an n_jobs argument, but it is unused: the greedy selection runs
+          single-threaded.
 ---
 
 # apricot-select
