@@ -303,7 +303,7 @@ def test_tabular_worker_columns_layout(capsys):
 
 
 def test_tabular_prefers_materialized_debug_info(capsys):
-    """A pre-resolved debug string wins over the callable, which is the parent-side replay path."""
+    """A pre-resolved debug string wins over the callable, which is how the parent renders forwarded snapshots."""
     # --- arrange -----------------------------------------
     reporter = TabularProgressReporter(debug_info=True)
     state = _stub_state()

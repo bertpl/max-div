@@ -51,7 +51,7 @@ solution = solver.solve()
 
 The solver will print progress as it runs. Pass `verbosity=Verbosity.SILENT` for silent operation, or
 `verbosity=Verbosity.TABULAR` for a detailed progress table (the enum members are plain integers, so
-`verbosity=0` and `verbosity=20` mean the same thing).
+plain `verbosity=0` and `verbosity=20` are accepted too).
 
 ### 3. Interpret the results
 

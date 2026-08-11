@@ -56,8 +56,8 @@ class ParallelMaxDivSolver:
 
         :param verbosity: (int | Verbosity) The verbosity level, with the same levels as a single
                           solve (see `Verbosity`), rendered as one combined live view over all
-                          workers (see `ParallelProgressView`). Defaults to the progress table, the
-                          level suited to longer runs.
+                          workers (see `ParallelProgressView`). The default differs from a single
+                          solve's progress bar because parallel runs are typically longer.
         :raises ValueError: If no worker reported a result, which means every one of them failed.
         """
         progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)

@@ -19,7 +19,7 @@ from max_div._core.solver._progress_reporting import ProgressReporter, ProgressS
 
 from ._result import WorkerResult
 
-# The composite bar's resolution: progress fractions map onto this many tqdm steps.
+# Progress fractions map onto this many tqdm steps — the composite bar's resolution.
 _TQDM_N_TOTAL = 1000
 
 
@@ -44,7 +44,7 @@ class ParallelProgressView:
     #  Events (called by the executor's drain loop)
     # -------------------------------------------------------------------------
     def start(self) -> None:
-        """Start rendering; resets the wall clock the view stamps on every composite snapshot."""
+        """Start rendering and reset the wall clock the view stamps on every composite snapshot."""
         self._t_start = perf_counter()
         self._reporter.show_step_started(f"solving ({self._n_workers} workers)")
 

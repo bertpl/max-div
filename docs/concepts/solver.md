@@ -197,7 +197,7 @@ combined live view** rather than N interleaved streams; the default is the progr
 suited to longer runs. A row combines two halves with different sources:
 
 - **Progress** (the fraction, iteration count and elapsed time) follows the *slowest still-running
-  worker* — it tracks when `solve()` will return, and reaches 100% exactly when it does.
+  worker* — the fraction tracks when `solve()` will return, and reaches 100% exactly when it does.
 - **The result columns** show the *best score found so far* by any worker, running or finished,
   with the `Worker` column naming the worker it came from (marked `✓` once that worker finished).
 

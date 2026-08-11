@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 #  Verbosity
 # =================================================================================================
 class Verbosity(IntEnum):
-    """Verbosity names the levels for `solve`; members are plain ints, so integer literals keep working.
+    """Verbosity names the levels for `solve`; members are plain ints, so plain integers are accepted too.
 
     The `TABULAR` through `TABULAR_FASTEST` levels differ only in how quickly the update cadence
     slows down over a run: `TABULAR` spaces rows out the fastest (fewest rows), `TABULAR_FASTEST`
@@ -88,7 +88,7 @@ class ReportThrottle:
     """A throttle decides which progress updates get shown, thinning them out as a run progresses.
 
     An update passes only when both an iteration threshold and an elapsed-time threshold are met;
-    each pass raises both, the time spacing growing from 0.1s toward 1.0s and the iteration spacing
+    each pass raises both, the time spacing growing toward a fixed ceiling and the iteration spacing
     by a factor `c_slowdown` — so the closer `c_slowdown` is to 1.0, the more updates keep coming.
     """
 
@@ -207,7 +207,7 @@ class ProgressReporter(ABC):
     def show_step_finished(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         """Render the end of the current solver step."""
 
-    def show_milestone(  # noqa: B027 — deliberately concrete: rendering nothing is the right default, not a hole to fill
+    def show_milestone(  # noqa: B027 — deliberately concrete: rendering nothing is the right default
         self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None
     ) -> None:
         """Render a snapshot that must not be throttled away, set off from the regular stream.
@@ -260,11 +260,11 @@ class ProgressReporter(ABC):
     def from_verbosity(cls, verbosity: int | Verbosity, worker_columns: bool = False) -> ProgressReporter:
         """Create the reporter for a verbosity level; the integer levels are decoded only here.
 
-        Accepts the `Verbosity` members or their plain integer values.
+        `verbosity` may be a `Verbosity` member or its plain integer value.
 
         :param worker_columns: If `True`, a tabular reporter is laid out for a multi-worker solve;
                                the other reporters render identically either way.
-        :raises ValueError: If `verbosity` is not one of the levels above.
+        :raises ValueError: If `verbosity` is not one of the `Verbosity` levels.
         """
         match verbosity:
             case 0:

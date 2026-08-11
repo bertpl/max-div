@@ -23,8 +23,8 @@ from max_div._core.solver._progress_reporting import (
     selection_hash_str,
 )
 
-# The forwarding cadence: the fastest cadence any rendering reporter uses, so the parent's own
-# display throttle — not this one — decides the visible row spacing at every verbosity level.
+# The forwarding cadence is the fastest any rendering reporter uses, so the parent's own display
+# throttle — not this one — decides the visible row spacing at every verbosity level.
 _FORWARD_C_SLOWDOWN = 1.01
 
 
@@ -56,7 +56,7 @@ class ForwardingProgressReporter(ProgressReporter):
             self._queue.put(self._materialize(snapshot, get_debug_info))
 
     def show_step_finished(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
-        # never throttled: step ends are rare, and the last one carries the worker's final state
+        # step ends are never throttled: they are rare, and the last one carries the worker's final state
         self._queue.put(self._materialize(snapshot, get_debug_info))
 
     # -------------------------------------------------------------------------

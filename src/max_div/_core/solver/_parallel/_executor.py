@@ -29,7 +29,7 @@ from ._progress_channel import ForwardingProgressReporter
 from ._progress_view import ParallelProgressView
 from ._result import WorkerResult
 
-# How often the drain loop wakes to re-check liveness while the queue is empty.  Messages that
+# The drain loop wakes this often to re-check liveness while the queue is empty.  Messages that
 # arrive are handled at once; this only bounds the wait after the last worker dies before that is
 # noticed — short enough to notice fast, long enough that the poll costs nothing.  Not tied to
 # solver runtime.
