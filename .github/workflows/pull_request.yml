@@ -130,6 +130,24 @@ jobs:
           # ignore-vulns: |
           #   GHSA-xxxx-xxxx-xxxx  # why accepted
 
+  # Docs must build cleanly at PR time. A broken nav entry, dead cross-link, or stale mkdocstrings
+  # reference is only a warning, which a non-strict build publishes silently — Read the Docs then
+  # serves the last good build and never signals GitHub. The strict `make docs` fails this check on
+  # any such warning.
+  docs:
+    needs: [preflight]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: ${{ vars.UV_VERSION }}
+      - name: Build docs (strict)
+        run: make docs
+
   ci-gate:
     name: CI gate
     # The single stable required check on main: branch protection requires only
@@ -137,7 +155,7 @@ jobs:
     # `always()` is load-bearing — without it the gate is skipped when an
     # upstream job fails, and GitHub treats a skipped required check as passing.
     if: always()
-    needs: [preflight, pre-commit, test, test-benchmarks-harness, package, pip-audit]
+    needs: [preflight, pre-commit, test, test-benchmarks-harness, package, pip-audit, docs]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed
