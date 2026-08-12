@@ -10,6 +10,10 @@ __pycache__
 # various auto-generated 'reports' (coverage, mkdocs)
 /reports
 
+# Coverage data files (root-level; configured runs redirect coverage into /reports)
+.coverage
+.coverage.*
+
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
 

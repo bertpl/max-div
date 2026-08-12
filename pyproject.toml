@@ -147,16 +147,11 @@ content-type = "text/markdown"
 path = "README.md"
 
 [[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
-# splash image: relative link -> tag-pinned raw URL so each release's PyPI page
-# renders that release's stamped splash, not whatever main's is at view time.
-pattern = 'src="(images/[^"]+)"'
-replacement = 'src="https://raw.githubusercontent.com/bertpl/max-div/v$HFPR_VERSION/\1"'
-
-[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
-# The hero table needs a `<picture>` to switch on the reader's color scheme, and its paths live
-# in attributes -- including `srcset`, which the rule above does not match. PyPI's sanitizer
-# drops `<picture>`/`<source>` and keeps the `<img>`, so PyPI shows the light variant, which is
-# right for a page with no dark mode -- but only if that URL is absolute.
+# The hero table needs a `<picture>` to switch on the reader's color scheme, and its paths live in
+# attributes -- including `srcset`. PyPI's sanitizer drops `<picture>`/`<source>` and keeps the
+# `<img>`, so PyPI shows the light variant, which is right for a page with no dark mode -- but only
+# if that URL is absolute. The splash image needs no rule here: release.py stamps it with an
+# absolute tag-pinned URL directly in README.md.
 pattern = '(src|srcset)="(docs/images/[^"]+)"'
 replacement = '\1="https://raw.githubusercontent.com/bertpl/max-div/v$HFPR_VERSION/\2"'
 
