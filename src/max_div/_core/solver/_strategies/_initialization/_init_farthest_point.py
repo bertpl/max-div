@@ -28,8 +28,8 @@ class InitFarthestPoint(InitializationStrategy):
     a little of the pure construction's peak quality for diversity among start points.
 
     A `top_k` above one makes every greedy pick sample uniformly among the `top_k` highest
-    contributions instead of taking the argmax — entropy without ever making a bad pick, since every
-    candidate in that set is near-optimal. `top_k=1` is the exact argmax and consumes no randomness.
+    contributions instead of taking the argmax, so picks vary while every one stays among the best
+    candidates. `top_k=1` is the exact argmax and consumes no randomness.
 
     Suggested use: when the strongest possible starting point is desired, e.g. at short time
     budgets.
@@ -39,7 +39,7 @@ class InitFarthestPoint(InitializationStrategy):
     """
 
     def __init__(self, random_fraction: float = 0.0, top_k: int = 1) -> None:
-        """Create the strategy; `random_fraction` sets the random-prefix size and `top_k` the pick greediness.
+        """Create the strategy; `random_fraction` sets the random-prefix size and `top_k` the pick candidate count.
 
         :raises ValueError: If `random_fraction` is outside [0, 1], or `top_k` is below 1.
         """
