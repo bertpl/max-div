@@ -119,3 +119,65 @@ def test_init_farthest_point_full_random_prefix_skips_greedy():
     full_selection = {int(i) for i in state_full.selected_index_array}
     greedy_selection = {int(i) for i in state_greedy.selected_index_array}
     assert full_selection != greedy_selection  # a random fill differs from the greedy construction
+
+
+@pytest.mark.parametrize("top_k", [0, -1])
+def test_init_farthest_point_rejects_top_k_below_one(top_k: int):
+    """top_k must be >= 1."""
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError, match="top_k"):
+        InitFarthestPoint(top_k=top_k)
+
+
+def test_init_farthest_point_top_k_1_is_the_argmax_pick():
+    """top_k=1 takes the plain argmax pick, identical to the default strategy."""
+    # --- arrange -----------------------------------------
+    solver_state = new_solver_state(has_constraints=False)
+    solver_state.add(np.int32(0))
+    contributions = solver_state.not_selected_contribution_array
+    expected = int(solver_state.not_selected_index_array[np.argmax(contributions)])
+
+    # --- act ---------------------------------------------
+    default_pick = int(InitFarthestPoint().get_next_samples(solver_state, solver_state.k)[0])
+    top1_pick = int(InitFarthestPoint(top_k=1).get_next_samples(solver_state, solver_state.k)[0])
+
+    # --- assert ------------------------------------------
+    assert top1_pick == default_pick == expected
+
+
+def test_init_farthest_point_top_k_1_full_init_matches_default():
+    """A full init with top_k=1 reproduces the default farthest-point selection bit-for-bit."""
+    # --- arrange -----------------------------------------
+    state_default = new_solver_state(has_constraints=False)
+    state_top1 = new_solver_state(has_constraints=False)
+
+    # --- act ---------------------------------------------
+    InitializationStep(InitFarthestPoint()).run(state_default)
+    InitializationStep(InitFarthestPoint(top_k=1)).run(state_top1)
+
+    # --- assert ------------------------------------------
+    assert list(state_default.selected_index_array) == list(state_top1.selected_index_array)
+
+
+def test_init_farthest_point_top_k_draws_from_the_top_set():
+    """Every top_k>1 greedy pick comes from the top_k highest-contribution items, and the draw varies by seed."""
+    # --- arrange -----------------------------------------
+    solver_state = new_solver_state(has_constraints=False)
+    solver_state.add(np.int32(0))
+    contributions = solver_state.not_selected_contribution_array
+    index_array = solver_state.not_selected_index_array
+    top_k = 5
+    threshold = np.sort(contributions)[-top_k]  # k-th largest contribution
+
+    # --- act ---------------------------------------------
+    picks = []
+    for seed in range(20):
+        strategy = InitFarthestPoint(top_k=top_k)
+        strategy.set_seed(seed)
+        picks.append(int(strategy.get_next_samples(solver_state, solver_state.k)[0]))
+
+    # --- assert ------------------------------------------
+    for pick in picks:
+        pos = int(np.where(index_array == pick)[0][0])
+        assert contributions[pos] >= threshold  # each pick is among the top_k by contribution
+    assert len(set(picks)) > 1  # the uniform draw varies across seeds
