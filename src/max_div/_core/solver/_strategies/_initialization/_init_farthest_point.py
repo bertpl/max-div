@@ -22,9 +22,9 @@ class InitFarthestPoint(InitializationStrategy):
 
     A `random_fraction` above zero widens the random start into a random *prefix*: the first
     `round(random_fraction * k)` items (at least one) are drawn uniformly at random in a single
-    batch, and the greedy picks fill the rest. The endpoints meet the existing strategies: 0.0 is
-    the single random start and 1.0 a fully random selection. The prefix trades a little of the
-    pure construction's peak quality for diversity among start points.
+    batch, and the greedy picks fill the rest. At the endpoints, 0.0 is the pure farthest-point
+    construction from a single random seed, and 1.0 is a fully random selection. The prefix trades
+    a little of the pure construction's peak quality for diversity among start points.
 
     Suggested use: when the strongest possible starting point is desired, e.g. at short time
     budgets.
