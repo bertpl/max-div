@@ -5,7 +5,17 @@ import pytest
 from max_div._core.solver import SolverPreset
 from max_div._core.solver._duration import TargetDuration, iterations, seconds
 from max_div._core.solver._presets import get_preset_strategies
+from max_div._core.solver._strategies._initialization import InitializationStrategy
+from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
+
+# Look up each preset by its resolved alias, so DEFAULT falls back to SMART's entry.
+_EXPECTED_INIT: dict[SolverPreset, type[InitializationStrategy]] = {
+    SolverPreset.RANDOM: InitRandomOneShot,
+    SolverPreset.GUIDED: InitRandomOneShot,
+    SolverPreset.SMART: InitFarthestPoint,
+    SolverPreset.THOROUGH: InitFarthestPoint,
+}
 
 
 @pytest.mark.parametrize(
@@ -19,13 +29,13 @@ from max_div._core.solver._strategies._initialization._init_random_one_shot impo
 )
 @pytest.mark.parametrize("preset", list(SolverPreset))
 def test_get_preset_strategies(preset: SolverPreset, target_duration: TargetDuration):
-    """Perform some rudimentary checks for expected outcome."""
+    """Each preset yields its expected init strategy, at least one optim step, and the requested duration."""
 
     # --- act ---------------------------------------------
-    init_strat, optim_steps = get_preset_strategies(SolverPreset.DEFAULT, target_duration)
+    init_strat, optim_steps = get_preset_strategies(preset, target_duration)
 
     # --- assert ------------------------------------------
-    assert isinstance(init_strat, InitRandomOneShot)  # by default we choose fast initialization
+    assert isinstance(init_strat, _EXPECTED_INIT[preset.resolve_alias()])
     assert len(optim_steps) > 0  # at least 1 optimization step
     assert optim_steps[0]._duration == target_duration  # should be as requested
 

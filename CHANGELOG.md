@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A `Verbosity` enum names the verbosity levels for both solvers (plain integers keep working)
 
 ### Changed
+- SMART and THOROUGH now begin from a lightly randomized farthest-point construction: short-budget results improve and constrained problems reach competitor-level quality sooner; a given seed selects different but equally diverse items than before
 
 ### Deprecated
 

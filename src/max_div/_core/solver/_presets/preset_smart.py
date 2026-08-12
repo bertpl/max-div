@@ -1,6 +1,7 @@
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._solver_step import OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
+from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 
 
 # =================================================================================================
@@ -11,7 +12,12 @@ def get_preset_strategies_smart(
     thorough: bool = False,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     # --- initialization ----------------------------------
-    init_strategy = InitializationStrategy.random_one_shot(uniform=True, ignore_constraints=True)
+    # The greedy farthest-point construction reaches competitor-level quality far sooner than a
+    # random start, but its pure form costs quality on unconstrained problems at long budget; a
+    # short random prefix (random_fraction=0.1) removes that penalty while keeping most of the
+    # short-budget edge. random_fraction stays off the public farthest_point() factory, until a
+    # more final implementation has been decided upon.
+    init_strategy = InitFarthestPoint(random_fraction=0.1)
 
     # --- optimization steps ------------------------------
     if thorough:
