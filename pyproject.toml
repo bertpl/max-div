@@ -1,6 +1,6 @@
 [project]
 name = "max-div"
-version = "0.11.0"
+version = "0.11.1"
 description = "Configurable Solver for Maximum Diversity Problems with Fairness Constraints."
 # readme is dynamic: hatch-fancy-pypi-readme builds the PyPI long-description from README.md,
 # rewriting the relative splash link to a tag-pinned absolute URL (config below).

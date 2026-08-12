@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.11.1 (2026-08-12)
 
 ### Added
 - Parallel solving can report live progress at the same verbosity levels as a single solve: one non-interleaved view showing overall progress and the best result found so far, tagged with the worker that produced it
@@ -13,15 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - SMART and THOROUGH now begin from a lightly randomized farthest-point construction: short-budget results improve and constrained problems reach competitor-level quality sooner; a given seed selects different but equally diverse items than before
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.11.0 (2026-08-11)
 
 ### Added
