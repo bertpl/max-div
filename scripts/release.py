@@ -222,8 +222,8 @@ def step_10_finalize_changelog(version: str) -> None:
             new_body_lines.append(line)
             i += 1
     tail = text[m.end() :]
-    # A blank line ends the finalized section when a release section follows, so its last bullet is
-    # not left directly above that `## ` heading.
+    # When a release section follows, keep a blank line before its `## ` heading, so the finalized
+    # section's last bullet is not left directly above it.
     new_body = "".join(new_body_lines).rstrip() + ("\n\n" if tail else "\n")
     new_header = f"## {version} ({date.today().isoformat()})\n"
     text = text[: m.start()] + new_header + new_body + tail
