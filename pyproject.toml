@@ -6,7 +6,7 @@ description = "Configurable Solver for Maximum Diversity Problems with Fairness 
 # rewriting the relative splash link to a tag-pinned absolute URL (config below).
 dynamic = ["readme"]
 authors = [
-    { name = "Bert Pluymers", email = "bert.pluymers@gmail.com" }
+    { name = "Bert Pluymers" }
 ]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
