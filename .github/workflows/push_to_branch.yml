@@ -40,8 +40,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/pre_commit
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
 
   test:  # latest-only here; the full matrix runs on PR / push-to-main / release
     needs: [check-open-pr]
@@ -52,5 +50,3 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/unit_test
-        with:
-          uv_version: ${{ vars.UV_VERSION }}

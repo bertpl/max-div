@@ -3,9 +3,6 @@ author: Bert Pluymers
 description: Run unit tests at a specific Python version, dependency resolution, and numba JIT mode.
 
 inputs:
-    uv_version:
-        required: true
-        description: "Version of uv to be used. Empty installs the latest."
     python_version:
         required: false
         description: "Python version. Empty string uses .python-version."
@@ -29,7 +26,6 @@ runs:
       - name: Set up uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          version: ${{ inputs.uv_version }}
           # Distinct cache key per combo (incl. Python, since wheels are cpXY-specific) so
           # parallel legs don't race to save one shared key or restore the wrong interpreter's wheels.
           cache-suffix: py${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}
