@@ -100,3 +100,34 @@ updates:
     # number, since the two are meant to stay equal.
     cooldown:
       default-days: 14  # covers every semver level; no per-level override needed
+
+  - package-ecosystem: "pre-commit"
+    # Bumps the pinned `rev` of each hook in .pre-commit-config.yaml; the hook tooling
+    # (ruff, actionlint, zizmor, codespell, ...) rots without these bumps.
+    directory: "/"
+    # Wednesday: a third distinct day, for the collision reason spelled out on the
+    # github-actions entry — auto-merged bumps that fire in the same minute strand each other
+    # behind an out-of-date main.
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "01:00"
+      timezone: "Europe/Zurich"
+    commit-message:
+      prefix: "chore"
+    # Split by update type, as on the entries above and for the same reason: a batch holding a
+    # single major resolves to major and would park every minor/patch bump behind review.
+    groups:
+      pre-commit:  # minor/patch batch: auto-merges once checks pass
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      pre-commit-major:  # majors batch separately and wait for review
+        patterns: ["*"]
+        update-types: ["major"]
+    # 14 days, matching the entries above. A hook `rev` resolves to a git ref, so (as on the
+    # github-actions entry) the wait is soak time for a compromised or broken release to surface
+    # upstream before a bump can auto-merge. Not subsumed by the weekly cadence: the schedule
+    # sets how often Dependabot looks, the cooldown how old a release must be to be eligible, so
+    # a release that landed in the days before a run still waits rather than being taken at once.
+    cooldown:
+      default-days: 14  # covers every semver level; no per-level override needed
