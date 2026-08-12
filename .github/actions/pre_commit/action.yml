@@ -2,18 +2,12 @@ name: Pre-commit
 author: Bert Pluymers
 description: Set up uv and run the full pre-commit hook suite over all files (mirrors `make lint`).
 
-inputs:
-    uv_version:
-        required: true
-        description: "Version of uv to be used. Empty installs the latest."
-
 runs:
     using: composite
     steps:
       - name: Set up uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          version: ${{ inputs.uv_version }}
           enable-cache: true
 
       - name: Cache pre-commit hook environments

@@ -44,7 +44,6 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/unit_test
         with:
-          uv_version: ${{ vars.UV_VERSION }}
           python_version: ${{ matrix.python }}
           dependency_resolution: ${{ matrix.resolution }}
           jit: ${{ matrix.jit }}
@@ -70,8 +69,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-        with:
-          version: ${{ vars.UV_VERSION }}
       - name: Download coverage data from all matrix combos
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
