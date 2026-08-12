@@ -56,8 +56,7 @@ repos:
         name: python matrix covers .python-versions
         entry: uv run --no-default-groups --group tooling python scripts/check_python_matrix.py
         language: system
-        # A version added to .python-versions but not to the CI matrix would ship untested; this
-        # fails when a declared version has no matrix leg.
+        # A version added to .python-versions but not to the CI matrix would ship untested.
         files: ^(\.python-versions|\.github/workflows/_unit_tests\.yml)$
         pass_filenames: false
       - id: uv-lock

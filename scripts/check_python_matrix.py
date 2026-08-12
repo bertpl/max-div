@@ -1,14 +1,14 @@
 """Check that the CI test matrix covers every Python in `.python-versions`.
 
-`.python-versions` is the declared set of supported Python minors, and `scripts/release.py` already
-ties it to the trove classifiers. Nothing tied it to what CI actually runs: the matrix in
-`.github/workflows/_unit_tests.yml` is hand-curated (each Python paired with resolution and jit
-axes, plus a free-threaded `3.14t` leg), so a version could be added to `.python-versions` and the
-classifiers, pass the release check, and ship to PyPI without a single test leg running on it.
+`.python-versions` is the declared set of supported Python minors; `scripts/release.py` ties it to
+the trove classifiers. The CI test matrix in `.github/workflows/_unit_tests.yml` is separate and
+hand-curated (each Python paired with resolution and jit axes, plus a free-threaded `3.14t` leg), so
+a version can sit in `.python-versions` and the classifiers, pass the release check, and reach PyPI
+with no test leg running on it. This check fails when a declared version has no matrix leg, so that
+cannot happen.
 
-This closes that gap by failing when a declared version has no matrix leg. The check is
-one-directional: extra matrix legs (notably `3.14t`, deliberately absent from `.python-versions`)
-are fine; only an uncovered declared version is an error.
+The check is one-directional: extra matrix legs (notably `3.14t`, deliberately absent from
+`.python-versions`) are fine; only an uncovered declared version is an error.
 
 Usage:
 
