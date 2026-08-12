@@ -109,7 +109,7 @@ repos:
       - id: zizmor  # security linter for workflows — complements actionlint (correctness)
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.37.4
     hooks:
       - id: check-github-workflows
       - id: check-dependabot
