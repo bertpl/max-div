@@ -107,9 +107,8 @@ dev = [
     { include-group = "package" },
     { include-group = "tooling" },
 ]
-# Docs toolchain — a dependency-group, not a published extra, so it stays out of the package's PyPI
-# metadata; Read the Docs installs it with uv (see .readthedocs.yaml). Kept out of dev for the same
-# reason as notebooks below: building the docs is a separate activity from the test/lint cycle CI runs.
+# Docs toolchain, in its own dependency-group so it stays out of the package's PyPI metadata; out of
+# dev like notebooks below. Read the Docs installs it with uv (see .readthedocs.yaml).
 docs = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.0.0",
