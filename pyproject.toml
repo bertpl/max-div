@@ -47,16 +47,6 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-[project.optional-dependencies]
-docs = [
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.0.0",
-    "mkdocstrings[python]>=0.24.0",
-    "mkdocs-autoapi[python]>=0.4.1",
-    "mkdocs-include-markdown-plugin>=7.2.0",
-    "ruff>=0.14.0",
-]
-
 [dependency-groups]
 # Comparison-benchmark harness (see benchmarks/README.md); never part of the published package.
 benchmarks = [
@@ -116,6 +106,16 @@ dev = [
     { include-group = "lint" },
     { include-group = "package" },
     { include-group = "tooling" },
+]
+# Docs toolchain, in its own dependency-group so it stays out of the package's PyPI metadata; out of
+# dev like notebooks below. Read the Docs installs it with uv (see .readthedocs.yaml).
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.24.0",
+    "mkdocs-autoapi[python]>=0.4.1",
+    "mkdocs-include-markdown-plugin>=7.2.0",
+    "ruff>=0.14.0",
 ]
 # notebook/analysis tooling — not needed to run the test suite, so kept out of the
 # dev group that CI installs (and out of the lowest-direct resolution surface)

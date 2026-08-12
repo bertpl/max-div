@@ -1800,16 +1800,6 @@ dependencies = [
     { name = "tqdm" },
 ]
 
-[package.optional-dependencies]
-docs = [
-    { name = "mkdocs" },
-    { name = "mkdocs-autoapi", extra = ["python"] },
-    { name = "mkdocs-include-markdown-plugin" },
-    { name = "mkdocs-material" },
-    { name = "mkdocstrings", extra = ["python"] },
-    { name = "ruff" },
-]
-
 [package.dev-dependencies]
 benchmarks = [
     { name = "apricot-select" },
@@ -1837,6 +1827,14 @@ dev = [
     { name = "ruff" },
     { name = "scipy-stubs" },
     { name = "ty" },
+]
+docs = [
+    { name = "mkdocs" },
+    { name = "mkdocs-autoapi", extra = ["python"] },
+    { name = "mkdocs-include-markdown-plugin" },
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings", extra = ["python"] },
+    { name = "ruff" },
 ]
 lint = [
     { name = "pre-commit" },
@@ -1869,11 +1867,6 @@ requires-dist = [
     { name = "click", specifier = ">=8.2.0" },
     { name = "icc-rt", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "intel-cmplr-lib-rt", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
-    { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.1" },
-    { name = "mkdocs-autoapi", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.4.1" },
-    { name = "mkdocs-include-markdown-plugin", marker = "extra == 'docs'", specifier = ">=7.2.0" },
-    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.0.0" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.24.0" },
     { name = "numba", marker = "python_full_version < '3.12'", specifier = ">=0.57" },
     { name = "numba", marker = "python_full_version == '3.12.*'", specifier = ">=0.59" },
     { name = "numba", marker = "python_full_version == '3.13.*'", specifier = ">=0.61" },
@@ -1881,13 +1874,11 @@ requires-dist = [
     { name = "numpy", marker = "python_full_version < '3.13'", specifier = ">=2.0.0" },
     { name = "numpy", marker = "python_full_version == '3.13.*'", specifier = ">=2.1.0" },
     { name = "numpy", marker = "python_full_version >= '3.14'", specifier = ">=2.3.2" },
-    { name = "ruff", marker = "extra == 'docs'", specifier = ">=0.14.0" },
     { name = "scipy", marker = "python_full_version < '3.13'", specifier = ">=1.10.0" },
     { name = "scipy", marker = "python_full_version == '3.13.*'", specifier = ">=1.14.1" },
     { name = "scipy", marker = "python_full_version >= '3.14'", specifier = ">=1.16.1" },
     { name = "tqdm", specifier = ">=4.66.0" },
 ]
-provides-extras = ["docs"]
 
 [package.metadata.requires-dev]
 benchmarks = [
@@ -1917,6 +1908,14 @@ dev = [
     { name = "ruff", specifier = ">=0.14.0" },
     { name = "scipy-stubs", specifier = ">=1.10.0" },
     { name = "ty", specifier = ">=0.0.58" },
+]
+docs = [
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-autoapi", extras = ["python"], specifier = ">=0.4.1" },
+    { name = "mkdocs-include-markdown-plugin", specifier = ">=7.2.0" },
+    { name = "mkdocs-material", specifier = ">=9.0.0" },
+    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.24.0" },
+    { name = "ruff", specifier = ">=0.14.0" },
 ]
 lint = [
     { name = "pre-commit", specifier = ">=4.0" },
