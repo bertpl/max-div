@@ -9,7 +9,7 @@ from max_div._core.solver._strategies._initialization import InitializationStrat
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
 
-# expected init strategy per resolved preset (DEFAULT resolves to its alias's entry)
+# Look up each preset by its resolved alias, so DEFAULT falls back to SMART's entry.
 _EXPECTED_INIT: dict[SolverPreset, type[InitializationStrategy]] = {
     SolverPreset.RANDOM: InitRandomOneShot,
     SolverPreset.GUIDED: InitRandomOneShot,

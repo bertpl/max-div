@@ -101,7 +101,7 @@ def test_init_farthest_point_random_prefix_size(random_fraction: float, expected
 
     # --- assert ------------------------------------------
     assert len(first_batch) == expected_prefix
-    assert len({int(i) for i in first_batch}) == expected_prefix  # all distinct
+    assert len({int(i) for i in first_batch}) == expected_prefix  # the drawn items are all distinct
 
 
 def test_init_farthest_point_full_random_prefix_skips_greedy():
@@ -115,7 +115,7 @@ def test_init_farthest_point_full_random_prefix_skips_greedy():
     InitializationStep(InitFarthestPoint(random_fraction=0.0)).run(state_greedy)
 
     # --- assert ------------------------------------------
-    assert state_full.score.size == 1.0  # reached full size k in the single random batch
+    assert state_full.score.size == 1.0  # the single random batch reached full size k
     full_selection = {int(i) for i in state_full.selected_index_array}
     greedy_selection = {int(i) for i in state_greedy.selected_index_array}
-    assert full_selection != greedy_selection  # random fill, not the greedy construction
+    assert full_selection != greedy_selection  # a random fill differs from the greedy construction
