@@ -5,13 +5,16 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.13"
+  jobs:
+    install:
+      # uv reads the PEP 735 `docs` dependency-group (pip cannot), which keeps the docs toolchain out
+      # of the package's published PyPI metadata. The export deliberately uses `--no-default-groups
+      # --group docs`, not `--only-group docs`: mkdocstrings and mkdocs-autoapi import max_div to read
+      # its docstrings, so the project and its runtime deps must be installed too. `--no-hashes` lets
+      # the (hashless) local project sit in the same requirements file as the hashed dependencies.
+      - pip install uv
+      - uv export --no-default-groups --group docs --no-editable --no-hashes > docs-requirements.txt
+      - pip install -r docs-requirements.txt
 
 mkdocs:
   configuration: mkdocs.yml
-
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs

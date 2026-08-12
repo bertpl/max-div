@@ -120,7 +120,7 @@ splash:
 
 docs:
 	# output dir comes from mkdocs.yml (site_dir: ./reports/docs)
-	uv run --exact --no-default-groups --extra docs mkdocs build --strict;
+	uv run --exact --no-default-groups --group docs mkdocs build --strict;
 
 show-coverage:
 	# trigger browser to open coverage report
