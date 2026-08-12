@@ -20,6 +20,12 @@ class InitFarthestPoint(InitializationStrategy):
 
     Constraints are ignored by design; feasibility is left to the optimization steps.
 
+    A `random_fraction` above zero widens the random start into a random *prefix*: the first
+    `round(random_fraction * k)` items (at least one) are drawn uniformly at random in a single
+    batch, and the greedy picks fill the rest. The endpoints meet the existing strategies: 0.0 is
+    the single random start and 1.0 a fully random selection. The prefix trades a little of the
+    pure construction's peak quality for diversity among start points.
+
     Suggested use: when the strongest possible starting point is desired, e.g. at short time
     budgets.
 
@@ -27,9 +33,20 @@ class InitFarthestPoint(InitializationStrategy):
        - ~O(n * k), times d when distances are computed on demand from vectors.
     """
 
+    def __init__(self, random_fraction: float = 0.0) -> None:
+        """Create the strategy; `random_fraction` in [0, 1] sets the random-prefix size.
+
+        :raises ValueError: If `random_fraction` is outside [0, 1].
+        """
+        super().__init__()
+        if not (0.0 <= random_fraction <= 1.0):
+            raise ValueError(f"random_fraction must be in [0, 1], got {random_fraction}")
+        self._random_fraction = random_fraction
+
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         if state.n_selected == 0:
-            return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
+            n_random = min(max(round(self._random_fraction * int(state.k)), 1), int(state.k))
+            return randint(n=state.n, k=np.int32(n_random), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
         # both arrays below are ascending-index, so positions align
         contributions = state.not_selected_contribution_array
         return np.array([state.not_selected_index_array[np.argmax(contributions)]], dtype=np.int32)
