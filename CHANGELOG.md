@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- The presets' farthest-point construction picks a little less greedily instead of starting with random picks: short-budget results improve further, and a given seed again selects different (equally good) items
 
 ### Deprecated
 
