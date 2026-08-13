@@ -5,21 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.11.2 (2026-08-13)
 
 ### Added
 - `InitializationStrategy.farthest_point()` accepts an optional `top_k`: each greedy pick samples uniformly among the `top_k` best candidates (default 1 keeps the exact greedy construction)
 
 ### Changed
 - The tunable entropy mechanism of the farthest-point initialization procedure has changed from a pure-random fraction to choosing randomly from top_k-farthest-points in each step: short-budget results improve further, while maintaining the effect that seeds sufficiently diversify the search process
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.11.1 (2026-08-12)
 
