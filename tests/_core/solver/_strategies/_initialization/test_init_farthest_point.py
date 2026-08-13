@@ -86,6 +86,33 @@ def test_init_farthest_point_rejects_top_k_below_one(top_k: int):
         InitFarthestPoint(top_k=top_k)
 
 
+def test_farthest_point_factory_passes_top_k_through():
+    """The public factory's top_k reaches the strategy: same seed, same pick as direct construction."""
+    # --- arrange -----------------------------------------
+    solver_state = new_solver_state(has_constraints=False)
+    solver_state.add(np.int32(0))
+
+    # --- act ---------------------------------------------
+    picks = {}
+    for name, strategy in [
+        ("factory", InitializationStrategy.farthest_point(top_k=5)),
+        ("direct", InitFarthestPoint(top_k=5)),
+    ]:
+        strategy.set_seed(3)
+        picks[name] = int(strategy.get_next_samples(solver_state, solver_state.k)[0])
+
+    # --- assert ------------------------------------------
+    assert picks["factory"] == picks["direct"]
+
+
+@pytest.mark.parametrize("top_k", [0, -1])
+def test_farthest_point_factory_rejects_top_k_below_one(top_k: int):
+    """The strategy's top_k validation raises through the public factory."""
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError, match="top_k"):
+        InitializationStrategy.farthest_point(top_k=top_k)
+
+
 def test_init_farthest_point_top_k_1_is_the_argmax_pick():
     """top_k=1 takes the plain argmax pick, identical to the default strategy."""
     # --- arrange -----------------------------------------

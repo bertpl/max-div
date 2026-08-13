@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `InitializationStrategy.farthest_point()` accepts an optional `top_k`: each greedy pick samples uniformly among the `top_k` best candidates (default 1 keeps the exact greedy construction)
 
 ### Changed
 - The presets' farthest-point construction picks a little less greedily instead of starting with random picks: short-budget results improve further, and a given seed again selects different (equally good) items

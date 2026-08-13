@@ -26,9 +26,9 @@ speed vs quality of the starting point:
 
 | Strategy | How it works |
 |----------|-------------|
-| `random_one_shot` | Selects all `k` items in one batch, with probabilities biased by global separation. **Default for all presets.** |
+| `random_one_shot` | Selects all `k` items in one batch, with probabilities biased by global separation. **Default for the RANDOM and GUIDED presets.** |
 | `random_batched` | Selects in batches of `b`, re-evaluating separations between batches. |
-| `farthest_point` | A seeded random start item, then greedily adds the item farthest from the selection (farthest-point sampling; under `MEAN_PAIRWISE_DISTANCE`, greedily maximizes mean distance to the selection). Constraint-unaware. |
+| `farthest_point` | A seeded random start item, then greedily adds the item farthest from the selection (farthest-point sampling; under `MEAN_PAIRWISE_DISTANCE`, greedily maximizes mean distance to the selection). An optional `top_k` samples each pick uniformly among the `top_k` best candidates (default 1 keeps the exact greedy construction). Constraint-unaware. **The SMART and THOROUGH presets initialize this way.** |
 | `eager` | Evaluates `nc` random candidates per step, picks the best. Slower but higher quality. |
 | `fast` | Selects the first `k` items. Trivial deterministic baseline for testing and benchmarking. |
 
