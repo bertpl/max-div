@@ -78,49 +78,6 @@ def test_init_farthest_point_name():
     assert strategy.name == "InitFarthestPoint"
 
 
-@pytest.mark.parametrize("random_fraction", [-0.1, 1.1, 2.0])
-def test_init_farthest_point_rejects_out_of_range_random_fraction(random_fraction: float):
-    """random_fraction must lie in [0, 1]."""
-    # --- act & assert ------------------------------------
-    with pytest.raises(ValueError, match="random_fraction"):
-        InitFarthestPoint(random_fraction=random_fraction)
-
-
-@pytest.mark.parametrize(
-    "random_fraction, expected_prefix",
-    [(0.0, 1), (0.1, 5), (0.5, 25), (1.0, 50)],  # the shared state has k=50
-)
-def test_init_farthest_point_random_prefix_size(random_fraction: float, expected_prefix: int):
-    """The first batch draws round(random_fraction * k) distinct random items, at least one."""
-    # --- arrange -----------------------------------------
-    solver_state = new_solver_state(has_constraints=False)
-    strategy = InitFarthestPoint(random_fraction=random_fraction)
-
-    # --- act ---------------------------------------------
-    first_batch = strategy.get_next_samples(solver_state, solver_state.k)
-
-    # --- assert ------------------------------------------
-    assert len(first_batch) == expected_prefix
-    assert len({int(i) for i in first_batch}) == expected_prefix  # the drawn items are all distinct
-
-
-def test_init_farthest_point_full_random_prefix_skips_greedy():
-    """random_fraction=1.0 fills the whole selection in one random batch, never running a greedy pick."""
-    # --- arrange -----------------------------------------
-    state_full = new_solver_state(has_constraints=False)
-    state_greedy = new_solver_state(has_constraints=False)
-
-    # --- act ---------------------------------------------
-    InitializationStep(InitFarthestPoint(random_fraction=1.0)).run(state_full)
-    InitializationStep(InitFarthestPoint(random_fraction=0.0)).run(state_greedy)
-
-    # --- assert ------------------------------------------
-    assert state_full.score.size == 1.0  # the single random batch reached full size k
-    full_selection = {int(i) for i in state_full.selected_index_array}
-    greedy_selection = {int(i) for i in state_greedy.selected_index_array}
-    assert full_selection != greedy_selection  # a random fill differs from the greedy construction
-
-
 @pytest.mark.parametrize("top_k", [0, -1])
 def test_init_farthest_point_rejects_top_k_below_one(top_k: int):
     """top_k must be >= 1."""

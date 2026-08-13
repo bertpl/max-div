@@ -14,9 +14,9 @@ def get_preset_strategies_smart(
     # --- initialization ----------------------------------
     # The greedy farthest-point construction reaches competitor-level quality far sooner than a
     # random start; sampling each pick among the top_k highest contributions keeps that quality
-    # (every pick stays among the best candidates) while decorrelating seeds, so the workers of a
-    # best-of-N portfolio find different solutions. top_k and random_fraction are deliberately not
-    # exposed on the public farthest_point() factory.
+    # while letting different seeds pick different items, so the workers of a best-of-N portfolio
+    # find different solutions. top_k is deliberately not exposed on the public farthest_point()
+    # factory.
     init_strategy = InitFarthestPoint(top_k=8)
 
     # --- optimization steps ------------------------------
