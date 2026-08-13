@@ -57,14 +57,17 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitFast()
 
     @classmethod
-    def farthest_point(cls) -> InitFarthestPoint:
+    def farthest_point(cls, top_k: int = 1) -> InitFarthestPoint:
         """Farthest-point-sampling initialization: a seeded random start item, then greedy picks.
 
         See `InitFarthestPoint` for the per-metric interpretation and constraint handling.
+
+        :param top_k: Each greedy pick samples uniformly among the `top_k` highest diversity
+            contributions; the default 1 keeps the exact greedy construction.
         """
         from ._init_farthest_point import InitFarthestPoint
 
-        return InitFarthestPoint()
+        return InitFarthestPoint(top_k=top_k)
 
     @classmethod
     def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:

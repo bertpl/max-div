@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `InitializationStrategy.farthest_point()` accepts an optional `top_k`: each greedy pick samples uniformly among the `top_k` best candidates (default 1 keeps the exact greedy construction)
 
 ### Changed
+- The tunable entropy mechanism of the farthest-point initialization procedure has changed from a pure-random fraction to choosing randomly from top_k-farthest-points in each step: short-budget results improve further, while maintaining the effect that seeds sufficiently diversify the search process
 
 ### Deprecated
 
