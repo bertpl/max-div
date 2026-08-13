@@ -13,11 +13,10 @@ def get_preset_strategies_smart(
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     # --- initialization ----------------------------------
     # The greedy farthest-point construction reaches competitor-level quality far sooner than a
-    # random start; sampling each pick among the top_k=8 highest contributions keeps that quality
-    # (every pick stays among the best candidates) while decorrelating seeds, which is what a
-    # best-of-N portfolio monetizes. Preferred over a random prefix, whose uniform picks cost
-    # several percent at the construction instant. Both knobs stay off the public farthest_point()
-    # factory, until a more final implementation has been decided upon.
+    # random start; sampling each pick among the top_k highest contributions keeps that quality
+    # (every pick stays among the best candidates) while decorrelating seeds, so the workers of a
+    # best-of-N portfolio find different solutions. top_k and random_fraction are deliberately not
+    # exposed on the public farthest_point() factory.
     init_strategy = InitFarthestPoint(top_k=8)
 
     # --- optimization steps ------------------------------
