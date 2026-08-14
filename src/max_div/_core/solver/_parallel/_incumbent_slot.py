@@ -1,7 +1,8 @@
 """The incumbent slot holds one island's shared best: the top-scoring selection published so far.
 
-The slot lives in shared memory created by the parent process and inherited by every island
-member at spawn, like the shared distance store.  Everything in it is fixed-size, so it fits raw
+An island is a group of workers that exchange selections through one shared slot.  The slot lives
+in shared memory created by the parent process and inherited by every island member at spawn,
+like the shared distance store.  Everything in the slot is fixed-size, so it fits raw
 shared-memory arrays:
 
 - the score, as a float64 vector;
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
 
 
 class IslandIncumbentSlot:
-    """The slot holds one island's shared best selection; every exchange happens under a single lock.
+    """The slot holds one island's shared best selection.
 
     Score tuples are compared lexicographically, exactly as `Score.as_tuple()` orders them, so
     "better" means the same thing here as in the final best-of-all selection.
@@ -48,8 +49,7 @@ class IslandIncumbentSlot:
     def exchange(self, score: tuple[float, ...], selection: NDArray[np.int32]) -> NDArray[np.int32] | None:
         """Publish the given selection if it is strictly the island's best, else return a better one.
 
-        The exchange is one atomic visit under the slot lock; the worker comes away with whichever
-        of the two selections scores strictly higher:
+        The exchange is one atomic visit under the slot lock:
 
         - the worker's beats the stored one (or the slot was never written): the worker's is
           stored, and None is returned — the worker keeps what it has;
