@@ -208,7 +208,7 @@ def test_group_sizes_split_the_remainder_over_the_first_groups(total, n_groups, 
 
 
 def test_group_count_outside_the_worker_count_is_rejected():
-    """An group count below 1 or above the worker count is a configuration error."""
+    """A group count below 1 or above the worker count is a configuration error."""
     # --- arrange -----------------------------------------
     builder = ParallelMaxDivSolverBuilder(_problem())
 
@@ -271,7 +271,7 @@ def test_an_integer_worker_count_defaults_to_cooperative_groups():
 
 
 def test_a_cooperative_portfolio_solves():
-    """An group of cooperating workers produces an ordinary, valid solution."""
+    """A group of cooperating workers produces an ordinary, valid solution."""
     # --- arrange / act -----------------------------------
     solution = _solve_portfolio(2, n_groups=1)
 

@@ -44,7 +44,7 @@ class ParallelMaxDivSolver:
         :param storage: the already-resolved backend the shared store is built in.
         :param worker_configs: what each worker runs, reported back in the solution.
         :param solver_configs: the solver each worker assembles, in the same order.
-        :param group_sizes: how the workers group into groups, as consecutive run lengths over
+        :param group_sizes: how the workers split into groups, as consecutive run lengths over
                              the worker order; sizes must sum to the worker count.
         """
         self._problem = problem
@@ -91,7 +91,7 @@ class ParallelMaxDivSolver:
         return ParallelMaxDivSolution(**inherited, workers=summaries, winning_worker=winner.worker_index)
 
     def _build_coordinators(self) -> list[WorkerCoordinator]:
-        """Return one coordinator per worker: an group's members share a slot, lone workers share nothing."""
+        """Return one coordinator per worker: a worker group's members share a slot, lone workers share nothing."""
         config = self._solver_configs[0]
         context = multiprocessing.get_context("spawn")
         coordinators: list[WorkerCoordinator] = []
@@ -142,7 +142,7 @@ def default_group_count(n_workers_total: int) -> int:
 
     The default targets roughly twice as many groups as workers per group: the final result is a
     best over all workers, and only groups are independent draws of that best, so groups buy more
-    than group size does.  Every group keeps at least 2 workers (a lone worker forms an group of
+    than group size does.  Every group keeps at least 2 workers (a lone worker forms a group of
     one) — on small totals the count collapses to a single group rather than to groups of one,
     preferring cooperation over independence.  An explicit `n_groups` on `with_workers` overrides it.
     """

@@ -49,13 +49,13 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
         n_groups: int | None = None,
     ) -> Self:
-        """Set what the portfolio runs, for how long each worker runs it, and how workers group into groups.
+        """Set what the portfolio runs, for how long each worker runs it, and how workers form groups.
 
         The workers run side by side, so the portfolio takes as long as one of them rather than the
         sum.  Presets differ in iteration speed, so when workers run different ones a wall-clock
         budget keeps them to the same real time where an iteration count would not.
 
-        Workers group into **groups**: within an group, workers adopt the best selection any
+        Workers form **worker groups**: within a group, workers adopt the best selection any
         member has found so far; groups never communicate, and the best worker over all groups
         wins.  Groups of one make those workers fully independent — `n_groups` equal to the
         worker count is the fully independent portfolio.
