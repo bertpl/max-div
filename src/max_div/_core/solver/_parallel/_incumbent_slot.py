@@ -1,11 +1,14 @@
-"""One shared incumbent per island: the best selection any island member has published so far.
+"""The incumbent slot holds one island's shared best: the top-scoring selection published so far.
 
 The slot lives in shared memory created by the parent process and inherited by every island
 member at spawn, like the shared distance store.  Everything in it is fixed-size, so it fits raw
-shared-memory arrays: the score as a float64 vector (its length is a property of the shared
-metric configuration, so it is identical across an island's workers), the selection as an int32
-vector of up to k indices.  A version counter distinguishes a never-written slot from a written
-one and lets tests observe that exchanges happened.
+shared-memory arrays:
+
+- the score, as a float64 vector;
+- the selection, as an int32 vector of up to k indices.
+
+A version counter distinguishes a never-written slot from a written one and lets tests observe
+that exchanges happened.
 """
 
 from __future__ import annotations
@@ -21,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class IslandIncumbentSlot:
-    """The shared best-selection slot of one island, exchanged through under a single lock.
+    """The slot holds one island's shared best selection; every exchange happens under a single lock.
 
     Score tuples are compared lexicographically, exactly as `Score.as_tuple()` orders them, so
     "better" means the same thing here as in the final best-of-all selection.
@@ -32,7 +35,9 @@ class IslandIncumbentSlot:
 
         :param context: (BaseContext) the multiprocessing context the workers spawn from.
         :param k: (int) maximum selection size the slot can hold.
-        :param score_length: (int) number of components in the workers' score tuples.
+        :param score_length: (int) number of components in the workers' score tuples — a property
+                             of the shared metric configuration, so identical across an island's
+                             workers.
         """
         self._lock = context.Lock()
         self._version = context.Value("q", 0, lock=False)
@@ -43,8 +48,8 @@ class IslandIncumbentSlot:
     def exchange(self, score: tuple[float, ...], selection: NDArray[np.int32]) -> NDArray[np.int32] | None:
         """Publish the given selection if it is strictly the island's best, else return a better one.
 
-        One atomic visit under the slot lock, from which a worker comes away with whichever of the
-        two selections scores strictly higher:
+        The exchange is one atomic visit under the slot lock; the worker comes away with whichever
+        of the two selections scores strictly higher:
 
         - the worker's beats the stored one (or the slot was never written): the worker's is
           stored, and None is returned — the worker keeps what it has;

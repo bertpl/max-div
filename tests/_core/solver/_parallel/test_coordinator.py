@@ -96,7 +96,7 @@ def test_cooperative_coordinator_moves_the_best_selection_between_states():
 
 
 def test_cooperative_coordinator_keeps_the_better_state_untouched():
-    """A boundary where the worker already matches or beats the slot adopts nothing and stores nothing new."""
+    """A worker that beats the slot publishes without adopting; one that matches it leaves the slot untouched."""
     # --- arrange -----------------------------------------
     slot = IslandIncumbentSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
     coordinator = CooperativeCoordinator(slot)

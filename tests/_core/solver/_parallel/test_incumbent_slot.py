@@ -11,6 +11,7 @@ from max_div._core.solver._parallel import IslandIncumbentSlot
 # =================================================================================================
 @pytest.fixture
 def slot() -> IslandIncumbentSlot:
+    """Return a fresh, never-written slot."""
     return IslandIncumbentSlot(multiprocessing.get_context("spawn"), k=4, score_length=3)
 
 
