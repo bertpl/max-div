@@ -40,7 +40,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · budget expressed as an iteration count | <span class="mark mark-full">✔</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-full">✔</span> |  |
 | time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^scip-7] |
-| multi-worker · solves one problem with several workers at once | <span class="mark mark-partial">◐</span> | [^scip-8] |
+| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
+| multi-worker · parallel workers share information mid-run | <span class="mark mark-partial">◐</span> | [^scip-8] |
 | largest practical problem size | n ≈ 10<sup>3</sup> | [^scip-9] |
 
 </div>
@@ -52,5 +53,5 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^scip-5]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
 [^scip-6]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
 [^scip-7]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
-[^scip-8]: Reachable through SCIP's concurrent solving and the FiberSCIP / UG frameworks, which need a TPI-enabled build; the default PySCIPOpt wheel does not expose it.
+[^scip-8]: Reachable through SCIP's concurrent solving and the FiberSCIP / UG frameworks, which share bounds and solutions between the racing solvers but need a TPI-enabled build; the default PySCIPOpt wheel does not expose it.
 [^scip-9]: The limit differs sharply by objective. A max-min model with big-M linearization is routinely solved to optimality around n ≈ 10³; the mean-of-NN objective needs an assignment MILP whose size grows far faster and which stops being tractable near n ≈ 60 — below the floor of the benchmark generators used here. The single value reported is the max-min one, because that is the formulation this comparison actually exercises.

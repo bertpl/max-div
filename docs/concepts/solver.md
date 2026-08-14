@@ -130,13 +130,19 @@ portfolio** — and keeps the best result any of them reached. The workers share
 distances, which are usually the most memory-intensive structure in a solve, so N workers cost N
 processes but not N copies of that data.
 
+The workers form **[worker groups](glossary.md#worker-group)** — the parallel-metaheuristics
+literature calls them *islands*: within a group, every worker adopts the best selection any
+member has found so far, exchanged at the same periodic points where workers report progress;
+groups never communicate with each other. Groups of one worker are fully independent — a fully
+independent portfolio is the special case where every group has one member.
+
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
 
 solution = (
     ParallelMaxDivSolverBuilder(problem)
     .with_seed(42)
-    .with_workers(seconds(60), 8)          # or one WorkerConfig per worker
+    .with_workers(seconds(60), 8, n_groups=4)   # 8 workers in 4 groups of 2
     .build()
     .solve()
 )
@@ -144,16 +150,41 @@ solution = (
 
 ### Why Run Several
 
-**The purpose is variance reduction, not speed.** A run's quality depends on its seed, and running
-several seeds at once and keeping the best is insurance against drawing a bad one. Running several
-does not make any single search faster, and it does not substitute for a larger budget.
+The two counts buy different things:
 
-How much it buys depends on the budget. The [published preset quantiles](../benchmarks/solver/bm_problem_u1_presets.md)
+- **More groups**: variance reduction. A run's quality depends on its seed, and keeping the best
+  over several independent groups is insurance against drawing a bad one.
+- **Larger groups**: shared search capacity. A group's members pool their effort on promising
+  selections — a member stuck with a poor selection picks up a sibling's better one and continues
+  from there — at the cost of searching less independently.
+
+How much the variance reduction buys depends on the budget. The [published preset quantiles](../benchmarks/solver/bm_problem_u1_presets.md)
 show the seed spread narrowing sharply as budgets grow — roughly tenfold over the first stretch —
 and then flattening rather than vanishing.
 
 Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
+
+### Workers and Groups
+
+`with_workers` accepts the worker set in three forms:
+
+- **an integer** — that many default workers, grouped into `n_groups` groups (both counts have
+  defaults, below); the only form `n_groups` combines with;
+- **a flat sequence of `WorkerConfig`** — one configuration per worker, grouped by the default
+  rule;
+- **a nested sequence** — one inner sequence per group, fixing the grouping and every
+  configuration at once; groups may differ in size and mix presets freely.
+
+When the counts are not given:
+
+- the worker total defaults to **3/4 of the logical cores**;
+- the group count defaults to **`round(sqrt(2 · total))`**, capped so every group keeps at least
+  two workers (a lone worker forms a group of one) — about twice as many groups as workers per
+  group, leaning on groups because only they are independent draws of the final result, the best
+  over all workers;
+- totals too small for two groups of two get a single group rather than independent workers;
+- a worker total that does not divide evenly hands the extra workers to the first groups.
 
 ### What Varies per Worker
 
@@ -170,12 +201,19 @@ Distance storage is fixed for a different reason: the workers read one shared bu
 
 ### Seeds and Reproducibility
 
-The portfolio takes one seed and derives a seed per worker from that seed, so a portfolio is reproducible
-as a whole from a single number while its workers still search differently.
+The portfolio takes one seed and derives a seed per worker from that seed, so the workers search
+differently while the whole configuration derives from a single number.
 
-Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran, which is
-enough to replay that worker on its own with `MaxDivSolverBuilder`. The limits in the
-[Reproducibility](#reproducibility) section apply unchanged.
+**Reproducibility follows the grouping.** A fully independent portfolio (`n_groups` equal to the
+worker count) run twice from one seed returns the same selection. A portfolio with cooperating
+groups does not: which selections get adopted depends on how far each worker happens to have
+come when it reaches an exchange, and that inter-worker timing varies from run to run.
+
+Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran. For an
+independent worker that is enough to replay it on its own with `MaxDivSolverBuilder`; a
+cooperative worker's trajectory also depends on what its group mates published, so the replay
+contract is independent-only. The limits in the [Reproducibility](#reproducibility) section apply
+on top.
 
 ### Reading the Result
 
@@ -184,8 +222,10 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
 
 - **Well below the worker count**: seeds mattered on this problem, and the portfolio earned its
   cost.
-- **Equal to the worker count**: every worker tied, so the portfolio found nothing a single one
-  would not have. Lower the worker count or solve once.
+- **Equal to the worker count**: every worker tied. In a fully independent portfolio that means
+  the run found nothing a single worker would not have — lower the worker count or solve once.
+  With cooperating groups, ties *within* a group are partly structural (members adopt each
+  other's best), so read the count against the number of groups rather than of workers.
 
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
@@ -216,7 +256,8 @@ predict, and then run, the single algorithm best suited to it. That is not max-d
 runs several at once and keeps the best.
 
 Portfolio workers may run independently or share what they learn as they go — ManySAT (Hamadi,
-Jabbour and Sais, 2009) shares. max-div's workers are independent: they never exchange information.
+Jabbour and Sais, 2009) shares. max-div sits in between: group members share their best selection,
+while groups never exchange information.
 
 **References**
 

@@ -66,7 +66,8 @@ solver:
       note:
         text: >-
           A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-    parallelism.parallel: {mark: none}
+    parallelism.independent: {mark: none}
+    parallelism.cooperative: {mark: none}
 ---
 
 # code-FDM

@@ -42,11 +42,17 @@ solver:
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves: {mark: full}
-    parallelism.parallel:
+    parallelism.independent:
       mark: full
       note:
         text: >-
           Several workers solve the same problem at once and the best result wins.
+    parallelism.cooperative:
+      mark: full
+      note:
+        text: >-
+          Workers form groups whose members adopt the best selection any member has found so
+          far; groups stay independent of each other, and the best result over all workers wins.
 ---
 
 # max-div

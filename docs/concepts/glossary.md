@@ -234,3 +234,12 @@ The coordinates of an [item](#item), when the problem has any. A vector-defined 
 [precomputed distances](#precomputed-distances) has distances but no vectors. Use *vector*
 only where the coordinates themselves matter — how distances are computed, or what gets passed in
 — and [item](#item) everywhere the selection is what is being discussed.
+
+## Worker group { #worker-group }
+
+A set of parallel workers that share their best selection while solving: at regular exchange
+points, every member adopts the group's best-so-far selection. Groups never communicate with each
+other, so each group explores independently and the best worker over all groups wins. The
+parallel-metaheuristics literature calls this concept an *island*; the documentation and API say
+"worker group" throughout as the more accessible name. See
+[Solving in Parallel](solver.md#solving-in-parallel).

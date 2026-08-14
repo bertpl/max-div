@@ -1,7 +1,7 @@
 """A portfolio builder configures and builds several solvers over one problem."""
 
 from collections.abc import Sequence
-from typing import Self
+from typing import Self, cast
 
 from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
@@ -9,6 +9,7 @@ from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._parallel import (
     ParallelMaxDivSolver,
     WorkerConfig,
+    default_group_count,
     default_worker_count,
     warn_about_worker_count,
 )
@@ -36,27 +37,62 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         """
         super().__init__(problem)
         self._worker_configs: list[WorkerConfig] = []
+        self._group_sizes: list[int] = []
         self._target_duration: TargetDuration | None = None
 
     # -------------------------------------------------------------------------
     #  Builder API
     # -------------------------------------------------------------------------
     def with_workers(
-        self, target_duration: TargetDuration, workers: int | Sequence[WorkerConfig] | None = None
+        self,
+        target_duration: TargetDuration,
+        workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
+        n_groups: int | None = None,
     ) -> Self:
-        """Set what the portfolio runs, and for how long each worker runs it.
+        """Set what the portfolio runs, for how long each worker runs it, and how workers form groups.
 
         The workers run side by side, so the portfolio takes as long as one of them rather than the
         sum.  Presets differ in iteration speed, so when workers run different ones a wall-clock
         budget keeps them to the same real time where an iteration count would not.
 
-        :param workers: an integer runs the default configuration that many times; a sequence gives
-                        one configuration per worker; omitting it uses `default_worker_count()`.
+        Workers form **worker groups**: within a group, workers adopt the best selection any
+        member has found so far; groups never communicate, and the best worker over all groups
+        wins.  Groups of one make those workers fully independent — `n_groups` equal to the
+        worker count is the fully independent portfolio.
+
+        :param workers: an integer runs the default configuration that many times; a flat sequence
+                        gives one configuration per worker; a nested sequence gives one inner
+                        sequence per group, fixing both grouping and configurations; omitting it
+                        uses `default_worker_count()`.
+        :param n_groups: number of groups; only combines with an integer (or omitted) `workers` —
+                         a nested sequence carries its own grouping, a flat sequence uses the
+                         default.  Omitting it uses `default_group_count()`.
+        :raises ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
+                             or the sequence mixes configurations and groups.
         """
         self._target_duration = target_duration
         if workers is None:
             workers = default_worker_count()
-        self._worker_configs = [WorkerConfig() for _ in range(workers)] if isinstance(workers, int) else list(workers)
+        if isinstance(workers, int):
+            self._worker_configs = [WorkerConfig() for _ in range(workers)]
+            self._group_sizes = _resolve_group_sizes(workers, n_groups)
+        elif any(isinstance(entry, WorkerConfig) for entry in workers):
+            if not all(isinstance(entry, WorkerConfig) for entry in workers):
+                raise ValueError("Workers must be all configurations (flat) or all groups (nested), not a mix.")
+            if n_groups is not None:
+                raise ValueError(
+                    "n_groups only combines with an integer worker count; a flat sequence uses the default grouping."
+                )
+            self._worker_configs = [cast("WorkerConfig", entry) for entry in workers]
+            self._group_sizes = _resolve_group_sizes(len(self._worker_configs), None)
+        else:
+            if n_groups is not None:
+                raise ValueError(
+                    "n_groups only combines with an integer worker count; a nested sequence carries its own grouping."
+                )
+            groups = [list(cast("Sequence[WorkerConfig]", group)) for group in workers]
+            self._worker_configs = [config for group in groups for config in group]
+            self._group_sizes = [len(group) for group in groups]
         return self
 
     # -------------------------------------------------------------------------
@@ -79,6 +115,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 self._solver_config_for(index, worker, self._target_duration, label)
                 for index, worker in enumerate(self._worker_configs)
             ],
+            group_sizes=self._group_sizes,
         )
 
     def _solver_config_for(
@@ -86,10 +123,12 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     ) -> SolverConfig:
         """Return the solver configuration for one worker.
 
-        Worker seeds are derived from the portfolio seed rather than set, so one seed reproduces the
-        whole portfolio while the workers still search differently.  The derivation reduces to an
-        int64 because the seed is reported back for replaying a worker on its own, and salts the
-        tuple so a worker seed cannot coincide with a seed derived the same way elsewhere.
+        Worker seeds are derived from the portfolio seed rather than set, so one seed pins every
+        worker's search while the workers still search differently (with cooperating groups the
+        run stays timing-dependent, so the seed only makes a fully independent portfolio
+        reproducible).  The derivation reduces to an int64 because the seed is reported back for
+        replaying a worker on its own, and salts the tuple so a worker seed cannot coincide with a
+        seed derived the same way elsewhere.
         """
         init_strategy, optim_steps = get_preset_strategies(worker.preset, duration)
         return SolverConfig(
@@ -103,3 +142,17 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=storage_label,
         )
+
+
+def _resolve_group_sizes(n_workers_total: int, n_groups: int | None) -> list[int]:
+    """Return the group sizes for a worker total, splitting any remainder over the first groups.
+
+    :param n_groups: number of groups; `default_group_count(n_workers_total)` if None.
+    :raises ValueError: If `n_groups` falls outside 1..`n_workers_total`.
+    """
+    if n_groups is None:
+        n_groups = default_group_count(n_workers_total)
+    elif not 1 <= n_groups <= n_workers_total:
+        raise ValueError(f"n_groups must be between 1 and the worker count ({n_workers_total}); got {n_groups}.")
+    base, remainder = divmod(n_workers_total, n_groups)
+    return [base + 1 if group < remainder else base for group in range(n_groups)]
