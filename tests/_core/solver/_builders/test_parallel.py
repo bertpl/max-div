@@ -85,7 +85,7 @@ def test_workers_at_the_best_score_are_counted():
 # =================================================================================================
 #  Seeds
 # =================================================================================================
-def test_one_seed_reproduces_the_whole_portfolio():
+def test_one_seed_reproduces_an_independent_portfolio():
     """An independent portfolio run twice from one seed selects the same items and seeds its workers alike."""
     # --- arrange / act -----------------------------------
     first, second = _solve_portfolio(2, n_groups=2), _solve_portfolio(2, n_groups=2)
@@ -192,7 +192,7 @@ def test_default_worker_count_is_three_quarters_of_the_cores_at_least_two(
     [(1, 1), (2, 1), (3, 1), (4, 2), (6, 3), (8, 4), (12, 5), (24, 7), (48, 10)],
 )
 def test_default_group_count_targets_twice_as_many_islands_as_members(total, expected):
-    """The default island count follows round(sqrt(2 * total)), capped so every island keeps 2 workers."""
+    """The island count follows round(sqrt(2 * total)), capped so islands keep 2 workers (1 total -> 1 island)."""
     # --- act / assert ------------------------------------
     assert default_group_count(total) == expected
 

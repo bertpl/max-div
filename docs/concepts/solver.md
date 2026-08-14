@@ -179,8 +179,9 @@ When the counts are not given:
 
 - the worker total defaults to **3/4 of the logical cores**;
 - the island count defaults to **`round(sqrt(2 · total))`**, capped so every island keeps at least
-  two workers — about twice as many islands as workers per island, leaning on islands because only
-  they are independent draws of the final best-of-all pick;
+  two workers (a lone worker forms an island of one) — about twice as many islands as workers per
+  island, leaning on islands because only they are independent draws of the final result, the best
+  over all workers;
 - totals too small for two islands of two get a single island rather than independent workers;
 - a worker total that does not divide evenly hands the extra workers to the first islands.
 
@@ -200,7 +201,7 @@ Distance storage is fixed for a different reason: the workers read one shared bu
 ### Seeds and Reproducibility
 
 The portfolio takes one seed and derives a seed per worker from that seed, so the workers search
-differently while the whole configuration hangs on a single number.
+differently while the whole configuration derives from a single number.
 
 **Reproducibility follows the grouping.** A fully independent portfolio (`n_groups` equal to the
 worker count) run twice from one seed returns the same selection. A portfolio with cooperating

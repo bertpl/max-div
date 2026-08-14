@@ -129,9 +129,10 @@ def warn_about_worker_count(n_workers: int) -> None:
 def default_worker_count() -> int:
     """Return the default portfolio size when the caller names none: 3/4 of the logical cores, at least 2.
 
-    The default portfolio is cooperative, and there the criterion is throughput per island rather
-    than per worker, which tolerates more cores in use than the conservative half that suits
-    independent workers.  An explicit count on `with_workers` overrides it.
+    The default portfolio is cooperative, and cooperation converts extra workers into shared
+    search progress, where extra independent workers only buy insurance against unlucky seeds —
+    so more cores in use keep paying off, and the default takes 3/4 where a purely independent
+    portfolio took the conservative half.  An explicit count on `with_workers` overrides it.
     """
     return max(2, (os.cpu_count() or 2) * 3 // 4)
 
@@ -140,9 +141,9 @@ def default_group_count(n_workers_total: int) -> int:
     """Return the default island count for a worker total, when the caller names none.
 
     The default targets roughly twice as many islands as workers per island: the final result is a
-    best over all workers, and only islands are independent draws of it, so islands buy more than
-    island size does.  Every island keeps at least 2 workers — on small totals the count collapses
-    to a single island rather than to islands of one, preferring cooperation over independence.
-    An explicit `n_groups` on `with_workers` overrides it.
+    best over all workers, and only islands are independent draws of that best, so islands buy more
+    than island size does.  Every island keeps at least 2 workers (a lone worker forms an island of
+    one) — on small totals the count collapses to a single island rather than to islands of one,
+    preferring cooperation over independence.  An explicit `n_groups` on `with_workers` overrides it.
     """
     return max(1, min(round(math.sqrt(2 * n_workers_total)), n_workers_total // 2))

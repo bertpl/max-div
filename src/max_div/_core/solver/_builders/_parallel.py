@@ -67,7 +67,8 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         :param n_groups: number of islands; only combines with an integer (or omitted) `workers` —
                          a nested sequence carries its own grouping, a flat sequence uses the
                          default.  Omitting it uses `default_group_count()`.
-        :raises ValueError: If `n_groups` accompanies a sequence form or falls outside 1..worker count.
+        :raises ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
+                             or the sequence mixes configurations and islands.
         """
         self._target_duration = target_duration
         if workers is None:
@@ -79,12 +80,16 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             if not all(isinstance(entry, WorkerConfig) for entry in workers):
                 raise ValueError("Workers must be all configurations (flat) or all islands (nested), not a mix.")
             if n_groups is not None:
-                raise ValueError("n_groups only combines with an integer worker count; a sequence groups itself.")
+                raise ValueError(
+                    "n_groups only combines with an integer worker count; a flat sequence uses the default grouping."
+                )
             self._worker_configs = [cast("WorkerConfig", entry) for entry in workers]
             self._island_sizes = _resolve_island_sizes(len(self._worker_configs), None)
         else:
             if n_groups is not None:
-                raise ValueError("n_groups only combines with an integer worker count; a sequence groups itself.")
+                raise ValueError(
+                    "n_groups only combines with an integer worker count; a nested sequence carries its own grouping."
+                )
             islands = [list(cast("Sequence[WorkerConfig]", island)) for island in workers]
             self._worker_configs = [config for island in islands for config in island]
             self._island_sizes = [len(island) for island in islands]
@@ -118,10 +123,12 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     ) -> SolverConfig:
         """Return the solver configuration for one worker.
 
-        Worker seeds are derived from the portfolio seed rather than set, so one seed reproduces the
-        whole portfolio while the workers still search differently.  The derivation reduces to an
-        int64 because the seed is reported back for replaying a worker on its own, and salts the
-        tuple so a worker seed cannot coincide with a seed derived the same way elsewhere.
+        Worker seeds are derived from the portfolio seed rather than set, so one seed pins every
+        worker's search while the workers still search differently (with cooperating islands the
+        run stays timing-dependent, so the seed only makes a fully independent portfolio
+        reproducible).  The derivation reduces to an int64 because the seed is reported back for
+        replaying a worker on its own, and salts the tuple so a worker seed cannot coincide with a
+        seed derived the same way elsewhere.
         """
         init_strategy, optim_steps = get_preset_strategies(worker.preset, duration)
         return SolverConfig(
