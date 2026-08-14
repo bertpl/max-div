@@ -65,7 +65,7 @@ class ParallelMaxDivSolver:
             results = run_portfolio(
                 self._solver_configs,
                 shared_distance_store.spec,
-                IndependentCoordinator(),
+                [IndependentCoordinator() for _ in self._solver_configs],
                 progress_reporter=progress_reporter,
             )
         winner = best_result(results)

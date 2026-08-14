@@ -1,3 +1,4 @@
+import multiprocessing
 import queue
 
 import numpy as np
@@ -7,7 +8,13 @@ from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._distance_storage import build_shared_distance_store
 from max_div._core.solver._duration import iterations
-from max_div._core.solver._parallel import IndependentCoordinator, best_result, run_portfolio
+from max_div._core.solver._parallel import (
+    CooperativeCoordinator,
+    GroupIncumbentSlot,
+    IndependentCoordinator,
+    best_result,
+    run_portfolio,
+)
 from max_div._core.solver._parallel._executor import _drain, _notice_dead_workers, solve_in_worker
 from max_div._core.solver._parallel._progress_view import ParallelProgressView
 from max_div._core.solver._parallel._result import WorkerResult
@@ -30,7 +37,12 @@ def portfolio_results():
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
     with build_shared_distance_store(builder._problem, resolved) as shared:
-        yield builder, run_portfolio([config.with_seed(seed) for seed in _SEEDS], shared.spec, IndependentCoordinator())
+        yield (
+            builder,
+            run_portfolio(
+                [config.with_seed(seed) for seed in _SEEDS], shared.spec, [IndependentCoordinator() for _ in _SEEDS]
+            ),
+        )
 
 
 def test_every_worker_reports_a_result(portfolio_results):
@@ -75,6 +87,36 @@ def test_the_best_reported_result_wins(portfolio_results):
     assert winner.score == max(result.score for result in results)
 
 
+def test_one_coordinator_per_worker_is_required():
+    """A coordinator count that does not match the worker count is rejected before any worker spawns."""
+    # --- arrange -----------------------------------------
+    builder = _builder()
+    resolved, config = builder.prepare_storage_and_config()
+
+    # --- act & assert ------------------------------------
+    with build_shared_distance_store(builder._problem, resolved) as shared, pytest.raises(ValueError):
+        run_portfolio([config.with_seed(1), config.with_seed(2)], shared.spec, [IndependentCoordinator()])
+
+
+def test_a_group_of_cooperative_workers_solves_and_exchanges():
+    """Spawned workers sharing one incumbent slot all report results, and the slot was published to."""
+    # --- arrange -----------------------------------------
+    builder = _builder()
+    resolved, config = builder.prepare_storage_and_config()
+    n_score_components = 3 + len(config.diversity_tie_breakers)
+    slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=builder._k, score_length=n_score_components)
+    coordinators = [CooperativeCoordinator(slot) for _ in _SEEDS]
+
+    # --- act ---------------------------------------------
+    with build_shared_distance_store(builder._problem, resolved) as shared:
+        results = run_portfolio([config.with_seed(seed) for seed in _SEEDS], shared.spec, coordinators)
+
+    # --- assert ------------------------------------------
+    assert len(results) == len(_SEEDS)
+    assert all(result.i_selected.size == builder._k for result in results)
+    assert slot.written  # at least the first boundary reached published into the empty slot
+
+
 def test_portfolio_renders_coherent_progress(capsys):
     """A rendered portfolio prints one non-interleaved table and still collects every result."""
     # --- arrange -----------------------------------------
@@ -87,7 +129,7 @@ def test_portfolio_renders_coherent_progress(capsys):
         results = run_portfolio(
             [config.with_seed(seed) for seed in _SEEDS],
             shared.spec,
-            IndependentCoordinator(),
+            [IndependentCoordinator() for _ in _SEEDS],
             progress_reporter=reporter,
         )
 

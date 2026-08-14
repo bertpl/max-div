@@ -44,7 +44,7 @@ _JOIN_SECONDS = 30.0
 def run_portfolio(
     configs: list[SolverConfig],
     spec: SharedStoreSpec,
-    coordinator: WorkerCoordinator,
+    coordinators: Sequence[WorkerCoordinator],
     progress_reporter: ProgressReporter | None = None,
 ) -> list[WorkerResult]:
     """Solve one configuration per worker over the published store, and return what each reported.
@@ -55,10 +55,14 @@ def run_portfolio(
 
     :param configs: one solver configuration per worker, in worker order.
     :param spec: where the published store lives; every worker attaches to it.
-    :param coordinator: reached by every worker at each batch boundary; an independent one shares nothing.
+    :param coordinators: one coordinator per worker, in worker order; `_coordinator` documents
+                         the topology this list wires up.
     :param progress_reporter: renders the workers' combined progress from this (parent) process; a
                               reporter that renders nothing — or `None` — turns all forwarding off.
+    :raises ValueError: If the coordinator count does not match the worker count.
     """
+    if len(coordinators) != len(configs):
+        raise ValueError(f"Expected one coordinator per worker: got {len(coordinators)} for {len(configs)} workers.")
     requirements = progress_reporter.snapshot_requirements if (progress_reporter is not None) else None
     view = ParallelProgressView(progress_reporter, len(configs)) if (requirements is not None) else None  # ty: ignore[invalid-argument-type]  # requirements imply a reporter
 
@@ -66,7 +70,9 @@ def run_portfolio(
     messages: Queue = context.Queue()
     workers = [
         context.Process(
-            target=solve_in_worker, args=(index, config, spec, coordinator, messages, requirements), daemon=True
+            target=solve_in_worker,
+            args=(index, config, spec, coordinators[index], messages, requirements),
+            daemon=True,
         )
         for index, config in enumerate(configs)
     ]
