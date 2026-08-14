@@ -55,8 +55,8 @@ def run_portfolio(
 
     :param configs: one solver configuration per worker, in worker order.
     :param spec: where the published store lives; every worker attaches to it.
-    :param coordinators: one coordinator per worker, in worker order — island members share one
-                         bound to their island's slot, independent workers each get a no-op one.
+    :param coordinators: one coordinator per worker, in worker order; `_coordinator` documents
+                         the topology this list wires up.
     :param progress_reporter: renders the workers' combined progress from this (parent) process; a
                               reporter that renders nothing — or `None` — turns all forwarding off.
     :raises ValueError: If the coordinator count does not match the worker count.

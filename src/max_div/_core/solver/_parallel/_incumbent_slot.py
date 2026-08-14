@@ -1,15 +1,12 @@
-"""The incumbent slot holds one island's shared best: the top-scoring selection published so far.
+"""The incumbent slot holds one worker group's shared best: the top-scoring selection published so far.
 
-An island is a group of workers that exchange selections through one shared slot.  The slot lives
-in shared memory created by the parent process and inherited by every island member at spawn,
-like the shared distance store.  Everything in the slot is fixed-size, so it fits raw
-shared-memory arrays:
+A worker group — what the parallel-metaheuristics literature calls an *island* — is a set of
+workers that exchange selections through one shared slot.  The slot lives in shared memory
+created by the parent process and inherited by every group member at spawn, like the shared
+distance store.  Everything in the slot is fixed-size, so it fits raw shared-memory arrays:
 
 - the score, as a float64 vector;
 - the selection, as an int32 vector of up to k indices.
-
-A version counter distinguishes a never-written slot from a written one and lets tests observe
-that exchanges happened.
 """
 
 from __future__ import annotations
@@ -24,8 +21,8 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-class IslandIncumbentSlot:
-    """The slot holds one island's shared best selection.
+class GroupIncumbentSlot:
+    """The slot holds one worker group's shared best selection.
 
     Score tuples are compared lexicographically, exactly as `Score.as_tuple()` orders them, so
     "better" means the same thing here as in the final best-of-all selection.
@@ -37,17 +34,19 @@ class IslandIncumbentSlot:
         :param context: (BaseContext) the multiprocessing context the workers spawn from.
         :param k: (int) maximum selection size the slot can hold.
         :param score_length: (int) number of components in the workers' score tuples — a property
-                             of the shared metric configuration, so identical across an island's
-                             workers.
+                             of the shared metric configuration, so identical across a worker
+                             group's workers.
         """
         self._lock = context.Lock()
-        self._version = context.Value("q", 0, lock=False)
+        # False until the first publish: an all-zero score array is a legal real score, so the
+        # never-written state needs its own flag rather than a sentinel score
+        self._written = context.Value("b", 0, lock=False)
         self._score = context.Array("d", score_length, lock=False)
         self._selection = context.Array("i", k, lock=False)
         self._n_selected = context.Value("i", 0, lock=False)
 
     def exchange(self, score: tuple[float, ...], selection: NDArray[np.int32]) -> NDArray[np.int32] | None:
-        """Publish the given selection if it is strictly the island's best, else return a better one.
+        """Publish the given selection if it is strictly the group's best, else return a better one.
 
         The exchange is one atomic visit under the slot lock:
 
@@ -62,18 +61,18 @@ class IslandIncumbentSlot:
         :returns: the stored selection to adopt, or None to keep the worker's own.
         """
         with self._lock:
-            if self._version.value == 0 or score > tuple(self._score):
+            if not self._written.value or score > tuple(self._score):
                 self._score[:] = score
                 self._selection[: len(selection)] = selection
                 self._n_selected.value = len(selection)
-                self._version.value += 1
+                self._written.value = True
                 return None
             if tuple(self._score) > score:
                 return np.array(self._selection[: self._n_selected.value], dtype=np.int32)
             return None
 
     @property
-    def version(self) -> int:
-        """Return how often a selection was stored; 0 means the slot was never written."""
+    def written(self) -> bool:
+        """Return whether any selection was ever stored."""
         with self._lock:
-            return self._version.value
+            return bool(self._written.value)
