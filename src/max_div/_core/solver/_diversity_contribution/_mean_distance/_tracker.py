@@ -121,6 +121,10 @@ class MeanDistanceTracker(DiversityContributionTracker):
         """
         self._backend.remove(self._dist_sums, self._store, index)
 
+    def reset(self) -> None:
+        """Reset distance sums to the empty selection (all zero); the global cache stays valid as-is."""
+        self._dist_sums.fill(0.0)
+
     # -------------------------------------------------------------------------
     #  Snapshot
     # -------------------------------------------------------------------------

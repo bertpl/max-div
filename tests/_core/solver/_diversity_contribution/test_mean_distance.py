@@ -326,3 +326,18 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
             rtol=1e-5,
             err_msg=f"{backend} diverged",
         )
+
+
+def test_reset_returns_to_empty_selection(tracker: MeanDistanceTracker):
+    # --- arrange -----------------------------------------
+    tracker.add(np.int32(0))
+    tracker.add(np.int32(2))
+    global_before = tracker.contribution_wrt_dataset.copy()
+    selected = np.full(N, False, dtype=np.bool)
+
+    # --- act ---------------------------------------------
+    tracker.reset()
+
+    # --- assert ------------------------------------------
+    assert np.all(tracker.contribution_wrt_selection(selected, np.int32(0)) == 0.0)
+    np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched

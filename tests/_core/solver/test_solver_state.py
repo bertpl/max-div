@@ -590,3 +590,114 @@ def test_selected_index_array_is_ascending(new_solver_state_unconstrained):
     indices = new_solver_state_unconstrained.selected_index_array
     assert indices.tolist() == sorted(indices.tolist())
     assert indices.tolist() == [0, 4, 5]
+
+
+# =================================================================================================
+#  Adoption
+# =================================================================================================
+def _adoption_state(diversity_metric: DiversityMetric, diversity_tie_breakers: list[DiversityMetric]) -> SolverState:
+    """Build an 8-point constrained state for adoption tests."""
+    vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0], [15.0], [21.0], [28.0]], dtype=np.float32)
+    return SolverState.new(
+        n=vectors.shape[0],
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        k=4,
+        diversity_metric=diversity_metric,
+        diversity_tie_breakers=diversity_tie_breakers,
+        constraints=[
+            Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=3),
+            Constraint(int_set={4, 5, 6, 7}, min_count=1, max_count=3),
+        ],
+    )
+
+
+def _assert_equivalent_to_fresh(state: SolverState, reference: SolverState) -> None:
+    """Assert `state` is indistinguishable from `reference`, a fresh state holding the same selection."""
+    assert np.array_equal(state.selected_index_array, reference.selected_index_array)
+    assert state.n_selected == reference.n_selected
+    assert np.array_equal(state.con_values, reference.con_values)
+    assert state.score.as_tuple() == pytest.approx(reference.score.as_tuple())
+    np.testing.assert_allclose(state.full_contribution_array, reference.full_contribution_array, rtol=1e-6, atol=1e-6)
+
+
+_METRIC_CONFIGS = [
+    (DiversityMetric.GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),  # separation tracker only
+    (DiversityMetric.MEAN_PAIRWISE_DISTANCE, []),  # mean-distance tracker only
+    (DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE]),  # both tracker families
+]
+
+
+@pytest.mark.parametrize("diversity_metric, tie_breakers", _METRIC_CONFIGS)
+@pytest.mark.parametrize(
+    "start, target",
+    [
+        ([0, 2, 4, 6], [0, 2, 4, 7]),  # small diff -> diff route
+        ([0, 1, 2, 3], [4, 5, 6, 7]),  # disjoint -> rebuild route
+        ([], [1, 3, 5, 7]),  # from empty -> diff route (adds only)
+        ([0, 2, 4, 6], []),  # to empty -> rebuild route
+        ([1, 3, 5, 7], [1, 3, 5, 7]),  # identical -> no-op diff
+        ([0, 1, 2], [2, 4, 5, 6, 7]),  # different sizes, low overlap -> rebuild route
+    ],
+)
+def test_adopt_selection_matches_fresh_state(diversity_metric, tie_breakers, start, target):
+    """Adopting a selection must be indistinguishable from having built it directly, on either route."""
+    # --- arrange -----------------------------------------
+    state = _adoption_state(diversity_metric, tie_breakers)
+    state.add_many(np.array(start, dtype=np.int32))
+    reference = _adoption_state(diversity_metric, tie_breakers)
+    reference.add_many(np.array(target, dtype=np.int32))
+
+    # --- act ---------------------------------------------
+    state.adopt_selection(np.array(target, dtype=np.int32))
+
+    # --- assert ------------------------------------------
+    _assert_equivalent_to_fresh(state, reference)
+
+
+def test_adopt_selection_accepts_unordered_input():
+    # --- arrange -----------------------------------------
+    state = _adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
+    reference = _adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
+    reference.add_many(np.array([1, 4, 6], dtype=np.int32))
+
+    # --- act ---------------------------------------------
+    state.adopt_selection(np.array([6, 1, 4], dtype=np.int32))
+
+    # --- assert ------------------------------------------
+    _assert_equivalent_to_fresh(state, reference)
+
+
+def test_adopt_selection_state_remains_fully_usable():
+    """After adoption the state supports mutators and savepoints as usual."""
+    # --- arrange -----------------------------------------
+    state = _adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
+    state.add_many(np.array([0, 1, 2, 3], dtype=np.int32))
+
+    # --- act ---------------------------------------------
+    state.adopt_selection(np.array([4, 5, 6, 7], dtype=np.int32))  # rebuild route
+    score_after_adopt = state.score.as_tuple()
+    with state.savepoint():
+        state.remove(np.int32(4))
+        state.add(np.int32(0))
+    state.adopt_selection(np.array([4, 5, 6, 0], dtype=np.int32))  # diff route
+
+    # --- assert ------------------------------------------
+    assert score_after_adopt != state.score.as_tuple()
+    assert state.selected_index_array.tolist() == [0, 4, 5, 6]
+
+
+def test_adopt_selection_validation():
+    # --- arrange -----------------------------------------
+    state = _adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
+    state.add_many(np.array([0, 1], dtype=np.int32))
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        state.adopt_selection(np.array([1, 1, 2], dtype=np.int32))  # duplicates
+    with pytest.raises(ValueError):
+        state.adopt_selection(np.array([-1, 2], dtype=np.int32))  # negative index
+    with pytest.raises(ValueError):
+        state.adopt_selection(np.array([2, 8], dtype=np.int32))  # index >= n
+    with state.savepoint(), pytest.raises(RuntimeError):
+        state.adopt_selection(np.array([2, 3], dtype=np.int32))  # open savepoint
+    assert state.selected_index_array.tolist() == [0, 1]  # untouched by the rejected calls

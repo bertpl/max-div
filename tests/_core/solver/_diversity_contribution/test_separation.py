@@ -383,3 +383,18 @@ def test_every_backend_computes_the_same_separations():
         np.testing.assert_allclose(
             values, reference, rtol=tolerance, atol=tolerance * float(np.max(reference)), err_msg=f"{name} disagrees"
         )
+
+
+def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
+    # --- arrange -----------------------------------------
+    tracker.add(np.int32(0))
+    tracker.add(np.int32(2))
+    global_before = tracker.contribution_wrt_dataset.copy()
+    selected, n_selected = _selection_args([], 5)
+
+    # --- act ---------------------------------------------
+    tracker.reset()
+
+    # --- assert ------------------------------------------
+    assert np.all(np.isinf(tracker.contribution_wrt_selection(selected, n_selected)))
+    np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched

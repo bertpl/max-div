@@ -277,6 +277,47 @@ class SolverState:
         # --- score ---------------------------------------
         self._score_dirty = True
 
+    def adopt_selection(self, indices: NDArray[np.int32]) -> None:
+        """Replace the current selection with `indices`, updating all incremental state to match.
+
+        Installs a selection produced elsewhere (e.g. another worker's incumbent) as if it had been
+        built through this state's own mutators.  The install goes through the cheaper of two
+        routes: diffing against the current selection and applying the removes/adds, or — when the
+        selections barely overlap, where per-point removes would cost more than starting over —
+        resetting to the empty selection and bulk-adding.  Which route ran is unobservable.
+
+        :param indices: (int32 ndarray) the selection to adopt; duplicate-free, any order.
+        :raises RuntimeError: If a savepoint is open — an adoption cannot be provisional.
+        :raises ValueError: If `indices` contains duplicates or out-of-range values.
+        """
+        # --- validation ----------------------------------
+        if self._depth != 0:
+            raise RuntimeError("Cannot adopt a selection while a savepoint is open.")
+        foreign = np.unique(np.asarray(indices, dtype=np.int32))  # ascending, deduplicated
+        if foreign.size != len(indices):
+            raise ValueError(f"Cannot adopt a selection with duplicate indices ({list(indices)}).")
+        if foreign.size > 0 and (foreign[0] < 0 or foreign[-1] >= self._n):
+            raise ValueError(f"Cannot adopt a selection with out-of-range indices ({list(indices)}).")
+
+        # --- route selection -----------------------------
+        current = self.selected_index_array
+        to_remove = np.setdiff1d(current, foreign, assume_unique=True)
+        to_add = np.setdiff1d(foreign, current, assume_unique=True)
+
+        if to_remove.size + to_add.size <= foreign.size:
+            # --- diff route ------------------------------
+            self.remove_many(to_remove)
+            self.add_many(to_add)
+        else:
+            # --- rebuild route ---------------------------
+            # undo the constraint effect of the current selection while its index view is intact
+            for index in current:
+                self._con_values[self._con_membership[index], :] += 1
+            self._selected.fill(False)
+            self._n_selected = np.int32(0)
+            self._contribution_trackers.reset()
+            self.add_many(foreign)  # also marks the score dirty
+
     def remove_many(self, indices: NDArray[np.int32]) -> None:
         # --- validation ----------------------------------
         if (~self._selected[indices]).any():

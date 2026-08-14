@@ -106,6 +106,10 @@ class SeparationTracker(DiversityContributionTracker):
         """Update separations after removing point `index`, rescanning against `new_selection` where needed."""
         self._backend.remove(self._sep_selected, self._store, index, new_selection)
 
+    def reset(self) -> None:
+        """Reset separations to the empty selection (all +inf); the global cache stays valid as-is."""
+        self._sep_selected.fill(np.inf)
+
     # -------------------------------------------------------------------------
     #  Snapshot
     # -------------------------------------------------------------------------

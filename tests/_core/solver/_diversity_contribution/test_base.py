@@ -30,6 +30,9 @@ class _CallRecordingTracker(DiversityContributionTracker):
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         self.calls.append(("remove", int(index), list(new_selection)))
 
+    def reset(self) -> None:
+        pass  # pragma: no cover - not exercised by these tests
+
     def push_snapshot(self) -> None:
         pass  # pragma: no cover - not exercised by these tests
 
