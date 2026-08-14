@@ -105,6 +105,16 @@ class DiversityContributionTracker(ABC):
         for index in indices:
             self.remove(index, new_selection)
 
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset contributions to the empty selection, without going through per-point removes.
+
+        Callers must only reset when the snapshot stack is empty: a reset does not touch saved
+        snapshots, so after a reset inside an open snapshot scope, a later restore would bring
+        back contributions that no longer match the rest of the solver state.
+        """
+        raise NotImplementedError
+
     # -------------------------------------------------------------------------
     #  Snapshot & copy
     # -------------------------------------------------------------------------

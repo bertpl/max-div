@@ -124,6 +124,11 @@ class DiversityContributionTrackers:
         for tracker in self._trackers:
             tracker.remove_many(indices, new_selection)
 
+    def reset(self) -> None:
+        """Reset all trackers to the empty selection; see the base class for the snapshot caveat."""
+        for tracker in self._trackers:
+            tracker.reset()
+
     # -------------------------------------------------------------------------
     #  Snapshot
     # -------------------------------------------------------------------------

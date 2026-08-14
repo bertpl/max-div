@@ -22,7 +22,7 @@ class _CallRecordingTracker(DiversityContributionTracker):
         return np.array([], dtype=np.float32)
 
     def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
-        return np.array([], dtype=np.float32)  # pragma: no cover - not exercised by these tests
+        return np.array([], dtype=np.float32)  # not exercised by these tests
 
     def add(self, index: np.int32) -> None:
         self.calls.append(("add", int(index)))
@@ -30,14 +30,17 @@ class _CallRecordingTracker(DiversityContributionTracker):
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         self.calls.append(("remove", int(index), list(new_selection)))
 
+    def reset(self) -> None:
+        pass  # not exercised by these tests
+
     def push_snapshot(self) -> None:
-        pass  # pragma: no cover - not exercised by these tests
+        pass  # not exercised by these tests
 
     def pop_snapshot(self, restore: bool) -> None:
-        pass  # pragma: no cover - not exercised by these tests
+        pass  # not exercised by these tests
 
     def copy(self) -> DiversityContributionTracker:
-        return self  # pragma: no cover - not exercised by these tests
+        return self  # not exercised by these tests
 
 
 # =================================================================================================
