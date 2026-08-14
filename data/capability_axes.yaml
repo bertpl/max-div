@@ -164,11 +164,11 @@ groups:
     label: multi-worker
     axes:
       - key: independent
-        hero_label: independent
+        hero_label: multi-worker - independent
         label: several workers search one problem separately and the best result wins
         hero: true
       - key: cooperative
-        hero_label: cooperative
+        hero_label: multi-worker - cooperative
         label: parallel workers share information mid-run
         hero: true
 
