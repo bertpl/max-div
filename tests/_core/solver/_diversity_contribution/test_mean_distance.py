@@ -329,6 +329,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
 
 
 def test_reset_returns_to_empty_selection(tracker: MeanDistanceTracker):
+    """Reset returns distance sums to the empty-selection zeros; the dataset-wide cache stays untouched."""
     # --- arrange -----------------------------------------
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))

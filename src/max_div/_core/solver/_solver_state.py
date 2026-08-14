@@ -277,12 +277,35 @@ class SolverState:
         # --- score ---------------------------------------
         self._score_dirty = True
 
+    def remove_many(self, indices: NDArray[np.int32]) -> None:
+        # --- validation ----------------------------------
+        if (~self._selected[indices]).any():
+            raise ValueError(f"Cannot remove index that is not selected ({list(indices)}).")
+
+        # --- selection -----------------------------------
+        self._selected[indices] = False
+        # same reason as in add_many: each delete reads the count as the list's current length
+        for index in indices:
+            self._delete_selected_index(index)
+            self._n_selected -= np.int32(1)
+
+        # --- diversity contributions ---------------------
+        self._contribution_trackers.remove_many(indices, self.selected_index_array)
+
+        # --- constraints ---------------------------------
+        # increase both min_count and max_count for all constraints that include any of 'indices'
+        for index in indices:
+            self._con_values[self._con_membership[index], :] += 1
+
+        # --- score ---------------------------------------
+        self._score_dirty = True
+
     def adopt_selection(self, indices: NDArray[np.int32]) -> None:
         """Replace the current selection with `indices`, updating all incremental state to match.
 
-        Installs a selection produced elsewhere (e.g. another worker's incumbent) as if it had been
-        built through this state's own mutators.  Internally applies the cheaper of a selection
-        diff or a rebuild from the empty selection; which route ran is unobservable.
+        Adoption installs a selection produced elsewhere (e.g. another worker's incumbent) as if it
+        had been built through this state's own mutators, applying the cheaper of a selection diff
+        or a rebuild from the empty selection.
 
         :param indices: (int32 ndarray) the selection to adopt; duplicate-free, any order.
         :raises RuntimeError: If a savepoint is open — an adoption cannot be provisional.
@@ -315,29 +338,6 @@ class SolverState:
             self._n_selected = np.int32(0)
             self._contribution_trackers.reset()
             self.add_many(foreign)  # also marks the score dirty
-
-    def remove_many(self, indices: NDArray[np.int32]) -> None:
-        # --- validation ----------------------------------
-        if (~self._selected[indices]).any():
-            raise ValueError(f"Cannot remove index that is not selected ({list(indices)}).")
-
-        # --- selection -----------------------------------
-        self._selected[indices] = False
-        # same reason as in add_many: each delete reads the count as the list's current length
-        for index in indices:
-            self._delete_selected_index(index)
-            self._n_selected -= np.int32(1)
-
-        # --- diversity contributions ---------------------
-        self._contribution_trackers.remove_many(indices, self.selected_index_array)
-
-        # --- constraints ---------------------------------
-        # increase both min_count and max_count for all constraints that include any of 'indices'
-        for index in indices:
-            self._con_values[self._con_membership[index], :] += 1
-
-        # --- score ---------------------------------------
-        self._score_dirty = True
 
     # -------------------------------------------------------------------------
     #  Properties

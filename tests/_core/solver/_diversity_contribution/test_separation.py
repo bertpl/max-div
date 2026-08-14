@@ -386,6 +386,7 @@ def test_every_backend_computes_the_same_separations():
 
 
 def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
+    """Reset returns separations to the empty-selection +inf values; the dataset-wide cache stays untouched."""
     # --- arrange -----------------------------------------
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))
