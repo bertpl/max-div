@@ -15,7 +15,7 @@ from max_div._core.solver._solver_config import SolverConfig
 
 from ._coordinator import CooperativeCoordinator, IndependentCoordinator, WorkerCoordinator
 from ._executor import run_portfolio
-from ._incumbent_slot import IslandIncumbentSlot
+from ._incumbent_slot import GroupIncumbentSlot
 from ._result import best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._worker_config import WorkerConfig
@@ -37,21 +37,21 @@ class ParallelMaxDivSolver:
         storage: DistanceStorage,
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
-        island_sizes: list[int],
+        group_sizes: list[int],
     ) -> None:
         """Hold the problem, the resolved backend, and one configuration per worker.
 
         :param storage: the already-resolved backend the shared store is built in.
         :param worker_configs: what each worker runs, reported back in the solution.
         :param solver_configs: the solver each worker assembles, in the same order.
-        :param island_sizes: how the workers group into islands, as consecutive run lengths over
+        :param group_sizes: how the workers group into groups, as consecutive run lengths over
                              the worker order; sizes must sum to the worker count.
         """
         self._problem = problem
         self._storage = storage
         self._worker_configs = worker_configs
         self._solver_configs = solver_configs
-        self._island_sizes = island_sizes
+        self._group_sizes = group_sizes
 
     # -------------------------------------------------------------------------
     #  API
@@ -91,16 +91,16 @@ class ParallelMaxDivSolver:
         return ParallelMaxDivSolution(**inherited, workers=summaries, winning_worker=winner.worker_index)
 
     def _build_coordinators(self) -> list[WorkerCoordinator]:
-        """Return one coordinator per worker: an island's members share a slot, lone workers share nothing."""
+        """Return one coordinator per worker: an group's members share a slot, lone workers share nothing."""
         config = self._solver_configs[0]
         context = multiprocessing.get_context("spawn")
         coordinators: list[WorkerCoordinator] = []
-        for size in self._island_sizes:
+        for size in self._group_sizes:
             if size == 1:
                 coordinators.append(IndependentCoordinator())
             else:
                 # the score length is the three fixed components plus one per tie-breaker (Score.as_tuple)
-                slot = IslandIncumbentSlot(context, k=config.k, score_length=3 + len(config.diversity_tie_breakers))
+                slot = GroupIncumbentSlot(context, k=config.k, score_length=3 + len(config.diversity_tie_breakers))
                 coordinators.extend([CooperativeCoordinator(slot)] * size)
         return coordinators
 
@@ -138,12 +138,12 @@ def default_worker_count() -> int:
 
 
 def default_group_count(n_workers_total: int) -> int:
-    """Return the default island count for a worker total, when the caller names none.
+    """Return the default group count for a worker total, when the caller names none.
 
-    The default targets roughly twice as many islands as workers per island: the final result is a
-    best over all workers, and only islands are independent draws of that best, so islands buy more
-    than island size does.  Every island keeps at least 2 workers (a lone worker forms an island of
-    one) — on small totals the count collapses to a single island rather than to islands of one,
+    The default targets roughly twice as many groups as workers per group: the final result is a
+    best over all workers, and only groups are independent draws of that best, so groups buy more
+    than group size does.  Every group keeps at least 2 workers (a lone worker forms an group of
+    one) — on small totals the count collapses to a single group rather than to groups of one,
     preferring cooperation over independence.  An explicit `n_groups` on `with_workers` overrides it.
     """
     return max(1, min(round(math.sqrt(2 * n_workers_total)), n_workers_total // 2))

@@ -37,7 +37,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         """
         super().__init__(problem)
         self._worker_configs: list[WorkerConfig] = []
-        self._island_sizes: list[int] = []
+        self._group_sizes: list[int] = []
         self._target_duration: TargetDuration | None = None
 
     # -------------------------------------------------------------------------
@@ -49,50 +49,50 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
         n_groups: int | None = None,
     ) -> Self:
-        """Set what the portfolio runs, for how long each worker runs it, and how workers group into islands.
+        """Set what the portfolio runs, for how long each worker runs it, and how workers group into groups.
 
         The workers run side by side, so the portfolio takes as long as one of them rather than the
         sum.  Presets differ in iteration speed, so when workers run different ones a wall-clock
         budget keeps them to the same real time where an iteration count would not.
 
-        Workers group into **islands**: within an island, workers adopt the best selection any
-        member has found so far; islands never communicate, and the best worker over all islands
-        wins.  Islands of one make those workers fully independent — `n_groups` equal to the
+        Workers group into **groups**: within an group, workers adopt the best selection any
+        member has found so far; groups never communicate, and the best worker over all groups
+        wins.  Groups of one make those workers fully independent — `n_groups` equal to the
         worker count is the fully independent portfolio.
 
         :param workers: an integer runs the default configuration that many times; a flat sequence
                         gives one configuration per worker; a nested sequence gives one inner
-                        sequence per island, fixing both grouping and configurations; omitting it
+                        sequence per group, fixing both grouping and configurations; omitting it
                         uses `default_worker_count()`.
-        :param n_groups: number of islands; only combines with an integer (or omitted) `workers` —
+        :param n_groups: number of groups; only combines with an integer (or omitted) `workers` —
                          a nested sequence carries its own grouping, a flat sequence uses the
                          default.  Omitting it uses `default_group_count()`.
         :raises ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
-                             or the sequence mixes configurations and islands.
+                             or the sequence mixes configurations and groups.
         """
         self._target_duration = target_duration
         if workers is None:
             workers = default_worker_count()
         if isinstance(workers, int):
             self._worker_configs = [WorkerConfig() for _ in range(workers)]
-            self._island_sizes = _resolve_island_sizes(workers, n_groups)
+            self._group_sizes = _resolve_group_sizes(workers, n_groups)
         elif any(isinstance(entry, WorkerConfig) for entry in workers):
             if not all(isinstance(entry, WorkerConfig) for entry in workers):
-                raise ValueError("Workers must be all configurations (flat) or all islands (nested), not a mix.")
+                raise ValueError("Workers must be all configurations (flat) or all groups (nested), not a mix.")
             if n_groups is not None:
                 raise ValueError(
                     "n_groups only combines with an integer worker count; a flat sequence uses the default grouping."
                 )
             self._worker_configs = [cast("WorkerConfig", entry) for entry in workers]
-            self._island_sizes = _resolve_island_sizes(len(self._worker_configs), None)
+            self._group_sizes = _resolve_group_sizes(len(self._worker_configs), None)
         else:
             if n_groups is not None:
                 raise ValueError(
                     "n_groups only combines with an integer worker count; a nested sequence carries its own grouping."
                 )
-            islands = [list(cast("Sequence[WorkerConfig]", island)) for island in workers]
-            self._worker_configs = [config for island in islands for config in island]
-            self._island_sizes = [len(island) for island in islands]
+            groups = [list(cast("Sequence[WorkerConfig]", group)) for group in workers]
+            self._worker_configs = [config for group in groups for config in group]
+            self._group_sizes = [len(group) for group in groups]
         return self
 
     # -------------------------------------------------------------------------
@@ -115,7 +115,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 self._solver_config_for(index, worker, self._target_duration, label)
                 for index, worker in enumerate(self._worker_configs)
             ],
-            island_sizes=self._island_sizes,
+            group_sizes=self._group_sizes,
         )
 
     def _solver_config_for(
@@ -124,7 +124,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         """Return the solver configuration for one worker.
 
         Worker seeds are derived from the portfolio seed rather than set, so one seed pins every
-        worker's search while the workers still search differently (with cooperating islands the
+        worker's search while the workers still search differently (with cooperating groups the
         run stays timing-dependent, so the seed only makes a fully independent portfolio
         reproducible).  The derivation reduces to an int64 because the seed is reported back for
         replaying a worker on its own, and salts the tuple so a worker seed cannot coincide with a
@@ -144,10 +144,10 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         )
 
 
-def _resolve_island_sizes(n_workers_total: int, n_groups: int | None) -> list[int]:
-    """Return the island sizes for a worker total, splitting any remainder over the first islands.
+def _resolve_group_sizes(n_workers_total: int, n_groups: int | None) -> list[int]:
+    """Return the group sizes for a worker total, splitting any remainder over the first groups.
 
-    :param n_groups: number of islands; `default_group_count(n_workers_total)` if None.
+    :param n_groups: number of groups; `default_group_count(n_workers_total)` if None.
     :raises ValueError: If `n_groups` falls outside 1..`n_workers_total`.
     """
     if n_groups is None:
@@ -155,4 +155,4 @@ def _resolve_island_sizes(n_workers_total: int, n_groups: int | None) -> list[in
     elif not 1 <= n_groups <= n_workers_total:
         raise ValueError(f"n_groups must be between 1 and the worker count ({n_workers_total}); got {n_groups}.")
     base, remainder = divmod(n_workers_total, n_groups)
-    return [base + 1 if island < remainder else base for island in range(n_groups)]
+    return [base + 1 if group < remainder else base for group in range(n_groups)]

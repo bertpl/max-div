@@ -55,7 +55,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-1]: A problem can be built from a precomputed distance matrix, square or condensed, so any metric the caller can compute is usable without max-div implementing it.
 [^cmp-2]: Counts are per-group minimum and maximum bounds, and carry per-constraint weights and a choice of linear or quadratic penalty shaping when a problem is over-constrained.
 [^cmp-3]: Several workers solve the same problem at once and the best result wins.
-[^cmp-4]: Workers group into islands whose members adopt the best selection any member has found so far; islands stay independent of each other, and the best result over all workers wins.
+[^cmp-4]: Workers form groups whose members adopt the best selection any member has found so far; groups stay independent of each other, and the best result over all workers wins.
 [^cmp-5]: Vector problems can be solved with lazy distance storage, which computes pair distances on demand and never materializes the O(n²) matrix, so the ceiling is time rather than memory: each solver iteration costs O(n), and the iteration count a useful anytime run needs grows with n as well. Precomputed-distance problems keep the stored-matrix ceiling of n ≈ 10⁵.
 [^cmp-6]: Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modelling choice rather than a property of the metric.
 [^cmp-7]: Any distance you can compute and round to integers is usable, which in practice means any metric at all.

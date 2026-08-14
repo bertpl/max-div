@@ -51,9 +51,8 @@ solver:
       mark: full
       note:
         text: >-
-          Workers group into islands whose members adopt the best selection any member has found
-          so far; islands stay independent of each other, and the best result over all workers
-          wins.
+          Workers form groups whose members adopt the best selection any member has found so
+          far; groups stay independent of each other, and the best result over all workers wins.
 ---
 
 # max-div

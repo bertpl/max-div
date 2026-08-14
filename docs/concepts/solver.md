@@ -130,10 +130,10 @@ portfolio** — and keeps the best result any of them reached. The workers share
 distances, which are usually the most memory-intensive structure in a solve, so N workers cost N
 processes but not N copies of that data.
 
-The workers group into **islands**: within an island, every worker adopts the best selection any
+The workers group into **groups**: within an group, every worker adopts the best selection any
 member has found so far, exchanged at the same periodic points where workers report progress;
-islands never communicate with each other. Islands of one worker are fully independent — a fully
-independent portfolio is the special case where every island has one member.
+groups never communicate with each other. Groups of one worker are fully independent — a fully
+independent portfolio is the special case where every group has one member.
 
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
@@ -141,7 +141,7 @@ from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
 solution = (
     ParallelMaxDivSolverBuilder(problem)
     .with_seed(42)
-    .with_workers(seconds(60), 8, n_groups=4)   # 8 workers in 4 islands of 2
+    .with_workers(seconds(60), 8, n_groups=4)   # 8 workers in 4 groups of 2
     .build()
     .solve()
 )
@@ -151,9 +151,9 @@ solution = (
 
 The two counts buy different things:
 
-- **More islands**: variance reduction. A run's quality depends on its seed, and keeping the best
-  over several independent islands is insurance against drawing a bad one.
-- **Larger islands**: shared search capacity. An island's members pool their effort on promising
+- **More groups**: variance reduction. A run's quality depends on its seed, and keeping the best
+  over several independent groups is insurance against drawing a bad one.
+- **Larger groups**: shared search capacity. An group's members pool their effort on promising
   selections — a member stuck with a poor selection picks up a sibling's better one and continues
   from there — at the cost of searching less independently.
 
@@ -164,26 +164,26 @@ and then flattening rather than vanishing.
 Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
 
-### Workers and Islands
+### Workers and Groups
 
 `with_workers` accepts the worker set in three forms:
 
-- **an integer** — that many default workers, grouped into `n_groups` islands (both counts have
+- **an integer** — that many default workers, grouped into `n_groups` groups (both counts have
   defaults, below); the only form `n_groups` combines with;
 - **a flat sequence of `WorkerConfig`** — one configuration per worker, grouped by the default
   rule;
-- **a nested sequence** — one inner sequence per island, fixing the grouping and every
-  configuration at once; islands may differ in size and mix presets freely.
+- **a nested sequence** — one inner sequence per group, fixing the grouping and every
+  configuration at once; groups may differ in size and mix presets freely.
 
 When the counts are not given:
 
 - the worker total defaults to **3/4 of the logical cores**;
-- the island count defaults to **`round(sqrt(2 · total))`**, capped so every island keeps at least
-  two workers (a lone worker forms an island of one) — about twice as many islands as workers per
-  island, leaning on islands because only they are independent draws of the final result, the best
+- the group count defaults to **`round(sqrt(2 · total))`**, capped so every group keeps at least
+  two workers (a lone worker forms an group of one) — about twice as many groups as workers per
+  group, leaning on groups because only they are independent draws of the final result, the best
   over all workers;
-- totals too small for two islands of two get a single island rather than independent workers;
-- a worker total that does not divide evenly hands the extra workers to the first islands.
+- totals too small for two groups of two get a single group rather than independent workers;
+- a worker total that does not divide evenly hands the extra workers to the first groups.
 
 ### What Varies per Worker
 
@@ -205,12 +205,12 @@ differently while the whole configuration derives from a single number.
 
 **Reproducibility follows the grouping.** A fully independent portfolio (`n_groups` equal to the
 worker count) run twice from one seed returns the same selection. A portfolio with cooperating
-islands does not: which selections get adopted depends on how far each worker happens to have
+groups does not: which selections get adopted depends on how far each worker happens to have
 come when it reaches an exchange, and that inter-worker timing varies from run to run.
 
 Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran. For an
 independent worker that is enough to replay it on its own with `MaxDivSolverBuilder`; a
-cooperative worker's trajectory also depends on what its island mates published, so the replay
+cooperative worker's trajectory also depends on what its group mates published, so the replay
 contract is independent-only. The limits in the [Reproducibility](#reproducibility) section apply
 on top.
 
@@ -223,8 +223,8 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
   cost.
 - **Equal to the worker count**: every worker tied. In a fully independent portfolio that means
   the run found nothing a single worker would not have — lower the worker count or solve once.
-  With cooperating islands, ties *within* an island are partly structural (members adopt each
-  other's best), so read the count against the number of islands rather than of workers.
+  With cooperating groups, ties *within* an group are partly structural (members adopt each
+  other's best), so read the count against the number of groups rather than of workers.
 
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
@@ -255,8 +255,8 @@ predict, and then run, the single algorithm best suited to it. That is not max-d
 runs several at once and keeps the best.
 
 Portfolio workers may run independently or share what they learn as they go — ManySAT (Hamadi,
-Jabbour and Sais, 2009) shares. max-div sits in between: island members share their best selection,
-while islands never exchange information.
+Jabbour and Sais, 2009) shares. max-div sits in between: group members share their best selection,
+while groups never exchange information.
 
 **References**
 

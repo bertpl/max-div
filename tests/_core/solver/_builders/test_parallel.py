@@ -4,7 +4,7 @@ import pytest
 from max_div._core._warnings import ParallelSolvingWarning
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder, ParallelMaxDivSolverBuilder
-from max_div._core.solver._builders._parallel import _resolve_island_sizes
+from max_div._core.solver._builders._parallel import _resolve_group_sizes
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import (
     ParallelMaxDivSolution,
@@ -107,8 +107,8 @@ def test_workers_are_seeded_differently_from_each_other():
 def test_a_worker_can_be_replayed_on_its_own():
     """An independent worker's preset and seed reproduce its selection in a single solve.
 
-    Nested singleton islands make every worker independent; a cooperative worker's trajectory
-    depends on its island mates, so only independent workers carry this replay contract.
+    Nested singleton groups make every worker independent; a cooperative worker's trajectory
+    depends on its group mates, so only independent workers carry this replay contract.
     """
     # --- arrange -----------------------------------------
     solution = _solve_portfolio([[WorkerConfig(preset=SolverPreset.SMART)], [WorkerConfig(preset=SolverPreset.GUIDED)]])
@@ -185,14 +185,14 @@ def test_default_worker_count_is_three_quarters_of_the_cores_at_least_two(
 
 
 # =================================================================================================
-#  Islands
+#  Groups
 # =================================================================================================
 @pytest.mark.parametrize(
     "total,expected",
     [(1, 1), (2, 1), (3, 1), (4, 2), (6, 3), (8, 4), (12, 5), (24, 7), (48, 10)],
 )
-def test_default_group_count_targets_twice_as_many_islands_as_members(total, expected):
-    """The island count follows round(sqrt(2 * total)), capped so islands keep 2 workers (1 total -> 1 island)."""
+def test_default_group_count_targets_twice_as_many_groups_as_members(total, expected):
+    """The group count follows round(sqrt(2 * total)), capped so groups keep 2 workers (1 total -> 1 group)."""
     # --- act / assert ------------------------------------
     assert default_group_count(total) == expected
 
@@ -201,14 +201,14 @@ def test_default_group_count_targets_twice_as_many_islands_as_members(total, exp
     "total,n_groups,expected",
     [(4, 2, [2, 2]), (5, 2, [3, 2]), (7, 3, [3, 2, 2]), (3, 3, [1, 1, 1]), (3, None, [3])],
 )
-def test_island_sizes_split_the_remainder_over_the_first_islands(total, n_groups, expected):
-    """An uneven split hands the extra workers to the first islands, deterministically."""
+def test_group_sizes_split_the_remainder_over_the_first_groups(total, n_groups, expected):
+    """An uneven split hands the extra workers to the first groups, deterministically."""
     # --- act / assert ------------------------------------
-    assert _resolve_island_sizes(total, n_groups) == expected
+    assert _resolve_group_sizes(total, n_groups) == expected
 
 
 def test_group_count_outside_the_worker_count_is_rejected():
-    """An island count below 1 or above the worker count is a configuration error."""
+    """An group count below 1 or above the worker count is a configuration error."""
     # --- arrange -----------------------------------------
     builder = ParallelMaxDivSolverBuilder(_problem())
 
@@ -231,8 +231,8 @@ def test_group_count_only_combines_with_an_integer_worker_count():
         builder.with_workers(_BUDGET, [[WorkerConfig()], [WorkerConfig()]], n_groups=2)
 
 
-def test_mixing_configurations_and_islands_is_rejected():
-    """A workers sequence must be all configurations or all islands, never a mix of both."""
+def test_mixing_configurations_and_groups_is_rejected():
+    """A workers sequence must be all configurations or all groups, never a mix of both."""
     # --- arrange -----------------------------------------
     builder = ParallelMaxDivSolverBuilder(_problem())
 
@@ -242,18 +242,18 @@ def test_mixing_configurations_and_islands_is_rejected():
 
 
 def test_a_nested_sequence_fixes_grouping_and_configurations():
-    """Each inner sequence becomes one island, at its own size, with its own worker configurations."""
+    """Each inner sequence becomes one group, at its own size, with its own worker configurations."""
     # --- arrange -----------------------------------------
-    islands = [
+    groups = [
         [WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.THOROUGH)],
         [WorkerConfig(preset=SolverPreset.SMART)],
     ]
 
     # --- act ---------------------------------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, islands).build()
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, groups).build()
 
     # --- assert ------------------------------------------
-    assert solver._island_sizes == [2, 1]
+    assert solver._group_sizes == [2, 1]
     assert [worker.preset for worker in solver._worker_configs] == [
         SolverPreset.SMART,
         SolverPreset.THOROUGH,
@@ -261,17 +261,17 @@ def test_a_nested_sequence_fixes_grouping_and_configurations():
     ]
 
 
-def test_an_integer_worker_count_defaults_to_cooperative_islands():
+def test_an_integer_worker_count_defaults_to_cooperative_groups():
     """An integer count groups by the default rule, so cooperation is the default rather than opt-in."""
     # --- act ---------------------------------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 4).build()
 
     # --- assert ------------------------------------------
-    assert solver._island_sizes == [2, 2]
+    assert solver._group_sizes == [2, 2]
 
 
 def test_a_cooperative_portfolio_solves():
-    """An island of cooperating workers produces an ordinary, valid solution."""
+    """An group of cooperating workers produces an ordinary, valid solution."""
     # --- arrange / act -----------------------------------
     solution = _solve_portfolio(2, n_groups=1)
 
