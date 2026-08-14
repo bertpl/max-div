@@ -1,5 +1,7 @@
 """A portfolio solver runs several workers over one shared store and returns the best result they reach."""
 
+import math
+import multiprocessing
 import os
 import warnings
 from dataclasses import fields
@@ -11,8 +13,9 @@ from max_div._core.solver._progress_reporting import ProgressReporter, Verbosity
 from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
 
-from ._coordinator import IndependentCoordinator
+from ._coordinator import CooperativeCoordinator, IndependentCoordinator, WorkerCoordinator
 from ._executor import run_portfolio
+from ._incumbent_slot import IslandIncumbentSlot
 from ._result import best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._worker_config import WorkerConfig
@@ -34,17 +37,21 @@ class ParallelMaxDivSolver:
         storage: DistanceStorage,
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
+        island_sizes: list[int],
     ) -> None:
         """Hold the problem, the resolved backend, and one configuration per worker.
 
         :param storage: the already-resolved backend the shared store is built in.
         :param worker_configs: what each worker runs, reported back in the solution.
         :param solver_configs: the solver each worker assembles, in the same order.
+        :param island_sizes: how the workers group into islands, as consecutive run lengths over
+                             the worker order; sizes must sum to the worker count.
         """
         self._problem = problem
         self._storage = storage
         self._worker_configs = worker_configs
         self._solver_configs = solver_configs
+        self._island_sizes = island_sizes
 
     # -------------------------------------------------------------------------
     #  API
@@ -65,7 +72,7 @@ class ParallelMaxDivSolver:
             results = run_portfolio(
                 self._solver_configs,
                 shared_distance_store.spec,
-                [IndependentCoordinator() for _ in self._solver_configs],
+                self._build_coordinators(),
                 progress_reporter=progress_reporter,
             )
         winner = best_result(results)
@@ -82,6 +89,20 @@ class ParallelMaxDivSolver:
         ]
         inherited = {field.name: getattr(winner.solution, field.name) for field in fields(MaxDivSolution)}
         return ParallelMaxDivSolution(**inherited, workers=summaries, winning_worker=winner.worker_index)
+
+    def _build_coordinators(self) -> list[WorkerCoordinator]:
+        """Return one coordinator per worker: an island's members share a slot, lone workers share nothing."""
+        config = self._solver_configs[0]
+        context = multiprocessing.get_context("spawn")
+        coordinators: list[WorkerCoordinator] = []
+        for size in self._island_sizes:
+            if size == 1:
+                coordinators.append(IndependentCoordinator())
+            else:
+                # score length = the three fixed components plus one per tie-breaker (Score.as_tuple)
+                slot = IslandIncumbentSlot(context, k=config.k, score_length=3 + len(config.diversity_tie_breakers))
+                coordinators.extend([CooperativeCoordinator(slot)] * size)
+        return coordinators
 
 
 def warn_about_worker_count(n_workers: int) -> None:
@@ -106,10 +127,22 @@ def warn_about_worker_count(n_workers: int) -> None:
 
 
 def default_worker_count() -> int:
-    """Return the default portfolio size when the caller names none: half the logical cores, at least 2.
+    """Return the default portfolio size when the caller names none: 3/4 of the logical cores, at least 2.
 
-    Half the logical count is the physical-core count on 2-way-SMT machines — the cores a compute- and
-    bandwidth-bound solve can actually use — and a conservative half on machines without SMT, so it
-    never oversubscribes real cores. An explicit count on `with_workers` overrides it.
+    The default portfolio is cooperative, and there the criterion is throughput per island rather
+    than per worker, which tolerates more cores in use than the conservative half that suits
+    independent workers.  An explicit count on `with_workers` overrides it.
     """
-    return max(2, (os.cpu_count() or 2) // 2)
+    return max(2, (os.cpu_count() or 2) * 3 // 4)
+
+
+def default_group_count(n_workers_total: int) -> int:
+    """Return the default island count for a worker total, when the caller names none.
+
+    The shape targets roughly twice as many islands as workers per island: the final result is a
+    best over all workers, and only islands are independent draws of it, so islands buy more than
+    island size does.  Every island keeps at least 2 workers — on small totals the count collapses
+    to a single island rather than to islands of one, preferring cooperation over independence.
+    An explicit `n_groups` on `with_workers` overrides it.
+    """
+    return max(1, min(round(math.sqrt(2 * n_workers_total)), n_workers_total // 2))

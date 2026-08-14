@@ -63,12 +63,13 @@ solver:
       note:
         text: >-
           A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-    parallelism.parallel:
+    parallelism.independent:
       mark: none
       note:
         text: >-
           MaxMin and MaxSum selection is sequential; OptiSim and DISE parallelize only their KDTree
           neighbor queries, not the search over selections.
+    parallelism.cooperative: {mark: none}
 ---
 
 # qc-selector

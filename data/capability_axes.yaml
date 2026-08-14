@@ -155,19 +155,23 @@ groups:
         label: the answer improves when given more budget
         hero: true
 
-  # One coarse axis — whether a tool solves a single problem with several workers at once. It is a
-  # group so an independent/cooperative split can be added as a second axis under the same band,
-  # without redrawing the surrounding columns. The hero group label is blank: with a single narrow
-  # column the rotated axis header names it, and a horizontal band label would collide with the scale
-  # column's label. The scale column is wide enough to carry a horizontal label; this narrow one is
-  # not.
+  # Whether a tool solves a single problem with several workers at once, split by whether those
+  # workers exchange information mid-run: `independent` marks workers that search separately with
+  # the best result winning, `cooperative` marks workers that share information (bounds, clauses,
+  # selections) while solving. The hero group label is blank: the rotated axis headers name the
+  # columns, and a horizontal band label would collide with the scale column's label. The scale
+  # column is wide enough to carry a horizontal label; these narrow ones are not.
   - key: parallelism
     hero_label: ""
     label: multi-worker
     axes:
-      - key: parallel
-        hero_label: multi-worker
-        label: solves one problem with several workers at once
+      - key: independent
+        hero_label: independent
+        label: several workers search one problem separately and the best result wins
+        hero: true
+      - key: cooperative
+        hero_label: cooperative
+        label: parallel workers share information mid-run
         hero: true
 
 # The scale column is not a mark: its value is a power of ten (or a range of them), and every

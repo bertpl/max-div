@@ -40,7 +40,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^qc-selector-6] |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^qc-selector-7] |
-| multi-worker · solves one problem with several workers at once | <span class="mark mark-none">—</span> | [^qc-selector-8] |
+| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^qc-selector-8] |
+| multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
 | largest practical problem size | n ≈ 10<sup>4</sup> | [^qc-selector-9] |
 
 </div>

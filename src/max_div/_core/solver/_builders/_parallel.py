@@ -1,7 +1,7 @@
 """A portfolio builder configures and builds several solvers over one problem."""
 
 from collections.abc import Sequence
-from typing import Self
+from typing import Self, cast
 
 from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
@@ -9,6 +9,7 @@ from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._parallel import (
     ParallelMaxDivSolver,
     WorkerConfig,
+    default_group_count,
     default_worker_count,
     warn_about_worker_count,
 )
@@ -36,27 +37,57 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         """
         super().__init__(problem)
         self._worker_configs: list[WorkerConfig] = []
+        self._island_sizes: list[int] = []
         self._target_duration: TargetDuration | None = None
 
     # -------------------------------------------------------------------------
     #  Builder API
     # -------------------------------------------------------------------------
     def with_workers(
-        self, target_duration: TargetDuration, workers: int | Sequence[WorkerConfig] | None = None
+        self,
+        target_duration: TargetDuration,
+        workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
+        n_groups: int | None = None,
     ) -> Self:
-        """Set what the portfolio runs, and for how long each worker runs it.
+        """Set what the portfolio runs, for how long each worker runs it, and how workers group into islands.
 
         The workers run side by side, so the portfolio takes as long as one of them rather than the
         sum.  Presets differ in iteration speed, so when workers run different ones a wall-clock
         budget keeps them to the same real time where an iteration count would not.
 
-        :param workers: an integer runs the default configuration that many times; a sequence gives
-                        one configuration per worker; omitting it uses `default_worker_count()`.
+        Workers group into **islands**: within an island, workers adopt the best selection any
+        member has found so far; islands never communicate, and the best worker over all islands
+        wins.  Islands of one make those workers fully independent — `n_groups` equal to the
+        worker count is the fully independent portfolio.
+
+        :param workers: an integer runs the default configuration that many times; a flat sequence
+                        gives one configuration per worker; a nested sequence gives one inner
+                        sequence per island, fixing both grouping and configurations; omitting it
+                        uses `default_worker_count()`.
+        :param n_groups: number of islands; only combines with an integer (or omitted) `workers` —
+                         a nested sequence carries its own grouping, a flat sequence uses the
+                         default.  Omitting it uses `default_group_count()`.
+        :raises ValueError: If `n_groups` accompanies a sequence form or falls outside 1..worker count.
         """
         self._target_duration = target_duration
         if workers is None:
             workers = default_worker_count()
-        self._worker_configs = [WorkerConfig() for _ in range(workers)] if isinstance(workers, int) else list(workers)
+        if isinstance(workers, int):
+            self._worker_configs = [WorkerConfig() for _ in range(workers)]
+            self._island_sizes = _resolve_island_sizes(workers, n_groups)
+        elif any(isinstance(entry, WorkerConfig) for entry in workers):
+            if not all(isinstance(entry, WorkerConfig) for entry in workers):
+                raise ValueError("Workers must be all configurations (flat) or all islands (nested), not a mix.")
+            if n_groups is not None:
+                raise ValueError("n_groups only combines with an integer worker count; a sequence groups itself.")
+            self._worker_configs = [cast("WorkerConfig", entry) for entry in workers]
+            self._island_sizes = _resolve_island_sizes(len(self._worker_configs), None)
+        else:
+            if n_groups is not None:
+                raise ValueError("n_groups only combines with an integer worker count; a sequence groups itself.")
+            islands = [list(cast("Sequence[WorkerConfig]", island)) for island in workers]
+            self._worker_configs = [config for island in islands for config in island]
+            self._island_sizes = [len(island) for island in islands]
         return self
 
     # -------------------------------------------------------------------------
@@ -79,6 +110,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 self._solver_config_for(index, worker, self._target_duration, label)
                 for index, worker in enumerate(self._worker_configs)
             ],
+            island_sizes=self._island_sizes,
         )
 
     def _solver_config_for(
@@ -103,3 +135,17 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=storage_label,
         )
+
+
+def _resolve_island_sizes(n_workers_total: int, n_groups: int | None) -> list[int]:
+    """Return the island sizes for a worker total, splitting any remainder over the first islands.
+
+    :param n_groups: number of islands; `default_group_count(n_workers_total)` if None.
+    :raises ValueError: If `n_groups` falls outside 1..`n_workers_total`.
+    """
+    if n_groups is None:
+        n_groups = default_group_count(n_workers_total)
+    elif not 1 <= n_groups <= n_workers_total:
+        raise ValueError(f"n_groups must be between 1 and the worker count ({n_workers_total}); got {n_groups}.")
+    base, remainder = divmod(n_workers_total, n_groups)
+    return [base + 1 if island < remainder else base for island in range(n_groups)]

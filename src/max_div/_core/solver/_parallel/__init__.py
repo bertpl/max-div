@@ -10,7 +10,7 @@ from ._executor import run_portfolio, solve_in_worker
 from ._incumbent_slot import GroupIncumbentSlot
 from ._result import WorkerResult, best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
-from ._solver import ParallelMaxDivSolver, default_worker_count, warn_about_worker_count
+from ._solver import ParallelMaxDivSolver, default_group_count, default_worker_count, warn_about_worker_count
 from ._worker_config import WorkerConfig
 
 __all__ = [
@@ -24,6 +24,7 @@ __all__ = [
     "WorkerResult",
     "WorkerSummary",
     "best_result",
+    "default_group_count",
     "default_worker_count",
     "run_portfolio",
     "solve_in_worker",

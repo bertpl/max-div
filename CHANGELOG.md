@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Cooperative parallel solving: parallel workers now group into islands whose members share their best solution mid-run; set the island count via `with_workers(..., n_groups=...)`, or pass nested worker-config lists for explicit islands
 
 ### Changed
+- Parallel solving defaults to cooperative islands on 3/4 of the logical cores (previously: fully independent workers on half); a fully independent portfolio remains available via `n_groups` equal to the worker count, and stays the reproducible mode
 
 ### Deprecated
 

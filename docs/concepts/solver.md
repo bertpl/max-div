@@ -130,13 +130,18 @@ portfolio** — and keeps the best result any of them reached. The workers share
 distances, which are usually the most memory-intensive structure in a solve, so N workers cost N
 processes but not N copies of that data.
 
+The workers group into **islands**: within an island, every worker adopts the best selection any
+member has found so far, exchanged at the same once-per-batch boundaries that drive progress
+reporting; islands never communicate with each other. Islands of one worker are fully
+independent — the pre-island portfolio is the special case where every island has one member.
+
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
 
 solution = (
     ParallelMaxDivSolverBuilder(problem)
     .with_seed(42)
-    .with_workers(seconds(60), 8)          # or one WorkerConfig per worker
+    .with_workers(seconds(60), 8, n_groups=4)   # 8 workers in 4 islands of 2
     .build()
     .solve()
 )
@@ -144,16 +149,38 @@ solution = (
 
 ### Why Run Several
 
-**The purpose is variance reduction, not speed.** A run's quality depends on its seed, and running
-several seeds at once and keeping the best is insurance against drawing a bad one. Running several
-does not make any single search faster, and it does not substitute for a larger budget.
+The two counts buy different things:
 
-How much it buys depends on the budget. The [published preset quantiles](../benchmarks/solver/bm_problem_u1_presets.md)
+- **More islands**: variance reduction. A run's quality depends on its seed, and keeping the best
+  over several independent islands is insurance against drawing a bad one.
+- **Larger islands**: shared search capacity. An island's members pool their effort on promising
+  selections — a member stuck with a poor selection picks up a sibling's better one and continues
+  from there — at the cost of searching less independently.
+
+How much the variance reduction buys depends on the budget. The [published preset quantiles](../benchmarks/solver/bm_problem_u1_presets.md)
 show the seed spread narrowing sharply as budgets grow — roughly tenfold over the first stretch —
 and then flattening rather than vanishing.
 
 Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
+
+### Workers and Islands
+
+`with_workers` accepts the worker set in three forms:
+
+- **an integer** — that many default workers, grouped into `n_groups` islands (both counts have
+  defaults, below); the only form `n_groups` combines with;
+- **a flat sequence of `WorkerConfig`** — one configuration per worker, grouped by the default
+  rule;
+- **a nested sequence** — one inner sequence per island, fixing the grouping and every
+  configuration at once; islands may differ in size and mix presets freely.
+
+When the counts are not given, the worker total defaults to **3/4 of the logical cores** and the
+island count to **`round(sqrt(2 · total))`**, capped so every island keeps at least two workers —
+about twice as many islands as workers per island, leaning on islands because only they are
+independent draws of the final best-of-all pick. On totals too small for two islands of two, the
+default is a single island rather than independent workers. A worker total that does not divide
+evenly hands the extra workers to the first islands.
 
 ### What Varies per Worker
 
@@ -170,12 +197,19 @@ Distance storage is fixed for a different reason: the workers read one shared bu
 
 ### Seeds and Reproducibility
 
-The portfolio takes one seed and derives a seed per worker from that seed, so a portfolio is reproducible
-as a whole from a single number while its workers still search differently.
+The portfolio takes one seed and derives a seed per worker from that seed, so the workers search
+differently while the whole configuration hangs on a single number.
 
-Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran, which is
-enough to replay that worker on its own with `MaxDivSolverBuilder`. The limits in the
-[Reproducibility](#reproducibility) section apply unchanged.
+**Reproducibility follows the grouping.** A fully independent portfolio (`n_groups` equal to the
+worker count) run twice from one seed returns the same selection. A portfolio with cooperating
+islands does not: which selections get adopted depends on how far each worker happens to have
+come when it reaches an exchange, and that inter-worker timing varies from run to run.
+
+Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran. For an
+independent worker that is enough to replay it on its own with `MaxDivSolverBuilder`; a
+cooperative worker's trajectory also depends on what its island mates published, so the replay
+contract is independent-only. The limits in the [Reproducibility](#reproducibility) section apply
+on top.
 
 ### Reading the Result
 

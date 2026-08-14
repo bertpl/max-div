@@ -69,12 +69,18 @@ solver:
       note:
         text: >-
           The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
-    parallelism.parallel:
+    parallelism.independent:
       mark: full
       note:
         text: >-
-          CP-SAT runs a portfolio of search workers on the same instance by default, set by the
-          num_workers parameter.
+          CP-SAT runs a portfolio of differently configured search workers on the same instance by
+          default, set by the num_workers parameter.
+    parallelism.cooperative:
+      mark: full
+      note:
+        text: >-
+          The portfolio workers share learned clauses, solutions and objective bounds while
+          solving.
 ---
 
 # OR-Tools CP-SAT
