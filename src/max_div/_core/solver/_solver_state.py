@@ -300,12 +300,39 @@ class SolverState:
         # --- score ---------------------------------------
         self._score_dirty = True
 
+    def reset(self) -> None:
+        """Return the state to the empty selection, updating all incremental state to match.
+
+        Cheaper than removing the selected items one by one: the trackers jump straight to their
+        empty-selection values instead of rescanning after every removal.
+
+        :raises RuntimeError: If a savepoint is open — a reset cannot be provisional.
+        """
+        # --- validation ----------------------------------
+        if self._depth != 0:
+            raise RuntimeError("Cannot reset the selection while a savepoint is open.")
+
+        # --- constraints ---------------------------------
+        # undo the constraint effect of the current selection while its index view is intact
+        for index in self.selected_index_array:
+            self._con_values[self._con_membership[index], :] += 1
+
+        # --- selection -----------------------------------
+        self._selected.fill(False)
+        self._n_selected = np.int32(0)
+
+        # --- diversity contributions ---------------------
+        self._contribution_trackers.reset()
+
+        # --- score ---------------------------------------
+        self._score_dirty = True
+
     def adopt_selection(self, indices: NDArray[np.int32]) -> None:
         """Replace the current selection with `indices`, updating all incremental state to match.
 
         Adoption installs a selection produced elsewhere (e.g. another worker's incumbent) as if it
         had been built through this state's own mutators, applying the cheaper of a selection diff
-        or a rebuild from the empty selection.
+        or a reset-then-rebuild.
 
         :param indices: (int32 ndarray) the selection to adopt; duplicate-free, any order.
         :raises RuntimeError: If a savepoint is open — an adoption cannot be provisional.
@@ -331,13 +358,8 @@ class SolverState:
             self.add_many(to_add)
         else:
             # --- rebuild route ---------------------------
-            # undo the constraint effect of the current selection while its index view is intact
-            for index in current:
-                self._con_values[self._con_membership[index], :] += 1
-            self._selected.fill(False)
-            self._n_selected = np.int32(0)
-            self._contribution_trackers.reset()
-            self.add_many(foreign)  # also marks the score dirty
+            self.reset()
+            self.add_many(foreign)
 
     # -------------------------------------------------------------------------
     #  Properties

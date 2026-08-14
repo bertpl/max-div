@@ -629,6 +629,34 @@ _METRIC_CONFIGS = [
 ]
 
 
+def test_reset_returns_the_state_to_empty():
+    """A reset state is indistinguishable from a freshly built one, and stays fully usable."""
+    # --- arrange -----------------------------------------
+    state = _make_adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
+    state.add_many(np.array([0, 2, 4, 6], dtype=np.int32))
+    reference = _make_adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
+
+    # --- act ---------------------------------------------
+    state.reset()
+
+    # --- assert ------------------------------------------
+    _assert_state_matches_reference(state, reference)
+    state.add(np.int32(1))  # the reset state accepts mutations as usual
+    assert state.selected_index_array.tolist() == [1]
+
+
+def test_reset_inside_a_savepoint_is_rejected():
+    """A reset cannot be provisional, so an open savepoint rejects it."""
+    # --- arrange -----------------------------------------
+    state = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
+    state.add_many(np.array([0, 1], dtype=np.int32))
+
+    # --- act & assert ------------------------------------
+    with state.savepoint(), pytest.raises(RuntimeError):
+        state.reset()
+    assert state.selected_index_array.tolist() == [0, 1]
+
+
 @pytest.mark.parametrize("diversity_metric, tie_breakers", _METRIC_CONFIGS)
 @pytest.mark.parametrize(
     "start, target",
