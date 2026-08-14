@@ -281,10 +281,8 @@ class SolverState:
         """Replace the current selection with `indices`, updating all incremental state to match.
 
         Installs a selection produced elsewhere (e.g. another worker's incumbent) as if it had been
-        built through this state's own mutators.  The install goes through the cheaper of two
-        routes: diffing against the current selection and applying the removes/adds, or — when the
-        selections barely overlap, where per-point removes would cost more than starting over —
-        resetting to the empty selection and bulk-adding.  Which route ran is unobservable.
+        built through this state's own mutators.  Internally applies the cheaper of a selection
+        diff or a rebuild from the empty selection; which route ran is unobservable.
 
         :param indices: (int32 ndarray) the selection to adopt; duplicate-free, any order.
         :raises RuntimeError: If a savepoint is open — an adoption cannot be provisional.
