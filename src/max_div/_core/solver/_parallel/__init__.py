@@ -5,15 +5,18 @@ the objective does not, because comparing what they found needs one answer to wh
 better.
 """
 
-from ._coordinator import IndependentCoordinator, WorkerCoordinator
+from ._coordinator import CooperativeCoordinator, IndependentCoordinator, WorkerCoordinator
 from ._executor import run_portfolio, solve_in_worker
+from ._incumbent_slot import IslandIncumbentSlot
 from ._result import WorkerResult, best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._solver import ParallelMaxDivSolver, default_worker_count, warn_about_worker_count
 from ._worker_config import WorkerConfig
 
 __all__ = [
+    "CooperativeCoordinator",
     "IndependentCoordinator",
+    "IslandIncumbentSlot",
     "ParallelMaxDivSolution",
     "ParallelMaxDivSolver",
     "WorkerConfig",
