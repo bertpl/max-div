@@ -99,7 +99,7 @@ class ParallelMaxDivSolver:
             if size == 1:
                 coordinators.append(IndependentCoordinator())
             else:
-                # score length = the three fixed components plus one per tie-breaker (Score.as_tuple)
+                # the score length is the three fixed components plus one per tie-breaker (Score.as_tuple)
                 slot = IslandIncumbentSlot(context, k=config.k, score_length=3 + len(config.diversity_tie_breakers))
                 coordinators.extend([CooperativeCoordinator(slot)] * size)
         return coordinators
@@ -139,7 +139,7 @@ def default_worker_count() -> int:
 def default_group_count(n_workers_total: int) -> int:
     """Return the default island count for a worker total, when the caller names none.
 
-    The shape targets roughly twice as many islands as workers per island: the final result is a
+    The default targets roughly twice as many islands as workers per island: the final result is a
     best over all workers, and only islands are independent draws of it, so islands buy more than
     island size does.  Every island keeps at least 2 workers — on small totals the count collapses
     to a single island rather than to islands of one, preferring cooperation over independence.

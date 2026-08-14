@@ -131,9 +131,9 @@ distances, which are usually the most memory-intensive structure in a solve, so 
 processes but not N copies of that data.
 
 The workers group into **islands**: within an island, every worker adopts the best selection any
-member has found so far, exchanged at the same once-per-batch boundaries that drive progress
-reporting; islands never communicate with each other. Islands of one worker are fully
-independent — the pre-island portfolio is the special case where every island has one member.
+member has found so far, exchanged at the same periodic points where workers report progress;
+islands never communicate with each other. Islands of one worker are fully independent — a fully
+independent portfolio is the special case where every island has one member.
 
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
@@ -175,12 +175,14 @@ still finish below a lucky one with less.
 - **a nested sequence** — one inner sequence per island, fixing the grouping and every
   configuration at once; islands may differ in size and mix presets freely.
 
-When the counts are not given, the worker total defaults to **3/4 of the logical cores** and the
-island count to **`round(sqrt(2 · total))`**, capped so every island keeps at least two workers —
-about twice as many islands as workers per island, leaning on islands because only they are
-independent draws of the final best-of-all pick. On totals too small for two islands of two, the
-default is a single island rather than independent workers. A worker total that does not divide
-evenly hands the extra workers to the first islands.
+When the counts are not given:
+
+- the worker total defaults to **3/4 of the logical cores**;
+- the island count defaults to **`round(sqrt(2 · total))`**, capped so every island keeps at least
+  two workers — about twice as many islands as workers per island, leaning on islands because only
+  they are independent draws of the final best-of-all pick;
+- totals too small for two islands of two get a single island rather than independent workers;
+- a worker total that does not divide evenly hands the extra workers to the first islands.
 
 ### What Varies per Worker
 
@@ -218,8 +220,10 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
 
 - **Well below the worker count**: seeds mattered on this problem, and the portfolio earned its
   cost.
-- **Equal to the worker count**: every worker tied, so the portfolio found nothing a single one
-  would not have. Lower the worker count or solve once.
+- **Equal to the worker count**: every worker tied. In a fully independent portfolio that means
+  the run found nothing a single worker would not have — lower the worker count or solve once.
+  With cooperating islands, ties *within* an island are partly structural (members adopt each
+  other's best), so read the count against the number of islands rather than of workers.
 
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
@@ -250,7 +254,8 @@ predict, and then run, the single algorithm best suited to it. That is not max-d
 runs several at once and keeps the best.
 
 Portfolio workers may run independently or share what they learn as they go — ManySAT (Hamadi,
-Jabbour and Sais, 2009) shares. max-div's workers are independent: they never exchange information.
+Jabbour and Sais, 2009) shares. max-div sits in between: island members share their best selection,
+while islands never exchange information.
 
 **References**
 
