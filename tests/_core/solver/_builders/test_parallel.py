@@ -189,7 +189,7 @@ def test_default_worker_count_is_three_quarters_of_the_cores_at_least_two(
 # =================================================================================================
 @pytest.mark.parametrize("total", [1, 2, 4, 8, 48])
 def test_default_group_count_is_one(total):
-    """One group at any worker total: benchmarks showed a single group converging fastest."""
+    """The default is one group at any worker total: benchmarks showed a single group converging fastest."""
     # --- act / assert ------------------------------------
     assert default_group_count(total) == 1
 

@@ -130,7 +130,7 @@ def default_worker_count() -> int:
 
     The default portfolio is cooperative, and cooperation converts extra workers into shared
     search progress — so more cores in use keep paying off, and the default takes 3/4 where a
-    purely independent portfolio took the conservative half.  An explicit count on `with_workers`
+    purely independent portfolio would justify only half.  An explicit count on `with_workers`
     overrides it.
     """
     return max(2, (os.cpu_count() or 2) * 3 // 4)

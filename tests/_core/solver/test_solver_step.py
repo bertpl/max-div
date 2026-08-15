@@ -198,7 +198,7 @@ def test_optimization_step_run_seconds():
 
 # --- coordinator-declared batch interval -----------------
 class _BoundaryCoordinator:
-    """A coordinator stub that declares a batch-boundary interval and does nothing at boundaries."""
+    """The stub declares a batch-boundary interval and does nothing at boundaries."""
 
     def __init__(self, boundary_seconds: float | None) -> None:
         self.boundary_seconds = boundary_seconds
@@ -240,7 +240,7 @@ def test_run_batches_at_the_coordinator_interval(monkeypatch, boundary_seconds, 
 
 
 def test_checkpoint_count_is_batch_invariant():
-    """Tight coordinator batches change when checkpoints are detected, never how many there are."""
+    """Tightening the batch interval never changes the number of score checkpoints."""
     # --- arrange -----------------------------------------
     step_default = OptimizationStep(OptimTest(), duration=iterations(500))
     step_fast = OptimizationStep(OptimTest(), duration=iterations(500))

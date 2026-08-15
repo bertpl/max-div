@@ -153,8 +153,8 @@ solution = (
 The two counts buy different things:
 
 - **More groups**: variance reduction. A run's quality depends on its seed, and keeping the best
-  over several independent groups insures against drawing a bad one — though in the measured
-  regimes a single group converged fastest anyway (hence the default below).
+  over several independent groups insures against drawing a bad one — though the default, under
+  Workers and Groups below, is a single group.
 - **Larger groups**: shared search capacity. A group's members pool their effort on promising
   selections — a member stuck with a poor selection picks up a sibling's better one and continues
   from there — at the cost of searching less independently.

@@ -131,7 +131,7 @@ def test_a_lone_cooperative_worker_searches_exactly_as_if_alone():
 
 
 def test_cooperative_coordinator_wants_tighter_batches_than_the_reporting_default():
-    """Cooperative workers exchange sub-0.5s; independent workers state no batching preference."""
+    """Cooperative workers ask for exchanges more often than the reporting default; independent ones do not."""
     # --- arrange -----------------------------------------
     slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
 

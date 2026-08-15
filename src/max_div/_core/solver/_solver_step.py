@@ -14,9 +14,9 @@ from ._strategies._base import StrategyBase
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
 
-# The default wall-clock size of one optimization batch, sized so progress reports can fire ~2x
-# per second.  A coordinator with a tighter boundary interval shrinks the batch below this; it is
-# never stretched above it, so a coordinator never slows reporting.
+# One optimization batch defaults to this wall-clock size, so progress reports can fire ~2x per
+# second.  A coordinator's `boundary_seconds` can shrink the batch below this — see
+# `WorkerCoordinator`.
 _REPORTING_BATCH_SECONDS = 0.5
 
 
