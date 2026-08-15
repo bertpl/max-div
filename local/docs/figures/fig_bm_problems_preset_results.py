@@ -14,13 +14,15 @@ from max_div._core._utils import format_long_time_duration
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.solver import SolverPreset
 
+_DATA_FOLDER = Path("./local/docs/data")
+
 
 # =================================================================================================
 #  Main functionality
 # =================================================================================================
 def create_figures(target_fig_folder: Path, target_md_folder: Path, show_plots: bool = True):
     """
-    For each (problem, size)-combination for which we have data we create the following figures:
+    For each (problem, n)-combination for which we have data we create the following figures:
       - constraint score vs iteration
       - constraint score vs elapsed time
       - diversity score vs iteration
@@ -33,27 +35,21 @@ def create_figures(target_fig_folder: Path, target_md_folder: Path, show_plots: 
     plt.close("all")
 
     # --- scope -------------------------------------------
-    problem_names = BenchmarkProblemFactory.get_all_benchmark_problems()
-    sizes = [10, 100]
-
-    problem_sizes: list[tuple[str, int]] = [
-        (problem_name, size)
-        for problem_name in problem_names
-        for size in sizes
-        if _get_data_file_name(problem_name, size).exists()
-    ]
+    # The data folder is globbed rather than matched against a fixed list of `n` values, so the
+    # figures reflect whatever the latest benchmark run produced.
+    problem_ns: list[tuple[str, int]] = []
+    for problem_name in BenchmarkProblemFactory.get_all_benchmark_problems():
+        for data_file in sorted(_DATA_FOLDER.glob(f"preset_results_{problem_name}_*.json")):
+            problem_ns.append((problem_name, int(data_file.stem.rsplit("_", 1)[1])))
 
     # --- create all figures ------------------------------
-    for problem, size in tqdm(problem_sizes, desc="Creating figures for benchmark problems"):
+    for problem, n in tqdm(problem_ns, desc="Creating figures for benchmark problems"):
         # --- check problem props -----
-        d, n, k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(problem, size=size)
+        _d, _n, _k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(problem, n=n)
         has_constraints = m > 0
 
         # --- load data ---------------
-        data_file_name = _get_data_file_name(problem, size)
-        with open(data_file_name, "r") as f:
-            json_str = f.read()
-
+        json_str = _get_data_file_name(problem, n).read_text()
         result: list[SolverPresetBenchmarkResult] = results_from_json(json_str)
 
         # --- create figure -----------
@@ -61,7 +57,7 @@ def create_figures(target_fig_folder: Path, target_md_folder: Path, show_plots: 
             target_fig_folder=target_fig_folder,
             target_md_folder=target_md_folder,
             problem_name=problem,
-            size=size,
+            n=n,
             results=result,
             show_constraints=has_constraints,
         )
@@ -74,7 +70,7 @@ def create_single_figure(
     target_fig_folder: Path,
     target_md_folder: Path,
     problem_name: str,
-    size: int,
+    n: int,
     results: list[SolverPresetBenchmarkResult],
     show_constraints: bool,
 ):
@@ -86,7 +82,7 @@ def create_single_figure(
     n_presets = len(all_presets)
 
     # --- create PresetQuantilesTable for markdown tables -
-    quantiles_table = PresetQuantilesTable(problem_name, size, target_md_folder)
+    quantiles_table = PresetQuantilesTable(problem_name, n, target_md_folder)
 
     # --- axis configurations -----------------------------
     x_axes = ["iteration", "elapsed_sec"]
@@ -238,7 +234,7 @@ def create_single_figure(
     fig.text(
         0.02,
         0.96 if len(y_axes) == 2 else 0.94,
-        f"(problem {problem_name}, size={size})",
+        f"(problem {problem_name}, n={n})",
         fontsize=12,
         ha="left",
         va="top",
@@ -273,7 +269,7 @@ def create_single_figure(
     fig.subplots_adjust(wspace=0.075, hspace=0.15)
 
     # --- save figure ---------------------------------
-    save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{str(size)}.webp")
+    save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{n}.webp")
 
     # --- save markdown report ------------------------
     quantiles_table.generate_tables()
@@ -282,8 +278,8 @@ def create_single_figure(
 # =================================================================================================
 #  File handling
 # =================================================================================================
-def _get_data_file_name(problem_name: str, size: int) -> Path:
-    return Path(f"./local/docs/data/preset_results_{problem_name}_{size}.json")
+def _get_data_file_name(problem_name: str, n: int) -> Path:
+    return _DATA_FOLDER / f"preset_results_{problem_name}_{n}.json"
 
 
 # =================================================================================================

@@ -3,13 +3,14 @@ from pathlib import Path
 
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.spatial.distance import squareform
 from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
 from local.docs.utils import univariate_kde_adaptive
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DiversityMetric
-from max_div._core.metrics._distance import compute_pdist, compute_separation
+from max_div._core.metrics._distance import compute_pdist
 
 
 # =================================================================================================
@@ -18,7 +19,7 @@ from max_div._core.metrics._distance import compute_pdist, compute_separation
 def create_figures(target_folder: Path, show_plots: bool = True) -> None:
     """
     For all benchmark problems, create a figure showing the distribution of separations of the entire
-    vector populate for sizes n=1,2,4,8,16,32,64,128.
+    vector populate for problem sizes n = 200, 800, 3200, 12800.
     :param target_folder: Path to save the figures.
     :param show_plots: Whether to display the plots (blocking). Default is True.
     """
@@ -26,8 +27,8 @@ def create_figures(target_folder: Path, show_plots: bool = True) -> None:
     problem_names = BenchmarkProblemFactory.get_all_benchmark_problems()
     for problem_name in tqdm(problem_names, desc="Creating benchmark problem figures"):
         # --- generate data ---------------------
-        sizes = [2, 8, 32, 128]
-        sep_dict = {size: compute_separations(problem_name, size) for size in sizes}
+        ns = [200, 800, 3200, 12800]
+        sep_dict = {n: compute_separations(problem_name, n) for n in ns}
 
         # --- create figure ---------------------
         create_figure_for_problem(target_folder, problem_name, sep_dict)
@@ -44,7 +45,7 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
     # --- compute KDEs ------------------------------------
     x_min, x_max = determine_x_range(sep_dict)
     x_values = np.logspace(np.log10(x_min), np.log10(x_max), 1000)
-    kde_dict = {size: compute_kde(separations, x_values) for size, separations in sep_dict.items()}
+    kde_dict = {n: compute_kde(separations, x_values) for n, separations in sep_dict.items()}
     y_min, y_max = determine_y_range(kde_dict)
 
     # rug-related
@@ -53,12 +54,12 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
 
     # --- plot KDEs ---------------------------------------
     n_sizes = len(kde_dict)
-    for i_size, size in enumerate(sorted(kde_dict.keys()), start=1):
+    for i_size, n in enumerate(sorted(kde_dict.keys()), start=1):
         h = ax.plot(
             x_values,
-            kde_dict[size],
+            kde_dict[n],
             lw=0.5,
-            label=f"$s={size}$",
+            label=f"$n={n}$",
         )
 
         # Extract the color from the Line2D object
@@ -67,7 +68,7 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
         # plot filled area under the curve
         ax.fill_between(
             x_values,
-            kde_dict[size],
+            kde_dict[n],
             alpha=0.3,
             color=line_color,
         )
@@ -75,16 +76,16 @@ def create_figure_for_problem(target_folder: Path, problem_name: str, sep_dict: 
         # rug plot
         y_rug = -i_size * y_unit
         ax.plot([x_min, x_max], [y_rug, y_rug], lw=0.5, color=line_color)
-        for sep in sep_dict[size]:
+        for sep in sep_dict[n]:
             ax.plot([sep, sep], [y_rug, y_rug + (0.5 * y_unit)], lw=0.25, color=line_color, alpha=0.5)
 
-        # plot the size (as text) slightly above the highest point of the curve
-        max_kde_value = np.max(kde_dict[size])
-        max_kde_x = x_values[np.argmax(kde_dict[size])]
+        # plot n (as text) slightly above the highest point of the curve
+        max_kde_value = np.max(kde_dict[n])
+        max_kde_x = x_values[np.argmax(kde_dict[n])]
         ax.text(
             max_kde_x,
             max_kde_value + 0.03 * y_max,
-            f"$s={size}$",
+            f"$n={n}$",
             fontsize=9,
             ha="center",
             va="bottom",
@@ -178,22 +179,21 @@ def compute_kde(separations: np.ndarray, x_values: np.ndarray) -> np.ndarray:
 # =================================================================================================
 #  Generate data
 # =================================================================================================
-def compute_separations(problem_name: str, size: int) -> np.ndarray:
+def compute_separations(problem_name: str, n: int) -> np.ndarray:
     """
-    Compute the separations of the entire vector population for the given problem and size.
+    Compute the separations of the entire vector population for the given problem and size n.
     """
     problem = BenchmarkProblemFactory.construct_problem(
         problem_name,
-        size=size,
+        n=n,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
     )
 
-    # compute separations
-    pdist = compute_pdist(problem.vectors, problem.distance_metric)
-    separations = compute_separation(pdist, np.int32(problem.n))
-
-    # return
-    return separations
+    # each vector's separation is its nearest-neighbor distance: reduce compute_pdist's
+    # scipy-layout condensed distances to the per-row minimum over the other vectors
+    square = squareform(compute_pdist(problem.vectors, problem.distance_metric))
+    np.fill_diagonal(square, np.inf)
+    return square.min(axis=1)
 
 
 # =================================================================================================

@@ -148,6 +148,10 @@ update-solver-benchmark-figures:
 	@if ls ./preset_results*.json 1> /dev/null 2>&1; then \
 		mv -f ./preset_results*.json ./local/docs/data/; \
 	fi
-	uv run ./local/docs/figures/fig_bm_problems_vectors_and_cons.py ./docs/benchmarks/solver/images --show-plots=false
-	uv run ./local/docs/figures/fig_bm_problems_separations.py ./docs/benchmarks/solver/images --show-plots=false
-	uv run ./local/docs/figures/fig_bm_problems_preset_results.py ./docs/benchmarks/solver/images ./docs/benchmarks/solver/results --show-plots=false
+	# Geometry: a self-contained script (no local.docs imports), so a plain-path run under the
+	# benchmarks group for matplotlib.
+	uv run --group benchmarks ./scripts/generate_problem_images.py
+	# The two local.docs generators run as modules so their package imports resolve from the repo
+	# root, under the notebooks group whose cvxpy their local.docs.utils package init pulls in.
+	uv run --group notebooks python -m local.docs.figures.fig_bm_problems_separations ./docs/benchmarks/solver/images --show-plots=false
+	uv run --group notebooks python -m local.docs.figures.fig_bm_problems_preset_results ./docs/benchmarks/solver/images ./docs/benchmarks/solver/results --show-plots=false
