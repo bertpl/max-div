@@ -4,7 +4,7 @@
 
 ### A. Overall Approach
 
-`C1` is the suite's **constrained gateway problem**: its constraints are maximally restrictive — exact stratified quotas, the one constraint form that restricted third-party tools support — making it the reference problem for cross-tool constrained comparisons.
+`C1` is the suite's **constrained reference problem for cross-tool comparisons**: its constraints are maximally restrictive — exact stratified quotas, the one constraint form that restricted third-party tools support.
 
 Vectors are 2-dimensional and have...
 

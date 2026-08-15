@@ -4,7 +4,7 @@
 
 ### A. Overall Approach
 
-`U1` is the suite's **gateway problem**: fixed at $d=2$ so every third-party subset-selection tool can run it, with a geometry chosen to make solver-quality differences clearly visible. Vectors form a mixture with fixed proportions of $n$:
+`U1` is the suite's **reference problem for cross-tool comparisons**: fixed at $d=2$ so every third-party subset-selection tool can run it, with a geometry chosen to make solver-quality differences clearly visible. Vectors form a mixture with fixed proportions of $n$:
 
 - **three gaussian clusters** with equal point counts and spreads in ratio $\sim$ 1:4:9 ($75\%$ of points) — the same number of points in very different volumes, so a diversity-aware selection must allocate against point count, not spatial extent,
 - a **uniform background** over the unit square ($20\%$),

@@ -10,7 +10,7 @@ from ._helpers import sort_vectors
 
 
 # =================================================================================================
-#  U1 - Clustered 2D gateway - Unconstrained
+#  U1 - Clustered 2D cross-tool reference - Unconstrained
 # =================================================================================================
 class BenchmarkProblem_U1(BenchmarkProblem):
     """U1 is the fixed-d=2 reference problem for cross-tool comparisons.
@@ -38,16 +38,17 @@ class BenchmarkProblem_U1(BenchmarkProblem):
 
     @classmethod
     def _create_problem_instance(cls, n: int, diversity_metric: DiversityMetric) -> VectorMaxDivProblem:
-        """Generate the clustered gateway geometry in the unit square.
+        """Generate the clustered cross-tool reference geometry in the unit square.
 
         Components (fractions of n): three gaussian clusters with equal point counts and spreads in
         ratio ~1:4:9 (75% of mass, volumetric density spanning ~two orders of magnitude), a uniform
         background (20%), and a sparse ring of far outliers (5%).
         """
-        # split n into three equal clusters, the background, and the remainder as halo
+        # split n into three equal clusters, the halo (with an enforced minimum of one point),
+        # and the background as remainder
         n_cluster = int(n * 0.75) // 3
-        n_background = int(n * 0.20)
-        n_halo = n - 3 * n_cluster - n_background
+        n_halo = max(1, int(n * 0.05))
+        n_background = n - 3 * n_cluster - n_halo
 
         np.random.seed(42)
         parts = []

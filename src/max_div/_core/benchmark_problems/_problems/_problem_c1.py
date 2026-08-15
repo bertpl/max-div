@@ -9,7 +9,7 @@ from ._helpers import make_banded_vectors_and_bands
 
 
 # =================================================================================================
-#  C1 - Exact stratified quotas - Constrained gateway
+#  C1 - Exact stratified quotas - Constrained cross-tool reference
 # =================================================================================================
 class BenchmarkProblem_C1(BenchmarkProblem):
     """C1 is the fixed-d=2 constrained reference problem for cross-tool comparisons.

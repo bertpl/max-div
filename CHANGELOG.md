@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Benchmark problem suite restructured, not backward compatible: problems take the size `n` directly (all other dimensions derived), `U1` (new clustered-2D) and `C1` (exact quotas, previously `C2`) are fixed-d=2 gateway problems for cross-tool comparisons, and the log-uniform problem is removed
+- Benchmark problem suite restructured, not backward compatible: problems take the size `n` directly (all other dimensions derived), `U1` (new clustered-2D) and `C1` (exact quotas, previously `C2`) are fixed-d=2 reference problems every third-party tool can run, and the log-uniform problem is removed
 
 ### Deprecated
 
