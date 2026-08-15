@@ -132,12 +132,18 @@ def create_single_figure(
             # --- plot data per preset ------------------------
             for preset in all_presets:
                 # --- collect data ---
+                # single-worker runs only; the parallel arm is a separate series plotted below, so
+                # its records must not fold into the preset's own scatter or quantile band
                 x: list[float] = []
                 y: list[float] = []
                 for result in results:
-                    if result.params.preset == preset:
+                    if result.params.preset == preset and result.params.n_workers == 1:
                         x.append(getattr(result, x_result_field))
                         y.append(getattr(result.score, y_result_score_field))
+
+                # a preset may be absent from a partial run; skip it rather than reducing over empties
+                if not x:
+                    continue
 
                 # --- plot data ---
                 if use_y_transform:
@@ -176,6 +182,22 @@ def create_single_figure(
                     ax.plot(x_q, q50, color=color, linestyle="-", lw=0.8, alpha=0.8, label="q50")
                     ax.plot(x_q, q10, color=color, linestyle="-", lw=0.5, alpha=0.5, label="q10, q90")
                     ax.plot(x_q, q90, color=color, linestyle="-", lw=0.5, alpha=0.5)
+
+            # --- plot the parallel arm ---------------------------
+            # The default parallel invocation (one preset, several cooperative workers) is shown as
+            # a plain black-circle scatter with no quantile band: it is a single reference series,
+            # not a preset sweep, and one run per budget point makes the scatter itself the spread.
+            parallel_x: list[float] = []
+            parallel_y: list[float] = []
+            parallel_label = ""
+            for result in results:
+                if result.params.n_workers > 1:
+                    parallel_x.append(getattr(result, x_result_field))
+                    parallel_y.append(getattr(result.score, y_result_score_field))
+                    parallel_label = result.params.column_label()
+            if parallel_x:
+                parallel_y_plot = y_transform.f(parallel_y) if use_y_transform else parallel_y
+                ax.plot(parallel_x, parallel_y_plot, label=parallel_label, linestyle="None", marker="o", color="black")
 
             # --- decorations ---------------------------------
 

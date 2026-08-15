@@ -14,6 +14,11 @@ if TYPE_CHECKING:
     from ._models import SolverPresetBenchmarkResult
 
 
+# placeholder for a table cell whose (duration, column) combination has no runs — the parallel
+# arm only covers the longer budgets, so its column is blank at the short-duration rows
+_EMPTY_CELL = "—"
+
+
 # =================================================================================================
 #  Helpers
 # =================================================================================================
@@ -88,27 +93,23 @@ def show_solver_presets_benchmark_results(
                         agg.constraint_scores.append(result.score.constraints)
                         agg.diversity_scores.append(result.score.diversity)
 
-                # add results for this preset to table rows
-                table_actual_times_row.append(TableTimeElapsed.from_values(agg.elapsed_sec))
-                table_con_score_row.append(
-                    TableValueWithUncertainty.from_values(
-                        agg.constraint_scores,
-                        decimals=6,
+                # add results for this column to the table rows; a column can lack data at a
+                # given duration (the parallel arm only runs the longer budgets), so those cells
+                # render as a placeholder rather than aggregating an empty sample
+                if agg.elapsed_sec:
+                    table_actual_times_row.append(TableTimeElapsed.from_values(agg.elapsed_sec))
+                    table_con_score_row.append(TableValueWithUncertainty.from_values(agg.constraint_scores, decimals=6))
+                    table_div_score_row.append(
+                        TableValueWithUncertainty.from_values(agg.diversity_scores, decimals=6, scientific=True)
                     )
-                )
-                table_div_score_row.append(
-                    TableValueWithUncertainty.from_values(
-                        agg.diversity_scores,
-                        decimals=6,
-                        scientific=True,
+                    table_iters_row.append(
+                        TableValueWithUncertainty.from_values([float(n) for n in agg.n_iterations], decimals=0)
                     )
-                )
-                table_iters_row.append(
-                    TableValueWithUncertainty.from_values(
-                        [float(n) for n in agg.n_iterations],
-                        decimals=0,
-                    )
-                )
+                else:
+                    table_actual_times_row.append(_EMPTY_CELL)
+                    table_con_score_row.append(_EMPTY_CELL)
+                    table_div_score_row.append(_EMPTY_CELL)
+                    table_iters_row.append(_EMPTY_CELL)
 
             # add rows to tables
             table_actual_times.add_row(table_actual_times_row)
