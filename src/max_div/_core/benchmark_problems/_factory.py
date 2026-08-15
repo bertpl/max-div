@@ -18,7 +18,7 @@ class BenchmarkProblemFactory:
         Args:
             name: Registered benchmark problem name, e.g. `"U1"` or `"C3"`.
             n: Problem size (number of vectors to choose from); all other dimensions are derived
-                from it.  Must be >= 20.
+                from it.  Must be at least `MIN_N` (see the `BenchmarkProblem` base class).
             diversity_metric: Diversity metric to be maximized.
         """
         return cls._get_problem_class(name).create_problem_instance(n, diversity_metric)

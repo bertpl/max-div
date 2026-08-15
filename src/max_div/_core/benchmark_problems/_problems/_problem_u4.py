@@ -13,11 +13,9 @@ from ._helpers import sort_vectors
 #  U4 - Conic - Unconstrained
 # =================================================================================================
 class BenchmarkProblem_U4(BenchmarkProblem):
-    """Conic vector density; the capstone of the scaling-d unconstrained series.
+    """U4 draws vectors in a cone around the all-ones direction.
 
-    Points are placed uniformly along the cone axis while cross-section volume grows like
-    a^(d-1), so volumetric density concentration sharpens exponentially with d — the most
-    extreme density regime in the suite.
+    Volumetric density concentrates toward the cone's tip, ever more sharply as d grows.
     """
 
     @classmethod

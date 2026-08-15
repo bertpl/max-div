@@ -13,14 +13,11 @@ from ._helpers import sort_vectors
 #  U1 - Clustered 2D gateway - Unconstrained
 # =================================================================================================
 class BenchmarkProblem_U1(BenchmarkProblem):
-    """The fixed-d=2 reference problem for cross-tool comparisons.
+    """U1 is the fixed-d=2 reference problem for cross-tool comparisons.
 
-    Every third-party subset-selection tool can run this problem, and its geometry is chosen so
-    solver-class quality differences are clearly visible: random sampling allocates picks by point
-    count (oversampling the tightest cluster), one-shot farthest-point greedy overpays for the
-    outlier halo, and budget-driven optimizers balance all three density regimes.  Component
-    proportions are fixed fractions of n, so the density structure is n-invariant: growing n yields
-    the same picture, denser.
+    Its clustered geometry is chosen so solver-class quality differences are clearly visible, and
+    its component proportions are fixed fractions of n, so the density structure is n-invariant:
+    growing n yields the same picture, denser.
     """
 
     @classmethod

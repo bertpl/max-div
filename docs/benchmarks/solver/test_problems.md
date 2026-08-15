@@ -5,7 +5,10 @@ and optimization strategies & presets under controlled conditions.
 
 ## High-level overview
 
-We have 4 unconstrained (`U1-U4`) and 4 constrained (`C1-C4`) benchmark problems.  **The first problem of each series (`U1` and `C1`) is a gateway problem**: fixed at $d=2$ and — for `C1` — using the most restrictive constraint shape (exact stratified quotas over a partition), so that every third-party subset-selection tool can run them.  These two anchor the cross-tool comparisons.  The remaining problems carry each series' native difficulty axis: increasingly non-uniform density for `U2-U4` (dimensionality scaling with $n$), increasingly free-form constraints for `C2-C4`.
+We have 4 unconstrained (`U1-U4`) and 4 constrained (`C1-C4`) benchmark problems:
+
+- **`U1` and `C1` are gateway problems**, anchoring the cross-tool comparisons: fixed at $d=2$ — and, for `C1`, using the most restrictive constraint form (exact stratified quotas over a partition) — so that every third-party subset-selection tool can run them.
+- **The remaining problems carry each series' native difficulty axis**: increasingly non-uniform density for `U2-U4` (dimensionality scaling with $n$), increasingly free-form constraints for `C2-C4`.
 
 Detailed descriptions of each problem can be found by following the provided links.
 

@@ -13,7 +13,7 @@ from ._helpers import sort_vectors
 #  U3 - Gaussian - Unconstrained
 # =================================================================================================
 class BenchmarkProblem_U3(BenchmarkProblem):
-    """Gaussian vector density; mild radial non-uniformity in the scaling-d unconstrained series."""
+    """U3 draws vector components from a standard normal distribution."""
 
     @classmethod
     def name(cls) -> str:

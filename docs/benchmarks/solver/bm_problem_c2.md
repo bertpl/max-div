@@ -4,7 +4,7 @@
 
 ### A. Overall Approach
 
-Identical to test problem `C1` — same vectors, same group partition — but with the exact per-group quotas relaxed to lower bounds: from each group between $\min(4, \lfloor k/m \rfloor)$ and $k$ vectors need to be selected (the cap on the lower bound keeps the $m$ bounds summing to at most $k$ at every $n$; from $n = 40$ upward the bound is simply $4$).
+Identical to test problem `C1` — same vectors, same group partition — but with the exact per-group quotas relaxed to lower bounds: from each group between $\min(4, \lfloor k/m \rfloor)$ and $k$ vectors need to be selected.  The cap on the lower bound keeps the $m$ bounds summing to at most $k$ at every $n$; from $n = 40$ upward the bound is simply $4$.
 
 ### B. Visualization
 

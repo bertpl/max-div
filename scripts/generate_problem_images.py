@@ -36,7 +36,7 @@ RED = "#ee1111"
 #  Rendering helpers
 # =================================================================================================
 def _save_webp(fig: plt.Figure, path: Path) -> None:
-    """Render the figure to lossless webp via PIL (matplotlib has no native webp writer)."""
+    """Render the figure to quality-92 webp via PIL (matplotlib has no native webp writer)."""
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png", dpi=200)
     plt.close(fig)
@@ -46,7 +46,7 @@ def _save_webp(fig: plt.Figure, path: Path) -> None:
 
 
 def _titled_figure(title: str, subtitle: str) -> tuple[plt.Figure, plt.Axes]:
-    """Square figure with the suite's bold-title + regular-subtitle header."""
+    """Return a square figure with the suite's bold-title + regular-subtitle header."""
     fig, ax = plt.subplots(figsize=(10.0, 10.0))
     fig.subplots_adjust(top=0.88, left=0.11, right=0.95, bottom=0.09)
     fig.text(0.06, 0.955, title, fontsize=22, fontweight="bold", ha="left")
@@ -60,6 +60,7 @@ def _titled_figure(title: str, subtitle: str) -> tuple[plt.Figure, plt.Axes]:
 
 
 def _crosshair_gridlines(ax: plt.Axes) -> None:
+    """Draw dashed gridlines at coordinates 0 and 1 on both axes."""
     for value in (0.0, 1.0):
         ax.axhline(value, color=LIGHT_GRAY, linestyle="--", linewidth=1.0, alpha=0.7, zorder=0)
         ax.axvline(value, color=LIGHT_GRAY, linestyle="--", linewidth=1.0, alpha=0.7, zorder=0)
@@ -86,8 +87,13 @@ def _draw_boundary(ax: plt.Axes, name: str) -> None:
         tangent_points = []
         for phi in (np.pi / 4 - half_angle, np.pi / 4 + half_angle):
             tip = tangent_len * np.array([np.cos(phi), np.sin(phi)])
-            ax.plot([0, tip[0]], [0, tip[1]], color=LIGHT_GRAY, linewidth=1.5,
-                    label="Population boundary" if first else None)
+            ax.plot(
+                [0, tip[0]],
+                [0, tip[1]],
+                color=LIGHT_GRAY,
+                linewidth=1.5,
+                label="Population boundary" if first else None,
+            )
             tangent_points.append(tip)
             first = False
         center = np.array([1.0, 1.0])
@@ -97,18 +103,23 @@ def _draw_boundary(ax: plt.Axes, name: str) -> None:
 
 
 def _draw_band_constraints(ax: plt.Axes, name: str, n: int) -> None:
-    """Blue dash-dot constraint overlays: band boundaries for C1/C2, sign/band lines for C3/C4."""
-    _, _, k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
+    """Draw blue dash-dot constraint overlays: band boundaries for C1/C2, sign/band lines for C3/C4."""
+    _, _, _k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
     if name in ("C1", "C2"):
         for i in range(m + 1):
-            ax.axvline(i / m, color=BLUE, linestyle="-.", linewidth=1.5,
-                       label="Constraint group boundary" if i == 0 else None)
+            ax.axvline(
+                i / m, color=BLUE, linestyle="-.", linewidth=1.5, label="Constraint group boundary" if i == 0 else None
+            )
         label = "select\nexactly 5" if name == "C1" else "select\nat least 4"
         y_text = ax.get_ylim()[1]
         for i in range(m):
             x_mid = (i + 0.5) / m
-            ax.annotate("", xy=(i / m + 0.02, y_text * 0.82), xytext=((i + 1) / m - 0.02, y_text * 0.82),
-                        arrowprops={"arrowstyle": "<->", "color": BLUE, "linewidth": 1.5})
+            ax.annotate(
+                "",
+                xy=(i / m + 0.02, y_text * 0.82),
+                xytext=((i + 1) / m - 0.02, y_text * 0.82),
+                arrowprops={"arrowstyle": "<->", "color": BLUE, "linewidth": 1.5},
+            )
             ax.text(x_mid, y_text * 0.86, label, color=BLUE, fontsize=13, ha="center", va="bottom")
     if name in ("C3", "C4"):
         # per-dimension sign constraints split each axis at 0
@@ -140,10 +151,18 @@ def render_geometry(name: str, with_solution: bool) -> None:
     _draw_band_constraints(ax, name, GEOMETRY_N)
 
     if with_solution:
-        solver = MaxDivSolverBuilder(problem).with_preset(iterations(10_000), SolverPreset.DEFAULT).with_seed(42).build()
+        solver = (
+            MaxDivSolverBuilder(problem).with_preset(iterations(10_000), SolverPreset.DEFAULT).with_seed(42).build()
+        )
         selected = solver.solve(verbosity=0).i_selected
-        ax.scatter(problem.vectors[selected, 0], problem.vectors[selected, 1], s=140, color=RED,
-                   label="Example solution", zorder=3)
+        ax.scatter(
+            problem.vectors[selected, 0],
+            problem.vectors[selected, 1],
+            s=140,
+            color=RED,
+            label="Example solution",
+            zorder=3,
+        )
 
     ax.legend(fontsize=15, loc="lower right" if name.startswith("C") else "upper right", framealpha=0.9)
     suffix = "_with_solution" if with_solution else ""

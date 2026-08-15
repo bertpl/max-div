@@ -19,7 +19,7 @@ METRIC = DiversityMetric.MIN_SEPARATION
 
 @pytest.mark.parametrize("n", [20, 137, 1000])
 @pytest.mark.parametrize(
-    ("name", "d_formula", "k_formula"),
+    "name, d_formula, k_formula",
     [
         ("U1", lambda n: 2, lambda n: math.ceil(n / 10)),
         ("U2", lambda n: math.ceil(n / 100), lambda n: math.ceil(n / 10)),
@@ -32,6 +32,7 @@ METRIC = DiversityMetric.MIN_SEPARATION
     ],
 )
 def test_dimension_formulas(name, d_formula, k_formula, n):
+    """The derived d, k, m match the published formulas at round and odd n alike."""
     # --- act ---------------------------------------------
     d, _, k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
 

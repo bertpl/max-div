@@ -147,8 +147,8 @@ class SolverBenchmarkScope:
         full_n_range = [100 * s for s in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]]  # n range for speed=0.0
 
         # --- speed-dependent settings ----------
-        # the seed budget below is computed on n/100 ("weight", the grid's unit spacing), which is
-        # the scale the min/max/limit formulas here are tuned for
+        # the seed budget below is computed on n/100 ("weight"), the scale the min/max/limit
+        # formulas here are tuned for
         speed = self._speed
         max_weight = max(full_n_range) / 100.0
         n_seeds_min = round(n_seeds_min ** (1 - speed))  # reduce to 1 at speed=1.0

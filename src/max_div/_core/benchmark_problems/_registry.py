@@ -4,7 +4,8 @@ from typing import Any, ClassVar
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
 
-# Below this, k = ceil(n/10) < 2 and a diversity problem is degenerate.
+# Smallest supported problem size: keeps every problem's derived selection size k at 2 or more,
+# with margin against future ratio tweaks.
 MIN_N = 20
 
 
@@ -59,8 +60,7 @@ class BenchmarkProblem(ABC):
 
         Args:
             n: Problem size (number of vectors to choose from); all other dimensions are derived
-                from it.  Must be >= 20 — below that the selection size k drops under 2 and the
-                problem is degenerate.
+                from it.  Must be at least `MIN_N`.
             diversity_metric: Diversity metric to be maximized.
         """
         cls.validate_n(n)
@@ -68,12 +68,9 @@ class BenchmarkProblem(ABC):
 
     @classmethod
     def validate_n(cls, n: int) -> None:
-        """Raise ValueError if n is below the smallest non-degenerate problem size."""
+        """Raise ValueError if n is below the smallest supported problem size."""
         if n < MIN_N:
-            raise ValueError(
-                f"Benchmark problem '{cls.name()}' requires n >= {MIN_N}, got n={n}."
-                f" Below that, the selection size k drops under 2 and the problem is degenerate."
-            )
+            raise ValueError(f"Benchmark problem '{cls.name()}' requires n >= {MIN_N}, got n={n}.")
 
     @classmethod
     @abstractmethod

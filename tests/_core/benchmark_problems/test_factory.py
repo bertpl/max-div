@@ -48,8 +48,8 @@ def test_benchmark_problem_factory_create_problem_invalid_name():
 
 @pytest.mark.parametrize("name", ALL_PROBLEM_NAMES)
 @pytest.mark.parametrize("n", [0, 19])
-def test_benchmark_problem_factory_rejects_degenerate_n(name: str, n: int):
-    """n below 20 is degenerate (k < 2) and both entry points refuse it."""
+def test_benchmark_problem_factory_rejects_n_below_minimum(name: str, n: int):
+    """Both entry points refuse n below the supported minimum."""
     with pytest.raises(ValueError, match="n >= 20"):
         BenchmarkProblemFactory.construct_problem(name, n=n, diversity_metric=DiversityMetric.MIN_SEPARATION)
     with pytest.raises(ValueError, match="n >= 20"):

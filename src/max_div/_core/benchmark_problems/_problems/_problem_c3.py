@@ -14,7 +14,7 @@ from ._helpers import sort_vectors
 #  C3 - Gaussian - Overlapping constraints
 # =================================================================================================
 class BenchmarkProblem_C3(BenchmarkProblem):
-    """Overlapping per-dimension sign constraints on a shifted gaussian cloud."""
+    """C3 places overlapping sign constraints per dimension on a shifted gaussian cloud."""
 
     @classmethod
     def name(cls) -> str:

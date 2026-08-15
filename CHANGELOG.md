@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Benchmark problem suite restructured: problems now take exactly two arguments (problem size `n` ≥ 20 and the diversity metric), `U1` and `C1` are new fixed-d=2 reference problems runnable by restricted third-party tools (`U1` is a new clustered-2D problem; `C1` holds the exact-quota constraints previously under `C2`), and the log-uniform problem is removed; not backward compatible
+- Benchmark problem suite restructured, not backward compatible: problems take the size `n` directly (all other dimensions derived), `U1` (new clustered-2D) and `C1` (exact quotas, previously `C2`) are fixed-d=2 gateway problems for cross-tool comparisons, and the log-uniform problem is removed
 
 ### Deprecated
 

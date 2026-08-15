@@ -13,7 +13,7 @@ from ._helpers import sort_vectors
 #  U2 - Uniform - Unconstrained
 # =================================================================================================
 class BenchmarkProblem_U2(BenchmarkProblem):
-    """Uniform vector density; the baseline of the scaling-d unconstrained series."""
+    """U2 draws vectors uniformly over the unit hypercube."""
 
     @classmethod
     def name(cls) -> str:

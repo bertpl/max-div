@@ -14,7 +14,7 @@ from ._helpers import sort_vectors
 #  C4 - Gaussian - Coupled constraints
 # =================================================================================================
 class BenchmarkProblem_C4(BenchmarkProblem):
-    """C3's sign pairs plus a band constraint per dimension, so the constraints couple strongly."""
+    """C4 extends C3's sign pairs with a band constraint per dimension, so the constraints couple strongly."""
 
     @classmethod
     def name(cls) -> str:

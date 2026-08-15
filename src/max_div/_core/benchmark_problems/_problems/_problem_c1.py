@@ -12,13 +12,10 @@ from ._helpers import make_banded_vectors_and_bands
 #  C1 - Exact stratified quotas - Constrained gateway
 # =================================================================================================
 class BenchmarkProblem_C1(BenchmarkProblem):
-    """The fixed-d=2 constrained reference problem for cross-tool comparisons.
+    """C1 is the fixed-d=2 constrained reference problem for cross-tool comparisons.
 
-    Its constraints are the maximally restrictive shape: non-overlapping bands that partition the
-    population, each with min_count == max_count, quotas summing exactly to k.  That is the
-    constraint form restricted third-party tools (exact stratified quota samplers) support, which
-    makes this the constrained gateway problem — the count structure fully determines the per-band
-    allocation, leaving a solver only the within-band choices.
+    Non-overlapping bands partition the population and each band carries an exact selection
+    quota — the constraint form restricted third-party tools support.
     """
 
     @classmethod
