@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 # One optimization batch defaults to this wall-clock size, so progress reports can fire ~2x per
 # second.  Callers pass a smaller `batch_seconds` into `run` for tighter batch boundaries.
-_REPORTING_BATCH_SECONDS = 0.5
+REPORTING_BATCH_SECONDS = 0.5
 
 
 # =================================================================================================
@@ -55,7 +55,7 @@ class SolverStep(ABC, Generic[S]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
-        batch_seconds: float = _REPORTING_BATCH_SECONDS,
+        batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         """Execute the solver step by running a strategy once or repeatedly, and return its result.
 
@@ -88,7 +88,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
-        batch_seconds: float = _REPORTING_BATCH_SECONDS,
+        batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         # --- set up progress tracking --------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
@@ -148,7 +148,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
-        batch_seconds: float = _REPORTING_BATCH_SECONDS,
+        batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         # --- init ----------------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()

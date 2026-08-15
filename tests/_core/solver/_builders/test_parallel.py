@@ -15,7 +15,7 @@ from max_div._core.solver._parallel import (
 )
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
-from max_div._core.solver._solver_step import _REPORTING_BATCH_SECONDS
+from max_div._core.solver._solver_step import REPORTING_BATCH_SECONDS
 from max_div._core.solver._strategies import InitializationStrategy
 
 _BUDGET = iterations(120)
@@ -288,5 +288,5 @@ def test_cooperative_workers_batch_at_the_cooperative_interval():
     assert [config.batch_seconds for config in solver._solver_configs] == [
         COOPERATIVE_BATCH_SECONDS,
         COOPERATIVE_BATCH_SECONDS,
-        _REPORTING_BATCH_SECONDS,
+        REPORTING_BATCH_SECONDS,
     ]

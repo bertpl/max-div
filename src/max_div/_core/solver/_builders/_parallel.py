@@ -16,7 +16,7 @@ from max_div._core.solver._parallel import (
 )
 from max_div._core.solver._presets import get_preset_strategies
 from max_div._core.solver._solver_config import SolverConfig
-from max_div._core.solver._solver_step import _REPORTING_BATCH_SECONDS, InitializationStep
+from max_div._core.solver._solver_step import REPORTING_BATCH_SECONDS, InitializationStep
 
 from ._base import SolverBuilderBase
 
@@ -144,7 +144,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=storage_label,
             # cooperative workers batch — and so exchange — at the tighter cooperative interval
-            batch_seconds=COOPERATIVE_BATCH_SECONDS if group_size > 1 else _REPORTING_BATCH_SECONDS,
+            batch_seconds=COOPERATIVE_BATCH_SECONDS if group_size > 1 else REPORTING_BATCH_SECONDS,
         )
 
 

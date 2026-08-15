@@ -11,7 +11,7 @@ from ._duration import Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
-from ._solver_step import _REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
+from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
 
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
@@ -39,7 +39,7 @@ class MaxDivSolver:
         seed: int = 42,
         constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
         distance_storage_label: str = "",
-        batch_seconds: float = _REPORTING_BATCH_SECONDS,
+        batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
