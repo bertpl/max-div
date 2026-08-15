@@ -132,8 +132,8 @@ processes but not N copies of that data.
 
 The workers form **[worker groups](glossary.md#worker-group)** — the parallel-metaheuristics
 literature calls them *islands*: within a group, every worker adopts the best selection any
-member has found so far, exchanged at the same periodic points where workers report progress;
-groups never communicate with each other. Groups of one worker are fully independent — a fully
+member has found so far, exchanged many times per second while solving; groups never communicate
+with each other. Groups of one worker are fully independent — a fully
 independent portfolio is the special case where every group has one member.
 
 ```python
@@ -179,12 +179,11 @@ still finish below a lucky one with less.
 When the counts are not given:
 
 - the worker total defaults to **3/4 of the logical cores**;
-- the group count defaults to **`round(sqrt(2 · total))`**, capped so every group keeps at least
-  two workers (a lone worker forms a group of one) — about twice as many groups as workers per
-  group, leaning on groups because only they are independent draws of the final result, the best
-  over all workers;
-- totals too small for two groups of two get a single group rather than independent workers;
-- a worker total that does not divide evenly hands the extra workers to the first groups.
+- the group count defaults to **one**: benchmarks across problem shapes, constraint structures
+  and backends showed a single cooperative group converging fastest at every tested worker
+  count, including on the best-over-seeds quantiles that multiple groups were designed to win;
+- a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
+  to the first groups.
 
 ### What Varies per Worker
 

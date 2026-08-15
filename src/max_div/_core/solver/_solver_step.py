@@ -14,6 +14,11 @@ from ._strategies._base import StrategyBase
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
 
+# The default wall-clock size of one optimization batch, sized so progress reports can fire ~2x
+# per second.  A coordinator with a tighter boundary interval shrinks the batch below this; it is
+# never stretched above it, so reporting cadence is a ceiling, not a casualty.
+_REPORTING_BATCH_SECONDS = 0.5
+
 
 # =================================================================================================
 #  SolverStepResult
@@ -145,6 +150,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         tracker = self._duration.track()
         score_checkpoints: list[tuple[Elapsed, Score]] = []
         next_checkpoint_iter_count = 1
+        batch_seconds = _REPORTING_BATCH_SECONDS
+        if coordinator is not None and coordinator.boundary_seconds is not None:
+            batch_seconds = min(batch_seconds, coordinator.boundary_seconds)
 
         # --- main loop -----------------------------------
         while not (progress := tracker.get_progress()).is_finished:
@@ -157,7 +165,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             )
 
             # --- do n iterations ---
-            n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count)
+            n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count, batch_seconds)
             self._strategy.perform_n_iterations(
                 state=state,
                 n_iters=n_iters,
@@ -199,16 +207,17 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         return SolverStepResult(score_checkpoints=score_checkpoints)
 
     @staticmethod
-    def _determine_n_iterations(progress: Progress, next_checkpoint_iter_count: int) -> int:
+    def _determine_n_iterations(progress: Progress, next_checkpoint_iter_count: int, batch_seconds: float) -> int:
         """Determine number of iterations to execute in the next inner loop.
 
         We take into account:
           - estimated total number of iterations left in tracked duration
-          - we want to trigger a potential progress report at most every ~0.5sec
+          - batch_seconds: the targeted wall-clock size of one batch — the reporting-driven
+            default, or tighter when the worker's coordinator wants faster exchanges
           - next_checkpoint_iter_count: this is the # of iterations at which we want to keep track
                                                                                   of the score we're optimizing.
         """
-        iters_until_next_progress_report = int(0.5 * progress.est_iters_per_second)  # target = 2x/sec
+        iters_until_next_progress_report = int(batch_seconds * progress.est_iters_per_second)
         iters_until_next_checkpoint = next_checkpoint_iter_count - progress.iter_count
         half_iters_until_finished = progress.est_n_iters_remaining // 2  # iters to move 50% closer to being finished
 

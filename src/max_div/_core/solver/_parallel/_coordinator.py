@@ -23,6 +23,11 @@ from ._incumbent_slot import GroupIncumbentSlot
 class WorkerCoordinator(ABC):
     """A worker uses its coordinator to reach the other workers solving the same problem."""
 
+    # The batch-boundary interval this coordinator wants, in seconds; None means no preference,
+    # leaving the batch at the reporting-driven default.  A coordinator can only tighten the
+    # interval, never stretch it (the optimization step takes the minimum).
+    boundary_seconds: float | None = None
+
     @abstractmethod
     def at_batch_boundary(self, state: SolverState) -> None:
         """React to a worker finishing a batch, with the state the worker holds at that moment.
@@ -40,6 +45,11 @@ class IndependentCoordinator(WorkerCoordinator):
 
 class CooperativeCoordinator(WorkerCoordinator):
     """The members of one worker group hold this coordinator, all bound to the group's shared slot."""
+
+    # The fastest interval benchmarked: quality improved monotonically from 2 s down to here with
+    # no measurable boundary overhead, so this is the best point tested rather than a found
+    # optimum.  Exchanges are a lock visit plus an occasional adoption, cheap enough for 20 Hz.
+    boundary_seconds: float | None = 0.05
 
     def __init__(self, slot: GroupIncumbentSlot) -> None:
         """Bind the coordinator to its worker group's incumbent slot."""

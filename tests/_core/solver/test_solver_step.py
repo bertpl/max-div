@@ -194,3 +194,61 @@ def test_optimization_step_run_seconds():
     assert result.elapsed.t_elapsed_sec >= 0.1
     assert result.elapsed.n_iterations == strategy._n_iterations > 0
     assert_score_checkpoints_are_sane(result.score_checkpoints)
+
+
+# --- coordinator-declared batch interval -----------------
+class _FastBoundaryCoordinator:
+    """A coordinator stub that wants tight batch boundaries and counts how often it is reached."""
+
+    def __init__(self, boundary_seconds: float | None) -> None:
+        self.boundary_seconds = boundary_seconds
+        self.calls = 0
+
+    def at_batch_boundary(self, state) -> None:
+        self.calls += 1
+
+
+def test_determine_n_iterations_scales_with_the_batch_interval():
+    """The batch size is the target interval times the estimated iteration rate."""
+    # --- arrange -----------------------------------------
+    progress = Mock(est_iters_per_second=1000.0, est_n_iters_remaining=10**9, iter_count=0)
+
+    # --- act / assert ------------------------------------
+    assert OptimizationStep._determine_n_iterations(progress, 10**9, batch_seconds=0.5) == 500
+    assert OptimizationStep._determine_n_iterations(progress, 10**9, batch_seconds=0.05) == 50
+
+
+@pytest.mark.parametrize("boundary_seconds, expected_batch_seconds", [(None, 0.5), (0.05, 0.05), (2.0, 0.5)])
+def test_run_batches_at_the_coordinator_interval(monkeypatch, boundary_seconds, expected_batch_seconds):
+    """A coordinator can tighten the batch interval below the reporting default, never stretch it."""
+    # --- arrange -----------------------------------------
+    captured = []
+    original = OptimizationStep._determine_n_iterations
+
+    def spy(progress, next_checkpoint_iter_count, batch_seconds):
+        captured.append(batch_seconds)
+        return original(progress, next_checkpoint_iter_count, batch_seconds)
+
+    monkeypatch.setattr(OptimizationStep, "_determine_n_iterations", staticmethod(spy))
+    step = OptimizationStep(OptimTest(), duration=iterations(50))
+
+    # --- act ---------------------------------------------
+    step.run(Mock(), coordinator=_FastBoundaryCoordinator(boundary_seconds))
+
+    # --- assert ------------------------------------------
+    assert captured
+    assert all(batch_seconds == expected_batch_seconds for batch_seconds in captured)
+
+
+def test_checkpoint_count_is_batch_invariant():
+    """Tight coordinator batches change when checkpoints are detected, never how many there are."""
+    # --- arrange -----------------------------------------
+    step_default = OptimizationStep(OptimTest(), duration=iterations(500))
+    step_fast = OptimizationStep(OptimTest(), duration=iterations(500))
+
+    # --- act ---------------------------------------------
+    result_default = step_default.run(Mock())
+    result_fast = step_fast.run(Mock(), coordinator=_FastBoundaryCoordinator(0.001))
+
+    # --- assert ------------------------------------------
+    assert len(result_fast.score_checkpoints) == len(result_default.score_checkpoints)

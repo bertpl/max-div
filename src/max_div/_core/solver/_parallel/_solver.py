@@ -1,6 +1,5 @@
 """A portfolio solver runs several workers over one shared store and returns the best result they reach."""
 
-import math
 import multiprocessing
 import os
 import warnings
@@ -138,12 +137,12 @@ def default_worker_count() -> int:
 
 
 def default_group_count(n_workers_total: int) -> int:
-    """Return the default group count for a worker total, when the caller names none.
+    """Return the default group count when the caller names none: one group, at any worker total.
 
-    The default targets roughly twice as many groups as workers per group: the final result is a
-    best over all workers, and only groups are independent draws of that best, so groups buy more
-    than group size does.  Every group keeps at least 2 workers (a lone worker forms a group of
-    one) — on small totals the count collapses to a single group rather than to groups of one,
-    preferring cooperation over independence.  An explicit `n_groups` on `with_workers` overrides it.
+    Benchmarks across problem shapes, constraint structures, budgets and backends showed a single
+    cooperative group converging fastest at every tested worker count — including on the
+    best-over-seeds upper quantile, so multiple groups did not even buy tail insurance
+    (adopt-if-better already prunes unlucky seeds).  Measured at totals up to 8; beyond that one
+    group is an extrapolation.  An explicit `n_groups` on `with_workers` overrides it.
     """
-    return max(1, min(round(math.sqrt(2 * n_workers_total)), n_workers_total // 2))
+    return 1
