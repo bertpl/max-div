@@ -4,6 +4,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 from max_div._core.solver._strategies._initialization._init_eager import InitEager
+from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_fast import InitFast
 from max_div._core.solver._strategies._initialization._init_random_batched import InitRandomBatched
 from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
@@ -16,7 +17,12 @@ if TYPE_CHECKING:
 #  Enum
 # =================================================================================================
 class InitPreset(StrEnum):
-    """StrEnum for all initialization presets we want to benchmark."""
+    """StrEnum for all initialization presets we want to benchmark.
+
+    The random-batched and eager sweeps run at two batch/candidate sizes each (the effect is
+    monotonic between them); `fps(1)` is the exact greedy construction and `fps(8)` the
+    SMART/THOROUGH presets' production initialization.
+    """
 
     # --- fast --------------
     FAST = "fast"
@@ -28,16 +34,16 @@ class InitPreset(StrEnum):
     ROS_NU_UNCON = "ros(nu,uncon)"
 
     # --- random batched ----
-    RB_2 = "rb(2)"
     RB_4 = "rb(4)"
-    RB_8 = "rb(8)"
     RB_16 = "rb(16)"
 
     # --- eager -------------
-    E_2 = "e(2)"
     E_4 = "e(4)"
-    E_8 = "e(8)"
     E_16 = "e(16)"
+
+    # --- farthest point ----
+    FPS_1 = "fps(1)"
+    FPS_8 = "fps(8)"
 
     # -------------------------------------------------------------------------
     #  Factory
@@ -51,7 +57,13 @@ class InitPreset(StrEnum):
     #  Meta-Data
     # -------------------------------------------------------------------------
     def is_constraint_aware(self) -> bool:
-        return self not in [InitPreset.FAST, InitPreset.ROS_U_UNCON, InitPreset.ROS_NU_UNCON]
+        return self not in [
+            InitPreset.FAST,
+            InitPreset.ROS_U_UNCON,
+            InitPreset.ROS_NU_UNCON,
+            InitPreset.FPS_1,
+            InitPreset.FPS_8,
+        ]
 
     def is_relevant_for_problem(self, problem_has_constraints: bool) -> bool:
         if problem_has_constraints:
@@ -66,6 +78,10 @@ class InitPreset(StrEnum):
     def class_kwargs(self) -> dict[str, Any]:
         _, kwargs = _INIT_CLASSES_AND_KWARGS[self]
         return kwargs
+
+    def preset_note(self) -> str:
+        """Return which shipped solver preset this configuration matches exactly, or '' when none."""
+        return _PRESET_NOTES.get(self, "")
 
     @classmethod
     def all(cls) -> list[InitPreset]:
@@ -82,12 +98,15 @@ _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], d
     InitPreset.ROS_NU: (InitRandomOneShot, {"uniform": False, "ignore_constraints": False}),
     InitPreset.ROS_U_UNCON: (InitRandomOneShot, {"uniform": True, "ignore_constraints": True}),
     InitPreset.ROS_NU_UNCON: (InitRandomOneShot, {"uniform": False, "ignore_constraints": True}),
-    InitPreset.RB_2: (InitRandomBatched, {"b": 2, "ignore_constraints": False}),
     InitPreset.RB_4: (InitRandomBatched, {"b": 4, "ignore_constraints": False}),
-    InitPreset.RB_8: (InitRandomBatched, {"b": 8, "ignore_constraints": False}),
     InitPreset.RB_16: (InitRandomBatched, {"b": 16, "ignore_constraints": False}),
-    InitPreset.E_2: (InitEager, {"nc": 2, "ignore_constraints": False}),
     InitPreset.E_4: (InitEager, {"nc": 4, "ignore_constraints": False}),
-    InitPreset.E_8: (InitEager, {"nc": 8, "ignore_constraints": False}),
     InitPreset.E_16: (InitEager, {"nc": 16, "ignore_constraints": False}),
+    InitPreset.FPS_1: (InitFarthestPoint, {"top_k": 1}),
+    InitPreset.FPS_8: (InitFarthestPoint, {"top_k": 8}),
+}
+
+_PRESET_NOTES: dict[InitPreset, str] = {
+    InitPreset.ROS_U_UNCON: "= the RANDOM/GUIDED presets' initialization",
+    InitPreset.FPS_8: "= the SMART/THOROUGH presets' initialization",
 }
