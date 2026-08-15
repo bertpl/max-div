@@ -142,7 +142,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=storage_label,
-            # cooperative workers batch — and so exchange — at the tighter cooperative interval
+            # tighter batches give cooperative workers faster incumbent exchanges
             batch_seconds=COOPERATIVE_BATCH_SECONDS if group_size > 1 else REPORTING_BATCH_SECONDS,
         )
 

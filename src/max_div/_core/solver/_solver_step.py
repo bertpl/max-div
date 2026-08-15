@@ -14,10 +14,10 @@ from ._strategies._base import StrategyBase
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
 
-# The two standard sizes of one optimization batch, as wall-clock targets a caller passes into
-# `run`.  The default is sized so progress reports can fire ~2x per second; the cooperative value
-# gives workers in a group tighter batch boundaries — and so faster incumbent exchanges — and
-# must stay below the default, or it would coarsen reporting instead of tightening exchanges.
+# A caller passes one of these wall-clock targets into `run` as the size of one optimization
+# batch.  The default is sized so progress reports can fire ~2x per second; the cooperative value
+# gives a group's workers faster incumbent exchanges, and must stay below the default, or it
+# would coarsen reporting instead of tightening exchanges.
 REPORTING_BATCH_SECONDS = 0.5
 COOPERATIVE_BATCH_SECONDS = 0.05
 
@@ -64,9 +64,8 @@ class SolverStep(ABC, Generic[S]):
 
         :param coordinator: a `WorkerCoordinator` this step calls at each batch boundary; a step that
                             runs as a single batch ignores it.
-        :param batch_seconds: targeted wall-clock size of one batch; the caller decides, e.g.
-                              tighter batches for cooperative workers.  Ignored with `coordinator`
-                              by steps that run as a single batch.
+        :param batch_seconds: targeted wall-clock size of one batch.  Like `coordinator`, it is
+                              ignored by steps that run as a single batch.
         """
         raise NotImplementedError
 
@@ -217,8 +216,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
         We take into account:
           - estimated total number of iterations left in tracked duration
-          - batch_seconds: the targeted wall-clock size of one batch — the reporting-driven
-            default, or tighter when the worker's coordinator wants faster exchanges
+          - batch_seconds: the targeted wall-clock size of one batch
           - next_checkpoint_iter_count: this is the # of iterations at which we want to keep track
                                                                                   of the score we're optimizing.
         """

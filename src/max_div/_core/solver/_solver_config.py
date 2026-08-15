@@ -29,8 +29,8 @@ class SolverConfig:
     seed: int
     constraint_penalty: ConstraintPenalty
     distance_storage_label: str
-    # targeted wall-clock size of one optimization batch; the parallel builder tightens this for
-    # cooperative workers so their incumbent exchanges run at `COOPERATIVE_BATCH_SECONDS`
+    # `batch_seconds` targets the wall-clock size of one optimization batch (set per worker by
+    # the parallel builder)
     batch_seconds: float = REPORTING_BATCH_SECONDS
 
     def build_solver(self, store: DistanceStore) -> MaxDivSolver:

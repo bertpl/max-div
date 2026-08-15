@@ -55,9 +55,7 @@ class MaxDivSolver:
         :param seed: (int) Random seed for the solver.
         :param constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
         :param distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
-        :param batch_seconds: (float) Targeted wall-clock size of one optimization batch; tighter
-                              values give more frequent batch boundaries, and with them faster
-                              coordinator exchanges.
+        :param batch_seconds: (float) Targeted wall-clock size of one optimization batch.
         """
         # --- problem description -------------------------
         self._n = n

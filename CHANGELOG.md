@@ -11,8 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cooperative parallel solving: parallel workers now form worker groups whose members share their best solution mid-run; set the group count via `with_workers(..., n_groups=...)`, or pass nested worker-config lists for explicit groups
 
 ### Changed
-- Parallel solving defaults to cooperative worker groups on 3/4 of the logical cores (previously: fully independent workers on half); a fully independent portfolio remains available via `n_groups` equal to the worker count, and stays the reproducible mode
-- Parallel solving defaults to a single cooperative worker group (`n_groups=1`): benchmarks showed one group converging fastest at every tested worker count
+- Parallel solving defaults to a single cooperative worker group (`n_groups=1`) on 3/4 of the logical cores (previously: fully independent workers on half); a fully independent portfolio remains available via `n_groups` equal to the worker count, and stays the reproducible mode
 - Cooperative workers exchange their best selection roughly every 0.05s (was: every 0.5s), improving short-budget results; single solves and fully independent portfolios are unaffected
 
 ### Deprecated
