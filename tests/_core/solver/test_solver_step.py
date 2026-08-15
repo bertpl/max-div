@@ -197,15 +197,14 @@ def test_optimization_step_run_seconds():
 
 
 # --- coordinator-declared batch interval -----------------
-class _FastBoundaryCoordinator:
-    """A coordinator stub that wants tight batch boundaries and counts how often it is reached."""
+class _BoundaryCoordinator:
+    """A coordinator stub that declares a batch-boundary interval and does nothing at boundaries."""
 
     def __init__(self, boundary_seconds: float | None) -> None:
         self.boundary_seconds = boundary_seconds
-        self.calls = 0
 
     def at_batch_boundary(self, state) -> None:
-        self.calls += 1
+        pass
 
 
 def test_determine_n_iterations_scales_with_the_batch_interval():
@@ -233,7 +232,7 @@ def test_run_batches_at_the_coordinator_interval(monkeypatch, boundary_seconds, 
     step = OptimizationStep(OptimTest(), duration=iterations(50))
 
     # --- act ---------------------------------------------
-    step.run(Mock(), coordinator=_FastBoundaryCoordinator(boundary_seconds))
+    step.run(Mock(), coordinator=_BoundaryCoordinator(boundary_seconds))
 
     # --- assert ------------------------------------------
     assert captured
@@ -248,7 +247,7 @@ def test_checkpoint_count_is_batch_invariant():
 
     # --- act ---------------------------------------------
     result_default = step_default.run(Mock())
-    result_fast = step_fast.run(Mock(), coordinator=_FastBoundaryCoordinator(0.001))
+    result_fast = step_fast.run(Mock(), coordinator=_BoundaryCoordinator(0.001))
 
     # --- assert ------------------------------------------
     assert len(result_fast.score_checkpoints) == len(result_default.score_checkpoints)

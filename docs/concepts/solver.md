@@ -153,7 +153,8 @@ solution = (
 The two counts buy different things:
 
 - **More groups**: variance reduction. A run's quality depends on its seed, and keeping the best
-  over several independent groups is insurance against drawing a bad one.
+  over several independent groups insures against drawing a bad one — though in the measured
+  regimes a single group converged fastest anyway (hence the default below).
 - **Larger groups**: shared search capacity. A group's members pool their effort on promising
   selections — a member stuck with a poor selection picks up a sibling's better one and continues
   from there — at the cost of searching less independently.
@@ -179,9 +180,8 @@ still finish below a lucky one with less.
 When the counts are not given:
 
 - the worker total defaults to **3/4 of the logical cores**;
-- the group count defaults to **one**: benchmarks across problem shapes, constraint structures
-  and backends showed a single cooperative group converging fastest at every tested worker
-  count, including on the best-over-seeds quantiles that multiple groups were designed to win;
+- the group count defaults to **one** — a single cooperative group converged fastest at every
+  tested worker count;
 - a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
   to the first groups.
 

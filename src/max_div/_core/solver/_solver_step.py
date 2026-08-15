@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 # The default wall-clock size of one optimization batch, sized so progress reports can fire ~2x
 # per second.  A coordinator with a tighter boundary interval shrinks the batch below this; it is
-# never stretched above it, so reporting cadence is a ceiling, not a casualty.
+# never stretched above it, so a coordinator never slows reporting.
 _REPORTING_BATCH_SECONDS = 0.5
 
 

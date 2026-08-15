@@ -129,9 +129,9 @@ def default_worker_count() -> int:
     """Return the default portfolio size when the caller names none: 3/4 of the logical cores, at least 2.
 
     The default portfolio is cooperative, and cooperation converts extra workers into shared
-    search progress, where extra independent workers only buy insurance against unlucky seeds —
-    so more cores in use keep paying off, and the default takes 3/4 where a purely independent
-    portfolio took the conservative half.  An explicit count on `with_workers` overrides it.
+    search progress — so more cores in use keep paying off, and the default takes 3/4 where a
+    purely independent portfolio took the conservative half.  An explicit count on `with_workers`
+    overrides it.
     """
     return max(2, (os.cpu_count() or 2) * 3 // 4)
 
@@ -139,10 +139,8 @@ def default_worker_count() -> int:
 def default_group_count(n_workers_total: int) -> int:
     """Return the default group count when the caller names none: one group, at any worker total.
 
-    Benchmarks across problem shapes, constraint structures, budgets and backends showed a single
-    cooperative group converging fastest at every tested worker count — including on the
-    best-over-seeds upper quantile, so multiple groups did not even buy tail insurance
-    (adopt-if-better already prunes unlucky seeds).  Measured at totals up to 8; beyond that one
-    group is an extrapolation.  An explicit `n_groups` on `with_workers` overrides it.
+    A single cooperative group converged fastest in benchmarks at every tested worker total (up
+    to 8; beyond that, one group is an extrapolation).  An explicit `n_groups` on `with_workers`
+    overrides it.
     """
     return 1
