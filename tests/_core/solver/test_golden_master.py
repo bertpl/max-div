@@ -62,7 +62,7 @@ PROBLEMS = ["U1", "U2", "U3", "U4", "C1", "C2", "C3", "C4"]
 PRESETS = [SolverPreset.RANDOM, SolverPreset.GUIDED, SolverPreset.SMART, SolverPreset.THOROUGH]
 SEEDS = [42, 123]
 
-# small problems (n=100) + tiny iteration budget: full matrix must stay
+# small problems (PROBLEM_N) + tiny iteration budget: full matrix must stay
 # fast with NUMBA_DISABLE_JIT, where these solves run interpreted
 N_ITERATIONS = 30
 PROBLEM_N = 100

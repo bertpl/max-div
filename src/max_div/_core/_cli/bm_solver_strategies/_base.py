@@ -72,16 +72,10 @@ class SolverBenchmarkExecutor:
 #  Benchmark Scope
 # =================================================================================================
 class SolverBenchmarkScope:
-    """Base class for Scope of benchmarks to run for a solver benchmark, limited to a specific test problem.
+    """The scope of benchmarks to run for one test problem.
 
-    A scope spans all (n, seed, strat_name)-tuples for one test problem.
-
-    The SolverBenchmarkExecutor can use this info to construct a pre-configured Solver for said
-    problem with given size n, such that it can be benchmarked.  Such class will typically focus
-    on testing...
-      - initialization strategies
-      - optimization strategies
-      - specific solver presets.
+    A scope spans all (n, seed, strat_name)-tuples for that problem; the SolverBenchmarkExecutor
+    iterates them and registers the results here.
     """
 
     # -------------------------------------------------------------------------
@@ -140,7 +134,7 @@ class SolverBenchmarkScope:
     #  API
     # -------------------------------------------------------------------------
     def params(self) -> list[tuple[int, str, int]]:
-        """Returns list of (n, strat_name, seed)-tuples to benchmark."""
+        """Return the list of (n, strat_name, seed)-tuples to benchmark."""
         # --- calibrate -------------------------
         n_seeds_min = 3  # we don't execute benchmarks if n_seeds < n_seeds_min
         n_seeds_max = 16  # we never do more than n_seeds_max
@@ -173,7 +167,7 @@ class SolverBenchmarkScope:
         return lst
 
     def construct_solver(self, n: int, strat_name: str, seed: int) -> MaxDivSolver:
-        """Constructs and returns a Solver for given (n, strat_name, seed)-tuple."""
+        """Construct and return a Solver for the given (n, strat_name, seed)-tuple."""
         return self._solver_constructor.construct_solver(n, strat_name, seed)
 
     def register_result(
@@ -265,14 +259,10 @@ class SolverBenchmarkScope:
 #  BenchmarkSolverConstructor
 # =================================================================================================
 class BenchmarkSolverConstructor(ABC):
-    """Base class for constructing Solvers for given benchmark scope and (n, strat_name, seed)-tuple.
+    """Base class for constructing pre-configured Solvers, one strategy family per subclass.
 
-    The SolverBenchmarkExecutor can use this info to construct a pre-configured Solver for said
-    problem with given size n, such that it can be benchmarked.  Such class will typically focus
-    on testing...
-      - initialization strategies
-      - optimization strategies
-      - specific solver presets.
+    A subclass owns one test problem and one set of named strategies, and builds the solver a
+    SolverBenchmarkScope asks for.
     """
 
     # -------------------------------------------------------------------------
@@ -316,7 +306,7 @@ class BenchmarkSolverConstructor(ABC):
     # -------------------------------------------------------------------------
     @abstractmethod
     def construct_solver(self, n: int, strat_name: str, seed: int) -> MaxDivSolver:
-        """Constructs and returns a Solver for given (n, strat_name, seed)-tuple."""
+        """Construct and return a Solver for the given (n, strat_name, seed)-tuple."""
         raise NotImplementedError
 
     @abstractmethod

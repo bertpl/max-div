@@ -36,7 +36,7 @@ class BenchmarkProblem_C2(BenchmarkProblem):
         vectors, bands = make_banded_vectors_and_bands(n, m)
 
         # at least 4 picks per band; capped by k // m so the m lower bounds always sum to <= k
-        # (m = ceil(k/5) can exceed k/5 when 5 does not divide k, and 4 * ceil(k/5) then exceeds k)
+        # (m = ceil(k/5) can exceed k/5 when 5 does not divide k, and 4 * ceil(k/5) can then exceed k)
         min_count = min(4, k // m)
         constraints: list[Constraint] = [
             Constraint(int_set=set(band), min_count=min_count, max_count=k) for band in bands

@@ -4,4 +4,5 @@
     solver, not the current one.
     The problem generators of that era took a coarse `size` parameter; figures and tables
     on this page state sizes in those units, with the actual dimensions (d, n, k, m) listed
-    per row where applicable.
+    per row where applicable.  Problem names follow today's suite: figures shown under a
+    name describe the problem now carrying that name.

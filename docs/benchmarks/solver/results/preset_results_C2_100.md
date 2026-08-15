@@ -1,4 +1,4 @@
-# Benchmark Results for Problem 'C1' (size=100).
+# Benchmark Results for Problem 'C2' (size=100).
 
 ## Actual Total Elapsed Times
 

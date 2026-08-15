@@ -25,7 +25,7 @@ Detailed descriptions of each problem can be found by following the provided lin
 
 **Legend:**
 
-- $n$: number of vectors to choose from — the problem's single size parameter (any integer $\geq 20$; below that the selection size drops under 2 and the problem is degenerate)
+- $n$: number of vectors to choose from — the problem's single size parameter (any integer $\geq 20$, the enforced minimum)
 - $d$: dimensionality of vectors
 - $k$: number of vectors to select
 - $m$: number of constraint groups

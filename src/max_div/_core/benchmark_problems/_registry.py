@@ -4,8 +4,8 @@ from typing import Any, ClassVar
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
 
-# Smallest supported problem size: keeps every problem's derived selection size k at 2 or more,
-# with margin against future ratio tweaks.
+# MIN_N keeps every problem's derived selection size k at 2 or more, with margin against
+# future ratio tweaks.
 MIN_N = 20
 
 

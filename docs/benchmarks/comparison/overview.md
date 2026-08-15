@@ -7,10 +7,13 @@ tool and their feature trade-offs; these pages measure how they actually *perfor
 
 !!! note "Problem naming vintage"
     These pages were measured before the built-in benchmark problems were re-parametrized by n
-    and restructured, and they use the problem names and `size` units of that era: their `U1`
-    is the uniform-density problem (now `U2`), their `C2` is the exact-quota problem (now
-    `C1`), and sizes are stated as the old `size` parameter (n ≈ 100·size).  The
-    [current problem definitions](../solver/test_problems.md) describe today's suite.
+    and restructured, and they use the problem names and `size` units of that era:
+
+    - their `U1` is the uniform-density problem (now `U2`)
+    - their `C2` is the exact-quota problem (now `C1`)
+    - sizes are stated as the old `size` parameter (n ≈ 100·size)
+
+    The [current problem definitions](../solver/test_problems.md) describe today's suite.
 
 The comparison runs in three tiers, by what `max-div` is measured against:
 

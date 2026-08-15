@@ -44,7 +44,7 @@ class BenchmarkProblem_U1(BenchmarkProblem):
         ratio ~1:4:9 (75% of mass, volumetric density spanning ~two orders of magnitude), a uniform
         background (20%), and a sparse ring of far outliers (5%).
         """
-        # component counts: three equal clusters, background, and the remainder as halo
+        # split n into three equal clusters, the background, and the remainder as halo
         n_cluster = int(n * 0.75) // 3
         n_background = int(n * 0.20)
         n_halo = n - 3 * n_cluster - n_background
@@ -52,16 +52,16 @@ class BenchmarkProblem_U1(BenchmarkProblem):
         np.random.seed(42)
         parts = []
 
-        # step 1 - three gaussian clusters with equal counts and strongly different spreads
+        # step 1 - draw three gaussian clusters with equal counts and strongly different spreads
         centers = [(0.25, 0.7), (0.7, 0.65), (0.55, 0.25)]
         sigmas = [0.012, 0.045, 0.11]
         for center, sigma in zip(centers, sigmas):
             parts.append(np.random.normal(loc=center, scale=sigma, size=(n_cluster, 2)))
 
-        # step 2 - uniform background over the unit square
+        # step 2 - draw the uniform background over the unit square
         parts.append(np.random.random_sample(size=(n_background, 2)))
 
-        # step 3 - outlier halo: a sparse ring well outside the unit square's core
+        # step 3 - draw the outlier halo, a sparse ring well outside the unit square's core
         angle = np.random.random_sample(size=n_halo) * 2.0 * np.pi
         radius = 0.72 + 0.10 * np.random.random_sample(size=n_halo)
         parts.append(np.stack([0.5 + radius * np.cos(angle), 0.5 + radius * np.sin(angle)], axis=1))

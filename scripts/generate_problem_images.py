@@ -4,7 +4,7 @@ For every built-in problem this renders three webp images from the current gener
 geometry (`problem_X.webp`), geometry with an example solution (`problem_X_with_solution.webp`,
 DEFAULT preset over 10,000 iterations), and the nearest-neighbor separation distributions over a
 range of problem sizes (`problem_X_separations.webp`).  All problems render their geometry at
-n=200, where every problem in the suite is 2-dimensional.
+`GEOMETRY_N`, where every problem in the suite is 2-dimensional.
 
 Run:  uv run --group benchmarks --python 3.13 python scripts/generate_problem_images.py [PROBLEM ...]
 """
@@ -78,7 +78,7 @@ def _draw_boundary(ax: plt.Axes, name: str) -> None:
         theta = np.linspace(0.0, 2.0 * np.pi, 200)
         ax.plot(2.0 * np.cos(theta), 2.0 * np.sin(theta), color=LIGHT_GRAY, linewidth=1.5, label=r"2$\sigma$ contour")
     if name == "U4":
-        # cone from the origin tangent to the a=1 circle around (1,1) with radius r, plus its cap arc
+        # draw the cone from the origin tangent to the a=1 circle around (1,1) with radius r, plus its cap arc
         r = 0.1 * np.sqrt(2.0)
         center_dist = np.sqrt(2.0)
         half_angle = np.arcsin(r / center_dist)
@@ -136,7 +136,7 @@ def _draw_band_constraints(ax: plt.Axes, name: str, n: int) -> None:
 #  Image builders
 # =================================================================================================
 def render_geometry(name: str, with_solution: bool) -> None:
-    """Render the n=200 geometry scatter, optionally with a DEFAULT-preset example solution."""
+    """Render the GEOMETRY_N geometry scatter, optionally with a DEFAULT-preset example solution."""
     problem = BenchmarkProblemFactory.construct_problem(
         name, n=GEOMETRY_N, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
     )
