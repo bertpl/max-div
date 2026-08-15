@@ -50,7 +50,11 @@ The `strategies` sub-command tests both individual initialization & optimization
 ```
 
 The `presets` sub-command tests predefined solver presets (=predefined initialization + optimization strategies)
-  & supports similar flags & options as the `strategies` sub-command.
+  & supports similar flags & options as the `strategies` sub-command, plus:
+
+```
+--n           Problem size n to benchmark on (default: 10000)
+```
 
 For results, see [here](./benchmarks/solver/test_problems.md).
 
