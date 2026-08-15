@@ -1,10 +1,9 @@
 """Regenerate the benchmark-problem illustration images under docs/benchmarks/solver/images/.
 
-For every built-in problem this renders three webp images from the current generators:
-geometry (`problem_X.webp`), geometry with an example solution (`problem_X_with_solution.webp`,
-DEFAULT preset over 10,000 iterations), and the nearest-neighbor separation distributions over a
-range of problem sizes (`problem_X_separations.webp`).  All problems render their geometry at
-`GEOMETRY_N`, where every problem in the suite is 2-dimensional.
+For every built-in problem this renders two webp images from the current generators:
+geometry (`problem_X.webp`) and geometry with an example solution (`problem_X_with_solution.webp`,
+DEFAULT preset over 10,000 iterations), both at `GEOMETRY_N`, where every problem in the suite is
+2-dimensional.  The separation distributions are a separate generator under `local/docs/figures/`.
 
 Run:  uv run --group benchmarks --python 3.13 python scripts/generate_problem_images.py [PROBLEM ...]
 """
@@ -16,7 +15,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-from scipy.stats import gaussian_kde
 
 from max_div.benchmark_problems import BenchmarkProblemFactory
 from max_div.metrics import DiversityMetric
@@ -24,7 +22,6 @@ from max_div.solver import MaxDivSolverBuilder, SolverPreset, iterations
 
 IMAGES_DIR = Path(__file__).parent.parent / "docs" / "benchmarks" / "solver" / "images"
 GEOMETRY_N = 200
-SEPARATION_N_VALUES = [200, 800, 3200, 12800]
 
 GRAY = "#b0b0b0"
 LIGHT_GRAY = "#cccccc"
@@ -169,66 +166,12 @@ def render_geometry(name: str, with_solution: bool) -> None:
     _save_webp(fig, IMAGES_DIR / f"problem_{name}{suffix}.webp")
 
 
-def render_separations(name: str) -> None:
-    """Render nearest-neighbor L2-distance distributions (KDE on a log axis, with rugs) across sizes."""
-    fig, ax = plt.subplots(figsize=(12.0, 9.0))
-    fig.subplots_adjust(top=0.87, left=0.09, right=0.96, bottom=0.10)
-    fig.text(0.05, 0.945, f"Vector separations for problem {name}", fontsize=22, fontweight="bold", ha="left")
-    fig.text(0.05, 0.905, "(full population; distances to nearest neighbor)", fontsize=17, ha="left")
-
-    rug_base = -0.06
-    for i, n in enumerate(SEPARATION_N_VALUES):
-        problem = BenchmarkProblemFactory.construct_problem(
-            name, n=n, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
-        )
-        nn_dist = _nearest_neighbor_distances(problem.vectors)
-        log_dist = np.log10(nn_dist[nn_dist > 0])
-        kde = gaussian_kde(log_dist)
-        grid = np.linspace(log_dist.min() - 0.5, log_dist.max() + 0.5, 400)
-        density = kde(grid)
-        color = f"C{i}"
-        ax.plot(10**grid, density, color=color, linewidth=1.5)
-        ax.fill_between(10**grid, density, color=color, alpha=0.25, label=f"$n$ = {n}")
-        peak_x = 10 ** grid[np.argmax(density)]
-        ax.text(peak_x, density.max() + 0.04, f"$n$ = {n}", fontsize=15, ha="center")
-        rug_y = rug_base * (i + 1)
-        ax.vlines(nn_dist, rug_y - 0.035, rug_y, color=color, linewidth=0.4, alpha=0.8)
-
-    ax.set_xscale("log")
-    ax.set_xlabel(r"$L_2$ distance", fontsize=15)
-    ax.set_ylabel("Probability density (KDE)", fontsize=15)
-    ax.tick_params(labelsize=13)
-    ax.grid(color="#e5e5e5", linewidth=0.8)
-    ax.legend(title="Problem size", fontsize=14, title_fontsize=14, loc="upper left")
-    for spine in ("top", "right"):
-        ax.spines[spine].set_visible(False)
-    _save_webp(fig, IMAGES_DIR / f"problem_{name}_separations.webp")
-
-
-def _nearest_neighbor_distances(vectors: np.ndarray) -> np.ndarray:
-    """Exact nearest-neighbor L2 distance per vector, computed in row chunks to bound memory."""
-    v = vectors.astype(np.float64)
-    n = v.shape[0]
-    result = np.empty(n)
-    chunk = 1024
-    sq_norms = (v * v).sum(axis=1)
-    for start in range(0, n, chunk):
-        stop = min(start + chunk, n)
-        d2 = sq_norms[start:stop, None] + sq_norms[None, :] - 2.0 * (v[start:stop] @ v.T)
-        np.clip(d2, 0.0, None, out=d2)
-        for row, idx in enumerate(range(start, stop)):
-            d2[row, idx] = np.inf  # exclude self
-        result[start:stop] = np.sqrt(d2.min(axis=1))
-    return result
-
-
 def main() -> None:
     """Regenerate images for the problems named on the command line (default: all)."""
     names = sys.argv[1:] or BenchmarkProblemFactory.get_all_benchmark_names()
     for name in names:
         render_geometry(name, with_solution=False)
         render_geometry(name, with_solution=True)
-        render_separations(name)
 
 
 if __name__ == "__main__":

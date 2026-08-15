@@ -148,8 +148,10 @@ update-solver-benchmark-figures:
 	@if ls ./preset_results*.json 1> /dev/null 2>&1; then \
 		mv -f ./preset_results*.json ./local/docs/data/; \
 	fi
-	# The illustration images (geometry and separations) come from one deterministic script.
+	# Geometry: a self-contained script (no local.docs imports), so a plain-path run under the
+	# benchmarks group for matplotlib.
 	uv run --group benchmarks ./scripts/generate_problem_images.py
-	# The preset result charts need recorded benchmark data and the notebooks group's cvxpy for the
-	# spline-quantile regression, and run as a module so the generator's imports resolve at repo root.
+	# The two local.docs generators run as modules so their package imports resolve from the repo
+	# root, under the notebooks group whose cvxpy their local.docs.utils package init pulls in.
+	uv run --group notebooks python -m local.docs.figures.fig_bm_problems_separations ./docs/benchmarks/solver/images --show-plots=false
 	uv run --group notebooks python -m local.docs.figures.fig_bm_problems_preset_results ./docs/benchmarks/solver/images ./docs/benchmarks/solver/results --show-plots=false
