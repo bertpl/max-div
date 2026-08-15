@@ -7,10 +7,10 @@ from max_div._core.solver._parallel._solver import default_worker_count
 from ._models import SolverPresetBenchmarkParams
 from ._utils import estimate_execution_time_sec_multi
 
-# The full-scope budget ladder (speed=0.0, the configuration the docs pages are generated with):
-# ~50 log-spaced budget points per (problem, preset)-curve, each run with a fresh seed, so the
-# seed-spread is estimated from the ladder density itself.  The parallel arm starts at 1 s —
-# below that a parallel run mostly measures process-spawn overhead.
+# The full-scope budget ladder (speed=0.0, the configuration the docs pages are generated with)
+# runs LADDER_N_POINTS log-spaced budget points per (problem, preset)-curve, each with a fresh
+# seed, so the seed-spread is estimated from the ladder density itself.  The parallel arm starts
+# at PARALLEL_ARM_T_MIN_SEC — below that a parallel run mostly measures process-spawn overhead.
 LADDER_T_MAX_SEC = 600.0
 LADDER_T_MIN_SEC = 0.03
 LADDER_N_POINTS = 50
@@ -33,10 +33,11 @@ def determine_problem_size_for_k(problem_name: str, k_target: int = K_TARGET) ->
     """
 
     def _k(n: int) -> int:
+        """Return the problem's derived selection size k at size n."""
         _d, _n, k, _m, _n_con = BenchmarkProblemFactory.get_problem_dimensions(problem_name, n=n)
         return k
 
-    # --- bracket ---------------------------------
+    # --- bracket -----------------------------------------
     lo, hi = 20, 40
     while _k(hi) <= k_target:
         hi *= 2

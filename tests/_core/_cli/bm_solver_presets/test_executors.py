@@ -33,8 +33,10 @@ def test_execute_single_run(n_workers: int):
 
 def test_executor_multi_parallel_runs_parallel_scope_serially():
     """Parallel runs execute outside the pool, and both kinds land in one result list."""
+
     # --- arrange -----------------------------------------
     def _params(n_workers: int) -> SolverPresetBenchmarkParams:
+        """Build a tiny-budget run differing only in worker count."""
         return SolverPresetBenchmarkParams(
             preset=SolverPreset.SMART,
             problem_name="U1",

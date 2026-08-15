@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 #  StrategyPreset protocol
 # =================================================================================================
 class StrategyPreset(Protocol):
-    """The metadata surface both benchmark preset enums (init and optim) expose."""
+    """A StrategyPreset exposes the metadata both benchmark preset enums (init and optim) share."""
 
     def class_name(self) -> str: ...
 
@@ -318,7 +318,7 @@ class BenchmarkSolverConstructor(ABC):
         return BenchmarkProblemFactory.get_problem_dimensions(self._problem_name, n=n)
 
     def _strategies_table(self, intro: str, presets: dict[str, StrategyPreset]) -> list[ReportElement | str]:
-        """Build the intro line + table describing the tested strategies, shared by both subclasses.
+        """Build the intro line + table describing the tested strategies, shared by the subclasses.
 
         The Note column appears only when at least one preset carries a preset note (its exact
         correspondence to a shipped solver preset); the Constraint-aware column only on

@@ -9,14 +9,14 @@ from time import perf_counter
 # =================================================================================================
 @dataclass
 class EndToEndTiming:
-    """The measured wall-clock span of one end-to-end solve."""
+    """An EndToEndTiming records the measured wall-clock span of one end-to-end solve."""
 
     t_elapsed_sec: float = 0.0
 
 
 @contextmanager
 def measure_end_to_end() -> Iterator[EndToEndTiming]:
-    """Measure an end-to-end solve, pinning the one timing definition every benchmark shares.
+    """Measure an end-to-end solve, so every benchmark shares one timing definition.
 
     End-to-end means everything a user pays for after the problem data exists: solver
     configuration, `build()` (distance-store construction included), and the solve itself.

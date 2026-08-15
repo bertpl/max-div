@@ -127,7 +127,7 @@ def test_determine_benchmark_scope_degenerate_ladder():
 #  determine_benchmark_scope_for_max_duration
 # =================================================================================================
 @pytest.mark.parametrize(
-    ("max_duration_sec", "expected_speed"),
+    "max_duration_sec, expected_speed",
     [
         (1e12, 0.0),  # slowest setting already fits
         (1e-6, 1.0),  # fastest setting still too slow
@@ -135,6 +135,7 @@ def test_determine_benchmark_scope_degenerate_ladder():
     ],
 )
 def test_determine_benchmark_scope_for_max_duration(max_duration_sec: float, expected_speed: float | None):
+    """The auto-tuner returns the boundary speeds directly and bisects in between."""
     # --- act ---------------------------------------------
     speed, scope = determine_benchmark_scope_for_max_duration(
         [SolverPreset.SMART], ["U1"], 100, max_duration_sec=max_duration_sec

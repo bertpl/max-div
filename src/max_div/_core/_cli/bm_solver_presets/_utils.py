@@ -36,7 +36,7 @@ def estimate_execution_time_sec_multi(
     single_params = [p for p in params if not p.is_parallel]
     parallel_sec = sum(estimate_execution_time_sec_single(p) for p in params if p.is_parallel)
 
-    # --- estimate single-worker duration -----
+    # --- estimate packed duration ----
     packed_sec = 0.0
     if single_params:
         durations_sec = [estimate_execution_time_sec_single(p) for p in single_params]

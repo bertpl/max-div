@@ -1,12 +1,12 @@
 import pytest
 
+from max_div._core._cli.bm_solver_presets._models import SolverPresetBenchmarkParams
 from max_div._core._cli.bm_solver_presets._utils import (
     estimate_execution_time_sec_multi,
     estimate_execution_time_sec_single,
     get_n_processes,
     get_pbar_units,
 )
-from max_div._core._cli.bm_solver_presets._models import SolverPresetBenchmarkParams
 from max_div._core.solver import SolverPreset, TargetTimeDuration
 
 
@@ -14,6 +14,7 @@ from max_div._core.solver import SolverPreset, TargetTimeDuration
 #  Helpers
 # =================================================================================================
 def _params(duration_sec: float, n_workers: int = 1) -> SolverPresetBenchmarkParams:
+    """Build benchmark params with only the fields under test varying."""
     return SolverPresetBenchmarkParams(
         preset=SolverPreset.SMART,
         problem_name="U1",
@@ -58,12 +59,14 @@ def test_estimate_execution_time_sec_multi_packs_singles_but_not_parallels():
 
 
 def test_get_pbar_units():
+    """Progress-bar units follow the estimated run time, never dropping below one."""
     # --- act & assert ------------------------------------
     assert get_pbar_units(_params(10.0)) >= 10
     assert get_pbar_units(_params(0.001)) == 1  # never below one unit
 
 
 def test_get_n_processes():
+    """The process count is capped by the scope size and stays at least one."""
     # --- act & assert ------------------------------------
     assert get_n_processes(1) == 1
     assert get_n_processes(10_000) >= 1
