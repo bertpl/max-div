@@ -196,17 +196,7 @@ def test_optimization_step_run_seconds():
     assert_score_checkpoints_are_sane(result.score_checkpoints)
 
 
-# --- coordinator-declared batch interval -----------------
-class _BoundaryCoordinator:
-    """The stub declares a batch-boundary interval and does nothing at boundaries."""
-
-    def __init__(self, boundary_seconds: float | None) -> None:
-        self.boundary_seconds = boundary_seconds
-
-    def at_batch_boundary(self, state) -> None:
-        pass
-
-
+# --- caller-provided batch interval ----------------------
 def test_determine_n_iterations_scales_with_the_batch_interval():
     """The batch size is the target interval times the estimated iteration rate."""
     # --- arrange -----------------------------------------
@@ -217,9 +207,9 @@ def test_determine_n_iterations_scales_with_the_batch_interval():
     assert OptimizationStep._determine_n_iterations(progress, 10**9, batch_seconds=0.05) == 50
 
 
-@pytest.mark.parametrize("boundary_seconds, expected_batch_seconds", [(None, 0.5), (0.05, 0.05), (2.0, 0.5)])
-def test_run_batches_at_the_coordinator_interval(monkeypatch, boundary_seconds, expected_batch_seconds):
-    """A coordinator can tighten the batch interval below the reporting default, never stretch it."""
+@pytest.mark.parametrize("call_kwargs, expected_batch_seconds", [({}, 0.5), ({"batch_seconds": 0.05}, 0.05)])
+def test_run_batches_at_the_interval_it_is_given(monkeypatch, call_kwargs, expected_batch_seconds):
+    """The caller's batch interval reaches the batch sizing; omitting it uses the reporting default."""
     # --- arrange -----------------------------------------
     captured = []
     original = OptimizationStep._determine_n_iterations
@@ -232,7 +222,7 @@ def test_run_batches_at_the_coordinator_interval(monkeypatch, boundary_seconds, 
     step = OptimizationStep(OptimTest(), duration=iterations(50))
 
     # --- act ---------------------------------------------
-    step.run(Mock(), coordinator=_BoundaryCoordinator(boundary_seconds))
+    step.run(Mock(), **call_kwargs)
 
     # --- assert ------------------------------------------
     assert captured
@@ -247,7 +237,7 @@ def test_checkpoint_count_is_batch_invariant():
 
     # --- act ---------------------------------------------
     result_default = step_default.run(Mock())
-    result_fast = step_fast.run(Mock(), coordinator=_BoundaryCoordinator(0.001))
+    result_fast = step_fast.run(Mock(), batch_seconds=0.001)
 
     # --- assert ------------------------------------------
     assert len(result_fast.score_checkpoints) == len(result_default.score_checkpoints)

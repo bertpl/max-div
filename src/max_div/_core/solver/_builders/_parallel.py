@@ -7,6 +7,7 @@ from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._parallel import (
+    COOPERATIVE_BATCH_SECONDS,
     ParallelMaxDivSolver,
     WorkerConfig,
     default_group_count,
@@ -15,7 +16,7 @@ from max_div._core.solver._parallel import (
 )
 from max_div._core.solver._presets import get_preset_strategies
 from max_div._core.solver._solver_config import SolverConfig
-from max_div._core.solver._solver_step import InitializationStep
+from max_div._core.solver._solver_step import _REPORTING_BATCH_SECONDS, InitializationStep
 
 from ._base import SolverBuilderBase
 
@@ -107,19 +108,20 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             raise ValueError("A portfolio needs workers; call with_workers before build.")
         warn_about_worker_count(len(self._worker_configs))
         resolved, label = self._select_storage()
+        group_size_per_worker = [size for size in self._group_sizes for _ in range(size)]
         return ParallelMaxDivSolver(
             problem=self._problem,
             storage=resolved,
             worker_configs=self._worker_configs,
             solver_configs=[
-                self._solver_config_for(index, worker, self._target_duration, label)
+                self._solver_config_for(index, worker, self._target_duration, label, group_size_per_worker[index])
                 for index, worker in enumerate(self._worker_configs)
             ],
             group_sizes=self._group_sizes,
         )
 
     def _solver_config_for(
-        self, index: int, worker: WorkerConfig, duration: TargetDuration, storage_label: str
+        self, index: int, worker: WorkerConfig, duration: TargetDuration, storage_label: str, group_size: int
     ) -> SolverConfig:
         """Return the solver configuration for one worker.
 
@@ -141,6 +143,8 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=storage_label,
+            # cooperative workers batch — and so exchange — at the tighter cooperative interval
+            batch_seconds=COOPERATIVE_BATCH_SECONDS if group_size > 1 else _REPORTING_BATCH_SECONDS,
         )
 
 

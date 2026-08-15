@@ -7,6 +7,7 @@ from max_div._core.solver._builders import MaxDivSolverBuilder, ParallelMaxDivSo
 from max_div._core.solver._builders._parallel import _resolve_group_sizes
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import (
+    COOPERATIVE_BATCH_SECONDS,
     ParallelMaxDivSolution,
     WorkerConfig,
     default_group_count,
@@ -14,6 +15,7 @@ from max_div._core.solver._parallel import (
 )
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
+from max_div._core.solver._solver_step import _REPORTING_BATCH_SECONDS
 from max_div._core.solver._strategies import InitializationStrategy
 
 _BUDGET = iterations(120)
@@ -275,3 +277,16 @@ def test_a_cooperative_portfolio_solves():
     # --- assert ------------------------------------------
     assert solution.i_selected.size == 8
     assert len(solution.workers) == 2
+
+
+def test_cooperative_workers_batch_at_the_cooperative_interval():
+    """Workers in groups of two or more carry the tighter batch interval; lone workers keep the default."""
+    # --- arrange / act -----------------------------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 3, n_groups=2).build()
+
+    # --- assert ------------------------------------------
+    assert [config.batch_seconds for config in solver._solver_configs] == [
+        COOPERATIVE_BATCH_SECONDS,
+        COOPERATIVE_BATCH_SECONDS,
+        _REPORTING_BATCH_SECONDS,
+    ]

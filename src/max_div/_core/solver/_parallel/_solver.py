@@ -19,6 +19,12 @@ from ._result import best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._worker_config import WorkerConfig
 
+# Cooperative workers run their optimization batches — and so their incumbent exchanges — at this
+# wall-clock interval: the best-performing value found so far, not a known optimum.  It must stay
+# below the reporting-driven default batch size in `_solver_step`, or it would coarsen reporting
+# instead of tightening exchanges.
+COOPERATIVE_BATCH_SECONDS = 0.05
+
 
 class ParallelMaxDivSolver:
     """A portfolio solver solves one problem with several workers at once, returning the best selection.

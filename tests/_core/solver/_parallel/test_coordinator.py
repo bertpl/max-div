@@ -128,15 +128,3 @@ def test_a_lone_cooperative_worker_searches_exactly_as_if_alone():
     # --- assert ------------------------------------------
     np.testing.assert_array_equal(np.sort(cooperative.i_selected), np.sort(alone.i_selected))
     assert slot.written  # the worker did publish along the way
-
-
-def test_cooperative_coordinator_wants_tighter_batches_than_the_reporting_default():
-    """Cooperative workers ask for exchanges more often than the reporting default; independent ones do not."""
-    # --- arrange -----------------------------------------
-    slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
-
-    # --- act / assert ------------------------------------
-    assert IndependentCoordinator().boundary_seconds is None
-    boundary_seconds = CooperativeCoordinator(slot).boundary_seconds
-    assert boundary_seconds is not None
-    assert 0.0 < boundary_seconds < 0.5

@@ -15,8 +15,7 @@ if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
 
 # One optimization batch defaults to this wall-clock size, so progress reports can fire ~2x per
-# second.  A coordinator's `boundary_seconds` can shrink the batch below this — see
-# `WorkerCoordinator`.
+# second.  Callers pass a smaller `batch_seconds` into `run` for tighter batch boundaries.
 _REPORTING_BATCH_SECONDS = 0.5
 
 
@@ -56,11 +55,15 @@ class SolverStep(ABC, Generic[S]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
+        batch_seconds: float = _REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         """Execute the solver step by running a strategy once or repeatedly, and return its result.
 
         :param coordinator: a `WorkerCoordinator` this step calls at each batch boundary; a step that
                             runs as a single batch ignores it.
+        :param batch_seconds: targeted wall-clock size of one batch; the caller decides, e.g.
+                              tighter batches for cooperative workers.  Ignored with `coordinator`
+                              by steps that run as a single batch.
         """
         raise NotImplementedError
 
@@ -85,6 +88,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
+        batch_seconds: float = _REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         # --- set up progress tracking --------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
@@ -144,15 +148,13 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
+        batch_seconds: float = _REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         # --- init ----------------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
         tracker = self._duration.track()
         score_checkpoints: list[tuple[Elapsed, Score]] = []
         next_checkpoint_iter_count = 1
-        batch_seconds = _REPORTING_BATCH_SECONDS
-        if coordinator is not None and coordinator.boundary_seconds is not None:
-            batch_seconds = min(batch_seconds, coordinator.boundary_seconds)
 
         # --- main loop -----------------------------------
         while not (progress := tracker.get_progress()).is_finished:
