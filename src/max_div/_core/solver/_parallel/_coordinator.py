@@ -46,9 +46,7 @@ class IndependentCoordinator(WorkerCoordinator):
 class CooperativeCoordinator(WorkerCoordinator):
     """The members of one worker group hold this coordinator, all bound to the group's shared slot."""
 
-    # The interval is the fastest benchmarked: quality improved monotonically from 2 s down to
-    # here with no measurable boundary overhead, so this is the best point tested rather than a
-    # found optimum.
+    # The best-performing exchange interval found so far, not a known optimum.
     boundary_seconds: float | None = 0.05
 
     def __init__(self, slot: GroupIncumbentSlot) -> None:

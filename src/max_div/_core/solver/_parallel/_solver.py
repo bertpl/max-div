@@ -139,8 +139,7 @@ def default_worker_count() -> int:
 def default_group_count(n_workers_total: int) -> int:
     """Return the default group count when the caller names none: one group, at any worker total.
 
-    A single cooperative group converged fastest in benchmarks at every tested worker total (up
-    to 8; beyond that, one group is an extrapolation).  An explicit `n_groups` on `with_workers`
-    overrides it.
+    A single group is the best-performing default found so far.  An explicit `n_groups` on
+    `with_workers` overrides it.
     """
     return 1
