@@ -9,8 +9,9 @@ from ._utils import estimate_execution_time_sec_multi
 
 # The full-scope budget ladder (speed=0.0, the configuration the docs pages are generated with)
 # runs LADDER_N_POINTS log-spaced budget points per (problem, preset)-curve, each with a fresh
-# seed, so the seed-spread is estimated from the ladder density itself.  The parallel arm starts
-# at PARALLEL_ARM_T_MIN_SEC — below that a parallel run mostly measures process-spawn overhead.
+# seed, so repeat variability shows up as scatter between neighboring ladder points.  The
+# parallel arm (SMART re-run on the machine's default worker count) starts at
+# PARALLEL_ARM_T_MIN_SEC — below that a parallel run mostly measures process-spawn overhead.
 LADDER_T_MAX_SEC = 600.0
 LADDER_T_MIN_SEC = 0.03
 LADDER_N_POINTS = 50

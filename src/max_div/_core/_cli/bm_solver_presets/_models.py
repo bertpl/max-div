@@ -12,7 +12,7 @@ from max_div._core.solver import Score, SolverPreset, TargetTimeDuration
 # =================================================================================================
 @dataclass(frozen=True)
 class SolverPresetBenchmarkParams:
-    """One benchmark run pairs a preset with a problem, a target duration, and a seed.
+    """A SolverPresetBenchmarkParams identifies one benchmark run.
 
     `n_workers=1` is a plain single solve; a higher count runs the parallel solver with that many
     workers in the default (cooperative) grouping, so records carry the actual worker count of the

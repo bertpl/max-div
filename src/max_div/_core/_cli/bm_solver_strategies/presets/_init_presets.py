@@ -20,8 +20,7 @@ class InitPreset(StrEnum):
     """StrEnum for all initialization presets we want to benchmark.
 
     The random-batched and eager sweeps run at two batch/candidate sizes each (the effect is
-    monotonic between them); `fps(1)` is the exact greedy construction and `fps(8)` the
-    SMART/THOROUGH presets' production initialization.
+    monotonic between them); shipped-preset correspondences live in `_PRESET_NOTES`.
     """
 
     # --- fast --------------

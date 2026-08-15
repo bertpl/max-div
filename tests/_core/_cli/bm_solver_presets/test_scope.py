@@ -37,7 +37,8 @@ def test_determine_problem_size_for_k_unreachable(monkeypatch: pytest.MonkeyPatc
 
     # --- arrange -----------------------------------------
     def _even_k_only(problem_name: str, n: int) -> tuple[int, int, int, int, int]:
-        return 2, n, 2 * ((n + 9) // 10), 0, 0  # k only takes even values
+        """Fake dimensions whose k(n) only takes even values."""
+        return 2, n, 2 * ((n + 9) // 10), 0, 0
 
     monkeypatch.setattr(BenchmarkProblemFactory, "get_problem_dimensions", staticmethod(_even_k_only))
 

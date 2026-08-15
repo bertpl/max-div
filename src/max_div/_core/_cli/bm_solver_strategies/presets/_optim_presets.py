@@ -18,9 +18,8 @@ if TYPE_CHECKING:
 class OptimPreset(StrEnum):
     """StrEnum for all optimization presets we want to benchmark.
 
-    Each member is a user-facing choice: `RS` as the baseline, the guided-swap size sweep with the
-    GUIDED preset's exact optimizer, and the smart-swap size sweep with the THOROUGH preset's
-    exact optimizer.  `SM(8)` doubles as the SMART preset's optimizer.
+    Each member is a user-facing choice: `RS` as the baseline, then the guided-swap and smart-swap
+    size sweeps; shipped-preset correspondences live in `_PRESET_NOTES`.
     """
 
     # --- random swaps ------

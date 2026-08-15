@@ -9,6 +9,7 @@ from max_div._core.solver import SolverPreset
 
 from ._cmd_benchmark_solver import solver
 from .bm_solver_presets import (
+    K_TARGET,
     determine_benchmark_scope,
     determine_benchmark_scope_for_max_duration,
     determine_problem_size_for_k,
@@ -40,7 +41,7 @@ from .bm_solver_presets import (
     is_flag=False,
     type=int,
     default=None,
-    help="Problem size n to benchmark solver presets on; defaults per problem to the size selecting 100 items",
+    help=f"Problem size n to benchmark solver presets on; defaults per problem to the size selecting {K_TARGET} items",
 )
 @click.option(
     "--json-file",
