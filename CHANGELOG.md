@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.12.0 (2026-08-15)
 
 ### Added
 - Cooperative parallel solving: parallel workers now form worker groups whose members share their best solution mid-run; set the group count via `with_workers(..., n_groups=...)`, or pass nested worker-config lists for explicit groups
@@ -13,14 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Parallel solving defaults to a single cooperative worker group (`n_groups=1`) on 3/4 of the logical cores (previously: fully independent workers on half); a fully independent portfolio remains available via `n_groups` equal to the worker count, and stays the reproducible mode
 - Cooperative workers exchange their best selection roughly every 0.05s (was: every 0.5s), improving short-budget results; single solves and fully independent portfolios are unaffected
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.11.2 (2026-08-13)
 
