@@ -11,7 +11,7 @@ def test_run_maxdiv_unconstrained_smoke(tmp_path: Path):
     # --- act ---------------------------------------------
     records = run_maxdiv_unconstrained(
         problems=("U1",),
-        sizes=(1,),
+        sizes=(100,),
         time_budgets_sec=[0.001, 0.002],
         seeds=(0,),
         out_path=out_path,
@@ -31,7 +31,7 @@ def test_run_maxdiv_constrained_smoke(tmp_path: Path):
     # --- act ---------------------------------------------
     records = run_maxdiv_constrained(
         problems=("C1",),
-        sizes=(1,),
+        sizes=(100,),
         time_budgets_sec=[0.001],
         seeds=(0,),
         out_path=out_path,
