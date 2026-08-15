@@ -14,9 +14,12 @@ from ._strategies._base import StrategyBase
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
 
-# One optimization batch defaults to this wall-clock size, so progress reports can fire ~2x per
-# second.  Callers pass a smaller `batch_seconds` into `run` for tighter batch boundaries.
+# The two standard sizes of one optimization batch, as wall-clock targets a caller passes into
+# `run`.  The default is sized so progress reports can fire ~2x per second; the cooperative value
+# gives workers in a group tighter batch boundaries — and so faster incumbent exchanges — and
+# must stay below the default, or it would coarsen reporting instead of tightening exchanges.
 REPORTING_BATCH_SECONDS = 0.5
+COOPERATIVE_BATCH_SECONDS = 0.05
 
 
 # =================================================================================================

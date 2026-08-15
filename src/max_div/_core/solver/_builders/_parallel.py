@@ -7,7 +7,6 @@ from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._parallel import (
-    COOPERATIVE_BATCH_SECONDS,
     ParallelMaxDivSolver,
     WorkerConfig,
     default_group_count,
@@ -16,7 +15,7 @@ from max_div._core.solver._parallel import (
 )
 from max_div._core.solver._presets import get_preset_strategies
 from max_div._core.solver._solver_config import SolverConfig
-from max_div._core.solver._solver_step import REPORTING_BATCH_SECONDS, InitializationStep
+from max_div._core.solver._solver_step import COOPERATIVE_BATCH_SECONDS, REPORTING_BATCH_SECONDS, InitializationStep
 
 from ._base import SolverBuilderBase
 
