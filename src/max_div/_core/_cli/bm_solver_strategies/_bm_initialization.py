@@ -1,4 +1,4 @@
-from max_div._core._markdown import ReportElement, Table
+from max_div._core._markdown import ReportElement
 from max_div._core.metrics import DiversityMetric
 from max_div._core.solver import MaxDivSolver, MaxDivSolverBuilder
 
@@ -33,18 +33,4 @@ class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
         return list(self._presets.keys())
 
     def build_strategies_table(self) -> list[ReportElement | str]:
-        # --- prepare table ---------------------
-        table = Table(["`name`", "`class`", "`params`"] + (["Constraint-aware"] if self.has_constraints else []))
-
-        for name, preset in self._presets.items():
-            table.add_row(
-                [
-                    f"`{name}`",
-                    preset.class_name(),
-                    "\n".join([f"{k}={v!s}" for k, v in preset.class_kwargs().items()]),
-                ]
-                + ([str(preset.is_constraint_aware())] if self.has_constraints else [])
-            )
-
-        # --- return ReportElements list --------
-        return ["Tested Initialization strategies:", table]
+        return self._strategies_table("Tested Initialization strategies:", dict(self._presets))

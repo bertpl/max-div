@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Protocol
 
 from tqdm import tqdm
 
@@ -22,9 +22,25 @@ from max_div._core.solver import Verbosity
 if TYPE_CHECKING:
     from types import TracebackType
 
+    from max_div._core._markdown import TableElement
     from max_div._core.metrics import DiversityMetric
     from max_div._core.problem import VectorMaxDivProblem
     from max_div._core.solver import MaxDivSolver
+
+
+# =================================================================================================
+#  StrategyPreset protocol
+# =================================================================================================
+class StrategyPreset(Protocol):
+    """A StrategyPreset exposes the metadata both benchmark preset enums (init and optim) share."""
+
+    def class_name(self) -> str: ...
+
+    def class_kwargs(self) -> dict[str, Any]: ...
+
+    def is_constraint_aware(self) -> bool: ...
+
+    def preset_note(self) -> str: ...
 
 
 # =================================================================================================
@@ -300,6 +316,35 @@ class BenchmarkSolverConstructor(ABC):
     def get_problem_dimensions(self, n: int) -> tuple[int, int, int, int, int]:
         """Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with given size n."""
         return BenchmarkProblemFactory.get_problem_dimensions(self._problem_name, n=n)
+
+    def _strategies_table(self, intro: str, presets: dict[str, StrategyPreset]) -> list[ReportElement | str]:
+        """Build the intro line + table describing the tested strategies, shared by the subclasses.
+
+        The Note column appears only when at least one preset carries a preset note (its exact
+        correspondence to a shipped solver preset); the Constraint-aware column only on
+        constrained problems.
+        """
+        has_notes = any(preset.preset_note() for preset in presets.values())
+        headers = ["`name`", "`class`", "`params`"]
+        if self.has_constraints:
+            headers.append("Constraint-aware")
+        if has_notes:
+            headers.append("Note")
+
+        table = Table(headers)
+        for name, preset in presets.items():
+            row: list[str | TableElement] = [
+                f"`{name}`",
+                preset.class_name(),
+                "\n".join(f"{k}={v!s}" for k, v in preset.class_kwargs().items()),
+            ]
+            if self.has_constraints:
+                row.append(str(preset.is_constraint_aware()))
+            if has_notes:
+                row.append(preset.preset_note())
+            table.add_row(row)
+
+        return [intro, table]
 
     # -------------------------------------------------------------------------
     #  API - ABSTRACT

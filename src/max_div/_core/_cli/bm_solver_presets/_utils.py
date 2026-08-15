@@ -30,19 +30,27 @@ def estimate_execution_time_sec_multi(
             ]
         )
 
-    # --- init ------------------------
-    durations_sec = [estimate_execution_time_sec_single(p) for p in params]
-    sum_duration_sec = sum(durations_sec)
-    max_duration_sec = max(durations_sec)
+    # --- split -----------------------
+    # parallel runs each use all cores, so they execute one after another and cannot be packed
+    # into the process pool the single-worker runs share
+    single_params = [p for p in params if not p.is_parallel]
+    parallel_sec = sum(estimate_execution_time_sec_single(p) for p in params if p.is_parallel)
 
-    # --- estimate total duration -----
-    n_processes = get_n_processes(len(params))
-    return max(max_duration_sec, sum_duration_sec / n_processes)
+    # --- estimate packed duration ----
+    packed_sec = 0.0
+    if single_params:
+        durations_sec = [estimate_execution_time_sec_single(p) for p in single_params]
+        n_processes = get_n_processes(len(single_params))
+        packed_sec = max(*durations_sec, sum(durations_sec) / n_processes)
+
+    return packed_sec + parallel_sec
 
 
 def estimate_execution_time_sec_single(params: SolverPresetBenchmarkParams) -> float:
     """Estimate execution time in seconds for a single benchmark run."""
     overhead_sec = 4.0 * ((params.problem_size / 10000.0) ** 2)  # initial distance computation of solver init is O(n^2)
+    if params.is_parallel:
+        overhead_sec += 2.0  # spawning the worker processes
     return params.duration.value() + overhead_sec
 
 

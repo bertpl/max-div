@@ -9,8 +9,10 @@ from max_div._core.solver import SolverPreset
 
 from ._cmd_benchmark_solver import solver
 from .bm_solver_presets import (
+    K_TARGET,
     determine_benchmark_scope,
     determine_benchmark_scope_for_max_duration,
+    determine_problem_size_for_k,
     estimate_execution_time_sec_multi,
     execute_solver_presets_benchmark,
     get_n_processes,
@@ -37,8 +39,9 @@ from .bm_solver_presets import (
 @click.option(
     "--n",
     is_flag=False,
-    default=10000,
-    help="Problem size n to benchmark solver presets on",
+    type=int,
+    default=None,
+    help=f"Problem size n to benchmark solver presets on; defaults per problem to the size selecting {K_TARGET} items",
 )
 @click.option(
     "--json-file",
@@ -92,7 +95,7 @@ from .bm_solver_presets import (
 def presets(
     preset: str,
     problem: str,
-    n: int,
+    n: int | None,
     json_file: bool,
     markdown_file: bool,
     turbo: bool,
@@ -112,6 +115,7 @@ def presets(
     # --- argument handling - preset(s) & problem(s) ------
     presets = resolve_presets(preset)
     problems = resolve_problems(problem)
+    problem_sizes = {p: n if n is not None else determine_problem_size_for_k(p) for p in problems}
 
     # --- argument handling - max_run_duration -------------
     max_run_duration_sec = 60.0 * max_run_duration_minutes if max_run_duration_minutes else None
@@ -162,13 +166,16 @@ def presets(
     end_time_str = end_time.strftime("%a %Y-%m-%d %H:%M:%S")
 
     # report statistics
+    n_parallel_runs = len([s for s in scope if s.is_parallel])
+    sizes_str = ", ".join(f"{p}={problem_sizes[p]:_}" for p in problems)
     click.echo(f"Executing {len(scope)} solver preset benchmark runs using {n_processes} parallel processes...")
-    click.echo(f"  - problem size  : {n:_}")
+    click.echo(f"  - problem sizes : {sizes_str}")
     click.echo(f"  - speed         : {speed:.6f}")
     click.echo(f"  - problems      : {len(problems):_}".ljust(40) + f"[{', '.join(problems)}]")
     click.echo(f"  - presets       : {len(presets):_}".ljust(40) + f"[{', '.join(presets)}]")
     click.echo(f"  - durations     : {n_durations:_}".ljust(40) + f"[{durations_str}]")
     click.echo(f"  - seeds         : {n_seeds:_}".ljust(40) + f"[{min_seed} -> {max_seed}]")
+    click.echo(f"  - parallel runs : {n_parallel_runs:_}")
     click.echo(f"  - est. duration : {est_duration_str}".ljust(40) + f"[{start_time_str} -> {end_time_str}]")
 
     # --- run benchmarks ----------------------------------
@@ -179,8 +186,9 @@ def presets(
     else:
         for problem in problems:
             # file names for this problem
-            json_file_name = Path(f"preset_results_{problem}_{n}.json") if json_file else None
-            markdown_file_name = f"preset_results_{problem}_{n}.md" if markdown_file else None
+            problem_size = problem_sizes[problem]
+            json_file_name = Path(f"preset_results_{problem}_{problem_size}.json") if json_file else None
+            markdown_file_name = f"preset_results_{problem}_{problem_size}.md" if markdown_file else None
 
             # execute for this problem
             results = execute_solver_presets_benchmark(

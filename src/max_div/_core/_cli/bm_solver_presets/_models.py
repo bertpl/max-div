@@ -12,11 +12,29 @@ from max_div._core.solver import Score, SolverPreset, TargetTimeDuration
 # =================================================================================================
 @dataclass(frozen=True)
 class SolverPresetBenchmarkParams:
+    """A SolverPresetBenchmarkParams identifies one benchmark run.
+
+    `n_workers=1` is a plain single solve; a higher count runs the parallel solver with that many
+    workers in the default (cooperative) grouping, so records carry the actual worker count of the
+    machine that ran them.
+    """
+
     preset: SolverPreset
     problem_name: str
     problem_size: int
     duration: TargetTimeDuration
     seed: int
+    n_workers: int = 1
+
+    @property
+    def is_parallel(self) -> bool:
+        """Return whether this run uses the parallel solver."""
+        return self.n_workers > 1
+
+    def column_label(self) -> str:
+        """Return the label identifying this run's results column in reports."""
+        label = self.preset.value.upper()
+        return f"{label} (parallel x{self.n_workers})" if self.is_parallel else label
 
     def to_dict(self) -> dict:
         return {
@@ -25,6 +43,7 @@ class SolverPresetBenchmarkParams:
             "problem_size": self.problem_size,
             "duration_sec": self.duration.value(),
             "seed": self.seed,
+            "n_workers": self.n_workers,
         }
 
     @classmethod
@@ -35,6 +54,7 @@ class SolverPresetBenchmarkParams:
             problem_size=data["problem_size"],
             duration=TargetTimeDuration(t_target_sec=data["duration_sec"]),
             seed=data["seed"],
+            n_workers=data.get("n_workers", 1),
         )
 
 

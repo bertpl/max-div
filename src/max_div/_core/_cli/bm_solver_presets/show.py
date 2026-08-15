@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from max_div._core._markdown import Report, Table, TableElement, TableTimeElapsed, TableValueWithUncertainty, h1, h2
 from max_div._core._utils import stdout_to_file
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 
-from ._models import SolverPresetBenchmarkResult
+if TYPE_CHECKING:
+    from max_div._core.solver import SolverPreset
+
+    from ._models import SolverPresetBenchmarkResult
 
 
 # =================================================================================================
@@ -31,11 +37,17 @@ def show_solver_presets_benchmark_results(
     # --- extract scope -----------------------------------
     problem_size = results[0].params.problem_size
     problem_names = sorted({result.params.problem_name for result in results})
-    presets = sorted({result.params.preset for result in results})
     target_durations = sorted({result.params.duration for result in results})
 
+    # each (n_workers, preset)-combination gets its own results column, so the parallel arm shows
+    # up next to the serial presets rather than folded into one of them
+    columns: dict[tuple[int, SolverPreset], str] = {}
+    for result in results:
+        columns[result.params.n_workers, result.params.preset] = result.params.column_label()
+    column_keys = sorted(columns.keys())
+
     # --- aggregate & show --------------------------------
-    headers = ["Target duration"] + [p.value.upper() for p in presets]
+    headers = ["Target duration"] + [columns[key] for key in column_keys]
     for problem_name in problem_names:
         # check problem properties
         _, _, _, m, _ = BenchmarkProblemFactory.get_problem_dimensions(problem_name, n=problem_size)
@@ -54,16 +66,22 @@ def show_solver_presets_benchmark_results(
             table_div_score_row: list[TableElement | str] = [str(target_duration)]
             table_iters_row: list[TableElement | str] = [str(target_duration)]
 
-            for preset in presets:
-                # each preset has its own column
+            for n_workers, preset in column_keys:
+                # each (n_workers, preset)-combination has its own column
 
                 # build aggregate result
                 agg = AggregateResult()
                 for result in results:
-                    if (result.params.problem_name, result.params.duration, result.params.preset) == (
+                    if (
+                        result.params.problem_name,
+                        result.params.duration,
+                        result.params.preset,
+                        result.params.n_workers,
+                    ) == (
                         problem_name,
                         target_duration,
                         preset,
+                        n_workers,
                     ):
                         agg.elapsed_sec.append(result.execution_info.elapsed_sec)
                         agg.n_iterations.append(result.n_iterations)
