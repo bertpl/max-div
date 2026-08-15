@@ -1,6 +1,5 @@
 """A portfolio solver runs several workers over one shared store and returns the best result they reach."""
 
-import math
 import multiprocessing
 import os
 import warnings
@@ -130,20 +129,17 @@ def default_worker_count() -> int:
     """Return the default portfolio size when the caller names none: 3/4 of the logical cores, at least 2.
 
     The default portfolio is cooperative, and cooperation converts extra workers into shared
-    search progress, where extra independent workers only buy insurance against unlucky seeds —
-    so more cores in use keep paying off, and the default takes 3/4 where a purely independent
-    portfolio took the conservative half.  An explicit count on `with_workers` overrides it.
+    search progress — so more cores in use keep paying off, and the default takes 3/4 where a
+    purely independent portfolio would justify only half.  An explicit count on `with_workers`
+    overrides it.
     """
     return max(2, (os.cpu_count() or 2) * 3 // 4)
 
 
 def default_group_count(n_workers_total: int) -> int:
-    """Return the default group count for a worker total, when the caller names none.
+    """Return the default group count when the caller names none: one group, at any worker total.
 
-    The default targets roughly twice as many groups as workers per group: the final result is a
-    best over all workers, and only groups are independent draws of that best, so groups buy more
-    than group size does.  Every group keeps at least 2 workers (a lone worker forms a group of
-    one) — on small totals the count collapses to a single group rather than to groups of one,
-    preferring cooperation over independence.  An explicit `n_groups` on `with_workers` overrides it.
+    A single group is the best-performing default found so far.  An explicit `n_groups` on
+    `with_workers` overrides it.
     """
-    return max(1, min(round(math.sqrt(2 * n_workers_total)), n_workers_total // 2))
+    return 1

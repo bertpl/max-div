@@ -132,8 +132,8 @@ processes but not N copies of that data.
 
 The workers form **[worker groups](glossary.md#worker-group)** — the parallel-metaheuristics
 literature calls them *islands*: within a group, every worker adopts the best selection any
-member has found so far, exchanged at the same periodic points where workers report progress;
-groups never communicate with each other. Groups of one worker are fully independent — a fully
+member has found so far, exchanged many times per second while solving; groups never communicate
+with each other. Groups of one worker are fully independent — a fully
 independent portfolio is the special case where every group has one member.
 
 ```python
@@ -153,7 +153,8 @@ solution = (
 The two counts buy different things:
 
 - **More groups**: variance reduction. A run's quality depends on its seed, and keeping the best
-  over several independent groups is insurance against drawing a bad one.
+  over several independent groups insures against drawing a bad one — though the default, under
+  Workers and Groups below, is a single group.
 - **Larger groups**: shared search capacity. A group's members pool their effort on promising
   selections — a member stuck with a poor selection picks up a sibling's better one and continues
   from there — at the cost of searching less independently.
@@ -179,12 +180,10 @@ still finish below a lucky one with less.
 When the counts are not given:
 
 - the worker total defaults to **3/4 of the logical cores**;
-- the group count defaults to **`round(sqrt(2 · total))`**, capped so every group keeps at least
-  two workers (a lone worker forms a group of one) — about twice as many groups as workers per
-  group, leaning on groups because only they are independent draws of the final result, the best
-  over all workers;
-- totals too small for two groups of two get a single group rather than independent workers;
-- a worker total that does not divide evenly hands the extra workers to the first groups.
+- the group count defaults to **one** — a single cooperative group converged fastest at every
+  tested worker count;
+- a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
+  to the first groups.
 
 ### What Varies per Worker
 

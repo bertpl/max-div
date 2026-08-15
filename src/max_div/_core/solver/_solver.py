@@ -11,7 +11,7 @@ from ._duration import Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
-from ._solver_step import SolverStep, SolverStepResult
+from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
 
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
@@ -39,6 +39,7 @@ class MaxDivSolver:
         seed: int = 42,
         constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
         distance_storage_label: str = "",
+        batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -54,6 +55,7 @@ class MaxDivSolver:
         :param seed: (int) Random seed for the solver.
         :param constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
         :param distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
+        :param batch_seconds: (float) Targeted wall-clock size of one optimization batch.
         """
         # --- problem description -------------------------
         self._n = n
@@ -68,6 +70,7 @@ class MaxDivSolver:
         self._solver_steps = solver_steps
         self._seed = seed
         self._constraint_penalty = constraint_penalty
+        self._batch_seconds = batch_seconds
 
     # -------------------------------------------------------------------------
     #  API
@@ -128,7 +131,7 @@ class MaxDivSolver:
         for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
-            step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator)
+            step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
 
         # --- Construct result ----------------------------
         return self._construct_final_solution(state, step_results)

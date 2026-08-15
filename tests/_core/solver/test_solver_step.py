@@ -194,3 +194,50 @@ def test_optimization_step_run_seconds():
     assert result.elapsed.t_elapsed_sec >= 0.1
     assert result.elapsed.n_iterations == strategy._n_iterations > 0
     assert_score_checkpoints_are_sane(result.score_checkpoints)
+
+
+# --- caller-provided batch interval ----------------------
+def test_determine_n_iterations_scales_with_the_batch_interval():
+    """The batch size is the target interval times the estimated iteration rate."""
+    # --- arrange -----------------------------------------
+    progress = Mock(est_iters_per_second=1000.0, est_n_iters_remaining=10**9, iter_count=0)
+
+    # --- act / assert ------------------------------------
+    assert OptimizationStep._determine_n_iterations(progress, 10**9, batch_seconds=0.5) == 500
+    assert OptimizationStep._determine_n_iterations(progress, 10**9, batch_seconds=0.05) == 50
+
+
+@pytest.mark.parametrize("call_kwargs, expected_batch_seconds", [({}, 0.5), ({"batch_seconds": 0.05}, 0.05)])
+def test_run_batches_at_the_interval_it_is_given(monkeypatch, call_kwargs, expected_batch_seconds):
+    """The caller's batch interval reaches the batch sizing; omitting it uses the reporting default."""
+    # --- arrange -----------------------------------------
+    captured = []
+    original = OptimizationStep._determine_n_iterations
+
+    def spy(progress, next_checkpoint_iter_count, batch_seconds):
+        captured.append(batch_seconds)
+        return original(progress, next_checkpoint_iter_count, batch_seconds)
+
+    monkeypatch.setattr(OptimizationStep, "_determine_n_iterations", staticmethod(spy))
+    step = OptimizationStep(OptimTest(), duration=iterations(50))
+
+    # --- act ---------------------------------------------
+    step.run(Mock(), **call_kwargs)
+
+    # --- assert ------------------------------------------
+    assert captured
+    assert all(batch_seconds == expected_batch_seconds for batch_seconds in captured)
+
+
+def test_checkpoint_count_is_batch_invariant():
+    """Tightening the batch interval never changes the number of score checkpoints."""
+    # --- arrange -----------------------------------------
+    step_default = OptimizationStep(OptimTest(), duration=iterations(500))
+    step_fast = OptimizationStep(OptimTest(), duration=iterations(500))
+
+    # --- act ---------------------------------------------
+    result_default = step_default.run(Mock())
+    result_fast = step_fast.run(Mock(), batch_seconds=0.001)
+
+    # --- assert ------------------------------------------
+    assert len(result_fast.score_checkpoints) == len(result_default.score_checkpoints)

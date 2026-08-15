@@ -14,6 +14,13 @@ from ._strategies._base import StrategyBase
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
 
+# A caller passes one of these wall-clock targets into `run` as the size of one optimization
+# batch.  The default is sized so progress reports can fire ~2x per second; the cooperative value
+# gives a group's workers faster incumbent exchanges, and must stay below the default, or it
+# would coarsen reporting instead of tightening exchanges.
+REPORTING_BATCH_SECONDS = 0.5
+COOPERATIVE_BATCH_SECONDS = 0.05
+
 
 # =================================================================================================
 #  SolverStepResult
@@ -51,11 +58,14 @@ class SolverStep(ABC, Generic[S]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
+        batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         """Execute the solver step by running a strategy once or repeatedly, and return its result.
 
         :param coordinator: a `WorkerCoordinator` this step calls at each batch boundary; a step that
                             runs as a single batch ignores it.
+        :param batch_seconds: targeted wall-clock size of one batch.  Like `coordinator`, it is
+                              ignored by steps that run as a single batch.
         """
         raise NotImplementedError
 
@@ -80,6 +90,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
+        batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         # --- set up progress tracking --------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
@@ -139,6 +150,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         state: SolverState,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
+        batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
         # --- init ----------------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
@@ -157,7 +169,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             )
 
             # --- do n iterations ---
-            n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count)
+            n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count, batch_seconds)
             self._strategy.perform_n_iterations(
                 state=state,
                 n_iters=n_iters,
@@ -199,16 +211,16 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         return SolverStepResult(score_checkpoints=score_checkpoints)
 
     @staticmethod
-    def _determine_n_iterations(progress: Progress, next_checkpoint_iter_count: int) -> int:
+    def _determine_n_iterations(progress: Progress, next_checkpoint_iter_count: int, batch_seconds: float) -> int:
         """Determine number of iterations to execute in the next inner loop.
 
         We take into account:
           - estimated total number of iterations left in tracked duration
-          - we want to trigger a potential progress report at most every ~0.5sec
+          - batch_seconds: the targeted wall-clock size of one batch
           - next_checkpoint_iter_count: this is the # of iterations at which we want to keep track
                                                                                   of the score we're optimizing.
         """
-        iters_until_next_progress_report = int(0.5 * progress.est_iters_per_second)  # target = 2x/sec
+        iters_until_next_progress_report = int(batch_seconds * progress.est_iters_per_second)
         iters_until_next_checkpoint = next_checkpoint_iter_count - progress.iter_count
         half_iters_until_finished = progress.est_n_iters_remaining // 2  # iters to move 50% closer to being finished
 

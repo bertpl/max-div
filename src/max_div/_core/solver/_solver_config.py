@@ -13,7 +13,7 @@ from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
 from ._solver import MaxDivSolver
-from ._solver_step import SolverStep
+from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep
 
 
 @dataclass(frozen=True)
@@ -29,6 +29,9 @@ class SolverConfig:
     seed: int
     constraint_penalty: ConstraintPenalty
     distance_storage_label: str
+    # `batch_seconds` targets the wall-clock size of one optimization batch (set per worker by
+    # the parallel builder)
+    batch_seconds: float = REPORTING_BATCH_SECONDS
 
     def build_solver(self, store: DistanceStore) -> MaxDivSolver:
         """Return a solver configured as this record describes, reading the given store."""
@@ -43,6 +46,7 @@ class SolverConfig:
             seed=self.seed,
             constraint_penalty=self.constraint_penalty,
             distance_storage_label=self.distance_storage_label,
+            batch_seconds=self.batch_seconds,
         )
 
     def with_seed(self, seed: int) -> "SolverConfig":

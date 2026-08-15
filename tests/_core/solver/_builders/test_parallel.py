@@ -14,6 +14,7 @@ from max_div._core.solver._parallel import (
 )
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
+from max_div._core.solver._solver_step import COOPERATIVE_BATCH_SECONDS, REPORTING_BATCH_SECONDS
 from max_div._core.solver._strategies import InitializationStrategy
 
 _BUDGET = iterations(120)
@@ -187,14 +188,11 @@ def test_default_worker_count_is_three_quarters_of_the_cores_at_least_two(
 # =================================================================================================
 #  Groups
 # =================================================================================================
-@pytest.mark.parametrize(
-    "total,expected",
-    [(1, 1), (2, 1), (3, 1), (4, 2), (6, 3), (8, 4), (12, 5), (24, 7), (48, 10)],
-)
-def test_default_group_count_targets_twice_as_many_groups_as_members(total, expected):
-    """The group count follows round(sqrt(2 * total)), capped so groups keep 2 workers (1 total -> 1 group)."""
+@pytest.mark.parametrize("total", [1, 2, 4, 8, 48])
+def test_default_group_count_is_one(total):
+    """The default is one group at any worker total: benchmarks showed a single group converging fastest."""
     # --- act / assert ------------------------------------
-    assert default_group_count(total) == expected
+    assert default_group_count(total) == 1
 
 
 @pytest.mark.parametrize(
@@ -261,13 +259,13 @@ def test_a_nested_sequence_fixes_grouping_and_configurations():
     ]
 
 
-def test_an_integer_worker_count_defaults_to_cooperative_groups():
-    """An integer count groups by the default rule, so cooperation is the default rather than opt-in."""
+def test_an_integer_worker_count_defaults_to_one_cooperative_group():
+    """An integer count defaults to a single group, so cooperation is the default rather than opt-in."""
     # --- act ---------------------------------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 4).build()
 
     # --- assert ------------------------------------------
-    assert solver._group_sizes == [2, 2]
+    assert solver._group_sizes == [4]
 
 
 def test_a_cooperative_portfolio_solves():
@@ -278,3 +276,16 @@ def test_a_cooperative_portfolio_solves():
     # --- assert ------------------------------------------
     assert solution.i_selected.size == 8
     assert len(solution.workers) == 2
+
+
+def test_cooperative_workers_batch_at_the_cooperative_interval():
+    """Workers in groups of two or more carry the tighter batch interval; lone workers keep the default."""
+    # --- arrange / act -----------------------------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 3, n_groups=2).build()
+
+    # --- assert ------------------------------------------
+    assert [config.batch_seconds for config in solver._solver_configs] == [
+        COOPERATIVE_BATCH_SECONDS,
+        COOPERATIVE_BATCH_SECONDS,
+        REPORTING_BATCH_SECONDS,
+    ]
