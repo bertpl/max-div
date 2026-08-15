@@ -23,9 +23,9 @@ from ._cli import cli
     help="Verbosity level (0=silent, 10=tqdm, 20=tabular). Default=20.",
 )
 @click.option(
-    "--size",
-    default=10,
-    help="Problem size parameter. Default=10.",
+    "--n",
+    default=1000,
+    help="Problem size n. Default=1000.",
 )
 @click.option(
     "--preset",
@@ -37,7 +37,7 @@ def solve(
     iterations: int | None = None,
     seconds: float | None = None,
     verbosity: int = Verbosity.TABULAR,
-    size: int = 10,
+    n: int = 1000,
     preset: str = "default",
 ) -> None:
     """Run the solver on requested benchmark problem."""
@@ -60,7 +60,7 @@ def solve(
         MaxDivSolverBuilder(
             BenchmarkProblemFactory.construct_problem(
                 name=test_problem,
-                size=size,
+                n=n,
                 diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
             ),
         )

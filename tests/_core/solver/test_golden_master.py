@@ -49,7 +49,7 @@ from numba import config as numba_config
 from numpy.typing import NDArray
 
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
-from max_div._core.metrics import DistanceMetric
+from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._duration import iterations
@@ -62,9 +62,10 @@ PROBLEMS = ["U1", "U2", "U3", "U4", "C1", "C2", "C3", "C4"]
 PRESETS = [SolverPreset.RANDOM, SolverPreset.GUIDED, SolverPreset.SMART, SolverPreset.THOROUGH]
 SEEDS = [42, 123]
 
-# small problems (size=1 -> n=100..150, k=10) + tiny iteration budget: full matrix must stay
+# small problems (PROBLEM_N) + tiny iteration budget: full matrix must stay
 # fast with NUMBA_DISABLE_JIT, where these solves run interpreted
 N_ITERATIONS = 30
+PROBLEM_N = 100
 
 
 def _active_regime() -> str:
@@ -109,9 +110,9 @@ def _distances_from(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDA
 
 
 def _solve(problem_name: str, preset: SolverPreset, seed: int) -> MaxDivSolution:
-    params = BenchmarkProblemFactory.get_all_benchmark_problems()[problem_name].get_example_parameters()
-    params["size"] = 1
-    generated = BenchmarkProblemFactory.construct_problem(problem_name, **params)
+    generated = BenchmarkProblemFactory.construct_problem(
+        problem_name, n=PROBLEM_N, diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION
+    )
     # quantize the vectors: problem generation may involve transcendental functions (e.g. a power
     # mapping) whose SIMD implementations differ ~1 ULP across CPU generations; rounding to a coarse
     # grid absorbs that, so the solver runs on bit-identical inputs on every machine

@@ -4,15 +4,17 @@
 
 ### A. Overall Approach
 
-Samples are drawn in a cone-shaped region around the line spanning $(0,0,\ldots,0) \in \mathbb{R}^d$ to $(1,1,\ldots,1) \in \mathbb{R}^d$, where each sample is constructed as follows:
+Samples are drawn in a cone-shaped region around the line spanning $(0,0,\ldots,0) \in \mathbb{R}^d$ to $(1,1,\ldots,1) \in \mathbb{R}^d$, with $d = \lceil n/100 \rceil$, where each sample is constructed as follows:
 
 - determine radius $r = \frac{1}{10}\sqrt{d}$   (ensuring a cone with constant angular width as $d$ increases)
 - choose a point randomly at a distance $r$ from $(1,1,\ldots,1) \in \mathbb{R}^d$ in a random direction
 - scale point (component-wise) with scaling factor $c$ drawn from a uniform distribution over $[0, 1]$
 
+Because points are placed uniformly along the cone axis while the cone's cross-section volume grows like $c^{d-1}$, the volumetric density concentration toward the cone's tip sharpens exponentially with $d$ — the most extreme density regime in the suite.
+
 ### B. Visualization
 
-This image shows problem U4 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=20$, $m=0$):
+This image shows problem U4 with $n=200$ (thus $d=2$, $k=20$, $m=0$):
 
 ![Problem U4](./images/problem_U4.webp){ .center }
 

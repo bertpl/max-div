@@ -4,11 +4,17 @@
 
 ### A. Overall Approach
 
-Vectors are drawn from a uniform distribution over $[0, 1]^d$.
+`U1` is the suite's **reference problem for cross-tool comparisons**: fixed at $d=2$ so every third-party subset-selection tool can run it, with a geometry chosen to make solver-quality differences clearly visible. Vectors form a mixture with fixed proportions of $n$:
+
+- **three gaussian clusters** with equal point counts and spreads in ratio $\sim$ 1:4:9 ($75\%$ of points) — the same number of points in very different volumes, so a diversity-aware selection must allocate against point count, not spatial extent,
+- a **uniform background** over the unit square ($20\%$),
+- a **sparse halo of far outliers** on a ring outside the unit square ($5\%$) — the classic trap for one-shot farthest-point greedy selection, which spends its opening picks there.
+
+Because the proportions are fixed, the density structure is independent of $n$: growing the problem yields the same picture, denser.
 
 ### B. Visualization
 
-This image shows problem U1 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=20$, $m=0$):
+This image shows problem U1 with $n=200$ (thus $d=2$, $k=20$, $m=0$):
 
 ![Problem U1](./images/problem_U1.webp){ .center }
 

@@ -11,7 +11,7 @@ def test_run_maxmin_maxdiv_smoke(tmp_path: Path):
     # --- act ---------------------------------------------
     run_maxmin_maxdiv(
         problems=("U1",),
-        sizes=(1,),
+        sizes=(100,),
         time_budgets_sec=[0.001],
         seeds=(0,),
         out_path=out_path,
@@ -30,7 +30,7 @@ def test_run_incumbent_maxdiv_smoke(tmp_path: Path):
 
     # --- act ---------------------------------------------
     run_incumbent_maxdiv(
-        cases=(("U3", 1, 1.0),),
+        cases=(("U3", 100, 1.0),),
         time_budgets_sec=[0.001],
         seeds=(0,),
         out_path=out_path,

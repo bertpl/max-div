@@ -1,76 +1,49 @@
-from typing import Any
-
-import numpy as np
+import math
 
 from max_div._core.benchmark_problems._registry import BenchmarkProblem
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
 
-from ._helpers import sort_vectors
+from ._helpers import make_banded_vectors_and_bands
 
 
 # =================================================================================================
-#  C1 - Non-Uniform - Easy constraints
+#  C1 - Exact stratified quotas - Constrained cross-tool reference
 # =================================================================================================
 class BenchmarkProblem_C1(BenchmarkProblem):
+    """C1 is the fixed-d=2 constrained reference problem for cross-tool comparisons.
+
+    Non-overlapping bands partition the population and each band carries an exact selection
+    quota — the constraint form restricted third-party tools support.
+    """
+
     @classmethod
     def name(cls) -> str:
         return "C1"
 
     @classmethod
     def description(cls) -> str:
-        return "Problem with semi-non-uniform vector density and simple constraints"
+        return "Constrained 2D problem with exact per-band quotas (non-overlapping, partition)"
 
     @classmethod
-    def supported_params(cls) -> dict[str, str]:
-        return {
-            "size": "(int) value in [1, ...].  Problem size, with d=2, n=100*size, k=10*size, m=2*size",
-            "diversity_metric": "(DiversityMetric) diversity metric to be maximized",
-        }
-
-    @classmethod
-    def get_example_parameters(cls) -> dict[str, Any]:
-        return {
-            "size": 1,
-            "diversity_metric": DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-        }
-
-    @classmethod
-    def get_problem_dimensions(cls, **kwargs: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
-        size: int = kwargs["size"]  # required parameter, see supported_params()
+    def _get_problem_dimensions(cls, n: int) -> tuple[int, int, int, int, int]:
         d = 2
-        n = 100 * size
-        k = 10 * size
-        m = 2 * size
+        k = math.ceil(n / 10)
+        m = math.ceil(k / 5)  # tied to k so the exact quotas below can sum to k structurally
         n_con_indices = n
         return d, n, k, m, n_con_indices
 
     @classmethod
-    def _create_problem_instance(  # ty: ignore[invalid-method-override] -- factory always dispatches with matching named kwargs
-        cls,
-        size: int,
-        diversity_metric: DiversityMetric,
-        **kwargs: Any,  # noqa: ANN401 -- heterogeneous per-problem parameters
-    ) -> VectorMaxDivProblem:
-        _d, n, k, m, _ = cls.get_problem_dimensions(size=size)
+    def _create_problem_instance(cls, n: int, diversity_metric: DiversityMetric) -> VectorMaxDivProblem:
+        _d, _, k, m, _ = cls._get_problem_dimensions(n)
+        vectors, bands = make_banded_vectors_and_bands(n, m)
 
-        # Generate semi-non-uniform random vectors (uniform + gaussian)
-        np.random.seed(42)
-        uniform_col = np.random.rand(n, 1)
-        gaussian_col = np.random.randn(n, 1)
-        vectors = np.concatenate((uniform_col, gaussian_col), axis=1).astype(np.float32)
-        vectors = sort_vectors(vectors)  # sort by increasing L2 norm of rows
-
-        # Generate constraints
+        # exact quota of 5 per band; the last band takes the remainder so the quotas sum to k
         constraints: list[Constraint] = []
-        for i in range(m):
-            # generate m bands [v_min, v_max] spanning dimension 0   (total range [0,1])
-            # add specify constraint that at least 4 samples should be taken from each band
-            # (k=5*m and n=50*m, so this should always be feasible)
-            v_min, v_max = i / m, (i + 1) / m  # range of values in dimension 0
-            indices_in_range = [idx for idx in range(n) if v_min <= vectors[idx, 0] < v_max]
-            constraints.append(Constraint(int_set=set(indices_in_range), min_count=4, max_count=k))
+        for i, band in enumerate(bands):
+            quota = 5 if i < m - 1 else k - 5 * (m - 1)
+            constraints.append(Constraint(int_set=set(band), min_count=quota, max_count=quota))
 
         return VectorMaxDivProblem(
             vectors=vectors,

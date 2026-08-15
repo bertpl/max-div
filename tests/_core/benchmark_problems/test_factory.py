@@ -4,6 +4,8 @@ from max_div._core.benchmark_problems import BenchmarkProblem, BenchmarkProblemF
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
 
+ALL_PROBLEM_NAMES = list(BenchmarkProblemFactory.get_all_benchmark_problems().keys())
+
 
 def test_benchmark_problem_factory_show_all():
     BenchmarkProblemFactory.show_all()  # just ensure no errors occur
@@ -24,12 +26,12 @@ def test_benchmark_problem_factory_get_all_benchmark_problems():
     )
 
 
-@pytest.mark.parametrize("name", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
+@pytest.mark.parametrize("name", ALL_PROBLEM_NAMES)
 def test_benchmark_problem_factory_create_problem(name: str):
     # --- act ---------------------------------------------
-    problem_cls = BenchmarkProblemFactory.get_all_benchmark_problems()[name]
-    example_params = problem_cls.get_example_parameters()
-    problem_instance = BenchmarkProblemFactory.construct_problem(name, **example_params)
+    problem_instance = BenchmarkProblemFactory.construct_problem(
+        name, n=100, diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION
+    )
 
     # --- assert ------------------------------------------
     assert isinstance(problem_instance, MaxDivProblem)
@@ -40,34 +42,37 @@ def test_benchmark_problem_factory_create_problem_invalid_name():
     invalid_name = "NonExistentBenchmarkProblem"
 
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError):
-        BenchmarkProblemFactory.construct_problem(invalid_name)
+    with pytest.raises(ValueError, match="not registered"):
+        BenchmarkProblemFactory.construct_problem(invalid_name, n=100, diversity_metric=DiversityMetric.MIN_SEPARATION)
 
 
-def test_benchmark_problem_factory_create_problem_invalid_params():
-    # --- arrange -----------------------------------------
-    valid_name = next(iter(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
-    invalid_params = {"non_existent_param": 42}
+@pytest.mark.parametrize("name", ALL_PROBLEM_NAMES)
+@pytest.mark.parametrize("n", [0, 19])
+def test_benchmark_problem_factory_rejects_n_below_minimum(name: str, n: int):
+    """Both entry points refuse n below the supported minimum."""
+    with pytest.raises(ValueError, match="n >= 20"):
+        BenchmarkProblemFactory.construct_problem(name, n=n, diversity_metric=DiversityMetric.MIN_SEPARATION)
+    with pytest.raises(ValueError, match="n >= 20"):
+        BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
 
-    # --- act & assert ------------------------------------
-    with pytest.raises(ValueError):
-        BenchmarkProblemFactory.construct_problem(valid_name, **invalid_params)
 
-
-@pytest.mark.parametrize("benchmark_name", list(BenchmarkProblemFactory.get_all_benchmark_problems().keys()))
-@pytest.mark.parametrize("size", [2, 4, 8, 16])
-def test_benchmark_problem_factory_get_problem_dimensions(benchmark_name: str, size: int):
+@pytest.mark.parametrize("name", ALL_PROBLEM_NAMES)
+@pytest.mark.parametrize("n", [20, 37, 100, 137, 314])
+def test_benchmark_problem_factory_get_problem_dimensions(name: str, n: int):
+    """The dimensions report matches the constructed problem at round and odd n alike."""
     # --- act ---------------------------------------------
     problem = BenchmarkProblemFactory.construct_problem(
-        benchmark_name,
-        size=size,
+        name,
+        n=n,
         diversity_metric=DiversityMetric.MIN_SEPARATION,
     )
-    d, n, k, m, n_con_indices = BenchmarkProblemFactory.get_problem_dimensions(benchmark_name, size=size)
+    d, n_reported, k, m, n_con_indices = BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
 
     # --- assert ------------------------------------------
     assert problem.d == d
-    assert problem.n == n
+    assert problem.n == n_reported == n
     assert problem.k == k
     assert problem.m == m
+    assert d >= 1
+    assert k >= 2
     assert 0.9 * n_con_indices <= problem.n_constraint_indices <= 1.1 * n_con_indices

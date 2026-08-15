@@ -9,18 +9,18 @@ from ._utils import estimate_execution_time_sec_multi, get_n_processes
 def determine_benchmark_scope_for_max_duration(
     presets: list[SolverPreset],
     problems: list[str],
-    size: int,
+    n: int,
     max_duration_sec: float,
     max_run_duration_sec: float | None = None,
 ) -> tuple[float, list[SolverPresetBenchmarkParams]]:
-    """Compute full list of benchmark runs to be executed based on presets, problems, size, and target duration.
+    """Compute the full benchmark-run list from presets, problems, problem size n, and target duration.
 
     This method auto-tunes speed to fall just within the target duration.
     Returns (speed, scope)-tuple.
     """
 
     def _get_scope_for_speed(_speed: float) -> list[SolverPresetBenchmarkParams]:
-        return determine_benchmark_scope(presets, problems, size, _speed, max_run_duration_sec)
+        return determine_benchmark_scope(presets, problems, n, _speed, max_run_duration_sec)
 
     def _get_duration_for_speed(_speed: float) -> float:
         return estimate_execution_time_sec_multi(_get_scope_for_speed(_speed))
@@ -54,11 +54,11 @@ def determine_benchmark_scope_for_max_duration(
 def determine_benchmark_scope(
     presets: list[SolverPreset],
     problems: list[str],
-    size: int,
+    n: int,
     speed: float,
     max_run_duration_sec: float | None = None,
 ) -> list[SolverPresetBenchmarkParams]:
-    """Compute full list of benchmark runs to be executed based on presets, problems, size, and speed."""
+    """Compute full list of benchmark runs to be executed based on presets, problems, problem size n, and speed."""
     # --- speed-dependent settings ------------------------
     interp_speed = [0.0, 0.5, 0.99, 1.0]
     interp_max_duration_sec = [24 * 3600.0, 2 * 3600.0, 2.0, 1e-3]
@@ -84,7 +84,7 @@ def determine_benchmark_scope(
         SolverPresetBenchmarkParams(
             preset=preset,
             problem_name=problem,
-            problem_size=size,
+            problem_size=n,
             duration=TargetTimeDuration(t_target_sec=duration_sec),
             seed=seed,
         )

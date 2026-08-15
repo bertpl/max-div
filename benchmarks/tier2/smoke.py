@@ -28,13 +28,13 @@ OUTPUT_DIR = Path("reports/benchmarks/smoke")
 
 def main() -> None:
     """Run the smoke scenario and write records + one figure."""
-    problem = build_problem("U1", size=2, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+    problem = build_problem("U1", n=200, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
     seeds = (0, 1)
 
     records = run_maxdiv_ladder(
         problem,
         problem_name="U1",
-        size=2,
+        size=200,
         time_budgets_sec=time_ladder(0.001, 0.064),
         iteration_budgets=[100, 1000],
         seeds=seeds,
@@ -51,7 +51,7 @@ def main() -> None:
     ]
     for adapter in adapters:
         try:
-            records += run_adapter(adapter, problem, problem_name="U1", size=2, seeds=seeds)
+            records += run_adapter(adapter, problem, problem_name="U1", size=200, seeds=seeds)
         except ImportError:
             print(f"skipped (not installed): {adapter.name}")
 
@@ -60,7 +60,7 @@ def main() -> None:
         [r for r in records if not r.budget.startswith("iterations:")],
         metric_name=DiversityMetric.GEOMEAN_SEPARATION.name,
         path=OUTPUT_DIR / "anytime_u1_s2.svg",
-        title="smoke: U1 size=2 (validation only, not a published result)",
+        title="smoke: U1 n=200 (validation only, not a published result)",
     )
     print(f"smoke OK: {len(records)} records -> {OUTPUT_DIR}")
 

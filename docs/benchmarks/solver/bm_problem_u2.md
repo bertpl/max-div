@@ -4,11 +4,11 @@
 
 ### A. Overall Approach
 
-Vector components are drawn from a standard normal distribution $\mathcal{N}(0, 1)$.
+Vectors are drawn from a uniform distribution over $[0, 1]^d$, with $d = \lceil n/100 \rceil$.
 
 ### B. Visualization
 
-This image shows problem U2 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=20$, $m=0$):
+This image shows problem U2 with $n=200$ (thus $d=2$, $k=20$, $m=0$):
 
 ![Problem U2](./images/problem_U2.webp){ .center }
 

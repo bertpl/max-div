@@ -44,7 +44,7 @@ TIME_BUDGETS_SEC = time_ladder(0.001, 10.0)
 
 # Experiment 1: max-min gap to proven optimum.
 MAXMIN_PROBLEMS = ("U1", "C1")
-MAXMIN_SIZES = (1, 2, 3)  # n = 100 / 200 / 300; the CP-SAT proof cliff sits at n ~ 400
+MAXMIN_SIZES = (100, 200, 300)  # the CP-SAT proof cliff sits at n ~ 400
 MAXMIN_CAP_SEC = 120.0
 
 # Experiment 2: backend scaling ladder (custom d=4 family; k = n // 10).
@@ -53,7 +53,7 @@ SCALING_DIMENSIONS = 4
 SCALING_CAPS_SEC = {"SCIP (1 thread)": 900.0, "CP-SAT (1 worker)": 3600.0, "CP-SAT (8 workers)": 3600.0}
 
 # Experiment 3: incumbent-at-budget geomean panel on shipped problems.
-INCUMBENT_CASES = (("U3", 1, 10_800.0), ("C4", 1, 900.0))  # C4's bound is dead by 900 s already
+INCUMBENT_CASES = (("U3", 100, 10_800.0), ("C4", 150, 900.0))  # C4's bound is dead by 900 s already
 
 
 def scaling_problem(n: int) -> MaxDivProblem:
@@ -68,7 +68,7 @@ def run_maxmin_exact(out_path: Path = OUTPUT_DIR / "maxmin_exact.json") -> None:
     exact_rows = []
     for name in MAXMIN_PROBLEMS:
         for size in MAXMIN_SIZES:
-            problem = build_problem(name, size=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
+            problem = build_problem(name, n=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
             res = solve_maxmin_cpsat(problem, time_limit_sec=MAXMIN_CAP_SEC)
             exact_rows.append(
                 {
@@ -103,7 +103,7 @@ def run_maxmin_maxdiv(
     records = []
     for name in problems:
         for size in sizes:
-            problem = build_problem(name, size=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
+            problem = build_problem(name, n=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
             records += run_maxdiv_ladder(
                 problem, problem_name=name, size=size, time_budgets_sec=time_budgets_sec, seeds=seeds
             )
@@ -144,7 +144,7 @@ def run_incumbent_exact(out_path: Path = OUTPUT_DIR / "incumbent.json") -> None:
     """Experiment 3, exact half: long-cap CP-SAT incumbents on the uncertifiable problems."""
     panel_rows = []
     for name, size, cap in INCUMBENT_CASES:
-        problem = build_problem(name, size=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+        problem = build_problem(name, n=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
         res = solve_nn_assignment_cpsat(problem, DiversityMetric.GEOMEAN_SEPARATION, time_limit_sec=cap)
         panel_rows.append(
             {
@@ -178,7 +178,7 @@ def run_incumbent_maxdiv(
     """
     records = []
     for name, size, _cap in cases:
-        problem = build_problem(name, size=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+        problem = build_problem(name, n=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
         records += run_maxdiv_ladder(
             problem, problem_name=name, size=size, time_budgets_sec=time_budgets_sec, seeds=seeds
         )

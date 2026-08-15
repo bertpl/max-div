@@ -4,17 +4,20 @@
 
 ### A. Overall Approach
 
+`C1` is the suite's **constrained reference problem for cross-tool comparisons**: its constraints are maximally restrictive — exact stratified quotas, the one constraint form that restricted third-party tools support.
+
 Vectors are 2-dimensional and have...
 
 - first component drawn from a uniform distribution over $[0, 1]$,
 - second component drawn from a standard normal distribution $\mathcal{N}(0, 1)$.
 
-All vectors are split in $m=2s$ non-overlapping groups, by splitting the range $[0, 1]$ of the first component into $m$ equal segments.
-From each group between $4$ and $k$ vectors need to be selected.  This is always feasible, since $k=5m$ and $n=50m$.
+All vectors are split in $m=\lceil k/5 \rceil$ non-overlapping groups, by splitting the range $[0, 1]$ of the first component into $m$ equal segments. Every vector lands in exactly one group, so the groups **partition** the population.
+
+From each group an **exact** number of vectors must be selected: $5$ per group, with the last group taking the remainder $k - 5(m-1)$, so the quotas sum exactly to $k$. The count structure fully determines the per-group allocation, leaving a solver only the within-group choices.
 
 ### B. Visualization
 
-This image shows problem C1 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=20$, $m=4$):
+This image shows problem C1 with $n=200$ (thus $d=2$, $k=20$, $m=4$):
 
 ![Problem C1](./images/problem_C1.webp){ .center }
 

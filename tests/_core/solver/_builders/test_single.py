@@ -234,10 +234,10 @@ def test_max_div_solver_quadratic_penalty_end_to_end():
 # =================================================================================================
 #  Presets
 # =================================================================================================
-@pytest.mark.parametrize("size", [1, 5])
+@pytest.mark.parametrize("n", [100, 500])
 @pytest.mark.parametrize("problem_name", swept_benchmark_problems())
 @pytest.mark.parametrize("preset", list(SolverPreset))
-def test_max_div_solver_builder_preset(problem_name: str, size: int, preset: SolverPreset):
+def test_max_div_solver_builder_preset(problem_name: str, n: int, preset: SolverPreset):
     """
     Test different preset strategy on reference problems and check if we're optimizing.
     """
@@ -247,7 +247,7 @@ def test_max_div_solver_builder_preset(problem_name: str, size: int, preset: Sol
     # prepare problem & solver state
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
         name=problem_name,
-        size=size,
+        n=n,
         diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
     )
 

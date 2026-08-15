@@ -12,7 +12,7 @@ def test_result_to_from_json():
     params = SolverPresetBenchmarkParams(
         preset=SolverPreset.RANDOM,
         problem_name="U1",
-        problem_size=1,
+        problem_size=100,
         duration=TargetTimeDuration(t_target_sec=0.001),
         seed=42,
     )

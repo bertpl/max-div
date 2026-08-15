@@ -1,4 +1,4 @@
-from typing import Any
+import math
 
 import numpy as np
 
@@ -10,55 +10,67 @@ from ._helpers import sort_vectors
 
 
 # =================================================================================================
-#  U1 - Uniform - Unconstrained
+#  U1 - Clustered 2D cross-tool reference - Unconstrained
 # =================================================================================================
 class BenchmarkProblem_U1(BenchmarkProblem):
+    """U1 is the fixed-d=2 reference problem for cross-tool comparisons.
+
+    Its clustered geometry is chosen so solver-class quality differences are clearly visible, and
+    its component proportions are fixed fractions of n, so the density structure is n-invariant:
+    growing n yields the same picture, denser.
+    """
+
     @classmethod
     def name(cls) -> str:
         return "U1"
 
     @classmethod
     def description(cls) -> str:
-        return "Unconstrained problem with uniform vector density"
+        return "Unconstrained 2D problem with clustered density, uniform background and outlier halo"
 
     @classmethod
-    def supported_params(cls) -> dict[str, str]:
-        return {
-            "size": "(int) value in [1, ...].  Problem size, with d=size, n=100*size, k=10*size",
-            "diversity_metric": "(DiversityMetric) diversity metric to be maximized",
-        }
-
-    @classmethod
-    def get_example_parameters(cls) -> dict[str, Any]:
-        return {
-            "size": 1,
-            "diversity_metric": DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-        }
-
-    @classmethod
-    def get_problem_dimensions(cls, **kwargs: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
-        size: int = kwargs["size"]  # required parameter, see supported_params()
-        d = size
-        n = 100 * size
-        k = 10 * size
+    def _get_problem_dimensions(cls, n: int) -> tuple[int, int, int, int, int]:
+        d = 2
+        k = math.ceil(n / 10)
         m = 0
         n_con_indices = 0
         return d, n, k, m, n_con_indices
 
     @classmethod
-    def _create_problem_instance(  # ty: ignore[invalid-method-override] -- factory always dispatches with matching named kwargs
-        cls,
-        size: int,
-        diversity_metric: DiversityMetric,
-        **kwargs: Any,  # noqa: ANN401 -- heterogeneous per-problem parameters
-    ) -> VectorMaxDivProblem:
-        d, n, k, _, _ = cls.get_problem_dimensions(size=size)
+    def _create_problem_instance(cls, n: int, diversity_metric: DiversityMetric) -> VectorMaxDivProblem:
+        """Generate the clustered cross-tool reference geometry in the unit square.
 
-        # Generate uniform random vectors
+        Components (fractions of n): three gaussian clusters with equal point counts and spreads in
+        ratio ~1:4:9 (75% of mass, volumetric density spanning ~two orders of magnitude), a uniform
+        background (20%), and a sparse ring of far outliers (5%).
+        """
+        # split n into three equal clusters, the halo (with an enforced minimum of one point),
+        # and the background as remainder
+        n_cluster = int(n * 0.75) // 3
+        n_halo = max(1, int(n * 0.05))
+        n_background = n - 3 * n_cluster - n_halo
+
         np.random.seed(42)
-        vectors = np.random.random_sample(size=(n, d)).astype(np.float32)
-        vectors = sort_vectors(vectors)  # sort by increasing L2 norm of rows
+        parts = []
 
+        # step 1 - draw three gaussian clusters with equal counts and strongly different spreads
+        centers = [(0.25, 0.7), (0.7, 0.65), (0.55, 0.25)]
+        sigmas = [0.012, 0.045, 0.11]
+        for center, sigma in zip(centers, sigmas):
+            parts.append(np.random.normal(loc=center, scale=sigma, size=(n_cluster, 2)))
+
+        # step 2 - draw the uniform background over the unit square
+        parts.append(np.random.random_sample(size=(n_background, 2)))
+
+        # step 3 - draw the outlier halo, a sparse ring well outside the unit square's core
+        angle = np.random.random_sample(size=n_halo) * 2.0 * np.pi
+        radius = 0.72 + 0.10 * np.random.random_sample(size=n_halo)
+        parts.append(np.stack([0.5 + radius * np.cos(angle), 0.5 + radius * np.sin(angle)], axis=1))
+
+        # step 4 - sort vectors by increasing L2 norm of rows & return problem instance
+        vectors = np.concatenate(parts, axis=0).astype(np.float32)
+        vectors = sort_vectors(vectors)
+        _, _, k, _, _ = cls._get_problem_dimensions(n)
         return VectorMaxDivProblem(
             vectors=vectors,
             k=k,

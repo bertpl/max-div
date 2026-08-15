@@ -59,7 +59,7 @@ def _execute_single_run(params: SolverPresetBenchmarkParams) -> SolverPresetBenc
         MaxDivSolverBuilder(
             BenchmarkProblemFactory.construct_problem(
                 name=params.problem_name,
-                size=params.problem_size,
+                n=params.problem_size,
                 diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
             ),
         )

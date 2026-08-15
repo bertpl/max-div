@@ -24,8 +24,8 @@ class BenchmarkSolverConstructor_Initialization(BenchmarkSolverConstructor):
             if preset.is_relevant_for_problem(self.has_constraints)
         }
 
-    def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
-        problem = self.construct_problem(size)
+    def construct_solver(self, n: int, strat_name: str, seed: int) -> MaxDivSolver:
+        problem = self.construct_problem(n)
         preset = self._presets[strat_name]
         return MaxDivSolverBuilder(problem).set_initialization_strategy(preset.create()).with_seed(seed).build()
 

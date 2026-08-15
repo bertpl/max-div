@@ -46,11 +46,11 @@ OUTPUT_DIR = Path("reports/benchmarks/tier2")
 
 SEEDS = (0, 1, 2)
 UNCONSTRAINED_PROBLEMS = ("U1", "U2", "U3", "U4")
-UNCONSTRAINED_SIZES = (2, 10, 50, 200)
+UNCONSTRAINED_SIZES = (200, 1000, 5000, 20000)
 # C3/C4 are excluded: their overlapping constraint groups are inexpressible in code-FDM's
 # disjoint-color model (the adapter refuses them), leaving no competitor to compare against.
 CONSTRAINED_PROBLEMS = ("C1", "C2")
-CONSTRAINED_SIZES = (2, 10, 20)
+CONSTRAINED_SIZES = (200, 1000, 2000)
 CONSTRAINED_METRIC = DiversityMetric.MIN_SEPARATION
 
 # Ladder ceiling 10 s: the last rung is the first value >= the ceiling (16.4 s), so the
@@ -86,7 +86,7 @@ def run_competitors_unconstrained(
     records: list[RunRecord] = []
     for name in UNCONSTRAINED_PROBLEMS:
         for size in UNCONSTRAINED_SIZES:
-            problem = build_problem(name, size=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+            problem = build_problem(name, n=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
             for adapter in unconstrained_adapters():
                 try:
                     records += run_adapter(adapter, problem, problem_name=name, size=size, seeds=SEEDS)
@@ -112,7 +112,7 @@ def run_maxdiv_unconstrained(
     for name in problems:
         for size in sizes:
             for metric in EVALUATED_DIVERSITY_METRICS:
-                metric_problem = build_problem(name, size=size, diversity_metric=metric)
+                metric_problem = build_problem(name, n=size, diversity_metric=metric)
                 records += run_maxdiv_ladder(
                     metric_problem,
                     problem_name=name,
@@ -132,7 +132,7 @@ def run_competitors_constrained(
     records: list[RunRecord] = []
     for name in CONSTRAINED_PROBLEMS:
         for size in CONSTRAINED_SIZES:
-            problem = build_problem(name, size=size, diversity_metric=CONSTRAINED_METRIC)
+            problem = build_problem(name, n=size, diversity_metric=CONSTRAINED_METRIC)
             records += run_adapter(CodeFdmFairFlow(), problem, problem_name=name, size=size, seeds=SEEDS)
             print(f"competitors {name} size={size} done ({len(records)} records so far)", flush=True)
             save_records(records, out_path)
@@ -153,7 +153,7 @@ def run_maxdiv_constrained(
     records: list[RunRecord] = []
     for name in problems:
         for size in sizes:
-            problem = build_problem(name, size=size, diversity_metric=CONSTRAINED_METRIC)
+            problem = build_problem(name, n=size, diversity_metric=CONSTRAINED_METRIC)
             records += run_maxdiv_ladder(
                 problem,
                 problem_name=name,
