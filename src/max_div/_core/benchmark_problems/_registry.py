@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
+from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
+
+# Below this, k = ceil(n/10) < 2 and a diversity problem is degenerate.
+MIN_N = 20
 
 
 # =================================================================================================
@@ -32,60 +36,48 @@ class BenchmarkProblem(ABC):
         raise NotImplementedError
 
     @classmethod
-    @abstractmethod
-    def supported_params(cls) -> dict[str, str]:
-        """Return a dictionary of supported parameters for this benchmark problem.
+    def get_problem_dimensions(cls, n: int) -> tuple[int, int, int, int, int]:
+        """Return problem dimensions as (d, n, k, m, n_con_indices)-tuple for the given problem size n.
 
-        Parameters are returned as (param_name, param_description) key-value pairs in a dict.
+        Dimensions can be indicative (especially n_con_indices) if they are stochastic.  Main goal of
+        this method is to get an idea of dimensions without needing to create the full problem instance.
         """
-        raise NotImplementedError
+        cls.validate_n(n)
+        return cls._get_problem_dimensions(n)
 
     @classmethod
     @abstractmethod
-    def get_example_parameters(cls) -> dict[str, Any]:
-        """Return a dictionary of example acceptable parameter values for this benchmark problem.
-
-        Values are returned as (param_name, example_value) key-value pairs in a dict.
-        """
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def get_problem_dimensions(cls, **kwargs: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
-        """Returns problem dimensions as (d, n, k, m, n_con_indices)-tuple for this benchmark problem.
-
-        Dimensions are computed given the provided parameters.  These dimensions can be indicative
-        (especially n_con_indices), if they are stochastic.  Main goal of this method is to get an idea of
-        dimensions without needing to create the full problem instance.
-
-        :param kwargs: parameters passed to create_problem_instance() for which we want to know resulting dimensions.
-        """
+    def _get_problem_dimensions(cls, n: int) -> tuple[int, int, int, int, int]:
         raise NotImplementedError
 
     # -------------------------------------------------------------------------
     #  Problem creation
     # -------------------------------------------------------------------------
     @classmethod
-    def create_problem_instance(cls, **kwargs: Any) -> VectorMaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
-        """Create and return an instance of MaxDivProblem for this benchmark problem.
+    def create_problem_instance(cls, n: int, diversity_metric: DiversityMetric) -> VectorMaxDivProblem:
+        """Create and return a MaxDivProblem instance of this benchmark problem with the given size n.
 
-        The provided parameters are used as needed.
+        Args:
+            n: Problem size (number of vectors to choose from); all other dimensions are derived
+                from it.  Must be >= 20 — below that the selection size k drops under 2 and the
+                problem is degenerate.
+            diversity_metric: Diversity metric to be maximized.
         """
-        # --- validate ----------------
-        supported_params = cls.supported_params().keys()
-        for key in kwargs:
-            if key not in supported_params:
-                raise ValueError(
-                    f"Parameter '{key}' is not supported by benchmark problem '{cls.name()}'."
-                    f" Supported parameters: {list(supported_params)}"
-                )
+        cls.validate_n(n)
+        return cls._create_problem_instance(n, diversity_metric)
 
-        # --- create ------------------
-        return cls._create_problem_instance(**kwargs)
+    @classmethod
+    def validate_n(cls, n: int) -> None:
+        """Raise ValueError if n is below the smallest non-degenerate problem size."""
+        if n < MIN_N:
+            raise ValueError(
+                f"Benchmark problem '{cls.name()}' requires n >= {MIN_N}, got n={n}."
+                f" Below that, the selection size k drops under 2 and the problem is degenerate."
+            )
 
     @classmethod
     @abstractmethod
-    def _create_problem_instance(cls, **kwargs: Any) -> VectorMaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+    def _create_problem_instance(cls, n: int, diversity_metric: DiversityMetric) -> VectorMaxDivProblem:
         raise NotImplementedError
 
 

@@ -35,10 +35,10 @@ from .bm_solver_presets import (
     help="Problem to benchmark solver presets on",
 )
 @click.option(
-    "--size",
+    "--n",
     is_flag=False,
-    default=100,
-    help="Problem size to benchmark solver presets on",
+    default=10000,
+    help="Problem size n to benchmark solver presets on",
 )
 @click.option(
     "--json-file",
@@ -92,7 +92,7 @@ from .bm_solver_presets import (
 def presets(
     preset: str,
     problem: str,
-    size: int,
+    n: int,
     json_file: bool,
     markdown_file: bool,
     turbo: bool,
@@ -121,7 +121,7 @@ def presets(
         speed, scope = determine_benchmark_scope_for_max_duration(
             presets=presets,
             problems=problems,
-            size=size,
+            n=n,
             max_duration_sec=60.0 * target_max_minutes,
             max_run_duration_sec=max_run_duration_sec,
         )
@@ -129,7 +129,7 @@ def presets(
         scope = determine_benchmark_scope(
             presets=presets,
             problems=problems,
-            size=size,
+            n=n,
             speed=speed,
             max_run_duration_sec=max_run_duration_sec,
         )
@@ -163,7 +163,7 @@ def presets(
 
     # report statistics
     click.echo(f"Executing {len(scope)} solver preset benchmark runs using {n_processes} parallel processes...")
-    click.echo(f"  - problem size  : {size:_}")
+    click.echo(f"  - problem size  : {n:_}")
     click.echo(f"  - speed         : {speed:.6f}")
     click.echo(f"  - problems      : {len(problems):_}".ljust(40) + f"[{', '.join(problems)}]")
     click.echo(f"  - presets       : {len(presets):_}".ljust(40) + f"[{', '.join(presets)}]")
@@ -179,8 +179,8 @@ def presets(
     else:
         for problem in problems:
             # file names for this problem
-            json_file_name = Path(f"preset_results_{problem}_{size}.json") if json_file else None
-            markdown_file_name = f"preset_results_{problem}_{size}.md" if markdown_file else None
+            json_file_name = Path(f"preset_results_{problem}_{n}.json") if json_file else None
+            markdown_file_name = f"preset_results_{problem}_{n}.md" if markdown_file else None
 
             # execute for this problem
             results = execute_solver_presets_benchmark(

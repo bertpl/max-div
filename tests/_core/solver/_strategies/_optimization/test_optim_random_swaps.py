@@ -15,9 +15,9 @@ if TYPE_CHECKING:
     from max_div._core.problem import MaxDivProblem
 
 
-@pytest.mark.parametrize("size", [1, 2, 10])
+@pytest.mark.parametrize("n", [100, 200, 1000])
 @pytest.mark.parametrize("problem_name", swept_benchmark_problems())
-def test_optim_random_swaps(problem_name: str, size: int):
+def test_optim_random_swaps(problem_name: str, n: int):
     """
     Test OptimRandomSwaps strategy on reference problems, with very rudimentary initialization,
     to see if we're optimizing.
@@ -28,7 +28,7 @@ def test_optim_random_swaps(problem_name: str, size: int):
     # prepare problem & solver state
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
         name=problem_name,
-        size=size,
+        n=n,
         diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
     )
     solver_state = SolverState.new(

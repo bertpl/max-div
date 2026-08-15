@@ -1,6 +1,4 @@
-from typing import Any
-
-from max_div._core._utils import ljust_str_list
+from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
 
 from ._registry import BenchmarkProblem, BenchmarkProblemRegistry
@@ -10,26 +8,20 @@ class BenchmarkProblemFactory:
     """Factory class for conveniently constructing MaxDivProblem instances for benchmarking purposes.
 
     This class makes all registered (and discovered) BenchmarkProblem subclasses available (see show_all)
-      and allows creating corresponding MaxDivProblem instances by name & parameter values (see create_problem).
+      and allows creating corresponding MaxDivProblem instances by name & problem size (see construct_problem).
     """
 
     @classmethod
-    def construct_problem(cls, name: str, **params: Any) -> VectorMaxDivProblem:  # noqa: ANN401 -- heterogeneous per-problem parameters
+    def construct_problem(cls, name: str, n: int, diversity_metric: DiversityMetric) -> VectorMaxDivProblem:
         """Create and return an instance of MaxDivProblem for the benchmark problem with the given name.
 
-        The provided parameters are used as needed.
+        Args:
+            name: Registered benchmark problem name, e.g. `"U1"` or `"C3"`.
+            n: Problem size (number of vectors to choose from); all other dimensions are derived
+                from it.  Must be >= 20.
+            diversity_metric: Diversity metric to be maximized.
         """
-        # find BenchmarkProblem subclass
-        registered = BenchmarkProblemRegistry.get_registered_classes()
-        problem_cls = registered.get(name)
-
-        # report issue or return problem instance
-        if problem_cls is None:
-            raise ValueError(
-                f"Benchmark problem '{name}' is not registered."
-                f" Available benchmark problems: {sorted(registered.keys())}"
-            )
-        return problem_cls.create_problem_instance(**params)
+        return cls._get_problem_class(name).create_problem_instance(n, diversity_metric)
 
     @classmethod
     def get_all_benchmark_problems(cls) -> dict[str, type[BenchmarkProblem]]:
@@ -42,40 +34,25 @@ class BenchmarkProblemFactory:
         return sorted(cls.get_all_benchmark_problems().keys())
 
     @classmethod
-    def get_problem_dimensions(cls, name: str, **params: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
-        """Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with the given name.
+    def get_problem_dimensions(cls, name: str, n: int) -> tuple[int, int, int, int, int]:
+        """Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with the given name."""
+        return cls._get_problem_class(name).get_problem_dimensions(n)
 
-        The provided parameters are used as needed.
-        """
+    @classmethod
+    def show_all(cls) -> None:
+        """Show all registered benchmark problems and their descriptions."""
         registered = cls.get_all_benchmark_problems()
+        for name in sorted(registered.keys()):
+            print(f"{name.ljust(20)}: {registered[name].description()}")
+
+    @classmethod
+    def _get_problem_class(cls, name: str) -> type[BenchmarkProblem]:
+        """Return the registered problem class for the given name, or raise a ValueError naming the alternatives."""
+        registered = BenchmarkProblemRegistry.get_registered_classes()
         problem_cls = registered.get(name)
         if problem_cls is None:
             raise ValueError(
                 f"Benchmark problem '{name}' is not registered."
                 f" Available benchmark problems: {sorted(registered.keys())}"
             )
-        return problem_cls.get_problem_dimensions(**params)
-
-    @classmethod
-    def show_all(cls) -> None:
-        """Show all registered benchmark problems and their parameters."""
-        # --- get all registered classes ---
-        registered = cls.get_all_benchmark_problems()
-
-        # --- display ---
-        for name in sorted(registered.keys()):
-            problem_cls = registered[name]
-
-            # show name & description
-            print(f"{name.ljust(20)}: {problem_cls.description()}")
-
-            # show params & descriptions
-            params = problem_cls.supported_params()
-            param_names = sorted(params.keys())
-            param_names_ljust = ljust_str_list(param_names)
-            for param_name, param_name_ljust in zip(param_names, param_names_ljust):
-                param_desc = params[param_name]
-                print(f"    - {param_name_ljust}: {param_desc}")
-
-            # blank line between problems
-            print()
+        return problem_cls

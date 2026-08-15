@@ -1,4 +1,4 @@
-from typing import Any
+import math
 
 import numpy as np
 
@@ -13,6 +13,13 @@ from ._helpers import sort_vectors
 #  U4 - Conic - Unconstrained
 # =================================================================================================
 class BenchmarkProblem_U4(BenchmarkProblem):
+    """Conic vector density; the capstone of the scaling-d unconstrained series.
+
+    Points are placed uniformly along the cone axis while cross-section volume grows like
+    a^(d-1), so volumetric density concentration sharpens exponentially with d — the most
+    extreme density regime in the suite.
+    """
+
     @classmethod
     def name(cls) -> str:
         return "U4"
@@ -22,43 +29,22 @@ class BenchmarkProblem_U4(BenchmarkProblem):
         return "Unconstrained problem with non-uniform vector density (conic)"
 
     @classmethod
-    def supported_params(cls) -> dict[str, str]:
-        return {
-            "size": "(int) value in [1, ...].  Problem size, with d=size, n=100*size, k=10*size",
-            "diversity_metric": "(DiversityMetric) diversity metric to be maximized",
-        }
-
-    @classmethod
-    def get_example_parameters(cls) -> dict[str, Any]:
-        return {
-            "size": 1,
-            "diversity_metric": DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-        }
-
-    @classmethod
-    def get_problem_dimensions(cls, **kwargs: Any) -> tuple[int, int, int, int, int]:  # noqa: ANN401 -- heterogeneous per-problem parameters
-        size: int = kwargs["size"]  # required parameter, see supported_params()
-        d = size
-        n = 100 * size
-        k = 10 * size
+    def _get_problem_dimensions(cls, n: int) -> tuple[int, int, int, int, int]:
+        d = math.ceil(n / 100)
+        k = math.ceil(n / 10)
         m = 0
         n_con_indices = 0
         return d, n, k, m, n_con_indices
 
     @classmethod
-    def _create_problem_instance(  # ty: ignore[invalid-method-override] -- factory always dispatches with matching named kwargs
-        cls,
-        size: int,
-        diversity_metric: DiversityMetric,
-        **kwargs: Any,  # noqa: ANN401 -- heterogeneous per-problem parameters
-    ) -> VectorMaxDivProblem:
+    def _create_problem_instance(cls, n: int, diversity_metric: DiversityMetric) -> VectorMaxDivProblem:
         """We will generate vectors in d-dim. space as a * ([1, 1, 1, ..., 1] + (r * [x1, x2, ..., xd])).
 
         - a is sampled uniformly in [0,1]
         - xi-values are sampled uniformly in the hyper-box [-1, +1]^d and then rescaled to have L2 norm = 1
         - r = 0.1 * sqrt(d), such that the perceived angle of the cone from the origin remains constant as d increases
         """
-        d, n, k, _, _ = cls.get_problem_dimensions(size=size)
+        d, _, k, _, _ = cls._get_problem_dimensions(n)
         r = 0.1 * np.sqrt(d)
 
         # step 1 - generate n x (d+1) matrix of random values in [0,1]

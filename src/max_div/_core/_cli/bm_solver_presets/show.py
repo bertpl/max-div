@@ -38,7 +38,7 @@ def show_solver_presets_benchmark_results(
     headers = ["Target duration"] + [p.value.upper() for p in presets]
     for problem_name in problem_names:
         # check problem properties
-        _, _, _, m, _ = BenchmarkProblemFactory.get_problem_dimensions(problem_name, size=problem_size)
+        _, _, _, m, _ = BenchmarkProblemFactory.get_problem_dimensions(problem_name, n=problem_size)
         has_constraints = m > 0
 
         # each problem has its own tables with results
@@ -106,7 +106,7 @@ def show_solver_presets_benchmark_results(
         # build report for this problem
         report = Report()
         report += [
-            h1(f"Benchmark Results for Problem '{problem_name}' (size={problem_size})."),
+            h1(f"Benchmark Results for Problem '{problem_name}' (n={problem_size})."),
             h2("Actual Total Elapsed Times"),
             "(including initialization & fixed overhead)",
             table_actual_times,

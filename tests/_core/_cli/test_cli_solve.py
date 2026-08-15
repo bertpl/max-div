@@ -11,9 +11,9 @@ from tests.helpers import swept_benchmark_problems
 @pytest.mark.parametrize(
     "options, expected_exit_code",
     [
-        (["--size=2", "--preset=default"], 0),
-        (["--iterations=10", "--size=3"], 0),
-        (["--seconds=0.001", "--size=4"], 0),
+        (["--n=200", "--preset=default"], 0),
+        (["--iterations=10", "--n=300"], 0),
+        (["--seconds=0.001", "--n=400"], 0),
         (["--seconds=0.001"], 0),
         (["--seconds=0.001", "--iterations=1000"], 2),
     ],

@@ -1,8 +1,6 @@
 # Benchmark Results - Problem U1 - Initialization Strategies
 
-!!! note "Measurement vintage"
-    These results were measured with max-div v0.4.7 (January 2026). Later releases have
-    changed solver speed and behavior, so the figures below describe that version's
-    solver, not the current one.
-
---8<-- "docs/benchmarks/solver/results/benchmark_initialization_U1.md"
+!!! note "No measured results yet"
+    `U1` is a new problem (introduced together with the n-based problem parametrization) and has
+    no published initialization-strategy results yet.  The other problems' pages show what these results look
+    like once measured.

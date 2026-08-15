@@ -1,28 +1,28 @@
 # Solver Benchmarking Problems
 
-The package comes with 5 built-in benchmarking problems (each parametrized by size), which can be triggered [via the CLI](../../cli.md) and allow testing of initialization
+The package comes with 8 built-in benchmarking problems, each parametrized directly by the problem size $n$ (all other dimensions derive from it), which can be triggered [via the CLI](../../cli.md) and allow testing of initialization
 and optimization strategies & presets under controlled conditions.
 
 ## High-level overview
 
-We have 4 unconstrained (`U1-U4`) and 4 constrained (`C1-C4`) benchmark problems.  Detailed descriptions of each problem
-can be found by following the provided links.
+We have 4 unconstrained (`U1-U4`) and 4 constrained (`C1-C4`) benchmark problems.  **The first problem of each series (`U1` and `C1`) is a gateway problem**: fixed at $d=2$ and — for `C1` — using the most restrictive constraint shape (exact stratified quotas over a partition), so that every third-party subset-selection tool can run them.  These two anchor the cross-tool comparisons.  The remaining problems carry each series' native difficulty axis: increasingly non-uniform density for `U2-U4` (dimensionality scaling with $n$), increasingly free-form constraints for `C2-C4`.
 
-| Problem Name | $d$ | $n$    | $k$    | $m$  | Description                                                          | Results                  |
-|--------------|-----|--------|--------|------|----------------------------------------------------------------------|--------------------------|
-| `U1`         | $s$ | $100s$ | $10s$  | $0$  | Unconstrained, uniform vector density                                | [link](bm_problem_u1.md) |
-| `U2`         | $s$ | $100s$ | $10s$  | $0$  | Unconstrained, non-uniform vector density (Gaussian)                 | [link](bm_problem_u2.md) |
-| `U3`         | $s$ | $100s$ | $10s$  | $0$  | Unconstrained, non-uniform vector density (Exponential)              | [link](bm_problem_u3.md) |
-| `U4`         | $s$ | $100s$ | $10s$  | $0$  | Unconstrained, non-uniform vector density (Conic)                    | [link](bm_problem_u4.md) |
-| `C1`         | $2$ | $100s$ | $10s$  | $2s$ | semi-uniform vector density, simple non-overlapping constraints      | [link](bm_problem_c1.md) |
-| `C2`         | $2$ | $100s$ | $10s$  | $2s$ | semi-uniform vector density, medium-hard non-overlapping constraints | [link](bm_problem_c2.md) |
-| `C3`         | $s$ | $150s$ | $10s$  | $2s$ | non-uniform vector density, overlapping constraints                  | [link](bm_problem_c3.md) |
-| `C4`         | $s$ | $150s$ | $10s$  | $3s$ | non-uniform vector density, strongly coupled constraints             | [link](bm_problem_c4.md) |
+Detailed descriptions of each problem can be found by following the provided links.
+
+| Problem Name | $d$                    | $k$                   | $m$                  | Description                                                          | Results                  |
+|--------------|------------------------|-----------------------|----------------------|----------------------------------------------------------------------|--------------------------|
+| `U1`         | $2$                    | $\lceil n/10 \rceil$  | $0$                  | Clustered 2D density + background + outlier halo (gateway)           | [link](bm_problem_u1.md) |
+| `U2`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Uniform vector density                                               | [link](bm_problem_u2.md) |
+| `U3`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Non-uniform vector density (Gaussian)                                | [link](bm_problem_u3.md) |
+| `U4`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Non-uniform vector density (Conic)                                   | [link](bm_problem_u4.md) |
+| `C1`         | $2$                    | $\lceil n/10 \rceil$  | $\lceil k/5 \rceil$  | Exact per-band quotas; non-overlapping partition (gateway)           | [link](bm_problem_c1.md) |
+| `C2`         | $2$                    | $\lceil n/10 \rceil$  | $\lceil k/5 \rceil$  | Per-band lower bounds; non-overlapping partition                     | [link](bm_problem_c2.md) |
+| `C3`         | $\lceil n/150 \rceil$  | $\lceil n/15 \rceil$  | $2d$                 | Non-uniform vector density, overlapping constraints                  | [link](bm_problem_c3.md) |
+| `C4`         | $\lceil n/150 \rceil$  | $\lceil n/15 \rceil$  | $3d$                 | Non-uniform vector density, strongly coupled constraints             | [link](bm_problem_c4.md) |
 
 **Legend:**
 
-- $s$: size parameter ($1, 2, \ldots$)
+- $n$: number of vectors to choose from — the problem's single size parameter (any integer $\geq 20$; below that the selection size drops under 2 and the problem is degenerate)
 - $d$: dimensionality of vectors
-- $n$: number of vectors to choose from
 - $k$: number of vectors to select
 - $m$: number of constraint groups

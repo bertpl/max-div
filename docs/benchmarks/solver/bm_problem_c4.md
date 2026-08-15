@@ -10,7 +10,7 @@ Vector components are drawn from a standard normal distribution $\mathcal{N}(0.5
 - $\sim 31\%$ of values are expected to be negative
 - $\sim 62\%$ of values are expected to be in the range $[-1, +1]$
 
-In each of the $d=s$ dimensions, we define $3$ groups, based on the value of that dimension's vector component:
+Dimensionality is $d = \lceil n/150 \rceil$ and the selection size is $k = \lceil n/15 \rceil$.  In each of the $d$ dimensions, we define $3$ groups, based on the value of that dimension's vector component:
 
 - between $\frac{4}{10}k$ and $k$ vectors with positive component in that dimension need to be selected
 - between $\frac{4}{10}k$ and $k$ vectors with negative component in that dimension need to be selected
@@ -21,7 +21,7 @@ creating $4^d$ possible combinations of group membership.
 
 ### B. Visualization
 
-This image shows problem C4 with size parameter $s=2$ (thus $d=2$, $n=300$, $k=20$, $m=6$):
+This image shows problem C4 with $n=200$ (thus $d=2$, $k=14$, $m=6$):
 
 ![Problem C4](./images/problem_C4.webp){ .center }
 

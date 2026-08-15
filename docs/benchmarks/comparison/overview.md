@@ -5,6 +5,13 @@ tools. They are the quantitative companion to the qualitative
 [Comparison with Other Tools](../../comparison.md) page: that page maps the *categories* of
 tool and their feature trade-offs; these pages measure how they actually *perform*.
 
+!!! note "Problem naming vintage"
+    These pages were measured before the built-in benchmark problems were re-parametrized by n
+    and restructured, and they use the problem names and `size` units of that era: their `U1`
+    is the uniform-density problem (now `U2`), their `C2` is the exact-quota problem (now
+    `C1`), and sizes are stated as the old `size` parameter (n ≈ 100·size).  The
+    [current problem definitions](../solver/test_problems.md) describe today's suite.
+
 The comparison runs in three tiers, by what `max-div` is measured against:
 
 - [**vs. Python Heuristics**](tier2.md) — the single-shot pickers a Python user would

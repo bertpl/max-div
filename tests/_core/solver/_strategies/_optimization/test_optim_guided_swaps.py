@@ -39,11 +39,11 @@ if TYPE_CHECKING:
         linear(0.0, 1.0),
     ],
 )
-@pytest.mark.parametrize("size", [5])
+@pytest.mark.parametrize("n", [500])
 @pytest.mark.parametrize("problem_name", swept_benchmark_problems())
 def test_optim_guided_swaps(
     problem_name: str,
-    size: int,
+    n: int,
     min_swap_size: int,
     max_swap_size: int,
     swap_size_lambda: float | ParameterSchedule,
@@ -61,7 +61,7 @@ def test_optim_guided_swaps(
     # prepare problem & solver state
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
         name=problem_name,
-        size=size,
+        n=n,
         diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
     )
     solver_state = SolverState.new(

@@ -4,11 +4,11 @@
 
 ### A. Overall Approach
 
-Identical to test problem `C1`, but with group constraint boundaries changed from $[4, k]$ to $[5,5]$.
+Identical to test problem `C1` — same vectors, same group partition — but with the exact per-group quotas relaxed to lower bounds: from each group between $\min(4, \lfloor k/m \rfloor)$ and $k$ vectors need to be selected (the cap on the lower bound keeps the $m$ bounds summing to at most $k$ at every $n$; from $n = 40$ upward the bound is simply $4$).
 
 ### B. Visualization
 
-This image shows problem C2 with size parameter $s=2$ (thus $d=2$, $n=200$, $k=20$, $m=4$):
+This image shows problem C2 with $n=200$ (thus $d=2$, $k=20$, $m=4$):
 
 ![Problem C2](./images/problem_C2.webp){ .center }
 

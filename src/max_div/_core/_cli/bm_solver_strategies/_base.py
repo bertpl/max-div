@@ -43,9 +43,9 @@ class SolverBenchmarkExecutor:
     def execute(self, markdown: bool, file: bool = False) -> None:
         # --- run benchmarks ------------------------------
         with self._scope as scope:
-            for size, strat_name, seed in scope.params():
+            for n, strat_name, seed in scope.params():
                 # --- construct solver ---
-                solver = scope.construct_solver(size, strat_name, seed)
+                solver = scope.construct_solver(n, strat_name, seed)
 
                 # --- run solver  ---
                 solution = solver.solve(verbosity=Verbosity.SILENT)
@@ -57,7 +57,7 @@ class SolverBenchmarkExecutor:
 
                 # --- register results ---
                 scope.register_result(
-                    size=size,
+                    n=n,
                     strat_name=strat_name,
                     t_elapsed_sec=t_elapsed_sec,
                     diversity_score=diversity_score,
@@ -74,10 +74,11 @@ class SolverBenchmarkExecutor:
 class SolverBenchmarkScope:
     """Base class for Scope of benchmarks to run for a solver benchmark, limited to a specific test problem.
 
-    A scope spans all (size, seed, strat_name)-tuples for one test problem.
+    A scope spans all (n, seed, strat_name)-tuples for one test problem.
 
-    The SolverBenchmarkExecutor can use this info to construct a pre-configured Solver for said problem with given size,
-    such that it can be benchmarked.  Such class will typically focus on testing...
+    The SolverBenchmarkExecutor can use this info to construct a pre-configured Solver for said
+    problem with given size n, such that it can be benchmarked.  Such class will typically focus
+    on testing...
       - initialization strategies
       - optimization strategies
       - specific solver presets.
@@ -139,53 +140,55 @@ class SolverBenchmarkScope:
     #  API
     # -------------------------------------------------------------------------
     def params(self) -> list[tuple[int, str, int]]:
-        """Returns list of (size, strat_name, seed)-tuples to benchmark."""
+        """Returns list of (n, strat_name, seed)-tuples to benchmark."""
         # --- calibrate -------------------------
         n_seeds_min = 3  # we don't execute benchmarks if n_seeds < n_seeds_min
         n_seeds_max = 16  # we never do more than n_seeds_max
-        full_size_range = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]  # size range for speed=0.0
-        nominal_max_size = max(full_size_range)  # max_size for speed=0.0
+        full_n_range = [100 * s for s in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]]  # n range for speed=0.0
 
         # --- speed-dependent settings ----------
+        # the seed budget below is computed on n/100 ("weight", the grid's unit spacing), which is
+        # the scale the min/max/limit formulas here are tuned for
         speed = self._speed
+        max_weight = max(full_n_range) / 100.0
         n_seeds_min = round(n_seeds_min ** (1 - speed))  # reduce to 1 at speed=1.0
         n_seeds_max = round(n_seeds_max - speed * (n_seeds_max - n_seeds_min))  # reduce to n_seeds_min at speed=1.0
-        # speed = 0.0  -->  size_seeds_limit = n_seeds_min * nominal_max_size
-        # speed = 1.0  -->  size_seeds_limit = n_seeds_min * 1
-        size_seeds_limit = round(n_seeds_min * (nominal_max_size ** (1 - speed)))
+        # speed = 0.0  -->  weight_seeds_limit = n_seeds_min * max_weight
+        # speed = 1.0  -->  weight_seeds_limit = n_seeds_min * 1
+        weight_seeds_limit = round(n_seeds_min * (max_weight ** (1 - speed)))
 
         # --- generate list ---------------------
         lst = []
-        for size in full_size_range:
-            # determine n_seeds such that size * n_seeds <= size_seeds_limit
-            #                         and        n_seeds <= n_seeds_max
-            n_seeds = min(round(size_seeds_limit / size), n_seeds_max)
+        for n in full_n_range:
+            # determine n_seeds such that (n/100) * n_seeds <= weight_seeds_limit
+            #                         and           n_seeds <= n_seeds_max
+            n_seeds = min(round(weight_seeds_limit / (n / 100.0)), n_seeds_max)
 
-            # only generate benchmarks if n_seeds >= n_seeds_min; otherwise size is too big for this speed setting
+            # only generate benchmarks if n_seeds >= n_seeds_min; otherwise n is too big for this speed setting
             if n_seeds >= n_seeds_min:
                 for seed in range(42, 42 + n_seeds):
                     for strat_name in self._solver_constructor.strategy_names():
-                        lst.append((size, strat_name, seed))
+                        lst.append((n, strat_name, seed))
 
         return lst
 
-    def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
-        """Constructs and returns a Solver for given (size, strat_name, seed)-tuple."""
-        return self._solver_constructor.construct_solver(size, strat_name, seed)
+    def construct_solver(self, n: int, strat_name: str, seed: int) -> MaxDivSolver:
+        """Constructs and returns a Solver for given (n, strat_name, seed)-tuple."""
+        return self._solver_constructor.construct_solver(n, strat_name, seed)
 
     def register_result(
         self,
-        size: int,
+        n: int,
         strat_name: str,
         t_elapsed_sec: float,
         diversity_score: float,
         constraint_score: float,
     ) -> None:
-        """Register benchmark results for given (size, strat_name, seed)-tuple."""
+        """Register benchmark results for given (n, strat_name, seed)-tuple."""
         # --- register results ---
-        self._t_elapsed[size, strat_name].append(t_elapsed_sec)
-        self._diversity_scores[size, strat_name].append(diversity_score)
-        self._constraint_scores[size, strat_name].append(constraint_score)
+        self._t_elapsed[n, strat_name].append(t_elapsed_sec)
+        self._diversity_scores[n, strat_name].append(diversity_score)
+        self._constraint_scores[n, strat_name].append(constraint_score)
 
         # --- update progress bar ---
         if self._pbar:
@@ -204,23 +207,23 @@ class SolverBenchmarkScope:
 
             # --- aggregate data --------------------------
             t_elapsed_agg = {
-                (size, strat_name): TableTimeElapsed.from_values(result_lst)
-                for (size, strat_name), result_lst in self._t_elapsed.items()
+                (n, strat_name): TableTimeElapsed.from_values(result_lst)
+                for (n, strat_name), result_lst in self._t_elapsed.items()
             }
             diversity_scores_agg = {
-                (size, strat_name): TableValueWithUncertainty.from_values(result_lst)
-                for (size, strat_name), result_lst in self._diversity_scores.items()
+                (n, strat_name): TableValueWithUncertainty.from_values(result_lst)
+                for (n, strat_name), result_lst in self._diversity_scores.items()
             }
             constraint_scores_agg = {
-                (size, strat_name): TableValueWithUncertainty.from_values(result_lst)
-                for (size, strat_name), result_lst in self._constraint_scores.items()
+                (n, strat_name): TableValueWithUncertainty.from_values(result_lst)
+                for (n, strat_name), result_lst in self._constraint_scores.items()
             }
 
             # --- prepare table data ----------------------
 
             # --- prep ----------------
             strat_names = self._solver_constructor.strategy_names()
-            size_range = sorted({size for size, _, _ in self.params()})
+            n_range = sorted({n for n, _, _ in self.params()})
             scope: list[tuple[dict, str, TableAggregationType]] = [
                 (t_elapsed_agg, "Time Duration", TableAggregationType.GEOMEAN),
                 (diversity_scores_agg, "Diversity Score", TableAggregationType.GEOMEAN),
@@ -233,8 +236,8 @@ class SolverBenchmarkScope:
             for data, title, agg_type in scope:
                 # create table
                 table = Table(headers)
-                for size in size_range:
-                    problem = self._solver_constructor.construct_problem(size)
+                for n in n_range:
+                    problem = self._solver_constructor.construct_problem(n)
                     table.add_row(
                         [
                             str(problem.d),
@@ -242,7 +245,7 @@ class SolverBenchmarkScope:
                             str(problem.k),
                             str(problem.m),
                         ]
-                        + [data[size, strat_name] for strat_name in strat_names]
+                        + [data[n, strat_name] for strat_name in strat_names]
                     )
 
                 # finalize table & add to report
@@ -262,10 +265,11 @@ class SolverBenchmarkScope:
 #  BenchmarkSolverConstructor
 # =================================================================================================
 class BenchmarkSolverConstructor(ABC):
-    """Base class for constructing Solvers for given benchmark scope and (size, strat_name, seed)-tuple.
+    """Base class for constructing Solvers for given benchmark scope and (n, strat_name, seed)-tuple.
 
-    The SolverBenchmarkExecutor can use this info to construct a pre-configured Solver for said problem with given size,
-    such that it can be benchmarked.  Such class will typically focus on testing...
+    The SolverBenchmarkExecutor can use this info to construct a pre-configured Solver for said
+    problem with given size n, such that it can be benchmarked.  Such class will typically focus
+    on testing...
       - initialization strategies
       - optimization strategies
       - specific solver presets.
@@ -289,30 +293,30 @@ class BenchmarkSolverConstructor(ABC):
     @property
     def has_constraints(self) -> bool:
         """Determine if problems with 'problem_name' have constraints, assuming this property is size-independent."""
-        _d, _n, _k, m, _n_con_indices = self.get_problem_dimensions(size=10)
+        _d, _n, _k, m, _n_con_indices = self.get_problem_dimensions(n=1000)
         return m > 0
 
     @property
     def benchmark_type(self) -> str:
         return self._benchmark_type
 
-    def construct_problem(self, size: int) -> VectorMaxDivProblem:
+    def construct_problem(self, n: int) -> VectorMaxDivProblem:
         return BenchmarkProblemFactory.construct_problem(
             name=self._problem_name,
-            size=size,
+            n=n,
             diversity_metric=self._diversity_metric,
         )
 
-    def get_problem_dimensions(self, size: int) -> tuple[int, int, int, int, int]:
-        """Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with given size."""
-        return BenchmarkProblemFactory.get_problem_dimensions(self._problem_name, size=size)
+    def get_problem_dimensions(self, n: int) -> tuple[int, int, int, int, int]:
+        """Get problem dimensions as (d, n, k, m, n_con_indices)-tuple for the benchmark problem with given size n."""
+        return BenchmarkProblemFactory.get_problem_dimensions(self._problem_name, n=n)
 
     # -------------------------------------------------------------------------
     #  API - ABSTRACT
     # -------------------------------------------------------------------------
     @abstractmethod
-    def construct_solver(self, size: int, strat_name: str, seed: int) -> MaxDivSolver:
-        """Constructs and returns a Solver for given (size, strat_name, seed)-tuple."""
+    def construct_solver(self, n: int, strat_name: str, seed: int) -> MaxDivSolver:
+        """Constructs and returns a Solver for given (n, strat_name, seed)-tuple."""
         raise NotImplementedError
 
     @abstractmethod

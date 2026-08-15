@@ -42,7 +42,7 @@ def estimate_execution_time_sec_multi(
 
 def estimate_execution_time_sec_single(params: SolverPresetBenchmarkParams) -> float:
     """Estimate execution time in seconds for a single benchmark run."""
-    overhead_sec = 4.0 * ((params.problem_size / 100.0) ** 2)  # initial distance computation of solver init is O(n^2)
+    overhead_sec = 4.0 * ((params.problem_size / 10000.0) ** 2)  # initial distance computation of solver init is O(n^2)
     return params.duration.value() + overhead_sec
 
 
