@@ -346,7 +346,7 @@ def test_check_feasibility_proves_a_satisfiable_problem_feasible():
     # --- assert ------------------------------------------
     assert report.status is FeasibilityStatus.FEASIBLE
     assert report.violation == 0.0
-    assert report.constraints_score_ceiling == 1.0
+    assert report.violation_floor == 0.0
     chosen = set(report.selection.tolist())
     assert all(con.min_count <= len(con.int_set & chosen) <= con.max_count for con in constraints)
 
@@ -362,7 +362,6 @@ def test_check_feasibility_proves_infeasibility_with_a_recheckable_certificate()
     # --- assert ------------------------------------------
     assert report.status is FeasibilityStatus.INFEASIBLE
     assert report.violation_floor > 0.0
-    assert report.constraints_score_ceiling < 1.0
 
     scores = np.zeros(20)
     for i, con in enumerate(constraints):
@@ -386,7 +385,6 @@ def test_check_feasibility_thorough_tightens_the_floor():
     # --- assert ------------------------------------------
     assert fast.status is thorough.status is FeasibilityStatus.INFEASIBLE
     assert thorough.violation_floor > fast.violation_floor
-    assert thorough.constraints_score_ceiling < fast.constraints_score_ceiling
 
 
 def test_check_feasibility_reports_unknown_without_claiming_anything():
@@ -417,7 +415,7 @@ def test_check_feasibility_on_an_unconstrained_problem():
 
     # --- assert ------------------------------------------
     assert report.status is FeasibilityStatus.FEASIBLE
-    assert report.constraints_score_ceiling == 1.0
+    assert report.violation_floor == 0.0
 
 
 def test_check_feasibility_thorough_changes_nothing_without_a_proof():

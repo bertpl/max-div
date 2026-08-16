@@ -93,11 +93,6 @@ class FeasibilityResult:
             linear and the quadratic violation penalty.
         bound: the best dual value reached.  `violation_floor` is its certified reading; the raw
             value is kept because a negative one still says how far the search got.
-        constraints_score_ceiling: `violation_floor` on the 0-1 scale the solver reports its
-            constraints score on, or None when nobody has converted it.  The pipeline cannot fill
-            this itself — the mapping is owned by the constraints package, which this subpackage
-            sits below — so `MaxDivProblem.check_feasibility` sets it.  Assumes the default linear
-            penalty, unlike `violation_per_constraint`.
         lam_min: the shortfall multipliers behind `bound`; with `lam_max` they form the
             infeasibility certificate when `status` is `INFEASIBLE`, and nothing otherwise.
         lam_max: the excess multipliers behind `bound`.
@@ -110,7 +105,6 @@ class FeasibilityResult:
     bound: float
     lam_min: NDArray[np.float64]
     lam_max: NDArray[np.float64]
-    constraints_score_ceiling: float | None = None
 
     @property
     def violation_floor(self) -> float:
@@ -129,21 +123,16 @@ class FeasibilityResult:
         """Return a one-paragraph rendering of the verdict and the numbers behind it."""
         if self.status is FeasibilityStatus.FEASIBLE:
             return f"FEASIBLE: found a selection of {self.selection.shape[0]} items satisfying every constraint."
-        ceiling = (
-            ""
-            if self.constraints_score_ceiling is None
-            else f", capping the constraints score at {self.constraints_score_ceiling:.4f}"
-        )
         if self.status is FeasibilityStatus.INFEASIBLE:
             return (
-                f"INFEASIBLE: no selection can satisfy every constraint.  Any selection violates them "
-                f"by at least {self.violation_floor:g} (weighted){ceiling}.  The best selection found "
-                f"violates by {self.violation:g}."
+                f"INFEASIBLE: no selection can satisfy every constraint.  Every selection carries a total "
+                f"weighted violation of at least {self.violation_floor:g}; the best selection found carries "
+                f"{self.violation:g}."
             )
         return (
             f"UNKNOWN: neither a satisfying selection nor a proof that none exists was found — an "
             f"UNKNOWN verdict says nothing about whether the constraints can be satisfied.  The best "
-            f"selection found violates them by {self.violation:g} (weighted)."
+            f"selection found carries a total weighted violation of {self.violation:g}."
         )
 
 

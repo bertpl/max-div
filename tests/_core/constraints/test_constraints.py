@@ -12,8 +12,6 @@ from max_div._core.constraints.constraints import (
     _np_con_total_violation,
     _np_con_total_weighted_violation,
     _np_largest_con_index,
-    constraints_score_for_violation,
-    constraints_score_normalization,
 )
 
 
@@ -242,62 +240,3 @@ def test_np_con_count_satisfied_empty():
 
     # --- assert ------------------------------------------
     assert n_satisfied == 0
-
-
-# =================================================================================================
-#  Constraints-score normalization
-# =================================================================================================
-@pytest.mark.parametrize(
-    "weights,quadratic,expected",
-    [
-        ([1.0, 1.0], False, 1 / 6),  # 1 / (1 + 2 + 3)
-        ([1.0, 1.0], True, 1 / 14),  # 1 / (1 + 4 + 9)
-        ([2.0, 0.5], False, 1 / 6.5),  # 1 / (1 + 2*2 + 0.5*3)
-        ([2.0, 0.5], True, 1 / 13.5),  # 1 / (1 + 2*4 + 0.5*9)
-    ],
-)
-def test_constraints_score_normalization(weights: list[float], quadratic: bool, expected: float):
-    """The constant divides by one plus the worst-case violation, weighted and penalized as configured."""
-    # --- arrange -----------------------------------------
-    # both sets are smaller than k, so each worst case is its min_count: 2 and 3
-    constraints = [
-        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=5, weight=weights[0]),
-        Constraint(int_set={5, 6, 7, 8, 9}, min_count=3, max_count=5, weight=weights[1]),
-    ]
-
-    # --- act ---------------------------------------------
-    c = constraints_score_normalization(constraints, k=8, quadratic=quadratic)
-
-    # --- assert ------------------------------------------
-    assert c == pytest.approx(expected)
-
-
-def test_constraints_score_normalization_without_constraints():
-    """No constraints means nothing to violate, which the score reads as always perfect."""
-    # --- act & assert ------------------------------------
-    assert constraints_score_normalization([], k=8) == 0.0
-
-
-def test_constraints_score_normalization_counts_an_unreachable_maximum():
-    """When k forces more members than max_count allows, the worst case includes the excess."""
-    # --- arrange -----------------------------------------
-    # every item is a member and k is 8, so at most 5 selected leaves a worst-case excess of 3
-    constraints = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]
-
-    # --- act ---------------------------------------------
-    c = constraints_score_normalization(constraints, k=8)
-
-    # --- assert ------------------------------------------
-    assert c == pytest.approx(1 / 4)  # 1 / (1 + 3)
-
-
-def test_constraints_score_for_violation():
-    """Zero violation scores 1, and the worst case scores 0."""
-    # --- arrange -----------------------------------------
-    # every item is a member and k is 8, so the worst case is an excess of 3
-    constraints = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]
-
-    # --- act & assert ------------------------------------
-    assert constraints_score_for_violation(0.0, constraints, k=8) == 1.0
-    assert constraints_score_for_violation(3.0, constraints, k=8) == pytest.approx(0.25)
-    assert constraints_score_for_violation(0.0, [], k=8) == 1.0  # nothing to violate

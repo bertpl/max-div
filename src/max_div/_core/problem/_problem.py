@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints import Constraint, ConstraintList, constraints_score_for_violation
+from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.constraints.feasibility import (
     CONSTRUCTION_DEFAULT_ITER,
     VERDICT_MAX_ITER,
@@ -82,7 +82,7 @@ class MaxDivProblem(ABC):
             Feasible and unknown outcomes are reached identically either way.
         """
         con_values, con_indices = ConstraintList(self.constraints).to_numpy()
-        result = find_feasible(
+        return find_feasible(
             con_values=con_values,
             con_indices=con_indices,
             con_weights=np.array([con.weight for con in self.constraints], dtype=np.float64),
@@ -90,12 +90,6 @@ class MaxDivProblem(ABC):
             k=self.k,
             max_iter=CONSTRUCTION_DEFAULT_ITER if thorough else VERDICT_MAX_ITER,
             stop_at_first_proof=not thorough,
-        )
-        # The pipeline cannot convert its own floor onto the score scale -- that mapping is owned by
-        # the constraints package, which the feasibility subpackage sits below -- so it is filled here.
-        return replace(
-            result,
-            constraints_score_ceiling=constraints_score_for_violation(result.violation_floor, self.constraints, self.k),
         )
 
     # --- factory methods ---------------------------------

@@ -1,5 +1,4 @@
 import itertools
-from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -644,15 +643,14 @@ def test_rendering_disclaims_an_unknown_verdict():
     )
 
 
-def test_rendering_mentions_the_score_ceiling_only_once_converted():
-    """The pipeline leaves the ceiling unset, so the rendering must not invent one."""
-    # --- arrange -----------------------------------------
-    raw = _result(FeasibilityStatus.INFEASIBLE, bound=3.0, violation=3.0)
-    converted = replace(raw, constraints_score_ceiling=0.25)
+def test_rendering_reports_the_floor_and_the_selection_violation():
+    """An infeasible rendering states both the certified floor and what the best selection carries."""
+    # --- act ---------------------------------------------
+    rendered = str(_result(FeasibilityStatus.INFEASIBLE, bound=3.0, violation=5.0))
 
-    # --- act & assert ------------------------------------
-    assert "constraints score" not in str(raw)
-    assert "capping the constraints score at 0.2500" in str(converted)
+    # --- assert ------------------------------------------
+    assert "at least 3" in rendered  # the certified floor
+    assert "carries 5" in rendered  # the best selection found
 
 
 @pytest.mark.parametrize("seed", range(6))

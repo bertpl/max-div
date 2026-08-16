@@ -5,14 +5,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from max_div._core.constraints.constraints import (
-    _np_con_total_violation,
-    _np_con_total_weighted_violation,
-    constraints_score_normalization,
-)
+from max_div._core.constraints.constraints import _np_con_total_violation, _np_con_total_weighted_violation
 from max_div._core.solver._diversity_contribution import selected_contributions_slot
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from numpy.typing import NDArray
 
     from max_div._core.constraints import Constraint
@@ -107,6 +105,19 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 # =================================================================================================
 #  ScoreGenerator
 # =================================================================================================
+def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
+    """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
+
+    The worst-case total violation is computed with the *same* aggregation used for live scoring: each
+    constraint's worst-case violation (`max_violationsᵢ`) is encoded as a pure shortfall (magnitude in
+    column 0) and run through `_np_con_total_weighted_violation`. Reusing the accelerator this way keeps
+    the normalization from ever drifting out of lockstep with the score under any weights / penalty mode.
+    """
+    worst_case_con_values = np.zeros((len(max_violations), 2), dtype=np.int32)
+    worst_case_con_values[:, 0] = max_violations
+    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
+
+
 class ScoreGenerator:
     """Utility class to generate Score objects from core metrics & data structures.
 
@@ -143,7 +154,18 @@ class ScoreGenerator:
         # --- constraint score computation ------
         self._penalty_quadratic = penalty_quadratic
         self._con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
-        self._con_c = constraints_score_normalization(constraints, k, penalty_quadratic)
+        if len(constraints) > 0:
+            max_con_violations = [
+                max(
+                    con.min_count,  # in case of minimal selection
+                    min(k, len(con.int_set)) - con.max_count,  # in case of maximal selection
+                    0,  # in case we can never violate this constraint
+                )
+                for con in constraints
+            ]
+            self._con_c = _con_norm_constant(max_con_violations, self._con_weights, penalty_quadratic)
+        else:
+            self._con_c = 0.0  # no constraints -> always perfect score
         # fast unweighted-linear aggregation applies only when all weights are 1 and penalization is linear
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
