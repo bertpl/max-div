@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Opt-in `InitializationStrategy.most_feasible()`: starts a constrained solve from a selection that satisfies every constraint where one can be constructed, or from a least-infeasible one where the constraints provably cannot all be met
 
 ### Changed
 

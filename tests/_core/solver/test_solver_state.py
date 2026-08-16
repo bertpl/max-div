@@ -60,6 +60,31 @@ def test_solver_state_properties(new_solver_state, new_solver_state_unconstraine
     assert new_solver_state_unconstrained.n == 6
 
     assert new_solver_state_unconstrained.score.constraints == 1.0  # no constraints -> perfect score
+    assert new_solver_state_unconstrained.con_weights.shape == (0,)
+
+
+def test_solver_state_con_weights_reach_the_state():
+    """Constraint weights arrive as float64, in constraint order, and survive a copy."""
+    # --- arrange -----------------------------------------
+    vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
+
+    # --- act ---------------------------------------------
+    state = SolverState.new(
+        n=vectors.shape[0],
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        k=3,
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[],
+        constraints=[
+            Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2, weight=2.5),
+            Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
+        ],
+    )
+
+    # --- assert ------------------------------------------
+    assert state.con_weights.dtype == np.float64
+    assert np.array_equal(state.con_weights, [2.5, 1.0])
+    assert np.array_equal(state.copy().con_weights, state.con_weights)
 
 
 def test_solver_state_add_remove_validation(new_solver_state):
