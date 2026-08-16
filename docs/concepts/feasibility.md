@@ -118,6 +118,19 @@ print(report)
 stops there, having the verdict, while `thorough=True` keeps going for a tighter violation floor
 and a better selection to report.
 
+The result answers the two questions the opening posed, with two different numbers:
+
+- **`constraints_score_ceiling`** -- the best constraints score the problem admits, derived from
+  the certified floor. Comparing it against the score a long run actually reached says whether more
+  time could help, or whether the constraints themselves have to change.
+- **`violation_per_constraint`** -- how many items the returned selection misses each constraint
+  by, which says *which* constraints to change.
+
+The two describe different things and are worth keeping apart: the floor is a property of the
+problem that no selection need attain, while the per-constraint profile describes the selection
+actually returned. Weighted, the profile sums to `violation`, and where that equals the floor the
+returned selection is provably as close as any selection can get.
+
 The same pipeline can also start a solve, rather than only describe the problem:
 
 ```python
@@ -131,13 +144,14 @@ solver = (
 )
 ```
 
-Where the solve then begins depends on the same three outcomes:
+The solve begins from whatever the search built, which exists under all three verdicts: a
+satisfying selection where one was found, the least infeasible one where infeasibility was proven,
+and otherwise the least violating one reached. Only the first of those saves the optimization steps
+from having to reach feasibility themselves, but none of them is worse than an arbitrary start.
 
-- **a satisfying selection was constructed** -- the optimization steps start from it, and spend
-  their budget on diversity rather than on first reaching feasibility;
-- **infeasibility was proven** -- they start from the least infeasible selection found;
-- **unknown**, or the problem has no constraints -- initialization is delegated to the strategy
-  given as `fallback`, `random_one_shot` by default.
+This strategy is for constrained problems and raises on a problem without constraints, where every
+selection satisfies the (empty) constraint set and the search has nothing to contribute — pick a
+different initialization for those.
 
 ## Further Reading
 
