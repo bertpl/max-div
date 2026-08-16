@@ -256,7 +256,7 @@ def test_np_con_count_satisfied_empty():
     ],
 )
 def test_constraints_score_normalization(weights: list[float], quadratic: bool, expected: float):
-    """The constant divides by the worst-case violation, weighted and penalized as configured."""
+    """The constant divides by one plus the worst-case violation, weighted and penalized as configured."""
     # --- arrange -----------------------------------------
     # both sets are smaller than k, so each worst case is its min_count: 2 and 3
     constraints = [
@@ -278,7 +278,7 @@ def test_constraints_score_normalization_without_constraints():
 
 
 def test_constraints_score_normalization_counts_an_unreachable_maximum():
-    """A max below what k forces is a violation the worst case has to include."""
+    """When k forces more members than max_count allows, the worst case includes the excess."""
     # --- arrange -----------------------------------------
     # every item is a member and k is 8, so at most 5 selected leaves a worst-case excess of 3
     constraints = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]

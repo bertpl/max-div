@@ -220,27 +220,6 @@ def _np_con_total_weighted_violation(
     return s
 
 
-def constraints_score_normalization(constraints: list[Constraint], k: int, quadratic: bool = False) -> float:
-    """Return the constant that maps a total weighted violation onto the constraints score.
-
-    The constraints score is `1 - normalization * total_weighted_violation`, so the worst possible
-    selection scores 0 and a feasible one scores 1.  A caller holding a violation rather than a
-    selection converts it the same way.  An empty constraint list returns 0, which the score reads
-    as "nothing to violate, so always perfect".
-
-    The worst case runs through `_np_con_total_weighted_violation`, the same function live scoring
-    uses, so the two cannot drift apart.
-    """
-    if len(constraints) == 0:
-        return 0.0
-    worst_case_con_values = np.zeros((len(constraints), 2), dtype=np.int32)
-    worst_case_con_values[:, 0] = [
-        max(con.min_count, min(k, len(con.int_set)) - con.max_count, 0) for con in constraints
-    ]
-    con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
-    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
-
-
 def _np_con_count_satisfied(con_values: NDArray[np.int32]) -> int:
     """Return the number of individually satisfied constraints.
 
@@ -252,3 +231,29 @@ def _np_con_count_satisfied(con_values: NDArray[np.int32]) -> int:
         if con_values[i_con, 0] <= 0 and con_values[i_con, 1] >= 0:
             n_satisfied += 1
     return n_satisfied
+
+
+# =================================================================================================
+#  Constraints-score normalization
+# =================================================================================================
+def constraints_score_normalization(constraints: list[Constraint], k: int, quadratic: bool = False) -> float:
+    """Return the constant that maps a total weighted violation onto the constraints score.
+
+    The constraints score is `1 - normalization * total_weighted_violation`, so the worst possible
+    selection scores 0 and a feasible one scores 1.  An empty constraint list returns 0, which the
+    score reads as "nothing to violate, so always perfect".
+
+    The worst case runs through `_np_con_total_weighted_violation`, the same function live scoring
+    uses, so the two cannot drift apart.
+
+    :param quadratic: Square each per-constraint violation before weighting, matching the solver's
+        quadratic penalty mode.
+    """
+    if len(constraints) == 0:
+        return 0.0
+    worst_case_con_values = np.zeros((len(constraints), 2), dtype=np.int32)
+    worst_case_con_values[:, 0] = [
+        max(con.min_count, min(k, len(con.int_set)) - con.max_count, 0) for con in constraints
+    ]
+    con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
+    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))

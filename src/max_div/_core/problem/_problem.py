@@ -73,16 +73,13 @@ class MaxDivProblem(ABC):
     def check_feasibility(self, thorough: bool = False) -> FeasibilityReport:
         """Report whether `k` items can be selected such that every constraint holds.
 
-        Deciding this is NP-complete in general, so the answer is three-valued: two proofs, backed
-        by a satisfying selection or by multipliers a caller can re-check, and `UNKNOWN`, which
-        reports that the search settled nothing and claims nothing either way.
+        Deciding feasibility is NP-complete in general, so the verdict is three-valued; see
+        `FeasibilityStatus` for what each value claims.  No solver path calls `check_feasibility`.
 
-        Purely diagnostic: solving never calls this.
-
-        :param thorough: Search harder before answering. The default stops at the first proof,
-            which is the fast path to a verdict; this instead runs the search to the end, tightening
-            the violation floor on an infeasible problem, improving the selection returned, and
-            settling some cases the default leaves undecided.
+        :param thorough: Search harder before answering, at a proportional cost in time. The
+            default stops at the first proof; `thorough=True` instead runs the search to the end,
+            which tightens the violation floor on an infeasible problem, improves the selection
+            returned, and settles some cases the default leaves undecided.
         """
         con_values, con_indices = ConstraintList(self.constraints).to_numpy()
         result = find_feasible(

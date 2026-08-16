@@ -14,20 +14,18 @@ from .lagrangian import FeasibilityResult, FeasibilityStatus
 
 @dataclass(frozen=True)
 class FeasibilityReport:
-    """Whether a problem's constraints can be satisfied, with the evidence behind the answer.
+    """A report states whether a problem's constraints can be satisfied, and carries the evidence.
 
     `status`, `selection`, `violation`, `lam_min` and `lam_max` carry through from
     `FeasibilityResult`; see its docstring for what each holds, and `FeasibilityStatus` for what
-    each verdict does and does not claim.  The multipliers are an infeasibility certificate only
-    under `INFEASIBLE`.
+    each verdict does and does not claim.
 
     Attributes:
         violation_floor: a certified lower bound on the weighted violation of every possible
-            selection.  Positive only under `INFEASIBLE`, where it is what makes the verdict a
-            proof; zero otherwise.
+            selection.  Positive only under `INFEASIBLE`, where it makes the verdict a proof;
+            zero otherwise.
         constraints_score_ceiling: `violation_floor` mapped onto the 0-1 scale the solver reports
-            its constraints score on, so the best score an infeasible problem admits is readable
-            without converting by hand.  Assumes the default linear violation penalty.
+            its constraints score on.  The conversion assumes the default linear violation penalty.
     """
 
     status: FeasibilityStatus
@@ -55,8 +53,8 @@ class FeasibilityReport:
                 f"{self.violation:g}."
             )
         return (
-            f"UNKNOWN: neither a satisfying selection nor a proof that none exists was found — this "
-            f"says nothing about whether the constraints can be satisfied.  The best selection found "
+            f"UNKNOWN: neither a satisfying selection nor a proof that none exists was found — an "
+            f"UNKNOWN verdict says nothing about whether the constraints can be satisfied.  The best selection found "
             f"violates them by {self.violation:g} (weighted)."
         )
 

@@ -46,7 +46,7 @@ def test_report_converts_the_floor_onto_the_constraints_score_scale():
     [FeasibilityStatus.FEASIBLE, FeasibilityStatus.UNKNOWN],
     ids=["feasible", "unknown"],
 )
-def test_report_certifies_no_floor_without_an_infeasibility_proof(status: FeasibilityStatus):
+def test_report_claims_no_floor_without_an_infeasibility_proof(status: FeasibilityStatus):
     """Only a proof of infeasibility may claim a floor; everything else leaves the ceiling at 1."""
     # --- act ---------------------------------------------
     report = FeasibilityReport.from_result(_result(status, bound=2.5, violation=1.0), CAP_BELOW_K_NORMALIZATION)

@@ -375,7 +375,7 @@ def test_check_feasibility_proves_infeasibility_with_a_recheckable_certificate()
 
 
 def test_check_feasibility_thorough_tightens_the_floor():
-    """The default stops at the first proof; searching harder matures the bound it certifies."""
+    """The default stops at the first proof; searching harder tightens the bound it certifies."""
     # --- arrange -----------------------------------------
     problem = _problem_with([Constraint(int_set=set(range(20)), min_count=0, max_count=5)])
 
@@ -390,7 +390,7 @@ def test_check_feasibility_thorough_tightens_the_floor():
 
 
 def test_check_feasibility_reports_unknown_without_claiming_anything():
-    """An LP-feasible, integer-infeasible instance must not be reported as either proof."""
+    """An instance with no certificate and no satisfying selection must not be reported as either proof."""
     # --- arrange -----------------------------------------
     # Two disjoint 5-cycles, each edge needing at least one of its two endpoints: no certificate
     # exists, and no selection of 5 items covers every edge.
