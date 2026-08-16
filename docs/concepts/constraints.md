@@ -88,6 +88,17 @@ solution -- the one with the smallest total constraint violation. This is a natu
 of the score's priority ordering: the solver always prefers better constraint satisfaction over
 higher diversity.
 
+A least-infeasible solution is hard to tell apart from a solve that simply ran out of time, so
+infeasibility can be established up front instead:
+
+```python
+report = problem.check_feasibility()
+print(report)
+```
+
+The answer is a proof either way, or an explicit "unknown" --
+[Proving Feasibility](feasibility.md) explains how it is reached and what each verdict claims.
+
 ## How Constraints Are Tracked
 
 Internally, constraints are represented as numpy arrays for efficient access within
