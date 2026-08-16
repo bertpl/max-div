@@ -122,7 +122,7 @@ BUDGET_FRACTION = 0.10  # share of the solve budget granted to the ascent
 EST_SEC_PER_OP = 2e-9  # nominal cost of one inner-pass operation, for the time-typed budget
 CONSTRUCTION_MIN_ITER = 500
 CONSTRUCTION_MAX_ITER = 8000
-CONSTRUCTION_DEFAULT_ITER = 2000  # budget for callers that derive none from a solve budget
+CONSTRUCTION_DEFAULT_ITER = 2000  # ascent budget for callers with no solve budget to derive one from
 
 
 # =================================================================================================
@@ -818,9 +818,8 @@ def _candidate_rounds(
     violation reaches `stop_at_floor` — pass 0.0 to stop at a witness, or the certified floor to
     stop at a provably optimal least-infeasible selection.
 
-    Candidate generation is the only place a `beta` tilt toward caller-preferred items is
-    admissible: the same addition inside the ascent would break the exact-top-k invariant this
-    module's docstring sets out, and can fabricate a false infeasibility proof.
+    Candidate generation is the only place the `beta` tilt may be applied; this module's soundness
+    invariant forbids perturbing the ascent's top-k.
 
     Args:
         con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
@@ -955,8 +954,8 @@ def _log_diversity_prior(diversity_prior: NDArray[np.floating] | None) -> NDArra
     """Normalize a diversity prior into the per-item log-probabilities candidate generation adds.
 
     Negative entries are clamped away, and `PRIOR_EPS` keeps a zero-prior item finite so it is
-    disfavored rather than excluded.  A missing or all-zero prior carries no preference, and
-    returns the empty array that switches the tilt off.
+    disfavored rather than excluded.  A missing or all-zero prior carries no preference, so the
+    empty array is returned and the tilt stays off.
     """
     if diversity_prior is None:
         return np.empty(0, dtype=np.float64)
@@ -998,9 +997,8 @@ def find_feasible(
         diversity_prior: optional per-item non-negative preference, normalized here; consulted
             only when `beta` is nonzero.
         beta: how strongly candidate generation is tilted toward high-prior items, via a
-            `beta * log(p)` term on the candidate scores.  Zero leaves the pipeline purely
-            feasibility-driven; the tilt cannot reach the ascent, so it changes only which
-            selection is constructed, never the verdict.
+            `beta * log(p)` term on the candidate scores; 0 disables the tilt.  A tilt cannot
+            reach the ascent, and so changes which selection is constructed, never the verdict.
 
     Returns:
         A `FeasibilityResult` (see its docstring for the field semantics).  The certificate it may

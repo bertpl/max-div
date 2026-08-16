@@ -471,7 +471,7 @@ def test_diversity_prior_moves_the_selection_without_touching_the_verdict():
     certificate).
     """
     # --- arrange -----------------------------------------
-    cons = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]
+    cons = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]  # cap below k -> infeasible
     con_values, con_indices, weights = _arrays(cons)
     prior = np.arange(1, 21, dtype=np.float64)  # favors high indices
 

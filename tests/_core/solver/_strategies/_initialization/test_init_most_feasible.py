@@ -42,8 +42,8 @@ FEASIBLE_CONS = [
 INFEASIBLE_CONS = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]
 
 # two disjoint 5-cycles with a min-1 cover per edge: LP-feasible at 1/2 per item (no certificate
-# exists), while covering each odd cycle integrally needs 3 items -- more than the k=5 this
-# fixture is used with, so no feasible selection exists either
+# exists), while covering each odd cycle integrally needs 3 items -- more than the k these
+# fixtures are used with, so no feasible selection exists either
 UNKNOWN_CONS = [
     Constraint(int_set={cycle * 5 + i, cycle * 5 + (i + 1) % 5}, min_count=1, max_count=2)
     for cycle in range(2)

@@ -26,8 +26,7 @@ if TYPE_CHECKING:
 class InitializationStrategy(StrategyBase, ABC):
     """Base class for strategies that produce an initial selection of ``k`` items.
 
-    Use the factory methods (`fast`, `farthest_point`, `most_feasible`, `random_one_shot`,
-    `random_batched`, `eager`) to create instances.
+    Use the factory methods below to create instances.
     """
 
     @abstractmethod
@@ -83,7 +82,8 @@ class InitializationStrategy(StrategyBase, ABC):
         See `InitMostFeasible` for the full contract.
 
         :param max_iter: Search budget; a higher budget more often finds a feasible selection, and
-            sharpens the bound reported when none exists, at a proportional cost in setup time.
+            lowers the violation of the one returned when none exists, at a proportional cost in
+            setup time.
         :param beta: Tilts the constructed selection toward diverse items; 0 keeps construction
             purely feasibility-driven.
         :param fallback: Strategy used when the search settles nothing, or the problem is

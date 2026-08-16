@@ -11,25 +11,27 @@ from ._init_random_one_shot import InitRandomOneShot
 class InitMostFeasible(InitializationStrategy):
     """Initialize from a constructed feasible selection, or the least infeasible one available.
 
-    The Lagrangian feasibility pipeline runs in construction mode, and its verdict decides:
+    The Lagrangian feasibility pipeline runs, and its verdict decides:
 
     - a feasible selection was constructed -> the solve starts from it;
     - infeasibility was proven -> the least-infeasible selection found becomes the start;
     - neither -> `fallback` initializes, exactly as it would have on its own.
 
-    Unconstrained problems bypass the pipeline too: with nothing to satisfy, it has nothing to
-    contribute.
+    Unconstrained problems bypass the pipeline: the fallback initializes those.
+
+    The whole selection is produced in one batch, so the state must still be empty.
 
     Feasibility is all this strategy optimizes for, so its selection is no more diverse than a
     random one.  `beta` trades some of the chance of reaching feasibility for a more diverse
     result, by scoring candidates on the state's global diversity contributions.
 
-    Suggested use: constrained problems where reaching feasibility eats into the optimization
-    budget, or where it may be unreachable altogether.
+    Suggested use: constrained problems where reaching feasibility consumes a meaningful share of
+    the optimization budget, or where feasibility may be unreachable altogether.
 
     Time Complexity:
        - ~O(max_iter * (n log k + total constraint membership)) for the ascent, plus a bounded
          number of repair rounds.
+       - a nonzero `beta` additionally forces the O(n²) global-contribution sweep.
     """
 
     def __init__(
