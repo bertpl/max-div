@@ -327,7 +327,7 @@ def test_problem_square_condensed_distances_extracts_upper_triangle():
 #  Feasibility diagnostic
 # =================================================================================================
 def _problem_with(constraints: list[Constraint], n: int = 20, k: int = 8) -> MaxDivProblem:
-    """Build a problem over n random 3-d vectors with the given constraints."""
+    """Build a problem over n random vectors with the given constraints."""
     vectors = np.random.default_rng(0).random((n, 3)).astype(np.float32)
     return MaxDivProblem.new(vectors=vectors, k=k, constraints=constraints)
 
@@ -354,7 +354,7 @@ def test_check_feasibility_proves_a_satisfiable_problem_feasible():
 def test_check_feasibility_proves_infeasibility_with_a_recheckable_certificate():
     """The multipliers returned must independently reproduce a positive dual value."""
     # --- arrange -----------------------------------------
-    constraints = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]  # cap below k
+    constraints = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]  # every item a member, cap below k
 
     # --- act ---------------------------------------------
     report = _problem_with(constraints).check_feasibility(thorough=True)
@@ -392,7 +392,8 @@ def test_check_feasibility_thorough_tightens_the_floor():
 def test_check_feasibility_reports_unknown_without_claiming_anything():
     """An LP-feasible, integer-infeasible instance must not be reported as either proof."""
     # --- arrange -----------------------------------------
-    # two disjoint 5-cycles, min-1 cover per edge: no certificate exists and no selection of k=5 covers all
+    # Two disjoint 5-cycles, each edge needing at least one of its two endpoints: no certificate
+    # exists, and no selection of 5 items covers every edge.
     constraints = [
         Constraint(int_set={cycle * 5 + i, cycle * 5 + (i + 1) % 5}, min_count=1, max_count=2)
         for cycle in range(2)

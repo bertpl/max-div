@@ -223,19 +223,13 @@ def _np_con_total_weighted_violation(
 def constraints_score_normalization(constraints: list[Constraint], k: int, quadratic: bool = False) -> float:
     """Return the constant that maps a total weighted violation onto the constraints score.
 
-    The constraints score is `1 - normalization * total_weighted_violation`, so this constant is
-    `1 / (1 + worst-case total violation)`: the worst possible selection scores 0 and a feasible
-    one scores 1.  Callers that hold a violation rather than a selection — a certified floor, say —
-    convert it the same way.
+    The constraints score is `1 - normalization * total_weighted_violation`, so the worst possible
+    selection scores 0 and a feasible one scores 1.  A caller holding a violation rather than a
+    selection converts it the same way.  An empty constraint list returns 0, which the score reads
+    as "nothing to violate, so always perfect".
 
-    The worst case per constraint is a pure shortfall of `max(min_count, min(k, set size) - max_count, 0)`,
-    aggregated through the same accelerator live scoring uses, so the two cannot drift apart.
-
-    Args:
-        constraints: the problem's constraints.  An empty list returns 0, which the score reads as
-            "no constraints to violate, so always perfect".
-        k: the selection size.
-        quadratic: whether violations are penalized quadratically rather than linearly.
+    The worst case runs through `_np_con_total_weighted_violation`, the same function live scoring
+    uses, so the two cannot drift apart.
     """
     if len(constraints) == 0:
         return 0.0

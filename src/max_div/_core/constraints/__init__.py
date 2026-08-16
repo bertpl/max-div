@@ -8,4 +8,5 @@ from .constraints import (
     _np_con_total_violation,
     _np_con_total_weighted_violation,
     _np_largest_con_index,
+    constraints_score_normalization,
 )

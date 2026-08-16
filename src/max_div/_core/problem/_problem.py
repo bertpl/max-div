@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints import Constraint, ConstraintList, constraints_score_normalization
 from max_div._core.constraints.feasibility import (
     CONSTRUCTION_DEFAULT_ITER,
     VERDICT_MAX_ITER,
@@ -73,18 +73,16 @@ class MaxDivProblem(ABC):
     def check_feasibility(self, thorough: bool = False) -> FeasibilityReport:
         """Report whether `k` items can be selected such that every constraint holds.
 
-        Deciding this is NP-complete in general, so the answer is three-valued and only its two
-        definite verdicts carry information — both are proofs, backed by a witness selection or by
-        multipliers a caller can re-check.  `UNKNOWN` means the search settled nothing, and says
-        nothing about whether the constraints are satisfiable.
+        Deciding this is NP-complete in general, so the answer is three-valued: two proofs, backed
+        by a satisfying selection or by multipliers a caller can re-check, and `UNKNOWN`, which
+        reports that the search settled nothing and claims nothing either way.
 
-        Purely diagnostic: solving does not call this, and nothing about a solve changes based on
-        it.  A problem with no constraints is trivially feasible.
+        Purely diagnostic: solving never calls this.
 
         :param thorough: Search harder before answering. The default stops at the first proof,
-            which is the fast path to a verdict; this instead matures the bound, giving a tighter
-            violation floor on an infeasible problem and a better selection on any problem, and
-            turns some UNKNOWN answers definite.
+            which is the fast path to a verdict; this instead runs the search to the end, tightening
+            the violation floor on an infeasible problem, improving the selection returned, and
+            settling some cases the default leaves undecided.
         """
         con_values, con_indices = ConstraintList(self.constraints).to_numpy()
         result = find_feasible(
@@ -96,7 +94,7 @@ class MaxDivProblem(ABC):
             max_iter=CONSTRUCTION_DEFAULT_ITER if thorough else VERDICT_MAX_ITER,
             stop_at_first_proof=not thorough,
         )
-        return FeasibilityReport.from_result(result, self.constraints, self.k)
+        return FeasibilityReport.from_result(result, constraints_score_normalization(self.constraints, self.k))
 
     # --- factory methods ---------------------------------
     @classmethod
