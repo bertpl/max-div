@@ -33,6 +33,7 @@ mathematical facts the code cannot show (why a top-k minimizes the priced penalt
 """
 
 import math
+from dataclasses import dataclass
 from enum import IntEnum
 
 import numba
@@ -44,7 +45,7 @@ from max_div._core._random import new_rng_state, rand_nz_float64
 
 
 # =================================================================================================
-#  FeasibilityStatus
+#  FeasibilityStatus / FeasibilityResult
 # =================================================================================================
 class FeasibilityStatus(IntEnum):
     """Three-valued outcome of the feasibility pipeline; the definite verdicts are proofs."""
@@ -52,6 +53,31 @@ class FeasibilityStatus(IntEnum):
     INFEASIBLE = -1
     UNKNOWN = 0
     FEASIBLE = 1
+
+
+@dataclass(frozen=True)
+class FeasibilityResult:
+    """Outcome of `find_feasible`: the status plus the objects backing it.
+
+    Attributes:
+        status: `FEASIBLE` (selection is a witness), `INFEASIBLE` (bound and multipliers form a
+            verifiable proof; selection is the best least-infeasible found), or `UNKNOWN` (no
+            claim; selection is the least-violating found).
+        selection: the constructed selection of k item indices.
+        bound: the best dual value — when positive, a certified lower bound on the weighted
+            violation of every possible selection, re-checkable from the multipliers alone.
+        violation: the weighted violation of `selection` (0 for a witness).
+        lam_min: the shortfall multipliers behind `bound`; with `lam_max` they form the
+            infeasibility certificate when `status` is `INFEASIBLE`.
+        lam_max: the excess multipliers behind `bound`.
+    """
+
+    status: FeasibilityStatus
+    selection: NDArray[np.int64]
+    bound: float
+    violation: float
+    lam_min: NDArray[np.float64]
+    lam_max: NDArray[np.float64]
 
 
 # =================================================================================================
@@ -94,7 +120,7 @@ CONSTRUCTION_MAX_ITER = 8000
 # =================================================================================================
 @numba.njit(cache=True)
 def build_item_constraint_csr(con_indices: NDArray[np.int32], n: int) -> tuple[NDArray[np.int64], NDArray[np.int32]]:
-    """Transpose the packed constraint->item layout into an item->constraint CSR.
+    """Transpose the packed constraint->item layout into an item->constraint CSR (compressed sparse row) index.
 
     Args:
         con_indices: the packed representation built by `ConstraintList.to_numpy` — a 2m-element
@@ -130,7 +156,12 @@ def build_item_constraint_csr(con_indices: NDArray[np.int32], n: int) -> tuple[N
 
 @numba.njit(cache=True)
 def _constraint_set_sizes(item_cons: NDArray[np.int32], m: int) -> NDArray[np.int64]:
-    """Return the member count of each constraint."""
+    """Return the member count of each constraint.
+
+    Args:
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        m: the number of constraints.
+    """
     sizes = np.zeros(m, dtype=np.int64)
     for e in range(item_cons.shape[0]):
         sizes[item_cons[e]] += 1
@@ -172,6 +203,10 @@ def _top_k_items(scores: NDArray[np.float64], k: int) -> NDArray[np.int64]:
 
     The result is an exact top-k with arbitrary ordering among ties — any tie-break is a valid
     inner maximizer, so the dual value stays sound.
+
+    Args:
+        scores: the per-item scores to select from.
+        k: the selection size; `k >= len(scores)` returns every index.
     """
     if k >= scores.shape[0]:
         return np.arange(scores.shape[0], dtype=np.int64)
@@ -227,7 +262,13 @@ def _weighted_violation(
 
 @numba.njit(cache=True)
 def _counts_feasible(counts: NDArray[np.int64], con_min: NDArray[np.int64], con_max: NDArray[np.int64]) -> bool:
-    """Return whether every constraint count lies within its bounds."""
+    """Return whether every constraint count lies within its bounds.
+
+    Args:
+        counts: per-constraint counts of selected members.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+    """
     for i in range(counts.shape[0]):  # noqa: SIM110 — numba-compiled; the all(...) generator form is not supported
         if counts[i] < con_min[i] or counts[i] > con_max[i]:
             return False
@@ -249,6 +290,14 @@ def _dual_value(
     priced penalty over all k-selections, and that minimum is attained at the exact top-k.  A
     non-maximizing selection overestimates `g` — the false-infeasibility-proof trap this module's
     tests pin explicitly.
+
+    Args:
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        lam_min: shortfall prices, one per constraint.
+        lam_max: excess prices, one per constraint.
+        scores: per-item scores at these prices (`_item_scores`).
+        selection: an exact top-k of `scores`.
     """
     g = 0.0
     for i in range(con_min.shape[0]):
@@ -272,6 +321,12 @@ def _binding_upper_mask(
 
     A constraint whose max count can never be exceeded needs no price; its `lam_max` stays 0 and its
     supergradient component is skipped.
+
+    Args:
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        con_max: per-constraint maximum counts.
+        m: the number of constraints.
+        k: the selection size.
     """
     sizes = _constraint_set_sizes(item_cons, m)
     active = np.empty(m, dtype=np.bool_)
@@ -299,6 +354,17 @@ def _projected_step(
     ones decay.  The step is `gamma / (sqrt(t) * max(gradient norm, 1))`, and each multiplier is
     projected back into its box `[0, weight_i]` — the cap that makes the matured dual value a
     quantitative violation floor rather than only a sign test.
+
+    Args:
+        lam_min: shortfall prices, updated in place.
+        lam_max: excess prices, updated in place.
+        lam_max_active: which upper bounds can bind (`_binding_upper_mask`); inactive entries stay 0.
+        counts: per-constraint counts of the current top-k selection.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights — also the multiplier box bounds.
+        gamma: the current step-size scale.
+        t: the 1-based iteration number (drives the `1/sqrt(t)` decay).
     """
     m = con_min.shape[0]
     norm_sq = 0.0
@@ -342,10 +408,23 @@ def _dual_ascent(
     mature bound is the certified violation floor, and the mature prices are the score vectors
     candidate generation draws from.
 
+    Args:
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights — also the multiplier box bounds.
+        k: the selection size.
+        max_iter: the ascent iteration budget.
+        stop_at_first_proof: exit as soon as `g` clears the positivity margin.
+
     Returns:
-        `(best_g, lam_min_avg, lam_max_avg, lam_min_best, lam_max_best, witness)` — the running-average and
-        best-g multiplier vectors (both used by candidate generation), and the witness selection
-        (empty when none was found).
+        `(best_g, lam_min_avg, lam_max_avg, lam_min_best, lam_max_best, witness)`.  The two
+        multiplier pairs are complementary guesses for candidate generation: the `_best` pair is
+        the prices at the highest `g` seen (the sharpest single guess), the `_avg` pair is the
+        running average of all iterates, which smooths the zigzag of subgradient ascent and
+        typically ranks near-tied items differently.  `witness` is the feasible selection from the
+        early exit, empty when none was found.
     """
     m = con_min.shape[0]
     lam_min = np.zeros(m, dtype=np.float64)
@@ -398,7 +477,12 @@ def _dual_ascent(
 # =================================================================================================
 @numba.njit(cache=True)
 def _gumbel_noise(n: int, rng_state: NDArray[np.uint64]) -> NDArray[np.float64]:
-    """Return n iid Gumbel(0, 1) samples (the classical randomized-rounding perturbation)."""
+    """Return n iid Gumbel(0, 1) samples (the classical randomized-rounding perturbation).
+
+    Args:
+        n: the number of samples.
+        rng_state: xoroshiro128+ state, advanced in place.
+    """
     out = np.empty(n, dtype=np.float64)
     for j in range(n):
         u = rand_nz_float64(rng_state)
@@ -421,6 +505,15 @@ def _add_gain(
     Each constraint containing the item contributes `+w` when short (the addition helps) and `-w`
     when at or above its max (the addition creates or worsens excess).  An estimate, not the exact
     delta: it ignores interactions when the paired removal shares constraints with this item.
+
+    Args:
+        item: the item whose addition is evaluated.
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        counts: per-constraint counts of selected members.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
     """
     gain = 0.0
     for e in range(item_indptr[item], item_indptr[item + 1]):
@@ -446,6 +539,15 @@ def _remove_gain(
 
     Mirror image of `_add_gain`: `+w` when the constraint is in excess, `-w` when the removal
     would create or worsen a shortfall.
+
+    Args:
+        item: the item whose removal is evaluated.
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        counts: per-constraint counts of selected members.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
     """
     gain = 0.0
     for e in range(item_indptr[item], item_indptr[item + 1]):
@@ -464,7 +566,14 @@ def _worst_violated_constraint(
     con_max: NDArray[np.int64],
     weights: NDArray[np.float64],
 ) -> int:
-    """Return the index of the constraint with the largest weighted violation, or -1 if none."""
+    """Return the index of the constraint with the largest weighted violation, or -1 if none.
+
+    Args:
+        counts: per-constraint counts of selected members.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
+    """
     worst = -1
     worst_v = 0.0
     for i in range(counts.shape[0]):
@@ -498,6 +607,18 @@ def _best_member_move(
     When the constraint is `short`, that is the unselected member whose addition gains most;
     otherwise the selected member whose removal gains most.  Returns `(item, gain)`, item -1 when
     no candidate exists.
+
+    Args:
+        worst: the constraint whose violation the move targets.
+        short: whether that constraint is below its minimum (else it is in excess).
+        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        sel_mask: boolean selection mask over items.
+        counts: per-constraint counts of selected members.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
     """
     best_item = -1
     best_gain = 0.0
@@ -532,6 +653,17 @@ def _best_counterpart_move(
     A `short` primary move adds a member, so the counterpart removes the selected item whose
     removal gains most (usually a negative gain — the removal that loses least); an excess primary
     move symmetrically adds the best unselected item.  Returns `(item, gain)`, item -1 when none exists.
+
+    Args:
+        primary_item: the item of the primary move, excluded from counterpart candidates.
+        short: whether the primary move was an addition (else a removal).
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        sel_mask: boolean selection mask over items.
+        counts: per-constraint counts of selected members.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
     """
     n = item_indptr.shape[0] - 1
     best_item = -1
@@ -558,7 +690,16 @@ def _apply_swap(
     sel_mask: NDArray[np.bool_],
     counts: NDArray[np.int64],
 ) -> None:
-    """Execute one add/remove pair, updating the selection mask and counts in place."""
+    """Execute one add/remove pair, updating the selection mask and counts in place.
+
+    Args:
+        add_item: the item entering the selection.
+        remove_item: the item leaving the selection.
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        sel_mask: boolean selection mask over items, updated in place.
+        counts: per-constraint counts of selected members, updated in place.
+    """
     sel_mask[add_item] = True
     sel_mask[remove_item] = False
     for e in range(item_indptr[add_item], item_indptr[add_item + 1]):
@@ -586,6 +727,18 @@ def _repair_selection(
     The loop stops at violation zero, at a stall (no candidate or no strict improvement), or at
     the swap cap.  Single swaps cannot perform the coordinated multi-swap exchanges some feasible
     structures require — those land in the UNKNOWN outcome by design.
+
+    Args:
+        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
+        sel_mask: boolean selection mask over items, repaired in place.
+        counts: per-constraint counts of selected members, updated in place.
+        max_swaps: the swap budget (safety cap; strict improvement terminates on its own for
+            integral weights).
     """
     for _ in range(max_swaps):
         worst = _worst_violated_constraint(counts, con_min, con_max, weights)
@@ -613,16 +766,22 @@ def _repair_selection(
 #  Pipeline
 # =================================================================================================
 @numba.njit(cache=True)
-def _violation_floor(weights: NDArray[np.float64], best_g: float, certified: bool) -> float:
+def _violation_floor(weights: NDArray[np.float64], best_g: float, certified_infeasible: bool) -> float:
     """Return the certified violation floor, rounded up to the next integer for integral weights.
 
     Integral weights make every achievable violation an integer, which sharpens the fractional
     dual bound.
+
+    Args:
+        weights: per-constraint violation weights.
+        best_g: the mature dual bound.
+        certified_infeasible: whether `best_g` cleared the positivity margin (only then is
+            rounding up justified).
     """
     for i in range(weights.shape[0]):
         if abs(weights[i] - np.round(weights[i])) > 1e-12:
             return best_g
-    return np.ceil(best_g - G_POSITIVE_TOL) if certified else best_g
+    return np.ceil(best_g - G_POSITIVE_TOL) if certified_infeasible else best_g
 
 
 @numba.njit(cache=True)
@@ -646,6 +805,20 @@ def _candidate_rounds(
     so noise starts only after both have had their pure round.  The loop stops early once the best
     violation reaches `stop_at_floor` — pass 0.0 to stop at a witness, or the certified floor to
     stop at a provably optimal least-infeasible selection.
+
+    Args:
+        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
+        n: the number of items.
+        k: the selection size.
+        scores_avg: item scores at the running-average mature prices — the zigzag-smoothed guess.
+        scores_best: item scores at the highest-g mature prices — the sharpest guess.
+        seed: seed for the score noise.
+        stop_at_floor: the violation level at which searching further cannot improve the answer.
 
     Returns:
         `(best_violation, best_selection)` over all rounds.
@@ -691,17 +864,39 @@ def _find_feasible(
     seed: int,
     stop_at_first_proof: bool,
 ) -> tuple[int, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
-    """Run the numba core of `find_feasible`; see the wrapper for the contract."""
+    """Run the numba core of the pipeline: ascent, then candidate construction, then the verdict.
+
+    Args:
+        con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
+        n: the number of items.
+        k: the selection size.
+        max_iter: the ascent iteration budget.
+        seed: seed for the candidate-generation noise (the ascent itself is deterministic).
+        stop_at_first_proof: exit the ascent at the first infeasibility proof (verdict mode).
+
+    Returns:
+        The integer-status tuple the `find_feasible` wrapper packs into a `FeasibilityResult`.
+    """
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
 
+    # phase 1 — price ascent: matures the bound and the multipliers, and may already hand back a
+    # witness (a mid-ascent top-k that satisfies every constraint)
     best_g, lam_min_avg, lam_max_avg, lam_min_best, lam_max_best, witness = _dual_ascent(
         item_indptr, item_cons, con_min, con_max, weights, k, max_iter, stop_at_first_proof
     )
     if witness.shape[0] > 0:
         return _FEASIBLE, witness, best_g, 0.0, lam_min_best, lam_max_best
 
-    certified = best_g > G_POSITIVE_TOL
-    floor = _violation_floor(weights, best_g, certified)
+    # phase 2 — interpret the bound: a positive g proves infeasibility, and its value becomes the
+    # certified violation floor candidate construction can stop at
+    certified_infeasible = best_g > G_POSITIVE_TOL
+    floor = _violation_floor(weights, best_g, certified_infeasible)
+
+    # phase 3 — construct: candidate top-k selections from both mature score vectors, each
+    # finished by greedy swap repair
     scores_avg = _item_scores(item_indptr, item_cons, lam_min_avg, lam_max_avg)
     scores_best = _item_scores(item_indptr, item_cons, lam_min_best, lam_max_best)
     best_violation, best_selection = _candidate_rounds(
@@ -716,10 +911,12 @@ def _find_feasible(
         scores_avg,
         scores_best,
         seed,
-        floor if certified else 0.0,
+        floor if certified_infeasible else 0.0,
     )
 
-    if certified:
+    # phase 4 — assemble the verdict: proofs win over construction outcomes; a zero-violation
+    # construction is a witness; anything else is UNKNOWN
+    if certified_infeasible:
         return _INFEASIBLE, best_selection, best_g, best_violation, lam_min_best, lam_max_best
     if best_violation <= 0.0:
         return _FEASIBLE, best_selection, best_g, 0.0, lam_min_best, lam_max_best
@@ -735,7 +932,7 @@ def find_feasible(
     max_iter: int,
     seed: int = 0,
     stop_at_first_proof: bool = False,
-) -> tuple[FeasibilityStatus, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
+) -> FeasibilityResult:
     """Run the full feasibility pipeline: dual ascent, candidate generation, swap repair.
 
     Args:
@@ -753,15 +950,9 @@ def find_feasible(
             mature bound and the scores candidate generation draws from (verdict mode).
 
     Returns:
-        `(status, selection, bound, violation, lam_min, lam_max)`:
-
-        - `status`: `FEASIBLE` (selection is a witness, violation 0), `INFEASIBLE` (bound > 0 is a
-          verifiable proof; selection is the best least-infeasible found, its violation at most
-          `violation`), or `UNKNOWN` (no claim; selection is the least-violating found).
-        - `bound`: the best dual value — when positive, a certified lower bound on the weighted
-          violation of every possible selection, re-checkable from `(lam_min, lam_max)` alone.
-        - `lam_min`, `lam_max`: the multipliers behind `bound` (the certificate when `status` is
-          `INFEASIBLE`).
+        A `FeasibilityResult` (see its docstring for the field semantics).  The certificate it may
+        carry is independently verifiable: recompute the scores from `(lam_min, lam_max)`, sum the
+        k largest, and check `lam_min @ min_counts - lam_max @ max_counts - topk_sum` is positive.
     """
     con_min = con_values[:, 0].astype(np.int64)
     con_max = con_values[:, 1].astype(np.int64)
@@ -776,7 +967,14 @@ def find_feasible(
         int(seed),
         bool(stop_at_first_proof),
     )
-    return FeasibilityStatus(int(status)), selection, bound, violation, lam_min, lam_max
+    return FeasibilityResult(
+        status=FeasibilityStatus(int(status)),
+        selection=selection,
+        bound=bound,
+        violation=violation,
+        lam_min=lam_min,
+        lam_max=lam_max,
+    )
 
 
 # =================================================================================================
@@ -789,6 +987,11 @@ def construction_iteration_budget_seconds(t_max_sec: float, n: int, n_membership
     through a nominal per-iteration cost model — deterministic given problem and configuration, so
     same-seed reproducibility is preserved (machine-speed variation only shifts the actual wall
     fraction spent).
+
+    Args:
+        t_max_sec: the solve's total wall-clock budget in seconds.
+        n: the number of items.
+        n_memberships: the total constraint membership count (drives the per-iteration cost).
     """
     est_iter_cost_sec = (n_memberships + n * math.log2(max(n, 2))) * EST_SEC_PER_OP
     target = BUDGET_FRACTION * t_max_sec / est_iter_cost_sec
@@ -801,6 +1004,9 @@ def construction_iteration_budget_iterations(n_solver_iterations: int) -> int:
     The same share is applied to the solver iteration count directly — no cost model involved, so
     the machine independence of iteration-typed budgets is preserved; the crudeness of equating
     ascent and solver iteration costs is absorbed by the clamps.
+
+    Args:
+        n_solver_iterations: the solve's total iteration budget.
     """
     target = BUDGET_FRACTION * n_solver_iterations
     return int(min(max(round(target), CONSTRUCTION_MIN_ITER), CONSTRUCTION_MAX_ITER))

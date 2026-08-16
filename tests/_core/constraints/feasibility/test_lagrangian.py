@@ -185,19 +185,17 @@ def test_pigeonhole_certified_infeasible():
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, bound, violation, lam_min, lam_max = find_feasible(
-        con_values, con_indices, weights, n, k, max_iter=300
-    )
+    result = find_feasible(con_values, con_indices, weights, n, k, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FeasibilityStatus.INFEASIBLE
-    assert bound > 0.0
+    assert result.status == FeasibilityStatus.INFEASIBLE
+    assert result.bound > 0.0
     # the certificate is independently verifiable from the multipliers alone
-    assert _recomputed_dual_value(n, k, cons, lam_min, lam_max) == pytest.approx(bound)
+    assert _recomputed_dual_value(n, k, cons, result.lam_min, result.lam_max) == pytest.approx(result.bound)
     # the least-infeasible selection attains the brute-force minimum violation
-    assert selection.shape[0] == k
-    assert violation == pytest.approx(2.0)
-    assert violation >= bound - 1e-9
+    assert result.selection.shape[0] == k
+    assert result.violation == pytest.approx(2.0)
+    assert result.violation >= result.bound - 1e-9
 
 
 def test_verdict_mode_certifies_early():
@@ -207,13 +205,11 @@ def test_verdict_mode_certifies_early():
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, _, bound, _, _, _ = find_feasible(
-        con_values, con_indices, weights, n, k, max_iter=300, stop_at_first_proof=True
-    )
+    result = find_feasible(con_values, con_indices, weights, n, k, max_iter=300, stop_at_first_proof=True)
 
     # --- assert ------------------------------------------
-    assert status == FeasibilityStatus.INFEASIBLE
-    assert bound > 0.0
+    assert result.status == FeasibilityStatus.INFEASIBLE
+    assert result.bound > 0.0
 
 
 # =================================================================================================
@@ -226,25 +222,25 @@ def test_witness_from_ascent():
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, _, violation, _, _ = find_feasible(con_values, con_indices, weights, 4, 2, max_iter=300)
+    result = find_feasible(con_values, con_indices, weights, 4, 2, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FeasibilityStatus.FEASIBLE
-    assert violation == 0.0
-    assert sorted(selection.tolist()) == [2, 3]
+    assert result.status == FeasibilityStatus.FEASIBLE
+    assert result.violation == 0.0
+    assert sorted(result.selection.tolist()) == [2, 3]
 
 
 def test_no_constraints_is_trivially_feasible():
     """With no constraints, any selection is a witness."""
     # --- act ---------------------------------------------
-    status, selection, _, violation, _, _ = find_feasible(
+    result = find_feasible(
         np.empty((0, 2), dtype=np.int32), np.empty(0, dtype=np.int32), np.empty(0, dtype=np.float64), 6, 3, max_iter=50
     )
 
     # --- assert ------------------------------------------
-    assert status == FeasibilityStatus.FEASIBLE
-    assert selection.shape[0] == 3
-    assert violation == 0.0
+    assert result.status == FeasibilityStatus.FEASIBLE
+    assert result.selection.shape[0] == 3
+    assert result.violation == 0.0
 
 
 def test_scaled_weights_still_construct():
@@ -257,12 +253,12 @@ def test_scaled_weights_still_construct():
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, _, violation, _, _ = find_feasible(con_values, con_indices, weights, 6, 3, max_iter=300)
+    result = find_feasible(con_values, con_indices, weights, 6, 3, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FeasibilityStatus.FEASIBLE
-    assert violation == 0.0
-    assert _selection_satisfies(selection, cons)
+    assert result.status == FeasibilityStatus.FEASIBLE
+    assert result.violation == 0.0
+    assert _selection_satisfies(result.selection, cons)
 
 
 def test_fractional_weights_keep_unrounded_floor():
@@ -275,13 +271,13 @@ def test_fractional_weights_keep_unrounded_floor():
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, bound, violation, _, _ = find_feasible(con_values, con_indices, weights, 4, 2, max_iter=300)
+    result = find_feasible(con_values, con_indices, weights, 4, 2, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FeasibilityStatus.INFEASIBLE
-    assert bound > 0.0
-    assert selection.shape[0] == 2
-    assert violation >= bound - 1e-9
+    assert result.status == FeasibilityStatus.INFEASIBLE
+    assert result.bound > 0.0
+    assert result.selection.shape[0] == 2
+    assert result.violation >= result.bound - 1e-9
 
 
 def test_lp_feasible_integer_infeasible_returns_unknown():
@@ -300,13 +296,13 @@ def test_lp_feasible_integer_infeasible_returns_unknown():
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, bound, violation, _, _ = find_feasible(con_values, con_indices, weights, 10, 5, max_iter=300)
+    result = find_feasible(con_values, con_indices, weights, 10, 5, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FeasibilityStatus.UNKNOWN
-    assert bound <= 0.0
-    assert violation > 0.0
-    assert selection.shape[0] == 5
+    assert result.status == FeasibilityStatus.UNKNOWN
+    assert result.bound <= 0.0
+    assert result.violation > 0.0
+    assert result.selection.shape[0] == 5
 
 
 def test_planted_matching_solved_by_ascent():
@@ -335,12 +331,12 @@ def test_planted_matching_solved_by_ascent():
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, _, violation, _, _ = find_feasible(con_values, con_indices, weights, n, k, max_iter=300)
+    result = find_feasible(con_values, con_indices, weights, n, k, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FeasibilityStatus.FEASIBLE
-    assert violation == 0.0
-    assert _selection_satisfies(selection, cons)
+    assert result.status == FeasibilityStatus.FEASIBLE
+    assert result.violation == 0.0
+    assert _selection_satisfies(result.selection, cons)
 
 
 # =================================================================================================
@@ -354,21 +350,19 @@ def test_never_wrong_property(seed: int):
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, bound, violation, lam_min, lam_max = find_feasible(
-        con_values, con_indices, weights, n, k, max_iter=300, seed=seed
-    )
+    result = find_feasible(con_values, con_indices, weights, n, k, max_iter=300, seed=seed)
 
     # --- assert ------------------------------------------
-    if status == FeasibilityStatus.FEASIBLE:
-        assert violation == 0.0
-        assert selection.shape[0] == k
-        assert _selection_satisfies(selection, cons)
-    elif status == FeasibilityStatus.INFEASIBLE:
-        assert bound > 0.0
-        assert _recomputed_dual_value(n, k, cons, lam_min, lam_max) == pytest.approx(bound)
+    if result.status == FeasibilityStatus.FEASIBLE:
+        assert result.violation == 0.0
+        assert result.selection.shape[0] == k
+        assert _selection_satisfies(result.selection, cons)
+    elif result.status == FeasibilityStatus.INFEASIBLE:
+        assert result.bound > 0.0
+        assert _recomputed_dual_value(n, k, cons, result.lam_min, result.lam_max) == pytest.approx(result.bound)
         assert not _brute_force_feasible(n, k, cons)
     else:
-        assert status == FeasibilityStatus.UNKNOWN  # no claim to check — but only these three statuses may occur
+        assert result.status == FeasibilityStatus.UNKNOWN  # no claim to check — but only these three statuses may occur
 
 
 @pytest.mark.parametrize("seed", range(10))
@@ -389,11 +383,11 @@ def test_metamorphic_tightening_never_creates_feasibility(seed: int):
     t_con_values, t_con_indices, t_weights = _arrays(tightened)
 
     # --- act ---------------------------------------------
-    status, *_ = find_feasible(con_values, con_indices, weights, n, k, max_iter=300, seed=seed)
-    t_status, *_ = find_feasible(t_con_values, t_con_indices, t_weights, n, k, max_iter=300, seed=seed)
+    result = find_feasible(con_values, con_indices, weights, n, k, max_iter=300, seed=seed)
+    t_result = find_feasible(t_con_values, t_con_indices, t_weights, n, k, max_iter=300, seed=seed)
 
     # --- assert ------------------------------------------
-    assert not (status == FeasibilityStatus.INFEASIBLE and t_status == FeasibilityStatus.FEASIBLE)
+    assert not (result.status == FeasibilityStatus.INFEASIBLE and t_result.status == FeasibilityStatus.FEASIBLE)
 
 
 def test_milp_cross_check():
@@ -421,13 +415,13 @@ def test_milp_cross_check():
     milp_feasible = milp_result.status == 0
 
     # --- act ---------------------------------------------
-    status, selection, _, _, _, _ = find_feasible(con_values, con_indices, weights, n, k, max_iter=500)
+    result = find_feasible(con_values, con_indices, weights, n, k, max_iter=500)
 
     # --- assert ------------------------------------------
-    if status == FeasibilityStatus.FEASIBLE:
+    if result.status == FeasibilityStatus.FEASIBLE:
         assert milp_feasible
-        assert _selection_satisfies(selection, cons)
-    if status == FeasibilityStatus.INFEASIBLE:
+        assert _selection_satisfies(result.selection, cons)
+    if result.status == FeasibilityStatus.INFEASIBLE:
         assert not milp_feasible
 
 
@@ -445,12 +439,12 @@ def test_determinism_same_inputs_same_outputs():
     second = find_feasible(con_values, con_indices, weights, n, k, max_iter=300, seed=11)
 
     # --- assert ------------------------------------------
-    assert first[0] == second[0]
-    assert first[2] == second[2]
-    assert first[3] == second[3]
-    np.testing.assert_array_equal(first[1], second[1])
-    np.testing.assert_array_equal(first[4], second[4])
-    np.testing.assert_array_equal(first[5], second[5])
+    assert first.status == second.status
+    assert first.bound == second.bound
+    assert first.violation == second.violation
+    np.testing.assert_array_equal(first.selection, second.selection)
+    np.testing.assert_array_equal(first.lam_min, second.lam_min)
+    np.testing.assert_array_equal(first.lam_max, second.lam_max)
 
 
 def test_gumbel_noise_seed_behavior():
