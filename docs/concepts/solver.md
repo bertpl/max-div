@@ -30,7 +30,7 @@ speed vs quality of the starting point:
 | `random_batched` | Selects in batches of `b`, re-evaluating separations between batches. |
 | `farthest_point` | A seeded random start item, then greedily adds the item farthest from the selection (farthest-point sampling; under `MEAN_PAIRWISE_DISTANCE`, greedily maximizes mean distance to the selection). An optional `top_k` samples each pick uniformly among the `top_k` best candidates (default 1 keeps the exact greedy construction). Constraint-unaware. **The SMART and THOROUGH presets initialize this way.** |
 | `eager` | Evaluates `nc` random candidates per step, picks the best. Slower but higher quality. |
-| `most_feasible` | Constructs a selection satisfying every constraint where one can be found, so optimization starts feasible instead of searching for feasibility; where the constraints provably cannot all be met, starts from a least-infeasible one instead. **Constrained problems only** — raises on a problem with no constraints. |
+| `most_feasible` | Constructs a selection satisfying every constraint where one can be found, so optimization starts feasible instead of searching for feasibility; where the constraints provably cannot all be met, starts from a least-infeasible one; and otherwise from the least-violating one found. **Constrained problems only** — raises on a problem with no constraints. |
 | `fast` | Selects the first `k` items. Trivial deterministic baseline for testing and benchmarking. |
 
 ## Optimization Strategies

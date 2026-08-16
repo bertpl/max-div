@@ -11,8 +11,11 @@ class InitMostFeasible(InitializationStrategy):
     """Initialize from the most nearly feasible selection the Lagrangian pipeline can construct.
 
     The pipeline always hands back a selection of `k` items, and the solve always starts from it:
-    one satisfying every constraint where such a selection was found, the least-infeasible one
-    where infeasibility was proven, and otherwise the least-violating one the search reached.
+
+    - one satisfying every constraint, where such a selection was found;
+    - the least-infeasible one, where infeasibility was proven;
+    - the least-violating one the search reached, otherwise.
+
     `get_debug_info` reports which of the three it was.
 
     Constrained problems only.  An unconstrained problem raises, because every selection satisfies

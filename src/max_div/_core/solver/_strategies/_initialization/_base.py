@@ -80,9 +80,8 @@ class InitializationStrategy(StrategyBase, ABC):
             lowers the violation of the one returned when none exists, at a proportional cost in
             setup time.
         :param beta: Tilts the constructed selection toward diverse items, at the risk of a less
-            feasible starting point and an O(n²) diversity-contribution sweep; 0, the value to
-            keep unless the trade has been measured, leaves construction purely
-            feasibility-driven.
+            feasible starting point and an O(n²) diversity-contribution sweep. Keep it at 0 unless
+            the trade has been measured; construction is then purely feasibility-driven.
         """
         from ._init_most_feasible import InitMostFeasible
 
