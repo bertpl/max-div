@@ -1,5 +1,7 @@
 # Benchmark Results - Problem C2 - Solver Presets
 
+--8<-- "docs/benchmarks/solver/results/note_measured_presets.md"
+
 ## I. Introduction
 
 These results compare the built-in solver presets on problem C2 at n=1000 — the size at which the problem selects k=100 items, so every page compares presets at the same selection size.
