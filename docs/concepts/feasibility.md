@@ -4,17 +4,17 @@
 
 Given [constraints](constraints.md), can *any* selection of `k` items satisfy all of them at once?
 
-This is worth asking separately from solving, because the solver never answers it. Handed
-constraints that cannot all be met, it returns the least infeasible selection it can find and a
-constraints score below 1.
+This is worth asking separately from solving, because the solver does not necessarily answer it.
+Handed constraints that cannot all be met, it returns the least infeasible selection it can find and
+a constraints score below 1.
 
 That looks exactly like a run which merely needed more time. If no selection could have done
 better, the fix is the constraints, not a bigger budget.
 
 The question is NP-complete in general: with overlapping
 [constraint groups](glossary.md#overlapping-constraints) it encodes problems no known method solves
-quickly in every case. So the honest answer is three-valued, and the two definite answers are
-*proofs* rather than strong hints.
+quickly in every case. So the honest answer is three-valued (feasible, infeasible, unknown), and the
+two definite answers are *proofs* rather than strong hints.
 
 ## Pricing a Violation
 
@@ -120,9 +120,11 @@ and a better selection to report.
 
 The result answers the two questions the opening posed, with two different numbers:
 
-- **`constraints_score_ceiling`** -- the best constraints score the problem admits, derived from
-  the certified floor. Comparing it against the score a long run actually reached says whether more
-  time could help, or whether the constraints themselves have to change.
+- **`violation_floor`** -- the smallest total weighted violation any selection can have. On an
+  infeasible problem this is positive and certified; comparing it against the violation a long run
+  actually reached says whether more time could help, or whether the constraints themselves have to
+  change. It converts directly to a ceiling on the achievable constraints score, should you want it
+  on that scale.
 - **`violation_per_constraint`** -- how many items the returned selection misses each constraint
   by, which says *which* constraints to change.
 
@@ -153,12 +155,14 @@ This strategy is for constrained problems and raises on a problem without constr
 selection satisfies the (empty) constraint set and the search has nothing to contribute — pick a
 different initialization for those.
 
-## Further Reading
+## References
 
-- Boyd & Vandenberghe, *Convex Optimization* (Cambridge University Press, 2004), chapter 5 -- the
-  duality theory behind the bound, including why a relaxed problem's optimum bounds the original's.
-- Fisher, "The Lagrangian Relaxation Method for Solving Integer Programming Problems",
-  *Management Science* 27(1), 1981 -- the classic survey of the technique applied to integer
-  programs, and of the subgradient search used to improve the prices.
-- Geoffrion, "Lagrangean Relaxation for Integer Programming", *Mathematical Programming Study* 2,
-  1974 -- establishes how strong the bound can get, and hence which problems it can never rule out.
+- Boyd, S., & Vandenberghe, L. (2004). [Convex Optimization](https://doi.org/10.1017/CBO9780511804441).
+  Cambridge University Press. (Chapter 5 — the duality theory behind the bound, including why a
+  relaxed problem's optimum bounds the original's.)
+- Fisher, M. L. (1981). [The Lagrangian relaxation method for solving integer programming
+  problems](https://doi.org/10.1287/mnsc.27.1.1). *Management Science*, 27(1), 1-18. (The classic
+  survey of the technique, and of the subgradient search used to improve the prices.)
+- Geoffrion, A. M. (1974). [Lagrangean relaxation for integer
+  programming](https://doi.org/10.1007/BFb0120690). *Mathematical Programming Study*, 2, 82-114.
+  (Establishes how strong the bound can get, and hence which problems it can never rule out.)
