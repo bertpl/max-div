@@ -5,7 +5,7 @@ counts between `min_count_i` and `max_count_i` selected members?  Constraint set
 arbitrarily, which makes the decision NP-complete, so the pipeline returns one of three statuses:
 
 - `FEASIBLE`: a witness selection satisfying every constraint is returned.
-- `INFEASIBLE`: multipliers `(lam, mu)` with a positive dual value are returned — a proof that no
+- `INFEASIBLE`: multipliers `(lam_min, lam_max)` with a positive dual value are returned — a proof that no
   feasible selection exists, and a lower bound on the weighted violation of every possible
   selection (`find_feasible` documents the verification).
 - `UNKNOWN`: neither was found.  This verdict carries no information; callers must behave as if
@@ -13,12 +13,13 @@ arbitrarily, which makes the decision NP-complete, so the pipeline returns one o
 
 The mechanism works in three phases:
 
-- Per-constraint violation prices `(lam_i, mu_i)` turn the problem into per-item scores, whose
+- Per-constraint violation prices `(lam_min_i, lam_max_i)` turn the problem into per-item scores, whose
   exact top-k yields the dual value `g`; `g > 0` proves infeasibility (`_dual_value`).
 - Projected supergradient ascent searches for prices with high `g` (`_dual_ascent`); prices at the
   end of a full ascent are called "mature" throughout this module.
-- Because `g <= 0` proves nothing, witnesses are constructed separately: candidate top-k
-  selections drawn from the mature scores, each finished by greedy swap repair.
+- The ascent returns a witness immediately when an iterate's top-k happens to satisfy every
+  constraint; otherwise — since `g <= 0` proves nothing — witnesses are constructed separately:
+  candidate top-k selections drawn from the mature scores, each finished by greedy swap repair.
 
 Soundness invariant: the ascent must evaluate `g` through an EXACT, unperturbed top-k — noise
 there can overestimate `g` and fabricate a false infeasibility proof.  All randomization lives
@@ -26,9 +27,12 @@ exclusively in candidate generation, where no bound is claimed.
 
 All array-level functions are numba-compiled; the pipeline runs once per call (not per solver
 iteration), so clarity wins over micro-optimization everywhere outside the inner passes.
+Docstrings here are deliberately fuller than elsewhere in the code base: the computations are
+derivation-backed, so each function records the part of the argument it owns.
 """
 
 import math
+from enum import IntEnum
 
 import numba
 import numpy as np
@@ -36,13 +40,26 @@ from numpy.typing import NDArray
 
 from max_div._core._random import new_rng_state, rand_nz_float64
 
+
+# =================================================================================================
+#  FeasibilityStatus
+# =================================================================================================
+class FeasibilityStatus(IntEnum):
+    """Three-valued outcome of the feasibility pipeline; the definite verdicts are proofs."""
+
+    INFEASIBLE = -1
+    UNKNOWN = 0
+    FEASIBLE = 1
+
+
 # =================================================================================================
 #  Constants
 # =================================================================================================
-# status codes
-FEASIBLE = 1
-INFEASIBLE = -1
-UNKNOWN = 0
+# njit-internal integer aliases of `FeasibilityStatus` — the compiled core works with plain ints,
+# and the `find_feasible` wrapper converts back to the enum
+_FEASIBLE = int(FeasibilityStatus.FEASIBLE)
+_INFEASIBLE = int(FeasibilityStatus.INFEASIBLE)
+_UNKNOWN = int(FeasibilityStatus.UNKNOWN)
 
 # ascent
 GAMMA0 = 1.0  # initial step-size scale of the projected supergradient ascent
@@ -125,17 +142,24 @@ def _constraint_set_sizes(item_cons: NDArray[np.int32], m: int) -> NDArray[np.in
 def _item_scores(
     item_indptr: NDArray[np.int64],
     item_cons: NDArray[np.int32],
-    lam: NDArray[np.float64],
-    mu: NDArray[np.float64],
+    lam_min: NDArray[np.float64],
+    lam_max: NDArray[np.float64],
 ) -> NDArray[np.float64]:
-    """Return per-item scores `s_j = sum of (lam_i - mu_i) over the constraints containing j`."""
+    """Return per-item scores `s_j = sum of (lam_min_i - lam_max_i) over the constraints containing j`.
+
+    Args:
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        lam_min: shortfall prices, one per constraint.
+        lam_max: excess prices, one per constraint.
+    """
     n = item_indptr.shape[0] - 1
     scores = np.zeros(n, dtype=np.float64)
     for j in range(n):
         acc = 0.0
         for e in range(item_indptr[j], item_indptr[j + 1]):
             i = item_cons[e]
-            acc += lam[i] - mu[i]
+            acc += lam_min[i] - lam_max[i]
         scores[j] = acc
     return scores
 
@@ -154,7 +178,14 @@ def _selection_counts(
     selection: NDArray[np.int64],
     m: int,
 ) -> NDArray[np.int64]:
-    """Return per-constraint counts of selected members."""
+    """Return per-constraint counts of selected members.
+
+    Args:
+        item_indptr: item->constraint CSR offsets, as built by `build_item_constraint_csr`.
+        item_cons: item->constraint CSR values — the constraints containing each item.
+        selection: the selected item indices.
+        m: the number of constraints.
+    """
     counts = np.zeros(m, dtype=np.int64)
     for t in range(selection.shape[0]):
         j = selection[t]
@@ -170,7 +201,14 @@ def _weighted_violation(
     con_max: NDArray[np.int64],
     weights: NDArray[np.float64],
 ) -> float:
-    """Return the total weighted violation `sum of w_i * (shortfall_i + excess_i)`."""
+    """Return the total weighted violation `sum of w_i * (shortfall_i + excess_i)`.
+
+    Args:
+        counts: per-constraint counts of selected members.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+        weights: per-constraint violation weights.
+    """
     v = 0.0
     for i in range(counts.shape[0]):
         if counts[i] < con_min[i]:
@@ -193,12 +231,12 @@ def _counts_feasible(counts: NDArray[np.int64], con_min: NDArray[np.int64], con_
 def _dual_value(
     con_min: NDArray[np.int64],
     con_max: NDArray[np.int64],
-    lam: NDArray[np.float64],
-    mu: NDArray[np.float64],
+    lam_min: NDArray[np.float64],
+    lam_max: NDArray[np.float64],
     scores: NDArray[np.float64],
     selection: NDArray[np.int64],
 ) -> float:
-    """Return the dual value `g = lam.min_counts - mu.max_counts - sum of selected scores`.
+    """Return the dual value `g = lam_min.min_counts - lam_max.max_counts - sum of selected scores`.
 
     Valid as a bound only when `selection` is an exact top-k of `scores`: `g` is the minimum of the
     priced penalty over all k-selections, and that minimum is attained at the exact top-k.  A
@@ -207,7 +245,7 @@ def _dual_value(
     """
     g = 0.0
     for i in range(con_min.shape[0]):
-        g += lam[i] * con_min[i] - mu[i] * con_max[i]
+        g += lam_min[i] * con_min[i] - lam_max[i] * con_max[i]
     for t in range(selection.shape[0]):
         g -= scores[selection[t]]
     return g
@@ -225,7 +263,7 @@ def _binding_upper_mask(
 ) -> NDArray[np.bool_]:
     """Return which upper bounds can actually bind: `max_count < min(k, set size)`.
 
-    A constraint whose max count can never be exceeded needs no price; its `mu` stays 0 and its
+    A constraint whose max count can never be exceeded needs no price; its `lam_max` stays 0 and its
     supergradient component is skipped.
     """
     sizes = _constraint_set_sizes(item_cons, m)
@@ -237,9 +275,9 @@ def _binding_upper_mask(
 
 @numba.njit(cache=True)
 def _projected_step(
-    lam: NDArray[np.float64],
-    mu: NDArray[np.float64],
-    mu_active: NDArray[np.bool_],
+    lam_min: NDArray[np.float64],
+    lam_max: NDArray[np.float64],
+    lam_max_active: NDArray[np.bool_],
     counts: NDArray[np.int64],
     con_min: NDArray[np.int64],
     con_max: NDArray[np.int64],
@@ -249,8 +287,8 @@ def _projected_step(
 ) -> None:
     """Take one projected supergradient step in place.
 
-    The supergradient at the current top-k is `(con_min - counts)` for `lam` and
-    `(counts - con_max)` for `mu`: prices of starved constraints rise, prices of over-satisfied
+    The supergradient at the current top-k is `(con_min - counts)` for `lam_min` and
+    `(counts - con_max)` for `lam_max`: prices of starved constraints rise, prices of over-satisfied
     ones decay.  The step is `gamma / (sqrt(t) * max(gradient norm, 1))`, and each multiplier is
     projected back into its box `[0, weight_i]` — the cap that makes the matured dual value a
     quantitative violation floor rather than only a sign test.
@@ -258,16 +296,16 @@ def _projected_step(
     m = con_min.shape[0]
     norm_sq = 0.0
     for i in range(m):
-        g_lam = float(con_min[i] - counts[i])
-        norm_sq += g_lam * g_lam
-        if mu_active[i]:
-            g_mu = float(counts[i] - con_max[i])
-            norm_sq += g_mu * g_mu
+        g_min = float(con_min[i] - counts[i])
+        norm_sq += g_min * g_min
+        if lam_max_active[i]:
+            g_max = float(counts[i] - con_max[i])
+            norm_sq += g_max * g_max
     step = gamma / (np.sqrt(float(t)) * max(np.sqrt(norm_sq), 1.0))
     for i in range(m):
-        lam[i] = min(max(lam[i] + step * (con_min[i] - counts[i]), 0.0), weights[i])
-        if mu_active[i]:
-            mu[i] = min(max(mu[i] + step * (counts[i] - con_max[i]), 0.0), weights[i])
+        lam_min[i] = min(max(lam_min[i] + step * (con_min[i] - counts[i]), 0.0), weights[i])
+        if lam_max_active[i]:
+            lam_max[i] = min(max(lam_max[i] + step * (counts[i] - con_max[i]), 0.0), weights[i])
 
 
 @numba.njit(cache=True)
@@ -298,35 +336,35 @@ def _dual_ascent(
     candidate generation draws from.
 
     Returns:
-        `(best_g, lam_avg, mu_avg, lam_best, mu_best, witness)` — the running-average and
+        `(best_g, lam_min_avg, lam_max_avg, lam_min_best, lam_max_best, witness)` — the running-average and
         best-g multiplier vectors (both used by candidate generation), and the witness selection
         (empty when none was found).
     """
     m = con_min.shape[0]
-    lam = np.zeros(m, dtype=np.float64)
-    mu = np.zeros(m, dtype=np.float64)
-    lam_avg = np.zeros(m, dtype=np.float64)
-    mu_avg = np.zeros(m, dtype=np.float64)
-    lam_best = np.zeros(m, dtype=np.float64)
-    mu_best = np.zeros(m, dtype=np.float64)
-    mu_active = _binding_upper_mask(item_cons, con_max, m, k)
+    lam_min = np.zeros(m, dtype=np.float64)
+    lam_max = np.zeros(m, dtype=np.float64)
+    lam_min_avg = np.zeros(m, dtype=np.float64)
+    lam_max_avg = np.zeros(m, dtype=np.float64)
+    lam_min_best = np.zeros(m, dtype=np.float64)
+    lam_max_best = np.zeros(m, dtype=np.float64)
+    lam_max_active = _binding_upper_mask(item_cons, con_max, m, k)
 
     best_g = -np.inf
     gamma = GAMMA0
     stall = 0
     for t in range(1, max_iter + 1):
-        scores = _item_scores(item_indptr, item_cons, lam, mu)
+        scores = _item_scores(item_indptr, item_cons, lam_min, lam_max)
         selection = _top_k_items(scores, k)  # exact top-k: the soundness invariant
         counts = _selection_counts(item_indptr, item_cons, selection, m)
 
         if _counts_feasible(counts, con_min, con_max):
-            return best_g, lam_avg, mu_avg, lam_best, mu_best, selection
+            return best_g, lam_min_avg, lam_max_avg, lam_min_best, lam_max_best, selection
 
-        g = _dual_value(con_min, con_max, lam, mu, scores, selection)
+        g = _dual_value(con_min, con_max, lam_min, lam_max, scores, selection)
         if g > best_g:
             best_g = g
-            lam_best[:] = lam
-            mu_best[:] = mu
+            lam_min_best[:] = lam_min
+            lam_max_best[:] = lam_max
             stall = 0
         else:
             stall += 1
@@ -336,16 +374,16 @@ def _dual_ascent(
         if stop_at_first_proof and best_g > G_POSITIVE_TOL:
             break
 
-        _projected_step(lam, mu, mu_active, counts, con_min, con_max, weights, gamma, t)
+        _projected_step(lam_min, lam_max, lam_max_active, counts, con_min, con_max, weights, gamma, t)
 
         # running average of the iterates; averages smooth the zigzag of subgradient ascent and
         # give candidate generation a second, complementary score vector
         a = 1.0 / float(t)
         for i in range(m):
-            lam_avg[i] += a * (lam[i] - lam_avg[i])
-            mu_avg[i] += a * (mu[i] - mu_avg[i])
+            lam_min_avg[i] += a * (lam_min[i] - lam_min_avg[i])
+            lam_max_avg[i] += a * (lam_max[i] - lam_max_avg[i])
 
-    return best_g, lam_avg, mu_avg, lam_best, mu_best, np.empty(0, dtype=np.int64)
+    return best_g, lam_min_avg, lam_max_avg, lam_min_best, lam_max_best, np.empty(0, dtype=np.int64)
 
 
 # =================================================================================================
@@ -649,16 +687,16 @@ def _find_feasible(
     """Run the numba core of `find_feasible`; see the wrapper for the contract."""
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
 
-    best_g, lam_avg, mu_avg, lam_best, mu_best, witness = _dual_ascent(
+    best_g, lam_min_avg, lam_max_avg, lam_min_best, lam_max_best, witness = _dual_ascent(
         item_indptr, item_cons, con_min, con_max, weights, k, max_iter, stop_at_first_proof
     )
     if witness.shape[0] > 0:
-        return FEASIBLE, witness, best_g, 0.0, lam_best, mu_best
+        return _FEASIBLE, witness, best_g, 0.0, lam_min_best, lam_max_best
 
     certified = best_g > G_POSITIVE_TOL
     floor = _violation_floor(weights, best_g, certified)
-    scores_avg = _item_scores(item_indptr, item_cons, lam_avg, mu_avg)
-    scores_best = _item_scores(item_indptr, item_cons, lam_best, mu_best)
+    scores_avg = _item_scores(item_indptr, item_cons, lam_min_avg, lam_max_avg)
+    scores_best = _item_scores(item_indptr, item_cons, lam_min_best, lam_max_best)
     best_violation, best_selection = _candidate_rounds(
         con_indices,
         item_indptr,
@@ -675,10 +713,10 @@ def _find_feasible(
     )
 
     if certified:
-        return INFEASIBLE, best_selection, best_g, best_violation, lam_best, mu_best
+        return _INFEASIBLE, best_selection, best_g, best_violation, lam_min_best, lam_max_best
     if best_violation <= 0.0:
-        return FEASIBLE, best_selection, best_g, 0.0, lam_best, mu_best
-    return UNKNOWN, best_selection, best_g, best_violation, lam_best, mu_best
+        return _FEASIBLE, best_selection, best_g, 0.0, lam_min_best, lam_max_best
+    return _UNKNOWN, best_selection, best_g, best_violation, lam_min_best, lam_max_best
 
 
 def find_feasible(
@@ -690,7 +728,7 @@ def find_feasible(
     max_iter: int,
     seed: int = 0,
     stop_at_first_proof: bool = False,
-) -> tuple[int, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
+) -> tuple[FeasibilityStatus, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
     """Run the full feasibility pipeline: dual ascent, candidate generation, swap repair.
 
     Args:
@@ -708,19 +746,19 @@ def find_feasible(
             mature bound and the scores candidate generation draws from (verdict mode).
 
     Returns:
-        `(status, selection, bound, violation, lam, mu)`:
+        `(status, selection, bound, violation, lam_min, lam_max)`:
 
         - `status`: `FEASIBLE` (selection is a witness, violation 0), `INFEASIBLE` (bound > 0 is a
           verifiable proof; selection is the best least-infeasible found, its violation at most
           `violation`), or `UNKNOWN` (no claim; selection is the least-violating found).
         - `bound`: the best dual value — when positive, a certified lower bound on the weighted
-          violation of every possible selection, re-checkable from `(lam, mu)` alone.
-        - `lam`, `mu`: the multipliers behind `bound` (the certificate when `status` is
+          violation of every possible selection, re-checkable from `(lam_min, lam_max)` alone.
+        - `lam_min`, `lam_max`: the multipliers behind `bound` (the certificate when `status` is
           `INFEASIBLE`).
     """
     con_min = con_values[:, 0].astype(np.int64)
     con_max = con_values[:, 1].astype(np.int64)
-    return _find_feasible(
+    status, selection, bound, violation, lam_min, lam_max = _find_feasible(
         con_indices,
         con_min,
         con_max,
@@ -731,6 +769,7 @@ def find_feasible(
         int(seed),
         bool(stop_at_first_proof),
     )
+    return FeasibilityStatus(int(status)), selection, bound, violation, lam_min, lam_max
 
 
 # =================================================================================================

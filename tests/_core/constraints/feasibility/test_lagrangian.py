@@ -7,9 +7,7 @@ from scipy.optimize import LinearConstraint, milp
 from max_div._core._random import new_rng_state
 from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.constraints.feasibility import (
-    FEASIBLE,
-    INFEASIBLE,
-    UNKNOWN,
+    FeasibilityStatus,
     construction_iteration_budget_iterations,
     construction_iteration_budget_seconds,
     find_feasible,
@@ -46,15 +44,15 @@ def _brute_force_feasible(n: int, k: int, cons: list[Constraint]) -> bool:
     return any(_selection_satisfies(np.array(combo), cons) for combo in itertools.combinations(range(n), k))
 
 
-def _recomputed_dual_value(n: int, k: int, cons: list[Constraint], lam: np.ndarray, mu: np.ndarray) -> float:
+def _recomputed_dual_value(n: int, k: int, cons: list[Constraint], lam_min: np.ndarray, lam_max: np.ndarray) -> float:
     """Independently recompute g from returned multipliers — the one-line certificate check."""
     scores = np.zeros(n)
     for i, con in enumerate(cons):
         for j in con.int_set:
-            scores[j] += lam[i] - mu[i]
+            scores[j] += lam_min[i] - lam_max[i]
     mins = np.array([con.min_count for con in cons])
     maxs = np.array([con.max_count for con in cons])
-    return float(lam @ mins - mu @ maxs - np.sort(scores)[-k:].sum())
+    return float(lam_min @ mins - lam_max @ maxs - np.sort(scores)[-k:].sum())
 
 
 def _random_instance(seed: int) -> tuple[int, int, list[Constraint]]:
@@ -121,13 +119,15 @@ def test_dual_value_pigeonhole_toy():
     n, k, cons = _pigeonhole_instance()
     _, con_indices, _ = _arrays(cons)
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
-    lam = np.ones(2)
-    mu = np.zeros(2)
+    lam_min = np.ones(2)
+    lam_max = np.zeros(2)
 
     # --- act ---------------------------------------------
-    scores = _item_scores(item_indptr, item_cons, lam, mu)
+    scores = _item_scores(item_indptr, item_cons, lam_min, lam_max)
     selection = _top_k_items(scores, k)
-    g = _dual_value(np.array([2, 2], dtype=np.int64), np.array([2, 2], dtype=np.int64), lam, mu, scores, selection)
+    g = _dual_value(
+        np.array([2, 2], dtype=np.int64), np.array([2, 2], dtype=np.int64), lam_min, lam_max, scores, selection
+    )
 
     # --- assert ------------------------------------------
     assert scores.tolist() == [1.0, 1.0, 1.0, 1.0]
@@ -151,13 +151,13 @@ def test_exact_topk_guard():
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     con_min = np.array([1, 1], dtype=np.int64)
     con_max = np.array([2, 2], dtype=np.int64)
-    lam = np.array([3.0, 1.0])
-    mu = np.zeros(2)
-    scores = _item_scores(item_indptr, item_cons, lam, mu)
+    lam_min = np.array([3.0, 1.0])
+    lam_max = np.zeros(2)
+    scores = _item_scores(item_indptr, item_cons, lam_min, lam_max)
 
     # --- act ---------------------------------------------
-    g_exact = _dual_value(con_min, con_max, lam, mu, scores, _top_k_items(scores, k))
-    g_corrupted = _dual_value(con_min, con_max, lam, mu, scores, np.array([3, 4], dtype=np.int64))
+    g_exact = _dual_value(con_min, con_max, lam_min, lam_max, scores, _top_k_items(scores, k))
+    g_corrupted = _dual_value(con_min, con_max, lam_min, lam_max, scores, np.array([3, 4], dtype=np.int64))
 
     # --- assert ------------------------------------------
     assert g_exact <= 0.0
@@ -171,13 +171,15 @@ def test_pigeonhole_certified_infeasible():
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, bound, violation, lam, mu = find_feasible(con_values, con_indices, weights, n, k, max_iter=300)
+    status, selection, bound, violation, lam_min, lam_max = find_feasible(
+        con_values, con_indices, weights, n, k, max_iter=300
+    )
 
     # --- assert ------------------------------------------
-    assert status == INFEASIBLE
+    assert status == FeasibilityStatus.INFEASIBLE
     assert bound > 0.0
     # the certificate is independently verifiable from the multipliers alone
-    assert _recomputed_dual_value(n, k, cons, lam, mu) == pytest.approx(bound)
+    assert _recomputed_dual_value(n, k, cons, lam_min, lam_max) == pytest.approx(bound)
     # the least-infeasible selection attains the brute-force minimum violation
     assert selection.shape[0] == k
     assert violation == pytest.approx(2.0)
@@ -196,7 +198,7 @@ def test_verdict_mode_certifies_early():
     )
 
     # --- assert ------------------------------------------
-    assert status == INFEASIBLE
+    assert status == FeasibilityStatus.INFEASIBLE
     assert bound > 0.0
 
 
@@ -213,7 +215,7 @@ def test_witness_from_ascent():
     status, selection, _, violation, _, _ = find_feasible(con_values, con_indices, weights, 4, 2, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FEASIBLE
+    assert status == FeasibilityStatus.FEASIBLE
     assert violation == 0.0
     assert sorted(selection.tolist()) == [2, 3]
 
@@ -226,7 +228,7 @@ def test_no_constraints_is_trivially_feasible():
     )
 
     # --- assert ------------------------------------------
-    assert status == FEASIBLE
+    assert status == FeasibilityStatus.FEASIBLE
     assert selection.shape[0] == 3
     assert violation == 0.0
 
@@ -244,7 +246,7 @@ def test_scaled_weights_still_construct():
     status, selection, _, violation, _, _ = find_feasible(con_values, con_indices, weights, 6, 3, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FEASIBLE
+    assert status == FeasibilityStatus.FEASIBLE
     assert violation == 0.0
     assert _selection_satisfies(selection, cons)
 
@@ -262,7 +264,7 @@ def test_fractional_weights_keep_unrounded_floor():
     status, selection, bound, violation, _, _ = find_feasible(con_values, con_indices, weights, 4, 2, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == INFEASIBLE
+    assert status == FeasibilityStatus.INFEASIBLE
     assert bound > 0.0
     assert selection.shape[0] == 2
     assert violation >= bound - 1e-9
@@ -287,7 +289,7 @@ def test_lp_feasible_integer_infeasible_returns_unknown():
     status, selection, bound, violation, _, _ = find_feasible(con_values, con_indices, weights, 10, 5, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == UNKNOWN
+    assert status == FeasibilityStatus.UNKNOWN
     assert bound <= 0.0
     assert violation > 0.0
     assert selection.shape[0] == 5
@@ -322,7 +324,7 @@ def test_planted_matching_solved_by_ascent():
     status, selection, _, violation, _, _ = find_feasible(con_values, con_indices, weights, n, k, max_iter=300)
 
     # --- assert ------------------------------------------
-    assert status == FEASIBLE
+    assert status == FeasibilityStatus.FEASIBLE
     assert violation == 0.0
     assert _selection_satisfies(selection, cons)
 
@@ -338,21 +340,21 @@ def test_never_wrong_property(seed: int):
     con_values, con_indices, weights = _arrays(cons)
 
     # --- act ---------------------------------------------
-    status, selection, bound, violation, lam, mu = find_feasible(
+    status, selection, bound, violation, lam_min, lam_max = find_feasible(
         con_values, con_indices, weights, n, k, max_iter=300, seed=seed
     )
 
     # --- assert ------------------------------------------
-    if status == FEASIBLE:
+    if status == FeasibilityStatus.FEASIBLE:
         assert violation == 0.0
         assert selection.shape[0] == k
         assert _selection_satisfies(selection, cons)
-    elif status == INFEASIBLE:
+    elif status == FeasibilityStatus.INFEASIBLE:
         assert bound > 0.0
-        assert _recomputed_dual_value(n, k, cons, lam, mu) == pytest.approx(bound)
+        assert _recomputed_dual_value(n, k, cons, lam_min, lam_max) == pytest.approx(bound)
         assert not _brute_force_feasible(n, k, cons)
     else:
-        assert status == UNKNOWN  # no claim to check — but only these three statuses may occur
+        assert status == FeasibilityStatus.UNKNOWN  # no claim to check — but only these three statuses may occur
 
 
 @pytest.mark.parametrize("seed", range(10))
@@ -377,7 +379,7 @@ def test_metamorphic_tightening_never_creates_feasibility(seed: int):
     t_status, *_ = find_feasible(t_con_values, t_con_indices, t_weights, n, k, max_iter=300, seed=seed)
 
     # --- assert ------------------------------------------
-    assert not (status == INFEASIBLE and t_status == FEASIBLE)
+    assert not (status == FeasibilityStatus.INFEASIBLE and t_status == FeasibilityStatus.FEASIBLE)
 
 
 def test_milp_cross_check():
@@ -408,10 +410,10 @@ def test_milp_cross_check():
     status, selection, _, _, _, _ = find_feasible(con_values, con_indices, weights, n, k, max_iter=500)
 
     # --- assert ------------------------------------------
-    if status == FEASIBLE:
+    if status == FeasibilityStatus.FEASIBLE:
         assert milp_feasible
         assert _selection_satisfies(selection, cons)
-    if status == INFEASIBLE:
+    if status == FeasibilityStatus.INFEASIBLE:
         assert not milp_feasible
 
 
