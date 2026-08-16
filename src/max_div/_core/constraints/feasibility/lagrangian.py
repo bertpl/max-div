@@ -183,7 +183,7 @@ def _weighted_violation(
 @numba.njit(cache=True)
 def _counts_feasible(counts: NDArray[np.int64], con_min: NDArray[np.int64], con_max: NDArray[np.int64]) -> bool:
     """Return whether every constraint count lies within its bounds."""
-    for i in range(counts.shape[0]):
+    for i in range(counts.shape[0]):  # noqa: SIM110 — numba-compiled; the all(...) generator form is not supported
         if counts[i] < con_min[i] or counts[i] > con_max[i]:
             return False
     return True
@@ -568,42 +568,44 @@ def _repair_selection(
 #  Pipeline
 # =================================================================================================
 @numba.njit(cache=True)
-def _find_feasible(
+def _violation_floor(weights: NDArray[np.float64], best_g: float, certified: bool) -> float:
+    """Return the certified violation floor, rounded up to the next integer for integral weights.
+
+    Integral weights make every achievable violation an integer, which sharpens the fractional
+    dual bound.
+    """
+    for i in range(weights.shape[0]):
+        if abs(weights[i] - np.round(weights[i])) > 1e-12:
+            return best_g
+    return np.ceil(best_g - G_POSITIVE_TOL) if certified else best_g
+
+
+@numba.njit(cache=True)
+def _candidate_rounds(
     con_indices: NDArray[np.int32],
+    item_indptr: NDArray[np.int64],
+    item_cons: NDArray[np.int32],
     con_min: NDArray[np.int64],
     con_max: NDArray[np.int64],
     weights: NDArray[np.float64],
     n: int,
     k: int,
-    max_iter: int,
+    scores_avg: NDArray[np.float64],
+    scores_best: NDArray[np.float64],
     seed: int,
-    stop_at_first_proof: bool,
-) -> tuple[int, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
-    """Run the numba core of `find_feasible`; see the wrapper for the contract."""
+    stop_at_floor: float,
+) -> tuple[float, NDArray[np.int64]]:
+    """Generate candidate selections from the mature scores and swap-repair each.
+
+    Rounds alternate the two score vectors; the un-noised top-k of each is the single best guess,
+    so noise starts only after both have had their pure round.  The loop stops early once the best
+    violation reaches `stop_at_floor` — pass 0.0 to stop at a witness, or the certified floor to
+    stop at a provably optimal least-infeasible selection.
+
+    Returns:
+        `(best_violation, best_selection)` over all rounds.
+    """
     m = con_min.shape[0]
-    item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
-
-    best_g, lam_avg, mu_avg, lam_best, mu_best, witness = _dual_ascent(
-        item_indptr, item_cons, con_min, con_max, weights, k, max_iter, stop_at_first_proof
-    )
-    if witness.shape[0] > 0:
-        return FEASIBLE, witness, best_g, 0.0, lam_best, mu_best
-
-    certified = best_g > G_POSITIVE_TOL
-
-    # integral weights make every achievable violation an integer, so the bound can be rounded
-    # up to the next integer
-    weights_integral = True
-    for i in range(m):
-        if abs(weights[i] - np.round(weights[i])) > 1e-12:
-            weights_integral = False
-            break
-    floor = np.ceil(best_g - G_POSITIVE_TOL) if (certified and weights_integral) else best_g
-
-    # the un-noised top-k of each mature score vector is the single best guess, so noise starts
-    # only after both have had their pure round
-    scores_avg = _item_scores(item_indptr, item_cons, lam_avg, mu_avg)
-    scores_best = _item_scores(item_indptr, item_cons, lam_best, mu_best)
     noise_scale = NOISE_SCALE * (np.sum(weights) / m) if m > 0 else 0.0
     max_swaps = max(SWAP_CAP_FLOOR, SWAP_CAP_PER_K * k)
     rng_state = new_rng_state(np.int64(seed))
@@ -627,13 +629,55 @@ def _find_feasible(
         if violation < best_violation:
             best_violation = violation
             best_selection = np.where(sel_mask)[0].astype(np.int64)
-            if not certified and violation <= 0.0:
-                return FEASIBLE, best_selection, best_g, 0.0, lam_best, mu_best
-            if certified and best_violation <= floor + G_POSITIVE_TOL:
-                break  # the floor is attained: provably optimal least-infeasible selection
+            if best_violation <= stop_at_floor + G_POSITIVE_TOL:
+                break
+    return best_violation, best_selection
+
+
+@numba.njit(cache=True)
+def _find_feasible(
+    con_indices: NDArray[np.int32],
+    con_min: NDArray[np.int64],
+    con_max: NDArray[np.int64],
+    weights: NDArray[np.float64],
+    n: int,
+    k: int,
+    max_iter: int,
+    seed: int,
+    stop_at_first_proof: bool,
+) -> tuple[int, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
+    """Run the numba core of `find_feasible`; see the wrapper for the contract."""
+    item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
+
+    best_g, lam_avg, mu_avg, lam_best, mu_best, witness = _dual_ascent(
+        item_indptr, item_cons, con_min, con_max, weights, k, max_iter, stop_at_first_proof
+    )
+    if witness.shape[0] > 0:
+        return FEASIBLE, witness, best_g, 0.0, lam_best, mu_best
+
+    certified = best_g > G_POSITIVE_TOL
+    floor = _violation_floor(weights, best_g, certified)
+    scores_avg = _item_scores(item_indptr, item_cons, lam_avg, mu_avg)
+    scores_best = _item_scores(item_indptr, item_cons, lam_best, mu_best)
+    best_violation, best_selection = _candidate_rounds(
+        con_indices,
+        item_indptr,
+        item_cons,
+        con_min,
+        con_max,
+        weights,
+        n,
+        k,
+        scores_avg,
+        scores_best,
+        seed,
+        floor if certified else 0.0,
+    )
 
     if certified:
         return INFEASIBLE, best_selection, best_g, best_violation, lam_best, mu_best
+    if best_violation <= 0.0:
+        return FEASIBLE, best_selection, best_g, 0.0, lam_best, mu_best
     return UNKNOWN, best_selection, best_g, best_violation, lam_best, mu_best
 
 

@@ -37,7 +37,7 @@ def _arrays(cons: list[Constraint]) -> tuple[np.ndarray, np.ndarray, np.ndarray]
 
 def _selection_satisfies(selection: np.ndarray, cons: list[Constraint]) -> bool:
     """Check a selection against every constraint's [min_count, max_count]."""
-    chosen = set(int(j) for j in selection)
+    chosen = {int(j) for j in selection}
     return all(con.min_count <= len(con.int_set & chosen) <= con.max_count for con in cons)
 
 
@@ -66,7 +66,7 @@ def _random_instance(seed: int) -> tuple[int, int, list[Constraint]]:
     cons = []
     for _ in range(m):
         size = int(rng.integers(2, n))
-        int_set = set(int(j) for j in rng.choice(n, size=size, replace=False))
+        int_set = {int(j) for j in rng.choice(n, size=size, replace=False)}
         lo = int(rng.integers(0, min(k, len(int_set)) + 1))
         hi = int(rng.integers(lo, len(int_set) + 1))
         cons.append(Constraint(int_set=int_set, min_count=lo, max_count=hi))
@@ -386,7 +386,7 @@ def test_milp_cross_check():
     rng = np.random.default_rng(7)
     n, k = 40, 12
     cons = [
-        Constraint(int_set=set(int(j) for j in rng.choice(n, size=10, replace=False)), min_count=4, max_count=6)
+        Constraint(int_set={int(j) for j in rng.choice(n, size=10, replace=False)}, min_count=4, max_count=6)
         for _ in range(6)
     ]
     con_values, con_indices, weights = _arrays(cons)
@@ -453,7 +453,7 @@ def test_gumbel_noise_seed_behavior():
 #  Iteration budgets
 # =================================================================================================
 @pytest.mark.parametrize(
-    ("t_max_sec", "expected"),
+    "t_max_sec,expected",
     [
         (0.001, CONSTRUCTION_MIN_ITER),  # tiny budget clamps to the floor
         (1e6, CONSTRUCTION_MAX_ITER),  # huge budget clamps to the ceiling
@@ -479,7 +479,7 @@ def test_construction_budget_seconds_scales_with_problem_size():
 
 
 @pytest.mark.parametrize(
-    ("n_solver_iterations", "expected"),
+    "n_solver_iterations,expected",
     [
         (100, CONSTRUCTION_MIN_ITER),
         (20_000, 2000),  # the `BUDGET_FRACTION` share, un-clamped
