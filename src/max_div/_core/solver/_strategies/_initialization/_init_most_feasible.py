@@ -22,8 +22,12 @@ class InitMostFeasible(InitializationStrategy):
     The whole selection is produced in one batch, so the state must still be empty.
 
     Feasibility is all this strategy optimizes for, so its selection is no more diverse than a
-    random one.  `beta` trades some of the chance of reaching feasibility for a more diverse
-    result, by scoring candidates on the state's global diversity contributions.
+    random one.  A nonzero `beta` buys diversity by scoring candidates on the state's global
+    diversity contributions, and it is a real trade rather than a tie-break: steering candidate
+    generation toward diverse items can miss a satisfying selection that would otherwise have been
+    found, leaving a more violating starting point.  What it cannot do is affect an infeasibility
+    proof, which the tilt never reaches.  Leave it at 0 unless the trade has been measured on the
+    problem at hand.
 
     Suggested use: constrained problems where reaching feasibility consumes a meaningful share of
     the optimization budget, or where feasibility may be unreachable altogether.

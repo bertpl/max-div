@@ -1000,7 +1000,10 @@ def find_feasible(
             only when `beta` is nonzero.
         beta: how strongly candidate generation is tilted toward high-prior items, via a
             `beta * log(p)` term on the candidate scores; 0 disables the tilt.  A tilt cannot
-            reach the ascent, and so changes which selection is constructed, never the verdict.
+            reach the ascent, so it can never affect an infeasibility proof.  It can still cost
+            feasibility, though: steering candidate generation elsewhere can miss a witness this
+            same call would otherwise have constructed, turning `FEASIBLE` into `UNKNOWN` and
+            raising the violation reported.
 
     Returns:
         A `FeasibilityResult` (see its docstring for the field semantics).  The certificate it may

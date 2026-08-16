@@ -79,8 +79,10 @@ class InitializationStrategy(StrategyBase, ABC):
         :param max_iter: Search budget; a higher budget more often finds a feasible selection, and
             lowers the violation of the one returned when none exists, at a proportional cost in
             setup time.
-        :param beta: Tilts the constructed selection toward diverse items; 0 keeps construction
-            purely feasibility-driven.
+        :param beta: Tilts the constructed selection toward diverse items, at the risk of a less
+            feasible starting point and an O(n²) diversity-contribution sweep; 0, the value to
+            keep unless the trade has been measured, leaves construction purely
+            feasibility-driven.
         """
         from ._init_most_feasible import InitMostFeasible
 
