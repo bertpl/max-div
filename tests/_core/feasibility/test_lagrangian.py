@@ -6,14 +6,14 @@ from scipy.optimize import LinearConstraint, milp
 
 from max_div._core._random import new_rng_state
 from max_div._core.constraints import Constraint, ConstraintList
-from max_div._core.constraints.feasibility import (
+from max_div._core.feasibility import (
     FeasibilityResult,
     FeasibilityStatus,
     construction_iteration_budget_iterations,
     construction_iteration_budget_seconds,
     find_feasible,
 )
-from max_div._core.constraints.feasibility.lagrangian import (
+from max_div._core.feasibility.lagrangian import (
     CONSTRUCTION_MAX_ITER,
     CONSTRUCTION_MIN_ITER,
     _dual_value,

@@ -2,7 +2,7 @@
 
 from ._core._warnings import DistanceInputWarning, MaxDivWarning
 from ._core.constraints import Constraint
-from ._core.constraints.feasibility import FeasibilityResult, FeasibilityStatus
+from ._core.feasibility import FeasibilityResult, FeasibilityStatus
 from ._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
 __all__ = [
