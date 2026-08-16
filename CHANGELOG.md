@@ -5,20 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.12.1 (2026-08-16)
 
 ### Changed
 - Benchmark problem suite restructured, not backward compatible: problems take the size `n` directly (all other dimensions derived), `U1` (new clustered-2D) and `C1` (exact quotas, previously `C2`) are fixed-d=2 reference problems every third-party tool can run, and the log-uniform problem is removed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.12.0 (2026-08-15)
 
