@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from max_div._core.constraints.feasibility import CONSTRUCTION_DEFAULT_ITER
 from max_div._core.solver._strategies._base import StrategyBase
 
 if TYPE_CHECKING:
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
     from ._init_eager import InitEager
     from ._init_farthest_point import InitFarthestPoint
     from ._init_fast import InitFast
+    from ._init_most_feasible import InitMostFeasible
     from ._init_random_batched import InitRandomBatched
     from ._init_random_one_shot import InitRandomOneShot
 
@@ -24,8 +26,7 @@ if TYPE_CHECKING:
 class InitializationStrategy(StrategyBase, ABC):
     """Base class for strategies that produce an initial selection of ``k`` items.
 
-    Use the factory methods (`fast`, `farthest_point`, `random_one_shot`,
-    `random_batched`, `eager`) to create instances.
+    Use the factory methods below to create instances.
     """
 
     @abstractmethod
@@ -68,6 +69,23 @@ class InitializationStrategy(StrategyBase, ABC):
         from ._init_farthest_point import InitFarthestPoint
 
         return InitFarthestPoint(top_k=top_k)
+
+    @classmethod
+    def most_feasible(cls, max_iter: int = CONSTRUCTION_DEFAULT_ITER, beta: float = 0.0) -> InitMostFeasible:
+        """Initialization that constructs a selection satisfying every constraint, where it can.
+
+        Constrained problems only; see `InitMostFeasible` for the full contract.
+
+        :param max_iter: Search budget; a higher budget more often finds a feasible selection, and
+            lowers the violation of the one returned when none exists, at a proportional cost in
+            setup time.
+        :param beta: Tilts the constructed selection toward diverse items, at the risk of a less
+            feasible starting point and an O(n²) diversity-contribution sweep. Keep it at 0 unless
+            the trade has been measured; construction is then purely feasibility-driven.
+        """
+        from ._init_most_feasible import InitMostFeasible
+
+        return InitMostFeasible(max_iter=max_iter, beta=beta)
 
     @classmethod
     def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:

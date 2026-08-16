@@ -71,7 +71,9 @@ class FeasibilityResult:
         status: `FEASIBLE` (selection is a witness), `INFEASIBLE` (bound and multipliers form a
             verifiable proof; selection is the best least-infeasible found), or `UNKNOWN` (no
             claim; selection is the least-violating found).
-        selection: the constructed selection of k item indices.
+        selection: the constructed selection of k item indices.  Always populated, under every
+            status — an `UNKNOWN` verdict says nothing was *proven*, not that nothing was built,
+            so a caller wanting a starting selection rather than a verdict can use it unchanged.
         bound: the best dual value — when positive, a certified lower bound on the weighted
             violation of every possible selection, re-checkable from the multipliers alone.
         violation: the weighted violation of `selection` (0 for a witness).
@@ -107,6 +109,7 @@ VERDICT_MAX_ITER = 2000  # ascent budget when only a fast verdict is wanted
 N_ROUNDS = 16  # candidate selections tried before giving up
 N_NOISE_FREE_ROUNDS = 2  # pure top-k candidates (alternating multiplier sets) before noise starts
 NOISE_SCALE = 0.05  # score-noise magnitude, as a fraction of the mean constraint weight
+PRIOR_EPS = 1e-12  # added to the normalized diversity prior so a zero-prior item stays finite
 
 # repair
 SWAP_CAP_PER_K = 10  # repair swap budget per unit of k ...
@@ -121,6 +124,7 @@ BUDGET_FRACTION = 0.10  # share of the solve budget granted to the ascent
 EST_SEC_PER_OP = 2e-9  # nominal cost of one inner-pass operation, for the time-typed budget
 CONSTRUCTION_MIN_ITER = 500
 CONSTRUCTION_MAX_ITER = 8000
+CONSTRUCTION_DEFAULT_ITER = 2000  # ascent budget for callers with no solve budget to derive one from
 
 
 # =================================================================================================
@@ -806,6 +810,8 @@ def _candidate_rounds(
     scores_best: NDArray[np.float64],
     seed: int,
     stop_at_floor: float,
+    log_prior: NDArray[np.float64],
+    beta: float,
 ) -> tuple[float, NDArray[np.int64]]:
     """Generate candidate selections from the mature scores and swap-repair each.
 
@@ -813,6 +819,9 @@ def _candidate_rounds(
     so noise starts only after both have had their pure round.  The loop stops early once the best
     violation reaches `stop_at_floor` — pass 0.0 to stop at a witness, or the certified floor to
     stop at a provably optimal least-infeasible selection.
+
+    Candidate generation is the only place the `beta` tilt may be applied; this module's soundness
+    invariant forbids perturbing the ascent's top-k.
 
     Args:
         con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
@@ -827,6 +836,8 @@ def _candidate_rounds(
         scores_best: item scores at the highest-g mature prices — the sharpest guess.
         seed: seed for the score noise.
         stop_at_floor: the violation level at which searching further cannot improve the answer.
+        log_prior: per-item log diversity prior, or an empty array when no prior is supplied.
+        beta: weight of `log_prior` in the candidate scores; 0 disables the tilt.
 
     Returns:
         `(best_violation, best_selection)` over all rounds.
@@ -835,11 +846,15 @@ def _candidate_rounds(
     noise_scale = NOISE_SCALE * (np.sum(weights) / m) if m > 0 else 0.0
     max_swaps = max(SWAP_CAP_FLOOR, SWAP_CAP_PER_K * k)
     rng_state = new_rng_state(np.int64(seed))
+    use_prior = beta != 0.0 and log_prior.shape[0] == n
 
     best_violation = np.inf
     best_selection = np.empty(0, dtype=np.int64)
     for r in range(N_ROUNDS):
         scores = scores_avg.copy() if r % 2 == 0 else scores_best.copy()
+        if use_prior:
+            for j in range(n):
+                scores[j] += beta * log_prior[j]
         if r >= N_NOISE_FREE_ROUNDS:
             noise = _gumbel_noise(n, rng_state)
             for j in range(n):
@@ -871,6 +886,8 @@ def _find_feasible(
     max_iter: int,
     seed: int,
     stop_at_first_proof: bool,
+    log_prior: NDArray[np.float64],
+    beta: float,
 ) -> tuple[int, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
     """Run the numba core of the pipeline: ascent, then candidate construction, then the verdict.
 
@@ -884,6 +901,8 @@ def _find_feasible(
         max_iter: the ascent iteration budget.
         seed: seed for the candidate-generation noise (the ascent itself is deterministic).
         stop_at_first_proof: exit the ascent at the first infeasibility proof (verdict mode).
+        log_prior: per-item log diversity prior for candidate generation, or an empty array.
+        beta: weight of `log_prior` in the candidate scores; 0 disables the tilt.
 
     Returns:
         The integer-status tuple the `find_feasible` wrapper packs into a `FeasibilityResult`.
@@ -920,6 +939,8 @@ def _find_feasible(
         scores_best,
         seed,
         floor if certified_infeasible else 0.0,
+        log_prior,
+        beta,
     )
 
     # phase 4 — assemble the verdict: proofs win over construction outcomes; a zero-violation
@@ -931,6 +952,22 @@ def _find_feasible(
     return _UNKNOWN, best_selection, best_g, best_violation, lam_min_best, lam_max_best
 
 
+def _log_diversity_prior(diversity_prior: NDArray[np.floating] | None) -> NDArray[np.float64]:
+    """Normalize a diversity prior into the per-item log-probabilities candidate generation adds.
+
+    Negative entries are clamped away, and `PRIOR_EPS` keeps a zero-prior item finite so it is
+    disfavored rather than excluded.  A missing or all-zero prior carries no preference, so the
+    empty array is returned and the tilt stays off.
+    """
+    if diversity_prior is None:
+        return np.empty(0, dtype=np.float64)
+    p = np.maximum(np.asarray(diversity_prior, dtype=np.float64), 0.0)
+    total = p.sum()
+    if total <= 0.0:
+        return np.empty(0, dtype=np.float64)
+    return np.log(p / total + PRIOR_EPS)
+
+
 def find_feasible(
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
@@ -940,6 +977,8 @@ def find_feasible(
     max_iter: int,
     seed: int = 0,
     stop_at_first_proof: bool = False,
+    diversity_prior: NDArray[np.floating] | None = None,
+    beta: float = 0.0,
 ) -> FeasibilityResult:
     """Run the full feasibility pipeline: dual ascent, candidate generation, swap repair.
 
@@ -957,6 +996,14 @@ def find_feasible(
         seed: seed for the candidate-generation noise (the ascent itself is deterministic).
         stop_at_first_proof: exit the ascent as soon as infeasibility is proven, forgoing the
             mature bound and the scores candidate generation draws from (verdict mode).
+        diversity_prior: optional per-item non-negative preference, normalized here; consulted
+            only when `beta` is nonzero.
+        beta: how strongly candidate generation is tilted toward high-prior items, via a
+            `beta * log(p)` term on the candidate scores; 0 disables the tilt.  A tilt cannot
+            reach the ascent, so it can never affect an infeasibility proof.  It can still cost
+            feasibility, though: steering candidate generation elsewhere can miss a witness this
+            same call would otherwise have constructed, turning `FEASIBLE` into `UNKNOWN` and
+            raising the violation reported.
 
     Returns:
         A `FeasibilityResult` (see its docstring for the field semantics).  The certificate it may
@@ -975,6 +1022,8 @@ def find_feasible(
         int(max_iter),
         int(seed),
         bool(stop_at_first_proof),
+        _log_diversity_prior(diversity_prior),
+        float(beta),
     )
     return FeasibilityResult(
         status=FeasibilityStatus(int(status)),
