@@ -1,0 +1,5802 @@
+[
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.03,
+            "seed": 1,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844919.733968,
+            "t_end": 1786844919.775754
+        },
+        "t_elapsed_sec": 0.041651417035609484,
+        "n_iterations": 489,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9251803755760193,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.03671955226761599,
+            "seed": 2,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844919.719972,
+            "t_end": 1786844919.763428
+        },
+        "t_elapsed_sec": 0.043313249945640564,
+        "n_iterations": 578,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.93283611536026,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.04494418395780607,
+            "seed": 3,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844919.657258,
+            "t_end": 1786844919.730221
+        },
+        "t_elapsed_sec": 0.07283333397936076,
+        "n_iterations": 697,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9328295588493347,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.0550110103988002,
+            "seed": 4,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844919.656886,
+            "t_end": 1786844919.73327
+        },
+        "t_elapsed_sec": 0.0762535830726847,
+        "n_iterations": 717,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9334117770195007,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.06733265572110368,
+            "seed": 5,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844919.651121,
+            "t_end": 1786844919.741669
+        },
+        "t_elapsed_sec": 0.09041654097381979,
+        "n_iterations": 1117,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9452639818191528,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.08241416570228197,
+            "seed": 6,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844919.565825,
+            "t_end": 1786844919.657135
+        },
+        "t_elapsed_sec": 0.0911792500410229,
+        "n_iterations": 1205,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9354089498519897,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.10087370883656359,
+            "seed": 7,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844919.539501,
+            "t_end": 1786844919.649622
+        },
+        "t_elapsed_sec": 0.10997025005053729,
+        "n_iterations": 1675,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9436303973197937,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.12346791413508243,
+            "seed": 8,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844919.534583,
+            "t_end": 1786844919.669942
+        },
+        "t_elapsed_sec": 0.13521845801733434,
+        "n_iterations": 1574,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9340177178382874,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.15112288421522257,
+            "seed": 9,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844919.362602,
+            "t_end": 1786844919.520681
+        },
+        "t_elapsed_sec": 0.15793654194567353,
+        "n_iterations": 2524,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9459981322288513,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.18497215485912477,
+            "seed": 10,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844919.344828,
+            "t_end": 1786844919.5371
+        },
+        "t_elapsed_sec": 0.1921256670029834,
+        "n_iterations": 3038,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9448912143707275,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.226403156946773,
+            "seed": 11,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844919.321882,
+            "t_end": 1786844919.559853
+        },
+        "t_elapsed_sec": 0.2378220830578357,
+        "n_iterations": 3415,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.955517590045929,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.2771140851686765,
+            "seed": 12,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844919.033081,
+            "t_end": 1786844919.320546
+        },
+        "t_elapsed_sec": 0.2873315829783678,
+        "n_iterations": 4547,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9559876918792725,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.3391835044814602,
+            "seed": 13,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844919.027447,
+            "t_end": 1786844919.378276
+        },
+        "t_elapsed_sec": 0.35067387495655566,
+        "n_iterations": 5377,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9706791043281555,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.4151555473706708,
+            "seed": 14,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844918.916523,
+            "t_end": 1786844919.340294
+        },
+        "t_elapsed_sec": 0.4236234169220552,
+        "n_iterations": 6830,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9634965658187866,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.5081441940289357,
+            "seed": 15,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844918.507592,
+            "t_end": 1786844919.02475
+        },
+        "t_elapsed_sec": 0.5170027500716969,
+        "n_iterations": 8071,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9586484432220459,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.6219609097377033,
+            "seed": 16,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844918.285431,
+            "t_end": 1786844918.916374
+        },
+        "t_elapsed_sec": 0.630790917086415,
+        "n_iterations": 9709,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.961135745048523,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.7612708711175862,
+            "seed": 17,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844918.248494,
+            "t_end": 1786844919.01613
+        },
+        "t_elapsed_sec": 0.7674807499861345,
+        "n_iterations": 13077,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9671306014060974,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.931784184727192,
+            "seed": 18,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844917.316646,
+            "t_end": 1786844918.257801
+        },
+        "t_elapsed_sec": 0.9410138339735568,
+        "n_iterations": 15442,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9528493285179138,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.140489935774268,
+            "seed": 19,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844917.137708,
+            "t_end": 1786844918.286678
+        },
+        "t_elapsed_sec": 1.1488269999390468,
+        "n_iterations": 18169,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9719340205192566,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.3959426602451075,
+            "seed": 20,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844917.11249,
+            "t_end": 1786844918.519189
+        },
+        "t_elapsed_sec": 1.4065492920344695,
+        "n_iterations": 22440,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9640527963638306,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.7086129825155043,
+            "seed": 21,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844915.394929,
+            "t_end": 1786844917.112598
+        },
+        "t_elapsed_sec": 1.717514832969755,
+        "n_iterations": 28049,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9722718596458435,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.09131679055351,
+            "seed": 22,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844915.03655,
+            "t_end": 1786844917.136293
+        },
+        "t_elapsed_sec": 2.099588374956511,
+        "n_iterations": 34170,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9701141119003296,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.5597405399624176,
+            "seed": 23,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844914.73969,
+            "t_end": 1786844917.307048
+        },
+        "t_elapsed_sec": 2.567186833010055,
+        "n_iterations": 40625,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9733566045761108,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.1330842182895147,
+            "seed": 24,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844911.599939,
+            "t_end": 1786844914.743265
+        },
+        "t_elapsed_sec": 3.1431616250192747,
+        "n_iterations": 51789,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.966770589351654,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.8348483237441533,
+            "seed": 25,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844911.191173,
+            "t_end": 1786844915.03511
+        },
+        "t_elapsed_sec": 3.843759582960047,
+        "n_iterations": 62494,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9754058718681335,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 4.6937971154034335,
+            "seed": 26,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844910.690477,
+            "t_end": 1786844915.394805
+        },
+        "t_elapsed_sec": 4.704160583904013,
+        "n_iterations": 76391,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9794712066650391,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 5.745137617088047,
+            "seed": 27,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844904.935037,
+            "t_end": 1786844910.690154
+        },
+        "t_elapsed_sec": 5.754934333031997,
+        "n_iterations": 95172,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9724066257476807,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 7.031962700510376,
+            "seed": 28,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844904.141356,
+            "t_end": 1786844911.180075
+        },
+        "t_elapsed_sec": 7.038521082955413,
+        "n_iterations": 115511,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9777472615242004,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 8.60701739751056,
+            "seed": 29,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844902.978931,
+            "t_end": 1786844911.595904
+        },
+        "t_elapsed_sec": 8.616743999999017,
+        "n_iterations": 142663,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9855281114578247,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 10.534860839872298,
+            "seed": 30,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844893.598136,
+            "t_end": 1786844904.141216
+        },
+        "t_elapsed_sec": 10.542846541036852,
+        "n_iterations": 172968,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9681726098060608,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 12.894512441391724,
+            "seed": 31,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844890.076953,
+            "t_end": 1786844902.981728
+        },
+        "t_elapsed_sec": 12.904503166093491,
+        "n_iterations": 211534,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9721887707710266,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 15.782690785236923,
+            "seed": 32,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844889.135318,
+            "t_end": 1786844904.927332
+        },
+        "t_elapsed_sec": 15.791688458062708,
+        "n_iterations": 256848,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9788304567337036,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 19.317777973737613,
+            "seed": 33,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844870.745461,
+            "t_end": 1786844890.07358
+        },
+        "t_elapsed_sec": 19.32771079102531,
+        "n_iterations": 316030,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9761490821838379,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 23.644671933361966,
+            "seed": 34,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844865.487366,
+            "t_end": 1786844889.141674
+        },
+        "t_elapsed_sec": 23.653795957914554,
+        "n_iterations": 386621,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9686944484710693,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 28.94072556359057,
+            "seed": 35,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844864.629615,
+            "t_end": 1786844893.577286
+        },
+        "t_elapsed_sec": 28.947103249956854,
+        "n_iterations": 466921,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9726712703704834,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 35.4230161664998,
+            "seed": 36,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844829.213263,
+            "t_end": 1786844864.648079
+        },
+        "t_elapsed_sec": 35.432316459016874,
+        "n_iterations": 581755,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9796963930130005,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 43.35724312007982,
+            "seed": 37,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844827.379378,
+            "t_end": 1786844870.749007
+        },
+        "t_elapsed_sec": 43.3667279999936,
+        "n_iterations": 709330,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9706647992134094,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 53.068618497583486,
+            "seed": 38,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844812.401932,
+            "t_end": 1786844865.487219
+        },
+        "t_elapsed_sec": 53.078169084037654,
+        "n_iterations": 869153,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.979026198387146,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 64.95519702307296,
+            "seed": 39,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844764.237287,
+            "t_end": 1786844829.213113
+        },
+        "t_elapsed_sec": 64.96465783298481,
+        "n_iterations": 1069994,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.972679078578949,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 79.50419173806738,
+            "seed": 40,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844732.872811,
+            "t_end": 1786844812.392426
+        },
+        "t_elapsed_sec": 79.51290679199155,
+        "n_iterations": 1304344,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9748464226722717,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 97.31194413401757,
+            "seed": 41,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844730.04182,
+            "t_end": 1786844827.374413
+        },
+        "t_elapsed_sec": 97.32156995800324,
+        "n_iterations": 1605678,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9792166352272034,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 119.10836729641281,
+            "seed": 42,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844645.119361,
+            "t_end": 1786844764.237375
+        },
+        "t_elapsed_sec": 119.11732600000687,
+        "n_iterations": 1953616,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9798250198364258,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 145.7868639483677,
+            "seed": 43,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844584.247754,
+            "t_end": 1786844730.044474
+        },
+        "t_elapsed_sec": 145.79591287497897,
+        "n_iterations": 2380117,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9814587831497192,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 178.44094568946358,
+            "seed": 44,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844554.424419,
+            "t_end": 1786844732.874467
+        },
+        "t_elapsed_sec": 178.4490791669814,
+        "n_iterations": 2938416,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.980116069316864,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 218.40905439756938,
+            "seed": 45,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844426.696453,
+            "t_end": 1786844645.11692
+        },
+        "t_elapsed_sec": 218.4193055840442,
+        "n_iterations": 3586335,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.978064239025116,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 267.3294229557377,
+            "seed": 46,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844316.909499,
+            "t_end": 1786844584.247614
+        },
+        "t_elapsed_sec": 267.33673183294013,
+        "n_iterations": 4357453,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9793692827224731,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 327.2072239631609,
+            "seed": 47,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844227.21474,
+            "t_end": 1786844554.430551
+        },
+        "t_elapsed_sec": 327.2141497080447,
+        "n_iterations": 5374895,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9797183275222778,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 400.4967587552271,
+            "seed": 48,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786843826.690439,
+            "t_end": 1786844227.205546
+        },
+        "t_elapsed_sec": 400.5130649158964,
+        "n_iterations": 6598398,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9792290925979614,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 490.20205553744495,
+            "seed": 49,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786843826.678639,
+            "t_end": 1786844316.900149
+        },
+        "t_elapsed_sec": 490.21905141696334,
+        "n_iterations": 8067147,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9788619875907898,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "guided",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 600.0,
+            "seed": 50,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786843826.667931,
+            "t_end": 1786844426.685044
+        },
+        "t_elapsed_sec": 600.0141419169959,
+        "n_iterations": 9740029,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9736855626106262,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.03,
+            "seed": 1,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844919.733004,
+            "t_end": 1786844919.777993
+        },
+        "t_elapsed_sec": 0.04485583398491144,
+        "n_iterations": 1012,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.8483536243438721,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.03671955226761599,
+            "seed": 2,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844919.729155,
+            "t_end": 1786844919.777117
+        },
+        "t_elapsed_sec": 0.04782975011039525,
+        "n_iterations": 1244,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.8853731751441956,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.04494418395780607,
+            "seed": 3,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844919.663499,
+            "t_end": 1786844919.729039
+        },
+        "t_elapsed_sec": 0.06362091703340411,
+        "n_iterations": 1460,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.8829584121704102,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.0550110103988002,
+            "seed": 4,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844919.656285,
+            "t_end": 1786844919.732878
+        },
+        "t_elapsed_sec": 0.0764653340447694,
+        "n_iterations": 1514,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.8862729072570801,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.06733265572110368,
+            "seed": 5,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844919.649774,
+            "t_end": 1786844919.738274
+        },
+        "t_elapsed_sec": 0.08836008294019848,
+        "n_iterations": 2254,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.8991680145263672,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.08241416570228197,
+            "seed": 6,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844919.561208,
+            "t_end": 1786844919.65415
+        },
+        "t_elapsed_sec": 0.0928093750262633,
+        "n_iterations": 2803,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9045183062553406,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.10087370883656359,
+            "seed": 7,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844919.5429,
+            "t_end": 1786844919.651019
+        },
+        "t_elapsed_sec": 0.10798370791599154,
+        "n_iterations": 3486,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9158443808555603,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.12346791413508243,
+            "seed": 8,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844919.523551,
+            "t_end": 1786844919.656167
+        },
+        "t_elapsed_sec": 0.13247891701757908,
+        "n_iterations": 4221,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9183568954467773,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.15112288421522257,
+            "seed": 9,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844919.378418,
+            "t_end": 1786844919.5392
+        },
+        "t_elapsed_sec": 0.16064008395187557,
+        "n_iterations": 4716,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9240250587463379,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.18497215485912477,
+            "seed": 10,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844919.324654,
+            "t_end": 1786844919.521505
+        },
+        "t_elapsed_sec": 0.19671937497332692,
+        "n_iterations": 6437,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9298000931739807,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.226403156946773,
+            "seed": 11,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844919.322912,
+            "t_end": 1786844919.561782
+        },
+        "t_elapsed_sec": 0.23873391700908542,
+        "n_iterations": 7835,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9362504482269287,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.2771140851686765,
+            "seed": 12,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844919.040698,
+            "t_end": 1786844919.324542
+        },
+        "t_elapsed_sec": 0.28366737498436123,
+        "n_iterations": 9127,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9322110414505005,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.3391835044814602,
+            "seed": 13,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844919.016278,
+            "t_end": 1786844919.362454
+        },
+        "t_elapsed_sec": 0.34602874994743615,
+        "n_iterations": 11029,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9400957822799683,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.4151555473706708,
+            "seed": 14,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844918.898443,
+            "t_end": 1786844919.322778
+        },
+        "t_elapsed_sec": 0.42418837489094585,
+        "n_iterations": 14568,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9502905011177063,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.5081441940289357,
+            "seed": 15,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844918.519344,
+            "t_end": 1786844919.035767
+        },
+        "t_elapsed_sec": 0.5162803749553859,
+        "n_iterations": 16797,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9476476311683655,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.6219609097377033,
+            "seed": 16,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844918.270358,
+            "t_end": 1786844918.898306
+        },
+        "t_elapsed_sec": 0.6278060000622645,
+        "n_iterations": 20161,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9467669725418091,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.7612708711175862,
+            "seed": 17,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844918.256882,
+            "t_end": 1786844919.027311
+        },
+        "t_elapsed_sec": 0.7702882499434054,
+        "n_iterations": 26594,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9501343965530396,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.931784184727192,
+            "seed": 18,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844917.314469,
+            "t_end": 1786844918.256742
+        },
+        "t_elapsed_sec": 0.9421071249525994,
+        "n_iterations": 30970,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9550901651382446,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.140489935774268,
+            "seed": 19,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844917.136445,
+            "t_end": 1786844918.28527
+        },
+        "t_elapsed_sec": 1.1486827499466017,
+        "n_iterations": 38590,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9424763321876526,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.3959426602451075,
+            "seed": 20,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844917.103917,
+            "t_end": 1786844918.508103
+        },
+        "t_elapsed_sec": 1.4040380410151556,
+        "n_iterations": 48332,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.960705041885376,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.7086129825155043,
+            "seed": 21,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844915.393893,
+            "t_end": 1786844917.112344
+        },
+        "t_elapsed_sec": 1.7182972080772743,
+        "n_iterations": 59145,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9623828530311584,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.09131679055351,
+            "seed": 22,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844915.024003,
+            "t_end": 1786844917.121615
+        },
+        "t_elapsed_sec": 2.097455875016749,
+        "n_iterations": 70631,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9618411660194397,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.5597405399624176,
+            "seed": 23,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844914.746169,
+            "t_end": 1786844917.314309
+        },
+        "t_elapsed_sec": 2.567983958986588,
+        "n_iterations": 87084,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9611474871635437,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.1330842182895147,
+            "seed": 24,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844911.600969,
+            "t_end": 1786844914.743697
+        },
+        "t_elapsed_sec": 3.1425665409769863,
+        "n_iterations": 105453,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9665048718452454,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.8348483237441533,
+            "seed": 25,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844911.192562,
+            "t_end": 1786844915.036411
+        },
+        "t_elapsed_sec": 3.8436803340446204,
+        "n_iterations": 131964,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9668670892715454,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 4.6937971154034335,
+            "seed": 26,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844910.690284,
+            "t_end": 1786844915.39376
+        },
+        "t_elapsed_sec": 4.7033051669131964,
+        "n_iterations": 161949,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9755115509033203,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 5.745137617088047,
+            "seed": 27,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844904.935663,
+            "t_end": 1786844910.690363
+        },
+        "t_elapsed_sec": 5.754517624969594,
+        "n_iterations": 198293,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.97133469581604,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 7.031962700510376,
+            "seed": 28,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844904.119151,
+            "t_end": 1786844911.157842
+        },
+        "t_elapsed_sec": 7.038470458006486,
+        "n_iterations": 238807,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.965364396572113,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 8.60701739751056,
+            "seed": 29,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844902.986346,
+            "t_end": 1786844911.601796
+        },
+        "t_elapsed_sec": 8.615231500007212,
+        "n_iterations": 293995,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9722112417221069,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 10.534860839872298,
+            "seed": 30,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844893.577433,
+            "t_end": 1786844904.118991
+        },
+        "t_elapsed_sec": 10.541313958005048,
+        "n_iterations": 359313,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9756007790565491,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 12.894512441391724,
+            "seed": 31,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844890.073733,
+            "t_end": 1786844902.97876
+        },
+        "t_elapsed_sec": 12.904758042073809,
+        "n_iterations": 445342,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9697275757789612,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 15.782690785236923,
+            "seed": 32,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844889.145046,
+            "t_end": 1786844904.935538
+        },
+        "t_elapsed_sec": 15.790180750074796,
+        "n_iterations": 546286,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9746360778808594,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 19.317777973737613,
+            "seed": 33,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844870.74915,
+            "t_end": 1786844890.076793
+        },
+        "t_elapsed_sec": 19.327233167015947,
+        "n_iterations": 660979,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9682118892669678,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 23.644671933361966,
+            "seed": 34,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844865.48081,
+            "t_end": 1786844889.135456
+        },
+        "t_elapsed_sec": 23.65415070799645,
+        "n_iterations": 811244,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9662564396858215,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 28.94072556359057,
+            "seed": 35,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844864.648226,
+            "t_end": 1786844893.59799
+        },
+        "t_elapsed_sec": 28.949200958013535,
+        "n_iterations": 989260,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9742724299430847,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 35.4230161664998,
+            "seed": 36,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844829.215563,
+            "t_end": 1786844864.649985
+        },
+        "t_elapsed_sec": 35.43194899999071,
+        "n_iterations": 1210104,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9748424291610718,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 43.35724312007982,
+            "seed": 37,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844827.37457,
+            "t_end": 1786844870.745304
+        },
+        "t_elapsed_sec": 43.36780800006818,
+        "n_iterations": 1493189,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9727069735527039,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 53.068618497583486,
+            "seed": 38,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844812.394683,
+            "t_end": 1786844865.480677
+        },
+        "t_elapsed_sec": 53.07886799995322,
+        "n_iterations": 1820777,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9758395552635193,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 64.95519702307296,
+            "seed": 39,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844764.221865,
+            "t_end": 1786844829.19511
+        },
+        "t_elapsed_sec": 64.9620702919783,
+        "n_iterations": 2211842,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9720369577407837,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 79.50419173806738,
+            "seed": 40,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844732.874628,
+            "t_end": 1786844812.394536
+        },
+        "t_elapsed_sec": 79.51320416596718,
+        "n_iterations": 2724482,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9794912338256836,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 97.31194413401757,
+            "seed": 41,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844730.044618,
+            "t_end": 1786844827.377123
+        },
+        "t_elapsed_sec": 97.32148091599811,
+        "n_iterations": 3308124,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9713688492774963,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 119.10836729641281,
+            "seed": 42,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844645.116909,
+            "t_end": 1786844764.235741
+        },
+        "t_elapsed_sec": 119.11812895804178,
+        "n_iterations": 4087230,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9695701599121094,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 145.7868639483677,
+            "seed": 43,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844584.247412,
+            "t_end": 1786844730.044325
+        },
+        "t_elapsed_sec": 145.79609666706529,
+        "n_iterations": 4993611,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9764787554740906,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 178.44094568946358,
+            "seed": 44,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844554.422742,
+            "t_end": 1786844732.872655
+        },
+        "t_elapsed_sec": 178.44893808406778,
+        "n_iterations": 6098910,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9739022850990295,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 218.40905439756938,
+            "seed": 45,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844426.695626,
+            "t_end": 1786844645.116732
+        },
+        "t_elapsed_sec": 218.41992583405226,
+        "n_iterations": 7486715,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9780309796333313,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 267.3294229557377,
+            "seed": 46,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844316.900568,
+            "t_end": 1786844584.240382
+        },
+        "t_elapsed_sec": 267.3384376670001,
+        "n_iterations": 9136534,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9750584363937378,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 327.2072239631609,
+            "seed": 47,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844227.205691,
+            "t_end": 1786844554.424253
+        },
+        "t_elapsed_sec": 327.2169083750341,
+        "n_iterations": 11250868,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9761848449707031,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 400.4967587552271,
+            "seed": 48,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786843826.687241,
+            "t_end": 1786844227.202589
+        },
+        "t_elapsed_sec": 400.51331404200755,
+        "n_iterations": 13720861,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9731296896934509,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 490.20205553744495,
+            "seed": 49,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786843826.684594,
+            "t_end": 1786844316.90571
+        },
+        "t_elapsed_sec": 490.2186624580063,
+        "n_iterations": 16782543,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9660778045654297,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "random",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 600.0,
+            "seed": 50,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786843826.674469,
+            "t_end": 1786844426.695439
+        },
+        "t_elapsed_sec": 600.0178090420086,
+        "n_iterations": 20526105,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9777864217758179,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.03,
+            "seed": 1,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844919.73338,
+            "t_end": 1786844919.779557
+        },
+        "t_elapsed_sec": 0.04604849999304861,
+        "n_iterations": 225,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9557349681854248,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.03671955226761599,
+            "seed": 2,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844919.727841,
+            "t_end": 1786844919.77716
+        },
+        "t_elapsed_sec": 0.04917737504001707,
+        "n_iterations": 292,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9415535926818848,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.04494418395780607,
+            "seed": 3,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844919.670054,
+            "t_end": 1786844919.733851
+        },
+        "t_elapsed_sec": 0.06366512505337596,
+        "n_iterations": 353,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9520629048347473,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.0550110103988002,
+            "seed": 4,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844919.65682,
+            "t_end": 1786844919.7379
+        },
+        "t_elapsed_sec": 0.08094537502620369,
+        "n_iterations": 373,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9585826396942139,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.06733265572110368,
+            "seed": 5,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844919.650987,
+            "t_end": 1786844919.733725
+        },
+        "t_elapsed_sec": 0.08260574995074421,
+        "n_iterations": 485,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9600453972816467,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.08241416570228197,
+            "seed": 6,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844919.559992,
+            "t_end": 1786844919.663372
+        },
+        "t_elapsed_sec": 0.10323037498164922,
+        "n_iterations": 532,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9645493030548096,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.10087370883656359,
+            "seed": 7,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844919.537238,
+            "t_end": 1786844919.65124
+        },
+        "t_elapsed_sec": 0.11386516701895744,
+        "n_iterations": 769,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9623129367828369,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.12346791413508243,
+            "seed": 8,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844919.521634,
+            "t_end": 1786844919.656773
+        },
+        "t_elapsed_sec": 0.13499966694507748,
+        "n_iterations": 921,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9665735960006714,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.15112288421522257,
+            "seed": 9,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844919.380689,
+            "t_end": 1786844919.542773
+        },
+        "t_elapsed_sec": 0.16194808296859264,
+        "n_iterations": 1023,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9725244045257568,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.18497215485912477,
+            "seed": 10,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844919.324746,
+            "t_end": 1786844919.52342
+        },
+        "t_elapsed_sec": 0.19854212494101375,
+        "n_iterations": 1388,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9626583456993103,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.226403156946773,
+            "seed": 11,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844919.320705,
+            "t_end": 1786844919.561084
+        },
+        "t_elapsed_sec": 0.24023583298549056,
+        "n_iterations": 1470,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9743141531944275,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.2771140851686765,
+            "seed": 12,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844919.0315,
+            "t_end": 1786844919.321753
+        },
+        "t_elapsed_sec": 0.2901171250268817,
+        "n_iterations": 2017,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9662487506866455,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.3391835044814602,
+            "seed": 13,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844919.024891,
+            "t_end": 1786844919.375958
+        },
+        "t_elapsed_sec": 0.3509237499674782,
+        "n_iterations": 2119,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9748048782348633,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.4151555473706708,
+            "seed": 14,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844918.898096,
+            "t_end": 1786844919.32446
+        },
+        "t_elapsed_sec": 0.4262224999256432,
+        "n_iterations": 2637,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9765269160270691,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.5081441940289357,
+            "seed": 15,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844918.52116,
+            "t_end": 1786844919.040567
+        },
+        "t_elapsed_sec": 0.5192685419460759,
+        "n_iterations": 3154,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9802200198173523,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.6219609097377033,
+            "seed": 16,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844918.266218,
+            "t_end": 1786844918.897953
+        },
+        "t_elapsed_sec": 0.631589166005142,
+        "n_iterations": 4205,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.977042555809021,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.7612708711175862,
+            "seed": 17,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844918.257927,
+            "t_end": 1786844919.03136
+        },
+        "t_elapsed_sec": 0.7732858749805018,
+        "n_iterations": 4922,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9713739156723022,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.931784184727192,
+            "seed": 18,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844917.314838,
+            "t_end": 1786844918.258989
+        },
+        "t_elapsed_sec": 0.9439336250070482,
+        "n_iterations": 5189,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9793287515640259,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.140489935774268,
+            "seed": 19,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844917.12177,
+            "t_end": 1786844918.270219
+        },
+        "t_elapsed_sec": 1.1483013750985265,
+        "n_iterations": 7462,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9652702212333679,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.140489935774268,
+            "seed": 19,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848215.626999,
+            "t_end": 1786848217.509873
+        },
+        "t_elapsed_sec": 1.882618875009939,
+        "n_iterations": 8513,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9785736203193665,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.3959426602451075,
+            "seed": 20,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844917.101568,
+            "t_end": 1786844918.507429
+        },
+        "t_elapsed_sec": 1.4056792920455337,
+        "n_iterations": 9073,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9736005663871765,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.3959426602451075,
+            "seed": 20,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848213.483482,
+            "t_end": 1786848215.626689
+        },
+        "t_elapsed_sec": 2.142911500064656,
+        "n_iterations": 10466,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9773347973823547,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.7086129825155043,
+            "seed": 21,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844915.386095,
+            "t_end": 1786844917.103776
+        },
+        "t_elapsed_sec": 1.7175185420783237,
+        "n_iterations": 10289,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9776046276092529,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.7086129825155043,
+            "seed": 21,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848211.026554,
+            "t_end": 1786848213.483106
+        },
+        "t_elapsed_sec": 2.456285333028063,
+        "n_iterations": 12642,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9745367765426636,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.09131679055351,
+            "seed": 22,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844915.001445,
+            "t_end": 1786844917.101415
+        },
+        "t_elapsed_sec": 2.099787750048563,
+        "n_iterations": 11540,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9761696457862854,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.09131679055351,
+            "seed": 22,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848208.189978,
+            "t_end": 1786848211.026254
+        },
+        "t_elapsed_sec": 2.8360310839489102,
+        "n_iterations": 16539,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9807159900665283,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.5597405399624176,
+            "seed": 23,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844914.743836,
+            "t_end": 1786844917.316509
+        },
+        "t_elapsed_sec": 2.572500125039369,
+        "n_iterations": 15340,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.974779486656189,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.5597405399624176,
+            "seed": 23,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848204.884971,
+            "t_end": 1786848208.189664
+        },
+        "t_elapsed_sec": 3.3044334169244394,
+        "n_iterations": 20816,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9811515808105469,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.1330842182895147,
+            "seed": 24,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844911.596047,
+            "t_end": 1786844914.739539
+        },
+        "t_elapsed_sec": 3.1433250419795513,
+        "n_iterations": 16396,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9759098291397095,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.1330842182895147,
+            "seed": 24,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848201.003028,
+            "t_end": 1786848204.884638
+        },
+        "t_elapsed_sec": 3.881285708048381,
+        "n_iterations": 24130,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9797595739364624,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.8348483237441533,
+            "seed": 25,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844911.180316,
+            "t_end": 1786844915.02387
+        },
+        "t_elapsed_sec": 3.843171125045046,
+        "n_iterations": 21859,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9766257405281067,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.8348483237441533,
+            "seed": 25,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848196.423849,
+            "t_end": 1786848201.002768
+        },
+        "t_elapsed_sec": 4.578664500033483,
+        "n_iterations": 26667,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9797635674476624,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 4.6937971154034335,
+            "seed": 26,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844910.682807,
+            "t_end": 1786844915.385937
+        },
+        "t_elapsed_sec": 4.702952334075235,
+        "n_iterations": 28579,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9779417514801025,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 4.6937971154034335,
+            "seed": 26,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848190.976496,
+            "t_end": 1786848196.42349
+        },
+        "t_elapsed_sec": 5.44674024998676,
+        "n_iterations": 36223,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9795297980308533,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 5.745137617088047,
+            "seed": 27,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844904.92748,
+            "t_end": 1786844910.682667
+        },
+        "t_elapsed_sec": 5.754984709084965,
+        "n_iterations": 36899,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.977257251739502,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 5.745137617088047,
+            "seed": 27,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848184.475053,
+            "t_end": 1786848190.976149
+        },
+        "t_elapsed_sec": 6.500811540987343,
+        "n_iterations": 42378,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9803028702735901,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 7.031962700510376,
+            "seed": 28,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844904.149987,
+            "t_end": 1786844911.192426
+        },
+        "t_elapsed_sec": 7.042242791969329,
+        "n_iterations": 39997,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9772123098373413,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 7.031962700510376,
+            "seed": 28,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848176.695991,
+            "t_end": 1786848184.474766
+        },
+        "t_elapsed_sec": 7.778532166965306,
+        "n_iterations": 56945,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9747208952903748,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 8.60701739751056,
+            "seed": 29,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844902.980941,
+            "t_end": 1786844911.599793
+        },
+        "t_elapsed_sec": 8.61861420806963,
+        "n_iterations": 48452,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9823434352874756,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 8.60701739751056,
+            "seed": 29,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848167.338721,
+            "t_end": 1786848176.69559
+        },
+        "t_elapsed_sec": 9.356647500069812,
+        "n_iterations": 70261,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9775382280349731,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 10.534860839872298,
+            "seed": 30,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844893.603593,
+            "t_end": 1786844904.148585
+        },
+        "t_elapsed_sec": 10.544750415952876,
+        "n_iterations": 71732,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9824507236480713,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 10.534860839872298,
+            "seed": 30,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848156.050138,
+            "t_end": 1786848167.338409
+        },
+        "t_elapsed_sec": 11.288000499946065,
+        "n_iterations": 87306,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9774625301361084,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 12.894512441391724,
+            "seed": 31,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844890.074159,
+            "t_end": 1786844902.98064
+        },
+        "t_elapsed_sec": 12.906207791995257,
+        "n_iterations": 74569,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9782791137695312,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 12.894512441391724,
+            "seed": 31,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848142.40393,
+            "t_end": 1786848156.049841
+        },
+        "t_elapsed_sec": 13.645653375075199,
+        "n_iterations": 91946,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9836554527282715,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 15.782690785236923,
+            "seed": 32,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844889.141822,
+            "t_end": 1786844904.934901
+        },
+        "t_elapsed_sec": 15.792784875025973,
+        "n_iterations": 102389,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9841211438179016,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 15.782690785236923,
+            "seed": 32,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848125.871294,
+            "t_end": 1786848142.403648
+        },
+        "t_elapsed_sec": 16.53215550002642,
+        "n_iterations": 125529,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9785093665122986,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 19.317777973737613,
+            "seed": 33,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844870.749771,
+            "t_end": 1786844890.079407
+        },
+        "t_elapsed_sec": 19.32907520898152,
+        "n_iterations": 116987,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9750518202781677,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 19.317777973737613,
+            "seed": 33,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848105.801502,
+            "t_end": 1786848125.871045
+        },
+        "t_elapsed_sec": 20.069319750065915,
+        "n_iterations": 144726,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.982406735420227,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 23.644671933361966,
+            "seed": 34,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844865.479332,
+            "t_end": 1786844889.135157
+        },
+        "t_elapsed_sec": 23.65531920804642,
+        "n_iterations": 150065,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9814820289611816,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 23.644671933361966,
+            "seed": 34,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848081.403188,
+            "t_end": 1786848105.801185
+        },
+        "t_elapsed_sec": 24.397809041896835,
+        "n_iterations": 188751,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.981254518032074,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 28.94072556359057,
+            "seed": 35,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844864.650161,
+            "t_end": 1786844893.602449
+        },
+        "t_elapsed_sec": 28.951713207992725,
+        "n_iterations": 175102,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9777361154556274,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 28.94072556359057,
+            "seed": 35,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848051.706414,
+            "t_end": 1786848081.40292
+        },
+        "t_elapsed_sec": 29.69632841600105,
+        "n_iterations": 219178,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9827975034713745,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 35.4230161664998,
+            "seed": 36,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844829.195254,
+            "t_end": 1786844864.629477
+        },
+        "t_elapsed_sec": 35.431739041930996,
+        "n_iterations": 201457,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.982092559337616,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 35.4230161664998,
+            "seed": 36,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786848015.535421,
+            "t_end": 1786848051.706086
+        },
+        "t_elapsed_sec": 36.17047966609243,
+        "n_iterations": 278280,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9840721487998962,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 43.35724312007982,
+            "seed": 37,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844827.377269,
+            "t_end": 1786844870.749647
+        },
+        "t_elapsed_sec": 43.36947516701184,
+        "n_iterations": 253856,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9799072742462158,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 43.35724312007982,
+            "seed": 37,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847971.42694,
+            "t_end": 1786848015.535103
+        },
+        "t_elapsed_sec": 44.108020709012635,
+        "n_iterations": 324854,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9847144484519958,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 53.068618497583486,
+            "seed": 38,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844812.400571,
+            "t_end": 1786844865.489151
+        },
+        "t_elapsed_sec": 53.08146170899272,
+        "n_iterations": 348280,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9799116849899292,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 53.068618497583486,
+            "seed": 38,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847917.614803,
+            "t_end": 1786847971.426518
+        },
+        "t_elapsed_sec": 53.81160591705702,
+        "n_iterations": 367268,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9786393642425537,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 64.95519702307296,
+            "seed": 39,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844764.235898,
+            "t_end": 1786844829.213815
+        },
+        "t_elapsed_sec": 64.96674016700126,
+        "n_iterations": 411748,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9778926968574524,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 64.95519702307296,
+            "seed": 39,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847851.909873,
+            "t_end": 1786847917.614464
+        },
+        "t_elapsed_sec": 65.70455829193816,
+        "n_iterations": 480826,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9840039610862732,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 79.50419173806738,
+            "seed": 40,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844732.878865,
+            "t_end": 1786844812.400431
+        },
+        "t_elapsed_sec": 79.51487270893995,
+        "n_iterations": 454638,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9850180745124817,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 79.50419173806738,
+            "seed": 40,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847771.655325,
+            "t_end": 1786847851.909606
+        },
+        "t_elapsed_sec": 80.25427379203029,
+        "n_iterations": 620713,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9818682670593262,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 97.31194413401757,
+            "seed": 41,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844730.039457,
+            "t_end": 1786844827.372707
+        },
+        "t_elapsed_sec": 97.3222170410445,
+        "n_iterations": 624802,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.986106276512146,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 97.31194413401757,
+            "seed": 41,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847673.590731,
+            "t_end": 1786847771.655024
+        },
+        "t_elapsed_sec": 98.06434366700705,
+        "n_iterations": 716732,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9841291904449463,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 119.10836729641281,
+            "seed": 42,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844645.117153,
+            "t_end": 1786844764.23715
+        },
+        "t_elapsed_sec": 119.11930808401667,
+        "n_iterations": 683886,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9839147329330444,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 119.10836729641281,
+            "seed": 42,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847553.728929,
+            "t_end": 1786847673.590446
+        },
+        "t_elapsed_sec": 119.86340112495236,
+        "n_iterations": 829499,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9806939363479614,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 145.7868639483677,
+            "seed": 43,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844584.242656,
+            "t_end": 1786844730.04168
+        },
+        "t_elapsed_sec": 145.7981985830702,
+        "n_iterations": 728551,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9820628762245178,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 145.7868639483677,
+            "seed": 43,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847407.233922,
+            "t_end": 1786847553.728668
+        },
+        "t_elapsed_sec": 146.5402209579479,
+        "n_iterations": 1144438,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9760891199111938,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 178.44094568946358,
+            "seed": 44,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844554.430695,
+            "t_end": 1786844732.880809
+        },
+        "t_elapsed_sec": 178.44915137498174,
+        "n_iterations": 1026940,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.980191171169281,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 178.44094568946358,
+            "seed": 44,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847228.039259,
+            "t_end": 1786847407.233558
+        },
+        "t_elapsed_sec": 179.19238345895428,
+        "n_iterations": 1369847,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9817569851875305,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 218.40905439756938,
+            "seed": 45,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844426.685389,
+            "t_end": 1786844645.104302
+        },
+        "t_elapsed_sec": 218.4175622499315,
+        "n_iterations": 1413669,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.968650758266449,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 218.40905439756938,
+            "seed": 45,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786847008.888137,
+            "t_end": 1786847228.038902
+        },
+        "t_elapsed_sec": 219.14843591698445,
+        "n_iterations": 1656356,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9827597737312317,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 267.3294229557377,
+            "seed": 46,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844316.905881,
+            "t_end": 1786844584.247254
+        },
+        "t_elapsed_sec": 267.3399812079733,
+        "n_iterations": 1740310,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9793090224266052,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 267.3294229557377,
+            "seed": 46,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786846740.809375,
+            "t_end": 1786847008.887756
+        },
+        "t_elapsed_sec": 268.07559716608375,
+        "n_iterations": 1975128,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9844975471496582,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 327.2072239631609,
+            "seed": 47,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844227.202777,
+            "t_end": 1786844554.422578
+        },
+        "t_elapsed_sec": 327.2181292499881,
+        "n_iterations": 1746116,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.980068564414978,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 327.2072239631609,
+            "seed": 47,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786846412.856455,
+            "t_end": 1786846740.809009
+        },
+        "t_elapsed_sec": 327.94922812492587,
+        "n_iterations": 2425392,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9857704639434814,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 400.4967587552271,
+            "seed": 48,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786843826.687483,
+            "t_end": 1786844227.205169
+        },
+        "t_elapsed_sec": 400.51565704192035,
+        "n_iterations": 2420880,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9839375615119934,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 400.4967587552271,
+            "seed": 48,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786846011.607228,
+            "t_end": 1786846412.856088
+        },
+        "t_elapsed_sec": 401.2396554580191,
+        "n_iterations": 2810556,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9834352731704712,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 490.20205553744495,
+            "seed": 49,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786843826.674794,
+            "t_end": 1786844316.900427
+        },
+        "t_elapsed_sec": 490.2232016249327,
+        "n_iterations": 2902334,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9846488833427429,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 490.20205553744495,
+            "seed": 49,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786845520.62083,
+            "t_end": 1786846011.606909
+        },
+        "t_elapsed_sec": 490.9818612500094,
+        "n_iterations": 3743267,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9813215732574463,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 600.0,
+            "seed": 50,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786843826.674337,
+            "t_end": 1786844426.697754
+        },
+        "t_elapsed_sec": 600.0204519999679,
+        "n_iterations": 2976294,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9835062623023987,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "smart",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 600.0,
+            "seed": 50,
+            "n_workers": 12
+        },
+        "execution_info": {
+            "pid": 93180,
+            "t_start": 1786844919.796157,
+            "t_end": 1786845520.620484
+        },
+        "t_elapsed_sec": 600.8192390000913,
+        "n_iterations": 4812858,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9823984503746033,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.03,
+            "seed": 1,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844919.733847,
+            "t_end": 1786844919.777542
+        },
+        "t_elapsed_sec": 0.043561542057432234,
+        "n_iterations": 224,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9518980979919434,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.03671955226761599,
+            "seed": 2,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844919.730353,
+            "t_end": 1786844919.780508
+        },
+        "t_elapsed_sec": 0.04993216705042869,
+        "n_iterations": 272,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.944907009601593,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.04494418395780607,
+            "seed": 3,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844919.657386,
+            "t_end": 1786844919.719827
+        },
+        "t_elapsed_sec": 0.06231874995864928,
+        "n_iterations": 332,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9567614197731018,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.0550110103988002,
+            "seed": 4,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844919.654279,
+            "t_end": 1786844919.727699
+        },
+        "t_elapsed_sec": 0.0732877500122413,
+        "n_iterations": 434,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9540035724639893,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.06733265572110368,
+            "seed": 5,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844919.651355,
+            "t_end": 1786844919.740268
+        },
+        "t_elapsed_sec": 0.08878220908809453,
+        "n_iterations": 459,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.962673544883728,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.08241416570228197,
+            "seed": 6,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786844919.561915,
+            "t_end": 1786844919.657289
+        },
+        "t_elapsed_sec": 0.09524304198566824,
+        "n_iterations": 566,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9632204174995422,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.10087370883656359,
+            "seed": 7,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844919.538101,
+            "t_end": 1786844919.650858
+        },
+        "t_elapsed_sec": 0.11262266710400581,
+        "n_iterations": 703,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9566474556922913,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.12346791413508243,
+            "seed": 8,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844919.520835,
+            "t_end": 1786844919.656043
+        },
+        "t_elapsed_sec": 0.1350610420340672,
+        "n_iterations": 786,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9633902907371521,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.15112288421522257,
+            "seed": 9,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844919.376097,
+            "t_end": 1786844919.537977
+        },
+        "t_elapsed_sec": 0.1617411250481382,
+        "n_iterations": 900,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.966541588306427,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.18497215485912477,
+            "seed": 10,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844919.340452,
+            "t_end": 1786844919.534451
+        },
+        "t_elapsed_sec": 0.1938599580898881,
+        "n_iterations": 1222,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9619743824005127,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.226403156946773,
+            "seed": 11,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844919.324585,
+            "t_end": 1786844919.565689
+        },
+        "t_elapsed_sec": 0.24096895894035697,
+        "n_iterations": 1277,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9640101790428162,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.2771140851686765,
+            "seed": 12,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844919.035899,
+            "t_end": 1786844919.324627
+        },
+        "t_elapsed_sec": 0.2885965419700369,
+        "n_iterations": 1819,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9654287695884705,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.3391835044814602,
+            "seed": 13,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844919.026948,
+            "t_end": 1786844919.380557
+        },
+        "t_elapsed_sec": 0.3534717499278486,
+        "n_iterations": 1950,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9781660437583923,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.4151555473706708,
+            "seed": 14,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844918.919274,
+            "t_end": 1786844919.344693
+        },
+        "t_elapsed_sec": 0.4252761249663308,
+        "n_iterations": 2555,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9637891054153442,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.5081441940289357,
+            "seed": 15,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844918.508244,
+            "t_end": 1786844919.026804
+        },
+        "t_elapsed_sec": 0.5181908329250291,
+        "n_iterations": 2895,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9752054810523987,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.6219609097377033,
+            "seed": 16,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844918.286814,
+            "t_end": 1786844918.91914
+        },
+        "t_elapsed_sec": 0.6321847080253065,
+        "n_iterations": 3795,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9749017953872681,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.7612708711175862,
+            "seed": 17,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844918.259116,
+            "t_end": 1786844919.032959
+        },
+        "t_elapsed_sec": 0.773648584028706,
+        "n_iterations": 4934,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9606050848960876,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 0.931784184727192,
+            "seed": 18,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844917.307207,
+            "t_end": 1786844918.248329
+        },
+        "t_elapsed_sec": 0.9409696250222623,
+        "n_iterations": 4581,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9780671000480652,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.140489935774268,
+            "seed": 19,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844917.11409,
+            "t_end": 1786844918.266066
+        },
+        "t_elapsed_sec": 1.1518342909403145,
+        "n_iterations": 6391,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9736743569374084,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.3959426602451075,
+            "seed": 20,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844917.112731,
+            "t_end": 1786844918.52103
+        },
+        "t_elapsed_sec": 1.408135834033601,
+        "n_iterations": 8651,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9618022441864014,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 1.7086129825155043,
+            "seed": 21,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844915.393622,
+            "t_end": 1786844917.113967
+        },
+        "t_elapsed_sec": 1.7201803750358522,
+        "n_iterations": 8184,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9780479073524475,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.09131679055351,
+            "seed": 22,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844915.035251,
+            "t_end": 1786844917.137578
+        },
+        "t_elapsed_sec": 2.102167999953963,
+        "n_iterations": 11942,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9735516309738159,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 2.5597405399624176,
+            "seed": 23,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844914.743403,
+            "t_end": 1786844917.314688
+        },
+        "t_elapsed_sec": 2.5711170410504565,
+        "n_iterations": 16378,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9710212349891663,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.1330842182895147,
+            "seed": 24,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844911.601915,
+            "t_end": 1786844914.746035
+        },
+        "t_elapsed_sec": 3.1439598340075463,
+        "n_iterations": 15835,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9686081409454346,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 3.8348483237441533,
+            "seed": 25,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844911.157985,
+            "t_end": 1786844915.001283
+        },
+        "t_elapsed_sec": 3.8431199999758974,
+        "n_iterations": 17596,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9726200103759766,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 4.6937971154034335,
+            "seed": 26,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844910.687903,
+            "t_end": 1786844915.393466
+        },
+        "t_elapsed_sec": 4.705379625083879,
+        "n_iterations": 22836,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9778645634651184,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 5.745137617088047,
+            "seed": 27,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844904.930548,
+            "t_end": 1786844910.687747
+        },
+        "t_elapsed_sec": 5.756989000015892,
+        "n_iterations": 33011,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9811076521873474,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 7.031962700510376,
+            "seed": 28,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844904.148729,
+            "t_end": 1786844911.19102
+        },
+        "t_elapsed_sec": 7.042087292065844,
+        "n_iterations": 35350,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9759221076965332,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 8.60701739751056,
+            "seed": 29,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844902.981869,
+            "t_end": 1786844911.600854
+        },
+        "t_elapsed_sec": 8.618775124894455,
+        "n_iterations": 37570,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9779539108276367,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 10.534860839872298,
+            "seed": 30,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844893.602595,
+            "t_end": 1786844904.149851
+        },
+        "t_elapsed_sec": 10.547016417025588,
+        "n_iterations": 58840,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9829898476600647,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 12.894512441391724,
+            "seed": 31,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786844890.079541,
+            "t_end": 1786844902.986204
+        },
+        "t_elapsed_sec": 12.906402375083417,
+        "n_iterations": 60499,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9756284356117249,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 15.782690785236923,
+            "seed": 32,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18709,
+            "t_start": 1786844889.135612,
+            "t_end": 1786844904.930392
+        },
+        "t_elapsed_sec": 15.794479792006314,
+        "n_iterations": 88724,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9759702682495117,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 19.317777973737613,
+            "seed": 33,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844870.744247,
+            "t_end": 1786844890.074015
+        },
+        "t_elapsed_sec": 19.32936191605404,
+        "n_iterations": 76117,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.97927325963974,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 23.644671933361966,
+            "seed": 34,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844865.489292,
+            "t_end": 1786844889.144904
+        },
+        "t_elapsed_sec": 23.655118499998935,
+        "n_iterations": 117919,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9833562970161438,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 28.94072556359057,
+            "seed": 35,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844864.651689,
+            "t_end": 1786844893.60346
+        },
+        "t_elapsed_sec": 28.95119483396411,
+        "n_iterations": 136448,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9822177290916443,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 35.4230161664998,
+            "seed": 36,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18705,
+            "t_start": 1786844829.214149,
+            "t_end": 1786844864.651548
+        },
+        "t_elapsed_sec": 35.4349006669363,
+        "n_iterations": 189970,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9838364720344543,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 43.35724312007982,
+            "seed": 37,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844827.37286,
+            "t_end": 1786844870.744103
+        },
+        "t_elapsed_sec": 43.36833166703582,
+        "n_iterations": 221137,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9820272922515869,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 53.068618497583486,
+            "seed": 38,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18706,
+            "t_start": 1786844812.39257,
+            "t_end": 1786844865.47917
+        },
+        "t_elapsed_sec": 53.079472042038105,
+        "n_iterations": 302542,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9808263778686523,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 64.95519702307296,
+            "seed": 39,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844764.237504,
+            "t_end": 1786844829.215436
+        },
+        "t_elapsed_sec": 64.96676583297085,
+        "n_iterations": 308145,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.983298659324646,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 79.50419173806738,
+            "seed": 40,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786844732.880937,
+            "t_end": 1786844812.401804
+        },
+        "t_elapsed_sec": 79.51417995907832,
+        "n_iterations": 398270,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9774558544158936,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 97.31194413401757,
+            "seed": 41,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18704,
+            "t_start": 1786844730.044455,
+            "t_end": 1786844827.379243
+        },
+        "t_elapsed_sec": 97.32376766693778,
+        "n_iterations": 400766,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9825785756111145,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 119.10836729641281,
+            "seed": 42,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18702,
+            "t_start": 1786844645.10445,
+            "t_end": 1786844764.221703
+        },
+        "t_elapsed_sec": 119.1165594579652,
+        "n_iterations": 463016,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9853076934814453,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 145.7868639483677,
+            "seed": 43,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18701,
+            "t_start": 1786844584.240538,
+            "t_end": 1786844730.03929
+        },
+        "t_elapsed_sec": 145.7979352499824,
+        "n_iterations": 819614,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9820073843002319,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 178.44094568946358,
+            "seed": 44,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844554.426754,
+            "t_end": 1786844732.878708
+        },
+        "t_elapsed_sec": 178.450992875034,
+        "n_iterations": 822604,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.982563853263855,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 218.40905439756938,
+            "seed": 45,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18700,
+            "t_start": 1786844426.697904,
+            "t_end": 1786844645.119206
+        },
+        "t_elapsed_sec": 218.4201530830469,
+        "n_iterations": 1106600,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9774482846260071,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 267.3294229557377,
+            "seed": 46,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18703,
+            "t_start": 1786844316.900323,
+            "t_end": 1786844584.242511
+        },
+        "t_elapsed_sec": 267.34080758306663,
+        "n_iterations": 1291990,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9830896854400635,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 327.2072239631609,
+            "seed": 47,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18707,
+            "t_start": 1786844227.205349,
+            "t_end": 1786844554.426607
+        },
+        "t_elapsed_sec": 327.2195924160769,
+        "n_iterations": 1897766,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9808627963066101,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 400.4967587552271,
+            "seed": 48,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18710,
+            "t_start": 1786843826.699231,
+            "t_end": 1786844227.214573
+        },
+        "t_elapsed_sec": 400.51329712499864,
+        "n_iterations": 1790097,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9854143857955933,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 490.20205553744495,
+            "seed": 49,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18708,
+            "t_start": 1786843826.685759,
+            "t_end": 1786844316.909339
+        },
+        "t_elapsed_sec": 490.2211320839124,
+        "n_iterations": 2385435,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9805658459663391,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    },
+    {
+        "params": {
+            "preset": "thorough",
+            "problem_name": "U2",
+            "problem_size": 1000,
+            "duration_sec": 600.0,
+            "seed": 50,
+            "n_workers": 1
+        },
+        "execution_info": {
+            "pid": 18699,
+            "t_start": 1786843826.673357,
+            "t_end": 1786844426.696279
+        },
+        "t_elapsed_sec": 600.0199356249068,
+        "n_iterations": 2478435,
+        "score": {
+            "size": 1.0,
+            "constraints": 1.0,
+            "diversity": 0.9845972061157227,
+            "div_tie_breakers": [
+                1.0
+            ]
+        }
+    }
+]

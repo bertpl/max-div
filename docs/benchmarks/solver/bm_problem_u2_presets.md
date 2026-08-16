@@ -1,26 +1,19 @@
 # Benchmark Results - Problem U2 - Solver Presets
 
---8<-- "docs/benchmarks/solver/results/note_vintage_v0_5_4.md"
-
 ## I. Introduction
 
-We present results of the different built-in solver presets on problem U2, size=100.  We run each preset for
-increasing durations and evaluate final constraint & diversity score of the solution.  Each run is performed with a
-different seed, so also the influence of the seed is evaluated.
+These results compare the built-in solver presets on problem U2, run at n=1000 — the size at which it selects k=100 items, so every problem's page compares presets at the same selection size. Each preset is run for a ladder of increasing time budgets, with a fresh random seed at every budget point, so the spread across seeds is visible alongside the time trend.
 
-As the different seeds cause some randomness in the results, we estimate q10-q90 uncertainty bounds, by performing
-quantile regression through the data points of each preset using a cubic spline with monotonicity constraints.
+Timing is end-to-end: it includes building the solver's distance store, matching the cost a caller actually pays. The uncertainty band is a q10-q90 estimate from monotone cubic-spline quantile regression through the per-point scatter, approximating the result expected from e.g. the best of ten seeded runs (around q90). The band is shown for the informative metric only — constraint score while a constrained problem is infeasible, diversity score otherwise.
 
-The resulting uncertainty bounds give an idea of the result that can be expected by e.g. taking the best result out of 10 runs
-(with different seeds) as this is expected to lie around ~q90.  Uncertainty bounds are only estimated and shown
-for the relevant metric (constraint score if the problem is constrained and infeasible; diversity score otherwise)
+A separate black-circle series shows the default parallel invocation — the SMART preset on the machine's default set of cooperative workers — as a best-of-N reference. It runs only the longer budgets, since a parallel run's start-up cost dominates the shortest ones, and is drawn without a band because it is a single reference series rather than a preset sweep.
 
 ## II. Results
 
 ### A. Figures
 
-![Problem U2 - Size 100 - Preset results](./images/preset_results_U2_100.webp)
+![Problem U2 - Preset results](./images/preset_results_U2_1000.webp)
 
 ### B. Tables
 
---8<-- "docs/benchmarks/solver/results/preset_result_quantiles_U2_100.md"
+--8<-- "docs/benchmarks/solver/results/preset_result_quantiles_U2_1000.md"
