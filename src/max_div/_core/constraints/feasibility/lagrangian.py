@@ -67,7 +67,7 @@ class FeasibilityStatus(IntEnum):
 class FeasibilityResult:
     """Whether a constraint set can be satisfied, with the evidence behind the answer.
 
-    Two of its numbers describe different things and are easy to conflate:
+    Two of the result's numbers describe different things and are easy to conflate:
 
     - `violation_floor` is a property of the *problem* — no selection whatsoever can beat it, and
       none need attain it either;
@@ -76,9 +76,8 @@ class FeasibilityResult:
 
     They relate as `violation_floor <= violation = sum of weight_i * violation_per_constraint[i]`.
     Equality proves `selection` is a minimum-violation selection, since it attains a bound nothing
-    can beat; a gap proves nothing either way, because the bound may simply be loose.  Compare the
-    two with a tolerance rather than `==`: the floor is rounded up to the next integer only when
-    every weight is integral, and is the raw dual value otherwise.
+    can beat; a gap proves nothing either way, because the bound may simply be loose.  The floor is
+    a fractional dual value (`max(bound, 0)`), so compare the two with a tolerance rather than `==`.
 
     Attributes:
         status: `FEASIBLE` (selection satisfies every constraint), `INFEASIBLE` (the multipliers
@@ -91,7 +90,7 @@ class FeasibilityResult:
             constraint order.  Describes the selection, not the floor; weighted and summed it
             gives `violation`.  Being a real selection's profile, it is exact under both the
             linear and the quadratic violation penalty.
-        bound: the best dual value reached.  `violation_floor` is its certified reading; the raw
+        bound: the best dual value reached.  `violation_floor` is its non-negative reading; the raw
             value is kept because a negative one still says how far the search got.
         lam_min: the shortfall multipliers behind `bound`; with `lam_max` they form the
             infeasibility certificate when `status` is `INFEASIBLE`, and nothing otherwise.
