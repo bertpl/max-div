@@ -438,3 +438,21 @@ def test_check_feasibility_thorough_changes_nothing_without_a_proof():
     assert fast.status is thorough.status is FeasibilityStatus.UNKNOWN
     assert fast.violation == thorough.violation
     np.testing.assert_array_equal(fast.selection, thorough.selection)
+
+
+def test_check_feasibility_reports_where_the_violation_sits():
+    """The per-constraint profile describes the returned selection and reproduces its total."""
+    # --- arrange -----------------------------------------
+    constraints = [
+        Constraint(int_set=set(range(12)), min_count=9, max_count=12, weight=3.0),
+        Constraint(int_set=set(range(8, 20)), min_count=9, max_count=12, weight=0.5),
+    ]
+
+    # --- act ---------------------------------------------
+    report = _problem_with(constraints).check_feasibility(thorough=True)
+
+    # --- assert ------------------------------------------
+    weights = np.array([con.weight for con in constraints])
+    assert report.violation_per_constraint.shape[0] == len(constraints)
+    assert float(weights @ report.violation_per_constraint) == pytest.approx(report.violation)
+    assert report.violation_floor <= report.violation + 1e-9

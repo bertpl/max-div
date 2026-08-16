@@ -65,29 +65,86 @@ class FeasibilityStatus(IntEnum):
 
 @dataclass(frozen=True)
 class FeasibilityResult:
-    """Outcome of `find_feasible`: the status plus the objects backing it.
+    """Whether a constraint set can be satisfied, with the evidence behind the answer.
+
+    Two of its numbers describe different things and are easy to conflate:
+
+    - `violation_floor` is a property of the *problem* — no selection whatsoever can beat it, and
+      none need attain it either;
+    - `violation` and `violation_per_constraint` describe the *selection returned* — what it
+      actually costs, and where.
+
+    They relate as `violation_floor <= violation = sum of weight_i * violation_per_constraint[i]`.
+    Equality proves `selection` is a minimum-violation selection, since it attains a bound nothing
+    can beat; a gap proves nothing either way, because the bound may simply be loose.  Compare the
+    two with a tolerance rather than `==`: the floor is rounded up to the next integer only when
+    every weight is integral, and is the raw dual value otherwise.
 
     Attributes:
-        status: `FEASIBLE` (selection is a witness), `INFEASIBLE` (bound and multipliers form a
-            verifiable proof; selection is the best least-infeasible found), or `UNKNOWN` (no
-            claim; selection is the least-violating found).
+        status: `FEASIBLE` (selection satisfies every constraint), `INFEASIBLE` (the multipliers
+            prove none can), or `UNKNOWN` (nothing was established, in either direction).
         selection: the constructed selection of k item indices.  Always populated, under every
             status — an `UNKNOWN` verdict says nothing was *proven*, not that nothing was built,
             so a caller wanting a starting selection rather than a verdict can use it unchanged.
-        bound: the best dual value — when positive, a certified lower bound on the weighted
-            violation of every possible selection, re-checkable from the multipliers alone.
-        violation: the weighted violation of `selection` (0 for a witness).
+        violation: the total weighted violation of `selection` (0 when it satisfies everything).
+        violation_per_constraint: how much `selection` misses each constraint by, in items, in
+            constraint order.  Describes the selection, not the floor; weighted and summed it
+            gives `violation`.  Being a real selection's profile, it is exact under both the
+            linear and the quadratic violation penalty.
+        bound: the best dual value reached.  `violation_floor` is its certified reading; the raw
+            value is kept because a negative one still says how far the search got.
+        constraints_score_ceiling: `violation_floor` on the 0-1 scale the solver reports its
+            constraints score on, or None when nobody has converted it.  The pipeline cannot fill
+            this itself — the mapping is owned by the constraints package, which this subpackage
+            sits below — so `MaxDivProblem.check_feasibility` sets it.  Assumes the default linear
+            penalty, unlike `violation_per_constraint`.
         lam_min: the shortfall multipliers behind `bound`; with `lam_max` they form the
-            infeasibility certificate when `status` is `INFEASIBLE`.
+            infeasibility certificate when `status` is `INFEASIBLE`, and nothing otherwise.
         lam_max: the excess multipliers behind `bound`.
     """
 
     status: FeasibilityStatus
     selection: NDArray[np.int64]
-    bound: float
     violation: float
+    violation_per_constraint: NDArray[np.int64]
+    bound: float
     lam_min: NDArray[np.float64]
     lam_max: NDArray[np.float64]
+    constraints_score_ceiling: float | None = None
+
+    @property
+    def violation_floor(self) -> float:
+        """Return the certified lower bound on every possible selection's weighted violation.
+
+        Zero unless infeasibility was proven — only then does the dual value bound anything.
+        """
+        return max(self.bound, 0.0) if self.status is FeasibilityStatus.INFEASIBLE else 0.0
+
+    @property
+    def is_certified(self) -> bool:
+        """Return whether the verdict is one of the two proofs, rather than `UNKNOWN`."""
+        return self.status is not FeasibilityStatus.UNKNOWN
+
+    def __str__(self) -> str:
+        """Return a one-paragraph rendering of the verdict and the numbers behind it."""
+        if self.status is FeasibilityStatus.FEASIBLE:
+            return f"FEASIBLE: found a selection of {self.selection.shape[0]} items satisfying every constraint."
+        ceiling = (
+            ""
+            if self.constraints_score_ceiling is None
+            else f", capping the constraints score at {self.constraints_score_ceiling:.4f}"
+        )
+        if self.status is FeasibilityStatus.INFEASIBLE:
+            return (
+                f"INFEASIBLE: no selection can satisfy every constraint.  Any selection violates them "
+                f"by at least {self.violation_floor:g} (weighted){ceiling}.  The best selection found "
+                f"violates by {self.violation:g}."
+            )
+        return (
+            f"UNKNOWN: neither a satisfying selection nor a proof that none exists was found — an "
+            f"UNKNOWN verdict says nothing about whether the constraints can be satisfied.  The best "
+            f"selection found violates them by {self.violation:g} (weighted)."
+        )
 
 
 # =================================================================================================
@@ -270,6 +327,29 @@ def _weighted_violation(
         elif counts[i] > con_max[i]:
             v += weights[i] * (counts[i] - con_max[i])
     return v
+
+
+@numba.njit(cache=True)
+def _per_constraint_violation(
+    counts: NDArray[np.int64], con_min: NDArray[np.int64], con_max: NDArray[np.int64]
+) -> NDArray[np.int64]:
+    """Return how many items each constraint is short of, or over, its bounds.
+
+    Unweighted item counts, so this stays readable as "constraint i misses by 3" whatever the
+    weights are; `_weighted_violation` is the aggregate the verdicts are graded on.
+
+    Args:
+        counts: per-constraint counts of selected members.
+        con_min: per-constraint minimum counts.
+        con_max: per-constraint maximum counts.
+    """
+    out = np.zeros(counts.shape[0], dtype=np.int64)
+    for i in range(counts.shape[0]):
+        if counts[i] < con_min[i]:
+            out[i] = con_min[i] - counts[i]
+        elif counts[i] > con_max[i]:
+            out[i] = counts[i] - con_max[i]
+    return out
 
 
 @numba.njit(cache=True)
@@ -888,7 +968,7 @@ def _find_feasible(
     stop_at_first_proof: bool,
     log_prior: NDArray[np.float64],
     beta: float,
-) -> tuple[int, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
+) -> tuple[int, NDArray[np.int64], float, NDArray[np.int64], float, NDArray[np.float64], NDArray[np.float64]]:
     """Run the numba core of the pipeline: ascent, then candidate construction, then the verdict.
 
     Args:
@@ -915,7 +995,8 @@ def _find_feasible(
         item_indptr, item_cons, con_min, con_max, weights, k, max_iter, stop_at_first_proof
     )
     if witness.shape[0] > 0:
-        return _FEASIBLE, witness, best_g, 0.0, lam_min_best, lam_max_best
+        no_violation = np.zeros(con_min.shape[0], dtype=np.int64)
+        return _FEASIBLE, witness, 0.0, no_violation, best_g, lam_min_best, lam_max_best
 
     # phase 2 — interpret the bound: a positive g proves infeasibility, and its value becomes the
     # certified violation floor candidate construction can stop at
@@ -945,11 +1026,15 @@ def _find_feasible(
 
     # phase 4 — assemble the verdict: proofs win over construction outcomes; a zero-violation
     # construction is a witness; anything else is UNKNOWN
+    m = con_min.shape[0]
+    per_constraint = _per_constraint_violation(
+        _selection_counts(item_indptr, item_cons, best_selection, m), con_min, con_max
+    )
     if certified_infeasible:
-        return _INFEASIBLE, best_selection, best_g, best_violation, lam_min_best, lam_max_best
+        return _INFEASIBLE, best_selection, best_violation, per_constraint, best_g, lam_min_best, lam_max_best
     if best_violation <= 0.0:
-        return _FEASIBLE, best_selection, best_g, 0.0, lam_min_best, lam_max_best
-    return _UNKNOWN, best_selection, best_g, best_violation, lam_min_best, lam_max_best
+        return _FEASIBLE, best_selection, 0.0, per_constraint, best_g, lam_min_best, lam_max_best
+    return _UNKNOWN, best_selection, best_violation, per_constraint, best_g, lam_min_best, lam_max_best
 
 
 def _log_diversity_prior(diversity_prior: NDArray[np.floating] | None) -> NDArray[np.float64]:
@@ -1012,7 +1097,7 @@ def find_feasible(
     """
     con_min = con_values[:, 0].astype(np.int64)
     con_max = con_values[:, 1].astype(np.int64)
-    status, selection, bound, violation, lam_min, lam_max = _find_feasible(
+    status, selection, violation, per_constraint, bound, lam_min, lam_max = _find_feasible(
         con_indices,
         con_min,
         con_max,
@@ -1028,8 +1113,9 @@ def find_feasible(
     return FeasibilityResult(
         status=FeasibilityStatus(int(status)),
         selection=selection,
-        bound=bound,
         violation=violation,
+        violation_per_constraint=per_constraint,
+        bound=bound,
         lam_min=lam_min,
         lam_max=lam_max,
     )

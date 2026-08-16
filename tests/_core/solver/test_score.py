@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from max_div._core.constraints import Constraint
+from max_div._core.constraints import Constraint, constraints_score_for_violation
+from max_div._core.constraints.constraints import _np_con_total_weighted_violation
 from max_div._core.metrics import DiversityMetric
 from max_div._core.solver._score import Score, ScoreGenerator
 
@@ -347,3 +348,40 @@ def test_compute_score_binds_metrics_to_their_contribution_slot():
     # --- assert ------------------------------------------
     assert score.diversity == pytest.approx(4.0)  # mean of the separation slot, not of the decoy
     assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of the separation slot, not of the decoy
+
+
+@pytest.mark.parametrize("quadratic", [False, True], ids=["linear", "quadratic"])
+@pytest.mark.parametrize(
+    "con_values",
+    [[[2, 3], [2, 3]], [[1, 2], [0, 1]], [[0, 1], [0, 1]], [[-2, -1], [-1, 0]]],
+)
+def test_constraints_score_matches_the_shared_mapping(con_values: list[list[int]], quadratic: bool):
+    """The live scoring path and the cold violation-to-score mapping must not drift apart.
+
+    `ScoreGenerator` caches the normalization because it scores per iteration, while callers
+    holding only a violation go through `constraints_score_for_violation`. Both spell out the same
+    formula, so this pins them together.
+    """
+    # --- arrange -----------------------------------------
+    constraints = [
+        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3, weight=2.0),
+        Constraint(int_set=set(range(5, 16)), min_count=2, max_count=3, weight=0.5),
+    ]
+    generator = ScoreGenerator(
+        n=100,
+        k=8,
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_tie_breakers=[],
+        constraints=constraints,
+        penalty_quadratic=quadratic,
+    )
+    cv = np.array(con_values, dtype=np.int32)
+    weights = np.array([con.weight for con in constraints], dtype=np.float32)
+    violation = float(_np_con_total_weighted_violation(cv, weights, quadratic))
+
+    # --- act ---------------------------------------------
+    from_generator = generator.compute_score(8, cv, _as_contributions(np.ones(5, dtype=np.float32))).constraints
+    from_mapping = constraints_score_for_violation(violation, constraints, k=8, quadratic=quadratic)
+
+    # --- assert ------------------------------------------
+    assert from_generator == pytest.approx(from_mapping)

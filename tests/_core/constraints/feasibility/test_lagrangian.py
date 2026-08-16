@@ -1,4 +1,5 @@
 import itertools
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -7,6 +8,7 @@ from scipy.optimize import LinearConstraint, milp
 from max_div._core._random import new_rng_state
 from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.constraints.feasibility import (
+    FeasibilityResult,
     FeasibilityStatus,
     construction_iteration_budget_iterations,
     construction_iteration_budget_seconds,
@@ -573,3 +575,98 @@ def test_construction_budget_iterations(n_solver_iterations: int, expected: int)
 
     # --- assert ------------------------------------------
     assert budget == expected
+
+
+# =================================================================================================
+#  FeasibilityResult — derived members
+# =================================================================================================
+def _result(status: FeasibilityStatus, bound: float = 0.0, violation: float = 0.0) -> FeasibilityResult:
+    """Build a result with the fields the derived members read."""
+    return FeasibilityResult(
+        status=status,
+        selection=np.arange(8, dtype=np.int64),
+        violation=violation,
+        violation_per_constraint=np.zeros(1, dtype=np.int64),
+        bound=bound,
+        lam_min=np.zeros(1),
+        lam_max=np.ones(1),
+    )
+
+
+@pytest.mark.parametrize(
+    "status,expected_floor",
+    [(FeasibilityStatus.INFEASIBLE, 3.0), (FeasibilityStatus.FEASIBLE, 0.0), (FeasibilityStatus.UNKNOWN, 0.0)],
+    ids=["infeasible", "feasible", "unknown"],
+)
+def test_violation_floor_only_follows_from_a_proof(status: FeasibilityStatus, expected_floor: float):
+    """Only an infeasibility proof bounds anything; the other verdicts certify no floor."""
+    # --- act & assert ------------------------------------
+    assert _result(status, bound=3.0).violation_floor == expected_floor
+
+
+def test_violation_floor_clamps_a_negative_bound():
+    """A dual value below zero bounds nothing, so it must not surface as a negative floor."""
+    # --- act & assert ------------------------------------
+    assert _result(FeasibilityStatus.INFEASIBLE, bound=-1.0).violation_floor == 0.0
+
+
+@pytest.mark.parametrize(
+    "status,certified",
+    [(FeasibilityStatus.FEASIBLE, True), (FeasibilityStatus.INFEASIBLE, True), (FeasibilityStatus.UNKNOWN, False)],
+    ids=["feasible", "infeasible", "unknown"],
+)
+def test_is_certified_covers_only_the_two_proofs(status: FeasibilityStatus, certified: bool):
+    """Both proofs count as certified; UNKNOWN does not."""
+    # --- act & assert ------------------------------------
+    assert _result(status).is_certified is certified
+
+
+@pytest.mark.parametrize(
+    "status,opening",
+    [
+        (FeasibilityStatus.FEASIBLE, "FEASIBLE:"),
+        (FeasibilityStatus.INFEASIBLE, "INFEASIBLE:"),
+        (FeasibilityStatus.UNKNOWN, "UNKNOWN:"),
+    ],
+    ids=["feasible", "infeasible", "unknown"],
+)
+def test_rendering_names_its_verdict(status: FeasibilityStatus, opening: str):
+    """Each verdict renders a line naming itself, so a printed result is self-explaining."""
+    # --- act & assert ------------------------------------
+    assert str(_result(status, bound=3.0, violation=3.0)).startswith(opening)
+
+
+def test_rendering_disclaims_an_unknown_verdict():
+    """UNKNOWN must read as 'nothing was learned', never as evidence against feasibility."""
+    # --- act & assert ------------------------------------
+    assert "says nothing about whether the constraints can be satisfied" in str(
+        _result(FeasibilityStatus.UNKNOWN, violation=2.0)
+    )
+
+
+def test_rendering_mentions_the_score_ceiling_only_once_converted():
+    """The pipeline leaves the ceiling unset, so the rendering must not invent one."""
+    # --- arrange -----------------------------------------
+    raw = _result(FeasibilityStatus.INFEASIBLE, bound=3.0, violation=3.0)
+    converted = replace(raw, constraints_score_ceiling=0.25)
+
+    # --- act & assert ------------------------------------
+    assert "constraints score" not in str(raw)
+    assert "capping the constraints score at 0.2500" in str(converted)
+
+
+@pytest.mark.parametrize("seed", range(6))
+def test_per_constraint_violation_reproduces_the_total(seed: int):
+    """The per-constraint profile describes the returned selection: weighted, it sums to `violation`."""
+    # --- arrange -----------------------------------------
+    n, k, cons = _random_instance(seed)
+    con_values, con_indices, weights = _arrays(cons)
+
+    # --- act ---------------------------------------------
+    result = find_feasible(con_values, con_indices, weights, n, k, max_iter=300)
+
+    # --- assert ------------------------------------------
+    assert result.violation_per_constraint.shape[0] == len(cons)
+    assert (result.violation_per_constraint >= 0).all()
+    assert float(weights @ result.violation_per_constraint) == pytest.approx(result.violation)
+    assert result.violation_floor <= result.violation + 1e-9  # the floor can never exceed what was achieved

@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints import Constraint, ConstraintList, constraints_score_normalization
+from max_div._core.constraints import Constraint, ConstraintList, constraints_score_for_violation
 from max_div._core.constraints.feasibility import (
     CONSTRUCTION_DEFAULT_ITER,
     VERDICT_MAX_ITER,
-    FeasibilityReport,
+    FeasibilityResult,
     find_feasible,
 )
 from max_div._core.metrics import DistanceMetric, DiversityMetric, validate_cosine_vectors
@@ -70,7 +70,7 @@ class MaxDivProblem(ABC):
         return sum([len(con.int_set) for con in self.constraints])
 
     # --- feasibility -------------------------------------
-    def check_feasibility(self, thorough: bool = False) -> FeasibilityReport:
+    def check_feasibility(self, thorough: bool = False) -> FeasibilityResult:
         """Report whether `k` items can be selected such that every constraint holds.
 
         Deciding feasibility is NP-complete in general, so the verdict is three-valued; see
@@ -91,7 +91,12 @@ class MaxDivProblem(ABC):
             max_iter=CONSTRUCTION_DEFAULT_ITER if thorough else VERDICT_MAX_ITER,
             stop_at_first_proof=not thorough,
         )
-        return FeasibilityReport.from_result(result, constraints_score_normalization(self.constraints, self.k))
+        # The pipeline cannot convert its own floor onto the score scale -- that mapping is owned by
+        # the constraints package, which the feasibility subpackage sits below -- so it is filled here.
+        return replace(
+            result,
+            constraints_score_ceiling=constraints_score_for_violation(result.violation_floor, self.constraints, self.k),
+        )
 
     # --- factory methods ---------------------------------
     @classmethod

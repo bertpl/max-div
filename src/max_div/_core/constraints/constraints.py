@@ -257,3 +257,19 @@ def constraints_score_normalization(constraints: list[Constraint], k: int, quadr
     ]
     con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
     return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
+
+
+def constraints_score_for_violation(
+    total_weighted_violation: float, constraints: list[Constraint], k: int, quadratic: bool = False
+) -> float:
+    """Return the constraints score a given total weighted violation produces.
+
+    This is the whole violation-to-score mapping in one place, for callers holding a violation
+    rather than a selection — a certified lower bound, say, which no selection need realize.  The
+    live scoring path applies the same mapping, but keeps the normalization cached because it runs
+    per iteration; `test_score.py` pins the two against each other.
+
+    :param quadratic: Square each per-constraint violation before weighting, matching the solver's
+        quadratic penalty mode.  A violation aggregated linearly must not be passed as quadratic.
+    """
+    return 1.0 - constraints_score_normalization(constraints, k, quadratic) * total_weighted_violation

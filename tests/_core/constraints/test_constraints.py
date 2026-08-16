@@ -12,6 +12,7 @@ from max_div._core.constraints.constraints import (
     _np_con_total_violation,
     _np_con_total_weighted_violation,
     _np_largest_con_index,
+    constraints_score_for_violation,
     constraints_score_normalization,
 )
 
@@ -288,3 +289,15 @@ def test_constraints_score_normalization_counts_an_unreachable_maximum():
 
     # --- assert ------------------------------------------
     assert c == pytest.approx(1 / 4)  # 1 / (1 + 3)
+
+
+def test_constraints_score_for_violation():
+    """Zero violation scores 1, and the worst case scores 0."""
+    # --- arrange -----------------------------------------
+    # every item is a member and k is 8, so the worst case is an excess of 3
+    constraints = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]
+
+    # --- act & assert ------------------------------------
+    assert constraints_score_for_violation(0.0, constraints, k=8) == 1.0
+    assert constraints_score_for_violation(3.0, constraints, k=8) == pytest.approx(0.25)
+    assert constraints_score_for_violation(0.0, [], k=8) == 1.0  # nothing to violate

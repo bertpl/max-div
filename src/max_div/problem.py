@@ -2,14 +2,14 @@
 
 from ._core._warnings import DistanceInputWarning, MaxDivWarning
 from ._core.constraints import Constraint
-from ._core.constraints.feasibility import FeasibilityReport, FeasibilityStatus
+from ._core.constraints.feasibility import FeasibilityResult, FeasibilityStatus
 from ._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
 __all__ = [
     "Constraint",
     "DistanceInputWarning",
     "DistanceMaxDivProblem",
-    "FeasibilityReport",
+    "FeasibilityResult",
     "FeasibilityStatus",
     "MaxDivProblem",
     "MaxDivWarning",
