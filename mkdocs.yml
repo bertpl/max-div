@@ -95,6 +95,7 @@ nav:
     - How the Solver Works: concepts/solver.md
     - Scoring: concepts/scoring.md
     - Constraints: concepts/constraints.md
+    - Proving Feasibility: concepts/feasibility.md
     - Diversity & Distance: concepts/diversity.md
     - Objectives & the Landscape: concepts/objectives.md
     - Glossary: concepts/glossary.md

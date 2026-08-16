@@ -104,6 +104,8 @@ the [score components](#score-components) put constraints strictly above diversi
 always moves toward feasibility first and optimizes diversity only among equally feasible
 selections. A problem whose constraints cannot all be met does not fail: it degrades to the
 least-violating selection the solver can find, which is often the useful answer in practice.
+Whether such a selection exists at all can be settled separately -- see
+[Proving Feasibility](feasibility.md).
 
 ## Geometric-mean separation (`GEOMEAN_SEPARATION`) { #geometric-mean-separation }
 
