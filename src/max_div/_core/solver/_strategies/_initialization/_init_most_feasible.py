@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints.feasibility import CONSTRUCTION_DEFAULT_ITER, FeasibilityStatus, find_feasible
+from max_div._core.feasibility import CONSTRUCTION_DEFAULT_ITER, FeasibilityStatus, find_feasible
 from max_div._core.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy

@@ -6,7 +6,7 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._warnings import DistanceInputWarning
 from max_div._core.constraints import Constraint
-from max_div._core.constraints.feasibility import FeasibilityStatus
+from max_div._core.feasibility import FeasibilityStatus
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
 from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX

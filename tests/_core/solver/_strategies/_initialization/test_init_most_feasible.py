@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core.constraints import Constraint
-from max_div._core.constraints.feasibility import FeasibilityStatus
+from max_div._core.feasibility import FeasibilityStatus
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._solver_state import SolverState

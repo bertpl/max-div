@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.constraints import Constraint, ConstraintList
-from max_div._core.constraints.feasibility import (
+from max_div._core.feasibility import (
     CONSTRUCTION_DEFAULT_ITER,
     VERDICT_MAX_ITER,
     FeasibilityResult,

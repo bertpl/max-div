@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from max_div._core.constraints.feasibility import CONSTRUCTION_DEFAULT_ITER
+from max_div._core.feasibility import CONSTRUCTION_DEFAULT_ITER
 from max_div._core.solver._strategies._base import StrategyBase
 
 if TYPE_CHECKING:
