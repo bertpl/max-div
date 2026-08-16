@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
 from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
@@ -132,12 +133,19 @@ def create_single_figure(
             # --- plot data per preset ------------------------
             for preset in all_presets:
                 # --- collect data ---
+                # single-worker runs only; the parallel arm is a separate series (see the
+                # "plot the parallel arm" block), so its records must not fold into the preset's
+                # own scatter or quantile band
                 x: list[float] = []
                 y: list[float] = []
                 for result in results:
-                    if result.params.preset == preset:
+                    if result.params.preset == preset and result.params.n_workers == 1:
                         x.append(getattr(result, x_result_field))
                         y.append(getattr(result.score, y_result_score_field))
+
+                # a preset may be absent from a partial run; skip it rather than reducing over empties
+                if not x:
+                    continue
 
                 # --- plot data ---
                 if use_y_transform:
@@ -176,6 +184,32 @@ def create_single_figure(
                     ax.plot(x_q, q50, color=color, linestyle="-", lw=0.8, alpha=0.8, label="q50")
                     ax.plot(x_q, q10, color=color, linestyle="-", lw=0.5, alpha=0.5, label="q10, q90")
                     ax.plot(x_q, q90, color=color, linestyle="-", lw=0.5, alpha=0.5)
+
+            # --- plot the parallel arm -----------------------
+            # The default parallel invocation (one preset, several cooperative workers) is shown as
+            # a plain black-circle scatter with no quantile band: it is a single reference series,
+            # not a preset sweep, and one run per budget point makes the scatter itself the spread.
+            parallel_x: list[float] = []
+            parallel_y: list[float] = []
+            parallel_label = ""
+            for result in results:
+                if result.params.n_workers > 1:
+                    parallel_x.append(getattr(result, x_result_field))
+                    parallel_y.append(getattr(result.score, y_result_score_field))
+                    parallel_label = result.params.column_label()
+            if parallel_x:
+                parallel_y_plot = y_transform.f(parallel_y) if use_y_transform else parallel_y
+                # hollow black circles, so the parallel arm reads as distinct from the filled
+                # preset dots
+                ax.plot(
+                    parallel_x,
+                    parallel_y_plot,
+                    label=parallel_label,
+                    linestyle="None",
+                    marker="o",
+                    markerfacecolor="none",
+                    markeredgecolor="black",
+                )
 
             # --- decorations ---------------------------------
 
@@ -244,32 +278,40 @@ def create_single_figure(
     for i_row in range(n_rows):
         handles, labels = axes[i_row, 1].get_legend_handles_labels()
         if len(handles) > n_presets:
-            # we have uncertainty bounds here
-
-            n_preset_rows = n_presets
-            n_legend_cols = int(np.ceil(len(handles) / n_preset_rows))
-            # Matplotlib fills columns first; reorder so the visible layout reads row-wise.
-            order = [
-                r * n_legend_cols + c
-                for c in range(n_legend_cols)
-                for r in range(n_preset_rows)
-                if r * n_legend_cols + c < len(handles)
-            ]
-            handles = [handles[i] for i in order]
-            labels = [labels[i] for i in order]
+            # One row per series, three fixed columns [dot, q50, q10-q90]. Handles arrive grouped
+            # per series (a preset contributes dot, q50, q10-q90; the parallel arm just a dot), so
+            # group them, pad the parallel arm's row with blank cells, and emit column-first to
+            # match matplotlib's column-major legend fill — keeping every series on its own row.
+            band_labels = ("q50", "q10, q90")
+            series: list[tuple[list, list]] = []
+            for handle, lbl in zip(handles, labels):
+                if lbl not in band_labels:
+                    series.append(([handle], [lbl]))
+                else:
+                    series[-1][0].append(handle)
+                    series[-1][1].append(lbl)
+            n_cols = max(len(hs) for hs, _ in series)
+            blank = Line2D([], [], linestyle="none", marker="none")
+            grid_handles, grid_labels = [], []
+            for col in range(n_cols):
+                for hs, ls in series:
+                    grid_handles.append(hs[col] if col < len(hs) else blank)
+                    grid_labels.append(ls[col] if col < len(ls) else "")
             axes[i_row, 1].legend(
-                handles,
-                labels,
+                grid_handles,
+                grid_labels,
                 title="Solver preset",
                 loc="lower right",
-                ncol=n_legend_cols,
+                ncol=n_cols,
             )
 
     fig.tight_layout(rect=(0, 0.05, 1, 0.96))
     fig.subplots_adjust(wspace=0.075, hspace=0.15)
 
     # --- save figure ---------------------------------
-    save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{n}.webp")
+    # the default lossless webp resolution puts these dense scatter figures over the repo's
+    # committed-file ceiling, so cap the resolution — still sharp at the page width they display at
+    save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{n}.webp", tgt_pixels=6_000_000)
 
     # --- save markdown report ------------------------
     quantiles_table.generate_tables()
