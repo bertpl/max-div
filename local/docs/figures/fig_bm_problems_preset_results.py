@@ -184,7 +184,7 @@ def create_single_figure(
                     ax.plot(x_q, q10, color=color, linestyle="-", lw=0.5, alpha=0.5, label="q10, q90")
                     ax.plot(x_q, q90, color=color, linestyle="-", lw=0.5, alpha=0.5)
 
-            # --- plot the parallel arm ---------------------------
+            # --- plot the parallel arm -----------------------
             # The default parallel invocation (one preset, several cooperative workers) is shown as
             # a plain black-circle scatter with no quantile band: it is a single reference series,
             # not a preset sweep, and one run per budget point makes the scatter itself the spread.
@@ -293,7 +293,7 @@ def create_single_figure(
 
     # --- save figure ---------------------------------
     # the default lossless webp resolution puts these dense scatter figures over the repo's
-    # committed-file ceiling, so cap it — still sharp at the page width they display at
+    # committed-file ceiling, so cap the resolution — still sharp at the page width they display at
     save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{n}.webp", tgt_pixels=6_000_000)
 
     # --- save markdown report ------------------------
