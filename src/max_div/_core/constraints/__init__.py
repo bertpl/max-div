@@ -1,4 +1,4 @@
-from ._constraints import (
+from .constraints import (
     Constraint,
     ConstraintList,
     _build_array_repr,

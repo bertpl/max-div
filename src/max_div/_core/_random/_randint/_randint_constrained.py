@@ -8,7 +8,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints._constraints import _np_con_indices, _np_con_max_value, _np_con_min_value
+from max_div._core.constraints.constraints import _np_con_indices, _np_con_max_value, _np_con_min_value
 
 from ._randint import randint1
 

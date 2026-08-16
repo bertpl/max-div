@@ -6,9 +6,9 @@ from numpy.typing import NDArray
 # =================================================================================================
 #  select_k_min
 # =================================================================================================
-@numba.njit("int32[:](float32[:], int32)", fastmath=True, inline="always", cache=True)
-def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
-    """Find indices of k smallest elements in a float32 array using Numba.
+@numba.njit(["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"], fastmath=True, inline="always", cache=True)
+def select_k_min(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
+    """Find indices of k smallest elements in a float32 or float64 array using Numba.
 
     This implementation uses a max-heap approach with O(n log k) complexity,
     which is efficient when k << n. The heap maintains the k smallest elements
@@ -16,7 +16,7 @@ def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  #
 
     Parameters:
     -----------
-    arr : NDArray[np.float32]
+    arr : NDArray[np.float32] | NDArray[np.float64]
         Input array with n elements (typically 1000-10000)
     k : int
         Number of smallest elements to find
@@ -35,7 +35,7 @@ def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  #
     """
     n = len(arr)
     heap_idx = np.empty(k, dtype=np.int32)  # indices (into arr) of elements in the heap
-    heap_values = np.empty(k, dtype=np.float32)  # values of elements in the heap; largest at heap_values[0]
+    heap_values = np.empty(k, dtype=arr.dtype)  # values of elements in the heap; largest at heap_values[0]
 
     # Build initial heap with first k elements
     for i in range(k):
@@ -129,9 +129,9 @@ def select_k_min(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  #
 # =================================================================================================
 #  select_k_max
 # =================================================================================================
-@numba.njit("int32[:](float32[:], int32)", fastmath=True, inline="always", cache=True)
-def select_k_max(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
-    """Find indices of k largest elements in a float32 array using Numba.
+@numba.njit(["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"], fastmath=True, inline="always", cache=True)
+def select_k_max(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
+    """Find indices of k largest elements in a float32 or float64 array using Numba.
 
     This implementation uses a min-heap approach with O(n log k) complexity,
     which is efficient when k << n. The heap maintains the k largest elements
@@ -139,7 +139,7 @@ def select_k_max(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  #
 
     Parameters:
     -----------
-    arr : NDArray[np.float32]
+    arr : NDArray[np.float32] | NDArray[np.float64]
         Input array with n elements (typically 1000-10000)
     k : int
         Number of largest elements to find
@@ -158,7 +158,7 @@ def select_k_max(arr: NDArray[np.float32], k: np.int32) -> NDArray[np.int32]:  #
     """
     n = len(arr)
     heap_idx = np.empty(k, dtype=np.int32)  # indices (into arr) of elements in the heap
-    heap_values = np.empty(k, dtype=np.float32)  # values of elements in the heap; smallest at heap_values[0]
+    heap_values = np.empty(k, dtype=arr.dtype)  # values of elements in the heap; smallest at heap_values[0]
 
     # Build initial heap with first k elements
     for i in range(k):

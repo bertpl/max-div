@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
-from max_div._core.constraints._constraints import _np_con_count_satisfied
+from max_div._core.constraints.constraints import _np_con_count_satisfied
 from max_div._core.metrics import DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 
