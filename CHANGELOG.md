@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Opt-in `InitializationStrategy.most_feasible()`: starts a constrained solve from the most nearly feasible selection it can construct — one satisfying every constraint where such a selection is found, and the least-violating one found otherwise
-- `MaxDivProblem.check_feasibility()`: reports whether the constraints can be satisfied at all — provably yes with a satisfying selection, provably no with a re-checkable certificate and a ceiling on the achievable constraints score, or undecided
+- `MaxDivProblem.check_feasibility()`: reports whether the constraints can be satisfied at all — provably yes with a satisfying selection, provably no with a re-checkable certificate and a ceiling on the achievable constraints score, or an explicit unknown
 
 ### Changed
 
