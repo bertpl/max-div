@@ -40,12 +40,12 @@ facts turn that quantity into a proof:
 
 Only that last term depends on the selection, and it is subtracted -- so the priced cost is
 smallest for the selection taking the `k` highest-scoring items. Minimizing over all selections is
-therefore a top-`k` pick rather than a search, and that is what makes the bound computable at all:
+therefore a top-`k` pick rather than a search, so the bound is computable at all:
 
 $$g(\lambda) = \sum_i \big( \lambda^-_i \mathit{lo}_i - \lambda^+_i \mathit{hi}_i \big) \;-\; \sum_{j \,\in\, \text{top-}k(s)} s_j$$
 
 Every selection of `k` items violates the constraints by at least $g(\lambda)$, whatever prices
-were used. Different prices give different bounds, so the search hunts for the prices that make
+were used. Different prices give different bounds, so the search looks for the prices that make
 $g$ largest, adjusting each one against the constraint it belongs to:
 
 - a constraint below its minimum has its shortfall price raised;
@@ -118,7 +118,8 @@ print(report)
 stops there, having the verdict, while `thorough=True` keeps going for a tighter violation floor
 and a better selection to report.
 
-The result answers the two questions the opening posed, with two different numbers:
+The result carries two numbers, between them telling you whether more time could help and which
+constraints to change:
 
 - **`violation_floor`** -- the smallest total weighted violation any selection can have. On an
   infeasible problem this is positive and certified; comparing it against the violation a long run
@@ -146,19 +147,23 @@ solver = (
 )
 ```
 
-The solve begins from whatever the search built, which exists under all three verdicts: a
-satisfying selection where one was found, the least infeasible one where infeasibility was proven,
-and otherwise the least violating one reached. Only the first of those saves the optimization steps
-from having to reach feasibility themselves, but none of them is worse than an arbitrary start.
+The solve begins from whatever the search built, which exists under all three verdicts:
+
+- a satisfying selection, where one was found;
+- the least infeasible one, where infeasibility was proven;
+- the least violating one reached, otherwise.
+
+Only the first saves the optimization steps from having to reach feasibility themselves, but none
+of them is worse than an arbitrary start.
 
 This strategy is for constrained problems and raises on a problem without constraints, where every
-selection satisfies the (empty) constraint set and the search has nothing to contribute — pick a
+selection satisfies the (empty) constraint set and the search has nothing to contribute -- pick a
 different initialization for those.
 
 ## References
 
 - Boyd, S., & Vandenberghe, L. (2004). [Convex Optimization](https://doi.org/10.1017/CBO9780511804441).
-  Cambridge University Press. (Chapter 5 — the duality theory behind the bound, including why a
+  Cambridge University Press. (Chapter 5 -- the duality theory behind the bound, including why a
   relaxed problem's optimum bounds the original's.)
 - Fisher, M. L. (1981). [The Lagrangian relaxation method for solving integer programming
   problems](https://doi.org/10.1287/mnsc.27.1.1). *Management Science*, 27(1), 1-18. (The classic
