@@ -74,7 +74,7 @@ def _random_instance(seed: int) -> tuple[int, int, list[Constraint]]:
 
 
 def _pigeonhole_instance() -> tuple[int, int, list[Constraint]]:
-    """Two disjoint min-2 sets with k=2: certifiably infeasible, minimum violation exactly 2."""
+    """Return a certifiably infeasible instance: two disjoint min-2 sets with k = 2 (minimum violation 2)."""
     cons = [
         Constraint(int_set={0, 1}, min_count=2, max_count=2),
         Constraint(int_set={2, 3}, min_count=2, max_count=2),
@@ -86,6 +86,7 @@ def _pigeonhole_instance() -> tuple[int, int, list[Constraint]]:
 #  Item <-> constraint indexing
 # =================================================================================================
 def test_build_item_constraint_csr():
+    """The transpose lists each item's constraints exactly."""
     # --- arrange -----------------------------------------
     cons = [
         Constraint(int_set={0, 1, 2}, min_count=1, max_count=3),
@@ -102,6 +103,7 @@ def test_build_item_constraint_csr():
 
 
 def test_build_item_constraint_csr_no_constraints():
+    """An empty constraint set transposes to an all-empty CSR."""
     # --- act ---------------------------------------------
     item_indptr, item_cons = build_item_constraint_csr(np.empty(0, dtype=np.int32), 3)
 
@@ -114,7 +116,7 @@ def test_build_item_constraint_csr_no_constraints():
 #  Dual value and the certificate
 # =================================================================================================
 def test_dual_value_pigeonhole_toy():
-    """Pins the worked example: all-ones prices on the pigeonhole instance give g = 2."""
+    """All-ones prices on the pigeonhole instance give g = 2."""
     # --- arrange -----------------------------------------
     n, k, cons = _pigeonhole_instance()
     _, con_indices, _ = _arrays(cons)
@@ -163,6 +165,7 @@ def test_exact_topk_guard():
 
 
 def test_pigeonhole_certified_infeasible():
+    """The pigeonhole instance is certified with a verifiable bound and an optimal least-infeasible selection."""
     # --- arrange -----------------------------------------
     n, k, cons = _pigeonhole_instance()
     con_values, con_indices, weights = _arrays(cons)
@@ -182,6 +185,7 @@ def test_pigeonhole_certified_infeasible():
 
 
 def test_verdict_mode_certifies_early():
+    """Verdict mode still returns a certified INFEASIBLE."""
     # --- arrange -----------------------------------------
     n, k, cons = _pigeonhole_instance()
     con_values, con_indices, weights = _arrays(cons)
@@ -215,6 +219,7 @@ def test_witness_from_ascent():
 
 
 def test_no_constraints_is_trivially_feasible():
+    """With no constraints, any selection is a witness."""
     # --- act ---------------------------------------------
     status, selection, _, violation, _, _ = find_feasible(
         np.empty((0, 2), dtype=np.int32), np.empty(0, dtype=np.int32), np.empty(0, dtype=np.float64), 6, 3, max_iter=50
@@ -266,11 +271,9 @@ def test_fractional_weights_keep_unrounded_floor():
 def test_boundary_band_instance_returns_unknown():
     """An LP-feasible but integer-infeasible instance must land in UNKNOWN.
 
-    Two disjoint 5-cycles, one min-1 cover constraint per edge, k = 5: fractional selection 1/2
-    per item covers every edge with total exactly 5, so no positive-dual certificate can exist —
-    yet covering each odd cycle integrally needs 3 items, 6 in total, so no witness exists either.
-    UNKNOWN is therefore forced structurally, not an artifact of budgets or seeds; the case also
-    drives candidate generation through all its rounds (nothing to find, nothing to certify).
+    Two disjoint 5-cycles, one min-1 cover constraint per edge, k = 5.  A fractional 1/2 per item
+    covers every edge with total exactly 5, so no positive-dual certificate exists; covering each
+    odd cycle integrally needs 3 items (6 > k), so no witness exists either — UNKNOWN is forced.
     """
     # --- arrange -----------------------------------------
     cons = [
@@ -291,7 +294,7 @@ def test_boundary_band_instance_returns_unknown():
 
 
 def test_planted_matching_solved_by_ascent():
-    """A matching-shaped instance the sampling heuristic notoriously fails is solved here.
+    """A planted-matching instance is solved via the ascent's feasible-top-k exit.
 
     With unit row/column quotas the price dynamics behave like an auction: starved rows and
     columns bid up their members until the top-k is a perfect matching, which the ascent's
@@ -416,6 +419,7 @@ def test_milp_cross_check():
 #  Determinism and noise
 # =================================================================================================
 def test_determinism_same_inputs_same_outputs():
+    """Identical inputs and seed reproduce the full output tuple."""
     # --- arrange -----------------------------------------
     n, k, cons = _random_instance(3)
     con_values, con_indices, weights = _arrays(cons)
@@ -434,6 +438,7 @@ def test_determinism_same_inputs_same_outputs():
 
 
 def test_gumbel_noise_seed_behavior():
+    """Noise reproduces per seed and differs across seeds."""
     # --- act ---------------------------------------------
     noise_a = _gumbel_noise(100, new_rng_state(1))
     noise_b = _gumbel_noise(100, new_rng_state(1))
@@ -455,6 +460,7 @@ def test_gumbel_noise_seed_behavior():
     ],
 )
 def test_construction_budget_seconds_clamps(t_max_sec: float, expected: int):
+    """Extreme time budgets clamp to the iteration floor and ceiling."""
     # --- act ---------------------------------------------
     budget = construction_iteration_budget_seconds(t_max_sec, n=1000, n_memberships=5000)
 
@@ -463,6 +469,7 @@ def test_construction_budget_seconds_clamps(t_max_sec: float, expected: int):
 
 
 def test_construction_budget_seconds_scales_with_problem_size():
+    """A fixed time budget buys fewer iterations on a larger problem."""
     # --- act ---------------------------------------------
     small_problem = construction_iteration_budget_seconds(1.0, n=1000, n_memberships=5000)
     large_problem = construction_iteration_budget_seconds(1.0, n=100_000, n_memberships=5_000_000)
@@ -480,6 +487,7 @@ def test_construction_budget_seconds_scales_with_problem_size():
     ],
 )
 def test_construction_budget_iterations(n_solver_iterations: int, expected: int):
+    """Iteration-typed budgets take the fixed share, clamped."""
     # --- act ---------------------------------------------
     budget = construction_iteration_budget_iterations(n_solver_iterations)
 

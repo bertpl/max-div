@@ -1,33 +1,32 @@
-"""Lagrangian-relaxation feasibility pipeline for constrained selection problems.
+"""The Lagrangian-relaxation pipeline decides, and where possible constructs, feasibility.
 
-Decides — and where possible constructs — feasibility for: select exactly `k` of `n` items such
-that for every constraint `i` the number of selected items inside its set lies in
-`[min_count_i, max_count_i]`.  The constraint sets may overlap arbitrarily, which makes the
-decision problem NP-complete, so the pipeline returns one of three statuses and never pretends
-otherwise:
+The question it answers: can exactly `k` of `n` items be selected such that every constraint `i`
+counts between `min_count_i` and `max_count_i` selected members?  Constraint sets may overlap
+arbitrarily, which makes the decision NP-complete, so the pipeline returns one of three statuses:
 
 - `FEASIBLE`: a witness selection satisfying every constraint is returned.
-- `INFEASIBLE`: a certificate is returned — multipliers `(lam, mu)` whose dual value is positive,
-  which proves no feasible selection exists (see below) and lower-bounds the weighted violation of
-  every possible selection.
-- `UNKNOWN`: neither a witness nor a certificate was found.  This verdict carries no information;
-  callers must behave as if nothing was learned.
+- `INFEASIBLE`: multipliers `(lam, mu)` with a positive dual value are returned — a proof that no
+  feasible selection exists, and a lower bound on the weighted violation of every possible
+  selection (`find_feasible` documents the verification).
+- `UNKNOWN`: neither was found.  This verdict carries no information; callers must behave as if
+  nothing was learned.
 
-The mechanism, in brief: attach prices `lam_i >= 0` (per unit of shortfall) and `mu_i >= 0` (per
-unit of excess) to each constraint.  For fixed prices, each item gets a score — the sum of
-`lam_i - mu_i` over the constraints containing it — and the priced penalty of the best possible
-selection collapses to a closed formula over the `k` largest scores (the "dual value" `g`).  A
-feasible selection has non-positive priced penalty at any prices, so exhibiting prices with
-`g > 0` proves infeasibility — a proof any reader can re-check by recomputing `g` from the
-returned multipliers.  Prices are found by projected supergradient ascent on `g` (raise prices of
-constraints the current top-k starves, decay prices of over-satisfied ones).  Because `g <= 0`
-proves nothing, witnesses are constructed separately: several candidate top-k selections are drawn
-from the matured scores (varying how near-ties break, later rounds with small score noise) and
-each is finished by greedy swap repair.
+The mechanism works as follows:
 
-Soundness invariant: the ascent must evaluate `g` through an EXACT, unperturbed top-k — any noise
-or biasing there can overestimate `g` and fabricate a false infeasibility proof.  All
-randomization lives exclusively in candidate generation, where no bound is claimed.
+- Prices `lam_i >= 0` (per unit of shortfall) and `mu_i >= 0` (per unit of excess) attach to each
+  constraint; for fixed prices, an item's score sums `lam_i - mu_i` over its constraints.
+- The dual value `g` — the priced penalty of the best possible selection — is a closed formula
+  over the `k` largest scores (`_dual_value`); a feasible selection has non-positive priced
+  penalty at any prices, so `g > 0` proves infeasibility.
+- Projected supergradient ascent raises prices of starved constraints and decays prices of
+  over-satisfied ones (`_dual_ascent`).  Prices at the end of a full ascent are called "mature"
+  throughout this module.
+- Because `g <= 0` proves nothing, witnesses are constructed separately: candidate top-k
+  selections drawn from the mature scores, each finished by greedy swap repair.
+
+Soundness invariant: the ascent must evaluate `g` through an EXACT, unperturbed top-k — noise
+there can overestimate `g` and fabricate a false infeasibility proof.  All randomization lives
+exclusively in candidate generation, where no bound is claimed.
 
 All array-level functions are numba-compiled; the pipeline runs once per call (not per solver
 iteration), so clarity wins over micro-optimization everywhere outside the inner passes.
@@ -41,37 +40,36 @@ from numpy.typing import NDArray
 
 from max_div._core._random import new_rng_state, rand_nz_float64
 
-
 # =================================================================================================
 #  Constants
 # =================================================================================================
-# --- status codes ---------------------------
+# status codes
 FEASIBLE = 1
 INFEASIBLE = -1
 UNKNOWN = 0
 
-# --- ascent ---------------------------------
+# ascent
 GAMMA0 = 1.0  # initial step-size scale of the projected supergradient ascent
 STALL_WINDOW = 100  # iterations without a new best g before the step size is damped
 STALL_SHRINK = 0.7  # damping factor applied to the step-size scale on a stall
 VERDICT_MAX_ITER = 2000  # ascent budget when only a fast verdict is wanted
 
-# --- candidate generation -------------------
+# candidate generation
 N_ROUNDS = 16  # candidate selections tried before giving up
 N_NOISE_FREE_ROUNDS = 2  # pure top-k candidates (alternating multiplier sets) before noise starts
 NOISE_SCALE = 0.05  # score-noise magnitude, as a fraction of the mean constraint weight
 
-# --- repair ---------------------------------
+# repair
 SWAP_CAP_PER_K = 10  # repair swap budget per unit of k ...
 SWAP_CAP_FLOOR = 500  # ... floored here (strict improvement already guarantees termination)
 
-# --- soundness margins ----------------------
+# soundness margins
 G_POSITIVE_TOL = 1e-9  # g must exceed this before it counts as an infeasibility proof
 TIE_TOL = 1e-12  # improvement threshold for repair swaps
 
-# --- construction-mode iteration budget -----
+# construction-mode iteration budget
 BUDGET_FRACTION = 0.10  # share of the solve budget granted to the ascent
-EST_SEC_PER_OP = 2e-9  # nominal cost of one inner-pass operation, for the time-form budget
+EST_SEC_PER_OP = 2e-9  # nominal cost of one inner-pass operation, for the time-typed budget
 CONSTRUCTION_MIN_ITER = 500
 CONSTRUCTION_MAX_ITER = 8000
 
@@ -83,8 +81,11 @@ CONSTRUCTION_MAX_ITER = 8000
 def build_item_constraint_csr(con_indices: NDArray[np.int32], n: int) -> tuple[NDArray[np.int64], NDArray[np.int32]]:
     """Transpose the packed constraint->item layout into an item->constraint CSR.
 
-    `con_indices` is the packed representation built by `ConstraintList.to_numpy`: a 2m-element
-    header of per-constraint [start, end) offsets, followed by the concatenated member indices.
+    Args:
+        con_indices: the packed representation built by `ConstraintList.to_numpy` — a 2m-element
+            header of per-constraint [start, end) offsets, followed by the concatenated member
+            indices.
+        n: the number of items.
 
     Returns:
         `(item_indptr, item_cons)`: for item `j`, `item_cons[item_indptr[j]:item_indptr[j + 1]]`
@@ -283,7 +284,9 @@ def _dual_ascent(
     k: int,
     max_iter: int,
     stop_at_first_proof: bool,
-) -> tuple[float, NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.int64]]:
+) -> tuple[
+    float, NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.int64]
+]:
     """Run the projected supergradient ascent from zero multipliers.
 
     Each iteration evaluates the dual value `g` at the current prices through an exact top-k (the
@@ -295,8 +298,8 @@ def _dual_ascent(
       fast verdict needs no matured bound.
 
     Without `stop_at_first_proof` the ascent runs to `max_iter` even after `g` goes positive: the
-    matured bound is the certified violation floor, and matured prices give the construction phase
-    far better scores.
+    mature bound is the certified violation floor, and the mature prices are the score vectors
+    candidate generation draws from.
 
     Returns:
         `(best_g, lam_avg, mu_avg, lam_best, mu_best, witness)` — the running-average and
@@ -601,8 +604,8 @@ def _find_feasible(
             break
     floor = np.ceil(best_g - G_POSITIVE_TOL) if (certified and weights_integral) else best_g
 
-    # candidate generation: alternate the two matured score vectors, add relative noise from
-    # round N_NOISE_FREE_ROUNDS on (never earlier — pure top-k first)
+    # the un-noised top-k of each mature score vector is the single best guess, so noise starts
+    # only after both have had their pure round
     scores_avg = _item_scores(item_indptr, item_cons, lam_avg, mu_avg)
     scores_best = _item_scores(item_indptr, item_cons, lam_best, mu_best)
     noise_scale = NOISE_SCALE * (np.sum(weights) / m) if m > 0 else 0.0
@@ -661,8 +664,8 @@ def find_feasible(
             `construction_iteration_budget_iterations` for the budget-derived value, or
             `VERDICT_MAX_ITER` for a fast verdict.
         seed: seed for the candidate-generation noise (the ascent itself is deterministic).
-        stop_at_first_proof: exit the ascent as soon as infeasibility is proven, instead of
-            maturing the bound and the construction scores (verdict mode).
+        stop_at_first_proof: exit the ascent as soon as infeasibility is proven, forgoing the
+            mature bound and construction scores (verdict mode).
 
     Returns:
         `(status, selection, bound, violation, lam, mu)`:
@@ -696,8 +699,8 @@ def find_feasible(
 def construction_iteration_budget_seconds(t_max_sec: float, n: int, n_memberships: int) -> int:
     """Return the ascent iteration budget for a time-typed solve budget.
 
-    A fixed share (`BUDGET_FRACTION`) of the solve budget, converted to iterations through a
-    nominal per-iteration cost model — deterministic given problem and configuration, so
+    The budget is a fixed share (`BUDGET_FRACTION`) of the solve budget, converted to iterations
+    through a nominal per-iteration cost model — deterministic given problem and configuration, so
     same-seed reproducibility is preserved (machine-speed variation only shifts the actual wall
     fraction spent).
     """
@@ -709,9 +712,9 @@ def construction_iteration_budget_seconds(t_max_sec: float, n: int, n_membership
 def construction_iteration_budget_iterations(n_solver_iterations: int) -> int:
     """Return the ascent iteration budget for an iteration-typed solve budget.
 
-    The same budget share applied in the budget's own currency — no cost model involved, so the
-    machine independence of iteration-typed budgets is preserved; the crudeness of equating ascent
-    and solver iteration costs is absorbed by the clamps.
+    The same share is applied to the solver iteration count directly — no cost model involved, so
+    the machine independence of iteration-typed budgets is preserved; the crudeness of equating
+    ascent and solver iteration costs is absorbed by the clamps.
     """
     target = BUDGET_FRACTION * n_solver_iterations
     return int(min(max(round(target), CONSTRUCTION_MIN_ITER), CONSTRUCTION_MAX_ITER))
