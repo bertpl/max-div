@@ -76,10 +76,10 @@ class MaxDivProblem(ABC):
         Deciding feasibility is NP-complete in general, so the verdict is three-valued; see
         `FeasibilityStatus` for what each value claims.  No solver path calls `check_feasibility`.
 
-        :param thorough: Search harder before answering, at a proportional cost in time. The
-            default stops at the first proof; `thorough=True` instead runs the search to the end,
-            which tightens the violation floor on an infeasible problem, improves the selection
-            returned, and settles some cases the default leaves undecided.
+        :param thorough: Changes only what happens once infeasibility is proven. The default stops
+            there, having the verdict; `thorough=True` keeps searching, which tightens the certified
+            violation floor and can improve the selection returned, at a proportional cost in time.
+            Feasible and unknown outcomes are reached identically either way.
         """
         con_values, con_indices = ConstraintList(self.constraints).to_numpy()
         result = find_feasible(

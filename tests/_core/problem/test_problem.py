@@ -418,3 +418,23 @@ def test_check_feasibility_on_an_unconstrained_problem():
     # --- assert ------------------------------------------
     assert report.status is FeasibilityStatus.FEASIBLE
     assert report.constraints_score_ceiling == 1.0
+
+
+def test_check_feasibility_thorough_changes_nothing_without_a_proof():
+    """`thorough` only alters the post-proof search, so an unknown verdict is reached identically."""
+    # --- arrange -----------------------------------------
+    constraints = [
+        Constraint(int_set={cycle * 5 + i, cycle * 5 + (i + 1) % 5}, min_count=1, max_count=2)
+        for cycle in range(2)
+        for i in range(5)
+    ]
+    problem = _problem_with(constraints, n=10, k=5)
+
+    # --- act ---------------------------------------------
+    fast = problem.check_feasibility()
+    thorough = problem.check_feasibility(thorough=True)
+
+    # --- assert ------------------------------------------
+    assert fast.status is thorough.status is FeasibilityStatus.UNKNOWN
+    assert fast.violation == thorough.violation
+    np.testing.assert_array_equal(fast.selection, thorough.selection)
