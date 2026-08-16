@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
 from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
@@ -198,7 +199,17 @@ def create_single_figure(
                     parallel_label = result.params.column_label()
             if parallel_x:
                 parallel_y_plot = y_transform.f(parallel_y) if use_y_transform else parallel_y
-                ax.plot(parallel_x, parallel_y_plot, label=parallel_label, linestyle="None", marker="o", color="black")
+                # hollow black circles, so the parallel arm reads as distinct from the filled
+                # preset dots
+                ax.plot(
+                    parallel_x,
+                    parallel_y_plot,
+                    label=parallel_label,
+                    linestyle="None",
+                    marker="o",
+                    markerfacecolor="none",
+                    markeredgecolor="black",
+                )
 
             # --- decorations ---------------------------------
 
@@ -267,25 +278,31 @@ def create_single_figure(
     for i_row in range(n_rows):
         handles, labels = axes[i_row, 1].get_legend_handles_labels()
         if len(handles) > n_presets:
-            # we have uncertainty bounds here
-
-            n_preset_rows = n_presets
-            n_legend_cols = int(np.ceil(len(handles) / n_preset_rows))
-            # Matplotlib fills columns first; reorder so the visible layout reads row-wise.
-            order = [
-                r * n_legend_cols + c
-                for c in range(n_legend_cols)
-                for r in range(n_preset_rows)
-                if r * n_legend_cols + c < len(handles)
-            ]
-            handles = [handles[i] for i in order]
-            labels = [labels[i] for i in order]
+            # One row per series, three fixed columns [dot, q50, q10-q90]. Handles arrive grouped
+            # per series (a preset contributes dot, q50, q10-q90; the parallel arm just a dot), so
+            # group them, pad the parallel arm's row with blank cells, and emit column-first to
+            # match matplotlib's column-major legend fill — keeping every series on its own row.
+            band_labels = ("q50", "q10, q90")
+            series: list[tuple[list, list]] = []
+            for handle, lbl in zip(handles, labels):
+                if lbl not in band_labels:
+                    series.append(([handle], [lbl]))
+                else:
+                    series[-1][0].append(handle)
+                    series[-1][1].append(lbl)
+            n_cols = max(len(hs) for hs, _ in series)
+            blank = Line2D([], [], linestyle="none", marker="none")
+            grid_handles, grid_labels = [], []
+            for col in range(n_cols):
+                for hs, ls in series:
+                    grid_handles.append(hs[col] if col < len(hs) else blank)
+                    grid_labels.append(ls[col] if col < len(ls) else "")
             axes[i_row, 1].legend(
-                handles,
-                labels,
+                grid_handles,
+                grid_labels,
                 title="Solver preset",
                 loc="lower right",
-                ncol=n_legend_cols,
+                ncol=n_cols,
             )
 
     fig.tight_layout(rect=(0, 0.05, 1, 0.96))
