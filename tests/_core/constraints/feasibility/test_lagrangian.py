@@ -110,6 +110,20 @@ def test_build_item_constraint_csr_no_constraints():
     assert item_cons.size == 0
 
 
+def test_top_k_items_is_exact():
+    """Heap selection returns exactly the k best items, and all items when k reaches n."""
+    # --- arrange -----------------------------------------
+    scores = np.array([3.0, 1.0, 2.0, 5.0, 4.0])
+
+    # --- act ---------------------------------------------
+    top2 = _top_k_items(scores, 2)
+    top_all = _top_k_items(scores, 5)
+
+    # --- assert ------------------------------------------
+    assert sorted(top2.tolist()) == [3, 4]
+    assert sorted(top_all.tolist()) == [0, 1, 2, 3, 4]
+
+
 # =================================================================================================
 #  Dual value and the certificate
 # =================================================================================================

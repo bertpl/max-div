@@ -38,6 +38,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core._math import select_k_max
 from max_div._core._random import new_rng_state, rand_nz_float64
 
 
@@ -166,9 +167,14 @@ def _item_scores(
 
 @numba.njit(cache=True)
 def _top_k_items(scores: NDArray[np.float64], k: int) -> NDArray[np.int64]:
-    """Return the indices of the k largest scores (exact; stable ties by item index)."""
-    order = np.argsort(-scores, kind="mergesort")
-    return order[:k]
+    """Return the indices of the k largest scores via O(n log k) heap selection.
+
+    The result is an exact top-k with arbitrary ordering among ties — any tie-break is a valid
+    inner maximizer, so the dual value stays sound.
+    """
+    if k >= scores.shape[0]:
+        return np.arange(scores.shape[0], dtype=np.int64)
+    return select_k_max(scores, np.int32(k)).astype(np.int64)
 
 
 @numba.njit(cache=True)

@@ -4,14 +4,15 @@ import pytest
 from max_div._core._math.select_k_minmax import select_k_max, select_k_min
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("k", [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
-def test_select_k_min_correctness(k: int):
+def test_select_k_min_correctness(k: int, dtype: type):
     """Test that select_k_min returns indices of the k largest elements."""
 
     # --- arrange -----------------------------------------
     np.random.seed(42)
     n = 1024
-    arr = np.random.randn(n).astype(np.float32)
+    arr = np.random.randn(n).astype(dtype)
 
     # --- act ---------------------------------------------
     result_indices = select_k_min(arr, np.int32(k))
@@ -33,14 +34,15 @@ def test_select_k_min_correctness(k: int):
         assert max_k_smallest <= min_others
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("k", [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
-def test_select_k_max_correctness(k: int):
+def test_select_k_max_correctness(k: int, dtype: type):
     """Test that select_k_max returns indices of the k largest elements."""
 
     # --- arrange -----------------------------------------
     np.random.seed(42)
     n = 1024
-    arr = np.random.randn(n).astype(np.float32)
+    arr = np.random.randn(n).astype(dtype)
 
     # --- act ---------------------------------------------
     result_indices = select_k_max(arr, np.int32(k))
