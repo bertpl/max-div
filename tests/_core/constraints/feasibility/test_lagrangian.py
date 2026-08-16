@@ -268,7 +268,7 @@ def test_fractional_weights_keep_unrounded_floor():
     assert violation >= bound - 1e-9
 
 
-def test_boundary_band_instance_returns_unknown():
+def test_lp_feasible_integer_infeasible_returns_unknown():
     """An LP-feasible but integer-infeasible instance must land in UNKNOWN.
 
     Two disjoint 5-cycles, one min-1 cover constraint per edge, k = 5.  A fractional 1/2 per item
@@ -475,14 +475,14 @@ def test_construction_budget_seconds_scales_with_problem_size():
     large_problem = construction_iteration_budget_seconds(1.0, n=100_000, n_memberships=5_000_000)
 
     # --- assert ------------------------------------------
-    assert small_problem >= large_problem  # same budget buys fewer iterations on a larger problem
+    assert small_problem >= large_problem
 
 
 @pytest.mark.parametrize(
     ("n_solver_iterations", "expected"),
     [
         (100, CONSTRUCTION_MIN_ITER),
-        (20_000, 2000),  # the 10% share, un-clamped
+        (20_000, 2000),  # the `BUDGET_FRACTION` share, un-clamped
         (10_000_000, CONSTRUCTION_MAX_ITER),
     ],
 )

@@ -1,4 +1,4 @@
-"""The Lagrangian-relaxation pipeline decides, and where possible constructs, feasibility.
+"""The Lagrangian-relaxation pipeline decides whether a feasible selection exists and, where possible, constructs one.
 
 The question it answers: can exactly `k` of `n` items be selected such that every constraint `i`
 counts between `min_count_i` and `max_count_i` selected members?  Constraint sets may overlap
@@ -11,16 +11,12 @@ arbitrarily, which makes the decision NP-complete, so the pipeline returns one o
 - `UNKNOWN`: neither was found.  This verdict carries no information; callers must behave as if
   nothing was learned.
 
-The mechanism works as follows:
+The mechanism works in three phases:
 
-- Prices `lam_i >= 0` (per unit of shortfall) and `mu_i >= 0` (per unit of excess) attach to each
-  constraint; for fixed prices, an item's score sums `lam_i - mu_i` over its constraints.
-- The dual value `g` — the priced penalty of the best possible selection — is a closed formula
-  over the `k` largest scores (`_dual_value`); a feasible selection has non-positive priced
-  penalty at any prices, so `g > 0` proves infeasibility.
-- Projected supergradient ascent raises prices of starved constraints and decays prices of
-  over-satisfied ones (`_dual_ascent`).  Prices at the end of a full ascent are called "mature"
-  throughout this module.
+- Per-constraint violation prices `(lam_i, mu_i)` turn the problem into per-item scores, whose
+  exact top-k yields the dual value `g`; `g > 0` proves infeasibility (`_dual_value`).
+- Projected supergradient ascent searches for prices with high `g` (`_dual_ascent`); prices at the
+  end of a full ascent are called "mature" throughout this module.
 - Because `g <= 0` proves nothing, witnesses are constructed separately: candidate top-k
   selections drawn from the mature scores, each finished by greedy swap repair.
 
@@ -221,7 +217,7 @@ def _dual_value(
 #  Dual ascent
 # =================================================================================================
 @numba.njit(cache=True)
-def _vacuous_upper_mask(
+def _binding_upper_mask(
     item_cons: NDArray[np.int32],
     con_max: NDArray[np.int64],
     m: int,
@@ -313,7 +309,7 @@ def _dual_ascent(
     mu_avg = np.zeros(m, dtype=np.float64)
     lam_best = np.zeros(m, dtype=np.float64)
     mu_best = np.zeros(m, dtype=np.float64)
-    mu_active = _vacuous_upper_mask(item_cons, con_max, m, k)
+    mu_active = _binding_upper_mask(item_cons, con_max, m, k)
 
     best_g = -np.inf
     gamma = GAMMA0
@@ -489,8 +485,8 @@ def _best_counterpart_move(
     """Return the best counterpart move keeping the selection size at k.
 
     A `short` primary move adds a member, so the counterpart removes the selected item whose
-    removal gains most (usually a negative gain — the cheapest damage); an excess primary move
-    symmetrically adds the best unselected item.  Returns `(item, gain)`, item -1 when none exists.
+    removal gains most (usually a negative gain — the removal that loses least); an excess primary
+    move symmetrically adds the best unselected item.  Returns `(item, gain)`, item -1 when none exists.
     """
     n = item_indptr.shape[0] - 1
     best_item = -1
@@ -542,8 +538,8 @@ def _repair_selection(
 
     Each round targets the worst-violated constraint, pairs the best primary move among its
     members with the best size-preserving counterpart, and executes only strictly improving pairs.
-    Stops at violation zero, at a stall (no candidate or no strict improvement), or at the swap
-    cap.  Single swaps cannot perform the coordinated multi-swap exchanges some feasible
+    The loop stops at violation zero, at a stall (no candidate or no strict improvement), or at
+    the swap cap.  Single swaps cannot perform the coordinated multi-swap exchanges some feasible
     structures require — those land in the UNKNOWN outcome by design.
     """
     for _ in range(max_swaps):
@@ -583,7 +579,7 @@ def _find_feasible(
     seed: int,
     stop_at_first_proof: bool,
 ) -> tuple[int, NDArray[np.int64], float, float, NDArray[np.float64], NDArray[np.float64]]:
-    """Numba core of `find_feasible`; see the wrapper for the contract."""
+    """Run the numba core of `find_feasible`; see the wrapper for the contract."""
     m = con_min.shape[0]
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
 
@@ -595,8 +591,8 @@ def _find_feasible(
 
     certified = best_g > G_POSITIVE_TOL
 
-    # integral weights make every achievable violation an integer, so the floor sharpens to the
-    # ceiling of the bound
+    # integral weights make every achievable violation an integer, so the bound can be rounded
+    # up to the next integer
     weights_integral = True
     for i in range(m):
         if abs(weights[i] - np.round(weights[i])) > 1e-12:
@@ -665,7 +661,7 @@ def find_feasible(
             `VERDICT_MAX_ITER` for a fast verdict.
         seed: seed for the candidate-generation noise (the ascent itself is deterministic).
         stop_at_first_proof: exit the ascent as soon as infeasibility is proven, forgoing the
-            mature bound and construction scores (verdict mode).
+            mature bound and the scores candidate generation draws from (verdict mode).
 
     Returns:
         `(status, selection, bound, violation, lam, mu)`:
