@@ -21,6 +21,14 @@ The mechanism works in three phases:
   constraint; otherwise — since `g <= 0` proves nothing — witnesses are constructed separately:
   candidate top-k selections drawn from the mature scores, each finished by greedy swap repair.
 
+Violation is weighted-linearly throughout: `sum of w_i * (shortfall_i + excess_i)`, with `w_i` the
+user-set constraint weights.  This is a deliberate best effort at honoring relative constraint
+importance — a quadratic penalty cannot be mapped onto this machinery, because the collapse of the
+priced penalty into per-item scores requires the penalty to be linear in the counts.  The
+consequence splits cleanly: verdicts and witnesses are penalty-shape-independent (zero violation
+is zero violation under any shape), while the certified floor and the least-infeasible grading
+are specific to the weighted-linear aggregate.
+
 Soundness invariant: the ascent must evaluate `g` through an EXACT, unperturbed top-k — noise
 there can overestimate `g` and fabricate a false infeasibility proof.  All randomization lives
 exclusively in candidate generation, where no bound is claimed.
@@ -939,7 +947,8 @@ def find_feasible(
         con_values: `(m, 2)` per-constraint `[min_count, max_count]`, as built by
             `ConstraintList.to_numpy` (the pristine problem-level values, not remaining counts).
         con_indices: packed constraint membership array from the same conversion.
-        con_weights: per-constraint weights (strictly positive).
+        con_weights: per-constraint weights (strictly positive) — the user-set `Constraint.weight`
+            values; the module docstring describes how they define the violation aggregate.
         n: number of items.
         k: selection size.
         max_iter: ascent iteration budget; see `construction_iteration_budget_seconds` /
