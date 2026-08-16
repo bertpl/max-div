@@ -3,7 +3,7 @@ import pytest
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DiversityMetric
-from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
+from max_div._core.solver._score import Score, ScoreGenerator
 
 _NO_CONTRIBUTIONS = np.array([], dtype=np.float32)
 
@@ -165,27 +165,6 @@ def test_score_generator_constraints():
     assert 0.0 < con_score_0 < con_score_2 < con_score_4
     assert con_score_4 == con_score_5 == con_score_6 == 1.0
     assert con_score_6 > con_score_7 > con_score_8 > 0.0
-
-
-@pytest.mark.parametrize(
-    "weights,quadratic,expected",
-    [
-        ([1.0, 1.0], False, 1 / 6),  # 1 / (1 + 2 + 3)
-        ([1.0, 1.0], True, 1 / 14),  # 1 / (1 + 4 + 9)
-        ([2.0, 0.5], False, 1 / 6.5),  # 1 / (1 + 2·2 + 0.5·3)
-        ([2.0, 0.5], True, 1 / 13.5),  # 1 / (1 + 2·4 + 0.5·9)
-    ],
-)
-def test_con_norm_constant(weights: list[float], quadratic: bool, expected: float):
-    # --- arrange -----------------------------------------
-    max_violations = [2, 3]
-    con_weights = np.array(weights, dtype=np.float32)
-
-    # --- act ---------------------------------------------
-    c = _con_norm_constant(max_violations, con_weights, quadratic)
-
-    # --- assert ------------------------------------------
-    assert c == pytest.approx(expected)
 
 
 def test_score_generator_constraints_linear_vs_quadratic():

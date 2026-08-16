@@ -220,6 +220,33 @@ def _np_con_total_weighted_violation(
     return s
 
 
+def constraints_score_normalization(constraints: list[Constraint], k: int, quadratic: bool = False) -> float:
+    """Return the constant that maps a total weighted violation onto the constraints score.
+
+    The constraints score is `1 - normalization * total_weighted_violation`, so this constant is
+    `1 / (1 + worst-case total violation)`: the worst possible selection scores 0 and a feasible
+    one scores 1.  Callers that hold a violation rather than a selection — a certified floor, say —
+    convert it the same way.
+
+    The worst case per constraint is a pure shortfall of `max(min_count, min(k, set size) - max_count, 0)`,
+    aggregated through the same accelerator live scoring uses, so the two cannot drift apart.
+
+    Args:
+        constraints: the problem's constraints.  An empty list returns 0, which the score reads as
+            "no constraints to violate, so always perfect".
+        k: the selection size.
+        quadratic: whether violations are penalized quadratically rather than linearly.
+    """
+    if len(constraints) == 0:
+        return 0.0
+    worst_case_con_values = np.zeros((len(constraints), 2), dtype=np.int32)
+    worst_case_con_values[:, 0] = [
+        max(con.min_count, min(k, len(con.int_set)) - con.max_count, 0) for con in constraints
+    ]
+    con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
+    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
+
+
 def _np_con_count_satisfied(con_values: NDArray[np.int32]) -> int:
     """Return the number of individually satisfied constraints.
 

@@ -4,7 +4,13 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints import Constraint
+from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints.feasibility import (
+    CONSTRUCTION_DEFAULT_ITER,
+    VERDICT_MAX_ITER,
+    FeasibilityReport,
+    find_feasible,
+)
 from max_div._core.metrics import DistanceMetric, DiversityMetric, validate_cosine_vectors
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
 
@@ -62,6 +68,35 @@ class MaxDivProblem(ABC):
     @property
     def n_constraint_indices(self) -> int:
         return sum([len(con.int_set) for con in self.constraints])
+
+    # --- feasibility -------------------------------------
+    def check_feasibility(self, thorough: bool = False) -> FeasibilityReport:
+        """Report whether `k` items can be selected such that every constraint holds.
+
+        Deciding this is NP-complete in general, so the answer is three-valued and only its two
+        definite verdicts carry information — both are proofs, backed by a witness selection or by
+        multipliers a caller can re-check.  `UNKNOWN` means the search settled nothing, and says
+        nothing about whether the constraints are satisfiable.
+
+        Purely diagnostic: solving does not call this, and nothing about a solve changes based on
+        it.  A problem with no constraints is trivially feasible.
+
+        :param thorough: Search harder before answering. The default stops at the first proof,
+            which is the fast path to a verdict; this instead matures the bound, giving a tighter
+            violation floor on an infeasible problem and a better selection on any problem, and
+            turns some UNKNOWN answers definite.
+        """
+        con_values, con_indices = ConstraintList(self.constraints).to_numpy()
+        result = find_feasible(
+            con_values=con_values,
+            con_indices=con_indices,
+            con_weights=np.array([con.weight for con in self.constraints], dtype=np.float64),
+            n=self.n,
+            k=self.k,
+            max_iter=CONSTRUCTION_DEFAULT_ITER if thorough else VERDICT_MAX_ITER,
+            stop_at_first_proof=not thorough,
+        )
+        return FeasibilityReport.from_result(result, self.constraints, self.k)
 
     # --- factory methods ---------------------------------
     @classmethod
