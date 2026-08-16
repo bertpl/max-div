@@ -93,9 +93,8 @@ def show_solver_presets_benchmark_results(
                         agg.constraint_scores.append(result.score.constraints)
                         agg.diversity_scores.append(result.score.diversity)
 
-                # add results for this column to the table rows; a column can lack data at a
-                # given duration (the parallel arm only runs the longer budgets), so those cells
-                # render as a placeholder rather than aggregating an empty sample
+                # a column can lack data at a given duration, so those cells render a placeholder
+                # rather than aggregating an empty sample (see _EMPTY_CELL)
                 if agg.elapsed_sec:
                     table_actual_times_row.append(TableTimeElapsed.from_values(agg.elapsed_sec))
                     table_con_score_row.append(TableValueWithUncertainty.from_values(agg.constraint_scores, decimals=6))

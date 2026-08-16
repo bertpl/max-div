@@ -132,8 +132,9 @@ def create_single_figure(
             # --- plot data per preset ------------------------
             for preset in all_presets:
                 # --- collect data ---
-                # single-worker runs only; the parallel arm is a separate series plotted below, so
-                # its records must not fold into the preset's own scatter or quantile band
+                # single-worker runs only; the parallel arm is a separate series (see the
+                # "plot the parallel arm" block), so its records must not fold into the preset's
+                # own scatter or quantile band
                 x: list[float] = []
                 y: list[float] = []
                 for result in results:
@@ -291,9 +292,8 @@ def create_single_figure(
     fig.subplots_adjust(wspace=0.075, hspace=0.15)
 
     # --- save figure ---------------------------------
-    # these are dense scatter figures displayed at page width; the default 40-Mpx lossless webp
-    # runs ~1 MB, over the repo's committed-file ceiling, so cap the resolution — still sharp on
-    # the web page, comfortably under the limit
+    # the default lossless webp resolution puts these dense scatter figures over the repo's
+    # committed-file ceiling, so cap it — still sharp at the page width they display at
     save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{n}.webp", tgt_pixels=6_000_000)
 
     # --- save markdown report ------------------------
