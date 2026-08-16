@@ -6,13 +6,15 @@ Given [constraints](constraints.md), can *any* selection of `k` items satisfy al
 
 This is worth asking separately from solving, because the solver never answers it. Handed
 constraints that cannot all be met, it returns the least infeasible selection it can find and a
-constraints score below 1 -- which looks exactly like a run that merely needed more time. Knowing
-that no selection could have done better turns a tempting "raise the budget" into a decision to
-change the constraints instead.
+constraints score below 1.
 
-The question is NP-complete in general: with overlapping [constraint groups](glossary.md#overlapping-constraints)
-it encodes problems no known method solves quickly in every case. So the honest answer is
-three-valued, and the two definite answers are *proofs* rather than strong hints.
+That looks exactly like a run which merely needed more time. Knowing no selection could have done
+better turns a tempting "raise the budget" into a decision to change the constraints instead.
+
+The question is NP-complete in general: with overlapping
+[constraint groups](glossary.md#overlapping-constraints) it encodes problems no known method solves
+quickly in every case. So the honest answer is three-valued, and the two definite answers are
+*proofs* rather than strong hints.
 
 ## Pricing a Violation
 
@@ -24,78 +26,57 @@ $$v(x) = \sum_i w_i \Big( \max(0,\; \mathit{lo}_i - c_i(x)) + \max(0,\; c_i(x) -
 
 and the constraints are satisfiable exactly when some $x$ with $k$ items has $v(x) = 0$.
 
-The idea behind the proof machinery is to stop treating violation as a penalty and start treating
-it as a **price**. Attach a price $\lambda^-_i \ge 0$ to each unit of shortfall and
-$\lambda^+_i \ge 0$ to each unit of excess. As long as no price exceeds the weight it stands in
-for -- that is, $0 \le \lambda^\pm_i \le w_i$ -- paying the prices is never more expensive than the
-real violation:
+Attach a price $\lambda^-_i \ge 0$ to each unit of shortfall and $\lambda^+_i \ge 0$ to each unit of
+excess. Two facts turn those prices into a proof:
 
-$$v(x) \;\ge\; \sum_i \Big( \lambda^-_i \big(\mathit{lo}_i - c_i(x)\big) + \lambda^+_i \big(c_i(x) - \mathit{hi}_i\big) \Big)$$
+- **Priced cost never exceeds real violation**, provided each price is capped at the weight it
+  stands in for. That cap is the whole reason prices are clamped to $[0, w_i]$ rather than left to
+  grow.
+- **Priced cost collapses to a per-item sum.** Regrouped by item, each one picks up a score
+  $s_j = \sum_{i \,:\, j \in S_i} (\lambda^-_i - \lambda^+_i)$, and the priced cost becomes a
+  constant minus the scores of the items chosen.
 
-The inequality holds term by term. Where a constraint is short, the real cost is
-$w_i \cdot (\mathit{lo}_i - c_i)$ and the priced cost is at most that. Where it is not short, the
-real cost is 0 while the priced term is negative, so the bound only loosens. The cap at $w_i$ is
-what makes the whole construction work, and it is why the prices are clamped rather than left to
-grow.
-
-## Why the Bound Can Be Computed
-
-A lower bound is only useful if it holds for *every* selection, and there are astronomically many.
-What rescues this is that the right-hand side above collapses into something per-item.
-
-Group the terms by item instead of by constraint. Each item $j$ picks up a score summing the
-prices of every constraint it belongs to:
-
-$$s_j = \sum_{i \,:\, j \in S_i} \big( \lambda^-_i - \lambda^+_i \big)$$
-
-and the priced cost of a selection becomes a constant minus the scores of the items chosen:
-
-$$\sum_i \big( \lambda^-_i \mathit{lo}_i - \lambda^+_i \mathit{hi}_i \big) \;-\; \sum_{j \in x} s_j$$
-
-Only the last term depends on which items are selected, and it is subtracted -- so the selection
-that makes the priced cost *smallest* is simply the one taking the `k` highest-scoring items. The
-worst case over all selections is a sort, not a search. That value is the bound:
+Only that last term depends on the selection, and it is subtracted -- so the priced cost is
+smallest for the selection taking the `k` highest-scoring items. The worst case over all selections
+is a sort, not a search, which is what makes the bound computable at all:
 
 $$g(\lambda) = \sum_i \big( \lambda^-_i \mathit{lo}_i - \lambda^+_i \mathit{hi}_i \big) \;-\; \sum_{j \,\in\, \text{top-}k(s)} s_j$$
 
 Every selection of `k` items violates the constraints by at least $g(\lambda)$, whatever prices
-were used. Different prices give different bounds, so the machinery searches for prices that push
-$g$ as high as it will go, nudging up the price of starved constraints and letting over-satisfied
-ones decay.
+were used. Different prices give different bounds, so the search raises the price of constraints
+below their minimum, lets over-full ones decay, and pushes $g$ as high as it will go.
 
 ## Reading the Certificate
 
-If any prices drive $g(\lambda)$ above zero, then every possible selection violates something, and
-the constraints are **provably** unsatisfiable. The prices are the proof: they are reported
-alongside the verdict, and re-checking them needs no trust in the search that found them --
-recompute the scores, sum the `k` largest, and evaluate $g$.
+If any prices drive $g(\lambda)$ above zero, every possible selection violates something, and the
+constraints are **provably** unsatisfiable. The prices are reported alongside the verdict, and
+re-checking them takes no trust in the search that found them: recompute the scores, sum the `k`
+largest, evaluate $g$.
 
-That is why the answer is a certificate rather than a claim. A bug in the price search can only
-produce a *worse* bound, never a wrong one, because the inequality above holds for any prices
-inside their boxes. The one thing that would break it is evaluating $g$ at anything other than the
-exact top `k` -- a near-miss selection makes the subtracted sum too small and $g$ too large, which
-would manufacture a proof of infeasibility that is not true. The implementation keeps every source
-of randomness away from that step for exactly this reason.
+A bug in the price search can only produce a *worse* bound, never a wrong one, since the inequality
+above holds for any prices in $[0, w_i]$. The one step that would break it is evaluating $g$ at
+anything other than the exact top `k`: a near-miss selection makes the subtracted sum too small and
+$g$ too large, manufacturing a proof that is not true. Every source of randomness is kept away from
+that step for exactly this reason.
 
-A positive $g$ carries a second, quantitative payload: it is a floor on the violation of *any*
-selection, so it also caps the constraints score the solver could ever report. An infeasible
-problem thus comes with a best achievable score, not just a verdict.
+A positive $g$ is also a number, not just a sign -- a floor on the violation of any selection, and
+so a cap on the constraints score the solver could ever report.
 
 ## Finding a Selection Is a Separate Job
 
 The bound is one-sided. A positive $g$ proves infeasibility, but $g \le 0$ proves nothing at all --
-it only means these prices failed to rule the problem out. So a satisfying selection has to be
-produced, not deduced.
+it only means these prices failed to rule the problem out. A satisfying selection therefore has to
+be produced, not deduced.
 
-The prices help here too, in a different role. Once they have matured, a high-scoring item is one
-that starved constraints want and over-full constraints do not, which makes the top-`k` scoring
-selection a good first guess. It is rarely feasible outright, so it is repaired: repeatedly take
-the worst-violated constraint and swap one item for another where doing so lowers the total
-violation. Several such attempts are made from slightly perturbed scores.
+The prices help here too, in a different role. A high-scoring item is one belonging to constraints
+below their minimum and not to constraints over their maximum, which makes the top-`k` scoring
+selection a good first guess. It is rarely satisfying outright, so it is repaired: repeatedly take
+the worst-violated constraint and swap one of its items for another, where the swap is estimated to
+lower the total violation. Several rounds run, from different prices and with noise added.
 
-Any selection this produces with zero violation is a witness, and a witness needs no certificate --
-it can be checked directly against every constraint. Randomization is safe in this phase precisely
-because nothing here claims a bound.
+Any selection reaching zero violation is a witness, and a witness needs no certificate -- it can be
+checked directly against every constraint. Randomization is safe here precisely because nothing in
+this phase claims a bound.
 
 ## Three Answers, Two of Them Proofs
 
@@ -105,11 +86,14 @@ because nothing here claims a bound.
 | **Infeasible** | No selection can satisfy every constraint. | Prices with $g > 0$, plus the violation floor they certify. |
 | **Unknown** | Neither was established. | Nothing. |
 
-**Unknown is not a weak "probably infeasible".** It carries no information whatsoever, and a
-caller must behave exactly as if the check had never run. Two situations land there by
-construction: problems that are satisfiable only in a fractional sense, where prices provably
-cannot separate them, and satisfiable problems whose witnesses need several coordinated swaps at
-once, which the repair step does not attempt.
+**Unknown is not a weak "probably infeasible".** It carries no information whatsoever, and a caller
+must behave exactly as if the check had never run. Two structural cases land there:
+
+- problems satisfiable only in a fractional sense, where prices provably cannot separate them;
+- satisfiable problems whose witnesses need several coordinated swaps at once, which the repair
+  step does not attempt.
+
+Exhausted search limits produce the rest.
 
 ## Using It
 
@@ -120,33 +104,34 @@ report = problem.check_feasibility()
 print(report)
 ```
 
-`thorough=True` searches longer before answering: it tightens the violation floor on an infeasible
-problem and settles some cases the default leaves unknown.
+`thorough=True` changes only what happens after infeasibility is proven: the default stops there,
+while `thorough=True` keeps searching for a tighter violation floor.
 
-The same machinery can start a solve, rather than just describe it:
+The same check can start a solve, rather than only describe the problem:
 
 ```python
-from max_div.solver import InitializationStrategy
+from max_div.solver import InitializationStrategy, MaxDivSolverBuilder, seconds
 
 solver = (
     MaxDivSolverBuilder(problem)
-    .set_initialization_strategy(InitializationStrategy.most_feasible())
     .with_preset(seconds(5))
+    .set_initialization_strategy(InitializationStrategy.most_feasible())  # after with_preset
     .build()
 )
 ```
 
 The solver then begins from a satisfying selection where one can be constructed, spending its whole
-budget on diversity instead of first searching for feasibility. Where the verdict is unknown, it
-initializes exactly as it otherwise would.
+budget on diversity instead of first searching for feasibility; where infeasibility is proven, it
+begins from the least infeasible selection found. Where the verdict is unknown -- and on problems
+with no constraints -- it delegates to the strategy given as `fallback`, `random_one_shot` by
+default.
 
 ## Further Reading
 
 - Boyd & Vandenberghe, *Convex Optimization* (Cambridge University Press, 2004), chapter 5 -- the
-  duality theory this rests on, including why a relaxed problem's optimum bounds the original's.
+  duality theory behind the bound, including why a relaxed problem's optimum bounds the original's.
 - Fisher, "The Lagrangian Relaxation Method for Solving Integer Programming Problems",
   *Management Science* 27(1), 1981 -- the classic survey of the technique applied to integer
   programs, and of the subgradient search used to improve the prices.
 - Geoffrion, "Lagrangean Relaxation for Integer Programming", *Mathematical Programming Study* 2,
-  1974 -- establishes how strong the bound can get, and hence which problems are destined to come
-  back unknown.
+  1974 -- establishes how strong the bound can get, and hence which problems it can never rule out.
