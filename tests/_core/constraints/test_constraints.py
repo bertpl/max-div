@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core.constraints._constraints import (
+from max_div._core.constraints.constraints import (
     Constraint,
     ConstraintList,
     _build_array_repr,

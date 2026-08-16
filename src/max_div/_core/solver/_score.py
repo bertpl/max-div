@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from max_div._core.constraints._constraints import _np_con_total_violation, _np_con_total_weighted_violation
+from max_div._core.constraints.constraints import _np_con_total_violation, _np_con_total_weighted_violation
 from max_div._core.solver._diversity_contribution import selected_contributions_slot
 
 if TYPE_CHECKING:
