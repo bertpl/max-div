@@ -464,11 +464,11 @@ def test_gumbel_noise_seed_behavior():
 #  Diversity prior
 # =================================================================================================
 def test_diversity_prior_moves_the_selection_without_touching_the_verdict():
-    """The tilt reaches candidate generation only, so the proof and its floor are untouched.
+    """A diversity prior reaches candidate generation only, so the proof and its floor are untouched.
 
-    Every item belongs to the single max-5 constraint while k is 8, so the floor is 3 whichever
-    items are chosen — which makes this instance separate what the tilt may change (the selection)
-    from what it may not (the certificate).
+    The single cap sits below k, so the violation floor is the same whichever items are chosen —
+    which separates what the prior may change (the selection) from what it may not (the
+    certificate).
     """
     # --- arrange -----------------------------------------
     cons = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]

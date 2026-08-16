@@ -78,19 +78,15 @@ class InitializationStrategy(StrategyBase, ABC):
         beta: float = 0.0,
         fallback: InitializationStrategy | None = None,
     ) -> InitMostFeasible:
-        """Initialization that starts from a feasible selection where one can be constructed.
-
-        Runs the Lagrangian feasibility pipeline: a witness starts the solve feasible, a proof of
-        infeasibility starts it from the least-infeasible selection found, and an inconclusive run
-        hands over to ``fallback``.  Only constrained problems use the pipeline.
+        """Initialization that constructs a selection satisfying every constraint, where it can.
 
         See `InitMostFeasible` for the full contract.
 
-        :param max_iter: Ascent iteration budget; higher budgets raise the witness rate and the
-            certified violation floor, at a proportional cost in setup time.
-        :param beta: Tilts the constructed selection toward diverse items; 0 (the default) keeps
-            construction purely feasibility-driven.
-        :param fallback: Strategy used when the pipeline is inconclusive or the problem is
+        :param max_iter: Search budget; a higher budget more often finds a feasible selection, and
+            sharpens the bound reported when none exists, at a proportional cost in setup time.
+        :param beta: Tilts the constructed selection toward diverse items; 0 keeps construction
+            purely feasibility-driven.
+        :param fallback: Strategy used when the search settles nothing, or the problem is
             unconstrained (default: `InitRandomOneShot`).
         """
         from ._init_most_feasible import InitMostFeasible

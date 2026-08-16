@@ -9,27 +9,23 @@ from ._init_random_one_shot import InitRandomOneShot
 
 
 class InitMostFeasible(InitializationStrategy):
-    """Initialize from a constructed feasible selection, or from the least infeasible one available.
+    """Initialize from a constructed feasible selection, or the least infeasible one available.
 
-    The strategy runs the Lagrangian feasibility pipeline in construction mode and dispatches on
-    its verdict:
+    The Lagrangian feasibility pipeline runs in construction mode, and its verdict decides:
 
-    - a witness was found -> the solve starts feasible, so the optimization steps can spend their
-      whole budget on diversity instead of first searching for feasibility;
-    - infeasibility was proven -> the least-infeasible selection constructed alongside the proof
-      becomes the starting point, sparing the solver a search for a selection that cannot exist;
-    - UNKNOWN -> nothing was learned, so `fallback` initializes exactly as it would have on its own.
+    - a feasible selection was constructed -> the solve starts from it;
+    - infeasibility was proven -> the least-infeasible selection found becomes the start;
+    - neither -> `fallback` initializes, exactly as it would have on its own.
 
-    Unconstrained problems bypass the pipeline for the same reason: with no constraint to satisfy
-    every selection is a witness, and the pipeline would hand back an arbitrary top-k of an
-    all-zero score vector.  The fallback initializes those instead.
+    Unconstrained problems bypass the pipeline too: with nothing to satisfy, it has nothing to
+    contribute.
 
-    Feasibility is the only thing this strategy optimizes for, so the selection it returns is
-    otherwise unremarkable in diversity terms; `beta` trades some of the witness rate for a more
-    diverse witness.
+    Feasibility is all this strategy optimizes for, so its selection is no more diverse than a
+    random one.  `beta` trades some of the chance of reaching feasibility for a more diverse
+    result, by scoring candidates on the state's global diversity contributions.
 
-    Suggested use: constrained problems where reaching feasibility consumes a meaningful share of
-    the optimization budget, or where feasibility may be unreachable altogether.
+    Suggested use: constrained problems where reaching feasibility eats into the optimization
+    budget, or where it may be unreachable altogether.
 
     Time Complexity:
        - ~O(max_iter * (n log k + total constraint membership)) for the ascent, plus a bounded
@@ -44,19 +40,7 @@ class InitMostFeasible(InitializationStrategy):
     ) -> None:
         """Create the strategy.
 
-        Args:
-            max_iter: ascent iteration budget handed to the pipeline.  Higher budgets mature the
-                prices further, which raises both the witness rate and the certified violation
-                floor, at a proportional cost in setup time.
-            beta: how strongly the constructed selection is tilted toward diverse items, scoring
-                candidates by `beta * log(p)` on the state's global diversity contributions.  The
-                default 0 leaves construction purely feasibility-driven.  The tilt cannot affect
-                the verdict, only which selection is constructed.
-            fallback: the strategy that initializes when this one has nothing to offer — an
-                UNKNOWN verdict, or a problem with no constraints.  Defaults to `InitRandomOneShot`.
-
-        Raises:
-            ValueError: If `max_iter` is below 1, or `beta` is negative.
+        :raises ValueError: If `max_iter` is below 1, or `beta` is negative.
         """
         super().__init__()
         if max_iter < 1:

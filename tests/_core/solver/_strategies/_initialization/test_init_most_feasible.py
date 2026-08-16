@@ -42,7 +42,8 @@ FEASIBLE_CONS = [
 INFEASIBLE_CONS = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]
 
 # two disjoint 5-cycles with a min-1 cover per edge: LP-feasible at 1/2 per item (no certificate
-# exists), while covering each odd cycle integrally needs 3 items -- 6 > k, so no witness either
+# exists), while covering each odd cycle integrally needs 3 items -- more than the k=5 this
+# fixture is used with, so no feasible selection exists either
 UNKNOWN_CONS = [
     Constraint(int_set={cycle * 5 + i, cycle * 5 + (i + 1) % 5}, min_count=1, max_count=2)
     for cycle in range(2)
@@ -70,7 +71,7 @@ def test_most_feasible_starts_from_a_witness():
 
 
 def test_most_feasible_starts_from_the_least_infeasible_selection_when_infeasibility_is_proven():
-    """A certified-infeasible problem still yields a full selection, graded against the floor."""
+    """A certified-infeasible problem still yields a full selection, with the INFEASIBLE verdict recorded."""
     # --- arrange -----------------------------------------
     state = _state(INFEASIBLE_CONS)
     strategy = InitializationStrategy.most_feasible()
@@ -146,6 +147,7 @@ def test_most_feasible_diversity_tilt_moves_the_witness_without_losing_feasibili
     ids=["max_iter_below_one", "negative_beta"],
 )
 def test_most_feasible_rejects_invalid_arguments(kwargs: dict, match: str):
+    """A max_iter below 1 and a negative beta are rejected at construction."""
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError, match=match):
         InitMostFeasible(**kwargs)
@@ -165,7 +167,7 @@ def test_most_feasible_seeds_the_fallback_it_delegates_to():
 
 
 def test_most_feasible_needs_an_empty_state():
-    """The pipeline reads the constraint bounds as problem-level values, which holds only while empty."""
+    """`get_next_samples` refuses a state that already holds a selection."""
     # --- arrange -----------------------------------------
     state = _state(FEASIBLE_CONS)
     state.add_many(np.array([0], dtype=np.int32))

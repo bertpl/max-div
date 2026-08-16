@@ -818,10 +818,9 @@ def _candidate_rounds(
     violation reaches `stop_at_floor` — pass 0.0 to stop at a witness, or the certified floor to
     stop at a provably optimal least-infeasible selection.
 
-    A nonzero `beta` tilts every candidate toward items the caller considers diverse.  This is the
-    only place such a tilt is admissible: candidate generation claims no bound, whereas the same
-    addition inside the ascent would break the exact-top-k invariant and can fabricate a false
-    infeasibility proof.
+    Candidate generation is the only place a `beta` tilt toward caller-preferred items is
+    admissible: the same addition inside the ascent would break the exact-top-k invariant this
+    module's docstring sets out, and can fabricate a false infeasibility proof.
 
     Args:
         con_indices: packed constraint->item membership array (`ConstraintList.to_numpy`).
@@ -955,12 +954,9 @@ def _find_feasible(
 def _log_diversity_prior(diversity_prior: NDArray[np.floating] | None) -> NDArray[np.float64]:
     """Normalize a diversity prior into the per-item log-probabilities candidate generation adds.
 
-    Negative entries are clamped away and a zero-prior item keeps a finite, strongly negative log
-    (via `PRIOR_EPS`), so it is disfavored rather than excluded outright.  A missing or all-zero
-    prior carries no preference, and yields the empty array that switches the tilt off.
-
-    Args:
-        diversity_prior: per-item non-negative preferences, or None when no prior is supplied.
+    Negative entries are clamped away, and `PRIOR_EPS` keeps a zero-prior item finite so it is
+    disfavored rather than excluded.  A missing or all-zero prior carries no preference, and
+    returns the empty array that switches the tilt off.
     """
     if diversity_prior is None:
         return np.empty(0, dtype=np.float64)
@@ -999,13 +995,12 @@ def find_feasible(
         seed: seed for the candidate-generation noise (the ascent itself is deterministic).
         stop_at_first_proof: exit the ascent as soon as infeasibility is proven, forgoing the
             mature bound and the scores candidate generation draws from (verdict mode).
-        diversity_prior: optional per-item non-negative preference, normalized here into a
-            probability vector; only consulted when `beta` is nonzero.
+        diversity_prior: optional per-item non-negative preference, normalized here; consulted
+            only when `beta` is nonzero.
         beta: how strongly candidate generation is tilted toward high-prior items, via a
-            `beta * log(p)` term on the candidate scores.  Zero — the default — leaves the pipeline
-            purely feasibility-driven.  Nonzero values trade witness rate for a more diverse
-            witness, at no cost to soundness: the tilt cannot reach the ascent, so it can neither
-            create nor destroy a proof, only change which selection is constructed.
+            `beta * log(p)` term on the candidate scores.  Zero leaves the pipeline purely
+            feasibility-driven; the tilt cannot reach the ascent, so it changes only which
+            selection is constructed, never the verdict.
 
     Returns:
         A `FeasibilityResult` (see its docstring for the field semantics).  The certificate it may
