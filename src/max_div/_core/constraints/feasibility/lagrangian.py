@@ -27,8 +27,9 @@ exclusively in candidate generation, where no bound is claimed.
 
 All array-level functions are numba-compiled; the pipeline runs once per call (not per solver
 iteration), so clarity wins over micro-optimization everywhere outside the inner passes.
-Docstrings here are deliberately fuller than elsewhere in the code base: the computations are
-derivation-backed, so each function records the part of the argument it owns.
+Docstrings here are deliberately fuller than elsewhere in the code base: correctness rests on
+mathematical facts the code cannot show (why a top-k minimizes the priced penalty, why a positive
+`g` is a proof), so each function states the fact it relies on.
 """
 
 import math
