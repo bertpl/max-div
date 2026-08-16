@@ -85,38 +85,29 @@ def test_most_feasible_starts_from_the_least_infeasible_selection_when_infeasibi
     assert strategy.get_debug_info() == FeasibilityStatus.INFEASIBLE.name
 
 
-def test_most_feasible_hands_over_to_the_fallback_on_unknown():
-    """An inconclusive verdict must leave the selection exactly as the fallback alone would make it."""
+def test_most_feasible_still_starts_from_a_selection_on_unknown():
+    """An inconclusive verdict still yields the least-violating selection the search reached."""
     # --- arrange -----------------------------------------
-    strategy = InitializationStrategy.most_feasible(max_iter=300, fallback=InitializationStrategy.random_one_shot())
-    reference = InitializationStrategy.random_one_shot()
-    strategy.set_seed(7)
-    reference.set_seed(7)
+    state = _state(UNKNOWN_CONS, n=10, k=5)
+    strategy = InitializationStrategy.most_feasible(max_iter=300)
 
     # --- act ---------------------------------------------
-    selection = strategy.get_next_samples(_state(UNKNOWN_CONS, n=10, k=5), 5)
-    expected = reference.get_next_samples(_state(UNKNOWN_CONS, n=10, k=5), 5)
+    selection = strategy.get_next_samples(state, 5)
 
     # --- assert ------------------------------------------
     assert strategy.get_debug_info() == FeasibilityStatus.UNKNOWN.name
-    assert np.array_equal(selection, expected)
+    assert len(selection) == 5
+    assert len(set(selection.tolist())) == 5
 
 
-def test_most_feasible_bypasses_the_pipeline_without_constraints():
-    """With nothing to satisfy, the fallback initializes and the pipeline never runs."""
+def test_most_feasible_rejects_an_unconstrained_problem():
+    """Every selection satisfies an empty constraint set, so the strategy refuses rather than guess."""
     # --- arrange -----------------------------------------
-    strategy = InitializationStrategy.most_feasible(fallback=InitializationStrategy.random_one_shot())
-    reference = InitializationStrategy.random_one_shot()
-    strategy.set_seed(11)
-    reference.set_seed(11)
+    strategy = InitializationStrategy.most_feasible()
 
-    # --- act ---------------------------------------------
-    selection = strategy.get_next_samples(_state([]), 8)
-    expected = reference.get_next_samples(_state([]), 8)
-
-    # --- assert ------------------------------------------
-    assert np.array_equal(selection, expected)
-    assert strategy.get_debug_info() == "/"  # the pipeline never ran, so there is no verdict
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError, match="no constraints"):
+        strategy.get_next_samples(_state([]), 8)
 
 
 # =================================================================================================
@@ -151,19 +142,6 @@ def test_most_feasible_rejects_invalid_arguments(kwargs: dict, match: str):
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError, match=match):
         InitMostFeasible(**kwargs)
-
-
-def test_most_feasible_seeds_the_fallback_it_delegates_to():
-    """One seed drives both paths, so a fall-through stays reproducible."""
-    # --- arrange -----------------------------------------
-    fallback = InitializationStrategy.random_one_shot()
-    strategy = InitMostFeasible(fallback=fallback)
-
-    # --- act ---------------------------------------------
-    strategy.set_seed(123)
-
-    # --- assert ------------------------------------------
-    assert fallback.seed == strategy.seed
 
 
 def test_most_feasible_needs_an_empty_state():

@@ -5,19 +5,19 @@ from max_div._core.constraints.feasibility import CONSTRUCTION_DEFAULT_ITER, Fea
 from max_div._core.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy
-from ._init_random_one_shot import InitRandomOneShot
 
 
 class InitMostFeasible(InitializationStrategy):
-    """Initialize from a constructed feasible selection, or the least infeasible one available.
+    """Initialize from the most nearly feasible selection the Lagrangian pipeline can construct.
 
-    The Lagrangian feasibility pipeline runs, and its verdict decides:
+    The pipeline always hands back a selection of `k` items, and the solve always starts from it:
+    one satisfying every constraint where such a selection was found, the least-infeasible one
+    where infeasibility was proven, and otherwise the least-violating one the search reached.
+    `get_debug_info` reports which of the three it was.
 
-    - a feasible selection was constructed -> the solve starts from it;
-    - infeasibility was proven -> the least-infeasible selection found becomes the start;
-    - neither -> `fallback` initializes, exactly as it would have on its own.
-
-    Unconstrained problems bypass the pipeline: the fallback initializes those.
+    Constrained problems only.  An unconstrained problem raises, because every selection satisfies
+    an empty constraint set and the pipeline would return an arbitrary one; a preset choosing this
+    strategy must choose a different one when a problem carries no constraints.
 
     The whole selection is produced in one batch, so the state must still be empty.
 
@@ -34,12 +34,7 @@ class InitMostFeasible(InitializationStrategy):
        - a nonzero `beta` additionally forces the O(n²) global-contribution sweep.
     """
 
-    def __init__(
-        self,
-        max_iter: int = CONSTRUCTION_DEFAULT_ITER,
-        beta: float = 0.0,
-        fallback: InitializationStrategy | None = None,
-    ) -> None:
+    def __init__(self, max_iter: int = CONSTRUCTION_DEFAULT_ITER, beta: float = 0.0) -> None:
         """Create the strategy.
 
         :raises ValueError: If `max_iter` is below 1, or `beta` is negative.
@@ -51,13 +46,7 @@ class InitMostFeasible(InitializationStrategy):
             raise ValueError(f"beta must be >= 0, got {beta}")
         self._max_iter = max_iter
         self._beta = beta
-        self._fallback = fallback if fallback is not None else InitRandomOneShot()
         self._status: FeasibilityStatus | None = None
-
-    def set_seed(self, seed: int | np.int64) -> None:
-        """Seed this strategy and the fallback it delegates to, so one seed drives both paths."""
-        super().set_seed(seed)
-        self._fallback.set_seed(seed)
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         if state.n_selected != 0:
@@ -65,7 +54,10 @@ class InitMostFeasible(InitializationStrategy):
             # bounds as problem-level values -- which they only are while nothing is selected.
             raise RuntimeError("InitMostFeasible produces the full selection in one batch, so it needs an empty state.")
         if not state.has_constraints:
-            return self._fallback.get_next_samples(state, k_remaining)
+            raise ValueError(
+                "InitMostFeasible only applies to constrained problems; this one has no constraints. "
+                "Choose another initialization strategy for it."
+            )
 
         result = find_feasible(
             con_values=state.con_values,
@@ -79,8 +71,6 @@ class InitMostFeasible(InitializationStrategy):
             beta=self._beta,
         )
         self._status = result.status
-        if result.status is FeasibilityStatus.UNKNOWN:
-            return self._fallback.get_next_samples(state, k_remaining)
         return result.selection.astype(np.int32)
 
     def get_debug_info(self) -> str:

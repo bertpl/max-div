@@ -71,7 +71,9 @@ class FeasibilityResult:
         status: `FEASIBLE` (selection is a witness), `INFEASIBLE` (bound and multipliers form a
             verifiable proof; selection is the best least-infeasible found), or `UNKNOWN` (no
             claim; selection is the least-violating found).
-        selection: the constructed selection of k item indices.
+        selection: the constructed selection of k item indices.  Always populated, under every
+            status — an `UNKNOWN` verdict says nothing was *proven*, not that nothing was built,
+            so a caller wanting a starting selection rather than a verdict can use it unchanged.
         bound: the best dual value — when positive, a certified lower bound on the weighted
             violation of every possible selection, re-checkable from the multipliers alone.
         violation: the weighted violation of `selection` (0 for a witness).
