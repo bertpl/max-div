@@ -4,7 +4,13 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.constraints import Constraint
+from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints.feasibility import (
+    CONSTRUCTION_DEFAULT_ITER,
+    VERDICT_MAX_ITER,
+    FeasibilityResult,
+    find_feasible,
+)
 from max_div._core.metrics import DistanceMetric, DiversityMetric, validate_cosine_vectors
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
 
@@ -62,6 +68,29 @@ class MaxDivProblem(ABC):
     @property
     def n_constraint_indices(self) -> int:
         return sum([len(con.int_set) for con in self.constraints])
+
+    # --- feasibility -------------------------------------
+    def check_feasibility(self, thorough: bool = False) -> FeasibilityResult:
+        """Report whether `k` items can be selected such that every constraint holds.
+
+        Deciding feasibility is NP-complete in general, so the verdict is three-valued; see
+        `FeasibilityStatus` for what each value claims.  No solver path calls `check_feasibility`.
+
+        :param thorough: Changes only what happens once infeasibility is proven. The default stops
+            there, having the verdict; `thorough=True` keeps searching, which tightens the certified
+            violation floor and can improve the selection returned, at a proportional cost in time.
+            Feasible and unknown outcomes are reached identically either way.
+        """
+        con_values, con_indices = ConstraintList(self.constraints).to_numpy()
+        return find_feasible(
+            con_values=con_values,
+            con_indices=con_indices,
+            con_weights=np.array([con.weight for con in self.constraints], dtype=np.float64),
+            n=self.n,
+            k=self.k,
+            max_iter=CONSTRUCTION_DEFAULT_ITER if thorough else VERDICT_MAX_ITER,
+            stop_at_first_proof=not thorough,
+        )
 
     # --- factory methods ---------------------------------
     @classmethod

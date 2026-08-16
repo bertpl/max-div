@@ -6,6 +6,7 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._warnings import DistanceInputWarning
 from max_div._core.constraints import Constraint
+from max_div._core.constraints.feasibility import FeasibilityStatus
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import compute_pdist
 from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX
@@ -320,3 +321,136 @@ def test_problem_square_condensed_distances_extracts_upper_triangle():
 
     # --- act / assert ------------------------------------
     np.testing.assert_array_equal(problem.condensed_distances(), condensed)
+
+
+# =================================================================================================
+#  Feasibility diagnostic
+# =================================================================================================
+def _problem_with(constraints: list[Constraint], n: int = 20, k: int = 8) -> MaxDivProblem:
+    """Build a problem over n random vectors with the given constraints."""
+    vectors = np.random.default_rng(0).random((n, 3)).astype(np.float32)
+    return MaxDivProblem.new(vectors=vectors, k=k, constraints=constraints)
+
+
+def test_check_feasibility_proves_a_satisfiable_problem_feasible():
+    """A satisfiable problem comes back FEASIBLE, with a selection that satisfies every constraint."""
+    # --- arrange -----------------------------------------
+    constraints = [
+        Constraint(int_set=set(range(10)), min_count=3, max_count=3),
+        Constraint(int_set=set(range(10, 20)), min_count=5, max_count=5),
+    ]
+
+    # --- act ---------------------------------------------
+    report = _problem_with(constraints).check_feasibility()
+
+    # --- assert ------------------------------------------
+    assert report.status is FeasibilityStatus.FEASIBLE
+    assert report.violation == 0.0
+    assert report.violation_floor == 0.0
+    chosen = set(report.selection.tolist())
+    assert all(con.min_count <= len(con.int_set & chosen) <= con.max_count for con in constraints)
+
+
+def test_check_feasibility_proves_infeasibility_with_a_recheckable_certificate():
+    """The multipliers returned must independently reproduce a positive dual value."""
+    # --- arrange -----------------------------------------
+    constraints = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]  # every item a member, cap below k
+
+    # --- act ---------------------------------------------
+    report = _problem_with(constraints).check_feasibility(thorough=True)
+
+    # --- assert ------------------------------------------
+    assert report.status is FeasibilityStatus.INFEASIBLE
+    assert report.violation_floor > 0.0
+
+    scores = np.zeros(20)
+    for i, con in enumerate(constraints):
+        for j in con.int_set:
+            scores[j] += report.lam_min[i] - report.lam_max[i]
+    mins = np.array([con.min_count for con in constraints])
+    maxs = np.array([con.max_count for con in constraints])
+    dual_value = float(report.lam_min @ mins - report.lam_max @ maxs - np.sort(scores)[-8:].sum())
+    assert dual_value > 0.0
+
+
+def test_check_feasibility_thorough_tightens_the_floor():
+    """The default stops at the first proof; searching harder tightens the bound it certifies."""
+    # --- arrange -----------------------------------------
+    problem = _problem_with([Constraint(int_set=set(range(20)), min_count=0, max_count=5)])
+
+    # --- act ---------------------------------------------
+    fast = problem.check_feasibility()
+    thorough = problem.check_feasibility(thorough=True)
+
+    # --- assert ------------------------------------------
+    assert fast.status is thorough.status is FeasibilityStatus.INFEASIBLE
+    assert thorough.violation_floor > fast.violation_floor
+
+
+def test_check_feasibility_reports_unknown_without_claiming_anything():
+    """An instance with no certificate and no satisfying selection must not be reported as either proof."""
+    # --- arrange -----------------------------------------
+    # Two disjoint 5-cycles, each edge needing at least one of its two endpoints: no certificate
+    # exists, and no selection of 5 items covers every edge.
+    constraints = [
+        Constraint(int_set={cycle * 5 + i, cycle * 5 + (i + 1) % 5}, min_count=1, max_count=2)
+        for cycle in range(2)
+        for i in range(5)
+    ]
+
+    # --- act ---------------------------------------------
+    report = _problem_with(constraints, n=10, k=5).check_feasibility()
+
+    # --- assert ------------------------------------------
+    assert report.status is FeasibilityStatus.UNKNOWN
+    assert not report.is_certified
+    assert report.violation_floor == 0.0
+    assert report.violation > 0.0
+
+
+def test_check_feasibility_on_an_unconstrained_problem():
+    """With no constraints every selection satisfies them all, so the verdict is feasible."""
+    # --- act ---------------------------------------------
+    report = _problem_with([]).check_feasibility()
+
+    # --- assert ------------------------------------------
+    assert report.status is FeasibilityStatus.FEASIBLE
+    assert report.violation_floor == 0.0
+
+
+def test_check_feasibility_thorough_changes_nothing_without_a_proof():
+    """`thorough` only alters the post-proof search, so an unknown verdict is reached identically."""
+    # --- arrange -----------------------------------------
+    constraints = [
+        Constraint(int_set={cycle * 5 + i, cycle * 5 + (i + 1) % 5}, min_count=1, max_count=2)
+        for cycle in range(2)
+        for i in range(5)
+    ]
+    problem = _problem_with(constraints, n=10, k=5)
+
+    # --- act ---------------------------------------------
+    fast = problem.check_feasibility()
+    thorough = problem.check_feasibility(thorough=True)
+
+    # --- assert ------------------------------------------
+    assert fast.status is thorough.status is FeasibilityStatus.UNKNOWN
+    assert fast.violation == thorough.violation
+    np.testing.assert_array_equal(fast.selection, thorough.selection)
+
+
+def test_check_feasibility_reports_where_the_violation_sits():
+    """The per-constraint profile describes the returned selection and reproduces its total."""
+    # --- arrange -----------------------------------------
+    constraints = [
+        Constraint(int_set=set(range(12)), min_count=9, max_count=12, weight=3.0),
+        Constraint(int_set=set(range(8, 20)), min_count=9, max_count=12, weight=0.5),
+    ]
+
+    # --- act ---------------------------------------------
+    report = _problem_with(constraints).check_feasibility(thorough=True)
+
+    # --- assert ------------------------------------------
+    weights = np.array([con.weight for con in constraints])
+    assert report.violation_per_constraint.shape[0] == len(constraints)
+    assert float(weights @ report.violation_per_constraint) == pytest.approx(report.violation)
+    assert report.violation_floor <= report.violation + 1e-9
