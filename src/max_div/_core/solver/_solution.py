@@ -15,10 +15,10 @@ class MaxDivSolution:
     and a history of score checkpoints recorded during the solve.
     """
 
-    # --- final solution ----------------------------------
+    # --- final solution -------------------------
     i_selected: NDArray[np.int32]
 
-    # --- score & checkpoints -----------------------------
+    # --- score & checkpoints --------------------
     # list of (step_name, elapsed, score) tuples
     # where elapsed times/iterations are cumulative metrics starting at the start of the first solver step
     score_checkpoints: list[tuple[str, Elapsed, Score]]
@@ -28,7 +28,7 @@ class MaxDivSolution:
         """Return the final score of the solution."""
         return self.score_checkpoints[-1][2]
 
-    # --- durations ---------------------------------------
+    # --- durations ------------------------------
     step_durations: dict[str, Elapsed]
 
     @property
@@ -36,15 +36,15 @@ class MaxDivSolution:
         """Return the total elapsed time and iterations taken to compute the solution."""
         return self.score_checkpoints[-1][1]
 
-    # --- constraints -------------------------------------
+    # --- constraints ----------------------------
     n_constraints: int = 0
     n_constraints_satisfied: int = 0
 
-    # --- distance storage --------------------------------
+    # --- distance storage -----------------------
     # resolved backend label, e.g. "full_matrix (auto)" or "condensed"; empty when unreported
     distance_storage: str = ""
 
-    # --- string representation ---------------------------
+    # --- string representation ------------------
     def __str__(self) -> str:
         parts = [
             f"MaxDivSolution: {len(self.i_selected)} items selected",

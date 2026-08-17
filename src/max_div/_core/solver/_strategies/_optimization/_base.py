@@ -79,18 +79,18 @@ class OptimizationStrategy(StrategyBase, ABC):
         self.ignore_infeasible_diversity_up_to_fraction = ignore_infeasible_diversity_up_to_fraction
         self.ignore_infeasible_diversity = ignore_infeasible_diversity_up_to_fraction >= 0.0
 
-        # --- initialize scheduled parameters ---
+        # --- initialize scheduled parameters ----
         #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params
         self.has_scheduled_params = False
         self.scheduled_params = []
         self.scheduled_param_configs = np.empty(0, dtype=np.float32)
 
-        # --- adaptively sampled parameters ---
+        # --- adaptively sampled parameters ------
         #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params
         self.has_sampled_params = False
         self.sampled_params: dict[str, AdaptiveSampler] = {}
 
-        # --- now actually configure them ---
+        # --- now actually configure them --------
         if dynamic_params:
             self._configure_dynamic_params(dynamic_params)
 
@@ -100,7 +100,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         Args:
             dynamic_params: (dict) dictionary of dynamic parameters to configure.
         """
-        # --- schedule parameters ---------------
+        # --- schedule parameters ----------------
         scheduled_parameters = {
             param_name: param_value
             for param_name, param_value in dynamic_params.items()
@@ -111,7 +111,7 @@ class OptimizationStrategy(StrategyBase, ABC):
             self.scheduled_param_names = list(scheduled_parameters.keys())
             self.scheduled_param_configs = _schedules_to_2d_numpy_array(list(scheduled_parameters.values()))
 
-        # --- sampled parameters ----------------
+        # --- sampled parameters -----------------
         sampled_parameters = {
             param_name: param_value
             for param_name, param_value in dynamic_params.items()
@@ -149,7 +149,7 @@ class OptimizationStrategy(StrategyBase, ABC):
                 contributes towards the total duration configured for this SolverStep.
                 For time-based solver step configurations, this can be an estimate.
         """
-        # --- prep ----------------------------------------
+        # --- prep -------------------------------
         if n_iters > 1:
             progress_frac_per_iter = min(
                 progress_frac_per_iter,
@@ -158,9 +158,9 @@ class OptimizationStrategy(StrategyBase, ABC):
         has_scheduled_params = self.has_scheduled_params
         has_sampled_params = self.has_sampled_params
 
-        # --- main loop -----------------------------------
+        # --- main loop --------------------------
         for _ in range(n_iters):
-            # --- update dynamic parameters ---
+            # --- update dynamic parameters ------
             if has_scheduled_params:
                 param_values = _evaluate_schedules(self.scheduled_param_configs, current_progress_frac)
                 for param_name, param_value in zip(self.scheduled_param_names, param_values):
@@ -171,7 +171,7 @@ class OptimizationStrategy(StrategyBase, ABC):
                     setattr(self, param_name, param_value)
             self.ignore_infeasible_diversity = current_progress_frac <= self.ignore_infeasible_diversity_up_to_fraction
 
-            # --- execute iteration ---
+            # --- execute iteration --------------
             success = self._perform_single_iteration(state, current_progress_frac)
 
             # --- inform samplers of success/failure ---
@@ -179,7 +179,7 @@ class OptimizationStrategy(StrategyBase, ABC):
                 for sampler in self.sampled_params.values():
                     sampler.feedback(success)
 
-            # --- update progress ---
+            # --- update progress ----------------
             current_progress_frac += progress_frac_per_iter
 
     @abstractmethod
@@ -338,7 +338,7 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         - add n new samples to current selection
         - if this swap did not improve the score -> revert to previous selection.
         """
-        # --- init ---
+        # --- init -------------------------------
         n_swap = min(
             self._determine_swap_size(),
             state.n_selected,  # we need to remove n_swap samples from selected, so n_selected is lower bound
@@ -378,10 +378,10 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
             if success:
                 swap.keep()
 
-        # --- update fail/success history ---
+        # --- update fail/success history --------
         _update_success_rate_state(self._success_rate_state, success)
 
-        # --- return success flag ---
+        # --- return success flag ----------------
         return success
 
     # -------------------------------------------------------------------------

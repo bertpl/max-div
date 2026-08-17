@@ -36,10 +36,10 @@ def _selection_args(indices: list[int], n: int) -> tuple[np.ndarray, np.int32]:
 #  Tests
 # =================================================================================================
 def test_construction_fresh(tracker: SeparationTracker):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     selected, n_selected = _selection_args([], 5)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     # global contribution: nearest-neighbor distances of points [0, 1, 3, 6, 10] on a line
     np.testing.assert_allclose(tracker.contribution_wrt_dataset, [1, 1, 2, 3, 4])
     # empty selection: all contributions +inf
@@ -47,46 +47,46 @@ def test_construction_fresh(tracker: SeparationTracker):
 
 
 def test_construction_precomputed_arrays_skip_recompute():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
     store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=3)
     sep_global = _all_separations(store)
     sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     tracker = SeparationTracker(store, sep_global=sep_global, sep_selected=sep_selected)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert tracker.contribution_wrt_dataset is sep_global  # taken as-is, not recomputed
     selected, n_selected = _selection_args([0], 3)
     assert tracker.contribution_wrt_selection(selected, n_selected) is sep_selected
 
 
 def test_add_remove_updates_contribution(tracker: SeparationTracker):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     selected, n_selected = _selection_args([0, 2], 5)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     # points [0, 1, 3, 6, 10]; selection {0 (=0.0), 2 (=3.0)}: distance of each point to nearest selected
     np.testing.assert_allclose(tracker.contribution_wrt_selection(selected, n_selected), [3, 1, 3, 3, 7])
 
-    # --- act (remove) ------------------------------------
+    # --- act (remove) -----------------
     tracker.remove(np.int32(2), new_selection=np.array([0], dtype=np.int32))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     selected, n_selected = _selection_args([0], 5)
     np.testing.assert_allclose(tracker.contribution_wrt_selection(selected, n_selected), [np.inf, 1, 3, 6, 10])
 
 
 def test_add_many_remove_many_match_singles(tracker: SeparationTracker):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     other = tracker.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     tracker.add_many(np.array([1, 3, 4], dtype=np.int32))
     other.add(np.int32(1))
     other.add(np.int32(3))
@@ -96,7 +96,7 @@ def test_add_many_remove_many_match_singles(tracker: SeparationTracker):
     other.remove(np.int32(3), new_selection=np.array([1], dtype=np.int32))
     other.remove(np.int32(4), new_selection=np.array([1], dtype=np.int32))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     selected, n_selected = _selection_args([1], 5)
     np.testing.assert_array_equal(
         tracker.contribution_wrt_selection(selected, n_selected),
@@ -105,14 +105,14 @@ def test_add_many_remove_many_match_singles(tracker: SeparationTracker):
 
 
 def test_copy_is_independent(tracker: SeparationTracker):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     tracker.add(np.int32(0))
     clone = tracker.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     tracker.add(np.int32(4))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     selected, n_selected = _selection_args([0], 5)
     np.testing.assert_allclose(clone.contribution_wrt_selection(selected, n_selected), [np.inf, 1, 3, 6, 10])
     # the immutable store and global contributions are shared by contract, not duplicated
@@ -121,10 +121,10 @@ def test_copy_is_independent(tracker: SeparationTracker):
 
 
 def test_snapshot_stack(tracker: SeparationTracker):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     tracker.add(np.int32(0))
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     # two nested snapshots: pop the inner one restoring, the outer one keeping
     tracker.push_snapshot()
     tracker.add(np.int32(3))
@@ -148,14 +148,14 @@ def test_snapshot_stack(tracker: SeparationTracker):
 #  Kernels
 # =================================================================================================
 def test_lazy_global_targeted_read_computes_only_requested(tracker: SeparationTracker):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # points [0, 1, 3, 6, 10] on a line: nearest-neighbor distances [1, 1, 2, 3, 4]
     requested = np.array([0, 3], dtype=np.int32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = tracker.contribution_wrt_dataset_for(requested)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_allclose(values, [1, 3])
     # only the requested elements are computed; the rest of the cache is still pending
     assert np.all(np.isnan(tracker._sep_global[[1, 2, 4]]))
@@ -165,13 +165,13 @@ def test_lazy_global_targeted_read_computes_only_requested(tracker: SeparationTr
 
 
 def test_lazy_global_cache_shared_across_copies(tracker: SeparationTracker):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     clone = tracker.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     clone.contribution_wrt_dataset_for(np.array([2], dtype=np.int32))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     # an element computed through the clone is visible through the original (one shared cache)
     assert not np.isnan(tracker._sep_global[2])
 
@@ -179,16 +179,16 @@ def test_lazy_global_cache_shared_across_copies(tracker: SeparationTracker):
 def test_compute_separation_elements_partial_fill():
     """The elements kernel fills exactly the requested elements; untouched ones keep their sentinel."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
     store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=5)
     sep = np.full(5, np.nan, dtype=np.float32)
     requested = np.array([1, 4], dtype=np.int32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     backend_for(store).elements(sep, store, requested)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_allclose(sep[requested], [1, 4])
     assert np.all(np.isnan(sep[[0, 2, 3]]))  # only the requested elements were written
 
@@ -196,7 +196,7 @@ def test_compute_separation_elements_partial_fill():
 def test_elements_over_every_item():
     """`elements` fills a whole array with each item's separation wrt all others."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
     d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
     m = vectors.shape[0]
@@ -210,17 +210,17 @@ def test_elements_over_every_item():
                 if dist < expected_separation[i]:
                     expected_separation[i] = dist
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     separation = _all_separations(DistanceStore.condensed(d, n=m))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_allclose(separation, expected_separation)
 
 
 def test_update_separation_add():
     """Check if update_separation_add correctly updates separation after adding a vector."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
     m = vectors.shape[0]
     d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
@@ -251,18 +251,18 @@ def test_update_separation_add():
         dtype=np.float32,
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     store = DistanceStore.condensed(d, n=m)
     backend_for(store).add(separation, store, np.int32(i_added))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_allclose(separation, expected_separation)
 
 
 def test_update_separation_remove():
     """Check if update_separation_remove correctly updates separation after adding a vector."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
     m = vectors.shape[0]
     d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
@@ -293,11 +293,11 @@ def test_update_separation_remove():
         dtype=np.float32,
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     store = DistanceStore.condensed(d, n=m)
     backend_for(store).remove(separation, store, np.int32(i_removed), np.array([0], dtype=np.int32))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_allclose(separation, expected_separation)
 
 
@@ -334,7 +334,7 @@ def _brute_force_separation(vectors: np.ndarray, metric: DistanceMetric, selecti
 def test_backend_matches_brute_force_over_random_operations(backend: str):
     """Random add/remove sequences must match a brute-force recompute, on every layout."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260805)
     vectors = rng.random((25, 3)).astype(np.float32)
     store = _stores_for(vectors, DistanceMetric.L2_EUCLIDEAN)[backend]
@@ -342,7 +342,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
     selection: list[int] = []
     rescans_triggered = 0
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     for _ in range(120):
         must_remove = len(selection) == 25  # nothing left to add once everything is selected
         if selection and (must_remove or rng.random() < 0.4):
@@ -368,16 +368,16 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
 def test_every_backend_computes_the_same_separations():
     """The three layouts agree with each other, to within summation rounding."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260805)
     vectors = rng.random((30, 4)).astype(np.float32)
     stores = _stores_for(vectors, DistanceMetric.L2_EUCLIDEAN)
     tolerance = 8.0 * np.sqrt(vectors.shape[1]) * np.finfo(np.float32).eps
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     results = {name: _all_separations(store) for name, store in stores.items()}
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     reference = results.pop("condensed")
     for name, values in results.items():
         np.testing.assert_allclose(
@@ -387,15 +387,15 @@ def test_every_backend_computes_the_same_separations():
 
 def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
     """Reset returns separations to the empty-selection +inf values; the dataset-wide cache stays untouched."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))
     global_before = tracker.contribution_wrt_dataset.copy()
     selected, n_selected = _selection_args([], 5)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     tracker.reset()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.all(np.isinf(tracker.contribution_wrt_selection(selected, n_selected)))
     np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched

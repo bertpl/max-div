@@ -15,10 +15,10 @@ from max_div._core.solver._score import Score
 #  Helpers
 # =================================================================================================
 def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[str, Elapsed, Score]]):
-    # --- non-empty -------------------
+    # --- non-empty ------------------------------
     assert len(score_checkpoints) >= 1, "score_checkpoints must contain at least one entry"
 
-    # --- check step names ------------
+    # --- check step names -----------------------
     singular_step_names = []
     for step_name, _, _ in score_checkpoints:
         if (len(singular_step_names) == 0) or (step_name != singular_step_names[-1]):
@@ -35,13 +35,13 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[str, Elapsed
         #  - other steps are step 1/3, step 2/3, step 3/3, represent actual SolverSteps
         assert f"{i}/{len(singular_step_names) - 1}" in step_name
 
-    # --- check iteration counts ------
+    # --- check iteration counts -----------------
     iter_values = [e.n_iterations for _, e, _ in score_checkpoints]
     assert min(iter_values) >= 0, "score_checkpoints contains negative iteration counts"
     assert len(iter_values) == len(set(iter_values)), "score_checkpoints contains duplicate iteration counts"
     assert iter_values == sorted(iter_values), "score_checkpoints iteration counts should be strictly increasing"
 
-    # --- check elapsed times ---------
+    # --- check elapsed times --------------------
     t_values = [e.t_elapsed_sec for _, e, _ in score_checkpoints]
     assert min(t_values) >= 0.0, "score_checkpoints contains negative elapsed times"
     # NOTE: duplicate time values can happen if iterations are very fast, so we don't assert uniqueness here
@@ -52,10 +52,10 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[str, Elapsed
 #  Tests
 # =================================================================================================
 def test_solver_minimal(example_solver):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution = example_solver.solve()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(solution, MaxDivSolution)
     assert_score_checkpoints_are_sane(solution.score_checkpoints)
     assert solution.duration == sum(list(solution.step_durations.values()))
@@ -64,10 +64,10 @@ def test_solver_minimal(example_solver):
 
 
 def test_solver_solution_constraint_counts(example_solver):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution = example_solver.solve(verbosity=Verbosity.SILENT)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solution.n_constraints == 2
     assert solution.n_constraints_satisfied == 2
 
@@ -88,7 +88,7 @@ def test_solver_solution_constraint_counts(example_solver):
     ],
 )
 def test_solver_verbosity(example_solver, tmp_path, verbosity: int, error_expected: bool):
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     if not error_expected:
         # arrange
         output_file = tmp_path / "output.txt"
@@ -118,7 +118,7 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
     distance-input path.
     """
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260713)
     vectors = rng.random((40, 4)).astype(np.float32)
     kwargs: dict = {"k": 8, "diversity_metric": DiversityMetric.GEOMEAN_SEPARATION}
@@ -127,13 +127,13 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
     distances = np.ascontiguousarray(squareform(condensed)) if form == "square" else condensed
     problem_dist = MaxDivProblem.from_distances(distances, **kwargs)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solutions = [
         MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
         for problem in (problem_vec, problem_dist)
     ]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert list(solutions[0].i_selected) == list(solutions[1].i_selected)
     assert solutions[0].score == solutions[1].score
 
@@ -141,12 +141,12 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
 def test_solver_deterministic_above_candidate_cap():
     """Same seed → identical selections on a problem large enough that swap candidates are subsampled."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260802)
     vectors = rng.random((600, 3)).astype(np.float32)  # pool of ~590 non-selected items exceeds the initial cap
     problem = MaxDivProblem.new(vectors, k=10, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution_1 = (
         MaxDivSolverBuilder(problem).with_preset(iterations(100)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
     )
@@ -154,7 +154,7 @@ def test_solver_deterministic_above_candidate_cap():
         MaxDivSolverBuilder(problem).with_preset(iterations(100)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert list(solution_1.i_selected) == list(solution_2.i_selected)
 
 
@@ -163,7 +163,7 @@ def test_solver_deterministic_above_candidate_cap():
 def test_solver_alternative_backend_bit_identical_selection(backend: str, distance_metric: DistanceMetric):
     """A solve on any alternative distance backend selects exactly what the condensed solve selects."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260731)
     vectors = rng.random((40, 4)).astype(np.float32)
     problem = MaxDivProblem.new(
@@ -177,11 +177,11 @@ def test_solver_alternative_backend_bit_identical_selection(backend: str, distan
     else:
         solver_other._store = DistanceStore.full_matrix_from_vectors(vectors, distance_metric)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution_condensed = solver_condensed.solve(verbosity=Verbosity.SILENT)
     solution_other = solver_other.solve(verbosity=Verbosity.SILENT)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert list(solution_other.i_selected) == list(solution_condensed.i_selected)
     assert solution_other.score == solution_condensed.score
 
@@ -213,14 +213,14 @@ def _make_mean_pairwise_distance_problem(n: int = 60, k: int = 8) -> tuple[MaxDi
 
 
 def test_solver_mean_pairwise_distance_end_to_end():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem, vectors = _make_mean_pairwise_distance_problem()
     solver = MaxDivSolverBuilder(problem).with_preset(iterations(300)).with_seed(42).build()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution = solver.solve(verbosity=Verbosity.SILENT)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(solution.i_selected) == problem.k
     assert len(set(solution.i_selected)) == problem.k
     # reported diversity equals brute-force mean pairwise distance of the returned selection
@@ -229,16 +229,16 @@ def test_solver_mean_pairwise_distance_end_to_end():
 
 
 def test_solver_mean_pairwise_distance_deterministic():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem, _ = _make_mean_pairwise_distance_problem()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solutions = [
         MaxDivSolverBuilder(problem).with_preset(iterations(300)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
         for _ in range(2)
     ]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(solutions[0].i_selected, solutions[1].i_selected)
     assert solutions[0].score == solutions[1].score
 
@@ -258,11 +258,11 @@ def _greedy_max_sum_selection(vectors: np.ndarray, k: int) -> np.ndarray:
 def test_solver_mean_pairwise_distance_meets_greedy_baseline():
     """The solver must meet or beat the classical greedy max-sum baseline on a modest budget."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem, vectors = _make_mean_pairwise_distance_problem()
     greedy_score = _mean_pairwise_distance_of(vectors, _greedy_max_sum_selection(vectors, problem.k))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution = (
         MaxDivSolverBuilder(problem)
         .with_preset(iterations(1500))
@@ -271,5 +271,5 @@ def test_solver_mean_pairwise_distance_meets_greedy_baseline():
         .solve(verbosity=Verbosity.SILENT)
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solution.score.diversity >= greedy_score * (1.0 - 1e-6)

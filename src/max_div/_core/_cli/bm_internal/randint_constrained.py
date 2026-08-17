@@ -54,19 +54,19 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
         markdown: If `True`, outputs the results as a Markdown table.
         file: If `True`, redirects output to a file instead of console.
     """
-    # --- speed-dependent settings --------------------
+    # --- speed-dependent settings ---------------
     max_count = int(100 * (0.01**speed))  # max_count=100 if speed=0;  max_count=1 at speed=1
 
-    # --- build scenarios ---------------------------------
+    # --- build scenarios ------------------------
     scenarios = [ScenarioA(), ScenarioB()]
 
-    # --- benchmark all scenarios -------------------------
+    # --- benchmark all scenarios ----------------
     print("Benchmarking `randint_constrained`...")
 
     i_file = 0
     for s in scenarios:
         for use_p in [False, True]:
-            # --- benchmark scenario ----------------
+            # --- benchmark scenario -------------
             headers = [
                 "`k`",
                 "`n`",
@@ -82,7 +82,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                 if i >= max_count:
                     continue
 
-                # --- construct p ---
+                # --- construct p ----------------
                 if use_p:
                     p = np.array([1.0 + i for i in range(n)], dtype=np.float32)
                     p /= p.sum()
@@ -112,9 +112,9 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                     ]
                 )
 
-            # --- show all results --------------------------------------------
+            # --- show all results ---------------
 
-            # --- prepare final report ---
+            # --- prepare final report -----------
             timing_table.add_aggregate_row(TableAggregationType.GEOMEAN)
             timing_table.highlight_results(TableTimeElapsed, clr_lowest=Table.GREEN)
 
@@ -136,7 +136,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
                 accuracy_table,
             ]
 
-            # --- output ---
+            # --- output -------------------------
             i_file += 1
             with stdout_to_file(file, f"benchmark_randint_constrained_{i_file}.md"):
                 report.print(markdown=markdown)
@@ -234,7 +234,7 @@ def _determine_precision(
 
     satisfied_count = 0
     for run_idx in range(n_runs):
-        # --- build constraints ---
+        # --- build constraints ------------------
         cons = s.build_constraints(n, k, m, seed=424242 * run_idx)
         con_values, con_indices = ConstraintList(cons).to_numpy()
 

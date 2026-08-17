@@ -8,7 +8,7 @@ from max_div._core.solver._parameters.samplers import TruncatedPoissonAdaptiveSa
 
 
 def test_truncated_poisson_adaptive_sampler_construction():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     sampler = TruncatedPoissonAdaptiveSampler(
         min_value=1,
         max_value=8,
@@ -18,7 +18,7 @@ def test_truncated_poisson_adaptive_sampler_construction():
         seed=123,
     )
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert isinstance(sampler, AdaptiveSampler)
     assert isinstance(sampler, TruncatedPoissonAdaptiveSampler)
 
@@ -48,7 +48,7 @@ def test_truncated_poisson_adaptive_sampler_construction_validation():
 def test_truncated_poisson_adaptive_sampler_learn_and_forget(
     good_values: list[int], tau_forget: float, large_value_exponent: float
 ):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     sampler = TruncatedPoissonAdaptiveSampler(
         min_value=1,
         max_value=10,
@@ -59,21 +59,21 @@ def test_truncated_poisson_adaptive_sampler_learn_and_forget(
         seed=123,
     )
 
-    # --- act 1 - learn -----------------------------------
+    # --- act 1 - learn ----------------
     for _ in range(1_000):
         s = sampler.new_sample()
         sampler.feedback(s in good_values)  # positive feedback when we sampled one of 'good_values'
 
-    # --- assert 1 - learn --------------------------------
+    # --- assert 1 - learn -------------
     assert min(good_values) < sampler._lambda < max(good_values)  # should learn to sample good range
 
-    # --- act 2 - forget ----------------------------------
+    # --- act 2 - forget ---------------
     summary_stat_before = sampler.summary_statistic()
     for _ in range(1_000):
         s = sampler.new_sample()
         sampler.feedback(False)  # negative feedback always, so we maximally forget
 
-    # --- assert 2 - forget -------------------------------
+    # --- assert 2 - forget ------------
     if not np.isinf(tau_forget):
         # forgetting is enabled
         assert 5.0 < sampler._lambda < 6.0  # should have forgotten back to prior (5.5)
@@ -84,7 +84,7 @@ def test_truncated_poisson_adaptive_sampler_learn_and_forget(
 
 @pytest.mark.parametrize("lambda_prior", [3.7, None])
 def test_sampled_poisson_alias(lambda_prior: float | None):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     sampler = sampled_poisson(
         min_value=2,
         max_value=12,
@@ -95,7 +95,7 @@ def test_sampled_poisson_alias(lambda_prior: float | None):
         seed=124816,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(sampler, TruncatedPoissonAdaptiveSampler)
 
     if lambda_prior is not None:

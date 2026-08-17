@@ -111,7 +111,7 @@ def benchmark(  # noqa: C901 — case-dispatch structure is clearer un-split
     Returns:
         Median estimate of duration/execution of `f` in seconds.
     """
-    # --- init --------------------------------------------
+    # --- init -----------------------------------
     lst_t = []  # list of measured times per execution in seconds
     n_executions = 1  # number of executions per run, adjusted dynamically
     # baseline function to subtract overhead (indexed variant when an index is cycled)
@@ -120,33 +120,33 @@ def benchmark(  # noqa: C901 — case-dispatch structure is clearer un-split
     if not silent:
         print("Benchmarking: ", end="")
 
-    # --- main loop ---------------------------------------
+    # --- main loop ------------------------------
     for i in range(n_warmup + n_benchmark):
         if index_range is None:
-            # --- without index -----------------
+            # --- without index ------------------
             with Timer() as timer_tot:
-                # --- baseline ---
+                # --- baseline -------------------
                 with Timer() as timer_baseline:
                     for _ in range(n_executions):
                         f_baseline()
                 t_baseline = timer_baseline.t_elapsed_sec()
 
-                # --- actual function ---
+                # --- actual function ------------
                 with Timer() as timer_f:
                     for _ in range(n_executions):
                         f()
                 t_f = timer_f.t_elapsed_sec()
         else:
-            # --- with index --------------------
+            # --- with index ---------------------
             idx_offset = int((i * index_range) // (n_warmup + n_benchmark))
             with Timer() as timer_tot:
-                # --- baseline ---
+                # --- baseline -------------------
                 with Timer() as timer_baseline:
                     for idx in range(idx_offset, idx_offset + n_executions):
                         f_baseline(idx % index_range)
                 t_baseline = timer_baseline.t_elapsed_sec()
 
-                # --- actual function ---
+                # --- actual function ------------
                 with Timer() as timer_f:
                     for idx in range(idx_offset, idx_offset + n_executions):
                         f(idx % index_range)
@@ -173,12 +173,12 @@ def benchmark(  # noqa: C901 — case-dispatch structure is clearer un-split
             )
         )
 
-    # --- finalize ----------------------------------------
+    # --- finalize -------------------------------
     result = BenchmarkResult.from_list(lst_t)
     if not silent:
         print(f"   {result.t_sec_with_uncertainty_str} per execution")
 
-    # --- return result -----------------------------------
+    # --- return result --------------------------
     return result
 
 

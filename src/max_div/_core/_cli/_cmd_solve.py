@@ -41,7 +41,7 @@ def solve(
     preset: str = "default",
 ) -> None:
     """Run the solver on requested benchmark problem."""
-    # --- argument handling -------------------------------
+    # --- argument handling ----------------------
     if (iterations is not None) and (seconds is not None):
         raise click.UsageError("Please provide only one of --iterations or --seconds.")
     if (not iterations) and (not seconds):
@@ -52,10 +52,10 @@ def solve(
         # `seconds` is guaranteed non-None here by the branches above, but ty cannot see the link
         duration = TargetDuration.seconds(float(seconds))  # ty: ignore[invalid-argument-type]
 
-    # --- show what we'll do ------------------------------
+    # --- show what we'll do ---------------------
     click.echo(f"Solving test problem '{test_problem}' for a duration of {duration!s} using {preset.upper()} preset...")
 
-    # --- construct solver --------------------------------
+    # --- construct solver -----------------------
     solver = (
         MaxDivSolverBuilder(
             BenchmarkProblemFactory.construct_problem(
@@ -68,5 +68,5 @@ def solve(
         .build()
     )
 
-    # --- solve -------------------------------------------
+    # --- solve ----------------------------------
     solver.solve(verbosity=verbosity)

@@ -47,71 +47,71 @@ def portfolio_results():
 
 def test_every_worker_reports_a_result(portfolio_results):
     """A portfolio returns one result per configuration, each carrying a full selection."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     builder, results = portfolio_results
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(results) == len(_SEEDS)
     assert all(result.i_selected.size == builder._k for result in results)
 
 
 def test_results_come_back_in_worker_order(portfolio_results):
     """Results are ordered by worker rather than by who finished first."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     _, results = portfolio_results
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert [result.worker_index for result in results] == list(range(len(_SEEDS)))
     assert [result.seed for result in results] == list(_SEEDS)
 
 
 def test_a_worker_reproduces_the_same_solve_run_alone(portfolio_results):
     """A worker's selection is what the same configuration and seed produce in a single process."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder, results = portfolio_results
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     alone = builder.with_seed(_SEEDS[0]).build().solve(verbosity=Verbosity.SILENT)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(np.sort(results[0].i_selected), np.sort(alone.i_selected))
 
 
 def test_the_best_reported_result_wins(portfolio_results):
     """The winner is the best-scoring worker, not the first to report."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     _, results = portfolio_results
     winner = best_result(results)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert winner.score == max(result.score for result in results)
 
 
 def test_one_coordinator_per_worker_is_required():
     """A coordinator count that does not match the worker count is rejected before any worker spawns."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with build_shared_distance_store(builder._problem, resolved) as shared, pytest.raises(ValueError):
         run_portfolio([config.with_seed(1), config.with_seed(2)], shared.spec, [IndependentCoordinator()])
 
 
 def test_a_group_of_cooperative_workers_solves_and_exchanges():
     """Spawned workers sharing one incumbent slot all report results, and the slot was published to."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
     n_score_components = 3 + len(config.diversity_tie_breakers)
     slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=builder._k, score_length=n_score_components)
     coordinators = [CooperativeCoordinator(slot) for _ in _SEEDS]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
         results = run_portfolio([config.with_seed(seed) for seed in _SEEDS], shared.spec, coordinators)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(results) == len(_SEEDS)
     assert all(result.i_selected.size == builder._k for result in results)
     assert slot.written  # at least the first boundary reached published into the empty slot
@@ -119,12 +119,12 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
 
 def test_portfolio_renders_coherent_progress(capsys):
     """A rendered portfolio prints one non-interleaved table and still collects every result."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
     reporter = ProgressReporter.from_verbosity(Verbosity.TABULAR, worker_columns=True)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
         results = run_portfolio(
             [config.with_seed(seed) for seed in _SEEDS],
@@ -133,7 +133,7 @@ def test_portfolio_renders_coherent_progress(capsys):
             progress_reporter=reporter,
         )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(results) == len(_SEEDS)
     lines = capsys.readouterr().out.splitlines()
     table_lines = [line for line in lines if line.startswith("|")]
@@ -145,18 +145,18 @@ def test_portfolio_renders_coherent_progress(capsys):
 
 def test_solve_in_worker_runs_in_process():
     """The worker entry point solves and reports, with and without a forwarding reporter."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
     messages = queue.Queue()
     requirements = SnapshotRequirements(debug_info=False, selection_hash=True)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
         solve_in_worker(0, config.with_seed(1), shared.spec, IndependentCoordinator(), messages, None)
         solve_in_worker(1, config.with_seed(2), shared.spec, IndependentCoordinator(), messages, requirements)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     received = []
     while not messages.empty():
         received.append(messages.get_nowait())
@@ -179,7 +179,7 @@ class _StubWorker:
 
 def test_drain_collects_in_flight_results_of_dead_workers():
     """Results still in the queue after every worker exited are collected, not lost."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
     messages = queue.Queue()
@@ -187,24 +187,24 @@ def test_drain_collects_in_flight_results_of_dead_workers():
         solve_in_worker(0, config.with_seed(1), shared.spec, IndependentCoordinator(), messages, None)
     workers = [_StubWorker(alive=False), _StubWorker(alive=False)]  # worker 1 died without reporting
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     collected = _drain(messages, workers, view=None)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert [result.worker_index for result in collected] == [0]
 
 
 def test_dead_workers_are_reported_to_the_view_once():
     """A worker that stopped without a result is reported dead to the view, exactly once."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = ProgressReporter.from_verbosity(Verbosity.TABULAR, worker_columns=True)
     view = ParallelProgressView(reporter, n_workers=2)
     workers = [_StubWorker(alive=True), _StubWorker(alive=False)]
     reported_dead: set[int] = set()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     _notice_dead_workers(workers, [], reported_dead, view)
     _notice_dead_workers(workers, [], reported_dead, view)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert reported_dead == {1}

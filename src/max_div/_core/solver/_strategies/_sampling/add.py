@@ -61,7 +61,7 @@ def select_items_to_add(
     Returns:
         list of np.int32 indices of the items to be added to the selection (unique values, unsorted).
     """
-    # --- prepare probabilities ---------------------------
+    # --- prepare probabilities ------------------
     if state.n_selected == 0:
         # the only option is to look at the global contribution (wrt all other items), as we don't have a selection yet
         # this branch is only taken in the first iteration of initialization strategies
@@ -80,7 +80,7 @@ def select_items_to_add(
         low_value=DEFAULT_LOW_VALUE,
     )
 
-    # --- actual sampling ---------------------------------
+    # --- actual sampling ------------------------
     if (not state.has_constraints) or ignore_constraints:
         # UNCONSTRAINED
         return choice(

@@ -25,14 +25,14 @@ def get_probabilities(n: int) -> NDArray[np.float32]:
 @pytest.mark.parametrize("replace", [True, False])
 @pytest.mark.parametrize("uniform", [True, False])
 def test_choice(n_values: int, k: int, replace: bool, uniform: bool) -> None:
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     values = randint(10000, np.int32(n_values), replace=False, p=P_UNIFORM, rng_state=new_rng_state(42))
     values_set = set(values)
     p = P_UNIFORM if uniform else get_probabilities(values.size)
     p_copy = p.copy()
     rng_state = new_rng_state(123456)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     results = choice(
         values=values,
         k=np.int32(k),
@@ -41,7 +41,7 @@ def test_choice(n_values: int, k: int, replace: bool, uniform: bool) -> None:
         rng_state=rng_state,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(results, np.ndarray)
     assert results.dtype == np.int32
     assert results.shape == (k,)
@@ -54,14 +54,14 @@ def test_choice(n_values: int, k: int, replace: bool, uniform: bool) -> None:
 @pytest.mark.parametrize("k", [1, 5, 10, 20])
 @pytest.mark.parametrize("uniform", [True, False])
 def test_choice1(n_values: int, k: int, uniform: bool) -> None:
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     values = randint(10000, np.int32(n_values), replace=False, p=P_UNIFORM, rng_state=new_rng_state(42))
     values_set = set(values)
     p = P_UNIFORM if uniform else get_probabilities(values.size)
     p_copy = p.copy()
     rng_state = new_rng_state(123456)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     results = [
         choice1(
             values=values,
@@ -71,7 +71,7 @@ def test_choice1(n_values: int, k: int, uniform: bool) -> None:
         for _ in range(k)
     ]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert all(isinstance(result, numbers.Integral) for result in results)
     assert all(result in values_set for result in results)
     assert np.array_equal(p, p_copy), "p should remain unmodified"

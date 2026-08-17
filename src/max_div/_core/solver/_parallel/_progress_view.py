@@ -88,7 +88,7 @@ class ParallelProgressView:
 
     def _composite(self, result: ProgressSnapshot) -> ProgressSnapshot:
         """Compose min-progress across live workers with the given result half into one snapshot."""
-        # --- progress half: the slowest live worker ------
+        # --- progress half: the slowest live worker ---
         live = [i for i in range(self._n_workers) if (i not in self._finished) and (i not in self._dead)]
         if live:
             fraction, iter_count = min(self._progress_of(i) for i in live)
@@ -103,7 +103,7 @@ class ParallelProgressView:
             est_iters_per_second=0.0,
         )
 
-        # --- result half: the best worker so far ---------
+        # --- result half: the best worker so far ---
         return ProgressSnapshot(
             step_name="",
             progress=progress,

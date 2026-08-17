@@ -50,13 +50,13 @@ def choice_constrained(
     Returns:
         (NDArray[np.int32]) The array of samples, size (k,), taken from the provided 'values' array.
     """
-    # --- argument handling -------------------------------
+    # --- argument handling ----------------------
     if not ((p.size == 0) or (p.size == values.size)):
         raise ValueError(f"p array size should be either 0 or same size as 'values' ({values.size}). [here: {p.size}]")
     if k > values.size:
         raise ValueError(f"Cannot sample k={k} values from 'values' array of size {values.size} without replacement.")
 
-    # --- construct p_full --------------------------------
+    # --- construct p_full -----------------------
     #  p_full: (n,)-sized array with probabilities for each value in [0, n), setting to 0.0 those not in 'values'
     if p.size == 0:
         # uniform sampling
@@ -66,7 +66,7 @@ def choice_constrained(
         p_full = np.zeros(n, dtype=np.float32)
         p_full[values] = p
 
-    # --- construct i_forbidden ---------------------------
+    # --- construct i_forbidden ------------------
     #  i_forbidden: (n-len(values),)-sized array with values in [0,n) that are NOT in 'values' and should not be sampled
     is_in_values = np.zeros(n, dtype=np.bool_)
     for v in values:
@@ -78,7 +78,7 @@ def choice_constrained(
             i_forbidden[idx] = i
             idx += 1
 
-    # --- call randint_constrained ------------------------
+    # --- call randint_constrained ---------------
     return randint_constrained(
         n=n,
         k=k,
@@ -91,4 +91,4 @@ def choice_constrained(
         k_context=k_context,
     )
 
-    # --- return values -----------------------------------
+    # --- return values --------------------------

@@ -28,7 +28,7 @@ def minimize_nd(
     Returns:
         tuple of floats with optimal solution.
     """
-    # --- init ----------------------------------------------------------------
+    # --- init -----------------------------------
 
     # general
     lb_orig, ub_orig = lb, ub
@@ -52,10 +52,10 @@ def minimize_nd(
     x_opt = tuple((lo + hi) / 2.0 for lo, hi in zip(lb, ub))  # center of grid
     f_opt = fun(x_opt)
 
-    # --- main loop -----------------------------------------------------------
+    # --- main loop ------------------------------
     n_iters = 0
     while max(size) > acc:
-        # --- progress indication ----------------------------------
+        # --- progress indication ----------------
         n_iters += 1
         progress_table.show_progress(
             [
@@ -87,7 +87,7 @@ def minimize_nd(
                         f_opt = f_val
                         new_point_found = True
 
-        # --- reduce bounding box ---
+        # --- reduce bounding box ----------------
 
         # reduce size
         size = tuple([s * c_reduce for s in size])
@@ -96,5 +96,5 @@ def minimize_nd(
         lb = tuple([max(lb_orig[i], x_opt[i] - 0.5 * size[i]) for i in range(n)])
         ub = tuple([min(ub_orig[i], x_opt[i] + 0.5 * size[i]) for i in range(n)])
 
-    # --- we're done ----------------------------------------------------------
+    # --- we're done -----------------------------
     return x_opt

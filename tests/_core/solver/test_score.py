@@ -17,29 +17,29 @@ def _as_contributions(separation_values: np.ndarray) -> tuple[np.ndarray, np.nda
 #  Score
 # =================================================================================================
 def test_score_as_tuple():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     score_1 = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
     score_2 = Score(size=0.1, constraints=0.2, diversity=0.3, div_tie_breakers=())
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     score_tuple_1 = score_1.as_tuple()
     score_tuple_2 = score_2.as_tuple()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert score_tuple_1 == (0.8, 0.9, 0.95, 0.7, 0.6)
     assert score_tuple_2 == (0.1, 0.2, 0.3)
 
 
 @pytest.mark.parametrize("soft", [0.0, 0.2, 0.66, 1.0])
 def test_score_as_tuple_soft_constraints(soft: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     score = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
     expected_tuple = (0.8, (0.9 ** (1 - soft)) * (0.95**soft), 0.95, 0.7, 0.6)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     score_tuple = score.as_tuple(soft=soft)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.allclose(score_tuple, expected_tuple)
 
 
@@ -62,14 +62,14 @@ def test_score_as_tuple_soft_constraints_corner_cases(
 ):
     """Check if we don't bump into 0^0 issues."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     score = Score(size=0.8, constraints=con_score, diversity=div_score, div_tie_breakers=(0.7, 0.6))
     expected_tuple = (0.8, expected_soft_con_score, div_score, 0.7, 0.6)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     score_tuple = score.as_tuple(soft=soft)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.allclose(score_tuple, expected_tuple)
 
 
@@ -87,15 +87,15 @@ def test_score_as_tuple_soft_constraints_corner_cases(
 def test_score_as_tuple_ignore_infeasible_diversity(
     soft: float, ignore_infeasible_diversity: bool, expected_feas_tuple: tuple, expected_infeas_tuple: tuple
 ):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     score_feas = Score(size=1.0, constraints=0.8, diversity=0.2, div_tie_breakers=(0.7, 0.6))
     score_infeas = Score(size=1.0, constraints=1.0, diversity=4.0, div_tie_breakers=(0.7, 0.6))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     tuple_feas = score_feas.as_tuple(soft=soft, ignore_infeasible_diversity=ignore_infeasible_diversity)
     tuple_infeas = score_infeas.as_tuple(soft=soft, ignore_infeasible_diversity=ignore_infeasible_diversity)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.allclose(tuple_feas, expected_feas_tuple)
     assert np.allclose(tuple_infeas, expected_infeas_tuple)
 
@@ -104,7 +104,7 @@ def test_score_as_tuple_ignore_infeasible_diversity(
 #  ScoreGenerator
 # =================================================================================================
 def test_score_generator_size():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     generator = ScoreGenerator(
         n=20,
         k=3,
@@ -116,7 +116,7 @@ def test_score_generator_size():
     con_values = np.zeros((0, 2), dtype=np.int32)
     selected_contributions = _as_contributions(np.ones(4, dtype=np.float32))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     size_score_0 = generator.compute_score(0, con_values, selected_contributions).size
     size_score_1 = generator.compute_score(1, con_values, selected_contributions).size
     size_score_2 = generator.compute_score(2, con_values, selected_contributions).size
@@ -126,13 +126,13 @@ def test_score_generator_size():
     size_score_12 = generator.compute_score(12, con_values, selected_contributions).size
     size_score_20 = generator.compute_score(20, con_values, selected_contributions).size
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 0.0 < size_score_0 < size_score_1 < size_score_2 < size_score_3 == 1.0
     assert 1.0 == size_score_3 > size_score_4 > size_score_8 > size_score_12 > size_score_20 > 0.0
 
 
 def test_score_generator_constraints():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     generator = ScoreGenerator(
         n=100,
         k=8,
@@ -146,7 +146,7 @@ def test_score_generator_constraints():
 
     sep = _as_contributions(np.ones(5, dtype=np.float32))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
 
     # scores if we haven't selected enough from the constraint sets
     con_score_0 = generator.compute_score(8, np.array([[2, 3], [2, 3]], dtype=np.int32), sep).constraints
@@ -161,7 +161,7 @@ def test_score_generator_constraints():
     con_score_7 = generator.compute_score(8, np.array([[-2, -1], [-1, 0]], dtype=np.int32), sep).constraints
     con_score_8 = generator.compute_score(8, np.array([[-2, -1], [-2, -1]], dtype=np.int32), sep).constraints
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 0.0 < con_score_0 < con_score_2 < con_score_4
     assert con_score_4 == con_score_5 == con_score_6 == 1.0
     assert con_score_6 > con_score_7 > con_score_8 > 0.0
@@ -177,14 +177,14 @@ def test_score_generator_constraints():
     ],
 )
 def test_con_norm_constant(weights: list[float], quadratic: bool, expected: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     max_violations = [2, 3]
     con_weights = np.array(weights, dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     c = _con_norm_constant(max_violations, con_weights, quadratic)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert c == pytest.approx(expected)
 
 
@@ -199,7 +199,7 @@ def test_con_norm_constant(weights: list[float], quadratic: bool, expected: floa
 )
 def test_constraints_score_for_violation(violation: float, expected: float):
     """A total weighted violation maps onto the same 0-1 scale compute_score uses."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     constraints = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),  # worst case 2
         Constraint(int_set=set(range(11)), min_count=2, max_count=3),  # worst case 5
@@ -212,16 +212,16 @@ def test_constraints_score_for_violation(violation: float, expected: float):
         constraints=constraints,
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     score = generator.constraints_score_for_violation(violation)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert score == pytest.approx(expected)
 
 
 def test_constraints_score_for_violation_rejects_quadratic():
     """A scalar violation has no quadratic-scale conversion, so a quadratic generator raises."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     generator = ScoreGenerator(
         n=3,
         k=3,
@@ -231,13 +231,13 @@ def test_constraints_score_for_violation_rejects_quadratic():
         penalty_quadratic=True,
     )
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="profile"):
         generator.constraints_score_for_violation(1.0)
 
 
 def test_score_generator_constraints_linear_vs_quadratic():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # max_con_violations = [max(2, min(8,5)-3, 0), max(2, min(8,11)-3, 0)] = [2, 5]
     constraints = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -250,17 +250,17 @@ def test_score_generator_constraints_linear_vs_quadratic():
     con_values = np.array([[2, 3], [2, 3]], dtype=np.int32)  # need 2 more from each -> v = [2, 2]
     sep = _as_contributions(np.ones(5, dtype=np.float32))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     con_linear = gen_linear.compute_score(8, con_values, sep).constraints
     con_quad = gen_quad.compute_score(8, con_values, sep).constraints
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert con_linear == 0.5  # 1 - (1/8)·(2 + 2)          - unchanged linear behavior, exact
     assert con_quad == pytest.approx(1 - 8 / 30)  # 1 - (1/30)·(2² + 2²)
 
 
 def test_score_generator_constraints_weighted():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # max_con_violations = [2, 5], weights = [1, 2] -> _con_c = 1 / (1 + 1·2 + 2·5) = 1/13
     constraints = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -271,7 +271,7 @@ def test_score_generator_constraints_weighted():
     )
     sep = _as_contributions(np.ones(5, dtype=np.float32))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     con_violate_light = gen.compute_score(
         8, np.array([[1, 3], [0, 1]], dtype=np.int32), sep
     ).constraints  # con0 short 1
@@ -279,14 +279,14 @@ def test_score_generator_constraints_weighted():
         8, np.array([[0, 1], [1, 3]], dtype=np.int32), sep
     ).constraints  # con1 short 1
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert con_violate_light == pytest.approx(1 - 1 / 13)
     assert con_violate_heavy == pytest.approx(1 - 2 / 13)
     assert con_violate_heavy < con_violate_light  # violating the higher-weight constraint hurts more
 
 
 def test_score_generator_constraints_no_constraints():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     generator = ScoreGenerator(
         n=100,
         k=8,
@@ -295,17 +295,17 @@ def test_score_generator_constraints_no_constraints():
         constraints=[],
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     score = generator.compute_score(
         8, np.zeros((0, 2), dtype=np.int32), _as_contributions(np.ones(5, dtype=np.float32))
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert score.constraints == 1.0, "In case of no constraints, we expect a perfect 1.0 constraint score."
 
 
 def test_score_generator_diversity_scores():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     generator = ScoreGenerator(
         n=100,
         k=5,
@@ -320,10 +320,10 @@ def test_score_generator_diversity_scores():
     con_values = np.zeros((0, 2), dtype=np.int32)
     sep = _as_contributions(np.array([0, 2, 3, 4, 6], dtype=np.float32))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     score = generator.compute_score(5, con_values, sep)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert score.diversity == pytest.approx(0.0)
     assert len(score.div_tie_breakers) == 2
     assert score.div_tie_breakers[0] == pytest.approx(3.0)
@@ -331,14 +331,14 @@ def test_score_generator_diversity_scores():
 
 
 def test_score_comparison_happy_path():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     score_1a = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
     score_1b = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
     score_2 = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.5))
     score_3 = Score(size=0.8, constraints=0.9, diversity=0.90, div_tie_breakers=(0.9, 0.9))
     score_4 = Score(size=0.7, constraints=1.0, diversity=1.0, div_tie_breakers=(1.0, 1.0))
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert score_1a == score_1b
     assert score_1a >= score_1b
     assert score_1a <= score_1b
@@ -356,10 +356,10 @@ def test_score_comparison_happy_path():
 
 
 def test_score_comparison_invalid_types():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     score = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     _ = score == object()  # == is implemented in object()
 
     with pytest.raises(TypeError):
@@ -389,17 +389,17 @@ def test_score_comparison_invalid_types():
     ],
 )
 def test_score_str(score: Score, expected_str: str):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = str(score)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == expected_str
 
 
 def test_compute_score_binds_metrics_to_their_contribution_slot():
     """Separation-family metrics must read the separation slot, regardless of what else is passed."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     generator = ScoreGenerator(
         n=10,
         k=4,
@@ -410,9 +410,9 @@ def test_compute_score_binds_metrics_to_their_contribution_slot():
     separation_values = np.array([2.0, 4.0, 6.0], dtype=np.float32)
     decoy_values = np.array([100.0, 100.0, 100.0], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), (separation_values, decoy_values))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert score.diversity == pytest.approx(4.0)  # mean of the separation slot, not of the decoy
     assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of the separation slot, not of the decoy

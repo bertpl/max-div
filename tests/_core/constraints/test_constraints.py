@@ -16,33 +16,33 @@ from max_div._core.constraints.constraints import (
 
 
 def test_constraint_default_weight():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     con = Constraint(int_set={0, 1}, min_count=1, max_count=2)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert con.weight == 1.0
 
 
 @pytest.mark.parametrize("weight", [0, 0.0, -1.0, -0.001])
 def test_constraint_rejects_non_positive_weight(weight: float):
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="weight must be > 0"):
         Constraint(int_set={0, 1}, min_count=1, max_count=2, weight=weight)
 
 
 def test_build_array_repr():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     cons = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
         Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
         Constraint(int_set={3, 11}, min_count=2, max_count=2),
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     con_values_1, con_indices_1 = _build_array_repr(cons)
     con_values_2, con_indices_2 = ConstraintList(cons).to_numpy()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(
         con_values_1,
         np.array(
@@ -68,7 +68,7 @@ def test_build_array_repr():
 
 
 def test_np_con_min_value():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     con_values, _con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -77,14 +77,14 @@ def test_np_con_min_value():
         ]
     ).to_numpy()
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert _np_con_min_value(con_values, np.int32(0)) == 2
     assert _np_con_min_value(con_values, np.int32(1)) == 0
     assert _np_con_min_value(con_values, np.int32(2)) == 2
 
 
 def test_np_con_max_value():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     con_values, _con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -93,14 +93,14 @@ def test_np_con_max_value():
         ]
     ).to_numpy()
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert _np_con_max_value(con_values, np.int32(0)) == 3
     assert _np_con_max_value(con_values, np.int32(1)) == 7
     assert _np_con_max_value(con_values, np.int32(2)) == 2
 
 
 def test_np_con_indices():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     _con_values, con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -109,7 +109,7 @@ def test_np_con_indices():
         ]
     ).to_numpy()
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert np.array_equal(_np_con_indices(con_indices, np.int32(0)), np.array([0, 1, 2, 3, 4], dtype=np.int32))
     assert np.array_equal(_np_con_indices(con_indices, np.int32(1)), np.array([10, 11, 12, 13], dtype=np.int32))
     assert np.array_equal(_np_con_indices(con_indices, np.int32(2)), np.array([3, 11], dtype=np.int32))
@@ -124,7 +124,7 @@ def test_np_con_indices():
     ],
 )
 def test_np_largest_con_index(i1_max: int, i2_max: int, i3_max: int, expected_result: int):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     _, con_indices = ConstraintList(
         [
             Constraint(int_set={0, 1, 2, 3, i1_max}, min_count=2, max_count=3),
@@ -133,15 +133,15 @@ def test_np_largest_con_index(i1_max: int, i2_max: int, i3_max: int, expected_re
         ]
     ).to_numpy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = _np_largest_con_index(con_indices)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == expected_result
 
 
 def test_np_con_total_violation():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     con_values = np.array(
         [
             [-7, 11],  # satisfied
@@ -152,10 +152,10 @@ def test_np_con_total_violation():
         dtype=np.int32,
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     total_violation = _np_con_total_violation(con_values)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert total_violation == 7
 
 
@@ -170,7 +170,7 @@ def test_np_con_total_violation():
     ],
 )
 def test_np_con_total_weighted_violation(weights: list[float], quadratic: bool, expected: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     con_values = np.array(
         [
             [-7, 11],  # satisfied            -> v = 0
@@ -182,10 +182,10 @@ def test_np_con_total_weighted_violation(weights: list[float], quadratic: bool, 
     )
     con_weights = np.array(weights, dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     total = _np_con_total_weighted_violation(con_values, con_weights, quadratic)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert total == pytest.approx(expected)
 
 
@@ -200,20 +200,20 @@ def test_np_con_total_weighted_violation(weights: list[float], quadratic: bool, 
 )
 def test_np_con_total_weighted_violation_matches_fast_path(con_values: list[list[int]]):
     """Regression guard: unit weights + linear must reproduce the integer fast path exactly."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     cv = np.array(con_values, dtype=np.int32)
     unit_weights = np.ones(cv.shape[0], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     general = _np_con_total_weighted_violation(cv, unit_weights, False)
     fast = _np_con_total_violation(cv)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert float(general) == float(fast)
 
 
 def test_np_con_count_satisfied():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     con_values = np.array(
         [
             [-7, 11],  # satisfied (min_remaining <= 0, max_remaining >= 0)
@@ -224,19 +224,19 @@ def test_np_con_count_satisfied():
         dtype=np.int32,
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     n_satisfied = _np_con_count_satisfied(con_values)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert n_satisfied == 2
 
 
 def test_np_con_count_satisfied_empty():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     con_values = np.zeros((0, 2), dtype=np.int32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     n_satisfied = _np_con_count_satisfied(con_values)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert n_satisfied == 0

@@ -12,31 +12,31 @@ from max_div._core.metrics._distance._build._common import BUILD_BLOCK_WIDTH
 )  # below one block / exact block multiples / uneven
 def test_condensed_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatch, metric: DistanceMetric, n: int):
     """The parallel condensed build produces exactly the sequential build's values."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(7)
     vectors = rng.random((n, 7), dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     monkeypatch.setenv("MAXDIV_PARALLEL_BUILD", "1")
     parallel = compute_pdist(vectors, metric)
     monkeypatch.setenv("MAXDIV_PARALLEL_BUILD", "0")
     sequential = compute_pdist(vectors, metric)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(parallel, sequential)
 
 
 @pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_condensed_build_fills_a_supplied_buffer(metric: DistanceMetric):
     """A supplied buffer is filled and returned, holding what a freshly allocated one would."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.random.default_rng(11).random((20, 4), dtype=np.float32)
     buffer = np.full((20 * 19) // 2, 7.0, dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     filled = compute_pdist(vectors, metric, out=buffer)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert filled is buffer
     assert np.array_equal(filled, compute_pdist(vectors, metric))
 
@@ -44,13 +44,13 @@ def test_condensed_build_fills_a_supplied_buffer(metric: DistanceMetric):
 @pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_condensed_build_accepts_read_only_vectors(metric: DistanceMetric):
     """Vectors held read-only — as a DistanceStore holds them — are a valid input."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.ascontiguousarray(np.random.default_rng(13).random((16, 3), dtype=np.float32))
     read_only = vectors.view()
     read_only.flags.writeable = False
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     from_read_only = compute_pdist(read_only, metric)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(from_read_only, compute_pdist(vectors, metric))

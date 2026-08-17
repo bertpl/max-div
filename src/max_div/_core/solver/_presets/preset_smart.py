@@ -11,14 +11,14 @@ def get_preset_strategies_smart(
     target_duration: TargetDuration,
     thorough: bool = False,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
-    # --- initialization ----------------------------------
+    # --- initialization -------------------------
     # The greedy farthest-point construction reaches competitor-level quality far sooner than a
     # random start; sampling each pick among the top_k highest contributions keeps that quality
     # while letting different seeds have sufficient differentiating impact on initialization, so
     # the workers of a best-of-N portfolio perform a sufficiently broad, differentiated search.
     init_strategy = InitFarthestPoint(top_k=8)
 
-    # --- optimization steps ------------------------------
+    # --- optimization steps ---------------------
     if thorough:
         # THOROUGH preset
         n_max = 64
@@ -42,5 +42,5 @@ def get_preset_strategies_smart(
         )
     ]
 
-    # --- done --------------------------------------------
+    # --- done -----------------------------------
     return init_strategy, optim_steps

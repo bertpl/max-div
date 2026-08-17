@@ -8,7 +8,7 @@ from max_div._core.solver import SolverPreset, TargetTimeDuration
 
 
 def test_result_to_from_json():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     params = SolverPresetBenchmarkParams(
         preset=SolverPreset.RANDOM,
         problem_name="U1",
@@ -18,12 +18,12 @@ def test_result_to_from_json():
     )
     result = _execute_single_run(params)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     json_str_1 = results_to_json([result])
     results_loaded = results_from_json(json_str_1)
     json_str_2 = results_to_json(results_loaded)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(results_loaded, list)
     assert len(results_loaded) == 1
     assert isinstance(results_loaded[0], SolverPresetBenchmarkResult)
@@ -39,7 +39,7 @@ def test_result_to_from_json():
 
 def test_params_parallel_fields():
     """n_workers drives the parallel flag and the results-column label."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     serial = SolverPresetBenchmarkParams(
         preset=SolverPreset.SMART,
         problem_name="U1",
@@ -56,7 +56,7 @@ def test_params_parallel_fields():
         n_workers=8,
     )
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert not serial.is_parallel
     assert serial.column_label() == "SMART"
     assert parallel.is_parallel

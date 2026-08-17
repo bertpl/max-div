@@ -31,10 +31,10 @@ _EXPECTED_INIT: dict[SolverPreset, type[InitializationStrategy]] = {
 def test_get_preset_strategies(preset: SolverPreset, target_duration: TargetDuration):
     """Each preset yields its expected init strategy, at least one optim step, and the requested duration."""
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     init_strat, optim_steps = get_preset_strategies(preset, target_duration)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(init_strat, _EXPECTED_INIT[preset.resolve_alias()])
     assert len(optim_steps) > 0  # at least 1 optimization step
     assert optim_steps[0]._duration == target_duration  # should be as requested
@@ -43,10 +43,10 @@ def test_get_preset_strategies(preset: SolverPreset, target_duration: TargetDura
 def test_get_preset_strategies_invalid_preset():
     """Test that an invalid preset raises a ValueError."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     invalid_preset = Mock(resolve_alias=lambda: "INVALID")
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError):
         get_preset_strategies(invalid_preset, seconds(1))
 

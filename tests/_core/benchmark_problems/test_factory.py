@@ -12,10 +12,10 @@ def test_benchmark_problem_factory_show_all():
 
 
 def test_benchmark_problem_factory_get_all_benchmark_problems():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problems_dict = BenchmarkProblemFactory.get_all_benchmark_problems()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(problems_dict, dict)
     assert len(problems_dict) == 8  # number of built-in problems; adjust number as we add more
     assert all(isinstance(name, str) for name in problems_dict)
@@ -28,20 +28,20 @@ def test_benchmark_problem_factory_get_all_benchmark_problems():
 
 @pytest.mark.parametrize("name", ALL_PROBLEM_NAMES)
 def test_benchmark_problem_factory_create_problem(name: str):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem_instance = BenchmarkProblemFactory.construct_problem(
         name, n=100, diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(problem_instance, MaxDivProblem)
 
 
 def test_benchmark_problem_factory_create_problem_invalid_name():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     invalid_name = "NonExistentBenchmarkProblem"
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="not registered"):
         BenchmarkProblemFactory.construct_problem(invalid_name, n=100, diversity_metric=DiversityMetric.MIN_SEPARATION)
 
@@ -60,7 +60,7 @@ def test_benchmark_problem_factory_rejects_n_below_minimum(name: str, n: int):
 @pytest.mark.parametrize("n", [20, 37, 100, 137, 314])
 def test_benchmark_problem_factory_get_problem_dimensions(name: str, n: int):
     """The dimensions report matches the constructed problem at round and odd n alike."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = BenchmarkProblemFactory.construct_problem(
         name,
         n=n,
@@ -68,7 +68,7 @@ def test_benchmark_problem_factory_get_problem_dimensions(name: str, n: int):
     )
     d, n_reported, k, m, n_con_indices = BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert problem.d == d
     assert problem.n == n_reported == n
     assert problem.k == k

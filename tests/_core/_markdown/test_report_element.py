@@ -18,13 +18,13 @@ from max_div._core._markdown import ReportHeader, ReportText, h1, h2, h3, h4, te
     ],
 )
 def test_report_text(txt: str, markdown: bool, expected_lines: list[str]):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     report_text = ReportText(txt)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     lines = report_text.render(markdown=markdown)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(lines, list)
     assert len(lines) == len(expected_lines)
     for line, expected_line in zip(lines, expected_lines):
@@ -32,10 +32,10 @@ def test_report_text(txt: str, markdown: bool, expected_lines: list[str]):
 
 
 def test_report_text_alias():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     report_text = text("test")
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(report_text, ReportText)
     assert report_text.txt == "test"
 
@@ -60,13 +60,13 @@ def test_report_text_alias():
     ],
 )
 def test_report_header(txt: str, level: int, markdown: bool, expected_lines: list[str]):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     report_header = ReportHeader(txt, level=level)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     lines = report_header.render(markdown=markdown)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(lines, list)
     assert len(lines) == len(expected_lines)
     for line, expected_line in zip(lines, expected_lines):
@@ -74,13 +74,13 @@ def test_report_header(txt: str, level: int, markdown: bool, expected_lines: lis
 
 
 def test_report_header_aliases():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     h1_element = h1("Header 1")
     h2_element = h2("Header 2")
     h3_element = h3("Header 3")
     h4_element = h4("Header 4")
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(h1_element, ReportHeader)
     assert h1_element.txt == "Header 1"
     assert h1_element.level == 1

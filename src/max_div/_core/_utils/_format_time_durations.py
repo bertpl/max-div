@@ -26,7 +26,7 @@ def format_long_time_duration(dt_sec: float, n_chars: int = 10) -> str:
 
     The max lengths of the resulting string (n_chars) will always be exactly matched if n_chars>=5 and dt_sec<100d.
     """
-    # --- main loop ---------------------------------------
+    # --- main loop ------------------------------
     result = ""
     for precision in ["d", "h", "m", "s", "s.s", "s.ss"]:
         # choose representation with the highest precision with length <= n_chars
@@ -34,7 +34,7 @@ def format_long_time_duration(dt_sec: float, n_chars: int = 10) -> str:
         if (result == "") or (len(cand) <= n_chars):
             result = cand
 
-    # --- final result ------------------------------------
+    # --- final result ---------------------------
     return result.rjust(n_chars)  # pad with spaces on the left, if too short
 
 
@@ -61,7 +61,7 @@ def format_short_time_duration(
         spaced: (bool) If True, a space is added between the number and the unit.
         long_units: (bool) If True, long unit names are used (e.g. "nsec" instead of "ns").
     """
-    # --- styling heuristics ------------------------------
+    # --- styling heuristics ---------------------
     if right_aligned is None:
         right_aligned = n_chars > 6
     if spaced is None:
@@ -69,7 +69,7 @@ def format_short_time_duration(
     if long_units is None:
         long_units = n_chars > 10
 
-    # --- main loop ---------------------------------------
+    # --- main loop ------------------------------
     result = ""
     for n_digits in range(n_chars - 2):
         # choose representation with largest n_digits with length <= n_chars
@@ -77,7 +77,7 @@ def format_short_time_duration(
         if (result == "") or (len(cand) <= n_chars):
             result = cand
 
-    # --- final result ------------------------------------
+    # --- final result ---------------------------
     return result.rjust(n_chars)  # pad with spaces on the left, if too short
 
 
@@ -87,7 +87,7 @@ def format_short_time_duration(
 def _format_long_time_duration_to_spec(  # noqa: C901 — case-dispatch structure is clearer un-split
     dt_sec: float, precision: str
 ) -> str:
-    # --- rounding ----------------------------------------
+    # --- rounding -------------------------------
     match precision:
         case "d":
             round_to = 60 * 60 * 24
@@ -103,12 +103,12 @@ def _format_long_time_duration_to_spec(  # noqa: C901 — case-dispatch structur
             round_to = 0.01
     dt_sec = round_to * round(dt_sec / round_to) * (1 + HALF_EPS)  # avoid rounding issues
 
-    # --- split in components -----------------------------
+    # --- split in components --------------------
     rem_m, s = divmod(dt_sec, 60)
     rem_h, m = divmod(rem_m, 60)
     d, h = divmod(rem_h, 24)
 
-    # --- construct string-valued components --------------
+    # --- construct string-valued components -----
     d, h, m = int(d), int(h), int(m)  # convert to int where appropriate
     match precision:
         case "d":
@@ -128,7 +128,7 @@ def _format_long_time_duration_to_spec(  # noqa: C901 — case-dispatch structur
     while (len(components) > 1) and components[0].startswith("0"):
         components.pop(0)
 
-    # --- build final result ------------------------------
+    # --- build final result ---------------------
     return "".join(components)
 
 
@@ -147,7 +147,7 @@ def _format_short_time_duration_to_spec(
     Returns:
         string representation of the time duration.
     """
-    # --- init --------------------------------------------
+    # --- init -----------------------------------
     if long_units:
         c_and_unit = [
             (1.0, "sec " if right_aligned else "s"),
@@ -163,7 +163,7 @@ def _format_short_time_duration_to_spec(
             (1e9, "ns"),
         ]
 
-    # --- main loop ---------------------------------------
+    # --- main loop ------------------------------
     value_str, unit_str = "", ""
     for c, unit in c_and_unit:
         value = round(dt_sec * c, ndigits=n_digits)
@@ -171,7 +171,7 @@ def _format_short_time_duration_to_spec(
             unit_str = unit
             value_str = f"{value:.{n_digits}f}".lstrip() if n_digits > 0 else str(int(value))
 
-    # --- final result ------------------------------------
+    # --- final result ---------------------------
     if spaced:
         return f"{value_str} {unit_str}"
     return f"{value_str}{unit_str}"

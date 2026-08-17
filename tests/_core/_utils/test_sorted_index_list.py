@@ -26,13 +26,13 @@ def _buffer(values: list[int], slack: int = CAPACITY_SLACK) -> np.ndarray:
     ],
 )
 def test_move_within(dest_offset: int, src_offset: int, count: int, expected: list[int]):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     buffer = _buffer([10, 20, 30, 40], slack=1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     move_within(buffer, dest_offset, src_offset, count)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert list(buffer) == expected
 
 
@@ -51,13 +51,13 @@ def test_move_within(dest_offset: int, src_offset: int, count: int, expected: li
     ],
 )
 def test_insert_sorted(values: list[int], value: int, expected: list[int]):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     buffer = _buffer(values)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     insert_sorted(buffer, np.int32(len(values)), np.int32(value))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert list(buffer[: len(expected)]) == expected
 
 
@@ -74,13 +74,13 @@ def test_insert_sorted(values: list[int], value: int, expected: list[int]):
     ],
 )
 def test_delete_sorted(values: list[int], value: int, expected: list[int]):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     buffer = _buffer(values)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     delete_sorted(buffer, np.int32(len(values)), np.int32(value))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert list(buffer[: len(expected)]) == expected
 
 
@@ -89,33 +89,33 @@ def test_delete_sorted(values: list[int], value: int, expected: list[int]):
 # =================================================================================================
 def test_insert_then_delete_restores_the_list():
     """Inserting a value and deleting it again leaves the list as it was, at every position."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(0)
     original = np.sort(rng.choice(1_000, 200, replace=False)).astype(np.int32)
 
     for value in rng.choice(np.setdiff1d(np.arange(1_000), original), 25, replace=False):
         buffer = _buffer(list(original))
 
-        # --- act -----------------------------------------
+        # --- act ----------------------
         insert_sorted(buffer, np.int32(len(original)), np.int32(value))
         after_insert = buffer[: len(original) + 1].copy()
         delete_sorted(buffer, np.int32(len(original) + 1), np.int32(value))
 
-        # --- assert --------------------------------------
+        # --- assert -------------------
         assert list(after_insert) == sorted([*original.tolist(), int(value)])
         assert list(buffer[: len(original)]) == original.tolist()
 
 
 def test_the_list_stays_ascending_under_many_mixed_operations():
     """A long run of interleaved inserts and deletes keeps the list ascending and correct."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(1)
     capacity = 500
     buffer = np.full(capacity + 1, -1, dtype=np.int32)
     n_live = 0
     reference: set[int] = set()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     for _ in range(2_000):
         if n_live and (n_live == capacity or rng.random() < 0.5):
             value = int(rng.choice(sorted(reference)))
@@ -130,5 +130,5 @@ def test_the_list_stays_ascending_under_many_mixed_operations():
             reference.add(value)
             n_live += 1
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert list(buffer[:n_live]) == sorted(reference)

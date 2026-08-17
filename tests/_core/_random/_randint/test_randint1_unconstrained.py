@@ -25,21 +25,21 @@ def test_randint1_argument_validation():
     rng_state = new_rng_state(42)
     p = P_UNIFORM
 
-    # --- n < 1 ------------------------------------------
+    # --- n < 1 ----------------------------------
     with pytest.raises(ValueError):
         randint1(n=np.int32(0), p=p, rng_state=rng_state)
 
     with pytest.raises(ValueError):
         randint1(n=np.int32(-10), p=p, rng_state=rng_state)
 
-    # --- sum(p)<=0.0 ------------------------------------
+    # --- sum(p)<=0.0 ----------------------------
     with pytest.raises(ValueError):
         randint1(n=np.int32(5), p=-np.zeros(5).astype(np.float32), rng_state=rng_state)
 
     with pytest.raises(ValueError):
         randint1(n=np.int32(5), p=-np.ones(5).astype(np.float32), rng_state=rng_state)
 
-    # --- p invalid shape --------------------------------
+    # --- p invalid shape ------------------------
     with pytest.raises(ValueError):
         randint1(n=np.int32(10), p=np.array([0.1, 0.9], dtype=np.float32), rng_state=rng_state)  # wrong size
 
@@ -54,23 +54,23 @@ def test_randint1_argument_validation():
 @pytest.mark.parametrize("n", [1, 10, 100, 1000, 10000])
 @pytest.mark.parametrize("uniform", [False, True])
 def test_randint1_invariants(n: int, uniform: bool):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = P_UNIFORM if uniform else get_probabilities(n)
     rng_state = new_rng_state(42)
     n_repeats = 1000
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     all_values = set()
     for _ in range(n_repeats):
-        # --- arrange -----------------------------------------
+        # --- arrange ------------------
         p_before = p.copy()
         rng_state_before = rng_state.copy()
 
-        # --- act ---------------------------------------------
+        # --- act ----------------------
         sample = randint1(n=np.int32(n), p=p, rng_state=rng_state)
         all_values.add(sample)
 
-        # --- assert ------------------------------------------
+        # --- assert -------------------
         assert isinstance(
             sample, numbers.Integral
         )  # numba converts int32 -> int when called from plain Python function
@@ -78,7 +78,7 @@ def test_randint1_invariants(n: int, uniform: bool):
         assert np.array_equal(p, p_before), "p array should never be modified."
         assert not np.array_equal(rng_state, rng_state_before), "rng_state should be modified."
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(all_values) >= 0.5 * min(n, n_repeats)  # at least half of possible values were sampled
 
 
@@ -95,19 +95,19 @@ def test_randint1_invariants(n: int, uniform: bool):
 )
 @pytest.mark.parametrize("uniform", [False, True])
 def test_randint1_uniform_rng_state(n: int, k: int, uniform: bool):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = P_UNIFORM if uniform else get_probabilities(n)
     p_before = p.copy()  # copy for later comparison
     rng_state_1 = new_rng_state(42)
     rng_state_2 = new_rng_state(42)
     rng_state_3 = new_rng_state(123456)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples_1 = [randint1(np.int32(n), p=p, rng_state=rng_state_1) for _ in range(k)]
     samples_2 = [randint1(np.int32(n), p=p, rng_state=rng_state_2) for _ in range(k)]
     samples_3 = [randint1(np.int32(n), p=p, rng_state=rng_state_3) for _ in range(k)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # check rng_state modifications
     assert not np.array_equal(rng_state_1, new_rng_state(42))
@@ -133,7 +133,7 @@ def test_randint1_uniform_rng_state(n: int, k: int, uniform: bool):
 @pytest.mark.parametrize("factor", [2.0, 5.0, 10.0, 100.0, 1000.0, 0.0])
 @pytest.mark.parametrize("sum_of_p", [1.0, 0.1, 10.0])
 def test_randint1_non_uniform_probs(factor: float, sum_of_p: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 10000
     k = 1000
     p = get_probabilities(n)
@@ -145,10 +145,10 @@ def test_randint1_non_uniform_probs(factor: float, sum_of_p: float):
     p_before = p.copy()  # copy for later comparison
     rng_state = new_rng_state(42)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = [randint1(n=np.int32(n), p=p, rng_state=rng_state) for _ in range(k)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all(p[i] > 0 for i in samples)
     assert np.array_equal(p, p_before), "p array should never be modified."

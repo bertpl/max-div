@@ -75,22 +75,22 @@ class MaxDivSolverBuilder(SolverBuilderBase):
                 --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
             preset: Preset to use (default: SolverPreset.DEFAULT)
         """
-        # --- apply main preset logic -----------
+        # --- apply main preset logic ------------
         init_strategy, optim_steps = get_preset_strategies(
             preset=preset,
             target_duration=target_duration,
         )
 
-        # --- configure solver steps ------------
+        # --- configure solver steps -------------
         self._solver_steps = [
             InitializationStep(init_strategy),
             *optim_steps,
         ]
 
-        # --- diversity tie-breakers ---
+        # --- diversity tie-breakers -------------
         self.with_default_diversity_tie_breakers()
 
-        # --- we're done ---
+        # --- we're done -------------------------
         return self
 
     # -------------------------------------------------------------------------

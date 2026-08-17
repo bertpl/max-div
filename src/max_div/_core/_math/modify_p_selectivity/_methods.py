@@ -20,7 +20,7 @@ from max_div._core._math.fast_pow import fast_pow_f32
 @njit("void(float32[::1])", fastmath=True, inline="always", cache=True)
 def _uniform(p: NDArray[np.float32]) -> None:
     """Transform p in [0,1] in-place to uniform distribution (all values equal to 1.0)."""
-    # --- fill with 1.0 values ---
+    # --- fill with 1.0 values -------------------
     for i in range(p.size):
         p[i] = np.float32(1.0)
 
@@ -28,7 +28,7 @@ def _uniform(p: NDArray[np.float32]) -> None:
 @njit("void(float32[::1])", fastmath=True, inline="always", cache=True)
 def _max_selective(p: NDArray[np.float32]) -> None:
     """Transform p in [0,1] in-place to maximally selective distribution (all values equal to 0.0 or 1.0)."""
-    # --- fill with 1.0 or 0.0 ---
+    # --- fill with 1.0 or 0.0 -------------------
     for i in range(p.size):
         p[i] = np.float32(1.0) if (p[i] >= np.float32(1.0)) else np.float32(0.0)
 

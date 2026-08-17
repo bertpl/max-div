@@ -20,10 +20,10 @@ def get_preset_strategies_guided(
     Args:
         target_duration: (TargetDuration) The target duration to aim for.  (iteration- or time-based)
     """
-    # --- initialization ----------------------------------
+    # --- initialization -------------------------
     init_strategy = InitializationStrategy.random_one_shot(uniform=True, ignore_constraints=True)
 
-    # --- optimization strategy ---------------------------
+    # --- optimization strategy ------------------
     # RATIONALE: Benchmarks show that NARROW strategies result in the best diversity without sacrificing constraint
     #            satisfaction. However, where constraints cause very uneven spread of selected items or where
     #            the original distribution of items is very non-uniform, starting WIDE is expected to improve
@@ -41,5 +41,5 @@ def get_preset_strategies_guided(
         )
     ]
 
-    # --- return final result -----------------------------
+    # --- return final result --------------------
     return init_strategy, optim_steps

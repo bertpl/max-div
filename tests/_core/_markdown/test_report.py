@@ -5,7 +5,7 @@ from max_div._core._markdown import Report, h1, h2, text
 
 
 def test_report():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     report = Report()
     report.add(h1("Main Title about `code`"))
     report.add(h2("Subtitle"))
@@ -15,7 +15,7 @@ def test_report():
     report += ["Line 5.", "Line 6."]
     report += ["", "", ""]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     md_report = report.render(markdown=True)
     txt_report = report.render(markdown=False)
 
@@ -31,7 +31,7 @@ def test_report():
         report.print(markdown=False)
     txt_print_output = txt_print_buffer.getvalue().splitlines()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert md_report == [
         "# Main Title about `code`",
         "",

@@ -12,13 +12,13 @@ from tests.helpers import swept_benchmark_problems
 #  benchmark solver
 # =================================================================================================
 def test_cli_benchmark_solver_list_problems():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     runner = CliRunner()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = runner.invoke(benchmark, ["solver", "list_problems"])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.exit_code == 0
 
 
@@ -33,14 +33,14 @@ def test_cli_benchmark_solver_list_problems():
 )
 def test_cli_benchmark_solver_feasibility(options: list[str], tmp_path, monkeypatch):
     """The feasibility subcommand succeeds in every output mode."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     monkeypatch.chdir(tmp_path)
     runner = CliRunner()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = runner.invoke(benchmark, ["solver", "feasibility", "--problem=C1", *options])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.exit_code == 0
 
 
@@ -56,14 +56,14 @@ def test_cli_benchmark_solver_feasibility(options: list[str], tmp_path, monkeypa
 )
 @pytest.mark.parametrize("test_problem", [*swept_benchmark_problems(), "all"])
 def test_cli_benchmark_solver_strategies(options: list[str], test_problem: str):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     runner = CliRunner()
     options.append(f"--problem={test_problem}")
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = runner.invoke(benchmark, ["solver", "strategies", *options])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.exit_code == 0
 
 
@@ -82,15 +82,15 @@ def test_cli_benchmark_solver_strategies(options: list[str], test_problem: str):
 )
 @pytest.mark.parametrize("test_problem", [*swept_benchmark_problems(), "all"])
 def test_cli_benchmark_solver_presets(options: list[str], test_problem: str):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     runner = CliRunner()
     options.append(f"--problem={test_problem}")
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with runner.isolated_filesystem():
         result = runner.invoke(benchmark, ["solver", "presets", *options])
 
-        # --- assert ------------------------------------------
+        # --- assert -------------------
         assert result.exit_code == 0
 
 
@@ -98,12 +98,12 @@ def test_cli_benchmark_solver_presets(options: list[str], test_problem: str):
 #  Helpers
 # =================================================================================================
 def test_cli_benchmark_solver_preset_resolve_problems():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     all_supported_problems = BenchmarkProblemFactory.get_all_benchmark_names()
     problem_1 = all_supported_problems[0]
     problem_2 = all_supported_problems[1]
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     for problem in all_supported_problems:
         assert resolve_problems(problem) == [problem]
 
@@ -115,13 +115,13 @@ def test_cli_benchmark_solver_preset_resolve_problems():
 
 
 def test_cli_benchmark_solver_preset_resolve_presets():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     all_presets: list[SolverPreset] = list(SolverPreset)
     all_presets_except_default = [p for p in all_presets if p != SolverPreset.DEFAULT]
     preset_1 = all_presets_except_default[0]
     preset_2 = all_presets_except_default[1]
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     for preset in all_presets_except_default:
         assert resolve_presets(preset.value) == [preset]
 

@@ -58,7 +58,7 @@ def fast_pow_f32(x: np.float32, t: np.float32) -> np.float32:
     #  Approximate log2(x)
     # ---------------------------------------------------------------
 
-    # --- extract mantissa & exponent ---------------------
+    # --- extract mantissa & exponent ------------
     # exponent
     xi = np.int32(np.float32(x).view(np.int32))
     exponent = ((xi >> 23) & 0xFF) - 126
@@ -66,7 +66,7 @@ def fast_pow_f32(x: np.float32, t: np.float32) -> np.float32:
     xi = (xi & 0x007FFFFF) | 0x3F000000
     m = np.int32(xi).view(np.float32)
 
-    # --- polynomial approximation ------------------------
+    # --- polynomial approximation ---------------
     log2_mantissa = _S_L0 + m * (_S_L1 + m * _S_L2)
 
     # compute log2(x) = exponent + log2(mantissa)
@@ -81,12 +81,12 @@ def fast_pow_f32(x: np.float32, t: np.float32) -> np.float32:
     #  Approximate exp2(y)
     # ---------------------------------------------------------------
 
-    # --- split y in int + fraction -----------------------
+    # --- split y in int + fraction --------------
     k = np.floor(y)  # float32
     f = y - k  # fraction f is in [0, 1)
 
-    # --- polynomial approximation ------------------------
+    # --- polynomial approximation ---------------
     exp2_f = _S_E0 + f * (_S_E1 + f * _S_E2)
 
-    # --- combine parts -----------------------------------
+    # --- combine parts --------------------------
     return exp2_f * power_of_2_f32(np.int32(k))

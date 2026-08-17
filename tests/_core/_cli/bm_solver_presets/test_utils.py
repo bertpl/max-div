@@ -30,27 +30,27 @@ def _params(duration_sec: float, n_workers: int = 1) -> SolverPresetBenchmarkPar
 # =================================================================================================
 def test_estimate_execution_time_sec_single():
     """A parallel run carries extra spawn overhead on top of the shared O(n^2) build overhead."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     est_single = estimate_execution_time_sec_single(_params(10.0))
     est_parallel = estimate_execution_time_sec_single(_params(10.0, n_workers=4))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert est_single > 10.0
     assert est_parallel > est_single
 
 
 def test_estimate_execution_time_sec_multi_packs_singles_but_not_parallels():
     """Single-worker runs share the pool; parallel runs add up serially."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     singles = [_params(10.0) for _ in range(64)]
     parallels = [_params(10.0, n_workers=4) for _ in range(4)]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     est_singles = estimate_execution_time_sec_multi(singles)
     est_parallels = estimate_execution_time_sec_multi(parallels)
     est_all = estimate_execution_time_sec_multi(singles + parallels)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     sum_singles = sum(estimate_execution_time_sec_single(p) for p in singles)
     sum_parallels = sum(estimate_execution_time_sec_single(p) for p in parallels)
     assert est_singles < sum_singles  # packed onto the pool
@@ -60,13 +60,13 @@ def test_estimate_execution_time_sec_multi_packs_singles_but_not_parallels():
 
 def test_get_pbar_units():
     """Progress-bar units follow the estimated run time, never dropping below one."""
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert get_pbar_units(_params(10.0)) >= 10
     assert get_pbar_units(_params(0.001)) == 1  # never below one unit
 
 
 def test_get_n_processes():
     """The process count is capped by the scope size and stays at least one."""
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert get_n_processes(1) == 1
     assert get_n_processes(10_000) >= 1

@@ -2,7 +2,7 @@ from max_div._core._markdown import Table, TableAggregationType, TablePercentage
 
 
 def test_table():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     table = Table(headers=["Name", "Age", "City"])
     table.add_row(["Alice", "30", "New York\n(US)"])
     table.add_row(["Bob", "25", "Los Angeles\n(US)"])
@@ -11,11 +11,11 @@ def test_table():
     table.layout(0, 2).bold = True  # make "New York (US)" bold
     table.layout(1, 0).italic = True  # make "Bob" italic
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     md_lines = table.render(markdown=True)
     txt_lines = table.render(markdown=False)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert table.n_rows() == 4
     assert table.n_cols() == 3
 
@@ -45,16 +45,16 @@ def test_table():
 
 
 def test_table_add_aggregate_row():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     table = Table(headers=["Name", "Score (%)", "Time"])
     table.add_row(["Alice", TablePercentage(0.95, 1), TableTimeElapsed(950, 1000, 1050)])
     table.add_row(["Bob", TablePercentage(0.751, 1), TableTimeElapsed(450, 500, 550)])
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table.add_aggregate_row(agg_type=TableAggregationType.MEAN, restrict_to_types=[TablePercentage])
     md_lines = table.render(markdown=True)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert table.n_cols() == 3  # 3 columns as specified during construction
     assert table.n_rows() == 3  # 2 data rows + 1 aggregate row
 
@@ -70,7 +70,7 @@ def test_table_add_aggregate_row():
 
 
 def test_table_highlight_results():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     table = Table(headers=["Period", "Ellie", "Tony", "Ziva"])
     table.add_row(["(Effort)", "Strong", "Mediocre", "Strong"])
     table.add_row(["Period 1", TablePercentage(0.95), TablePercentage(0.70), TablePercentage(0.95001)])
@@ -79,7 +79,7 @@ def test_table_highlight_results():
     table.add_row(["Period 4", "-", "-", TablePercentage(0.93)])
     table.add_aggregate_row(agg_type=TableAggregationType.MEAN, restrict_to_types=[TablePercentage])
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table.highlight_results(
         element_type=TablePercentage,
         clr_lowest=Table.RED,
@@ -88,7 +88,7 @@ def test_table_highlight_results():
     )
     md_lines = table.render(markdown=True)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert md_lines == [
         "",
         "| Period    | Ellie                                         | Tony                                          | Ziva                                         |",

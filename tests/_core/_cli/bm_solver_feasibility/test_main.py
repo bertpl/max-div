@@ -31,10 +31,10 @@ def _result(status: FeasibilityStatus, bound: float = 0.0) -> FeasibilityResult:
 
 def test_constrained_problem_names_selects_exactly_the_problems_with_constraints():
     """The name list is derived from each problem's constraint count, not hard-coded."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     names = _constrained_problem_names()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     smallest = min(VERDICT_SIZES)
     for name in BenchmarkProblemFactory.get_all_benchmark_names():
         m = BenchmarkProblemFactory.get_problem_dimensions(name, smallest)[3]
@@ -57,11 +57,11 @@ def test_verdict_cell(status: FeasibilityStatus, expected_fragment: str):
 
 def test_ceiling_cell_per_status():
     """Feasible rows state the exact 1.0, unknown rows show a dash, infeasible rows state the ceiling."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     constraints = [Constraint(int_set={0, 1, 2, 3}, min_count=4, max_count=4)]
     problem = MaxDivProblem.new(np.random.default_rng(0).random((10, 2)), k=4, constraints=constraints)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert _ceiling_cell(problem, _result(FeasibilityStatus.FEASIBLE)) == "1.0"
     assert _ceiling_cell(problem, _result(FeasibilityStatus.UNKNOWN)) == "-"
     # worst case for this constraint is a violation of 4 (empty intersection at minimal selection),
@@ -71,13 +71,13 @@ def test_ceiling_cell_per_status():
 
 def test_build_report_renders_one_row_per_size():
     """The report table carries the problem dimensions and a verdict for every requested size."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     sizes = VERDICT_SIZES[:2]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     lines = _build_report("C1", sizes, max_iter=50).render(markdown=True)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     table_rows = [line for line in lines if line.startswith("|")]
     assert len(table_rows) == 2 + len(sizes)  # header + separator + one row per size
     for n in sizes:
@@ -86,13 +86,13 @@ def test_build_report_renders_one_row_per_size():
 
 def test_run_writes_one_file_per_problem(tmp_path, monkeypatch):
     """File mode writes one markdown verdict file per constrained problem."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     monkeypatch.chdir(tmp_path)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     run_solver_feasibility_benchmark(name="all", markdown=False, file=True, turbo=True)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     for name in _constrained_problem_names():
         content = (tmp_path / f"feasibility_verdicts_{name}.md").read_text()
         assert content.count("\n|") >= 2 + TURBO_N_SIZES

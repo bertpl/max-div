@@ -14,7 +14,7 @@ from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMa
 
 
 def test_problem_properties():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = VectorMaxDivProblem(
         vectors=np.ones((13, 7), dtype=np.float32),
         k=5,
@@ -23,12 +23,12 @@ def test_problem_properties():
         constraints=[],
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     n = problem.n
     d = problem.d
     m = problem.m
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert n == 13
     assert d == 7
     assert m == 0
@@ -36,7 +36,7 @@ def test_problem_properties():
 
 @pytest.mark.parametrize("con_type", ["list[Constraint]", "None"])
 def test_problem_new_happy_path(con_type: str):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     if con_type == "list[Constraint]":
         constraints = [
             Constraint(int_set={1, 2, 3}, min_count=1, max_count=2),
@@ -45,7 +45,7 @@ def test_problem_new_happy_path(con_type: str):
     else:
         constraints = None
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = MaxDivProblem.new(
         vectors=np.ones((13, 7), dtype=np.float64),
         k=5,
@@ -54,7 +54,7 @@ def test_problem_new_happy_path(con_type: str):
         constraints=constraints,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert problem.vectors.dtype == np.float32
     assert np.array_equal(problem.vectors, np.ones((13, 7), dtype=np.float64))
     assert problem.k == 5
@@ -82,10 +82,10 @@ def test_problem_new_happy_path(con_type: str):
     ],
 )
 def test_problem_new_value_error(ndims: int, n: int, d: int, k: int):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.ones(100, dtype=np.float64) if ndims == 1 else np.ones((n, d), dtype=np.float64)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError):
         _ = MaxDivProblem.new(vectors, k)
 
@@ -93,11 +93,11 @@ def test_problem_new_value_error(ndims: int, n: int, d: int, k: int):
 def test_problem_new_cosine_zero_vector_raises():
     """COSINE problems reject all-zero vectors at construction time."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.ones((10, 3), dtype=np.float32)
     vectors[4, :] = 0.0
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match=r"zero vector.*row 4"):
         _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.COSINE)
 
@@ -105,14 +105,14 @@ def test_problem_new_cosine_zero_vector_raises():
 def test_problem_new_cosine_non_zero_vectors_ok():
     """COSINE problems accept vector sets without zero rows."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((10, 3)).astype(np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.COSINE)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert problem.distance_metric == DistanceMetric.COSINE
 
 
@@ -123,16 +123,16 @@ def test_problem_new_cosine_non_zero_vectors_ok():
 def test_problem_from_distances_happy_path(form: str):
     """from_distances accepts square and condensed input, keeping each in the format provided."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((10, 4)).astype(np.float32)
     condensed = compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN)
     distances = squareform(condensed) if form == "square" else condensed
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = MaxDivProblem.from_distances(distances, k=4)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(problem, DistanceMaxDivProblem)
     assert problem.n == 10
     assert problem.k == 4
@@ -144,11 +144,11 @@ def test_problem_from_distances_happy_path(form: str):
 def test_problem_from_distances_new_returns_vector_flavor():
     """The two factories return their respective flavors, both subtypes of MaxDivProblem."""
 
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     vector_problem = MaxDivProblem.new(np.ones((5, 2), dtype=np.float32), k=2)
     distance_problem = MaxDivProblem.from_distances(np.ones(10, dtype=np.float32), k=2)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(vector_problem, VectorMaxDivProblem)
     assert isinstance(distance_problem, DistanceMaxDivProblem)
     assert isinstance(vector_problem, MaxDivProblem)
@@ -158,13 +158,13 @@ def test_problem_from_distances_new_returns_vector_flavor():
 def test_problem_from_distances_condensed_distances_returns_input():
     """For distance-input problems, condensed_distances returns the validated input distances."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     condensed = np.arange(1, 11, dtype=np.float32)  # n=5
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = MaxDivProblem.from_distances(condensed, k=3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert problem.n == 5
     np.testing.assert_array_equal(problem.condensed_distances(), condensed)
 
@@ -201,7 +201,7 @@ def _mutated_square_symmetric(i: int, j: int, value: float) -> np.ndarray:
 def test_problem_from_distances_value_error(case: str, distances: np.ndarray, k: int):
     """from_distances rejects malformed distance input with a ValueError."""
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError):
         _ = MaxDivProblem.from_distances(distances, k=k)
 
@@ -218,15 +218,15 @@ def _reference_square() -> np.ndarray:
 def test_problem_from_distances_zero_copy_adoption(form: str):
     """Well-formed float32 C-contiguous input is adopted zero-copy, without any warning."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     distances = _reference_square() if form == "square" else np.arange(1, 11, dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with warnings.catch_warnings():
         warnings.simplefilter("error")  # any warning fails the test
         problem = MaxDivProblem.from_distances(distances, k=3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert problem.distances is distances
 
 
@@ -234,14 +234,14 @@ def test_problem_from_distances_zero_copy_adoption(form: str):
 def test_problem_distance_store_matches_input_format(form: str):
     """The as-given store wraps the retained input directly: square -> full matrix, 1D -> condensed."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     distances = _reference_square() if form == "square" else np.arange(1, 11, dtype=np.float32)
     problem = MaxDivProblem.from_distances(distances, k=3)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     store = problem.distance_store()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     if form == "square":
         assert store.kind == KIND_FULL_MATRIX
         assert np.shares_memory(store.matrix, problem.distances)
@@ -254,15 +254,15 @@ def test_problem_distance_store_matches_input_format(form: str):
 def test_problem_from_distances_asymmetric_repaired_with_warning():
     """Asymmetric square input is symmetrized in place by averaging, disclosed with delta figures."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     distances = _reference_square()
     distances[0, 1] = 1.5  # partner [1, 0] stays 1.0 -> mean 1.25
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with pytest.warns(DistanceInputWarning, match=r"max \|delta\| = 5\.000e-01"):
         problem = MaxDivProblem.from_distances(distances, k=3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert problem.distances is distances  # zero-copy adoption, hence in-place repair
     assert distances[0, 1] == distances[1, 0] == np.float32(1.25)
     np.testing.assert_array_equal(distances, distances.T)
@@ -271,16 +271,16 @@ def test_problem_from_distances_asymmetric_repaired_with_warning():
 def test_problem_from_distances_conversion_copy_warns_and_leaves_input_untouched():
     """Input needing a dtype cast warns about the conversion copy; the user's array is not modified."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     distances = _reference_square().astype(np.float64)
     distances[0, 1] = 1.5  # asymmetric, so the repair must land in the cast copy only
     original = distances.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with pytest.warns(DistanceInputWarning, match="conversion copy"):
         problem = MaxDivProblem.from_distances(distances, k=3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(distances, original)  # user's array untouched
     assert problem.distances.dtype == np.float32
     assert problem.distances[0, 1] == problem.distances[1, 0] == np.float32(1.25)
@@ -289,25 +289,25 @@ def test_problem_from_distances_conversion_copy_warns_and_leaves_input_untouched
 def test_problem_from_distances_condensed_conversion_copy_warns():
     """A condensed vector needing a dtype cast warns about the conversion copy."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     distances = np.arange(1, 11, dtype=np.float64)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with pytest.warns(DistanceInputWarning, match="conversion copy"):
         problem = MaxDivProblem.from_distances(distances, k=3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert problem.distances.dtype == np.float32
 
 
 def test_problem_from_distances_condensed_negative_raises():
     """Negative values in condensed input are rejected, as for square input."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     distances = np.arange(1, 11, dtype=np.float32)
     distances[3] = -0.001
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="non-negative"):
         _ = MaxDivProblem.from_distances(distances, k=3)
 
@@ -315,11 +315,11 @@ def test_problem_from_distances_condensed_negative_raises():
 def test_problem_square_condensed_distances_extracts_upper_triangle():
     """condensed_distances() on a retained square matrix returns the exact condensed values."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     condensed = np.arange(1, 11, dtype=np.float32)
     problem = MaxDivProblem.from_distances(squareform(condensed), k=3)
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     np.testing.assert_array_equal(problem.condensed_distances(), condensed)
 
 
@@ -334,16 +334,16 @@ def _problem_with(constraints: list[Constraint], n: int = 20, k: int = 8) -> Max
 
 def test_check_feasibility_proves_a_satisfiable_problem_feasible():
     """A satisfiable problem comes back FEASIBLE, with a selection that satisfies every constraint."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     constraints = [
         Constraint(int_set=set(range(10)), min_count=3, max_count=3),
         Constraint(int_set=set(range(10, 20)), min_count=5, max_count=5),
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     report = _problem_with(constraints).check_feasibility()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert report.status is FeasibilityStatus.FEASIBLE
     assert report.violation == 0.0
     assert report.violation_floor == 0.0
@@ -353,13 +353,13 @@ def test_check_feasibility_proves_a_satisfiable_problem_feasible():
 
 def test_check_feasibility_proves_infeasibility_with_a_recheckable_certificate():
     """The multipliers returned must independently reproduce a positive dual value."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     constraints = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]  # every item a member, cap below k
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     report = _problem_with(constraints).check_feasibility(thorough=True)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert report.status is FeasibilityStatus.INFEASIBLE
     assert report.violation_floor > 0.0
 
@@ -375,29 +375,29 @@ def test_check_feasibility_proves_infeasibility_with_a_recheckable_certificate()
 
 def test_check_feasibility_thorough_tightens_the_floor():
     """The default stops at the first proof; searching harder tightens the bound it certifies."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = _problem_with([Constraint(int_set=set(range(20)), min_count=0, max_count=5)])
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     fast = problem.check_feasibility()
     thorough = problem.check_feasibility(thorough=True)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert fast.status is thorough.status is FeasibilityStatus.INFEASIBLE
     assert thorough.violation_floor > fast.violation_floor
 
 
 def test_check_feasibility_max_iter_sets_the_search_budget():
     """A larger budget tightens the certified floor; the default equals an explicit 2000."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = _problem_with([Constraint(int_set=set(range(20)), min_count=0, max_count=5)])
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     default = problem.check_feasibility(thorough=True)
     explicit = problem.check_feasibility(thorough=True, max_iter=2000)
     small = problem.check_feasibility(thorough=True, max_iter=10)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert default.violation_floor == explicit.violation_floor
     assert small.status is FeasibilityStatus.INFEASIBLE  # a proof survives even a tiny budget here
     assert small.violation_floor <= default.violation_floor
@@ -405,7 +405,7 @@ def test_check_feasibility_max_iter_sets_the_search_budget():
 
 def test_check_feasibility_reports_unknown_without_claiming_anything():
     """An instance with no certificate and no satisfying selection must not be reported as either proof."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # Two disjoint 5-cycles, each edge needing at least one of its two endpoints: no certificate
     # exists, and no selection of 5 items covers every edge.
     constraints = [
@@ -414,10 +414,10 @@ def test_check_feasibility_reports_unknown_without_claiming_anything():
         for i in range(5)
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     report = _problem_with(constraints, n=10, k=5).check_feasibility()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert report.status is FeasibilityStatus.UNKNOWN
     assert not report.is_certified
     assert report.violation_floor == 0.0
@@ -426,17 +426,17 @@ def test_check_feasibility_reports_unknown_without_claiming_anything():
 
 def test_check_feasibility_on_an_unconstrained_problem():
     """With no constraints every selection satisfies them all, so the verdict is feasible."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     report = _problem_with([]).check_feasibility()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert report.status is FeasibilityStatus.FEASIBLE
     assert report.violation_floor == 0.0
 
 
 def test_check_feasibility_thorough_changes_nothing_without_a_proof():
     """`thorough` only alters the post-proof search, so an unknown verdict is reached identically."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     constraints = [
         Constraint(int_set={cycle * 5 + i, cycle * 5 + (i + 1) % 5}, min_count=1, max_count=2)
         for cycle in range(2)
@@ -444,11 +444,11 @@ def test_check_feasibility_thorough_changes_nothing_without_a_proof():
     ]
     problem = _problem_with(constraints, n=10, k=5)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     fast = problem.check_feasibility()
     thorough = problem.check_feasibility(thorough=True)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert fast.status is thorough.status is FeasibilityStatus.UNKNOWN
     assert fast.violation == thorough.violation
     np.testing.assert_array_equal(fast.selection, thorough.selection)
@@ -456,16 +456,16 @@ def test_check_feasibility_thorough_changes_nothing_without_a_proof():
 
 def test_check_feasibility_reports_where_the_violation_sits():
     """The per-constraint profile describes the returned selection and reproduces its total."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     constraints = [
         Constraint(int_set=set(range(12)), min_count=9, max_count=12, weight=3.0),
         Constraint(int_set=set(range(8, 20)), min_count=9, max_count=12, weight=0.5),
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     report = _problem_with(constraints).check_feasibility(thorough=True)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     weights = np.array([con.weight for con in constraints])
     assert report.violation_per_constraint.shape[0] == len(constraints)
     assert float(weights @ report.violation_per_constraint) == pytest.approx(report.violation)

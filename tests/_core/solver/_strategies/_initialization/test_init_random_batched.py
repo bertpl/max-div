@@ -22,7 +22,7 @@ def test_init_random_batched_parameter_validation():
 @pytest.mark.parametrize("arg_ignore_constraints", [True, False])
 @pytest.mark.parametrize("arg_b", [2, 10, 100])
 def test_init_random_batched(problem_has_constraints: bool, arg_ignore_constraints: bool, arg_b: int):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     solver_state = new_solver_state(problem_has_constraints)
     strategy = InitializationStrategy.random_batched(
         b=np.int32(arg_b),
@@ -30,11 +30,11 @@ def test_init_random_batched(problem_has_constraints: bool, arg_ignore_constrain
     )
     init_step = InitializationStep(strategy)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     init_step.run(solver_state)
     score = solver_state.score
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert score.size == 1.0, "Selection size should be equal to k after initialization"
     if not arg_ignore_constraints:
         assert score.constraints == 1.0, "All constraints should be satisfied, if ignore_constraints=True"
@@ -54,8 +54,8 @@ def test_init_random_batched(problem_has_constraints: bool, arg_ignore_constrain
 def test_init_random_batched_name(kwargs: dict[str, Any], expected_name: str):
     """Test that the strategy name is generated as expected."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     optim_strategy = InitializationStrategy.random_batched(**kwargs)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert optim_strategy.name == expected_name

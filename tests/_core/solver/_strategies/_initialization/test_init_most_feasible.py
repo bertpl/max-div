@@ -56,14 +56,14 @@ UNKNOWN_CONS = [
 # =================================================================================================
 def test_most_feasible_starts_from_a_witness():
     """A satisfiable constrained problem is initialized with a selection meeting every constraint."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _state(FEASIBLE_CONS)
     strategy = InitializationStrategy.most_feasible()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     selection = strategy.get_next_samples(state, state.k)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(selection) == state.k
     assert len(set(selection.tolist())) == state.k
     assert _satisfies(selection, FEASIBLE_CONS)
@@ -72,14 +72,14 @@ def test_most_feasible_starts_from_a_witness():
 
 def test_most_feasible_starts_from_the_least_infeasible_selection_when_infeasibility_is_proven():
     """A certified-infeasible problem still yields a full selection, with the INFEASIBLE verdict recorded."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _state(INFEASIBLE_CONS)
     strategy = InitializationStrategy.most_feasible()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     selection = strategy.get_next_samples(state, state.k)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(selection) == state.k
     assert len(set(selection.tolist())) == state.k
     assert strategy.get_debug_info() == FeasibilityStatus.INFEASIBLE.name
@@ -87,14 +87,14 @@ def test_most_feasible_starts_from_the_least_infeasible_selection_when_infeasibi
 
 def test_most_feasible_still_starts_from_a_selection_on_unknown():
     """An inconclusive verdict still yields the least-violating selection the search reached."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _state(UNKNOWN_CONS, n=10, k=5)
     strategy = InitializationStrategy.most_feasible(max_iter=300)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     selection = strategy.get_next_samples(state, 5)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert strategy.get_debug_info() == FeasibilityStatus.UNKNOWN.name
     assert len(selection) == 5
     assert len(set(selection.tolist())) == 5
@@ -102,10 +102,10 @@ def test_most_feasible_still_starts_from_a_selection_on_unknown():
 
 def test_most_feasible_rejects_an_unconstrained_problem():
     """Every selection satisfies an empty constraint set, so the strategy refuses rather than guess."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = InitializationStrategy.most_feasible()
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="no constraints"):
         strategy.get_next_samples(_state([]), 8)
 
@@ -115,18 +115,18 @@ def test_most_feasible_rejects_an_unconstrained_problem():
 # =================================================================================================
 def test_most_feasible_rejects_a_max_iter_below_one():
     """A max_iter below 1 is rejected at construction."""
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="max_iter"):
         InitMostFeasible(max_iter=0)
 
 
 def test_most_feasible_needs_an_empty_state():
     """`get_next_samples` refuses a state that already holds a selection."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _state(FEASIBLE_CONS)
     state.add_many(np.array([0], dtype=np.int32))
     strategy = InitializationStrategy.most_feasible()
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(RuntimeError, match="empty state"):
         strategy.get_next_samples(state, state.k - 1)

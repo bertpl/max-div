@@ -56,7 +56,7 @@ def test_optim_guided_swaps(
     to see if we're optimizing.
     """
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
 
     # prepare problem & solver state
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
@@ -87,7 +87,7 @@ def test_optim_guided_swaps(
     initial_score = solver_state.score
     n_iterations = 100
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     optim_strategy.perform_n_iterations(
         state=solver_state,
         n_iters=n_iterations,
@@ -95,7 +95,7 @@ def test_optim_guided_swaps(
         progress_frac_per_iter=1e-6,  # dummy value
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(solver_state.selected_index_array) == problem.k, "Number of selected items should remain k."
     assert solver_state.score > initial_score, "We should be optimizing"
 
@@ -113,15 +113,15 @@ def test_optim_guided_swaps(
 def test_optim_guided_swaps_name(kwargs: dict[str, Any], expected_name: str):
     """Test that the strategy name is generated as expected."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     optim_strategy = OptimizationStrategy.guided_swaps(**kwargs)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert optim_strategy.name == expected_name
 
 
 def test_optim_guided_swaps_get_debug_info():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = OptimGuidedSwaps(
         min_swap_size=2,
         max_swap_size=5,
@@ -132,9 +132,9 @@ def test_optim_guided_swaps_get_debug_info():
         constraint_softness=0.23,
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     debug_info = strategy.get_debug_info()
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert (
         debug_info.strip() == "scs= 50.000% | λ_swap= 2.10 | sel_rem=-0.20 | sel_add= 0.60 | p_con= 0.40 | soft= 0.23"
     )

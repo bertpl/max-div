@@ -40,23 +40,23 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
     """
     print("Benchmarking `modify_p_selectivity`...")
 
-    # --- speed-dependent settings --------------------
+    # --- speed-dependent settings ---------------
     n_accuracy = round(1000.0 / (100.0**speed))  # 1000 when speed=0, 10 when speed=1
     max_size = round(100_000 / (1_000**speed))
     t_per_run = 0.01 / (1000.0**speed)
     n_warmup = int(8 - 6 * speed)
     n_benchmark = int(25 - 24 * speed)
 
-    # --- compute approximation errors ----------------
+    # --- compute approximation errors -----------
     # compute errors by method (by comparing exact power method vs other methods on calibration data)
     error_by_method = {method: compute_accuracy(method, n_accuracy) for method in MODIFY_P_METHODS}
 
-    # --- prepare random modifier values --------------
+    # --- prepare random modifier values ---------
     # Generate 100 random modifier values in (0.0, 1.0)
     np.random.seed(42)
     random_modifiers = np.random.uniform(0.0, 1.0, 100).astype(np.float32)
 
-    # --- benchmark ------------------------------------
+    # --- benchmark ------------------------------
     table = Table(headers=["size"] + [f"method={method}" for method in MODIFY_P_METHODS] + ["exponential"])
     sizes = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
     sizes = [size for size in sizes if size <= max_size]
@@ -110,9 +110,9 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
 
         table.add_row(table_row)
 
-    # --- show results -----------------------------------------
+    # --- show results ---------------------------
 
-    # --- create final report ---
+    # --- create final report --------------------
     table.add_aggregate_row(TableAggregationType.GEOMEAN)
     table.add_row(
         ["**e_approx:**"]
@@ -131,7 +131,7 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
         table,
     ]
 
-    # --- output ---
+    # --- output ---------------------------------
     with stdout_to_file(file, "benchmark_modify_p_selectivity.md"):
         report.print(markdown=markdown)
 

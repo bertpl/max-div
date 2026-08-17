@@ -19,32 +19,32 @@ def get_probabilities(n: int) -> NDArray[np.float32]:
 #  TEST - ARGUMENT VALIDATION
 # =================================================================================================
 def test_randint_python_argument_validation():
-    # --- n < 1 ------------------------------------------
+    # --- n < 1 ----------------------------------
     with pytest.raises(ValueError):
         randint_python(n=0, k=1, replace=True)
 
     with pytest.raises(ValueError):
         randint_python(n=-10, k=1, replace=True)
 
-    # --- k < 1 ------------------------------------------
+    # --- k < 1 ----------------------------------
     with pytest.raises(ValueError):
         randint_python(n=10, k=0, replace=True)
 
     with pytest.raises(ValueError):
         randint_python(n=10, k=-5, replace=True)
 
-    # --- k > n when replace=False -----------------------
+    # --- k > n when replace=False ---------------
     with pytest.raises(ValueError):
         randint_python(n=10, k=20, replace=False)
 
     with pytest.raises(ValueError):
         randint_python(n=100, k=101, replace=False)
 
-    # --- sum(p)==0.0 ------------------------------------
+    # --- sum(p)==0.0 ----------------------------
     with pytest.raises(ValueError):
         randint_python(n=5, k=2, replace=True, p=np.zeros(5).astype(np.float32))
 
-    # --- p invalid shape --------------------------------
+    # --- p invalid shape ------------------------
     with pytest.raises(ValueError):
         randint_python(n=10, k=5, replace=True, p=np.array([0.1, 0.9], dtype=np.float32))  # wrong size
 
@@ -78,13 +78,13 @@ def test_randint_python_argument_validation():
 )
 @pytest.mark.parametrize("p", [None, P_UNIFORM])
 def test_randint_python_uniform_with_replacement_invariants(p: np.ndarray | None, n: int, k: int | None):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     k_expected = k if k is not None else 1
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_python(n=n, k=k, replace=True, p=p)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k_expected,)
     assert samples.dtype == np.int32
@@ -92,10 +92,10 @@ def test_randint_python_uniform_with_replacement_invariants(p: np.ndarray | None
 
 
 def test_randint_python_uniform_with_replacement_duplicates():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_python(n=1000, k=900, replace=True)  # very unlikely all are unique
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(set(samples)) < 900  # there are duplicates, which is expected with replacement
 
 
@@ -117,17 +117,17 @@ def test_randint_python_uniform_with_replacement_duplicates():
 )
 @pytest.mark.parametrize("p", [None, P_UNIFORM])
 def test_randint_python_uniform_with_replacement_seed(p: np.ndarray | None, n: int, k: int | None):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     seed_1 = 42
     seed_2 = 42
     seed_3 = 123456
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples_1 = randint_python(n, k, replace=True, p=p, seed=seed_1)
     samples_2 = randint_python(n, k, replace=True, p=p, seed=seed_2)
     samples_3 = randint_python(n, k, replace=True, p=p, seed=seed_3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(samples_1, samples_2)
     if (k or 1) >= 10:
         # in this case, it's very unlikely that samples_3 matches samples_1 or samples_2
@@ -155,13 +155,13 @@ def test_randint_python_uniform_with_replacement_seed(p: np.ndarray | None, n: i
 )
 @pytest.mark.parametrize("p", [None, P_UNIFORM])
 def test_randint_python_uniform_without_replacement_invariants(p: np.ndarray | None, n: int, k: int | None):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     k_expected = k if k is not None else 1
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_python(n, k, replace=False, p=p)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k_expected,)
     assert samples.dtype == np.int32
@@ -186,17 +186,17 @@ def test_randint_python_uniform_without_replacement_invariants(p: np.ndarray | N
 )
 @pytest.mark.parametrize("p", [None, P_UNIFORM])
 def test_randint_python_uniform_without_replacement_seed(p: np.ndarray | None, n: int, k: int | None):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     seed_1 = 42
     seed_2 = 42
     seed_3 = 123456
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples_1 = randint_python(n, k, replace=False, p=p, seed=seed_1)
     samples_2 = randint_python(n, k, replace=False, p=p, seed=seed_2)
     samples_3 = randint_python(n, k, replace=False, p=p, seed=seed_3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(samples_1, samples_2)
     if (k or 1) >= 10:
         # in this case, it's very unlikely that samples_3 matches samples_1 or samples_2
@@ -224,15 +224,15 @@ def test_randint_python_uniform_without_replacement_seed(p: np.ndarray | None, n
     ],
 )
 def test_randint_python_non_uniform_with_replacement_invariants(n: int, k: int | None):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = get_probabilities(n)
     p_before = p.copy()  # copy for later comparison
     k_expected = k if k is not None else 1
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_python(n, k, replace=True, p=p)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k_expected,)
     assert samples.dtype == np.int32
@@ -241,14 +241,14 @@ def test_randint_python_non_uniform_with_replacement_invariants(n: int, k: int |
 
 
 def test_randint_python_non_uniform_with_replacement_duplicates():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = get_probabilities(1000)
     p_before = p.copy()  # copy for later comparison
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_python(n=1000, k=900, replace=True, p=p)  # very unlikely all are unique
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(set(samples)) < 900  # there are duplicates, which is expected with replacement
     assert np.array_equal(p, p_before), "p array should never be modified."
 
@@ -270,19 +270,19 @@ def test_randint_python_non_uniform_with_replacement_duplicates():
     ],
 )
 def test_randint_python_non_uniform_with_replacement_seed(n: int, k: int | None):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = get_probabilities(n)
     p_before = p.copy()  # copy for later comparison
     seed_1 = 42
     seed_2 = 42
     seed_3 = 123456
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples_1 = randint_python(n, k, replace=True, p=p, seed=seed_1)
     samples_2 = randint_python(n, k, replace=True, p=p, seed=seed_2)
     samples_3 = randint_python(n, k, replace=True, p=p, seed=seed_3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # check results
     np.testing.assert_array_equal(samples_1, samples_2)
@@ -298,7 +298,7 @@ def test_randint_python_non_uniform_with_replacement_seed(n: int, k: int | None)
 @pytest.mark.parametrize("factor", [2.0, 5.0, 10.0, 100.0, 1000.0, 0.0])
 @pytest.mark.parametrize("sum_of_p", [1.0, 0.1, 10.0])
 def test_randint_python_non_uniform_with_replacement_probs(factor: float, sum_of_p: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 10000
     k = 1000
     p = get_probabilities(n)
@@ -309,10 +309,10 @@ def test_randint_python_non_uniform_with_replacement_probs(factor: float, sum_of
 
     p_before = p.copy()  # copy for later comparison
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_python(n=n, k=k, replace=True, p=p)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all(p[i] > 0 for i in samples)
     assert np.array_equal(p, p_before), "p array should never be modified."
@@ -337,15 +337,15 @@ def test_randint_python_non_uniform_with_replacement_probs(factor: float, sum_of
     ],
 )
 def test_randint_python_non_uniform_without_replacement_invariants(n: int, k: int | None):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = get_probabilities(n)
     p_before = p.copy()  # copy for later comparison
     k_expected = k if k is not None else 1
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_python(n, k, replace=False, p=p)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k_expected,)
     assert samples.dtype == np.int32
@@ -370,19 +370,19 @@ def test_randint_python_non_uniform_without_replacement_invariants(n: int, k: in
     ],
 )
 def test_randint_python_non_uniform_without_replacement_seed(n: int, k: int | None):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = get_probabilities(n)
     p_before = p.copy()  # copy for later comparison
     seed_1 = 42
     seed_2 = 42
     seed_3 = 123456
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples_1 = randint_python(n, k, replace=False, p=p, seed=seed_1)
     samples_2 = randint_python(n, k, replace=False, p=p, seed=seed_2)
     samples_3 = randint_python(n, k, replace=False, p=p, seed=seed_3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # check results
     np.testing.assert_array_equal(samples_1, samples_2)
@@ -398,7 +398,7 @@ def test_randint_python_non_uniform_without_replacement_seed(n: int, k: int | No
 @pytest.mark.parametrize("factor", [2.0, 5.0, 10.0, 100.0, 1000.0, 0.0])
 @pytest.mark.parametrize("sum_of_p", [1.0, 0.1, 10.0])
 def test_randint_python_non_uniform_without_replacement_probs(factor: float, sum_of_p: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 10000
     k = 1000
     p = get_probabilities(n)
@@ -409,10 +409,10 @@ def test_randint_python_non_uniform_without_replacement_probs(factor: float, sum
 
     p_before = p.copy()  # copy for later comparison
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_python(n=n, k=k, replace=False, p=p)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 0.9 * expected_mean < np.mean(samples) < 1.1 * expected_mean
     assert all(p[i] > 0 for i in samples)
     assert np.array_equal(p, p_before), "p array should never be modified."

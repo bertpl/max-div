@@ -20,10 +20,10 @@ def test_init_preset_notes():
 def test_init_preset_properties(init_preset: InitPreset):
     """Test properties of InitPreset enum members."""
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     init_strat = init_preset.create()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(init_strat, InitializationStrategy)
     assert init_strat.__class__.__name__ == init_preset.class_name()
     assert isinstance(init_preset.class_kwargs(), dict)

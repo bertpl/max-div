@@ -8,15 +8,15 @@ from max_div._core._math.fast_log_exp._fast_log import _D22 as c2_actual
 
 
 def test_calibrate_fast_log_exp():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 100
     acc = 1e-2
     n_evals = 1000
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     (c0, c1, c2), (d0, d1, d2) = calibrate_fast_log_exp(n, acc, n_evals)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # fast_log coefficients
     assert abs(c0 - c0_actual) <= 2 * acc

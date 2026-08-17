@@ -58,22 +58,22 @@ class InitEager(InitializationStrategy):
                 If `False`, respects problem constraints during initialization, if present.
                 If `True`, constraints are ignored when sampling candidates and when comparing scores.
         """
-        # --- parameter validation --------------
+        # --- parameter validation ---------------
         if nc <= 1:
             raise ValueError("InitEager requires nc > 1; for nc=1 use InitRandomBatched with b=k instead.")
 
-        # --- init ------------------------------
+        # --- init -------------------------------
         name = f"InitEager(nc={nc}" + (",uncon)" if ignore_constraints else ")")
         super().__init__(name)
         self.nc = np.int32(nc)
         self.ignore_constraints = ignore_constraints
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
-        # --- initialize ------------------------
+        # --- initialize -------------------------
         nc = min(self.nc, state.n - state.n_selected)  # number of candidates cannot be larger than remaining items
         modifier = min(0.9, state.n_selected / state.k)  # proportional to progress; cap at 0.9 to avoid extremes
 
-        # --- select nc candidates --------------
+        # --- select nc candidates ---------------
         candidates = select_items_to_add(
             state=state,
             candidates=state.not_selected_index_array,
@@ -85,7 +85,7 @@ class InitEager(InitializationStrategy):
             ignore_constraints=self.ignore_constraints,
         )
 
-        # --- select best one -------------------
+        # --- select best one --------------------
         best_sample: np.int32 = np.int32(-1)
         best_score_tuple: tuple | None = None
 
@@ -103,5 +103,5 @@ class InitEager(InitializationStrategy):
                 best_score_tuple = score_tuple
                 best_sample = sample
 
-        # --- return best sample ----------------
+        # --- return best sample -----------------
         return np.array([best_sample], dtype=np.int32)

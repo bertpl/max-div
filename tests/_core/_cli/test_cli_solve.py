@@ -20,11 +20,11 @@ from tests.helpers import swept_benchmark_problems
 )
 @pytest.mark.parametrize("test_problem", swept_benchmark_problems())
 def test_cli_solve(options: list[str], test_problem: str, expected_exit_code: int):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     runner = CliRunner()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = runner.invoke(solve, [*options, test_problem])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.exit_code == expected_exit_code

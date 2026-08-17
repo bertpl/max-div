@@ -31,7 +31,7 @@ def sample_truncated_poisson(
     Returns:
         (np.int32) single sample from the truncated Poisson distribution in range [min_value, max_value]
     """
-    # --- generate p ------------------
+    # --- generate p -----------------------------
     p = np.zeros(max_value - min_value + 1, dtype=np.float32)
     for k in range(min_value, max_value + 1):
         if k == min_value:
@@ -39,7 +39,7 @@ def sample_truncated_poisson(
         else:
             p[k - min_value] = p[k - min_value - 1] * (_lambda / np.float32(k))
 
-    # --- sample ----------------------
+    # --- sample ---------------------------------
     return randint1(n=np.int32(p.shape[0]), p=p, rng_state=rng_state) + min_value
 
 
@@ -55,7 +55,7 @@ def truncated_poisson_expected_value(min_value: np.int32, max_value: np.int32, _
     Returns:
         (np.float32) expected value of the truncated Poisson distribution in range [min_value, max_value]
     """
-    # --- compute p -------------------
+    # --- compute p ------------------------------
     p = np.zeros(max_value - min_value + 1, dtype=np.float32)
     for k in range(min_value, max_value + 1):
         if k == min_value:
@@ -63,7 +63,7 @@ def truncated_poisson_expected_value(min_value: np.int32, max_value: np.int32, _
         else:
             p[k - min_value] = p[k - min_value - 1] * (_lambda / np.float32(k))
 
-    # --- compute expected value -------
+    # --- compute expected value -----------------
     sum_p_k = np.float32(0.0)
     sum_p = np.float32(0.0)
     for k in range(min_value, max_value + 1):

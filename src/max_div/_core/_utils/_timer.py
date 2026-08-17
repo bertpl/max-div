@@ -5,12 +5,12 @@ from types import TracebackType
 class Timer:
     """Class acting as a context manager to measure time elapsed.  Elapsed time can be retrieved using t_elapsed()."""
 
-    # --- constructor -------------------------------------
+    # --- constructor ----------------------------
     def __init__(self) -> None:
         self._start: float | None = None
         self._end: float | None = None
 
-    # --- context manager ---------------------------------
+    # --- context manager ------------------------
     def __enter__(self) -> "Timer":
         self._start = time.perf_counter_ns()
         return self
@@ -23,7 +23,7 @@ class Timer:
     ) -> None:
         self._end = time.perf_counter_ns()
 
-    # --- extract results ---------------------------------
+    # --- extract results ------------------------
     def t_elapsed_nsec(self) -> float:
         if self._start is None:
             raise RuntimeError("Timer has not been started.")

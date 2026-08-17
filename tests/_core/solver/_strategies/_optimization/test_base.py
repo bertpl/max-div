@@ -27,12 +27,12 @@ from max_div._core.solver._strategies import OptimizationStrategy
 def test_optimization_strategy_factory(factory_method: Callable[[], OptimizationStrategy]):
     """Test factory methods of OptimizationStrategy base class."""
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert isinstance(factory_method(), OptimizationStrategy)
 
 
 def test_optimization_strategy_properties():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     class TestOptimizationStrategy(OptimizationStrategy):
         def __init__(self, name: str | None = None):
             super().__init__(name)
@@ -40,7 +40,7 @@ def test_optimization_strategy_properties():
         def _perform_single_iteration(self, state: SolverState) -> bool:
             return True
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert TestOptimizationStrategy().name == "TestOptimizationStrategy"
     assert TestOptimizationStrategy("custom_name").name == "custom_name"
 
@@ -54,10 +54,10 @@ def test_optimization_strategy_properties():
     ],
 )
 def test_optimization_strategy_initial_param_value(param: ParameterSchedule | float, expected_initial_value: float):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     initial_value = OptimizationStrategy.initial_param_value(param)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(initial_value, float)
     assert initial_value == expected_initial_value
 
@@ -86,14 +86,14 @@ class StrategyWithDynamicParameters(OptimizationStrategy):
 
 
 def test_optimization_strategy_dynamic_params_without():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = StrategyWithDynamicParameters(
         param_a=0.1,  # fixed value, no scheduling
         param_b=0.9,  # fixed value, no scheduling
     )
     solver_state = Mock()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     _ = strategy.perform_n_iterations(
         state=solver_state,
         n_iters=3,
@@ -101,7 +101,7 @@ def test_optimization_strategy_dynamic_params_without():
         progress_frac_per_iter=0.5,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert not strategy.has_scheduled_params
     assert not strategy.has_sampled_params
     assert not strategy.has_dynamic_params
@@ -112,14 +112,14 @@ def test_optimization_strategy_dynamic_params_without():
 
 @pytest.mark.parametrize("param_b_scheduled", [True, False])
 def test_optimization_strategy_dynamic_params_scheduled(param_b_scheduled: bool):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = StrategyWithDynamicParameters(
         param_a=linear(1.0, 2.0),  # scheduled from 1.0 to 2.0
         param_b=ease_in(3.0, 1.0) if param_b_scheduled else 0.9,
     )
     solver_state = Mock()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     _ = strategy.perform_n_iterations(
         state=solver_state,
         n_iters=3,
@@ -127,7 +127,7 @@ def test_optimization_strategy_dynamic_params_scheduled(param_b_scheduled: bool)
         progress_frac_per_iter=0.5,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert strategy.has_scheduled_params
     assert strategy.has_dynamic_params
     assert not strategy.has_sampled_params
@@ -141,7 +141,7 @@ def test_optimization_strategy_dynamic_params_scheduled(param_b_scheduled: bool)
 
 @pytest.mark.parametrize("param_b_sampled", [True, False])
 def test_optimization_strategy_dynamic_params_sampled(param_b_sampled: bool):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     param_b_range = (1.0, 3.0)
     param_b_sampler = sampled_interval(
         min_value=param_b_range[0],
@@ -154,17 +154,17 @@ def test_optimization_strategy_dynamic_params_sampled(param_b_sampled: bool):
     )
     solver_state = Mock()
 
-    # --- act 1 -------------------------------------------
+    # --- act 1 ------------------------
     rng_state_before = param_b_sampler._rng_state.copy()
     strategy.set_seed(seed=1000)
 
-    # --- assert 1 ----------------------------------------
+    # --- assert 1 ---------------------
     if param_b_sampled:
         assert not np.array_equal(param_b_sampler._rng_state, rng_state_before)
     else:
         assert np.array_equal(param_b_sampler._rng_state, rng_state_before)
 
-    # --- act 2 -------------------------------------------
+    # --- act 2 ------------------------
     _ = strategy.perform_n_iterations(
         state=solver_state,
         n_iters=10,
@@ -172,7 +172,7 @@ def test_optimization_strategy_dynamic_params_sampled(param_b_sampled: bool):
         progress_frac_per_iter=0.1,
     )
 
-    # --- assert 2 ----------------------------------------
+    # --- assert 2 ---------------------
     assert strategy.has_dynamic_params == param_b_sampled
     assert strategy.has_sampled_params == param_b_sampled
     assert not strategy.has_scheduled_params

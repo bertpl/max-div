@@ -20,10 +20,10 @@ def test_optim_preset_notes():
 def test_optim_preset_properties(optim_preset: OptimPreset):
     """Test properties of OptimPreset enum members."""
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     optim_strat = optim_preset.create()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(optim_strat, OptimizationStrategy)
     assert optim_strat.__class__.__name__ == optim_preset.class_name()
     assert isinstance(optim_preset.class_kwargs(), dict)

@@ -18,8 +18,8 @@ from max_div._core._markdown import TextLayout
     ],
 )
 def test_text_layout(txt: str, layout: TextLayout, expected_result: str):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     txt_with_layout = layout.apply(txt)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert txt_with_layout == expected_result

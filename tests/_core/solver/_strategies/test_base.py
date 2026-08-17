@@ -6,7 +6,7 @@ from max_div._core.solver._strategies._base import StrategyBase
 def test_strategy_base_seed_default():
     """Test if default seed is deterministic but depending on name"""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy_1 = StrategyBase(name="s1")
     strategy_2a = StrategyBase(name="s2")
     strategy_2b = StrategyBase(name="s2")
@@ -14,14 +14,14 @@ def test_strategy_base_seed_default():
     strategy_3a = StrategyBase()
     strategy_3b = StrategyBase()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     seed_1 = strategy_1.seed
     seed_2a = strategy_2a.seed
     seed_2b = strategy_2b.seed
     seed_3a = strategy_3a.seed
     seed_3b = strategy_3b.seed
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert seed_1 != seed_2a
     assert seed_1 != seed_2b
     assert seed_1 != seed_3a
@@ -39,10 +39,10 @@ def test_strategy_base_seed_default_unique():
 def test_strategy_base_set_seed():
     """Test if set_seed is deterministic"""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = StrategyBase()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     seed_1 = strategy.seed
     rng_state_1 = strategy._rng_state.copy()
     strategy.set_seed(42)
@@ -53,7 +53,7 @@ def test_strategy_base_set_seed():
     seed_3b = strategy.seed  # should stay the same
     rng_state_3 = strategy._rng_state.copy()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert seed_1 != seed_2
     assert seed_2 != seed_3
     assert seed_2 == 42

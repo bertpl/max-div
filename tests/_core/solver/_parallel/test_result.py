@@ -20,28 +20,28 @@ def _result(worker_index: int, diversity: float) -> WorkerResult:
 
 def test_best_result_picks_the_highest_score():
     """The winner is the worker that scored best, wherever it sits in the list."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     winner = best_result([_result(0, 0.1), _result(1, 0.9), _result(2, 0.5)])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert winner.worker_index == 1
 
 
 def test_best_result_breaks_ties_by_lowest_worker_index():
     """Equal scores resolve to the lowest index, so the winner never depends on who finished first."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     tied = [_result(2, 0.7), _result(0, 0.7), _result(1, 0.7)]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     winner = best_result(tied)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert winner.worker_index == 0
     assert best_result(list(reversed(tied))).worker_index == 0  # and not on list order either
 
 
 def test_best_result_rejects_an_empty_portfolio():
     """No results means every worker failed, which is an error rather than an empty answer."""
-    # --- arrange / act / assert --------------------------
+    # --- arrange / act / assert -------
     with pytest.raises(ValueError, match="every worker failed"):
         best_result([])

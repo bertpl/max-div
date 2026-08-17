@@ -39,7 +39,7 @@ def show_solver_presets_benchmark_results(
     markdown: bool,
     markdown_file_name: str | None,
 ) -> None:
-    # --- extract scope -----------------------------------
+    # --- extract scope --------------------------
     problem_size = results[0].params.problem_size
     problem_names = sorted({result.params.problem_name for result in results})
     target_durations = sorted({result.params.duration for result in results})
@@ -51,7 +51,7 @@ def show_solver_presets_benchmark_results(
         columns[result.params.n_workers, result.params.preset] = result.params.column_label()
     column_keys = sorted(columns.keys())
 
-    # --- aggregate & show --------------------------------
+    # --- aggregate & show -----------------------
     headers = ["Target duration"] + [columns[key] for key in column_keys]
     for problem_name in problem_names:
         # check problem properties

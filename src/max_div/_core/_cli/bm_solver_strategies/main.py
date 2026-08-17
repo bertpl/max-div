@@ -30,7 +30,7 @@ def run_solver_strategies_benchmark(
     #  Regular case
     # -------------------------------------------------------------------------
 
-    # --- initialization ----------------------------------
+    # --- initialization -------------------------
     if benchmark_initialization:
         executor = SolverBenchmarkExecutor(
             scope=SolverBenchmarkScope(
@@ -43,7 +43,7 @@ def run_solver_strategies_benchmark(
         )
         executor.execute(markdown, file)
 
-    # --- optimization ------------------------------------
+    # --- optimization ---------------------------
     if benchmark_optimization:
         executor = SolverBenchmarkExecutor(
             scope=SolverBenchmarkScope(

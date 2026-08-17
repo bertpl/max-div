@@ -9,11 +9,11 @@ from max_div._core._random._distributions import sample_truncated_poisson, trunc
 
 @pytest.mark.parametrize("min_value, max_value", [(1, 5), (2, 2), (2, 4), (3, 7), (10, 20), (15, 20)])
 def test_sample_truncated_poisson_boundaries(min_value: int, max_value: int):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n_samples = 100
     lambda_values = np.linspace(1.0, max_value + 1.0, num=n_samples)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     rng_state = new_rng_state(np.int64(42))
     samples = [
         sample_truncated_poisson(
@@ -25,7 +25,7 @@ def test_sample_truncated_poisson_boundaries(min_value: int, max_value: int):
         for i in range(n_samples)
     ]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert min(samples) == min_value
     assert max(samples) == max_value
     assert len(set(samples)) == max_value - min_value + 1
@@ -43,7 +43,7 @@ def test_sample_truncated_poisson_boundaries(min_value: int, max_value: int):
     ],
 )
 def test_sample_truncated_poisson_distribution(min_value: int, max_value: int, _lambda: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n_samples = 10_000
     hist = np.zeros(max_value + 1, dtype=np.float32)
 
@@ -52,7 +52,7 @@ def test_sample_truncated_poisson_distribution(min_value: int, max_value: int, _
         hist_expected[i] = np.float32((_lambda**i) / math.factorial(i))
     hist_expected /= np.sum(hist_expected)  # normalize
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     rng_state = new_rng_state(np.int64(42))
     for _ in range(n_samples):
         sample = sample_truncated_poisson(
@@ -65,17 +65,17 @@ def test_sample_truncated_poisson_distribution(min_value: int, max_value: int, _
 
     hist /= n_samples  # normalize
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.allclose(hist, hist_expected, atol=0.05)
 
 
 def test_truncated_poisson_expected_value():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = truncated_poisson_expected_value(
         min_value=np.int32(1),
         max_value=np.int32(5),
         _lambda=np.float32(2.0),
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == pytest.approx(2.2340424060821533)

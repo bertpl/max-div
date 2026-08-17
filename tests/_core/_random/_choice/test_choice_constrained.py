@@ -7,7 +7,7 @@ from max_div._core.constraints import Constraint, ConstraintList
 
 
 def test_choice_constrained_argument_validation():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     k = 5
     n = 100
     constraints = [
@@ -24,7 +24,7 @@ def test_choice_constrained_argument_validation():
     k_too_large = 20
     p_wrong_size = np.array([0.1, 0.9], dtype=np.float32)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError):
         choice_constrained(
             n=np.int32(n),
@@ -53,7 +53,7 @@ def test_choice_constrained_argument_validation():
 @pytest.mark.parametrize("eager", [False, True])
 @pytest.mark.parametrize("uniform", [False, True])
 def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, uniform: bool):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     k = 5
     constraints = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -73,7 +73,7 @@ def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, unif
     p_before = p.copy()
     rng_state_before = rng_state.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = choice_constrained(
         n=np.int32(n),
         values=values,
@@ -86,7 +86,7 @@ def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, unif
         k_context=np.int32(k_context),
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(samples, np.ndarray)
     assert samples.shape == (k,)
     assert samples.dtype == np.int32
@@ -104,7 +104,7 @@ def test_choice_constrained_invariants(eager: bool, n: int, k_context: int, unif
 
 @pytest.mark.parametrize("seed", list(range(1, 100)))
 def test_choice_constrained_p_adherence(seed: int):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 20
     k = 5
     constraints = [
@@ -117,7 +117,7 @@ def test_choice_constrained_p_adherence(seed: int):
     values = np.array([0, 1, 2, 3, 4, 10, 11, 12, 13, 14], dtype=np.int32)
     p = np.array([1, 1, 1, 1, 1, 1, 1, 1e3, 1, 1], dtype=np.float32)  # very strongly favor value 12
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = choice_constrained(
         n=np.int32(n),
         values=values,
@@ -128,5 +128,5 @@ def test_choice_constrained_p_adherence(seed: int):
         rng_state=rng_state,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.int32(12) in samples

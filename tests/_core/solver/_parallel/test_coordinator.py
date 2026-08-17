@@ -41,24 +41,24 @@ def _solve_with(coordinator: WorkerCoordinator | None):
 
 def test_the_batch_boundary_is_reached_during_optimization():
     """The coordinator is called during optimization, on a path that runs rather than merely exists."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     coordinator = _RecordingCoordinator()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     _solve_with(coordinator)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert coordinator.calls > 0
     assert all(size == 5 for size in coordinator.sizes)  # optimization swaps, never resizes
 
 
 def test_a_coordinator_does_not_change_the_search():
     """Passing a coordinator that does nothing leaves the solution exactly as solving alone gives it."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     with_coordinator = _solve_with(IndependentCoordinator())
     without = _solve_with(None)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(np.sort(with_coordinator.i_selected), np.sort(without.i_selected))
 
 
@@ -79,35 +79,35 @@ def _cooperation_state(indices: list[int]) -> SolverState:
 
 def test_cooperative_coordinator_moves_the_best_selection_between_states():
     """The better state's boundary publishes its selection; the worse state's boundary adopts it."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
     coordinator = CooperativeCoordinator(slot)
     spread_out = _cooperation_state([0, 3, 5])  # min separation 10
     clustered = _cooperation_state([0, 1, 2])  # min separation 1
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     coordinator.at_batch_boundary(spread_out)
     coordinator.at_batch_boundary(clustered)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted the published incumbent
     assert spread_out.selected_index_array.tolist() == [0, 3, 5]  # publisher keeps its own
 
 
 def test_cooperative_coordinator_keeps_the_better_state_untouched():
     """A worker that beats the slot publishes without adopting; one that matches it leaves the slot untouched."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
     coordinator = CooperativeCoordinator(slot)
     clustered = _cooperation_state([0, 1, 2])
     spread_out = _cooperation_state([0, 3, 5])
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     coordinator.at_batch_boundary(clustered)  # publishes (empty slot)
     coordinator.at_batch_boundary(spread_out)  # better: replaces the stored incumbent
     coordinator.at_batch_boundary(spread_out)  # equal to the slot now: nothing happens
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert spread_out.selected_index_array.tolist() == [0, 3, 5]
     late_arrival = _cooperation_state([0, 1, 2])  # a worse state adopting proves the replacement stored
     coordinator.at_batch_boundary(late_arrival)
@@ -116,15 +116,15 @@ def test_cooperative_coordinator_keeps_the_better_state_untouched():
 
 def test_a_lone_cooperative_worker_searches_exactly_as_if_alone():
     """With nobody else publishing, a cooperative worker only ever publishes — the search is unchanged."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = MaxDivSolverBuilder(MaxDivProblem.new(np.random.default_rng(4).random((50, 3)).astype(np.float32), k=5))
     n_score_components = 3 + len(builder._determine_diversity_tie_breakers())
     slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=5, score_length=n_score_components)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     cooperative = _solve_with(CooperativeCoordinator(slot))
     alone = _solve_with(None)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(np.sort(cooperative.i_selected), np.sort(alone.i_selected))
     assert slot.written  # the worker did publish along the way

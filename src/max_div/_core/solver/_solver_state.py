@@ -217,32 +217,32 @@ class SolverState:
         delete_sorted(self._selected_indices, self._n_selected, index)
 
     def add(self, index: int | np.int32) -> None:
-        # --- validation ----------------------------------
+        # --- validation -------------------------
         index = np.int32(index)
         if self._selected[index]:
             raise ValueError(f"Cannot add index that is already selected ({index}).")
 
-        # --- selection -----------------------------------
+        # --- selection --------------------------
         self._selected[index] = True
         self._insert_selected_index(index)
         self._n_selected += np.int32(1)
 
-        # --- diversity contributions ---------------------
+        # --- diversity contributions ------------
         self._contribution_trackers.add(index)
 
-        # --- constraints ---------------------------------
+        # --- constraints ------------------------
         # decrease both min_count and max_count for all constraints that include 'index'
         self._con_values[self._con_membership[index], :] -= 1
 
-        # --- score ---------------------------------------
+        # --- score ------------------------------
         self._score_dirty = True
 
     def add_many(self, indices: NDArray[np.int32]) -> None:
-        # --- validation ----------------------------------
+        # --- validation -------------------------
         if self._selected[indices].any():
             raise ValueError(f"Cannot add index that is already selected ({list(indices)}).")
 
-        # --- selection -----------------------------------
+        # --- selection --------------------------
         self._selected[indices] = True
         # the count advances inside the loop because each insert reads it as the list's current
         # length; raising it once afterwards would give every insert but the first a stale length
@@ -250,59 +250,59 @@ class SolverState:
             self._insert_selected_index(index)
             self._n_selected += np.int32(1)
 
-        # --- diversity contributions ---------------------
+        # --- diversity contributions ------------
         self._contribution_trackers.add_many(indices)
 
-        # --- constraints ---------------------------------
+        # --- constraints ------------------------
         # decrease both min_count and max_count for all constraints that include any of 'indices'
         for index in indices:
             self._con_values[self._con_membership[index], :] -= 1
 
-        # --- score ---------------------------------------
+        # --- score ------------------------------
         self._score_dirty = True
 
     def remove(self, index: int | np.int32) -> None:
-        # --- validation ----------------------------------
+        # --- validation -------------------------
         index = np.int32(index)
         if not self._selected[index]:
             raise ValueError(f"Cannot remove index that is not selected ({index}).")
 
-        # --- selection -----------------------------------
+        # --- selection --------------------------
         self._selected[index] = False
         self._delete_selected_index(index)
         self._n_selected -= np.int32(1)
 
-        # --- diversity contributions ---------------------
+        # --- diversity contributions ------------
         self._contribution_trackers.remove(index, self.selected_index_array)
 
-        # --- constraints ---------------------------------
+        # --- constraints ------------------------
         # increase both min_count and max_count for all constraints that include 'index'
         self._con_values[self._con_membership[index], :] += 1
 
-        # --- score ---------------------------------------
+        # --- score ------------------------------
         self._score_dirty = True
 
     def remove_many(self, indices: NDArray[np.int32]) -> None:
-        # --- validation ----------------------------------
+        # --- validation -------------------------
         if (~self._selected[indices]).any():
             raise ValueError(f"Cannot remove index that is not selected ({list(indices)}).")
 
-        # --- selection -----------------------------------
+        # --- selection --------------------------
         self._selected[indices] = False
         # same reason as in add_many: each delete reads the count as the list's current length
         for index in indices:
             self._delete_selected_index(index)
             self._n_selected -= np.int32(1)
 
-        # --- diversity contributions ---------------------
+        # --- diversity contributions ------------
         self._contribution_trackers.remove_many(indices, self.selected_index_array)
 
-        # --- constraints ---------------------------------
+        # --- constraints ------------------------
         # increase both min_count and max_count for all constraints that include any of 'indices'
         for index in indices:
             self._con_values[self._con_membership[index], :] += 1
 
-        # --- score ---------------------------------------
+        # --- score ------------------------------
         self._score_dirty = True
 
     def reset(self) -> None:
@@ -314,23 +314,23 @@ class SolverState:
         Raises:
             RuntimeError: If a savepoint is open — a reset cannot be provisional.
         """
-        # --- validation ----------------------------------
+        # --- validation -------------------------
         if self._depth != 0:
             raise RuntimeError("Cannot reset the selection while a savepoint is open.")
 
-        # --- constraints ---------------------------------
+        # --- constraints ------------------------
         # undo the constraint effect of the current selection while its index view is intact
         for index in self.selected_index_array:
             self._con_values[self._con_membership[index], :] += 1
 
-        # --- selection -----------------------------------
+        # --- selection --------------------------
         self._selected.fill(False)
         self._n_selected = np.int32(0)
 
-        # --- diversity contributions ---------------------
+        # --- diversity contributions ------------
         self._contribution_trackers.reset()
 
-        # --- score ---------------------------------------
+        # --- score ------------------------------
         self._score_dirty = True
 
     def adopt_selection(self, indices: NDArray[np.int32]) -> None:
@@ -347,7 +347,7 @@ class SolverState:
             RuntimeError: If a savepoint is open — an adoption cannot be provisional.
             ValueError: If `indices` contains duplicates or out-of-range values.
         """
-        # --- validation ----------------------------------
+        # --- validation -------------------------
         if self._depth != 0:
             raise RuntimeError("Cannot adopt a selection while a savepoint is open.")
         foreign = np.unique(np.asarray(indices, dtype=np.int32))  # ascending, deduplicated
@@ -356,17 +356,17 @@ class SolverState:
         if foreign.size > 0 and (foreign[0] < 0 or foreign[-1] >= self._n):
             raise ValueError(f"Cannot adopt a selection with out-of-range indices ({list(indices)}).")
 
-        # --- route selection -----------------------------
+        # --- route selection --------------------
         current = self.selected_index_array
         to_remove = np.setdiff1d(current, foreign, assume_unique=True)
         to_add = np.setdiff1d(foreign, current, assume_unique=True)
 
         if to_remove.size + to_add.size <= foreign.size:
-            # --- diff route ------------------------------
+            # --- diff route ---------------------
             self.remove_many(to_remove)
             self.add_many(to_add)
         else:
-            # --- rebuild route ---------------------------
+            # --- rebuild route ------------------
             self.reset()
             self.add_many(foreign)
 
@@ -494,21 +494,21 @@ class SolverState:
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> SolverState:
-        # --- diversity contributions ---
+        # --- diversity contributions ------------
         n_np = np.int32(n)
         contribution_trackers = DiversityContributionTrackers.for_metrics(
             diversity_metric, diversity_tie_breakers, store
         )
 
-        # --- selection ---
+        # --- selection --------------------------
         selected = np.full(n_np, False, dtype=np.bool)
 
-        # --- constraints ---
+        # --- constraints ------------------------
         con_values, con_indices = ConstraintList(constraints).to_numpy()
         con_weights = np.array([con.weight for con in constraints], dtype=np.float64)
         con_membership = _build_con_membership(n_np, constraints)
 
-        # --- score generator ---
+        # --- score generator --------------------
         score_generator = ScoreGenerator(
             n=n_np,
             k=k,
@@ -518,7 +518,7 @@ class SolverState:
             penalty_quadratic=penalty_quadratic,
         )
 
-        # --- construct & return ---
+        # --- construct & return -----------------
         return SolverState(
             n=n_np,
             k=np.int32(k),

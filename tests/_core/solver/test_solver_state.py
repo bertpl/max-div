@@ -65,10 +65,10 @@ def test_solver_state_properties(new_solver_state, new_solver_state_unconstraine
 
 def test_solver_state_con_weights_reach_the_state():
     """Constraint weights arrive as float64, in constraint order, and survive a copy."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     state = SolverState.new(
         n=vectors.shape[0],
         store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
@@ -81,17 +81,17 @@ def test_solver_state_con_weights_reach_the_state():
         ],
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert state.con_weights.dtype == np.float64
     assert np.array_equal(state.con_weights, [2.5, 1.0])
     assert np.array_equal(state.copy().con_weights, state.con_weights)
 
 
 def test_solver_state_add_remove_validation(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError):
         state.remove(3)  # never added
 
@@ -113,10 +113,10 @@ def test_solver_state_add_remove_validation(new_solver_state):
 
 
 def test_solver_state_end_to_end(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
 
-    # --- assert 1 ----------------------------------------
+    # --- assert 1 ---------------------
     assert state.selected_index_array.size == 0
     assert state.not_selected_index_array.size == 6
     assert state.score.size < 1.0  # insufficient items selected
@@ -127,12 +127,12 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.n_selected == 0
     assert state.n_not_selected == 6
 
-    # --- act 1 -------------------------------------------
+    # --- act 1 ------------------------
     state.add(0)
     state.add(2)
     state.add(5)
 
-    # --- assert 2 ----------------------------------------
+    # --- assert 2 ---------------------
     assert np.array_equal(state.selected_index_array, [0, 2, 5])
     assert np.array_equal(state.not_selected_index_array, [1, 3, 4])
     assert np.allclose(state.selected_contribution_array, [2, 2, 3])
@@ -142,11 +142,11 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.n_selected == 3
     assert state.n_not_selected == 3
 
-    # --- act 2 -------------------------------------------
+    # --- act 2 ------------------------
     state.remove(5)
     state.add(4)
 
-    # --- assert 3 ----------------------------------------
+    # --- assert 3 ---------------------
     assert np.array_equal(state.selected_index_array, [0, 2, 4])
     assert np.array_equal(state.not_selected_index_array, [1, 3, 5])
     assert np.allclose(state.selected_contribution_array, [2, 2, 2])
@@ -159,7 +159,7 @@ def test_solver_state_end_to_end(new_solver_state):
 
 
 def test_savepoint_restores_by_default(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
     state.add(0)
     state.add(2)
@@ -170,12 +170,12 @@ def test_savepoint_restores_by_default(new_solver_state):
     orig_separation_array = state.selected_contribution_array.copy()
     orig_con_values = state._con_values.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     # the below should be a no-op: the scope is never kept
     with state.savepoint():
         state.add(5)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(state.selected_index_array, orig_selected_array)
     assert np.array_equal(state.not_selected_index_array, orig_not_selected_array)
     assert np.allclose(state.selected_contribution_array, orig_separation_array)
@@ -183,25 +183,25 @@ def test_savepoint_restores_by_default(new_solver_state):
 
 
 def test_savepoint_keep(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
     state.add(0)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with state.savepoint() as sp:
         state.add(5)
         sp.keep()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(state.selected_index_array, [0, 5])
 
 
 def test_savepoint_nesting(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
     state.add(0)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     # kept outer scope, with one restored and one kept scope nested inside it
     with state.savepoint() as outer:
         state.add(2)
@@ -212,27 +212,27 @@ def test_savepoint_nesting(new_solver_state):
             inner.keep()
         outer.keep()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(state.selected_index_array, [0, 2, 5])
 
 
 def test_savepoint_restoring_outer_discards_kept_inner(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
     state.add(0)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with state.savepoint(), state.savepoint() as inner:
         state.add(5)
         inner.keep()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     # keeping a scope only survives up to its parent; the outer exit restores the state from before it
     assert np.array_equal(state.selected_index_array, [0])
 
 
 def test_savepoint_exception_restores_and_propagates(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
     state.add(0)
 
@@ -242,26 +242,26 @@ def test_savepoint_exception_restores_and_propagates(new_solver_state):
             sp.keep()  # an exception restores even a kept scope
             raise RuntimeError("boom")
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with pytest.raises(RuntimeError, match="boom"):
         trial_that_raises()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(state.selected_index_array, [0])
 
 
 def test_savepoint_restores_cached_score(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
     state.add(0)
     score_before = state.score  # cached, clean
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with state.savepoint():
         state.add(5)
         _ = state.score
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     # the exit restores the score cached at scope entry (by reference; Score is immutable), clean
     assert state._score is score_before
     assert not state._score_dirty
@@ -271,12 +271,12 @@ def test_savepoint_restores_cached_score(new_solver_state):
 def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
     """Check solver state consistency after a large series of add/remove operations."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
     state_ref = new_solver_state.copy()  # we'll leave this untouched until the end
     n_iters = 100
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     random.seed(seed)
     for it in range(n_iters):
         # every iteration's changes are provisional; roughly half the scopes are kept
@@ -309,7 +309,7 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
             if random.rand() >= 0.5:
                 sp.keep()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # double check state_ref was not changed
     assert len(state_ref.selected_index_array) == 0
@@ -336,10 +336,10 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
 
 def test_solver_state_tracker_set_dormancy(new_solver_state):
     """Separation-only metric configurations construct exactly one tracker: dormancy by absence."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     trackers = new_solver_state._contribution_trackers._trackers
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(trackers) == 1
     assert type(trackers[0]) is SeparationTracker
     assert new_solver_state._contribution_tracker is trackers[0]
@@ -347,11 +347,11 @@ def test_solver_state_tracker_set_dormancy(new_solver_state):
 
 def test_solver_state_tracker_set_mean_distance(new_solver_state):
     """A mean-distance main metric constructs only a MeanDistanceTracker; mixed metrics construct both."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [2.0], [3.0]], dtype=np.float32)
     pdist = compute_pdist(vectors, DistanceMetric.L1_MANHATTAN)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     state_pure = SolverState.new(
         n=4,
         store=DistanceStore.condensed(pdist, n=4),
@@ -369,7 +369,7 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
         constraints=[],
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert [type(t) for t in state_pure._contribution_trackers._trackers] == [MeanDistanceTracker]
     assert type(state_pure._contribution_tracker) is MeanDistanceTracker
     assert {type(t) for t in state_mixed._contribution_trackers._trackers} == {MeanDistanceTracker, SeparationTracker}
@@ -378,7 +378,7 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
 
 def test_solver_state_mean_pairwise_distance_score():
     """The diversity score under MEAN_PAIRWISE_DISTANCE equals the brute-force mean over selected pairs."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [3.0], [7.0]], dtype=np.float32)
     state = SolverState.new(
         n=4,
@@ -389,15 +389,15 @@ def test_solver_state_mean_pairwise_distance_score():
         constraints=[],
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     state.add_many(np.array([0, 1, 3], dtype=np.int32))  # points 0, 1, 7 -> pair distances 1, 7, 6
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert state.score.diversity == pytest.approx((1 + 7 + 6) / 3)
 
 
 def test_build_con_membership():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     cons = [
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
         Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
@@ -422,10 +422,10 @@ def test_build_con_membership():
     }
     expected_membership = {k: np.array(v, dtype=np.int32) for k, v in expected_membership.items()}
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     con_membership = _build_con_membership(m, cons)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert con_membership.keys() == expected_membership.keys()
     for key, value in con_membership.items():
         assert isinstance(value, np.ndarray)
@@ -513,30 +513,30 @@ def _apply_random_operation(state: SolverState, rng: random.Generator, open_save
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_solver_state_consistency_invariant(seed: int):
     """Apply a random operation sequence; after EVERY op, state must equal a fresh rebuild bit-for-bit."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _make_reference_state()
     rng = random.default_rng(seed=seed)
     open_savepoints: list[Savepoint] = []
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     for _ in range(60):
         _apply_random_operation(state, rng, open_savepoints)
         _assert_state_matches_fresh_rebuild(state)
 
 
 def test_solver_state_score_lazy_recompute(new_solver_state):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = new_solver_state
     state.add_many(np.array([0, 2, 4], dtype=np.int32))
     expected_score = state.score
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     # force the lazy branch: invalidate the cached score and mark it dirty
     state._score = None
     state._score_dirty = True
     observed_score = state.score
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert observed_score == expected_score  # recomputed on read
     assert not state._score_dirty  # flag cleared by the recompute
 
@@ -656,15 +656,15 @@ _METRIC_CONFIGS = [
 
 def test_reset_returns_the_state_to_empty():
     """A reset state is indistinguishable from a freshly built one, and stays fully usable."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _make_adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
     state.add_many(np.array([0, 2, 4, 6], dtype=np.int32))
     reference = _make_adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     state.reset()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     _assert_state_matches_reference(state, reference)
     state.add(np.int32(1))  # the reset state accepts mutations as usual
     assert state.selected_index_array.tolist() == [1]
@@ -672,11 +672,11 @@ def test_reset_returns_the_state_to_empty():
 
 def test_reset_inside_a_savepoint_is_rejected():
     """A reset cannot be provisional, so an open savepoint rejects it."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
     state.add_many(np.array([0, 1], dtype=np.int32))
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with state.savepoint(), pytest.raises(RuntimeError):
         state.reset()
     assert state.selected_index_array.tolist() == [0, 1]
@@ -696,40 +696,40 @@ def test_reset_inside_a_savepoint_is_rejected():
 )
 def test_adopt_selection_matches_fresh_state(diversity_metric, tie_breakers, start, target):
     """Adopting a selection must be indistinguishable from having built it directly, on either route."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _make_adoption_state(diversity_metric, tie_breakers)
     state.add_many(np.array(start, dtype=np.int32))
     reference = _make_adoption_state(diversity_metric, tie_breakers)
     reference.add_many(np.array(target, dtype=np.int32))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     state.adopt_selection(np.array(target, dtype=np.int32))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     _assert_state_matches_reference(state, reference)
 
 
 def test_adopt_selection_accepts_unordered_input():
     """Adoption sorts its input itself; the caller's ordering carries no meaning."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
     reference = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
     reference.add_many(np.array([1, 4, 6], dtype=np.int32))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     state.adopt_selection(np.array([6, 1, 4], dtype=np.int32))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     _assert_state_matches_reference(state, reference)
 
 
 def test_adopt_selection_state_remains_fully_usable():
     """After adoption the state supports mutators and savepoints as usual."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _make_adoption_state(DiversityMetric.MIN_SEPARATION, [DiversityMetric.MEAN_PAIRWISE_DISTANCE])
     state.add_many(np.array([0, 1, 2, 3], dtype=np.int32))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     state.adopt_selection(np.array([4, 5, 6, 7], dtype=np.int32))  # rebuild route
     score_after_adopt = state.score.as_tuple()
     with state.savepoint():
@@ -737,18 +737,18 @@ def test_adopt_selection_state_remains_fully_usable():
         state.add(np.int32(0))
     state.adopt_selection(np.array([4, 5, 6, 0], dtype=np.int32))  # diff route
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert score_after_adopt != state.score.as_tuple()
     assert state.selected_index_array.tolist() == [0, 4, 5, 6]
 
 
 def test_adopt_selection_validation():
     """Duplicate, out-of-range, and savepoint-open calls are rejected without touching the state."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     state = _make_adoption_state(DiversityMetric.GEOMEAN_SEPARATION, [])
     state.add_many(np.array([0, 1], dtype=np.int32))
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError):
         state.adopt_selection(np.array([1, 1, 2], dtype=np.int32))  # duplicates
     with pytest.raises(ValueError):

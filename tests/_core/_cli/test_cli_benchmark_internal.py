@@ -26,11 +26,11 @@ from max_div._core._cli import benchmark
     ],
 )
 def test_cli_benchmark_internal(sub_command: str, options: list[str]):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     runner = CliRunner()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = runner.invoke(benchmark, ["internal", *options, sub_command])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.exit_code == 0
