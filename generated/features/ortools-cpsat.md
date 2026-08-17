@@ -52,7 +52,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^ortools-cpsat-3]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
 [^ortools-cpsat-4]: No natural constraint-programming encoding. Expressing a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, at which point a MILP solver is the better tool.
 [^ortools-cpsat-5]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
-[^ortools-cpsat-6]: A feasibility-only solve of the hand-written constraint model returns a proven feasible-or-infeasible verdict; the proof machinery is native.
+[^ortools-cpsat-6]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
 [^ortools-cpsat-7]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
 [^ortools-cpsat-8]: CP-SAT runs a portfolio of differently configured search workers on the same instance by default, set by the num_workers parameter.
 [^ortools-cpsat-9]: The portfolio workers share learned clauses, solutions and objective bounds while solving.

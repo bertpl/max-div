@@ -63,7 +63,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-9]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
 [^cmp-10]: No natural constraint-programming encoding. Expressing a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, at which point a MILP solver is the better tool.
 [^cmp-11]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
-[^cmp-12]: A feasibility-only solve of the hand-written constraint model returns a proven feasible-or-infeasible verdict; the proof machinery is native.
+[^cmp-12]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
 [^cmp-13]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
 [^cmp-14]: CP-SAT runs a portfolio of differently configured search workers on the same instance by default, set by the num_workers parameter.
 [^cmp-15]: The portfolio workers share learned clauses, solutions and objective bounds while solving.

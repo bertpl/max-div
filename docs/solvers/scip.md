@@ -80,8 +80,9 @@ solver:
       mark: partial
       note:
         text: >-
-          A feasibility-only solve of the hand-written constraint model returns a proven
-          feasible-or-infeasible verdict; the proof machinery is native.
+          A feasibility-only solve of the hand-built constraint model returns a proven
+          feasible-or-infeasible verdict: the solver itself produces the proof; only the model
+          is yours to write.
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves:
