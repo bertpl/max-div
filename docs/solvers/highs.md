@@ -67,7 +67,7 @@ solver:
       note:
         text: >-
           A feasibility-only solve of the hand-written constraint model returns a proven
-          feasible-or-infeasible verdict; the proof machinery is native, the modeling is manual.
+          feasible-or-infeasible verdict; the proof machinery is native.
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves:

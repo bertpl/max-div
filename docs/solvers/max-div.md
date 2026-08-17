@@ -43,9 +43,9 @@ solver:
       mark: full
       note:
         text: >-
-          `check_feasibility` returns a three-valued verdict whose definite answers are proofs:
-          feasible comes with a satisfying selection, infeasible with an independently re-checkable
-          certificate and a certified violation floor, and unknown claims nothing.
+          `check_feasibility` returns a three-valued verdict whose definite answers are proofs.
+          Feasible comes with a satisfying selection; infeasible with an independently
+          re-checkable certificate. Unknown claims nothing.
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves: {mark: full}

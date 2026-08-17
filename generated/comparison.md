@@ -54,7 +54,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^cmp-1]: A problem can be built from a precomputed distance matrix, square or condensed, so any metric the caller can compute is usable without max-div implementing it.
 [^cmp-2]: Counts are per-group minimum and maximum bounds, and carry per-constraint weights and a choice of linear or quadratic penalty shaping when a problem is over-constrained.
-[^cmp-3]: `check_feasibility` returns a three-valued verdict whose definite answers are proofs: feasible comes with a satisfying selection, infeasible with an independently re-checkable certificate and a certified violation floor, and unknown claims nothing.
+[^cmp-3]: `check_feasibility` returns a three-valued verdict whose definite answers are proofs. Feasible comes with a satisfying selection; infeasible with an independently re-checkable certificate. Unknown claims nothing.
 [^cmp-4]: Several workers solve the same problem at once and the best result wins.
 [^cmp-5]: Workers form groups whose members adopt the best selection any member has found so far; groups stay independent of each other, and the best result over all workers wins.
 [^cmp-6]: Vector problems can be solved with lazy distance storage, which computes pair distances on demand and never materializes the O(n²) matrix, so the ceiling is time rather than memory: each solver iteration costs O(n), and the iteration count a useful anytime run needs grows with n as well. Precomputed-distance problems keep the stored-matrix ceiling of n ≈ 10⁵.
@@ -63,7 +63,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-9]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
 [^cmp-10]: No natural constraint-programming encoding. Expressing a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, at which point a MILP solver is the better tool.
 [^cmp-11]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
-[^cmp-12]: A feasibility-only solve of the hand-written constraint model returns a proven feasible-or-infeasible verdict; the proof machinery is native, the modeling is manual.
+[^cmp-12]: A feasibility-only solve of the hand-written constraint model returns a proven feasible-or-infeasible verdict; the proof machinery is native.
 [^cmp-13]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
 [^cmp-14]: CP-SAT runs a portfolio of differently configured search workers on the same instance by default, set by the num_workers parameter.
 [^cmp-15]: The portfolio workers share learned clauses, solutions and objective bounds while solving.
