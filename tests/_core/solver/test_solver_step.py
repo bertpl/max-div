@@ -39,6 +39,19 @@ class OptimTest(OptimizationStrategy):
         self._progress_fracs.append(progress_frac)
 
 
+class OptimTickingTest(OptimTest):
+    """OptimTest whose every iteration advances the fake clock, so a time-budgeted run terminates."""
+
+    def __init__(self, clock, dt_sec: float):
+        super().__init__()
+        self._clock = clock
+        self._dt_sec = dt_sec
+
+    def _perform_single_iteration(self, state: SolverState, progress_frac: float):
+        super()._perform_single_iteration(state, progress_frac)
+        self._clock.advance(self._dt_sec)
+
+
 class DummySolverState:
     def __init__(self, n: int, k: int):
         self.n = n
@@ -178,9 +191,10 @@ def test_optimization_step_run_iterations():
     assert_score_checkpoints_are_sane(result.score_checkpoints)
 
 
-def test_optimization_step_run_seconds():
+def test_optimization_step_run_seconds(fake_clock):
+    """A time-budgeted step iterates until its budget is spent, and reports at least that much time."""
     # --- arrange -----------------------------------------
-    strategy = OptimTest()
+    strategy = OptimTickingTest(fake_clock, dt_sec=0.001)
     step = OptimizationStep(strategy, duration=seconds(0.1))
     state = Mock()
 
