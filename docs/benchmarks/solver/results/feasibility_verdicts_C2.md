@@ -1,16 +1,12 @@
 Certified feasibility verdicts for problem C2 (ascent budget 8000 iterations, thorough mode, fixed seed):
 
-| $n$  | $d$ | $k$ | $m$ | Verdict                                                  | Constraints-score ceiling |
-| ---- | --- | --- | --- | -------------------------------------------------------- | ------------------------- |
-| 100  | 2   | 10  | 2   | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 200  | 2   | 20  | 4   | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 300  | 2   | 30  | 6   | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 400  | 2   | 40  | 8   | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 600  | 2   | 60  | 12  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 800  | 2   | 80  | 16  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 1200 | 2   | 120 | 24  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 1600 | 2   | 160 | 32  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 2400 | 2   | 240 | 48  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 3200 | 2   | 320 | 64  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 4800 | 2   | 480 | 96  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
-| 6400 | 2   | 640 | 128 | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
+| $n$   | $d$ | $k$  | $m$ | Verdict                                                  | Constraints-score ceiling |
+| ----- | --- | ---- | --- | -------------------------------------------------------- | ------------------------- |
+| 100   | 2   | 10   | 2   | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
+| 200   | 2   | 20   | 4   | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
+| 500   | 2   | 50   | 10  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
+| 1000  | 2   | 100  | 20  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
+| 2000  | 2   | 200  | 40  | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
+| 5000  | 2   | 500  | 100 | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
+| 10000 | 2   | 1000 | 200 | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |
+| 20000 | 2   | 2000 | 400 | <span style="color:#00aa00">**feasible** (proven)</span> | 1.0                       |

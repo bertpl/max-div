@@ -29,13 +29,6 @@ if TYPE_CHECKING:
 
 
 # =================================================================================================
-#  Benchmark problem sizes
-# =================================================================================================
-# Every per-size table in the docs is generated on this one list of n values, so their rows line up.
-BENCHMARK_PROBLEM_SIZES = [100 * s for s in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]]
-
-
-# =================================================================================================
 #  StrategyPreset protocol
 # =================================================================================================
 class StrategyPreset(Protocol):
@@ -161,7 +154,7 @@ class SolverBenchmarkScope:
         # --- calibrate -------------------------
         n_seeds_min = 3  # we don't execute benchmarks if n_seeds < n_seeds_min
         n_seeds_max = 16  # we never do more than n_seeds_max
-        full_n_range = BENCHMARK_PROBLEM_SIZES  # n range for speed=0.0
+        full_n_range = [100 * s for s in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]]  # n range for speed=0.0
 
         # --- speed-dependent settings ----------
         # the seed budget below is computed on n/100 ("weight"), the scale the min/max/limit
