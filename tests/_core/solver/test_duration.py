@@ -22,8 +22,8 @@ class _FakeClock:
     """A `perf_counter` stand-in that only moves when the test advances it.
 
     `ProgressTracker` reads `time.perf_counter()` at construction and on every progress query, so
-    monkeypatching it with one of these turns any "did enough time pass?" assertion from a wall-clock
-    race into an exact, deterministic check.
+    monkeypatching `perf_counter` with a `_FakeClock` turns any "did enough time pass?" assertion
+    from a wall-clock race into an exact check.
     """
 
     def __init__(self, t: float = 1000.0) -> None:

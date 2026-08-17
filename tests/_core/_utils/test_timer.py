@@ -18,11 +18,11 @@ def test_timer():
         time.sleep(0.1)
 
     # --- assert ------------------------------------------
-    # `sleep(0.1)` blocks for at least 0.1 s and a loaded runner only overshoots, so the elapsed
-    # time can be bounded from below but not above without inviting a flake. The sec/nsec reads come
-    # off the same stopped interval, so their agreement is exact.
+    # `sleep(0.1)` blocks for at least 0.1 s and a loaded runner only overshoots, so each reading is
+    # bounded from below but not above; an upper bound would eventually flake. The nsec bound is
+    # asserted directly (not derived from the sec one) so it also catches a wrong time unit.
     assert timer.t_elapsed_sec() >= 0.09, "t_elapsed_sec() undercounts a 0.1 s sleep."
-    assert timer.t_elapsed_nsec() == pytest.approx(timer.t_elapsed_sec() * 1e9)
+    assert timer.t_elapsed_nsec() >= 90_000_000, "t_elapsed_nsec() undercounts a 0.1 s sleep."
 
 
 def test_timer_running():

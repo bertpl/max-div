@@ -12,8 +12,8 @@ def test_micro_benchmark(t_sleep: float, silent: bool, index_range: int | None):
     """A busy-wait of a known duration measures at least that duration.
 
     Only the lower bound is asserted. The harness measures real wall-clock, which a loaded runner
-    inflates without limit, so any upper bound is a flake waiting to happen; the busy-wait can never
-    be measured as *shorter* than it ran, which is the property worth pinning.
+    inflates without limit, so any upper bound would eventually flake; the busy-wait can never be
+    measured as *shorter* than it ran, which is the property worth pinning.
     """
 
     # --- arrange -----------------------------------------
