@@ -25,12 +25,7 @@ class InitMostFeasible(InitializationStrategy):
     The whole selection is produced in one batch, so the state must still be empty.
 
     Feasibility is all this strategy optimizes for, so its selection is no more diverse than a
-    random one.  A nonzero `beta` buys diversity by scoring candidates on the state's global
-    diversity contributions, and it is a real trade rather than a tie-break: steering candidate
-    generation toward diverse items can miss a satisfying selection that would otherwise have been
-    found, leaving a more violating starting point.  What it cannot do is affect an infeasibility
-    proof, which the tilt never reaches.  Leave it at 0 unless the trade has been measured on the
-    problem at hand.
+    random one.
 
     Suggested use: constrained problems where reaching feasibility consumes a meaningful share of
     the optimization budget, or where feasibility may be unreachable altogether.
@@ -38,21 +33,17 @@ class InitMostFeasible(InitializationStrategy):
     Time Complexity:
        - ~O(max_iter * (n log k + total constraint membership)) for the ascent, plus a bounded
          number of repair rounds.
-       - a nonzero `beta` additionally forces the O(n²) global-contribution sweep.
     """
 
-    def __init__(self, max_iter: int = CONSTRUCTION_DEFAULT_ITER, beta: float = 0.0) -> None:
+    def __init__(self, max_iter: int = CONSTRUCTION_DEFAULT_ITER) -> None:
         """Create the strategy.
 
-        :raises ValueError: If `max_iter` is below 1, or `beta` is negative.
+        :raises ValueError: If `max_iter` is below 1.
         """
         super().__init__()
         if max_iter < 1:
             raise ValueError(f"max_iter must be >= 1, got {max_iter}")
-        if beta < 0:
-            raise ValueError(f"beta must be >= 0, got {beta}")
         self._max_iter = max_iter
-        self._beta = beta
         self._status: FeasibilityStatus | None = None
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
@@ -74,8 +65,6 @@ class InitMostFeasible(InitializationStrategy):
             k=int(state.k),
             max_iter=self._max_iter,
             seed=int(self._seed),
-            diversity_prior=(state.global_contribution_array if self._beta != 0.0 else None),
-            beta=self._beta,
         )
         self._status = result.status
         return result.selection.astype(np.int32)

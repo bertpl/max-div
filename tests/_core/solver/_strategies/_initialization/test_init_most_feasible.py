@@ -111,37 +111,13 @@ def test_most_feasible_rejects_an_unconstrained_problem():
 
 
 # =================================================================================================
-#  Diversity tilt
-# =================================================================================================
-def test_most_feasible_diversity_tilt_moves_the_witness_without_losing_feasibility():
-    """A nonzero beta selects a different witness, and it is still a witness."""
-    # --- arrange -----------------------------------------
-    plain = InitializationStrategy.most_feasible()
-    tilted = InitializationStrategy.most_feasible(beta=5.0)
-
-    # --- act ---------------------------------------------
-    plain_selection = plain.get_next_samples(_state(FEASIBLE_CONS), 8)
-    tilted_selection = tilted.get_next_samples(_state(FEASIBLE_CONS), 8)
-
-    # --- assert ------------------------------------------
-    assert _satisfies(plain_selection, FEASIBLE_CONS)
-    assert _satisfies(tilted_selection, FEASIBLE_CONS)
-    assert not np.array_equal(plain_selection, tilted_selection)
-
-
-# =================================================================================================
 #  Configuration & contract
 # =================================================================================================
-@pytest.mark.parametrize(
-    "kwargs,match",
-    [({"max_iter": 0}, "max_iter"), ({"beta": -0.1}, "beta")],
-    ids=["max_iter_below_one", "negative_beta"],
-)
-def test_most_feasible_rejects_invalid_arguments(kwargs: dict, match: str):
-    """A max_iter below 1 and a negative beta are rejected at construction."""
+def test_most_feasible_rejects_a_max_iter_below_one():
+    """A max_iter below 1 is rejected at construction."""
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError, match=match):
-        InitMostFeasible(**kwargs)
+    with pytest.raises(ValueError, match="max_iter"):
+        InitMostFeasible(max_iter=0)
 
 
 def test_most_feasible_needs_an_empty_state():
