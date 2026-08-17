@@ -41,11 +41,14 @@ def compute_full_matrix(
     Each pair is computed once through the same pair arithmetic the condensed and lazy paths use,
     and written to both halves.
 
-    :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
-    :param metric: (DistanceMetric) The distance metric to use.
-    :param out: ((n, n) ndarray) buffer to fill, allocated here when not given.
-    :return: ((n, n) ndarray) full pairwise-distance matrix, float32 C-contiguous — `out` itself
-                whenever one was given, following numpy's convention for such a parameter.
+    Args:
+        vectors: (n x d ndarray) A set of n vectors in d dimensions.
+        metric: (DistanceMetric) The distance metric to use.
+        out: ((n, n) ndarray) buffer to fill, allocated here when not given.
+
+    Returns:
+        ((n, n) ndarray) full pairwise-distance matrix, float32 C-contiguous — `out` itself
+        whenever one was given, following numpy's convention for such a parameter.
     """
     vectors = np.ascontiguousarray(vectors, dtype=np.float32)
     if metric == DistanceMetric.COSINE:
@@ -64,11 +67,14 @@ def expand_condensed(
 ) -> NDArray[np.float32]:
     """Expand a condensed distance vector into a full (n, n) matrix, each value written to both halves.
 
-    :param condensed: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
-    :param n: (int) number of items.
-    :param out: ((n, n) ndarray) buffer to fill, allocated here when not given.
-    :return: ((n, n) ndarray) full pairwise-distance matrix, bit-equal to the condensed source —
-                `out` itself whenever one was given, following numpy's convention for such a parameter.
+    Args:
+        condensed: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
+        n: (int) number of items.
+        out: ((n, n) ndarray) buffer to fill, allocated here when not given.
+
+    Returns:
+        ((n, n) ndarray) full pairwise-distance matrix, bit-equal to the condensed source —
+        `out` itself whenever one was given, following numpy's convention for such a parameter.
     """
     out = _allocate_if_needed(out, n)
     _fill_matrix_from_condensed(condensed, np.int32(n), out)

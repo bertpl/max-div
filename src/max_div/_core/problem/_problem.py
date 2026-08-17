@@ -75,12 +75,13 @@ class MaxDivProblem(ABC):
         Deciding feasibility is NP-complete in general, so the verdict is three-valued; see
         `FeasibilityStatus` for what each value claims.  No solver path calls `check_feasibility`.
 
-        :param thorough: Changes only what happens once infeasibility is proven. The default stops
-            there, having the verdict; `thorough=True` keeps searching, which tightens the certified
-            violation floor and can improve the selection returned, at a proportional cost in time.
-            Feasible and unknown outcomes are reached identically either way.
-        :param max_iter: Search budget in ascent iterations; cost is proportional. A larger budget
-            can only move an unknown verdict toward a proof, never flip one proof into another.
+        Args:
+            thorough: Changes only what happens once infeasibility is proven. The default stops
+                there, having the verdict; `thorough=True` keeps searching, which tightens the certified
+                violation floor and can improve the selection returned, at a proportional cost in time.
+                Feasible and unknown outcomes are reached identically either way.
+            max_iter: Search budget in ascent iterations; cost is proportional. A larger budget
+                can only move an unknown verdict toward a proof, never flip one proof into another.
         """
         con_values, con_indices = ConstraintList(self.constraints).to_numpy()
         return find_feasible(
@@ -105,12 +106,13 @@ class MaxDivProblem(ABC):
     ) -> "VectorMaxDivProblem":
         """Create a new VectorMaxDivProblem with validation.
 
-        :param vectors: 2D numpy array of shape ``(n, d)`` with at least 3 rows.
-                        Converted to ``float32`` automatically if needed.
-        :param k: Number of items to select (must satisfy ``2 <= k <= n``).
-        :param distance_metric: Distance metric for pairwise distances.
-        :param diversity_metric: Diversity metric to maximize.
-        :param constraints: Optional list of fairness constraints.
+        Args:
+            vectors: 2D numpy array of shape ``(n, d)`` with at least 3 rows.
+                Converted to ``float32`` automatically if needed.
+            k: Number of items to select (must satisfy ``2 <= k <= n``).
+            distance_metric: Distance metric for pairwise distances.
+            diversity_metric: Diversity metric to maximize.
+            constraints: Optional list of fairness constraints.
         """
         # --- validate ----------------
         if vectors.ndim != 2:
@@ -152,12 +154,13 @@ class MaxDivProblem(ABC):
         vector of length ``n*(n-1)/2`` (scipy layout, as produced by ``scipy.spatial.distance.pdist``).
         Distances are converted to ``float32`` internally.
 
-        :param distances: Square symmetric ``(n, n)`` matrix with zero diagonal, or condensed
-                          1D vector of length ``n*(n-1)/2``, with at least 3 items.
-                          All values must be finite and non-negative.
-        :param k: Number of items to select (must satisfy ``2 <= k <= n``).
-        :param diversity_metric: Diversity metric to maximize.
-        :param constraints: Optional list of fairness constraints.
+        Args:
+            distances: Square symmetric ``(n, n)`` matrix with zero diagonal, or condensed
+                1D vector of length ``n*(n-1)/2``, with at least 3 items.
+                All values must be finite and non-negative.
+            k: Number of items to select (must satisfy ``2 <= k <= n``).
+            diversity_metric: Diversity metric to maximize.
+            constraints: Optional list of fairness constraints.
         """
         # --- validate, keeping the provided format -----
         distances = np.asarray(distances)

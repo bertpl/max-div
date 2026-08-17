@@ -18,8 +18,9 @@ def build_diversity_contribution_tracker(
 ) -> DiversityContributionTracker:
     """Build a fresh (empty-selection) diversity-contribution tracker for the given contribution family.
 
-    :param family: (DiversityContributionFamily) the contribution family to track.
-    :param store: (DistanceStore) pairwise-distance storage the tracker reads from.
+    Args:
+        family: (DiversityContributionFamily) the contribution family to track.
+        store: (DistanceStore) pairwise-distance storage the tracker reads from.
     """
     match family:
         case DiversityContributionFamily.SEPARATION:

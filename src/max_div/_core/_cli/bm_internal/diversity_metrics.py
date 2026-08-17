@@ -18,9 +18,10 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
 
     Vector sizes tested: [2, 4, 8, ..., 1024, 2048, 4096]
 
-    :param speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
-    :param markdown: If `True`, outputs the results as a Markdown table.
-    :param file: If `True`, redirects output to a file instead of console.
+    Args:
+        speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
+        markdown: If `True`, outputs the results as a Markdown table.
+        file: If `True`, redirects output to a file instead of console.
     """
     print("Benchmarking `DiversityMetric`...")
 

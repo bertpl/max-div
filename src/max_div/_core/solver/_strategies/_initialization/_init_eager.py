@@ -52,10 +52,11 @@ class InitEager(InitializationStrategy):
     def __init__(self, nc: int, ignore_constraints: bool = False) -> None:
         """Constructor for InitEager class.
 
-        :param nc: (int) Number of candidates to sample in each iteration.
-        :param ignore_constraints: (bool, default=False)
-                        If `False`, respects problem constraints during initialization, if present.
-                        If `True`, constraints are ignored when sampling candidates and when comparing scores.
+        Args:
+            nc: (int) Number of candidates to sample in each iteration.
+            ignore_constraints: (bool, default=False)
+                If `False`, respects problem constraints during initialization, if present.
+                If `True`, constraints are ignored when sampling candidates and when comparing scores.
         """
         # --- parameter validation --------------
         if nc <= 1:

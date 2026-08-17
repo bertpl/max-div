@@ -29,10 +29,11 @@ class ParameterSchedule(ParameterValueSource):
         In principle, we expect s(0) = 0 and s(1) = 1, as a result of which we expect c0=0 and c1+c2+c3=1,
           but this is not enforced here.
 
-        :param v0: (float) initial value of the parameter at progress fraction f=0.0
-        :param v1: (float) final value of the parameter at progress fraction f=1.0
-        :param c_poly: (list[float]) coefficients of the cubic polynomial defining the scheduling function s(f)
-        :param name: (str) optional name/description of this schedule (used in __str__())
+        Args:
+            v0: (float) initial value of the parameter at progress fraction f=0.0
+            v1: (float) final value of the parameter at progress fraction f=1.0
+            c_poly: (list[float]) coefficients of the cubic polynomial defining the scheduling function s(f)
+            name: (str) optional name/description of this schedule (used in __str__())
         """
         self.v0 = v0
         self.v1 = v1
@@ -128,9 +129,12 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
 
     The array is intended for use in low-level numba-optimized schedule evaluation functions.
 
-    :param schedules: list of ParameterSchedule instances
-    :return: 2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
-                        [min_value, max_value, d0, d1, d2, d3].
+    Args:
+        schedules: list of ParameterSchedule instances
+
+    Returns:
+        2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
+        [min_value, max_value, d0, d1, d2, d3].
     """
     # --- prep ------------------------
     n_schedules = len(schedules)
@@ -162,10 +166,13 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
 def _evaluate_schedules(schedules_array: NDArray[np.float64], f: float) -> NDArray[np.float64]:
     """Evaluate multiple ParameterSchedule instances at once, given their numpy array representation.
 
-    :param schedules_array: 2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
-                        [min_value, max_value, d0, d1, d2, d3]
-    :param f: progress fraction in [0.0, 1.0]
-    :return: 1D numpy array of shape (n_schedules,) with evaluated parameter values.
+    Args:
+        schedules_array: 2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
+            [min_value, max_value, d0, d1, d2, d3]
+        f: progress fraction in [0.0, 1.0]
+
+    Returns:
+        1D numpy array of shape (n_schedules,) with evaluated parameter values.
     """
     # --- prep ------------------------
     n_schedules = schedules_array.shape[0]

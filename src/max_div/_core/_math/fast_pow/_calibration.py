@@ -157,7 +157,8 @@ def construct_calibration_data(n: int) -> tuple[NDArray[np.float64], NDArray[np.
     t will be chosen as (1+s)/(1-s) with s chosen uniformly in [-0.9, 0.9]  (hence t in [1/19, 19])
     x will be chosen such that x**t is equally spaced in [0.001, 0.999]
 
-    :param n: (int) size parameter, with resulting arrays of size n^2   (!!!)
+    Args:
+        n: (int) size parameter, with resulting arrays of size n^2   (!!!)
     """
     # --- init ----------------------------------
     x_values = np.empty(n * n, dtype=np.float64)

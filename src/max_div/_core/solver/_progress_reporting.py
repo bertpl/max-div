@@ -272,9 +272,13 @@ class ProgressReporter(ABC):
 
         `verbosity` may be a `Verbosity` member or its plain integer value.
 
-        :param worker_columns: If `True`, a tabular reporter is laid out for a multi-worker solve;
-                               the other reporters render identically either way.
-        :raises ValueError: If `verbosity` is not one of the `Verbosity` levels.
+        Args:
+            verbosity: the level to build the reporter for.
+            worker_columns: If `True`, a tabular reporter is laid out for a multi-worker solve;
+                the other reporters render identically either way.
+
+        Raises:
+            ValueError: If `verbosity` is not one of the `Verbosity` levels.
         """
         match verbosity:
             case 0:
@@ -376,11 +380,12 @@ class TabularProgressReporter(ProgressReporter):
     def __init__(self, c_slowdown: float = 1.05, debug_info: bool = False, worker_columns: bool = False) -> None:
         """Initializes a TabularProgressReporter.
 
-        :param c_slowdown: Update-thinning factor; see `ReportThrottle`.
-        :param debug_info: If `True`, includes additional column with solver step debug info.
-        :param worker_columns: If `True`, lay the table out for a multi-worker solve: a worker column
-                               and an active-worker count replace the per-step columns, which have no
-                               meaning when the rendered rows draw on several workers at once.
+        Args:
+            c_slowdown: Update-thinning factor; see `ReportThrottle`.
+            debug_info: If `True`, includes additional column with solver step debug info.
+            worker_columns: If `True`, lay the table out for a multi-worker solve: a worker column
+                and an active-worker count replace the per-step columns, which have no
+                meaning when the rendered rows draw on several workers at once.
         """
         super().__init__()
 

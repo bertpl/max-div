@@ -36,9 +36,10 @@ class ForwardingProgressReporter(ProgressReporter):
     def __init__(self, queue: Queue, worker_index: int, requirements: SnapshotRequirements) -> None:
         """Forward this worker's snapshots, materializing what the parent's reporter declared it needs.
 
-        :param queue: the parent-drained progress queue; must be unbounded (see module docstring).
-        :param worker_index: stamped on every forwarded snapshot, so the parent can attribute it.
-        :param requirements: what to materialize, as declared by the parent's rendering reporter.
+        Args:
+            queue: the parent-drained progress queue; must be unbounded (see module docstring).
+            worker_index: stamped on every forwarded snapshot, so the parent can attribute it.
+            requirements: what to materialize, as declared by the parent's rendering reporter.
         """
         super().__init__()
         self._queue = queue

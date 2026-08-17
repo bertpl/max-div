@@ -42,12 +42,13 @@ class MeanDistanceTracker(DiversityContributionTracker):
     ) -> None:
         """Initialize the MeanDistanceTracker for an empty selection.
 
-        :param store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
-        :param contribution_wrt_dataset: (np.ndarray[np.float32] | None) global-contribution array to adopt;
-                                    a fresh lazy (all-NaN) array if omitted.
-        :param dist_sums: (np.ndarray[np.float64] | None) current distance sums wrt selection; fresh (all 0.0,
-                          i.e. empty selection) if omitted.  Together with `contribution_wrt_dataset` this
-                          enables copies without recomputation.
+        Args:
+            store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
+            contribution_wrt_dataset: (np.ndarray[np.float32] | None) global-contribution array to adopt;
+                a fresh lazy (all-NaN) array if omitted.
+            dist_sums: (np.ndarray[np.float64] | None) current distance sums wrt selection; fresh (all 0.0,
+                i.e. empty selection) if omitted.  Together with `contribution_wrt_dataset` this
+                enables copies without recomputation.
         """
         self._store = store  # READ-ONLY
         # the layout is a property of the store, so which calculations apply is settled here

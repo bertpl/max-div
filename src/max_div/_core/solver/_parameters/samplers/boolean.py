@@ -17,11 +17,12 @@ class BooleanAdaptiveSampler(AdaptiveSampler[bool]):
     ) -> None:
         """Class that performs adaptive sampling of boolean values (True/False).
 
-        :param p_true_prior: (float in (0,1)) prior expectation of probability of sampling True.
-        :param tau_learn: (float) time constant for learning from successful samples.
-        :param tau_forget: (float) time constant for forgetting learned probability
-                                                     in case of unsuccessful samples.
-        :param seed: (int|int64) initial random seed for sampling.
+        Args:
+            p_true_prior: (float in (0,1)) prior expectation of probability of sampling True.
+            tau_learn: (float) time constant for learning from successful samples.
+            tau_forget: (float) time constant for forgetting learned probability
+                in case of unsuccessful samples.
+            seed: (int|int64) initial random seed for sampling.
         """
         super().__init__(tau_learn=tau_learn, tau_forget=tau_forget, seed=seed)
 

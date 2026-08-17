@@ -40,8 +40,9 @@ class DiversityContributionTracker(ABC):
         can slice it by any selection mask.  It may be a reference to internal state — callers
         must not modify it.
 
-        :param selected: (n-sized bool ndarray) current selection mask.
-        :param n_selected: (np.int32) number of True values in `selected`.
+        Args:
+            selected: (n-sized bool ndarray) current selection mask.
+            n_selected: (np.int32) number of True values in `selected`.
         """
         raise NotImplementedError
 
@@ -85,9 +86,10 @@ class DiversityContributionTracker(ABC):
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Update contributions after removing point `index` from the selection.
 
-        :param index: (np.int32) the point just removed.
-        :param new_selection: (int32 ndarray) indices selected *after* the removal — needed by
-                              trackers whose contribution requires rescanning the remaining selection.
+        Args:
+            index: (np.int32) the point just removed.
+            new_selection: (int32 ndarray) indices selected *after* the removal — needed by
+                trackers whose contribution requires rescanning the remaining selection.
         """
         raise NotImplementedError
 
@@ -99,8 +101,9 @@ class DiversityContributionTracker(ABC):
     def remove_many(self, indices: NDArray[np.int32], new_selection: NDArray[np.int32]) -> None:
         """Update contributions after removing all points in `indices` from the selection.
 
-        :param indices: (int32 ndarray) the points just removed.
-        :param new_selection: (int32 ndarray) indices selected after *all* removals.
+        Args:
+            indices: (int32 ndarray) the points just removed.
+            new_selection: (int32 ndarray) indices selected after *all* removals.
         """
         for index in indices:
             self.remove(index, new_selection)
@@ -127,8 +130,9 @@ class DiversityContributionTracker(ABC):
     def pop_snapshot(self, restore: bool) -> None:
         """Discard the top snapshot, first restoring the contribution state from it if `restore`.
 
-        :param restore: (bool) True to restore the snapshotted state, False to keep the
-                        current state and drop the snapshot.
+        Args:
+            restore: (bool) True to restore the snapshotted state, False to keep the
+                current state and drop the snapshot.
         """
         raise NotImplementedError
 

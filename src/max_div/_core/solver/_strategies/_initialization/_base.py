@@ -36,11 +36,14 @@ class InitializationStrategy(StrategyBase, ABC):
         This method is called repeatedly by the Solver, until enough samples have been selected to
         reach the desired selection size.
 
-        :param state: (SolverState) The current solver state, to fetch problem size, constraints, distances, etc...,
-                                    so initial selection can be made in an informed way.
-        :param k_remaining: (int) number of samples that remain to be selected.
-        :return: np.array of unique np.int32 values, shape=(b,), with indices of samples to be added to the selection.
-                  b can be any value in range [1, k_remaining].  Samples should be unique and not yet selected.
+        Args:
+            state: (SolverState) The current solver state, to fetch problem size, constraints, distances, etc...,
+                so initial selection can be made in an informed way.
+            k_remaining: (int) number of samples that remain to be selected.
+
+        Returns:
+            np.array of unique np.int32 values, shape=(b,), with indices of samples to be added to the selection.
+            b can be any value in range [1, k_remaining].  Samples should be unique and not yet selected.
         """
         raise NotImplementedError
 
@@ -63,8 +66,9 @@ class InitializationStrategy(StrategyBase, ABC):
 
         See `InitFarthestPoint` for the per-metric interpretation and constraint handling.
 
-        :param top_k: Each greedy pick samples uniformly among the `top_k` highest diversity
-            contributions; the default 1 keeps the exact greedy construction.
+        Args:
+            top_k: Each greedy pick samples uniformly among the `top_k` highest diversity
+                contributions; the default 1 keeps the exact greedy construction.
         """
         from ._init_farthest_point import InitFarthestPoint
 
@@ -76,9 +80,10 @@ class InitializationStrategy(StrategyBase, ABC):
 
         Constrained problems only; see `InitMostFeasible` for the full contract.
 
-        :param max_iter: Search budget; a higher budget more often finds a feasible selection, and
-            lowers the violation of the one returned when none exists, at a proportional cost in
-            setup time.
+        Args:
+            max_iter: Search budget; a higher budget more often finds a feasible selection, and
+                lowers the violation of the one returned when none exists, at a proportional cost in
+                setup time.
         """
         from ._init_most_feasible import InitMostFeasible
 
@@ -90,8 +95,9 @@ class InitializationStrategy(StrategyBase, ABC):
 
         Probabilities are biased by the global diversity contribution (unless ``uniform=True``).
 
-        :param uniform: If True, sample uniformly instead of using contribution-based probabilities.
-        :param ignore_constraints: If True, ignore constraints during sampling.
+        Args:
+            uniform: If True, sample uniformly instead of using contribution-based probabilities.
+            ignore_constraints: If True, ignore constraints during sampling.
         """
         from ._init_random_one_shot import InitRandomOneShot
 
@@ -106,8 +112,9 @@ class InitializationStrategy(StrategyBase, ABC):
 
         Diversity contributions are re-evaluated between batches.
 
-        :param b: Batch size (number of items to select per batch).
-        :param ignore_constraints: If True, ignore constraints during sampling.
+        Args:
+            b: Batch size (number of items to select per batch).
+            ignore_constraints: If True, ignore constraints during sampling.
         """
         from ._init_random_batched import InitRandomBatched
 
@@ -122,8 +129,9 @@ class InitializationStrategy(StrategyBase, ABC):
 
         Higher ``nc`` gives better quality but is slower.
 
-        :param nc: Number of candidates to evaluate at each step.
-        :param ignore_constraints: If True, ignore constraints during sampling.
+        Args:
+            nc: Number of candidates to evaluate at each step.
+            ignore_constraints: If True, ignore constraints during sampling.
         """
         from ._init_eager import InitEager
 

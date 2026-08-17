@@ -35,7 +35,8 @@ class InitFarthestPoint(InitializationStrategy):
     def __init__(self, top_k: int = 1) -> None:
         """Create the strategy.
 
-        :raises ValueError: If `top_k` is below 1.
+        Raises:
+            ValueError: If `top_k` is below 1.
         """
         super().__init__()
         if top_k < 1:

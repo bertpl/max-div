@@ -53,13 +53,16 @@ def run_portfolio(
     whichever worker happens to finish first.  A worker that dies without reporting is left out rather than
     treated as an error; `best_result` raises when none came back.
 
-    :param configs: one solver configuration per worker, in worker order.
-    :param spec: where the published store lives; every worker attaches to it.
-    :param coordinators: one coordinator per worker, in worker order; `_coordinator` documents
-                         the topology this list wires up.
-    :param progress_reporter: renders the workers' combined progress from this (parent) process; a
-                              reporter that renders nothing — or `None` — turns all forwarding off.
-    :raises ValueError: If the coordinator count does not match the worker count.
+    Args:
+        configs: one solver configuration per worker, in worker order.
+        spec: where the published store lives; every worker attaches to it.
+        coordinators: one coordinator per worker, in worker order; `_coordinator` documents
+            the topology this list wires up.
+        progress_reporter: renders the workers' combined progress from this (parent) process; a
+            reporter that renders nothing — or `None` — turns all forwarding off.
+
+    Raises:
+        ValueError: If the coordinator count does not match the worker count.
     """
     if len(coordinators) != len(configs):
         raise ValueError(f"Expected one coordinator per worker: got {len(coordinators)} for {len(configs)} workers.")

@@ -25,9 +25,10 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
         * both `n` & `k` are varied across [1, 10, 100, 1000, 10000]
         * all valid combinations are tested (if `replace==False` we don't test `k`>`n`)
 
-    :param speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
-    :param markdown: If `True`, outputs the results as a Markdown table.
-    :param file: If `True`, redirects output to a file instead of console.
+    Args:
+        speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
+        markdown: If `True`, outputs the results as a Markdown table.
+        file: If `True`, redirects output to a file instead of console.
     """
     print("Benchmarking `randint`...")
 

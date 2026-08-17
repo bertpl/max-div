@@ -15,10 +15,13 @@ def remove_sample_from_candidates_and_p(
      - original arrays are not modified; new arrays are returned
      - if 'sample' is not found in 'candidates', a ValueError is raised.
 
-    :param candidates: (n-element int32-array) with candidate values
-    :param p: (n-element float32-array) with probabilities
-    :param sample: (int32) value to be removed from candidates (and corresponding p)
-    :return: (new_candidates, new_p), each of size n-1
+    Args:
+        candidates: (n-element int32-array) with candidate values
+        p: (n-element float32-array) with probabilities
+        sample: (int32) value to be removed from candidates (and corresponding p)
+
+    Returns:
+        (new_candidates, new_p), each of size n-1
     """
     # --- init ---
     n = np.int32(candidates.shape[0])

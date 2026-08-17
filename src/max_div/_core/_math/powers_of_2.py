@@ -23,8 +23,11 @@ _POWERS_OF_2_F32 = np.array(
 def power_of_2_f32(k: np.int32) -> np.float32:
     """Compute float32 2^k for arbitrary int32 k, using precomputed values in range [-150, 128].
 
-    :param k: (np.int32) exponent
-    :return: (np.float32) 2^k    (returning 0.0 or np.inf in case of underflow/overflow)
+    Args:
+        k: (np.int32) exponent
+
+    Returns:
+        (np.float32) 2^k    (returning 0.0 or np.inf in case of underflow/overflow)
     """
     k = max(_POWERS_OF_2_F32_MIN_EXP, min(k, _POWERS_OF_2_F32_MAX_EXP))
     return _POWERS_OF_2_F32[k - _POWERS_OF_2_F32_MIN_EXP]

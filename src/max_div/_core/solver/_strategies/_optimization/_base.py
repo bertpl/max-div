@@ -49,8 +49,9 @@ class OptimizationStrategy(StrategyBase, ABC):
     ) -> None:
         """Initialize the optimization strategy.
 
-        :param name: optional name of the strategy; if omitted class name is used.
-        :param dynamic_params: optional dictionary of parameters that are potentially adjusted each iteration.
+        Args:
+            name: optional name of the strategy; if omitted class name is used.
+            dynamic_params: optional dictionary of parameters that are potentially adjusted each iteration.
 
                 The values of this dictionary are triaged by type, with different action taken:
 
@@ -62,12 +63,12 @@ class OptimizationStrategy(StrategyBase, ABC):
 
                 other (float, int, ...) these parameters are fixed for the duration of the strategy.
 
-        :param ignore_infeasible_diversity_up_to_fraction: float between 0 and 1.  If provided, we compare solution
-                           scores using the flag 'ignore_infeasible_diversity' until the step has progressed up to this
-                           fraction.  This allows optimization strategies to focus on satisfying constraints first
-                           before trying to improve diversity.  Trying to improve diversity while still infeasible wrt
-                           constraints, can steer away the solution from more feasible regions of the search space,
-                           in case of hard-to-satisfy, overlapping constraints.
+            ignore_infeasible_diversity_up_to_fraction: float between 0 and 1.  If provided, we compare solution
+                scores using the flag 'ignore_infeasible_diversity' until the step has progressed up to this
+                fraction.  This allows optimization strategies to focus on satisfying constraints first
+                before trying to improve diversity.  Trying to improve diversity while still infeasible wrt
+                constraints, can steer away the solution from more feasible regions of the search space,
+                in case of hard-to-satisfy, overlapping constraints.
 
                            This parameter will influence how the instance field 'ignore_infeasible_diversity' is set.
                            When not provided it is always False; when provided it will start as True and will get set
@@ -96,7 +97,8 @@ class OptimizationStrategy(StrategyBase, ABC):
     def _configure_dynamic_params(self, dynamic_params: dict[str, ParamValueType]) -> None:
         """Internal method to configure dynamic parameters (scheduled and/or sampled).
 
-        :param dynamic_params: (dict) dictionary of dynamic parameters to configure.
+        Args:
+            dynamic_params: (dict) dictionary of dynamic parameters to configure.
         """
         # --- schedule parameters ---------------
         scheduled_parameters = {
@@ -137,14 +139,15 @@ class OptimizationStrategy(StrategyBase, ABC):
     ) -> None:
         """Perform n iterations of the optimization strategy, modifying the solver state in-place.
 
-        :param state: (SolverState) current solver state to be modified and used to extract properties
-                      of current state.
-        :param n_iters: (int) number of iterations to perform.
-        :param current_progress_frac: (float) fraction in [0.0, 1.0] indicating current overall progress through total
-                                      duration (iterations or time) configured for this SolverStep.
-        :param progress_frac_per_iter: (float) fraction in [0.0, 1.0] indicating how much progress each iteration
-                                       contributes towards the total duration configured for this SolverStep.
-                                       For time-based solver step configurations, this can be an estimate.
+        Args:
+            state: (SolverState) current solver state to be modified and used to extract properties
+                of current state.
+            n_iters: (int) number of iterations to perform.
+            current_progress_frac: (float) fraction in [0.0, 1.0] indicating current overall progress through total
+                duration (iterations or time) configured for this SolverStep.
+            progress_frac_per_iter: (float) fraction in [0.0, 1.0] indicating how much progress each iteration
+                contributes towards the total duration configured for this SolverStep.
+                For time-based solver step configurations, this can be an estimate.
         """
         # --- prep ----------------------------------------
         if n_iters > 1:
@@ -185,9 +188,10 @@ class OptimizationStrategy(StrategyBase, ABC):
 
         The goal of each iteration is to try to reach a more optimal solution.
 
-        :param state: (SolverState) The current solver state.
-        :param progress_frac: (float) Fraction in [0.0, 1.0] indicating current overall progress through total
-                                 duration (iterations or time) configured for this SolverStep.
+        Args:
+            state: (SolverState) The current solver state.
+            progress_frac: (float) Fraction in [0.0, 1.0] indicating current overall progress through total
+                duration (iterations or time) configured for this SolverStep.
         """
         raise NotImplementedError
 
@@ -200,8 +204,11 @@ class OptimizationStrategy(StrategyBase, ABC):
 
         Intended for use inside constructors of child classes.
 
-        :param param: (ParamValueType) parameter to get initial value for
-        :return: (float) initial value of the parameter.
+        Args:
+            param: (ParamValueType) parameter to get initial value for
+
+        Returns:
+            (float) initial value of the parameter.
         """
         if isinstance(param, ParameterValueSource):
             return float(param.get_initial_value())  # float() since samplers may yield numpy scalars; cold path
@@ -314,7 +321,8 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     def get_success_rate(self) -> float:
         """Estimate the swap success rate of the strategy, based on recent history of successes and failures.
 
-        :return: (float) estimated success rate in range [0.0, 1.0].
+        Returns:
+            (float) estimated success rate in range [0.0, 1.0].
         """
         return float(_estimate_success_rate(self._success_rate_state))
 
@@ -400,7 +408,8 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
     def _determine_swap_size(self) -> np.int32:
         """Determine the swap size n for the current iteration.
 
-        :return: (np.int32) swap size n.
+        Returns:
+            (np.int32) swap size n.
         """
         raise NotImplementedError
 
@@ -413,9 +422,12 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         NOTE: for reproducibility, any random sampling inside this method should use self.next_seed() method of the
               strategy to get a new seed.
 
-        :param state: (SolverState) current solver state, with # selected samples = k
-        :param n_to_remove: (np.int32) number of samples to be removed  (swap size)
-        :return: (int32 ndarray) of shape (n,) with indices of samples to be REMOVED
+        Args:
+            state: (SolverState) current solver state, with # selected samples = k
+            n_to_remove: (np.int32) number of samples to be removed  (swap size)
+
+        Returns:
+            (int32 ndarray) of shape (n,) with indices of samples to be REMOVED
         """
         raise NotImplementedError
 
@@ -430,11 +442,14 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         NOTE: for reproducibility, any random sampling inside this method should use self.next_seed() method of the
               strategy to get a new seed.
 
-        :param state: (SolverState) current solver state, with # selected samples = k-n_to_add
-        :param n_to_add: (np.int32) number of samples to be added  (swap size)
-        :param candidate_samples: (1D np.int32 ndarray) with candidate samples to choose from; this method should
-                                     NEVER return samples that are not in this array.
-        :return: (int32 ndarray) of shape (n,) with indices of samples to be ADDED
+        Args:
+            state: (SolverState) current solver state, with # selected samples = k-n_to_add
+            n_to_add: (np.int32) number of samples to be added  (swap size)
+            candidate_samples: (1D np.int32 ndarray) with candidate samples to choose from; this method should
+                NEVER return samples that are not in this array.
+
+        Returns:
+            (int32 ndarray) of shape (n,) with indices of samples to be ADDED
         """
         raise NotImplementedError
 
@@ -456,10 +471,11 @@ def _update_success_rate_state(success_rate_state: NDArray[np.int64], success: b
     Current iteration # is estimated based on values found in the state
     (current iter = max(success_rate_state) + 1).
 
-    :param success_rate_state: 2n-sized np.int64 array representing buffer of
-                                 - n last success iters (in order)
-                                 - n last fail iters (in order)
-    :param success: (bool) True if latest iteration was a success, False otherwise.
+    Args:
+        success_rate_state: 2n-sized np.int64 array representing buffer of
+            - n last success iters (in order)
+            - n last fail iters (in order)
+        success: (bool) True if latest iteration was a success, False otherwise.
     """
     n = int(success_rate_state.shape[0] // 2)
     it = max(success_rate_state[n - 1], success_rate_state[-1]) + 1
@@ -484,10 +500,13 @@ def _estimate_success_rate(success_rate_state: NDArray[np.int64]) -> np.float64:
 
         success_rate = success_rate_proxy / (success_rate_proxy + failure_rate_proxy)
 
-    :param success_rate_state: 2n-sized np.int64 array representing buffer of
-                                 - n last success iters (in order)
-                                 - n last fail iters (in order)
-    :return: (float64) estimated success rate in range [0.0, 1.0]
+    Args:
+        success_rate_state: 2n-sized np.int64 array representing buffer of
+            - n last success iters (in order)
+            - n last fail iters (in order)
+
+    Returns:
+        (float64) estimated success rate in range [0.0, 1.0]
     """
     n = int(success_rate_state.shape[0] // 2)
     it = max(success_rate_state[n - 1], success_rate_state[-1]) + 1

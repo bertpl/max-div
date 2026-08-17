@@ -33,9 +33,10 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
     For each benchmark iteration, a random modifier value in (0.0, 1.0) is chosen from
     100 pre-generated random values to ensure variability.
 
-    :param speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
-    :param markdown: If `True`, outputs the results as a Markdown table.
-    :param file: If `True`, redirects output to a file instead of console.
+    Args:
+        speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
+        markdown: If `True`, outputs the results as a Markdown table.
+        file: If `True`, redirects output to a file instead of console.
     """
     print("Benchmarking `modify_p_selectivity`...")
 

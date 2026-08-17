@@ -30,7 +30,8 @@ _METRIC_KINDS = {
 def validate_cosine_vectors(vectors: NDArray[np.float32]) -> None:
     """Raise ValueError if any vector is all-zero — cosine distance is undefined for zero vectors.
 
-    :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
+    Args:
+        vectors: (n x d ndarray) A set of n vectors in d dimensions.
     """
     zero_rows = np.flatnonzero(~vectors.any(axis=1))
     if zero_rows.size > 0:

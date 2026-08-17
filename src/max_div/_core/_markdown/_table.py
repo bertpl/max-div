@@ -123,12 +123,13 @@ class Table(ReportElement):
 
                 --> Highlights lowest percentages in red and highest percentages in green, making both bold.
 
-        :param element_type: Type of TableElement to compare and highlight.
-        :param clr_lowest: Color for lowest values (e.g., Table.RED).
-        :param clr_highest: Color for highest values (e.g., Table.GREEN).
-        :param make_bold: Whether to make highlighted values bold.
-        :param make_italic: Whether to make highlighted values italic.
-        :param highlight_single_values: If False, skip highlighting rows with only one value to compare.
+        Args:
+            element_type: Type of TableElement to compare and highlight.
+            clr_lowest: Color for lowest values (e.g., Table.RED).
+            clr_highest: Color for highest values (e.g., Table.GREEN).
+            make_bold: Whether to make highlighted values bold.
+            make_italic: Whether to make highlighted values italic.
+            highlight_single_values: If False, skip highlighting rows with only one value to compare.
         """
         for row_idx in range(self.n_rows()):
             # collect all elements of the specified type in this row

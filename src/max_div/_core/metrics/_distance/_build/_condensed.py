@@ -36,12 +36,15 @@ def compute_pdist(
     narrows to float32 on store — avoiding the float64 distance matrix scipy would otherwise
     materialize and cast (a ~3x transient in peak setup memory).
 
-    :param vectors: (n x d ndarray) A set of n vectors in d dimensions.
-    :param metric: (DistanceMetric) The distance metric to use.
-    :param out: ((n*(n-1))//2 ndarray) buffer to fill, allocated here when not given.
-    :return: ((n*(n-1))//2 ndarray) condensed pair-wise distance vector, in scipy's layout: the
-                (i,j)-distance for i<j sits at the offset given by `_condensed_index`.  This is `out`
-                itself whenever one was given, following numpy's convention for such a parameter.
+    Args:
+        vectors: (n x d ndarray) A set of n vectors in d dimensions.
+        metric: (DistanceMetric) The distance metric to use.
+        out: ((n*(n-1))//2 ndarray) buffer to fill, allocated here when not given.
+
+    Returns:
+        ((n*(n-1))//2 ndarray) condensed pair-wise distance vector, in scipy's layout: the
+        (i,j)-distance for i<j sits at the offset given by `_condensed_index`.  This is `out`
+        itself whenever one was given, following numpy's convention for such a parameter.
     """
     vectors = np.ascontiguousarray(vectors, dtype=np.float32)
     n = vectors.shape[0]

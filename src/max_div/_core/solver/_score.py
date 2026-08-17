@@ -61,11 +61,12 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
     def as_tuple(self, soft: float = 0.0, ignore_infeasible_diversity: bool = False) -> tuple[float, ...]:
         """Return score as tuple, in order of descending priority, such that tuple-comparison yields correct results.
 
-        :param soft: Softness parameter in [0.0 ,1.0] indicating how soft constraints should be treated.
-                      0.0 = hard constraints (i.e. constraints score is absolute higher prio than diversity)
-                     >0.0 = soft constraints (i.e. diversity score is partly 'mixed into' constraints score)
-                                    constraints_soft = constraints^(1-soft) * diversity^soft
-        :param ignore_infeasible_diversity: If `True`, diversity is set to 0.0 if constraints are not fully satisfied.
+        Args:
+            soft: Softness parameter in [0.0 ,1.0] indicating how soft constraints should be treated.
+                0.0 = hard constraints (i.e. constraints score is absolute higher prio than diversity)
+                >0.0 = soft constraints (i.e. diversity score is partly 'mixed into' constraints score)
+                constraints_soft = constraints^(1-soft) * diversity^soft
+            ignore_infeasible_diversity: If `True`, diversity is set to 0.0 if constraints are not fully satisfied.
         """
         if ignore_infeasible_diversity and self.constraints < 1.0:
             # set scores of diversity & tie-breakers to 0.0 in case of infeasible solution
@@ -138,12 +139,13 @@ class ScoreGenerator:
     ) -> None:
         """Initialize the ScoreGenerator.
 
-        :param n: (int | np.int32) number of items in the max-div problem.
-        :param k: (int) The target selection size for the max-div problem.
-        :param diversity_metric: (DiversityMetric) The diversity metric used to compute diversity scores.
-        :param diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
-        :param constraints: (list[Constraint]) The list of constraints used in the max-div problem.
-        :param penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
+        Args:
+            n: (int | np.int32) number of items in the max-div problem.
+            k: (int) The target selection size for the max-div problem.
+            diversity_metric: (DiversityMetric) The diversity metric used to compute diversity scores.
+            diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
+            constraints: (list[Constraint]) The list of constraints used in the max-div problem.
+            penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
         # --- size score computation ------------
         self._n = n
@@ -234,11 +236,12 @@ class ScoreGenerator:
     ) -> Score:
         """Compute the multi-component Score of a selection.
 
-        :param n_selected: (int | np.int32) current number of selected items.
-        :param con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
-        :param selected_contributions: (SelectedContributions) the selected items' per-family
-                                       contribution values; slots of families no configured metric
-                                       consumes are never read.
+        Args:
+            n_selected: (int | np.int32) current number of selected items.
+            con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
+            selected_contributions: (SelectedContributions) the selected items' per-family
+                contribution values; slots of families no configured metric
+                consumes are never read.
         """
         # --- individual scores ---------------------------
         if n_selected <= self._k:

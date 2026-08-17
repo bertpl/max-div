@@ -33,7 +33,8 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     def __init__(self, problem: MaxDivProblem) -> None:
         """Configure a portfolio over the given problem.
 
-        :param problem: The MaxDivProblem every worker solves.
+        Args:
+            problem: The MaxDivProblem every worker solves.
         """
         super().__init__(problem)
         self._worker_configs: list[WorkerConfig] = []
@@ -60,15 +61,19 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         wins.  Groups of one make those workers fully independent — `n_groups` equal to the
         worker count is the fully independent portfolio.
 
-        :param workers: an integer runs the default configuration that many times; a flat sequence
-                        gives one configuration per worker; a nested sequence gives one inner
-                        sequence per group, fixing both grouping and configurations; omitting it
-                        uses `default_worker_count()`.
-        :param n_groups: number of groups; only combines with an integer (or omitted) `workers` —
-                         a nested sequence carries its own grouping, a flat sequence uses the
-                         default.  Omitting it uses `default_group_count()`.
-        :raises ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
-                             or the sequence mixes configurations and groups.
+        Args:
+            target_duration: the wall-clock budget each worker runs for (see `TargetDuration`).
+            workers: an integer runs the default configuration that many times; a flat sequence
+                gives one configuration per worker; a nested sequence gives one inner
+                sequence per group, fixing both grouping and configurations; omitting it
+                uses `default_worker_count()`.
+            n_groups: number of groups; only combines with an integer (or omitted) `workers` —
+                a nested sequence carries its own grouping, a flat sequence uses the
+                default.  Omitting it uses `default_group_count()`.
+
+        Raises:
+            ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
+                or the sequence mixes configurations and groups.
         """
         self._target_duration = target_duration
         if workers is None:
@@ -101,7 +106,8 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     def build(self) -> ParallelMaxDivSolver:
         """Build the portfolio: one solver configuration per worker over a store they will share.
 
-        :raises ValueError: If no workers were configured.
+        Raises:
+            ValueError: If no workers were configured.
         """
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A portfolio needs workers; call with_workers before build.")
@@ -150,8 +156,12 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
 def _resolve_group_sizes(n_workers_total: int, n_groups: int | None) -> list[int]:
     """Return the group sizes for a worker total, splitting any remainder over the first groups.
 
-    :param n_groups: number of groups; `default_group_count(n_workers_total)` if None.
-    :raises ValueError: If `n_groups` falls outside 1..`n_workers_total`.
+    Args:
+        n_workers_total: the number of workers to split into groups.
+        n_groups: number of groups; `default_group_count(n_workers_total)` if None.
+
+    Raises:
+        ValueError: If `n_groups` falls outside 1..`n_workers_total`.
     """
     if n_groups is None:
         n_groups = default_group_count(n_workers_total)
