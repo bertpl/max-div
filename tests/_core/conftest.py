@@ -28,7 +28,7 @@ class FakeClock:
         return self._read()
 
     def perf_counter_ns(self) -> int:
-        """Stand in for `time.perf_counter` (nanoseconds), integer-valued like the real one."""
+        """Stand in for `time.perf_counter_ns`, integer-valued like the real one."""
         return int(self._read() * 1e9)
 
     def sleep(self, seconds: float) -> None:
