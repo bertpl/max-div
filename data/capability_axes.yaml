@@ -137,6 +137,10 @@ groups:
         hero_label: ranged counts
         label: minimum and maximum counts per group
         hero: true
+      - key: feasibility_proofs
+        hero_label: feasibility proofs
+        label: certified verdicts on whether a constraint set is satisfiable
+        hero: true
 
   - key: budget
     hero_label: budget

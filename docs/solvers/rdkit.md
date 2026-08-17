@@ -46,6 +46,7 @@ solver:
           No per-group counting of any kind. It does accept a set of items that must appear in the result, which is a different guarantee entirely: membership for named items, not proportions across groups.
     constraints.overlapping_groups: {mark: none}
     constraints.ranged_counts: {mark: none}
+    constraints.feasibility_proofs: {mark: none}
     budget.iterations: {mark: none}
     budget.wall_clock: {mark: none}
     budget.improves:

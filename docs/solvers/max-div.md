@@ -39,6 +39,13 @@ solver:
         text: >-
           Counts are per-group minimum and maximum bounds, and carry per-constraint weights and a
           choice of linear or quadratic penalty shaping when a problem is over-constrained.
+    constraints.feasibility_proofs:
+      mark: full
+      note:
+        text: >-
+          `check_feasibility` returns a three-valued verdict whose definite answers are proofs:
+          feasible comes with a satisfying selection, infeasible with an independently re-checkable
+          certificate and a certified violation floor, and unknown claims nothing.
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves: {mark: full}

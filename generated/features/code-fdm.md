@@ -37,6 +37,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^code-fdm-4] |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> | [^code-fdm-5] |
 | constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> | [^code-fdm-6] |
+| constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^code-fdm-7] |
