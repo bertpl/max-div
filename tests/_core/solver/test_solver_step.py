@@ -40,14 +40,16 @@ class OptimTest(OptimizationStrategy):
 
 
 class OptimTickingTest(OptimTest):
-    """OptimTest whose every iteration advances the fake clock, so a time-budgeted run terminates."""
+    """Each iteration advances the fake clock, so a time-budgeted run terminates."""
 
     def __init__(self, clock, dt_sec: float):
+        """Take the clock to tick and the per-iteration step size `dt_sec`."""
         super().__init__()
         self._clock = clock
         self._dt_sec = dt_sec
 
     def _perform_single_iteration(self, state: SolverState, progress_frac: float):
+        """Run the parent's iteration bookkeeping, then advance the clock by `dt_sec`."""
         super()._perform_single_iteration(state, progress_frac)
         self._clock.advance(self._dt_sec)
 
