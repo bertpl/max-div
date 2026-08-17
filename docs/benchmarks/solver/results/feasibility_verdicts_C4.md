@@ -1,4 +1,4 @@
-Certified feasibility verdicts for problem C4, one row per benchmark size (ascent budget 8000 iterations, thorough mode, fixed seed):
+Certified feasibility verdicts for problem C4 (ascent budget 8000 iterations, thorough mode, fixed seed):
 
 | $n$  | $d$ | $k$ | $m$ | Verdict                                                  | Constraints-score ceiling |
 | ---- | --- | --- | --- | -------------------------------------------------------- | ------------------------- |

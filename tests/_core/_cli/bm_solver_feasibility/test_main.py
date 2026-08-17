@@ -5,8 +5,8 @@ from max_div._core._cli.bm_solver_feasibility.main import (
     TURBO_N_SIZES,
     _build_report,
     _ceiling_cell,
+    _constrained_problem_names,
     _verdict_cell,
-    constrained_problem_names,
     run_solver_feasibility_benchmark,
 )
 from max_div._core._cli.bm_solver_strategies import BENCHMARK_PROBLEM_SIZES
@@ -32,7 +32,7 @@ def _result(status: FeasibilityStatus, bound: float = 0.0) -> FeasibilityResult:
 def test_constrained_problem_names_selects_exactly_the_problems_with_constraints():
     """The name list is derived from each problem's constraint count, not hard-coded."""
     # --- act ---------------------------------------------
-    names = constrained_problem_names()
+    names = _constrained_problem_names()
 
     # --- assert ------------------------------------------
     smallest = min(BENCHMARK_PROBLEM_SIZES)
@@ -93,7 +93,7 @@ def test_run_writes_one_file_per_problem(tmp_path, monkeypatch):
     run_solver_feasibility_benchmark(name="all", markdown=False, file=True, turbo=True)
 
     # --- assert ------------------------------------------
-    for name in constrained_problem_names():
+    for name in _constrained_problem_names():
         content = (tmp_path / f"feasibility_verdicts_{name}.md").read_text()
         assert content.count("\n|") >= 2 + TURBO_N_SIZES
 

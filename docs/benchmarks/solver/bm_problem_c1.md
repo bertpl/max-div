@@ -39,8 +39,7 @@ for different problem sizes:
 
 --8<-- "docs/benchmarks/solver/results/note_feasibility_methodology.md"
 
-See [Proving Feasibility](../../concepts/feasibility.md) for the machinery behind these verdicts, and
-[Scoring](../../concepts/scoring.md) for the constraints-score scale.
+See [Proving Feasibility](../../concepts/feasibility.md) for the machinery behind these verdicts, and [Scoring](../../concepts/scoring.md) for the constraints-score scale.
 
 --8<-- "docs/benchmarks/solver/results/feasibility_verdicts_C1.md"
 

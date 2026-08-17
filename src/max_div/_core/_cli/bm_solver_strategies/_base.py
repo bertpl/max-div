@@ -31,8 +31,7 @@ if TYPE_CHECKING:
 # =================================================================================================
 #  Benchmark problem sizes
 # =================================================================================================
-# Every per-size docs artifact is generated on this n-ladder: the strategy benchmarks sweep it, and
-# the feasibility-verdict tables reuse it, so all per-size tables in the docs share one size grid.
+# Every per-size table in the docs is generated on this one list of n values, so their rows line up.
 BENCHMARK_PROBLEM_SIZES = [100 * s for s in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]]
 
 

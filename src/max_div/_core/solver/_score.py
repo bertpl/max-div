@@ -120,9 +120,9 @@ def _max_con_violations(constraints: Sequence[Constraint], k: int) -> list[int]:
 def constraints_score_for_violation(constraints: Sequence[Constraint], k: int, violation: float) -> float:
     """Return the constraints score a selection of size `k` with the given total weighted violation receives.
 
-    The mapping targets the 0-1 constraints-score scale the solver reports, using the linear
-    penalty; feeding it a certified violation floor yields the constraints-score ceiling no
-    selection can exceed.
+    The conversion uses the linear penalty, so the result lands on the 0-1 scale the solver
+    reports; a certified violation floor maps to the constraints-score ceiling no selection can
+    exceed.
     """
     con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
     c = _con_norm_constant(_max_con_violations(constraints, k), con_weights, quadratic=False)

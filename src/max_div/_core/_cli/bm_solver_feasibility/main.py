@@ -1,10 +1,9 @@
 """Certified feasibility verdicts for the constrained benchmark problems.
 
 For each constrained benchmark problem and each size on the shared benchmark ladder, this runs the
-feasibility pipeline at its maximum documented budget and reports the verdict, plus the
-constraints-score ceiling wherever infeasibility is certified. The output feeds the committed
-per-problem verdict tables in the docs, so runs must be reproducible: the budget is fixed and the
-candidate-generation seed is pinned.
+feasibility pipeline at its maximum construction budget, `CONSTRUCTION_MAX_ITER`, and reports the
+verdict, plus the constraints-score ceiling wherever infeasibility is certified. The output feeds
+the committed per-problem verdict tables in the docs.
 """
 
 import numpy as np
@@ -27,7 +26,7 @@ TURBO_MAX_ITER = 200  # reduced ascent budget for --turbo smoke runs
 TURBO_N_SIZES = 3  # number of ladder sizes retained for --turbo smoke runs
 
 
-def constrained_problem_names() -> list[str]:
+def _constrained_problem_names() -> list[str]:
     """Return the registered benchmark problems that carry constraints, by name."""
     names = BenchmarkProblemFactory.get_all_benchmark_names()
     smallest = min(BENCHMARK_PROBLEM_SIZES)
@@ -62,8 +61,7 @@ def _ceiling_cell(problem: VectorMaxDivProblem, result: FeasibilityResult) -> st
     """Return the constraints-score-ceiling cell for one verdict row.
 
     A witness attains the perfect score, so feasible rows state 1.0 exactly; UNKNOWN certifies
-    nothing, so the cell shows a dash; certified-infeasible rows convert the certified violation
-    floor onto the solver's 0-1 constraints-score scale.
+    nothing, so the cell shows a dash.
     """
     if result.status == FeasibilityStatus.FEASIBLE:
         return "1.0"
@@ -77,7 +75,7 @@ def _build_report(problem_name: str, sizes: list[int], max_iter: int) -> Report:
     """Build the verdict table report for one constrained problem."""
     report = Report()
     report += (
-        f"Certified feasibility verdicts for problem {problem_name}, one row per benchmark size "
+        f"Certified feasibility verdicts for problem {problem_name} "
         f"(ascent budget {max_iter} iterations, thorough mode, fixed seed):"
     )
     table = Table(["$n$", "$d$", "$k$", "$m$", "Verdict", "Constraints-score ceiling"])
@@ -102,7 +100,7 @@ def run_solver_feasibility_benchmark(name: str, markdown: bool, file: bool, turb
         turbo: Shrink the size grid and ascent budget for a fast smoke run; the resulting
             verdicts are weaker (more UNKNOWN) and not meant for the docs.
     """
-    constrained = constrained_problem_names()
+    constrained = _constrained_problem_names()
     problem_names = constrained if name == "all" else [name]
     unknown = [p for p in problem_names if p not in constrained]
     if unknown:
