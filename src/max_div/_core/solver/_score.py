@@ -105,53 +105,6 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 # =================================================================================================
 #  ScoreGenerator
 # =================================================================================================
-def _max_con_violations(constraints: Sequence[Constraint], k: int) -> list[int]:
-    """Return each constraint's worst-case violation over all selections of size `k`."""
-    return [
-        max(
-            con.min_count,  # in case of minimal selection
-            min(k, len(con.int_set)) - con.max_count,  # in case of maximal selection
-            0,  # in case we can never violate this constraint
-        )
-        for con in constraints
-    ]
-
-
-def constraints_score_for_violation(
-    constraints: Sequence[Constraint], k: int, violation: float, quadratic: bool = False
-) -> float:
-    """Return the constraints score a selection of size `k` with the given total weighted violation receives.
-
-    The conversion uses the linear penalty, so the result lands on the 0-1 scale the solver
-    reports; a certified violation floor maps to the constraints-score ceiling no selection can
-    exceed.
-
-    Args:
-        constraints: the problem's constraints, whose weights and worst cases set the scale.
-        k: the selection size.
-        violation: total weighted violation, in weighted item-counts: per constraint, how many
-            selected items it is short of its `min_count` plus how many it is above its
-            `max_count`, times its `weight`, summed over all constraints. Fractional values are
-            fine (a certified floor is a fractional dual bound).
-        quadratic: the penalty shape of the score scale to convert to. Only the linear shape
-            (the default) is accepted; the parameter exists so a caller scoring under quadratic
-            penalties fails loudly instead of silently receiving a linear-scale number.
-
-    Raises:
-        ValueError: If `quadratic` is True — the quadratic constraints score depends on the
-            per-constraint violation profile, not the total, so no conversion from a scalar
-            violation exists.
-    """
-    if quadratic:
-        raise ValueError(
-            "The quadratic constraints score depends on the per-constraint violation profile, "
-            "not the total violation, so a scalar violation cannot be converted to it."
-        )
-    con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
-    c = _con_norm_constant(_max_con_violations(constraints, k), con_weights, quadratic=False)
-    return 1.0 - c * violation
-
-
 def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
     """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
 
@@ -202,7 +155,15 @@ class ScoreGenerator:
         self._penalty_quadratic = penalty_quadratic
         self._con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
         if len(constraints) > 0:
-            self._con_c = _con_norm_constant(_max_con_violations(constraints, k), self._con_weights, penalty_quadratic)
+            max_con_violations = [
+                max(
+                    con.min_count,  # in case of minimal selection
+                    min(k, len(con.int_set)) - con.max_count,  # in case of maximal selection
+                    0,  # in case we can never violate this constraint
+                )
+                for con in constraints
+            ]
+            self._con_c = _con_norm_constant(max_con_violations, self._con_weights, penalty_quadratic)
         else:
             self._con_c = 0.0  # no constraints -> always perfect score
         # fast unweighted-linear aggregation applies only when all weights are 1 and penalization is linear
@@ -234,6 +195,33 @@ class ScoreGenerator:
             constraints=self._constraints.copy(),
             penalty_quadratic=self._penalty_quadratic,
         )
+
+    # -------------------------------------------------------------------------
+    #  Violation-to-score conversion
+    # -------------------------------------------------------------------------
+    def constraints_score_for_violation(self, violation: float) -> float:
+        """Return the constraints score a selection with the given total weighted violation receives.
+
+        The conversion lands on the same 0-1 scale `compute_score` reports; a certified violation
+        floor maps to the constraints-score ceiling no selection can exceed.
+
+        Args:
+            violation: total weighted violation, in weighted item-counts: per constraint, how many
+                selected items it is short of its `min_count` plus how many it is above its
+                `max_count`, times its `weight`, summed over all constraints. Fractional values
+                are fine (a certified floor is a fractional dual bound).
+
+        Raises:
+            ValueError: If this generator penalizes quadratically — the quadratic constraints
+                score depends on the per-constraint violation profile, not the total, so no
+                conversion from a scalar violation exists.
+        """
+        if self._penalty_quadratic:
+            raise ValueError(
+                "The quadratic constraints score depends on the per-constraint violation profile, "
+                "not the total violation, so a scalar violation cannot be converted to it."
+            )
+        return 1.0 - self._con_c * violation
 
     # -------------------------------------------------------------------------
     #  Score computation

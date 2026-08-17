@@ -15,7 +15,7 @@ from max_div._core.constraints import ConstraintList
 from max_div._core.feasibility import CONSTRUCTION_MAX_ITER, FeasibilityResult, FeasibilityStatus, find_feasible
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
-from max_div._core.solver._score import constraints_score_for_violation
+from max_div._core.solver._score import ScoreGenerator
 
 # The verdict tables sweep a 1-2-5 size series reaching well past the strategy benchmarks' grid,
 # far enough that constrained problems whose difficulty compounds with size cross into certified
@@ -71,8 +71,14 @@ def _ceiling_cell(problem: VectorMaxDivProblem, result: FeasibilityResult) -> st
         return "1.0"
     if result.status == FeasibilityStatus.UNKNOWN:
         return "-"
-    ceiling = constraints_score_for_violation(problem.constraints, problem.k, result.violation_floor)
-    return f"{ceiling:.5f}"
+    score_generator = ScoreGenerator(
+        n=problem.n,
+        k=problem.k,
+        diversity_metric=problem.diversity_metric,
+        diversity_tie_breakers=[],
+        constraints=problem.constraints,
+    )
+    return f"{score_generator.constraints_score_for_violation(result.violation_floor):.5f}"
 
 
 def _build_report(problem_name: str, sizes: list[int], max_iter: int) -> Report:
