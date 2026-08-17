@@ -72,7 +72,6 @@ test = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "pytest-xdist>=3.5.0",
-    "pytest-rerunfailures>=14.0",
     { include-group = "tooling" },
 ]
 # The pre-commit config drives ruff and ty as local `uv run` hooks rather than pinned pre-commit
@@ -252,4 +251,4 @@ exclude_also = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-n auto --dist worksteal --reruns 3"
+addopts = "-n auto --dist worksteal"

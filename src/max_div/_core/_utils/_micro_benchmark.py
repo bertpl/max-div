@@ -154,7 +154,8 @@ def benchmark(  # noqa: C901 — case-dispatch structure is clearer un-split
 
         # adjust n_executions to bring t_tot closer to t_per_run
         # NOTE: during warmup we adjust n_executions at a log-scale to reach t_per_run target at end of warmup
-        t_tot = timer_tot.t_elapsed_sec()
+        # t_tot is a divisor below, and a very fast run can measure 0 on a coarse clock -> floor it.
+        t_tot = max(timer_tot.t_elapsed_sec(), 1e-9)
         n_executions = round(
             clip(
                 value=n_executions * (t_per_run / t_tot) ** min(1.0, (i + 1) / n_warmup),
