@@ -5,7 +5,7 @@ import pytest
 from max_div._core._utils import Timer
 
 
-def test_timer():
+def test_timer(fake_clock):
     # --- arrange -----------------------------------------
     timer = Timer()
 
@@ -15,17 +15,14 @@ def test_timer():
 
     # --- act ---------------------------------------------
     with timer:
-        time.sleep(0.1)
+        time.sleep(0.1)  # patched by fake_clock: advances the clock by exactly 0.1 s, no real wait
 
     # --- assert ------------------------------------------
-    # `sleep(0.1)` blocks for at least 0.1 s and a loaded runner only overshoots, so each reading is
-    # bounded from below but not above; an upper bound would eventually flake. The nsec bound is
-    # asserted directly (not derived from the sec one) so it also catches a wrong time unit.
-    assert timer.t_elapsed_sec() >= 0.09, "t_elapsed_sec() undercounts a 0.1 s sleep."
-    assert timer.t_elapsed_nsec() >= 90_000_000, "t_elapsed_nsec() undercounts a 0.1 s sleep."
+    assert timer.t_elapsed_sec() == pytest.approx(0.1)
+    assert timer.t_elapsed_nsec() == pytest.approx(0.1e9)
 
 
-def test_timer_running():
+def test_timer_running(fake_clock):
     # --- arrange -----------------------------------------
     timer = Timer()
 
@@ -36,4 +33,5 @@ def test_timer_running():
         t_after = timer.t_elapsed_sec()
 
     # --- assert ------------------------------------------
-    assert t_after >= t_before + 0.09, "t_elapsed_sec() did not increase while timer was running."
+    assert t_before == pytest.approx(0.0)
+    assert t_after == pytest.approx(0.1)  # the clock advanced while the timer was running
