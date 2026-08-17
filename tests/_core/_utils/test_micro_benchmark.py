@@ -1,6 +1,6 @@
-"""`benchmark`'s control logic: adaptive `n_executions` sizing, baseline subtraction, quantile stats.
+"""Pin `benchmark`'s control logic: adaptive `n_executions` sizing, baseline subtraction, quantile stats.
 
-`benchmark` is a feedback controller — each run rescales `n_executions` from the previous run's
+`benchmark` is a feedback controller -- each run rescales `n_executions` from the previous run's
 `Timer` reading toward the per-run time target. Timing enters only through `time.perf_counter_ns`,
 so most of these tests drive the `fake_clock` fixture, advanced only by the workload's own patched
 `sleep`; every assertion is then exact and immune to a loaded runner. One test at the bottom
@@ -52,14 +52,15 @@ def test_benchmark_adapts_n_executions_upward(fake_clock):
     benchmark(f_test, t_per_run=1e-2, n_warmup=n_warmup, n_benchmark=n_benchmark, silent=True)
 
     # --- assert ------------------------------------------
-    # a controller that never adapted would call the workload once per run; the ramp makes it far more
-    assert n_calls > n_warmup + n_benchmark
+    # per run the controller converges near t_per_run / cost = 1000 executions, so the total call
+    # count clears that target -- a controller stuck at one call per run would be far below it
+    assert n_calls > 1000
 
 
 def test_benchmark_survives_a_run_measuring_zero_elapsed(fake_clock):
     """A run whose measured time rounds to zero must not raise -- t_tot is a divisor in the rescale."""
     # --- arrange -----------------------------------------
-    costs = iter([0.0])  # the first run measures nothing; every run after it costs a normal amount
+    costs = iter([0.0])  # the first (warm-up) run measures nothing; every run after it costs 1e-4
 
     def f_test(_idx: int = 0) -> None:
         time.sleep(next(costs, 1e-4))
@@ -68,7 +69,8 @@ def test_benchmark_survives_a_run_measuring_zero_elapsed(fake_clock):
     result = benchmark(f_test, t_per_run=1e-2, n_warmup=3, n_benchmark=3, silent=True)
 
     # --- assert ------------------------------------------
-    assert isinstance(result, BenchmarkResult)
+    # not raising is the point; the benchmark runs all cost 1e-4, so the zero warm-up leaves no trace
+    assert result.t_sec_q_50 == pytest.approx(1e-4)
 
 
 def test_benchmark_prints_progress_unless_silent(fake_clock, capsys):
@@ -82,8 +84,7 @@ def test_benchmark_prints_progress_unless_silent(fake_clock, capsys):
     benchmark(f_test, t_per_run=1e-2, n_warmup=2, n_benchmark=3, silent=False)
     printed = capsys.readouterr().out
     assert "Benchmarking" in printed
-    assert "w" in printed  # warmup run marker
-    assert "." in printed  # benchmark run marker
+    assert "ww..." in printed  # 2 warm-up markers then 3 benchmark-run markers, in order
     assert "per execution" in printed  # the final t_sec_with_uncertainty_str line
 
     # --- act / assert: silent ----------------------------
@@ -137,7 +138,7 @@ def test_micro_benchmark_result_aggregation_raises_value_error(results, method):
 #  Against the real clock
 # =================================================================================================
 def test_benchmark_measures_the_real_clock():
-    """Insurance against the fake clock hiding a benchmark that never times anything.
+    """Guard against the fake clock hiding a benchmark that never times anything.
 
     Asserts only a floor: a busy-wait guarantees a minimum of real elapsed time, a loaded runner
     inflates it without limit, and the harness subtracts a baseline and divides by an execution

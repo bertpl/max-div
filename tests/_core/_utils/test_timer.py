@@ -38,7 +38,7 @@ def test_timer_running(fake_clock):
 
 
 def test_timer_measures_the_real_clock():
-    """Insurance against the fake clock hiding a Timer that reads no clock at all.
+    """Guard against the fake clock hiding a Timer that reads no clock at all.
 
     Asserts only a floor: `sleep(0.1)` guarantees a minimum, never a maximum, and how promptly the OS
     reschedules the woken thread is not something Timer promises anything about.
