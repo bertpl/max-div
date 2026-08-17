@@ -71,7 +71,7 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitFarthestPoint(top_k=top_k)
 
     @classmethod
-    def most_feasible(cls, max_iter: int = CONSTRUCTION_DEFAULT_ITER, beta: float = 0.0) -> InitMostFeasible:
+    def most_feasible(cls, max_iter: int = CONSTRUCTION_DEFAULT_ITER) -> InitMostFeasible:
         """Initialization that constructs a selection satisfying every constraint, where it can.
 
         Constrained problems only; see `InitMostFeasible` for the full contract.
@@ -79,13 +79,10 @@ class InitializationStrategy(StrategyBase, ABC):
         :param max_iter: Search budget; a higher budget more often finds a feasible selection, and
             lowers the violation of the one returned when none exists, at a proportional cost in
             setup time.
-        :param beta: Tilts the constructed selection toward diverse items, at the risk of a less
-            feasible starting point and an O(n²) diversity-contribution sweep. Keep it at 0 unless
-            the trade has been measured; construction is then purely feasibility-driven.
         """
         from ._init_most_feasible import InitMostFeasible
 
-        return InitMostFeasible(max_iter=max_iter, beta=beta)
+        return InitMostFeasible(max_iter=max_iter)
 
     @classmethod
     def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:

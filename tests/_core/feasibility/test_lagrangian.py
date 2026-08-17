@@ -19,7 +19,6 @@ from max_div._core.feasibility.lagrangian import (
     _dual_value,
     _gumbel_noise,
     _item_scores,
-    _log_diversity_prior,
     _top_k_items,
     build_item_constraint_csr,
 )
@@ -459,75 +458,6 @@ def test_gumbel_noise_seed_behavior():
     # --- assert ------------------------------------------
     np.testing.assert_array_equal(noise_a, noise_b)
     assert not np.array_equal(noise_a, noise_c)
-
-
-# =================================================================================================
-#  Diversity prior
-# =================================================================================================
-def test_diversity_prior_moves_the_selection_without_touching_the_verdict():
-    """A diversity prior reaches candidate generation only, so the proof and its floor are untouched.
-
-    The single cap sits below k, so the violation floor is the same whichever items are chosen —
-    which separates what the prior may change (the selection) from what it may not (the
-    certificate).
-    """
-    # --- arrange -----------------------------------------
-    cons = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]  # cap below k -> infeasible
-    con_values, con_indices, weights = _arrays(cons)
-    prior = np.arange(1, 21, dtype=np.float64)  # favors high indices
-
-    # --- act ---------------------------------------------
-    plain = find_feasible(con_values, con_indices, weights, 20, 8, max_iter=300)
-    tilted = find_feasible(con_values, con_indices, weights, 20, 8, max_iter=300, diversity_prior=prior, beta=5.0)
-
-    # --- assert ------------------------------------------
-    assert plain.status == tilted.status == FeasibilityStatus.INFEASIBLE
-    assert plain.bound == tilted.bound
-    assert plain.violation == tilted.violation
-    np.testing.assert_array_equal(plain.lam_min, tilted.lam_min)
-    np.testing.assert_array_equal(plain.lam_max, tilted.lam_max)
-    assert not np.array_equal(plain.selection, tilted.selection)
-    assert tilted.selection.mean() > plain.selection.mean()  # pulled toward the favored high indices
-
-
-def test_diversity_prior_is_inert_at_beta_zero():
-    """A prior supplied with the default beta must change nothing at all."""
-    # --- arrange -----------------------------------------
-    cons = [Constraint(int_set=set(range(20)), min_count=0, max_count=5)]
-    con_values, con_indices, weights = _arrays(cons)
-
-    # --- act ---------------------------------------------
-    without = find_feasible(con_values, con_indices, weights, 20, 8, max_iter=300)
-    with_prior = find_feasible(
-        con_values, con_indices, weights, 20, 8, max_iter=300, diversity_prior=np.arange(1, 21, dtype=np.float64)
-    )
-
-    # --- assert ------------------------------------------
-    np.testing.assert_array_equal(without.selection, with_prior.selection)
-
-
-@pytest.mark.parametrize(
-    "prior,expect_empty",
-    [
-        (None, True),
-        (np.zeros(4), True),  # no preference expressed -> tilt switched off
-        (np.array([0.0, 1.0, 2.0, 1.0]), False),
-        (np.array([-5.0, 1.0, 2.0, 1.0]), False),  # negatives clamped to zero
-    ],
-    ids=["none", "all_zero", "normal", "negative_clamped"],
-)
-def test_log_diversity_prior_normalization(prior: np.ndarray | None, expect_empty: bool):
-    """Only a prior carrying preference produces log-probabilities; the rest switch the tilt off."""
-    # --- act ---------------------------------------------
-    log_prior = _log_diversity_prior(prior)
-
-    # --- assert ------------------------------------------
-    if expect_empty:
-        assert log_prior.shape == (0,)
-    else:
-        assert log_prior.shape == prior.shape
-        assert np.all(np.isfinite(log_prior))  # a zero-prior item stays finite via PRIOR_EPS
-        assert log_prior.argmax() == np.maximum(prior, 0.0).argmax()
 
 
 # =================================================================================================
