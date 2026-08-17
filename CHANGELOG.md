@@ -5,21 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.13.0 (2026-08-17)
 
 ### Added
 - Opt-in `InitializationStrategy.most_feasible()`: starts a constrained solve from the most nearly feasible selection it can construct — one satisfying every constraint where such a selection is found, and the least-violating one found otherwise
 - `MaxDivProblem.check_feasibility()`: reports whether the constraints can be satisfied at all — provably yes with a satisfying selection, provably no with a re-checkable certificate and a certified violation floor, or an explicit unknown; alongside a per-constraint breakdown of the best selection found
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.12.1 (2026-08-16)
 
