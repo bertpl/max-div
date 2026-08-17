@@ -37,12 +37,13 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^highs-5] |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^highs-5] |
 | constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^highs-5] |
+| constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-partial">◐</span> | [^highs-6] |
 | time budget · budget expressed as an iteration count | <span class="mark mark-full">✔</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-full">✔</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^highs-6] |
+| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^highs-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
-| multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^highs-7] |
-| largest practical problem size | n ≈ 10<sup>3</sup> | [^highs-8] |
+| multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^highs-8] |
+| largest practical problem size | n ≈ 10<sup>3</sup> | [^highs-9] |
 
 </div>
 
@@ -51,6 +52,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^highs-3]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
 [^highs-4]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
 [^highs-5]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
-[^highs-6]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
-[^highs-7]: The dual simplex, the interior-point factorization and the MIP branch-and-bound each run in parallel, controlled by the parallel and threads options — threads jointly advancing one solve rather than racing independent ones.
-[^highs-8]: The same big-M max-min formulation SCIP solves, and the same ceiling: the model carries a constraint per pair, so it grows quadratically and stops closing the gap in reasonable time around n ≈ 10³.
+[^highs-6]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
+[^highs-7]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
+[^highs-8]: The dual simplex, the interior-point factorization and the MIP branch-and-bound each run in parallel, controlled by the parallel and threads options — threads jointly advancing one solve rather than racing independent ones.
+[^highs-9]: The same big-M max-min formulation SCIP solves, and the same ceiling: the model carries a constraint per pair, so it grows quadratically and stops closing the gap in reasonable time around n ≈ 10³.

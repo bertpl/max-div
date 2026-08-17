@@ -52,6 +52,7 @@ solver:
           Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.
     constraints.overlapping_groups: {mark: none}
     constraints.ranged_counts: {mark: none}
+    constraints.feasibility_proofs: {mark: none}
     budget.iterations:
       mark: partial
       note:

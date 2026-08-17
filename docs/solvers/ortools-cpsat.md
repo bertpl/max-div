@@ -20,7 +20,7 @@ solver:
       mark: partial
       note: &integer_scaled
         text: >-
-          Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modelling choice rather than a property of the metric.
+          Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modeling choice rather than a property of the metric.
     distance.l2:
       mark: partial
       note: *integer_scaled
@@ -62,6 +62,13 @@ solver:
     constraints.ranged_counts:
       mark: partial
       note: *linear_cons
+    constraints.feasibility_proofs:
+      mark: partial
+      note:
+        text: >-
+          A feasibility-only solve of the hand-built constraint model returns a proven
+          feasible-or-infeasible verdict: the solver itself produces the proof; only the model
+          is yours to write.
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves:

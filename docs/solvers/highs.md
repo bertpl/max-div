@@ -62,6 +62,13 @@ solver:
     constraints.ranged_counts:
       mark: partial
       note: *linear_cons
+    constraints.feasibility_proofs:
+      mark: partial
+      note:
+        text: >-
+          A feasibility-only solve of the hand-built constraint model returns a proven
+          feasible-or-infeasible verdict: the solver itself produces the proof; only the model
+          is yours to write.
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves:
@@ -114,7 +121,7 @@ x_i \in \{0,1\}.
 $$
 
 **Guarantee: proven optimum.** On termination the reported selection is optimal for the model as
-written — which makes the modelling, not the solving, the place errors live.
+written — which makes the modeling, not the solving, the place errors live.
 
 ## Reference
 

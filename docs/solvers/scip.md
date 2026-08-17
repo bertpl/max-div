@@ -44,7 +44,7 @@ solver:
       note:
         text: >-
           Since every distance is a coefficient you supply, an arbitrary metric costs nothing
-          extra — this is the one distance axis where a modelling solver is at no disadvantage.
+          extra — this is the one distance axis where a modeling solver is at no disadvantage.
     objective.max_min:
       mark: partial
       note: &linearize
@@ -76,6 +76,13 @@ solver:
     constraints.ranged_counts:
       mark: partial
       note: *linear_constraints
+    constraints.feasibility_proofs:
+      mark: partial
+      note:
+        text: >-
+          A feasibility-only solve of the hand-built constraint model returns a proven
+          feasible-or-infeasible verdict: the solver itself produces the proof; only the model
+          is yours to write.
     budget.iterations: {mark: full}
     budget.wall_clock: {mark: full}
     budget.improves:

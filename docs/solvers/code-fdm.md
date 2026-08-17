@@ -59,6 +59,7 @@ solver:
       note:
         text: >-
           Counts are exact requirements per group, not a minimum and a maximum, so a range cannot be expressed.
+    constraints.feasibility_proofs: {mark: none}
     budget.iterations: {mark: none}
     budget.wall_clock: {mark: none}
     budget.improves:

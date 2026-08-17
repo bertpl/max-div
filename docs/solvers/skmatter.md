@@ -32,6 +32,7 @@ solver:
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}
     constraints.ranged_counts: {mark: none}
+    constraints.feasibility_proofs: {mark: none}
     budget.iterations: {mark: none}
     budget.wall_clock: {mark: none}
     budget.improves:
@@ -47,7 +48,7 @@ solver:
 
 skmatter — scikit-matter — is a scikit-learn-compatible library of feature and sample selection
 methods aimed at atomistic machine learning. Farthest-point sampling is one entry in a larger
-catalogue that also includes CUR decomposition and several information-theoretic selectors.
+catalog that also includes CUR decomposition and several information-theoretic selectors.
 
 For this comparison it is the *idiomatic* choice rather than the fastest one: a selector with
 `fit`/`transform` semantics that drops into an existing scikit-learn pipeline without new

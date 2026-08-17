@@ -36,6 +36,7 @@ solver:
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}
     constraints.ranged_counts: {mark: none}
+    constraints.feasibility_proofs: {mark: none}
     budget.iterations: {mark: none}
     budget.wall_clock: {mark: none}
     budget.improves:
