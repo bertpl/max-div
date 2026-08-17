@@ -148,7 +148,6 @@ _UNKNOWN = int(FeasibilityStatus.UNKNOWN)
 GAMMA0 = 1.0  # initial step-size scale of the projected supergradient ascent
 STALL_WINDOW = 100  # iterations without a new best g before the step size is damped
 STALL_SHRINK = 0.7  # damping factor applied to the step-size scale on a stall
-VERDICT_MAX_ITER = 2000  # ascent budget when only a fast verdict is wanted
 
 # candidate generation
 N_ROUNDS = 16  # candidate selections tried before giving up
@@ -1028,8 +1027,7 @@ def find_feasible(
         n: number of items.
         k: selection size.
         max_iter: ascent iteration budget; see `construction_iteration_budget_seconds` /
-            `construction_iteration_budget_iterations` for the budget-derived value, or
-            `VERDICT_MAX_ITER` for a fast verdict.
+            `construction_iteration_budget_iterations` for the budget-derived value.
         seed: seed for the candidate-generation noise (the ascent itself is deterministic).
         stop_at_first_proof: exit the ascent as soon as infeasibility is proven, forgoing the
             mature bound and the scores candidate generation draws from (verdict mode).

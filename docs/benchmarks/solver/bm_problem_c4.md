@@ -37,6 +37,16 @@ for different problem sizes:
 
 ![Problem C4 - Vector Separations](./images/problem_C4_separations.webp){ .center75 }
 
+### D. Feasibility
+
+--8<-- "docs/benchmarks/solver/results/note_measured_feasibility.md"
+
+--8<-- "docs/benchmarks/solver/results/note_feasibility_methodology.md"
+
+See [Proving Feasibility](../../concepts/feasibility.md) for the machinery behind these verdicts, and [Scoring](../../concepts/scoring.md) for the constraints-score scale.
+
+--8<-- "docs/benchmarks/solver/results/feasibility_verdicts_C4.md"
+
 ## II. Benchmark results
 
 - [Initialization Strategies](bm_problem_c4_init.md)

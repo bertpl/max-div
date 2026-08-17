@@ -7,7 +7,6 @@ from numpy.typing import NDArray
 from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.feasibility import (
     CONSTRUCTION_DEFAULT_ITER,
-    VERDICT_MAX_ITER,
     FeasibilityResult,
     find_feasible,
 )
@@ -70,7 +69,7 @@ class MaxDivProblem(ABC):
         return sum([len(con.int_set) for con in self.constraints])
 
     # --- feasibility -------------------------------------
-    def check_feasibility(self, thorough: bool = False) -> FeasibilityResult:
+    def check_feasibility(self, thorough: bool = False, max_iter: int = CONSTRUCTION_DEFAULT_ITER) -> FeasibilityResult:
         """Report whether `k` items can be selected such that every constraint holds.
 
         Deciding feasibility is NP-complete in general, so the verdict is three-valued; see
@@ -80,6 +79,8 @@ class MaxDivProblem(ABC):
             there, having the verdict; `thorough=True` keeps searching, which tightens the certified
             violation floor and can improve the selection returned, at a proportional cost in time.
             Feasible and unknown outcomes are reached identically either way.
+        :param max_iter: Search budget in ascent iterations; cost is proportional. A larger budget
+            can only move an unknown verdict toward a proof, never flip one proof into another.
         """
         con_values, con_indices = ConstraintList(self.constraints).to_numpy()
         return find_feasible(
@@ -88,7 +89,7 @@ class MaxDivProblem(ABC):
             con_weights=np.array([con.weight for con in self.constraints], dtype=np.float64),
             n=self.n,
             k=self.k,
-            max_iter=CONSTRUCTION_DEFAULT_ITER if thorough else VERDICT_MAX_ITER,
+            max_iter=max_iter,
             stop_at_first_proof=not thorough,
         )
 

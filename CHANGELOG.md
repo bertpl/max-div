@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `max-div benchmark solver feasibility` prints and regenerates the certified per-size feasibility verdicts now shown on the constrained benchmark problem docs pages
+- `MaxDivProblem.check_feasibility()` accepts `max_iter` to set the search budget; a larger budget can only move an unknown verdict toward a proof
 
 ### Changed
 

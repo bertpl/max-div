@@ -197,6 +197,33 @@ class ScoreGenerator:
         )
 
     # -------------------------------------------------------------------------
+    #  Violation-to-score conversion
+    # -------------------------------------------------------------------------
+    def constraints_score_for_violation(self, violation: float) -> float:
+        """Return the constraints score a selection with the given total weighted violation receives.
+
+        The conversion lands on the same 0-1 scale `compute_score` reports; a certified violation
+        floor maps to the constraints-score ceiling no selection can exceed.
+
+        Args:
+            violation: total weighted violation, in weighted item-counts: per constraint, how many
+                selected items it is short of its `min_count` plus how many it is above its
+                `max_count`, times its `weight`, summed over all constraints. Fractional values
+                are fine (a certified floor is a fractional dual bound).
+
+        Raises:
+            ValueError: If this generator penalizes quadratically — the quadratic constraints
+                score depends on the per-constraint violation profile, not the total, so no
+                conversion from a scalar violation exists.
+        """
+        if self._penalty_quadratic:
+            raise ValueError(
+                "The quadratic constraints score depends on the per-constraint violation profile, "
+                "not the total violation, so a scalar violation cannot be converted to it."
+            )
+        return 1.0 - self._con_c * violation
+
+    # -------------------------------------------------------------------------
     #  Score computation
     # -------------------------------------------------------------------------
     def compute_score(

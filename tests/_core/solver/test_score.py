@@ -188,6 +188,54 @@ def test_con_norm_constant(weights: list[float], quadratic: bool, expected: floa
     assert c == pytest.approx(expected)
 
 
+@pytest.mark.parametrize(
+    "violation,expected",
+    [
+        (0.0, 1.0),  # no violation -> perfect score
+        (4.0, 1.0 - 4.0 / 8.0),  # worst-case violations are [2, 5] -> c = 1/8
+        (7.0, 1.0 - 7.0 / 8.0),  # the worst case itself stays above 0
+    ],
+    ids=["zero", "partial", "worst_case"],
+)
+def test_constraints_score_for_violation(violation: float, expected: float):
+    """A total weighted violation maps onto the same 0-1 scale compute_score uses."""
+    # --- arrange -----------------------------------------
+    constraints = [
+        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),  # worst case 2
+        Constraint(int_set=set(range(11)), min_count=2, max_count=3),  # worst case 5
+    ]
+    generator = ScoreGenerator(
+        n=11,
+        k=8,
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[],
+        constraints=constraints,
+    )
+
+    # --- act ---------------------------------------------
+    score = generator.constraints_score_for_violation(violation)
+
+    # --- assert ------------------------------------------
+    assert score == pytest.approx(expected)
+
+
+def test_constraints_score_for_violation_rejects_quadratic():
+    """A scalar violation has no quadratic-scale conversion, so a quadratic generator raises."""
+    # --- arrange -----------------------------------------
+    generator = ScoreGenerator(
+        n=3,
+        k=3,
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[],
+        constraints=[Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)],
+        penalty_quadratic=True,
+    )
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError, match="profile"):
+        generator.constraints_score_for_violation(1.0)
+
+
 def test_score_generator_constraints_linear_vs_quadratic():
     # --- arrange -----------------------------------------
     # max_con_violations = [max(2, min(8,5)-3, 0), max(2, min(8,11)-3, 0)] = [2, 5]
