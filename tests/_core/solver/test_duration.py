@@ -18,6 +18,24 @@ from max_div._core.solver._duration import (
 )
 
 
+class _FakeClock:
+    """A `perf_counter` stand-in that only moves when the test advances it.
+
+    `ProgressTracker` reads `time.perf_counter()` at construction and on every progress query, so
+    monkeypatching it with one of these turns any "did enough time pass?" assertion from a wall-clock
+    race into an exact, deterministic check.
+    """
+
+    def __init__(self, t: float = 1000.0) -> None:
+        self._t = t
+
+    def __call__(self) -> float:
+        return self._t
+
+    def advance(self, dt: float) -> None:
+        self._t += dt
+
+
 # =================================================================================================
 #  TargetDuration
 # =================================================================================================
@@ -158,26 +176,30 @@ def test_progress_tracker_track(duration: TargetDuration, expected_tracker_cls):
     assert isinstance(duration.track(), expected_tracker_cls)
 
 
-def test_progress_tracker_iters_per_second():
+def test_progress_tracker_iters_per_second(monkeypatch):
     # --- arrange -----------------------------------------
+    clock = _FakeClock()
+    monkeypatch.setattr(time, "perf_counter", clock)
     tracker = seconds(1.0).track()
 
     # --- act ---------------------------------------------
     ips_1a, ips_1b = tracker.iters_per_second(), tracker.get_progress().est_iters_per_second
     tracker.report_iterations_done(1)
-    time.sleep(0.1)
+    clock.advance(0.1)
     ips_2a, ips_2b = tracker.iters_per_second(), tracker.get_progress().est_iters_per_second
 
     # --- assert ------------------------------------------
     assert ips_1a == 0.0  # 0 iterations -> 0 iters/sec
     assert ips_1b == 0.0  # 0 iterations -> 0 iters/sec
 
-    assert 5.0 <= ips_2a <= 20.0  # should be around 10 iters/sec
-    assert 5.0 <= ips_2b <= 20.0  # should be around 10 iters/sec
+    assert ips_2a == pytest.approx(10.0)  # 1 iteration over exactly 0.1 s
+    assert ips_2b == pytest.approx(10.0)
 
 
-def test_progress_tracker_iteration_based():
+def test_progress_tracker_iteration_based(monkeypatch):
     # --- arrange -----------------------------------------
+    clock = _FakeClock()
+    monkeypatch.setattr(time, "perf_counter", clock)
     tracker_1 = iterations(1).track()
     tracker_2 = iterations(5).track()
     tracker_3 = iterations(1000).track()
@@ -196,7 +218,7 @@ def test_progress_tracker_iteration_based():
     assert tracker_3.get_progress().est_iters_per_second == 0.0
 
     # --- act & assert 1 ----------------------------------
-    time.sleep(0.1)  # should not do anything, since these are iteration-based
+    clock.advance(0.1)  # time passing should not move iteration-based progress
 
     assert tracker_1.get_progress().fraction == 0.0
     assert tracker_2.get_progress().fraction == 0.0
@@ -227,9 +249,9 @@ def test_progress_tracker_iteration_based():
     assert tracker_2.get_progress().est_n_iters_remaining == 4
     assert tracker_3.get_progress().est_n_iters_remaining == 999
 
-    assert 5 < tracker_1.get_progress().est_iters_per_second < 15  # should be around 10 iters/sec
-    assert 5 < tracker_2.get_progress().est_iters_per_second < 15  # should be around 10 iters/sec
-    assert 5 < tracker_3.get_progress().est_iters_per_second < 15  # should be around 10 iters/sec
+    assert tracker_1.get_progress().est_iters_per_second == pytest.approx(10.0)  # 1 iter / 0.1 s
+    assert tracker_2.get_progress().est_iters_per_second == pytest.approx(10.0)
+    assert tracker_3.get_progress().est_iters_per_second == pytest.approx(10.0)
 
     assert tracker_1.get_progress().fraction == pytest.approx(1)
     assert tracker_2.get_progress().fraction == pytest.approx(1 / 5)
@@ -269,13 +291,15 @@ def test_progress_tracker_iteration_based():
     assert elapsed_2.n_iterations == 5
     assert elapsed_3.n_iterations == 5
 
-    assert 0.1 <= elapsed_1.t_elapsed_sec <= 1.0
-    assert 0.1 <= elapsed_2.t_elapsed_sec <= 1.0
-    assert 0.1 <= elapsed_3.t_elapsed_sec <= 1.0
+    assert elapsed_1.t_elapsed_sec == pytest.approx(0.1)
+    assert elapsed_2.t_elapsed_sec == pytest.approx(0.1)
+    assert elapsed_3.t_elapsed_sec == pytest.approx(0.1)
 
 
-def test_progress_tracker_time_based():
+def test_progress_tracker_time_based(monkeypatch):
     # --- arrange -----------------------------------------
+    clock = _FakeClock()
+    monkeypatch.setattr(time, "perf_counter", clock)
     tracker_1 = seconds(0.001).track()
     tracker_2 = seconds(0.01).track()
     tracker_3 = seconds(10).track()
@@ -303,7 +327,7 @@ def test_progress_tracker_time_based():
     assert not tracker_3.get_progress().is_finished
 
     # --- act & assert 2 ----------------------------------
-    time.sleep(0.002)
+    clock.advance(0.005)  # past tracker_1's 0.001 s budget, still short of tracker_2's 0.01 s
 
     assert tracker_1.get_progress().tqdm_n_current == 1
     assert tracker_2.get_progress().tqdm_n_current == 0
@@ -318,7 +342,7 @@ def test_progress_tracker_time_based():
     assert not tracker_3.get_progress().is_finished
 
     # --- act & assert 3 ----------------------------------
-    time.sleep(0.02)
+    clock.advance(0.015)  # total 0.02 s: past tracker_2's 0.01 s budget, still short of tracker_3's
 
     assert tracker_1.get_progress().tqdm_n_current == 1
     assert tracker_2.get_progress().tqdm_n_current == 1
@@ -341,9 +365,9 @@ def test_progress_tracker_time_based():
     assert elapsed_2.n_iterations == 1
     assert elapsed_3.n_iterations == 1
 
-    assert 0.022 <= elapsed_1.t_elapsed_sec <= 1.0
-    assert 0.022 <= elapsed_2.t_elapsed_sec <= 1.0
-    assert 0.022 <= elapsed_3.t_elapsed_sec <= 1.0
+    assert elapsed_1.t_elapsed_sec == pytest.approx(0.02)
+    assert elapsed_2.t_elapsed_sec == pytest.approx(0.02)
+    assert elapsed_3.t_elapsed_sec == pytest.approx(0.02)
 
 
 @pytest.mark.parametrize(
@@ -356,12 +380,14 @@ def test_progress_tracker_time_based():
     ],
 )
 def test_progress_corner_cases(
-    duration: TargetDuration, sleep_time: float, expected_n_current: int, expected_n_total: int
+    monkeypatch, duration: TargetDuration, sleep_time: float, expected_n_current: int, expected_n_total: int
 ):
     """Test corner cases where rounding could (but won't) result in n_current == n_total, while we're not finished."""
     # --- arrange -----------------------------------------
+    clock = _FakeClock()
+    monkeypatch.setattr(time, "perf_counter", clock)
     tracker = duration.track()
-    time.sleep(sleep_time)
+    clock.advance(sleep_time)
 
     # --- act ---------------------------------------------
     progress = tracker.get_progress()

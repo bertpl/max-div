@@ -5,7 +5,6 @@ import pytest
 from max_div._core._utils import Timer
 
 
-@pytest.mark.flaky(reruns=10)
 def test_timer():
     # --- arrange -----------------------------------------
     timer = Timer()
@@ -19,11 +18,13 @@ def test_timer():
         time.sleep(0.1)
 
     # --- assert ------------------------------------------
-    assert 0.05 < timer.t_elapsed_sec() < 0.15, "t_elapsed_sec() result incorrect."
-    assert 50_000_000 < timer.t_elapsed_nsec() < 150_000_000, "t_elapsed_nsec() result incorrect."
+    # `sleep(0.1)` blocks for at least 0.1 s and a loaded runner only overshoots, so the elapsed
+    # time can be bounded from below but not above without inviting a flake. The sec/nsec reads come
+    # off the same stopped interval, so their agreement is exact.
+    assert timer.t_elapsed_sec() >= 0.09, "t_elapsed_sec() undercounts a 0.1 s sleep."
+    assert timer.t_elapsed_nsec() == pytest.approx(timer.t_elapsed_sec() * 1e9)
 
 
-@pytest.mark.flaky(reruns=10)
 def test_timer_running():
     # --- arrange -----------------------------------------
     timer = Timer()
@@ -35,4 +36,4 @@ def test_timer_running():
         t_after = timer.t_elapsed_sec()
 
     # --- assert ------------------------------------------
-    assert t_after >= t_before + 0.05, "t_elapsed_sec() did not increase while timer was running."
+    assert t_after >= t_before + 0.09, "t_elapsed_sec() did not increase while timer was running."
