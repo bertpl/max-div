@@ -123,6 +123,14 @@ def constraints_score_for_violation(constraints: Sequence[Constraint], k: int, v
     The conversion uses the linear penalty, so the result lands on the 0-1 scale the solver
     reports; a certified violation floor maps to the constraints-score ceiling no selection can
     exceed.
+
+    Args:
+        constraints: the problem's constraints, whose weights and worst cases set the scale.
+        k: the selection size.
+        violation: total weighted violation, in weighted item-counts: per constraint, how many
+            selected items it is short of its `min_count` plus how many it is above its
+            `max_count`, times its `weight`, summed over all constraints. Fractional values are
+            fine (a certified floor is a fractional dual bound).
     """
     con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
     c = _con_norm_constant(_max_con_violations(constraints, k), con_weights, quadratic=False)
