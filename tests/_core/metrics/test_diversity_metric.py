@@ -26,43 +26,43 @@ from max_div._core.metrics import DiversityContributionFamily, DiversityMetric
     ],
 )
 def test_diversity_compute(metric: DiversityMetric, separation: list[float], expected_result: float, tol: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     separation = np.array(separation, dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = metric.compute(separation)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == pytest.approx(expected_result, abs=tol, rel=tol)
 
 
 def test_diversity_metric_unique_names():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     metrics = list(DiversityMetric)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     all_metric_names = [metric.name for metric in metrics]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(set(all_metric_names)) == len(metrics)
 
 
 def test_diversity_metric_unique_values():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     metrics = list(DiversityMetric)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     all_metric_values = [metric.value for metric in metrics]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(set(all_metric_values)) == len(metrics)
 
 
 def test_diversity_metric_equals():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     metrics = list(DiversityMetric)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     for i, metric_1 in enumerate(metrics):
         for j, metric_2 in enumerate(metrics):
             if i == j:
@@ -84,22 +84,22 @@ def test_diversity_metric_equals():
 def test_diversity_metric_small_arrays(metric: DiversityMetric, sep_array: np.ndarray):
     """check if all metrics report 0.0 for small arrays; we can only compute diversity meaningfully for size >=2."""
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = metric.compute(sep_array)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == 0.0
 
 
 @pytest.mark.parametrize("metric", list(DiversityMetric))
 def test_diversity_metric_contribution_family(metric: DiversityMetric):
     """Each metric maps to the contribution family its name implies."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     expected = (
         DiversityContributionFamily.MEAN_DISTANCE
         if metric == DiversityMetric.MEAN_PAIRWISE_DISTANCE
         else DiversityContributionFamily.SEPARATION
     )
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert metric.contribution_family == expected

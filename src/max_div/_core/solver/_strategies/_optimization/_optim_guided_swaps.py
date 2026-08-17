@@ -72,11 +72,11 @@ class OptimGuidedSwaps(SwapBasedOptimizationStrategy):
     def _samples_to_be_added(
         self, state: SolverState, n_to_add: np.int32, candidate_samples: NDArray[np.int32]
     ) -> NDArray[np.int32]:
-        # --- ignore constraints or not? ---
+        # --- ignore constraints or not? ---------
         r = rand_float32(self._rng_state)  # random float in [0.0, 1.0)
         ignore_constraints = bool(r > self.p_add_constraint_aware)
 
-        # --- select items to add ---
+        # --- select items to add ----------------
         return select_items_to_add(
             state=state,
             candidates=candidate_samples,

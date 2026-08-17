@@ -215,10 +215,10 @@ class _IterationTracker(ProgressTracker):
 class Progress:
     """Representation of progress made so far towards a target duration, including various meta-data."""
 
-    # --- tqdm ---
+    # --- tqdm -----------------------------------
     tqdm_n_total: int  # total number of steps for tqdm progress bar
 
-    # --- other---
+    # --- other ----------------------------------
     fraction: float  # fractional progress in [0,1]
     iter_count: int  # total number of iterations reported done
     est_n_iters_remaining: int  # estimated number of iterations remaining
@@ -254,11 +254,11 @@ class Progress:
 # =================================================================================================
 @dataclass(frozen=True, slots=True)
 class Elapsed:  # noqa: PLW1641 — value-semantics-only hot-path object; deliberately unhashable
-    # --- data fields -----------------
+    # --- data fields ----------------------------
     t_elapsed_sec: float
     n_iterations: int
 
-    # --- equal -----------------------
+    # --- equal ----------------------------------
     def __eq__(self, other: object) -> bool:
         # equal if...
         #   n_iterations is exactly equal
@@ -269,7 +269,7 @@ class Elapsed:  # noqa: PLW1641 — value-semantics-only hot-path object; delibe
             and abs(self.t_elapsed_sec - other.t_elapsed_sec) < 1e-10
         )
 
-    # --- math ------------------------
+    # --- math -----------------------------------
     def __add__(self, other: Elapsed | int) -> Elapsed:
         if other == 0:
             return self  # helps ensure sum() works correctly

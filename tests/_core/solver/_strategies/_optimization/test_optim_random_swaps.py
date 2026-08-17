@@ -23,7 +23,7 @@ def test_optim_random_swaps(problem_name: str, n: int):
     to see if we're optimizing.
     """
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
 
     # prepare problem & solver state
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
@@ -50,7 +50,7 @@ def test_optim_random_swaps(problem_name: str, n: int):
     initial_score = solver_state.score
     n_iterations = 100
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     optim_strategy.perform_n_iterations(
         state=solver_state,
         n_iters=n_iterations,
@@ -58,6 +58,6 @@ def test_optim_random_swaps(problem_name: str, n: int):
         progress_frac_per_iter=1e-6,  # dummy value
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(solver_state.selected_index_array) == problem.k, "Number of selected items should remain k."
     assert solver_state.score > initial_score, "We should be optimizing"

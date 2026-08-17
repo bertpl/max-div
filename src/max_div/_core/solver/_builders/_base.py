@@ -33,16 +33,16 @@ class SolverBuilderBase:
     # -------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
         """Configure a builder over the given problem."""
-        # --- problem ---------------------------
+        # --- problem ----------------------------
         self._problem = problem
 
-        # --- problem properties ----------------
+        # --- problem properties -----------------
         self._n: int = problem.n
         self._k: int = problem.k
         self._diversity_metric: DiversityMetric = problem.diversity_metric
         self._constraints: list[Constraint] = problem.constraints
 
-        # --- shared configuration --------------
+        # --- shared configuration ---------------
         self._diversity_tie_breakers: list[DiversityMetric] = []
         self._default_diversity_tie_breakers: bool = True
         self._seed = 42

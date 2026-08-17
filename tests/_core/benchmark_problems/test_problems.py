@@ -33,10 +33,10 @@ METRIC = DiversityMetric.MIN_SEPARATION
 )
 def test_dimension_formulas(name, d_formula, k_formula, n):
     """The derived d, k, m match the published formulas at round and odd n alike."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     d, _, k, m, _ = BenchmarkProblemFactory.get_problem_dimensions(name, n=n)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert d == d_formula(n)
     assert k == k_formula(n)
     if name in ("C1", "C2"):
@@ -50,11 +50,11 @@ def test_dimension_formulas(name, d_formula, k_formula, n):
 @pytest.mark.parametrize("n", ODD_N_VALUES)
 def test_u1_component_structure(n):
     """U1's mixture components always sum to exactly n, and the geometry is deterministic."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = BenchmarkProblemFactory.construct_problem("U1", n=n, diversity_metric=METRIC)
     problem_again = BenchmarkProblemFactory.construct_problem("U1", n=n, diversity_metric=METRIC)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert problem.vectors.shape == (n, 2)
     assert np.array_equal(problem.vectors, problem_again.vectors)
 
@@ -62,10 +62,10 @@ def test_u1_component_structure(n):
 @pytest.mark.parametrize("n", ODD_N_VALUES)
 def test_c1_exact_quotas_feasible(n):
     """C1's bands partition the population and their exact quotas sum to k with every band large enough."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = BenchmarkProblemFactory.construct_problem("C1", n=n, diversity_metric=METRIC)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     all_indices: set[int] = set()
     quota_sum = 0
     for constraint in problem.constraints:
@@ -82,10 +82,10 @@ def test_c1_exact_quotas_feasible(n):
 @pytest.mark.parametrize("n", ODD_N_VALUES)
 def test_c2_lower_bounds_feasible(n):
     """C2's per-band lower bounds always sum to at most k, each satisfiable within its band."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = BenchmarkProblemFactory.construct_problem("C2", n=n, diversity_metric=METRIC)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     min_sum = 0
     for constraint in problem.constraints:
         assert constraint.min_count >= 1
@@ -99,10 +99,10 @@ def test_c2_lower_bounds_feasible(n):
 @pytest.mark.parametrize("n", ODD_N_VALUES)
 def test_c3_c4_bounds_satisfiable_per_constraint(name, n):
     """C3/C4's overlapping lower bounds each fit within their own index set and within k."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     problem = BenchmarkProblemFactory.construct_problem(name, n=n, diversity_metric=METRIC)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(problem.constraints) == problem.m
     for constraint in problem.constraints:
         assert constraint.min_count <= constraint.max_count <= problem.k

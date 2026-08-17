@@ -47,7 +47,7 @@ class InitRandomOneShot(InitializationStrategy):
         self.ignore_constraints = ignore_constraints
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
-        # --- sample --------------------------------------
+        # --- sample -----------------------------
         if state.has_constraints and (not self.ignore_constraints):
             # take constraints into account
             if self.uniform:

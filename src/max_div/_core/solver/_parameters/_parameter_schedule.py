@@ -46,12 +46,12 @@ class ParameterSchedule(ParameterValueSource):
         NOTE: this function is provided as a reference implementation for computing the scheduled value;
               in performance-critical code paths, more efficient implementations should be preferred.
         """
-        # --- compute v(f) ----------------------
+        # --- compute v(f) -----------------------
         f = max(0.0, min(1.0, f))  # clip f to [0.0, 1.0]
         sf = self.c_poly[0] + self.c_poly[1] * f + self.c_poly[2] * (f * f) + self.c_poly[3] * (f * f * f)
         v = self.v0 + (self.v1 - self.v0) * sf
 
-        # --- return clipped version ------------
+        # --- return clipped version -------------
         # (to ensure rounding does not violate bounds, which might cause issues downstream)
         min_value = min(self.v0, self.v1)
         max_value = max(self.v0, self.v1)
@@ -136,13 +136,13 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
         2D numpy array of shape (n_schedules, 6) with schedule data, where each row contains:
         [min_value, max_value, d0, d1, d2, d3].
     """
-    # --- prep ------------------------
+    # --- prep -----------------------------------
     n_schedules = len(schedules)
     arr = np.empty((n_schedules, 6), dtype=np.float64)
 
-    # --- fill ------------------------
+    # --- fill -----------------------------------
     for i, sched in enumerate(schedules):
-        # --- convert ---
+        # --- convert ----------------------------
         v0 = sched.v0
         dv = sched.v1 - sched.v0
         c0, c1, c2, c3 = sched.c_poly
@@ -151,7 +151,7 @@ def _schedules_to_2d_numpy_array(schedules: list[ParameterSchedule]) -> NDArray[
         d2 = dv * c2
         d3 = dv * c3
 
-        # --- fill ---
+        # --- fill -------------------------------
         arr[i, 0] = sched.min_value
         arr[i, 1] = sched.max_value
         arr[i, 2] = d0
@@ -174,12 +174,12 @@ def _evaluate_schedules(schedules_array: NDArray[np.float64], f: float) -> NDArr
     Returns:
         1D numpy array of shape (n_schedules,) with evaluated parameter values.
     """
-    # --- prep ------------------------
+    # --- prep -----------------------------------
     n_schedules = schedules_array.shape[0]
     values = np.empty(n_schedules, dtype=np.float64)
     f = max(0.0, min(1.0, f))  # clip f to [0.0, 1.0]
 
-    # --- evaluate --------------------
+    # --- evaluate -------------------------------
     for i in range(n_schedules):
         # extract data
         min_value = schedules_array[i, 0]

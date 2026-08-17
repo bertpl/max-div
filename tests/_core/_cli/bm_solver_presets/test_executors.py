@@ -12,7 +12,7 @@ from max_div._core.solver import SolverPreset, TargetTimeDuration
 @pytest.mark.parametrize("n_workers", [1, 2])
 def test_execute_single_run(n_workers: int):
     """One run per solver kind: a plain single solve, and the parallel solver at n_workers > 1."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     params = SolverPresetBenchmarkParams(
         preset=SolverPreset.RANDOM if n_workers == 1 else SolverPreset.SMART,
         problem_name="U1",
@@ -22,10 +22,10 @@ def test_execute_single_run(n_workers: int):
         n_workers=n_workers,
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = _execute_single_run(params)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(result, SolverPresetBenchmarkResult)
     assert result.params == params
     assert result.t_elapsed_sec > 0.0  # end-to-end span: build() + solve
@@ -34,7 +34,7 @@ def test_execute_single_run(n_workers: int):
 def test_executor_multi_parallel_runs_parallel_scope_serially():
     """Parallel runs execute outside the pool, and both kinds land in one result list."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     def _params(n_workers: int) -> SolverPresetBenchmarkParams:
         """Build a tiny-budget run differing only in worker count."""
         return SolverPresetBenchmarkParams(
@@ -48,8 +48,8 @@ def test_executor_multi_parallel_runs_parallel_scope_serially():
 
     scope = [_params(1), _params(2)]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     results = executor_multi_parallel(scope, n_processes=1)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert {r.params for r in results} == set(scope)

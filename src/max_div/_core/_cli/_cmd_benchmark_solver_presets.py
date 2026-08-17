@@ -106,21 +106,21 @@ def presets(
     markdown: bool,
 ) -> None:
     """Benchmark solver presets on specific solver benchmark problem."""
-    # --- argument handling - speed -----------------------
+    # --- argument handling - speed --------------
     if turbo:
         speed = 1.0
     if markdown_file:
         markdown = True
 
-    # --- argument handling - preset(s) & problem(s) ------
+    # --- argument handling - preset(s) & problem(s) ---
     presets = resolve_presets(preset)
     problems = resolve_problems(problem)
     problem_sizes = {p: n if n is not None else determine_problem_size_for_k(p) for p in problems}
 
-    # --- argument handling - max_run_duration -------------
+    # --- argument handling - max_run_duration ---
     max_run_duration_sec = 60.0 * max_run_duration_minutes if max_run_duration_minutes else None
 
-    # --- determine scope ---------------------------------
+    # --- determine scope ------------------------
     if target_max_minutes:
         speed, scope = determine_benchmark_scope_for_max_duration(
             presets=presets,
@@ -138,7 +138,7 @@ def presets(
             max_run_duration_sec=max_run_duration_sec,
         )
 
-    # --- report scope & estimated duration ---------------
+    # --- report scope & estimated duration ------
 
     # gather statistics
     n_processes = get_n_processes(len(scope))
@@ -178,7 +178,7 @@ def presets(
     click.echo(f"  - parallel runs : {n_parallel_runs:_}")
     click.echo(f"  - est. duration : {est_duration_str}".ljust(40) + f"[{start_time_str} -> {end_time_str}]")
 
-    # --- run benchmarks ----------------------------------
+    # --- run benchmarks -------------------------
     if dry_run:
         click.echo("")
         click.echo("---=== DRY_RUN ENABLED - SKIPPING BENCHMARK EXECUTION ===---")

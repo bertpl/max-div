@@ -7,7 +7,7 @@ from max_div._core._utils import _MAX_INT64, _MIN_INT64, deterministic_hash, det
 #  deterministic_hash
 # =================================================================================================
 def test_deterministic_hash():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     objects = [
         1,
         1.0,
@@ -22,10 +22,10 @@ def test_deterministic_hash():
         {1: "one"},
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     hashes = [deterministic_hash(obj) for obj in objects]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert all(isinstance(h, int) for h in hashes)
     assert len(set(hashes)) == len(objects)
     assert max(hashes) > 2**250
@@ -36,7 +36,7 @@ def test_deterministic_hash():
 #  deterministic_hash_int64
 # =================================================================================================
 def test_deterministic_hash_int64():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     objects = [
         1,
         1.0,
@@ -51,10 +51,10 @@ def test_deterministic_hash_int64():
         {1: "one"},
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     hashes = [deterministic_hash_int64(obj) for obj in objects]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert all(isinstance(h, np.int64) for h in hashes)
     assert len(set(hashes)) == len(objects)
     assert max(hashes) > 2**62
@@ -65,7 +65,7 @@ def test_deterministic_hash_int64():
 #  helpers
 # =================================================================================================
 def test_int_to_int64():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     i0 = int_to_int64(100)
     i1 = int_to_int64(-100)
     i2 = int_to_int64(_MAX_INT64)  # borderline fits in a int64
@@ -73,7 +73,7 @@ def test_int_to_int64():
     i4 = int_to_int64(2**100)  # too large for int64
     i5 = int_to_int64(-(2**100))  # too small for int64
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(i0, np.int64)
     assert isinstance(i1, np.int64)
     assert isinstance(i2, np.int64)

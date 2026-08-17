@@ -17,7 +17,7 @@ def estimate_execution_time_sec_multi(
     params: list[SolverPresetBenchmarkParams], per_problem_execution: bool = True
 ) -> float:
     """Estimate total execution time in seconds for multiple benchmark runs, taking multiprocessing into account."""
-    # --- per problem? ----------------
+    # --- per problem? ---------------------------
     if per_problem_execution:
         all_problem_names = {p.problem_name for p in params}
         return sum(
@@ -30,13 +30,13 @@ def estimate_execution_time_sec_multi(
             ]
         )
 
-    # --- split -----------------------
+    # --- split ----------------------------------
     # parallel runs each use all cores, so they execute one after another and cannot be packed
     # into the process pool the single-worker runs share
     single_params = [p for p in params if not p.is_parallel]
     parallel_sec = sum(estimate_execution_time_sec_single(p) for p in params if p.is_parallel)
 
-    # --- estimate packed duration ----
+    # --- estimate packed duration ---------------
     packed_sec = 0.0
     if single_params:
         durations_sec = [estimate_execution_time_sec_single(p) for p in single_params]

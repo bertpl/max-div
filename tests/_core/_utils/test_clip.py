@@ -18,8 +18,8 @@ from max_div._core._utils import clip
     ],
 )
 def test_clip(value: float, min_value: float, max_value: float, expected: float):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = clip(value, min_value, max_value)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == expected

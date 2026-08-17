@@ -9,15 +9,15 @@ from max_div._core._math.select_k_minmax import select_k_max, select_k_min
 def test_select_k_min_correctness(k: int, dtype: type):
     """Test that select_k_min returns indices of the k largest elements."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     np.random.seed(42)
     n = 1024
     arr = np.random.randn(n).astype(dtype)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result_indices = select_k_min(arr, np.int32(k))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # validate index invariants
     assert result_indices.dtype == np.int32
@@ -39,15 +39,15 @@ def test_select_k_min_correctness(k: int, dtype: type):
 def test_select_k_max_correctness(k: int, dtype: type):
     """Test that select_k_max returns indices of the k largest elements."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     np.random.seed(42)
     n = 1024
     arr = np.random.randn(n).astype(dtype)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result_indices = select_k_max(arr, np.int32(k))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # validate index invariants
     assert result_indices.dtype == np.int32

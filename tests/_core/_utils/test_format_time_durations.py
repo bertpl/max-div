@@ -36,10 +36,10 @@ from max_div._core._utils._format_time_durations import (
 def test_format_time_duration_length(value: float, n_chars: int):
     """Check if we can always exactly meet n_chars if value<100d and n_chars>=5."""
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = format_time_duration(value, n_chars)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(result) == n_chars
 
 
@@ -53,10 +53,10 @@ def test_format_time_duration_length(value: float, n_chars: int):
     ],
 )
 def test_format_time_duration_pad(dt_sec: float, n_chars: int, pad: bool, expected: str):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = format_time_duration(dt_sec, n_chars=n_chars, pad=pad)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == expected
 
 
@@ -87,10 +87,10 @@ def test_format_time_duration_pad(dt_sec: float, n_chars: int, pad: bool, expect
 def test_format_long_time_duration_length(value: float, n_chars: int):
     """Check if we can always exactly meet n_chars if value<100d and n_chars>=5."""
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = format_long_time_duration(value, n_chars)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(result) == n_chars
 
 
@@ -119,10 +119,10 @@ def test_format_long_time_duration_length(value: float, n_chars: int):
 def test_format_short_time_duration_length(value: float, n_chars: int):
     """Check if we can always exactly meet n_chars if value<999.5 and n_chars>=5."""
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = format_short_time_duration(value, n_chars)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(result) == n_chars
 
 
@@ -132,7 +132,7 @@ def test_format_short_time_duration_length(value: float, n_chars: int):
 @pytest.mark.parametrize(
     "value, precision, expected",
     [
-        # --- "s.ss" precision ------------------
+        # --- "s.ss" precision -------------------
         (0.0, "s.ss", "0.00s"),
         (0.001, "s.ss", "0.00s"),
         (0.006, "s.ss", "0.01s"),
@@ -149,7 +149,7 @@ def test_format_short_time_duration_length(value: float, n_chars: int):
         (90360.00, "s.ss", "1d1h6m0.00s"),
         (90361.23, "s.ss", "1d1h6m1.23s"),
         (90361.236, "s.ss", "1d1h6m1.24s"),
-        # --- "s.s" precision -------------------
+        # --- "s.s" precision --------------------
         (0.0, "s.s", "0.0s"),
         (0.01, "s.s", "0.0s"),
         (0.04, "s.s", "0.0s"),
@@ -165,7 +165,7 @@ def test_format_short_time_duration_length(value: float, n_chars: int):
         (90360.00, "s.s", "1d1h6m0.0s"),
         (90361.23, "s.s", "1d1h6m1.2s"),
         (90361.26, "s.s", "1d1h6m1.3s"),
-        # --- "s" precision ---------------------
+        # --- "s" precision ----------------------
         (0.0, "s", "0s"),
         (0.4, "s", "0s"),
         (0.6, "s", "1s"),
@@ -179,7 +179,7 @@ def test_format_short_time_duration_length(value: float, n_chars: int):
         (90360.00, "s", "1d1h6m0s"),
         (90361.23, "s", "1d1h6m1s"),
         (90361.6, "s", "1d1h6m2s"),
-        # --- "m" precision ---------------------
+        # --- "m" precision ----------------------
         (0.0, "m", "0m"),
         (10.0, "m", "0m"),
         (31.0, "m", "1m"),
@@ -192,7 +192,7 @@ def test_format_short_time_duration_length(value: float, n_chars: int):
         (90360.00, "m", "1d1h6m"),
         (90361.23, "m", "1d1h6m"),
         (90390.1, "m", "1d1h7m"),
-        # --- "h" precision ---------------------
+        # --- "h" precision ----------------------
         (0.0, "h", "0h"),
         (661.234, "h", "0h"),
         (1800.01, "h", "1h"),
@@ -200,7 +200,7 @@ def test_format_short_time_duration_length(value: float, n_chars: int):
         (86400.00, "h", "1d0h"),
         (90361.23, "h", "1d1h"),
         (91800.01, "h", "1d2h"),
-        # --- "d" precision ---------------------
+        # --- "d" precision ----------------------
         (0.0, "d", "0d"),
         (43000.00, "d", "0d"),
         (43200.01, "d", "1d"),
@@ -210,10 +210,10 @@ def test_format_short_time_duration_length(value: float, n_chars: int):
     ],
 )
 def test_format_long_time_duration_to_spec(value: float, precision: str, expected: str):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = _format_long_time_duration_to_spec(value, precision)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == expected
 
 
@@ -241,8 +241,8 @@ def test_format_short_time_duration_to_spec(
     long_units: bool,
     expected: str,
 ):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = _format_short_time_duration_to_spec(dt_sec, n_digits, right_aligned, spaced, long_units)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == expected

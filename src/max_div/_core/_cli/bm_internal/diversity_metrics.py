@@ -25,13 +25,13 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
     """
     print("Benchmarking `DiversityMetric`...")
 
-    # --- speed-dependent settings --------------------
+    # --- speed-dependent settings ---------------
     max_size = round(100_000 / (1_000**speed))
     t_per_run = 0.01 / (1000.0**speed)
     n_warmup = int(8 - 6 * speed)
     n_benchmark = int(25 - 24 * speed)
 
-    # --- create diversity metrics --------------------
+    # --- create diversity metrics ---------------
     metrics = [
         DiversityMetric.MIN_SEPARATION,
         DiversityMetric.MEAN_SEPARATION,
@@ -40,7 +40,7 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
         DiversityMetric.NON_ZERO_SEPARATION_FRAC,
     ]
 
-    # --- benchmark ------------------------------------
+    # --- benchmark ------------------------------
     table = Table(
         headers=[
             "`size`",
@@ -81,9 +81,9 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
 
         table.add_row(table_row)
 
-    # --- show results -----------------------------------------
+    # --- show results ---------------------------
 
-    # --- create final report ---
+    # --- create final report --------------------
     table.add_aggregate_row(TableAggregationType.GEOMEAN)
     table.highlight_results(TableTimeElapsed, clr_lowest=Table.GREEN, clr_highest=Table.RED)
 
@@ -91,6 +91,6 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
     report += h2("DiversityMetric Performance")
     report += table
 
-    # --- output ---
+    # --- output ---------------------------------
     with stdout_to_file(file, "benchmark_diversity_metrics.md"):
         report.print(markdown=markdown)

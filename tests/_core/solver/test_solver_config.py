@@ -19,13 +19,13 @@ def _builder() -> MaxDivSolverBuilder:
 
 def test_resolve_returns_the_backend_and_a_config_over_it():
     """Resolving hands back the chosen backend and a config carrying the builder's settings."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = _builder().with_seed(99)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     resolved, config = builder.prepare_storage_and_config()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert resolved != DistanceStorage.AUTO  # AUTO is resolved to something concrete
     assert config.seed == 99
     assert config.k == 4
@@ -34,27 +34,27 @@ def test_resolve_returns_the_backend_and_a_config_over_it():
 
 def test_a_config_builds_a_solver_over_any_store():
     """A config plus a store is a solver."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solver = config.build_solver(build_distance_store(builder._problem, resolved))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
     assert solver.solve(verbosity=Verbosity.SILENT).i_selected.size == 4
 
 
 def test_with_seed_changes_only_the_seed():
     """Reseeding a config leaves every other setting alone, so workers differ in search only."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     _, config = _builder().with_seed(1).prepare_storage_and_config()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reseeded = config.with_seed(2)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert reseeded.seed == 2
     assert config.seed == 1  # the original is untouched
     assert reseeded.solver_steps is config.solver_steps
@@ -63,9 +63,9 @@ def test_with_seed_changes_only_the_seed():
 
 def test_build_produces_a_working_solver():
     """`build` produces a solver over a store it built itself."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     solution = _builder().with_seed(5).build().solve(verbosity=Verbosity.SILENT)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solution.i_selected.size == 4
     assert solution.score.diversity > 0.0

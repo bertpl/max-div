@@ -37,12 +37,12 @@ from max_div._core.solver._strategies import InitializationStrategy
 def test_initialization_strategy_factory(factory_method: Callable[[], InitializationStrategy]):
     """Test factory methods of InitializationStrategy base class."""
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert isinstance(factory_method(), InitializationStrategy)
 
 
 def test_initialization_strategy_properties():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     class TestInitializationStrategy(InitializationStrategy):
         def __init__(self, name: str | None = None):
             super().__init__(name)
@@ -50,6 +50,6 @@ def test_initialization_strategy_properties():
         def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
             pass
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert TestInitializationStrategy().name == "TestInitializationStrategy"
     assert TestInitializationStrategy("custom_name").name == "custom_name"

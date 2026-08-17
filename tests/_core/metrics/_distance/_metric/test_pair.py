@@ -23,14 +23,14 @@ _SCIPY_METRIC = {
 def test_compute_pdist_metrics(metric: DistanceMetric):
     """Check if compute_pdist implements all metrics."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # note: no all-zero row — COSINE rejects zero vectors
     vectors = np.array([[2, 2], [3, 4], [1, 0], [0, 1]], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     d = compute_pdist(vectors, metric=metric)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert d.shape == (6,), "Unexpected shape of pdist output."
     assert d.dtype == np.float32, "Unexpected dtype of pdist output."
 
@@ -47,13 +47,13 @@ def test_compute_pdist_metrics(metric: DistanceMetric):
 def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
     """Check if compute_pdist produces correct values."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4]], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     d = compute_pdist(vectors, metric=metric)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert d[0] == pytest.approx(expected_value)
 
 
@@ -61,15 +61,15 @@ def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
 def test_compute_pdist_matches_scipy(metric: DistanceMetric):
     """The hand-rolled float32 kernel matches scipy's float64→float32 result within float32 tolerance."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260711)
     vectors = rng.standard_normal((60, 8)).astype(np.float32)
     expected = scipy_pdist(vectors, metric=_SCIPY_METRIC[metric.value]).astype(np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = compute_pdist(vectors, metric=metric)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.dtype == np.float32
     np.testing.assert_allclose(result, expected, rtol=1e-5, atol=1e-5)
 
@@ -86,23 +86,23 @@ def test_compute_pdist_matches_scipy(metric: DistanceMetric):
 def test_compute_pdist_cosine_values(x: list[float], y: list[float], expected_value: float):
     """Cosine distance produces the expected angular values."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([x, y], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     d = compute_pdist(vectors, metric=DistanceMetric.COSINE)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert d[0] == pytest.approx(expected_value, abs=1e-6)
 
 
 def test_compute_pdist_cosine_zero_vector_raises():
     """Cosine distance rejects all-zero vectors with a clear error naming the row."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[1, 2], [0, 0], [3, 4]], dtype=np.float32)
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.raises(ValueError, match=r"zero vector.*row 1"):
         compute_pdist(vectors, metric=DistanceMetric.COSINE)
 
@@ -111,11 +111,11 @@ def test_compute_pdist_cosine_zero_vector_raises():
 def test_compute_pdist_zero_for_identical_vectors(metric: DistanceMetric):
     """Identical vectors have exactly-zero distance under every metric."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[1.5, -2.0, 3.0], [1.5, -2.0, 3.0], [4.0, 4.0, 4.0]], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = compute_pdist(vectors, metric=metric)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result[0] == np.float32(0.0)  # distance between the two identical vectors

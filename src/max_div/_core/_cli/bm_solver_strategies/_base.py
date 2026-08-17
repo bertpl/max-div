@@ -57,21 +57,21 @@ class SolverBenchmarkExecutor:
     #  Main API
     # -------------------------------------------------------------------------
     def execute(self, markdown: bool, file: bool = False) -> None:
-        # --- run benchmarks ------------------------------
+        # --- run benchmarks ---------------------
         with self._scope as scope:
             for n, strat_name, seed in scope.params():
-                # --- construct solver ---
+                # --- construct solver -----------
                 solver = scope.construct_solver(n, strat_name, seed)
 
-                # --- run solver  ---
+                # --- run solver -----------------
                 solution = solver.solve(verbosity=Verbosity.SILENT)
 
-                # --- get results ---
+                # --- get results ----------------
                 t_elapsed_sec = list(solution.step_durations.values())[-1].t_elapsed_sec
                 diversity_score = solution.score.diversity
                 constraint_score = solution.score.constraints
 
-                # --- register results ---
+                # --- register results -----------
                 scope.register_result(
                     n=n,
                     strat_name=strat_name,
@@ -80,7 +80,7 @@ class SolverBenchmarkExecutor:
                     constraint_score=constraint_score,
                 )
 
-        # --- show results --------------------------------
+        # --- show results -----------------------
         scope.show_results_tables(markdown, file)
 
 
@@ -151,12 +151,12 @@ class SolverBenchmarkScope:
     # -------------------------------------------------------------------------
     def params(self) -> list[tuple[int, str, int]]:
         """Return the list of (n, strat_name, seed)-tuples to benchmark."""
-        # --- calibrate -------------------------
+        # --- calibrate --------------------------
         n_seeds_min = 3  # we don't execute benchmarks if n_seeds < n_seeds_min
         n_seeds_max = 16  # we never do more than n_seeds_max
         full_n_range = [100 * s for s in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]]  # n range for speed=0.0
 
-        # --- speed-dependent settings ----------
+        # --- speed-dependent settings -----------
         # the seed budget below is computed on n/100 ("weight"), the scale the min/max/limit
         # formulas here are tuned for
         speed = self._speed
@@ -167,7 +167,7 @@ class SolverBenchmarkScope:
         # speed = 1.0  -->  weight_seeds_limit = n_seeds_min * 1
         weight_seeds_limit = round(n_seeds_min * (max_weight ** (1 - speed)))
 
-        # --- generate list ---------------------
+        # --- generate list ----------------------
         lst = []
         for n in full_n_range:
             # determine n_seeds such that (n/100) * n_seeds <= weight_seeds_limit
@@ -195,12 +195,12 @@ class SolverBenchmarkScope:
         constraint_score: float,
     ) -> None:
         """Register benchmark results for given (n, strat_name, seed)-tuple."""
-        # --- register results ---
+        # --- register results -------------------
         self._t_elapsed[n, strat_name].append(t_elapsed_sec)
         self._diversity_scores[n, strat_name].append(diversity_score)
         self._constraint_scores[n, strat_name].append(constraint_score)
 
-        # --- update progress bar ---
+        # --- update progress bar ----------------
         if self._pbar:
             self._pbar.n += 1
             self._pbar.refresh()
@@ -211,11 +211,11 @@ class SolverBenchmarkScope:
 
         # redirect stdout to file if requested
         with stdout_to_file(enabled=file, filename=f"benchmark_{benchmark_type}_{problem_name}.md"):
-            # --- initialize report -----------------------
+            # --- initialize report --------------
             report = Report()
             report += self._solver_constructor.build_strategies_table()
 
-            # --- aggregate data --------------------------
+            # --- aggregate data -----------------
             t_elapsed_agg = {
                 (n, strat_name): TableTimeElapsed.from_values(result_lst)
                 for (n, strat_name), result_lst in self._t_elapsed.items()
@@ -229,9 +229,9 @@ class SolverBenchmarkScope:
                 for (n, strat_name), result_lst in self._constraint_scores.items()
             }
 
-            # --- prepare table data ----------------------
+            # --- prepare table data -------------
 
-            # --- prep ----------------
+            # --- prep ---------------------------
             strat_names = self._solver_constructor.strategy_names()
             n_range = sorted({n for n, _, _ in self.params()})
             scope: list[tuple[dict, str, TableAggregationType]] = [
@@ -241,7 +241,7 @@ class SolverBenchmarkScope:
             if self._constraints:
                 scope.append((constraint_scores_agg, "Constraint Score", TableAggregationType.MEAN))
 
-            # --- show all tables -----
+            # --- show all tables ----------------
             headers = ["`d`", "`n`", "`k`", "`m`"] + [f"`{s}`" for s in strat_names]
             for data, title, agg_type in scope:
                 # create table

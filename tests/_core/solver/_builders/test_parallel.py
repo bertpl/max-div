@@ -36,10 +36,10 @@ def _solve_portfolio(workers, seed: int = 5, n_groups: int | None = None) -> Par
 # =================================================================================================
 def test_a_portfolio_returns_an_ordinary_solution():
     """The winner is a MaxDivSolution, so code written for a single solve keeps working."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     solution = _solve_portfolio(2)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solution.i_selected.size == 8
     assert solution.score.diversity > 0.0
     assert solution.duration.n_iterations > 0
@@ -47,10 +47,10 @@ def test_a_portfolio_returns_an_ordinary_solution():
 
 def test_every_worker_is_summarized():
     """Each worker reports what it ran, what it scored, and whether it reached the best score."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     solution = _solve_portfolio([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert [worker.worker_index for worker in solution.workers] == [0, 1]
     assert [worker.config.preset for worker in solution.workers] == [SolverPreset.SMART, SolverPreset.GUIDED]
     assert solution.workers[solution.winning_worker].has_best_score
@@ -58,26 +58,26 @@ def test_every_worker_is_summarized():
 
 def test_workers_may_differ_by_initialization_alone():
     """Two workers can run one preset from different starting points, which a preset name cannot express."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     workers = [
         WorkerConfig(preset=SolverPreset.SMART),
         WorkerConfig(preset=SolverPreset.SMART, init_strategy=InitializationStrategy.farthest_point()),
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution = _solve_portfolio(workers)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solution.workers[0].config.init_strategy is None
     assert solution.workers[1].config.init_strategy is not None
 
 
 def test_workers_at_the_best_score_are_counted():
     """The count says how many workers tied for best; when every worker ties, the portfolio did not help."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     solution = _solve_portfolio(3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     counted = solution.n_workers_with_best_score
     assert counted == sum(1 for worker in solution.workers if worker.has_best_score)
     assert 1 <= counted <= len(solution.workers)
@@ -88,20 +88,20 @@ def test_workers_at_the_best_score_are_counted():
 # =================================================================================================
 def test_one_seed_reproduces_an_independent_portfolio():
     """An independent portfolio run twice from one seed selects the same items and seeds its workers alike."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     first, second = _solve_portfolio(2, n_groups=2), _solve_portfolio(2, n_groups=2)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(first.i_selected, second.i_selected)
     assert [worker.seed for worker in first.workers] == [worker.seed for worker in second.workers]
 
 
 def test_workers_are_seeded_differently_from_each_other():
     """Derived seeds differ per worker, so the workers search differently."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     seeds = [worker.seed for worker in _solve_portfolio(4).workers]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(set(seeds)) == len(seeds)
 
 
@@ -111,11 +111,11 @@ def test_a_worker_can_be_replayed_on_its_own():
     Nested singleton groups make every worker independent; a cooperative worker's trajectory
     depends on its group mates, so only independent workers carry this replay contract.
     """
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     solution = _solve_portfolio([[WorkerConfig(preset=SolverPreset.SMART)], [WorkerConfig(preset=SolverPreset.GUIDED)]])
     winner = solution.workers[solution.winning_worker]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     replayed = (
         MaxDivSolverBuilder(_problem())
         .with_preset(_BUDGET, winner.config.preset)
@@ -124,7 +124,7 @@ def test_a_worker_can_be_replayed_on_its_own():
         .solve(verbosity=Verbosity.SILENT)
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(np.sort(replayed.i_selected), np.sort(solution.i_selected))
 
 
@@ -133,24 +133,24 @@ def test_a_worker_can_be_replayed_on_its_own():
 # =================================================================================================
 def test_a_single_worker_warns():
     """One worker cannot beat a single solve, so configuring one worker warns."""
-    # --- arrange / act / assert --------------------------
+    # --- arrange / act / assert -------
     with pytest.warns(ParallelSolvingWarning, match="cannot do better than solving once"):
         ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 1).build()
 
 
 def test_more_workers_than_cores_warns(monkeypatch: pytest.MonkeyPatch):
     """Configuring more workers than cores warns, because the workers then share cores."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     monkeypatch.setattr("max_div._core.solver._parallel._solver.os.cpu_count", lambda: 2)
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.warns(ParallelSolvingWarning, match="share cores"):
         ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 4).build()
 
 
 def test_building_without_workers_is_rejected():
     """A portfolio with no workers is a configuration error rather than an empty run."""
-    # --- arrange / act / assert --------------------------
+    # --- arrange / act / assert -------
     with pytest.raises(ValueError, match="needs workers"):
         ParallelMaxDivSolverBuilder(_problem()).build()
 
@@ -160,13 +160,13 @@ def test_building_without_workers_is_rejected():
 # =================================================================================================
 def test_omitting_the_count_uses_the_default(monkeypatch: pytest.MonkeyPatch):
     """With no worker count given, the portfolio runs 3/4 of the logical cores (here 8 * 3/4 = 6)."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     monkeypatch.setattr("max_div._core.solver._parallel._solver.os.cpu_count", lambda: 8)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution = ParallelMaxDivSolverBuilder(_problem()).with_seed(5).with_workers(_BUDGET).build().solve()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(solution.workers) == 6
 
 
@@ -178,10 +178,10 @@ def test_default_worker_count_is_three_quarters_of_the_cores_at_least_two(
     monkeypatch: pytest.MonkeyPatch, logical, expected
 ):
     """The count is 3/4 of the logical cores, floored at two; an unknown core count also falls back to two."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     monkeypatch.setattr("max_div._core.solver._parallel._solver.os.cpu_count", lambda: logical)
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert default_worker_count() == expected
 
 
@@ -191,7 +191,7 @@ def test_default_worker_count_is_three_quarters_of_the_cores_at_least_two(
 @pytest.mark.parametrize("total", [1, 2, 4, 8, 48])
 def test_default_group_count_is_one(total):
     """The default is one group at any worker total: benchmarks showed a single group converging fastest."""
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert default_group_count(total) == 1
 
 
@@ -201,16 +201,16 @@ def test_default_group_count_is_one(total):
 )
 def test_group_sizes_split_the_remainder_over_the_first_groups(total, n_groups, expected):
     """An uneven split hands the extra workers to the first groups, deterministically."""
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert _resolve_group_sizes(total, n_groups) == expected
 
 
 def test_group_count_outside_the_worker_count_is_rejected():
     """A group count below 1 or above the worker count is a configuration error."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = ParallelMaxDivSolverBuilder(_problem())
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="n_groups"):
         builder.with_workers(_BUDGET, 4, n_groups=5)
     with pytest.raises(ValueError, match="n_groups"):
@@ -219,10 +219,10 @@ def test_group_count_outside_the_worker_count_is_rejected():
 
 def test_group_count_only_combines_with_an_integer_worker_count():
     """Sequence worker forms carry their own grouping, so combining them with n_groups is rejected."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = ParallelMaxDivSolverBuilder(_problem())
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="integer worker count"):
         builder.with_workers(_BUDGET, [WorkerConfig(), WorkerConfig()], n_groups=1)
     with pytest.raises(ValueError, match="integer worker count"):
@@ -231,26 +231,26 @@ def test_group_count_only_combines_with_an_integer_worker_count():
 
 def test_mixing_configurations_and_groups_is_rejected():
     """A workers sequence must be all configurations or all groups, never a mix of both."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = ParallelMaxDivSolverBuilder(_problem())
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError, match="not a mix"):
         builder.with_workers(_BUDGET, [WorkerConfig(), [WorkerConfig()]])
 
 
 def test_a_nested_sequence_fixes_grouping_and_configurations():
     """Each inner sequence becomes one group, at its own size, with its own worker configurations."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     groups = [
         [WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.THOROUGH)],
         [WorkerConfig(preset=SolverPreset.SMART)],
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, groups).build()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solver._group_sizes == [2, 1]
     assert [worker.preset for worker in solver._worker_configs] == [
         SolverPreset.SMART,
@@ -261,29 +261,29 @@ def test_a_nested_sequence_fixes_grouping_and_configurations():
 
 def test_an_integer_worker_count_defaults_to_one_cooperative_group():
     """An integer count defaults to a single group, so cooperation is the default rather than opt-in."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 4).build()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solver._group_sizes == [4]
 
 
 def test_a_cooperative_portfolio_solves():
     """A group of cooperating workers produces an ordinary, valid solution."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     solution = _solve_portfolio(2, n_groups=1)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solution.i_selected.size == 8
     assert len(solution.workers) == 2
 
 
 def test_cooperative_workers_batch_at_the_cooperative_interval():
     """Workers in groups of two or more carry the tighter batch interval; lone workers keep the default."""
-    # --- arrange / act -----------------------------------
+    # --- arrange / act ----------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 3, n_groups=2).build()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert [config.batch_seconds for config in solver._solver_configs] == [
         COOPERATIVE_BATCH_SECONDS,
         COOPERATIVE_BATCH_SECONDS,

@@ -89,7 +89,7 @@ def modify_p_selectivity(  # noqa: C901 — case-dispatch structure is clearer u
     Returns:
         (1D array) Modified p values.
     """
-    # --- prep transformation -----------------------------
+    # --- prep transformation --------------------
     p_max = _p_max(p)
     if p_max <= 0.0:
         # p array is degenerate -> just copy input to output, if needed & return
@@ -103,7 +103,7 @@ def modify_p_selectivity(  # noqa: C901 — case-dispatch structure is clearer u
     for i in range(p.size):
         p_out[i] = p[i] * p_max_inv
 
-    # --- detect shortcuts --------------------------------
+    # --- detect shortcuts -----------------------
     if modifier == 0.0:
         # no further action needed  (p_out is already populated correctly)
         pass
@@ -112,7 +112,7 @@ def modify_p_selectivity(  # noqa: C901 — case-dispatch structure is clearer u
     elif modifier >= __MODIFIER_MAX:
         _max_selective(p_out)
     else:
-        # --- regular cases -------------------------------
+        # --- regular cases ----------------------
         # actual transformation  (fastest methods first)
         if method == 100:
             _pwl_2_segment(p_out, modifier)

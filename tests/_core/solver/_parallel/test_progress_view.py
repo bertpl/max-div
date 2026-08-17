@@ -73,16 +73,16 @@ def _result(worker_index: int) -> WorkerResult:
 
 def test_progress_follows_the_slowest_live_worker():
     """The composite fraction is the minimum across workers that are still running."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingReporter()
     view = ParallelProgressView(reporter, n_workers=2)
     view.start()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     view.on_snapshot(_snapshot(worker_index=0, fraction=0.8, diversity=0.5))
     view.on_snapshot(_snapshot(worker_index=1, fraction=0.3, diversity=0.4))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     last = reporter.updates()[-1]
     assert last.progress.fraction == 0.3
     assert last.n_active == 2
@@ -90,17 +90,17 @@ def test_progress_follows_the_slowest_live_worker():
 
 def test_result_half_is_the_best_so_far_and_never_regresses():
     """A finished best worker keeps the result columns; slower workers only take over by beating it."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingReporter()
     view = ParallelProgressView(reporter, n_workers=2)
     view.start()
     view.on_snapshot(_snapshot(worker_index=0, fraction=1.0, diversity=0.9))
     view.on_worker_finished(_result(0))  # best worker finishes first
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     view.on_snapshot(_snapshot(worker_index=1, fraction=0.5, diversity=0.4))  # worse, still running
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     last = reporter.updates()[-1]
     assert last.worker_index == 0  # the finished best still owns the result columns
     assert last.worker_finished is True
@@ -111,17 +111,17 @@ def test_result_half_is_the_best_so_far_and_never_regresses():
 
 def test_better_late_result_takes_over():
     """A running worker that beats the finished best takes the result columns over."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingReporter()
     view = ParallelProgressView(reporter, n_workers=2)
     view.start()
     view.on_snapshot(_snapshot(worker_index=0, fraction=1.0, diversity=0.5))
     view.on_worker_finished(_result(0))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     view.on_snapshot(_snapshot(worker_index=1, fraction=0.5, diversity=0.7))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     last = reporter.updates()[-1]
     assert last.worker_index == 1
     assert last.score.diversity == 0.7
@@ -130,17 +130,17 @@ def test_better_late_result_takes_over():
 
 def test_worker_finish_renders_a_milestone_with_its_own_state():
     """Finishing prints that worker's final state set off from the stream, marked finished."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingReporter()
     view = ParallelProgressView(reporter, n_workers=2)
     view.start()
     view.on_snapshot(_snapshot(worker_index=0, fraction=1.0, diversity=0.6))
     view.on_snapshot(_snapshot(worker_index=1, fraction=0.4, diversity=0.9))  # global best is worker 1
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     view.on_worker_finished(_result(0))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     kind, milestone = reporter.events[-1]
     assert kind == "milestone"
     assert milestone.worker_index == 0  # the milestone shows the finisher itself, not the global best
@@ -150,18 +150,18 @@ def test_worker_finish_renders_a_milestone_with_its_own_state():
 
 def test_dead_worker_is_dropped_from_the_progress_half():
     """A dead worker stops holding the minimum down, so the view keeps advancing."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingReporter()
     view = ParallelProgressView(reporter, n_workers=2)
     view.start()
     view.on_snapshot(_snapshot(worker_index=0, fraction=0.9, diversity=0.5))
     view.on_snapshot(_snapshot(worker_index=1, fraction=0.1, diversity=0.4))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     view.on_worker_died(1)
     view.on_snapshot(_snapshot(worker_index=0, fraction=0.95, diversity=0.5))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     last = reporter.updates()[-1]
     assert last.progress.fraction == 0.95
     assert last.n_active == 1
@@ -169,17 +169,17 @@ def test_dead_worker_is_dropped_from_the_progress_half():
 
 def test_finish_renders_a_full_progress_closing_row():
     """The closing row reports 100% progress and the best result."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingReporter()
     view = ParallelProgressView(reporter, n_workers=1)
     view.start()
     view.on_snapshot(_snapshot(worker_index=0, fraction=0.7, diversity=0.5))
     view.on_worker_finished(_result(0))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     view.finish()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     kind, closing = reporter.events[-1]
     assert kind == "finished"
     assert closing.progress.fraction == 1.0
@@ -189,28 +189,28 @@ def test_finish_renders_a_full_progress_closing_row():
 
 def test_finish_with_no_snapshots_renders_nothing():
     """Every worker dying before its first snapshot leaves nothing to render, not a crash."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingReporter()
     view = ParallelProgressView(reporter, n_workers=1)
     view.start()
     view.on_worker_died(0)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     view.finish()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert [kind for kind, _ in reporter.events] == ["started"]
 
 
 def test_unattributable_snapshot_is_ignored():
     """A snapshot without a worker index cannot be folded in and is dropped."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingReporter()
     view = ParallelProgressView(reporter, n_workers=1)
     view.start()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     view.on_snapshot(replace(_snapshot(worker_index=0, fraction=0.5, diversity=0.5), worker_index=None))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert reporter.updates() == []

@@ -21,13 +21,13 @@ def randint_python(  # noqa: C901 — case-dispatch structure is clearer un-spli
     Returns:
         np.array[np.int32] of shape (k,) containing the sampled integers.
     """
-    # --- argument handling ---------------------------
+    # --- argument handling ----------------------
     if k is None:
         k = 1  # indicates single sample
     if k == 1:
         replace = True  # single sample, replacement makes no difference, so we can fall back to faster methods
 
-    # --- argument validation -------------------------
+    # --- argument validation --------------------
     if n < 1:
         raise ValueError(f"n must be >=1. (here: {n})")
     if k < 1:
@@ -40,7 +40,7 @@ def randint_python(  # noqa: C901 — case-dispatch structure is clearer un-spli
         if p.size == 0:
             p = None  # indicates no probabilities were specified
 
-    # --- sampling ------------------------------------
+    # --- sampling -------------------------------
     if seed:
         np.random.seed(seed)
     if p is not None:

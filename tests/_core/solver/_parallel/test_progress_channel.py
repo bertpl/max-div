@@ -32,17 +32,17 @@ def _snapshot(iter_count: int = 5, t_elapsed: float = 1.0) -> ProgressSnapshot:
 
 def test_forwarded_snapshot_is_materialized():
     """Forwarding resolves by-reference fields into picklable ones and stamps the worker index."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     messages = queue.Queue()
     reporter = ForwardingProgressReporter(
         messages, worker_index=3, requirements=SnapshotRequirements(debug_info=True, selection_hash=True)
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.show_step_started("step 1")
     reporter.show_update(_snapshot(), get_debug_info=lambda: "dbg")
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     forwarded = messages.get_nowait()
     assert forwarded.worker_index == 3
     assert forwarded.selection is None
@@ -57,7 +57,7 @@ def test_forwarded_snapshot_is_materialized():
 
 def test_forwarding_skips_fields_not_required():
     """Neither the hash nor the debug string is produced when the requirements exclude them."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     messages = queue.Queue()
     reporter = ForwardingProgressReporter(
         messages, worker_index=0, requirements=SnapshotRequirements(debug_info=False, selection_hash=False)
@@ -66,11 +66,11 @@ def test_forwarding_skips_fields_not_required():
     def _boom() -> str:
         raise AssertionError("debug callable must not be invoked when not required")
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.show_step_started("step 1")
     reporter.show_update(_snapshot(), get_debug_info=_boom)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     forwarded = messages.get_nowait()
     assert forwarded.selection_hash is None
     assert forwarded.debug_info is None
@@ -78,20 +78,20 @@ def test_forwarding_skips_fields_not_required():
 
 def test_forwarding_is_throttled_but_step_finished_is_not():
     """Rapid-fire updates collapse under the throttle, while every step end goes through."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     messages = queue.Queue()
     reporter = ForwardingProgressReporter(
         messages, worker_index=0, requirements=SnapshotRequirements(debug_info=False, selection_hash=False)
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.show_step_started("step 1")
     for i in range(50):
         reporter.show_update(_snapshot(iter_count=i, t_elapsed=i * 0.01))  # 50 updates in a fast 0.5s burst
     for _ in range(3):
         reporter.show_step_finished(_snapshot(t_elapsed=0.5))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     n_forwarded = messages.qsize()
     assert n_forwarded < (50 + 3) / 2  # the update burst was thinned to (well below) half...
     assert n_forwarded >= 1 + 3  # ...but the first update and every step end went through

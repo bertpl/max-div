@@ -26,14 +26,14 @@ def store() -> DistanceStore:
 #  Tests
 # =================================================================================================
 def test_for_metrics_single_family(store: DistanceStore):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     trackers = DiversityContributionTrackers.for_metrics(
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
         store=store,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     # both metrics are separation-family -> exactly one tracker, which is also the main one
     assert len(trackers._trackers) == 1
     assert type(trackers.main) is SeparationTracker
@@ -41,21 +41,21 @@ def test_for_metrics_single_family(store: DistanceStore):
 
 
 def test_for_metrics_mixed_families(store: DistanceStore):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     trackers = DiversityContributionTrackers.for_metrics(
         diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION],
         store=store,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     # duplicate families are deduplicated
     assert len(trackers._trackers) == 1
     assert type(trackers.main) is SeparationTracker
 
 
 def test_mutations_fan_out_to_all_trackers(store: DistanceStore):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # hand-built two-family set, mirroring what a mixed-metric configuration would construct
     sep, mean = SeparationTracker(store), MeanDistanceTracker(store)
     trackers = DiversityContributionTrackers(
@@ -69,7 +69,7 @@ def test_mutations_fan_out_to_all_trackers(store: DistanceStore):
     selected = np.full(N, False, dtype=np.bool)
     selected[[0, 3]] = True
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     trackers.add(np.int32(0))
     trackers.add_many(np.array([2, 3], dtype=np.int32))
     trackers.push_snapshot()
@@ -82,7 +82,7 @@ def test_mutations_fan_out_to_all_trackers(store: DistanceStore):
         ref.add_many(np.array([2, 3], dtype=np.int32))
         ref.remove(np.int32(2), new_selection=np.array([0, 3], dtype=np.int32))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert trackers.main is mean
     np.testing.assert_array_equal(
         sep.contribution_wrt_selection(selected, np.int32(2)),
@@ -95,7 +95,7 @@ def test_mutations_fan_out_to_all_trackers(store: DistanceStore):
 
 
 def test_copy_is_independent(store: DistanceStore):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     trackers = DiversityContributionTrackers.for_metrics(
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],
@@ -107,10 +107,10 @@ def test_copy_is_independent(store: DistanceStore):
     selected[0] = True
     before = clone.main.contribution_wrt_selection(selected, np.int32(1)).copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     trackers.add(np.int32(4))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert clone.main is not trackers.main
     np.testing.assert_array_equal(clone.main.contribution_wrt_selection(selected, np.int32(1)), before)
 
@@ -118,7 +118,7 @@ def test_copy_is_independent(store: DistanceStore):
 def test_selected_contributions_slots(store: DistanceStore):
     """Active families fill their slot with the selected vectors' values; untracked slots are empty."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     trackers = DiversityContributionTrackers.for_metrics(
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],
@@ -129,10 +129,10 @@ def test_selected_contributions_slots(store: DistanceStore):
     selected = np.full(N, False, dtype=np.bool)
     selected[[0, 2]] = True
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     contributions = trackers.selected_contributions(selected, np.int32(2))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     sep_slot = selected_contributions_slot(DiversityContributionFamily.SEPARATION)
     mean_slot = selected_contributions_slot(DiversityContributionFamily.MEAN_DISTANCE)
     assert sep_slot != mean_slot

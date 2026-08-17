@@ -24,7 +24,7 @@ def select_items_to_remove(
     Returns:
         list of np.int32 indices of the items to be removed from the selection (unique values, unsorted).
     """
-    # --- guiding probabilities for removal ---
+    # --- guiding probabilities for removal ------
     p = state.selected_contribution_array  # this creates a copy
     exponential_selectivity(
         p_in=p,
@@ -34,7 +34,7 @@ def select_items_to_remove(
         low_value=DEFAULT_LOW_VALUE,
     )
 
-    # --- sample ---
+    # --- sample ---------------------------------
     return choice(
         values=state.selected_index_array,
         k=np.int32(k),

@@ -35,12 +35,12 @@ class MaxDivProblem(ABC):
     Use the `new` / `from_distances` factory methods to create instances with validation.
     """
 
-    # --- primary fields ----------------------------------
+    # --- primary fields -------------------------
     k: int
     diversity_metric: DiversityMetric
     constraints: list[Constraint]
 
-    # --- flavor-specific ---------------------------------
+    # --- flavor-specific ------------------------
     @property
     @abstractmethod
     def n(self) -> int:
@@ -59,7 +59,7 @@ class MaxDivProblem(ABC):
         the condensed layout.
         """
 
-    # --- computed fields ---------------------------------
+    # --- computed fields ------------------------
     @property
     def m(self) -> int:
         return len(self.constraints)
@@ -68,7 +68,7 @@ class MaxDivProblem(ABC):
     def n_constraint_indices(self) -> int:
         return sum([len(con.int_set) for con in self.constraints])
 
-    # --- feasibility -------------------------------------
+    # --- feasibility ----------------------------
     def check_feasibility(self, thorough: bool = False, max_iter: int = CONSTRUCTION_DEFAULT_ITER) -> FeasibilityResult:
         """Report whether `k` items can be selected such that every constraint holds.
 
@@ -94,7 +94,7 @@ class MaxDivProblem(ABC):
             stop_at_first_proof=not thorough,
         )
 
-    # --- factory methods ---------------------------------
+    # --- factory methods ------------------------
     @classmethod
     def new(
         cls,
@@ -114,7 +114,7 @@ class MaxDivProblem(ABC):
             diversity_metric: Diversity metric to maximize.
             constraints: Optional list of fairness constraints.
         """
-        # --- validate ----------------
+        # --- validate ---------------------------
         if vectors.ndim != 2:
             raise ValueError("Vectors must be a 2D numpy array.")
         if vectors.shape[0] < 3:
@@ -131,7 +131,7 @@ class MaxDivProblem(ABC):
         if constraints is None:
             constraints = []
 
-        # --- build -------------------
+        # --- build ------------------------------
         return VectorMaxDivProblem(
             vectors=vectors,
             k=k,
@@ -162,7 +162,7 @@ class MaxDivProblem(ABC):
             diversity_metric: Diversity metric to maximize.
             constraints: Optional list of fairness constraints.
         """
-        # --- validate, keeping the provided format -----
+        # --- validate, keeping the provided format ---
         distances = np.asarray(distances)
         if distances.ndim == 2:
             validated = validated_square_distances(distances)
@@ -178,7 +178,7 @@ class MaxDivProblem(ABC):
         if constraints is None:
             constraints = []
 
-        # --- build -------------------
+        # --- build ------------------------------
         return DistanceMaxDivProblem(
             distances=validated,
             k=k,
@@ -197,11 +197,11 @@ class VectorMaxDivProblem(MaxDivProblem):
     Use `MaxDivProblem.new` to create instances with validation.
     """
 
-    # --- primary fields ----------------------------------
+    # --- primary fields -------------------------
     vectors: NDArray[np.float32]
     distance_metric: DistanceMetric
 
-    # --- flavor-specific ---------------------------------
+    # --- flavor-specific ------------------------
     @property
     def n(self) -> int:
         return self.vectors.shape[0]
@@ -224,10 +224,10 @@ class DistanceMaxDivProblem(MaxDivProblem):
     Use `MaxDivProblem.from_distances` to create instances with validation.
     """
 
-    # --- primary fields ----------------------------------
+    # --- primary fields -------------------------
     distances: NDArray[np.float32]  # as provided: (n, n) square matrix or condensed 1D vector
 
-    # --- flavor-specific ---------------------------------
+    # --- flavor-specific ------------------------
     @property
     def n(self) -> int:
         if self.distances.ndim == 2:

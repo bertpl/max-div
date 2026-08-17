@@ -42,10 +42,10 @@ def dummy_problem() -> MaxDivProblem:
     ],
 )
 def test_solver_builder_set_initialization_strategy(dummy_problem, strategy, expected_ok: bool):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = MaxDivSolverBuilder(dummy_problem)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     if expected_ok:
         builder = builder.set_initialization_strategy(strategy)
         assert builder is not None
@@ -65,14 +65,14 @@ def test_solver_builder_set_initialization_strategy(dummy_problem, strategy, exp
     ],
 )
 def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expected_ok: bool):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = MaxDivSolverBuilder(dummy_problem)
     solver_steps = [
         InitializationStep(s) if isinstance(s, InitializationStrategy) else OptimizationStep(s, duration=seconds(10))
         for s in strategies
     ]
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     if expected_ok:
         builder = builder.add_solver_steps(solver_steps)
         assert builder is not None
@@ -99,7 +99,7 @@ def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expect
 def test_max_div_solver_builder_tie_breaker_metrics_defaults(
     diversity_metric: DiversityMetric, expected_tie_breakers: list[DiversityMetric]
 ):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = MaxDivSolverBuilder(
         MaxDivProblem.new(
             vectors=np.random.rand(10, 5).astype(np.float32),
@@ -108,17 +108,17 @@ def test_max_div_solver_builder_tie_breaker_metrics_defaults(
         )
     ).with_default_diversity_tie_breakers()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solver = builder.build()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solver._diversity_metric == diversity_metric
     for true_tie_breaker, expected_tie_breaker in zip(solver._diversity_tie_breakers, expected_tie_breakers):
         assert true_tie_breaker == expected_tie_breaker
 
 
 def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     builder = MaxDivSolverBuilder(dummy_problem).with_diversity_tie_breakers(
         [
             DiversityMetric.APPROX_GEOMEAN_SEPARATION,
@@ -127,10 +127,10 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
         ]
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solver = builder.build()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solver._diversity_metric == DiversityMetric.GEOMEAN_SEPARATION
     assert len(solver._diversity_tie_breakers) == 3
     assert solver._diversity_tie_breakers[0] == DiversityMetric.APPROX_GEOMEAN_SEPARATION
@@ -142,7 +142,7 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
 #  MaxDivSolverBuilder - End-to-End
 # =================================================================================================
 def test_max_div_solver_builder_end_to_end():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.random.rand(10, 5).astype(np.float32)
     k = 5
     init_strategy = InitializationStrategy.random_one_shot()
@@ -155,7 +155,7 @@ def test_max_div_solver_builder_end_to_end():
         Constraint(set(range(5, 10)), min_count=2, max_count=3),
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     builder = (
         MaxDivSolverBuilder(
             MaxDivProblem.new(
@@ -172,7 +172,7 @@ def test_max_div_solver_builder_end_to_end():
     )
     solver = builder.build()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
     assert solver._n == vectors.shape[0]
     # AUTO resolves to the full matrix for a problem this small
@@ -191,23 +191,23 @@ def test_max_div_solver_builder_end_to_end():
 #  MaxDivSolverBuilder - Constraint penalty
 # =================================================================================================
 def test_solver_builder_constraint_penalty_default(dummy_problem):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solver = MaxDivSolverBuilder(dummy_problem).build()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solver._constraint_penalty == ConstraintPenalty.LINEAR
 
 
 def test_solver_builder_constraint_penalty_quadratic(dummy_problem):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solver = MaxDivSolverBuilder(dummy_problem).with_constraint_penalty(ConstraintPenalty.QUADRATIC).build()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert solver._constraint_penalty == ConstraintPenalty.QUADRATIC
 
 
 def test_max_div_solver_quadratic_penalty_end_to_end():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     problem = MaxDivProblem.new(
         vectors=np.random.rand(20, 5).astype(np.float32),
         k=5,
@@ -221,10 +221,10 @@ def test_max_div_solver_quadratic_penalty_end_to_end():
         .with_constraint_penalty(ConstraintPenalty.QUADRATIC)
     ).build()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = solver.solve(verbosity=Verbosity.SILENT)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(result.i_selected) == problem.k
     score_after_initialization = result.score_checkpoints[1][2]
     score_after_optimization = result.score_checkpoints[-1][2]
@@ -242,7 +242,7 @@ def test_max_div_solver_builder_preset(problem_name: str, n: int, preset: Solver
     Test different preset strategy on reference problems and check if we're optimizing.
     """
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
 
     # prepare problem & solver state
     problem: MaxDivProblem = BenchmarkProblemFactory.construct_problem(
@@ -251,7 +251,7 @@ def test_max_div_solver_builder_preset(problem_name: str, n: int, preset: Solver
         diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
     )
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solver = (
         MaxDivSolverBuilder(problem)
         .with_seed(42)
@@ -262,7 +262,7 @@ def test_max_div_solver_builder_preset(problem_name: str, n: int, preset: Solver
     ).build()
     result = solver.solve(verbosity=Verbosity.TABULAR_DEBUG)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     score_after_initialization = result.score_checkpoints[1][2]
     score_after_optimization = result.score_checkpoints[-1][2]
 

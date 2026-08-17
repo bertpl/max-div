@@ -33,7 +33,7 @@ def fast_log2_f64(x: np.float64) -> np.float64:
 
     (Max abs error ~0.0075 over entire range.)
     """
-    # --- extract mantissa & exponent ---------------------
+    # --- extract mantissa & exponent ------------
     # exponent
     xi = np.int64(np.float64(x).view(np.int64))
     exponent = ((xi >> 52) & 0x7FF) - 1022
@@ -41,7 +41,7 @@ def fast_log2_f64(x: np.float64) -> np.float64:
     xi = (xi & 0x000FFFFFFFFFFFFF) | 0x3FE0000000000000
     m = np.int64(xi).view(np.float64)  # in range [0.5, 1.0)
 
-    # --- polynomial approximation ------------------------
+    # --- polynomial approximation ---------------
     log2_mantissa = _D20 + m * (_D21 + m * _D22)
 
     # Return log2(x) = exponent + log2(m)
@@ -54,7 +54,7 @@ def fast_log2_f32(x: np.float32) -> np.float32:
 
     (Max abs error ~0.0075 over entire range.)
     """
-    # --- extract mantissa & exponent ---------------------
+    # --- extract mantissa & exponent ------------
     # exponent
     xi = np.int32(np.float32(x).view(np.int32))
     exponent = ((xi >> 23) & 0xFF) - 126
@@ -62,7 +62,7 @@ def fast_log2_f32(x: np.float32) -> np.float32:
     xi = (xi & 0x007FFFFF) | 0x3F000000
     m = np.int32(xi).view(np.float32)
 
-    # --- polynomial approximation ------------------------
+    # --- polynomial approximation ---------------
     log2_mantissa = _S20 + m * (_S21 + m * _S22)
 
     # Return log2(x) = exponent + log2(mantissa)

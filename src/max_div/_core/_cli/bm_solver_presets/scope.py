@@ -38,12 +38,12 @@ def determine_problem_size_for_k(problem_name: str, k_target: int = K_TARGET) ->
         _d, _n, k, _m, _n_con = BenchmarkProblemFactory.get_problem_dimensions(problem_name, n=n)
         return k
 
-    # --- bracket -----------------------------------------
+    # --- bracket --------------------------------
     lo, hi = 20, 40
     while _k(hi) <= k_target:
         hi *= 2
 
-    # --- bisect for largest n with k(n) <= k_target ------
+    # --- bisect for largest n with k(n) <= k_target ---
     while hi - lo > 1:
         mid = (lo + hi) // 2
         if _k(mid) <= k_target:
@@ -124,7 +124,7 @@ def determine_benchmark_scope(
         arm: SMART on the machine's default worker count, on the ladder points above
         `PARALLEL_ARM_T_MIN_SEC`.
     """
-    # --- speed-dependent settings ------------------------
+    # --- speed-dependent settings ---------------
     interp_speed = [0.0, 0.5, 0.99, 1.0]
     interp_max_duration_sec = [LADDER_T_MAX_SEC, 60.0, 2.0, 1e-3]
     interp_min_duration_sec = [LADDER_T_MIN_SEC, LADDER_T_MIN_SEC, LADDER_T_MIN_SEC, 1e-4]
@@ -137,17 +137,17 @@ def determine_benchmark_scope(
     min_duration_sec = min(float(np.interp(speed, interp_speed, interp_min_duration_sec)), max_duration_sec)
     n_points = round(float(np.interp(speed, interp_speed, interp_n_points)))
 
-    # --- budget ladder -----------------------------------
+    # --- budget ladder --------------------------
     if n_points <= 1 or min_duration_sec == max_duration_sec:
         durations_sec = [max_duration_sec]
     else:
         ratio = min_duration_sec / max_duration_sec
         durations_sec = sorted({max_duration_sec * ratio ** (i / (n_points - 1)) for i in range(n_points)})
 
-    # --- problem sizes -----------------------------------
+    # --- problem sizes --------------------------
     problem_sizes = {problem: n if n is not None else determine_problem_size_for_k(problem) for problem in problems}
 
-    # --- single-worker scope -----------------------------
+    # --- single-worker scope --------------------
     scope = [
         SolverPresetBenchmarkParams(
             preset=preset,
@@ -161,7 +161,7 @@ def determine_benchmark_scope(
         for seed, duration_sec in enumerate(durations_sec, start=1)
     ]
 
-    # --- parallel arm ------------------------------------
+    # --- parallel arm ---------------------------
     # one arm, not a preset replica: SMART on the default parallel setup answers "what does the
     # default parallel invocation buy over serial SMART" without overloading the pages
     if SolverPreset.SMART in presets:

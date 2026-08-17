@@ -188,7 +188,7 @@ def total_physical_memory_bytes() -> int | None:
     POSIX exposes it through sysconf; Windows through one kernel32 call.  Callers must treat None
     as "unknown" and degrade gracefully.
     """
-    # --- POSIX -----------------------------------
+    # --- POSIX ----------------------------------
     try:
         page_count = os.sysconf("SC_PHYS_PAGES")
         page_size = os.sysconf("SC_PAGE_SIZE")
@@ -196,7 +196,7 @@ def total_physical_memory_bytes() -> int | None:
             return page_count * page_size
     except (ValueError, OSError, AttributeError):
         pass
-    # --- Windows ---------------------------------
+    # --- Windows --------------------------------
     try:
         import ctypes
 

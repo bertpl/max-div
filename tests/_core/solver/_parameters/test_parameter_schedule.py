@@ -29,14 +29,14 @@ from max_div._core.solver._parameters._parameter_schedule import (
     ],
 )
 def test_parameter_schedule_properties(v0: float, v1: float, expected_min_value: float, expected_max_value: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     c_poly = [-2.0, 10.0, 0.0, -20.0]  # set strange values; the result should only depend on v0, v1
     schedule = ParameterSchedule(v0, v1, c_poly)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     min_value, max_value = schedule.min_value, schedule.max_value
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert min_value == expected_min_value
     assert max_value == expected_max_value
 
@@ -67,15 +67,15 @@ def test_parameter_schedule_properties(v0: float, v1: float, expected_min_value:
     ],
 )
 def test_parameter_schedule_get_value(c_poly: list[float], f: float, v_expected: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     schedule = ParameterSchedule(1.23, 4.56, c_poly)
     v_min = schedule.min_value
     v_max = schedule.max_value
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     v = schedule.get_value(f)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert v_min <= v <= v_max
     assert v == pytest.approx(v_expected)
 
@@ -100,17 +100,17 @@ def test_parameter_schedule_get_initial_value(sched: ParameterSchedule):
 def test_parameter_schedule_child_classes_well_behaved(cls):
     """Test if child classes are well-behaved: v(0) = v0, v(1) = v1, min_value <= v(f) <= max_value."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     v0_exact = 1.23
     v1_exact = 4.56
     schedule = cls(v0=v0_exact, v1=v1_exact)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     v0 = schedule.get_value(0.0)
     v1 = schedule.get_value(1.0)
     v_internal = [schedule.get_value(float(f)) for f in np.linspace(0.001, 0.999, num=1000)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert v0 == pytest.approx(v0_exact)
     assert v1 == pytest.approx(v1_exact)
     assert all(1.23 < v < 4.56 for v in v_internal)
@@ -118,27 +118,27 @@ def test_parameter_schedule_child_classes_well_behaved(cls):
 
 @pytest.mark.parametrize("cls", [EaseInSchedule, EaseInOutSchedule])
 def test_parameter_schedule_ease_in(cls):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     schedule = cls(v0=0.0, v1=1.0)
     delta = 0.001
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     v0001 = schedule.get_value(delta)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 0.0 < v0001 < 10 * (delta * delta)  # v(f) should ease in quadratically
 
 
 @pytest.mark.parametrize("cls", [EaseOutSchedule, EaseInOutSchedule])
 def test_parameter_schedule_ease_out(cls):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     schedule = cls(v0=0.0, v1=1.0)
     delta = 0.001
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     v0999 = schedule.get_value(1.0 - delta)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 1.0 - (10 * (delta * delta)) < v0999 < 1.0  # v(f) should ease out quadratically
 
 
@@ -155,10 +155,10 @@ def test_parameter_schedule_ease_out(cls):
     ],
 )
 def test_parameter_schedule_aliases(alias_fun, expected_cls):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     schedule = alias_fun(v0=2.46, v1=3.69)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(schedule, expected_cls)
     assert schedule.v0 == 2.46
     assert schedule.v1 == 3.69
@@ -186,16 +186,16 @@ def test_parameter_schedule_str(schedule: ParameterSchedule, expected_str: str):
 #  TEST - numba acceleration
 # =================================================================================================
 def test_schedules_to_2d_numpy_array():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     schedules = [
         ParameterSchedule(v0=1.0, v1=2.0, c_poly=[0.1, 0.2, 0.4, 0.8]),
         ParameterSchedule(v0=1.6, v1=-3.1, c_poly=[0.8, 0.4, 0.2, 0.1]),
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     arr = _schedules_to_2d_numpy_array(schedules)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert arr.shape == (2, 6)
     assert arr.dtype == np.float64
     assert np.allclose(
@@ -208,17 +208,17 @@ def test_schedules_to_2d_numpy_array():
 
 
 def test_schedules_to_2d_numpy_array_empty():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     arr = _schedules_to_2d_numpy_array([])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert arr.shape == (0, 6)
     assert arr.dtype == np.float64
 
 
 @pytest.mark.parametrize("f", [-0.1, 0.0, 0.1, 0.5, 0.9, 1.0, 1.1])
 def test_evaluate_schedules(f: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     schedules = [
         linear(1.1, 2.3),
         ease_in(2.1, -0.6),
@@ -229,8 +229,8 @@ def test_evaluate_schedules(f: float):
 
     arr = _schedules_to_2d_numpy_array(schedules)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     v_actual = _evaluate_schedules(arr, f)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.allclose(v_expected, v_actual)

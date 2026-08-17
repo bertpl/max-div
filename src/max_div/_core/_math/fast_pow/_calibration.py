@@ -160,17 +160,17 @@ def construct_calibration_data(n: int) -> tuple[NDArray[np.float64], NDArray[np.
     Args:
         n: (int) size parameter, with resulting arrays of size n^2   (!!!)
     """
-    # --- init ----------------------------------
+    # --- init -----------------------------------
     x_values = np.empty(n * n, dtype=np.float64)
     t_values = np.empty(n * n, dtype=np.float64)
     xt_values = np.empty(n * n, dtype=np.float64)
 
-    # --- construct data ------------------------
+    # --- construct data -------------------------
     for i, (s, xt) in enumerate(product(np.linspace(-0.9, 0.9, n), np.linspace(0.001, 0.999, n))):
         t = (1.0 + s) / (1.0 - s)
         xt_values[i] = np.float64(xt)
         t_values[i] = np.float64(t)
         x_values[i] = np.float64(xt ** (1.0 / t))
 
-    # --- return --------------------------------
+    # --- return ---------------------------------
     return x_values, t_values, xt_values

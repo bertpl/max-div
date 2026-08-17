@@ -47,25 +47,25 @@ def _render(hooks, html: str, page_url: str = "") -> str:
     ],
 )
 def test_paths_are_re_anchored_onto_the_including_page(hooks, page_url, expected):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     html = '<img src="docs/images/hero_light.svg" alt="x">'
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     rendered = _render(hooks, html, page_url)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert expected in rendered
 
 
 def test_srcset_is_rewritten_too(hooks):
     """The dark variant of the hero rides on `srcset`, which a `src`-only rule would miss."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     html = '<source media="(prefers-color-scheme: dark)" srcset="docs/images/hero_dark.svg">'
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     rendered = _render(hooks, html)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 'srcset="images/hero_dark.svg"' in rendered
 
 
@@ -78,7 +78,7 @@ def test_srcset_is_rewritten_too(hooks):
     ],
 )
 def test_unrelated_paths_are_left_alone(hooks, html):
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert _render(hooks, html) == html
 
 
@@ -87,21 +87,21 @@ def test_unrelated_paths_are_left_alone(hooks, html):
 # =================================================================================================
 def test_every_readme_image_resolves_on_the_docs_site(hooks):
     """Each path the hook rewrites must name a file that actually ships in the docs tree."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     readme = README.read_text(encoding="utf-8")
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     referenced = [path for _attribute, path in hooks.DOCS_RELATIVE_ATTR.findall(readme)]
     missing = [path for path in referenced if not (REPO_ROOT / "docs" / path).exists()]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert referenced, "README no longer carries docs-relative image paths — is this hook still needed?"
     assert not missing, f"README references files absent from docs/: {missing}"
 
 
 def test_the_rendered_readme_keeps_no_docs_relative_paths(hooks):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     rendered = _render(hooks, README.read_text(encoding="utf-8"))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert not hooks.DOCS_RELATIVE_ATTR.findall(rendered)

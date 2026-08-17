@@ -46,7 +46,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
                 should be avoided, since they incur additional computational cost.  Non-0 values
                 make it such that larger values are only used if they provide sufficient benefit.
         """
-        # --- swap_size ---
+        # --- swap_size --------------------------
         _swap_size = sampled_poisson(
             min_value=1,
             max_value=swap_size_max,
@@ -56,7 +56,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             large_value_penalty_exponent=cost_awareness,
         )
 
-        # --- nc_remove ---
+        # --- nc_remove --------------------------
         _nc_remove = sampled_poisson(
             min_value=1,
             max_value=nc_remove_max,
@@ -66,7 +66,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             large_value_penalty_exponent=cost_awareness,
         )
 
-        # --- nc_add ---
+        # --- nc_add -----------------------------
         _nc_add = sampled_poisson(
             min_value=1,
             max_value=nc_add_max,
@@ -76,7 +76,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             large_value_penalty_exponent=cost_awareness,
         )
 
-        # --- selectivity modifiers ---
+        # --- selectivity modifiers --------------
         _selectivity_modifier_remove = sampled_interval(
             min_value=-0.99,
             max_value=0.99,
@@ -92,11 +92,11 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             tau_forget=math.inf,
         )
 
-        # --- name ----------------------------------------
+        # --- name -------------------------------
         name_swap_size = f"1-{swap_size_max}" if swap_size_max > 1 else "1"
         name = f"OptimSmartSwaps({name_swap_size},{nc_remove_max},{nc_add_max})"
 
-        # --- superclass constructor ----------------------
+        # --- superclass constructor -------------
         super().__init__(
             name=name,
             constraint_softness=0.0,
@@ -110,7 +110,7 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             ignore_infeasible_diversity_up_to_fraction=ignore_infeasible_diversity_up_to_fraction,
         )
 
-        # --- set (initial) parameter values --------------
+        # --- set (initial) parameter values -----
         self.swap_size = 1
         self.nc_remove = 1
         self.nc_add = 1
@@ -254,14 +254,14 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
     #  Debug info
     # -------------------------------------------------------------------------
     def get_debug_info(self) -> str:
-        # --- collect info ---
+        # --- collect info -----------------------
         swap_size = self.get_expected_param_value("swap_size")
         nc_remove = self.get_expected_param_value("nc_remove")
         nc_add = self.get_expected_param_value("nc_add")
         selectivity_modifier_remove = self.get_expected_param_value("selectivity_modifier_remove")
         selectivity_modifier_add = self.get_expected_param_value("selectivity_modifier_add")
 
-        # --- build string ---
+        # --- build string -----------------------
         debug_info = super().get_debug_info().strip()
         debug_info += (
             f" | λ_swap={swap_size:4.1f}"

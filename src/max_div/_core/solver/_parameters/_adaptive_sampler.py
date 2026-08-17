@@ -44,14 +44,14 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
         tau_forget: float,
         seed: int | np.int64 = 42,
     ) -> None:
-        # --- dummy initial values --------------
+        # --- dummy initial values ---------------
         self._tau_learn, self._tau_forget = -1.0, -1.0
         self._c_learn, self._c_forget = 0.0, 0.0
         self._c_learn_f32, self._c_forget_f32 = np.float32(0.0), np.float32(0.0)
         self._forgetting_enabled = False
         self._rng_state = np.zeros(2, dtype=np.uint64)
 
-        # --- go through update methods ---------
+        # --- go through update methods ----------
         self.update_tau(tau_learn, tau_forget)
         self.update_seed(seed)
 

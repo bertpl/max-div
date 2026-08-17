@@ -7,11 +7,11 @@ from pathlib import Path
 @contextmanager
 def stdout_to_file(enabled: bool = True, filename: str | Path | None = None) -> Iterator[None]:
     """Context manager to redirect stdout to file, if enabled."""
-    # --- argument validation -----------------------------
+    # --- argument validation --------------------
     if enabled and not filename:
         raise ValueError("`filename` must be provided when 'enabled' is True.")
 
-    # --- context mgr -------------------------------------
+    # --- context mgr ----------------------------
     old_stdout = sys.stdout
     f = None
     if enabled:

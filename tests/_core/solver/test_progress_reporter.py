@@ -67,10 +67,10 @@ class _RecordingProgressReporter(ProgressReporter):
     ],
 )
 def test_progress_reporter_factory_methods(factory_method: Callable, expected_class: type[ProgressReporter]):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter = factory_method()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(reporter, expected_class)
 
 
@@ -83,15 +83,15 @@ def test_progress_reporter_factory_methods(factory_method: Callable, expected_cl
     ],
 )
 def test_progress_reporter_selection_hash(selection: np.ndarray, n: int):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     selection_modified = selection.copy()
     selection_modified[-1] += 1  # modify selection to ensure hash changes
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     hash_str_1 = TabularProgressReporter._get_selection_hash(selection, n)
     hash_str_2 = TabularProgressReporter._get_selection_hash(selection_modified, n)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(hash_str_1) == n
     assert all(char in "0123456789abcdef" for char in hash_str_1)
 
@@ -121,10 +121,10 @@ def test_from_verbosity(
     expected_debug_info: bool | None,
 ):
     """Each verbosity level maps to the expected reporter class and settings."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter = ProgressReporter.from_verbosity(verbosity)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert type(reporter) is expected_class
     if expected_c_slowdown is not None:
         assert reporter._c_slowdown == expected_c_slowdown
@@ -134,24 +134,24 @@ def test_from_verbosity(
 @pytest.mark.parametrize("verbosity", [-1, 1, 11, 24, 26, 42])
 def test_from_verbosity_invalid_level(verbosity: int):
     """An unknown verbosity level raises ValueError."""
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(ValueError):
         ProgressReporter.from_verbosity(verbosity)
 
 
 def test_snapshot_building():
     """The base class builds snapshots carrying the step name, elapsed times, and the state fields."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingProgressReporter()
     state = _stub_state(n_selected=3, k=5, m=2)
     progress = _stub_progress(iter_count=7)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.solver_step_started("step A")
     reporter.update(progress, state, ignore_infeasible_diversity=True)
     reporter.solver_step_finished(None, state)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert [call[0] for call in reporter.calls] == ["started", "update", "finished"]
 
     snapshot = reporter.calls[1][1]
@@ -171,16 +171,16 @@ def test_snapshot_building():
 
 def test_snapshot_solver_clock_spans_steps():
     """The solver clock starts at the first step and keeps running across step boundaries."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingProgressReporter()
     state = _stub_state()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.solver_step_started("step A")
     reporter.solver_step_started("step B")
     reporter.update(_stub_progress(), state)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     snapshot = reporter.calls[-1][1]
     assert snapshot.step_name == "step B"
     assert snapshot.t_elapsed_solver >= snapshot.t_elapsed_step  # solver clock was not reset by step B
@@ -188,15 +188,15 @@ def test_snapshot_solver_clock_spans_steps():
 
 def test_tabular_show_update_without_progress(capsys):
     """A snapshot without progress renders a row with blank progress columns instead of crashing."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = TabularProgressReporter()
     state = _stub_state()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.solver_step_started("step A")
     reporter.update(None, state)  # ty: ignore[invalid-argument-type]  # deliberately exercising the None path
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     output_lines = [line for line in capsys.readouterr().out.splitlines() if line.startswith("|")]
     row = output_lines[-1]
     assert "step A" in row
@@ -206,16 +206,16 @@ def test_tabular_show_update_without_progress(capsys):
 
 def test_tqdm_show_update_without_progress():
     """A snapshot without progress leaves the tqdm bar untouched instead of crashing."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = TqdmProgressReporter()
     state = _stub_state()
     reporter.solver_step_started("step A")
     n_before = reporter._current_pbar.n
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.update(None, state)  # ty: ignore[invalid-argument-type]  # deliberately exercising the None path
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert reporter._current_pbar.n == n_before
     reporter.solver_step_finished(None, state)
 
@@ -223,11 +223,11 @@ def test_tqdm_show_update_without_progress():
 @pytest.mark.parametrize("verbosity", list(Verbosity))
 def test_from_verbosity_accepts_enum_members(verbosity: Verbosity):
     """Every Verbosity member creates the same reporter as its plain integer value."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     from_member = ProgressReporter.from_verbosity(verbosity)
     from_int = ProgressReporter.from_verbosity(int(verbosity))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert type(from_member) is type(from_int)
 
 
@@ -242,22 +242,22 @@ def test_from_verbosity_accepts_enum_members(verbosity: Verbosity):
 )
 def test_snapshot_requirements(reporter: ProgressReporter, expected: SnapshotRequirements | None):
     """Each reporter class declares what must be materialized for it — silent declares nothing at all."""
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert reporter.snapshot_requirements == expected
 
 
 def test_report_throttle_thins_a_burst_and_resets():
     """A rapid burst collapses to a few passes; reset makes the next update pass again."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     throttle = ReportThrottle(c_slowdown=1.05)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     n_passed = sum(throttle.passes(iter_now=i, t_elapsed=i * 0.01) for i in range(100))
     blocked_before_reset = not throttle.passes(iter_now=100, t_elapsed=1.0000001)
     throttle.reset()
     passes_after_reset = throttle.passes(iter_now=0, t_elapsed=0.0)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert 1 <= n_passed < 50
     assert blocked_before_reset
     assert passes_after_reset
@@ -265,7 +265,7 @@ def test_report_throttle_thins_a_burst_and_resets():
 
 def test_tabular_worker_columns_layout(capsys):
     """Worker columns replace the step columns: worker index (with finished marker) and active count."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = TabularProgressReporter(worker_columns=True)
     snapshot_running = ProgressSnapshot(
         step_name="",
@@ -284,12 +284,12 @@ def test_tabular_worker_columns_layout(capsys):
     )
     snapshot_finished = replace(snapshot_running, worker_index=3, n_active=3, worker_finished=True)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.show_step_started("solving (4 workers)")
     reporter.show_update(snapshot_running)
     reporter.show_milestone(snapshot_finished)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     lines = [line for line in capsys.readouterr().out.splitlines() if line.startswith("|")]
     header, running_row, milestone_row, closing_line = lines[0], lines[2], lines[3], lines[4]
     assert "Worker" in header
@@ -304,46 +304,46 @@ def test_tabular_worker_columns_layout(capsys):
 
 def test_tabular_prefers_materialized_debug_info(capsys):
     """A pre-resolved debug string wins over the callable, which is how the parent renders forwarded snapshots."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = TabularProgressReporter(debug_info=True)
     state = _stub_state()
     reporter.solver_step_started("step A")
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
     reporter.show_update(replace(snapshot, debug_info="materialized"), get_debug_info=lambda: "callable")
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert "materialized" in capsys.readouterr().out
 
 
 def test_milestone_is_a_no_op_by_default():
     """Only renderers that can set a row apart override show_milestone; the base renders nothing."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = _RecordingProgressReporter()
     state = _stub_state()
     reporter.solver_step_started("step A")
     snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     ProgressReporter.show_milestone(reporter, snapshot)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert [call[0] for call in reporter.calls] == ["started"]
 
 
 def test_tabular_hash_column_blank_without_selection_or_hash(capsys):
     """A snapshot with neither the selection nor a precomputed hash renders an empty hash column."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     reporter = TabularProgressReporter()
     state = _stub_state()
     reporter.solver_step_started("step A")
     snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     reporter.show_update(replace(snapshot, selection=None, selection_hash=None))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     row = capsys.readouterr().out.splitlines()[-1]
     assert row.rstrip().endswith("|")
     assert all(char in "| " for char in row.split("|")[-2])  # hash column is blank

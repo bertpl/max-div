@@ -17,24 +17,24 @@ from max_div._core._math.modify_p_selectivity._methods import (
 #  Boundary methods
 # =================================================================================================
 def test_modify_p_methods_uniform():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = np.array([0.0, 0.123, 0.002, 0.345, 0.0], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     _uniform(p)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert min(p) == max(p) == np.float32(1.0)
 
 
 def test_modify_p_methods_max_selective():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = np.array([0.0, 0.123, 0.002, 1.0, 0.0, 1.0], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     _max_selective(p)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(
         p,
         np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0], dtype=np.float32),
@@ -54,14 +54,14 @@ METHODS_AND_TOLERANCES = [
 
 @pytest.mark.parametrize("fun,tol", METHODS_AND_TOLERANCES)
 def test_modify_p_methods_accuracy(fun: Callable, tol: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 50
     p = np.linspace(0.0, 1.0, num=n, dtype=np.float32)
     modifiers = np.linspace(-0.9, 0.9, num=n, dtype=np.float32)
 
     p_out_expected = [np.array([p[i] ** ((1 + m) / (1 - m)) for i in range(n)], dtype=np.float32) for m in modifiers]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     e_tot = 0.0
     for modifier, expected_result in zip(modifiers, p_out_expected):
         p_out = p.copy()
@@ -70,5 +70,5 @@ def test_modify_p_methods_accuracy(fun: Callable, tol: float):
 
     e_tot /= n * n
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert e_tot <= tol

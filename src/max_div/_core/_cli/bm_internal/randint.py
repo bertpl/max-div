@@ -32,13 +32,13 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
     """
     print("Benchmarking `randint`...")
 
-    # --- speed-dependent settings --------------------
+    # --- speed-dependent settings ---------------
     t_per_run = 0.01 / (1000.0**speed)
     n_warmup = int(8 - 6 * speed)
     n_benchmark = int(25 - 24 * speed)
     max_size = round(10_000 / (100**speed))
 
-    # --- benchmark scenarios -------------------------
+    # --- benchmark scenarios --------------------
     i_file = 0
     for replace, use_p, letter, desc in [
         (True, False, "A", "WITH replacement, UNIFORM probabilities"),
@@ -46,7 +46,7 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
         (True, True, "C", "WITH replacement, CUSTOM probabilities"),
         (False, True, "D", "WITHOUT replacement, CUSTOM probabilities"),
     ]:
-        # --- benchmark ------------------------------------
+        # --- benchmark --------------------------
         table = Table(headers=["`k`", "`n`", "`randint_python`", "`randint`"])
         n_k_values = [(n, k) for n in [10, 100, 1000, 10000] for k in [1, 10, 100, 1000, 10000] if replace or (k <= n)]
         for n, k in tqdm(n_k_values, leave=file):
@@ -89,16 +89,16 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
 
             table.add_row(table_row)
 
-        # --- show results -----------------------------------------
+        # --- show results -----------------------
 
-        # --- prepare final report ---
+        # --- prepare final report ---------------
         table.add_aggregate_row(TableAggregationType.GEOMEAN)
         table.highlight_results(TableTimeElapsed, clr_lowest=Table.GREEN)
 
         report = Report()
         report += [h2(f"{letter}. {desc}"), table]
 
-        # --- output ---
+        # --- output -----------------------------
         i_file += 1
         with stdout_to_file(file, f"benchmark_randint_{i_file}.md"):
             report.print(markdown=markdown)

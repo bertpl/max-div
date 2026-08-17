@@ -95,33 +95,33 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
-        # --- set up progress tracking --------------------
+        # --- set up progress tracking -----------
         progress_reporter = progress_reporter or SilentProgressReporter()
         duration = TargetDuration.iterations(int(state.k))  # we need to select k items
         tracker = duration.track()
 
-        # --- execute initialization ----------------------
+        # --- execute initialization -------------
         with Timer() as t:
             while state.n_selected < state.k:
                 # continue while we don't have a complete initial selection
 
-                # --- update progress ---
+                # --- update progress ------------
                 progress_reporter.update(tracker.get_progress(), state, self.get_debug_info)
 
-                # --- get next samples ---
+                # --- get next samples -----------
                 samples = self._strategy.get_next_samples(
                     state=state,
                     k_remaining=state.k - state.n_selected,
                 )
 
-                # --- add items to state ---
+                # --- add items to state ---------
                 state.add_many(samples)
 
                 tracker.report_iterations_done(len(samples))
 
         progress_reporter.solver_step_finished(tracker.get_progress(), state, self.get_debug_info)
 
-        # --- gather results ------------------------------
+        # --- gather results ---------------------
         return SolverStepResult(
             score_checkpoints=[
                 (
@@ -155,15 +155,15 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
-        # --- init ----------------------------------------
+        # --- init -------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
         tracker = self._duration.track()
         score_checkpoints: list[tuple[Elapsed, Score]] = []
         next_checkpoint_iter_count = 1
 
-        # --- main loop -----------------------------------
+        # --- main loop --------------------------
         while not (progress := tracker.get_progress()).is_finished:
-            # --- update progress ---
+            # --- update progress ----------------
             progress_reporter.update(
                 progress,
                 state,
@@ -171,7 +171,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                 ignore_infeasible_diversity=self._strategy.ignore_infeasible_diversity,
             )
 
-            # --- do n iterations ---
+            # --- do n iterations ----------------
             n_iters = self._determine_n_iterations(progress, next_checkpoint_iter_count, batch_seconds)
             self._strategy.perform_n_iterations(
                 state=state,
@@ -180,14 +180,14 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                 progress_frac_per_iter=progress.est_progress_fraction_per_iter,
             )
 
-            # --- report progress to tracker ---
+            # --- report progress to tracker -----
             tracker.report_iterations_done(n_iters)
 
-            # --- batch boundary ---
+            # --- batch boundary -----------------
             if coordinator is not None:
                 coordinator.at_batch_boundary(state)
 
-            # --- create checkpoint if needed ---
+            # --- create checkpoint if needed ----
             if tracker.iter_count() >= next_checkpoint_iter_count:
                 score_checkpoints.append((tracker.elapsed(), state.score))
                 next_checkpoint_iter_count = int(
@@ -206,7 +206,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             ignore_infeasible_diversity=self._strategy.ignore_infeasible_diversity,
         )
 
-        # --- gather results ------------------------------
+        # --- gather results ---------------------
         elapsed = tracker.elapsed()
         if (len(score_checkpoints) == 0) or (elapsed.n_iterations > score_checkpoints[-1][0].n_iterations):
             # make sure we always have a checkpoint after the last iteration

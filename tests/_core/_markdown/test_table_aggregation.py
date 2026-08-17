@@ -12,11 +12,11 @@ from max_div._core._markdown import TableAggregationType
     ],
 )
 def test_table_aggregation_type(agg_type: TableAggregationType, expected_result: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     values = [1, 2, 4]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = agg_type.aggregate_values(values)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result == pytest.approx(expected_result)

@@ -7,11 +7,11 @@ from max_div._core._cli import numba_status
 #  numba_status
 # =================================================================================================
 def test_cli_numba_status():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     runner = CliRunner()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = runner.invoke(numba_status)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert result.exit_code == 0

@@ -22,16 +22,16 @@ class OptimPreset(StrEnum):
     size sweeps; shipped-preset correspondences live in `_PRESET_NOTES`.
     """
 
-    # --- random swaps ------
+    # --- random swaps ---------------------------
     RS = "RS"
 
-    # --- guided swaps ------
+    # --- guided swaps ---------------------------
     GS_1 = "GS(1)"
     GS_3 = "GS(3)"
     GS_1_3 = "GS(1-3)"
     GS_GUIDED = "GS(guided)"
 
-    # --- smart swaps -------
+    # --- smart swaps ----------------------------
     SM_2 = "SM(2)"
     SM_4 = "SM(4)"
     SM_8 = "SM(8)"

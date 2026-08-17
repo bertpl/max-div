@@ -175,13 +175,13 @@ class Table(ReportElement):
             3. Split rows than span multiple lines, removing 1 level of our nested list
             4. Convert final cell contents into table lines with proper padding and header separator.
         """
-        # --- 1. Render all cells -------------------------
+        # --- 1. Render all cells ----------------
         # header indices  --> s =     headers[i_col][i_cell_line]
         # rows indices    --> s = rows[i_row][i_col][i_cell_line]
         headers: list[list[str]] = self._render_single_elements_of_single_row(markdown, self.headers)
         rows: list[list[list[str]]] = [self._render_single_elements_of_single_row(markdown, row) for row in self.rows]
 
-        # --- 2. Apply layout to rows, if Markdown --------
+        # --- 2. Apply layout to rows, if Markdown ---
         if markdown:
             rows_with_layout = [
                 [
@@ -193,11 +193,11 @@ class Table(ReportElement):
         else:
             rows_with_layout = rows
 
-        # --- 3. Split rows spanning multiple lines -------
+        # --- 3. Split rows spanning multiple lines ---
         final_headers = self._split_row_spanning_multiple_lines(headers)
         final_rows = list(chain(*[self._split_row_spanning_multiple_lines(row) for row in rows_with_layout]))
 
-        # --- 4. Convert to final table lines -------------
+        # --- 4. Convert to final table lines ----
         return self._render_cell_contents_to_table_lines(final_headers, final_rows)
 
     # -------------------------------------------------------------------------
@@ -267,18 +267,18 @@ class Table(ReportElement):
         n_header_rows = len(headers)
         contents = headers + rows
 
-        # --- determine column widths -----------
+        # --- determine column widths ------------
         n_cols = len(contents[0])
         col_widths = [0] * n_cols
         for row in contents:
             for col_idx, cell in enumerate(row):
                 col_widths[col_idx] = max(col_widths[col_idx], len(cell))
 
-        # --- insert header separator -----------
+        # --- insert header separator ------------
         contents = [*contents[:n_header_rows], ["-" * cw for cw in col_widths], *contents[n_header_rows:]]
 
-        # --- left justify all cells ------------
+        # --- left justify all cells -------------
         contents = [[el.ljust(col_widths[col_idx]) for col_idx, el in enumerate(row)] for row in contents]
 
-        # --- build table lines -----------------
+        # --- build table lines ------------------
         return [""] + ["| " + " | ".join(row) + " |" for row in contents] + [""]

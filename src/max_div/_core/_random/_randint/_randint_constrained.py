@@ -48,11 +48,11 @@ def _compute_score(
     """
     m = con_values.shape[0]
 
-    # --- init --------------------------------------------
+    # --- init -----------------------------------
     max_count_penalty = _SCORE_PENALTY_HARD_CONSTRAINT if hard_max_constraints else np.int32(1)
     scores = np.zeros(n, dtype=np.int32)
 
-    # --- min_count / max_count ---------------------------
+    # --- min_count / max_count ------------------
     for i_con in np.arange(m, dtype=np.int32):
         min_val = _np_con_min_value(con_values, i_con)
         max_val = _np_con_max_value(con_values, i_con)
@@ -68,7 +68,7 @@ def _compute_score(
                     -_SCORE_PENALTY_ALREADY_SAMPLED + 1,  # avoid wrap-around + ensure -already_sampled_penalty is lower
                 )
 
-    # --- already sampled ---------------------------------
+    # --- already sampled ------------------------
     for i in already_sampled:
         if i >= 0:  # negative values indicate end of valid samples
             scores[i] = -_SCORE_PENALTY_ALREADY_SAMPLED
@@ -137,7 +137,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
     Returns:
         array of samples
     """
-    # --- parameter validation ----------------------------
+    # --- parameter validation -------------------
     n_forbidden = i_forbidden.shape[0]
     if k > (n - n_forbidden):
         if n_forbidden:
@@ -147,7 +147,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
             )
         raise ValueError(f"Cannot sample {k} unique integers from [0, {n}). ({k} > {n})")
 
-    # --- initialize --------------------------------------
+    # --- initialize -----------------------------
     if k_context < k:
         k_context = k
     samples = np.empty(k, dtype=np.int32)
@@ -159,7 +159,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
 
     sample_idx = np.int32(0)
 
-    # --- pre-process p -----------------------------------
+    # --- pre-process p --------------------------
     # we construct an 'augmented p' aug_p, which is identical to p, except small entries are adjusted to be >0,
     # avoiding issues later on when we exclude certain elements due to constraint-violation, which might otherwise
     # cause all p-values to become zero.
@@ -182,9 +182,9 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
             for i in range(n):
                 p_aug[i] += p_delta
 
-    # --- sample ------------------------------------------
+    # --- sample ---------------------------------
     for _ in range(k):
-        # --- score & thresholds ----------------
+        # --- score & thresholds -----------------
 
         # Get already sampled integers
         # (we include i_forbidden, since they're excluded from sampling, with equal priority as already sampled values)
@@ -227,7 +227,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
                     max_score = s
             score_threshold = max_score
 
-        # --- sample according to strategy ------
+        # --- sample according to strategy -------
 
         # zero out probabilities for scores below threshold  (there will always be at least 1 we don't zero out)
         p_mod = p_aug.copy()
@@ -238,7 +238,7 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
         # sample one integer
         s = randint1(n=n, p=p_mod, rng_state=rng_state)
 
-        # --- update stats --------------------------------
+        # --- update stats -----------------------
         for i_con in range(m):
             indices = _np_con_indices(con_indices, np.int32(i_con))
             for idx in indices:
@@ -252,5 +252,5 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
         sample_idx += 1
         k_remaining -= 1
 
-    # --- done ----------------------------------------
+    # --- done -----------------------------------
     return samples

@@ -51,13 +51,13 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
                    towards removing items causing 0-distances.
     """
 
-    # --- score components ------------
+    # --- score components -----------------------
     size: float  # score indicating if target selection size is met
     constraints: float  # score indicating if constraints are satisfied
     diversity: float  # main diversity score, as computed by the user-selected diversity metric
     div_tie_breakers: tuple[float, ...]  # diversity tie-breakers - used in case of ties in all higher-prio metrics
 
-    # --- helpers ---------------------
+    # --- helpers --------------------------------
     def as_tuple(self, soft: float = 0.0, ignore_infeasible_diversity: bool = False) -> tuple[float, ...]:
         """Return score as tuple, in order of descending priority, such that tuple-comparison yields correct results.
 
@@ -83,7 +83,7 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 
         return self.size, constraint_score, self.diversity, *self.div_tie_breakers
 
-    # --- math overloads --------------
+    # --- math overloads -------------------------
     def __lt__(self, other: object) -> bool:
         if isinstance(other, Score):
             return self.as_tuple() < other.as_tuple()
@@ -147,13 +147,13 @@ class ScoreGenerator:
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.
             penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
-        # --- size score computation ------------
+        # --- size score computation -------------
         self._n = n
         self._k = k
         self._size_c0 = 1 / (1 + k)
         self._size_c1 = 1 / (1 + n - k)
 
-        # --- constraint score computation ------
+        # --- constraint score computation -------
         self._penalty_quadratic = penalty_quadratic
         self._con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
         if len(constraints) > 0:
@@ -171,7 +171,7 @@ class ScoreGenerator:
         # fast unweighted-linear aggregation applies only when all weights are 1 and penalization is linear
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
-        # --- diversity & tie-breakers ----------
+        # --- diversity & tie-breakers -----------
         # each metric is bound here, once, to the SelectedContributions slot of its contribution
         # family — compute_score then just indexes, without any per-call family lookups
         self._diversity_metric = diversity_metric
@@ -181,7 +181,7 @@ class ScoreGenerator:
             (tb, selected_contributions_slot(tb.contribution_family)) for tb in diversity_tie_breakers
         ]
 
-        # --- store other params ---------------
+        # --- store other params -----------------
         self._constraints = constraints
 
     # -------------------------------------------------------------------------
@@ -243,7 +243,7 @@ class ScoreGenerator:
                 contribution values; slots of families no configured metric
                 consumes are never read.
         """
-        # --- individual scores ---------------------------
+        # --- individual scores ------------------
         if n_selected <= self._k:
             size_score = 1.0 - self._size_c0 * (self._k - n_selected)
         else:
@@ -259,7 +259,7 @@ class ScoreGenerator:
                 _np_con_total_weighted_violation(con_values, self._con_weights, self._penalty_quadratic)
             )
 
-        # --- construct Score object ----------------------
+        # --- construct Score object -------------
         # each metric reads the contribution slot it was bound to at construction
         return Score(
             size=size_score,

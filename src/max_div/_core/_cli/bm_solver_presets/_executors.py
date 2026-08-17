@@ -19,7 +19,7 @@ from ._utils import get_pbar_units
 def executor_multi_parallel(
     scope: list[SolverPresetBenchmarkParams], n_processes: int
 ) -> list[SolverPresetBenchmarkResult]:
-    # --- init --------------------------------------------
+    # --- init -----------------------------------
     n_pbar_units = sum([get_pbar_units(params) for params in scope])
     problem_names = sorted({params.problem_name for params in scope})
     desc = (
@@ -29,13 +29,13 @@ def executor_multi_parallel(
     )
     pbar = tqdm(desc=desc, total=n_pbar_units, leave=True)
 
-    # --- split -------------------------------------------
+    # --- split ----------------------------------
     # parallel runs each use all cores themselves, so they run one at a time in this process
     # (spawning their own workers) instead of occupying a slot in the pool
     single_scope = [params for params in scope if not params.is_parallel]
     parallel_scope = [params for params in scope if params.is_parallel]
 
-    # --- execute single-worker runs ----------------------
+    # --- execute single-worker runs -------------
     # spawn, never fork: the parent has usually run numba parallel code by now (the distance-store
     # builds), and numba's threading layer is not fork-safe — forked children deadlock on their
     # first parallel call.  spawn starts workers clean on every platform and Python version.
@@ -47,13 +47,13 @@ def executor_multi_parallel(
                 pbar.n += get_pbar_units(result.params)
                 pbar.refresh()
 
-    # --- execute parallel runs ---------------------------
+    # --- execute parallel runs ------------------
     for params in parallel_scope:
         results.append(_execute_single_run(params))
         pbar.n += get_pbar_units(params)
         pbar.refresh()
 
-    # --- wrap up -----------------------------------------
+    # --- wrap up --------------------------------
     pbar.n = pbar.total
     pbar.refresh()
     pbar.close()
@@ -65,17 +65,17 @@ def executor_multi_parallel(
 #  Execute SINGLE run
 # =================================================================================================
 def _execute_single_run(params: SolverPresetBenchmarkParams) -> SolverPresetBenchmarkResult:
-    # --- init --------------------------------------------
+    # --- init -----------------------------------
     t_start = datetime.datetime.now().timestamp()
 
-    # --- construct problem (untimed) ---------------------
+    # --- construct problem (untimed) ------------
     problem = BenchmarkProblemFactory.construct_problem(
         name=params.problem_name,
         n=params.problem_size,
         diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
     )
 
-    # --- build & solve (end-to-end timed) ----------------
+    # --- build & solve (end-to-end timed) -------
     with measure_end_to_end() as timing:
         if params.is_parallel:
             solver = (
@@ -93,7 +93,7 @@ def _execute_single_run(params: SolverPresetBenchmarkParams) -> SolverPresetBenc
             )
         result = solver.solve(verbosity=Verbosity.SILENT)
 
-    # --- return result -----------------------------------
+    # --- return result --------------------------
     return SolverPresetBenchmarkResult(
         params=params,
         execution_info=SolverPresetBenchmarkExecutionInfo(

@@ -22,12 +22,12 @@ from max_div._core._random._rng._core import (
 #  new_rng_state
 # -------------------------------------------------------------------------
 def test_new_rng_state():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
     rng_state_3 = new_rng_state(3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert all(rng_state_1 == rng_state_2)
     assert not all(rng_state_1 == rng_state_3)
 
@@ -36,17 +36,17 @@ def test_new_rng_state():
 #  rand_float32
 # -------------------------------------------------------------------------
 def test_rand_float32_seed():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     f11 = rand_float32(rng_state_1)
     f12 = rand_float32(rng_state_1)
     f21 = rand_float32(rng_state_2)
     f22 = rand_float32(rng_state_2)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert f11 == f21
     assert f12 == f22
     assert f11 != f12
@@ -54,13 +54,13 @@ def test_rand_float32_seed():
 
 
 def test_rand_float32_stats():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = [rand_float32(rng_state) for _ in range(10000)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert min(values) < 0.01
     assert max(values) > 0.99
     assert 0.49 < np.mean(values) < 0.51
@@ -85,14 +85,14 @@ def test_rand_float32_stats():
     ids=["min_value", "max_value"],
 )
 def test_rand_float32_exact_range(rng_state: list[int], expected_uint64: int, expected_float32: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_np = np.array(rng_state, dtype=np.uint64)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     value_uint64 = _xoroshiro128plus_next(rng_state_np.copy())  # copy rng_state to avoid modifying the original
     value_float32 = rand_float32(rng_state_np)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
     assert value_float32 == expected_float32
 
@@ -117,14 +117,14 @@ def test_rand_float32_exact_range(rng_state: list[int], expected_uint64: int, ex
     ids=["min_value", "max_value"],
 )
 def test_rand_nz_float32_exact_range(rng_state: list[int], expected_uint64: int, expected_float32: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_np = np.array(rng_state, dtype=np.uint64)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     value_uint64 = _xoroshiro128plus_next(rng_state_np.copy())  # copy rng_state to avoid modifying the original
     value_float32 = rand_nz_float32(rng_state_np)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
     assert value_float32 == expected_float32
 
@@ -133,11 +133,11 @@ def test_rand_nz_float32_exact_range(rng_state: list[int], expected_uint64: int,
 #  rand_float64
 # -------------------------------------------------------------------------
 def test_rand_float64_seed():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     f11 = rand_float64(rng_state_1)
     f12 = rand_float64(rng_state_1)
     f21 = rand_float64(rng_state_2)
@@ -145,7 +145,7 @@ def test_rand_float64_seed():
 
     print(type(f11), f11)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert f11 == f21
     assert f12 == f22
     assert f11 != f12
@@ -153,13 +153,13 @@ def test_rand_float64_seed():
 
 
 def test_rand_float64_stats():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = [rand_float64(rng_state) for _ in range(10000)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert min(values) < 0.01
     assert max(values) > 0.99
     assert 0.49 < np.mean(values) < 0.51
@@ -184,14 +184,14 @@ def test_rand_float64_stats():
     ids=["min_value", "max_value"],
 )
 def test_rand_float64_exact_range(rng_state: list[int], expected_uint64: int, expected_float64: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_np = np.array(rng_state, dtype=np.uint64)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     value_uint64 = _xoroshiro128plus_next(rng_state_np.copy())  # copy rng_state to avoid modifying the original
     value_float64 = rand_float64(rng_state_np)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
     assert value_float64 == expected_float64
 
@@ -216,14 +216,14 @@ def test_rand_float64_exact_range(rng_state: list[int], expected_uint64: int, ex
     ids=["min_value", "max_value"],
 )
 def test_rand_nz_float64_exact_range(rng_state: list[int], expected_uint64: int, expected_float64: float):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_np = np.array(rng_state, dtype=np.uint64)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     value_uint64 = _xoroshiro128plus_next(rng_state_np.copy())  # copy rng_state to avoid modifying the original
     value_float64 = rand_nz_float64(rng_state_np)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert value_uint64 == expected_uint64, "rng_state should be chosen such that it produces the expected uint64 value"
     assert value_float64 == expected_float64
 
@@ -232,11 +232,11 @@ def test_rand_nz_float64_exact_range(rng_state: list[int], expected_uint64: int,
 #  rand_int32
 # -------------------------------------------------------------------------
 def test_rand_int32_seed():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     i11 = rand_int32(rng_state_1, np.int32(0), np.int32(100))
     i12 = rand_int32(rng_state_1, np.int32(0), np.int32(100))
     i21 = rand_int32(rng_state_2, np.int32(0), np.int32(100))
@@ -244,7 +244,7 @@ def test_rand_int32_seed():
 
     print(type(i11), i11)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert i11 == i21
     assert i12 == i22
     assert i11 != i12
@@ -252,15 +252,15 @@ def test_rand_int32_seed():
 
 
 def test_rand_int32_stats():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(100)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = [rand_int32(rng_state, low, high) for _ in range(10000)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert min(values) == 0
     assert max(values) == 99
     assert 49 < np.mean(values) < 51
@@ -269,15 +269,15 @@ def test_rand_int32_stats():
 
 
 def test_rand_int32_range():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int32(-50)
     high = np.int32(50)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = [rand_int32(rng_state, low, high) for _ in range(10000)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert all(low <= v < high for v in values)
     assert min(values) == -50
     assert max(values) == 49
@@ -287,11 +287,11 @@ def test_rand_int32_range():
 #  rand_int64
 # -------------------------------------------------------------------------
 def test_rand_int64_seed():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     i11 = rand_int64(rng_state_1, np.int64(0), np.int64(100))
     i12 = rand_int64(rng_state_1, np.int64(0), np.int64(100))
     i21 = rand_int64(rng_state_2, np.int64(0), np.int64(100))
@@ -299,7 +299,7 @@ def test_rand_int64_seed():
 
     print(type(i11), i11)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert i11 == i21
     assert i12 == i22
     assert i11 != i12
@@ -307,15 +307,15 @@ def test_rand_int64_seed():
 
 
 def test_rand_int64_stats():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int64(0)
     high = np.int64(100)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = [rand_int64(rng_state, low, high) for _ in range(10000)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert min(values) == 0
     assert max(values) == 99
     assert 49 < np.mean(values) < 51
@@ -324,30 +324,30 @@ def test_rand_int64_stats():
 
 
 def test_rand_int64_range():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int64(-50)
     high = np.int64(50)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = [rand_int64(rng_state, low, high) for _ in range(1000)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert all(low <= v < high for v in values)
     assert min(values) == -50
     assert max(values) == 49
 
 
 def test_rand_int64_large_range():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int64(0)
     high = np.int64(1_000_000_000)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = [rand_int64(rng_state, low, high) for _ in range(10000)]
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert all(low <= v < high for v in values)
     assert min(values) < 100_000_000
     assert max(values) > 900_000_000
@@ -359,44 +359,44 @@ def test_rand_int64_large_range():
 #  rand_int32_array
 # -------------------------------------------------------------------------
 def test_rand_int32_array_seed():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state_1 = new_rng_state(1)
     rng_state_2 = new_rng_state(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     arr1 = rand_int32_array(rng_state_1, np.int32(0), np.int32(100), np.int32(10))
     arr2 = rand_int32_array(rng_state_2, np.int32(0), np.int32(100), np.int32(10))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(arr1, arr2)
     assert arr1.dtype == np.int32
     assert len(arr1) == 10
 
 
 def test_rand_int32_array_different_calls():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     arr1 = rand_int32_array(rng_state, np.int32(0), np.int32(100), np.int32(10))
     arr2 = rand_int32_array(rng_state, np.int32(0), np.int32(100), np.int32(10))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     # Different calls should produce different results
     assert not np.array_equal(arr1, arr2)
 
 
 def test_rand_int32_array_stats():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(100)
     size = np.int32(10000)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = rand_int32_array(rng_state, low, high, size)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(values) == 10000
     assert values.dtype == np.int32
     assert np.min(values) == 0
@@ -407,16 +407,16 @@ def test_rand_int32_array_stats():
 
 
 def test_rand_int32_array_range():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int32(-50)
     high = np.int32(50)
     size = np.int32(10000)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = rand_int32_array(rng_state, low, high, size)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(values) == 10000
     assert np.all(values >= low)
     assert np.all(values < high)
@@ -426,16 +426,16 @@ def test_rand_int32_array_range():
 
 
 def test_rand_int32_array_small_range():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(5)
     size = np.int32(1000)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = rand_int32_array(rng_state, low, high, size)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(values) == 1000
     assert np.all(values >= 0)
     assert np.all(values < 5)
@@ -444,31 +444,31 @@ def test_rand_int32_array_small_range():
 
 
 def test_rand_int32_array_single_element():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(100)
     size = np.int32(1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = rand_int32_array(rng_state, low, high, size)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(values) == 1
     assert 0 <= values[0] < 100
 
 
 def test_rand_int32_array_large_size():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(1)
     low = np.int32(0)
     high = np.int32(1000)
     size = np.int32(100000)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = rand_int32_array(rng_state, low, high, size)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(values) == 100000
     assert values.dtype == np.int32
     assert np.all(values >= 0)

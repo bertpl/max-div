@@ -58,7 +58,7 @@ class MaxDivSolver:
             distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
         """
-        # --- problem description -------------------------
+        # --- problem description ----------------
         self._n = n
         self._store = store
         self._distance_storage_label = distance_storage_label
@@ -66,7 +66,7 @@ class MaxDivSolver:
         self._diversity_metric = diversity_metric
         self._constraints = constraints
 
-        # --- solver config -------------------------------
+        # --- solver config ----------------------
         self._diversity_tie_breakers = diversity_tie_breakers
         self._solver_steps = solver_steps
         self._seed = seed
@@ -95,19 +95,19 @@ class MaxDivSolver:
         Returns:
             A MaxDivSolution object representing the solution found.
         """
-        # --- Init ----------------------------------------
+        # --- Init -------------------------------
 
-        # --- progress reporting ---
+        # --- progress reporting -----------------
         if progress_reporter is None:
             progress_reporter = ProgressReporter.from_verbosity(verbosity)
 
-        # --- solver steps ---
+        # --- solver steps -----------------------
         n_steps = len(self._solver_steps)
         step_names = self._get_step_names()  # includes solver state init step (hence length n_steps+1)
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
         step_results: dict[str, SolverStepResult] = {}
 
-        # --- solver state ---
+        # --- solver state -----------------------
         with Timer() as timer:
             progress_reporter.solver_step_started(step_names[0])
             state = SolverState.new(
@@ -131,13 +131,13 @@ class MaxDivSolver:
             ]
         )
 
-        # --- Main loop -----------------------------------
+        # --- Main loop --------------------------
         for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
             step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
 
-        # --- Construct result ----------------------------
+        # --- Construct result -------------------
         return self._construct_final_solution(state, step_results)
 
     # -------------------------------------------------------------------------
@@ -153,10 +153,10 @@ class MaxDivSolver:
         self, state: SolverState, step_results: dict[str, SolverStepResult]
     ) -> MaxDivSolution:
         """Construct the final MaxDivSolution from the current state & step results."""
-        # --- collect step durations --------------------
+        # --- collect step durations -------------
         step_durations = {step_name: result.elapsed for step_name, result in step_results.items()}
 
-        # --- aggregate score checkpoints -----------------
+        # --- aggregate score checkpoints --------
         score_checkpoints = []
         elapsed_from_previous_steps = Elapsed(t_elapsed_sec=0.0, n_iterations=0)
         for step_name, result in step_results.items():
@@ -172,11 +172,11 @@ class MaxDivSolver:
             # Update elapsed_from_previous_steps to include this step's total elapsed time
             elapsed_from_previous_steps += result.elapsed
 
-        # --- constraint satisfaction ----------------------
+        # --- constraint satisfaction ------------
         n_constraints = state.m
         n_constraints_satisfied = _np_con_count_satisfied(state.con_values)
 
-        # --- construct solution --------------------------
+        # --- construct solution -----------------
         return MaxDivSolution(
             i_selected=state.selected_index_array.copy(),
             score_checkpoints=score_checkpoints,

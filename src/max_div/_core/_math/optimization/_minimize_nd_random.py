@@ -27,7 +27,7 @@ def minimize_nd_random(
     Returns:
         tuple of floats with optimal solution.
     """
-    # --- init ----------------------------------------------------------------
+    # --- init -----------------------------------
 
     # general
     random.seed(42)
@@ -52,12 +52,12 @@ def minimize_nd_random(
     x_opt = tuple((lo + hi) / 2.0 for lo, hi in zip(lb, ub))  # center of grid
     f_opt = fun(x_opt)
 
-    # --- main loop -----------------------------------------------------------
+    # --- main loop ------------------------------
     n_progress_updates = max(10, int(math.cbrt(n_evals)))
     progress_every_n = max(1, n_evals // n_progress_updates)
 
     for i_iter in range(n_evals):
-        # --- progress indication -------------------------
+        # --- progress indication ----------------
         if i_iter % progress_every_n == 0:
             progress_table.show_progress(
                 [
@@ -68,7 +68,7 @@ def minimize_nd_random(
                 + [f"{x_opt[i]:.{n_digits}f}" for i in range(n)]
             )
 
-        # --- randomly sample x_cand and try --------------
+        # --- randomly sample x_cand and try -----
 
         # randomly sample in search area
         x_cand = tuple([random.uniform(lb, ub) for lb, ub in zip(lb, ub)])
@@ -79,7 +79,7 @@ def minimize_nd_random(
             x_opt = x_cand
             f_opt = f_val
 
-        # --- reduce search range ---
+        # --- reduce search range ----------------
 
         # reduce size
         size = tuple([s * c_reduce for s in size])
@@ -88,5 +88,5 @@ def minimize_nd_random(
         lb = tuple([max(lb_orig[i], x_opt[i] - 0.5 * size[i]) for i in range(n)])
         ub = tuple([min(ub_orig[i], x_opt[i] + 0.5 * size[i]) for i in range(n)])
 
-    # --- we're done ----------------------------------------------------------
+    # --- we're done -----------------------------
     return x_opt

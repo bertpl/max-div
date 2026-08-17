@@ -23,13 +23,13 @@ def remove_sample_from_candidates_and_p(
     Returns:
         (new_candidates, new_p), each of size n-1
     """
-    # --- init ---
+    # --- init -----------------------------------
     n = np.int32(candidates.shape[0])
     n_minus_1 = n - np.int32(1)
     new_candidates = np.empty(n - 1, dtype=np.int32)
     new_p = np.empty(n - 1, dtype=np.float32)
 
-    # --- construct ---
+    # --- construct ------------------------------
     i_tgt = np.int32(0)
     for i_src in range(n):
         if candidates[i_src] != sample:
@@ -40,19 +40,19 @@ def remove_sample_from_candidates_and_p(
             new_p[i_tgt] = p[i_src]
             i_tgt += np.int32(1)
 
-    # --- we're done ---
+    # --- we're done -----------------------------
     return new_candidates, new_p
 
 
 @numba.njit("int32[:](int32[:], int32)", inline="always", fastmath=True, cache=True)
 def remove_sample_from_candidates(candidates: NDArray[np.int32], sample: np.int32) -> NDArray[np.int32]:
     """Simplified version of remove_sample_from_candidates_and_p that only modifies 'candidates', not 'p'."""
-    # --- init ---
+    # --- init -----------------------------------
     n = np.int32(candidates.shape[0])
     n_minus_1 = n - np.int32(1)
     new_candidates = np.empty(n - 1, dtype=np.int32)
 
-    # --- construct ---
+    # --- construct ------------------------------
     i_tgt = np.int32(0)
     for i_src in range(n):
         if candidates[i_src] != sample:
@@ -62,5 +62,5 @@ def remove_sample_from_candidates(candidates: NDArray[np.int32], sample: np.int3
             new_candidates[i_tgt] = candidates[i_src]
             i_tgt += np.int32(1)
 
-    # --- we're done ---
+    # --- we're done -----------------------------
     return new_candidates

@@ -26,12 +26,12 @@ class Report:
     #  Render Report
     # -------------------------------------------------------------------------
     def render(self, markdown: bool) -> list[str]:
-        # --- render all elements -------------------------
+        # --- render all elements ----------------
         lines: list[str] = []
         for element in self._elements:
             lines.extend(element.render(markdown))
 
-        # --- remove double empty lines -------------------
+        # --- remove double empty lines ----------
         cleaned_lines: list[str] = []
         previous_was_empty = False
         for line in lines:
@@ -40,13 +40,13 @@ class Report:
                 cleaned_lines.append(line)
             previous_was_empty = is_empty
 
-        # --- remove initial and final empty lines --------
+        # --- remove initial and final empty lines ---
         while cleaned_lines and cleaned_lines[0].strip() == "":
             cleaned_lines.pop(0)
         while cleaned_lines and cleaned_lines[-1].strip() == "":
             cleaned_lines.pop()
 
-        # --- done ----------------------------------------
+        # --- done -------------------------------
         return cleaned_lines
 
     def print(self, markdown: bool) -> None:

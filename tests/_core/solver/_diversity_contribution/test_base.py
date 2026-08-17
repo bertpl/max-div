@@ -47,31 +47,31 @@ class _CallRecordingTracker(DiversityContributionTracker):
 #  Tests
 # =================================================================================================
 def test_tracker_abc_cannot_be_instantiated():
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.raises(TypeError):
         DiversityContributionTracker()  # ty: ignore[missing-argument]  # deliberate: abstract class
 
 
 def test_add_many_delegates_to_add_in_order():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     tracker = _CallRecordingTracker()
     indices = np.array([4, 1, 7], dtype=np.int32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     tracker.add_many(indices)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert tracker.calls == [("add", 4), ("add", 1), ("add", 7)]
 
 
 def test_remove_many_delegates_to_remove_in_order_with_same_selection():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     tracker = _CallRecordingTracker()
     indices = np.array([2, 5], dtype=np.int32)
     new_selection = np.array([0, 9], dtype=np.int32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     tracker.remove_many(indices, new_selection)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert tracker.calls == [("remove", 2, [0, 9]), ("remove", 5, [0, 9])]

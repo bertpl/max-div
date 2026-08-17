@@ -8,7 +8,7 @@ from max_div._core.solver._parameters.samplers import SkewedIntervalAdaptiveSamp
 
 
 def test_skewed_interval_adaptive_sampler_construction():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     sampler = SkewedIntervalAdaptiveSampler(
         min_value=1.0,
         max_value=5.0,
@@ -18,7 +18,7 @@ def test_skewed_interval_adaptive_sampler_construction():
         seed=123,
     )
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert isinstance(sampler, AdaptiveSampler)
     assert isinstance(sampler, SkewedIntervalAdaptiveSampler)
 
@@ -45,7 +45,7 @@ def test_skewed_interval_adaptive_sampler_construction_validation():
 @pytest.mark.parametrize("good_interval", [(1.0, 2.0), (4.0, 5.0)])
 @pytest.mark.parametrize("tau_forget", [100.0, math.inf])
 def test_boolean_adaptive_sampler_learn_and_forget(good_interval: tuple[float, float], tau_forget):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     sampler = SkewedIntervalAdaptiveSampler(
         min_value=1.0,
         max_value=5.0,
@@ -57,21 +57,21 @@ def test_boolean_adaptive_sampler_learn_and_forget(good_interval: tuple[float, f
 
     min_good_value, max_good_value = good_interval
 
-    # --- act 1 - learn -----------------------------------
+    # --- act 1 - learn ----------------
     for _ in range(1_000):
         s = sampler.new_sample()
         sampler.feedback(min_good_value <= s <= max_good_value)  # positive feedback when we sampled in 'good_interval'
 
-    # --- assert 1 - learn --------------------------------
+    # --- assert 1 - learn -------------
     assert min_good_value < sampler.summary_statistic() < max_good_value  # should learn to sample good range
 
-    # --- act 2 - forget ----------------------------------
+    # --- act 2 - forget ---------------
     summary_stat_before = sampler.summary_statistic()
     for _ in range(1_000):
         s = sampler.new_sample()
         sampler.feedback(False)  # negative feedback always, so we maximally forget
 
-    # --- assert 2 - forget -------------------------------
+    # --- assert 2 - forget ------------
     if not np.isinf(tau_forget):
         # forgetting is enabled
         assert 2.5 < sampler.summary_statistic() < 3.5  # should have forgotten back to prior (5.5)
@@ -82,7 +82,7 @@ def test_boolean_adaptive_sampler_learn_and_forget(good_interval: tuple[float, f
 
 @pytest.mark.parametrize("median_prior", [0.25, None])
 def test_skewed_interval_alias(median_prior: float | None):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     sampler = sampled_interval(
         min_value=0.2,
         max_value=0.8,
@@ -91,7 +91,7 @@ def test_skewed_interval_alias(median_prior: float | None):
         seed=1248,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(sampler, SkewedIntervalAdaptiveSampler)
     if median_prior is not None:
         assert sampler._median_prior == pytest.approx(median_prior)

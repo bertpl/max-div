@@ -58,21 +58,21 @@ class InitRandomBatched(InitializationStrategy):
                 If `False`, respects problem constraints during initialization, if present.
                 If `True`, constraints are ignored.
         """
-        # --- parameter validation --------------
+        # --- parameter validation ---------------
         if b <= 1:
             raise ValueError("InitRandomBatched requires b > 1; for b=1 use InitRandomOneShot instead.")
 
-        # --- settings --------------------------
+        # --- settings ---------------------------
         name = f"InitRandomBatched(b={b}" + (",uncon)" if ignore_constraints else ")")
         super().__init__(name)
         self.b = b
         self.ignore_constraints = ignore_constraints
 
-        # --- initialize state ------------------
+        # --- initialize state -------------------
         self._batches_remaining = 0  # set appropriately when calling get_next_samples the first time
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
-        # --- determine batch size --------------
+        # --- determine batch size ---------------
         n_selected = state.n_selected
         if n_selected == 0:
             # first call
@@ -81,7 +81,7 @@ class InitRandomBatched(InitializationStrategy):
         batch_size = int(max(1, math.ceil(k_remaining / self._batches_remaining)))
         self._batches_remaining -= 1
 
-        # --- select samples --------------------
+        # --- select samples ---------------------
         modifier = min(0.9, n_selected / state.k)  # proportional to progress; cap at 0.9 to avoid extremes
         return select_items_to_add(
             state=state,

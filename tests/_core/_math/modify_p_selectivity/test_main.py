@@ -13,14 +13,14 @@ METHODS_AND_TOLERANCES = [
 
 @pytest.mark.parametrize("method, tol", METHODS_AND_TOLERANCES)
 def test_modify_p_selectivity_accuracy(method, tol):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 50
     p = np.linspace(0.0, 1.0, num=n, dtype=np.float32)
     modifiers = np.linspace(-0.9, 0.9, num=n, dtype=np.float32)
 
     p_out_expected = [np.array([p[i] ** ((1 + m) / (1 - m)) for i in range(n)], dtype=np.float32) for m in modifiers]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     e_tot = 0.0
     for modifier, expected_result in zip(modifiers, p_out_expected):
         p_out = np.empty_like(p)
@@ -29,21 +29,21 @@ def test_modify_p_selectivity_accuracy(method, tol):
 
     e_tot /= n * n
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert e_tot <= tol
 
 
 @pytest.mark.parametrize("method, tol", METHODS_AND_TOLERANCES)
 @pytest.mark.parametrize("modifier", np.linspace(-0.9, 0.9, 20))
 def test_modify_p_selectivity_preserve_order(method, tol, modifier):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = np.linspace(0.0, 1.0, num=10_000, dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     p_out = np.empty_like(p)
     modify_p_selectivity(p=p, modifier=np.float32(modifier), method=method, p_out=p_out)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.array_equal(p_out, sorted(p_out))
 
 
@@ -65,25 +65,25 @@ def test_modify_p_selectivity_preserve_order(method, tol, modifier):
 )
 @pytest.mark.parametrize("method", [0, 10, 20, 100])
 def test_modify_p_selectivity_edge_cases(p: np.ndarray, modifier, p_expected: np.ndarray, method: int):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     p_out = np.empty_like(p)
     modify_p_selectivity(p=p, modifier=np.float32(modifier), method=np.int32(method), p_out=p_out)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert np.allclose(p_out, p_expected)
 
 
 @pytest.mark.parametrize("method, tol", METHODS_AND_TOLERANCES)
 @pytest.mark.parametrize("modifier", [-0.999, 0.999])
 def test_modify_p_selectivity_ill_conditioning(method: int, tol: float, modifier):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = np.array([0.0, 0.1, 0.5, 0.9, 1.0], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     p_out = np.empty_like(p)
     modify_p_selectivity(p, np.float32(modifier), np.int32(method), p_out)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     if modifier < -0.9:
         assert 0.99 <= p_out[1] <= 1.0
         assert 0.99 <= p_out[2] <= 1.0
@@ -97,12 +97,12 @@ def test_modify_p_selectivity_ill_conditioning(method: int, tol: float, modifier
 
 
 def test_modify_p_selectivity_invalid_method():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     p = np.linspace(0.0, 1.0, num=10, dtype=np.float32)
     modifier = np.float32(0.5)
     method = np.int32(999)  # invalid method
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     p_out = np.empty_like(p)
     with pytest.raises(NotImplementedError):
         modify_p_selectivity(p, modifier, method, p_out)

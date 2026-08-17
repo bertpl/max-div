@@ -19,7 +19,7 @@ from max_div._core.constraints import Constraint, ConstraintList
 @pytest.mark.parametrize("eager", [False, True])
 @pytest.mark.parametrize("p_mode", ["random", "empty", "zero"])
 def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 20
     k = 5
     constraints = [
@@ -45,7 +45,7 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
     con_indices_before = con_indices.copy()
     p_before = p.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_constrained(
         n=np.int32(n),
         k=np.int32(k),
@@ -56,7 +56,7 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
         eager=eager,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(samples) == k
     assert len(set(samples)) == k  # unique samples
     assert all(0 <= s < n for s in samples)
@@ -75,7 +75,7 @@ def test_randint_constrained_basic(seed: int, eager: bool, p_mode: str) -> None:
 @pytest.mark.parametrize("eager", [False, True])
 @pytest.mark.parametrize("p_mode", ["random", "empty", "zero"])
 def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> None:
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 100
     k = 5
     constraints = [
@@ -100,7 +100,7 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
     con_indices_before = con_indices.copy()
     p_before = p.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_constrained(
         n=np.int32(n),
         k=np.int32(k),
@@ -111,7 +111,7 @@ def test_randint_constrained_infeasible(seed: int, eager: bool, p_mode: str) -> 
         eager=eager,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(samples) == k
     assert len(set(samples)) == k  # unique samples
     assert all(0 <= s < n for s in samples)
@@ -140,7 +140,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
 
     """
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 6
     k = 1
     constraints = [
@@ -158,7 +158,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
     con_indices_before = con_indices.copy()
     p_before = p.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_constrained(
         n=np.int32(n),
         k=np.int32(k),
@@ -170,7 +170,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
         k_context=np.int32(k_context),
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # check k_context correctness
     if k_context < 2:
@@ -201,7 +201,7 @@ def test_randint_constrained_k_context(k_context: int, seed: int):
 def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_ok: bool):
     """Check for ValueError in case k, n, len(i_forbidden) are conflicting."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     constraints = [Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)]
 
     # convert to numpy format
@@ -223,7 +223,7 @@ def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_
         i_forbidden=i_forbidden,
     )
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     if expected_ok:
         _ = function_call()  # should work
     else:
@@ -236,7 +236,7 @@ def test_randint_constrained_i_forbidden_validation(k, n, n_forbidden, expected_
 def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool):
     """Test if i_forbidden is prioritized over constraints and p=0."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng_state = new_rng_state(42)
     n = 10
     k = 5
@@ -254,7 +254,7 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
     con_indices_before = con_indices.copy()
     p_before = p.copy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     samples = randint_constrained(
         n=np.int32(n),
         k=np.int32(k),
@@ -266,7 +266,7 @@ def test_randint_constrained_i_forbidden_priorities(min_count: int, eager: bool)
         i_forbidden=i_forbidden,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
 
     # never sample forbidden indices
     assert not any(s == 3 for s in samples)
@@ -291,7 +291,7 @@ def test_randint_constrained_score_wrap_around():
     This test specifically checks if the safeguard against this issue is working as expected.
     """
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     n = 10
     constraints = [
         Constraint(
@@ -303,7 +303,7 @@ def test_randint_constrained_score_wrap_around():
     ]
     con_values, con_indices = ConstraintList(constraints).to_numpy()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     score = _compute_score(
         n=np.int32(n),
         con_values=con_values,
@@ -312,7 +312,7 @@ def test_randint_constrained_score_wrap_around():
         hard_max_constraints=True,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert max(score) <= 0.0, "Scores should not have wrapped around to positive values."
     assert score[0] == -_SCORE_PENALTY_ALREADY_SAMPLED
     for i in range(1, n):

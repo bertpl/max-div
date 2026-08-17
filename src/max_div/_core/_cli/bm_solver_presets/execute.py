@@ -17,7 +17,7 @@ def execute_solver_presets_benchmark(
         [list[SolverPresetBenchmarkParams], int], list[SolverPresetBenchmarkResult]
     ] = executor_multi_parallel,
 ) -> list[SolverPresetBenchmarkResult]:
-    # --- semi-randomization ------------------------------
+    # --- semi-randomization ---------------------
     # first we shuffle, and then we sort from long to short durations
     # --> this way we will shuffle presets and problems, but still process short duration runs last
     #     (=more efficient to keep all parallel workers busy as long as possible)
@@ -25,10 +25,10 @@ def execute_solver_presets_benchmark(
     random.shuffle(scope)
     scope = sorted(scope, key=lambda p: p.duration.value(), reverse=True)
 
-    # --- determine total processes -----------------------
+    # --- determine total processes --------------
     n_processes = get_n_processes(len(scope))
 
-    # --- execute -----------------------------------------
+    # --- execute --------------------------------
     results = executor(scope, n_processes)
     results = sorted(
         results,
@@ -40,10 +40,10 @@ def execute_solver_presets_benchmark(
         ),
     )
 
-    # --- save --------------------------------------------
+    # --- save -----------------------------------
     if json_file_name:
         with Path(json_file_name).open("w") as f:
             f.write(results_to_json(results))
 
-    # --- return ------------------------------------------
+    # --- return ---------------------------------
     return results

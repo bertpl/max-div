@@ -82,10 +82,10 @@ class DummySolverState:
 
 # --- checks ----------------------------------------------
 def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[Elapsed, Score]]):
-    # --- non-empty -------------------
+    # --- non-empty ------------------------------
     assert len(score_checkpoints) >= 1, "score_checkpoints must contain at least one entry"
 
-    # --- check iteration counts ------
+    # --- check iteration counts -----------------
     iter_values = [e.n_iterations for e, _ in score_checkpoints]
     assert min(iter_values) >= 0, "score_checkpoints contains negative iteration counts"
     assert len(iter_values) == len(set(iter_values)), "score_checkpoints contains duplicate iteration counts"
@@ -104,7 +104,7 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[Elapsed, Sco
         # check in range
         assert i_delta_min <= i_delta <= i_delta_max, f"checkpoints should be ~10%-spaced; here: {i} -> {i_next}"
 
-    # --- check elapsed times ---------
+    # --- check elapsed times --------------------
     t_values = [e.t_elapsed_sec for e, _ in score_checkpoints]
     assert min(t_values) >= 0.0, "score_checkpoints contains negative elapsed times"
     # NOTE: duplicate time values can happen if iterations are very fast, so we don't assert uniqueness here
@@ -124,27 +124,27 @@ def test_initialization_step_validation():
 
 
 def test_initialization_step_name():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = InitTest()
     step = InitializationStep(strategy)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     step_name = step.name()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert step_name == strategy.name
 
 
 def test_initialization_step_run():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = InitTest()
     step = InitializationStep(strategy)
     state = DummySolverState(n=100, k=10)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = step.run(state)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert strategy._n_iterations == 1, "This initialization should take exactly 1 iteration"
     assert isinstance(result, SolverStepResult)
     assert result.elapsed.n_iterations == 1, "This initialization should take exactly 1 iteration"
@@ -164,27 +164,27 @@ def test_optimization_step_validation():
 
 
 def test_optimization_step_name():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = OptimTest()
     step = OptimizationStep(strategy, duration=seconds(1))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     step_name = step.name()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert step_name == strategy.name
 
 
 def test_optimization_step_run_iterations():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = OptimTest()
     step = OptimizationStep(strategy, duration=iterations(123))
     state = Mock()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result = step.run(state)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert strategy._n_iterations == 123
     for i, progress_frac in enumerate(strategy._progress_fracs):
         assert math.isclose(i / 123, progress_frac)
@@ -196,16 +196,16 @@ def test_optimization_step_run_iterations():
 
 def test_optimization_step_run_seconds(fake_clock):
     """A time-budgeted step iterates until its budget is spent, and reports at least that much time."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     strategy = OptimTickingTest(fake_clock, dt_sec=0.001)
     step = OptimizationStep(strategy, duration=seconds(0.1))
     state = Mock()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     with Timer() as t:
         result = step.run(state)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert t.t_elapsed_sec() >= 0.1
     assert isinstance(result, SolverStepResult)
     assert result.elapsed.t_elapsed_sec >= 0.1
@@ -216,10 +216,10 @@ def test_optimization_step_run_seconds(fake_clock):
 # --- caller-provided batch interval ----------------------
 def test_determine_n_iterations_scales_with_the_batch_interval():
     """The batch size is the target interval times the estimated iteration rate."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     progress = Mock(est_iters_per_second=1000.0, est_n_iters_remaining=10**9, iter_count=0)
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert OptimizationStep._determine_n_iterations(progress, 10**9, batch_seconds=0.5) == 500
     assert OptimizationStep._determine_n_iterations(progress, 10**9, batch_seconds=0.05) == 50
 
@@ -227,7 +227,7 @@ def test_determine_n_iterations_scales_with_the_batch_interval():
 @pytest.mark.parametrize("call_kwargs, expected_batch_seconds", [({}, 0.5), ({"batch_seconds": 0.05}, 0.05)])
 def test_run_batches_at_the_interval_it_is_given(monkeypatch, call_kwargs, expected_batch_seconds):
     """The caller's batch interval reaches the batch sizing; omitting it uses the reporting default."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     captured = []
     original = OptimizationStep._determine_n_iterations
 
@@ -238,23 +238,23 @@ def test_run_batches_at_the_interval_it_is_given(monkeypatch, call_kwargs, expec
     monkeypatch.setattr(OptimizationStep, "_determine_n_iterations", staticmethod(spy))
     step = OptimizationStep(OptimTest(), duration=iterations(50))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     step.run(Mock(), **call_kwargs)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert captured
     assert all(batch_seconds == expected_batch_seconds for batch_seconds in captured)
 
 
 def test_checkpoint_count_is_batch_invariant():
     """Tightening the batch interval never changes the number of score checkpoints."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     step_default = OptimizationStep(OptimTest(), duration=iterations(500))
     step_fast = OptimizationStep(OptimTest(), duration=iterations(500))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     result_default = step_default.run(Mock())
     result_fast = step_fast.run(Mock(), batch_seconds=0.001)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(result_fast.score_checkpoints) == len(result_default.score_checkpoints)

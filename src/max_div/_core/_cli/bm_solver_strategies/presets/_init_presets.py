@@ -23,24 +23,24 @@ class InitPreset(StrEnum):
     monotonic between them); shipped-preset correspondences live in `_PRESET_NOTES`.
     """
 
-    # --- fast --------------
+    # --- fast -----------------------------------
     FAST = "fast"
 
-    # --- random one-shot ---
+    # --- random one-shot ------------------------
     ROS_U = "ros(u)"
     ROS_NU = "ros(nu)"
     ROS_U_UNCON = "ros(u,uncon)"
     ROS_NU_UNCON = "ros(nu,uncon)"
 
-    # --- random batched ----
+    # --- random batched -------------------------
     RB_4 = "rb(4)"
     RB_16 = "rb(16)"
 
-    # --- eager -------------
+    # --- eager ----------------------------------
     E_4 = "e(4)"
     E_16 = "e(16)"
 
-    # --- farthest point ----
+    # --- farthest point -------------------------
     FPS_1 = "fps(1)"
     FPS_8 = "fps(8)"
 

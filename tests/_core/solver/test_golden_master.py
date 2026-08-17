@@ -155,7 +155,7 @@ def _case_key(problem_name: str, preset: SolverPreset, seed: int) -> str:
 @pytest.mark.parametrize("preset", PRESETS)
 @pytest.mark.parametrize("problem_name", PROBLEMS)
 def test_golden_master(problem_name: str, preset: SolverPreset, seed: int):
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     regime = _active_regime()
     expected_data = json.loads(_data_file(regime).read_text())
     if regime == "jit" and expected_data["fingerprint"] != _runtime_fingerprint():
@@ -164,10 +164,10 @@ def test_golden_master(problem_name: str, preset: SolverPreset, seed: int):
         )
     expected = expected_data["cases"][_case_key(problem_name, preset, seed)]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution = _solve(problem_name, preset, seed)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert _as_record(solution) == expected  # exact equality, incl. float bits (see module docstring)
 
 

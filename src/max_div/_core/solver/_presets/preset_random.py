@@ -9,10 +9,10 @@ from max_div._core.solver._strategies import InitializationStrategy, Optimizatio
 def get_preset_strategies_random(
     target_duration: TargetDuration,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
-    # --- initialization ----------------------------------
+    # --- initialization -------------------------
     init_strategy = InitializationStrategy.random_one_shot(uniform=True, ignore_constraints=True)
 
-    # --- optimization steps ------------------------------
+    # --- optimization steps ---------------------
     optim_steps = [
         OptimizationStep(
             optim_strategy=OptimizationStrategy.random_swaps(),
@@ -20,5 +20,5 @@ def get_preset_strategies_random(
         )
     ]
 
-    # --- done --------------------------------------------
+    # --- done -----------------------------------
     return init_strategy, optim_steps

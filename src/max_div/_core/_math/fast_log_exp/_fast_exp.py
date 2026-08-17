@@ -37,14 +37,14 @@ def fast_exp2_f64(x: np.float64) -> np.float64:
 
     (Max rel error ~0.0026 over entire range.)
     """
-    # --- split in int + fraction -------------------------
+    # --- split in int + fraction ----------------
     k = np.floor(x)  # float64
     f = x - k  # f is in [0, 1)
 
-    # --- polynomial approximation ------------------------
+    # --- polynomial approximation ---------------
     exp2_f = _D20 + f * (_D21 + f * _D22)
 
-    # --- combine parts -----------------------------------
+    # --- combine parts --------------------------
     return np.float64(math.ldexp(exp2_f, int(k)))
 
 
@@ -54,14 +54,14 @@ def fast_exp2_f32(x: np.float32) -> np.float32:
 
     (Max rel error ~0.0026 over entire range.)
     """
-    # --- split in int + fraction -------------------------
+    # --- split in int + fraction ----------------
     k = np.floor(x)  # float32
     f = x - k  # f is in [0, 1)
 
-    # --- polynomial approximation ------------------------
+    # --- polynomial approximation ---------------
     exp2_f = _S20 + f * (_S21 + f * _S22)
 
-    # --- combine parts -----------------------------------
+    # --- combine parts --------------------------
     return exp2_f * power_of_2_f32(np.int32(k))
 
 

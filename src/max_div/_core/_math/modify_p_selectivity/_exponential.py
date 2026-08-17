@@ -74,7 +74,7 @@ def exponential_selectivity(
         reverse: (bool) if True, higher p_in values result in lower p_out values
         low_value: (float32) base of the exponential
     """
-    # --- init ----------------------------------
+    # --- init -----------------------------------
     n = p_in.shape[0]
     p_min = np.float32(np.inf)
     p_max = np.float32(-np.inf)
@@ -84,7 +84,7 @@ def exponential_selectivity(
         p_max = max(p_max, pi)
     p_range = p_max - p_min
 
-    # --- corner case ---------------------------
+    # --- corner case ----------------------------
     # Degenerate ranges fall back to uniform: all-equal inputs (p_range == 0) and
     # non-finite inputs (e.g. the +inf contribution of a sole selected item, which
     # makes p_range inf or nan) — the transform would emit NaNs for those.
@@ -95,5 +95,5 @@ def exponential_selectivity(
             p_out[i] = np.float32(1.0)
         return
 
-    # --- actual transformation -----------------
+    # --- actual transformation ------------------
     _exponential_transform(p_in, p_out, modifier, reverse, low_value, p_min, p_max, p_range)

@@ -40,7 +40,7 @@ def test_show_renders_ragged_parallel_arm(tmp_path: Path) -> None:
     The union of durations across columns includes budgets the parallel arm never ran, so those
     cells have no sample; the table must render them rather than reduce over an empty list.
     """
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # single-worker SMART at 0.5s and 2.0s; the parallel arm only at 2.0s
     results = [
         _result(0.5, n_workers=1, diversity=0.10),
@@ -49,10 +49,10 @@ def test_show_renders_ragged_parallel_arm(tmp_path: Path) -> None:
     ]
     out_file = tmp_path / "preset_results_U1_1000.md"
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     show_solver_presets_benchmark_results(results, markdown=True, markdown_file_name=str(out_file))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     text = out_file.read_text()
     assert "SMART (parallel x8)" in text  # the arm gets its own column
     assert "—" in text  # the 0.5s row's parallel cell is a placeholder

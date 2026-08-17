@@ -18,14 +18,14 @@ from max_div._core.metrics._distance._store._reads import _condensed_index
 def test_condensed_factory_fields():
     """A condensed store holds the given distances and n; unused backend fields are zero-size."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
     d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     store = DistanceStore.condensed(d, n=4)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(store, DistanceStore)
     assert store.kind == KIND_CONDENSED
     assert store.n == np.int32(4)
@@ -42,17 +42,17 @@ def test_condensed_factory_fields():
 def test_get_distance_condensed_values(i: int, j: int):
     """get_distance returns the correct condensed-layout value for every (i, j), including i == j."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
     d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
     store = DistanceStore.condensed(d, n=vectors.shape[0])
 
     expected_value = squareform(d)[i, j]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     value = get_distance(store, np.int32(i), np.int32(j))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert value == pytest.approx(expected_value)
 
 
@@ -62,13 +62,13 @@ def test_get_distance_condensed_values(i: int, j: int):
 def test_lazy_factory_fields():
     """A lazy store holds the vectors and metric selector; stored-distance fields are zero-size."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     store = DistanceStore.lazy(vectors, DistanceMetric.L2_EUCLIDEAN)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert store.kind == KIND_LAZY
     assert store.n == np.int32(4)
     assert store.pdist.size == 0
@@ -79,7 +79,7 @@ def test_lazy_factory_fields():
 def test_metric_kinds_cover_every_distance_metric():
     """Every DistanceMetric member must have an on-demand pair-kernel mapping (drift guard)."""
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     from max_div._core.metrics._distance._metric import _METRIC_KINDS
 
     assert set(_METRIC_KINDS) == set(DistanceMetric)
@@ -88,10 +88,10 @@ def test_metric_kinds_cover_every_distance_metric():
 def test_lazy_factory_cosine_zero_vector_raises():
     """The cosine zero-vector guard applies to lazy stores exactly as to precomputed distances."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     vectors = np.array([[1.0, 2.0], [0.0, 0.0]], dtype=np.float32)
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     with pytest.raises(ValueError, match="zero vector"):
         DistanceStore.lazy(vectors, DistanceMetric.COSINE)
 
@@ -102,13 +102,13 @@ def test_lazy_factory_cosine_zero_vector_raises():
 def test_full_matrix_factory_fields():
     """A full-matrix store holds the given matrix and n; other backend fields are zero-size."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     matrix = np.zeros((4, 4), dtype=np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     store = DistanceStore.full_matrix(matrix)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert store.kind == KIND_FULL_MATRIX
     assert store.n == np.int32(4)
     assert np.shares_memory(store.matrix, matrix)  # zero-copy: a read-only view, not a copy
@@ -120,15 +120,15 @@ def test_full_matrix_factory_fields():
 def test_full_matrix_construction_exactly_symmetric(metric: DistanceMetric):
     """Both full-matrix construction paths produce exactly symmetric matrices with zero diagonals."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260731)
     vectors = (rng.standard_normal((12, 3)) * 5).astype(np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     from_vectors = DistanceStore.full_matrix_from_vectors(vectors, metric)
     from_condensed = DistanceStore.full_matrix_from_condensed(compute_pdist(vectors, metric), n=12)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     for store in (from_vectors, from_condensed):
         np.testing.assert_array_equal(store.matrix, store.matrix.T)  # bit-exact symmetry
         np.testing.assert_array_equal(np.diag(store.matrix), np.zeros(12, dtype=np.float32))
@@ -171,16 +171,16 @@ def test_get_distance_agrees_across_backends(metric: DistanceMetric):
     fixed epsilon: a fixed one would be a flake generator at high dimensionality.
     """
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260731)
     vectors = (rng.standard_normal((15, 4)) * 10).astype(np.float32)
     n_dimensions = vectors.shape[1]
     tolerance = 8.0 * np.sqrt(n_dimensions) * np.finfo(np.float32).eps
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = _distances_per_backend(vectors, metric)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     reference = values.pop("condensed")
     scale = float(np.max(reference))
     for name, vals in values.items():
@@ -200,14 +200,14 @@ def test_get_distance_bit_equal_across_backends_canary(metric: DistanceMetric):
     goes green.
     """
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(20260731)
     vectors = (rng.standard_normal((15, 4)) * 10).astype(np.float32)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     values = _distances_per_backend(vectors, metric)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     reference = values.pop("condensed")
     for name, vals in values.items():
         np.testing.assert_array_equal(vals, reference, err_msg=f"backend {name} no longer bit-equal to condensed")
@@ -228,12 +228,12 @@ def test_get_distance_bit_equal_across_backends_canary(metric: DistanceMetric):
 def test_condensed_index_no_int32_overflow(i: int, j: int, n: int):
     """_condensed_index must return the exact condensed offset even where int32 arithmetic would overflow."""
 
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # reference offset computed with unbounded Python ints (the value the kernel must match)
     expected = (n * i) + j - ((i + 2) * (i + 1)) // 2
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     index = _condensed_index(np.int32(i), np.int32(j), np.int32(n))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert int(index) == expected

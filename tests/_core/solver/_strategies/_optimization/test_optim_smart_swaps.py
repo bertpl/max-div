@@ -10,7 +10,7 @@ def test_smart_preset_survives_tiny_problem_full_swap():
     # Regression: on tiny problems, SMART's adaptive swap size can grow to k, so the
     # removal loop ends up weighing a sole selected item whose contribution is +inf —
     # which used to NaN the removal probabilities and crash the solver.
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     rng = np.random.default_rng(7)
     vectors = rng.random((40, 3)).astype(np.float32)
     constraints = [
@@ -22,9 +22,9 @@ def test_smart_preset_survives_tiny_problem_full_swap():
     )
     solver = MaxDivSolverBuilder(problem).with_preset(iterations(800), SolverPreset.SMART).with_seed(0).build()
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     solution = solver.solve(verbosity=Verbosity.SILENT)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(solution.i_selected) == 6
     assert solution.n_constraints_satisfied == 2

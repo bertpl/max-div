@@ -25,26 +25,26 @@ def _selection(*indices: int) -> np.ndarray:
 # =================================================================================================
 def test_first_exchange_publishes(slot: GroupIncumbentSlot):
     """The first visitor always publishes: a never-written slot holds nothing to compare against."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     assert not slot.written
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     outcome = slot.exchange((1.0, 1.0, 0.5), _selection(0, 1, 2, 3))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert outcome is None
     assert slot.written
 
 
 def test_better_score_publishes(slot: GroupIncumbentSlot):
     """A strictly better score replaces the stored selection."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     slot.exchange((1.0, 1.0, 0.5), _selection(0, 1, 2, 3))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     outcome = slot.exchange((1.0, 1.0, 0.7), _selection(4, 5, 6, 7))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert outcome is None
     # a third, worse visitor receives the newly stored selection
     np.testing.assert_array_equal(slot.exchange((1.0, 1.0, 0.6), _selection(0, 1, 2, 3)), [4, 5, 6, 7])
@@ -52,13 +52,13 @@ def test_better_score_publishes(slot: GroupIncumbentSlot):
 
 def test_worse_score_receives_the_stored_selection(slot: GroupIncumbentSlot):
     """A strictly worse visitor gets the stored selection back and stores nothing."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     slot.exchange((1.0, 1.0, 0.5), _selection(3, 1, 0, 2))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     outcome = slot.exchange((1.0, 0.9, 0.8), _selection(4, 5, 6, 7))  # earlier component dominates
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(outcome, [3, 1, 0, 2])  # stored order preserved
     assert outcome.dtype == np.int32
     # the worse visitor stored nothing: a later visitor still receives the original selection
@@ -67,13 +67,13 @@ def test_worse_score_receives_the_stored_selection(slot: GroupIncumbentSlot):
 
 def test_equal_score_neither_publishes_nor_returns(slot: GroupIncumbentSlot):
     """Equal scores leave the slot untouched: adoption is strictly-better only."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     slot.exchange((1.0, 1.0, 0.5), _selection(0, 1, 2, 3))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     outcome = slot.exchange((1.0, 1.0, 0.5), _selection(4, 5, 6, 7))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert outcome is None
     # the equal visitor stored nothing: a worse visitor still receives the original selection
     np.testing.assert_array_equal(slot.exchange((1.0, 1.0, 0.4), _selection(4, 5, 6, 7)), [0, 1, 2, 3])
@@ -81,24 +81,24 @@ def test_equal_score_neither_publishes_nor_returns(slot: GroupIncumbentSlot):
 
 def test_partial_selection_round_trips(slot: GroupIncumbentSlot):
     """A selection smaller than k comes back at its own size, not padded to k."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     slot.exchange((0.5, 1.0, 0.5), _selection(2, 3))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     outcome = slot.exchange((0.4, 1.0, 0.5), _selection(1))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(outcome, [2, 3])
 
 
 def test_returned_selection_is_an_independent_copy(slot: GroupIncumbentSlot):
     """Mutating a returned selection must not corrupt what the slot stores."""
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     slot.exchange((1.0, 1.0, 0.5), _selection(0, 1, 2, 3))
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     outcome = slot.exchange((1.0, 1.0, 0.4), _selection(4, 5, 6, 7))
     outcome[:] = -1
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     np.testing.assert_array_equal(slot.exchange((1.0, 1.0, 0.4), _selection(4, 5, 6, 7)), [0, 1, 2, 3])

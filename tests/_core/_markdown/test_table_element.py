@@ -15,10 +15,10 @@ from max_div._core._utils import BenchmarkResult
 #  TableText
 # =================================================================================================
 def test_table_text():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table_text = TableText("my text\n**on two lines**")
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(table_text, TableText)
     assert not table_text.supports_aggregation
 
@@ -28,7 +28,7 @@ def test_table_text():
 
 
 def test_table_text_aggregate_not_implemented():
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     with pytest.raises(NotImplementedError):
         TableText.aggregate(
             elements=[TableText("a"), TableText("b")],
@@ -37,12 +37,12 @@ def test_table_text_aggregate_not_implemented():
 
 
 def test_table_text_lt_and_equalish():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     text_a = TableText("apple")
     text_b = TableText("banana")
     text_c = TableText("Apple")
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert text_a < text_b
     assert not (text_b < text_a)
 
@@ -54,10 +54,10 @@ def test_table_text_lt_and_equalish():
 #  TablePercentage
 # =================================================================================================
 def test_table_percentage():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table_perc = TablePercentage(frac=1.23456789, decimals=2)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(table_perc, TablePercentage)
     assert table_perc.supports_aggregation
 
@@ -68,31 +68,31 @@ def test_table_percentage():
 
 
 def test_table_percentage_aggregate():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     perc_1 = TablePercentage(frac=0.1, decimals=1)
     perc_2 = TablePercentage(frac=0.2, decimals=1)
     perc_3 = TablePercentage(frac=0.4, decimals=1)
     perc_4 = TablePercentage(frac=0.9, decimals=1)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     mean_perc = TablePercentage.aggregate(
         elements=[perc_1, perc_2, perc_3, perc_4],
         agg_type=TableAggregationType.MEAN,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(mean_perc, TablePercentage)
     assert mean_perc.frac == pytest.approx(0.4)
     assert mean_perc.decimals == 2  # max decimals + 1
 
 
 def test_table_percentage_lt_and_equalish():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     perc_1 = TablePercentage(frac=0.10, decimals=1)
     perc_2 = TablePercentage(frac=0.1001, decimals=1)
     perc_3 = TablePercentage(frac=0.40, decimals=1)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert perc_1 < perc_2 < perc_3
     assert min([perc_1, perc_2, perc_3]).frac == perc_1.frac
 
@@ -107,10 +107,10 @@ def test_table_percentage_lt_and_equalish():
 #  TableTimeElapsed
 # =================================================================================================
 def test_table_time_elapsed():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table_time = TableTimeElapsed(t_sec_q_25=0.9, t_sec_q_50=1.0, t_sec_q_75=1.1)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(table_time, TableTimeElapsed)
     assert table_time.supports_aggregation
 
@@ -122,18 +122,18 @@ def test_table_time_elapsed():
 
 
 def test_table_time_elapsed_aggregate():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     time_1 = TableTimeElapsed(t_sec_q_25=0.8, t_sec_q_50=1.0, t_sec_q_75=1.2)
     time_2 = TableTimeElapsed(t_sec_q_25=0.9, t_sec_q_50=1.1, t_sec_q_75=1.3)
     time_3 = TableTimeElapsed(t_sec_q_25=1.3, t_sec_q_50=1.5, t_sec_q_75=1.7)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     mean_time = TableTimeElapsed.aggregate(
         elements=[time_1, time_2, time_3],
         agg_type=TableAggregationType.MEAN,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(mean_time, TableTimeElapsed)
     assert mean_time.q_25 == pytest.approx(1.0)
     assert mean_time.q_50 == pytest.approx(1.2)
@@ -141,7 +141,7 @@ def test_table_time_elapsed_aggregate():
 
 
 def test_table_time_elapsed_factory_methods():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table_time_1 = TableTimeElapsed.from_benchmark_result(
         BenchmarkResult(
             t_sec_q_25=0.5,
@@ -151,7 +151,7 @@ def test_table_time_elapsed_factory_methods():
     )
     table_time_2 = TableTimeElapsed.from_values([0.8, 0.9, 1.0, 1.1, 1.2])
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(table_time_1, TableTimeElapsed)
     assert table_time_1.q_25 == 0.5
     assert table_time_1.q_50 == 1.0
@@ -164,7 +164,7 @@ def test_table_time_elapsed_factory_methods():
 
 
 def test_table_time_elapsed_lt_and_equalish():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # 4 times set up such that...
     #   - q50 increases strictly
     #   - time_1.q50 is in q25-q75 range of time_2, but NOT vice versa
@@ -174,7 +174,7 @@ def test_table_time_elapsed_lt_and_equalish():
     time_3 = TableTimeElapsed(1.1, 1.2, 1.3)
     time_4 = TableTimeElapsed(1.11, 1.21, 1.31)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert time_1 < time_2 < time_3 < time_4
 
     assert not time_1.is_equalish(time_2)
@@ -191,10 +191,10 @@ def test_table_time_elapsed_lt_and_equalish():
 #  TableValueWithUncertainty
 # =================================================================================================
 def test_table_value_with_uncertainty():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table_value = TableValueWithUncertainty(value_q_25=0.9, value_q_50=1.0, value_q_75=1.1, decimals=2)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(table_value, TableValueWithUncertainty)
     assert table_value.supports_aggregation
 
@@ -207,18 +207,18 @@ def test_table_value_with_uncertainty():
 
 
 def test_table_value_with_uncertainty_aggregate():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     value_1 = TableValueWithUncertainty(value_q_25=0.8, value_q_50=1.0, value_q_75=1.2, decimals=2)
     value_2 = TableValueWithUncertainty(value_q_25=0.9, value_q_50=1.1, value_q_75=1.3, decimals=2)
     value_3 = TableValueWithUncertainty(value_q_25=1.3, value_q_50=1.5, value_q_75=1.7, decimals=2)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     mean_value = TableValueWithUncertainty.aggregate(
         elements=[value_1, value_2, value_3],
         agg_type=TableAggregationType.MEAN,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(mean_value, TableValueWithUncertainty)
     assert mean_value.q_25 == pytest.approx(1.0)
     assert mean_value.q_50 == pytest.approx(1.2)
@@ -227,10 +227,10 @@ def test_table_value_with_uncertainty_aggregate():
 
 
 def test_table_value_with_uncertainty_from_values():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table_value = TableValueWithUncertainty.from_values([0.8, 0.9, 1.0, 1.1, 1.2], decimals=3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(table_value, TableValueWithUncertainty)
     assert table_value.q_25 == pytest.approx(0.9)
     assert table_value.q_50 == pytest.approx(1.0)
@@ -239,7 +239,7 @@ def test_table_value_with_uncertainty_from_values():
 
 
 def test_table_value_with_uncertainty_lt_and_equalish():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # 4 values set up such that...
     #   - q50 increases strictly
     #   - value_1.q50 is in q25-q75 range of value_2, but NOT vice versa
@@ -249,7 +249,7 @@ def test_table_value_with_uncertainty_lt_and_equalish():
     value_3 = TableValueWithUncertainty(value_q_25=1.1, value_q_50=1.2, value_q_75=1.3, decimals=2)
     value_4 = TableValueWithUncertainty(value_q_25=1.11, value_q_50=1.21, value_q_75=1.31, decimals=2)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert value_1 < value_2 < value_3 < value_4
 
     assert not value_1.is_equalish(value_2)
@@ -283,10 +283,10 @@ def test_table_value_with_uncertainty_lt_and_equalish():
     ],
 )
 def test_table_value_range(q25: float, q50: float, q75: float, expected_str: str):
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table_value = TableValueRange(value_q_25=q25, value_q_50=q50, value_q_75=q75, diff_decimals=3, max_decimals=9)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(table_value, TableValueRange)
     assert table_value.supports_aggregation
 
@@ -299,18 +299,18 @@ def test_table_value_range(q25: float, q50: float, q75: float, expected_str: str
 
 
 def test_table_value_range_aggregate():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     value_1 = TableValueRange(value_q_25=0.8, value_q_50=1.0, value_q_75=1.2, max_decimals=3, diff_decimals=2)
     value_2 = TableValueRange(value_q_25=0.9, value_q_50=1.1, value_q_75=1.3, max_decimals=3, diff_decimals=2)
     value_3 = TableValueRange(value_q_25=1.3, value_q_50=1.5, value_q_75=1.7, max_decimals=3, diff_decimals=2)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     mean_value = TableValueRange.aggregate(
         elements=[value_1, value_2, value_3],
         agg_type=TableAggregationType.MEAN,
     )
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(mean_value, TableValueRange)
     assert mean_value.q_25 == pytest.approx(1.0)
     assert mean_value.q_50 == pytest.approx(1.2)
@@ -320,10 +320,10 @@ def test_table_value_range_aggregate():
 
 
 def test_table_value_range_from_values():
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table_value = TableValueRange.from_values([0.8, 0.9, 1.0, 1.1, 1.2], max_decimals=5, diff_decimals=3)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert isinstance(table_value, TableValueRange)
     assert table_value.q_25 == pytest.approx(0.9)
     assert table_value.q_50 == pytest.approx(1.0)
@@ -333,7 +333,7 @@ def test_table_value_range_from_values():
 
 
 def test_table_value_range_lt_and_equalish():
-    # --- arrange -----------------------------------------
+    # --- arrange ----------------------
     # 4 values set up such that...
     #   - q50 increases strictly
     #   - value_1.q50 is in q25-q75 range of value_2, but NOT vice versa
@@ -343,7 +343,7 @@ def test_table_value_range_lt_and_equalish():
     value_3 = TableValueRange(value_q_25=1.1, value_q_50=1.2, value_q_75=1.3, max_decimals=3, diff_decimals=2)
     value_4 = TableValueRange(value_q_25=1.11, value_q_50=1.21, value_q_75=1.31, max_decimals=3, diff_decimals=2)
 
-    # --- act & assert ------------------------------------
+    # --- act & assert -----------------
     assert value_1 < value_2 < value_3 < value_4
 
     assert not value_1.is_equalish(value_2)

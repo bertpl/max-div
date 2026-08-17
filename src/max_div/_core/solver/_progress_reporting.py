@@ -79,7 +79,7 @@ class ProgressSnapshot:
     selection: NDArray[np.int32] | None  # currently selected indices, by reference into the live state
     ignore_infeasible_diversity: bool  # render diversity as not-yet-meaningful while infeasible
 
-    # --- materialized / multi-worker fields ---
+    # --- materialized / multi-worker fields -----
     # A snapshot that crosses a process boundary cannot carry the selection by reference or resolve a
     # debug callable, so the sender materializes these; `selection_hash` replaces `selection` and
     # `debug_info` replaces the `get_debug_info` callable. The worker fields exist only in the
@@ -540,10 +540,10 @@ def selection_hash_str(snapshot: ProgressSnapshot) -> str:
 
 def _selection_hash_hex(selection: NDArray[np.int32], n: int) -> str:
     """Return `n` hex characters hashed from the selected indices; empty when nothing is selected."""
-    # --- shortcut ---
+    # --- shortcut -------------------------------
     if n == 0:
         return ""
 
-    # --- generate hash ---
+    # --- generate hash --------------------------
     hash_array = np_int32_array_var_length_hash(selection, n)
     return "".join(f"{val & 0xF:x}" for val in hash_array)
