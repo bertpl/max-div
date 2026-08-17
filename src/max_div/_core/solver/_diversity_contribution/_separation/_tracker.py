@@ -37,12 +37,13 @@ class SeparationTracker(DiversityContributionTracker):
     ) -> None:
         """Initialize the SeparationTracker for an empty selection.
 
-        :param store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
-        :param sep_global: (np.ndarray[np.float32] | None) global-separation array to adopt; a fresh lazy
-                           (all-NaN) array if omitted.
-        :param sep_selected: (np.ndarray[np.float32] | None) current separations wrt selection; fresh (all +inf,
-                             i.e. empty selection) if omitted.  Together with `sep_global` this enables copies
-                             without recomputation.
+        Args:
+            store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
+            sep_global: (np.ndarray[np.float32] | None) global-separation array to adopt; a fresh lazy
+                (all-NaN) array if omitted.
+            sep_selected: (np.ndarray[np.float32] | None) current separations wrt selection; fresh (all +inf,
+                i.e. empty selection) if omitted.  Together with `sep_global` this enables copies
+                without recomputation.
         """
         self._store = store  # READ-ONLY
         # the layout is a property of the store, so which calculations apply is settled here

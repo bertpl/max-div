@@ -22,15 +22,16 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
 
         A prior is placed on the Lambda parameter, which is adapted based on feedback.
 
-        :param min_value: (int) minimum value to sample.
-        :param max_value: (int) maximum value to sample.
-        :param lambda_prior: (float in range [min_value, max_value]) prior expectation of the Poisson Lambda param
-        :param tau_learn: (float) time constant for learning from successful samples.
-        :param tau_forget: (float) time constant for forgetting learned probability
-                                                     in case of unsuccessful samples.
-        :param large_value_penalty_exponent: (float) exponent for penalizing larger values when learning, by using
-                                             learning factor  c = c_learn * ((lambda/sampled_value) ^ exponent).
-        :param seed: (int|int64) initial random seed for sampling.
+        Args:
+            min_value: (int) minimum value to sample.
+            max_value: (int) maximum value to sample.
+            lambda_prior: (float in range [min_value, max_value]) prior expectation of the Poisson Lambda param
+            tau_learn: (float) time constant for learning from successful samples.
+            tau_forget: (float) time constant for forgetting learned probability
+                in case of unsuccessful samples.
+            large_value_penalty_exponent: (float) exponent for penalizing larger values when learning, by using
+                learning factor  c = c_learn * ((lambda/sampled_value) ^ exponent).
+            seed: (int|int64) initial random seed for sampling.
         """
         super().__init__(tau_learn=tau_learn, tau_forget=tau_forget, seed=seed)
 

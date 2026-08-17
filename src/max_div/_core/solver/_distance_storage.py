@@ -63,9 +63,10 @@ def select_distance_storage(
     A pure function of its arguments — the memory probe is injected, so the selection is
     deterministic and testable.
 
-    :param problem: the problem to be solved.
-    :param storage: the user's choice, possibly AUTO.
-    :param total_memory_bytes: total physical RAM, or None when unknown (degrades to condensed).
+    Args:
+        problem: the problem to be solved.
+        storage: the user's choice, possibly AUTO.
+        total_memory_bytes: total physical RAM, or None when unknown (degrades to condensed).
     """
     if storage != DistanceStorage.AUTO:
         return storage

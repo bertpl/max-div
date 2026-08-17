@@ -40,11 +40,13 @@ class ParallelMaxDivSolver:
     ) -> None:
         """Hold the problem, the resolved backend, and one configuration per worker.
 
-        :param storage: the already-resolved backend the shared store is built in.
-        :param worker_configs: what each worker runs, reported back in the solution.
-        :param solver_configs: the solver each worker assembles, in the same order.
-        :param group_sizes: how the workers split into groups, as consecutive run lengths over
-                             the worker order; sizes must sum to the worker count.
+        Args:
+            problem: the MaxDivProblem every worker solves.
+            storage: the already-resolved backend the shared store is built in.
+            worker_configs: what each worker runs, reported back in the solution.
+            solver_configs: the solver each worker assembles, in the same order.
+            group_sizes: how the workers split into groups, as consecutive run lengths over
+                the worker order; sizes must sum to the worker count.
         """
         self._problem = problem
         self._storage = storage
@@ -60,11 +62,14 @@ class ParallelMaxDivSolver:
 
         The distances are built once, into shared memory, and released when the last worker is done.
 
-        :param verbosity: (int | Verbosity) The verbosity level, with the same levels as a single
-                          solve (see `Verbosity`), rendered as one combined live view over all
-                          workers (see `ParallelProgressView`). The default differs from a single
-                          solve's progress bar because parallel runs are typically longer.
-        :raises ValueError: If no worker reported a result, which means every one of them failed.
+        Args:
+            verbosity: (int | Verbosity) The verbosity level, with the same levels as a single
+                solve (see `Verbosity`), rendered as one combined live view over all
+                workers (see `ParallelProgressView`). The default differs from a single
+                solve's progress bar because parallel runs are typically longer.
+
+        Raises:
+            ValueError: If no worker reported a result, which means every one of them failed.
         """
         progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)
         with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:

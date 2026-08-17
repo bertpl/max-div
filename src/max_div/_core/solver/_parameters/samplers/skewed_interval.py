@@ -24,13 +24,14 @@ class SkewedIntervalAdaptiveSampler(AdaptiveSampler[np.float32]):
 
         For numerical robustness, the median parameter of the underlying distribution, is limited to [0.01, 0.99].
 
-        :param min_value: (int) minimum value to sample.
-        :param max_value: (int) maximum value to sample.
-        :param median_prior: (float in range [min_value, max_value]) prior expectation of the median of the distribution
-        :param tau_learn: (float) time constant for learning from successful samples.
-        :param tau_forget: (float) time constant for forgetting learned probability
-                                                     in case of unsuccessful samples.
-        :param seed: (int|int64) initial random seed for sampling.
+        Args:
+            min_value: (int) minimum value to sample.
+            max_value: (int) maximum value to sample.
+            median_prior: (float in range [min_value, max_value]) prior expectation of the median of the distribution
+            tau_learn: (float) time constant for learning from successful samples.
+            tau_forget: (float) time constant for forgetting learned probability
+                in case of unsuccessful samples.
+            seed: (int|int64) initial random seed for sampling.
         """
         super().__init__(tau_learn=tau_learn, tau_forget=tau_forget, seed=seed)
 

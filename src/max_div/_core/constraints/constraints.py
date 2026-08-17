@@ -94,8 +94,11 @@ def _build_array_repr(
       - con_values: 2D numpy array of shape (m, 2) with min_count and max_count for each constraint
       - con_indices: 1D numpy array of shape (2*m + n_indices,) with indexed, concatenated indices of all cons.
 
-    :param cons: list of Constraint objects
-    :return: tuple of (con_values, con_indices)
+    Args:
+        cons: list of Constraint objects
+
+    Returns:
+        tuple of (con_values, con_indices)
     """
     # get dimensions
     m = len(cons)

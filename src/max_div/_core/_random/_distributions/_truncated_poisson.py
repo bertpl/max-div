@@ -22,11 +22,14 @@ def sample_truncated_poisson(
 
     NOTE: we can also omit the constant factor e^(-λ) as it is the same for all k and we don't need normalized p.
 
-    :param min_value: (np.int32) minimum value (inclusive)
-    :param max_value: (np.int32) maximum value (inclusive)
-    :param _lambda: (np.float32) lambda parameter of the Poisson distribution
-    :param rng_state: (np.uint64 array) RNG state for underlying random sampling
-    :return: (np.int32) single sample from the truncated Poisson distribution in range [min_value, max_value]
+    Args:
+        min_value: (np.int32) minimum value (inclusive)
+        max_value: (np.int32) maximum value (inclusive)
+        _lambda: (np.float32) lambda parameter of the Poisson distribution
+        rng_state: (np.uint64 array) RNG state for underlying random sampling
+
+    Returns:
+        (np.int32) single sample from the truncated Poisson distribution in range [min_value, max_value]
     """
     # --- generate p ------------------
     p = np.zeros(max_value - min_value + 1, dtype=np.float32)
@@ -44,10 +47,13 @@ def sample_truncated_poisson(
 def truncated_poisson_expected_value(min_value: np.int32, max_value: np.int32, _lambda: np.float32) -> np.float32:
     """Compute expected value of a two-sided truncated Poisson distribution with given min, max & lambda values.
 
-    :param min_value: (np.int32) minimum value (inclusive)
-    :param max_value: (np.int32) maximum value (inclusive)
-    :param _lambda: (np.float32) lambda parameter of the Poisson distribution
-    :return: (np.float32) expected value of the truncated Poisson distribution in range [min_value, max_value]
+    Args:
+        min_value: (np.int32) minimum value (inclusive)
+        max_value: (np.int32) maximum value (inclusive)
+        _lambda: (np.float32) lambda parameter of the Poisson distribution
+
+    Returns:
+        (np.float32) expected value of the truncated Poisson distribution in range [min_value, max_value]
     """
     # --- compute p -------------------
     p = np.zeros(max_value - min_value + 1, dtype=np.float32)

@@ -92,8 +92,11 @@ class SharedDistanceStore:
 
         The buffer starts uninitialized: the caller fills it before publishing the spec.
 
-        :param kind: the DistanceStore backend selector the buffer holds data for.
-        :param metric_kind: metric selector, meaningful for the lazy backend only.
+        Args:
+            shape: the buffer shape to size the segment for; its product is the float32 element count.
+            kind: the DistanceStore backend selector the buffer holds data for.
+            n: the number of items the distances are over.
+            metric_kind: metric selector, meaningful for the lazy backend only.
         """
         # a zero-size segment is rejected by the OS, so degenerate shapes still claim one byte
         size_bytes = max(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize, 1)

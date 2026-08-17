@@ -29,8 +29,9 @@ class ParallelProgressView:
     def __init__(self, reporter: ProgressReporter, n_workers: int) -> None:
         """Render through `reporter`, which decides throttling and layout; the view only composes.
 
-        :param reporter: an ordinary rendering reporter (a tabular one laid out with worker columns).
-        :param n_workers: how many workers the portfolio runs; indices `0..n_workers-1` are tracked.
+        Args:
+            reporter: an ordinary rendering reporter (a tabular one laid out with worker columns).
+            n_workers: how many workers the portfolio runs; indices `0..n_workers-1` are tracked.
         """
         self._reporter = reporter
         self._n_workers = n_workers

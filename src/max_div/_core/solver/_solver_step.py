@@ -62,10 +62,13 @@ class SolverStep(ABC, Generic[S]):
     ) -> SolverStepResult:
         """Execute the solver step by running a strategy once or repeatedly, and return its result.
 
-        :param coordinator: a `WorkerCoordinator` this step calls at each batch boundary; a step that
-                            runs as a single batch ignores it.
-        :param batch_seconds: targeted wall-clock size of one batch.  Like `coordinator`, it is
-                              ignored by steps that run as a single batch.
+        Args:
+            state: the mutable solver state the step reads and updates.
+            progress_reporter: receives progress updates during the run; `None` disables reporting.
+            coordinator: a `WorkerCoordinator` this step calls at each batch boundary; a step that
+                runs as a single batch ignores it.
+            batch_seconds: targeted wall-clock size of one batch.  Like `coordinator`, it is
+                ignored by steps that run as a single batch.
         """
         raise NotImplementedError
 

@@ -85,16 +85,19 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
 
     <br>
 
-    :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
-    :param k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
-    :param replace: Whether to sample with replacement.
-    :param p: 1D array of probabilities associated with each integer in the range.
-              Size must be equal to max_value + 1, and should have non-negative values. Sum is not require to be 1.
-              NOTE: if size is 0, indicates no probabilities specified.  Use the constant P_UNIFORM for this.
-                    if size > 0, but not equal to max_value+1, a ValueError is raised.
-    :param rng_state: (2-element uint64 array) RNG state to be used (and updated in-place)
-                      Use new_rng_state(seed) to generate a new one based on an integer seed.
-    :return: (k,)-sized array with sampled np.int32 values.
+    Args:
+        n: defines population to sample from as range [0, n-1].  `n` must be >0.
+        k: The number of integers to sample (>0).  `k=None` indicates a single integer sample.
+        replace: Whether to sample with replacement.
+        p: 1D array of probabilities associated with each integer in the range.
+            Size must be equal to max_value + 1, and should have non-negative values. Sum is not require to be 1.
+            NOTE: if size is 0, indicates no probabilities specified.  Use the constant P_UNIFORM for this.
+            if size > 0, but not equal to max_value+1, a ValueError is raised.
+        rng_state: (2-element uint64 array) RNG state to be used (and updated in-place)
+            Use new_rng_state(seed) to generate a new one based on an integer seed.
+
+    Returns:
+        (k,)-sized array with sampled np.int32 values.
     """
     if n < 1:
         raise ValueError(f"n must be >=1. (here: {n})")
@@ -233,14 +236,17 @@ def randint1(
 
     NOTE: this method guarantees that when probabilities are provided, the returned sample will always have p[i]>0.0.
 
-    :param n: defines population to sample from as range [0, n-1].  `n` must be >0.
-    :param p: 1D array of probabilities associated with each integer in the range.
-              Size must be equal to max_value + 1, and should have non-negative values. Sum is not require to be 1.
-              NOTE: if size is 0, indicates no probabilities specified.  Use the constant P_UNIFORM for this.
-                    if size > 0, but not equal to max_value+1, a ValueError is raised.
-    :param rng_state: (2-element uint64 array) RNG state to be used (and updated in-place)
-                      Use new_rng_state(seed) to generate a new one based on an integer seed.
-    :return: (np.int32) generated sample.
+    Args:
+        n: defines population to sample from as range [0, n-1].  `n` must be >0.
+        p: 1D array of probabilities associated with each integer in the range.
+            Size must be equal to max_value + 1, and should have non-negative values. Sum is not require to be 1.
+            NOTE: if size is 0, indicates no probabilities specified.  Use the constant P_UNIFORM for this.
+            if size > 0, but not equal to max_value+1, a ValueError is raised.
+        rng_state: (2-element uint64 array) RNG state to be used (and updated in-place)
+            Use new_rng_state(seed) to generate a new one based on an integer seed.
+
+    Returns:
+        (np.int32) generated sample.
     """
     if n < 1:
         raise ValueError(f"n must be >=1. (here: {n})")

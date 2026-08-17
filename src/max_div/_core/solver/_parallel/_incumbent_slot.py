@@ -31,11 +31,12 @@ class GroupIncumbentSlot:
     def __init__(self, context: BaseContext, k: int, score_length: int) -> None:
         """Allocate the shared-memory fields; call in the parent, before workers spawn.
 
-        :param context: (BaseContext) the multiprocessing context the workers spawn from.
-        :param k: (int) maximum selection size the slot can hold.
-        :param score_length: (int) number of components in the workers' score tuples — a property
-                             of the shared metric configuration, so identical across a worker
-                             group's workers.
+        Args:
+            context: (BaseContext) the multiprocessing context the workers spawn from.
+            k: (int) maximum selection size the slot can hold.
+            score_length: (int) number of components in the workers' score tuples — a property
+                of the shared metric configuration, so identical across a worker
+                group's workers.
         """
         self._lock = context.Lock()
         # False until the first publish: an all-zero score array is a legal real score, so the
@@ -56,9 +57,12 @@ class GroupIncumbentSlot:
           worker to adopt;
         - equal scores: nothing is stored and None is returned.
 
-        :param score: (tuple[float, ...]) the worker's current score, as `Score.as_tuple()` orders it.
-        :param selection: (int32 ndarray) the worker's current selection.
-        :returns: the stored selection to adopt, or None to keep the worker's own.
+        Args:
+            score: (tuple[float, ...]) the worker's current score, as `Score.as_tuple()` orders it.
+            selection: (int32 ndarray) the worker's current selection.
+
+        Returns:
+            the stored selection to adopt, or None to keep the worker's own.
         """
         with self._lock:
             if not self._written.value or score > tuple(self._score):

@@ -38,7 +38,8 @@ class InitMostFeasible(InitializationStrategy):
     def __init__(self, max_iter: int = CONSTRUCTION_DEFAULT_ITER) -> None:
         """Create the strategy.
 
-        :raises ValueError: If `max_iter` is below 1.
+        Raises:
+            ValueError: If `max_iter` is below 1.
         """
         super().__init__()
         if max_iter < 1:

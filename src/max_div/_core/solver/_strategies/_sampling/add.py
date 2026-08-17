@@ -41,22 +41,25 @@ def select_items_to_add(
 
     Candidates are guaranteed to be a subset of the not-selected items in the SolverState.
 
-    :param state: (SolverState) The current solver state containing selected items and other relevant information.
-    :param candidates: (NDArray[np.int32]) array of candidate item indices to choose from
-                                                    (must be a subset of not-selected items; must be of size>=k)
-    :param k: (int) number of items to add to the selection.
-    :param selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the
-                                 diversity-contribution-based probabilities used for sampling items to be added.
-                                    -1: maximally un-selective --> uniform
-                                     0: no modification to the contribution-based probabilities
-                                    +1: maximally selective --> only the items with very lowest contribution are sampled
-    :param rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
-    :param sampling_type: (SamplingType) context in which the k items are being sampled (GROUP vs CANDIDATES)
-    :param include_within_group_contribution: (bool) flag that influences how sampling probabilities are built.
-                                 True: start from contribution wrt already selected items + within-group contribution
-                                 False: start from contribution wrt already selected items only
-    :param ignore_constraints: (bool) If True, constraints are ignored even if present in the SolverState.
-    :return: list of np.int32 indices of the items to be added to the selection (unique values, unsorted).
+    Args:
+        state: (SolverState) The current solver state containing selected items and other relevant information.
+        candidates: (NDArray[np.int32]) array of candidate item indices to choose from
+            (must be a subset of not-selected items; must be of size>=k)
+        k: (int) number of items to add to the selection.
+        selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the
+            diversity-contribution-based probabilities used for sampling items to be added.
+            -1: maximally un-selective --> uniform
+            0: no modification to the contribution-based probabilities
+            +1: maximally selective --> only the items with very lowest contribution are sampled
+        rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
+        sampling_type: (SamplingType) context in which the k items are being sampled (GROUP vs CANDIDATES)
+        include_within_group_contribution: (bool) flag that influences how sampling probabilities are built.
+            True: start from contribution wrt already selected items + within-group contribution
+            False: start from contribution wrt already selected items only
+        ignore_constraints: (bool) If True, constraints are ignored even if present in the SolverState.
+
+    Returns:
+        list of np.int32 indices of the items to be added to the selection (unique values, unsorted).
     """
     # --- prepare probabilities ---------------------------
     if state.n_selected == 0:

@@ -36,12 +36,15 @@ def _compute_score(
 
     The basic idea behind the scoring is that -if at all possible- integers with score <= 0 will not be sampled.
 
-    :param n: range to score [0, n)
-    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint
-    :param con_indices: 1D array with constraint indices in the format described in _constraints.py
-    :param already_sampled: 1D array of integers already sampled (negative values indicate no more samples)
-    :param hard_max_constraints: if True, integers that would violate max_count constraints are heavily penalized
-    :return: array of scores for each integer
+    Args:
+        n: range to score [0, n)
+        con_values: 2D array (m, 2) with min_count and max_count for each constraint
+        con_indices: 1D array with constraint indices in the format described in _constraints.py
+        already_sampled: 1D array of integers already sampled (negative values indicate no more samples)
+        hard_max_constraints: if True, integers that would violate max_count constraints are heavily penalized
+
+    Returns:
+        array of scores for each integer
     """
     m = con_values.shape[0]
 
@@ -109,28 +112,30 @@ def randint_constrained(  # noqa: C901 — case-dispatch structure is clearer un
      3) satisfy constraints
      4) if p is provided, don't sample from integers with p=0
 
-    :param n: range to sample from [0, n)
-    :param k: number of unique samples to draw (no replacement)
-    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
-    :param con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
-    :param p: optional, target probabilities for each integer in `[0, n)`                            (never modified!)
-    :param rng_state: (2-element uint64 array) state for random number generation; updated in-place.
-                                (use new_rng_state(seed) to construct an initial state)            (modified in-place)
-    :param eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
-                  increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
-                  and adherence to the provided p-values.
-    :param k_context: (int, default=-1) number of total samples - in the bigger context - we want to sample in order to
-                        satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
-                        constraints, giving it potentially more liberty to pick from a wider range of samples and with
-                        potentially higher p-values.
+    Args:
+        n: range to sample from [0, n)
+        k: number of unique samples to draw (no replacement)
+        con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
+        con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
+        p: optional, target probabilities for each integer in `[0, n)`                            (never modified!)
+        rng_state: (2-element uint64 array) state for random number generation; updated in-place.
+            (use new_rng_state(seed) to construct an initial state)            (modified in-place)
+        eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
+            increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
+            and adherence to the provided p-values.
+        k_context: (int, default=-1) number of total samples - in the bigger context - we want to sample in order to
+            satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
+            constraints, giving it potentially more liberty to pick from a wider range of samples and with
+            potentially higher p-values.
 
                       Two cases:
                         a) not provided or <=k:  the algorithm assumes k_context = k
                         b) provided and >k:      the algorithm knows that more samples will be drawn later.
 
-    :param i_forbidden: (optional) 1D array of integers in `[0, n)` that must not be sampled         (never modified!)
+        i_forbidden: (optional) 1D array of integers in `[0, n)` that must not be sampled         (never modified!)
 
-    :return: array of samples
+    Returns:
+        array of samples
     """
     # --- parameter validation ----------------------------
     n_forbidden = i_forbidden.shape[0]

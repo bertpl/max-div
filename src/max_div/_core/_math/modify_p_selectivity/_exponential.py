@@ -67,11 +67,12 @@ def exponential_selectivity(
     The approximate function fast_exp2(exponent * np.log2(base)) is used to compute the exponentiation efficiently,
       taking into account that np.log2(low_value) can be precomputed outside the loop.
 
-    :param p_in: np.ndarray of shape (n,) containing the original probabilities.
-    :param p_out: np.ndarray of shape (n,) to be populated with the transformed probabilities.
-    :param modifier: float32 in (-1, 1) indicating how to modify selectivity
-    :param reverse: (bool) if True, higher p_in values result in lower p_out values
-    :param low_value: (float32) base of the exponential
+    Args:
+        p_in: np.ndarray of shape (n,) containing the original probabilities.
+        p_out: np.ndarray of shape (n,) to be populated with the transformed probabilities.
+        modifier: float32 in (-1, 1) indicating how to modify selectivity
+        reverse: (bool) if True, higher p_in values result in lower p_out values
+        low_value: (float32) base of the exponential
     """
     # --- init ----------------------------------
     n = p_in.shape[0]

@@ -17,13 +17,16 @@ def choice(
 
     This method is nearly a drop-in replacement for numpy.random.choice with similar parameters, optimized for speed.
 
-    :param values: ((n,)-sized NDArray[np.int32]) The array of values to sample from.
-    :param k: (np.int32) The number of samples to draw.
-    :param replace: (bool) Whether to sample with replacement.
-    :param p: (NDArray[np.float32]) The probabilities associated with each value. If provided with a (0,)-sized array,
-                                    uniform sampling is used.  The constant 'P_UNIFORM' can be used for this purpose.
-    :param rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
-    :return: (NDArray[np.int32]) The array of samples, size (k,), taken from the provided 'values' array.
+    Args:
+        values: ((n,)-sized NDArray[np.int32]) The array of values to sample from.
+        k: (np.int32) The number of samples to draw.
+        replace: (bool) Whether to sample with replacement.
+        p: (NDArray[np.float32]) The probabilities associated with each value. If provided with a (0,)-sized array,
+            uniform sampling is used.  The constant 'P_UNIFORM' can be used for this purpose.
+        rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
+
+    Returns:
+        (NDArray[np.int32]) The array of samples, size (k,), taken from the provided 'values' array.
     """
     # first, sample k values from range [0, n)
     n = np.int32(values.shape[0])
@@ -47,11 +50,14 @@ def choice1(
 
     NOTE: this method guarantees that when probabilities are provided, the returned sample will always have p[i]>0.0.
 
-    :param values: ((n,)-sized NDArray[np.int32]) The array of values to sample from.
-    :param p: (NDArray[np.float32]) The probabilities associated with each value. If provided with a (0,)-sized array,
-                                    uniform sampling is used.  The constant 'P_UNIFORM' can be used for this purpose.
-    :param rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
-    :return: (np.int32) sample taken from 'values' array.
+    Args:
+        values: ((n,)-sized NDArray[np.int32]) The array of values to sample from.
+        p: (NDArray[np.float32]) The probabilities associated with each value. If provided with a (0,)-sized array,
+            uniform sampling is used.  The constant 'P_UNIFORM' can be used for this purpose.
+        rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
+
+    Returns:
+        (np.int32) sample taken from 'values' array.
     """
     n = np.int32(values.size)
     i = randint1(n=n, p=p, rng_state=rng_state)

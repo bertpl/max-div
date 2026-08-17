@@ -43,8 +43,11 @@ def best_result(results: list[WorkerResult]) -> WorkerResult:
 
     The same seeds give the same winner every run, whichever worker reports first.
 
-    :param results: what each worker reported; workers that failed are simply absent.
-    :raises ValueError: If no results were collected, which means every worker failed.
+    Args:
+        results: what each worker reported; workers that failed are simply absent.
+
+    Raises:
+        ValueError: If no results were collected, which means every worker failed.
     """
     if not results:
         raise ValueError("A portfolio returned no results at all; every worker failed to report one.")

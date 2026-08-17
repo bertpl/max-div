@@ -55,8 +55,9 @@ class DiversityContributionTrackers:
     ) -> None:
         """Initialize from an explicit family -> tracker mapping; prefer the for_metrics() factory.
 
-        :param trackers_by_family: (dict) one tracker per tracked contribution family.
-        :param main_family: (DiversityContributionFamily) family of the main diversity metric.
+        Args:
+            trackers_by_family: (dict) one tracker per tracked contribution family.
+            main_family: (DiversityContributionFamily) family of the main diversity metric.
         """
         self._trackers_by_family = trackers_by_family  # READ-ONLY
         self._main_family = main_family  # READ-ONLY
@@ -75,9 +76,10 @@ class DiversityContributionTrackers:
     ) -> DiversityContributionTrackers:
         """Build the tracker set required by the given metrics (main metric's family first).
 
-        :param diversity_metric: (DiversityMetric) the main diversity metric.
-        :param diversity_tie_breakers: (list[DiversityMetric]) the configured tie-breaker metrics.
-        :param store: (DistanceStore) pairwise-distance storage the trackers read from.
+        Args:
+            diversity_metric: (DiversityMetric) the main diversity metric.
+            diversity_tie_breakers: (list[DiversityMetric]) the configured tie-breaker metrics.
+            store: (DistanceStore) pairwise-distance storage the trackers read from.
         """
         main_family = diversity_metric.contribution_family
         families = dict.fromkeys([main_family, *(tb.contribution_family for tb in diversity_tie_breakers)])
@@ -151,8 +153,9 @@ class DiversityContributionTrackers:
         Slots of families this set does not track hold a shared empty array (never read, since the
         score generator only consumes the families its metrics were bound to).
 
-        :param selected: (n-sized bool ndarray) current selection mask.
-        :param n_selected: (np.int32) number of True values in `selected`.
+        Args:
+            selected: (n-sized bool ndarray) current selection mask.
+            n_selected: (np.int32) number of True values in `selected`.
         """
         sep_tracker = self._separation_tracker
         mean_tracker = self._mean_distance_tracker

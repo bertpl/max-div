@@ -11,12 +11,15 @@ def randint_python(  # noqa: C901 — case-dispatch structure is clearer un-spli
 ) -> NDArray[np.int32]:
     """Sample integers with the non-numba, numpy-based equivalent of randint, purely for speed comparison purposes.
 
-    :param n: (int) upper bound of range to sample from [0, n)
-    :param k: (int) number of samples to be returned
-    :param replace: (bool) whether sampling is with replacement
-    :param p: (np.array[np.float32] | None) optional probability weights for sampling, if None, sampling is uniform.
-    :param seed: (int|None) optional random seed for reproducibility.
-    :return: np.array[np.int32] of shape (k,) containing the sampled integers.
+    Args:
+        n: (int) upper bound of range to sample from [0, n)
+        k: (int) number of samples to be returned
+        replace: (bool) whether sampling is with replacement
+        p: (np.array[np.float32] | None) optional probability weights for sampling, if None, sampling is uniform.
+        seed: (int|None) optional random seed for reproducibility.
+
+    Returns:
+        np.array[np.int32] of shape (k,) containing the sampled integers.
     """
     # --- argument handling ---------------------------
     if k is None:

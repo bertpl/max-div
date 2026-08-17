@@ -11,15 +11,18 @@ def select_items_to_remove(
 ) -> NDArray[np.int32]:
     """Select k items to be removed from the current selection in the provided SolverState.
 
-    :param state: (SolverState) The current solver state containing selected items and other relevant information.
-    :param k: (int) number of items to remove from the selection.
-    :param selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the
-                                 diversity-contribution-based probabilities used for sampling items to be removed.
-                                    -1: maximally un-selective --> uniform
-                                     0: no modification to the contribution-based probabilities
-                                    +1: maximally selective --> only the items with very lowest contribution are sampled
-    :param rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
-    :return: list of np.int32 indices of the items to be removed from the selection (unique values, unsorted).
+    Args:
+        state: (SolverState) The current solver state containing selected items and other relevant information.
+        k: (int) number of items to remove from the selection.
+        selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the
+            diversity-contribution-based probabilities used for sampling items to be removed.
+            -1: maximally un-selective --> uniform
+            0: no modification to the contribution-based probabilities
+            +1: maximally selective --> only the items with very lowest contribution are sampled
+        rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
+
+    Returns:
+        list of np.int32 indices of the items to be removed from the selection (unique values, unsorted).
     """
     # --- guiding probabilities for removal ---
     p = state.selected_contribution_array  # this creates a copy

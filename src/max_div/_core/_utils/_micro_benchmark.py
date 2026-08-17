@@ -37,8 +37,11 @@ class BenchmarkResult:
     def from_list(cls, lst: list[float]) -> BenchmarkResult:
         """Create a BenchmarkResult from a list of measured times.
 
-        :param lst: List of measured times in seconds
-        :return: BenchmarkResult with computed q25, q50, q75
+        Args:
+            lst: List of measured times in seconds
+
+        Returns:
+            BenchmarkResult with computed q25, q50, q75
         """
         q25, q50, q75 = np.quantile(lst, [0.25, 0.50, 0.75])
         return BenchmarkResult(t_sec_q_25=float(q25), t_sec_q_50=float(q50), t_sec_q_75=float(q75))
@@ -47,9 +50,12 @@ class BenchmarkResult:
     def aggregate(cls, results: list[BenchmarkResult], method: Literal["mean", "geomean", "sum"]) -> BenchmarkResult:
         """Aggregate multiple BenchmarkResults into one, by aggregating q25, q50, q75 values separately.
 
-        :param results: List of BenchmarkResult objects to aggregate
-        :param method: Aggregation method - "mean", "geomean" (geometric mean), or "sum"
-        :return: Aggregated BenchmarkResult
+        Args:
+            results: List of BenchmarkResult objects to aggregate
+            method: Aggregation method - "mean", "geomean" (geometric mean), or "sum"
+
+        Returns:
+            Aggregated BenchmarkResult
         """
         if not results:
             raise ValueError("Cannot aggregate empty list of results")
@@ -91,16 +97,19 @@ def benchmark(  # noqa: C901 — case-dispatch structure is clearer un-split
 ) -> BenchmarkResult:
     """Adaptive micro-benchmarking function, to determine the duration/execution of the provided callable `f`.
 
-    :param f: (Callable) Function to benchmark. Should take no arguments.
-    :param t_per_run: (float, default=0.1) time in seconds we want to target per benchmarking run.
-                      # of executions/run is adjusted to meet this target.
-    :param n_warmup: (int, default=5) Number of warmup runs to perform before benchmarking.
-    :param n_benchmark: (int, default=30) Number of benchmark runs to perform.
-    :param silent: (bool, default=False) If True, suppresses any output during benchmarking.
-    :param index_range: (int | None, default=None) If provided, indicates that the benchmarking function accepts an
-                         integer index 'i' in range [0, index_range). When running the benchmark, 'i' will be cycled
-                         through this range to allow for more diverse execution paths.
-    :return: Median estimate of duration/execution of `f` in seconds.
+    Args:
+        f: (Callable) Function to benchmark. Should take no arguments.
+        t_per_run: (float, default=0.1) time in seconds we want to target per benchmarking run.
+            # of executions/run is adjusted to meet this target.
+        n_warmup: (int, default=5) Number of warmup runs to perform before benchmarking.
+        n_benchmark: (int, default=30) Number of benchmark runs to perform.
+        silent: (bool, default=False) If True, suppresses any output during benchmarking.
+        index_range: (int | None, default=None) If provided, indicates that the benchmarking function accepts an
+            integer index 'i' in range [0, index_range). When running the benchmark, 'i' will be cycled
+            through this range to allow for more diverse execution paths.
+
+    Returns:
+        Median estimate of duration/execution of `f` in seconds.
     """
     # --- init --------------------------------------------
     lst_t = []  # list of measured times per execution in seconds

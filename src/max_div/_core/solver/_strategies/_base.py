@@ -18,7 +18,8 @@ class StrategyBase:
     def __init__(self, name: str | None = None) -> None:
         """Initialize the strategy.
 
-        :param name: optional name of the strategy; if omitted class name is used.
+        Args:
+            name: optional name of the strategy; if omitted class name is used.
         """
         self._name: str = name or self.__class__.__name__
         self._seed: np.int64 = deterministic_hash_int64(self._name)

@@ -26,7 +26,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     #  Constructor
     # -------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
-        """:param problem: The MaxDivProblem to solve."""
+        """Initialize the builder for `problem` with a default initialization strategy."""
         super().__init__(problem)
         self._solver_steps: list[SolverStep] = [
             InitializationStep(InitializationStrategy.random_one_shot()),  # Default initialization strategy
@@ -70,9 +70,10 @@ class MaxDivSolverBuilder(SolverBuilderBase):
 
         Please make sure to set diversity metric prior to calling this method, as it influences the choices.
 
-        :param target_duration: Target duration for the init+optim phases (either in time or iterations).
-                                       --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
-        :param preset: Preset to use (default: SolverPreset.DEFAULT)
+        Args:
+            target_duration: Target duration for the init+optim phases (either in time or iterations).
+                --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
+            preset: Preset to use (default: SolverPreset.DEFAULT)
         """
         # --- apply main preset logic -----------
         init_strategy, optim_steps = get_preset_strategies(

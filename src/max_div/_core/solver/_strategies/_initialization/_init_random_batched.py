@@ -52,10 +52,11 @@ class InitRandomBatched(InitializationStrategy):
     def __init__(self, b: int, ignore_constraints: bool = False) -> None:
         """Constructor for InitRandomBatched class.
 
-        :param b: (int) Number of batches to sample (must be > 1).
-        :param ignore_constraints: (bool, default=False)
-                                If `False`, respects problem constraints during initialization, if present.
-                                If `True`, constraints are ignored.
+        Args:
+            b: (int) Number of batches to sample (must be > 1).
+            ignore_constraints: (bool, default=False)
+                If `False`, respects problem constraints during initialization, if present.
+                If `True`, constraints are ignored.
         """
         # --- parameter validation --------------
         if b <= 1:

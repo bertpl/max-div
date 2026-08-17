@@ -50,7 +50,7 @@ plugins:
             line_length: 80
             show_source: false
             members_order: source
-            docstring_style: sphinx  # or numpy, or google
+            docstring_style: google
             merge_init_into_class: true
             show_submodules: false
             show_root_heading: true

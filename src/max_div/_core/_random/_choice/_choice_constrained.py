@@ -25,27 +25,30 @@ def choice_constrained(
       - `con_values` and `con_indices` can be constructed using ConstraintList(constraints).to_numpy()
       - `con_indices` refers to values of the `values` array, not indices into it.
 
-    :param n: (np.int32) specify the 'encompassing range' [0, n) from which 'values' are drawn and to which
-                           `con_indices` are restricted.
-    :param values: (NDArray[np.int32]) The array of values to sample from.
-    :param k: (np.int32) The number of samples to draw.
-    :param p: (NDArray[np.float32]) The probabilities associated with each value. If provided with a (0,)-sized array,
-                                    uniform sampling is used.  The constant 'P_UNIFORM' can be used for this purpose.
-    :param rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
-    :param con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
-    :param con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
-    :param eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
-                  increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
-                  and adherence to the provided p-values.
-    :param k_context: (int, default=-1) number of total samples - in the bigger context - we want to sample in order to
-                        satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
-                        constraints, giving it potentially more liberty to pick from a wider range of samples and with
-                        potentially higher p-values.
+    Args:
+        n: (np.int32) specify the 'encompassing range' [0, n) from which 'values' are drawn and to which
+            `con_indices` are restricted.
+        values: (NDArray[np.int32]) The array of values to sample from.
+        k: (np.int32) The number of samples to draw.
+        p: (NDArray[np.float32]) The probabilities associated with each value. If provided with a (0,)-sized array,
+            uniform sampling is used.  The constant 'P_UNIFORM' can be used for this purpose.
+        rng_state: (NDArray[np.uint64]) The RNG state used (and updated in-place) for sampling.
+        con_values: 2D array (m, 2) with min_count and max_count for each constraint              (never modified!)
+        con_indices: 1D array with constraint indices in the format described in _constraints.py  (never modified!)
+        eager: if True, the algorithm will try to satisfy as many constraints as early as possible; in some cases
+            increasing the probability of finding a feasible solution, albeit at the cost of sampling diversity
+            and adherence to the provided p-values.
+        k_context: (int, default=-1) number of total samples - in the bigger context - we want to sample in order to
+            satisfy the constraints.  This informs the algorithm about the urgency of fulfilling
+            constraints, giving it potentially more liberty to pick from a wider range of samples and with
+            potentially higher p-values.
 
                       Two cases:
                         a) not provided or <=k:  the algorithm assumes k_context = k
                         b) provided and >k:      the algorithm knows that more samples will be drawn later.
-    :return: (NDArray[np.int32]) The array of samples, size (k,), taken from the provided 'values' array.
+
+    Returns:
+        (NDArray[np.int32]) The array of samples, size (k,), taken from the provided 'values' array.
     """
     # --- argument handling -------------------------------
     if not ((p.size == 0) or (p.size == values.size)):

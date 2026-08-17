@@ -7,9 +7,10 @@ from ._precision import HALF_EPS
 def format_time_duration(dt_sec: float, n_chars: int = 10, pad: bool = True) -> str:
     """Format a time duration in seconds.
 
-    :param dt_sec: (float) Time duration in seconds.
-    :param n_chars: (int) Controls output precision; higher values yield more decimal places.
-    :param pad: (bool) If True (default), right-justify to n_chars for tabular alignment.
+    Args:
+        dt_sec: (float) Time duration in seconds.
+        n_chars: (int) Controls output precision; higher values yield more decimal places.
+        pad: (bool) If True (default), right-justify to n_chars for tabular alignment.
     """
     if dt_sec < 1.0:
         result = format_short_time_duration(
@@ -53,11 +54,12 @@ def format_short_time_duration(
 
     The requested n_chars is guaranteed to be met exactly if n_chars>=5, dt_sec<999.5 and with default styling options.
 
-    :param dt_sec: (float) Time duration in seconds.
-    :param n_chars: (int >= 5) Desired number of characters in the output
-    :param right_aligned: (bool) If True, the result is right-aligned such that values & units align vertically.
-    :param spaced: (bool) If True, a space is added between the number and the unit.
-    :param long_units: (bool) If True, long unit names are used (e.g. "nsec" instead of "ns").
+    Args:
+        dt_sec: (float) Time duration in seconds.
+        n_chars: (int >= 5) Desired number of characters in the output
+        right_aligned: (bool) If True, the result is right-aligned such that values & units align vertically.
+        spaced: (bool) If True, a space is added between the number and the unit.
+        long_units: (bool) If True, long unit names are used (e.g. "nsec" instead of "ns").
     """
     # --- styling heuristics ------------------------------
     if right_aligned is None:
@@ -135,12 +137,15 @@ def _format_short_time_duration_to_spec(
 ) -> str:
     """Format a time duration that is expected to be <<1sec to the given specification.
 
-    :param dt_sec: (float) Time duration in seconds.
-    :param n_digits: (int >= 0) Number of digits to show after the decimal point.
-    :param right_aligned: (bool) If True, the result is right-aligned such that values & units align vertically.
-    :param spaced: (bool) If True, a space is added between the number and the unit.
-    :param long_units: (bool) If True, long unit names are used (e.g. "nsec" instead of "ns").
-    :return: string representation of the time duration.
+    Args:
+        dt_sec: (float) Time duration in seconds.
+        n_digits: (int >= 0) Number of digits to show after the decimal point.
+        right_aligned: (bool) If True, the result is right-aligned such that values & units align vertically.
+        spaced: (bool) If True, a space is added between the number and the unit.
+        long_units: (bool) If True, long unit names are used (e.g. "nsec" instead of "ns").
+
+    Returns:
+        string representation of the time duration.
     """
     # --- init --------------------------------------------
     if long_units:

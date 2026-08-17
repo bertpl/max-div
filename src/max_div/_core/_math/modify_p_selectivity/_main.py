@@ -78,13 +78,16 @@ def modify_p_selectivity(  # noqa: C901 — case-dispatch structure is clearer u
         - if max(p) <= 0.0, no modification is applied   (also no normalization is applied)
         - if max(p) > 0.0 (regular case), the output array will always be normalized to range [0,1] even if modifier=0.0
 
-    :param p: (1D float32 array) Original p values
-    :param modifier: (float) The selectivity modifier in [-1,1] to apply.
-    :param method: (int) Approximation mode, with higher numbers representing faster, less accurate methods.
-                         See docs above for more info.
-    :param p_out: (1D float32 array) Output array to store modified p values; should be same size as p.
-                       If p needs to be modified in-place, also provide p as this argument.
-    :return: (1D array) Modified p values.
+    Args:
+        p: (1D float32 array) Original p values
+        modifier: (float) The selectivity modifier in [-1,1] to apply.
+        method: (int) Approximation mode, with higher numbers representing faster, less accurate methods.
+            See docs above for more info.
+        p_out: (1D float32 array) Output array to store modified p values; should be same size as p.
+            If p needs to be modified in-place, also provide p as this argument.
+
+    Returns:
+        (1D array) Modified p values.
     """
     # --- prep transformation -----------------------------
     p_max = _p_max(p)

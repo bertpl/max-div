@@ -69,8 +69,9 @@ class DistanceStore(NamedTuple):
     def condensed(cls, pdist: NDArray[np.float32], n: int) -> "DistanceStore":
         """Return a DistanceStore reading from a condensed distance vector (scipy layout).
 
-        :param pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
-        :param n: (int) number of items.
+        Args:
+            pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
+            n: (int) number of items.
         """
         return cls(
             kind=KIND_CONDENSED,
@@ -88,8 +89,9 @@ class DistanceStore(NamedTuple):
         Cosine holds the rows pre-normalized (the exact normalization the pairwise kernels use), so
         the on-demand pair read reuses the squared-L2 accumulation.
 
-        :param vectors: (n x d ndarray) the vectors to compute distances from.
-        :param metric: (DistanceMetric) the distance metric to use.
+        Args:
+            vectors: (n x d ndarray) the vectors to compute distances from.
+            metric: (DistanceMetric) the distance metric to use.
         """
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)
         if metric == DistanceMetric.COSINE:
@@ -112,8 +114,9 @@ class DistanceStore(NamedTuple):
         cannot serve a caller that must keep reading the exact array it was handed, such as a store
         over a shared segment.
 
-        :param vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
-        :param metric_kind: (int32) metric selector, as `lazy` would have derived from the metric.
+        Args:
+            vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
+            metric_kind: (int32) metric selector, as `lazy` would have derived from the metric.
         """
         return cls(
             kind=KIND_LAZY,
@@ -133,7 +136,8 @@ class DistanceStore(NamedTuple):
         be bit-equal.  Construction paths that cannot guarantee this by construction must repair
         or validate before wrapping.
 
-        :param matrix: ((n, n) ndarray) full pairwise-distance matrix.
+        Args:
+            matrix: ((n, n) ndarray) full pairwise-distance matrix.
         """
         return cls(
             kind=KIND_FULL_MATRIX,
@@ -152,8 +156,9 @@ class DistanceStore(NamedTuple):
         and written to both halves — so values are bit-equal across backends and symmetry is
         structural.
 
-        :param vectors: (n x d ndarray) the vectors to compute distances from.
-        :param metric: (DistanceMetric) the distance metric to use.
+        Args:
+            vectors: (n x d ndarray) the vectors to compute distances from.
+            metric: (DistanceMetric) the distance metric to use.
         """
         return cls.full_matrix(compute_full_matrix(vectors, metric))
 
@@ -164,8 +169,9 @@ class DistanceStore(NamedTuple):
         Each condensed value is written to both halves, so the matrix is exactly symmetric and
         bit-equal to the condensed source.
 
-        :param pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
-        :param n: (int) number of items.
+        Args:
+            pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
+            n: (int) number of items.
         """
         return cls.full_matrix(expand_condensed(pdist, n))
 

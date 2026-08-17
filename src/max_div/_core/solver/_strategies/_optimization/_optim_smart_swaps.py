@@ -36,14 +36,15 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         These swaps combine adaptive parameter sampling, selectivity-modification and best-of-nc selection
         of removed and added samples.
 
-        :param swap_size_max: (int) maximum swap sizes to be adaptively sampled from.
-        :param nc_remove_max: (int) maximum 'nc'-value to be adaptively sampled from for REMOVING.
-        :param nc_add_max: (int) maximum 'nc'-value to be adaptively sampled from for ADDING.
-        :param tau_learn: (float) learning time constant for adaptive parameter sampling.
-        :param ignore_infeasible_diversity_up_to_fraction: (float) fraction of total diversity score
-        :param cost_awareness: (float >= 0) value to indicate how much larger values of n_swap, nc_remove, nc_add
-                               should be avoided, since they incur additional computational cost.  Non-0 values
-                               make it such that larger values are only used if they provide sufficient benefit.
+        Args:
+            swap_size_max: (int) maximum swap sizes to be adaptively sampled from.
+            nc_remove_max: (int) maximum 'nc'-value to be adaptively sampled from for REMOVING.
+            nc_add_max: (int) maximum 'nc'-value to be adaptively sampled from for ADDING.
+            tau_learn: (float) learning time constant for adaptive parameter sampling.
+            ignore_infeasible_diversity_up_to_fraction: (float) fraction of total diversity score
+            cost_awareness: (float >= 0) value to indicate how much larger values of n_swap, nc_remove, nc_add
+                should be avoided, since they incur additional computational cost.  Non-0 values
+                make it such that larger values are only used if they provide sufficient benefit.
         """
         # --- swap_size ---
         _swap_size = sampled_poisson(

@@ -17,7 +17,8 @@ def get_preset_strategies_guided(
       - GuidedSwaps optimization strategy
           --> parameters chosen to be reasonable for both unconstrained & constrained problems.
 
-    :param target_duration: (TargetDuration) The target duration to aim for.  (iteration- or time-based)
+    Args:
+        target_duration: (TargetDuration) The target duration to aim for.  (iteration- or time-based)
     """
     # --- initialization ----------------------------------
     init_strategy = InitializationStrategy.random_one_shot(uniform=True, ignore_constraints=True)

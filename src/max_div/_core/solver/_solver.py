@@ -43,19 +43,20 @@ class MaxDivSolver:
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
-        :param n: (int) The number of items in the problem ('universe').
-        :param store: (DistanceStore) Pairwise-distance storage the solver reads from.
-        :param k: (int) The number of items to be selected from the input set ('universe').
-        :param diversity_metric: (DiversityMetric) The diversity metric to use.
-        :param diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
-        :param constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
-        :param solver_steps: (list[SolverStep]) A list of solver steps to execute,
-                                       the first of which needs to be an InitializationStep,
-                                       while all latter ones need to be OptimizationSteps.
-        :param seed: (int) Random seed for the solver.
-        :param constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
-        :param distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
-        :param batch_seconds: (float) Targeted wall-clock size of one optimization batch.
+        Args:
+            n: (int) The number of items in the problem ('universe').
+            store: (DistanceStore) Pairwise-distance storage the solver reads from.
+            k: (int) The number of items to be selected from the input set ('universe').
+            diversity_metric: (DiversityMetric) The diversity metric to use.
+            diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
+            constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
+            solver_steps: (list[SolverStep]) A list of solver steps to execute,
+                the first of which needs to be an InitializationStep,
+                while all latter ones need to be OptimizationSteps.
+            seed: (int) Random seed for the solver.
+            constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
+            distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
+            batch_seconds: (float) Targeted wall-clock size of one optimization batch.
         """
         # --- problem description -------------------------
         self._n = n
@@ -84,12 +85,15 @@ class MaxDivSolver:
     ) -> MaxDivSolution:
         """Solve the maximum diversity problem with the given configuration.
 
-        :param verbosity: (int | Verbosity) The verbosity level, as a `Verbosity` member or its
-                          plain integer value; see `Verbosity` for the levels.
-        :param coordinator: a `WorkerCoordinator` the solver calls at each batch boundary.
-        :param progress_reporter: a ready-made reporter to report into, overriding `verbosity`; this
-                                  is how a portfolio worker reports to its parent process.
-        :return: A MaxDivSolution object representing the solution found.
+        Args:
+            verbosity: (int | Verbosity) The verbosity level, as a `Verbosity` member or its
+                plain integer value; see `Verbosity` for the levels.
+            coordinator: a `WorkerCoordinator` the solver calls at each batch boundary.
+            progress_reporter: a ready-made reporter to report into, overriding `verbosity`; this
+                is how a portfolio worker reports to its parent process.
+
+        Returns:
+            A MaxDivSolution object representing the solution found.
         """
         # --- Init ----------------------------------------
 
