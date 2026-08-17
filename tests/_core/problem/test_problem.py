@@ -387,6 +387,22 @@ def test_check_feasibility_thorough_tightens_the_floor():
     assert thorough.violation_floor > fast.violation_floor
 
 
+def test_check_feasibility_max_iter_sets_the_search_budget():
+    """A larger budget tightens the certified floor; the default equals an explicit 2000."""
+    # --- arrange -----------------------------------------
+    problem = _problem_with([Constraint(int_set=set(range(20)), min_count=0, max_count=5)])
+
+    # --- act ---------------------------------------------
+    default = problem.check_feasibility(thorough=True)
+    explicit = problem.check_feasibility(thorough=True, max_iter=2000)
+    small = problem.check_feasibility(thorough=True, max_iter=10)
+
+    # --- assert ------------------------------------------
+    assert default.violation_floor == explicit.violation_floor
+    assert small.status is FeasibilityStatus.INFEASIBLE  # a proof survives even a tiny budget here
+    assert small.violation_floor <= default.violation_floor
+
+
 def test_check_feasibility_reports_unknown_without_claiming_anything():
     """An instance with no certificate and no satisfying selection must not be reported as either proof."""
     # --- arrange -----------------------------------------

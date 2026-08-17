@@ -1,4 +1,4 @@
-Certified feasibility verdicts for problem C3 (ascent budget 8000 iterations, thorough mode, fixed seed):
+Certified feasibility verdicts for problem C3, computed with `check_feasibility(thorough=True, max_iter=8000)`:
 
 | $n$   | $d$ | $k$  | $m$ | Verdict                                                    | Constraints-score ceiling |
 | ----- | --- | ---- | --- | ---------------------------------------------------------- | ------------------------- |
