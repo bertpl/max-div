@@ -56,7 +56,7 @@ def test_verdict_cell(status: FeasibilityStatus, expected_fragment: str):
 
 
 def test_ceiling_cell_per_status():
-    """Feasible rows state the exact 1.0, unknown rows stay empty, infeasible rows state the ceiling."""
+    """Feasible rows state the exact 1.0, unknown rows show a dash, infeasible rows state the ceiling."""
     # --- arrange -----------------------------------------
     constraints = [Constraint(int_set={0, 1, 2, 3}, min_count=4, max_count=4)]
     problem = MaxDivProblem.new(np.random.default_rng(0).random((10, 2)), k=4, constraints=constraints)

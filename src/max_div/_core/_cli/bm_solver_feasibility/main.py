@@ -62,7 +62,7 @@ def _ceiling_cell(problem: VectorMaxDivProblem, result: FeasibilityResult) -> st
     """Return the constraints-score-ceiling cell for one verdict row.
 
     A witness attains the perfect score, so feasible rows state 1.0 exactly; UNKNOWN certifies
-    nothing, so the cell stays empty; certified-infeasible rows convert the certified violation
+    nothing, so the cell shows a dash; certified-infeasible rows convert the certified violation
     floor onto the solver's 0-1 constraints-score scale.
     """
     if result.status == FeasibilityStatus.FEASIBLE:

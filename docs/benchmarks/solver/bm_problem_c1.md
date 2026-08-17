@@ -37,13 +37,10 @@ for different problem sizes:
 
 --8<-- "docs/benchmarks/solver/results/note_measured_feasibility.md"
 
-For each benchmark size, the table below states the verdict of the
-[feasibility diagnostic](../../concepts/feasibility.md): **feasible** and **infeasible** are proofs
-(a witness selection, resp. a re-checkable certificate), **unknown** claims nothing. Where
-infeasibility is proven, the certified violation floor is shown as a **constraints-score ceiling** —
-the best [constraints score](../../concepts/scoring.md) any selection can reach on that instance.
-For this problem the verdict is *feasible* at every size: a perfect constraints score of $1.0$ is
-attainable everywhere.
+--8<-- "docs/benchmarks/solver/results/note_feasibility_methodology.md"
+
+See [Proving Feasibility](../../concepts/feasibility.md) for the machinery behind these verdicts, and
+[Scoring](../../concepts/scoring.md) for the constraints-score scale.
 
 --8<-- "docs/benchmarks/solver/results/feasibility_verdicts_C1.md"
 
