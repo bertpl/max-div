@@ -47,7 +47,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 </div>
 
-[^ortools-cpsat-1]: Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modelling choice rather than a property of the metric.
+[^ortools-cpsat-1]: Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modeling choice rather than a property of the metric.
 [^ortools-cpsat-2]: Any distance you can compute and round to integers is usable, which in practice means any metric at all.
 [^ortools-cpsat-3]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
 [^ortools-cpsat-4]: No natural constraint-programming encoding. Expressing a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, at which point a MILP solver is the better tool.

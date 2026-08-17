@@ -44,7 +44,7 @@ solver:
       note:
         text: >-
           Since every distance is a coefficient you supply, an arbitrary metric costs nothing
-          extra — this is the one distance axis where a modelling solver is at no disadvantage.
+          extra — this is the one distance axis where a modeling solver is at no disadvantage.
     objective.max_min:
       mark: partial
       note: &linearize

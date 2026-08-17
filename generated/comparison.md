@@ -58,7 +58,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-4]: Several workers solve the same problem at once and the best result wins.
 [^cmp-5]: Workers form groups whose members adopt the best selection any member has found so far; groups stay independent of each other, and the best result over all workers wins.
 [^cmp-6]: Vector problems can be solved with lazy distance storage, which computes pair distances on demand and never materializes the O(n²) matrix, so the ceiling is time rather than memory: each solver iteration costs O(n), and the iteration count a useful anytime run needs grows with n as well. Precomputed-distance problems keep the stored-matrix ceiling of n ≈ 10⁵.
-[^cmp-7]: Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modelling choice rather than a property of the metric.
+[^cmp-7]: Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modeling choice rather than a property of the metric.
 [^cmp-8]: Any distance you can compute and round to integers is usable, which in practice means any metric at all.
 [^cmp-9]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
 [^cmp-10]: No natural constraint-programming encoding. Expressing a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, at which point a MILP solver is the better tool.
@@ -69,7 +69,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-15]: The portfolio workers share learned clauses, solutions and objective bounds while solving.
 [^cmp-16]: Max-min is solved by repeatedly asking a feasibility question — "can k items all be at least t apart?" — and each question is a fresh constraint-propagation search over O(n²) pairwise constraints. That stays tractable to around n ≈ 10³ and degrades sharply beyond it.
 [^cmp-17]: Reachable, but you build the model: distances enter as precomputed objective coefficients, so the metric is whatever you computed before the solver ever sees it.
-[^cmp-18]: Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modelling solver is at no disadvantage.
+[^cmp-18]: Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
 [^cmp-19]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
 [^cmp-20]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
 [^cmp-21]: Reachable through SCIP's concurrent solving and the FiberSCIP / UG frameworks, which share bounds and solutions between the racing solvers but need a TPI-enabled build; the default PySCIPOpt wheel does not expose it.

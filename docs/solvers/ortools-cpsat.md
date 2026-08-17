@@ -20,7 +20,7 @@ solver:
       mark: partial
       note: &integer_scaled
         text: >-
-          Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modelling choice rather than a property of the metric.
+          Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modeling choice rather than a property of the metric.
     distance.l2:
       mark: partial
       note: *integer_scaled

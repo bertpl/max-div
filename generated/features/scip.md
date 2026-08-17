@@ -49,7 +49,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^scip-1]: The two halves carry different licenses: the SCIP solver itself is Apache-2.0, while the PySCIPOpt binding installed from PyPI is MIT. [Source](https://pypi.org/project/PySCIPOpt/)
 [^scip-2]: Reachable, but you build the model: distances enter as precomputed objective coefficients, so the metric is whatever you computed before the solver ever sees it.
-[^scip-3]: Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modelling solver is at no disadvantage.
+[^scip-3]: Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
 [^scip-4]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
 [^scip-5]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
 [^scip-6]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.

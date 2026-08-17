@@ -121,7 +121,7 @@ x_i \in \{0,1\}.
 $$
 
 **Guarantee: proven optimum.** On termination the reported selection is optimal for the model as
-written — which makes the modelling, not the solving, the place errors live.
+written — which makes the modeling, not the solving, the place errors live.
 
 ## Reference
 
