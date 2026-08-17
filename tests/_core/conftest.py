@@ -13,24 +13,30 @@ class FakeClock:
     """
 
     def __init__(self, start_sec: float = 1000.0, auto_advance_sec: float = 0.0) -> None:
+        """Start the clock at `start_sec`, ticking `auto_advance_sec` forward on every read."""
         self._t = start_sec
         self.auto_advance_sec = auto_advance_sec
 
     def _read(self) -> float:
+        """Return the current time in seconds, then apply the auto-advance tick."""
         t = self._t
         self._t += self.auto_advance_sec
         return t
 
     def perf_counter(self) -> float:
+        """Stand in for `time.perf_counter` (seconds)."""
         return self._read()
 
-    def perf_counter_ns(self) -> float:
-        return self._read() * 1e9
+    def perf_counter_ns(self) -> int:
+        """Stand in for `time.perf_counter` (nanoseconds), integer-valued like the real one."""
+        return int(self._read() * 1e9)
 
     def sleep(self, seconds: float) -> None:
+        """Stand in for `time.sleep`: advance the clock without blocking."""
         self._t += seconds
 
     def advance(self, dt_sec: float) -> None:
+        """Move the clock forward by `dt_sec` seconds."""
         self._t += dt_sec
 
 

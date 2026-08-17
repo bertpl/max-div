@@ -12,11 +12,13 @@ def test_micro_benchmark(t_sleep: float, silent: bool, index_range: int | None):
     """A busy-wait of a known duration measures on the order of that duration.
 
     Unlike the other timing tests, this one does not use the `fake_clock` fixture: it exercises the
-    measurement harness itself, so it must read a real clock. That leaves only a lower bound safe to
-    assert, and at half the busy-wait rather than its full length: the harness subtracts a baseline
-    and divides by an execution count, which can shave the reported figure below `t_sleep` for the
-    tiniest workloads, so half leaves margin for that. No upper bound — real wall-clock is inflated
-    without limit by a loaded runner, so any ceiling would eventually flake.
+    measurement harness itself, so it must read a real clock. Two consequences shape the assertion:
+
+    - only a lower bound is safe — real wall-clock is inflated without limit by a loaded runner, so
+      any ceiling would eventually flake;
+    - the bound is half the busy-wait, not its full length — the harness subtracts a baseline and
+      divides by an execution count, which can shave the reported figure below `t_sleep` for the
+      tiniest workloads, and half leaves margin for that.
     """
 
     # --- arrange -----------------------------------------
