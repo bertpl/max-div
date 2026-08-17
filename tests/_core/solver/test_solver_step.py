@@ -11,6 +11,7 @@ from max_div._core.solver._score import Score
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
+from tests._core.conftest import FakeClock
 
 # =================================================================================================
 #  Helpers
@@ -42,8 +43,8 @@ class OptimTest(OptimizationStrategy):
 class OptimTickingTest(OptimTest):
     """Each iteration advances the fake clock, so a time-budgeted run terminates."""
 
-    def __init__(self, clock, dt_sec: float):
-        """Take the clock to tick and the per-iteration step size `dt_sec`."""
+    def __init__(self, clock: FakeClock, dt_sec: float):
+        """Store the clock and the seconds each iteration advances it."""
         super().__init__()
         self._clock = clock
         self._dt_sec = dt_sec
