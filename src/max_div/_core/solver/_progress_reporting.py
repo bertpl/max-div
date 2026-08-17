@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import math
 import sys
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum
-from time import perf_counter
 from typing import TYPE_CHECKING
 
 from tqdm.auto import tqdm
@@ -175,7 +175,7 @@ class ProgressReporter(ABC):
     def solver_step_started(self, step_name: str) -> None:
         """Record that a new solver step with the provided name has started, and notify the renderer."""
         self._step_name = step_name
-        self._t_start_step = perf_counter()
+        self._t_start_step = time.perf_counter()
         if self._t_start_solver < 0:
             self._t_start_solver = self._t_start_step
         self.show_step_started(step_name)
@@ -234,7 +234,7 @@ class ProgressReporter(ABC):
         self, progress: Progress | None, state: SolverState, ignore_infeasible_diversity: bool
     ) -> ProgressSnapshot:
         """Build a snapshot of the current progress and state, stamping the elapsed times."""
-        t_now = perf_counter()
+        t_now = time.perf_counter()
         return ProgressSnapshot(
             step_name=self._step_name,
             progress=progress,

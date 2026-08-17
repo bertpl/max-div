@@ -1,7 +1,7 @@
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from time import perf_counter
 
 
 # =================================================================================================
@@ -28,8 +28,8 @@ def measure_end_to_end() -> Iterator[EndToEndTiming]:
         context exits.
     """
     timing = EndToEndTiming()
-    t_start = perf_counter()
+    t_start = time.perf_counter()
     try:
         yield timing
     finally:
-        timing.t_elapsed_sec = perf_counter() - t_start
+        timing.t_elapsed_sec = time.perf_counter() - t_start

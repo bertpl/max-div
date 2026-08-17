@@ -12,7 +12,7 @@ The view feeds ordinary reporters through their snapshot interface (`show_*`), s
 tabular all render a parallel solve through the same code as a single one.
 """
 
-from time import perf_counter
+import time
 
 from max_div._core.solver._duration import Progress
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot
@@ -34,7 +34,7 @@ class ParallelProgressView:
         """
         self._reporter = reporter
         self._n_workers = n_workers
-        self._t_start = perf_counter()
+        self._t_start = time.perf_counter()
         self._latest: dict[int, ProgressSnapshot] = {}  # per worker, feeds the progress half
         self._best: ProgressSnapshot | None = None  # across workers, feeds the result half
         self._finished: set[int] = set()
@@ -45,7 +45,7 @@ class ParallelProgressView:
     # -------------------------------------------------------------------------
     def start(self) -> None:
         """Start rendering and reset the wall clock the view stamps on every composite snapshot."""
-        self._t_start = perf_counter()
+        self._t_start = time.perf_counter()
         self._reporter.show_step_started(f"solving ({self._n_workers} workers)")
 
     def on_snapshot(self, snapshot: ProgressSnapshot) -> None:
@@ -93,7 +93,7 @@ class ParallelProgressView:
             fraction, iter_count = min(self._progress_of(i) for i in live)
         else:
             fraction, iter_count = 1.0, min((self._progress_of(i)[1] for i in self._finished), default=0)
-        t_elapsed = perf_counter() - self._t_start
+        t_elapsed = time.perf_counter() - self._t_start
         progress = Progress(
             tqdm_n_total=_TQDM_N_TOTAL,
             fraction=fraction,
