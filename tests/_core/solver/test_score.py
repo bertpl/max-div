@@ -235,6 +235,16 @@ def test_constraints_score_for_violation(violation: float, expected: float):
     assert score == pytest.approx(expected)
 
 
+def test_constraints_score_for_violation_rejects_quadratic():
+    """A scalar violation has no quadratic-scale conversion, so asking for one raises."""
+    # --- arrange -----------------------------------------
+    constraints = [Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)]
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError, match="profile"):
+        constraints_score_for_violation(constraints, k=3, violation=1.0, quadratic=True)
+
+
 def test_score_generator_constraints_linear_vs_quadratic():
     # --- arrange -----------------------------------------
     # max_con_violations = [max(2, min(8,5)-3, 0), max(2, min(8,11)-3, 0)] = [2, 5]

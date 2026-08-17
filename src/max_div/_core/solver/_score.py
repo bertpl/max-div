@@ -117,7 +117,9 @@ def _max_con_violations(constraints: Sequence[Constraint], k: int) -> list[int]:
     ]
 
 
-def constraints_score_for_violation(constraints: Sequence[Constraint], k: int, violation: float) -> float:
+def constraints_score_for_violation(
+    constraints: Sequence[Constraint], k: int, violation: float, quadratic: bool = False
+) -> float:
     """Return the constraints score a selection of size `k` with the given total weighted violation receives.
 
     The conversion uses the linear penalty, so the result lands on the 0-1 scale the solver
@@ -131,7 +133,20 @@ def constraints_score_for_violation(constraints: Sequence[Constraint], k: int, v
             selected items it is short of its `min_count` plus how many it is above its
             `max_count`, times its `weight`, summed over all constraints. Fractional values are
             fine (a certified floor is a fractional dual bound).
+        quadratic: the penalty shape of the score scale to convert to. Only the linear shape
+            (the default) is accepted; the parameter exists so a caller scoring under quadratic
+            penalties fails loudly instead of silently receiving a linear-scale number.
+
+    Raises:
+        ValueError: If `quadratic` is True — the quadratic constraints score depends on the
+            per-constraint violation profile, not the total, so no conversion from a scalar
+            violation exists.
     """
+    if quadratic:
+        raise ValueError(
+            "The quadratic constraints score depends on the per-constraint violation profile, "
+            "not the total violation, so a scalar violation cannot be converted to it."
+        )
     con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
     c = _con_norm_constant(_max_con_violations(constraints, k), con_weights, quadratic=False)
     return 1.0 - c * violation
