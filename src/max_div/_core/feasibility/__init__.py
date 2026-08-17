@@ -1,5 +1,6 @@
 from .lagrangian import (
     CONSTRUCTION_DEFAULT_ITER,
+    CONSTRUCTION_MAX_ITER,
     VERDICT_MAX_ITER,
     FeasibilityResult,
     FeasibilityStatus,

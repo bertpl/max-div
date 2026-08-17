@@ -105,6 +105,30 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 # =================================================================================================
 #  ScoreGenerator
 # =================================================================================================
+def _max_con_violations(constraints: Sequence[Constraint], k: int) -> list[int]:
+    """Return each constraint's worst-case violation over all selections of size `k`."""
+    return [
+        max(
+            con.min_count,  # in case of minimal selection
+            min(k, len(con.int_set)) - con.max_count,  # in case of maximal selection
+            0,  # in case we can never violate this constraint
+        )
+        for con in constraints
+    ]
+
+
+def constraints_score_for_violation(constraints: Sequence[Constraint], k: int, violation: float) -> float:
+    """Return the constraints score a selection of size `k` with the given total weighted violation receives.
+
+    Maps a total weighted violation onto the 0-1 constraints-score scale the solver reports, using
+    the linear penalty; feeding it a certified violation floor yields the constraints-score ceiling
+    no selection can exceed.
+    """
+    con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
+    c = _con_norm_constant(_max_con_violations(constraints, k), con_weights, quadratic=False)
+    return 1.0 - c * violation
+
+
 def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
     """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
 
@@ -155,15 +179,7 @@ class ScoreGenerator:
         self._penalty_quadratic = penalty_quadratic
         self._con_weights = np.array([con.weight for con in constraints], dtype=np.float32)
         if len(constraints) > 0:
-            max_con_violations = [
-                max(
-                    con.min_count,  # in case of minimal selection
-                    min(k, len(con.int_set)) - con.max_count,  # in case of maximal selection
-                    0,  # in case we can never violate this constraint
-                )
-                for con in constraints
-            ]
-            self._con_c = _con_norm_constant(max_con_violations, self._con_weights, penalty_quadratic)
+            self._con_c = _con_norm_constant(_max_con_violations(constraints, k), self._con_weights, penalty_quadratic)
         else:
             self._con_c = 0.0  # no constraints -> always perfect score
         # fast unweighted-linear aggregation applies only when all weights are 1 and penalization is linear

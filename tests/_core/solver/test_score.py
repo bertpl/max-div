@@ -3,7 +3,13 @@ import pytest
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DiversityMetric
-from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
+from max_div._core.solver._score import (
+    Score,
+    ScoreGenerator,
+    _con_norm_constant,
+    _max_con_violations,
+    constraints_score_for_violation,
+)
 
 _NO_CONTRIBUTIONS = np.array([], dtype=np.float32)
 
@@ -186,6 +192,47 @@ def test_con_norm_constant(weights: list[float], quadratic: bool, expected: floa
 
     # --- assert ------------------------------------------
     assert c == pytest.approx(expected)
+
+
+def test_max_con_violations():
+    """Each constraint's worst case is the larger of its min-side and max-side extreme, floored at 0."""
+    # --- arrange -----------------------------------------
+    # per constraint: max(min_count, min(k, |group|) - max_count, 0) with k=8
+    constraints = [
+        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),  # max(2, 5-3) = 2
+        Constraint(int_set=set(range(11)), min_count=2, max_count=3),  # max(2, 8-3) = 5
+        Constraint(int_set={0, 1}, min_count=0, max_count=2),  # never violable -> 0
+    ]
+
+    # --- act ---------------------------------------------
+    worst = _max_con_violations(constraints, k=8)
+
+    # --- assert ------------------------------------------
+    assert worst == [2, 5, 0]
+
+
+@pytest.mark.parametrize(
+    "violation,expected",
+    [
+        (0.0, 1.0),  # no violation -> perfect score
+        (4.0, 1.0 - 4.0 / 8.0),  # worst-case violation sums to 7 -> c = 1/8
+        (7.0, 1.0 - 7.0 / 8.0),  # the worst case itself stays above 0
+    ],
+    ids=["zero", "partial", "worst_case"],
+)
+def test_constraints_score_for_violation(violation: float, expected: float):
+    """A total weighted violation maps onto the same 0-1 scale the score generator uses."""
+    # --- arrange -----------------------------------------
+    constraints = [
+        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),  # worst case 2
+        Constraint(int_set=set(range(11)), min_count=2, max_count=3),  # worst case 5
+    ]
+
+    # --- act ---------------------------------------------
+    score = constraints_score_for_violation(constraints, k=8, violation=violation)
+
+    # --- assert ------------------------------------------
+    assert score == pytest.approx(expected)
 
 
 def test_score_generator_constraints_linear_vs_quadratic():

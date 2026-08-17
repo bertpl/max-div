@@ -27,6 +27,28 @@ def test_cli_benchmark_solver_list_problems():
     [
         ["--turbo", "--markdown"],
         ["--turbo"],
+        ["--turbo", "--file"],
+    ],
+    ids=["markdown", "console", "file"],
+)
+def test_cli_benchmark_solver_feasibility(options: list[str], tmp_path, monkeypatch):
+    """The feasibility subcommand succeeds in every output mode."""
+    # --- arrange -----------------------------------------
+    monkeypatch.chdir(tmp_path)
+    runner = CliRunner()
+
+    # --- act ---------------------------------------------
+    result = runner.invoke(benchmark, ["solver", "feasibility", "--problem=C1", *options])
+
+    # --- assert ------------------------------------------
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["--turbo", "--markdown"],
+        ["--turbo"],
         ["--speed=1.0"],
         ["--turbo", "--optimization-only"],
         ["--turbo", "--initialization-only"],
