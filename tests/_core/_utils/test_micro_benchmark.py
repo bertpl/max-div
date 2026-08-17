@@ -9,11 +9,13 @@ from max_div._core._utils import BenchmarkResult, benchmark
 @pytest.mark.parametrize("silent", [True, False])
 @pytest.mark.parametrize("index_range", [None, 1000])
 def test_micro_benchmark(t_sleep: float, silent: bool, index_range: int | None):
-    """A busy-wait of a known duration measures at least that duration.
+    """A busy-wait of a known duration measures on the order of that duration.
 
-    Only the lower bound is asserted. The harness measures real wall-clock, which a loaded runner
-    inflates without limit, so any upper bound would eventually flake; the busy-wait can never be
-    measured as *shorter* than it ran, which is the property worth pinning.
+    Only a lower bound is asserted, and at half the busy-wait rather than its full length: the
+    harness subtracts a baseline and divides by an execution count, which can shave the reported
+    figure below `t_sleep` for the tiniest workloads, so half leaves margin for that. No upper
+    bound — the harness measures real wall-clock, which a loaded runner inflates without limit, so
+    any ceiling would eventually flake.
     """
 
     # --- arrange -----------------------------------------

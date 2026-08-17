@@ -371,7 +371,7 @@ def test_progress_tracker_time_based(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "duration,sleep_time,expected_n_current,expected_n_total",
+    "duration,elapsed_sec,expected_n_current,expected_n_total",
     [
         (seconds(0.1), 0.2, 1, 1),
         (seconds(0.9), 0.0, 0, 1),
@@ -380,14 +380,14 @@ def test_progress_tracker_time_based(monkeypatch):
     ],
 )
 def test_progress_corner_cases(
-    monkeypatch, duration: TargetDuration, sleep_time: float, expected_n_current: int, expected_n_total: int
+    monkeypatch, duration: TargetDuration, elapsed_sec: float, expected_n_current: int, expected_n_total: int
 ):
     """Test corner cases where rounding could (but won't) result in n_current == n_total, while we're not finished."""
     # --- arrange -----------------------------------------
     clock = _FakeClock()
     monkeypatch.setattr(time, "perf_counter", clock)
     tracker = duration.track()
-    clock.advance(sleep_time)
+    clock.advance(elapsed_sec)
 
     # --- act ---------------------------------------------
     progress = tracker.get_progress()
