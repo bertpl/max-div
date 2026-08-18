@@ -79,9 +79,11 @@ class InitPreset(StrEnum):
     def is_relevant_for_problem(self, problem_has_constraints: bool) -> bool:
         """Report whether this strategy belongs on the given problem's benchmark page.
 
-        Two distinct reasons drop a strategy from an unconstrained problem: `most_feasible`
-        *raises* without constraints, so it must not run; the `ros(*,uncon)` twins are *redundant*
-        there, behaving identically to their constraint-aware versions.
+        Two reasons drop a strategy from an unconstrained problem:
+
+        - `most_feasible` *raises* without constraints, so it must not run.
+        - the `ros(*,uncon)` twins are *redundant* there, behaving identically to their
+          constraint-aware versions.
         """
         if problem_has_constraints:
             return True

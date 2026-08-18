@@ -34,7 +34,7 @@ def _constrained_problem_names() -> list[str]:
 
 
 def _has_constraints(problem_name: str) -> bool:
-    """Report whether the problem carries constraints, a size-independent property probed at k=10."""
+    """Report whether the problem carries constraints, a size-independent property probed at the smallest ladder k."""
     probe_n = determine_problem_size_for_k(problem_name, K_LADDER[0])
     return BenchmarkProblemFactory.get_problem_dimensions(problem_name, probe_n)[3] > 0
 
