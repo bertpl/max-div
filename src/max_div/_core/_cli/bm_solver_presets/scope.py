@@ -1,6 +1,6 @@
 import numpy as np
 
-from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from max_div._core._cli.bm_solver_sizing import determine_problem_size_for_k
 from max_div._core.solver import SolverPreset, TargetTimeDuration
 from max_div._core.solver._parallel._solver import default_worker_count
 
@@ -20,40 +20,6 @@ PARALLEL_ARM_T_MIN_SEC = 1.0
 # Every problem is benchmarked at the size where it selects this many items, so the suite's
 # curves are comparable across problems: k is what drives the swap space and per-iteration cost.
 K_TARGET = 100
-
-
-def determine_problem_size_for_k(problem_name: str, k_target: int = K_TARGET) -> int:
-    """Return the largest problem size n at which the problem selects exactly `k_target` items.
-
-    Each benchmark problem derives k from n (see the docs problem-overview table); this inverts
-    that derivation by bisecting on the monotone k(n).  Taking the largest such n lands on the
-    round sizes (k=100 -> n=1000 for k=n/10 problems, n=1500 for k=n/15 ones).
-
-    Raises:
-        ValueError: If no n yields exactly `k_target` (a non-contiguous k(n) mapping).
-    """
-
-    def _k(n: int) -> int:
-        """Return the problem's derived selection size k at size n."""
-        _d, _n, k, _m, _n_con = BenchmarkProblemFactory.get_problem_dimensions(problem_name, n=n)
-        return k
-
-    # --- bracket --------------------------------
-    lo, hi = 20, 40
-    while _k(hi) <= k_target:
-        hi *= 2
-
-    # --- bisect for largest n with k(n) <= k_target ---
-    while hi - lo > 1:
-        mid = (lo + hi) // 2
-        if _k(mid) <= k_target:
-            lo = mid
-        else:
-            hi = mid
-
-    if _k(lo) != k_target:
-        raise ValueError(f"Problem '{problem_name}' has no size n with k == {k_target}.")
-    return lo
 
 
 def determine_benchmark_scope_for_max_duration(
@@ -145,7 +111,9 @@ def determine_benchmark_scope(
         durations_sec = sorted({max_duration_sec * ratio ** (i / (n_points - 1)) for i in range(n_points)})
 
     # --- problem sizes --------------------------
-    problem_sizes = {problem: n if n is not None else determine_problem_size_for_k(problem) for problem in problems}
+    problem_sizes = {
+        problem: n if n is not None else determine_problem_size_for_k(problem, K_TARGET) for problem in problems
+    }
 
     # --- single-worker scope --------------------
     scope = [

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 from tqdm import tqdm
 
+from max_div._core._cli.bm_solver_sizing import K_VALUES, determine_problem_size_for_k
 from max_div._core._markdown import (
     Report,
     ReportElement,
@@ -154,7 +155,8 @@ class SolverBenchmarkScope:
         # --- calibrate --------------------------
         n_seeds_min = 3  # we don't execute benchmarks if n_seeds < n_seeds_min
         n_seeds_max = 16  # we never do more than n_seeds_max
-        full_n_range = [100 * s for s in [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]]  # n range for speed=0.0
+        # at speed=0.0 the size axis maps each k in K_VALUES to this problem's n
+        full_n_range = sorted({determine_problem_size_for_k(self.problem_name, k) for k in K_VALUES})
 
         # --- speed-dependent settings -----------
         # the seed budget below is computed on n/100 ("weight"), the scale the min/max/limit

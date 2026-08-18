@@ -5,6 +5,5 @@ from .scope import (
     K_TARGET,
     determine_benchmark_scope,
     determine_benchmark_scope_for_max_duration,
-    determine_problem_size_for_k,
 )
 from .show import show_solver_presets_benchmark_results

@@ -6,14 +6,21 @@ from max_div._core.solver._strategies import InitializationStrategy
 
 def test_init_preset_count():
     """Forces focus on these unit tests when changing InitPreset."""
-    assert len(list(InitPreset)) == 11
+    assert len(list(InitPreset)) == 14
     assert InitPreset.all() == list(InitPreset)
 
 
 def test_init_preset_notes():
     """The strategies matching a shipped preset's initialization exactly carry a note."""
     noted = {preset for preset in InitPreset if preset.preset_note()}
-    assert noted == {InitPreset.ROS_U_UNCON, InitPreset.FPS_8}
+    assert noted == {InitPreset.ROS_U_UNCON, InitPreset.FPS_8, InitPreset.MF_MEDIUM}
+
+
+def test_most_feasible_relevant_only_on_constrained_problems():
+    """most_feasible raises without constraints, so it is dropped from the unconstrained pages."""
+    for preset in (InitPreset.MF_LOW, InitPreset.MF_MEDIUM, InitPreset.MF_HIGH):
+        assert preset.is_relevant_for_problem(problem_has_constraints=True)
+        assert not preset.is_relevant_for_problem(problem_has_constraints=False)
 
 
 @pytest.mark.parametrize("init_preset", list(InitPreset))

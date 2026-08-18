@@ -9,4 +9,4 @@ Purposes:
 
 from ._factory import BenchmarkProblemFactory
 from ._problems import IMPORT_ME_FOR_BENCHMARK_PROBLEM_DISCOVERY
-from ._registry import BenchmarkProblem
+from ._registry import MIN_N, BenchmarkProblem

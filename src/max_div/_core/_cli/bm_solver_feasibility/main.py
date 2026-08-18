@@ -1,11 +1,12 @@
 """Certified feasibility verdicts for the constrained benchmark problems.
 
-For each constrained benchmark problem and each size in `VERDICT_SIZES`, this runs
+For each constrained benchmark problem and each size in the shared `k`-based size series, this runs
 `check_feasibility` at the pipeline's verdict-grade budget, `FEASIBILITY_MAX_ITER_HIGH`, and
 reports the verdict, plus the constraints-score ceiling wherever infeasibility is certified. The
 output feeds the committed per-problem verdict tables in the docs.
 """
 
+from max_div._core._cli.bm_solver_sizing import K_VALUES, determine_problem_size_for_k
 from max_div._core._markdown import Report, Table
 from max_div._core._utils import stdout_to_file
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
@@ -19,23 +20,23 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
 from max_div._core.solver._score import ScoreGenerator
 
-# The verdict tables sweep a 1-2-5 size series reaching well past the strategy benchmarks' grid,
-# far enough that constrained problems whose difficulty compounds with size cross into certified
-# infeasibility inside the table rather than beyond its last row.
-VERDICT_SIZES = [100, 200, 500, 1000, 2000, 5000, 10000, 20000]
-
 # Verdicts are properties of the problem, not measurements, but they still depend on the search
 # budget (a bigger budget can only move UNKNOWN toward a proof) and on the seed of the candidate
 # noise. The budget is pinned here and check_feasibility pins the seed, so regenerating the
 # committed tables is deterministic.
-TURBO_N_SIZES = 3  # number of ladder sizes retained for --turbo smoke runs
+TURBO_N_SIZES = 3  # number of k-values retained for --turbo smoke runs
 
 
 def _constrained_problem_names() -> list[str]:
     """Return the registered benchmark problems that carry constraints, by name."""
     names = BenchmarkProblemFactory.get_all_benchmark_names()
-    smallest = min(VERDICT_SIZES)
-    return [name for name in names if BenchmarkProblemFactory.get_problem_dimensions(name, smallest)[3] > 0]
+    return [name for name in names if _has_constraints(name)]
+
+
+def _has_constraints(problem_name: str) -> bool:
+    """Report whether the problem carries constraints, a size-independent property probed at one size."""
+    probe_n = determine_problem_size_for_k(problem_name, K_VALUES[0])
+    return BenchmarkProblemFactory.get_problem_dimensions(problem_name, probe_n)[3] > 0
 
 
 def _verdict_cell(status: FeasibilityStatus) -> str:
@@ -102,10 +103,11 @@ def run_solver_feasibility_benchmark(name: str, markdown: bool, file: bool, turb
     if unknown:
         raise ValueError(f"Not a constrained benchmark problem: {', '.join(unknown)}")
 
-    sizes = VERDICT_SIZES[:TURBO_N_SIZES] if turbo else VERDICT_SIZES
+    k_values = K_VALUES[:TURBO_N_SIZES] if turbo else K_VALUES
     max_iter = FEASIBILITY_MAX_ITER_LOW if turbo else FEASIBILITY_MAX_ITER_HIGH
 
     for problem_name in problem_names:
+        sizes = [determine_problem_size_for_k(problem_name, k) for k in k_values]
         report = _build_report(problem_name, sizes, max_iter)
         with stdout_to_file(enabled=file, filename=f"feasibility_verdicts_{problem_name}.md"):
             report.print(markdown=markdown or file)
