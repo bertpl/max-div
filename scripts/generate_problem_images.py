@@ -28,6 +28,32 @@ LIGHT_GRAY = "#cccccc"
 BLUE = "#2233bb"
 RED = "#ee1111"
 
+# Explicit per-problem axes and legend corner: without them, autoscale frames the data
+# edge-to-edge and the legend has no empty corner to sit in (most visibly U4, where it lands on
+# the cone). Each problem's legend goes in the corner its own data leaves empty, and each frame
+# carries a margin around the data (U1's halo reaches ~1.3, U3 sits on a wider scale, U2 is a unit
+# square) so nothing is clipped and the legend has room.
+_XY_LIMS = {
+    "U1": ((-0.4, 1.4), (-0.2, 1.4)),
+    "U2": ((-0.1, 1.1), (-0.1, 1.25)),
+    "U3": ((-3.7, 2.9), (-2.4, 4.4)),
+    "U4": ((-0.05, 1.25), (-0.05, 1.25)),
+    "C1": ((-0.1, 1.1), (-4.0, 5.5)),
+    "C2": ((-0.1, 1.1), (-4.0, 5.5)),
+    "C3": ((-5.0, 5.0), (-4.0, 6.0)),
+    "C4": ((-5.0, 5.0), (-4.0, 6.0)),
+}
+_LEGEND_LOC = {
+    "U1": "upper right",
+    "U2": "upper right",
+    "U3": "upper right",
+    "U4": "upper left",
+    "C1": "lower right",
+    "C2": "lower right",
+    "C3": "lower left",
+    "C4": "lower left",
+}
+
 
 # =================================================================================================
 #  Rendering helpers
@@ -145,6 +171,8 @@ def render_geometry(name: str, with_solution: bool) -> None:
     _crosshair_gridlines(ax)
     ax.scatter(problem.vectors[:, 0], problem.vectors[:, 1], s=45, color=GRAY, label="Population", zorder=2)
     _draw_boundary(ax, name)
+    ax.set_xlim(*_XY_LIMS[name][0])
+    ax.set_ylim(*_XY_LIMS[name][1])
     _draw_band_constraints(ax, name, GEOMETRY_N)
 
     if with_solution:
@@ -161,7 +189,7 @@ def render_geometry(name: str, with_solution: bool) -> None:
             zorder=3,
         )
 
-    ax.legend(fontsize=15, loc="lower right" if name.startswith("C") else "upper right", framealpha=0.9)
+    ax.legend(fontsize=15, loc=_LEGEND_LOC[name], framealpha=0.9)
     suffix = "_with_solution" if with_solution else ""
     _save_webp(fig, IMAGES_DIR / f"problem_{name}{suffix}.webp")
 
