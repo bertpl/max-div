@@ -19,7 +19,7 @@ UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-g
 # to pass coverage flags, and deliberately keeps the warnings visible.
 PYTEST_ARGS ?= --disable-warnings
 
-.PHONY: help build test collect-test-ids check-capability-data build-capability-data coverage test-and-coverage lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-all-benchmarks update-solver-benchmark-figures
+.PHONY: help build test collect-test-ids check-capability-data build-capability-data coverage test-and-coverage lint dev-setup release splash docs show-coverage show-docs update-internal-benchmarks update-solver-strategies-benchmarks update-solver-feasibility-benchmarks update-all-benchmarks update-solver-benchmark-figures
 
 help:
 	@echo 'Commands:'
@@ -48,6 +48,7 @@ help:
 	@echo ''
 	@echo '  update-internal-benchmarks             Run internal benchmarks and update results in ./docs/benchmarks/internal/results/.'
 	@echo '  update-solver-strategies-benchmarks    Run solver benchmarks and update results in ./docs/benchmarks/solver/results/.'
+	@echo '  update-solver-feasibility-benchmarks   Run solver feasibility benchmarks and update results in ./docs/benchmarks/solver/results/.'
 	@echo '  update-all-benchmarks                  Run all benchmarks and update results in ./docs/benchmarks/.'
 	@echo '  update-solver-benchmark-figures        Updates all benchmark-related figures in ./docs/benchmarks/solver/images.'
 	@echo ''
@@ -142,7 +143,12 @@ update-solver-strategies-benchmarks:
 	mv -f ./benchmark*.md ./docs/benchmarks/solver/results/;
 	$(MAKE) docs
 
-update-all-benchmarks: update-internal-benchmarks update-solver-strategies-benchmarks
+update-solver-feasibility-benchmarks:
+	uv run max-div benchmark solver feasibility --markdown --file --problem=all;
+	mv -f ./feasibility_verdicts_*.md ./docs/benchmarks/solver/results/;
+	$(MAKE) docs
+
+update-all-benchmarks: update-internal-benchmarks update-solver-strategies-benchmarks update-solver-feasibility-benchmarks
 
 update-solver-benchmark-figures:
 	@if ls ./preset_results*.json 1> /dev/null 2>&1; then \
