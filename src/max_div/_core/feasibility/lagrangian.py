@@ -40,7 +40,6 @@ mathematical facts the code cannot show (why a top-k minimizes the priced penalt
 `g` is a proof), so each function states the fact it relies on.
 """
 
-import math
 from dataclasses import dataclass
 from enum import IntEnum
 
@@ -162,12 +161,10 @@ SWAP_CAP_FLOOR = 500  # ... floored here (strict improvement already guarantees 
 G_POSITIVE_TOL = 1e-9  # g must exceed this before it counts as an infeasibility proof
 TIE_TOL = 1e-12  # improvement threshold for repair swaps
 
-# construction-mode iteration budget
-BUDGET_FRACTION = 0.10  # share of the solve budget granted to the ascent
-EST_SEC_PER_OP = 2e-9  # nominal cost of one inner-pass operation, for the time-typed budget
-CONSTRUCTION_MIN_ITER = 500
-CONSTRUCTION_MAX_ITER = 8000
-CONSTRUCTION_DEFAULT_ITER = 2000  # ascent budget for callers with no solve budget to derive one from
+# dual-ascent iteration-budget grades — a caller picks a grade, the algorithm owns the numbers
+FEASIBILITY_MAX_ITER_LOW = 200  # reduced-fidelity smoke runs
+FEASIBILITY_MAX_ITER_MEDIUM = 2000  # default when a caller has no solve budget to derive one from
+FEASIBILITY_MAX_ITER_HIGH = 8000  # verdict grade — the budget the published verdict tables use
 
 
 # =================================================================================================
@@ -1026,8 +1023,8 @@ def find_feasible(
             values; the module docstring describes how they define the violation aggregate.
         n: number of items.
         k: selection size.
-        max_iter: ascent iteration budget; see `construction_iteration_budget_seconds` /
-            `construction_iteration_budget_iterations` for the budget-derived value.
+        max_iter: ascent iteration budget; cost is proportional, and a larger budget can only
+            move an unknown verdict toward a proof.
         seed: seed for the candidate-generation noise (the ascent itself is deterministic).
         stop_at_first_proof: exit the ascent as soon as infeasibility is proven, forgoing the
             mature bound and the scores candidate generation draws from (verdict mode).
@@ -1059,38 +1056,3 @@ def find_feasible(
         lam_min=lam_min,
         lam_max=lam_max,
     )
-
-
-# =================================================================================================
-#  Construction-mode iteration budgets
-# =================================================================================================
-def construction_iteration_budget_seconds(t_max_sec: float, n: int, n_memberships: int) -> int:
-    """Return the ascent iteration budget for a time-typed solve budget.
-
-    The budget is a fixed share (`BUDGET_FRACTION`) of the solve budget, converted to iterations
-    through a nominal per-iteration cost model — deterministic given problem and configuration, so
-    same-seed reproducibility is preserved (machine-speed variation only shifts the actual wall
-    fraction spent).
-
-    Args:
-        t_max_sec: the solve's total wall-clock budget in seconds.
-        n: the number of items.
-        n_memberships: the total constraint membership count (drives the per-iteration cost).
-    """
-    est_iter_cost_sec = (n_memberships + n * math.log2(max(n, 2))) * EST_SEC_PER_OP
-    target = BUDGET_FRACTION * t_max_sec / est_iter_cost_sec
-    return int(min(max(round(target), CONSTRUCTION_MIN_ITER), CONSTRUCTION_MAX_ITER))
-
-
-def construction_iteration_budget_iterations(n_solver_iterations: int) -> int:
-    """Return the ascent iteration budget for an iteration-typed solve budget.
-
-    The same share is applied to the solver iteration count directly — no cost model involved, so
-    the machine independence of iteration-typed budgets is preserved; the crudeness of equating
-    ascent and solver iteration costs is absorbed by the clamps.
-
-    Args:
-        n_solver_iterations: the solve's total iteration budget.
-    """
-    target = BUDGET_FRACTION * n_solver_iterations
-    return int(min(max(round(target), CONSTRUCTION_MIN_ITER), CONSTRUCTION_MAX_ITER))

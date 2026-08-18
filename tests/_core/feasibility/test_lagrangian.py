@@ -9,13 +9,9 @@ from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.feasibility import (
     FeasibilityResult,
     FeasibilityStatus,
-    construction_iteration_budget_iterations,
-    construction_iteration_budget_seconds,
     find_feasible,
 )
 from max_div._core.feasibility.lagrangian import (
-    CONSTRUCTION_MAX_ITER,
-    CONSTRUCTION_MIN_ITER,
     _dual_value,
     _gumbel_noise,
     _item_scores,
@@ -458,52 +454,6 @@ def test_gumbel_noise_seed_behavior():
     # --- assert -----------------------
     np.testing.assert_array_equal(noise_a, noise_b)
     assert not np.array_equal(noise_a, noise_c)
-
-
-# =================================================================================================
-#  Iteration budgets
-# =================================================================================================
-@pytest.mark.parametrize(
-    "t_max_sec,expected",
-    [
-        (0.001, CONSTRUCTION_MIN_ITER),  # tiny budget clamps to the floor
-        (1e6, CONSTRUCTION_MAX_ITER),  # huge budget clamps to the ceiling
-    ],
-)
-def test_construction_budget_seconds_clamps(t_max_sec: float, expected: int):
-    """Extreme time budgets clamp to the iteration floor and ceiling."""
-    # --- act --------------------------
-    budget = construction_iteration_budget_seconds(t_max_sec, n=1000, n_memberships=5000)
-
-    # --- assert -----------------------
-    assert budget == expected
-
-
-def test_construction_budget_seconds_scales_with_problem_size():
-    """A fixed time budget buys fewer iterations on a larger problem."""
-    # --- act --------------------------
-    small_problem = construction_iteration_budget_seconds(1.0, n=1000, n_memberships=5000)
-    large_problem = construction_iteration_budget_seconds(1.0, n=100_000, n_memberships=5_000_000)
-
-    # --- assert -----------------------
-    assert small_problem >= large_problem
-
-
-@pytest.mark.parametrize(
-    "n_solver_iterations,expected",
-    [
-        (100, CONSTRUCTION_MIN_ITER),
-        (20_000, 2000),  # the `BUDGET_FRACTION` share, un-clamped
-        (10_000_000, CONSTRUCTION_MAX_ITER),
-    ],
-)
-def test_construction_budget_iterations(n_solver_iterations: int, expected: int):
-    """Iteration-typed budgets take the fixed share, clamped."""
-    # --- act --------------------------
-    budget = construction_iteration_budget_iterations(n_solver_iterations)
-
-    # --- assert -----------------------
-    assert budget == expected
 
 
 # =================================================================================================

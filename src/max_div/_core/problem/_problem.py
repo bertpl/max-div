@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 
 from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.feasibility import (
-    CONSTRUCTION_DEFAULT_ITER,
+    FEASIBILITY_MAX_ITER_MEDIUM,
     FeasibilityResult,
     find_feasible,
 )
@@ -69,7 +69,9 @@ class MaxDivProblem(ABC):
         return sum([len(con.int_set) for con in self.constraints])
 
     # --- feasibility ----------------------------
-    def check_feasibility(self, thorough: bool = False, max_iter: int = CONSTRUCTION_DEFAULT_ITER) -> FeasibilityResult:
+    def check_feasibility(
+        self, thorough: bool = False, max_iter: int = FEASIBILITY_MAX_ITER_MEDIUM
+    ) -> FeasibilityResult:
         """Report whether `k` items can be selected such that every constraint holds.
 
         Deciding feasibility is NP-complete in general, so the verdict is three-valued; see
