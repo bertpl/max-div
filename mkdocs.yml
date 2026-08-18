@@ -102,7 +102,7 @@ nav:
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/index.md
-    - Built-in problems:
+    - Built-in Problems:
       - Overview: benchmarks/solver/test_problems.md
       - U1: benchmarks/solver/problem_u1.md
       - U2: benchmarks/solver/problem_u2.md
