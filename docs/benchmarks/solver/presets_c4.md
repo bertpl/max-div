@@ -1,5 +1,7 @@
 # Benchmark Results - Problem C4 - Solver Presets
 
+See [Problem C4](problem_c4.md) for the problem definition.
+
 --8<-- "docs/benchmarks/solver/results/note_measured_presets.md"
 
 ## I. Introduction
