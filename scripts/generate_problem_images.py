@@ -3,7 +3,7 @@
 For every built-in problem this renders two webp images from the current generators:
 geometry (`problem_X.webp`) and geometry with an example solution (`problem_X_with_solution.webp`,
 DEFAULT preset over 10,000 iterations), both at `GEOMETRY_N`, where every problem in the suite is
-2-dimensional.  The separation distributions are a separate generator under `local/docs/figures/`.
+2-dimensional.  The separation-distribution images come from a separate generator.
 
 Run:  uv run --group benchmarks --python 3.13 python scripts/generate_problem_images.py [PROBLEM ...]
 """
