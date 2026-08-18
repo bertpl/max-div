@@ -162,9 +162,9 @@ G_POSITIVE_TOL = 1e-9  # g must exceed this before it counts as an infeasibility
 TIE_TOL = 1e-12  # improvement threshold for repair swaps
 
 # dual-ascent iteration-budget grades — callers pick a grade rather than passing a raw count
-FEASIBILITY_MAX_ITER_LOW = 200  # reduced-fidelity smoke runs
-FEASIBILITY_MAX_ITER_MEDIUM = 2000  # default grade for a caller that specifies no budget
-FEASIBILITY_MAX_ITER_HIGH = 8000  # verdict grade — the budget the published verdict tables use
+FEASIBILITY_MAX_ITER_LOW = 200  # low value when speed is prioritized
+FEASIBILITY_MAX_ITER_MEDIUM = 2000  # reasonable default value
+FEASIBILITY_MAX_ITER_HIGH = 8000  # high value when result quality is prioritized
 
 
 # =================================================================================================
