@@ -10,18 +10,18 @@ from max_div._core.solver._strategies._initialization._init_farthest_point impor
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
 
-# Look up each preset by its resolved alias, so DEFAULT falls back to SMART's entry.
-_EXPECTED_INIT: dict[SolverPreset, type[InitializationStrategy]] = {
+# Expected init per preset (by resolved alias, so DEFAULT follows SMART) — unconstrained problem.
+_EXPECTED_INIT_UNCONSTRAINED: dict[SolverPreset, type[InitializationStrategy]] = {
     SolverPreset.RANDOM: InitRandomOneShot,
     SolverPreset.GUIDED: InitRandomOneShot,
     SolverPreset.SMART: InitFarthestPoint,
     SolverPreset.THOROUGH: InitFarthestPoint,
 }
 
-# With constraints present, SMART/THOROUGH switch to the feasibility-witness init; the others are
-# unaffected.
+# Expected init per preset — constrained problem: SMART/THOROUGH switch to most_feasible().
 _EXPECTED_INIT_CONSTRAINED: dict[SolverPreset, type[InitializationStrategy]] = {
-    **_EXPECTED_INIT,
+    SolverPreset.RANDOM: InitRandomOneShot,
+    SolverPreset.GUIDED: InitRandomOneShot,
     SolverPreset.SMART: InitMostFeasible,
     SolverPreset.THOROUGH: InitMostFeasible,
 }
@@ -44,7 +44,7 @@ def test_get_preset_strategies(preset: SolverPreset, target_duration: TargetDura
     init_strat, optim_steps = get_preset_strategies(preset, target_duration)
 
     # --- assert -----------------------
-    assert isinstance(init_strat, _EXPECTED_INIT[preset.resolve_alias()])
+    assert isinstance(init_strat, _EXPECTED_INIT_UNCONSTRAINED[preset.resolve_alias()])
     assert len(optim_steps) > 0  # at least 1 optimization step
     assert optim_steps[0]._duration == target_duration  # should be as requested
 
