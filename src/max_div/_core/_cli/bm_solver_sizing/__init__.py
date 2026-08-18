@@ -1,1 +1,1 @@
-from .size_ladder import K_LADDER, determine_problem_size_for_k
+from .compute_bm_sizes import K_VALUES, determine_problem_size_for_k

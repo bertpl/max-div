@@ -1,15 +1,15 @@
 import pytest
 
-from max_div._core._cli.bm_solver_sizing import K_LADDER, determine_problem_size_for_k
+from max_div._core._cli.bm_solver_sizing import K_VALUES, determine_problem_size_for_k
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 
 ALL_PROBLEMS = BenchmarkProblemFactory.get_all_benchmark_names()
 
 
 @pytest.mark.parametrize("problem_name", ALL_PROBLEMS)
-@pytest.mark.parametrize("k_target", K_LADDER)
+@pytest.mark.parametrize("k_target", K_VALUES)
 def test_determine_problem_size_for_k(problem_name: str, k_target: int):
-    """Every problem resolves each ladder k to the largest n selecting exactly that many items."""
+    """Every problem resolves each k in K_VALUES to the largest n selecting exactly that many items."""
     # --- act --------------------------
     n = determine_problem_size_for_k(problem_name, k_target)
 
