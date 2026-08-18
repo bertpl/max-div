@@ -10,13 +10,18 @@ from max_div._core.solver._strategies._initialization._init_farthest_point impor
 def get_preset_strategies_smart(
     target_duration: TargetDuration,
     thorough: bool = False,
+    has_constraints: bool = False,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
+    """Return the SMART (or THOROUGH, when `thorough`) preset's init strategy and optimization steps."""
     # --- initialization -------------------------
-    # The greedy farthest-point construction reaches competitor-level quality far sooner than a
-    # random start; sampling each pick among the top_k highest contributions keeps that quality
-    # while letting different seeds have sufficient differentiating impact on initialization, so
-    # the workers of a best-of-N portfolio perform a sufficiently broad, differentiated search.
-    init_strategy = InitFarthestPoint(top_k=8)
+    if has_constraints:  # noqa: SIM108 — an if/else keeps a rationale comment on each init choice
+        # Constrained: most_feasible() finds a feasible (or least-infeasible) selection faster than the
+        # main solver's swaps could, freeing the optimizer to spend its whole budget on diversity.
+        init_strategy = InitializationStrategy.most_feasible()
+    else:
+        # Unconstrained: the farthest-point construction reaches competitor-level quality far sooner
+        # than a random start; sampling among the top_k picks keeps that quality while decorrelating seeds.
+        init_strategy = InitFarthestPoint(top_k=8)
 
     # --- optimization steps ---------------------
     if thorough:

@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.feasibility import CONSTRUCTION_DEFAULT_ITER, FeasibilityStatus, find_feasible
+from max_div._core.feasibility import FEASIBILITY_MAX_ITER_MEDIUM, FeasibilityStatus, find_feasible
 from max_div._core.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy
@@ -35,7 +35,7 @@ class InitMostFeasible(InitializationStrategy):
          number of repair rounds.
     """
 
-    def __init__(self, max_iter: int = CONSTRUCTION_DEFAULT_ITER) -> None:
+    def __init__(self, max_iter: int = FEASIBILITY_MAX_ITER_MEDIUM) -> None:
         """Create the strategy.
 
         Raises:

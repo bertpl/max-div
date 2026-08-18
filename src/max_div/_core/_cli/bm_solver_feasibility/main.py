@@ -1,7 +1,7 @@
 """Certified feasibility verdicts for the constrained benchmark problems.
 
 For each constrained benchmark problem and each size in `VERDICT_SIZES`, this runs
-`check_feasibility` at the pipeline's maximum construction budget, `CONSTRUCTION_MAX_ITER`, and
+`check_feasibility` at the pipeline's verdict-grade budget, `FEASIBILITY_MAX_ITER_HIGH`, and
 reports the verdict, plus the constraints-score ceiling wherever infeasibility is certified. The
 output feeds the committed per-problem verdict tables in the docs.
 """
@@ -9,7 +9,12 @@ output feeds the committed per-problem verdict tables in the docs.
 from max_div._core._markdown import Report, Table
 from max_div._core._utils import stdout_to_file
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
-from max_div._core.feasibility import CONSTRUCTION_MAX_ITER, FeasibilityResult, FeasibilityStatus
+from max_div._core.feasibility import (
+    FEASIBILITY_MAX_ITER_HIGH,
+    FEASIBILITY_MAX_ITER_LOW,
+    FeasibilityResult,
+    FeasibilityStatus,
+)
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
 from max_div._core.solver._score import ScoreGenerator
@@ -23,7 +28,6 @@ VERDICT_SIZES = [100, 200, 500, 1000, 2000, 5000, 10000, 20000]
 # budget (a bigger budget can only move UNKNOWN toward a proof) and on the seed of the candidate
 # noise. The budget is pinned here and check_feasibility pins the seed, so regenerating the
 # committed tables is deterministic.
-TURBO_MAX_ITER = 200  # reduced ascent budget for --turbo smoke runs
 TURBO_N_SIZES = 3  # number of ladder sizes retained for --turbo smoke runs
 
 
@@ -99,7 +103,7 @@ def run_solver_feasibility_benchmark(name: str, markdown: bool, file: bool, turb
         raise ValueError(f"Not a constrained benchmark problem: {', '.join(unknown)}")
 
     sizes = VERDICT_SIZES[:TURBO_N_SIZES] if turbo else VERDICT_SIZES
-    max_iter = TURBO_MAX_ITER if turbo else CONSTRUCTION_MAX_ITER
+    max_iter = FEASIBILITY_MAX_ITER_LOW if turbo else FEASIBILITY_MAX_ITER_HIGH
 
     for problem_name in problem_names:
         report = _build_report(problem_name, sizes, max_iter)

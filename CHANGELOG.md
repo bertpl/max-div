@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- SMART and THOROUGH presets now initialize constrained problems with `most_feasible()` instead of the farthest-point construction; unconstrained problems are unchanged
 
 ### Deprecated
 

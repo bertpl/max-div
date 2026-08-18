@@ -7,14 +7,23 @@ from max_div._core.solver._duration import TargetDuration, iterations, seconds
 from max_div._core.solver._presets import get_preset_strategies
 from max_div._core.solver._strategies._initialization import InitializationStrategy
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
+from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
 
-# Look up each preset by its resolved alias, so DEFAULT falls back to SMART's entry.
-_EXPECTED_INIT: dict[SolverPreset, type[InitializationStrategy]] = {
+# Expected init per preset (by resolved alias, so DEFAULT follows SMART) — unconstrained problem.
+_EXPECTED_INIT_UNCONSTRAINED: dict[SolverPreset, type[InitializationStrategy]] = {
     SolverPreset.RANDOM: InitRandomOneShot,
     SolverPreset.GUIDED: InitRandomOneShot,
     SolverPreset.SMART: InitFarthestPoint,
     SolverPreset.THOROUGH: InitFarthestPoint,
+}
+
+# Expected init per preset — constrained problem: SMART/THOROUGH switch to most_feasible().
+_EXPECTED_INIT_CONSTRAINED: dict[SolverPreset, type[InitializationStrategy]] = {
+    SolverPreset.RANDOM: InitRandomOneShot,
+    SolverPreset.GUIDED: InitRandomOneShot,
+    SolverPreset.SMART: InitMostFeasible,
+    SolverPreset.THOROUGH: InitMostFeasible,
 }
 
 
@@ -35,9 +44,20 @@ def test_get_preset_strategies(preset: SolverPreset, target_duration: TargetDura
     init_strat, optim_steps = get_preset_strategies(preset, target_duration)
 
     # --- assert -----------------------
-    assert isinstance(init_strat, _EXPECTED_INIT[preset.resolve_alias()])
+    assert isinstance(init_strat, _EXPECTED_INIT_UNCONSTRAINED[preset.resolve_alias()])
     assert len(optim_steps) > 0  # at least 1 optimization step
     assert optim_steps[0]._duration == target_duration  # should be as requested
+
+
+@pytest.mark.parametrize("preset", list(SolverPreset))
+def test_get_preset_strategies_constrained_init(preset: SolverPreset):
+    """With constraints present, SMART/THOROUGH start from the feasibility-witness init."""
+
+    # --- act --------------------------
+    init_strat, _ = get_preset_strategies(preset, iterations(30), has_constraints=True)
+
+    # --- assert -----------------------
+    assert isinstance(init_strat, _EXPECTED_INIT_CONSTRAINED[preset.resolve_alias()])
 
 
 def test_get_preset_strategies_invalid_preset():

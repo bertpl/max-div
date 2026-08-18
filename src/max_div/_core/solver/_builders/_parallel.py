@@ -137,7 +137,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         replaying a worker on its own, and salts the tuple so a worker seed cannot coincide with a
         seed derived the same way elsewhere.
         """
-        init_strategy, optim_steps = get_preset_strategies(worker.preset, duration)
+        init_strategy, optim_steps = get_preset_strategies(
+            worker.preset, duration, has_constraints=bool(self._constraints)
+        )
         return SolverConfig(
             n=self._n,
             k=self._k,
