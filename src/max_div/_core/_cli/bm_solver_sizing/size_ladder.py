@@ -1,4 +1,4 @@
-from max_div._core.benchmark_problems import BenchmarkProblemFactory
+from max_div._core.benchmark_problems import MIN_N, BenchmarkProblemFactory
 
 # The k values every solver-benchmark family (initialization, optimization, feasibility) sweeps,
 # so a per-size row is comparable across problems even though they derive k from n differently
@@ -26,18 +26,18 @@ def determine_problem_size_for_k(problem_name: str, k_target: int) -> int:
         return k
 
     # --- bracket --------------------------------
-    lo, hi = 20, 40
-    while _k(hi) <= k_target:
-        hi *= 2
+    # n_lo is the smallest constructible size; n_hi over-shoots k_target for any problem selecting
+    # k >= n/100, which the built-in n/10 and n/15 problems clear with wide margin.
+    n_lo, n_hi = MIN_N, 100 * k_target
 
     # --- bisect for largest n with k(n) <= k_target ---
-    while hi - lo > 1:
-        mid = (lo + hi) // 2
+    while n_hi - n_lo > 1:
+        mid = (n_lo + n_hi) // 2
         if _k(mid) <= k_target:
-            lo = mid
+            n_lo = mid
         else:
-            hi = mid
+            n_hi = mid
 
-    if _k(lo) != k_target:
+    if _k(n_lo) != k_target:
         raise ValueError(f"Problem '{problem_name}' has no size n with k == {k_target}.")
-    return lo
+    return n_lo
