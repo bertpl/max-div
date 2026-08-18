@@ -48,7 +48,7 @@ help:
 	@echo ''
 	@echo '  update-internal-benchmarks             Run internal benchmarks and update results in ./docs/benchmarks/internal/results/.'
 	@echo '  update-solver-strategies-benchmarks    Run solver benchmarks and update results in ./docs/benchmarks/solver/results/.'
-	@echo '  update-solver-feasibility-benchmarks   Run solver feasibility verdicts and update results in ./docs/benchmarks/solver/results/.'
+	@echo '  update-solver-feasibility-benchmarks   Run solver feasibility benchmarks and update results in ./docs/benchmarks/solver/results/.'
 	@echo '  update-all-benchmarks                  Run all benchmarks and update results in ./docs/benchmarks/.'
 	@echo '  update-solver-benchmark-figures        Updates all benchmark-related figures in ./docs/benchmarks/solver/images.'
 	@echo ''
