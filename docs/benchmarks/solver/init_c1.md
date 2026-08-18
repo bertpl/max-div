@@ -1,4 +1,4 @@
-# Benchmark Results - Problem C1 - Initialization Strategies
+# Benchmark Results - Problem C1 - Init Strategies
 
 --8<-- "docs/benchmarks/solver/results/note_measured_init.md"
 

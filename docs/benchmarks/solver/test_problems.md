@@ -14,14 +14,14 @@ Detailed descriptions of each problem can be found by following the provided lin
 
 | Problem Name | $d$                    | $k$                   | $m$                  | Description                                                          | Results                  |
 |--------------|------------------------|-----------------------|----------------------|----------------------------------------------------------------------|--------------------------|
-| `U1`         | $2$                    | $\lceil n/10 \rceil$  | $0$                  | Clustered 2D density + background + outlier halo (cross-tool ref.)   | [link](bm_problem_u1.md) |
-| `U2`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Uniform vector density                                               | [link](bm_problem_u2.md) |
-| `U3`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Non-uniform vector density (Gaussian)                                | [link](bm_problem_u3.md) |
-| `U4`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Non-uniform vector density (Conic)                                   | [link](bm_problem_u4.md) |
-| `C1`         | $2$                    | $\lceil n/10 \rceil$  | $\lceil k/5 \rceil$  | Exact per-band quotas; non-overlapping partition (cross-tool ref.)   | [link](bm_problem_c1.md) |
-| `C2`         | $2$                    | $\lceil n/10 \rceil$  | $\lceil k/5 \rceil$  | Per-band lower bounds; non-overlapping partition                     | [link](bm_problem_c2.md) |
-| `C3`         | $\lceil n/150 \rceil$  | $\lceil n/15 \rceil$  | $2d$                 | Non-uniform vector density, overlapping constraints                  | [link](bm_problem_c3.md) |
-| `C4`         | $\lceil n/150 \rceil$  | $\lceil n/15 \rceil$  | $3d$                 | Non-uniform vector density, strongly coupled constraints             | [link](bm_problem_c4.md) |
+| `U1`         | $2$                    | $\lceil n/10 \rceil$  | $0$                  | Clustered 2D density + background + outlier halo (cross-tool ref.)   | [link](problem_u1.md) |
+| `U2`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Uniform vector density                                               | [link](problem_u2.md) |
+| `U3`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Non-uniform vector density (Gaussian)                                | [link](problem_u3.md) |
+| `U4`         | $\lceil n/100 \rceil$  | $\lceil n/10 \rceil$  | $0$                  | Non-uniform vector density (Conic)                                   | [link](problem_u4.md) |
+| `C1`         | $2$                    | $\lceil n/10 \rceil$  | $\lceil k/5 \rceil$  | Exact per-band quotas; non-overlapping partition (cross-tool ref.)   | [link](problem_c1.md) |
+| `C2`         | $2$                    | $\lceil n/10 \rceil$  | $\lceil k/5 \rceil$  | Per-band lower bounds; non-overlapping partition                     | [link](problem_c2.md) |
+| `C3`         | $\lceil n/150 \rceil$  | $\lceil n/15 \rceil$  | $2d$                 | Non-uniform vector density, overlapping constraints                  | [link](problem_c3.md) |
+| `C4`         | $\lceil n/150 \rceil$  | $\lceil n/15 \rceil$  | $3d$                 | Non-uniform vector density, strongly coupled constraints             | [link](problem_c4.md) |
 
 **Legend:**
 

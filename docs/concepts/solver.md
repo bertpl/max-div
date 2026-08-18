@@ -160,7 +160,7 @@ The two counts buy different things:
   selections — a member stuck with a poor selection picks up a sibling's better one and continues
   from there — at the cost of searching less independently.
 
-How much the variance reduction buys depends on the budget. The [published preset quantiles](../benchmarks/solver/bm_problem_u1_presets.md)
+How much the variance reduction buys depends on the budget. The [published preset quantiles](../benchmarks/solver/presets_u1.md)
 show the seed spread narrowing sharply as budgets grow — roughly tenfold over the first stretch —
 and then flattening rather than vanishing.
 

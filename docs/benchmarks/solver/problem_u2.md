@@ -26,6 +26,6 @@ for different problem sizes:
 
 ## II. Benchmark results
 
-- [Initialization Strategies](bm_problem_u2_init.md)
-- [Optimization Strategies](bm_problem_u2_optim.md)
-- [Solver Presets](bm_problem_u2_presets.md)
+- [Init Strategies](init_u2.md)
+- [Optim Strategies](optim_u2.md)
+- [Solver Presets](presets_u2.md)

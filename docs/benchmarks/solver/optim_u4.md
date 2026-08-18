@@ -1,4 +1,4 @@
-# Benchmark Results - Problem U4 - Optimization Strategies
+# Benchmark Results - Problem U4 - Optim Strategies
 
 --8<-- "docs/benchmarks/solver/results/note_measured_optim.md"
 

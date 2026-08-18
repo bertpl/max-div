@@ -49,6 +49,6 @@ See [Proving Feasibility](../../concepts/feasibility.md) for the machinery behin
 
 ## II. Benchmark results
 
-- [Initialization Strategies](bm_problem_c4_init.md)
-- [Optimization Strategies](bm_problem_c4_optim.md)
-- [Solver Presets](bm_problem_c4_presets.md)
+- [Init Strategies](init_c4.md)
+- [Optim Strategies](optim_c4.md)
+- [Solver Presets](presets_c4.md)
