@@ -5,20 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.13.2 (2026-08-18)
 
 ### Changed
 - SMART and THOROUGH presets now initialize constrained problems with `most_feasible()` instead of the farthest-point construction; unconstrained problems are unchanged
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.13.1 (2026-08-17)
 
