@@ -1,0 +1,21 @@
+# Benchmark Results - Problem C3 - Solver Presets
+
+See [Problem C3](problem_c3.md) for the problem definition.
+
+--8<-- "docs/benchmarks/solver/results/note_measured_presets.md"
+
+## I. Introduction
+
+These results compare the built-in solver presets on problem C3 at n=1500 — the size at which the problem selects k=100 items, so every page compares presets at the same selection size.
+
+--8<-- "docs/benchmarks/solver/results/note_preset_methodology.md"
+
+## II. Results
+
+### A. Figures
+
+![Problem C3 - Preset results](./images/preset_results_C3_1500.webp)
+
+### B. Tables
+
+--8<-- "docs/benchmarks/solver/results/preset_result_quantiles_C3_1500.md"

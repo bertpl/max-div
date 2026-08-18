@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The initialization, optimization, and feasibility benchmark pages share one `k`-based size series
+- The Benchmarks documentation is reorganized by benchmark type
 
 ### Deprecated
 

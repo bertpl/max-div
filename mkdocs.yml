@@ -102,53 +102,48 @@ nav:
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/index.md
+    - Built-in Problems:
+      - Overview: benchmarks/solver/test_problems.md
+      - U1: benchmarks/solver/problem_u1.md
+      - U2: benchmarks/solver/problem_u2.md
+      - U3: benchmarks/solver/problem_u3.md
+      - U4: benchmarks/solver/problem_u4.md
+      - C1: benchmarks/solver/problem_c1.md
+      - C2: benchmarks/solver/problem_c2.md
+      - C3: benchmarks/solver/problem_c3.md
+      - C4: benchmarks/solver/problem_c4.md
+    - Init Strategies:
+      - U1: benchmarks/solver/init_u1.md
+      - U2: benchmarks/solver/init_u2.md
+      - U3: benchmarks/solver/init_u3.md
+      - U4: benchmarks/solver/init_u4.md
+      - C1: benchmarks/solver/init_c1.md
+      - C2: benchmarks/solver/init_c2.md
+      - C3: benchmarks/solver/init_c3.md
+      - C4: benchmarks/solver/init_c4.md
+    - Optim Strategies:
+      - U1: benchmarks/solver/optim_u1.md
+      - U2: benchmarks/solver/optim_u2.md
+      - U3: benchmarks/solver/optim_u3.md
+      - U4: benchmarks/solver/optim_u4.md
+      - C1: benchmarks/solver/optim_c1.md
+      - C2: benchmarks/solver/optim_c2.md
+      - C3: benchmarks/solver/optim_c3.md
+      - C4: benchmarks/solver/optim_c4.md
+    - Solver Presets:
+      - U1: benchmarks/solver/presets_u1.md
+      - U2: benchmarks/solver/presets_u2.md
+      - U3: benchmarks/solver/presets_u3.md
+      - U4: benchmarks/solver/presets_u4.md
+      - C1: benchmarks/solver/presets_c1.md
+      - C2: benchmarks/solver/presets_c2.md
+      - C3: benchmarks/solver/presets_c3.md
+      - C4: benchmarks/solver/presets_c4.md
     - 3rd Party Solvers:
       - Overview: benchmarks/comparison/overview.md
       - vs. Python Heuristics: benchmarks/comparison/tier2.md
       - vs. Exact Solvers: benchmarks/comparison/tier1.md
       - vs. MDPLIB Best-Known: benchmarks/comparison/tier3.md
-    - Solver Presets:
-      - Test Problems: benchmarks/solver/test_problems.md
-      - Problem U1:
-          - Description: benchmarks/solver/bm_problem_u1.md
-          - Initialization Strategies: benchmarks/solver/bm_problem_u1_init.md
-          - Optimization Strategies: benchmarks/solver/bm_problem_u1_optim.md
-          - Solver Presets: benchmarks/solver/bm_problem_u1_presets.md
-      - Problem U2:
-          - Description: benchmarks/solver/bm_problem_u2.md
-          - Initialization Strategies: benchmarks/solver/bm_problem_u2_init.md
-          - Optimization Strategies: benchmarks/solver/bm_problem_u2_optim.md
-          - Solver Presets: benchmarks/solver/bm_problem_u2_presets.md
-      - Problem U3:
-          - Description: benchmarks/solver/bm_problem_u3.md
-          - Initialization Strategies: benchmarks/solver/bm_problem_u3_init.md
-          - Optimization Strategies: benchmarks/solver/bm_problem_u3_optim.md
-          - Solver Presets: benchmarks/solver/bm_problem_u3_presets.md
-      - Problem U4:
-          - Description: benchmarks/solver/bm_problem_u4.md
-          - Initialization Strategies: benchmarks/solver/bm_problem_u4_init.md
-          - Optimization Strategies: benchmarks/solver/bm_problem_u4_optim.md
-          - Solver Presets: benchmarks/solver/bm_problem_u4_presets.md
-      - Problem C1:
-          - Description: benchmarks/solver/bm_problem_c1.md
-          - Initialization Strategies: benchmarks/solver/bm_problem_c1_init.md
-          - Optimization Strategies: benchmarks/solver/bm_problem_c1_optim.md
-          - Solver Presets: benchmarks/solver/bm_problem_c1_presets.md
-      - Problem C2:
-          - Description: benchmarks/solver/bm_problem_c2.md
-          - Initialization Strategies: benchmarks/solver/bm_problem_c2_init.md
-          - Optimization Strategies: benchmarks/solver/bm_problem_c2_optim.md
-          - Solver Presets: benchmarks/solver/bm_problem_c2_presets.md
-      - Problem C3:
-          - Description: benchmarks/solver/bm_problem_c3.md
-          - Initialization Strategies: benchmarks/solver/bm_problem_c3_init.md
-          - Optimization Strategies: benchmarks/solver/bm_problem_c3_optim.md
-          - Solver Presets: benchmarks/solver/bm_problem_c3_presets.md
-      - Problem C4:
-          - Description: benchmarks/solver/bm_problem_c4.md
-          - Initialization Strategies: benchmarks/solver/bm_problem_c4_init.md
-          - Optimization Strategies: benchmarks/solver/bm_problem_c4_optim.md
-          - Solver Presets: benchmarks/solver/bm_problem_c4_presets.md
     - Internal Primitives:
       - Overview: benchmarks/internal/overview.md
       - DiversityMetric: benchmarks/internal/bm_diversity_metrics.md
