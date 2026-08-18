@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `most_feasible()` now appears in the published initialization benchmarks for the constrained problems
 
 ### Changed
+- The initialization, optimization, and feasibility benchmark pages share one `k`-based size series
 
 ### Deprecated
 

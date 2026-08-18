@@ -12,12 +12,12 @@ from .bm_solver_presets import (
     K_TARGET,
     determine_benchmark_scope,
     determine_benchmark_scope_for_max_duration,
-    determine_problem_size_for_k,
     estimate_execution_time_sec_multi,
     execute_solver_presets_benchmark,
     get_n_processes,
     show_solver_presets_benchmark_results,
 )
+from .bm_solver_sizing import determine_problem_size_for_k
 
 
 # =================================================================================================
@@ -115,7 +115,7 @@ def presets(
     # --- argument handling - preset(s) & problem(s) ---
     presets = resolve_presets(preset)
     problems = resolve_problems(problem)
-    problem_sizes = {p: n if n is not None else determine_problem_size_for_k(p) for p in problems}
+    problem_sizes = {p: n if n is not None else determine_problem_size_for_k(p, K_TARGET) for p in problems}
 
     # --- argument handling - max_run_duration ---
     max_run_duration_sec = 60.0 * max_run_duration_minutes if max_run_duration_minutes else None

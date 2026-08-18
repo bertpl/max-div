@@ -3,13 +3,13 @@ import pytest
 
 from max_div._core._cli.bm_solver_feasibility.main import (
     TURBO_N_SIZES,
-    VERDICT_SIZES,
     _build_report,
     _ceiling_cell,
     _constrained_problem_names,
     _verdict_cell,
     run_solver_feasibility_benchmark,
 )
+from max_div._core._cli.bm_solver_sizing import K_LADDER, determine_problem_size_for_k
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.constraints import Constraint
 from max_div._core.feasibility import FeasibilityResult, FeasibilityStatus
@@ -35,9 +35,9 @@ def test_constrained_problem_names_selects_exactly_the_problems_with_constraints
     names = _constrained_problem_names()
 
     # --- assert -----------------------
-    smallest = min(VERDICT_SIZES)
     for name in BenchmarkProblemFactory.get_all_benchmark_names():
-        m = BenchmarkProblemFactory.get_problem_dimensions(name, smallest)[3]
+        probe_n = determine_problem_size_for_k(name, K_LADDER[0])
+        m = BenchmarkProblemFactory.get_problem_dimensions(name, probe_n)[3]
         assert (name in names) == (m > 0)
 
 
@@ -72,7 +72,7 @@ def test_ceiling_cell_per_status():
 def test_build_report_renders_one_row_per_size():
     """The report table carries the problem dimensions and a verdict for every requested size."""
     # --- arrange ----------------------
-    sizes = VERDICT_SIZES[:2]
+    sizes = [determine_problem_size_for_k("C1", k) for k in K_LADDER[:2]]
 
     # --- act --------------------------
     lines = _build_report("C1", sizes, max_iter=50).render(markdown=True)
