@@ -161,9 +161,9 @@ SWAP_CAP_FLOOR = 500  # ... floored here (strict improvement already guarantees 
 G_POSITIVE_TOL = 1e-9  # g must exceed this before it counts as an infeasibility proof
 TIE_TOL = 1e-12  # improvement threshold for repair swaps
 
-# dual-ascent iteration-budget grades — a caller picks a grade, the algorithm owns the numbers
+# dual-ascent iteration-budget grades — callers pick a grade rather than passing a raw count
 FEASIBILITY_MAX_ITER_LOW = 200  # reduced-fidelity smoke runs
-FEASIBILITY_MAX_ITER_MEDIUM = 2000  # default when a caller has no solve budget to derive one from
+FEASIBILITY_MAX_ITER_MEDIUM = 2000  # default grade for a caller that specifies no budget
 FEASIBILITY_MAX_ITER_HIGH = 8000  # verdict grade — the budget the published verdict tables use
 
 

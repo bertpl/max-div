@@ -16,6 +16,8 @@ from max_div._core.solver import (
 )
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
+from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
+from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from tests.helpers import swept_benchmark_problems
 
 
@@ -271,3 +273,30 @@ def test_max_div_solver_builder_preset(problem_name: str, n: int, preset: Solver
     assert len(result.i_selected) == problem.k, "final solution should contain k items."
 
     assert score_after_optimization > score_after_initialization, "Optimization should improve the score."
+
+
+@pytest.mark.parametrize("preset", [SolverPreset.SMART, SolverPreset.THOROUGH])
+@pytest.mark.parametrize(
+    "constraints,expected_init",
+    [
+        ([], InitFarthestPoint),
+        ([Constraint(set(range(10)), min_count=2, max_count=3)], InitMostFeasible),
+    ],
+)
+def test_with_preset_switches_init_on_constraints(
+    preset: SolverPreset, constraints: list[Constraint], expected_init: type[InitializationStrategy]
+):
+    """with_preset gives SMART/THOROUGH the feasibility-witness init when the problem is constrained."""
+    # --- arrange ----------------------
+    problem = MaxDivProblem.new(
+        vectors=np.random.rand(20, 5).astype(np.float32),
+        k=5,
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        constraints=constraints,
+    )
+
+    # --- act --------------------------
+    builder = MaxDivSolverBuilder(problem).with_preset(iterations(100), preset)
+
+    # --- assert -----------------------
+    assert isinstance(builder._solver_steps[0]._strategy, expected_init)

@@ -8682,15 +8682,15 @@
   },
   "C1|SMART|42": {
    "i_selected": [
-    1,
-    38,
+    2,
+    25,
     50,
-    54,
-    67,
+    65,
     69,
-    86,
+    81,
+    82,
     95,
-    97,
+    96,
     99
    ],
    "score_checkpoints": [
@@ -8704,10 +8704,10 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6177579164505005,
+     "diversity": 0.10097450017929077,
      "div_tie_breakers": [
       1.0
      ]
@@ -8716,7 +8716,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6492426991462708,
+     "diversity": 0.17379391193389893,
      "div_tie_breakers": [
       1.0
      ]
@@ -8725,7 +8725,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6646372675895691,
+     "diversity": 0.2009076476097107,
      "div_tie_breakers": [
       1.0
      ]
@@ -8734,7 +8734,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.20405566692352295,
      "div_tie_breakers": [
       1.0
      ]
@@ -8743,7 +8743,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.3769512176513672,
      "div_tie_breakers": [
       1.0
      ]
@@ -8752,7 +8752,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.45707497000694275,
      "div_tie_breakers": [
       1.0
      ]
@@ -8761,7 +8761,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.45707497000694275,
      "div_tie_breakers": [
       1.0
      ]
@@ -8770,7 +8770,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.45707497000694275,
      "div_tie_breakers": [
       1.0
      ]
@@ -8779,7 +8779,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.4897719919681549,
      "div_tie_breakers": [
       1.0
      ]
@@ -8788,7 +8788,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.4897719919681549,
      "div_tie_breakers": [
       1.0
      ]
@@ -8797,7 +8797,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.5941063165664673,
      "div_tie_breakers": [
       1.0
      ]
@@ -8806,7 +8806,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6705297231674194,
+     "diversity": 0.6255318522453308,
      "div_tie_breakers": [
       1.0
      ]
@@ -8815,7 +8815,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.6255318522453308,
      "div_tie_breakers": [
       1.0
      ]
@@ -8824,7 +8824,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.6255318522453308,
      "div_tie_breakers": [
       1.0
      ]
@@ -8833,7 +8833,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.62766033411026,
      "div_tie_breakers": [
       1.0
      ]
@@ -8842,7 +8842,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.62766033411026,
      "div_tie_breakers": [
       1.0
      ]
@@ -8851,7 +8851,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.6806357502937317,
      "div_tie_breakers": [
       1.0
      ]
@@ -8860,7 +8860,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.7299386262893677,
      "div_tie_breakers": [
       1.0
      ]
@@ -8869,7 +8869,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.7720316648483276,
      "div_tie_breakers": [
       1.0
      ]
@@ -8878,7 +8878,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.7885106801986694,
      "div_tie_breakers": [
       1.0
      ]
@@ -8887,7 +8887,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.7885106801986694,
      "div_tie_breakers": [
       1.0
      ]
@@ -8896,7 +8896,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6812641024589539,
+     "diversity": 0.7885106801986694,
      "div_tie_breakers": [
       1.0
      ]
@@ -8905,7 +8905,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7374700903892517,
+     "diversity": 0.7927988171577454,
      "div_tie_breakers": [
       1.0
      ]
@@ -8914,7 +8914,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7374700903892517,
+     "diversity": 0.7927988171577454,
      "div_tie_breakers": [
       1.0
      ]
@@ -8923,16 +8923,16 @@
   },
   "C1|SMART|123": {
    "i_selected": [
-    4,
-    32,
+    0,
+    51,
     55,
     71,
-    74,
+    76,
     82,
     91,
     95,
     97,
-    98
+    99
    ],
    "score_checkpoints": [
     {
@@ -8945,10 +8945,10 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.10097450017929077,
      "div_tie_breakers": [
       1.0
      ]
@@ -8957,7 +8957,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.14387130737304688,
      "div_tie_breakers": [
       1.0
      ]
@@ -8966,7 +8966,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.20401252806186676,
      "div_tie_breakers": [
       1.0
      ]
@@ -8975,7 +8975,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.3535398840904236,
      "div_tie_breakers": [
       1.0
      ]
@@ -8984,7 +8984,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7817785143852234,
+     "diversity": 0.3892238140106201,
      "div_tie_breakers": [
       1.0
      ]
@@ -8993,7 +8993,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7817785143852234,
+     "diversity": 0.5730899572372437,
      "div_tie_breakers": [
       1.0
      ]
@@ -9002,7 +9002,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7817785143852234,
+     "diversity": 0.6109760999679565,
      "div_tie_breakers": [
       1.0
      ]
@@ -9011,7 +9011,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7817785143852234,
+     "diversity": 0.640798807144165,
      "div_tie_breakers": [
       1.0
      ]
@@ -9020,7 +9020,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7893818616867065,
+     "diversity": 0.7044306993484497,
      "div_tie_breakers": [
       1.0
      ]
@@ -9029,7 +9029,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7893818616867065,
+     "diversity": 0.7490624189376831,
      "div_tie_breakers": [
       1.0
      ]
@@ -9038,7 +9038,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7893818616867065,
+     "diversity": 0.7621327042579651,
      "div_tie_breakers": [
       1.0
      ]
@@ -9047,7 +9047,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7893818616867065,
+     "diversity": 0.7621327042579651,
      "div_tie_breakers": [
       1.0
      ]
@@ -9056,7 +9056,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8003093004226685,
+     "diversity": 0.7621327042579651,
      "div_tie_breakers": [
       1.0
      ]
@@ -9065,7 +9065,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8003093004226685,
+     "diversity": 0.7621327042579651,
      "div_tie_breakers": [
       1.0
      ]
@@ -9074,7 +9074,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8003093004226685,
+     "diversity": 0.7621327042579651,
      "div_tie_breakers": [
       1.0
      ]
@@ -9083,7 +9083,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8003093004226685,
+     "diversity": 0.7621327042579651,
      "div_tie_breakers": [
       1.0
      ]
@@ -9092,7 +9092,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8370375037193298,
+     "diversity": 0.8421592712402344,
      "div_tie_breakers": [
       1.0
      ]
@@ -9101,7 +9101,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8370375037193298,
+     "diversity": 0.8421592712402344,
      "div_tie_breakers": [
       1.0
      ]
@@ -9110,7 +9110,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8370375037193298,
+     "diversity": 0.863882303237915,
      "div_tie_breakers": [
       1.0
      ]
@@ -9119,7 +9119,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8505820631980896,
+     "diversity": 0.863882303237915,
      "div_tie_breakers": [
       1.0
      ]
@@ -9128,7 +9128,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8505820631980896,
+     "diversity": 0.863882303237915,
      "div_tie_breakers": [
       1.0
      ]
@@ -9137,7 +9137,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8505820631980896,
+     "diversity": 0.863882303237915,
      "div_tie_breakers": [
       1.0
      ]
@@ -9146,7 +9146,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8505820631980896,
+     "diversity": 0.863882303237915,
      "div_tie_breakers": [
       1.0
      ]
@@ -9155,7 +9155,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8505820631980896,
+     "diversity": 0.863882303237915,
      "div_tie_breakers": [
       1.0
      ]
@@ -9164,255 +9164,14 @@
   },
   "C1|THOROUGH|42": {
    "i_selected": [
-    1,
-    42,
-    54,
-    58,
-    69,
-    79,
+    14,
+    39,
+    44,
+    61,
+    75,
+    81,
     86,
-    92,
     95,
-    99
-   ],
-   "score_checkpoints": [
-    {
-     "step": "step 0/2 - Init SolverState",
-     "size": 0.09090909090909083,
-     "constraints": 0.09090909090909083,
-     "diversity": 0.0,
-     "div_tie_breakers": [
-      0.0
-     ]
-    },
-    {
-     "step": "step 1/2 - InitFarthestPoint",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6177579164505005,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6492426991462708,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6646372675895691,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6705297231674194,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6812641024589539,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6812641024589539,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6812641024589539,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6812641024589539,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6812641024589539,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6812641024589539,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6812641024589539,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.7310718894004822,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.7310718894004822,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.7310718894004822,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.7425635457038879,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.7425635457038879,
-     "div_tie_breakers": [
-      1.0
-     ]
-    }
-   ]
-  },
-  "C1|THOROUGH|123": {
-   "i_selected": [
-    2,
-    32,
-    40,
-    71,
-    74,
-    82,
-    91,
-    94,
     97,
     99
    ],
@@ -9427,10 +9186,10 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.10097450017929077,
      "div_tie_breakers": [
       1.0
      ]
@@ -9439,7 +9198,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.17379391193389893,
      "div_tie_breakers": [
       1.0
      ]
@@ -9448,7 +9207,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.2009076476097107,
      "div_tie_breakers": [
       1.0
      ]
@@ -9457,7 +9216,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.20405566692352295,
      "div_tie_breakers": [
       1.0
      ]
@@ -9466,7 +9225,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7817785143852234,
+     "diversity": 0.3769512176513672,
      "div_tie_breakers": [
       1.0
      ]
@@ -9475,7 +9234,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7817785143852234,
+     "diversity": 0.45707497000694275,
      "div_tie_breakers": [
       1.0
      ]
@@ -9484,7 +9243,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7817785143852234,
+     "diversity": 0.45707497000694275,
      "div_tie_breakers": [
       1.0
      ]
@@ -9493,7 +9252,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8344119191169739,
+     "diversity": 0.45707497000694275,
      "div_tie_breakers": [
       1.0
      ]
@@ -9502,7 +9261,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8344119191169739,
+     "diversity": 0.4897719919681549,
      "div_tie_breakers": [
       1.0
      ]
@@ -9511,7 +9270,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8344119191169739,
+     "diversity": 0.4897719919681549,
      "div_tie_breakers": [
       1.0
      ]
@@ -9520,7 +9279,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.5203781723976135,
      "div_tie_breakers": [
       1.0
      ]
@@ -9529,7 +9288,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.6021319031715393,
      "div_tie_breakers": [
       1.0
      ]
@@ -9538,7 +9297,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.6329655647277832,
      "div_tie_breakers": [
       1.0
      ]
@@ -9547,7 +9306,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.6329655647277832,
      "div_tie_breakers": [
       1.0
      ]
@@ -9556,7 +9315,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.6329655647277832,
      "div_tie_breakers": [
       1.0
      ]
@@ -9565,7 +9324,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.6329655647277832,
      "div_tie_breakers": [
       1.0
      ]
@@ -9574,7 +9333,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.6657816767692566,
      "div_tie_breakers": [
       1.0
      ]
@@ -9583,7 +9342,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.6657816767692566,
      "div_tie_breakers": [
       1.0
      ]
@@ -9592,7 +9351,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8500238060951233,
+     "diversity": 0.7204319834709167,
      "div_tie_breakers": [
       1.0
      ]
@@ -9601,7 +9360,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8525834679603577,
+     "diversity": 0.7204319834709167,
      "div_tie_breakers": [
       1.0
      ]
@@ -9610,7 +9369,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8525834679603577,
+     "diversity": 0.7511542439460754,
      "div_tie_breakers": [
       1.0
      ]
@@ -9619,7 +9378,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8525834679603577,
+     "diversity": 0.7511542439460754,
      "div_tie_breakers": [
       1.0
      ]
@@ -9628,7 +9387,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8525834679603577,
+     "diversity": 0.7573950290679932,
      "div_tie_breakers": [
       1.0
      ]
@@ -9637,7 +9396,248 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8525834679603577,
+     "diversity": 0.7573950290679932,
+     "div_tie_breakers": [
+      1.0
+     ]
+    }
+   ]
+  },
+  "C1|THOROUGH|123": {
+   "i_selected": [
+    0,
+    51,
+    55,
+    71,
+    76,
+    82,
+    91,
+    95,
+    97,
+    99
+   ],
+   "score_checkpoints": [
+    {
+     "step": "step 0/2 - Init SolverState",
+     "size": 0.09090909090909083,
+     "constraints": 0.09090909090909083,
+     "diversity": 0.0,
+     "div_tie_breakers": [
+      0.0
+     ]
+    },
+    {
+     "step": "step 1/2 - InitMostFeasible",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.10097450017929077,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.14387130737304688,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.20401252806186676,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.3535398840904236,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.3892238140106201,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.5730899572372437,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.6109760999679565,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.640798807144165,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7044306993484497,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7490624189376831,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7621327042579651,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7621327042579651,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7621327042579651,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7621327042579651,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7621327042579651,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7621327042579651,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.8421592712402344,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.8421592712402344,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.863882303237915,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.863882303237915,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.863882303237915,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.863882303237915,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.863882303237915,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.863882303237915,
      "div_tie_breakers": [
       1.0
      ]
@@ -10610,14 +10610,14 @@
   },
   "C2|SMART|42": {
    "i_selected": [
-    0,
-    45,
-    58,
+    2,
+    32,
+    60,
     65,
-    85,
-    86,
+    71,
+    81,
     91,
-    95,
+    93,
     97,
     99
    ],
@@ -10632,10 +10632,10 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6177579164505005,
+     "diversity": 0.11533879488706589,
      "div_tie_breakers": [
       1.0
      ]
@@ -10644,7 +10644,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.23224928975105286,
      "div_tie_breakers": [
       1.0
      ]
@@ -10653,7 +10653,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.2631280720233917,
      "div_tie_breakers": [
       1.0
      ]
@@ -10662,7 +10662,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.3390456438064575,
      "div_tie_breakers": [
       1.0
      ]
@@ -10671,7 +10671,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.4182325303554535,
      "div_tie_breakers": [
       1.0
      ]
@@ -10680,7 +10680,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.48303109407424927,
      "div_tie_breakers": [
       1.0
      ]
@@ -10689,7 +10689,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.48303109407424927,
      "div_tie_breakers": [
       1.0
      ]
@@ -10698,7 +10698,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.48303109407424927,
      "div_tie_breakers": [
       1.0
      ]
@@ -10707,7 +10707,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.48303109407424927,
      "div_tie_breakers": [
       1.0
      ]
@@ -10716,7 +10716,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.6129156351089478,
      "div_tie_breakers": [
       1.0
      ]
@@ -10725,7 +10725,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.6129156351089478,
      "div_tie_breakers": [
       1.0
      ]
@@ -10734,7 +10734,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.6298039555549622,
      "div_tie_breakers": [
       1.0
      ]
@@ -10743,7 +10743,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.7551458477973938,
      "div_tie_breakers": [
       1.0
      ]
@@ -10752,7 +10752,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.7551458477973938,
      "div_tie_breakers": [
       1.0
      ]
@@ -10761,7 +10761,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6856381893157959,
+     "diversity": 0.7551458477973938,
      "div_tie_breakers": [
       1.0
      ]
@@ -10770,7 +10770,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6856381893157959,
+     "diversity": 0.7551458477973938,
      "div_tie_breakers": [
       1.0
      ]
@@ -10779,7 +10779,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6948826909065247,
+     "diversity": 0.780029833316803,
      "div_tie_breakers": [
       1.0
      ]
@@ -10788,7 +10788,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7033566236495972,
+     "diversity": 0.780029833316803,
      "div_tie_breakers": [
       1.0
      ]
@@ -10797,7 +10797,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7461032271385193,
+     "diversity": 0.7904437184333801,
      "div_tie_breakers": [
       1.0
      ]
@@ -10806,7 +10806,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7540906071662903,
+     "diversity": 0.7904437184333801,
      "div_tie_breakers": [
       1.0
      ]
@@ -10815,7 +10815,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7540906071662903,
+     "diversity": 0.7904437184333801,
      "div_tie_breakers": [
       1.0
      ]
@@ -10824,7 +10824,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7540906071662903,
+     "diversity": 0.7904437184333801,
      "div_tie_breakers": [
       1.0
      ]
@@ -10833,7 +10833,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7718172669410706,
+     "diversity": 0.7904437184333801,
      "div_tie_breakers": [
       1.0
      ]
@@ -10842,7 +10842,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7718172669410706,
+     "diversity": 0.7904437184333801,
      "div_tie_breakers": [
       1.0
      ]
@@ -10851,10 +10851,10 @@
   },
   "C2|SMART|123": {
    "i_selected": [
-    1,
+    2,
     32,
-    50,
     55,
+    71,
     76,
     82,
     91,
@@ -10873,10 +10873,10 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.11533879488706589,
      "div_tie_breakers": [
       1.0
      ]
@@ -10885,7 +10885,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.16484434902668,
      "div_tie_breakers": [
       1.0
      ]
@@ -10894,7 +10894,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.1991259604692459,
      "div_tie_breakers": [
       1.0
      ]
@@ -10903,7 +10903,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.30221763253211975,
      "div_tie_breakers": [
       1.0
      ]
@@ -10912,7 +10912,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.38971996307373047,
      "div_tie_breakers": [
       1.0
      ]
@@ -10921,7 +10921,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8412484526634216,
+     "diversity": 0.5954388380050659,
      "div_tie_breakers": [
       1.0
      ]
@@ -10930,7 +10930,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8412484526634216,
+     "diversity": 0.6812024712562561,
      "div_tie_breakers": [
       1.0
      ]
@@ -10939,7 +10939,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.7243225574493408,
      "div_tie_breakers": [
       1.0
      ]
@@ -10948,7 +10948,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.869873583316803,
+     "diversity": 0.7245192527770996,
      "div_tie_breakers": [
       1.0
      ]
@@ -10957,7 +10957,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.869873583316803,
+     "diversity": 0.7245192527770996,
      "div_tie_breakers": [
       1.0
      ]
@@ -10966,7 +10966,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.869873583316803,
+     "diversity": 0.7245192527770996,
      "div_tie_breakers": [
       1.0
      ]
@@ -10975,7 +10975,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.869873583316803,
+     "diversity": 0.7245192527770996,
      "div_tie_breakers": [
       1.0
      ]
@@ -10984,7 +10984,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.869873583316803,
+     "diversity": 0.7744949460029602,
      "div_tie_breakers": [
       1.0
      ]
@@ -10993,7 +10993,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.869873583316803,
+     "diversity": 0.8241316676139832,
      "div_tie_breakers": [
       1.0
      ]
@@ -11002,7 +11002,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.869873583316803,
+     "diversity": 0.8241316676139832,
      "div_tie_breakers": [
       1.0
      ]
@@ -11011,7 +11011,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.869873583316803,
+     "diversity": 0.8241316676139832,
      "div_tie_breakers": [
       1.0
      ]
@@ -11020,7 +11020,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8701953887939453,
+     "diversity": 0.865696132183075,
      "div_tie_breakers": [
       1.0
      ]
@@ -11029,7 +11029,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8701953887939453,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11038,7 +11038,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8701953887939453,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11047,7 +11047,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8701953887939453,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11056,7 +11056,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8701953887939453,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11065,7 +11065,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8701953887939453,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11074,7 +11074,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8701953887939453,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11083,7 +11083,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8701953887939453,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11092,12 +11092,12 @@
   },
   "C2|THOROUGH|42": {
    "i_selected": [
-    0,
-    45,
-    51,
-    52,
-    58,
-    85,
+    2,
+    32,
+    65,
+    66,
+    71,
+    81,
     91,
     93,
     97,
@@ -11114,10 +11114,10 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6177579164505005,
+     "diversity": 0.11533879488706589,
      "div_tie_breakers": [
       1.0
      ]
@@ -11126,7 +11126,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.23224928975105286,
      "div_tie_breakers": [
       1.0
      ]
@@ -11135,7 +11135,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.2631280720233917,
      "div_tie_breakers": [
       1.0
      ]
@@ -11144,7 +11144,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.3390456438064575,
      "div_tie_breakers": [
       1.0
      ]
@@ -11153,7 +11153,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.4182325303554535,
      "div_tie_breakers": [
       1.0
      ]
@@ -11162,7 +11162,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.48303109407424927,
      "div_tie_breakers": [
       1.0
      ]
@@ -11171,7 +11171,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.48303109407424927,
      "div_tie_breakers": [
       1.0
      ]
@@ -11180,7 +11180,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6565380692481995,
+     "diversity": 0.48303109407424927,
      "div_tie_breakers": [
       1.0
      ]
@@ -11189,7 +11189,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.48303109407424927,
      "div_tie_breakers": [
       1.0
      ]
@@ -11198,7 +11198,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.6129156351089478,
      "div_tie_breakers": [
       1.0
      ]
@@ -11207,7 +11207,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.6129156351089478,
      "div_tie_breakers": [
       1.0
      ]
@@ -11216,7 +11216,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.6298039555549622,
      "div_tie_breakers": [
       1.0
      ]
@@ -11225,7 +11225,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.7551458477973938,
      "div_tie_breakers": [
       1.0
      ]
@@ -11234,7 +11234,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6684407591819763,
+     "diversity": 0.7551458477973938,
      "div_tie_breakers": [
       1.0
      ]
@@ -11243,7 +11243,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6856381893157959,
+     "diversity": 0.7551458477973938,
      "div_tie_breakers": [
       1.0
      ]
@@ -11252,7 +11252,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6856381893157959,
+     "diversity": 0.7551458477973938,
      "div_tie_breakers": [
       1.0
      ]
@@ -11261,7 +11261,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6948826909065247,
+     "diversity": 0.780029833316803,
      "div_tie_breakers": [
       1.0
      ]
@@ -11270,7 +11270,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7033566236495972,
+     "diversity": 0.780029833316803,
      "div_tie_breakers": [
       1.0
      ]
@@ -11279,7 +11279,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7240328788757324,
+     "diversity": 0.7904437184333801,
      "div_tie_breakers": [
       1.0
      ]
@@ -11288,7 +11288,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7240328788757324,
+     "diversity": 0.8018074631690979,
      "div_tie_breakers": [
       1.0
      ]
@@ -11297,7 +11297,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7240328788757324,
+     "diversity": 0.8018074631690979,
      "div_tie_breakers": [
       1.0
      ]
@@ -11306,7 +11306,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7240328788757324,
+     "diversity": 0.8018074631690979,
      "div_tie_breakers": [
       1.0
      ]
@@ -11315,7 +11315,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7240328788757324,
+     "diversity": 0.8018074631690979,
      "div_tie_breakers": [
       1.0
      ]
@@ -11324,7 +11324,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7240328788757324,
+     "diversity": 0.8018074631690979,
      "div_tie_breakers": [
       1.0
      ]
@@ -11333,11 +11333,11 @@
   },
   "C2|THOROUGH|123": {
    "i_selected": [
-    1,
+    2,
     32,
-    50,
     55,
-    74,
+    71,
+    76,
     82,
     91,
     95,
@@ -11355,10 +11355,10 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.11533879488706589,
      "div_tie_breakers": [
       1.0
      ]
@@ -11367,7 +11367,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.16484434902668,
      "div_tie_breakers": [
       1.0
      ]
@@ -11376,7 +11376,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.1991259604692459,
      "div_tie_breakers": [
       1.0
      ]
@@ -11385,7 +11385,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.30221763253211975,
      "div_tie_breakers": [
       1.0
      ]
@@ -11394,7 +11394,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.7608301639556885,
+     "diversity": 0.38971996307373047,
      "div_tie_breakers": [
       1.0
      ]
@@ -11403,7 +11403,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8412484526634216,
+     "diversity": 0.5954388380050659,
      "div_tie_breakers": [
       1.0
      ]
@@ -11412,7 +11412,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8412484526634216,
+     "diversity": 0.6812024712562561,
      "div_tie_breakers": [
       1.0
      ]
@@ -11421,7 +11421,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.7243225574493408,
      "div_tie_breakers": [
       1.0
      ]
@@ -11430,7 +11430,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.7245192527770996,
      "div_tie_breakers": [
       1.0
      ]
@@ -11439,7 +11439,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.7245192527770996,
      "div_tie_breakers": [
       1.0
      ]
@@ -11448,7 +11448,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.7245192527770996,
      "div_tie_breakers": [
       1.0
      ]
@@ -11457,7 +11457,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.7245192527770996,
      "div_tie_breakers": [
       1.0
      ]
@@ -11466,7 +11466,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.7744949460029602,
      "div_tie_breakers": [
       1.0
      ]
@@ -11475,7 +11475,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.8241316676139832,
      "div_tie_breakers": [
       1.0
      ]
@@ -11484,7 +11484,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.8241316676139832,
      "div_tie_breakers": [
       1.0
      ]
@@ -11493,7 +11493,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8667120933532715,
+     "diversity": 0.8241316676139832,
      "div_tie_breakers": [
       1.0
      ]
@@ -11502,7 +11502,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8670329451560974,
+     "diversity": 0.865696132183075,
      "div_tie_breakers": [
       1.0
      ]
@@ -11511,7 +11511,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8670329451560974,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11520,7 +11520,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8670329451560974,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11529,7 +11529,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8670329451560974,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11538,7 +11538,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8670329451560974,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11547,7 +11547,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8670329451560974,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11556,7 +11556,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8670329451560974,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -11565,7 +11565,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.8670329451560974,
+     "diversity": 0.9063172936439514,
      "div_tie_breakers": [
       1.0
      ]
@@ -12526,249 +12526,11 @@
   },
   "C3|SMART|42": {
    "i_selected": [
-    2,
-    39,
-    43,
-    76,
-    80,
-    97,
-    98
-   ],
-   "score_checkpoints": [
-    {
-     "step": "step 0/2 - Init SolverState",
-     "size": 0.125,
-     "constraints": 0.19999999999999996,
-     "diversity": 0.0,
-     "div_tie_breakers": [
-      0.0
-     ]
-    },
-    {
-     "step": "step 1/2 - InitFarthestPoint",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.42619815468788147,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.5551184415817261,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6279575228691101,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6279575228691101,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6279575228691101,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6279575228691101,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6279575228691101,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6279575228691101,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6279575228691101,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6279575228691101,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6329509019851685,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6329509019851685,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6329509019851685,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6329509019851685,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6329509019851685,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6329509019851685,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6572884321212769,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6743707656860352,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6743707656860352,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6744616031646729,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6744616031646729,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6744616031646729,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6744616031646729,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6744616031646729,
-     "div_tie_breakers": [
-      1.0
-     ]
-    }
-   ]
-  },
-  "C3|SMART|123": {
-   "i_selected": [
-    8,
-    37,
-    44,
-    71,
-    76,
+    13,
+    46,
+    60,
+    81,
+    90,
     98,
     99
    ],
@@ -12783,10 +12545,37 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 4.886536054266033e-13,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 1.9381959145275962e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 4.161599450464015e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.15975376963615417,
      "div_tie_breakers": [
       1.0
      ]
@@ -12795,7 +12584,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 0.3600497543811798,
      "div_tie_breakers": [
       1.0
      ]
@@ -12804,7 +12593,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 0.6402223110198975,
      "div_tie_breakers": [
       1.0
      ]
@@ -12813,7 +12602,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 0.6402223110198975,
      "div_tie_breakers": [
       1.0
      ]
@@ -12822,7 +12611,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 0.6723846793174744,
      "div_tie_breakers": [
       1.0
      ]
@@ -12831,7 +12620,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6316583156585693,
+     "diversity": 0.6723846793174744,
      "div_tie_breakers": [
       1.0
      ]
@@ -12840,7 +12629,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6316583156585693,
+     "diversity": 0.7090976238250732,
      "div_tie_breakers": [
       1.0
      ]
@@ -12849,7 +12638,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.7090976238250732,
      "div_tie_breakers": [
       1.0
      ]
@@ -12858,7 +12647,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.7110927104949951,
      "div_tie_breakers": [
       1.0
      ]
@@ -12867,7 +12656,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.7188262939453125,
      "div_tie_breakers": [
       1.0
      ]
@@ -12876,7 +12665,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.7188262939453125,
      "div_tie_breakers": [
       1.0
      ]
@@ -12885,7 +12674,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.7188262939453125,
      "div_tie_breakers": [
       1.0
      ]
@@ -12894,7 +12683,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471362113952637,
+     "diversity": 0.7188262939453125,
      "div_tie_breakers": [
       1.0
      ]
@@ -12903,7 +12692,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471884846687317,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -12912,7 +12701,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471884846687317,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -12921,7 +12710,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471884846687317,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -12930,7 +12719,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471884846687317,
+     "diversity": 0.7313728332519531,
      "div_tie_breakers": [
       1.0
      ]
@@ -12939,7 +12728,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.672599732875824,
+     "diversity": 0.7313728332519531,
      "div_tie_breakers": [
       1.0
      ]
@@ -12948,7 +12737,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.672599732875824,
+     "diversity": 0.7313728332519531,
      "div_tie_breakers": [
       1.0
      ]
@@ -12957,7 +12746,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6744139194488525,
+     "diversity": 0.7345974445343018,
      "div_tie_breakers": [
       1.0
      ]
@@ -12966,7 +12755,56 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6744139194488525,
+     "diversity": 0.7345974445343018,
+     "div_tie_breakers": [
+      1.0
+     ]
+    }
+   ]
+  },
+  "C3|SMART|123": {
+   "i_selected": [
+    7,
+    46,
+    52,
+    81,
+    82,
+    98,
+    99
+   ],
+   "score_checkpoints": [
+    {
+     "step": "step 0/2 - Init SolverState",
+     "size": 0.125,
+     "constraints": 0.19999999999999996,
+     "diversity": 0.0,
+     "div_tie_breakers": [
+      0.0
+     ]
+    },
+    {
+     "step": "step 1/2 - InitMostFeasible",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 4.886536054266033e-13,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 1.1591168563168663e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.09974955767393112,
      "div_tie_breakers": [
       1.0
      ]
@@ -12975,7 +12813,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6744139194488525,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -12984,7 +12822,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6744139194488525,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -12993,7 +12831,169 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6744139194488525,
+     "diversity": 0.38933661580085754,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.624976634979248,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.624976634979248,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.624976634979248,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.69746333360672,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.69746333360672,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.69746333360672,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7071554064750671,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7071554064750671,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7071554064750671,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.7071554064750671,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.722814679145813,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.722814679145813,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.722814679145813,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.722814679145813,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.722814679145813,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.722814679145813,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.722814679145813,
+     "div_tie_breakers": [
+      1.0
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.722814679145813,
      "div_tie_breakers": [
       1.0
      ]
@@ -13002,13 +13002,13 @@
   },
   "C3|THOROUGH|42": {
    "i_selected": [
-    2,
+    13,
     39,
-    43,
+    59,
     76,
-    78,
-    97,
-    98
+    90,
+    98,
+    99
    ],
    "score_checkpoints": [
     {
@@ -13021,10 +13021,37 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.42619815468788147,
+     "diversity": 4.886536054266033e-13,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 1.9381959145275962e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 4.161599450464015e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.15975376963615417,
      "div_tie_breakers": [
       1.0
      ]
@@ -13033,7 +13060,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5551184415817261,
+     "diversity": 0.3600497543811798,
      "div_tie_breakers": [
       1.0
      ]
@@ -13042,7 +13069,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6279575228691101,
+     "diversity": 0.6402223110198975,
      "div_tie_breakers": [
       1.0
      ]
@@ -13051,7 +13078,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6279575228691101,
+     "diversity": 0.6402223110198975,
      "div_tie_breakers": [
       1.0
      ]
@@ -13060,7 +13087,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6279575228691101,
+     "diversity": 0.6723846793174744,
      "div_tie_breakers": [
       1.0
      ]
@@ -13069,7 +13096,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6279575228691101,
+     "diversity": 0.6723846793174744,
      "div_tie_breakers": [
       1.0
      ]
@@ -13078,7 +13105,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6279575228691101,
+     "diversity": 0.7090976238250732,
      "div_tie_breakers": [
       1.0
      ]
@@ -13087,7 +13114,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6279575228691101,
+     "diversity": 0.7090976238250732,
      "div_tie_breakers": [
       1.0
      ]
@@ -13096,7 +13123,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6279575228691101,
+     "diversity": 0.7110927104949951,
      "div_tie_breakers": [
       1.0
      ]
@@ -13105,7 +13132,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6279575228691101,
+     "diversity": 0.7188262939453125,
      "div_tie_breakers": [
       1.0
      ]
@@ -13114,7 +13141,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6329509019851685,
+     "diversity": 0.7188262939453125,
      "div_tie_breakers": [
       1.0
      ]
@@ -13123,7 +13150,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6329509019851685,
+     "diversity": 0.7188262939453125,
      "div_tie_breakers": [
       1.0
      ]
@@ -13132,7 +13159,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6329509019851685,
+     "diversity": 0.7188262939453125,
      "div_tie_breakers": [
       1.0
      ]
@@ -13141,7 +13168,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6329509019851685,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -13150,7 +13177,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6329509019851685,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -13159,7 +13186,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6329509019851685,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -13168,7 +13195,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6572884321212769,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -13177,7 +13204,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6743707656860352,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -13186,7 +13213,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6743707656860352,
+     "diversity": 0.7254298329353333,
      "div_tie_breakers": [
       1.0
      ]
@@ -13195,7 +13222,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6743707656860352,
+     "diversity": 0.7323153018951416,
      "div_tie_breakers": [
       1.0
      ]
@@ -13204,34 +13231,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6743707656860352,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6743707656860352,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6743707656860352,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6743707656860352,
+     "diversity": 0.7323153018951416,
      "div_tie_breakers": [
       1.0
      ]
@@ -13240,13 +13240,13 @@
   },
   "C3|THOROUGH|123": {
    "i_selected": [
-    8,
-    37,
-    44,
-    74,
-    77,
-    95,
-    98
+    7,
+    48,
+    52,
+    81,
+    82,
+    98,
+    99
    ],
    "score_checkpoints": [
     {
@@ -13259,10 +13259,28 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 4.886536054266033e-13,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 1.1591168563168663e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.09974955767393112,
      "div_tie_breakers": [
       1.0
      ]
@@ -13271,7 +13289,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -13280,7 +13298,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -13289,7 +13307,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -13298,7 +13316,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5408505797386169,
+     "diversity": 0.624976634979248,
      "div_tie_breakers": [
       1.0
      ]
@@ -13307,7 +13325,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6316583156585693,
+     "diversity": 0.624976634979248,
      "div_tie_breakers": [
       1.0
      ]
@@ -13316,7 +13334,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6316583156585693,
+     "diversity": 0.624976634979248,
      "div_tie_breakers": [
       1.0
      ]
@@ -13325,7 +13343,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.69746333360672,
      "div_tie_breakers": [
       1.0
      ]
@@ -13334,7 +13352,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.69746333360672,
      "div_tie_breakers": [
       1.0
      ]
@@ -13343,7 +13361,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.69746333360672,
      "div_tie_breakers": [
       1.0
      ]
@@ -13352,7 +13370,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.7071554064750671,
      "div_tie_breakers": [
       1.0
      ]
@@ -13361,7 +13379,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6388194561004639,
+     "diversity": 0.7071554064750671,
      "div_tie_breakers": [
       1.0
      ]
@@ -13370,7 +13388,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471362113952637,
+     "diversity": 0.7071554064750671,
      "div_tie_breakers": [
       1.0
      ]
@@ -13379,7 +13397,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471884846687317,
+     "diversity": 0.7071554064750671,
      "div_tie_breakers": [
       1.0
      ]
@@ -13388,7 +13406,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471884846687317,
+     "diversity": 0.722814679145813,
      "div_tie_breakers": [
       1.0
      ]
@@ -13397,7 +13415,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471884846687317,
+     "diversity": 0.722814679145813,
      "div_tie_breakers": [
       1.0
      ]
@@ -13406,7 +13424,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6471884846687317,
+     "diversity": 0.722814679145813,
      "div_tie_breakers": [
       1.0
      ]
@@ -13415,7 +13433,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6509901285171509,
+     "diversity": 0.722814679145813,
      "div_tie_breakers": [
       1.0
      ]
@@ -13424,7 +13442,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6509901285171509,
+     "diversity": 0.722814679145813,
      "div_tie_breakers": [
       1.0
      ]
@@ -13433,7 +13451,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6509901285171509,
+     "diversity": 0.722814679145813,
      "div_tie_breakers": [
       1.0
      ]
@@ -13442,7 +13460,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6509901285171509,
+     "diversity": 0.722814679145813,
      "div_tie_breakers": [
       1.0
      ]
@@ -13451,25 +13469,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6509901285171509,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6602873206138611,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6602873206138611,
+     "diversity": 0.7274969816207886,
      "div_tie_breakers": [
       1.0
      ]
@@ -14430,13 +14430,13 @@
   },
   "C4|SMART|42": {
    "i_selected": [
-    11,
-    25,
-    48,
-    55,
-    76,
-    78,
-    94
+    5,
+    38,
+    68,
+    69,
+    87,
+    93,
+    98
    ],
    "score_checkpoints": [
     {
@@ -14449,10 +14449,37 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.42619815468788147,
+     "diversity": 4.886536054266033e-13,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 1.9381959145275962e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 4.161599450464015e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.15852266550064087,
      "div_tie_breakers": [
       1.0
      ]
@@ -14461,7 +14488,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.44385936856269836,
+     "diversity": 0.2689635753631592,
      "div_tie_breakers": [
       1.0
      ]
@@ -14470,7 +14497,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.519208550453186,
      "div_tie_breakers": [
       1.0
      ]
@@ -14479,7 +14506,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.519208550453186,
      "div_tie_breakers": [
       1.0
      ]
@@ -14488,7 +14515,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.519208550453186,
      "div_tie_breakers": [
       1.0
      ]
@@ -14497,7 +14524,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.519208550453186,
      "div_tie_breakers": [
       1.0
      ]
@@ -14506,7 +14533,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.564033567905426,
      "div_tie_breakers": [
       1.0
      ]
@@ -14515,7 +14542,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.564033567905426,
      "div_tie_breakers": [
       1.0
      ]
@@ -14524,7 +14551,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.564033567905426,
      "div_tie_breakers": [
       1.0
      ]
@@ -14533,7 +14560,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -14542,7 +14569,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -14551,7 +14578,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -14560,7 +14587,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -14569,7 +14596,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -14578,7 +14605,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -14587,7 +14614,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -14596,7 +14623,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4797179102897644,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -14605,7 +14632,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4797179102897644,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -14614,7 +14641,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4797179102897644,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -14623,7 +14650,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.48019176721572876,
+     "diversity": 0.6227802038192749,
      "div_tie_breakers": [
       1.0
      ]
@@ -14632,34 +14659,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.48019176721572876,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.48019176721572876,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.49739503860473633,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.49739503860473633,
+     "diversity": 0.6227802038192749,
      "div_tie_breakers": [
       1.0
      ]
@@ -14668,11 +14668,11 @@
   },
   "C4|SMART|123": {
    "i_selected": [
-    14,
-    31,
-    51,
-    69,
-    81,
+    27,
+    28,
+    58,
+    65,
+    82,
     96,
     98
    ],
@@ -14687,19 +14687,28 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
-     "constraints": 0.8888888888888888,
-     "diversity": 0.5408505797386169,
+     "constraints": 1.0,
+     "diversity": 4.886536054266033e-13,
      "div_tie_breakers": [
-      1.0
+      0.7142857313156128
      ]
     },
     {
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
-     "constraints": 0.8888888888888888,
-     "diversity": 0.36717066168785095,
+     "constraints": 1.0,
+     "diversity": 1.1591168563168663e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.09974955767393112,
      "div_tie_breakers": [
       1.0
      ]
@@ -14708,7 +14717,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.37589016556739807,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -14717,7 +14726,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3977173864841461,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -14726,7 +14735,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3977173864841461,
+     "diversity": 0.5330157279968262,
      "div_tie_breakers": [
       1.0
      ]
@@ -14735,7 +14744,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3977173864841461,
+     "diversity": 0.5612459182739258,
      "div_tie_breakers": [
       1.0
      ]
@@ -14744,7 +14753,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5094338655471802,
+     "diversity": 0.5612459182739258,
      "div_tie_breakers": [
       1.0
      ]
@@ -14753,7 +14762,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6094219088554382,
+     "diversity": 0.5662109851837158,
      "div_tie_breakers": [
       1.0
      ]
@@ -14762,7 +14771,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5662109851837158,
      "div_tie_breakers": [
       1.0
      ]
@@ -14771,7 +14780,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14780,7 +14789,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14789,7 +14798,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14798,7 +14807,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14807,7 +14816,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14816,7 +14825,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14825,7 +14834,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14834,7 +14843,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.619182825088501,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14843,7 +14852,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6376600861549377,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -14852,7 +14861,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6376600861549377,
+     "diversity": 0.5734270215034485,
      "div_tie_breakers": [
       1.0
      ]
@@ -14861,7 +14870,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6379690766334534,
+     "diversity": 0.6462721228599548,
      "div_tie_breakers": [
       1.0
      ]
@@ -14870,7 +14879,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6379690766334534,
+     "diversity": 0.6462721228599548,
      "div_tie_breakers": [
       1.0
      ]
@@ -14879,7 +14888,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6379690766334534,
+     "diversity": 0.6462721228599548,
      "div_tie_breakers": [
       1.0
      ]
@@ -14888,16 +14897,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6379690766334534,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-8,8,8)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6485404372215271,
+     "diversity": 0.6462721228599548,
      "div_tie_breakers": [
       1.0
      ]
@@ -14906,13 +14906,13 @@
   },
   "C4|THOROUGH|42": {
    "i_selected": [
-    10,
-    25,
+    5,
     38,
-    50,
-    76,
-    78,
-    94
+    56,
+    68,
+    87,
+    93,
+    98
    ],
    "score_checkpoints": [
     {
@@ -14925,10 +14925,37 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.42619815468788147,
+     "diversity": 4.886536054266033e-13,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 1.9381959145275962e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 4.161599450464015e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.15852266550064087,
      "div_tie_breakers": [
       1.0
      ]
@@ -14937,7 +14964,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.44385936856269836,
+     "diversity": 0.2689635753631592,
      "div_tie_breakers": [
       1.0
      ]
@@ -14946,7 +14973,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.519208550453186,
      "div_tie_breakers": [
       1.0
      ]
@@ -14955,7 +14982,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.519208550453186,
      "div_tie_breakers": [
       1.0
      ]
@@ -14964,7 +14991,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.519208550453186,
      "div_tie_breakers": [
       1.0
      ]
@@ -14973,7 +15000,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.519208550453186,
      "div_tie_breakers": [
       1.0
      ]
@@ -14982,7 +15009,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.564033567905426,
      "div_tie_breakers": [
       1.0
      ]
@@ -14991,7 +15018,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4614385664463043,
+     "diversity": 0.564033567905426,
      "div_tie_breakers": [
       1.0
      ]
@@ -15000,7 +15027,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.564033567905426,
      "div_tie_breakers": [
       1.0
      ]
@@ -15009,7 +15036,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -15018,7 +15045,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -15027,7 +15054,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -15036,7 +15063,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -15045,7 +15072,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -15054,7 +15081,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6025290489196777,
      "div_tie_breakers": [
       1.0
      ]
@@ -15063,7 +15090,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.46385523676872253,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -15072,7 +15099,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4797179102897644,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -15081,7 +15108,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4797179102897644,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -15090,7 +15117,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.4797179102897644,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -15099,7 +15126,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.50043123960495,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -15108,34 +15135,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.50043123960495,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.50043123960495,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.50043123960495,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.50043123960495,
+     "diversity": 0.6186779141426086,
      "div_tie_breakers": [
       1.0
      ]
@@ -15144,11 +15144,11 @@
   },
   "C4|THOROUGH|123": {
    "i_selected": [
-    20,
-    31,
-    48,
-    69,
-    81,
+    27,
+    28,
+    62,
+    65,
+    82,
     96,
     98
    ],
@@ -15163,19 +15163,28 @@
      ]
     },
     {
-     "step": "step 1/2 - InitFarthestPoint",
+     "step": "step 1/2 - InitMostFeasible",
      "size": 1.0,
-     "constraints": 0.8888888888888888,
-     "diversity": 0.5408505797386169,
+     "constraints": 1.0,
+     "diversity": 4.886536054266033e-13,
      "div_tie_breakers": [
-      1.0
+      0.7142857313156128
      ]
     },
     {
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
-     "constraints": 0.8888888888888888,
-     "diversity": 0.36717066168785095,
+     "constraints": 1.0,
+     "diversity": 1.1591168563168663e-12,
+     "div_tie_breakers": [
+      0.7142857313156128
+     ]
+    },
+    {
+     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
+     "size": 1.0,
+     "constraints": 1.0,
+     "diversity": 0.09974955767393112,
      "div_tie_breakers": [
       1.0
      ]
@@ -15184,7 +15193,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.37589016556739807,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -15193,7 +15202,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3977173864841461,
+     "diversity": 0.38933661580085754,
      "div_tie_breakers": [
       1.0
      ]
@@ -15202,7 +15211,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3977173864841461,
+     "diversity": 0.5330157279968262,
      "div_tie_breakers": [
       1.0
      ]
@@ -15211,7 +15220,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.3977173864841461,
+     "diversity": 0.5612459182739258,
      "div_tie_breakers": [
       1.0
      ]
@@ -15220,7 +15229,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.5094338655471802,
+     "diversity": 0.5612459182739258,
      "div_tie_breakers": [
       1.0
      ]
@@ -15229,7 +15238,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6094219088554382,
+     "diversity": 0.5662109851837158,
      "div_tie_breakers": [
       1.0
      ]
@@ -15238,7 +15247,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5662109851837158,
      "div_tie_breakers": [
       1.0
      ]
@@ -15247,7 +15256,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15256,7 +15265,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15265,7 +15274,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15274,7 +15283,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15283,7 +15292,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15292,7 +15301,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15301,7 +15310,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15310,7 +15319,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15319,7 +15328,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6289439797401428,
+     "diversity": 0.5733508467674255,
      "div_tie_breakers": [
       1.0
      ]
@@ -15328,7 +15337,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6451008319854736,
+     "diversity": 0.5734270215034485,
      "div_tie_breakers": [
       1.0
      ]
@@ -15337,7 +15346,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6462307572364807,
+     "diversity": 0.6462721228599548,
      "div_tie_breakers": [
       1.0
      ]
@@ -15346,7 +15355,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6462307572364807,
+     "diversity": 0.6462721228599548,
      "div_tie_breakers": [
       1.0
      ]
@@ -15355,7 +15364,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6462307572364807,
+     "diversity": 0.6462721228599548,
      "div_tie_breakers": [
       1.0
      ]
@@ -15364,16 +15373,7 @@
      "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
      "size": 1.0,
      "constraints": 1.0,
-     "diversity": 0.6462307572364807,
-     "div_tie_breakers": [
-      1.0
-     ]
-    },
-    {
-     "step": "step 2/2 - OptimSmartSwaps(1-64,64,64)",
-     "size": 1.0,
-     "constraints": 1.0,
-     "diversity": 0.6462307572364807,
+     "diversity": 0.647970974445343,
      "div_tie_breakers": [
       1.0
      ]

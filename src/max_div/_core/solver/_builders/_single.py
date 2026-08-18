@@ -79,6 +79,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         init_strategy, optim_steps = get_preset_strategies(
             preset=preset,
             target_duration=target_duration,
+            has_constraints=bool(self._constraints),
         )
 
         # --- configure solver steps -------------

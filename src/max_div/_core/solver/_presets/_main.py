@@ -14,15 +14,17 @@ from .preset_smart import get_preset_strategies_smart
 def get_preset_strategies(
     preset: SolverPreset,
     target_duration: TargetDuration,
+    has_constraints: bool = False,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
+    """Return the initialization strategy and optimization steps a preset resolves to."""
     match preset.resolve_alias():
         case SolverPreset.RANDOM:
             return get_preset_strategies_random(target_duration)
         case SolverPreset.GUIDED:
             return get_preset_strategies_guided(target_duration)
         case SolverPreset.SMART:
-            return get_preset_strategies_smart(target_duration, thorough=False)
+            return get_preset_strategies_smart(target_duration, thorough=False, has_constraints=has_constraints)
         case SolverPreset.THOROUGH:
-            return get_preset_strategies_smart(target_duration, thorough=True)
+            return get_preset_strategies_smart(target_duration, thorough=True, has_constraints=has_constraints)
         case _:
             raise ValueError(f"Unsupported preset: {preset}")
