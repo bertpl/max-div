@@ -155,7 +155,7 @@ class SolverBenchmarkScope:
         # --- calibrate --------------------------
         n_seeds_min = 3  # we don't execute benchmarks if n_seeds < n_seeds_min
         n_seeds_max = 16  # we never do more than n_seeds_max
-        # the size axis at speed=0.0: each k in the shared ladder mapped to this problem's n
+        # at speed=0.0 the size axis maps each ladder k to this problem's n
         full_n_range = sorted({determine_problem_size_for_k(self.problem_name, k) for k in K_LADDER})
 
         # --- speed-dependent settings -----------

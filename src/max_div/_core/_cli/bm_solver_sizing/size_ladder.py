@@ -3,9 +3,9 @@ from max_div._core.benchmark_problems import BenchmarkProblemFactory
 # The k values every solver-benchmark family (initialization, optimization, feasibility) sweeps,
 # so a per-size row is comparable across problems even though they derive k from n differently
 # (k = n/10 vs n/15): k, not n, drives the swap space and per-iteration cost the pages measure.
-# The low rungs land the smallest problem at n=100 (n/10 problems) / n=150 (n/15), keeping quick
-# high-speed runs cheap; the top rung reaches n=20000-30000, far enough that a constrained
-# problem's feasible->infeasible crossing falls inside the table.
+# The low rungs keep the smallest problem small, so quick high-speed runs stay cheap; the top
+# rung reaches far enough that a constrained problem's feasible->infeasible crossing falls inside
+# the table.
 K_LADDER = [10, 20, 50, 100, 200, 500, 1000, 2000]
 
 
