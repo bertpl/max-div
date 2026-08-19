@@ -52,6 +52,10 @@ class ToolEntry:
     ``memory_exponent`` is the power of n in the tool's documented dominant memory term
     (1 for linear structures, 2 for anything materializing an n x n object);
     ``memory_note`` names that structure, so the fit's constraint is a stated fact.
+    ``min_growth_bytes`` is an analytic lower bound on that term's coefficient, for tools
+    whose structure is exactly known (an n x n float64 kernel cannot cost less than 8
+    bytes per pair) — it floors the fit where every completed size is too small for the
+    growth term to rise above the interpreter's baseline footprint.
     ``stochastic`` decides the seed count (see ``seeds_for``).
     """
 
@@ -59,21 +63,28 @@ class ToolEntry:
     memory_note: str
     stochastic: bool
     configs: dict[Mode, ToolConfig]
+    min_growth_bytes: float | None = None
 
 
 # ==================================================================================================
 #  select() builders
 # ==================================================================================================
-def _maxdiv_select(preset_name: str, budget_kind: str) -> SelectFn:
-    """Build a select function running the named max-div preset under the given budget kind."""
+def _maxdiv_select(preset_name: str, budget_kind: str, lazy_storage: bool = False) -> SelectFn:
+    """Build a select function running the named max-div preset under the given budget kind.
+
+    ``lazy_storage`` forces the lazy distance store — the memory-optimal configuration.
+    Without it the default AUTO storage applies, which materializes the distance matrix
+    at sizes where it still fits.
+    """
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
-        from max_div.solver import MaxDivSolverBuilder, SolverPreset, Verbosity, iterations, seconds
+        from max_div.solver import DistanceStorage, MaxDivSolverBuilder, SolverPreset, Verbosity, iterations, seconds
 
         target = iterations(1) if budget_kind == "single-iteration" else seconds(budget_sec)
-        preset = SolverPreset[preset_name]
-        solver = MaxDivSolverBuilder(problem).with_preset(target, preset).with_seed(seed).build()
-        return np.asarray(solver.solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
+        builder = MaxDivSolverBuilder(problem).with_preset(target, SolverPreset[preset_name]).with_seed(seed)
+        if lazy_storage:
+            builder = builder.with_distance_storage(DistanceStorage.LAZY)
+        return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
 
     return select
 
@@ -205,8 +216,8 @@ TOOLS: dict[str, ToolEntry] = {
                 _maxdiv_select("RANDOM", "single-iteration"),
             ),
             Mode.MEMORY_OPTIMAL: ToolConfig(
-                "RANDOM preset with a one-iteration budget (the lazy distance storage is the default at large n)",
-                _maxdiv_select("RANDOM", "single-iteration"),
+                "RANDOM preset with a one-iteration budget and the lazy distance storage forced",
+                _maxdiv_select("RANDOM", "single-iteration", lazy_storage=True),
             ),
             Mode.QUALITY: ToolConfig(
                 "SMART preset under the wall-clock budget",
@@ -310,15 +321,16 @@ TOOLS: dict[str, ToolEntry] = {
     ),
     "dppy": ToolEntry(
         memory_exponent=2,
-        memory_note="the k-DPP likelihood kernel is a materialized n x n matrix",
+        memory_note="the k-DPP likelihood kernel is a materialized n x n float64 matrix",
         stochastic=True,
+        min_growth_bytes=8.0,
         configs=_same_for_all_modes(
             "exact k-DPP sample over an RBF likelihood kernel (its standard usage)", _dppy_select()
         ),
     ),
     "code-fdm": ToolEntry(
-        memory_exponent=2,
-        memory_note="builds pairwise structures over the candidate set",
+        memory_exponent=1,
+        memory_note="evaluates distances through a callable and keeps per-item flow structures, no pairwise matrix",
         stochastic=False,
         configs=_same_for_all_modes("FairFlow with a single color spanning all items (its unconstrained reduction)", _adapter_select(_code_fdm)),
     ),

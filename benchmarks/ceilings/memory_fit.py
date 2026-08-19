@@ -44,6 +44,10 @@ def fit_memory_ceilings(records: list[CeilingRunRecord]) -> dict[str, dict]:
         sizes = np.asarray(sorted(points), dtype=np.float64)
         peaks = np.asarray([points[int(n)] for n in sizes], dtype=np.float64)
         a, c = _least_squares(sizes**entry.memory_exponent, peaks)
+        if entry.min_growth_bytes is not None:
+            # Every completed size can sit below where the growth term shows above the
+            # interpreter baseline; the analytic bound then carries the extrapolation.
+            a = max(a, entry.min_growth_bytes)
         ceiling = _crossing(a, c, entry.memory_exponent)
         fits[tool] = {
             "ceiling": ceiling,

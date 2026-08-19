@@ -73,3 +73,20 @@ def test_memory_optimal_records_take_precedence_over_fastest_valid() -> None:
     assert fits["max-div"]["fit_sizes"] == [1000, 2000, 5000]
     assert fits["max-div"]["ceiling"] is not None
     assert 100 * 2**20 + 40 * fits["max-div"]["ceiling"] < MEMORY_CAP_BYTES
+
+
+def test_the_analytic_floor_carries_a_baseline_dominated_fit() -> None:
+    """When every completed size hides the growth term, the documented bound must bind.
+
+    DPPy's completed sizes are so small that its n^2 kernel term vanishes under the
+    interpreter footprint; without the floor the fit would extend to the operational
+    bound, which the kernel arithmetic plainly forbids.
+    """
+    # --- arrange ----------------------
+    records = [_record("dppy", n, 210 * 2**20) for n in (100, 200, 500)]
+
+    # --- act --------------------------
+    fits = fit_memory_ceilings(records)
+
+    # --- assert -----------------------
+    assert fits["dppy"]["ceiling"] == 50000  # 8 bytes/pair crosses 32 GB just past n = 65k
