@@ -185,7 +185,7 @@ TEST_COUNT_UNION_RATIO_WARN = 1.5
 
 @dataclass(frozen=True)
 class BadgeMetrics:
-    """A BadgeMetrics records the badge numbers for one release, gathered before anything is written."""
+    """A BadgeMetrics records the badge numbers for one release."""
 
     coverage_pct: float
     test_union: int
@@ -318,7 +318,7 @@ def _coverage_color(pct: float) -> str:
 
 
 def refresh_readme_badges(badges: BadgeMetrics) -> None:
-    """Stamp the README coverage + test-count badges from the pre-gathered metrics."""
+    """Stamp the README coverage + test-count badges from the metrics in `badges`."""
     text = README.read_text()
     text = re.sub(
         r"badge/coverage-[\d.]+%25-[a-z]+",
