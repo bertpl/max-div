@@ -4,7 +4,7 @@ solver:
   source: https://max-div.readthedocs.io/
   verified: 2026-08-11
   scale:
-    max_n_memory: pending
+    max_n_memory: 50000000
     max_n_time: 1000000
     max_n_quality: pending
   metadata:

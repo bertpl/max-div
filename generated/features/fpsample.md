@@ -43,7 +43,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^fpsample-3] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| tool scaling · largest n within memory | <span class="scale-pending">pending</span> | |
+| tool scaling · largest n within memory | n = 200M | |
 | tool scaling · largest n within the time budget | n = 500k | |
 | tool scaling · largest n at good quality | <span class="scale-pending">pending</span> | |
 

@@ -4,7 +4,7 @@ solver:
   source: https://apricot-select.readthedocs.io/
   verified: 2026-07-27
   scale:
-    max_n_memory: pending
+    max_n_memory: 50000
     max_n_time: 50000
     max_n_quality: pending
   metadata:

@@ -4,7 +4,7 @@ solver:
   source: https://www.rdkit.org/docs/source/rdkit.SimDivFilters.rdSimDivPickers.html
   verified: 2026-07-27
   scale:
-    max_n_memory: pending
+    max_n_memory: 200000000
     max_n_time: 50000
     max_n_quality: pending
   metadata:

@@ -4,7 +4,7 @@ solver:
   source: https://www.scipopt.org/
   verified: 2026-07-27
   scale:
-    max_n_memory: pending
+    max_n_memory: 2000
     max_n_time: 2000
     max_n_quality: pending
   metadata:

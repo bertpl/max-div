@@ -43,7 +43,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-full">✔</span> | [^ortools-cpsat-8] |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^ortools-cpsat-9] |
-| tool scaling · largest n within memory | <span class="scale-pending">pending</span> | |
+| tool scaling · largest n within memory | n = 20k | |
 | tool scaling · largest n within the time budget | n = 20k | |
 | tool scaling · largest n at good quality | <span class="scale-pending">pending</span> | |
 
