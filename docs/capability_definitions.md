@@ -28,9 +28,9 @@ values.
 - Measurements proceed from small to large sizes; once a tool fails at some size, larger sizes
   are not attempted.
 - Solution quality is always scored as the smallest distance between any two selected points —
-  the **max-min objective**, the one objective every tool in this comparison can pursue. A tool
-  that optimizes a different objective (the objective columns above show which) is still scored
-  on max-min.
+  the **max-min objective**, the most widely supported objective in this comparison. A tool that
+  optimizes a different objective, or none (the objective columns above show which), is still
+  scored on max-min.
 
 **The four measurements.**
 
