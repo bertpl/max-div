@@ -27,7 +27,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 |---|:---:|---|
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-none">—</span> |  |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
-| distance metrics · Linf (Chebyshev) distance | <span class="mark mark-none">—</span> |  |
+| distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-none">—</span> |  |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^skmatter-1] |
 | distance metrics · caller-supplied distances | <span class="mark mark-none">—</span> |  |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
@@ -43,10 +43,11 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^skmatter-2] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| largest practical problem size | n ≈ 10<sup>5</sup> | [^skmatter-3] |
+| measured size ceilings · memory ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · time ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · quality ceiling | <span class="scale-pending">pending</span> | |
 
 </div>
 
 [^skmatter-1]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
 [^skmatter-2]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^skmatter-3]: A NumPy implementation following scikit-learn conventions: no distance matrix is stored, but each pick scans all remaining candidates, so cost grows as n·k. Comfortable into the hundreds of thousands, an order below the compiled implementations.

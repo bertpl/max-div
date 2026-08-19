@@ -4,11 +4,9 @@ solver:
   source: https://www.rdkit.org/docs/source/rdkit.SimDivFilters.rdSimDivPickers.html
   verified: 2026-07-27
   scale:
-    max_practical_n: "6"
-    rationale: >-
-      Never materializes a distance matrix: it calls your distance function lazily and keeps one
-      running nearest-selected distance per candidate, so memory is O(n) and the ceiling is set by
-      how fast your callback is rather than by n² storage.
+    memory_ceiling: pending
+    time_ceiling: pending
+    quality_ceiling: pending
   metadata:
     guarantee: 2-approximation (farthest-point traversal)
     license: BSD-3-Clause

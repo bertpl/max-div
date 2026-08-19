@@ -4,11 +4,9 @@ solver:
   source: https://ergo-code.github.io/HiGHS/
   verified: 2026-07-27
   scale:
-    max_practical_n: "3"
-    rationale: >-
-      The same big-M max-min formulation SCIP solves, and the same ceiling: the model carries a
-      constraint per pair, so it grows quadratically and stops closing the gap in reasonable time
-      around n ≈ 10³.
+    memory_ceiling: pending
+    time_ceiling: pending
+    quality_ceiling: pending
   metadata:
     guarantee: proven optimum
     license: MIT

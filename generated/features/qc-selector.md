@@ -27,7 +27,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 |---|:---:|---|
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
-| distance metrics · Linf (Chebyshev) distance | <span class="mark mark-full">✔</span> | [^qc-selector-1] |
+| distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-full">✔</span> | [^qc-selector-1] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^qc-selector-2] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^qc-selector-3] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
@@ -43,7 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^qc-selector-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^qc-selector-8] |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| largest practical problem size | n ≈ 10<sup>4</sup> | [^qc-selector-9] |
+| measured size ceilings · memory ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · time ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · quality ceiling | <span class="scale-pending">pending</span> | |
 
 </div>
 
@@ -55,4 +57,3 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^qc-selector-6]: Several of its methods take a parameter that controls how much work they do — a sphere-exclusion radius, an OptiSim subsample size — but these change the character of the search rather than lengthening it. Raising one does not mean a better answer.
 [^qc-selector-7]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
 [^qc-selector-8]: MaxMin and MaxSum selection is sequential; OptiSim and DISE parallelize only their KDTree neighbor queries, not the search over selections.
-[^qc-selector-9]: Its selection methods work from a full distance matrix, and the diversity measures it offers are computed over that matrix rather than incrementally, so both memory and per-pick cost are quadratic. Comfortable in the tens of thousands.
