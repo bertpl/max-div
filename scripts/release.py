@@ -85,7 +85,7 @@ def read_python_versions() -> list[str]:
 
 
 # ==================================================================================================
-#  validation steps (1-7)
+#  validation steps
 # ==================================================================================================
 def step_1_check_working_tree() -> None:
     """Validate working tree is on main and clean."""
@@ -173,11 +173,11 @@ def step_7_check_changelog_has_entries() -> None:
 
 
 # ==================================================================================================
-#  badge metrics (step 8)
+#  badge metrics
 # ==================================================================================================
-# Gathering these is the last precondition: it runs after every cheap check has passed and before
-# the first write, so an abort here — most often because CI on current main has not gone green
-# yet — costs nothing to recover from.
+# Gathering the badge metrics is the last precondition: the fetch runs after every cheap check
+# has passed and before the first write, so an abort here — most often because CI on current
+# main has not gone green yet — costs nothing to recover from.
 
 # warn if the cumulative union exceeds this multiple of the largest single combo
 TEST_COUNT_UNION_RATIO_WARN = 1.5
@@ -185,7 +185,7 @@ TEST_COUNT_UNION_RATIO_WARN = 1.5
 
 @dataclass(frozen=True)
 class BadgeMetrics:
-    """The badge numbers for one release, gathered before anything is written."""
+    """A BadgeMetrics records the badge numbers for one release, gathered before anything is written."""
 
     coverage_pct: float
     test_union: int
@@ -252,7 +252,7 @@ def step_8_gather_badge_metrics() -> BadgeMetrics:
 
 
 # ==================================================================================================
-#  release commit steps (9-13)
+#  release commit steps
 # ==================================================================================================
 def step_9_bump_version(version: str) -> None:
     """Set version in pyproject.toml."""
@@ -373,7 +373,7 @@ def step_13_tag(version: str) -> None:
 
 
 # ==================================================================================================
-#  post-release steps (14-16)
+#  post-release steps
 # ==================================================================================================
 def step_14_add_unreleased_section() -> None:
     """Add a fresh Unreleased section to the changelog."""
