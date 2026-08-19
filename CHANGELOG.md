@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Parallel solving now defaults to cooperative worker groups of about four workers instead of one all-worker group; explicit `n_groups` values are unaffected
 
 ### Deprecated
 
