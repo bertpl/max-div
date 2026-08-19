@@ -26,6 +26,9 @@ from benchmarks.ceilings.grid import MEMORY_CAP_BYTES, operational_bound, size_g
 from benchmarks.ceilings.records import CeilingRunRecord, load_ceiling_records
 from benchmarks.ceilings.time_stage import DATA_PATH
 
+# Dedicated memory-optimal runs land here — the exception path for tools whose
+# memory-optimal configuration differs from their fastest-valid one.
+MEMORY_DATA_PATH = Path(__file__).resolve().parent / "data" / "memory_stage.jsonl"
 FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
 
 # Only the tool's N_FIT_SIZES largest completed sizes feed the fit. Small sizes are dominated
@@ -92,7 +95,10 @@ def _crossing(a: float, c: float, exponent: int) -> int | None:
 
 
 if __name__ == "__main__":
-    all_fits = fit_memory_ceilings(load_ceiling_records(DATA_PATH))
+    records = load_ceiling_records(DATA_PATH)
+    if MEMORY_DATA_PATH.exists():
+        records += load_ceiling_records(MEMORY_DATA_PATH)
+    all_fits = fit_memory_ceilings(records)
     FIT_PATH.parent.mkdir(parents=True, exist_ok=True)
     FIT_PATH.write_text(json.dumps(all_fits, indent=2) + "\n", encoding="utf-8")
     for tool_key, fit in all_fits.items():
