@@ -7,10 +7,10 @@ reach for? This page benchmarks it against the surveyed single-shot heuristics (
 
 ## Protocol
 
-- **max-div** runs a wall-clock budget ladder (2× steps from 1 ms; the last rung is the
+- **max-div** runs a wall-clock budget series (2× steps from 1 ms; the last budget point is the
   first ≥ 10 s), one independent solve per budget × seed (3 seeds), `DEFAULT` preset (an
   alias of `SMART` — figures label it `max-div[DEFAULT]`). Figures
-  plot *measured* solve time, never the nominal budget. One ladder per diversity metric —
+  plot *measured* solve time, never the nominal budget. One series per diversity metric —
   max-div optimizes the metric it is scored under.
 - **Competitors** are single-shot: one run per seed, plotted as a dot at (measured time,
   quality).

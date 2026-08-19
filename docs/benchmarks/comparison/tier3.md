@@ -12,7 +12,7 @@ comparison is pinned.
 
 - Objective: `MIN_SEPARATION` (the MMDP objective). All 195 published (instance, k)
   pairings: 75 Glover (n ≤ 30), 60 Geo and 60 Ran (n ∈ {100, 250, 500}).
-- max-div runs the wall-clock budget ladder (2× steps from 1 ms, `SMART` preset, 3 seeds)
+- max-div runs the wall-clock budget series (2× steps from 1 ms, `SMART` preset, 3 seeds)
   to ~2 s per pairing, extended to ~16 s on the n = 500 instances — calibration showed
   quality plateaus well inside 1 s on the smaller ones.
 - Hardware: 16" MacBook Pro with M3-class CPU, single sequential run.

@@ -126,3 +126,24 @@ def _load_code_fdm() -> tuple[ModuleType, ModuleType]:
         modules.append(module)
     utils, algorithms = modules[0], modules[1]
     return algorithms, utils
+
+class CodeFdmSingleColor(SelectionAdapter):
+    """FairFlow on an unconstrained problem: one color for every item, count = k.
+
+    code-FDM's model is fairness-colored max-min selection; with a single color it reduces
+    to plain max-min diverse selection, which is how the ceilings campaign runs it on the
+    unconstrained reference problem.
+    """
+
+    @property
+    def name(self) -> str:
+        """Tool name as it appears in records and figures."""
+        return "code-FDM[single-color]"
+
+    def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
+        """Run FairFlow with one color spanning all items."""
+        algorithms, utils = _load_code_fdm()
+        vectors = problem_vectors(problem)
+        elements = [utils.Element(idx=i, color=0, features=vectors[i].tolist()) for i in range(problem.n)]
+        selected, _diversity, _t = algorithms.FairFlow(elements, 1, [problem.k], utils.euclidean_dist)
+        return np.asarray(sorted(selected), dtype=np.int64)

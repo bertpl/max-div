@@ -32,7 +32,7 @@ Every tier uses the same measuring stick, so numbers are comparable across pages
 
 - **All tools are scored under `max-div`'s own diversity metrics** (min / mean / geomean
   separation, mean pairwise distance), computed identically for every tool.
-- **`max-div` runs an anytime budget ladder** (2× wall-clock steps from 1 ms, `SMART`
+- **`max-div` runs an anytime budget series** (2× wall-clock steps from 1 ms, `SMART`
   preset, 3 seeds); figures plot *measured* solve time, never the nominal budget. Single-shot
   competitors run once per seed. Per-tier budget ceilings differ and are stated on each page.
 - **One sequential run on one machine** — a 16" MacBook Pro with M3-class CPU.

@@ -57,7 +57,7 @@ def _group_by_tool(records: list[RunRecord]) -> dict[str, list[RunRecord]]:
 def _ladder_stats(
     records: list[RunRecord], metric_name: str
 ) -> tuple[list[float], list[float], list[float], list[float]]:
-    """Aggregate ladder records per budget: mean measured time, mean/min/max quality."""
+    """Aggregate budget-series records per budget: mean measured time, mean/min/max quality."""
     by_budget: dict[str, list[RunRecord]] = defaultdict(list)
     for rec in records:
         by_budget[rec.budget].append(rec)

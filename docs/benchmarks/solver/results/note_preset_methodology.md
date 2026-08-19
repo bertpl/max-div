@@ -1,4 +1,4 @@
-Each preset is run for a ladder of increasing time budgets, one run per budget point with a fresh seed, so the spread across seeds shows up as scatter alongside the time trend.
+Each preset is run for a series of increasing time budgets, one run per budget point with a fresh seed, so the spread across seeds shows up as scatter alongside the time trend.
 
 Timing is end-to-end: it includes building the solver's distance store, the cost a caller actually pays.
 

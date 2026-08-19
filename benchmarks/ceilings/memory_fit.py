@@ -1,0 +1,94 @@
+"""Memory-ceiling fits: per tool, extrapolate recorded peaks to the 32 GB crossing.
+
+No runs happen here. The time stage recorded peak memory on every run; this fits, per
+tool, the model ``rss = c + a * n^p`` — with p fixed to the tool's documented memory
+exponent from the configuration registry — over the completed runs at that tool's largest
+sizes, and reads off the largest candidate size whose predicted peak stays within the
+cap. The fit is least squares on the two free parameters; fixing p is what makes an
+extrapolation from a handful of sizes defensible.
+
+Tools whose memory-optimal configuration differs from the fastest-valid one contribute
+their dedicated memory-optimal records instead, when present.
+
+Usage: python -m benchmarks.ceilings.memory_fit
+"""
+
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+from benchmarks.ceilings.configs import TOOLS, Mode
+from benchmarks.ceilings.grid import MEMORY_CAP_BYTES, operational_bound, size_grid
+from benchmarks.ceilings.records import CeilingRunRecord, load_ceiling_records
+from benchmarks.ceilings.time_stage import DATA_PATH
+
+FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
+
+# How many of the tool's largest completed sizes feed the fit. Small sizes are dominated
+# by the interpreter's fixed footprint and would drag the growth term toward zero.
+N_FIT_SIZES = 3
+
+
+def fit_memory_ceilings(records: list[CeilingRunRecord]) -> dict[str, dict]:
+    """Fit every tool's memory model and return its ceiling with the fit's parameters."""
+    fits: dict[str, dict] = {}
+    for tool, entry in TOOLS.items():
+        points = _fit_points(records, tool)
+        if len(points) < 2:
+            fits[tool] = {"ceiling": None, "reason": f"only {len(points)} completed size(s) to fit on"}
+            continue
+        sizes = np.asarray(sorted(points), dtype=np.float64)
+        peaks = np.asarray([points[int(n)] for n in sizes], dtype=np.float64)
+        a, c = _least_squares(sizes**entry.memory_exponent, peaks)
+        ceiling = _crossing(a, c, entry.memory_exponent)
+        fits[tool] = {
+            "ceiling": ceiling,
+            "exponent": entry.memory_exponent,
+            "coef": a,
+            "offset": c,
+            "fit_sizes": [int(n) for n in sizes],
+        }
+    return fits
+
+
+def _fit_points(records: list[CeilingRunRecord], tool: str) -> dict[int, float]:
+    """The tool's fit points: per size, the largest completed peak, memory-optimal runs first."""
+    for mode in (Mode.MEMORY_OPTIMAL, Mode.FASTEST_VALID):
+        rows = [r for r in records if r.tool == tool and r.mode == mode.value and r.completed and r.peak_rss_bytes]
+        if rows:
+            break
+    per_size: dict[int, float] = {}
+    for row in rows:
+        per_size[row.n] = max(per_size.get(row.n, 0.0), float(row.peak_rss_bytes))
+    largest = sorted(per_size)[-N_FIT_SIZES:]
+    return {n: per_size[n] for n in largest}
+
+
+def _least_squares(growth: np.ndarray, peaks: np.ndarray) -> tuple[float, float]:
+    """Fit peaks = a * growth + c; a is clamped non-negative (memory does not shrink with n)."""
+    design = np.column_stack([growth, np.ones_like(growth)])
+    (a, c), *_ = np.linalg.lstsq(design, peaks, rcond=None)
+    return max(float(a), 0.0), float(c)
+
+
+def _crossing(a: float, c: float, exponent: int) -> int | None:
+    """The largest grid size whose predicted peak stays within the cap."""
+    if c >= MEMORY_CAP_BYTES:
+        return None
+    bound = operational_bound()
+    if a <= 0.0:
+        return size_grid(bound)[-1]
+    n_star = ((MEMORY_CAP_BYTES - c) / a) ** (1.0 / exponent)
+    passing = [n for n in size_grid(bound) if n <= n_star]
+    return passing[-1] if passing else None
+
+
+if __name__ == "__main__":
+    all_fits = fit_memory_ceilings(load_ceiling_records(DATA_PATH))
+    FIT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    FIT_PATH.write_text(json.dumps(all_fits, indent=2) + "\n", encoding="utf-8")
+    for tool_key, fit in all_fits.items():
+        print(f"{tool_key}: memory ceiling {fit.get('ceiling')}")
+    sys.exit(0)

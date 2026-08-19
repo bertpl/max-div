@@ -10,7 +10,7 @@ from benchmarks.tier3.report import (
 
 
 def _record(instance: str, k: int, budget: str, min_separation: float, seed: int = 0) -> RunRecord:
-    """Minimal tier-3 ladder record (problem = instance file name, size = k)."""
+    """Minimal tier-3 budget-series record (problem = instance file name, size = k)."""
     return RunRecord(
         tool="max-div[SMART]",
         problem=instance,

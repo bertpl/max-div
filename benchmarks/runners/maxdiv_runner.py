@@ -1,4 +1,4 @@
-"""Run max-div across a budget ladder, one independent solve per rung x seed."""
+"""Run max-div across a budget series, one independent solve per rung x seed."""
 
 from benchmarks.common.quality import evaluate_selection, n_constraints_satisfied
 from benchmarks.common.records import RunRecord
@@ -6,7 +6,7 @@ from max_div.problem import MaxDivProblem
 from max_div.solver import MaxDivSolverBuilder, SolverPreset, TargetDuration, Verbosity, iterations, seconds
 
 
-def run_maxdiv_ladder(
+def run_maxdiv_budget_series(
     problem: MaxDivProblem,
     problem_name: str,
     size: int,

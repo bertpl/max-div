@@ -1,7 +1,7 @@
 """Re-measure max-div for the tier-1 comparison, keeping exact-solver references fixed.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier1.rerun``.
-Runs only max-div's budget ladders — same problems, budgets, and seeds as
+Runs only max-div's budget seriess — same problems, budgets, and seeds as
 ``benchmarks.tier1.full`` — and writes them into ``reports/benchmarks/tier1/``. The
 exact-solver side of the report comes from the tracked reference records in
 ``benchmarks/tier1/data/``: proven optima and long-cap incumbents are properties of the

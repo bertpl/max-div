@@ -6,7 +6,7 @@ optimality cost? This page anchors the heuristic quality numbers to exact refere
 
 ## Protocol
 
-- **max-div** runs the same wall-clock budget ladder as the
+- **max-div** runs the same wall-clock budget series as the
   [heuristics comparison](tier2.md) (2× steps from 1 ms, `SMART` preset, 3 seeds).
 - **Exact max-min reference:** CP-SAT via threshold binary search over the distinct
   pairwise distances (the max-min optimum is always one of them), one worker for
@@ -31,7 +31,7 @@ certified optimum, mean over 3 seeds:
 --8<-- "docs/benchmarks/comparison/results/tier1_maxmin_gap.md"
 
 Reading: max-div lands within roughly 10 % of the proven optimum in ~100 ms and ~2–9 % at
-the ladder top, occasionally hitting the optimum exactly — while the exact solver needs up
+the top of the budget series, occasionally hitting the optimum exactly — while the exact solver needs up
 to seconds-to-minutes to *certify*, and stops certifying entirely a factor ~2 above these
 sizes. Note max-min is the harshest gap measure: the objective is the single worst pair, so
 one suboptimal swap shows in full.
@@ -57,7 +57,7 @@ What a practitioner can still ask: *"what if I just gave a MIP/CP solver a big t
 and took its best solution?"* Below, CP-SAT (8 workers) runs the assignment model at a
 generous cap on two shipped problems, and its **incumbent** — best solution found, no
 optimality certificate; the bound gap column shows how far the proof remained — is compared
-against max-div's 1-second ladder rung:
+against max-div's 1-second budget point:
 
 --8<-- "docs/benchmarks/comparison/results/tier1_incumbent_geomean.md"
 

@@ -1,7 +1,7 @@
 """Re-measure max-div for the tier-2 comparison, keeping competitor values fixed.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.rerun``.
-Runs only max-div's budget ladders — same problems, budgets, and seeds as
+Runs only max-div's budget seriess — same problems, budgets, and seeds as
 ``benchmarks.tier2.full`` — and writes them into ``reports/benchmarks/tier2/``. The
 competitor side of the report comes from the tracked reference records in
 ``benchmarks/tier2/data/``: those are deterministic single-shot values, so re-running
