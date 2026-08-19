@@ -16,6 +16,7 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
@@ -84,7 +85,7 @@ def read_python_versions() -> list[str]:
 
 
 # ==================================================================================================
-#  validation steps (1-7)
+#  validation steps
 # ==================================================================================================
 def step_1_check_working_tree() -> None:
     """Validate working tree is on main and clean."""
@@ -171,67 +172,20 @@ def step_7_check_changelog_has_entries() -> None:
         fail_with_message("'## Unreleased' has no bullet entries")
 
 
-# ==================================================================================================
-#  release commit steps (8-12)
-# ==================================================================================================
-def step_8_bump_version(version: str) -> None:
-    """Set version in pyproject.toml."""
-    print_step(8, f"bump version to {version}")
-    run_command(["uv", "version", version])
-
-
-def step_9_lock() -> None:
-    """Refresh uv.lock after version bump."""
-    print_step(9, "refresh uv.lock")
-    run_command(["uv", "lock"])
-
-
-def step_10_finalize_changelog(version: str) -> None:
-    """Move Unreleased entries to a dated version section."""
-    print_step(10, f"finalize CHANGELOG.md '## Unreleased' -> '## {version} ({date.today().isoformat()})'")
-    text = CHANGELOG.read_text()
-    m = re.search(r"^## Unreleased\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
-    if not m:
-        fail_with_message("no '## Unreleased' section to finalize")
-    body = m.group(1)
-    new_body_lines: list[str] = []
-    lines = body.splitlines(keepends=True)
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        cat_match = re.match(r"^### (\w+)\s*$", line)
-        if cat_match and cat_match.group(1) in CATEGORIES:
-            j = i + 1
-            has_entry = False
-            while j < len(lines) and not re.match(r"^### ", lines[j]):
-                if lines[j].lstrip().startswith("- "):
-                    has_entry = True
-                    break
-                j += 1
-            if has_entry:
-                new_body_lines.append(line)
-                i += 1
-                while i < len(lines) and not re.match(r"^### ", lines[i]):
-                    new_body_lines.append(lines[i])
-                    i += 1
-            else:
-                i += 1
-                while i < len(lines) and lines[i].strip() == "":
-                    i += 1
-        else:
-            new_body_lines.append(line)
-            i += 1
-    tail = text[m.end() :]
-    # When a release section follows, keep a blank line before its `## ` heading, so the finalized
-    # section's last bullet is not left directly above that heading.
-    new_body = "".join(new_body_lines).rstrip() + ("\n\n" if tail else "\n")
-    new_header = f"## {version} ({date.today().isoformat()})\n"
-    text = text[: m.start()] + new_header + new_body + tail
-    CHANGELOG.write_text(text)
-
+# Gathering the badge metrics is the last precondition: the fetch runs after every cheap check
+# has passed and before the first write, so an abort here — most often because CI on current
+# main has not gone green yet — costs nothing to recover from.
 
 # warn if the cumulative union exceeds this multiple of the largest single combo
 TEST_COUNT_UNION_RATIO_WARN = 1.5
+
+
+@dataclass(frozen=True)
+class BadgeMetrics:
+    """A BadgeMetrics records the badge numbers for one release."""
+
+    coverage_pct: float
+    test_union: int
 
 
 def _latest_main_coverage_run() -> tuple[str, str]:
@@ -278,17 +232,10 @@ def _fetch_release_metrics() -> dict[str, float]:
         return json.loads((Path(tmp) / "metrics.json").read_text())
 
 
-def _coverage_color(pct: float) -> str:
-    """Map a coverage percentage to a shields.io badge color."""
-    if pct >= 90:
-        return "brightgreen"
-    return "yellow" if pct >= 75 else "red"
-
-
-def refresh_readme_badges() -> None:
-    """Stamp the README coverage + test-count badges from CI's cumulative metrics."""
+def step_8_gather_badge_metrics() -> BadgeMetrics:
+    """Resolve every badge number, failing the release if any of them cannot be obtained."""
+    print_step(8, "gather badge metrics (CI metrics for HEAD)")
     metrics = _fetch_release_metrics()
-    coverage_pct = float(metrics["coverage_pct"])
     union = int(metrics["test_union"])
     max_combo = int(metrics["test_max"])
     if max_combo and union > TEST_COUNT_UNION_RATIO_WARN * max_combo:
@@ -298,13 +245,84 @@ def refresh_readme_badges() -> None:
             "Node-id mismatches across combos can inflate the union — verify before publishing.\n",
             file=sys.stderr,
         )
+    return BadgeMetrics(coverage_pct=float(metrics["coverage_pct"]), test_union=union)
+
+
+# ==================================================================================================
+#  release commit steps
+# ==================================================================================================
+def step_9_bump_version(version: str) -> None:
+    """Set version in pyproject.toml."""
+    print_step(9, f"bump version to {version}")
+    run_command(["uv", "version", version])
+
+
+def step_10_lock() -> None:
+    """Refresh uv.lock after version bump."""
+    print_step(10, "refresh uv.lock")
+    run_command(["uv", "lock"])
+
+
+def step_11_finalize_changelog(version: str) -> None:
+    """Move Unreleased entries to a dated version section."""
+    print_step(11, f"finalize CHANGELOG.md '## Unreleased' -> '## {version} ({date.today().isoformat()})'")
+    text = CHANGELOG.read_text()
+    m = re.search(r"^## Unreleased\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
+    if not m:
+        fail_with_message("no '## Unreleased' section to finalize")
+    body = m.group(1)
+    new_body_lines: list[str] = []
+    lines = body.splitlines(keepends=True)
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        cat_match = re.match(r"^### (\w+)\s*$", line)
+        if cat_match and cat_match.group(1) in CATEGORIES:
+            j = i + 1
+            has_entry = False
+            while j < len(lines) and not re.match(r"^### ", lines[j]):
+                if lines[j].lstrip().startswith("- "):
+                    has_entry = True
+                    break
+                j += 1
+            if has_entry:
+                new_body_lines.append(line)
+                i += 1
+                while i < len(lines) and not re.match(r"^### ", lines[i]):
+                    new_body_lines.append(lines[i])
+                    i += 1
+            else:
+                i += 1
+                while i < len(lines) and lines[i].strip() == "":
+                    i += 1
+        else:
+            new_body_lines.append(line)
+            i += 1
+    tail = text[m.end() :]
+    # When a release section follows, keep a blank line before its `## ` heading, so the finalized
+    # section's last bullet is not left directly above that heading.
+    new_body = "".join(new_body_lines).rstrip() + ("\n\n" if tail else "\n")
+    new_header = f"## {version} ({date.today().isoformat()})\n"
+    text = text[: m.start()] + new_header + new_body + tail
+    CHANGELOG.write_text(text)
+
+
+def _coverage_color(pct: float) -> str:
+    """Map a coverage percentage to a shields.io badge color."""
+    if pct >= 90:
+        return "brightgreen"
+    return "yellow" if pct >= 75 else "red"
+
+
+def refresh_readme_badges(badges: BadgeMetrics) -> None:
+    """Stamp the README coverage + test-count badges from the metrics in `badges`."""
     text = README.read_text()
     text = re.sub(
         r"badge/coverage-[\d.]+%25-[a-z]+",
-        f"badge/coverage-{coverage_pct:.2f}%25-{_coverage_color(coverage_pct)}",
+        f"badge/coverage-{badges.coverage_pct:.2f}%25-{_coverage_color(badges.coverage_pct)}",
         text,
     )
-    text = re.sub(r"badge/tests-\d+-blue", f"badge/tests-{union}-blue", text)
+    text = re.sub(r"badge/tests-\d+-blue", f"badge/tests-{badges.test_union}-blue", text)
     README.write_text(text)
 
 
@@ -335,28 +353,28 @@ def stamp_splash(version: str) -> None:
     run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)
 
 
-def step_11_commit_release(version: str) -> None:
+def step_12_commit_release(version: str, badges: BadgeMetrics) -> None:
     """Refresh README badges, stamp the splash, then create the release commit."""
-    print_step(11, f"refresh README badges + stamp splash + commit 'release: {version}'")
-    refresh_readme_badges()
+    print_step(12, f"refresh README badges + stamp splash + commit 'release: {version}'")
+    refresh_readme_badges(badges)
     stamp_readme_splash_url(version)
     stamp_splash(version)
     run_command(["git", "add", "pyproject.toml", "uv.lock", "CHANGELOG.md", "README.md", str(SPLASH_WEBP)])
     run_command(["git", "commit", "-m", f"release: {version}"])
 
 
-def step_12_tag(version: str) -> None:
+def step_13_tag(version: str) -> None:
     """Create the version tag."""
-    print_step(12, f"create tag v{version}")
+    print_step(13, f"create tag v{version}")
     run_command(["git", "tag", f"v{version}"])
 
 
 # ==================================================================================================
-#  post-release steps (13-15)
+#  post-release steps
 # ==================================================================================================
-def step_13_add_unreleased_section() -> None:
+def step_14_add_unreleased_section() -> None:
     """Add a fresh Unreleased section to the changelog."""
-    print_step(13, "add fresh '## Unreleased' section to CHANGELOG.md")
+    print_step(14, "add fresh '## Unreleased' section to CHANGELOG.md")
     text = CHANGELOG.read_text()
     m = re.search(r"^## ", text, re.MULTILINE)
     if not m:
@@ -366,16 +384,16 @@ def step_13_add_unreleased_section() -> None:
     CHANGELOG.write_text(text)
 
 
-def step_14_commit_next_cycle() -> None:
+def step_15_commit_next_cycle() -> None:
     """Commit the fresh Unreleased section."""
-    print_step(14, "commit 'chore: begin next development cycle'")
+    print_step(15, "commit 'chore: begin next development cycle'")
     run_command(["git", "add", "CHANGELOG.md"])
     run_command(["git", "commit", "-m", "chore: begin next development cycle"])
 
 
-def step_15_push(version: str) -> None:
+def step_16_push(version: str) -> None:
     """Push main and the tag atomically."""
-    print_step(15, f"push main + v{version} atomically")
+    print_step(16, f"push main + v{version} atomically")
     run_command(["git", "push", "--atomic", "origin", "main", f"refs/tags/v{version}"])
 
 
@@ -399,6 +417,11 @@ def main() -> None:
     """Entry point."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("version", help="X.Y.Z (no leading v)")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="run every precondition, including the CI badge-metrics fetch, then stop before the first write",
+    )
     args = parser.parse_args()
     version = args.version
     parse_semver(version)
@@ -413,21 +436,29 @@ def main() -> None:
     step_5_check_pypi_doesnt_have(version)
     step_6_check_classifiers_match()
     step_7_check_changelog_has_entries()
+    badges = step_8_gather_badge_metrics()
+
+    if args.dry_run:
+        print(
+            f"\nDry run: every precondition passed and nothing was written.\n"
+            f"  coverage {badges.coverage_pct:.2f}% | tests {badges.test_union}\n"
+        )
+        return
 
     print("\nRelease commit:")
-    step_8_bump_version(version)
-    step_9_lock()
-    step_10_finalize_changelog(version)
-    step_11_commit_release(version)
-    step_12_tag(version)
+    step_9_bump_version(version)
+    step_10_lock()
+    step_11_finalize_changelog(version)
+    step_12_commit_release(version, badges)
+    step_13_tag(version)
 
     print("\nPost-release:")
     also_next_cycle = False
     try:
-        step_13_add_unreleased_section()
-        step_14_commit_next_cycle()
+        step_14_add_unreleased_section()
+        step_15_commit_next_cycle()
         also_next_cycle = True
-        step_15_push(version)
+        step_16_push(version)
     except subprocess.CalledProcessError:
         post_tag_recovery_hint(version, also_next_cycle)
         sys.exit(1)
