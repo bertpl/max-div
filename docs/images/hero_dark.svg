@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="896" height="503" viewBox="0 0 896 503" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
-<rect width="896" height="503" fill="#0d1117"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="896" height="519" viewBox="0 0 896 519" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="896" height="519" fill="#0d1117"/>
 <polygon points="279,32 409,32 292,149 292,477 162,477 162,149" fill="#161b22"/>
 <text x="344" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle">distance</text>
 <line x1="281" y1="31" x2="407" y2="31" stroke="#30363d" stroke-width="1"/>
@@ -13,11 +13,18 @@
 <polygon points="695,32 747,32 630,149 630,477 578,477 578,149" fill="#161b22"/>
 <text x="721" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle"></text>
 <line x1="697" y1="31" x2="745" y2="31" stroke="#30363d" stroke-width="1"/>
-<text x="816" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle">size ceilings</text>
+<text x="816" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle">size ceilings (n)</text>
 <line x1="749" y1="31" x2="883" y2="31" stroke="#30363d" stroke-width="1"/>
+<line x1="162" y1="149" x2="162" y2="477" stroke="#30363d" stroke-width="1"/>
+<line x1="292" y1="149" x2="292" y2="477" stroke="#30363d" stroke-width="1"/>
+<line x1="396" y1="149" x2="396" y2="477" stroke="#30363d" stroke-width="1"/>
+<line x1="500" y1="149" x2="500" y2="477" stroke="#30363d" stroke-width="1"/>
+<line x1="578" y1="149" x2="578" y2="477" stroke="#30363d" stroke-width="1"/>
+<line x1="630" y1="149" x2="630" y2="477" stroke="#30363d" stroke-width="1"/>
+<line x1="768" y1="149" x2="768" y2="477" stroke="#30363d" stroke-width="1"/>
 <text x="172" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 172 157)">L1</text>
 <text x="198" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 198 157)">L2</text>
-<text x="224" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 224 157)">Linf</text>
+<text x="224" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 224 157)">L∞</text>
 <text x="250" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 250 157)">cosine</text>
 <text x="276" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 276 157)">custom</text>
 <text x="302" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 302 157)">max-min</text>
@@ -33,9 +40,9 @@
 <text x="562" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 562 157)">improves with budget</text>
 <text x="588" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 588 157)">multi-worker - independent</text>
 <text x="614" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 614 157)">multi-worker - cooperative</text>
-<text x="650" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 650 157)">memory</text>
-<text x="696" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 696 157)">time</text>
-<text x="742" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 742 157)">quality</text>
+<text x="650" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 650 157)">memory †</text>
+<text x="696" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 696 157)">time †</text>
+<text x="742" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 742 157)">quality †</text>
 <rect x="14" y="164" width="754" height="20" fill="#c9d1d9" fill-opacity="0.05"/>
 <text x="14" y="178" fill="#8b949e" font-size="11" font-weight="600" letter-spacing="0.5">ANYTIME OPTIMIZERS</text>
 <rect x="14" y="184" width="754" height="23" fill="#12261e"/>
@@ -209,5 +216,6 @@
 <text x="699" y="470" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
 <text x="745" y="470" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
 <line x1="14" y1="477" x2="768" y2="477" stroke="#30363d" stroke-width="1"/>
-<text x="14" y="490" font-size="11"><tspan fill="#3fb950" font-weight="700">✓</tspan><tspan fill="#8b949e" dx="5">built in</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">~</tspan><tspan fill="#8b949e" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">…</tspan><tspan fill="#8b949e" dx="5">measurement pending</tspan></text>
+<text x="14" y="490" font-size="11"><tspan fill="#3fb950" font-weight="700">✓</tspan><tspan fill="#8b949e" dx="5">built in</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">~</tspan><tspan fill="#8b949e" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan></text>
+<text x="14" y="506" font-size="11"><tspan fill="#8b949e" font-weight="700">†</tspan><tspan fill="#8b949e" dx="5">based on the built-in benchmark problem U1 and the published measurement protocol</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">…</tspan><tspan fill="#8b949e" dx="5">measurement pending</tspan></text>
 </svg>

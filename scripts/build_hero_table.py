@@ -145,6 +145,9 @@ NAME_FS = "12.5"  # solver-name size
 MARK_FS = "13.5"  # check-mark and tilde size
 SMALL_FS = 11  # group labels, category labels, caption
 PENDING_GLYPH = "\u2026"  # a ceiling cell awaiting its measurement
+DAGGER = "\u2020"  # anchors the ceiling column headers to the footnote row under the table
+CEILING_FOOTNOTE = "based on the built-in benchmark problem U1 and the published measurement protocol"
+CAPTION2_H = 16  # the footnote row under the mark-legend row
 
 
 def scale_text(value):
@@ -185,6 +188,7 @@ class _Layout:
             + len(self.categories) * CAT_H
             + len(self.rows) * ROW_H
             + CAPTION_H
+            + CAPTION2_H
             + BOTTOM_PAD
         )
 
@@ -239,10 +243,12 @@ def _group_bands(lay):
     sits `skew` px right of its bottom, which is why the labels are offset by the same amount.
     """
     out, idx, t = [], 0, lay.t
+    edges = set()
     for gi, (glabel, cols) in enumerate(lay.groups):
         span = sum(COL_W if w == 1 else CEIL_W for _, w in cols)
         x0 = lay.col_x(idx)
         x1 = x0 + span
+        edges.update((x0, x1))
         if gi % 2 == 0:
             corners = [
                 (x0 + lay.skew, lay.y_top),
@@ -264,6 +270,13 @@ def _group_bands(lay):
             f'y2="{lay.y_group + 5}" stroke="{t["rule"]}" stroke-width="1"/>'
         )
         idx += len(cols)
+    # A hairline where one group ends and the next begins, and on the outer edges of the first
+    # and last group — the same stroke as the bracket rules above, so the verticals read as the
+    # same scaffolding. Drawn from where the bands turn vertical, clear of the rotated labels.
+    for x in sorted(edges):
+        out.append(
+            f'<line x1="{x}" y1="{lay.y_corner}" x2="{x}" y2="{lay.y_end}" stroke="{t["rule"]}" stroke-width="1"/>'
+        )
     return out
 
 
@@ -286,7 +299,7 @@ def _column_headers(lay):
         x = lay.scale_x(j) + CEIL_W // 2 - 3
         out.append(
             f'<text x="{x}" y="{y}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
-            f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header)}</text>'
+            f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header + " " + DAGGER)}</text>'
         )
     return out
 
@@ -357,7 +370,7 @@ def _data_rows(lay):
 
 
 def _legend(lay, y):
-    """The mark legend under the table — every mark the hero draws, in declaration order.
+    """The two legend rows under the table: the marks, then the ceiling footnote and pending marker.
 
     Both glyphs are bolded here whatever weight they carry in the grid: at legend size they sit
     inline in a line of prose, where the grid's lighter tilde would disappear.
@@ -371,11 +384,18 @@ def _legend(lay, y):
             spans.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
         spans.append(f'<tspan fill="{t[MARK_STYLE[mark][0]]}" font-weight="700"{gap}>{esc(spec["hero_glyph"])}</tspan>')
         spans.append(f'<tspan fill="{t["muted"]}" dx="5">{esc(spec["legend"])}</tspan>')
+    notes = [
+        f'<tspan fill="{t["muted"]}" font-weight="700">{esc(DAGGER)}</tspan>',
+        f'<tspan fill="{t["muted"]}" dx="5">{esc(CEILING_FOOTNOTE)}</tspan>',
+    ]
     if lay.any_pending():
-        spans.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
-        spans.append(f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">{esc(PENDING_GLYPH)}</tspan>')
-        spans.append(f'<tspan fill="{t["muted"]}" dx="5">measurement pending</tspan>')
-    return [f'<text x="{PAD}" y="{y + CAPTION_H - 8}" font-size="{SMALL_FS}">' + "".join(spans) + "</text>"]
+        notes.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
+        notes.append(f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">{esc(PENDING_GLYPH)}</tspan>')
+        notes.append(f'<tspan fill="{t["muted"]}" dx="5">measurement pending</tspan>')
+    return [
+        f'<text x="{PAD}" y="{y + CAPTION_H - 8}" font-size="{SMALL_FS}">' + "".join(spans) + "</text>",
+        f'<text x="{PAD}" y="{y + CAPTION_H + CAPTION2_H - 8}" font-size="{SMALL_FS}">' + "".join(notes) + "</text>",
+    ]
 
 
 def build_svg(table, theme_name):

@@ -27,7 +27,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 |---|:---:|---|
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
-| distance metrics · Linf (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
+| distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^scip-3] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^scip-4] |

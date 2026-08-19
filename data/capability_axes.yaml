@@ -122,10 +122,10 @@ groups:
         hero: true
         definition: Selects under L2 (Euclidean) distance computed by the tool from vector input.
       - key: linf
-        hero_label: Linf
-        label: Linf (Chebyshev) distance
+        hero_label: L∞
+        label: L∞ (Chebyshev) distance
         hero: true
-        definition: Selects under Linf (Chebyshev) distance computed by the tool from vector input.
+        definition: Selects under L∞ (Chebyshev) distance computed by the tool from vector input.
       - key: cosine
         hero_label: cosine
         label: cosine distance
@@ -256,7 +256,7 @@ groups:
 # preamble the capability-definitions page prints before the three columns; the measurement
 # protocol behind them is summarized on that page.
 scale_columns:
-  hero_label: size ceilings
+  hero_label: size ceilings (n)
   label: measured size ceilings
   definition: >-
     The three size columns are measured ceilings, not order-of-magnitude claims: each is the

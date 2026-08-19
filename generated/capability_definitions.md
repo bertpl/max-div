@@ -26,7 +26,7 @@ Each table below states what its capability columns claim.
 |---|---|
 | L1 (Manhattan) distance | Selects under L1 (Manhattan) distance computed by the tool from vector input. |
 | L2 (Euclidean) distance | Selects under L2 (Euclidean) distance computed by the tool from vector input. |
-| Linf (Chebyshev) distance | Selects under Linf (Chebyshev) distance computed by the tool from vector input. |
+| L∞ (Chebyshev) distance | Selects under L∞ (Chebyshev) distance computed by the tool from vector input. |
 | cosine distance | Selects under cosine distance computed by the tool from vector input. Reaching it through a documented transform — L2-normalize, then select under Euclidean — counts as reachable, not built in. |
 | caller-supplied distances | Accepts distances the caller computed — a distance matrix or a distance callable — so a metric the tool does not implement is usable anyway. |
 
