@@ -43,7 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^code-fdm-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| largest practical problem size | n ≈ 10<sup>4</sup> | [^code-fdm-8] |
+| measured size ceilings · memory ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · time ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · quality ceiling | <span class="scale-pending">pending</span> | |
 
 </div>
 
@@ -54,4 +56,3 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^code-fdm-5]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.
 [^code-fdm-6]: Counts are exact requirements per group, not a minimum and a maximum, so a range cannot be expressed.
 [^code-fdm-7]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^code-fdm-8]: Research code built around a full distance matrix and repeated threshold scans over it. No effort has gone into constant factors, so the practical ceiling sits below the maintained libraries at comparable memory.

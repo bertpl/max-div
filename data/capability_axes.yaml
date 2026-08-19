@@ -12,6 +12,13 @@
 # what the comparison page and the per-solver feature tables use, where there is room. Groups
 # carry the same pair for the same reason: the hero writes a group's name on a band spanning only
 # its own columns, so "objective" fits where "diversity objectives" would run into its neighbor.
+#
+# `definition` is the exact criterion a cell is judged by — what capability the column claims,
+# composed with the mark vocabulary below (a `full` mark claims the definition holds built in,
+# `partial` that it is reachable with caller work, `none` that it is not available). The
+# definitions render as the capability-definitions page, so every column the tables show is
+# pinned to one published criterion. Axes, scale columns and metadata fields all carry one;
+# scripts/capability_data.py rejects a column without it.
 
 # The mark vocabulary, shared by every surface that renders a cell — including the hero SVG, whose
 # renderer reads its glyphs and its legend wording from here.
@@ -26,7 +33,7 @@
 #
 # `partial` is a half-filled circle in the docs, where it sits beside a footnote marker and has to
 # stay distinct from it at a glance. The hero draws a tilde instead: it has no footnotes to compete
-# with, and the tilde matches the one that prefixes every practical-scale figure there.
+# with, and the tilde reads as "roughly reachable" beside the measured figures.
 #
 # `none` is drawn as nothing at all in the hero, because in a dense grid an empty cell
 # unambiguously reads as absence. A per-solver table has one row per capability and no such
@@ -65,14 +72,41 @@ marks:
 # links would dominate a table read across tools, and the comparison page reaches each tool's
 # source through the link on its name.
 metadata:
-  - {key: guarantee, label: Guarantee}
-  - {key: license, label: License}
-  - {key: last_release, label: Version, kind: release_version, note: false}
-  - {key: last_release, label: Released, kind: release_date}
-  - {key: determinism, label: Determinism}
-  - {key: input, label: Input}
-  - {key: source, label: Source, kind: url, comparison: false}
-  - {key: verified, label: Last verified}
+  - key: guarantee
+    label: Guarantee
+    definition: >-
+      The strongest solution-quality statement the tool's algorithm supports and its documentation
+      makes: a proof of optimality, a stated approximation factor, or `heuristic` when no bound is
+      claimed.
+  - key: license
+    label: License
+    definition: The SPDX identifier of the license the tool is distributed under.
+  - key: last_release
+    label: Version
+    kind: release_version
+    note: false
+    definition: The latest released version at the record's verification date.
+  - key: last_release
+    label: Released
+    kind: release_date
+    definition: The date of that latest release — how recently the tool has seen maintenance.
+  - key: determinism
+    label: Determinism
+    definition: >-
+      Whether repeated runs on the same input reproduce the same selection, and under what stated
+      conditions (a fixed seed, a fixed thread count, ...). "Deterministic" without qualification
+      means identical output on every run.
+  - key: input
+    label: Input
+    definition: The input forms the tool accepts — vectors, a precomputed distance matrix, or both.
+  - key: source
+    label: Source
+    kind: url
+    comparison: false
+    definition: The upstream repository or documentation every fact in the record was checked against.
+  - key: verified
+    label: Last verified
+    definition: The date the record's facts were last checked against that source.
 
 groups:
   - key: distance
@@ -83,22 +117,32 @@ groups:
         hero_label: L1
         label: L1 (Manhattan) distance
         hero: true
+        definition: Selects under L1 (Manhattan) distance computed by the tool from vector input.
       - key: l2
         hero_label: L2
         label: L2 (Euclidean) distance
         hero: true
+        definition: Selects under L2 (Euclidean) distance computed by the tool from vector input.
       - key: linf
         hero_label: Linf
         label: Linf (Chebyshev) distance
         hero: true
+        definition: Selects under Linf (Chebyshev) distance computed by the tool from vector input.
       - key: cosine
         hero_label: cosine
         label: cosine distance
         hero: true
+        definition: >-
+          Selects under cosine distance computed by the tool from vector input. Reaching it through
+          a documented transform — L2-normalize, then select under Euclidean — counts as reachable,
+          not built in.
       - key: custom
         hero_label: custom
         label: caller-supplied distances
         hero: true
+        definition: >-
+          Accepts distances the caller computed — a distance matrix or a distance callable — so a
+          metric the tool does not implement is usable anyway.
 
   - key: objective
     hero_label: objective
@@ -108,18 +152,30 @@ groups:
         hero_label: max-min
         label: maximize the minimum separation
         hero: true
+        definition: >-
+          Optimizes the minimum pairwise distance within the selection (max-min diversity, also
+          known as p-dispersion).
       - key: mean_nn
         hero_label: mean-of-NN
         label: maximize the mean nearest-neighbor separation
         hero: true
+        definition: >-
+          Optimizes the mean, over the selected items, of each item's distance to its nearest
+          selected neighbor.
       - key: geomean_nn
         hero_label: geomean-of-NN
         label: maximize the geometric-mean nearest-neighbor separation
         hero: true
+        definition: >-
+          Optimizes the geometric mean, over the selected items, of each item's distance to its
+          nearest selected neighbor.
       - key: max_sum
         hero_label: max-sum
         label: maximize the mean pairwise distance
         hero: true
+        definition: >-
+          Optimizes the mean (equivalently the sum) of all pairwise distances within the selection
+          (max-sum diversity).
 
   - key: constraints
     hero_label: constraints
@@ -129,18 +185,29 @@ groups:
         hero_label: disjoint groups
         label: per-group counts over disjoint groups
         hero: true
+        definition: >-
+          Enforces per-group selection counts when every item belongs to exactly one group (a
+          partition of the items).
       - key: overlapping_groups
         hero_label: overlapping groups
         label: per-group counts over overlapping groups
         hero: true
+        definition: Enforces per-group selection counts when an item may belong to several groups at once.
       - key: ranged_counts
         hero_label: ranged counts
         label: minimum and maximum counts per group
         hero: true
+        definition: >-
+          Accepts a two-sided count constraint per group — a minimum and a maximum — rather than
+          only one-sided bounds.
       - key: feasibility_proofs
         hero_label: feasibility proofs
         label: certified verdicts on whether a constraint set is satisfiable
         hero: true
+        definition: >-
+          Answers whether a constraint set admits any valid selection with a certified verdict — a
+          witness selection or an independently checkable infeasibility certificate — rather than a
+          heuristic guess.
 
   - key: budget
     hero_label: budget
@@ -150,19 +217,24 @@ groups:
         hero_label: iterations
         label: budget expressed as an iteration count
         hero: true
+        definition: Accepts a compute budget expressed as an iteration count.
       - key: wall_clock
         hero_label: wall clock
         label: budget expressed as wall-clock time
         hero: true
+        definition: Accepts a compute budget expressed as wall-clock time.
       - key: improves
         hero_label: improves with budget
         label: the answer improves when given more budget
         hero: true
+        definition: >-
+          Produces a better answer when given a larger budget — the mark that separates anytime
+          search from one-shot construction, whose answer is the same however long you wait.
 
   # The group records whether a tool solves a single problem with several workers at once, split
-  # by whether those workers exchange information mid-run. The hero group label is blank: the rotated axis headers name the
-  # columns, and a horizontal band label would collide with the scale column's label. The scale
-  # column is wide enough to carry a horizontal label; these narrow ones are not.
+  # by whether those workers exchange information mid-run. The hero group label is blank: the
+  # rotated axis headers name the columns, and a horizontal band label would collide with its
+  # neighbors' — these columns are narrow, unlike the ceiling columns whose band carries a label.
   - key: parallelism
     hero_label: ""
     label: multi-worker
@@ -171,16 +243,52 @@ groups:
         hero_label: multi-worker - independent
         label: several workers search one problem separately and the best result wins
         hero: true
+        definition: >-
+          Runs several workers on one problem at once with no exchange between them; the best
+          result wins.
       - key: cooperative
         hero_label: multi-worker - cooperative
         label: parallel workers share information mid-run
         hero: true
+        definition: Runs several workers on one problem at once, and the workers exchange information mid-run.
 
-# The scale column is not a mark: its value is a power of ten (or a range of them), and every
-# record must explain the value it claims. It renders as the last column of the hero table and
-# as a row of each per-solver feature table.
-scale:
-  key: max_practical_n
-  hero_label: max practical n
-  label: largest practical problem size
-  hero: true
+# The ceiling columns are not marks: each cell is a measured problem size, or `pending` while its
+# measurement campaign has not filled it yet. They render as the last three columns of the hero
+# table and the comparison grid, and as rows of each per-solver feature table. The shared
+# `definition` is the preamble the capability-definitions page prints before the three columns;
+# the measurement protocol behind them is summarized on that page.
+scale_columns:
+  hero_label: size ceilings
+  label: measured size ceilings
+  definition: >-
+    The three size columns are measured ceilings, not order-of-magnitude claims: each is the
+    largest problem size n, on a 1-2-5 grid (100, 200, 500, 1000, ...), at which the tool still
+    clears that column's bar on one unconstrained reference problem. They are nested by
+    construction — no memory means no solution, no solution means no good solution — so each
+    ceiling can only be at or below the previous one, and a row reads as a sequence of tightening
+    claims. A cell reading `pending` has not been measured yet.
+  columns:
+    - key: memory_ceiling
+      hero_label: memory
+      label: memory ceiling
+      definition: >-
+        The largest grid size whose peak memory stays within 32 GB in the tool's most
+        memory-efficient configuration. Determined by calibrated extrapolation: a per-tool memory
+        model, checked against the tool's documented data structures and fitted to measured peak
+        memory from runs at smaller sizes, read off at the 32 GB crossing and rounded down to the
+        grid. No run is executed at the ceiling itself — at full memory most tools are far too
+        slow to run at all — and extrapolation is the standard method for every tool.
+    - key: time_ceiling
+      hero_label: time
+      label: time ceiling
+      definition: >-
+        The largest grid size at which the tool returns a valid size-k selection within one
+        minute, timed end-to-end from raw vectors, in its fastest valid configuration — the
+        fastest standard, user-configurable setting that still produces a valid selection.
+    - key: quality_ceiling
+      hero_label: quality
+      label: quality ceiling
+      definition: >-
+        The largest grid size at which the tool, in its standard configuration at the one-minute
+        budget, closes at least 90% of the quality gap between a uniform-random selection and the
+        best solution any tool produces within fifteen minutes.

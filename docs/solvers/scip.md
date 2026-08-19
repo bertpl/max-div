@@ -4,13 +4,9 @@ solver:
   source: https://www.scipopt.org/
   verified: 2026-07-27
   scale:
-    max_practical_n: "3"
-    rationale: >-
-      The limit differs sharply by objective. A max-min model with big-M linearization is
-      routinely solved to optimality around n ≈ 10³; the mean-of-NN objective needs an assignment
-      MILP whose size grows far faster and which stops being tractable near n ≈ 60 — below the
-      floor of the benchmark generators used here. The single value reported is the max-min one,
-      because that is the formulation this comparison actually exercises.
+    memory_ceiling: pending
+    time_ceiling: pending
+    quality_ceiling: pending
   metadata:
     guarantee: proven optimum
     license: Apache-2.0 (SCIP)

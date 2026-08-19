@@ -181,6 +181,7 @@ nav:
       - BenchmarkProblemFactory: reference/benchmark_problems/BenchmarkProblemFactory.md
   - 3rd Party Solvers:
     - Comparison: comparison.md
+    - Capability Definitions: capability_definitions.md
     - Profiles: solvers/index.md
     - Exact Solvers:
       - OR-Tools CP-SAT: solvers/ortools-cpsat.md

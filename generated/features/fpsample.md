@@ -43,11 +43,12 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^fpsample-3] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| largest practical problem size | n ≈ 10<sup>6</sup> | [^fpsample-4] |
+| measured size ceilings · memory ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · time ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · quality ceiling | <span class="scale-pending">pending</span> | |
 
 </div>
 
 [^fpsample-1]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
 [^fpsample-2]: Euclidean only. The KD-tree variants depend on it structurally, so this is not a gap waiting to be filled.
 [^fpsample-3]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^fpsample-4]: A Rust implementation with KD-tree accelerated variants, so the traversal avoids the O(nk) distance evaluations a naive sweep needs. The tree variants degrade in high dimension and are documented as practical below roughly d ≈ 9; the plain variant has no such limit.

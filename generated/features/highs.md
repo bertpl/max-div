@@ -43,7 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^highs-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^highs-8] |
-| largest practical problem size | n ≈ 10<sup>3</sup> | [^highs-9] |
+| measured size ceilings · memory ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · time ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · quality ceiling | <span class="scale-pending">pending</span> | |
 
 </div>
 
@@ -55,4 +57,3 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^highs-6]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
 [^highs-7]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
 [^highs-8]: The dual simplex, the interior-point factorization and the MIP branch-and-bound each run in parallel, controlled by the parallel and threads options — threads jointly advancing one solve rather than racing independent ones.
-[^highs-9]: The same big-M max-min formulation SCIP solves, and the same ceiling: the model carries a constraint per pair, so it grows quadratically and stops closing the gap in reasonable time around n ≈ 10³.

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="848" height="503" viewBox="0 0 848 503" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
-<rect width="848" height="503" fill="#0d1117"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="896" height="503" viewBox="0 0 896 503" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="896" height="503" fill="#0d1117"/>
 <polygon points="279,32 409,32 292,149 292,477 162,477 162,149" fill="#161b22"/>
 <text x="344" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle">distance</text>
 <line x1="281" y1="31" x2="407" y2="31" stroke="#30363d" stroke-width="1"/>
@@ -13,8 +13,8 @@
 <polygon points="695,32 747,32 630,149 630,477 578,477 578,149" fill="#161b22"/>
 <text x="721" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle"></text>
 <line x1="697" y1="31" x2="745" y2="31" stroke="#30363d" stroke-width="1"/>
-<text x="792" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle">max practical n</text>
-<line x1="749" y1="31" x2="835" y2="31" stroke="#30363d" stroke-width="1"/>
+<text x="816" y="26" fill="#8b949e" font-size="11" font-weight="600" text-anchor="middle">size ceilings</text>
+<line x1="749" y1="31" x2="883" y2="31" stroke="#30363d" stroke-width="1"/>
 <text x="172" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 172 157)">L1</text>
 <text x="198" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 198 157)">L2</text>
 <text x="224" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 224 157)">Linf</text>
@@ -33,10 +33,13 @@
 <text x="562" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 562 157)">improves with budget</text>
 <text x="588" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 588 157)">multi-worker - independent</text>
 <text x="614" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 614 157)">multi-worker - cooperative</text>
-<rect x="14" y="164" width="706" height="20" fill="#c9d1d9" fill-opacity="0.05"/>
+<text x="650" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 650 157)">memory</text>
+<text x="696" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 696 157)">time</text>
+<text x="742" y="157" fill="#e6edf3" font-size="12" text-anchor="start" transform="rotate(-45 742 157)">quality</text>
+<rect x="14" y="164" width="754" height="20" fill="#c9d1d9" fill-opacity="0.05"/>
 <text x="14" y="178" fill="#8b949e" font-size="11" font-weight="600" letter-spacing="0.5">ANYTIME OPTIMIZERS</text>
-<rect x="14" y="184" width="706" height="23" fill="#12261e"/>
-<line x1="14" y1="184" x2="720" y2="184" stroke="#30363d" stroke-width="1"/>
+<rect x="14" y="184" width="754" height="23" fill="#12261e"/>
+<line x1="14" y1="184" x2="768" y2="184" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="200" fill="#e6edf3" font-size="12.5" font-weight="700">max-div</text>
 <text x="175" y="200" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="201" y="200" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -56,10 +59,12 @@
 <text x="565" y="200" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="591" y="200" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="617" y="200" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="675" y="200" fill="#3fb950" font-size="12" font-weight="700" text-anchor="middle">~10<tspan font-size="8" dy="-4">5</tspan><tspan font-size="12" dy="4">–10</tspan><tspan font-size="8" dy="-4">6</tspan></text>
-<rect x="14" y="207" width="706" height="20" fill="#c9d1d9" fill-opacity="0.05"/>
+<text x="653" y="200" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="200" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="200" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<rect x="14" y="207" width="754" height="20" fill="#c9d1d9" fill-opacity="0.05"/>
 <text x="14" y="221" fill="#8b949e" font-size="11" font-weight="600" letter-spacing="0.5">EXACT SOLVERS</text>
-<line x1="14" y1="227" x2="720" y2="227" stroke="#30363d" stroke-width="1"/>
+<line x1="14" y1="227" x2="768" y2="227" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="243" fill="#e6edf3" font-size="12.5" font-weight="400">OR-Tools CP-SAT</text>
 <text x="175" y="243" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="243" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
@@ -79,8 +84,10 @@
 <text x="565" y="243" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="591" y="243" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="617" y="243" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="675" y="243" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">3</tspan></text>
-<line x1="14" y1="250" x2="720" y2="250" stroke="#30363d" stroke-width="1"/>
+<text x="653" y="243" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="243" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="243" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="250" x2="768" y2="250" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="266" fill="#e6edf3" font-size="12.5" font-weight="400">SCIP</text>
 <text x="175" y="266" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="266" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
@@ -99,8 +106,10 @@
 <text x="539" y="266" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="565" y="266" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="617" y="266" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
-<text x="675" y="266" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">3</tspan></text>
-<line x1="14" y1="273" x2="720" y2="273" stroke="#30363d" stroke-width="1"/>
+<text x="653" y="266" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="266" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="266" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="273" x2="768" y2="273" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="289" fill="#e6edf3" font-size="12.5" font-weight="400">HiGHS</text>
 <text x="175" y="289" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="289" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
@@ -119,10 +128,12 @@
 <text x="539" y="289" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="565" y="289" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="617" y="289" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="675" y="289" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">3</tspan></text>
-<rect x="14" y="296" width="706" height="20" fill="#c9d1d9" fill-opacity="0.05"/>
+<text x="653" y="289" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="289" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="289" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<rect x="14" y="296" width="754" height="20" fill="#c9d1d9" fill-opacity="0.05"/>
 <text x="14" y="310" fill="#8b949e" font-size="11" font-weight="600" letter-spacing="0.5">ONE-SHOT PICKERS &amp; SAMPLERS</text>
-<line x1="14" y1="316" x2="720" y2="316" stroke="#30363d" stroke-width="1"/>
+<line x1="14" y1="316" x2="768" y2="316" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="332" fill="#e6edf3" font-size="12.5" font-weight="400">RDKit MaxMinPicker</text>
 <text x="175" y="332" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="332" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
@@ -130,20 +141,26 @@
 <text x="253" y="332" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="279" y="332" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="305" y="332" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="675" y="332" fill="#3fb950" font-size="12" font-weight="700" text-anchor="middle">~10<tspan font-size="8" dy="-4">6</tspan></text>
-<line x1="14" y1="339" x2="720" y2="339" stroke="#30363d" stroke-width="1"/>
+<text x="653" y="332" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="332" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="332" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="339" x2="768" y2="339" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="355" fill="#e6edf3" font-size="12.5" font-weight="400">fpsample</text>
 <text x="201" y="355" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="253" y="355" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="305" y="355" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="675" y="355" fill="#3fb950" font-size="12" font-weight="700" text-anchor="middle">~10<tspan font-size="8" dy="-4">6</tspan></text>
-<line x1="14" y1="362" x2="720" y2="362" stroke="#30363d" stroke-width="1"/>
+<text x="653" y="355" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="355" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="355" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="362" x2="768" y2="362" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="378" fill="#e6edf3" font-size="12.5" font-weight="400">skmatter</text>
 <text x="201" y="378" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="253" y="378" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="305" y="378" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="675" y="378" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">5</tspan></text>
-<line x1="14" y1="385" x2="720" y2="385" stroke="#30363d" stroke-width="1"/>
+<text x="653" y="378" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="378" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="378" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="385" x2="768" y2="385" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="401" fill="#e6edf3" font-size="12.5" font-weight="400">apricot-select</text>
 <text x="175" y="401" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="201" y="401" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -151,8 +168,10 @@
 <text x="253" y="401" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="279" y="401" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="383" y="401" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="675" y="401" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">5</tspan></text>
-<line x1="14" y1="408" x2="720" y2="408" stroke="#30363d" stroke-width="1"/>
+<text x="653" y="401" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="401" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="401" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="408" x2="768" y2="408" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="424" fill="#e6edf3" font-size="12.5" font-weight="400">qc-selector</text>
 <text x="175" y="424" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="201" y="424" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -163,8 +182,10 @@
 <text x="383" y="424" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="409" y="424" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="513" y="424" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
-<text x="675" y="424" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">4</tspan></text>
-<line x1="14" y1="431" x2="720" y2="431" stroke="#30363d" stroke-width="1"/>
+<text x="653" y="424" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="424" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="424" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="431" x2="768" y2="431" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="447" fill="#e6edf3" font-size="12.5" font-weight="400">DPPy</text>
 <text x="175" y="447" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="447" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
@@ -172,8 +193,10 @@
 <text x="253" y="447" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="279" y="447" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="513" y="447" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
-<text x="675" y="447" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">4</tspan></text>
-<line x1="14" y1="454" x2="720" y2="454" stroke="#30363d" stroke-width="1"/>
+<text x="653" y="447" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="447" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="447" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="454" x2="768" y2="454" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="470" fill="#e6edf3" font-size="12.5" font-weight="400">code-FDM</text>
 <text x="175" y="470" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="470" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -182,7 +205,9 @@
 <text x="279" y="470" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="305" y="470" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="409" y="470" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="675" y="470" fill="#e6edf3" font-size="12" font-weight="400" text-anchor="middle">~10<tspan font-size="8" dy="-4">4</tspan></text>
-<line x1="14" y1="477" x2="720" y2="477" stroke="#30363d" stroke-width="1"/>
-<text x="14" y="490" font-size="11"><tspan fill="#3fb950" font-weight="700">✓</tspan><tspan fill="#8b949e" dx="5">built in</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">~</tspan><tspan fill="#8b949e" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan></text>
+<text x="653" y="470" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="699" y="470" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="470" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="477" x2="768" y2="477" stroke="#30363d" stroke-width="1"/>
+<text x="14" y="490" font-size="11"><tspan fill="#3fb950" font-weight="700">✓</tspan><tspan fill="#8b949e" dx="5">built in</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">~</tspan><tspan fill="#8b949e" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">…</tspan><tspan fill="#8b949e" dx="5">measurement pending</tspan></text>
 </svg>

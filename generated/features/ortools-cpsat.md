@@ -43,7 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-full">✔</span> | [^ortools-cpsat-8] |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^ortools-cpsat-9] |
-| largest practical problem size | n ≈ 10<sup>3</sup> | [^ortools-cpsat-10] |
+| measured size ceilings · memory ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · time ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · quality ceiling | <span class="scale-pending">pending</span> | |
 
 </div>
 
@@ -56,4 +58,3 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^ortools-cpsat-7]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
 [^ortools-cpsat-8]: CP-SAT runs a portfolio of differently configured search workers on the same instance by default, set by the num_workers parameter.
 [^ortools-cpsat-9]: The portfolio workers share learned clauses, solutions and objective bounds while solving.
-[^ortools-cpsat-10]: Max-min is solved by repeatedly asking a feasibility question — "can k items all be at least t apart?" — and each question is a fresh constraint-propagation search over O(n²) pairwise constraints. That stays tractable to around n ≈ 10³ and degrades sharply beyond it.

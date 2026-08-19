@@ -67,7 +67,14 @@ def synthetic():
                 ],
             }
         ],
-        "scale": {"hero_label": "max practical n"},
+        "scale_columns": {
+            "hero_label": "size ceilings",
+            "columns": [
+                {"key": "memory_ceiling", "hero_label": "memory"},
+                {"key": "time_ceiling", "hero_label": "time"},
+                {"key": "quality_ceiling", "hero_label": "quality"},
+            ],
+        },
     }
     registry = {
         "categories": [
@@ -87,7 +94,7 @@ def synthetic():
                     "distance.cosine": {"mark": "full"},
                     "distance.internal": {"mark": "full"},
                 },
-                "scale": {"max_practical_n": "3"},
+                "scale": {"memory_ceiling": 20000, "time_ceiling": 1000, "quality_ceiling": "pending"},
             },
             "",
         ),
@@ -98,7 +105,7 @@ def synthetic():
                     "distance.cosine": {"mark": "none"},
                     "distance.internal": {"mark": "none"},
                 },
-                "scale": {"max_practical_n": "4-5"},
+                "scale": {"memory_ceiling": 500000, "time_ceiling": "pending", "quality_ceiling": "pending"},
             },
             "",
         ),
@@ -166,7 +173,10 @@ def test_columns_are_the_hero_visible_axes(builder, synthetic):
     hero = builder.HeroTable(axes, registry, records)
 
     # --- assert -----------------------
-    assert hero.groups == [("distance", [("L2", 1), ("cosine", 1)]), ("max practical n", [("", 2)])]
+    assert hero.groups == [
+        ("distance", [("L2", 1), ("cosine", 1)]),
+        ("size ceilings", [("memory", 2), ("time", 2), ("quality", 2)]),
+    ]
     assert [len(row["marks"]) for row in hero.rows] == [2, 2]
 
 
@@ -180,7 +190,10 @@ def test_rows_follow_the_registry_order_and_its_short_names(builder, synthetic):
 
     # --- assert -----------------------
     assert hero.categories == ["Exact solvers", "Anytime optimizers"]
-    assert [(row["name"], row["category"], row["scale"]) for row in hero.rows] == [("Other", 0, "3"), ("own", 1, "4-5")]
+    assert [(row["name"], row["category"], row["scales"]) for row in hero.rows] == [
+        ("Other", 0, [20000, 1000, "pending"]),
+        ("own", 1, [500000, "pending", "pending"]),
+    ]
 
 
 def test_the_highlighted_row_is_the_registry_subject(builder, synthetic):
@@ -235,3 +248,48 @@ def test_a_mark_with_no_hero_glyph_leaves_its_cell_empty(builder, synthetic):
     # --- assert -----------------------
     assert svg.count("✓") == 1, "the only check mark left should be the one in the legend"
     assert "not available" not in svg, "a mark the hero never draws has nothing to explain"
+
+
+# =================================================================================================
+#  The ceiling columns
+# =================================================================================================
+def test_each_columns_highest_measured_value_is_the_leader(builder, synthetic):
+    """Bold-and-green marks the per-column leader; a pending cell never leads."""
+    # --- arrange ----------------------
+    axes, registry, records = synthetic
+
+    # --- act --------------------------
+    svg = builder.build_svg(builder.HeroTable(axes, registry, records), "light")
+
+    # --- assert -----------------------
+    assert 'font-weight="700" text-anchor="middle">500k</text>' in svg  # own leads on memory
+    assert 'font-weight="400" text-anchor="middle">20k</text>' in svg  # other does not
+    assert 'font-weight="700" text-anchor="middle">1k</text>' in svg  # other leads on time by default
+
+
+def test_pending_cells_render_as_the_pending_marker_with_a_legend(builder, synthetic):
+    # --- arrange ----------------------
+    axes, registry, records = synthetic
+
+    # --- act --------------------------
+    svg = builder.build_svg(builder.HeroTable(axes, registry, records), "light")
+
+    # --- assert -----------------------
+    assert svg.count("…") == 4  # three pending cells plus the legend's own marker
+    assert "measurement pending" in svg
+
+
+def test_the_pending_legend_disappears_once_every_ceiling_is_measured(builder, synthetic):
+    """The legend explains a marker; once no cell draws it, explaining it would be noise."""
+    # --- arrange ----------------------
+    axes, registry, records = synthetic
+    for record, _body in records.values():
+        for key in record["scale"]:
+            record["scale"][key] = 1000
+
+    # --- act --------------------------
+    svg = builder.build_svg(builder.HeroTable(axes, registry, records), "light")
+
+    # --- assert -----------------------
+    assert "…" not in svg
+    assert "measurement pending" not in svg

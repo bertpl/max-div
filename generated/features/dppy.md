@@ -43,7 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> |  |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| largest practical problem size | n ≈ 10<sup>4</sup> | [^dppy-5] |
+| measured size ceilings · memory ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · time ceiling | <span class="scale-pending">pending</span> | |
+| measured size ceilings · quality ceiling | <span class="scale-pending">pending</span> | |
 
 </div>
 
@@ -51,4 +53,3 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^dppy-2]: The kernel is entirely caller-supplied, so a custom similarity is the native case rather than a workaround. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
 [^dppy-3]: DPPy draws samples from a determinantal point process rather than maximizing anything. Diversity is a property of the distribution it samples from — subsets whose kernel submatrix has a large determinant are more likely — so no objective is optimized and no selection is claimed to be best.
 [^dppy-4]: You can ask for more samples, but a sample count is a number of independent draws, not an improvement budget — the tenth draw is no better than the first, merely different.
-[^dppy-5]: An n × n kernel matrix must be materialized, and exact k-DPP sampling eigendecomposes it — an O(n³) step that dominates well before memory does. Around n ≈ 10⁴ that is still minutes; beyond it, approximate samplers are the only route.

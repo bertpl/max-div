@@ -4,11 +4,9 @@ solver:
   source: https://github.com/yhwang1990/code-FDM
   verified: 2026-07-27
   scale:
-    max_practical_n: "4"
-    rationale: >-
-      Research code built around a full distance matrix and repeated threshold scans over it. No
-      effort has gone into constant factors, so the practical ceiling sits below the maintained
-      libraries at comparable memory.
+    memory_ceiling: pending
+    time_ceiling: pending
+    quality_ceiling: pending
   metadata:
     guarantee: heuristic with approximation bounds stated in the paper
     license: none declared

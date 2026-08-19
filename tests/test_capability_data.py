@@ -48,16 +48,22 @@ def synthetic(cd):
             {
                 "key": "distance",
                 "label": "distance metrics",
-                "axes": [{"key": "l2", "label": "L2", "hero_label": "L2", "hero": True}],
+                "axes": [
+                    {"key": "l2", "label": "L2", "hero_label": "L2", "hero": True, "definition": "Selects under L2."}
+                ],
             }
         ],
-        "scale": {
-            "key": "max_practical_n",
-            "label": "largest practical problem size",
-            "hero_label": "max practical n",
-            "hero": True,
+        "scale_columns": {
+            "hero_label": "size ceilings",
+            "label": "measured size ceilings",
+            "definition": "Measured ceilings on a 1-2-5 grid.",
+            "columns": [
+                {"key": "memory_ceiling", "hero_label": "memory", "label": "memory ceiling", "definition": "Mem."},
+                {"key": "time_ceiling", "hero_label": "time", "label": "time ceiling", "definition": "Time."},
+                {"key": "quality_ceiling", "hero_label": "quality", "label": "quality ceiling", "definition": "Qual."},
+            ],
         },
-        "metadata": [{"key": "guarantee", "label": "Guarantee"}],
+        "metadata": [{"key": "guarantee", "label": "Guarantee", "definition": "The strongest quality claim."}],
         "marks": {
             "full": {"glyph": "Y", "legend": "built in"},
             "partial": {"glyph": "~", "legend": "reachable"},
@@ -69,7 +75,7 @@ def synthetic(cd):
     record = {
         "name": "Tool",
         "metadata": {"guarantee": "heuristic"},
-        "scale": {"max_practical_n": "3", "rationale": "because"},
+        "scale": {"memory_ceiling": "pending", "time_ceiling": "pending", "quality_ceiling": "pending"},
         "capabilities": {"distance.l2": {"mark": "full"}},
     }
     body = '--8<-- "generated/features/tool.md"'
@@ -251,38 +257,56 @@ def test_metadata_falls_back_to_the_record_top_level(cd, synthetic):
     """Source and verification date live at the top level, not inside the metadata block."""
     # --- arrange ----------------------
     axes, registry, records = synthetic
-    axes["metadata"].append({"key": "verified", "label": "Last verified"})
+    axes["metadata"].append({"key": "verified", "label": "Last verified", "definition": "Check date."})
     records["tool"][0]["verified"] = "2026-07-27"
 
     # --- act / assert -----------------
     assert cd.check_structure(axes, registry, records) == []
 
 
-def test_missing_scale_rationale_is_rejected(cd, synthetic):
+def test_a_missing_ceiling_cell_is_rejected(cd, synthetic):
     # --- arrange ----------------------
-    synthetic[2]["tool"][0]["scale"]["rationale"] = "   "
+    del synthetic[2]["tool"][0]["scale"]["time_ceiling"]
 
     # --- act / assert -----------------
-    assert any("no rationale" in p for p in problems(cd, synthetic))
+    assert any("no cell for ceiling `time_ceiling`" in p for p in problems(cd, synthetic))
 
 
-@pytest.mark.parametrize("value", ["", "12", "1-2-3", "n/a", "10^3"])
-def test_malformed_scale_value_is_rejected(cd, synthetic, value):
+def test_an_unknown_ceiling_cell_is_rejected(cd, synthetic):
+    """The old single-column key is the likely stray, and it must not survive silently."""
     # --- arrange ----------------------
-    synthetic[2]["tool"][0]["scale"]["max_practical_n"] = value
+    synthetic[2]["tool"][0]["scale"]["max_practical_n"] = "4"
 
     # --- act / assert -----------------
-    assert any("power of ten" in p for p in problems(cd, synthetic))
+    assert any("unknown ceiling `max_practical_n`" in p for p in problems(cd, synthetic))
 
 
-@pytest.mark.parametrize("value", ["3", "4-5"])
-def test_a_single_value_and_a_range_are_both_accepted(cd, synthetic, value):
-    """max-div reports a range; SCIP reports one value. Both are legitimate."""
+@pytest.mark.parametrize("value", ["", "12", "300", "4-5", "10^3", 50, 150000])
+def test_a_ceiling_off_the_grid_is_rejected(cd, synthetic, value):
+    """Only 1-2-5 grid sizes (floor 100) or `pending` — anything else is a typo or an old value."""
     # --- arrange ----------------------
-    synthetic[2]["tool"][0]["scale"]["max_practical_n"] = value
+    synthetic[2]["tool"][0]["scale"]["memory_ceiling"] = value
+
+    # --- act / assert -----------------
+    assert any("expected `pending` or a 1-2-5 grid size" in p for p in problems(cd, synthetic))
+
+
+@pytest.mark.parametrize("value", ["pending", 100, 500, 20000, 2000000000, "1000"])
+def test_pending_and_grid_sizes_are_both_accepted(cd, synthetic, value):
+    # --- arrange ----------------------
+    synthetic[2]["tool"][0]["scale"]["memory_ceiling"] = value
 
     # --- act / assert -----------------
     assert problems(cd, synthetic) == []
+
+
+def test_a_column_without_a_definition_is_rejected(cd, synthetic):
+    """Every column a table can show must be pinned on the definitions page."""
+    # --- arrange ----------------------
+    del synthetic[0]["groups"][0]["axes"][0]["definition"]
+
+    # --- act / assert -----------------
+    assert any("has no definition" in p for p in problems(cd, synthetic))
 
 
 @pytest.mark.parametrize("note", ["a bare string", 42, ["a", "list"]])
@@ -379,17 +403,24 @@ def test_every_capability_axis_is_a_column(cd, real):
     for group in axes["groups"]:
         for axis in group["axes"]:
             assert f">{axis['hero_label']}</th>" in rendered
-    assert f">{axes['scale']['hero_label']}</th>" in rendered
+    for column in axes["scale_columns"]["columns"]:
+        assert f">{column['hero_label']}</th>" in rendered
 
 
 @pytest.mark.parametrize(
     "value, expected",
-    [("3", "n ≈ 10<sup>3</sup>"), ("4-5", "n ≈ 10<sup>4</sup>&ndash;10<sup>5</sup>")],
+    [(100, "100"), (500, "500"), (1000, "1k"), (20000, "20k"), (500000, "500k"), (1000000, "1M"), (2000000000, "2B")],
 )
-def test_a_scale_range_renders_as_two_powers(cd, value, expected):
-    """`10<sup>4-5</sup>` reads as a single exponent of `4-5` rather than as a range."""
+def test_grid_sizes_format_in_suffix_notation(cd, value, expected):
+    """Grid values are 1, 2 or 5 times a power of ten, so the mantissa never rounds."""
     # --- act / assert -----------------
-    assert cd._scale_markup({"max_practical_n": value}) == expected
+    assert cd.format_scale_value(value) == expected
+
+
+def test_a_pending_ceiling_renders_as_the_pending_marker(cd):
+    # --- act / assert -----------------
+    assert cd._scale_markup("pending") == '<span class="scale-pending">pending</span>'
+    assert cd._scale_markup(20000) == "n = 20k"
 
 
 def test_each_group_heading_spans_its_own_columns(cd, real):
@@ -457,6 +488,62 @@ def test_only_the_excluded_tool_is_unlinked(cd, real):
     for tool in cd.registered_tools(registry):
         linked = f"[{tool['name']}](solvers/{tool['key']}.md)" in rendered
         assert linked is tool.get("profile", True)
+
+
+# =================================================================================================
+#  The capability-definitions page
+# =================================================================================================
+def test_definitions_page_without_its_include_is_rejected(cd, tmp_path):
+    # --- arrange ----------------------
+    page = tmp_path / "capability_definitions.md"
+    page.write_text("# Definitions\n\nprose, but no include\n", encoding="utf-8")
+
+    # --- act / assert -----------------
+    assert any("does not include" in p for p in cd.check_definitions_include(page))
+
+
+def test_a_missing_definitions_page_is_rejected(cd, tmp_path):
+    # --- act / assert -----------------
+    assert any("is missing" in p for p in cd.check_definitions_include(tmp_path / "gone.md"))
+
+
+def test_the_committed_definitions_body_matches_a_fresh_render(cd, real):
+    # --- arrange ----------------------
+    axes, _registry, _records = real
+
+    # --- act / assert -----------------
+    assert cd.DEFINITIONS_FRAGMENT.read_text(encoding="utf-8") == cd.render_definitions(axes), (
+        "generated/capability_definitions.md is stale — re-run scripts/capability_data.py"
+    )
+
+
+def test_a_stale_definitions_fragment_is_reported_by_the_dry_run(cd, real, tmp_path):
+    # --- arrange ----------------------
+    axes, registry, records = real
+    stale = tmp_path / "capability_definitions.md"
+    stale.write_text("stale content", encoding="utf-8")
+
+    # --- act --------------------------
+    problems = cd.check_fragments_are_current(axes, registry, records, cd.FRAGMENTS_DIR, cd.COMPARISON_FRAGMENT, stale)
+
+    # --- assert -----------------------
+    assert any(p.startswith("definitions:") and "is stale" in p for p in problems)
+
+
+def test_every_declared_definition_reaches_the_page(cd, real):
+    """The page's whole point: no column a table shows may be missing its criterion."""
+    # --- arrange ----------------------
+    axes, _registry, _records = real
+
+    # --- act --------------------------
+    rendered = cd.render_definitions(axes)
+
+    # --- assert -----------------------
+    specs = [axis for group in axes["groups"] for axis in group["axes"]]
+    specs += axes["scale_columns"]["columns"]
+    specs += axes["metadata"]
+    for spec in specs:
+        assert cd.inline(spec["definition"]) in rendered
 
 
 # =================================================================================================
@@ -532,7 +619,12 @@ def repo_copy(tmp_path):
         destination = tmp_path / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(source, destination)
-    for relative in ("generated/comparison.md", "docs/comparison.md"):
+    for relative in (
+        "generated/comparison.md",
+        "docs/comparison.md",
+        "generated/capability_definitions.md",
+        "docs/capability_definitions.md",
+    ):
         shutil.copy(REPO_ROOT / relative, tmp_path / relative)
     return tmp_path
 
