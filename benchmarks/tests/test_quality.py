@@ -92,3 +92,21 @@ def test_n_constraints_satisfied(small_constrained_problem):
     assert n_constraints_satisfied(small_constrained_problem, both_ok) == 2
     assert n_constraints_satisfied(small_constrained_problem, first_violated) == 1
     assert n_constraints_satisfied(small_constrained_problem, both_violated) == 0
+
+
+def test_nn_min_separation_matches_the_pairwise_evaluation() -> None:
+    """The O(k log k) scorer must agree with the k x k evaluation it replaces."""
+    # --- arrange ----------------------
+    from scipy.spatial.distance import pdist
+
+    from benchmarks.common.quality import min_separation_nn
+
+    rng = np.random.default_rng(0)
+    vectors = rng.random((500, 2), dtype=np.float32)
+    idx = rng.choice(500, size=50, replace=False)
+
+    # --- act --------------------------
+    fast = min_separation_nn(vectors, idx)
+
+    # --- assert -----------------------
+    assert fast == pytest.approx(pdist(vectors[idx].astype(np.float64)).min(), rel=1e-6)

@@ -88,3 +88,20 @@ def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.in
     off_diag = ~np.eye(k, dtype=bool)
     dist[off_diag] = condensed[condensed_pos[off_diag]]
     return dist
+
+def min_separation_nn(vectors: NDArray[np.floating], i_selected: NDArray[np.integer]) -> float:
+    """Score a selection's minimum separation via nearest-neighbor queries, in O(k log k).
+
+    The k x k matrix behind `evaluate_selection` costs O(k^2) memory, which at the ceilings
+    campaign's largest sizes would dwarf the tool being measured — the minimum separation
+    equals the minimum over each selected point's nearest selected neighbor, and a KD-tree
+    answers that without materializing any pairwise block.
+    """
+    from scipy.spatial import cKDTree
+
+    selected = np.ascontiguousarray(vectors[np.asarray(i_selected, dtype=np.int64)], dtype=np.float64)
+    if selected.shape[0] < 2:
+        raise ValueError("A selection needs at least 2 items to evaluate diversity.")
+    tree = cKDTree(selected)
+    distances, _ = tree.query(selected, k=2)
+    return float(distances[:, 1].min())

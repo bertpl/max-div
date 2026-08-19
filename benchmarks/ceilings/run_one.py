@@ -21,7 +21,7 @@ def execute(spec: dict) -> dict:
     """Run the spec's tool once and return the result fields the parent records."""
     from benchmarks.ceilings.configs import Mode, resolve
     from benchmarks.common.problems import build_problem
-    from benchmarks.common.quality import evaluate_selection
+    from benchmarks.common.quality import min_separation_nn
     from max_div.metrics import DiversityMetric
 
     problem = build_problem("U1", n=spec["n"], diversity_metric=DiversityMetric.MIN_SEPARATION)
@@ -45,11 +45,12 @@ def execute(spec: dict) -> dict:
     selection = np.asarray(selection, dtype=np.int64)
     if len(selection) != problem.k or len(np.unique(selection)) != problem.k:
         raise ValueError(f"invalid selection: {len(selection)} indices for k={problem.k}")
-    quality = evaluate_selection(problem, selection)
+    # Scored via nearest neighbors rather than `evaluate_selection`: the k x k matrix the
+    # latter builds would dominate the campaign's memory at the largest sizes.
     return {
         "completed": True,
         "measured_sec": measured_sec,
-        "min_separation": quality[DiversityMetric.MIN_SEPARATION.name],
+        "min_separation": min_separation_nn(problem.vectors, selection),
     }
 
 
