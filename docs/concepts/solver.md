@@ -154,8 +154,7 @@ solution = (
 The two counts buy different things:
 
 - **More groups**: variance reduction. A run's quality depends on its seed, and keeping the best
-  over several independent groups insures against drawing a bad one — though the default, under
-  Workers and Groups below, is a single group.
+  over several independent groups insures against drawing a bad one.
 - **Larger groups**: shared search capacity. A group's members pool their effort on promising
   selections — a member stuck with a poor selection picks up a sibling's better one and continues
   from there — at the cost of searching less independently.
@@ -181,8 +180,10 @@ still finish below a lucky one with less.
 When the counts are not given:
 
 - the worker total defaults to **3/4 of the logical cores**;
-- the group count defaults to **one** — a single cooperative group converged fastest at every
-  tested worker count;
+- the group count defaults to **groups of about four workers** (the count nearest a quarter of
+  the worker total, so group sizes stay between 3 and 5; five workers or fewer form a single
+  group) — groups of four matched one all-worker group's quality in benchmarks while spreading
+  the seed risk over independent groups;
 - a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
   to the first groups.
 

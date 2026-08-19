@@ -188,11 +188,14 @@ def test_default_worker_count_is_three_quarters_of_the_cores_at_least_two(
 # =================================================================================================
 #  Groups
 # =================================================================================================
-@pytest.mark.parametrize("total", [1, 2, 4, 8, 48])
-def test_default_group_count_is_one(total):
-    """The default is one group at any worker total: benchmarks showed a single group converging fastest."""
+@pytest.mark.parametrize(
+    "total,expected",
+    [(1, 1), (2, 1), (5, 1), (6, 2), (8, 2), (9, 2), (10, 3), (11, 3), (12, 3), (16, 4), (48, 12)],
+)
+def test_default_group_count(total, expected):
+    """The default is the group count nearest total/4: sizes stay 3-5, five workers or fewer stay one group."""
     # --- act / assert -----------------
-    assert default_group_count(total) == 1
+    assert default_group_count(total) == expected
 
 
 @pytest.mark.parametrize(
@@ -259,13 +262,13 @@ def test_a_nested_sequence_fixes_grouping_and_configurations():
     ]
 
 
-def test_an_integer_worker_count_defaults_to_one_cooperative_group():
-    """An integer count defaults to a single group, so cooperation is the default rather than opt-in."""
+def test_an_integer_worker_count_defaults_to_cooperative_groups_of_about_four():
+    """An integer count defaults to groups of about four workers, so cooperation is the default rather than opt-in."""
     # --- act --------------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 4).build()
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 8).build()
 
     # --- assert -----------------------
-    assert solver._group_sizes == [4]
+    assert solver._group_sizes == [4, 4]
 
 
 def test_a_cooperative_portfolio_solves():
