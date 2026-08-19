@@ -271,12 +271,12 @@ def _group_bands(lay):
         )
         idx += len(cols)
     # A hairline where one group ends and the next begins, and on the outer edges of the first
-    # and last group — the same stroke as the bracket rules above, so the verticals read as the
-    # same scaffolding. Drawn from where the bands turn vertical, clear of the rotated labels.
+    # and last group — the bracket rules' color at half their weight, so the verticals read as
+    # quieter scaffolding. Each follows its band's edge: slanted alongside the rotated labels,
+    # then vertical from the corner down to the last row.
     for x in sorted(edges):
-        out.append(
-            f'<line x1="{x}" y1="{lay.y_corner}" x2="{x}" y2="{lay.y_end}" stroke="{t["rule"]}" stroke-width="1"/>'
-        )
+        pts = f"{x + lay.skew},{lay.y_top} {x},{lay.y_corner} {x},{lay.y_end}"
+        out.append(f'<polyline points="{pts}" fill="none" stroke="{t["rule"]}" stroke-width="0.5"/>')
     return out
 
 

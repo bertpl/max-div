@@ -153,7 +153,9 @@ def test_computed_geometry_is_integral(builder, table):
     svg = builder.build_svg(table, "light")
     offenders = []
     for attr in geometry:
-        for value in re.findall(rf'\b{attr}="([^"]+)"', svg):
+        # (?<![-\w]) rather than \b: `stroke-width` must not match as `width` — stroke widths are
+        # exactly the author-chosen literals the docstring exempts.
+        for value in re.findall(rf'(?<![-\w]){attr}="([^"]+)"', svg):
             if "." in value:
                 offenders.append(f"{attr}={value}")
 
