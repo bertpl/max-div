@@ -205,7 +205,7 @@ def check_metadata(key: str, record: dict, axes_metadata: list[dict]) -> list[st
 
 
 def check_scale_cells(key: str, record: dict, scale_columns: list[dict]) -> list[str]:
-    """One cell per ceiling column, no others, each `pending` or a size on the 1-2-5 grid."""
+    """A record carries one cell per ceiling column, no others, each `pending` or a 1-2-5 grid size."""
     problems: list[str] = []
     cells = record.get("scale") or {}
     expected = {column["key"] for column in scale_columns}
@@ -561,7 +561,7 @@ def render_definitions(axes: dict) -> str:
         "",
         "## Capabilities",
         "",
-        "What each capability column claims, group by group.",
+        "Each table below states what its capability columns claim.",
     ]
     for group in axes["groups"]:
         lines += [
@@ -594,7 +594,7 @@ def render_definitions(axes: dict) -> str:
         "",
         "## Tool facts",
         "",
-        "The prose fields on each profile page and the comparison page's companion table.",
+        "These fields appear on each profile page and in the comparison page's companion table.",
         "",
         '<div class="capability-definitions" markdown>',
         "",

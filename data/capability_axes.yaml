@@ -14,11 +14,9 @@
 # its own columns, so "objective" fits where "diversity objectives" would run into its neighbor.
 #
 # `definition` is the exact criterion a cell is judged by — what capability the column claims,
-# composed with the mark vocabulary below (a `full` mark claims the definition holds built in,
-# `partial` that it is reachable with caller work, `none` that it is not available). The
-# definitions render as the capability-definitions page, so every column the tables show is
-# pinned to one published criterion. Axes, scale columns and metadata fields all carry one;
-# scripts/capability_data.py rejects a column without it.
+# composed with the mark vocabulary below. The definitions render as the capability-definitions
+# page, so every column the tables show is pinned to one published criterion. Axes, scale columns
+# and metadata fields all carry one; scripts/capability_data.py rejects a column without it.
 
 # The mark vocabulary, shared by every surface that renders a cell — including the hero SVG, whose
 # renderer reads its glyphs and its legend wording from here.
@@ -252,32 +250,29 @@ groups:
         hero: true
         definition: Runs several workers on one problem at once, and the workers exchange information mid-run.
 
-# The ceiling columns are not marks: each cell is a measured problem size, or `pending` while its
-# measurement campaign has not filled it yet. They render as the last three columns of the hero
-# table and the comparison grid, and as rows of each per-solver feature table. The shared
-# `definition` is the preamble the capability-definitions page prints before the three columns;
-# the measurement protocol behind them is summarized on that page.
+# The ceiling columns are not marks: each cell is a measured problem size, or `pending` while it
+# has not been measured yet. They render as the last three columns of the hero table and the
+# comparison grid, and as rows of each per-solver feature table. The shared `definition` is the
+# preamble the capability-definitions page prints before the three columns; the measurement
+# protocol behind them is summarized on that page.
 scale_columns:
   hero_label: size ceilings
   label: measured size ceilings
   definition: >-
     The three size columns are measured ceilings, not order-of-magnitude claims: each is the
     largest problem size n, on a 1-2-5 grid (100, 200, 500, 1000, ...), at which the tool still
-    clears that column's bar on one unconstrained reference problem. They are nested by
-    construction — no memory means no solution, no solution means no good solution — so each
-    ceiling can only be at or below the previous one, and a row reads as a sequence of tightening
-    claims. A cell reading `pending` has not been measured yet.
+    meets that column's criterion on one unconstrained reference problem. No memory means no
+    solution, and no solution means no good solution — so each ceiling can only be at or below
+    the previous one. A cell reading `pending` has not been measured yet.
   columns:
     - key: memory_ceiling
       hero_label: memory
       label: memory ceiling
       definition: >-
         The largest grid size whose peak memory stays within 32 GB in the tool's most
-        memory-efficient configuration. Determined by calibrated extrapolation: a per-tool memory
-        model, checked against the tool's documented data structures and fitted to measured peak
-        memory from runs at smaller sizes, read off at the 32 GB crossing and rounded down to the
-        grid. No run is executed at the ceiling itself — at full memory most tools are far too
-        slow to run at all — and extrapolation is the standard method for every tool.
+        memory-efficient configuration — determined by calibrated extrapolation from measured
+        smaller-size runs, rounded down to the grid, and never by a run at the ceiling itself:
+        at full memory most tools are far too slow to run at all.
     - key: time_ceiling
       hero_label: time
       label: time ceiling

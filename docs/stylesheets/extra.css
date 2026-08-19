@@ -165,8 +165,8 @@ table th {
     color: color-mix(in srgb, var(--md-default-fg-color--light) 91%, transparent);
 }
 
-/* A ceiling cell awaiting its measurement recedes like the quiet marks: pending is the absence
-   of a claim, and full ink would read as one. */
+/* A pending ceiling cell takes the same muted tone as the partial/none marks: pending is the
+   absence of a claim, and full ink would read as a claim. */
 .scale-pending {
     font-style: italic;
     color: color-mix(in srgb, var(--md-default-fg-color--light) 91%, transparent);

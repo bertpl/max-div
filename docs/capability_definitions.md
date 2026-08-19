@@ -2,8 +2,8 @@
 
 Every cell in the [comparison tables](comparison.md), the README capability table and the
 per-solver [profiles](solvers/index.md) traces back to a per-tool record, and every column those
-tables show is pinned here to one exact criterion. This page is what a mark or a figure *means*;
-the records supply the evidence per tool.
+tables show is pinned here to one exact criterion. This page defines what each mark and figure
+means; the records supply the evidence per tool.
 
 --8<-- "generated/capability_definitions.md"
 
@@ -12,21 +12,26 @@ the records supply the evidence per tool.
 All three ceilings come from one measurement protocol, summarized here so every published figure
 is reproducible from this page alone.
 
-**Setup.** One unconstrained reference problem family:
-[U1](benchmarks/solver/problem_u1.md), fixed d = 2, with k = n/10 — the same k-to-n sizing the
-solver benchmarks use. Candidate sizes sit on the 1-2-5 grid in n (100, 200, 500, 1000, ...);
-a published ceiling is always a grid value. Every run executes on one benchmark machine — a 16″
-MacBook Pro with a 16-core M3 Max CPU — under a 32 GB peak-memory cap enforced by a memory
-watchdog, and is timed end-to-end from raw vectors, so a tool's distance and setup work is part
-of its cost. Quality is scored on the published U1 objective. Walks up the grid assume
-monotonicity: a tool that fails a test at one size is not retried at larger ones.
+**Setup.**
+
+- **Problem:** one unconstrained reference problem family —
+  [U1](benchmarks/solver/problem_u1.md), fixed d = 2, with k = n/10, the same k-to-n sizing the
+  solver benchmarks use.
+- **Candidate sizes:** the 1-2-5 grid in n (100, 200, 500, 1000, ...); a published ceiling is
+  always a grid value.
+- **Machine:** a 16″ MacBook Pro with a 16-core M3 Max CPU, under a 32 GB peak-memory cap
+  enforced by a memory watchdog.
+- **Timing:** end-to-end from raw vectors, so a tool's distance and setup work is part of its
+  cost.
+- **Scoring:** the published U1 objective.
+- **Monotonicity:** walks up the grid stop at the first fail; a tool that fails a test at one
+  size is not retried at larger ones.
 
 **Budgets.** The reference budget is **one minute** per run; the quality anchor runs at
-**fifteen minutes** (fifteen times the reference budget). Both are stated in each column's
-definition above and bound every run — a run still going at its budget is killed and counts as
-a fail.
+**fifteen minutes**. Both are stated in the time and quality definitions above and bound every
+run — a run still going at its budget is killed and counts as a fail.
 
-**The four campaign stages**, each pruning the next:
+**The four measurement stages**, each pruning the next:
 
 1. **Memory calibration** — per tool, runs at smaller sizes in its most memory-efficient
    configuration record peak memory; the fitted model gives the memory ceiling, and sizes it puts
@@ -40,13 +45,13 @@ a fail.
 
 **The quality anchor.** For each size, the anchor is the best solution any tool in the suite
 produces within fifteen minutes — the dedicated anchor runs and the one-minute quality runs both
-count. Three properties are worth stating openly: the anchor solution usually comes from max-div's
-own fifteen-minute parallel run, and wherever any other tool beats it, that tool sets the anchor;
-at sizes where no fifteen-minute run betters the one-minute field, the best one-minute tool
-defines the very line it is scored against and passes it by construction; and a re-measurement
-that improves the anchor lowers every tool's quality ceiling with it.
+count. Its stated properties:
+
+- The anchor solution usually comes from max-div's own fifteen-minute parallel run; wherever any
+  other tool beats it, that tool sets the anchor.
+- At sizes where no fifteen-minute run betters the one-minute field, the best one-minute tool
+  defines the very line it is scored against and passes it by construction.
+- A re-measurement that improves the anchor lowers every tool's quality ceiling with it.
 
 **Seeds.** Stochastic tools run five seeds per size, deterministic ones three; every pass or fail
 is judged on the median seed. Anchor runs use one pre-registered seed each.
-
-A cell reading *pending* has not been measured yet.

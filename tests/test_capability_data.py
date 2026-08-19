@@ -273,7 +273,7 @@ def test_a_missing_ceiling_cell_is_rejected(cd, synthetic):
 
 
 def test_an_unknown_ceiling_cell_is_rejected(cd, synthetic):
-    """The old single-column key is the likely stray, and it must not survive silently."""
+    """`max_practical_n` is a key no declared column carries, and it must not survive silently."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["max_practical_n"] = "4"
 

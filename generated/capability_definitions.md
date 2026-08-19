@@ -16,7 +16,7 @@ Every capability cell carries one of three marks. A mark composes with the colum
 
 ## Capabilities
 
-What each capability column claims, group by group.
+Each table below states what its capability columns claim.
 
 ### distance metrics
 
@@ -83,7 +83,7 @@ What each capability column claims, group by group.
 
 ## Measured size ceilings
 
-The three size columns are measured ceilings, not order-of-magnitude claims: each is the largest problem size n, on a 1-2-5 grid (100, 200, 500, 1000, ...), at which the tool still clears that column's bar on one unconstrained reference problem. They are nested by construction — no memory means no solution, no solution means no good solution — so each ceiling can only be at or below the previous one, and a row reads as a sequence of tightening claims. A cell reading `pending` has not been measured yet.
+The three size columns are measured ceilings, not order-of-magnitude claims: each is the largest problem size n, on a 1-2-5 grid (100, 200, 500, 1000, ...), at which the tool still meets that column's criterion on one unconstrained reference problem. No memory means no solution, and no solution means no good solution — so each ceiling can only be at or below the previous one. A cell reading `pending` has not been measured yet.
 
 Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.
 
@@ -91,7 +91,7 @@ Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.
 
 | Column | Definition |
 |---|---|
-| memory ceiling | The largest grid size whose peak memory stays within 32 GB in the tool's most memory-efficient configuration. Determined by calibrated extrapolation: a per-tool memory model, checked against the tool's documented data structures and fitted to measured peak memory from runs at smaller sizes, read off at the 32 GB crossing and rounded down to the grid. No run is executed at the ceiling itself — at full memory most tools are far too slow to run at all — and extrapolation is the standard method for every tool. |
+| memory ceiling | The largest grid size whose peak memory stays within 32 GB in the tool's most memory-efficient configuration — determined by calibrated extrapolation from measured smaller-size runs, rounded down to the grid, and never by a run at the ceiling itself: at full memory most tools are far too slow to run at all. |
 | time ceiling | The largest grid size at which the tool returns a valid size-k selection within one minute, timed end-to-end from raw vectors, in its fastest valid configuration — the fastest standard, user-configurable setting that still produces a valid selection. |
 | quality ceiling | The largest grid size at which the tool, in its standard configuration at the one-minute budget, closes at least 90% of the quality gap between a uniform-random selection and the best solution any tool produces within fifteen minutes. |
 
@@ -99,7 +99,7 @@ Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.
 
 ## Tool facts
 
-The prose fields on each profile page and the comparison page's companion table.
+These fields appear on each profile page and in the comparison page's companion table.
 
 <div class="capability-definitions" markdown>
 

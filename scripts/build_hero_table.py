@@ -148,10 +148,10 @@ PENDING_GLYPH = "\u2026"  # a ceiling cell awaiting its measurement
 
 
 def scale_text(value):
-    """One ceiling cell's text: the measured size in suffix notation, or the pending marker.
+    """Return one ceiling cell's text: the measured size in suffix notation, or the pending marker.
 
-    The suffix notation (k = 10\u00b3, M = 10\u2076, B = 10\u2079) is the same one the documentation
-    tables use; the shared formatter guarantees the two surfaces cannot print one value two ways.
+    The notation is `format_scale_value`'s; sharing the formatter guarantees the hero and the
+    documentation tables cannot print one value two ways.
     """
     return PENDING_GLYPH if value == capability_data.PENDING else capability_data.format_scale_value(int(value))
 
@@ -199,7 +199,7 @@ class _Layout:
         self.table_w = LABEL_W + self.grid_w
 
     def leads_on_scale(self, row, j):
-        """True when this row carries ceiling column j's highest measured value.
+        """Return True when this row carries ceiling column j's highest measured value.
 
         Deliberately not keyed to max-div: whoever measures highest leads, and saying so is the
         point of showing the columns at all. A pending cell never leads, and a column with no
@@ -209,15 +209,18 @@ class _Layout:
         return bool(measured) and row["scales"][j] != capability_data.PENDING and int(row["scales"][j]) == max(measured)
 
     def any_pending(self):
-        """True while at least one ceiling cell awaits its measurement — it drives the legend."""
+        """Return True while any ceiling cell awaits its measurement.
+
+        The pending legend entry is drawn only while one does.
+        """
         return any(value == capability_data.PENDING for row in self.rows for value in row["scales"])
 
     def col_x(self, i):
-        """Left edge of mark column i."""
+        """Return the left edge of mark column i."""
         return PAD + LABEL_W + i * COL_W
 
     def scale_x(self, j):
-        """Left edge of ceiling column j, which sits right of every mark column."""
+        """Return the left edge of ceiling column j, which sits right of every mark column."""
         return PAD + LABEL_W + self.n_marks * COL_W + j * CEIL_W
 
     def rule(self, y):
