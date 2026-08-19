@@ -181,8 +181,8 @@ When the counts are not given:
 
 - the worker total defaults to **3/4 of the logical cores**;
 - the group count defaults to **groups of about four workers** (the count nearest a quarter of
-  the worker total; five workers or fewer form a single group), spreading the seed risk over
-  independent groups without losing quality;
+  the worker total; five workers or fewer form a single group), spreading the risk of a bad seed
+  over independent groups without losing quality;
 - a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
   to the first groups.
 

@@ -145,7 +145,7 @@ def default_group_count(n_workers_total: int) -> int:
     """Return the default group count when the caller names none: the count nearest a quarter of the total.
 
     Groups of about four workers matched one all-worker group's result quality in benchmarks while
-    spreading the seed risk over several independent groups.  Rounding to the nearest count keeps
+    spreading the risk of a bad seed over several independent groups.  Rounding to the nearest count keeps
     every group's size between 3 and 5; five workers or fewer form a single group.  An explicit
     `n_groups` on `with_workers` overrides it.
     """
