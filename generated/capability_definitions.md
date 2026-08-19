@@ -108,7 +108,7 @@ These fields appear on each profile page and in the comparison page's companion 
 | Guarantee | The strongest solution-quality statement the tool's algorithm supports and its documentation makes: a proof of optimality, a stated approximation factor, or `heuristic` when no bound is claimed. |
 | License | The SPDX identifier of the license the tool is distributed under. |
 | Version | The latest released version at the record's verification date. |
-| Released | The date of that latest release — how recently the tool has seen maintenance. |
+| Released | The date of the tool's latest release — how recently the tool has seen maintenance. |
 | Determinism | Whether repeated runs on the same input reproduce the same selection, and under what stated conditions (a fixed seed, a fixed thread count, ...). "Deterministic" without qualification means identical output on every run. |
 | Input | The input forms the tool accepts — vectors, a precomputed distance matrix, or both. |
 | Source | The upstream repository or documentation every fact in the record was checked against. |

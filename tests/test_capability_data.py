@@ -265,6 +265,7 @@ def test_metadata_falls_back_to_the_record_top_level(cd, synthetic):
 
 
 def test_a_missing_ceiling_cell_is_rejected(cd, synthetic):
+    """A record must carry a cell for every declared ceiling column."""
     # --- arrange ----------------------
     del synthetic[2]["tool"][0]["scale"]["time_ceiling"]
 
@@ -283,7 +284,7 @@ def test_an_unknown_ceiling_cell_is_rejected(cd, synthetic):
 
 @pytest.mark.parametrize("value", ["", "12", "300", "4-5", "10^3", 50, 150000])
 def test_a_ceiling_off_the_grid_is_rejected(cd, synthetic, value):
-    """Only 1-2-5 grid sizes (floor 100) or `pending` — anything else is a typo or an old value."""
+    """Only 1-2-5 grid sizes (floor 100) or `pending` are accepted — anything else is a typo or an old value."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["memory_ceiling"] = value
 
@@ -293,6 +294,7 @@ def test_a_ceiling_off_the_grid_is_rejected(cd, synthetic, value):
 
 @pytest.mark.parametrize("value", ["pending", 100, 500, 20000, 2000000000, "1000"])
 def test_pending_and_grid_sizes_are_both_accepted(cd, synthetic, value):
+    """`pending` and every 1-2-5 grid size pass validation, as int or as string."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["memory_ceiling"] = value
 
@@ -418,6 +420,7 @@ def test_grid_sizes_format_in_suffix_notation(cd, value, expected):
 
 
 def test_a_pending_ceiling_renders_as_the_pending_marker(cd):
+    """A pending cell renders as the styled marker, a measured one as its formatted size."""
     # --- act / assert -----------------
     assert cd._scale_markup("pending") == '<span class="scale-pending">pending</span>'
     assert cd._scale_markup(20000) == "n = 20k"
@@ -494,6 +497,7 @@ def test_only_the_excluded_tool_is_unlinked(cd, real):
 #  The capability-definitions page
 # =================================================================================================
 def test_definitions_page_without_its_include_is_rejected(cd, tmp_path):
+    """The include is the only thing tying the generated definitions to the page that shows them."""
     # --- arrange ----------------------
     page = tmp_path / "capability_definitions.md"
     page.write_text("# Definitions\n\nprose, but no include\n", encoding="utf-8")
@@ -503,11 +507,13 @@ def test_definitions_page_without_its_include_is_rejected(cd, tmp_path):
 
 
 def test_a_missing_definitions_page_is_rejected(cd, tmp_path):
+    """Reported rather than raised, like the comparison page — the check runs from a commit hook."""
     # --- act / assert -----------------
     assert any("is missing" in p for p in cd.check_definitions_include(tmp_path / "gone.md"))
 
 
 def test_the_committed_definitions_body_matches_a_fresh_render(cd, real):
+    """The committed definitions body is a build product, pinned like the feature tables."""
     # --- arrange ----------------------
     axes, _registry, _records = real
 
@@ -518,6 +524,7 @@ def test_the_committed_definitions_body_matches_a_fresh_render(cd, real):
 
 
 def test_a_stale_definitions_fragment_is_reported_by_the_dry_run(cd, real, tmp_path):
+    """The drift guard covers the definitions body from `--check`, not only from this suite."""
     # --- arrange ----------------------
     axes, registry, records = real
     stale = tmp_path / "capability_definitions.md"

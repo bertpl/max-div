@@ -630,11 +630,10 @@ def _edge(starts_group: bool) -> str:
 
 
 def format_scale_value(n: int) -> str:
-    """A grid size in the suffix notation the tables use: 500 -> `500`, 20000 -> `20k`, 2·10⁹ -> `2B`.
+    """Return a grid size in the suffix notation the tables use: 500 -> `500`, 20000 -> `20k`.
 
     Grid values are 1, 2 or 5 times a power of ten, so the mantissa is always a whole number of
-    the chosen unit and the formatting never rounds. The definitions page states the notation
-    (k = 10³, M = 10⁶, B = 10⁹).
+    the chosen unit and the formatting never rounds.
     """
     for divisor, suffix in ((10**9, "B"), (10**6, "M"), (10**3, "k")):
         if n >= divisor:

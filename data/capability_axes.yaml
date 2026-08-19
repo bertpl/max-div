@@ -87,7 +87,7 @@ metadata:
   - key: last_release
     label: Released
     kind: release_date
-    definition: The date of that latest release — how recently the tool has seen maintenance.
+    definition: The date of the tool's latest release — how recently the tool has seen maintenance.
   - key: determinism
     label: Determinism
     definition: >-

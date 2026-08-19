@@ -27,15 +27,15 @@ is reproducible from this page alone.
 - **Monotonicity:** walks up the grid stop at the first fail; a tool that fails a test at one
   size is not retried at larger ones.
 
-**Budgets.** The reference budget is **one minute** per run; the quality anchor runs at
-**fifteen minutes**. Both are stated in the time and quality definitions above and bound every
-run — a run still going at its budget is killed and counts as a fail.
+**Budgets.** The budgets in the time and quality definitions above bound every run — a run still
+going at its budget is killed and counts as a fail.
 
 **The four measurement stages**, each pruning the next:
 
 1. **Memory calibration** — per tool, runs at smaller sizes in its most memory-efficient
-   configuration record peak memory; the fitted model gives the memory ceiling, and sizes it puts
-   above 32 GB are marked failed everywhere below without running.
+   configuration record peak memory; a model fitted to those measurements gives the memory
+   ceiling, and sizes it puts above 32 GB are treated as failed in every later stage without
+   running.
 2. **Time-ceiling walks** — per tool, ascend the grid in its fastest valid configuration at the
    one-minute budget until the first fail.
 3. **Anchor runs** — the fifteen-minute reference runs, on a schedule and seeds fixed before any
@@ -47,10 +47,11 @@ run — a run still going at its budget is killed and counts as a fail.
 produces within fifteen minutes — the dedicated anchor runs and the one-minute quality runs both
 count. Its stated properties:
 
-- The anchor solution usually comes from max-div's own fifteen-minute parallel run; wherever any
-  other tool beats it, that tool sets the anchor.
-- At sizes where no fifteen-minute run betters the one-minute field, the best one-minute tool
-  defines the very line it is scored against and passes it by construction.
+- The anchor is not pinned to any tool: whichever solution is best sets it. The dedicated
+  fifteen-minute runs include max-div's own parallel runs, so the reference is often produced by
+  the tool under comparison — stated here openly.
+- At sizes where no fifteen-minute run betters the one-minute field, the best one-minute tool is
+  itself the anchor, so it passes by construction.
 - A re-measurement that improves the anchor lowers every tool's quality ceiling with it.
 
 **Seeds.** Stochastic tools run five seeds per size, deterministic ones three; every pass or fail

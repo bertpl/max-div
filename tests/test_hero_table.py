@@ -268,6 +268,7 @@ def test_each_columns_highest_measured_value_is_the_leader(builder, synthetic):
 
 
 def test_pending_cells_render_as_the_pending_marker_with_a_legend(builder, synthetic):
+    """Every pending cell draws the marker, and the legend explains it while any exists."""
     # --- arrange ----------------------
     axes, registry, records = synthetic
 
