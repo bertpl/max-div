@@ -53,7 +53,7 @@ def build_maxmin_gap_table(exact_rows: list[dict], records: list[RunRecord]) -> 
 
 
 def build_scaling_table(rows: list[dict]) -> str:
-    """Markdown table: time-to-proof per backend across the n-budget series ('timeout' where unproven)."""
+    """Markdown table: time-to-proof per backend across the n values ('timeout' where unproven)."""
     backends = list(dict.fromkeys(row["backend"] for row in rows))
     by_backend: dict[str, dict[int, dict]] = defaultdict(dict)
     ns: list[int] = sorted({row["n"] for row in rows})

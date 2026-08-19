@@ -22,8 +22,8 @@ METRIC = DiversityMetric.MIN_SEPARATION  # published MMDP values are max-min
 
 # Every pairing gets the budget series to ~2 s — calibration showed max-div plateaus well within
 # that on these instances. Only the largest instances (n = 500) get the extended budgets, so
-# the deep-budget story is measured where a residual gap exists without budget series-solving 195
-# pairings to 16 s each (~5 h of mostly-flat curves).
+# the deep-budget story is measured where a residual gap exists without running the budget
+# series to 16 s on all 195 pairings (~5 h of mostly-flat curves).
 TIME_BUDGETS_SEC = time_budget_series(0.001, 2.0)
 EXTENDED_BUDGETS_SEC = [4.096, 8.192, 16.384]
 EXTENDED_MIN_N = 500

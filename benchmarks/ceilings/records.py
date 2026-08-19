@@ -44,6 +44,6 @@ def append_ceiling_record(record: CeilingRunRecord, path: Path) -> None:
 
 
 def load_ceiling_records(path: Path) -> list[CeilingRunRecord]:
-    """Read records from a JSONL file written by the savers above."""
+    """Read records from a JSONL file written by `save_ceiling_records` or `append_ceiling_record`."""
     with path.open() as f:
         return [CeilingRunRecord(**json.loads(line)) for line in f if line.strip()]

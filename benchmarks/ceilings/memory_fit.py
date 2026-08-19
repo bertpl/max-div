@@ -6,8 +6,8 @@ exponent from the configuration registry — over the completed runs at that too
 sizes, and reads off the largest candidate size whose predicted peak stays within the
 cap.
 
-The fit is least squares on the two free parameters; fixing p is what makes an
-extrapolation from a handful of sizes defensible.
+The fit is least squares on the two free parameters; fixing p makes an extrapolation
+from a handful of sizes defensible.
 
 Tools whose memory-optimal configuration differs from the fastest-valid one contribute
 their dedicated memory-optimal records instead, when present.
@@ -28,7 +28,7 @@ from benchmarks.ceilings.time_stage import DATA_PATH
 
 FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
 
-# How many of the tool's largest completed sizes feed the fit. Small sizes are dominated
+# Only the tool's N_FIT_SIZES largest completed sizes feed the fit. Small sizes are dominated
 # by the interpreter's fixed footprint and would drag the growth term toward zero.
 N_FIT_SIZES = 3
 

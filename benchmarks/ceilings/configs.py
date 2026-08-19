@@ -11,8 +11,7 @@ campaign mode. The three modes mirror the three published definitions:
   best-known-solution runs are measured in.
 
 Each entry also declares the exponent of the tool's documented asymptotic memory growth,
-which constrains the memory-model fit — a fit over a handful of measured sizes is only
-defensible because the shape of the curve is known, not inferred.
+which constrains the memory-model fit.
 
 A configuration's ``description`` is the pinned public wording; the definitions page's
 per-tool configuration listing renders from here so prose and code cannot drift.
@@ -325,8 +324,8 @@ TOOLS: dict[str, ToolEntry] = {
     ),
 }
 
-# Runner-test fixture, deliberately outside TOOLS: it must never look like a registry tool,
-# but the kill path needs a subprocess that outlives any budget.
+# The runner-test fixture sits deliberately outside TOOLS: it must never look like a
+# registry tool, but the kill path needs a subprocess that outlives any budget.
 TEST_SLEEP_ENTRY = ToolEntry(
     memory_exponent=1,
     memory_note="test fixture",
@@ -336,7 +335,7 @@ TEST_SLEEP_ENTRY = ToolEntry(
 
 
 def resolve(tool: str, mode: Mode) -> ToolConfig:
-    """Return the configuration for one tool in one mode; the test fixture by its own name."""
+    """Return the configuration for one tool in one mode; `_test_sleep` resolves to the test fixture."""
     if tool == "_test_sleep":
         return TEST_SLEEP_ENTRY.configs[mode]
     return TOOLS[tool].configs[mode]

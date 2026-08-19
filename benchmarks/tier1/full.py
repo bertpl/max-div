@@ -112,7 +112,7 @@ def run_maxmin_maxdiv(
 
 
 def run_scaling_series() -> None:
-    """Experiment 2: walk each backend up the n-series until its first failed proof."""
+    """Experiment 2: walk each backend up the increasing n values until its first failed proof."""
     rows = []
     for backend, cap in SCALING_CAPS_SEC.items():
         for n in SCALING_NS:

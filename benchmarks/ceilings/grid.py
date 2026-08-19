@@ -1,14 +1,14 @@
 """The candidate-size grid and the campaign's budget and memory constants."""
 
-# One source for the constants every stage shares. The docs' Capability Definitions page
+# These constants are the one source every stage shares. The docs' Capability Definitions page
 # states the same values as prose; scripts/capability_data.py validates published ceiling
 # cells against the same grid shape.
-REFERENCE_BUDGET_SEC = 60.0  # bounds every time- and quality-stage run
-BEST_KNOWN_BUDGET_SEC = 900.0  # bounds every best-known-solution run
-MEMORY_CAP_BYTES = 32 * 2**30  # peak-memory cap per run, and the memory-ceiling criterion
+REFERENCE_BUDGET_SEC = 60.0  # this budget bounds every time- and quality-stage run
+BEST_KNOWN_BUDGET_SEC = 900.0  # this budget bounds every best-known-solution run
+MEMORY_CAP_BYTES = 32 * 2**30  # caps every run's peak memory, and defines the memory ceiling
 GRID_FLOOR = 100
 
-# Grace added to a run's hard-kill deadline on top of its budget: the child's untimed setup
+# The grace is added to a run's hard-kill deadline on top of its budget: the child's untimed setup
 # (interpreter start, imports, problem construction) happens inside the same process, and
 # killing during setup would misreport a slow import as a tool failure.
 SETUP_GRACE_SEC = 90.0
