@@ -5,7 +5,7 @@ solver:
   verified: 2026-07-27
   scale:
     max_n_memory: pending
-    max_n_time: pending
+    max_n_time: 50000
     max_n_quality: pending
   metadata:
     guarantee: 2-approximation (farthest-point traversal)

@@ -44,7 +44,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^highs-8] |
 | tool scaling · largest n within memory | <span class="scale-pending">pending</span> | |
-| tool scaling · largest n within the time budget | <span class="scale-pending">pending</span> | |
+| tool scaling · largest n within the time budget | n = 2k | |
 | tool scaling · largest n at good quality | <span class="scale-pending">pending</span> | |
 
 </div>
