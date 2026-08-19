@@ -1,7 +1,7 @@
-"""Tiny end-to-end validation run: proves ladder runner, adapter runner, records, and figure wiring.
+"""Tiny end-to-end validation run: proves budget series runner, adapter runner, records, and figure wiring.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.smoke``.
-Deliberately minuscule (one problem, short ladder, two seeds) — this validates plumbing,
+Deliberately minuscule (one problem, short budget series, two seeds) — this validates plumbing,
 not performance; real runs are configured separately.
 """
 

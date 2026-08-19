@@ -19,7 +19,7 @@ class SelectionAdapter(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """Tool name as it appears in records and figures."""
+        """Return the tool name as it appears in records and figures."""
 
     @property
     def supports_constraints(self) -> bool:

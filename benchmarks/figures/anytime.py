@@ -1,4 +1,4 @@
-"""Anytime-curve figure: quality vs. measured wall-clock, ladder curves + single-shot dots."""
+"""Anytime-curve figure: quality vs. measured wall-clock, budget series curves + single-shot dots."""
 
 from collections import defaultdict
 from pathlib import Path
@@ -11,7 +11,7 @@ from benchmarks.common.records import RunRecord
 def plot_anytime_curve(records: list[RunRecord], metric_name: str, path: Path, title: str = "") -> None:
     """Plot quality (one diversity metric) against measured wall-clock, per tool.
 
-    Ladder tools (multiple budgets) are drawn as a mean-over-seeds curve with a
+    Budget-series tools (multiple budgets) are drawn as a mean-over-seeds curve with a
     min/max band; single-shot tools as one dot at (mean time, mean quality).
 
     Args:
@@ -30,7 +30,7 @@ def plot_anytime_curve(records: list[RunRecord], metric_name: str, path: Path, t
             values = [r.quality[metric_name] for r in tool_records]
             ax.plot(np.mean(times), np.mean(values), "o", markersize=9, label=tool)
         else:
-            t_mean, q_mean, q_min, q_max = _ladder_stats(tool_records, metric_name)
+            t_mean, q_mean, q_min, q_max = _budget_series_stats(tool_records, metric_name)
             ax.plot(t_mean, q_mean, "-", marker=".", label=tool)
             ax.fill_between(t_mean, q_min, q_max, alpha=0.15)
 
@@ -54,7 +54,7 @@ def _group_by_tool(records: list[RunRecord]) -> dict[str, list[RunRecord]]:
     return dict(grouped)
 
 
-def _ladder_stats(
+def _budget_series_stats(
     records: list[RunRecord], metric_name: str
 ) -> tuple[list[float], list[float], list[float], list[float]]:
     """Aggregate budget-series records per budget: mean measured time, mean/min/max quality."""

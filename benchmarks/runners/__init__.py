@@ -1,4 +1,4 @@
-"""Runners: execute max-div's anytime ladder or a single-shot adapter, emitting run records."""
+"""Runners: execute max-div's anytime budget series or a single-shot adapter, emitting run records."""
 
 from .adapter_runner import run_adapter
 from .maxdiv_runner import run_maxdiv_budget_series

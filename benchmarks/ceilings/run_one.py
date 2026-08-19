@@ -1,6 +1,6 @@
 """Child-process entry point: execute one campaign run and report its result as JSON.
 
-Runs in its own process so the parent can kill it — a tool stuck inside compiled code
+The run executes in its own process so the parent can kill it — a tool stuck inside compiled code
 cannot be interrupted in-process — and so its peak memory is its own, not the campaign
 driver's. Problem construction happens before the clock starts and scoring after it
 stops: only the tool call itself is timed.
@@ -54,6 +54,7 @@ def execute(spec: dict) -> dict:
 
 
 def main() -> int:
+    """Parse the spec, execute the run, and write the result JSON for the parent."""
     spec = json.loads(sys.argv[1])
     result_path = Path(sys.argv[2])
     try:

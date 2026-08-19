@@ -5,8 +5,8 @@ smallest first, and stop at the first size where the median seed fails. The larg
 passing size is the tool's time ceiling. Peak memory is recorded on every run — the
 memory-model fits consume those records, so this stage doubles as memory calibration.
 
-Records are appended after every run to ``benchmarks/ceilings/data/time_stage.jsonl``
-(tracked, like the tier reference data), so an interrupted stage resumes by rerunning:
+Records are appended after every run to the tracked data file at ``DATA_PATH``, so an
+interrupted stage resumes by rerunning:
 already-recorded runs are skipped.
 
 Usage: python -m benchmarks.ceilings.time_stage [tool ...]   # default: all registry tools

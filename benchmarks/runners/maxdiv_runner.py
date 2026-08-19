@@ -1,4 +1,4 @@
-"""Run max-div across a budget series, one independent solve per rung x seed."""
+"""Run max-div across a budget series, one independent solve per budget x seed."""
 
 from benchmarks.common.quality import evaluate_selection, n_constraints_satisfied
 from benchmarks.common.records import RunRecord
@@ -21,9 +21,9 @@ def run_maxdiv_budget_series(
         problem: Problem to solve.
         problem_name: Generator name recorded in each record (e.g. ``"U1"``).
         size: Generator size parameter, recorded in each record.
-        time_budgets_sec: Wall-clock ladder in seconds (may be combined with iteration budgets).
-        iteration_budgets: Iteration-count ladder (recorded with an ``iterations:`` budget tag).
-        seeds: One independent solve per seed per rung.
+        time_budgets_sec: Wall-clock budget series in seconds (may be combined with iteration budgets).
+        iteration_budgets: Iteration-count budget series (recorded with an ``iterations:`` budget tag).
+        seeds: One independent solve per seed per budget.
         preset: Solver preset to run.
 
     Returns:

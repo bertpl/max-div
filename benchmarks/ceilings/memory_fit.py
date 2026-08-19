@@ -1,10 +1,12 @@
-"""Memory-ceiling fits: per tool, extrapolate recorded peaks to the 32 GB crossing.
+"""Memory-ceiling fits: per tool, extrapolate recorded peaks to the memory-cap crossing.
 
 No runs happen here. The time stage recorded peak memory on every run; this fits, per
 tool, the model ``rss = c + a * n^p`` — with p fixed to the tool's documented memory
 exponent from the configuration registry — over the completed runs at that tool's largest
 sizes, and reads off the largest candidate size whose predicted peak stays within the
-cap. The fit is least squares on the two free parameters; fixing p is what makes an
+cap.
+
+The fit is least squares on the two free parameters; fixing p is what makes an
 extrapolation from a handful of sizes defensible.
 
 Tools whose memory-optimal configuration differs from the fastest-valid one contribute
@@ -54,7 +56,7 @@ def fit_memory_ceilings(records: list[CeilingRunRecord]) -> dict[str, dict]:
 
 
 def _fit_points(records: list[CeilingRunRecord], tool: str) -> dict[int, float]:
-    """The tool's fit points: per size, the largest completed peak, memory-optimal runs first."""
+    """Return the tool's fit points: per size, the largest completed peak, memory-optimal runs first."""
     for mode in (Mode.MEMORY_OPTIMAL, Mode.FASTEST_VALID):
         rows = [r for r in records if r.tool == tool and r.mode == mode.value and r.completed and r.peak_rss_bytes]
         if rows:
@@ -74,7 +76,7 @@ def _least_squares(growth: np.ndarray, peaks: np.ndarray) -> tuple[float, float]
 
 
 def _crossing(a: float, c: float, exponent: int) -> int | None:
-    """The largest grid size whose predicted peak stays within the cap."""
+    """Return the largest grid size whose predicted peak stays within the cap."""
     if c >= MEMORY_CAP_BYTES:
         return None
     bound = operational_bound()

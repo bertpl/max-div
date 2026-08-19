@@ -3,8 +3,8 @@
 # One source for the constants every stage shares. The docs' Capability Definitions page
 # states the same values as prose; scripts/capability_data.py validates published ceiling
 # cells against the same grid shape.
-REFERENCE_BUDGET_SEC = 60.0  # the one-minute budget bounding every time- and quality-stage run
-BEST_KNOWN_BUDGET_SEC = 900.0  # the fifteen-minute budget for best-known-solution runs
+REFERENCE_BUDGET_SEC = 60.0  # bounds every time- and quality-stage run
+BEST_KNOWN_BUDGET_SEC = 900.0  # bounds every best-known-solution run
 MEMORY_CAP_BYTES = 32 * 2**30  # peak-memory cap per run, and the memory-ceiling criterion
 GRID_FLOOR = 100
 
@@ -32,7 +32,7 @@ def size_grid(bound: int) -> list[int]:
 def operational_bound(d: int = 2) -> int:
     """Return the largest n whose raw float32 vectors array itself fits the memory cap.
 
-    Beyond this size the problem's input cannot exist under the campaign's own 32 GB
-    budget, so no stage ever generates an instance past it.
+    Beyond this size the problem's input cannot exist under the campaign's own memory
+    cap, so no stage ever generates an instance past it.
     """
     return MEMORY_CAP_BYTES // (d * 4)

@@ -10,18 +10,23 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def _registry_keys() -> set[str]:
+    """The tool keys of data/solver_registry.yaml, the campaign's coverage contract."""
     registry = yaml.safe_load((REPO_ROOT / "data" / "solver_registry.yaml").read_text(encoding="utf-8"))
     return {tool["key"] for category in registry["categories"] for tool in category["tools"]}
 
 
 def test_every_registry_tool_has_a_campaign_entry_and_no_others() -> None:
-    """The campaign covers exactly the published rows — a missing tool would silently keep
-    its ceilings pending, and an extra one would measure something the table never shows."""
+    """The campaign covers exactly the published registry rows.
+
+    A missing tool would silently keep its ceilings pending, and an extra one would
+    measure something the table never shows.
+    """
     # --- act / assert -----------------
     assert set(TOOLS) == _registry_keys()
 
 
 def test_every_entry_carries_all_three_modes_with_descriptions() -> None:
+    """Every tool resolves in every mode, with pinned public wording and fit metadata."""
     # --- act / assert -----------------
     for tool, entry in TOOLS.items():
         assert set(entry.configs) == set(Mode), tool

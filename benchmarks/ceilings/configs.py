@@ -53,8 +53,7 @@ class ToolEntry:
     ``memory_exponent`` is the power of n in the tool's documented dominant memory term
     (1 for linear structures, 2 for anything materializing an n x n object);
     ``memory_note`` names that structure, so the fit's constraint is a stated fact.
-    ``stochastic`` decides the seed count: five seeds for stochastic tools, three for
-    deterministic-or-nearly ones.
+    ``stochastic`` decides the seed count (see ``seeds_for``).
     """
 
     memory_exponent: int
@@ -63,11 +62,11 @@ class ToolEntry:
     configs: dict[Mode, ToolConfig]
 
 
-# --------------------------------------------------------------------------------------
+# ==================================================================================================
 #  select() builders
-# --------------------------------------------------------------------------------------
+# ==================================================================================================
 def _maxdiv_select(preset_name: str, budget_kind: str) -> SelectFn:
-    """max-div via the public builder: the named preset under the given budget kind."""
+    """Build a select function running the named max-div preset under the given budget kind."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from max_div.solver import MaxDivSolverBuilder, SolverPreset, Verbosity, iterations, seconds
@@ -81,7 +80,7 @@ def _maxdiv_select(preset_name: str, budget_kind: str) -> SelectFn:
 
 
 def _adapter_select(make_adapter: Callable) -> SelectFn:
-    """A single-shot adapter; its budget is enforced by the runner's kill, not by the tool."""
+    """Build a select function around a single-shot adapter; the runner's kill enforces its budget."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         return np.asarray(make_adapter().select(problem, seed), dtype=np.int64)
@@ -90,7 +89,7 @@ def _adapter_select(make_adapter: Callable) -> SelectFn:
 
 
 def _cpsat_select(first_feasible: bool) -> SelectFn:
-    """CP-SAT on the max-min model, stopping at the first feasible solution when asked."""
+    """Build a select function for CP-SAT on the max-min model; first_feasible stops at the first solution."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from benchmarks.exact.mip_maxmin import solve_maxmin_cpsat_selection
@@ -101,7 +100,7 @@ def _cpsat_select(first_feasible: bool) -> SelectFn:
 
 
 def _scip_select(first_feasible: bool) -> SelectFn:
-    """SCIP on the big-M max-min MIP, stopping at the first feasible solution when asked."""
+    """Build a select function for SCIP on the big-M max-min MIP; first_feasible stops at the first solution."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from benchmarks.exact.mip_maxmin import solve_maxmin_scip
@@ -112,7 +111,7 @@ def _scip_select(first_feasible: bool) -> SelectFn:
 
 
 def _highs_select(first_feasible: bool) -> SelectFn:
-    """HiGHS on the big-M max-min MIP, stopping at the first improving solution when asked."""
+    """Build a select function for HiGHS on the big-M max-min MIP; first_feasible stops at the first improving one."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from benchmarks.exact.mip_maxmin import solve_maxmin_highs
@@ -123,7 +122,7 @@ def _highs_select(first_feasible: bool) -> SelectFn:
 
 
 def _dppy_select() -> SelectFn:
-    """DPPy k-DPP sampling over an RBF likelihood kernel."""
+    """Build a select function drawing one DPPy k-DPP sample over an RBF likelihood kernel."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from benchmarks.adapters.dppy_kdpp import DppyKDpp
@@ -134,7 +133,7 @@ def _dppy_select() -> SelectFn:
 
 
 def _test_sleep_select() -> SelectFn:
-    """Sleeps past any budget; exists so the runner's kill path is testable without a slow tool."""
+    """Build a select function that sleeps past any budget, so the kill path is testable without a slow tool."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         import time
@@ -146,45 +145,51 @@ def _test_sleep_select() -> SelectFn:
 
 
 def _same_for_all_modes(description: str, select: SelectFn) -> dict[Mode, ToolConfig]:
-    """One configuration serving all three modes — the single-shot common case."""
+    """Return one configuration for all three modes — the single-shot common case."""
     config = ToolConfig(description, select)
     return {mode: config for mode in Mode}
 
 
-# --------------------------------------------------------------------------------------
+# ==================================================================================================
 #  The registry
-# --------------------------------------------------------------------------------------
+# ==================================================================================================
 def _rdkit():
+    """Instantiate the RDKit MaxMinPicker adapter."""
     from benchmarks.adapters.rdkit_maxmin import RdkitMaxMin
 
     return RdkitMaxMin()
 
 
 def _fpsample():
+    """Instantiate the fpsample FPS adapter."""
     from benchmarks.adapters.fps import FpsampleFPS
 
     return FpsampleFPS()
 
 
 def _skmatter():
+    """Instantiate the skmatter FPS adapter."""
     from benchmarks.adapters.fps import SkmatterFPS
 
     return SkmatterFPS()
 
 
 def _apricot():
+    """Instantiate the apricot facility-location adapter."""
     from benchmarks.adapters.apricot_fl import ApricotFacilityLocation
 
     return ApricotFacilityLocation()
 
 
 def _qc_selector():
+    """Instantiate the qc-selector max-min adapter."""
     from benchmarks.adapters.qc_selector_maxmin import QcSelectorMaxMin
 
     return QcSelectorMaxMin()
 
 
 def _code_fdm():
+    """Instantiate the single-color code-FDM adapter."""
     from benchmarks.adapters.code_fdm import CodeFdmSingleColor
 
     return CodeFdmSingleColor()

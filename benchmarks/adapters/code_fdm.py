@@ -37,7 +37,7 @@ class CodeFdmFairFlow(SelectionAdapter):
 
     @property
     def name(self) -> str:
-        """Tool name as it appears in records and figures."""
+        """Return the tool name as it appears in records and figures."""
         return "code-FDM[FairFlow]"
 
     @property
@@ -137,7 +137,7 @@ class CodeFdmSingleColor(SelectionAdapter):
 
     @property
     def name(self) -> str:
-        """Tool name as it appears in records and figures."""
+        """Return the tool name as it appears in records and figures."""
         return "code-FDM[single-color]"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:

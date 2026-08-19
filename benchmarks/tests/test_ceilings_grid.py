@@ -6,6 +6,7 @@ from benchmarks.ceilings.grid import GRID_FLOOR, MEMORY_CAP_BYTES, operational_b
 
 
 def test_grid_is_three_values_per_decade_from_the_floor() -> None:
+    """The published grid shape: 1-2-5 per decade, starting at the floor."""
     # --- act --------------------------
     sizes = size_grid(5000)
 
@@ -21,6 +22,7 @@ def test_grid_respects_a_bound_between_values() -> None:
 
 
 def test_a_bound_below_the_floor_is_rejected() -> None:
+    """A bound under the floor is a caller error, not an empty grid."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="grid floor"):
         size_grid(GRID_FLOOR - 1)

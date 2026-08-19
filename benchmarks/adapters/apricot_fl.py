@@ -18,7 +18,7 @@ class ApricotFacilityLocation(SelectionAdapter):
 
     @property
     def name(self) -> str:
-        """Tool name as it appears in records and figures."""
+        """Return the tool name as it appears in records and figures."""
         return "apricot[facility-location]"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:

@@ -20,9 +20,9 @@ OUTPUT_DIR = Path("reports/benchmarks/tier3")
 SEEDS = (0, 1, 2)
 METRIC = DiversityMetric.MIN_SEPARATION  # published MMDP values are max-min
 
-# Every pairing gets the ladder to ~2 s — calibration showed max-div plateaus well within
-# that on these instances. Only the largest instances (n = 500) get the extended rungs, so
-# the deep-budget story is measured where a residual gap exists without ladder-solving 195
+# Every pairing gets the budget series to ~2 s — calibration showed max-div plateaus well within
+# that on these instances. Only the largest instances (n = 500) get the extended budgets, so
+# the deep-budget story is measured where a residual gap exists without budget series-solving 195
 # pairings to 16 s each (~5 h of mostly-flat curves).
 TIME_BUDGETS_SEC = time_budget_series(0.001, 2.0)
 EXTENDED_BUDGETS_SEC = [4.096, 8.192, 16.384]
@@ -30,7 +30,7 @@ EXTENDED_MIN_N = 500
 
 
 def main() -> None:
-    """Ladder every published (instance, k) pairing and persist the records."""
+    """Run the budget series on every published (instance, k) pairing and persist the records."""
     rows = load_best_known()
     records = []
     for i, row in enumerate(rows, start=1):

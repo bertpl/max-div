@@ -21,7 +21,7 @@ Three experiments:
    n = 100 floor. This substantiates why no mean/geomean gap-to-optimum is published.
 3. **Incumbent-at-budget geomean panel** — on shipped problems no solver can certify
    (U3 and C4 at size 1), CP-SAT runs at a generous cap and its best-found solution is
-   compared against max-div's ladder. Uncertified by construction.
+   compared against max-div's budget series. Uncertified by construction.
 """
 
 import json
@@ -111,8 +111,8 @@ def run_maxmin_maxdiv(
     save_records(records, out_path)
 
 
-def run_scaling_ladder() -> None:
-    """Experiment 2: walk each backend up the n-ladder until its first failed proof."""
+def run_scaling_series() -> None:
+    """Experiment 2: walk each backend up the n-series until its first failed proof."""
     rows = []
     for backend, cap in SCALING_CAPS_SEC.items():
         for n in SCALING_NS:
@@ -193,7 +193,7 @@ def main() -> None:
     run_maxmin_exact()
     run_maxmin_maxdiv()
     print("tier-1 experiment 2: backend scaling series ...", flush=True)
-    run_scaling_ladder()
+    run_scaling_series()
     print("tier-1 experiment 3: incumbent-at-budget panel ...", flush=True)
     run_incumbent_exact()
     run_incumbent_maxdiv()

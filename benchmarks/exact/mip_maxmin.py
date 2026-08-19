@@ -1,8 +1,8 @@
 """Max-min selection as a MIP/CP model, for the exact solvers in the ceilings campaign.
 
-One binary variable per item and, for CP-SAT via its existing threshold search, or for the
-MIP solvers a big-M constraint per candidate pair — which is why an exact solver's memory
-and time ceilings sit where they sit: the model itself is quadratic in n.
+The model carries one binary variable per item and a per-pair constraint (big-M for the
+MIP solvers, an enforcement literal for CP-SAT), so it is quadratic in n — which is what
+bounds an exact solver's memory and time ceilings.
 
 All three entry points share one contract: return a valid size-k selection within the
 wall-clock budget. With ``first_feasible`` the solver stops at its first (improving)
@@ -19,7 +19,7 @@ from max_div.problem import MaxDivProblem
 
 
 def _pairwise(problem: MaxDivProblem) -> NDArray[np.float64]:
-    """The full pairwise distance matrix the models are built from."""
+    """Return the full pairwise distance matrix the models are built from."""
     return squareform(pdist(problem_vectors(problem).astype(np.float64)))
 
 

@@ -20,6 +20,7 @@ def test_a_completed_run_reports_time_memory_and_quality() -> None:
 
 
 def test_a_run_past_its_deadline_is_killed_and_recorded_as_timeout(monkeypatch) -> None:
+    """The parent's deadline kill lands as a `timeout` record, not an exception."""
     # --- arrange ----------------------
     monkeypatch.setattr("benchmarks.ceilings.runner.SETUP_GRACE_SEC", 20.0)
 
@@ -42,6 +43,7 @@ def test_a_child_error_reaches_the_parent_as_a_failed_record() -> None:
 
 
 def test_records_round_trip_through_jsonl(tmp_path: Path) -> None:
+    """Appending and loading preserves every field of a record."""
     # --- arrange ----------------------
     record = CeilingRunRecord(
         tool="max-div",

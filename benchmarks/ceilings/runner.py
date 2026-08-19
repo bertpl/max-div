@@ -1,10 +1,12 @@
 """Parent-side campaign runner: one subprocess per run, with budget and memory kills.
 
-The parent polls the child's resident set size every half second and kills it the moment
+The parent polls the child's resident set size on a fixed interval and kills it the moment
 it crosses the memory cap; the time kill fires at the run's budget plus a setup grace,
 since the child's untimed setup (imports, problem construction) happens inside the same
-process. A completed child reports its own timed measurement, so the grace never inflates
-a measured value — it only decides when a stuck child is declared dead.
+process.
+
+A completed child reports its own timed measurement, so the grace never inflates a
+measured value — it only decides when a stuck child is declared dead.
 """
 
 import json
@@ -81,7 +83,7 @@ def _supervise(child: subprocess.Popen, budget_sec: float) -> tuple[str | None, 
 
 
 def _rss_bytes(pid: int) -> int:
-    """The process's current resident set size, via ps (kilobytes on macOS and Linux alike)."""
+    """Return the process's current resident set size, via ps (kilobytes on macOS and Linux alike)."""
     try:
         out = subprocess.run(  # noqa: S603 -- fixed command, numeric argument
             ["/bin/ps", "-o", "rss=", "-p", str(pid)], capture_output=True, encoding="utf-8", check=False
