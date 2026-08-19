@@ -172,9 +172,6 @@ def step_7_check_changelog_has_entries() -> None:
         fail_with_message("'## Unreleased' has no bullet entries")
 
 
-# ==================================================================================================
-#  badge metrics
-# ==================================================================================================
 # Gathering the badge metrics is the last precondition: the fetch runs after every cheap check
 # has passed and before the first write, so an abort here — most often because CI on current
 # main has not gone green yet — costs nothing to recover from.
