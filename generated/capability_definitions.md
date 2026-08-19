@@ -83,7 +83,7 @@ Each table below states what its capability columns claim.
 
 ## Measured size ceilings
 
-The three size columns are measured ceilings, not order-of-magnitude claims: each is the largest problem size n, on a 1-2-5 grid (100, 200, 500, 1000, ...), at which the tool still meets that column's criterion on one unconstrained reference problem. No memory means no solution, and no solution means no good solution — so each ceiling can only be at or below the previous one. A cell reading `pending` has not been measured yet.
+The three size columns are measured ceilings, not order-of-magnitude claims: each is the largest problem size n — on a logarithmic grid with three values per decade (100, 200, 500, 1000, ...) — at which the tool still meets that column's criterion on one unconstrained reference problem. No memory means no solution, and no solution means no good solution — so each ceiling can only be at or below the previous one. A cell reading `pending` has not been measured yet.
 
 Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.
 

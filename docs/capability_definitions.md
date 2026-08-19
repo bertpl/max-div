@@ -1,58 +1,66 @@
 # Capability Definitions
 
 Every cell in the [comparison tables](comparison.md), the README capability table and the
-per-solver [profiles](solvers/index.md) traces back to a per-tool record, and every column those
-tables show is pinned here to one exact criterion. This page defines what each mark and figure
-means; the records supply the evidence per tool.
+per-solver [profiles](solvers/index.md) is pinned here to one exact criterion. This page defines
+what each mark and figure means; the reasoning behind each tool's own marks is on its profile
+page.
 
 --8<-- "generated/capability_definitions.md"
 
 ## How the size ceilings are measured
 
-All three ceilings come from one measurement protocol, summarized here so every published figure
-is reproducible from this page alone.
+All three ceilings come from one measurement procedure, described here so the published figures
+are reproducible from this page alone.
 
-**Setup.**
+**The test problem.** Every measurement uses [U1](benchmarks/solver/problem_u1.md), one of the
+built-in benchmark problems: n points in 2 dimensions, from which a tool must select the
+k = n/10 most diverse ones. Candidate problem sizes lie on a logarithmic grid with three values
+per decade — n = 100, 200, 500, 1000, ... — and a published ceiling is always one of these
+values.
 
-- **Problem:** one unconstrained reference problem family —
-  [U1](benchmarks/solver/problem_u1.md), fixed d = 2, with k = n/10, the same k-to-n sizing the
-  solver benchmarks use.
-- **Candidate sizes:** the 1-2-5 grid in n (100, 200, 500, 1000, ...); a published ceiling is
-  always a grid value.
-- **Machine:** a 16″ MacBook Pro with a 16-core M3 Max CPU, under a 32 GB peak-memory cap
-  enforced by a memory watchdog.
-- **Timing:** end-to-end from raw vectors, so a tool's distance and setup work is part of its
-  cost.
-- **Scoring:** the published U1 objective.
-- **Monotonicity:** walks up the grid stop at the first fail; a tool that fails a test at one
-  size is not retried at larger ones.
+**Ground rules.**
 
-**Budgets.** The budgets in the time and quality definitions above bound every run — a run still
-going at its budget is killed and counts as a fail.
+- Every run executes on the same machine — a MacBook Pro with a 16-core M3 Max CPU — with peak
+  memory capped at 32 GB.
+- A run is timed end-to-end from raw input vectors: distance computation and any other setup a
+  tool needs count toward its time.
+- A run that exceeds its time budget or the memory cap is stopped and counts as a failure.
+- Measurements proceed from small to large sizes; once a tool fails at some size, larger sizes
+  are not attempted.
+- Solution quality is always scored as the smallest distance between any two selected points —
+  the **max-min objective**, the one objective every tool in this comparison can pursue. A tool
+  that optimizes a different objective (the objective columns above show which) is still scored
+  on max-min.
 
-**The four measurement stages**, each pruning the next:
+**The four measurements.**
 
-1. **Memory calibration** — per tool, runs at smaller sizes in its most memory-efficient
-   configuration record peak memory; a model fitted to those measurements gives the memory
-   ceiling, and sizes it puts above 32 GB are treated as failed in every later stage without
-   running.
-2. **Time-ceiling walks** — per tool, ascend the grid in its fastest valid configuration at the
-   one-minute budget until the first fail.
-3. **Anchor runs** — the fifteen-minute reference runs, on a schedule and seeds fixed before any
-   quality run is examined, so the anchor cannot be tuned to the results it judges.
-4. **Quality runs** — per tool, seeded runs at the one-minute budget in its standard
-   configuration, at sizes up to its time ceiling.
+1. **Time ceiling.** Starting from n = 100, the tool runs once per size with a one-minute
+   budget, in its fastest valid configuration. The time ceiling is the largest size at which it
+   returns a valid selection. Peak memory is recorded on every one of these runs.
+2. **Memory ceiling.** A per-tool memory model is fitted to the peaks recorded at the largest
+   sizes the tool completed, checked against the tool's documented data structures, and
+   extrapolated: the memory ceiling is the largest candidate size whose predicted peak stays
+   within 32 GB. No run is executed at the ceiling itself — at full memory most tools are far
+   too slow to run at all. A tool whose most memory-efficient configuration differs from its
+   fastest one gets a few extra small runs in that configuration.
+3. **Best-known solutions.** The quality ceiling (next) compares each tool's solution to the
+   best solution *any* tool can find at that size when given plenty of time. To establish that
+   reference, every tool whose result improves with extra time gets one fifteen-minute run per
+   size, with seeds fixed in advance — before any one-minute result has been looked at — so the
+   reference cannot be tuned to the results it judges.
+4. **Quality ceiling.** Each tool runs at each size up to its time ceiling with the one-minute
+   budget, in its standard configuration — five seeded runs for stochastic tools, three for
+   deterministic ones. A size counts as passed when the median solution closes at least 90% of
+   the quality gap between a plain random selection (the median of 32 uniform-random draws) and
+   the best-known solution at that size. The quality ceiling is the largest size that passes; a
+   tool that passes at no size shows a dash with a footnote.
 
-**The quality anchor.** For each size, the anchor is the best solution any tool in the suite
-produces within fifteen minutes — the dedicated anchor runs and the one-minute quality runs both
-count. Its stated properties:
+**Rules for the best-known solution.**
 
-- The anchor is not pinned to any tool: whichever solution is best sets it. The dedicated
-  fifteen-minute runs include max-div's own parallel runs, so the reference is often produced by
-  the tool under comparison — stated here openly.
-- At sizes where no fifteen-minute run betters the one-minute field, the best one-minute tool is
-  itself the anchor, so it passes by construction.
-- A re-measurement that improves the anchor lowers every tool's quality ceiling with it.
-
-**Seeds.** Stochastic tools run five seeds per size, deterministic ones three; every pass or fail
-is judged on the median seed. Anchor runs use one pre-registered seed each.
+- It is whatever solution scores highest at that size, whether it was found in a fifteen-minute
+  run or in a one-minute quality run. It is not pinned to any particular tool; max-div takes
+  part like every other tool.
+- If at some size no fifteen-minute run beats the best one-minute result, the best one-minute
+  tool is being compared against itself and passes there by construction.
+- Re-measuring later with better tools can raise the best-known solution, which lowers every
+  tool's quality ceiling with it.
