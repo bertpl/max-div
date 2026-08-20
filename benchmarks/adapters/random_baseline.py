@@ -1,4 +1,4 @@
-"""Uniform-random selection: the quality floor every real tool must clear."""
+"""Uniform-random selection: the minimum quality every real tool must clear."""
 
 import numpy as np
 from numpy.typing import NDArray

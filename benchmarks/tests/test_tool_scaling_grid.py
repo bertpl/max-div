@@ -1,12 +1,12 @@
-"""Guards for the tool-scaling benchmarks's candidate-size grid and its constants."""
+"""Guards for the tool-scaling benchmarks' candidate-size grid and its constants."""
 
 import pytest
 
-from benchmarks.tool_scaling.grid import GRID_FLOOR, MEMORY_CAP_BYTES, operational_bound, size_grid
+from benchmarks.tool_scaling.grid import GRID_MIN, MEMORY_CAP_BYTES, operational_bound, size_grid
 
 
-def test_grid_is_three_values_per_decade_from_the_floor() -> None:
-    """The published grid shape: 1-2-5 per decade, starting at the floor."""
+def test_grid_is_three_values_per_decade_from_the_minimum() -> None:
+    """The grid runs 1-2-5 per decade, starting at 100."""
     # --- act --------------------------
     sizes = size_grid(5000)
 
@@ -21,11 +21,11 @@ def test_grid_respects_a_bound_between_values() -> None:
     assert size_grid(100) == [100]
 
 
-def test_a_bound_below_the_floor_is_rejected() -> None:
-    """A bound under the floor is a caller error, not an empty grid."""
+def test_a_bound_below_the_minimum_is_rejected() -> None:
+    """A bound under the smallest grid size is a caller error, not an empty grid."""
     # --- act / assert -----------------
-    with pytest.raises(ValueError, match="grid floor"):
-        size_grid(GRID_FLOOR - 1)
+    with pytest.raises(ValueError, match="smallest grid size"):
+        size_grid(GRID_MIN - 1)
 
 
 def test_operational_bound_is_where_the_raw_vectors_fill_the_cap() -> None:

@@ -1,4 +1,4 @@
-"""Limit run records: one row per campaign run, with JSONL persistence."""
+"""Scaling run records: one row per campaign run, with JSONL persistence."""
 
 import json
 from dataclasses import asdict, dataclass

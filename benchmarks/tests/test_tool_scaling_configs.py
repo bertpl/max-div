@@ -10,7 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def _registry_keys() -> set[str]:
-    """The tool keys of data/solver_registry.yaml, the campaign's coverage contract."""
+    """Return the tool keys of data/solver_registry.yaml — the campaign's coverage contract."""
     registry = yaml.safe_load((REPO_ROOT / "data" / "solver_registry.yaml").read_text(encoding="utf-8"))
     return {tool["key"] for category in registry["categories"] for tool in category["tools"]}
 
@@ -37,7 +37,7 @@ def test_every_entry_carries_all_three_modes_with_descriptions() -> None:
 
 
 def test_seed_counts_follow_the_protocol() -> None:
-    """Five seeds for stochastic tools, three for deterministic-or-nearly ones."""
+    """Stochastic tools run five seeds; all others run three."""
     # --- act / assert -----------------
     for tool, entry in TOOLS.items():
         assert len(seeds_for(tool)) == (5 if entry.stochastic else 3), tool

@@ -50,7 +50,7 @@ DEFINITIONS_FRAGMENT = REPO_ROOT / "generated" / "capability_definitions.md"
 DEFINITIONS_PAGE = REPO_ROOT / "docs" / "capability_definitions.md"
 DEFINITIONS_INCLUDE = '--8<-- "generated/capability_definitions.md"'
 
-# A measured limit sits on the 1-2-5 grid in n, floor 100 — the {2,} is the floor.
+# A measured scaling value sits on the 1-2-5 grid in n, smallest size 100 — the {2,} enforces that minimum.
 GRID_VALUE = re.compile(r"^[125]0{2,}$")
 PENDING = "pending"
 FRONT_MATTER = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.DOTALL)

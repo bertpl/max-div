@@ -68,7 +68,7 @@ def synthetic():
             }
         ],
         "scale_columns": {
-            "hero_label": "size scaling limits",
+            "hero_label": "tool scaling (n)",
             "columns": [
                 {"key": "max_n_memory", "hero_label": "memory"},
                 {"key": "max_n_time", "hero_label": "time"},
@@ -177,7 +177,7 @@ def test_columns_are_the_hero_visible_axes(builder, synthetic):
     # --- assert -----------------------
     assert hero.groups == [
         ("distance", [("L2", 1), ("cosine", 1)]),
-        ("size scaling limits", [("memory", 2), ("time", 2), ("quality", 2)]),
+        ("tool scaling (n)", [("memory", 2), ("time", 2), ("quality", 2)]),
     ]
     assert [len(row["marks"]) for row in hero.rows] == [2, 2]
 

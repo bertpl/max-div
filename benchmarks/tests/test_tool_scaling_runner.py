@@ -8,7 +8,7 @@ from benchmarks.tool_scaling.runner import run_measurement
 
 
 def test_a_completed_run_reports_time_memory_and_quality() -> None:
-    """The full round-trip: subprocess, child-reported timing, peak memory, min separation."""
+    """A completed run reports child-measured time, peak memory, and min separation."""
     # --- act --------------------------
     record = run_measurement("max-div", Mode.FASTEST_VALID, n=100, k=10, seed=0, budget_sec=30.0)
 

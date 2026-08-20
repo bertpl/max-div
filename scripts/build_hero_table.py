@@ -107,7 +107,7 @@ class HeroTable:
         ]
         # The scaling columns are not mark columns: each is wider, and its cell is a measured size
         # (or the pending marker) rather than a glyph. They form one group so the band that carries
-        # the "size scaling limits" label is drawn by the same code as every other group's.
+        # the scale-columns band label is drawn by the same code as every other group's.
         scale_columns = axes["scale_columns"]["columns"]
         self.groups.append((axes["scale_columns"]["hero_label"], [(c["hero_label"], 2) for c in scale_columns]))
         self.categories = [category["label"] for category in registry["categories"]]
@@ -140,7 +140,7 @@ def esc(text):
     )
 
 
-SCALE_FS = 12  # base size for the limit figures
+SCALE_FS = 12  # base size for the scaling figures
 NAME_FS = "12.5"  # solver-name size
 MARK_FS = "13.5"  # check-mark and tilde size
 SMALL_FS = 11  # group labels, category labels, caption
@@ -370,7 +370,7 @@ def _data_rows(lay):
 
 
 def _legend(lay, y):
-    """The two legend rows under the table: the marks, then the limit footnote and pending marker.
+    """The two legend rows under the table: the marks, then the scaling footnote and pending marker.
 
     Both glyphs are bolded here whatever weight they carry in the grid: at legend size they sit
     inline in a line of prose, where the grid's lighter tilde would disappear.

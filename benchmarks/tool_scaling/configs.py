@@ -4,11 +4,11 @@ Every tool in ``data/solver_registry.yaml`` has one entry here, with a configura
 campaign mode. The three modes mirror the three published definitions:
 
 * ``FASTEST_VALID`` — the fastest standard, user-configurable setting that still produces
-  a valid selection; what the largest n within the time budget is measured in.
-* ``MEMORY_OPTIMAL`` — the most memory-efficient setting; what the largest n within memory is
+  a valid selection — the configuration in which *largest n within the time budget* is measured.
+* ``MEMORY_OPTIMAL`` — the most memory-efficient setting — the configuration *largest n within memory* is
   defined against. For most tools this is the same callable as ``FASTEST_VALID``.
-* ``QUALITY`` — the tool's standard configuration; what the largest n at good quality and the
-  best-known-solution runs are measured in.
+* ``QUALITY`` — the tool's standard configuration — the one the quality measurements and the
+  best-known-solution runs use.
 
 Each entry also declares the exponent of the tool's documented asymptotic memory growth,
 which constrains the memory-model fit.
@@ -54,7 +54,7 @@ class ToolEntry:
     ``memory_note`` names that structure, so the fit's constraint is a stated fact.
     ``min_growth_bytes`` is an analytic lower bound on that term's coefficient, for tools
     whose structure is exactly known (an n x n float64 kernel cannot cost less than 8
-    bytes per pair) — it floors the fit where every completed size is too small for the
+    bytes per pair) — it bounds the fit's coefficient from below where every completed size is too small for the
     growth term to rise above the interpreter's baseline footprint.
     ``stochastic`` decides the seed count (see ``seeds_for``).
     """

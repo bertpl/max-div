@@ -18,7 +18,7 @@ Three experiments:
    Above n ~ 300 CP-SAT no longer proves within the cap, which bounds the experiment.
 2. **Backend scaling series (mean/geomean)** — how far SCIP and CP-SAT push the
    NN-assignment model before proofs stop, on a d=4 random family below the generators'
-   n = 100 floor. This substantiates why no mean/geomean gap-to-optimum is published.
+   n = 100 minimum. This substantiates why no mean/geomean gap-to-optimum is published.
 3. **Incumbent-at-budget geomean panel** — on shipped problems no solver can certify
    (U3 and C4 at size 1), CP-SAT runs at a generous cap and its best-found solution is
    compared against max-div's budget series. Uncertified by construction.
@@ -112,7 +112,7 @@ def run_maxmin_maxdiv(
 
 
 def run_scaling_series() -> None:
-    """Experiment 2: walk each backend up the increasing n values until its first failed proof."""
+    """Experiment 2: Run each backend at increasing n until its first failed proof."""
     rows = []
     for backend, cap in SCALING_CAPS_SEC.items():
         for n in SCALING_NS:

@@ -6,8 +6,7 @@ passing size is the tool's largest n within the time budget. Peak memory is reco
 memory-model fits consume those records, so this stage doubles as memory calibration.
 
 Records are appended after every run to the tracked data file at ``DATA_PATH``, so an
-interrupted stage resumes by rerunning:
-already-recorded runs are skipped.
+interrupted stage resumes by rerunning: already-recorded runs are skipped.
 
 Usage: python -m benchmarks.tool_scaling.time_stage [tool ...]   # default: all registry tools
 """
@@ -28,7 +27,7 @@ def run_time_stage(tools: list[str], data_path: Path = DATA_PATH) -> dict[str, i
     """Run the stage for the given tools and return each one's largest n within the time budget.
 
     Returns:
-        Tool key -> largest passing size, or None when even the grid floor fails.
+        Tool key -> largest passing size, or None when even the smallest grid size fails.
     """
     done = {
         (r.tool, r.n, r.seed): r

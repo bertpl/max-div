@@ -60,8 +60,8 @@ benchmarks = [
     "scikit-learn>=1.4",   # runtime dependency of the code-FDM research code
     "ortools>=9.10",       # CP-SAT: exact max-min reference
     "pyscipopt>=5.0",      # SCIP: exact mean/geomean-of-NN reference
-    "highspy>=1.7",        # HiGHS: exact max-min reference (ceilings campaign)
-    "dppy>=0.3",           # k-DPP sampling competitor (ceilings campaign)
+    "highspy>=1.7",        # HiGHS: exact max-min reference (tool-scaling benchmarks)
+    "dppy>=0.3",           # k-DPP sampling competitor (tool-scaling benchmarks)
 ]
 # GPL-3 competitor kept in its own opt-in group so the default benchmarks group stays GPL-free.
 benchmarks-gpl = [

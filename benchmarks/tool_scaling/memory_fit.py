@@ -1,4 +1,4 @@
-"""Memory-limit fits: per tool, extrapolate recorded peaks to the memory-cap crossing.
+"""Largest-n-within-memory fits: per tool, extrapolate recorded peaks to the memory-cap crossing.
 
 No runs happen here. The time stage recorded peak memory on every run; this fits, per
 tool, the model ``rss = c + a * n^p`` — with p fixed to the tool's documented memory

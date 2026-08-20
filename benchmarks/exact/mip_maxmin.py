@@ -6,8 +6,8 @@ bounds how large a problem an exact solver can handle in memory and in time.
 
 All three entry points share one contract: return a valid size-k selection within the
 wall-clock budget. With ``first_feasible`` the solver stops at its first (improving)
-solution — the fastest standard setting that still produces a valid selection, the
-configuration the tool-scaling time measurements run. Without it the solver optimizes until the budget runs out.
+solution — the fastest standard setting that still produces a valid selection, and the
+configuration the tool-scaling time measurements use. Without it the solver optimizes until the budget runs out.
 """
 
 import numpy as np

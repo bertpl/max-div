@@ -75,11 +75,11 @@ def test_memory_optimal_records_take_precedence_over_fastest_valid() -> None:
     assert 100 * 2**20 + 40 * fits["max-div"]["max_n"] < MEMORY_CAP_BYTES
 
 
-def test_the_analytic_floor_carries_a_baseline_dominated_fit() -> None:
-    """When every completed size hides the growth term, the documented bound must bind.
+def test_the_analytic_lower_bound_carries_a_baseline_dominated_fit() -> None:
+    """When every completed size hides the growth term, the documented lower bound must take over.
 
     DPPy's completed sizes are so small that its n^2 kernel term vanishes under the
-    interpreter footprint; without the floor the fit would extend to the operational
+    interpreter footprint; without the analytic lower bound the fit would extend to the operational
     bound, which the kernel arithmetic plainly forbids.
     """
     # --- arrange ----------------------

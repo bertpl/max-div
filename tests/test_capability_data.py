@@ -54,8 +54,8 @@ def synthetic(cd):
             }
         ],
         "scale_columns": {
-            "hero_label": "size scaling limits",
-            "label": "measured size scaling limits",
+            "hero_label": "tool scaling (n)",
+            "label": "measured tool scaling (n)",
             "definition": "Measured scaling limits on a 1-2-5 grid.",
             "columns": [
                 {
@@ -299,7 +299,7 @@ def test_an_unknown_limit_cell_is_rejected(cd, synthetic):
 
 @pytest.mark.parametrize("value", ["", "12", "300", "4-5", "10^3", 50, 150000])
 def test_a_limit_off_the_grid_is_rejected(cd, synthetic, value):
-    """Only 1-2-5 grid sizes (floor 100) or `pending` are accepted — anything else is a typo or an old value."""
+    """Only 1-2-5 grid sizes (smallest 100) or `pending` are accepted — anything else is a typo or an old value."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["max_n_memory"] = value
 

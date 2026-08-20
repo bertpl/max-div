@@ -1,4 +1,4 @@
-"""Tool-scaling benchmarks: measure each tool's memory / time / quality size scaling limits.
+"""Tool-scaling benchmarks: measure each tool's memory / time / quality tool-scaling values.
 
 The published capability table carries three measured scaling limits per tool (see the docs'
 *Capability Definitions* page for their exact definitions and the measurement protocol).
