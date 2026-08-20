@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
-- Unconstrained problems no longer allocate per-item constraint bookkeeping (~280 bytes per item), cutting the solver's memory footprint at large n by roughly a factor of five
+- Unconstrained problems no longer allocate per-item constraint bookkeeping (~280 bytes per item), previously the bulk of the solver's memory footprint at large n
 
 ### Security
 
