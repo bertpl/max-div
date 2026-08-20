@@ -441,6 +441,7 @@ def test_unconstrained_state_skips_con_membership(new_solver_state_unconstrained
     # --- assert -----------------------
     assert state._con_membership is None
 
+    # --- act / assert -----------------
     # every mutation path works without the membership mapping, including through a copy
     state.add(0)
     state.add_many(np.array([1, 2], dtype=np.int32))
