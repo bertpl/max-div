@@ -232,7 +232,7 @@ groups:
   # The group records whether a tool solves a single problem with several workers at once, split
   # by whether those workers exchange information mid-run. The hero group label is blank: the
   # rotated axis headers name the columns, and a horizontal band label would collide with its
-  # neighbors' — these columns are narrow, unlike the ceiling columns whose band carries a label.
+  # neighbors' — these columns are narrow, unlike the tool-scaling columns whose band carries a label.
   - key: parallelism
     hero_label: ""
     label: multi-worker
@@ -250,40 +250,40 @@ groups:
         hero: true
         definition: Runs several workers on one problem at once, and the workers exchange information mid-run.
 
-# The ceiling columns are not marks: each cell is a measured problem size, or `pending` while it
-# has not been measured yet. They render as the last three columns of the hero table and the
-# comparison grid, and as rows of each per-solver feature table. The shared `definition` is the
-# preamble the capability-definitions page prints before the three columns; the measurement
-# protocol behind them is summarized on that page.
+# The tool-scaling columns are not marks: each cell is a measured problem size, or `pending`
+# while it has not been measured yet. They render as the last three columns of the hero table
+# and the comparison grid, and as rows of each per-solver feature table. The shared `definition`
+# is the preamble the capability-definitions page prints before the three columns; the
+# measurement protocol behind them is summarized on that page.
 scale_columns:
-  hero_label: size ceilings (n)
-  label: measured size ceilings
+  hero_label: tool scaling (n)
+  label: tool scaling
   definition: >-
-    The three size columns are measured ceilings, not order-of-magnitude claims: each is the
-    largest problem size n — on a logarithmic grid with three values per decade (100, 200, 500,
-    1000, ...) — at which the tool still meets that column's criterion on one unconstrained
-    reference problem. No memory means no solution, and no solution means no good solution — so
-    each ceiling can only be at or below the previous one. A cell reading `pending` has not been
-    measured yet.
+    The three size columns state how far each tool scales, as measured values rather than
+    order-of-magnitude claims: each is the largest problem size n — on a logarithmic grid with
+    three values per decade (100, 200, 500, 1000, ...) — at which the tool still meets that
+    column's criterion on one unconstrained reference problem. No memory means no solution, and
+    no solution means no good solution — so each value can only be at or below the previous one.
+    A cell reading `pending` has not been measured yet.
   columns:
-    - key: memory_ceiling
+    - key: max_n_memory
       hero_label: memory
-      label: memory ceiling
+      label: largest n within memory
       definition: >-
         The largest grid size whose peak memory stays within 32 GB in the tool's most
         memory-efficient configuration — determined by calibrated extrapolation from measured
-        smaller-size runs, rounded down to the grid, and never by a run at the ceiling itself:
+        smaller-size runs, rounded down to the grid, and never by a run at that size itself:
         at full memory most tools are far too slow to run at all.
-    - key: time_ceiling
+    - key: max_n_time
       hero_label: time
-      label: time ceiling
+      label: largest n within the time budget
       definition: >-
         The largest grid size at which the tool returns a valid size-k selection within one
         minute, timed end-to-end from raw vectors, in its fastest valid configuration — the
         fastest standard, user-configurable setting that still produces a valid selection.
-    - key: quality_ceiling
+    - key: max_n_quality
       hero_label: quality
-      label: quality ceiling
+      label: largest n at good quality
       definition: >-
         The largest grid size at which the tool, in its standard configuration at the one-minute
         budget, closes at least 90% of the quality gap between a uniform-random selection and the

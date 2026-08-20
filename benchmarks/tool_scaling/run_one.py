@@ -5,7 +5,7 @@ cannot be interrupted in-process — and so its peak memory is its own, not the 
 driver's. Problem construction happens before the clock starts and scoring after it
 stops: only the tool call itself is timed.
 
-Usage: python -m benchmarks.ceilings.run_one '<spec json>' <result path>
+Usage: python -m benchmarks.tool_scaling.run_one '<spec json>' <result path>
 """
 
 import json
@@ -19,7 +19,7 @@ import numpy as np
 
 def execute(spec: dict) -> dict:
     """Run the spec's tool once and return the result fields the parent records."""
-    from benchmarks.ceilings.configs import Mode, resolve
+    from benchmarks.tool_scaling.configs import Mode, resolve
     from benchmarks.common.problems import build_problem
     from benchmarks.common.quality import min_separation_nn
     from max_div.metrics import DiversityMetric

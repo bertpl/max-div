@@ -1,4 +1,4 @@
-"""Memory-ceiling fits: per tool, extrapolate recorded peaks to the memory-cap crossing.
+"""Memory-limit fits: per tool, extrapolate recorded peaks to the memory-cap crossing.
 
 No runs happen here. The time stage recorded peak memory on every run; this fits, per
 tool, the model ``rss = c + a * n^p`` — with p fixed to the tool's documented memory
@@ -12,7 +12,7 @@ from a handful of sizes defensible.
 Tools whose memory-optimal configuration differs from the fastest-valid one contribute
 their dedicated memory-optimal records instead, when present.
 
-Usage: python -m benchmarks.ceilings.memory_fit
+Usage: python -m benchmarks.tool_scaling.memory_fit
 """
 
 import json
@@ -21,10 +21,10 @@ from pathlib import Path
 
 import numpy as np
 
-from benchmarks.ceilings.configs import TOOLS, Mode
-from benchmarks.ceilings.grid import MEMORY_CAP_BYTES, operational_bound, size_grid
-from benchmarks.ceilings.records import CeilingRunRecord, load_ceiling_records
-from benchmarks.ceilings.time_stage import DATA_PATH
+from benchmarks.tool_scaling.configs import TOOLS, Mode
+from benchmarks.tool_scaling.grid import MEMORY_CAP_BYTES, operational_bound, size_grid
+from benchmarks.tool_scaling.records import ScalingRunRecord, load_scaling_records
+from benchmarks.tool_scaling.time_stage import DATA_PATH
 
 # Dedicated memory-optimal runs land here — the exception path for tools whose
 # memory-optimal configuration differs from their fastest-valid one.
@@ -36,13 +36,13 @@ FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
 N_FIT_SIZES = 3
 
 
-def fit_memory_ceilings(records: list[CeilingRunRecord]) -> dict[str, dict]:
-    """Fit every tool's memory model and return its ceiling with the fit's parameters."""
+def fit_memory_limits(records: list[ScalingRunRecord]) -> dict[str, dict]:
+    """Fit every tool's memory model and return its limit with the fit's parameters."""
     fits: dict[str, dict] = {}
     for tool, entry in TOOLS.items():
         points = _fit_points(records, tool)
         if len(points) < 2:
-            fits[tool] = {"ceiling": None, "reason": f"only {len(points)} completed size(s) to fit on"}
+            fits[tool] = {"max_n": None, "reason": f"only {len(points)} completed size(s) to fit on"}
             continue
         sizes = np.asarray(sorted(points), dtype=np.float64)
         peaks = np.asarray([points[int(n)] for n in sizes], dtype=np.float64)
@@ -51,9 +51,9 @@ def fit_memory_ceilings(records: list[CeilingRunRecord]) -> dict[str, dict]:
             # Every completed size can sit below where the growth term shows above the
             # interpreter baseline; the analytic bound then carries the extrapolation.
             a = max(a, entry.min_growth_bytes)
-        ceiling = _crossing(a, c, entry.memory_exponent)
+        max_n = _crossing(a, c, entry.memory_exponent)
         fits[tool] = {
-            "ceiling": ceiling,
+            "max_n": max_n,
             "exponent": entry.memory_exponent,
             "coef": a,
             "offset": c,
@@ -62,7 +62,7 @@ def fit_memory_ceilings(records: list[CeilingRunRecord]) -> dict[str, dict]:
     return fits
 
 
-def _fit_points(records: list[CeilingRunRecord], tool: str) -> dict[int, float]:
+def _fit_points(records: list[ScalingRunRecord], tool: str) -> dict[int, float]:
     """Return the tool's fit points: per size, the largest completed peak, memory-optimal runs first."""
     for mode in (Mode.MEMORY_OPTIMAL, Mode.FASTEST_VALID):
         rows = [r for r in records if r.tool == tool and r.mode == mode.value and r.completed and r.peak_rss_bytes]
@@ -95,12 +95,12 @@ def _crossing(a: float, c: float, exponent: int) -> int | None:
 
 
 if __name__ == "__main__":
-    records = load_ceiling_records(DATA_PATH)
+    records = load_scaling_records(DATA_PATH)
     if MEMORY_DATA_PATH.exists():
-        records += load_ceiling_records(MEMORY_DATA_PATH)
-    all_fits = fit_memory_ceilings(records)
+        records += load_scaling_records(MEMORY_DATA_PATH)
+    all_fits = fit_memory_limits(records)
     FIT_PATH.parent.mkdir(parents=True, exist_ok=True)
     FIT_PATH.write_text(json.dumps(all_fits, indent=2) + "\n", encoding="utf-8")
     for tool_key, fit in all_fits.items():
-        print(f"{tool_key}: memory ceiling {fit.get('ceiling')}")
+        print(f"{tool_key}: largest n within memory = {fit.get('max_n')}")
     sys.exit(0)

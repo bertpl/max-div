@@ -16,14 +16,14 @@ import tempfile
 import time
 from pathlib import Path
 
-from benchmarks.ceilings.configs import Mode
-from benchmarks.ceilings.grid import MEMORY_CAP_BYTES, SETUP_GRACE_SEC
-from benchmarks.ceilings.records import CeilingRunRecord
+from benchmarks.tool_scaling.configs import Mode
+from benchmarks.tool_scaling.grid import MEMORY_CAP_BYTES, SETUP_GRACE_SEC
+from benchmarks.tool_scaling.records import ScalingRunRecord
 
 _POLL_SEC = 0.5
 
 
-def run_measurement(tool: str, mode: Mode, n: int, k: int, seed: int, budget_sec: float) -> CeilingRunRecord:
+def run_measurement(tool: str, mode: Mode, n: int, k: int, seed: int, budget_sec: float) -> ScalingRunRecord:
     """Execute one campaign run in a subprocess and return its record.
 
     A run ends one of three ways: the child reports a result (completed or failed), the
@@ -34,7 +34,7 @@ def run_measurement(tool: str, mode: Mode, n: int, k: int, seed: int, budget_sec
     with tempfile.TemporaryDirectory() as tmp:
         result_path = Path(tmp) / "result.json"
         child = subprocess.Popen(  # noqa: S603 -- fixed module invocation, repo-local
-            [sys.executable, "-m", "benchmarks.ceilings.run_one", json.dumps(spec), str(result_path)],
+            [sys.executable, "-m", "benchmarks.tool_scaling.run_one", json.dumps(spec), str(result_path)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -42,7 +42,7 @@ def run_measurement(tool: str, mode: Mode, n: int, k: int, seed: int, budget_sec
         result = json.loads(result_path.read_text(encoding="utf-8")) if result_path.exists() else {}
 
     completed = bool(result.get("completed", False)) and reason is None
-    return CeilingRunRecord(
+    return ScalingRunRecord(
         tool=tool,
         mode=mode.value,
         n=n,

@@ -6,8 +6,8 @@ def time_budget_series(t_min_sec: float = 0.001, t_max_sec: float = 1.0, factor:
 
     Args:
         t_min_sec: First budget of the series.
-        t_max_sec: Ceiling; the last value is the first one >= this, so the
-            ceiling itself is always covered.
+        t_max_sec: Limit; the last value is the first one >= this, so the
+            limit itself is always covered.
         factor: Multiplicative step between consecutive budgets.
 
     Returns:
@@ -26,7 +26,7 @@ def iteration_budget_series(i_min: int = 10, i_max: int = 100_000, factor: float
 
     Args:
         i_min: First budget of the series.
-        i_max: Ceiling; the last value is the first one >= this.
+        i_max: Limit; the last value is the first one >= this.
         factor: Multiplicative step between consecutive budgets.
 
     Returns:

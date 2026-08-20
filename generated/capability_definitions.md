@@ -81,9 +81,9 @@ Each table below states what its capability columns claim.
 
 </div>
 
-## Measured size ceilings
+## Tool scaling
 
-The three size columns are measured ceilings, not order-of-magnitude claims: each is the largest problem size n — on a logarithmic grid with three values per decade (100, 200, 500, 1000, ...) — at which the tool still meets that column's criterion on one unconstrained reference problem. No memory means no solution, and no solution means no good solution — so each ceiling can only be at or below the previous one. A cell reading `pending` has not been measured yet.
+The three size columns state how far each tool scales, as measured values rather than order-of-magnitude claims: each is the largest problem size n — on a logarithmic grid with three values per decade (100, 200, 500, 1000, ...) — at which the tool still meets that column's criterion on one unconstrained reference problem. No memory means no solution, and no solution means no good solution — so each value can only be at or below the previous one. A cell reading `pending` has not been measured yet.
 
 Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.
 
@@ -91,9 +91,9 @@ Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.
 
 | Column | Definition |
 |---|---|
-| memory ceiling | The largest grid size whose peak memory stays within 32 GB in the tool's most memory-efficient configuration — determined by calibrated extrapolation from measured smaller-size runs, rounded down to the grid, and never by a run at the ceiling itself: at full memory most tools are far too slow to run at all. |
-| time ceiling | The largest grid size at which the tool returns a valid size-k selection within one minute, timed end-to-end from raw vectors, in its fastest valid configuration — the fastest standard, user-configurable setting that still produces a valid selection. |
-| quality ceiling | The largest grid size at which the tool, in its standard configuration at the one-minute budget, closes at least 90% of the quality gap between a uniform-random selection and the best solution any tool produces within fifteen minutes. |
+| largest n within memory | The largest grid size whose peak memory stays within 32 GB in the tool's most memory-efficient configuration — determined by calibrated extrapolation from measured smaller-size runs, rounded down to the grid, and never by a run at that size itself: at full memory most tools are far too slow to run at all. |
+| largest n within the time budget | The largest grid size at which the tool returns a valid size-k selection within one minute, timed end-to-end from raw vectors, in its fastest valid configuration — the fastest standard, user-configurable setting that still produces a valid selection. |
+| largest n at good quality | The largest grid size at which the tool, in its standard configuration at the one-minute budget, closes at least 90% of the quality gap between a uniform-random selection and the best solution any tool produces within fifteen minutes. |
 
 </div>
 

@@ -1,10 +1,10 @@
-"""Guards for the per-tool configuration registry of the ceilings campaign."""
+"""Guards for the per-tool configuration registry of the tool-scaling benchmarks."""
 
 from pathlib import Path
 
 import yaml
 
-from benchmarks.ceilings.configs import TOOLS, Mode, resolve, seeds_for
+from benchmarks.tool_scaling.configs import TOOLS, Mode, resolve, seeds_for
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -18,7 +18,7 @@ def _registry_keys() -> set[str]:
 def test_every_registry_tool_has_a_campaign_entry_and_no_others() -> None:
     """The campaign covers exactly the published registry rows.
 
-    A missing tool would silently keep its ceilings pending, and an extra one would
+    A missing tool would silently keep its scaling cells pending, and an extra one would
     measure something the table never shows.
     """
     # --- act / assert -----------------

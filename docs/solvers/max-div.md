@@ -4,9 +4,9 @@ solver:
   source: https://max-div.readthedocs.io/
   verified: 2026-08-11
   scale:
-    memory_ceiling: pending
-    time_ceiling: pending
-    quality_ceiling: pending
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: heuristic
     license: Apache-2.0

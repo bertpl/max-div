@@ -1,11 +1,11 @@
 """The candidate-size grid and the campaign's budget and memory constants."""
 
 # These constants are the one source every stage shares. The docs' Capability Definitions page
-# states the same values as prose; scripts/capability_data.py validates published ceiling
+# states the same values as prose; scripts/capability_data.py validates published value
 # cells against the same grid shape.
 REFERENCE_BUDGET_SEC = 60.0  # this budget bounds every time- and quality-stage run
 BEST_KNOWN_BUDGET_SEC = 900.0  # this budget bounds every best-known-solution run
-MEMORY_CAP_BYTES = 32 * 2**30  # caps every run's peak memory, and defines the memory ceiling
+MEMORY_CAP_BYTES = 32 * 2**30  # caps every run's peak memory, and defines the largest n within memory
 GRID_FLOOR = 100
 
 # The grace is added to a run's hard-kill deadline on top of its budget: the child's untimed setup
@@ -18,7 +18,7 @@ def size_grid(bound: int) -> list[int]:
     """Return the candidate problem sizes up to and including ``bound``.
 
     The grid is logarithmic with three values per decade (100, 200, 500, 1000, ...);
-    every published ceiling is one of these values.
+    every published value is one of these values.
     """
     if bound < GRID_FLOOR:
         raise ValueError(f"bound {bound} lies below the grid floor {GRID_FLOOR}")

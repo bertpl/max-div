@@ -68,11 +68,11 @@ def synthetic():
             }
         ],
         "scale_columns": {
-            "hero_label": "size ceilings",
+            "hero_label": "size scaling limits",
             "columns": [
-                {"key": "memory_ceiling", "hero_label": "memory"},
-                {"key": "time_ceiling", "hero_label": "time"},
-                {"key": "quality_ceiling", "hero_label": "quality"},
+                {"key": "max_n_memory", "hero_label": "memory"},
+                {"key": "max_n_time", "hero_label": "time"},
+                {"key": "max_n_quality", "hero_label": "quality"},
             ],
         },
     }
@@ -94,7 +94,7 @@ def synthetic():
                     "distance.cosine": {"mark": "full"},
                     "distance.internal": {"mark": "full"},
                 },
-                "scale": {"memory_ceiling": 20000, "time_ceiling": 1000, "quality_ceiling": "pending"},
+                "scale": {"max_n_memory": 20000, "max_n_time": 1000, "max_n_quality": "pending"},
             },
             "",
         ),
@@ -105,7 +105,7 @@ def synthetic():
                     "distance.cosine": {"mark": "none"},
                     "distance.internal": {"mark": "none"},
                 },
-                "scale": {"memory_ceiling": 500000, "time_ceiling": "pending", "quality_ceiling": "pending"},
+                "scale": {"max_n_memory": 500000, "max_n_time": "pending", "max_n_quality": "pending"},
             },
             "",
         ),
@@ -177,7 +177,7 @@ def test_columns_are_the_hero_visible_axes(builder, synthetic):
     # --- assert -----------------------
     assert hero.groups == [
         ("distance", [("L2", 1), ("cosine", 1)]),
-        ("size ceilings", [("memory", 2), ("time", 2), ("quality", 2)]),
+        ("size scaling limits", [("memory", 2), ("time", 2), ("quality", 2)]),
     ]
     assert [len(row["marks"]) for row in hero.rows] == [2, 2]
 
@@ -253,7 +253,7 @@ def test_a_mark_with_no_hero_glyph_leaves_its_cell_empty(builder, synthetic):
 
 
 # =================================================================================================
-#  The ceiling columns
+#  The scaling columns
 # =================================================================================================
 def test_each_columns_highest_measured_value_is_the_leader(builder, synthetic):
     """Bold-and-green marks the per-column leader; a pending cell never leads."""
@@ -282,7 +282,7 @@ def test_pending_cells_render_as_the_pending_marker_with_a_legend(builder, synth
     assert "measurement pending" in svg
 
 
-def test_the_pending_legend_disappears_once_every_ceiling_is_measured(builder, synthetic):
+def test_the_pending_legend_disappears_once_every_limit_is_measured(builder, synthetic):
     """The legend explains a marker; once no cell draws it, explaining it would be noise."""
     # --- arrange ----------------------
     axes, registry, records = synthetic

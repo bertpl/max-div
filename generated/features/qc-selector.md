@@ -43,9 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^qc-selector-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^qc-selector-8] |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| measured size ceilings · memory ceiling | <span class="scale-pending">pending</span> | |
-| measured size ceilings · time ceiling | <span class="scale-pending">pending</span> | |
-| measured size ceilings · quality ceiling | <span class="scale-pending">pending</span> | |
+| tool scaling · largest n within memory | <span class="scale-pending">pending</span> | |
+| tool scaling · largest n within the time budget | <span class="scale-pending">pending</span> | |
+| tool scaling · largest n at good quality | <span class="scale-pending">pending</span> | |
 
 </div>
 

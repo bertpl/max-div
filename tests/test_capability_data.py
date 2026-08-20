@@ -54,13 +54,28 @@ def synthetic(cd):
             }
         ],
         "scale_columns": {
-            "hero_label": "size ceilings",
-            "label": "measured size ceilings",
-            "definition": "Measured ceilings on a 1-2-5 grid.",
+            "hero_label": "size scaling limits",
+            "label": "measured size scaling limits",
+            "definition": "Measured scaling limits on a 1-2-5 grid.",
             "columns": [
-                {"key": "memory_ceiling", "hero_label": "memory", "label": "memory ceiling", "definition": "Mem."},
-                {"key": "time_ceiling", "hero_label": "time", "label": "time ceiling", "definition": "Time."},
-                {"key": "quality_ceiling", "hero_label": "quality", "label": "quality ceiling", "definition": "Qual."},
+                {
+                    "key": "max_n_memory",
+                    "hero_label": "memory",
+                    "label": "largest n within memory",
+                    "definition": "Mem.",
+                },
+                {
+                    "key": "max_n_time",
+                    "hero_label": "time",
+                    "label": "largest n within the time budget",
+                    "definition": "Time.",
+                },
+                {
+                    "key": "max_n_quality",
+                    "hero_label": "quality",
+                    "label": "largest n at good quality",
+                    "definition": "Qual.",
+                },
             ],
         },
         "metadata": [{"key": "guarantee", "label": "Guarantee", "definition": "The strongest quality claim."}],
@@ -75,7 +90,7 @@ def synthetic(cd):
     record = {
         "name": "Tool",
         "metadata": {"guarantee": "heuristic"},
-        "scale": {"memory_ceiling": "pending", "time_ceiling": "pending", "quality_ceiling": "pending"},
+        "scale": {"max_n_memory": "pending", "max_n_time": "pending", "max_n_quality": "pending"},
         "capabilities": {"distance.l2": {"mark": "full"}},
     }
     body = '--8<-- "generated/features/tool.md"'
@@ -264,29 +279,29 @@ def test_metadata_falls_back_to_the_record_top_level(cd, synthetic):
     assert cd.check_structure(axes, registry, records) == []
 
 
-def test_a_missing_ceiling_cell_is_rejected(cd, synthetic):
-    """A record must carry a cell for every declared ceiling column."""
+def test_a_missing_limit_cell_is_rejected(cd, synthetic):
+    """A record must carry a cell for every declared scaling column."""
     # --- arrange ----------------------
-    del synthetic[2]["tool"][0]["scale"]["time_ceiling"]
+    del synthetic[2]["tool"][0]["scale"]["max_n_time"]
 
     # --- act / assert -----------------
-    assert any("no cell for ceiling `time_ceiling`" in p for p in problems(cd, synthetic))
+    assert any("no cell for scaling column `max_n_time`" in p for p in problems(cd, synthetic))
 
 
-def test_an_unknown_ceiling_cell_is_rejected(cd, synthetic):
+def test_an_unknown_limit_cell_is_rejected(cd, synthetic):
     """`max_practical_n` is a key no declared column carries, and it must not survive silently."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["max_practical_n"] = "4"
 
     # --- act / assert -----------------
-    assert any("unknown ceiling `max_practical_n`" in p for p in problems(cd, synthetic))
+    assert any("unknown scaling column `max_practical_n`" in p for p in problems(cd, synthetic))
 
 
 @pytest.mark.parametrize("value", ["", "12", "300", "4-5", "10^3", 50, 150000])
-def test_a_ceiling_off_the_grid_is_rejected(cd, synthetic, value):
+def test_a_limit_off_the_grid_is_rejected(cd, synthetic, value):
     """Only 1-2-5 grid sizes (floor 100) or `pending` are accepted — anything else is a typo or an old value."""
     # --- arrange ----------------------
-    synthetic[2]["tool"][0]["scale"]["memory_ceiling"] = value
+    synthetic[2]["tool"][0]["scale"]["max_n_memory"] = value
 
     # --- act / assert -----------------
     assert any("expected `pending` or a 1-2-5 grid size" in p for p in problems(cd, synthetic))
@@ -296,7 +311,7 @@ def test_a_ceiling_off_the_grid_is_rejected(cd, synthetic, value):
 def test_pending_and_grid_sizes_are_both_accepted(cd, synthetic, value):
     """`pending` and every 1-2-5 grid size pass validation, as int or as string."""
     # --- arrange ----------------------
-    synthetic[2]["tool"][0]["scale"]["memory_ceiling"] = value
+    synthetic[2]["tool"][0]["scale"]["max_n_memory"] = value
 
     # --- act / assert -----------------
     assert problems(cd, synthetic) == []
@@ -419,7 +434,7 @@ def test_grid_sizes_format_in_suffix_notation(cd, value, expected):
     assert cd.format_scale_value(value) == expected
 
 
-def test_a_pending_ceiling_renders_as_the_pending_marker(cd):
+def test_a_pending_limit_renders_as_the_pending_marker(cd):
     """A pending cell renders as the styled marker, a measured one as its formatted size."""
     # --- act / assert -----------------
     assert cd._scale_markup("pending") == '<span class="scale-pending">pending</span>'

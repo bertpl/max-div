@@ -13,7 +13,7 @@
 <polygon points="695,32 747,32 630,149 630,477 578,477 578,149" fill="#f6f8fa"/>
 <text x="721" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle"></text>
 <line x1="697" y1="31" x2="745" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<text x="816" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">size ceilings (n)</text>
+<text x="816" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">tool scaling (n)</text>
 <line x1="749" y1="31" x2="883" y2="31" stroke="#d8dee4" stroke-width="1"/>
 <polyline points="279,32 162,149 162,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
 <polyline points="409,32 292,149 292,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>

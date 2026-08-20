@@ -92,8 +92,8 @@ def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.in
 def min_separation_nn(vectors: NDArray[np.floating], i_selected: NDArray[np.integer]) -> float:
     """Score a selection's minimum separation via nearest-neighbor queries, in O(k log k).
 
-    The k x k matrix behind `evaluate_selection` costs O(k^2) memory, which at the ceilings
-    campaign's largest sizes would dwarf the tool being measured — the minimum separation
+    The k x k matrix behind `evaluate_selection` costs O(k^2) memory, which at the tool-scaling
+    benchmarks' largest sizes would dwarf the tool being measured — the minimum separation
     equals the minimum over each selected point's nearest selected neighbor, and a KD-tree
     answers that without materializing any pairwise block.
     """

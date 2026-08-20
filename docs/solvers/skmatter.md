@@ -4,9 +4,9 @@ solver:
   source: https://scikit-matter.readthedocs.io/
   verified: 2026-07-27
   scale:
-    memory_ceiling: pending
-    time_ceiling: pending
-    quality_ceiling: pending
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: 2-approximation (farthest-point traversal)
     license: BSD-3-Clause

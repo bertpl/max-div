@@ -1,13 +1,13 @@
-"""The per-tool run configurations of the ceilings campaign.
+"""The per-tool run configurations of the tool-scaling benchmarks.
 
 Every tool in ``data/solver_registry.yaml`` has one entry here, with a configuration per
 campaign mode. The three modes mirror the three published definitions:
 
 * ``FASTEST_VALID`` — the fastest standard, user-configurable setting that still produces
-  a valid selection; what the time ceiling is measured in.
-* ``MEMORY_OPTIMAL`` — the most memory-efficient setting; what the memory ceiling is
+  a valid selection; what the largest n within the time budget is measured in.
+* ``MEMORY_OPTIMAL`` — the most memory-efficient setting; what the largest n within memory is
   defined against. For most tools this is the same callable as ``FASTEST_VALID``.
-* ``QUALITY`` — the tool's standard configuration; what the quality ceiling and the
+* ``QUALITY`` — the tool's standard configuration; what the largest n at good quality and the
   best-known-solution runs are measured in.
 
 Each entry also declares the exponent of the tool's documented asymptotic memory growth,
@@ -30,7 +30,7 @@ SelectFn = Callable[[VectorMaxDivProblem, int, float], NDArray[np.int64]]
 
 
 class Mode(Enum):
-    """The three campaign run modes, one per published ceiling definition."""
+    """The three campaign run modes, one per published value definition."""
 
     FASTEST_VALID = "fastest_valid"
     MEMORY_OPTIMAL = "memory_optimal"

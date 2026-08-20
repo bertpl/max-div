@@ -1,8 +1,8 @@
-"""Guards for the ceilings campaign's candidate-size grid and its constants."""
+"""Guards for the tool-scaling benchmarks's candidate-size grid and its constants."""
 
 import pytest
 
-from benchmarks.ceilings.grid import GRID_FLOOR, MEMORY_CAP_BYTES, operational_bound, size_grid
+from benchmarks.tool_scaling.grid import GRID_FLOOR, MEMORY_CAP_BYTES, operational_bound, size_grid
 
 
 def test_grid_is_three_values_per_decade_from_the_floor() -> None:

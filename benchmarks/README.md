@@ -11,9 +11,9 @@ dependencies live in the `benchmarks` dependency group, never in package metadat
   run records, benchmark problem construction.
 - `adapters/` — one adapter per competing tool/baseline, all implementing
   `SelectionAdapter`.
-- `ceilings/` — the size-ceilings campaign: candidate-size grid, per-tool run
+- `tool_scaling/` — the tool-scaling benchmarks: candidate-size grid, per-tool run
   configurations, a budget/memory-enforcing subprocess runner, and the stage drivers
-  behind the capability table's measured ceiling columns.
+  behind the capability table's measured tool-scaling columns.
 - `runners/` — drivers that execute max-div (anytime budget series) or an adapter
   (single-shot) against a problem and emit run records.
 - `figures/` — plotting of anytime curves (max-div) vs. single-shot dots (competitors).

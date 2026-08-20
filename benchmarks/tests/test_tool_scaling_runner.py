@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from benchmarks.ceilings.configs import Mode
-from benchmarks.ceilings.records import CeilingRunRecord, append_ceiling_record, load_ceiling_records
-from benchmarks.ceilings.runner import run_measurement
+from benchmarks.tool_scaling.configs import Mode
+from benchmarks.tool_scaling.records import ScalingRunRecord, append_scaling_record, load_scaling_records
+from benchmarks.tool_scaling.runner import run_measurement
 
 
 def test_a_completed_run_reports_time_memory_and_quality() -> None:
@@ -22,7 +22,7 @@ def test_a_completed_run_reports_time_memory_and_quality() -> None:
 def test_a_run_past_its_deadline_is_killed_and_recorded_as_timeout(monkeypatch) -> None:
     """The parent's deadline kill lands as a `timeout` record, not an exception."""
     # --- arrange ----------------------
-    monkeypatch.setattr("benchmarks.ceilings.runner.SETUP_GRACE_SEC", 20.0)
+    monkeypatch.setattr("benchmarks.tool_scaling.runner.SETUP_GRACE_SEC", 20.0)
 
     # --- act --------------------------
     record = run_measurement("_test_sleep", Mode.FASTEST_VALID, n=100, k=10, seed=0, budget_sec=1.0)
@@ -45,7 +45,7 @@ def test_a_child_error_reaches_the_parent_as_a_failed_record() -> None:
 def test_records_round_trip_through_jsonl(tmp_path: Path) -> None:
     """Appending and loading preserves every field of a record."""
     # --- arrange ----------------------
-    record = CeilingRunRecord(
+    record = ScalingRunRecord(
         tool="max-div",
         mode="fastest_valid",
         n=100,
@@ -61,8 +61,8 @@ def test_records_round_trip_through_jsonl(tmp_path: Path) -> None:
     path = tmp_path / "records.jsonl"
 
     # --- act --------------------------
-    append_ceiling_record(record, path)
-    append_ceiling_record(record, path)
+    append_scaling_record(record, path)
+    append_scaling_record(record, path)
 
     # --- assert -----------------------
-    assert load_ceiling_records(path) == [record, record]
+    assert load_scaling_records(path) == [record, record]

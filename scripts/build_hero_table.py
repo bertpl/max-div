@@ -38,7 +38,7 @@ import capability_data  # noqa: E402
 # --- geometry (all integers; no float formatting anywhere) --
 LABEL_W = 148  # solver-name gutter
 COL_W = 26  # one mark column
-CEIL_W = 46  # one measured-ceiling column — wide enough for the longest suffix value ("500M")
+SCALE_W = 46  # one measured-scaling column — wide enough for the longest suffix value ("500M")
 ROW_H = 23
 HEADER_H = 132  # room for the 45-degree labels
 GROUP_H = 18
@@ -105,9 +105,9 @@ class HeroTable:
             (group["hero_label"], [(axis["hero_label"], 1) for axis in group["axes"] if axis.get("hero")])
             for group in axes["groups"]
         ]
-        # The ceiling columns are not mark columns: each is wider, and its cell is a measured size
+        # The scaling columns are not mark columns: each is wider, and its cell is a measured size
         # (or the pending marker) rather than a glyph. They form one group so the band that carries
-        # the "size ceilings" label is drawn by the same code as every other group's.
+        # the "size scaling limits" label is drawn by the same code as every other group's.
         scale_columns = axes["scale_columns"]["columns"]
         self.groups.append((axes["scale_columns"]["hero_label"], [(c["hero_label"], 2) for c in scale_columns]))
         self.categories = [category["label"] for category in registry["categories"]]
@@ -140,18 +140,18 @@ def esc(text):
     )
 
 
-SCALE_FS = 12  # base size for the ceiling figures
+SCALE_FS = 12  # base size for the limit figures
 NAME_FS = "12.5"  # solver-name size
 MARK_FS = "13.5"  # check-mark and tilde size
 SMALL_FS = 11  # group labels, category labels, caption
-PENDING_GLYPH = "\u2026"  # a ceiling cell awaiting its measurement
-DAGGER = "\u2020"  # anchors the ceiling column headers to the footnote row under the table
-CEILING_FOOTNOTE = "based on the built-in benchmark problem U1 and the published measurement protocol"
+PENDING_GLYPH = "\u2026"  # a scaling cell awaiting its measurement
+DAGGER = "\u2020"  # anchors the scaling column headers to the footnote row under the table
+SCALING_FOOTNOTE = "based on the built-in benchmark problem U1 and the published measurement protocol"
 CAPTION2_H = 16  # the footnote row under the mark-legend row
 
 
 def scale_text(value):
-    """Return one ceiling cell's text: the measured size in suffix notation, or the pending marker.
+    """Return one scaling cell's text: the measured size in suffix notation, or the pending marker.
 
     The notation is `format_scale_value`'s; sharing the formatter guarantees the hero and the
     documentation tables cannot print one value two ways.
@@ -172,7 +172,7 @@ class _Layout:
         self.mark_cols = [(h, w) for h, w in flat if w == 1]
         self.scale_cols = [(h, w) for h, w in flat if w != 1]
         self.n_marks = len(self.mark_cols)
-        self.grid_w = self.n_marks * COL_W + len(self.scale_cols) * CEIL_W
+        self.grid_w = self.n_marks * COL_W + len(self.scale_cols) * SCALE_W
 
         # The longest header, rotated 45 degrees, sticks out to the right by width/sqrt(2). That
         # same overhang sizes the header band and the skew of the group bands.
@@ -203,7 +203,7 @@ class _Layout:
         self.table_w = LABEL_W + self.grid_w
 
     def leads_on_scale(self, row, j):
-        """Return True when this row carries ceiling column j's highest measured value.
+        """Return True when this row carries scaling column j's highest measured value.
 
         Deliberately not keyed to max-div: whoever measures highest leads, and saying so is the
         point of showing the columns at all. A pending cell never leads, and a column with no
@@ -213,7 +213,7 @@ class _Layout:
         return bool(measured) and row["scales"][j] != capability_data.PENDING and int(row["scales"][j]) == max(measured)
 
     def any_pending(self):
-        """Return True while any ceiling cell awaits its measurement.
+        """Return True while any scaling cell awaits its measurement.
 
         The pending legend entry is drawn only while one does.
         """
@@ -224,8 +224,8 @@ class _Layout:
         return PAD + LABEL_W + i * COL_W
 
     def scale_x(self, j):
-        """Return the left edge of ceiling column j, which sits right of every mark column."""
-        return PAD + LABEL_W + self.n_marks * COL_W + j * CEIL_W
+        """Return the left edge of scaling column j, which sits right of every mark column."""
+        return PAD + LABEL_W + self.n_marks * COL_W + j * SCALE_W
 
     def rule(self, y):
         """A full-width horizontal rule at y."""
@@ -245,7 +245,7 @@ def _group_bands(lay):
     out, idx, t = [], 0, lay.t
     edges = set()
     for gi, (glabel, cols) in enumerate(lay.groups):
-        span = sum(COL_W if w == 1 else CEIL_W for _, w in cols)
+        span = sum(COL_W if w == 1 else SCALE_W for _, w in cols)
         x0 = lay.col_x(idx)
         x1 = x0 + span
         edges.update((x0, x1))
@@ -296,7 +296,7 @@ def _column_headers(lay):
             f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header)}</text>'
         )
     for j, (header, _w) in enumerate(lay.scale_cols):
-        x = lay.scale_x(j) + CEIL_W // 2 - 3
+        x = lay.scale_x(j) + SCALE_W // 2 - 3
         out.append(
             f'<text x="{x}" y="{y}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
             f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header + " " + DAGGER)}</text>'
@@ -356,12 +356,12 @@ def _data_rows(lay):
                 pending = value == capability_data.PENDING
                 leads = lay.leads_on_scale(row, j)
                 fill = t["partial"] if pending else (t["mark"] if leads else t["ink"])
-                # Bold in a ceiling column means "leads this column" and nothing else. The
+                # Bold in a scaling column means "leads this column" and nothing else. The
                 # row-name weight is a separate signal (the subject), so inheriting it here would
                 # imply max-div leads a column it does not.
                 weight = "700" if leads else "400"
                 out.append(
-                    f'<text x="{lay.scale_x(j) + CEIL_W // 2}" y="{y + ROW_H - 7}" fill="{fill}" '
+                    f'<text x="{lay.scale_x(j) + SCALE_W // 2}" y="{y + ROW_H - 7}" fill="{fill}" '
                     f'font-size="{SCALE_FS}" font-weight="{weight}" text-anchor="middle">'
                     f"{esc(scale_text(value))}</text>"
                 )
@@ -370,7 +370,7 @@ def _data_rows(lay):
 
 
 def _legend(lay, y):
-    """The two legend rows under the table: the marks, then the ceiling footnote and pending marker.
+    """The two legend rows under the table: the marks, then the limit footnote and pending marker.
 
     Both glyphs are bolded here whatever weight they carry in the grid: at legend size they sit
     inline in a line of prose, where the grid's lighter tilde would disappear.
@@ -386,7 +386,7 @@ def _legend(lay, y):
         spans.append(f'<tspan fill="{t["muted"]}" dx="5">{esc(spec["legend"])}</tspan>')
     notes = [
         f'<tspan fill="{t["muted"]}" font-weight="700">{esc(DAGGER)}</tspan>',
-        f'<tspan fill="{t["muted"]}" dx="5">{esc(CEILING_FOOTNOTE)}</tspan>',
+        f'<tspan fill="{t["muted"]}" dx="5">{esc(SCALING_FOOTNOTE)}</tspan>',
     ]
     if lay.any_pending():
         notes.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')

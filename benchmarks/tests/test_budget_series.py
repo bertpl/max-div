@@ -5,8 +5,8 @@ import pytest
 from benchmarks.common import iteration_budget_series, time_budget_series
 
 
-def test_time_budget_series_covers_ceiling():
-    """The series starts at t_min and its last value covers the ceiling."""
+def test_time_budget_series_covers_limit():
+    """The series starts at t_min and its last value covers the limit."""
     # --- act ------------------------------
     budgets = time_budget_series(0.001, 1.0, factor=2.0)
 
@@ -29,7 +29,7 @@ def test_iteration_budget_series_strictly_increases():
 
 @pytest.mark.parametrize("kwargs", [{"t_min_sec": 0.0}, {"t_max_sec": 0.0001}, {"factor": 1.0}])
 def test_time_budget_series_rejects_bad_arguments(kwargs):
-    """The series starts at t_min and its last value covers the ceiling."""
+    """The series starts at t_min and its last value covers the limit."""
     # --- act / assert ---------------------
     with pytest.raises(ValueError, match="A budget series requires"):
         time_budget_series(**{"t_min_sec": 0.001, "t_max_sec": 1.0, "factor": 2.0, **kwargs})

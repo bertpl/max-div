@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- The capability table's single problem-size figure is replaced by three measured ceilings (memory, time, quality), with exact definitions for every capability published alongside
+- The capability table's single problem-size figure is replaced by three measured tool-scaling values — the largest problem size each tool handles within memory, within one minute, and at good quality — with exact definitions for every capability published alongside
 
 ### Deprecated
 

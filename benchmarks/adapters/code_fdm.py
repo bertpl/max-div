@@ -131,7 +131,7 @@ class CodeFdmSingleColor(SelectionAdapter):
     """FairFlow on an unconstrained problem: one color for every item, count = k.
 
     code-FDM's model is fairness-colored max-min selection; with a single color it reduces
-    to plain max-min diverse selection, which is how the ceilings campaign runs it on the
+    to plain max-min diverse selection, which is how the tool-scaling benchmarks run it on the
     unconstrained reference problem.
     """
 

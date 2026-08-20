@@ -20,7 +20,7 @@ why the rules below are worth enforcing here rather than per surface.
 
 Two severities are reported. **Structural problems always fail**: an unknown axis, a missing
 cell, a mark outside the vocabulary, a record that is not registered (or a registration with no
-record), a ceiling cell that is neither ``pending`` nor on the 1-2-5 grid, a column with no
+record), a scaling cell that is neither ``pending`` nor on the 1-2-5 grid, a column with no
 definition, a page that forgot its include. **Near-duplicate note text also fails**, because two
 notes that differ only in wording produce two footnotes where one was meant; a note may opt out
 with ``distinct: true`` when the resemblance really is coincidental.
@@ -50,7 +50,7 @@ DEFINITIONS_FRAGMENT = REPO_ROOT / "generated" / "capability_definitions.md"
 DEFINITIONS_PAGE = REPO_ROOT / "docs" / "capability_definitions.md"
 DEFINITIONS_INCLUDE = '--8<-- "generated/capability_definitions.md"'
 
-# A measured ceiling sits on the 1-2-5 grid in n, floor 100 — the {2,} is the floor.
+# A measured limit sits on the 1-2-5 grid in n, floor 100 — the {2,} is the floor.
 GRID_VALUE = re.compile(r"^[125]0{2,}$")
 PENDING = "pending"
 FRONT_MATTER = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.DOTALL)
@@ -205,18 +205,18 @@ def check_metadata(key: str, record: dict, axes_metadata: list[dict]) -> list[st
 
 
 def check_scale_cells(key: str, record: dict, scale_columns: list[dict]) -> list[str]:
-    """A record carries one cell per ceiling column, no others, each `pending` or a 1-2-5 grid size."""
+    """A record carries one cell per scaling column, no others, each `pending` or a 1-2-5 grid size."""
     problems: list[str] = []
     cells = record.get("scale") or {}
     expected = {column["key"] for column in scale_columns}
     for missing in sorted(expected - set(cells)):
-        problems.append(f"{key}: no cell for ceiling `{missing}`")
+        problems.append(f"{key}: no cell for scaling column `{missing}`")
     for unknown in sorted(set(cells) - expected):
-        problems.append(f"{key}: cell for unknown ceiling `{unknown}`")
+        problems.append(f"{key}: cell for unknown scaling column `{unknown}`")
     for column_key in sorted(expected & set(cells)):
         value = cells[column_key]
         if value != PENDING and not GRID_VALUE.match(str(value)):
-            problems.append(f"{key}: ceiling `{column_key}` is {value!r}, expected `pending` or a 1-2-5 grid size")
+            problems.append(f"{key}: limit `{column_key}` is {value!r}, expected `pending` or a 1-2-5 grid size")
     return problems
 
 
@@ -224,7 +224,7 @@ def check_definitions(axes: dict) -> list[str]:
     """Every column a table can show must carry the definition the definitions page prints."""
     named = [
         *((f"axis `{g['key']}.{a['key']}`", a) for g in axes["groups"] for a in g["axes"]),
-        *((f"ceiling `{c['key']}`", c) for c in axes["scale_columns"]["columns"]),
+        *((f"limit `{c['key']}`", c) for c in axes["scale_columns"]["columns"]),
         ("scale_columns", axes["scale_columns"]),
         *((f"metadata `{f['label']}`", f) for f in axes["metadata"]),
     ]
@@ -642,7 +642,7 @@ def format_scale_value(n: int) -> str:
 
 
 def _scale_markup(value) -> str:
-    """Render one ceiling cell: a measured grid size in suffix notation, or the pending marker."""
+    """Render one scaling cell: a measured grid size in suffix notation, or the pending marker."""
     if value == PENDING:
         return '<span class="scale-pending">pending</span>'
     return f"n = {format_scale_value(int(value))}"

@@ -53,7 +53,7 @@ CONSTRAINED_PROBLEMS = ("C1", "C2")
 CONSTRAINED_SIZES = (200, 1000, 2000)
 CONSTRAINED_METRIC = DiversityMetric.MIN_SEPARATION
 
-# Series ceiling 10 s: the last budget is the first value >= the ceiling (16.4 s), so the
+# Series limit 10 s: the last budget is the first value >= the limit (16.4 s), so the
 # curves bracket the region where the slowest competitors land instead of stopping short.
 TIME_BUDGETS_SEC = time_budget_series(0.001, 10.0)
 

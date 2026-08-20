@@ -7,16 +7,16 @@ page.
 
 --8<-- "generated/capability_definitions.md"
 
-## How the size ceilings are measured
+## How the tool-scaling values are measured
 
-All three ceilings come from one measurement procedure, described here so the published figures
-are reproducible from this page alone.
+All three tool-scaling values come from one measurement procedure, described here so the
+published figures are reproducible from this page alone.
 
 **The test problem.** Every measurement uses [U1](benchmarks/solver/problem_u1.md), one of the
 built-in benchmark problems: n points in 2 dimensions, from which a tool must select the
 k = n/10 most diverse ones. Candidate problem sizes lie on a logarithmic grid with three values
-per decade — n = 100, 200, 500, 1000, ... — and a published ceiling is always one of these
-values.
+per decade — n = 100, 200, 500, 1000, ... — and a published value is always one of these
+sizes.
 
 **Ground rules.**
 
@@ -34,25 +34,26 @@ values.
 
 **The four measurements.**
 
-1. **Time ceiling.** Starting from n = 100, the tool runs once per size with a one-minute
-   budget, in its fastest valid configuration. The time ceiling is the largest size at which it
-   returns a valid selection. Peak memory is recorded on every one of these runs.
-2. **Memory ceiling.** A per-tool memory model is fitted to the peaks recorded at the largest
-   sizes the tool completed, checked against the tool's documented data structures, and
-   extrapolated: the memory ceiling is the largest candidate size whose predicted peak stays
-   within 32 GB. No run is executed at the ceiling itself — at full memory most tools are far
-   too slow to run at all. A tool whose most memory-efficient configuration differs from its
-   fastest one gets a few extra small runs in that configuration.
-3. **Best-known solutions.** The quality ceiling (next) compares each tool's solution to the
+1. **Largest n within the time budget.** Starting from n = 100, the tool runs once per size
+   with a one-minute budget, in its fastest valid configuration; the published value is the
+   largest size at which it returns a valid selection. Peak memory is recorded on every one of
+   these runs.
+2. **Largest n within memory.** A per-tool memory model is fitted to the peaks recorded at
+   the largest sizes the tool completed, checked against the tool's documented data structures,
+   and extrapolated: the published value is the largest candidate size whose predicted peak
+   stays within 32 GB. No run is executed at that size itself — at full memory most tools are
+   far too slow to run at all. A tool whose most memory-efficient configuration differs from
+   its fastest one gets a few extra small runs in that configuration.
+3. **Best-known solutions.** The quality measurement (next) compares each tool's solution to the
    best solution *any* tool can find at that size when given plenty of time. To establish that
    reference, every tool whose result improves with extra time gets one fifteen-minute run per
    size, with seeds fixed in advance — before any one-minute result has been looked at — so the
    reference cannot be tuned to the results it judges.
-4. **Quality ceiling.** Each tool runs at each size up to its time ceiling with the one-minute
-   budget, in its standard configuration — five seeded runs for stochastic tools, three for
+4. **Largest n at good quality.** Each tool runs — at each size up to its largest size within
+   the time budget — with the one-minute budget, in its standard configuration — five seeded runs for stochastic tools, three for
    deterministic ones. A size counts as passed when the median solution closes at least 90% of
    the quality gap between a plain random selection (the median of 32 uniform-random draws) and
-   the best-known solution at that size. The quality ceiling is the largest size that passes; a
+   the best-known solution at that size. The published value is the largest size that passes; a
    tool that passes at no size shows a dash with a footnote.
 
 **Rules for the best-known solution.**
@@ -63,4 +64,4 @@ values.
 - If at some size no fifteen-minute run beats the best one-minute result, the best one-minute
   tool is being compared against itself and passes there by construction.
 - Re-measuring later with better tools can raise the best-known solution, which lowers every
-  tool's quality ceiling with it.
+  tool's largest-n-at-good-quality value with it.
