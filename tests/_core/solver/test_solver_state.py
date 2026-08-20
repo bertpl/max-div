@@ -403,7 +403,7 @@ def test_build_con_membership():
         Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
         Constraint(int_set={3, 11}, min_count=2, max_count=2),
     ]
-    m = np.int32(14)
+    n = np.int32(14)
     expected_membership = {
         0: [0],
         1: [0],
@@ -423,7 +423,7 @@ def test_build_con_membership():
     expected_membership = {k: np.array(v, dtype=np.int32) for k, v in expected_membership.items()}
 
     # --- act --------------------------
-    con_membership = _build_con_membership(m, cons)
+    con_membership = _build_con_membership(n, cons)
 
     # --- assert -----------------------
     assert con_membership.keys() == expected_membership.keys()
@@ -431,6 +431,25 @@ def test_build_con_membership():
         assert isinstance(value, np.ndarray)
         assert value.dtype == np.int32
         assert np.array_equal(value, expected_membership[key])
+
+
+def test_unconstrained_state_skips_con_membership(new_solver_state_unconstrained):
+    """An unconstrained state allocates no per-item membership and mutates correctly without it."""
+    # --- arrange ----------------------
+    state = new_solver_state_unconstrained
+
+    # --- assert -----------------------
+    assert state._con_membership is None
+
+    # every mutation path works without the membership mapping, including through a copy
+    state.add(0)
+    state.add_many(np.array([1, 2], dtype=np.int32))
+    state.remove(1)
+    state.remove_many(np.array([2], dtype=np.int32))
+    assert state.copy()._con_membership is None
+    state.reset()
+    assert state.n_selected == 0
+    assert state.score.constraints == 1.0
 
 
 # =================================================================================================
