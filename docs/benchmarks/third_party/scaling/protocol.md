@@ -1,74 +1,186 @@
 # Solver Scaling — Measurement Protocol
 
-This protocol defines how the three problem-size values — the [memory](memory.md), [time](time.md), and [quality](quality.md) sizes — are measured, identically for every tool in the comparison suite. Each value answers a different question about the same tool on the same problem family:
+## I. Introduction
 
-- **Memory** — how large a problem still fits in memory at all?
-- **Time** — how large a problem still yields *a valid answer* within the reference budget?
-- **Quality** — how large a problem still yields *a good answer* within the reference budget?
+With _solver scaling_ we want to establish the **maximum problem size each solver can practically solve**.  Unfortunately, this question cannot be unambiguously answered:
 
-## Shared context
+- What is the _**size**_ of a problem? (dimensions, item count, selection size, number of constraints, ...)
+- What is _**practical**_?
+  - a solver might theoretically be able to solve a problem, but might require excessive amounts of time (days, months, years, ...)
+  - a solver might be able to produce a solution within a reasonable amount of time, but with very low quality (e.g. diversity comparable with a random selection)
 
-Every value is defined against one pinned context:
+Answering these questions in a nuanced way and with all corner cases taken into account would be an extensive study in itself.  
 
-- **Problem:** `U1` (the fixed-$d=2$ clustered problem family), sized per the same k→n contract every other published `U1` benchmark uses (n = 10·k). A value at size n is a claim about the same problem every other published `U1` number describes.
-- **Candidate sizes:** the 1-2-5 grid in n (100, 200, 500, 1000, ...), floor 100. A published value is always a grid value.
-- **No result-binding size cap.** Each value terminates by its own mechanism (below). The only bound is operational and derived from the protocol's own memory budget: instances are generated only while the raw float32 vectors array fits 32 GB (n·d·4 bytes ≤ 32 GB; at d=2, n ≈ 4×10⁹) — beyond that, the input itself cannot exist under the protocol.
-- **Machine:** the named benchmark machine.
-- **Memory budget:** 32 GB peak, enforced during runs by an RSS watchdog; a watchdog kill is a fail and costs no more than the kill.
-- **Timing:** end-to-end from raw vectors — a tool's distance/setup work is part of its cost.
-- **Quality metric:** the max-min objective — the smallest pairwise distance in the selection — chosen for maximum tool compatibility: no other objective is supported by as many suite tools (it is not universal — DPPy pursues no diversity objective, apricot-select pursues max-sum). Tools that optimize a different objective are still scored on max-min, with the mismatch disclosed; a tool that clears the 90% line at no size renders as a dash with a footnote. At d=2 the harness scores selections with a spatial index (min separation via nearest-neighbor queries, O(k log k)), so evaluation stays cheap at any generatable size.
+Hence, this page aims at describing a **practical, unambiguous protocol that can answer the _solver scaling_ question** in a sufficiently nuanced way in order to be practical and informative, while still keeping the protocol executable **in a reasonable amount of time** (hours or days, not weeks or months).
 
-## Constants
+## II. The Three Nested Axes
 
-| Constant | Value | Reading |
-|---|---|---|
-| T (reference budget) | 60 s | "within one minute" — a human unit, not a tuned number |
-| M (long-budget multiple) | 15 | long-budget reference runs get M·T = 15 min, "a quarter of an hour" |
-| Gap threshold | 0.9 | "closes at least 90% of the random-to-best gap" |
-| Q_rand sample | 32 | uniform random size-k selections, median objective |
-| Seeds S | 3 / 5 | 3 for deterministic-or-nearly tools, 5 for stochastic ones (max-div) |
-| Memory cap | 32 GB | shared by the run watchdog and the memory-size definition |
+We aim to determine **maximum solvable problem size** under three different constraint regimes, each tighter than the previous:
 
-T and M are the two computability knobs: T bounds every within-T probe, M·T bounds every long-budget reference run.
+- **Memory**: maximum problem size a solver can handle _**within a given memory budget**_.
+- **Time**: maximum problem size a solver can handle within the same memory budget _**and within a given (wall clock) time budget**_. (on a specified reference machine)
+- **Quality**: maximum problem size a solver can handle within the same memory and time budget, while _**achieving optimality (=diversity) sufficiently close to the best known solution**_.
 
-## The three definitions
+These three descriptions are consciously kept qualitative in nature.  The next section nails down the quantitative aspects of these axes and establishes what we mean by _problem size_.
 
-- **Memory** — the largest grid size whose peak memory stays within 32 GB in the tool's most memory-efficient configuration. Determined by calibrated extrapolation as the standard method: a per-tool memory model, checked against the tool's documented structure, is fitted to measured peak RSS from runs at smaller sizes (two completed sizes minimum) and read off at the 32 GB crossing, rounded down to the grid. No run is executed at the value to confirm it — at full memory most tools are far too slow to run at all — and because extrapolation is the standard method for every tool, the value carries no special provenance mark.
-- **Time** — the largest grid size at which the tool returns a valid size-k selection within T, under the memory cap, on the median seed — in its fastest valid configuration: the fastest standard, user-configurable setting that still produces a valid selection (max-div: purely random initialization, no optimization steps; exact solvers: stop at first feasible solution; one-shot tools: their only mode). Each tool's pinned configuration is listed on the [Time](time.md) page. Expected to land near the memory size for most tools — the binding cost is mandatory per-item overhead, not search.
-- **Quality** — the largest grid size (≤ the time size by construction) at which the tool's median quality, in its standard quality configuration (the same configuration the head-to-head pages measure) at budget T, clears `Q_rand + 0.9 · (Q_best − Q_rand)`. `Q_rand` is the median objective over 32 uniform random size-k selections; `Q_best` is defined below.
+## III. Fundamental Constants & Invariants
 
-**Nesting.** No memory → no solution → no good solution: each value can only be at or below the previous, so a tool's row reads as a sequence of tightening claims. The third ≤ the second is structural: a tool that returns a good answer within T in its quality configuration also returns *some* answer within T in its fastest valid configuration.
+- **problem size**: defined as item count (`n`) of built-in benchmarking problem `U1`:
+  - see the [Problem U1 description](../../solver/problem_u1.md): `d=2`, `k=n/10`, clustered item distribution + background distribution + outliers.
+  - _**unconstrained**_: since most 3rd party solvers don't handle constrained problems, we choose an unconstrained (no fairness constraints) problem, so we don't exclude any solvers from the start.
+  - _**fixed dimensionality**_: some solvers explicitly build a full pairwise distance matrix at solver start (O(n^2) in time and memory), others compute distances lazily as needed (O(n.d) in memory).  In order to be able to distinguish both types we choose to keep `d` fixed and not let it scale proportionally with `n`.
+  - _**granularity**_: we only evaluate a fixed set of problem sizes **N = {20, 50, 100, 200, 500, ..., 2e9}** — a 1-2-5 grid — in order to keep total benchmarking time limited and to explicitly acknowledge the accuracy limitations inherent to a time-constrained testing protocol.  The lower end (`n=20`) is the smallest size our benchmark problems build at; the upper end (`n=2e9`) is the largest grid value for which the raw vector data alone (8 bytes per item: `d=2` in float32) fits the memory budget `M_max` defined below (`5e9` no longer does).
+  - _**distance metric**_: L2 distance, as this has widest support among competing solvers.
+  - _**diversity metric**_: `max-min` (or `minimal separation`), as this has the widest support among competing solvers.  Some solvers can only be configured to optimize for a different metric (or don't explicitly optimize at all), in which case this is explicitly indicated.
+- **memory**: we define the memory budget as **M_max = 32GB** in line with typical memory of current high-end desktop machines.  Memory budget is defined as the **peak RSS memory usage** of the solver, excluding any memory used for problem construction before triggering the solver itself.
+- **time**: we define time budget as **T_max = 1min**, mostly driven by keeping the overall protocol executable.  Time is measured **end-to-end**: the clock runs from handing the raw input vectors to the solver until it returns a selection, so any distance computation or other setup work the solver performs is included in its cost.
+- **machine**: all measurements are executed on the same reference machine: an Apple M3 Max (12 performance cores, 4 efficiency cores).
+- **seeding**: every solver run uses the fixed seed `42`, except where a phase explicitly enumerates multiple seeds (the quality runs of IV.D.3).
+- **quality**: the minimum solution quality (=diversity) threshold is defined as **Q_threshold = 0.1 Q_random + 0.9 Q_best_known**, i.e. the solver reached at least 90% of the quality delta between a purely random selection and the best known solution.
 
-## The best-known solution
+## IV. Measurement Protocol
 
-**`Q_best(n)` = the best solution any tool in the suite produces within M·T at size n.**
+### IV.A. Solver Configurations
 
-No tool is excluded by category — only by producing nothing within M·T. The candidate pool is the union of the dedicated long-budget runs (below) and every within-T quality run (T < M·T, so those results are trivially candidates); the final value is taken at analysis time.
+Different solvers come with different tuning knobs to influence their runtime, memory consumption, result quality.  Knowledgeable users should therefore be assumed to use a **solver tuned optimally for the scenario** at hand: memory-bound, time-constrained or quality-focussed.
 
-**Scheduling rule** — a dedicated M·T run is scheduled wherever it could improve on what the tool's within-T runs can produce:
+Our testing protocol implements the same spirit in order to avoid testing a 3rd party solver in a specific configuration that favors some scenarios above others:
 
-- **Budget-responsive tools** (max-div with parallel default workers; the exact solvers, whose anytime incumbents improve with budget): every grid size they reach.
-- **One-shot deterministic tools**: only the completion band — sizes where the within-T run does not finish but an M·T run might (for an O(nk) tool at fixed k/n, ×15 budget buys roughly ×4 in n: one or two grid steps).
-- **Samplers** (DPPy, qc-selector): no dedicated runs — best-of-restarts at M·T would be our wrapper, not the tool's standard usage. Their within-T results still enter the candidate pool.
+- Each **solver** can potentially be represented by multiple **solver configurations** in our testing protocol.  
+- Each solver configuration will be tested independently
+- For any of the three axes and any considered problem size `n`, the best result for each solver across its configurations will be taken, assuming a user would also pick the most optimal one for the use case at hand
+- Solver configurations considered in our testing protocol are listed in detail [here](solver_configs.md).
 
-**Judge independence.** Every long-budget run uses a single pre-registered seed, and the schedule (which tools, which sizes, which seeds) is frozen before any quality run is examined. No run is added or repeated in reaction to candidate results. A single seed is safe as well as clean: parallel best-of-N is internally variance-reduced, and the candidate-pool union floors the best-known solution at the within-T field's best, so an unlucky long-budget run cannot drag it below.
+### IV.B. Memory-Bound Setting
 
-**Stated properties:**
+#### IV.B.1. Considerations
 
-- The best-known solution's long-budget term is usually produced by max-div itself. The pool definition keeps this honest — wherever any competitor beats it within M·T, the competitor sets the reference — and where the exact solvers prove optimality within M·T, the reference is a certified optimum, which also validates the 0.9 line at the small end.
-- At sizes where no M·T run betters the within-T field, the per-size winner defines the line it is scored against and passes by construction — the degeneracy the M·T term exists to remove returns locally there.
-- A re-measure that improves the best-known solution lowers every tool's quality size retroactively.
-- At sizes where every tool scores near-random, the gap collapses and the 90% line is trivially cleared; the quality size degenerates toward the time size there.
-- The per-size gap-closure fractions are published in the record table, so readers see margins, not just pass/fail against the 0.9 line.
-- The best-known solutions themselves are published as a per-size provenance table — best result obtained, which tool produced it, under what configuration and budget (within-T quality run or M·T run) — on the [Quality](quality.md) page. The "usually max-div's own" property above is thereby a checkable fact, not an assertion.
+We assume...
+- memory usage increases monotonically with increasing `n` and does so either linearly or quadratically
+- memory usage is sufficiently deterministic to not require multiple runs with different seeds
 
-## Campaign structure — four sequential stages
+Since the memory-bound setting is the least restrictive and the only one that does not consider time budget constraints, care needs to be taken to keep the protocol practical.  
 
-The measurement campaign splits into four dedicated stages; each stage prunes or feeds the next, and each is independently resumable.
+Therefore we will...
+- limit actual measurements to our earlier defined time budget T_max
+- extrapolate observations beyond T_max, if needed, to determine the largest `n` with the memory budget M_max.
 
-1. **Time measurements.** Per tool: ascend the grid from the floor in the fastest valid configuration, budget T per run, stop at the first fail (monotonicity in n at fixed k/n is assumed). Peak RSS is recorded on every run. Passes are fast by construction; fails cost T. → time values, which bound stage 4's grids.
-2. **Memory-model fits.** Desk work, no runs: per tool, fit the memory model to the recorded peaks at the largest sizes that tool completed, checked against its documented memory structure, and read off the 32 GB crossing → memory values. Exception rule: a tool whose memory-optimal configuration differs from its fastest valid one gets a few dedicated small runs in the memory-optimal configuration.
-3. **Long-budget reference runs.** The frozen pre-registered schedule per the rule above, each run killed at M·T. Runs before stage 4, so judge independence is visible in the protocol order.
-4. **Quality runs.** Per tool: S seeded runs at budget T in the quality configuration, at grid sizes up to its time value; median quality per size → quality values against Q_rand and the best-known-solution pool. A tool clearing the line at no size publishes a dash with a footnote.
+#### IV.B.2. Protocol
 
-**Pass criteria** everywhere use the median seed. All kills (T, M·T, RSS) are hard kills counted as fails.
+```
+For each solver configuration:
+  - For each `n` in `N`:
+    - Run the solver configuration under hard **M_max** and **T_max** 
+      constraints (killing the solver when exceeding either)
+    - Each run resulting in `success`, `T_exceeded` or `M_exceeded` outcome
+    - Record memory usage M(n) for each evaluated n and stop after 
+      the first `*_exceeded` outcome
+  - if the final run resulted in `M_exceeded` or `success`:
+    - Record the last successful `n` (or None if there is none) as the result for this solver configuration
+  - if the final run resulted in `T_exceeded`:
+    - if # successes >= 3
+      - Perform a least-squares regression f(n) = c0 + c1*n + c2*(n^2) through 
+        all obtained observations M(n), enforcing c0>=0, c1>=4d=8 (assuming 8 bytes per vector minimal memory usage), c2 >= 0.
+      - Find the largest `n` in `N` for which f(n) <= M_max
+      - Record this `n` as this solver configuration's
+        maximum problem size in the memory-bound setting
+    - if # successes = 2
+      - Same procedure but using a linear regression
+    - if # successes = 1
+      - Record that single `n` as the result for this solver configuration
+    - if # successes = 0
+      - Record 'None' as the result
+```
+
+### IV.C. Time-Bound Setting
+
+#### IV.C.1. Considerations
+
+The time-bound setting adds the time budget T_max on top of the memory budget — but the measurement runs of the memory-bound setting (IV.B.2) already enforce both budgets: every run there was executed under hard M_max and T_max kills.  No additional runs are therefore needed; the time-bound result is derived from the runs already executed.
+
+We assume...
+- runtime increases monotonically with increasing `n`, so the first `*_exceeded` outcome bounds all larger sizes
+- a single run per (configuration, `n`) decides the pass/fail verdict: runtime noise can at worst shift a result by one step in `N`, an inaccuracy the granularity of `N` already accepts
+
+#### IV.C.2. Protocol
+
+```
+For each solver configuration:
+  - Take the run outcomes of the memory-bound protocol (IV.B.2)
+  - Record the largest `n` in `N` with a `success` outcome as this solver
+    configuration's maximum problem size in the time-bound setting
+    (`None` if no run succeeded)
+```
+
+### IV.D. Quality-Bound Setting
+
+The additional criterion that comes into play here is `median(Q_observed) >= 0.1 Q_random + 0.9 Q_best_known` (the median taken over seeds, see IV.D.4).  So we need 3 elements here
+
+- `Q_observed`: regular solver executions within `T_max` and `M_max` but now using different seeds for non-deterministic solvers that support seeding (as opposed to memory and time usage, quality _is_ expected to be strongly influenced by random seeds)
+- `Q_random`: determined as the median quality (diversity) of 31 random selections of size `k` for each relevant `n`
+- `Q_best_known`: taken as the best (for each relevant `n`) observed quality...
+  - over all `Q_observed` (any solver configuration) 
+  - AND over all `Q_extended`: results of extended-budget runs (`T_extended = 15 T_max`, see IV.D.2) (any solver configuration)
+
+#### IV.D.1. Determining `Q_random`
+
+> `Q_random` is recorded per `n`.
+
+```
+- determine n_max = largest n for any solver under the time-bound setting
+- for each n <= n_max in `N`:
+  - determine 31 randomized selections of size `k`
+  - compute the selection quality (diversity) of each such random selection
+  - the median value is recorded as `Q_random(n)` 
+```
+
+#### IV.D.2. Determining `Q_extended`
+
+> `Q_extended` is recorded per `(solver_config, n)`.
+
+```
+- determine n_max = largest n for any solver under the time-bound setting
+- for each solver configuration:
+  - for each n <= n_max in `N`:
+    - execute the solver under `M_max` memory constraint and `T_extended = 15 T_max` time budget
+    - if the solver finished successfully within memory and (extended) time budget, record the selection quality (diversity) as `Q_extended` for this `(solver_config, n)`
+    - if the solver exceeded the memory or (extended) time budget, proceed with the next solver config
+```
+
+#### IV.D.3. Determining `Q_observed`
+
+> `Q_observed` is recorded per `(solver_config, n, seed)`.
+
+```
+- for each solver configuration:
+  - determine `n_max` for this solver config as the largest `n` under the time-bound setting
+  - if `n_max = None`, record `None` for all `Q_observed` for this solver config
+  - if `n_max != None`:
+    - determine `n_seeds`:
+      - if the solver is deterministic and/or does not support seeds: `n_seeds = 1`
+      - otherwise: `n_seeds = 3`
+    - for each n <= n_max in `N`:
+      - for each `seed = 1,...,n_seeds`:
+        - execute the solver and record the selection quality (diversity) as `Q_observed` for this `(solver_config, n, seed)`
+```
+
+#### IV.D.4. Determining the quality-bound problem size limits
+
+> The quality-bound problem size limit is recorded per `solver_config`.  No solver runs are involved in this phase; it only combines the quantities recorded in IV.D.1–IV.D.3.
+
+```
+- determine n_max = largest n for any solver under the time-bound setting
+- for each n <= n_max in `N`:
+  - `Q_best_known(n)` = the maximum over all recorded `Q_observed(*, n, *)`
+    (all solver configs, all seeds) and all recorded `Q_extended(*, n)`
+  - `Q_threshold(n)` = 0.1 `Q_random(n)` + 0.9 `Q_best_known(n)`
+- for each solver configuration:
+  - for each n <= n_max of this solver config (as in IV.D.3):
+    - `Q_median(solver_config, n)` = the median over seeds of
+      `Q_observed(solver_config, n, *)`
+  - record the largest `n` for which `Q_median(solver_config, n) >= Q_threshold(n)`
+    as this solver configuration's maximum problem size in the quality-bound
+    setting (`None` if no such `n` exists)
+```
+
+Note that a `Q_observed` value competes for `Q_best_known` per seed (a lucky draw is still a known solution), while the pass/fail verdict uses the per-config **median** over seeds — so a lucky seed can raise the bar for everyone, but can never carry its own configuration over it.

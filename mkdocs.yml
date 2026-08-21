@@ -164,6 +164,7 @@ nav:
       - Comparison: benchmarks/third_party/comparison.md
       - Solver Scaling:
         - Protocol: benchmarks/third_party/scaling/protocol.md
+        - Solver Configurations: benchmarks/third_party/scaling/solver_configs.md
         - Memory: benchmarks/third_party/scaling/memory.md
         - Time: benchmarks/third_party/scaling/time.md
         - Quality: benchmarks/third_party/scaling/quality.md
