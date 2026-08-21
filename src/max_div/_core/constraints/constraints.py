@@ -41,9 +41,8 @@ Notes:
     - con_indices is usually treated as a read-only data structure that models membership of indices to constraints
     - con_values, however, is often modified during sampling to reflect how many more samples are needed, hence to keep
                   track of constraint satisfaction as sampling / solving a problem is progressing.
-    - to_numpy_membership() derives the inverse mapping (item -> constraints containing it) from con_indices,
-                  packed into a single array with the same layout (start/end header, then concatenated
-                  segments); see its docstring for details.
+    - to_numpy_membership() derives the inverse mapping (item -> constraints containing it) from con_indices;
+                  see its docstring for the packed layout.
 
 """
 

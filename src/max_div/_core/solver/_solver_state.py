@@ -131,7 +131,7 @@ class SolverState:
     #  Copy
     # -------------------------------------------------------------------------
     def copy(self) -> SolverState:
-        """Returns a deep copy of the current state."""
+        """Return an independent copy of the state; the read-only membership array is shared, not duplicated."""
         return SolverState(
             n=self._n,
             k=self._k,
