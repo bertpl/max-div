@@ -16,7 +16,7 @@ a flat ranking across them would be misleading:
   given.
 
 The tables below make those categories explicit. Terminology for the objective columns is defined
-in [Objectives & the Diversity-Problem Landscape](concepts/objectives.md), and each tool's name
+in [Objectives & the Diversity-Problem Landscape](../../concepts/objectives.md), and each tool's name
 links to its [profile](solvers/index.md), where the same capabilities are laid out one tool at a
 time with the reasoning behind every mark.
 

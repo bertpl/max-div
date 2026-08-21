@@ -34,7 +34,7 @@ allowed to run, so it can be stopped at any moment and still return something us
 anytime by design: you give it a time budget or an iteration count, and it returns the best
 [selection](#selection) found within it. This is the property that distinguishes it from
 single-shot pickers, which produce one answer in one pass and cannot use a larger budget — see
-[Comparison with Other Tools](../comparison.md).
+[Comparison with Other Tools](../benchmarks/third_party/comparison.md).
 
 ## Constraint group { #constraint-group }
 

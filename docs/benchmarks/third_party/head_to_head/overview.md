@@ -2,7 +2,7 @@
 
 These pages benchmark `max-div` empirically against other freely available subset-selection
 tools. They are the quantitative companion to the qualitative
-[Comparison with Other Tools](../../comparison.md) page: that page maps the *categories* of
+[Comparison with Other Tools](../comparison.md) page: that page maps the *categories* of
 tool and their feature trade-offs; these pages measure how they actually *perform*.
 
 !!! note "Problem naming vintage"
@@ -13,7 +13,7 @@ tool and their feature trade-offs; these pages measure how they actually *perfor
     - their `C2` is the exact-quota problem (now `C1`)
     - sizes are stated as the old `size` parameter (n ≈ 100·size)
 
-    The [current problem definitions](../solver/test_problems.md) describe today's suite.
+    The [current problem definitions](../../solver/test_problems.md) describe today's suite.
 
 The comparison runs in three tiers, by what `max-div` is measured against:
 

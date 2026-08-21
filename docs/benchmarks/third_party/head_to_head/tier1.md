@@ -2,7 +2,7 @@
 
 How close does `max-div` get to *provably optimal* solutions, and what does proving
 optimality cost? This page anchors the heuristic quality numbers to exact references
-(CP-SAT and SCIP), on the built-in [benchmark problems](../solver/test_problems.md).
+(CP-SAT and SCIP), on the built-in [benchmark problems](../../solver/test_problems.md).
 
 ## Protocol
 
@@ -28,7 +28,7 @@ CP-SAT certifies the max-min optimum up to n = 300 within the cap (the proof cli
 around n = 400; constraints *help* — they prune the conflict graph). max-div's gap to the
 certified optimum, mean over 3 seeds:
 
---8<-- "docs/benchmarks/comparison/results/tier1_maxmin_gap.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_maxmin_gap.md"
 
 Reading: max-div lands within roughly 10 % of the proven optimum in ~100 ms and ~2–9 % at
 the ladder top, occasionally hitting the optimum exactly — while the exact solver needs up
@@ -43,7 +43,7 @@ model. Its proofs stop far below the generators' smallest problem (n = 100), whi
 backend runs it — time to certified optimality on a d=4 random family (k = n/10, geomean;
 each backend stops at its first timeout):
 
---8<-- "docs/benchmarks/comparison/results/tier1_scaling.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_scaling.md"
 
 CP-SAT with 8 parallel workers is the strongest backend and still times out at n = 100
 (cap 1 h; the trend suggests ~2 h would be needed, and n = 110+ is out of reach). The
@@ -59,7 +59,7 @@ generous cap on two shipped problems, and its **incumbent** — best solution fo
 optimality certificate; the bound gap column shows how far the proof remained — is compared
 against max-div's 1-second ladder rung:
 
---8<-- "docs/benchmarks/comparison/results/tier1_incumbent_geomean.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_incumbent_geomean.md"
 
 On the unconstrained problem (U3), max-div reaches within ~1 % of the exact solver's 3-hour
 incumbent in one second. On the constrained problem (C4), max-div's 1-second solution

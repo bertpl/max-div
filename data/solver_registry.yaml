@@ -8,7 +8,7 @@
 # category" happens to be true today, but it is an ordering coincidence, and a renderer keying off
 # it would silently highlight the wrong tool the moment a category is reordered.
 #
-# `key` is the record's file stem under docs/solvers/. Every entry must have a record and every
+# `key` is the record's file stem in the records directory (`RECORDS_DIR` in scripts/capability_data.py). Every entry must have a record and every
 # record must have an entry — scripts/capability_data.py fails on either mismatch.
 #
 # `profile: false` keeps a tool out of the per-solver profiles while keeping its row in both

@@ -527,12 +527,12 @@ def repo_copy(tmp_path):
     so they work on a copy rather than the checkout, where a tampered file would be read by
     whatever other test happened to be running at the time.
     """
-    for relative in ("data", "docs/solvers", "generated/features"):
+    for relative in ("data", "docs/benchmarks/third_party/solvers", "generated/features"):
         source = REPO_ROOT / relative
         destination = tmp_path / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(source, destination)
-    for relative in ("generated/comparison.md", "docs/comparison.md"):
+    for relative in ("generated/comparison.md", "docs/benchmarks/third_party/comparison.md"):
         shutil.copy(REPO_ROOT / relative, tmp_path / relative)
     return tmp_path
 
@@ -577,7 +577,7 @@ def test_the_check_command_fails_on_a_stale_fragment(repo_copy):
 def test_the_check_command_fails_on_a_comparison_page_missing_its_include(repo_copy):
     """The include is the only thing tying the generated tables to the page that shows them."""
     # --- arrange ----------------------
-    page = repo_copy / "docs" / "comparison.md"
+    page = repo_copy / "docs" / "benchmarks" / "third_party" / "comparison.md"
     page.write_text(page.read_text(encoding="utf-8").replace('--8<-- "generated/comparison.md"', ""), encoding="utf-8")
 
     # --- act --------------------------

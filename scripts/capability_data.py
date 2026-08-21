@@ -4,9 +4,9 @@ Three kinds of file feed this, split by what they describe:
 
 * ``data/capability_axes.yaml`` — the columns: which axes exist, their labels, hero visibility.
 * ``data/solver_registry.yaml`` — the rows: categories in order, tools in order within each.
-* ``docs/solvers/<key>.md`` — the cells and the prose. Each record's front matter is its data;
-  its body is its profile page. One file, so a capability and the text defending it cannot
-  drift apart.
+* the per-tool records under ``RECORDS_DIR`` (one ``<key>.md`` each) — the cells and the prose.
+  Each record's front matter is its data; its body is its profile page. One file, so a
+  capability and the text defending it cannot drift apart.
 
 Generated feature tables are written under ``generated/features/`` and pulled into each page by
 a snippet line, which keeps the seam between hand-authored and generated content visible. The
@@ -38,10 +38,10 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parent.parent
 AXES_FILE = REPO_ROOT / "data" / "capability_axes.yaml"
 REGISTRY_FILE = REPO_ROOT / "data" / "solver_registry.yaml"
-RECORDS_DIR = REPO_ROOT / "docs" / "solvers"
+RECORDS_DIR = REPO_ROOT / "docs" / "benchmarks" / "third_party" / "solvers"
 FRAGMENTS_DIR = REPO_ROOT / "generated" / "features"
 COMPARISON_FRAGMENT = REPO_ROOT / "generated" / "comparison.md"
-COMPARISON_PAGE = REPO_ROOT / "docs" / "comparison.md"
+COMPARISON_PAGE = REPO_ROOT / "docs" / "benchmarks" / "third_party" / "comparison.md"
 COMPARISON_INCLUDE = '--8<-- "generated/comparison.md"'
 
 SCALE_PATTERN = re.compile(r"^\d(-\d)?$")
@@ -658,10 +658,10 @@ def main() -> int:
 
     axes = load_axes(args.root / "data" / "capability_axes.yaml")
     registry = load_registry(args.root / "data" / "solver_registry.yaml")
-    records = load_records(args.root / "docs" / "solvers")
+    records = load_records(args.root / "docs" / "benchmarks" / "third_party" / "solvers")
     fragments_dir = args.root / "generated" / "features"
     comparison_fragment = args.root / "generated" / "comparison.md"
-    comparison_page = args.root / "docs" / "comparison.md"
+    comparison_page = args.root / "docs" / "benchmarks" / "third_party" / "comparison.md"
     structural, near_duplicates = validate(axes, registry, records, comparison_page)
     # Drift is only a problem in --check mode; in write mode the write is the fix. Rendering needs
     # sound data, so it is skipped when the structure is already broken.

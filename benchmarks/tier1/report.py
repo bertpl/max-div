@@ -4,7 +4,7 @@ Run with: ``uv run --group benchmarks python -m benchmarks.tier1.report``.
 Merges two result sources: max-div's ladders as measured by ``benchmarks.tier1.full`` or
 ``benchmarks.tier1.rerun`` (untracked, re-measured whenever the solver changes), and the
 exact-solver references from the tracked files in ``benchmarks/tier1/data/`` (fixed across
-max-div re-measurements). Emits markdown tables into ``docs/benchmarks/comparison/results/``.
+max-div re-measurements). Emits markdown tables into ``RESULTS_DIR``.
 """
 
 import json
@@ -17,7 +17,7 @@ from benchmarks.common.records import RunRecord, load_records
 
 RECORDS_DIR = Path("reports/benchmarks/tier1")
 DATA_DIR = Path(__file__).parent / "data"
-RESULTS_DIR = Path("docs/benchmarks/comparison/results")
+RESULTS_DIR = Path("docs/benchmarks/third_party/head_to_head/results")
 
 # Ladder rungs quoted in the gap table (seconds; must be actual ladder rungs).
 GAP_BUDGETS_SEC = (0.016, 0.128, 1.024, 16.384)

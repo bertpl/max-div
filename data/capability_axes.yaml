@@ -1,7 +1,7 @@
 # Capability axes — the COLUMNS of the capability grid.
 #
-# The rows live in solver_registry.yaml; the cells live in each tool's record under
-# docs/solvers/. Every record must carry exactly one cell per axis declared here, and may
+# The rows live in solver_registry.yaml; the cells live in each tool's record (one file per
+# tool under `RECORDS_DIR` in scripts/capability_data.py). Every record must carry exactly one cell per axis declared here, and may
 # carry no others; scripts/capability_data.py enforces both directions.
 #
 # `hero: true` means the axis appears in the README hero table as well as on the comparison
