@@ -11,11 +11,15 @@ from ._cli import cli
 @click.argument("test_problem")
 @click.option(
     "--iterations",
-    help="Number of iterations. Use this or --seconds to indicate duration.  Default=100 iter.",
+    help="Number of optimization iterations to run.  Default=100 iter.",
 )
 @click.option(
     "--seconds",
-    help="Number of seconds. Use this or --iterations to indicate duration.  Default=100 iter.",
+    help="Number of seconds to optimize for, on top of building the distances and initializing.",
+)
+@click.option(
+    "--total-seconds",
+    help="Number of seconds the whole solve may take, distances and initialization included.",
 )
 @click.option(
     "--verbosity",
@@ -36,21 +40,32 @@ def solve(
     test_problem: str,
     iterations: int | None = None,
     seconds: float | None = None,
+    total_seconds: float | None = None,
     verbosity: int = Verbosity.TABULAR,
     n: int = 1000,
     preset: str = "default",
 ) -> None:
     """Run the solver on requested benchmark problem."""
     # --- argument handling ----------------------
-    if (iterations is not None) and (seconds is not None):
-        raise click.UsageError("Please provide only one of --iterations or --seconds.")
-    if (not iterations) and (not seconds):
-        duration = TargetDuration.iterations(100)  # default to 100 iterations
-    elif iterations is not None:
+    given = {
+        flag: value
+        for flag, value in (
+            ("--iterations", iterations),
+            ("--seconds", seconds),
+            ("--total-seconds", total_seconds),
+        )
+        if value is not None
+    }
+    if len(given) > 1:
+        raise click.UsageError(f"Please provide only one of {', '.join(given)}.")
+    if iterations is not None:
         duration = TargetDuration.iterations(int(iterations))
+    elif seconds is not None:
+        duration = TargetDuration.seconds(float(seconds))
+    elif total_seconds is not None:
+        duration = TargetDuration.total_seconds(float(total_seconds))
     else:
-        # `seconds` is guaranteed non-None here by the branches above, but ty cannot see the link
-        duration = TargetDuration.seconds(float(seconds))  # ty: ignore[invalid-argument-type]
+        duration = TargetDuration.iterations(100)  # default to 100 iterations
 
     # --- show what we'll do ---------------------
     click.echo(f"Solving test problem '{test_problem}' for a duration of {duration!s} using {preset.upper()} preset...")

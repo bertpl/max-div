@@ -28,7 +28,9 @@ class TargetDuration(ABC):
     """Base class specifying how long a solver step should run.
 
     Use the factory methods `seconds`, `minutes`, `hours` for wall-clock
-    durations, or `iterations` for a fixed iteration count.
+    durations, or `iterations` for a fixed iteration count.  The `total_*`
+    factories return a budget for the whole solve rather than for the step
+    alone; see `TargetTotalTimeDuration`.
     """
 
     @abstractmethod
@@ -39,6 +41,13 @@ class TargetDuration(ABC):
     def value(self) -> float:
         """Numerical value (without unit) of the target duration."""
         raise NotImplementedError
+
+    def start_budget_clock(self) -> None:  # noqa: B027 — deliberately optional: only a total budget has a clock to start
+        """Mark the moment the solve begins, for durations measured from there.
+
+        A no-op for every duration that is measured from the start of the step that runs it;
+        `TargetTotalTimeDuration` overrides it.
+        """
 
     def __repr__(self) -> str:
         return f"TargetDuration({self!s})"
@@ -73,6 +82,18 @@ class TargetDuration(ABC):
     def iterations(cls, n_iters: int) -> TargetDuration:
         return TargetIterationCount(n_iters)
 
+    @classmethod
+    def total_seconds(cls, t_total_sec: float) -> TargetDuration:
+        return TargetTotalTimeDuration(t_total_sec)
+
+    @classmethod
+    def total_minutes(cls, t_total_min: float) -> TargetDuration:
+        return TargetTotalTimeDuration(t_total_min * 60.0)
+
+    @classmethod
+    def total_hours(cls, t_total_hours: float) -> TargetDuration:
+        return TargetTotalTimeDuration(t_total_hours * 3600.0)
+
 
 class TargetTimeDuration(TargetDuration):
     """Wall-clock time duration target, created via `seconds`, `minutes`, or `hours`."""
@@ -98,6 +119,56 @@ class TargetTimeDuration(TargetDuration):
 
     def __rmul__(self, other: float | int) -> TargetTimeDuration:
         return self.__mul__(other)
+
+
+class TargetTotalTimeDuration(TargetTimeDuration):
+    """Wall-clock budget for the whole solve, created via `total_seconds`, `total_minutes`, or `total_hours`.
+
+    A plain `seconds(60)` budget is spent by the optimization alone: building the distance store and
+    running the initialization happen on top of it, so a solve takes longer than the number asked
+    for -- at large `n` considerably longer, since the store build grows with the problem while the
+    budget does not.  A `total_seconds(60)` budget instead covers the whole solve, and the
+    optimization receives whatever the build and the initialization leave.  Use it whenever the
+    answer is due at a deadline rather than after a stretch of searching.
+
+    The clock starts when the solver begins working: `build()` for a single solver, `solve()` for a
+    portfolio, since that is where each starts spending time.  Constructing this object also starts
+    it, which is what a hand-assembled `MaxDivSolver` falls back on.
+
+    Two limits are worth knowing.  Neither the store build nor the initialization can be cut short,
+    so a budget smaller than those two together is overshot, and the optimization is then skipped
+    rather than shortened.  And there is no iteration-count counterpart: the build and the
+    initialization run no optimizer iterations, so there would be nothing for such a budget to
+    account for.
+    """
+
+    def __init__(self, t_total_sec: float) -> None:
+        super().__init__(t_total_sec)
+        self.start_budget_clock()
+
+    def start_budget_clock(self) -> None:
+        """Re-anchor the budget to start now."""
+        # monotonic() rather than perf_counter(): a portfolio's workers are separate processes, and
+        # they read this deadline against their own clock.
+        self._t_budget_start = time.monotonic()
+
+    def remaining_seconds(self) -> float:
+        """Return how much of the budget is left, which is zero once it is spent."""
+        return max(0.0, self._t_budget_start + self._t_target_sec - time.monotonic())
+
+    def track(self) -> ProgressTracker:
+        """Return a tracker over whatever is left of the budget, so a spent budget runs nothing."""
+        return _TimeTracker(self.remaining_seconds())
+
+    def __str__(self) -> str:
+        return f"{super().__str__()} total"
+
+    def __mul__(self, other: float | int) -> TargetTotalTimeDuration:
+        if not isinstance(other, (float, int)):
+            return NotImplemented
+        scaled = TargetTotalTimeDuration(max(1e-9, self._t_target_sec * other))
+        scaled._t_budget_start = self._t_budget_start  # a scaled budget keeps the original's start
+        return scaled
 
 
 class TargetIterationCount(TargetDuration):
@@ -131,6 +202,9 @@ iterations = TargetDuration.iterations
 seconds = TargetDuration.seconds
 minutes = TargetDuration.minutes
 hours = TargetDuration.hours
+total_seconds = TargetDuration.total_seconds
+total_minutes = TargetDuration.total_minutes
+total_hours = TargetDuration.total_hours
 
 
 # =================================================================================================
@@ -289,6 +363,7 @@ class Elapsed:  # noqa: PLW1641 — value-semantics-only hot-path object; delibe
 
 __ALL__ = [
     "TargetDuration",
+    "TargetTotalTimeDuration",
     "ProgressTracker",
     "Progress",
     "Elapsed",
@@ -296,4 +371,7 @@ __ALL__ = [
     "seconds",
     "minutes",
     "hours",
+    "total_seconds",
+    "total_minutes",
+    "total_hours",
 ]

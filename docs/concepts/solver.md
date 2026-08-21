@@ -73,6 +73,42 @@ solver = (
 
 This gives you full control over which strategies run, in what order, and for how long.
 
+## Budgets
+
+A budget says how long an optimization step searches, and comes in three kinds:
+
+| Budget | What it bounds |
+|---|---|
+| `iterations(10_000)` | the number of swap iterations the step performs |
+| `seconds(60)` (also `minutes`, `hours`) | the wall-clock time **that step** spends searching |
+| `total_seconds(60)` (also `total_minutes`, `total_hours`) | the wall-clock time **the whole solve** takes |
+
+The difference between the last two is what the solve does before searching starts: building the
+pairwise distances and running the initialization. A `seconds(60)` step searches for a full minute
+*after* that work, so the solve takes longer than a minute — the more so at large `n`, where the
+distance build grows with the problem while the budget does not:
+
+```python
+from max_div.solver import MaxDivSolverBuilder, SolverPreset, total_seconds
+
+solution = (
+    MaxDivSolverBuilder(problem)
+    .with_preset(total_seconds(60), SolverPreset.SMART)   # a minute, all in
+    .build()                                              # the budget starts here
+    .solve()
+)
+```
+
+With a total budget the optimization receives what the build and the initialization leave, so the
+answer arrives when it is due. Reach for it whenever a deadline is what you actually have; reach
+for `seconds` when you want a stretch of searching and do not mind the setup on top.
+
+Two limits are worth knowing. Neither the distance build nor the initialization can be cut short,
+so a total budget smaller than those two together is overshot — the optimization is then skipped
+rather than shortened, and the initialization's selection is the answer. And there is no
+`total_iterations`: the build and the initialization run no optimizer iterations, so an
+end-to-end iteration count would have nothing to account for.
+
 ## Distance Storage
 
 During search the solver reads pairwise distances constantly, and how they are stored is

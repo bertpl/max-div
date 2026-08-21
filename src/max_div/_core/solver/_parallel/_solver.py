@@ -72,6 +72,11 @@ class ParallelMaxDivSolver:
             ValueError: If no worker reported a result, which means every one of them failed.
         """
         progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)
+        # A total time budget starts here rather than at build(): a portfolio's build only assembles
+        # configurations, and the store below plus the worker spawns are the first cost it carries.
+        for config in self._solver_configs:
+            for step in config.solver_steps:
+                step.start_budget_clock()
         with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:
             results = run_portfolio(
                 self._solver_configs,

@@ -215,6 +215,7 @@ nav:
       - Duration:
         - TargetDuration: reference/solver/TargetDuration.md
         - TargetTimeDuration: reference/solver/TargetTimeDuration.md
+        - TargetTotalTimeDuration: reference/solver/TargetTotalTimeDuration.md
         - TargetIterationCount: reference/solver/TargetIterationCount.md
         - Duration helpers: reference/solver/duration_helpers.md
     - Solution:

@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import pytest
 
@@ -13,6 +15,7 @@ from max_div._core.solver import (
     Verbosity,
     iterations,
     seconds,
+    total_seconds,
 )
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
@@ -300,3 +303,74 @@ def test_with_preset_switches_init_on_constraints(
 
     # --- assert -----------------------
     assert isinstance(builder._solver_steps[0]._strategy, expected_init)
+
+
+# =================================================================================================
+#  MaxDivSolverBuilder - Total time budget
+# =================================================================================================
+def test_build_starts_the_total_budget(dummy_problem):
+    """Time between configuring the budget and building is not charged to it -- the build is where it starts."""
+    # --- arrange ----------------------
+    duration = total_seconds(10.0)
+    builder = MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM)
+    time.sleep(0.05)
+
+    # --- act --------------------------
+    builder.build()
+
+    # --- assert -----------------------
+    assert duration.remaining_seconds() > 9.9
+
+
+def test_a_total_budget_covers_the_distance_store_build(dummy_problem):
+    """The point of the budget: a solve fits in it, where a step budget of the same length overruns it."""
+    # --- arrange ----------------------
+    budget_sec = 0.4
+
+    # --- act --------------------------
+    t_start = time.monotonic()
+    MaxDivSolverBuilder(dummy_problem).with_preset(total_seconds(budget_sec), SolverPreset.RANDOM).build().solve(
+        verbosity=Verbosity.SILENT
+    )
+    t_end_to_end = time.monotonic() - t_start
+
+    # --- assert -----------------------
+    # a batch boundary and assembling the solution land after the deadline, hence the allowance
+    assert t_end_to_end < budget_sec + 0.3
+
+
+def test_a_total_budget_spent_before_solving_skips_the_optimization(dummy_problem):
+    """A build that outlasts the budget leaves the initialization's selection as the answer."""
+    # --- arrange ----------------------
+    duration = total_seconds(0.01)
+    solver = MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM).build()
+    time.sleep(0.05)
+
+    # --- act --------------------------
+    solution = solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    optimization_step = [name for name in solution.step_durations if "OptimRandomSwaps" in name]
+    assert len(optimization_step) == 1
+    assert solution.step_durations[optimization_step[0]].n_iterations == 0
+    assert len(solution.i_selected) == dummy_problem.k
+
+
+def test_one_total_budget_bounds_a_pipeline_of_several_optimization_steps(dummy_problem):
+    """Each step aims at the same deadline, so adding steps splits the budget instead of multiplying it."""
+    # --- arrange ----------------------
+    budget_sec = 0.4
+    duration = total_seconds(budget_sec)
+    builder = (
+        MaxDivSolverBuilder(dummy_problem)
+        .add_solver_step(OptimizationStep(OptimizationStrategy.random_swaps(), duration))
+        .add_solver_step(OptimizationStep(OptimizationStrategy.guided_swaps(), duration))
+    )
+
+    # --- act --------------------------
+    t_start = time.monotonic()
+    builder.build().solve(verbosity=Verbosity.SILENT)
+    t_end_to_end = time.monotonic() - t_start
+
+    # --- assert -----------------------
+    assert t_end_to_end < budget_sec + 0.3

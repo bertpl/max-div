@@ -72,6 +72,9 @@ class SolverStep(ABC, Generic[S]):
         """
         raise NotImplementedError
 
+    def start_budget_clock(self) -> None:
+        """Tell this step's duration that the solve begins now; a step without a duration ignores it."""
+
     def get_debug_info(self) -> str:
         return self._strategy.get_debug_info()
 
@@ -147,6 +150,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             )
         super().__init__(optim_strategy)
         self._duration = duration
+
+    def start_budget_clock(self) -> None:
+        self._duration.start_budget_clock()
 
     def run(
         self,

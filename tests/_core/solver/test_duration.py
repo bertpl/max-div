@@ -1,3 +1,6 @@
+import multiprocessing
+import time
+from multiprocessing.queues import Queue
 from unittest.mock import ANY
 
 import pytest
@@ -8,12 +11,16 @@ from max_div._core.solver._duration import (
     Progress,
     ProgressTracker,
     TargetDuration,
+    TargetTotalTimeDuration,
     _IterationTracker,
     _TimeTracker,
     hours,
     iterations,
     minutes,
     seconds,
+    total_hours,
+    total_minutes,
+    total_seconds,
 )
 
 
@@ -447,3 +454,105 @@ def test_elapsed_math():
     assert s12 == Elapsed(3.5, 25)
     assert s23 == Elapsed(2.7, 18)
     assert s123 == Elapsed(3.7, 28)
+
+
+# =================================================================================================
+#  TargetTotalTimeDuration
+# =================================================================================================
+def test_total_duration_factory_methods():
+    assert isinstance(total_seconds(1.23), TargetTotalTimeDuration)
+    assert isinstance(total_minutes(2.34), TargetTotalTimeDuration)
+    assert isinstance(total_hours(3.45), TargetTotalTimeDuration)
+
+    assert total_minutes(2.0).value() == pytest.approx(120.0)
+    assert total_hours(0.5).value() == pytest.approx(1800.0)
+
+    with pytest.raises(ValueError):
+        _ = total_seconds(0.0)
+
+
+def test_a_total_budget_is_distinct_from_a_step_budget_of_the_same_length():
+    """The two answer different questions, so neither equality nor a shared hash may merge them."""
+    # --- act / assert -----------------
+    assert total_seconds(5.0) != seconds(5.0)
+    assert str(total_seconds(5.0)) != str(seconds(5.0))
+
+
+def test_a_total_budget_counts_down_from_the_moment_it_starts():
+    # --- arrange ----------------------
+    duration = total_seconds(10.0)
+
+    # --- act --------------------------
+    time.sleep(0.05)
+    remaining = duration.remaining_seconds()
+
+    # --- assert -----------------------
+    assert 9.0 < remaining < 10.0
+
+
+def test_starting_the_clock_hands_back_the_whole_budget():
+    """The solver calls this when it starts working, so time spent before that is not charged."""
+    # --- arrange ----------------------
+    duration = total_seconds(10.0)
+    time.sleep(0.05)
+
+    # --- act --------------------------
+    duration.start_budget_clock()
+
+    # --- assert -----------------------
+    assert duration.remaining_seconds() > 9.99
+
+
+def test_a_spent_total_budget_tracks_as_finished_right_away():
+    """This is what makes a solve whose build ate the budget skip its optimization instead of overrunning."""
+    # --- arrange ----------------------
+    duration = total_seconds(0.01)
+
+    # --- act --------------------------
+    time.sleep(0.05)
+    progress = duration.track().get_progress()
+
+    # --- assert -----------------------
+    assert duration.remaining_seconds() == 0.0
+    assert progress.is_finished
+
+
+def test_a_scaled_total_budget_keeps_its_type_and_its_start():
+    # --- arrange ----------------------
+    duration = total_seconds(10.0)
+    time.sleep(0.05)
+
+    # --- act --------------------------
+    scaled = duration * 2.0
+
+    # --- assert -----------------------
+    assert isinstance(scaled, TargetTotalTimeDuration)
+    assert scaled.value() == pytest.approx(20.0)
+    # started 0.05s ago and now worth 20s, so ~19.95s is left -- not the full 20s of a fresh budget
+    assert 19.0 < scaled.remaining_seconds() < 19.99
+
+    with pytest.raises(TypeError):
+        _ = duration * "invalid"
+
+
+def test_a_deadline_means_the_same_thing_in_a_spawned_process():
+    """A portfolio's workers read the parent's deadline, so the clock behind it has to be machine-wide."""
+    # --- arrange ----------------------
+    context = multiprocessing.get_context("spawn")
+    results: Queue = context.Queue()
+
+    # --- act --------------------------
+    parent_now = time.monotonic()
+    worker = context.Process(target=_report_monotonic_offset, args=(results, parent_now))
+    worker.start()
+    offset = results.get(timeout=60)
+    worker.join()
+
+    # --- assert -----------------------
+    # the offset is the spawn itself; an unrelated clock base would show up as a wild number
+    assert 0.0 <= offset < 30.0
+
+
+def _report_monotonic_offset(results: Queue, parent_now: float) -> None:
+    """Report how far this process's monotonic clock reads past the parent's; a spawned worker entry point."""
+    results.put(time.monotonic() - parent_now)

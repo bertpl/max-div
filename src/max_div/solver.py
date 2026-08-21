@@ -15,6 +15,7 @@ from ._core.solver import (
     TargetDuration,
     TargetIterationCount,
     TargetTimeDuration,
+    TargetTotalTimeDuration,
     Verbosity,
     WorkerConfig,
     WorkerSummary,
@@ -22,6 +23,9 @@ from ._core.solver import (
     iterations,
     minutes,
     seconds,
+    total_hours,
+    total_minutes,
+    total_seconds,
 )
 
 __all__ = [
@@ -39,6 +43,7 @@ __all__ = [
     "TargetDuration",
     "TargetIterationCount",
     "TargetTimeDuration",
+    "TargetTotalTimeDuration",
     "Verbosity",
     "WorkerConfig",
     "WorkerSummary",
@@ -46,6 +51,9 @@ __all__ = [
     "iterations",
     "minutes",
     "seconds",
+    "total_hours",
+    "total_minutes",
+    "total_seconds",
 ]
 
 
