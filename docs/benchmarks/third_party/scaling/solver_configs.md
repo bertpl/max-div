@@ -21,7 +21,7 @@ For every configuration, the time budget is handed to the solver where it accept
 | skmatter | `default` | FPS selector (its only mode) |
 | apricot-select | `default` | facility-location selection, lazy greedy, RBF similarity matrix |
 | qc-selector | `maxmin` | max-min selection on a precomputed distance matrix |
-| DPPy | `default` | one exact k-DPP sample over an RBF likelihood kernel |
+| DPPy | `default` | one exact k-DPP sample over an RBF likelihood kernel, bandwidth set by the median-pairwise-distance heuristic |
 | code-FDM | `default` | FairFlow with a single color spanning all items (its unconstrained reduction) |
 
 Notes:
