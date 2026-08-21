@@ -47,7 +47,7 @@ def solve(
 ) -> None:
     """Run the solver on requested benchmark problem."""
     # --- argument handling ----------------------
-    given = {
+    given_duration_flags = {
         flag: value
         for flag, value in (
             ("--iterations", iterations),
@@ -56,8 +56,8 @@ def solve(
         )
         if value is not None
     }
-    if len(given) > 1:
-        raise click.UsageError(f"Please provide only one of {', '.join(given)}.")
+    if len(given_duration_flags) > 1:
+        raise click.UsageError(f"Please provide only one of {', '.join(given_duration_flags)}.")
     if iterations is not None:
         duration = TargetDuration.iterations(int(iterations))
     elif seconds is not None:
@@ -65,7 +65,7 @@ def solve(
     elif total_seconds is not None:
         duration = TargetDuration.total_seconds(float(total_seconds))
     else:
-        duration = TargetDuration.iterations(100)  # default to 100 iterations
+        duration = TargetDuration.iterations(100)
 
     # --- show what we'll do ---------------------
     click.echo(f"Solving test problem '{test_problem}' for a duration of {duration!s} using {preset.upper()} preset...")

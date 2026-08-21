@@ -75,7 +75,7 @@ This gives you full control over which strategies run, in what order, and for ho
 
 ## Budgets
 
-A budget says how long an optimization step searches, and comes in three kinds:
+A budget bounds how long the solver runs, and comes in three kinds:
 
 | Budget | What it bounds |
 |---|---|
@@ -84,9 +84,11 @@ A budget says how long an optimization step searches, and comes in three kinds:
 | `total_seconds(60)` (also `total_minutes`, `total_hours`) | the wall-clock time **the whole solve** takes |
 
 The difference between the last two is what the solve does before searching starts: building the
-pairwise distances and running the initialization. A `seconds(60)` step searches for a full minute
-*after* that work, so the solve takes longer than a minute — the more so at large `n`, where the
-distance build grows with the problem while the budget does not:
+pairwise distances and running the initialization.
+
+A `seconds(60)` step searches for a full minute *after* that work, so the solve takes longer than a
+minute — the more so at large `n`, where the distance build grows with the problem while the budget
+does not. A `total_seconds(60)` solve is done after a minute, whatever share of it the build took:
 
 ```python
 from max_div.solver import MaxDivSolverBuilder, SolverPreset, total_seconds
@@ -99,15 +101,11 @@ solution = (
 )
 ```
 
-With a total budget the optimization receives what the build and the initialization leave, so the
-answer arrives when it is due. Reach for it whenever a deadline is what you actually have; reach
-for `seconds` when you want a stretch of searching and do not mind the setup on top.
-
-Two limits are worth knowing. Neither the distance build nor the initialization can be cut short,
-so a total budget smaller than those two together is overshot — the optimization is then skipped
-rather than shortened, and the initialization's selection is the answer. And there is no
-`total_iterations`: the build and the initialization run no optimizer iterations, so an
-end-to-end iteration count would have nothing to account for.
+- Neither the distance build nor the initialization can be cut short, so a total budget smaller
+  than those two together is overshot: the optimization is then skipped rather than shortened, and
+  the initialization's selection is the answer.
+- There is no `total_iterations`. The build and the initialization run no optimizer iterations, so
+  an end-to-end iteration count would have nothing to account for.
 
 ## Distance Storage
 

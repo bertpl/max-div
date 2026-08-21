@@ -124,22 +124,16 @@ class TargetTimeDuration(TargetDuration):
 class TargetTotalTimeDuration(TargetTimeDuration):
     """Wall-clock budget for the whole solve, created via `total_seconds`, `total_minutes`, or `total_hours`.
 
-    A plain `seconds(60)` budget is spent by the optimization alone: building the distance store and
-    running the initialization happen on top of it, so a solve takes longer than the number asked
-    for -- at large `n` considerably longer, since the store build grows with the problem while the
-    budget does not.  A `total_seconds(60)` budget instead covers the whole solve, and the
-    optimization receives whatever the build and the initialization leave.  Use it whenever the
-    answer is due at a deadline rather than after a stretch of searching.
+    Where a `seconds` budget is spent by the optimization alone, this one also covers the distance
+    store build and the initialization that precede it, and the optimization receives what those
+    two leave.  The "How the Solver Works" page compares the budget kinds.
 
     The clock starts when the solver begins working: `build()` for a single solver, `solve()` for a
-    portfolio, since that is where each starts spending time.  Constructing this object also starts
-    it, which is what a hand-assembled `MaxDivSolver` falls back on.
+    portfolio.  Constructing this object also starts it, which is what a hand-assembled
+    `MaxDivSolver` falls back on.
 
-    Two limits are worth knowing.  Neither the store build nor the initialization can be cut short,
-    so a budget smaller than those two together is overshot, and the optimization is then skipped
-    rather than shortened.  And there is no iteration-count counterpart: the build and the
-    initialization run no optimizer iterations, so there would be nothing for such a budget to
-    account for.
+    Neither the store build nor the initialization can be cut short, so a budget smaller than those
+    two together is overshot, and the optimization is skipped rather than shortened.
     """
 
     def __init__(self, t_total_sec: float) -> None:
@@ -167,7 +161,8 @@ class TargetTotalTimeDuration(TargetTimeDuration):
         if not isinstance(other, (float, int)):
             return NotImplemented
         scaled = TargetTotalTimeDuration(max(1e-9, self._t_target_sec * other))
-        scaled._t_budget_start = self._t_budget_start  # a scaled budget keeps the original's start
+        # keep the original's start, so scaling mid-solve does not hand back time already spent
+        scaled._t_budget_start = self._t_budget_start
         return scaled
 
 

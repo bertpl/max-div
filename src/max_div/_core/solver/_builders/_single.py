@@ -101,7 +101,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         """Build the distance store this configuration calls for, and a solver reading it.
 
         A total time budget starts here rather than at `solve`, since the store built below is the
-        first thing it pays for.
+        first thing the budget pays for.
         """
         for step in self._solver_steps:
             step.start_budget_clock()

@@ -152,6 +152,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         self._duration = duration
 
     def start_budget_clock(self) -> None:
+        """Pass the start of the solve on to this step's duration."""
         self._duration.start_budget_clock()
 
     def run(

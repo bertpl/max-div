@@ -28,6 +28,7 @@ def test_solve_starts_the_total_budget(monkeypatch):
     remaining_when_workers_start = []
 
     def spy_run_portfolio(*args, **kwargs):
+        """Record what is left of the budget when the workers would start, and run none of them."""
         remaining_when_workers_start.append(duration.remaining_seconds())
         return []
 

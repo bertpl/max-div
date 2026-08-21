@@ -460,6 +460,7 @@ def test_elapsed_math():
 #  TargetTotalTimeDuration
 # =================================================================================================
 def test_total_duration_factory_methods():
+    """The total factories build total budgets, in the same three units as the step-budget ones."""
     assert isinstance(total_seconds(1.23), TargetTotalTimeDuration)
     assert isinstance(total_minutes(2.34), TargetTotalTimeDuration)
     assert isinstance(total_hours(3.45), TargetTotalTimeDuration)
@@ -478,49 +479,49 @@ def test_a_total_budget_is_distinct_from_a_step_budget_of_the_same_length():
     assert str(total_seconds(5.0)) != str(seconds(5.0))
 
 
-def test_a_total_budget_counts_down_from_the_moment_it_starts():
+def test_a_total_budget_counts_down_from_the_moment_it_starts(fake_clock):
+    """Constructing a total budget starts it, so a hand-assembled solver still gets sane behavior."""
     # --- arrange ----------------------
     duration = total_seconds(10.0)
 
     # --- act --------------------------
-    time.sleep(0.05)
-    remaining = duration.remaining_seconds()
+    fake_clock.advance(4.0)
 
     # --- assert -----------------------
-    assert 9.0 < remaining < 10.0
+    assert duration.remaining_seconds() == pytest.approx(6.0)
 
 
-def test_starting_the_clock_hands_back_the_whole_budget():
+def test_starting_the_clock_hands_back_the_whole_budget(fake_clock):
     """The solver calls this when it starts working, so time spent before that is not charged."""
     # --- arrange ----------------------
     duration = total_seconds(10.0)
-    time.sleep(0.05)
+    fake_clock.advance(4.0)
 
     # --- act --------------------------
     duration.start_budget_clock()
 
     # --- assert -----------------------
-    assert duration.remaining_seconds() > 9.99
+    assert duration.remaining_seconds() == pytest.approx(10.0)
 
 
-def test_a_spent_total_budget_tracks_as_finished_right_away():
-    """This is what makes a solve whose build ate the budget skip its optimization instead of overrunning."""
+def test_a_spent_total_budget_tracks_as_finished_right_away(fake_clock):
+    """A solve whose build outlasts the budget skips its optimization instead of overrunning it."""
     # --- arrange ----------------------
-    duration = total_seconds(0.01)
+    duration = total_seconds(10.0)
 
     # --- act --------------------------
-    time.sleep(0.05)
-    progress = duration.track().get_progress()
+    fake_clock.advance(11.0)
 
     # --- assert -----------------------
     assert duration.remaining_seconds() == 0.0
-    assert progress.is_finished
+    assert duration.track().get_progress().is_finished
 
 
-def test_a_scaled_total_budget_keeps_its_type_and_its_start():
+def test_a_scaled_total_budget_keeps_its_type_and_its_start(fake_clock):
+    """Scaling stays within the type and does not hand back time the original already spent."""
     # --- arrange ----------------------
     duration = total_seconds(10.0)
-    time.sleep(0.05)
+    fake_clock.advance(4.0)
 
     # --- act --------------------------
     scaled = duration * 2.0
@@ -528,11 +529,15 @@ def test_a_scaled_total_budget_keeps_its_type_and_its_start():
     # --- assert -----------------------
     assert isinstance(scaled, TargetTotalTimeDuration)
     assert scaled.value() == pytest.approx(20.0)
-    # started 0.05s ago and now worth 20s, so ~19.95s is left -- not the full 20s of a fresh budget
-    assert 19.0 < scaled.remaining_seconds() < 19.99
+    # started 4s ago and now worth 20s, so 16s is left -- not the full 20s of a fresh budget
+    assert scaled.remaining_seconds() == pytest.approx(16.0)
 
+
+def test_a_total_budget_cannot_be_scaled_by_a_non_number():
+    """The refusal to scale must surface, rather than silently producing some other type."""
+    # --- arrange / act / assert -------
     with pytest.raises(TypeError):
-        _ = duration * "invalid"
+        _ = total_seconds(10.0) * "invalid"
 
 
 def test_a_deadline_means_the_same_thing_in_a_spawned_process():
