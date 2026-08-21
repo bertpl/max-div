@@ -73,7 +73,7 @@ class ParallelMaxDivSolver:
         """
         progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)
         # A total time budget starts here rather than at build(): a portfolio's build only assembles
-        # configurations, and the store below plus the worker spawns are the first cost the budget carries.
+        # configurations, and the shared distance store plus the worker spawns are its first cost.
         for config in self._solver_configs:
             for step in config.solver_steps:
                 step.start_budget_clock()

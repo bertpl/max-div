@@ -111,10 +111,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         caller produce the distances once and assemble a solver per worker over them, where `build`
         would produce a store per solver.
 
-        A total time budget starts here rather than at `solve`, since whichever of the two callers
-        this is, the distances get built next and are the first thing the budget pays for.  Every
-        step takes its own anchored copy, so the budget the caller passed in stays unspent and can
-        configure another solver.
+        A total time budget starts here rather than at `solve`, since the distances get built next
+        either way and are the first thing the budget pays for.  Every step takes its own anchored
+        copy, so the budget the caller passed in stays unspent and can configure another solver.
         """
         for step in self._solver_steps:
             step.start_budget_clock()

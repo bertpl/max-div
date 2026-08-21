@@ -21,6 +21,9 @@ from tests.helpers import swept_benchmark_problems
     ],
 )
 @pytest.mark.parametrize("test_problem", swept_benchmark_problems())
+# the --total-seconds case runs a budget too small to reach optimization, which is fine for a
+# smoke test of the flags but warns; the warning has its own test
+@pytest.mark.filterwarnings("ignore::max_div._core._warnings.SolverBudgetWarning")
 def test_cli_solve(options: list[str], test_problem: str, expected_exit_code: int):
     # --- arrange ----------------------
     runner = CliRunner()

@@ -11,7 +11,7 @@ from ._cli import cli
 @click.argument("test_problem")
 @click.option(
     "--iterations",
-    help="Number of optimization iterations to run.  Default=100 iter.",
+    help="Number of optimization iterations to run.",
 )
 @click.option(
     "--seconds",
@@ -45,7 +45,7 @@ def solve(
     n: int = 1000,
     preset: str = "default",
 ) -> None:
-    """Run the solver on requested benchmark problem."""
+    """Run the solver on requested benchmark problem, for 100 iterations unless a budget is given."""
     # --- argument handling ----------------------
     given_duration_flags = {
         flag: value

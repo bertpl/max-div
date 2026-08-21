@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 import pytest
 
@@ -19,17 +17,17 @@ def _problem() -> MaxDivProblem:
 # =================================================================================================
 #  Total time budget
 # =================================================================================================
-def test_solve_starts_the_total_budget(monkeypatch):
+def test_solve_starts_the_total_budget(monkeypatch, fake_clock):
     """A portfolio's build only assembles configurations, so the budget starts at solve instead."""
     # --- arrange ----------------------
     duration = total_seconds(10.0)
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(duration, 2).build()
-    time.sleep(0.05)
+    fake_clock.advance(4.0)
     remaining_when_workers_start = []
 
-    def spy_run_portfolio(*args, **kwargs):
-        """Record what is left of the budget when the workers would start, and run none of them."""
-        remaining_when_workers_start.append(duration.remaining_seconds())
+    def spy_run_portfolio(configs, *args, **kwargs):
+        """Record what each worker has left when it would start, and run none of them."""
+        remaining_when_workers_start.extend(config.solver_steps[-1]._duration.remaining_seconds() for config in configs)
         return []
 
     monkeypatch.setattr(parallel_solver_module, "run_portfolio", spy_run_portfolio)
@@ -39,7 +37,8 @@ def test_solve_starts_the_total_budget(monkeypatch):
         solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
-    assert remaining_when_workers_start == [pytest.approx(10.0, abs=0.1)]
+    assert remaining_when_workers_start == [pytest.approx(10.0), pytest.approx(10.0)]
+    assert duration.remaining_seconds() == pytest.approx(6.0)  # the caller's own budget is left alone
 
 
 def test_a_spent_total_budget_reaches_the_workers_as_spent():

@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- `total_seconds()`, `total_minutes()` and `total_hours()` budget the whole solve — distance build and initialization included — where `seconds()` budgets only the optimization, with the build and initialization on top; `max-div solve` accepts the same budget as `--total-seconds`
+- `total_seconds()`, `total_minutes()` and `total_hours()` budget the whole solve, where `seconds()` budgets only the optimization that runs after the distance build and the initialization
+- `max-div solve --total-seconds` runs the solver under that whole-solve budget
 
 ### Changed
 

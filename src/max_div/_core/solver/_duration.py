@@ -45,10 +45,9 @@ class TargetDuration(ABC):
     def started_now(self) -> TargetDuration:
         """Return the duration a solve starting now should run against.
 
-        A duration measured from the start of the step that runs it returns itself;
-        `TargetTotalTimeDuration` returns a copy anchored at this moment.  The copy is what keeps a
-        budget reusable: a solver takes its own anchored duration rather than re-anchoring the one
-        the caller passed in, which any other solver may still be holding.
+        Copying rather than re-anchoring keeps a budget reusable: a solver anchors its own
+        duration, leaving the caller's for the next solver.  A duration measured from the start of
+        the step that runs it has no anchor to move, and returns itself.
         """
         return self
 
@@ -128,21 +127,21 @@ class TargetTotalTimeDuration(TargetTimeDuration):
     """Wall-clock budget for the whole solve, created via `total_seconds`, `total_minutes`, or `total_hours`.
 
     Where a `seconds` budget is spent by the optimization alone, this one also covers the distance
-    store build and the initialization that precede it, and the optimization receives what those
-    two leave.  The "How the Solver Works" page compares the budget kinds.
+    build and the initialization that precede it, and the optimization receives what those two
+    leave.  The "How the Solver Works" page compares the budget kinds.
 
     The clock starts when the solver begins working: `build()` for a single solver, `solve()` for a
-    portfolio, whose build only assembles configurations.  Each takes an anchored copy, so one
-    budget object can configure any number of solvers; constructing this object also starts it,
-    which is what a hand-assembled `MaxDivSolver` falls back on.
+    portfolio, whose build only assembles configurations.  Each solver takes an anchored copy, so
+    one budget object can configure any number of solvers.  Constructing the budget also starts it,
+    so a `MaxDivSolver` assembled without a builder counts down from construction.
 
-    **Build a single solver right before solving it.** Its deadline is fixed at `build()` -- that
-    is what lets the budget cover the build -- so anything between the two comes out of the budget,
-    including an earlier solve.  Build again to solve again.
+    **Build a single solver right before solving it**: its deadline is fixed at `build()`, which is
+    how the budget comes to cover the build, so anything between `build()` and `solve()` -- an
+    earlier solve included -- comes out of it.
 
-    Neither the store build nor the initialization can be cut short, so a budget smaller than those
-    two together is overshot, and the optimization is skipped rather than shortened.  A solve that
-    reaches its optimization with nothing left says so through a `SolverBudgetWarning`.
+    A budget smaller than the distance build and the initialization together is overshot, since
+    neither can be cut short; the optimization is then skipped rather than shortened, and says so
+    through a `SolverBudgetWarning`.
     """
 
     def __init__(self, t_total_sec: float) -> None:

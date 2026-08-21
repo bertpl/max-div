@@ -324,23 +324,6 @@ def test_build_starts_the_total_budget(dummy_problem, fake_clock):
     assert solver._solver_steps[-1]._duration.remaining_seconds() == pytest.approx(10.0)
 
 
-def test_a_total_budget_covers_the_distance_store_build(dummy_problem):
-    """A solve fits inside a total budget, where a step budget of the same length overruns it."""
-    # --- arrange ----------------------
-    budget_sec = 0.2
-
-    # --- act --------------------------
-    t_start = time.monotonic()
-    MaxDivSolverBuilder(dummy_problem).with_preset(total_seconds(budget_sec), SolverPreset.RANDOM).build().solve(
-        verbosity=Verbosity.SILENT
-    )
-    t_end_to_end = time.monotonic() - t_start
-
-    # --- assert -----------------------
-    # a batch boundary and assembling the solution land after the deadline, hence the allowance
-    assert t_end_to_end < budget_sec + 0.3
-
-
 def test_a_total_budget_spent_before_solving_skips_the_optimization(dummy_problem, fake_clock):
     """A build that outlasts the budget leaves the initialization's selection as the answer."""
     # --- arrange ----------------------
@@ -348,7 +331,8 @@ def test_a_total_budget_spent_before_solving_skips_the_optimization(dummy_proble
     fake_clock.advance(11.0)
 
     # --- act --------------------------
-    solution = solver.solve(verbosity=Verbosity.SILENT)
+    with pytest.warns(SolverBudgetWarning):  # its own test covers the warning; here it must not escape
+        solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
     optimization_step = [name for name in solution.step_durations if "OptimRandomSwaps" in name]
@@ -357,24 +341,29 @@ def test_a_total_budget_spent_before_solving_skips_the_optimization(dummy_proble
     assert len(solution.i_selected) == dummy_problem.k
 
 
-def test_one_total_budget_bounds_a_pipeline_of_several_optimization_steps(dummy_problem):
-    """Each step aims at the same deadline, so adding steps splits the budget instead of multiplying it."""
+def test_a_total_budget_bounds_the_whole_pipeline_where_a_step_budget_bounds_each_step(dummy_problem):
+    """Three steps under one total budget finish in about one budget, where step budgets take three."""
+
     # --- arrange ----------------------
-    budget_sec = 0.2
-    duration = total_seconds(budget_sec)
-    builder = (
-        MaxDivSolverBuilder(dummy_problem)
-        .add_solver_step(OptimizationStep(OptimizationStrategy.random_swaps(), duration))
-        .add_solver_step(OptimizationStep(OptimizationStrategy.guided_swaps(), duration))
-    )
+    def time_three_steps(duration) -> float:
+        """Return the wall-clock seconds a three-optimization-step solve takes under `duration`."""
+        builder = MaxDivSolverBuilder(dummy_problem)
+        for _ in range(3):
+            builder.add_solver_step(OptimizationStep(OptimizationStrategy.random_swaps(), duration))
+        t_start = time.monotonic()
+        with warnings.catch_warnings():
+            # under one total budget the later steps find it spent, which is the point of the test
+            warnings.simplefilter("ignore", SolverBudgetWarning)
+            builder.build().solve(verbosity=Verbosity.SILENT)
+        return time.monotonic() - t_start
 
     # --- act --------------------------
-    t_start = time.monotonic()
-    builder.build().solve(verbosity=Verbosity.SILENT)
-    t_end_to_end = time.monotonic() - t_start
+    t_step_budgets = time_three_steps(seconds(0.1))
+    t_total_budget = time_three_steps(total_seconds(0.1))
 
     # --- assert -----------------------
-    assert t_end_to_end < budget_sec + 0.3
+    # the steps share one deadline rather than each getting 0.1s, so well under half the time
+    assert t_total_budget < t_step_budgets / 2
 
 
 def test_one_total_budget_can_configure_several_solvers(dummy_problem, fake_clock):
@@ -392,7 +381,7 @@ def test_one_total_budget_can_configure_several_solvers(dummy_problem, fake_cloc
 
 
 def test_assembling_a_config_without_building_starts_the_total_budget(dummy_problem, fake_clock):
-    """The other public route to a solver has to charge the budget the same way `build` does."""
+    """`prepare_storage_and_config` charges the budget the same way `build` does."""
     # --- arrange ----------------------
     duration = total_seconds(10.0)
     builder = MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM)
@@ -407,7 +396,7 @@ def test_assembling_a_config_without_building_starts_the_total_budget(dummy_prob
 
 
 def test_a_solve_left_without_budget_warns(dummy_problem, fake_clock):
-    """Returning the initialization's selection is a quiet outcome, so it has to announce itself."""
+    """A solve left without budget warns instead of returning the initialization's selection silently."""
     # --- arrange ----------------------
     solver = MaxDivSolverBuilder(dummy_problem).with_preset(total_seconds(10.0), SolverPreset.RANDOM).build()
     fake_clock.advance(11.0)

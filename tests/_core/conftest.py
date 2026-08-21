@@ -48,7 +48,7 @@ class FakeClock:
 def fake_clock(monkeypatch: pytest.MonkeyPatch) -> FakeClock:
     """Replace the process wall-clock with a `FakeClock` for the duration of one test.
 
-    Patches `time.perf_counter`, `time.perf_counter_ns`, `time.monotonic` and `time.sleep`. Production code reads the
+    Patches the `time` module's clock readers and `sleep`. Production code reads the
     clock through the `time` module (never `from time import ...`), so this single patch reaches
     every reader, turning any "did enough time pass?" assertion from a wall-clock race into an exact
     check.

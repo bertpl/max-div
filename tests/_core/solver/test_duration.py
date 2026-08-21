@@ -473,14 +473,14 @@ def test_total_duration_factory_methods():
 
 
 def test_a_total_budget_is_distinct_from_a_step_budget_of_the_same_length():
-    """The two answer different questions, so neither equality nor a shared hash may merge them."""
+    """A total budget and a step budget answer different questions, so neither equality nor hash may merge them."""
     # --- act / assert -----------------
     assert total_seconds(5.0) != seconds(5.0)
     assert str(total_seconds(5.0)) != str(seconds(5.0))
 
 
 def test_a_total_budget_counts_down_from_the_moment_it_starts(fake_clock):
-    """Constructing a total budget starts it, so a hand-assembled solver still gets sane behavior."""
+    """Constructing a total budget starts it, so a solver assembled without a builder still counts down."""
     # --- arrange ----------------------
     duration = total_seconds(10.0)
 
@@ -572,5 +572,5 @@ def test_a_deadline_means_the_same_thing_in_a_spawned_process():
 
 
 def _report_monotonic_offset(results: Queue, parent_now: float) -> None:
-    """Report how far this process's monotonic clock reads past the parent's; a spawned worker entry point."""
+    """Report how far this process's monotonic clock reads past the parent's, as a spawned worker would."""
     results.put(time.monotonic() - parent_now)

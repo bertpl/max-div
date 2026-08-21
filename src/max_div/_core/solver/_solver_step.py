@@ -75,7 +75,7 @@ class SolverStep(ABC, Generic[S]):
         raise NotImplementedError
 
     def start_budget_clock(self) -> None:
-        """Anchor this step's duration at the start of the solve; a step without a duration ignores it."""
+        """Anchor this step's duration at the start of the solve; a step without a duration does nothing."""
 
     def get_debug_info(self) -> str:
         return self._strategy.get_debug_info()
@@ -224,12 +224,10 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         return SolverStepResult(score_checkpoints=score_checkpoints)
 
     def _warn_if_no_budget_left(self) -> None:
-        """Warn that this step will not run, which a total budget spent before the step reaches it causes.
+        """Warn when a total budget ran out before this step, so the step will not run.
 
-        Without this the step reports one 100%-complete row having done nothing, and the solution
-        is the initialization's -- a quiet outcome for something the caller usually wants to know
-        about, whether the build genuinely outlasted the budget or the budget had been spent by an
-        earlier solve.
+        Without the warning the step reports one 100%-complete row having done nothing, and the
+        solution is the initialization's -- a quiet outcome the caller usually wants to know about.
         """
         if not isinstance(self._duration, TargetTotalTimeDuration) or self._duration.remaining_seconds() > 0.0:
             return
@@ -238,7 +236,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             f"'{self.name()}' is skipped and the initialization's selection is the answer. Raise the "
             f"budget, or rebuild the solver if this budget already served an earlier solve.",
             SolverBudgetWarning,
-            # 4 frames up from here is the caller of solve(), past run() and solve() themselves
+            # point the warning at the caller of solve(), past run() and solve() themselves
             stacklevel=4,
         )
 
