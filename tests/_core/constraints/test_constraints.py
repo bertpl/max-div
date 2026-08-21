@@ -8,10 +8,12 @@ from max_div._core.constraints.constraints import (
     _np_con_count_satisfied,
     _np_con_indices,
     _np_con_max_value,
+    _np_con_membership,
     _np_con_min_value,
     _np_con_total_violation,
     _np_con_total_weighted_violation,
     _np_largest_con_index,
+    to_numpy_membership,
 )
 
 
@@ -65,6 +67,60 @@ def test_build_array_repr():
 
     assert np.array_equal(con_values_1, con_values_2)
     assert np.array_equal(con_indices_1, con_indices_2)
+
+
+def test_to_numpy_membership():
+    """The packed membership array inverts con_indices: per item, the sorted ids of its constraints."""
+    # --- arrange ----------------------
+    cons = [
+        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
+        Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
+        Constraint(int_set={3, 11}, min_count=2, max_count=2),
+    ]
+    n = 14
+    expected_membership = {
+        0: [0],
+        1: [0],
+        2: [0],
+        3: [0, 2],
+        4: [0],
+        5: [],
+        6: [],
+        7: [],
+        8: [],
+        9: [],
+        10: [1],
+        11: [1, 2],
+        12: [1],
+        13: [1],
+    }
+
+    # --- act --------------------------
+    _, con_indices = _build_array_repr(cons)
+    con_membership = to_numpy_membership(con_indices, m=len(cons), n=n)
+
+    # --- assert -----------------------
+    assert con_membership.dtype == np.int32
+    assert con_membership.shape[0] == 2 * n + 11  # header + one payload entry per (constraint, item) pair
+    for idx, expected_ids in expected_membership.items():
+        assert list(_np_con_membership(con_membership, idx)) == expected_ids
+    # segments are contiguous and in item order, so the payload region is exactly covered
+    assert con_membership[0] == 2 * n
+    assert con_membership[2 * n - 1] == con_membership.shape[0]
+
+
+def test_to_numpy_membership_accepts_numpy_index():
+    """The accessor takes np.int32 indices, as handed to it by SolverState's mutation methods."""
+    # --- arrange ----------------------
+    cons = [Constraint(int_set={0, 2}, min_count=1, max_count=2)]
+
+    # --- act --------------------------
+    _, con_indices = _build_array_repr(cons)
+    con_membership = to_numpy_membership(con_indices, m=1, n=3)
+
+    # --- assert -----------------------
+    assert list(_np_con_membership(con_membership, np.int32(2))) == [0]
+    assert list(_np_con_membership(con_membership, np.int32(1))) == []
 
 
 def test_np_con_min_value():

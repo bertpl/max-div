@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Constraint membership on constrained problems is now stored as one packed array instead of a dict of per-item arrays, cutting ~150 bytes per item of object overhead and building ~10x faster
 
 ### Deprecated
 
