@@ -79,19 +79,19 @@ of budget. Positive = max-div ahead.
 
 ### MIN_SEPARATION
 
---8<-- "docs/benchmarks/comparison/results/tier2_margins_min_separation.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_min_separation.md"
 
 ### MEAN_SEPARATION
 
---8<-- "docs/benchmarks/comparison/results/tier2_margins_mean_separation.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_mean_separation.md"
 
 ### GEOMEAN_SEPARATION
 
---8<-- "docs/benchmarks/comparison/results/tier2_margins_geomean_separation.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_geomean_separation.md"
 
 ### MEAN_PAIRWISE_DISTANCE
 
---8<-- "docs/benchmarks/comparison/results/tier2_margins_mean_pairwise_distance.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_mean_pairwise_distance.md"
 
 ## Constrained results
 
@@ -108,4 +108,4 @@ constraint-satisfying selections (exact solvers can, at small n — see the
 ![C1 size 10](./images/tier2_C1_10_min_separation.svg)
 ![C1 size 20](./images/tier2_C1_20_min_separation.svg)
 
---8<-- "docs/benchmarks/comparison/results/tier2_margins_constrained.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_constrained.md"

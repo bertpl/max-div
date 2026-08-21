@@ -38,14 +38,14 @@ algorithm agrees on every value.
 The discriminating set: Euclidean instances where a residual gap exists and budget moves
 it. Gap of the best-of-3-seeds solution (positive = below the published value):
 
---8<-- "docs/benchmarks/comparison/results/tier3_geo.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier3_geo.md"
 
 ## Ran — matched / exceeded / below counts
 
 Ran's distances are integers in [1, 200], so results are reported as counts (best over
 seeds and budgets), not percentage gaps. The picture splits by size:
 
---8<-- "docs/benchmarks/comparison/results/tier3_ran.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier3_ran.md"
 
 On the larger instances (n ≥ 250) max-div matches the reference on most — all 10 of 10 at
 n = 500, k = 150 — and **exceeds** it on a couple: where "exceeded" is non-zero it found a
@@ -58,7 +58,7 @@ dense ones.
 
 ## Glover — matched / exceeded counts
 
---8<-- "docs/benchmarks/comparison/results/tier3_glover.md"
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier3_glover.md"
 
 These instances (n ≤ 30) are trivial for modern methods; they are included for
 completeness of the published benchmark, not as a discriminating test.
