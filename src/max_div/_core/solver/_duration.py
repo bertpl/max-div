@@ -42,12 +42,15 @@ class TargetDuration(ABC):
         """Numerical value (without unit) of the target duration."""
         raise NotImplementedError
 
-    def start_budget_clock(self) -> None:  # noqa: B027 — deliberately optional: only a total budget has a clock to start
-        """Mark the moment the solve begins, for durations measured from there.
+    def started_now(self) -> TargetDuration:
+        """Return the duration a solve starting now should run against.
 
-        A no-op for every duration that is measured from the start of the step that runs it;
-        `TargetTotalTimeDuration` overrides it.
+        A duration measured from the start of the step that runs it returns itself;
+        `TargetTotalTimeDuration` returns a copy anchored at this moment.  The copy is what keeps a
+        budget reusable: a solver takes its own anchored duration rather than re-anchoring the one
+        the caller passed in, which any other solver may still be holding.
         """
+        return self
 
     def __repr__(self) -> str:
         return f"TargetDuration({self!s})"
@@ -129,22 +132,28 @@ class TargetTotalTimeDuration(TargetTimeDuration):
     two leave.  The "How the Solver Works" page compares the budget kinds.
 
     The clock starts when the solver begins working: `build()` for a single solver, `solve()` for a
-    portfolio.  Constructing this object also starts it, which is what a hand-assembled
-    `MaxDivSolver` falls back on.
+    portfolio, whose build only assembles configurations.  Each takes an anchored copy, so one
+    budget object can configure any number of solvers; constructing this object also starts it,
+    which is what a hand-assembled `MaxDivSolver` falls back on.
+
+    **Build a single solver right before solving it.** Its deadline is fixed at `build()` -- that
+    is what lets the budget cover the build -- so anything between the two comes out of the budget,
+    including an earlier solve.  Build again to solve again.
 
     Neither the store build nor the initialization can be cut short, so a budget smaller than those
-    two together is overshot, and the optimization is skipped rather than shortened.
+    two together is overshot, and the optimization is skipped rather than shortened.  A solve that
+    reaches its optimization with nothing left says so through a `SolverBudgetWarning`.
     """
 
     def __init__(self, t_total_sec: float) -> None:
         super().__init__(t_total_sec)
-        self.start_budget_clock()
-
-    def start_budget_clock(self) -> None:
-        """Re-anchor the budget to start now."""
         # monotonic() rather than perf_counter(): a portfolio's workers are separate processes, and
         # they read this deadline against their own clock.
         self._t_budget_start = time.monotonic()
+
+    def started_now(self) -> TargetTotalTimeDuration:
+        """Return a copy of this budget, anchored at this moment."""
+        return TargetTotalTimeDuration(self._t_target_sec)
 
     def remaining_seconds(self) -> float:
         """Return how much of the budget is left, which is zero once it is spent."""

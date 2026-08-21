@@ -492,16 +492,29 @@ def test_a_total_budget_counts_down_from_the_moment_it_starts(fake_clock):
 
 
 def test_starting_the_clock_hands_back_the_whole_budget(fake_clock):
-    """The solver calls this when it starts working, so time spent before that is not charged."""
+    """The solver anchors a copy when it starts working, leaving the caller's budget untouched."""
     # --- arrange ----------------------
     duration = total_seconds(10.0)
     fake_clock.advance(4.0)
 
     # --- act --------------------------
-    duration.start_budget_clock()
+    anchored = duration.started_now()
 
     # --- assert -----------------------
-    assert duration.remaining_seconds() == pytest.approx(10.0)
+    assert anchored is not duration
+    assert anchored.remaining_seconds() == pytest.approx(10.0)
+    assert duration.remaining_seconds() == pytest.approx(6.0)
+
+
+def test_a_step_budget_starts_now_as_itself():
+    """Only a total budget has an anchor to move, so the others hand back the very same object."""
+    # --- arrange ----------------------
+    step_budget = seconds(10.0)
+    iteration_budget = iterations(10)
+
+    # --- act / assert -----------------
+    assert step_budget.started_now() is step_budget
+    assert iteration_budget.started_now() is iteration_budget
 
 
 def test_a_spent_total_budget_tracks_as_finished_right_away(fake_clock):

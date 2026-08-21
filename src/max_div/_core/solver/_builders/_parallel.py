@@ -62,7 +62,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         worker count is the fully independent portfolio.
 
         Args:
-            target_duration: the wall-clock budget each worker runs for (see `TargetDuration`).
+            target_duration: the wall-clock budget each worker runs for (see `TargetDuration`); a
+                `total_*` budget instead sets one deadline the whole portfolio shares, so the
+                shared distance build and the worker spawns come out of it.
             workers: an integer runs the default configuration that many times; a flat sequence
                 gives one configuration per worker; a nested sequence gives one inner
                 sequence per group, fixing both grouping and configurations; omitting it

@@ -1,8 +1,10 @@
 import time
+import warnings
 
 import numpy as np
 import pytest
 
+from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
@@ -309,17 +311,17 @@ def test_with_preset_switches_init_on_constraints(
 #  MaxDivSolverBuilder - Total time budget
 # =================================================================================================
 def test_build_starts_the_total_budget(dummy_problem, fake_clock):
-    """Time between configuring the budget and building is not charged to the budget."""
+    """Time between configuring the budget and building is not charged to the solver's budget."""
     # --- arrange ----------------------
     duration = total_seconds(10.0)
     builder = MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM)
     fake_clock.advance(4.0)
 
     # --- act --------------------------
-    builder.build()
+    solver = builder.build()
 
     # --- assert -----------------------
-    assert duration.remaining_seconds() == pytest.approx(10.0)
+    assert solver._solver_steps[-1]._duration.remaining_seconds() == pytest.approx(10.0)
 
 
 def test_a_total_budget_covers_the_distance_store_build(dummy_problem):
@@ -373,3 +375,58 @@ def test_one_total_budget_bounds_a_pipeline_of_several_optimization_steps(dummy_
 
     # --- assert -----------------------
     assert t_end_to_end < budget_sec + 0.3
+
+
+def test_one_total_budget_can_configure_several_solvers(dummy_problem, fake_clock):
+    """The solver anchors a copy, so building never spends the budget the caller is holding."""
+    # --- arrange ----------------------
+    duration = total_seconds(10.0)
+
+    # --- act --------------------------
+    MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM).build()
+    fake_clock.advance(4.0)
+    MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM).build()
+
+    # --- assert -----------------------
+    assert duration.remaining_seconds() == pytest.approx(6.0)
+
+
+def test_assembling_a_config_without_building_starts_the_total_budget(dummy_problem, fake_clock):
+    """The other public route to a solver has to charge the budget the same way `build` does."""
+    # --- arrange ----------------------
+    duration = total_seconds(10.0)
+    builder = MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM)
+    fake_clock.advance(4.0)
+
+    # --- act --------------------------
+    _, config = builder.prepare_storage_and_config()
+
+    # --- assert -----------------------
+    optimization_step = config.solver_steps[-1]
+    assert optimization_step._duration.remaining_seconds() == pytest.approx(10.0)
+
+
+def test_a_solve_left_without_budget_warns(dummy_problem, fake_clock):
+    """Returning the initialization's selection is a quiet outcome, so it has to announce itself."""
+    # --- arrange ----------------------
+    solver = MaxDivSolverBuilder(dummy_problem).with_preset(total_seconds(10.0), SolverPreset.RANDOM).build()
+    fake_clock.advance(11.0)
+
+    # --- act / assert -----------------
+    with pytest.warns(SolverBudgetWarning, match="spent before optimization started"):
+        solver.solve(verbosity=Verbosity.SILENT)
+
+
+@pytest.mark.parametrize("duration", [seconds(0.05), iterations(5)])
+def test_a_step_budget_never_warns_about_a_spent_budget(dummy_problem, duration):
+    """Only a total budget can arrive spent; the warning must not fire for the other kinds."""
+    # --- arrange ----------------------
+    solver = MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM).build()
+
+    # --- act --------------------------
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert [w for w in caught if issubclass(w.category, SolverBudgetWarning)] == []

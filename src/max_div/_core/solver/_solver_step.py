@@ -1,11 +1,13 @@
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from max_div._core._utils._timer import Timer
+from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 
-from ._duration import Elapsed, Progress, TargetDuration
+from ._duration import Elapsed, Progress, TargetDuration, TargetTotalTimeDuration
 from ._progress_reporting import ProgressReporter, SilentProgressReporter
 from ._score import Score
 from ._solver_state import SolverState
@@ -73,7 +75,7 @@ class SolverStep(ABC, Generic[S]):
         raise NotImplementedError
 
     def start_budget_clock(self) -> None:
-        """Tell this step's duration that the solve begins now; a step without a duration ignores it."""
+        """Anchor this step's duration at the start of the solve; a step without a duration ignores it."""
 
     def get_debug_info(self) -> str:
         return self._strategy.get_debug_info()
@@ -152,8 +154,8 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         self._duration = duration
 
     def start_budget_clock(self) -> None:
-        """Pass the start of the solve on to this step's duration."""
-        self._duration.start_budget_clock()
+        """Take an own copy of the duration, anchored at this moment."""
+        self._duration = self._duration.started_now()
 
     def run(
         self,
@@ -165,6 +167,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         # --- init -------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
         tracker = self._duration.track()
+        self._warn_if_no_budget_left()
         score_checkpoints: list[tuple[Elapsed, Score]] = []
         next_checkpoint_iter_count = 1
 
@@ -219,6 +222,25 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             # make sure we always have a checkpoint after the last iteration
             score_checkpoints.append((elapsed, state.score))
         return SolverStepResult(score_checkpoints=score_checkpoints)
+
+    def _warn_if_no_budget_left(self) -> None:
+        """Warn that this step will not run, which a total budget spent before the step reaches it causes.
+
+        Without this the step reports one 100%-complete row having done nothing, and the solution
+        is the initialization's -- a quiet outcome for something the caller usually wants to know
+        about, whether the build genuinely outlasted the budget or the budget had been spent by an
+        earlier solve.
+        """
+        if not isinstance(self._duration, TargetTotalTimeDuration) or self._duration.remaining_seconds() > 0.0:
+            return
+        warnings.warn(
+            f"The total time budget of {self._duration} was spent before optimization started, so "
+            f"'{self.name()}' is skipped and the initialization's selection is the answer. Raise the "
+            f"budget, or rebuild the solver if this budget already served an earlier solve.",
+            SolverBudgetWarning,
+            # 4 frames up from here is the caller of solve(), past run() and solve() themselves
+            stacklevel=4,
+        )
 
     @staticmethod
     def _determine_n_iterations(progress: Progress, next_checkpoint_iter_count: int, batch_seconds: float) -> int:

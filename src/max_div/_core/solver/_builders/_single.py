@@ -71,7 +71,9 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         Please make sure to set diversity metric prior to calling this method, as it influences the choices.
 
         Args:
-            target_duration: Target duration for the init+optim phases (either in time or iterations).
+            target_duration: How long the optimization runs: an iteration count, a wall-clock time,
+                or -- via the `total_*` factories -- a wall-clock time covering the whole solve,
+                distance build and initialization included.
                 --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
             preset: Preset to use (default: SolverPreset.DEFAULT)
         """
@@ -98,13 +100,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     #  Build
     # -------------------------------------------------------------------------
     def build(self) -> MaxDivSolver:
-        """Build the distance store this configuration calls for, and a solver reading it.
-
-        A total time budget starts here rather than at `solve`, since the store built below is the
-        first thing the budget pays for.
-        """
-        for step in self._solver_steps:
-            step.start_budget_clock()
+        """Build the distance store this configuration calls for, and a solver reading it."""
         resolved, config = self.prepare_storage_and_config()
         return config.build_solver(build_distance_store(self._problem, resolved))
 
@@ -114,7 +110,14 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         `build` selects the backend and builds the store in one call.  Keeping the two apart lets a
         caller produce the distances once and assemble a solver per worker over them, where `build`
         would produce a store per solver.
+
+        A total time budget starts here rather than at `solve`, since whichever of the two callers
+        this is, the distances get built next and are the first thing the budget pays for.  Every
+        step takes its own anchored copy, so the budget the caller passed in stays unspent and can
+        configure another solver.
         """
+        for step in self._solver_steps:
+            step.start_budget_clock()
         resolved, label = self._select_storage()
         return resolved, SolverConfig(
             n=self._n,

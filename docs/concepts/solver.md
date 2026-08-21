@@ -101,11 +101,15 @@ solution = (
 )
 ```
 
-- Neither the distance build nor the initialization can be cut short, so a total budget smaller
+- **Build right before you solve.** A solver's deadline is fixed when `build()` returns it — that
+  is what lets the budget cover the build — so anything you do between building and solving comes
+  out of the budget. Build again to solve again.
+- **Neither the distance build nor the initialization can be cut short**, so a total budget smaller
   than those two together is overshot: the optimization is then skipped rather than shortened, and
-  the initialization's selection is the answer.
-- There is no `total_iterations`. The build and the initialization run no optimizer iterations, so
-  an end-to-end iteration count would have nothing to account for.
+  the initialization's selection is the answer. A solve that reaches its optimization with nothing
+  left says so through a `SolverBudgetWarning`.
+- **There is no `total_iterations`.** The build and the initialization run no optimizer iterations,
+  so an end-to-end iteration count would have nothing to account for.
 
 ## Distance Storage
 
