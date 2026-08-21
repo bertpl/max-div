@@ -1,7 +1,7 @@
 """Render the README hero capability table to light and dark SVGs.
 
 Reads the same capability data as the documentation surfaces — the axes file, the solver registry
-and the per-tool records under docs/solvers/ — and writes docs/images/hero_light.svg and
+and the per-tool records under docs/benchmarks/third_party/solvers/ — and writes docs/images/hero_light.svg and
 docs/images/hero_dark.svg. Every cell the README shows therefore traces back to the record that
 defends it, and a capability cannot say one thing here and another on the comparison page.
 

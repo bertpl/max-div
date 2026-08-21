@@ -2,7 +2,7 @@
 
 How close does `max-div` get to *provably optimal* solutions, and what does proving
 optimality cost? This page anchors the heuristic quality numbers to exact references
-(CP-SAT and SCIP), on the built-in [benchmark problems](../solver/test_problems.md).
+(CP-SAT and SCIP), on the built-in [benchmark problems](../../solver/test_problems.md).
 
 ## Protocol
 

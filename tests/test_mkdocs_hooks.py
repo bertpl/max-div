@@ -43,7 +43,7 @@ def _render(hooks, html: str, page_url: str = "") -> str:
     [
         ("", 'src="images/hero_light.svg"'),
         ("getting_started/", 'src="../images/hero_light.svg"'),
-        ("benchmarks/comparison/tier1/", 'src="../../../images/hero_light.svg"'),
+        ("benchmarks/third_party/head_to_head/tier1/", 'src="../../../../images/hero_light.svg"'),
     ],
 )
 def test_paths_are_re_anchored_onto_the_including_page(hooks, page_url, expected):

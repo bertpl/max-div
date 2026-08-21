@@ -33,7 +33,7 @@ contract, not a weakness.
 
 ## Guarantee types
 
-Each profile states one, defined in the [glossary](../concepts/glossary.md):
+Each profile states one, defined in the [glossary](../../../concepts/glossary.md):
 
 | Type | Means |
 |---|---|

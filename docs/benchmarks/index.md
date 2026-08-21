@@ -2,7 +2,7 @@
 
 This section contains three categories of benchmark results:
 
-- [**3rd Party Solvers**](./comparison/overview.md) — `max-div` against other freely available
+- [**3rd Party Solvers**](./third_party/head_to_head/overview.md) — `max-div` against other freely available
   subset-selection tools: Python heuristics, exact MIP/CP solvers, and the MDPLIB
   best-known values from the literature.
 - [**Built-in Problems**](./solver/test_problems.md) — `max-div`'s own benchmark suite: the

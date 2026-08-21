@@ -2,8 +2,8 @@
 
 How does `max-div` compare to the subset-selection tools a Python user would otherwise
 reach for? This page benchmarks it against the surveyed single-shot heuristics (see the
-[Comparison](../../comparison.md) page for the tool landscape) on the built-in
-[benchmark problems](../solver/test_problems.md).
+[Comparison](../comparison.md) page for the tool landscape) on the built-in
+[benchmark problems](../../solver/test_problems.md).
 
 ## Protocol
 

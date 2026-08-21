@@ -38,6 +38,27 @@ watch:
 
 plugins:
   - search
+  # Old URLs of the pages folded into Benchmarks → 3rd Party Solvers keep working;
+  # the README and external sites deep-link into them.
+  - redirects:
+      redirect_maps:
+        comparison.md: benchmarks/third_party/comparison.md
+        benchmarks/comparison/overview.md: benchmarks/third_party/head_to_head/overview.md
+        benchmarks/comparison/tier1.md: benchmarks/third_party/head_to_head/tier1.md
+        benchmarks/comparison/tier2.md: benchmarks/third_party/head_to_head/tier2.md
+        benchmarks/comparison/tier3.md: benchmarks/third_party/head_to_head/tier3.md
+        solvers/index.md: benchmarks/third_party/solvers/index.md
+        solvers/max-div.md: benchmarks/third_party/solvers/max-div.md
+        solvers/ortools-cpsat.md: benchmarks/third_party/solvers/ortools-cpsat.md
+        solvers/scip.md: benchmarks/third_party/solvers/scip.md
+        solvers/highs.md: benchmarks/third_party/solvers/highs.md
+        solvers/rdkit.md: benchmarks/third_party/solvers/rdkit.md
+        solvers/fpsample.md: benchmarks/third_party/solvers/fpsample.md
+        solvers/skmatter.md: benchmarks/third_party/solvers/skmatter.md
+        solvers/apricot-select.md: benchmarks/third_party/solvers/apricot-select.md
+        solvers/qc-selector.md: benchmarks/third_party/solvers/qc-selector.md
+        solvers/dppy.md: benchmarks/third_party/solvers/dppy.md
+        solvers/code-fdm.md: benchmarks/third_party/solvers/code-fdm.md
   - mkdocstrings:
       handlers:
         python:
@@ -140,10 +161,33 @@ nav:
       - C3: benchmarks/solver/presets_c3.md
       - C4: benchmarks/solver/presets_c4.md
     - 3rd Party Solvers:
-      - Overview: benchmarks/comparison/overview.md
-      - vs. Python Heuristics: benchmarks/comparison/tier2.md
-      - vs. Exact Solvers: benchmarks/comparison/tier1.md
-      - vs. MDPLIB Best-Known: benchmarks/comparison/tier3.md
+      - Comparison: benchmarks/third_party/comparison.md
+      - Solver Scaling:
+        - Protocol: benchmarks/third_party/scaling/protocol.md
+        - Memory: benchmarks/third_party/scaling/memory.md
+        - Time: benchmarks/third_party/scaling/time.md
+        - Quality: benchmarks/third_party/scaling/quality.md
+      - Head-to-Head:
+        - Overview: benchmarks/third_party/head_to_head/overview.md
+        - vs. Python Heuristics: benchmarks/third_party/head_to_head/tier2.md
+        - vs. Exact Solvers: benchmarks/third_party/head_to_head/tier1.md
+        - vs. MDPLIB Best-Known: benchmarks/third_party/head_to_head/tier3.md
+      - Solver Profiles:
+        - Overview: benchmarks/third_party/solvers/index.md
+        - Exact Solvers:
+          - OR-Tools CP-SAT: benchmarks/third_party/solvers/ortools-cpsat.md
+          - SCIP: benchmarks/third_party/solvers/scip.md
+          - HiGHS: benchmarks/third_party/solvers/highs.md
+        - One-Shot Pickers:
+          - RDKit MaxMinPicker: benchmarks/third_party/solvers/rdkit.md
+          - fpsample: benchmarks/third_party/solvers/fpsample.md
+          - skmatter: benchmarks/third_party/solvers/skmatter.md
+          - apricot-select: benchmarks/third_party/solvers/apricot-select.md
+          - qc-selector: benchmarks/third_party/solvers/qc-selector.md
+        - Samplers:
+          - DPPy: benchmarks/third_party/solvers/dppy.md
+        - Fair Selection:
+          - code-FDM: benchmarks/third_party/solvers/code-fdm.md
     - Internal Primitives:
       - Overview: benchmarks/internal/overview.md
       - DiversityMetric: benchmarks/internal/bm_diversity_metrics.md
@@ -179,22 +223,5 @@ nav:
     - Benchmark Problems:
       - BenchmarkProblem: reference/benchmark_problems/BenchmarkProblem.md
       - BenchmarkProblemFactory: reference/benchmark_problems/BenchmarkProblemFactory.md
-  - 3rd Party Solvers:
-    - Comparison: comparison.md
-    - Profiles: solvers/index.md
-    - Exact Solvers:
-      - OR-Tools CP-SAT: solvers/ortools-cpsat.md
-      - SCIP: solvers/scip.md
-      - HiGHS: solvers/highs.md
-    - One-Shot Pickers:
-      - RDKit MaxMinPicker: solvers/rdkit.md
-      - fpsample: solvers/fpsample.md
-      - skmatter: solvers/skmatter.md
-      - apricot-select: solvers/apricot-select.md
-      - qc-selector: solvers/qc-selector.md
-    - Samplers:
-      - DPPy: solvers/dppy.md
-    - Fair Selection:
-      - code-FDM: solvers/code-fdm.md
   - About:
     - Change Log: changelog.md
