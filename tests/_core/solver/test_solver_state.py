@@ -6,7 +6,7 @@ from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker, SeparationTracker
-from max_div._core.solver._solver_state import Savepoint, SolverState, _build_con_membership
+from max_div._core.solver._solver_state import Savepoint, SolverState
 
 
 # =================================================================================================
@@ -396,41 +396,9 @@ def test_solver_state_mean_pairwise_distance_score():
     assert state.score.diversity == pytest.approx((1 + 7 + 6) / 3)
 
 
-def test_build_con_membership():
-    # --- arrange ----------------------
-    cons = [
-        Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
-        Constraint(int_set={10, 11, 12, 13}, min_count=0, max_count=7),
-        Constraint(int_set={3, 11}, min_count=2, max_count=2),
-    ]
-    n = np.int32(14)
-    expected_membership = {
-        0: [0],
-        1: [0],
-        2: [0],
-        3: [0, 2],
-        4: [0],
-        5: [],
-        6: [],
-        7: [],
-        8: [],
-        9: [],
-        10: [1],
-        11: [1, 2],
-        12: [1],
-        13: [1],
-    }
-    expected_membership = {k: np.array(v, dtype=np.int32) for k, v in expected_membership.items()}
-
-    # --- act --------------------------
-    con_membership = _build_con_membership(n, cons)
-
-    # --- assert -----------------------
-    assert con_membership.keys() == expected_membership.keys()
-    for key, value in con_membership.items():
-        assert isinstance(value, np.ndarray)
-        assert value.dtype == np.int32
-        assert np.array_equal(value, expected_membership[key])
+def test_constrained_state_shares_con_membership_across_copies(new_solver_state):
+    """The packed membership array is read-only, so a copy shares it instead of duplicating it."""
+    assert new_solver_state.copy()._con_membership is new_solver_state._con_membership
 
 
 def test_unconstrained_state_skips_con_membership(new_solver_state_unconstrained):

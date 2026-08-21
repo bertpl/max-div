@@ -41,6 +41,8 @@ Notes:
     - con_indices is usually treated as a read-only data structure that models membership of indices to constraints
     - con_values, however, is often modified during sampling to reflect how many more samples are needed, hence to keep
                   track of constraint satisfaction as sampling / solving a problem is progressing.
+    - to_numpy_membership() derives the inverse mapping (item -> constraints containing it) from con_indices,
+                  packed into a single array with the same start/end-header idiom; see its docstring for the layout.
 
 """
 
@@ -128,6 +130,46 @@ def _build_array_repr(
     return con_values, con_indices
 
 
+def to_numpy_membership(con_indices: NDArray[np.int32], m: int, n: int) -> NDArray[np.int32]:
+    """Build the packed item→constraints array, the mirror image of con_indices.
+
+    Layout mirrors con_indices: a header of 2*n (start, end) positions — one pair per item —
+    followed by the concatenated per-item segments of constraint ids, each segment sorted
+    small-to-large. Items in no constraint get an empty segment. Read a segment with
+    `_np_con_membership`.
+
+    Built vectorized from the already-packed con_indices (stable argsort of the flattened
+    (constraint, item) pairs by item), so construction allocates no per-item Python objects.
+
+    Args:
+        con_indices: packed constraint→items array, as produced by ConstraintList.to_numpy().
+        m: number of constraints.
+        n: total number of items.
+
+    Returns:
+        1D int32 array of shape (2*n + total_membership,).
+    """
+    # flatten (constraint, item) pairs from con_indices
+    starts = con_indices[0 : 2 * m : 2]
+    ends = con_indices[1 : 2 * m : 2]
+    lengths = (ends - starts).astype(np.int64)
+    items = np.concatenate([con_indices[s:e] for s, e in zip(starts, ends)]) if m else np.empty(0, np.int32)
+    con_ids = np.repeat(np.arange(m, dtype=np.int32), lengths)
+
+    # stable sort by item: per-item segments come out contiguous, ids within a segment in constraint order
+    order = np.argsort(items, kind="stable")
+    payload = con_ids[order]
+    counts = np.bincount(items, minlength=n)
+    seg_ends = np.cumsum(counts)
+    seg_starts = seg_ends - counts
+
+    con_membership = np.empty(2 * n + len(payload), dtype=np.int32)
+    con_membership[0 : 2 * n : 2] = 2 * n + seg_starts
+    con_membership[1 : 2 * n : 2] = 2 * n + seg_ends
+    con_membership[2 * n :] = payload
+    return con_membership
+
+
 # =================================================================================================
 #  LOW-LEVEL HANDLING of numpy-based constraint representation
 # =================================================================================================
@@ -149,6 +191,15 @@ def _np_con_indices(con_indices: NDArray[np.int32], i_con: np.int32) -> NDArray[
     start = con_indices[2 * i_con]
     end = con_indices[2 * i_con + 1]
     return con_indices[start:end]
+
+
+# Deliberately NOT numba-compiled, unlike its mirror _np_con_indices: its only callers are
+# SolverState's Python-level mutation methods, and an njit function called from Python pays
+# boxing/dispatch overhead exceeding the two header reads it wraps.
+def _np_con_membership(con_membership: NDArray[np.int32], index: int | np.int32) -> NDArray[np.int32]:
+    """Return the constraint ids containing item `index` from the packed membership array (a view, no copy)."""
+    i = 2 * int(index)  # a python int indexes faster than a numpy scalar
+    return con_membership[con_membership[i] : con_membership[i + 1]]
 
 
 @numba.njit("int32(int32[:])", inline="always", fastmath=True, cache=True)
