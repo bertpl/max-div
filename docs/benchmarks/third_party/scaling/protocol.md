@@ -9,7 +9,7 @@ With _solver scaling_ we want to establish the **maximum problem size each solve
   - a solver might theoretically be able to solve a problem, but might require excessive amounts of time (days, months, years, ...)
   - a solver might be able to produce a solution within a reasonable amount of time, but with very low quality (e.g. diversity comparable with a random selection)
 
-Answering these questions in a nuanced way and with all corner cases taken into account would be an extensive study in itself.  
+Answering these questions in a nuanced way and with all corner cases taken into account would be an extensive study in itself.
 
 Hence, this page aims at describing a **practical, unambiguous protocol that can answer the _solver scaling_ question** in a sufficiently nuanced way in order to be practical and informative, while still keeping the protocol executable **in a reasonable amount of time** (hours or days, not weeks or months).
 
@@ -46,7 +46,7 @@ Different solvers come with different tuning knobs to influence their runtime, m
 
 Our testing protocol implements the same spirit in order to avoid testing a 3rd party solver in a specific configuration that favors some scenarios above others:
 
-- Each **solver** can potentially be represented by multiple **solver configurations** in our testing protocol.  
+- Each **solver** can potentially be represented by multiple **solver configurations** in our testing protocol.
 - Each solver configuration will be tested independently
 - For any of the three axes and any considered problem size `n`, the best result for each solver across its configurations will be taken, assuming a user would also pick the most optimal one for the use case at hand
 - Solver configurations considered in our testing protocol are listed in detail [here](solver_configs.md).
@@ -59,7 +59,7 @@ We assume...
 - memory usage increases monotonically with increasing `n` and does so either linearly or quadratically
 - memory usage is sufficiently deterministic to not require multiple runs with different seeds
 
-Since the memory-bound setting is the least restrictive and the only one that does not consider time budget constraints, care needs to be taken to keep the protocol practical.  
+Since the memory-bound setting is the least restrictive and the only one that does not consider time budget constraints, care needs to be taken to keep the protocol practical.
 
 Therefore we will...
 - limit actual measurements to our earlier defined time budget T_max
@@ -70,16 +70,16 @@ Therefore we will...
 ```
 For each solver configuration:
   - For each `n` in `N`:
-    - Run the solver configuration under hard **M_max** and **T_max** 
+    - Run the solver configuration under hard **M_max** and **T_max**
       constraints (killing the solver when exceeding either)
     - Each run resulting in `success`, `T_exceeded` or `M_exceeded` outcome
-    - Record memory usage M(n) for each evaluated n and stop after 
+    - Record memory usage M(n) for each evaluated n and stop after
       the first `*_exceeded` outcome
   - if the final run resulted in `M_exceeded` or `success`:
     - Record the last successful `n` (or None if there is none) as the result for this solver configuration
   - if the final run resulted in `T_exceeded`:
     - if # successes >= 3
-      - Perform a least-squares regression f(n) = c0 + c1*n + c2*(n^2) through 
+      - Perform a least-squares regression f(n) = c0 + c1*n + c2*(n^2) through
         all obtained observations M(n), enforcing c0>=0, c1>=4d=8 (assuming 8 bytes per vector minimal memory usage), c2 >= 0.
       - Find the largest `n` in `N` for which f(n) <= M_max
       - Record this `n` as this solver configuration's
@@ -119,7 +119,7 @@ The additional criterion that comes into play here is `median(Q_observed) >= 0.1
 - `Q_observed`: regular solver executions within `T_max` and `M_max` but now using different seeds for non-deterministic solvers that support seeding (as opposed to memory and time usage, quality _is_ expected to be strongly influenced by random seeds)
 - `Q_random`: determined as the median quality (diversity) of 31 random selections of size `k` for each relevant `n`
 - `Q_best_known`: taken as the best (for each relevant `n`) observed quality...
-  - over all `Q_observed` (any solver configuration) 
+  - over all `Q_observed` (any solver configuration)
   - AND over all `Q_extended`: results of extended-budget runs (`T_extended = 15 T_max`, see IV.D.2) (any solver configuration)
 
 #### IV.D.1. Determining `Q_random`
@@ -131,7 +131,7 @@ The additional criterion that comes into play here is `median(Q_observed) >= 0.1
 - for each n <= n_max in `N`:
   - determine 31 randomized selections of size `k`
   - compute the selection quality (diversity) of each such random selection
-  - the median value is recorded as `Q_random(n)` 
+  - the median value is recorded as `Q_random(n)`
 ```
 
 #### IV.D.2. Determining `Q_extended`
