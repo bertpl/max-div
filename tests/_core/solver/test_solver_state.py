@@ -398,6 +398,7 @@ def test_solver_state_mean_pairwise_distance_score():
 
 def test_constrained_state_shares_con_membership_across_copies(new_solver_state):
     """The packed membership array is read-only, so a copy shares it instead of duplicating it."""
+    # --- act / assert -----------------
     assert new_solver_state.copy()._con_membership is new_solver_state._con_membership
 
 

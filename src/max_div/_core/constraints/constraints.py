@@ -42,7 +42,8 @@ Notes:
     - con_values, however, is often modified during sampling to reflect how many more samples are needed, hence to keep
                   track of constraint satisfaction as sampling / solving a problem is progressing.
     - to_numpy_membership() derives the inverse mapping (item -> constraints containing it) from con_indices,
-                  packed into a single array with the same start/end-header idiom; see its docstring for the layout.
+                  packed into a single array with the same layout (start/end header, then concatenated
+                  segments); see its docstring for details.
 
 """
 
@@ -138,8 +139,8 @@ def to_numpy_membership(con_indices: NDArray[np.int32], m: int, n: int) -> NDArr
     small-to-large. Items in no constraint get an empty segment. Read a segment with
     `_np_con_membership`.
 
-    Built vectorized from the already-packed con_indices (stable argsort of the flattened
-    (constraint, item) pairs by item), so construction allocates no per-item Python objects.
+    The construction is vectorized over the already-packed con_indices, so it allocates no
+    per-item Python objects.
 
     Args:
         con_indices: packed constraint→items array, as produced by ConstraintList.to_numpy().
@@ -147,7 +148,7 @@ def to_numpy_membership(con_indices: NDArray[np.int32], m: int, n: int) -> NDArr
         n: total number of items.
 
     Returns:
-        1D int32 array of shape (2*n + total_membership,).
+        1D int32 array of shape (2*n + total number of (constraint, item) pairs,).
     """
     # flatten (constraint, item) pairs from con_indices
     starts = con_indices[0 : 2 * m : 2]
