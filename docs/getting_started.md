@@ -191,16 +191,24 @@ problem = MaxDivProblem.new(
 ## Solver Presets
 
 Presets configure the initialization and optimization strategies. All presets accept a
-**time budget** (via `seconds()`, `minutes()`, `hours()`) or an **iteration count**
+**time budget** (via `seconds()`, `minutes()`, `hours()`), a **budget for the whole solve**
+(via `total_seconds()`, `total_minutes()`, `total_hours()`), or an **iteration count**
 (via `iterations()`).
 
 ```python
-from max_div import SolverPreset, minutes, iterations
+from max_div import SolverPreset, minutes, total_minutes, iterations
 
 # Using a named preset
 solver = (
     MaxDivSolverBuilder(problem)
     .with_preset(minutes(2), preset=SolverPreset.SMART)
+    .build()
+)
+
+# Or two minutes for the whole solve, computing the distances included
+solver = (
+    MaxDivSolverBuilder(problem)
+    .with_preset(total_minutes(2), preset=SolverPreset.SMART)
     .build()
 )
 
@@ -211,6 +219,10 @@ solver = (
     .build()
 )
 ```
+
+`minutes(2)` gives the *optimization* two minutes, on top of computing the distances and
+initializing; `total_minutes(2)` gives the *solve* two minutes and leaves the optimization
+whatever remains. See [How the Solver Works](concepts/solver.md) for what each budget bounds.
 
 | Preset | Description |
 |--------|-------------|
