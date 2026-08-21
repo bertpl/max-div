@@ -2,7 +2,7 @@
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier3.report``.
 Reads the JSONL records written by ``benchmarks.tier3.full`` and emits markdown tables
-into ``docs/benchmarks/comparison/results/``. Per the published-values situation (see the
+into ``RESULTS_DIR``. Per the published-values situation (see the
 results page), Geo is reported as percentage gaps while Ran and Glover are reported as
 matched/exceeded counts — their references are integer-quantized and partly loose, so
 percentage gaps would over-read them.
@@ -17,7 +17,7 @@ from benchmarks.common.records import RunRecord, load_records
 from benchmarks.mdplib.best_known import BestKnown, load_best_known
 
 RECORDS_DIR = Path("reports/benchmarks/tier3")
-RESULTS_DIR = Path("docs/benchmarks/comparison/results")
+RESULTS_DIR = Path("docs/benchmarks/third_party/head_to_head/results")
 
 # Ladder rungs quoted in the tables (seconds; the last exists only for n=500 pairings).
 TABLE_BUDGETS_SEC = (0.128, 1.024, 16.384)

@@ -4,9 +4,9 @@ Three kinds of file feed this, split by what they describe:
 
 * ``data/capability_axes.yaml`` — the columns: which axes exist, their labels, hero visibility.
 * ``data/solver_registry.yaml`` — the rows: categories in order, tools in order within each.
-* ``docs/benchmarks/third_party/solvers/<key>.md`` — the cells and the prose. Each record's front matter is its data;
-  its body is its profile page. One file, so a capability and the text defending it cannot
-  drift apart.
+* the per-tool records under ``RECORDS_DIR`` (one ``<key>.md`` each) — the cells and the prose.
+  Each record's front matter is its data; its body is its profile page. One file, so a
+  capability and the text defending it cannot drift apart.
 
 Generated feature tables are written under ``generated/features/`` and pulled into each page by
 a snippet line, which keeps the seam between hand-authored and generated content visible. The

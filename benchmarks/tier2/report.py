@@ -5,7 +5,7 @@ Merges two record sources: max-div's ladders as measured by ``benchmarks.tier2.f
 ``benchmarks.tier2.rerun`` (untracked, re-measured whenever the solver changes), and the
 competitor single-shots from the tracked reference records in ``benchmarks/tier2/data/``
 (fixed across max-div re-measurements). Emits the curated docs artifacts (anytime-curve
-figures + margin tables) into ``docs/benchmarks/comparison/``.
+figures + margin tables) into ``DOCS_DIR``.
 """
 
 from collections import defaultdict
@@ -18,7 +18,7 @@ from benchmarks.figures import plot_anytime_curve
 
 RECORDS_DIR = Path("reports/benchmarks/tier2")
 DATA_DIR = Path(__file__).parent / "data"
-DOCS_DIR = Path("docs/benchmarks/comparison")
+DOCS_DIR = Path("docs/benchmarks/third_party/head_to_head")
 
 # Figures are curated to one representative problem per scenario (U1 uniform / C1 simple
 # constraints); the margin tables cover every problem, size, and metric.

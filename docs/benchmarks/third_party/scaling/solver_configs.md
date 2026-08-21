@@ -1,6 +1,6 @@
 # Solver Scaling — Solver Configurations
 
-The solver configurations entered into the [scaling measurements](protocol.md).  Each configuration is tested independently; per axis and problem size, a solver's best result across its configurations is reported.
+Each solver enters the [scaling measurements](protocol.md) as one or more of the configurations below.
 
 For every configuration, the time budget is handed to the solver where it accepts one, and a run counts as successful when a valid size-`k` selection is available when the run ends — for the exact solvers, a proven-optimal solution and an incumbent held at the budget kill are both valid outcomes.
 

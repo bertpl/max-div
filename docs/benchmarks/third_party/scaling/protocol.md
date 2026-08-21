@@ -42,7 +42,7 @@ These three descriptions are consciously kept qualitative in nature.  The next s
 
 ### IV.A. Solver Configurations
 
-Different solvers come with different tuning knobs to influence their runtime, memory consumption, result quality.  Knowledgeable users should therefore be assumed to use a **solver tuned optimally for the scenario** at hand: memory-bound, time-constrained or quality-focussed.
+Different solvers come with different tuning knobs to influence their runtime, memory consumption, result quality.  Knowledgeable users should therefore be assumed to use a **solver tuned optimally for the scenario** at hand: memory-bound, time-constrained or quality-focused.
 
 Our testing protocol implements the same spirit in order to avoid testing a 3rd party solver in a specific configuration that favors some scenarios above others:
 
