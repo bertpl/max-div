@@ -5,21 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.14.1 (2026-08-21)
 
 ### Changed
 - Constraint membership on constrained problems is now stored as one packed array instead of a dict of per-item arrays, cutting ~150 bytes per item of object overhead and building ~10x faster
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - Unconstrained problems no longer allocate per-item constraint bookkeeping (~280 bytes per item), previously the bulk of the solver's memory footprint at large n
-
-### Security
 
 ## 0.14.0 (2026-08-19)
 
