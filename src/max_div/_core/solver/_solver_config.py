@@ -54,7 +54,9 @@ class SolverConfig:
             ValueError: if neither or both are given.
         """
         if store is not None and store_provider is None:
-            provider = _provider_returning(store)
+
+            def provider() -> DistanceStore:
+                return store
         elif store is None and store_provider is not None:
             provider = store_provider
         else:
@@ -76,8 +78,3 @@ class SolverConfig:
     def with_seed(self, seed: int) -> "SolverConfig":
         """Return a copy of this configuration carrying a different seed."""
         return replace(self, seed=seed)
-
-
-def _provider_returning(store: DistanceStore) -> Callable[[], DistanceStore]:
-    """Return a store provider that yields an already-built store — the constant-source case."""
-    return lambda: store
