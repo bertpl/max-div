@@ -48,7 +48,7 @@ class MaxDivSolver:
             n: (int) The number of items in the problem ('universe').
             store_provider: called once at the start of each `solve` to obtain the pairwise-distance
                 storage to read from. A single solve builds its store here, so the cost is part of
-                the solve; a portfolio worker's provider returns the shared store it attached to.
+                the solve; a parallel worker's provider returns the shared store it attached to.
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_metric: (DiversityMetric) The diversity metric to use.
             diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
@@ -93,7 +93,7 @@ class MaxDivSolver:
                 plain integer value; see `Verbosity` for the levels.
             coordinator: a `WorkerCoordinator` the solver calls at each batch boundary.
             progress_reporter: a ready-made reporter to report into, overriding `verbosity`; this
-                is how a portfolio worker reports to its parent process.
+                is how a parallel worker reports to its parent process.
 
         Returns:
             A MaxDivSolution object representing the solution found.

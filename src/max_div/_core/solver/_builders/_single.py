@@ -110,7 +110,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         """Return the backend this configuration selects, and the solver config over it.
 
         Keeping the backend choice and the config apart lets a caller build the distances once and
-        assemble a solver per worker over them, which is how the portfolio shares one store.
+        assemble a solver per worker over them, which is how the parallel solver shares one store.
         """
         resolved, label = self._select_storage()
         return resolved, SolverConfig(
