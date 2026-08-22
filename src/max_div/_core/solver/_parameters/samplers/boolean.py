@@ -49,7 +49,7 @@ class BooleanAdaptiveSampler(AdaptiveSampler[bool]):
         elif self._forgetting_enabled:
             self._p_true += self._c_forget_f32 * (self._p_true_prior - self._p_true)
 
-    def reset_learning(self) -> None:
+    def _reset_learning(self) -> None:
         self._p_true = self._p_true_prior
         self._last_sample = bool(self._p_true_prior >= 0.5)
 

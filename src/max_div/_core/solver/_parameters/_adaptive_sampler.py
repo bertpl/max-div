@@ -95,8 +95,13 @@ class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
         """Provide feedback to the sampler whether the last sample was successful."""
         raise NotImplementedError
 
+    def reset(self, seed: np.int64 | int) -> None:
+        """Reseed and restore the prior distribution — equivalent to a freshly constructed sampler."""
+        self.update_seed(seed)
+        self._reset_learning()
+
     @abstractmethod
-    def reset_learning(self) -> None:
+    def _reset_learning(self) -> None:
         """Reset the sampled distribution back to its prior, discarding everything learned from feedback."""
         raise NotImplementedError
 

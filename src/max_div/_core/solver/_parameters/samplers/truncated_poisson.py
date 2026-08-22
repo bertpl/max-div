@@ -72,7 +72,7 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
         elif self._forgetting_enabled:
             self._lambda += self._c_forget_f32 * (self._lambda_prior - self._lambda)
 
-    def reset_learning(self) -> None:
+    def _reset_learning(self) -> None:
         self._lambda = self._lambda_prior
         self._last_sample = round(float(self._lambda_prior))
 

@@ -62,7 +62,7 @@ class SkewedIntervalAdaptiveSampler(AdaptiveSampler[np.float32]):
         elif self._forgetting_enabled:
             self._median += self._c_forget_f32 * (self._median_prior - self._median)
 
-    def reset_learning(self) -> None:
+    def _reset_learning(self) -> None:
         self._median = self._median_prior
         self._last_sample = self._median_prior
 

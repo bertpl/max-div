@@ -101,8 +101,8 @@ def test_skewed_interval_alias(median_prior: float | None):
     assert sampler._tau_forget == pytest.approx(123.45 * 123.45)
 
 
-def test_skewed_interval_adaptive_sampler_reset_learning():
-    """reset_learning() restores the prior median after feedback has shifted it."""
+def test_skewed_interval_adaptive_sampler_reset():
+    """reset() restores the prior median after feedback has shifted it."""
     # --- arrange ----------------------
     sampler = sampled_interval(min_value=-0.99, max_value=0.99, median_prior=0.0, tau_learn=5.0)
     for _ in range(200):
@@ -111,7 +111,7 @@ def test_skewed_interval_adaptive_sampler_reset_learning():
     assert sampler.summary_statistic() != pytest.approx(0.0)
 
     # --- act --------------------------
-    sampler.reset_learning()
+    sampler.reset(seed=42)
 
     # --- assert -----------------------
     assert sampler.summary_statistic() == pytest.approx(0.0)

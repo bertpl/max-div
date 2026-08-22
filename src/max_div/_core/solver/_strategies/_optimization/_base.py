@@ -134,9 +134,8 @@ class OptimizationStrategy(StrategyBase, ABC):
         """
         super().set_seed(seed)
         for i_sampler, sampler in enumerate(self.sampled_params.values()):
-            # set seed for each sampler, offset by multiple of large prime
-            sampler.update_seed(seed + (1_234_577 * i_sampler))
-            sampler.reset_learning()
+            # reset each sampler with its own seed, offset by a multiple of a large prime
+            sampler.reset(seed + (1_234_577 * i_sampler))
 
     # -------------------------------------------------------------------------
     #  Main API
