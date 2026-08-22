@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
@@ -39,7 +40,7 @@ def test_a_config_builds_a_solver_over_any_store():
     resolved, config = builder.prepare_storage_and_config()
 
     # --- act --------------------------
-    solver = config.build_solver(build_distance_store(builder._problem, resolved))
+    solver = config.build_solver(store=build_distance_store(builder._problem, resolved))
 
     # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
@@ -47,7 +48,7 @@ def test_a_config_builds_a_solver_over_any_store():
 
 
 def test_a_config_builds_a_solver_that_defers_its_store():
-    """The deferred form takes a provider called at solve time, not an already-built store."""
+    """Given a provider instead of a store, the provider is called at solve time, not before."""
     # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
@@ -59,12 +60,29 @@ def test_a_config_builds_a_solver_that_defers_its_store():
         return build_distance_store(builder._problem, resolved)
 
     # --- act --------------------------
-    solver = config.build_solver_deferred(provide_store)
+    solver = config.build_solver(store_provider=provide_store)
 
     # --- assert -----------------------
     assert calls == 0  # nothing built until we solve
     assert solver.solve(verbosity=Verbosity.SILENT).i_selected.size == 4
     assert calls == 1
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {},  # neither
+        {"store": "a store", "store_provider": lambda: "a store"},  # both
+    ],
+)
+def test_build_solver_requires_exactly_one_store_source(kwargs):
+    """Neither or both of store / store_provider is a caller error, not a silent fallback."""
+    # --- arrange ----------------------
+    _, config = _builder().prepare_storage_and_config()
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="exactly one"):
+        config.build_solver(**kwargs)
 
 
 def test_with_seed_changes_only_the_seed():

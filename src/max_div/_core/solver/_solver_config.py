@@ -34,22 +34,34 @@ class SolverConfig:
     # the parallel builder)
     batch_seconds: float = REPORTING_BATCH_SECONDS
 
-    def build_solver(self, store: DistanceStore) -> MaxDivSolver:
-        """Return a solver configured as this record describes, reading an already-built store.
+    def build_solver(
+        self,
+        *,
+        store: DistanceStore | None = None,
+        store_provider: Callable[[], DistanceStore] | None = None,
+    ) -> MaxDivSolver:
+        """Return a solver configured as this record describes, given the distances it will read.
 
-        The parallel solver uses this method: its workers attach to the shared store and hand it in.
+        Pass exactly one of:
+
+        Args:
+            store: an already-built store to read from — the parallel solver's workers attach to
+                the shared store and hand it in.
+            store_provider: a callable that yields the store when the solve starts, so `build`
+                stays lean and the store is built inside `solve`.
+
+        Raises:
+            ValueError: if neither or both are given.
         """
-        return self.build_solver_deferred(lambda: store)
-
-    def build_solver_deferred(self, store_provider: Callable[[], DistanceStore]) -> MaxDivSolver:
-        """Return a solver that obtains its store from `store_provider` when it solves.
-
-        A single solve builds its store this way, so the build is part of the solve rather than
-        done up front.
-        """
+        if store is not None and store_provider is None:
+            provider = _provider_returning(store)
+        elif store is None and store_provider is not None:
+            provider = store_provider
+        else:
+            raise ValueError("Pass exactly one of `store` or `store_provider`.")
         return MaxDivSolver(
             n=self.n,
-            store_provider=store_provider,
+            store_provider=provider,
             k=self.k,
             diversity_metric=self.diversity_metric,
             diversity_tie_breakers=self.diversity_tie_breakers,
@@ -64,3 +76,8 @@ class SolverConfig:
     def with_seed(self, seed: int) -> "SolverConfig":
         """Return a copy of this configuration carrying a different seed."""
         return replace(self, seed=seed)
+
+
+def _provider_returning(store: DistanceStore) -> Callable[[], DistanceStore]:
+    """Return a store provider that yields an already-built store — the constant-source case."""
+    return lambda: store
