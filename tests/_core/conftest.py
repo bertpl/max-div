@@ -27,6 +27,10 @@ class FakeClock:
         """Stand in for `time.perf_counter` (seconds)."""
         return self._read()
 
+    def monotonic(self) -> float:
+        """Stand in for `time.monotonic`, reading the same clock as `perf_counter`."""
+        return self._read()
+
     def perf_counter_ns(self) -> int:
         """Stand in for `time.perf_counter_ns`, integer-valued like the real one."""
         return int(self._read() * 1e9)
@@ -44,13 +48,14 @@ class FakeClock:
 def fake_clock(monkeypatch: pytest.MonkeyPatch) -> FakeClock:
     """Replace the process wall-clock with a `FakeClock` for the duration of one test.
 
-    Patches `time.perf_counter`, `time.perf_counter_ns` and `time.sleep`. Production code reads the
+    Patches the `time` module's clock readers and `sleep`. Production code reads the
     clock through the `time` module (never `from time import ...`), so this single patch reaches
     every reader, turning any "did enough time pass?" assertion from a wall-clock race into an exact
     check.
     """
     clock = FakeClock()
     monkeypatch.setattr(time, "perf_counter", clock.perf_counter)
+    monkeypatch.setattr(time, "monotonic", clock.monotonic)
     monkeypatch.setattr(time, "perf_counter_ns", clock.perf_counter_ns)
     monkeypatch.setattr(time, "sleep", clock.sleep)
     return clock

@@ -1,6 +1,6 @@
 """Public API for building and running Maximum Diversity solvers."""
 
-from ._core._warnings import ParallelSolvingWarning
+from ._core._warnings import ParallelSolvingWarning, SolverBudgetWarning
 from ._core.solver import (
     ConstraintPenalty,
     DistanceStorage,
@@ -35,6 +35,7 @@ __all__ = [
     "ParallelMaxDivSolver",
     "ParallelMaxDivSolverBuilder",
     "ParallelSolvingWarning",
+    "SolverBudgetWarning",
     "SolverPreset",
     "TargetDuration",
     "TargetIterationCount",

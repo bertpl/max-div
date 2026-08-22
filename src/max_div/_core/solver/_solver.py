@@ -1,18 +1,21 @@
+import time
+import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
+from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.constraints import Constraint
 from max_div._core.constraints.constraints import _np_con_count_satisfied
 from max_div._core.metrics import DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
-from ._duration import Elapsed
+from ._duration import Elapsed, TargetDuration
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
-from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
+from ._solver_step import REPORTING_BATCH_SECONDS, OptimizationStep, SolverStep, SolverStepResult
 
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
@@ -41,6 +44,8 @@ class MaxDivSolver:
         constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
         distance_storage_label: str = "",
         batch_seconds: float = REPORTING_BATCH_SECONDS,
+        end_to_end_budget_sec: float | None = None,
+        budget_anchor: float | None = None,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -60,6 +65,12 @@ class MaxDivSolver:
             constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
             distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
+            end_to_end_budget_sec: wall-clock budget for the whole solve — store build and
+                initialization included; each optimization step receives whatever remains.
+                `None` leaves every step on its own configured duration.
+            budget_anchor: the `time.monotonic()` value the budget counts from; `None` (the
+                default) stamps it when `solve` starts.  The parallel solver passes its own
+                solve start here, so worker setup is charged against the budget too.
         """
         # --- problem description ----------------
         self._n = n
@@ -75,6 +86,8 @@ class MaxDivSolver:
         self._seed = seed
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
+        self._end_to_end_budget_sec = end_to_end_budget_sec
+        self._budget_anchor = budget_anchor
 
     # -------------------------------------------------------------------------
     #  API
@@ -99,6 +112,7 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
+        t_budget_anchor = self._budget_anchor if self._budget_anchor is not None else time.monotonic()
 
         # --- progress reporting -----------------
         if progress_reporter is None:
@@ -139,10 +153,48 @@ class MaxDivSolver:
         for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
-            step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
+            step_results[step_name.strip()] = self._run_step(
+                step, state, progress_reporter, coordinator, t_budget_anchor
+            )
 
         # --- Construct result -------------------
         return self._construct_final_solution(state, step_results)
+
+    def _run_step(
+        self,
+        step: SolverStep,
+        state: SolverState,
+        progress_reporter: ProgressReporter,
+        coordinator: "WorkerCoordinator | None",
+        t_budget_anchor: float,
+    ) -> SolverStepResult:
+        """Run one step, converting the end-to-end budget into the step's remaining time where one is set.
+
+        With the budget spent before an optimization step starts, the step is skipped with a
+        `SolverBudgetWarning`, leaving the selection the earlier steps built.
+        """
+        if (self._end_to_end_budget_sec is None) or (not isinstance(step, OptimizationStep)):
+            return step.run(state, progress_reporter, coordinator, self._batch_seconds)
+        # NOTE: with several optimization steps under one budget, each receives everything that
+        # remains, so an earlier step can starve the later ones.  Every preset today produces
+        # exactly one optimization step; how several should share the remainder is undecided.
+        remaining_sec = self._end_to_end_budget_sec - (time.monotonic() - t_budget_anchor)
+        if remaining_sec <= 0.0:
+            warnings.warn(
+                f"The end-to-end budget of {self._end_to_end_budget_sec}s was spent before optimization "
+                "started; the returned selection is the initialization's.",
+                SolverBudgetWarning,
+                stacklevel=3,
+            )
+            progress_reporter.solver_step_finished(None, state)
+            return SolverStepResult(score_checkpoints=[(Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)])
+        return step.run(
+            state,
+            progress_reporter,
+            coordinator,
+            self._batch_seconds,
+            duration_override=TargetDuration.seconds(remaining_sec),
+        )
 
     # -------------------------------------------------------------------------
     #  Internal

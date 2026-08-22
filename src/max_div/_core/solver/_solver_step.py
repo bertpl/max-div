@@ -154,10 +154,16 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
+        *,
+        duration_override: TargetDuration | None = None,
     ) -> SolverStepResult:
+        """Run the optimization, under `duration_override` where given instead of the configured duration.
+
+        The override is how the solver hands a step the remaining part of an end-to-end budget.
+        """
         # --- init -------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
-        tracker = self._duration.track()
+        tracker = (duration_override or self._duration).track()
         score_checkpoints: list[tuple[Elapsed, Score]] = []
         next_checkpoint_iter_count = 1
 

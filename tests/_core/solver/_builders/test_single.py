@@ -1,6 +1,9 @@
+import warnings
+
 import numpy as np
 import pytest
 
+from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
@@ -14,7 +17,8 @@ from max_div._core.solver import (
     iterations,
     seconds,
 )
-from max_div._core.solver._solver_step import InitializationStep, OptimizationStep
+from max_div._core.solver._duration import Elapsed
+from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
@@ -328,3 +332,77 @@ def test_with_preset_switches_init_on_constraints(
 
     # --- assert -----------------------
     assert isinstance(builder._solver_steps[0]._strategy, expected_init)
+
+
+# =================================================================================================
+#  MaxDivSolverBuilder - end-to-end budget
+# =================================================================================================
+def test_an_end_to_end_budget_requires_a_time_budget(dummy_problem):
+    """An iteration count cannot bound the store build and initialization, so the flag rejects it."""
+    # --- arrange / act / assert -------
+    with pytest.raises(ValueError, match="requires a time budget"):
+        MaxDivSolverBuilder(dummy_problem).with_preset(iterations(100), end_to_end_budget=True)
+
+
+def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_clock):
+    """With the budget gone before optimization starts, the solve warns and returns the initialization's selection."""
+    # --- arrange ----------------------
+    solver = (
+        MaxDivSolverBuilder(dummy_problem)
+        .with_preset(seconds(10.0), SolverPreset.RANDOM, end_to_end_budget=True)
+        .build()
+    )
+    store_provider = solver._store_provider
+    solver._store_provider = lambda: (fake_clock.advance(11.0), store_provider())[1]  # the build eats the budget
+
+    # --- act --------------------------
+    with pytest.warns(SolverBudgetWarning, match="spent before optimization started"):
+        solution = solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    optimization_steps = [name for name in solution.step_durations if "OptimRandomSwaps" in name]
+    assert len(optimization_steps) == 1
+    assert solution.step_durations[optimization_steps[0]].n_iterations == 0
+    assert len(solution.i_selected) == dummy_problem.k
+
+
+def test_the_optimization_receives_what_the_setup_left(dummy_problem, fake_clock, monkeypatch):
+    """The optimization step runs under the remaining part of the budget, not the full duration."""
+    # --- arrange ----------------------
+    solver = (
+        MaxDivSolverBuilder(dummy_problem)
+        .with_preset(seconds(10.0), SolverPreset.RANDOM, end_to_end_budget=True)
+        .build()
+    )
+    store_provider = solver._store_provider
+    solver._store_provider = lambda: (fake_clock.advance(4.0), store_provider())[1]  # the build eats 4 of 10 seconds
+    received = {}
+
+    def record_duration(
+        self, state, progress_reporter=None, coordinator=None, batch_seconds=0.5, *, duration_override=None
+    ):
+        received["duration"] = duration_override
+        return SolverStepResult(score_checkpoints=[(Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)])
+
+    monkeypatch.setattr(OptimizationStep, "run", record_duration)
+
+    # --- act --------------------------
+    solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert received["duration"].value() == pytest.approx(6.0)
+
+
+@pytest.mark.parametrize("duration", [seconds(0.05), iterations(5)])
+def test_a_step_budget_never_warns_about_a_spent_budget(dummy_problem, duration):
+    """Only an end-to-end budget can arrive spent; the warning must not fire without the flag."""
+    # --- arrange ----------------------
+    solver = MaxDivSolverBuilder(dummy_problem).with_preset(duration, SolverPreset.RANDOM).build()
+
+    # --- act --------------------------
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert [w for w in caught if issubclass(w.category, SolverBudgetWarning)] == []

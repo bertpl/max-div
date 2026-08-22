@@ -20,6 +20,7 @@ from max_div._core.solver._distance_storage import (
     select_distance_storage,
     total_physical_memory_bytes,
 )
+from max_div._core.solver._duration import TargetDuration, TargetTimeDuration
 
 if TYPE_CHECKING:
     from max_div._core.constraints import Constraint
@@ -48,6 +49,7 @@ class SolverBuilderBase:
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
         self._distance_storage: DistanceStorage = DistanceStorage.AUTO
+        self._end_to_end_budget_sec: float | None = None
 
     # -------------------------------------------------------------------------
     #  Shared builder API
@@ -101,3 +103,20 @@ class SolverBuilderBase:
         ):
             return [DiversityMetric.NON_ZERO_SEPARATION_FRAC]
         return []
+
+
+def _resolve_end_to_end_budget(target_duration: TargetDuration, end_to_end_budget: bool) -> float | None:
+    """Return the end-to-end budget in seconds, or None when the duration bounds each step.
+
+    Raises:
+        ValueError: If `end_to_end_budget` is combined with an iteration budget — iterations
+            cannot bound the store build and initialization.
+    """
+    if not end_to_end_budget:
+        return None
+    if not isinstance(target_duration, TargetTimeDuration):
+        raise ValueError(
+            "end_to_end_budget requires a time budget (seconds/minutes/hours); "
+            "an iteration budget cannot bound the store build and initialization."
+        )
+    return target_duration.value()

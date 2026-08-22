@@ -212,6 +212,21 @@ solver = (
 )
 ```
 
+By default the budget covers the **optimization only** — computing the distances and initializing
+come on top. Pass `end_to_end_budget=True` to make a time budget cover the **whole solve**
+instead: the optimization then gets whatever time remains after setup, and is skipped with a
+`SolverBudgetWarning` when setup consumed everything (the result is then the initialization's
+selection). An iteration count cannot be an end-to-end budget.
+
+```python
+# the whole solve — distances, initialization and optimization — within two minutes
+solver = (
+    MaxDivSolverBuilder(problem)
+    .with_preset(minutes(2), preset=SolverPreset.SMART, end_to_end_budget=True)
+    .build()
+)
+```
+
 | Preset | Description |
 |--------|-------------|
 | `RANDOM` | Baseline -- random initialization + random swap optimization. Fast but lower quality. |

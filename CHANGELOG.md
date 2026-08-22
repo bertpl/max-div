@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A time budget can now cover the whole solve end to end, distance computation and initialization included: `end_to_end_budget=True` on `with_preset()` and `with_workers()`, and `--total-seconds` on `max-div solve`
 
 ### Changed
 

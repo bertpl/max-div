@@ -19,3 +19,7 @@ class DistanceInputWarning(MaxDivWarning):
 
 class ParallelSolvingWarning(MaxDivWarning):
     """Solving in parallel was configured in a way that cannot help, or that runs more workers than there are cores."""
+
+
+class SolverBudgetWarning(MaxDivWarning):
+    """A solve reached its optimization with no end-to-end budget left, so it returns what initialization built."""
