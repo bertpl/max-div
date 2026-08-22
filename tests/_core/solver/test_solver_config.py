@@ -46,6 +46,27 @@ def test_a_config_builds_a_solver_over_any_store():
     assert solver.solve(verbosity=Verbosity.SILENT).i_selected.size == 4
 
 
+def test_a_config_builds_a_solver_that_defers_its_store():
+    """The deferred form takes a provider called at solve time, not an already-built store."""
+    # --- arrange ----------------------
+    builder = _builder()
+    resolved, config = builder.prepare_storage_and_config()
+    calls = 0
+
+    def provide_store():
+        nonlocal calls
+        calls += 1
+        return build_distance_store(builder._problem, resolved)
+
+    # --- act --------------------------
+    solver = config.build_solver_deferred(provide_store)
+
+    # --- assert -----------------------
+    assert calls == 0  # nothing built until we solve
+    assert solver.solve(verbosity=Verbosity.SILENT).i_selected.size == 4
+    assert calls == 1
+
+
 def test_with_seed_changes_only_the_seed():
     """Reseeding a config leaves every other setting alone, so workers differ in search only."""
     # --- arrange ----------------------

@@ -141,6 +141,33 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
 
 
 # =================================================================================================
+#  MaxDivSolverBuilder - Store built in solve(), not build()
+# =================================================================================================
+def test_the_store_is_built_by_solve_not_by_build(dummy_problem, monkeypatch):
+    """build() only assembles the solver; each solve() builds the store, so its cost sits in solve()."""
+    # --- arrange ----------------------
+    from max_div._core.solver._builders import _single
+
+    builds = 0
+    real_build = _single.build_distance_store
+
+    def counting_build(*args, **kwargs):
+        nonlocal builds
+        builds += 1
+        return real_build(*args, **kwargs)
+
+    monkeypatch.setattr(_single, "build_distance_store", counting_build)
+
+    # --- act / assert -----------------
+    solver = MaxDivSolverBuilder(dummy_problem).with_preset(iterations(5), SolverPreset.RANDOM).build()
+    assert builds == 0  # build() did not touch the distances
+
+    solver.solve(verbosity=Verbosity.SILENT)
+    solver.solve(verbosity=Verbosity.SILENT)
+    assert builds == 2  # one store built per solve
+
+
+# =================================================================================================
 #  MaxDivSolverBuilder - End-to-End
 # =================================================================================================
 def test_max_div_solver_builder_end_to_end():
@@ -177,8 +204,9 @@ def test_max_div_solver_builder_end_to_end():
     # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
     assert solver._n == vectors.shape[0]
-    # AUTO resolves to the full matrix for a problem this small
-    assert solver._store.matrix.shape == (vectors.shape[0], vectors.shape[0])
+    # the store is built by solve(), not build(): a full-matrix store of the expected shape here
+    store = solver._store_provider()
+    assert store.matrix.shape == (vectors.shape[0], vectors.shape[0])  # AUTO -> full matrix at this size
     assert solver._k == k
     assert len(solver._solver_steps) == 3
     assert solver._solver_steps[0].name() == init_strategy.name

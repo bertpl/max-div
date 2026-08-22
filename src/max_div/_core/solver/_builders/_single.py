@@ -98,16 +98,19 @@ class MaxDivSolverBuilder(SolverBuilderBase):
     #  Build
     # -------------------------------------------------------------------------
     def build(self) -> MaxDivSolver:
-        """Build the distance store this configuration calls for, and a solver reading it."""
+        """Return a solver that builds its distance store when it solves.
+
+        The store is not built here: `solve` builds it, so its cost is part of the solve and a
+        large store is not held between building the solver and running it.
+        """
         resolved, config = self.prepare_storage_and_config()
-        return config.build_solver(build_distance_store(self._problem, resolved))
+        return config.build_solver_deferred(lambda: build_distance_store(self._problem, resolved))
 
     def prepare_storage_and_config(self) -> tuple[DistanceStorage, SolverConfig]:
         """Return the backend this configuration selects, and the solver config over it.
 
-        `build` selects the backend and builds the store in one call.  Keeping the two apart lets a
-        caller produce the distances once and assemble a solver per worker over them, where `build`
-        would produce a store per solver.
+        Keeping the backend choice and the config apart lets a caller build the distances once and
+        assemble a solver per worker over them, which is how the portfolio shares one store.
         """
         resolved, label = self._select_storage()
         return resolved, SolverConfig(

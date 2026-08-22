@@ -5,6 +5,7 @@ and read by several processes, while each process assembles its own solver over 
 this record — which is why the record must stay small enough to pickle.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from max_div._core.constraints import Constraint
@@ -34,10 +35,21 @@ class SolverConfig:
     batch_seconds: float = REPORTING_BATCH_SECONDS
 
     def build_solver(self, store: DistanceStore) -> MaxDivSolver:
-        """Return a solver configured as this record describes, reading the given store."""
+        """Return a solver configured as this record describes, reading an already-built store.
+
+        The portfolio uses this: its workers attach to the shared store and hand it in.
+        """
+        return self.build_solver_deferred(lambda: store)
+
+    def build_solver_deferred(self, store_provider: Callable[[], DistanceStore]) -> MaxDivSolver:
+        """Return a solver that obtains its store from `store_provider` when it solves.
+
+        A single solve builds its store this way, so the build is part of the solve rather than
+        done up front.
+        """
         return MaxDivSolver(
             n=self.n,
-            store=store,
+            store_provider=store_provider,
             k=self.k,
             diversity_metric=self.diversity_metric,
             diversity_tie_breakers=self.diversity_tie_breakers,
