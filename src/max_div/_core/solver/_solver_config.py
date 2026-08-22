@@ -37,7 +37,7 @@ class SolverConfig:
     def build_solver(self, store: DistanceStore) -> MaxDivSolver:
         """Return a solver configured as this record describes, reading an already-built store.
 
-        The portfolio uses this: its workers attach to the shared store and hand it in.
+        The portfolio uses this method: its workers attach to the shared store and hand it in.
         """
         return self.build_solver_deferred(lambda: store)
 

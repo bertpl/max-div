@@ -48,7 +48,7 @@ class MaxDivSolver:
             n: (int) The number of items in the problem ('universe').
             store_provider: called once at the start of each `solve` to obtain the pairwise-distance
                 storage to read from. A single solve builds its store here, so the cost is part of
-                the solve; a portfolio worker's returns the shared store it attached to.
+                the solve; a portfolio worker's provider returns the shared store it attached to.
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_metric: (DiversityMetric) The diversity metric to use.
             diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
@@ -111,8 +111,6 @@ class MaxDivSolver:
         step_results: dict[str, SolverStepResult] = {}
 
         # --- solver state -----------------------
-        # The store is obtained here, at the start of the solve, so its cost -- building the
-        # distances for a single solve -- is part of the solve rather than something done earlier.
         with Timer() as timer:
             progress_reporter.solver_step_started(step_names[0])
             store = self._store_provider()
