@@ -46,9 +46,9 @@ class MaxDivSolver:
 
         Args:
             n: (int) The number of items in the problem ('universe').
-            store_provider: called once at the start of each `solve` to obtain the pairwise-distance
-                storage to read from. A single solve builds its store here, so the cost is part of
-                the solve; a parallel worker's provider returns the shared store it attached to.
+            store_provider: called at the start of each `solve` to obtain the pairwise-distance
+                storage to read from, so `build` stays lean and fast rather than building the
+                store up front.
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_metric: (DiversityMetric) The diversity metric to use.
             diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
