@@ -1,4 +1,4 @@
-"""A portfolio builder configures and builds several solvers over one problem."""
+"""A parallel-solver builder configures and builds several solvers over one problem."""
 
 from collections.abc import Sequence
 from typing import Self, cast
@@ -21,7 +21,7 @@ from ._base import SolverBuilderBase
 
 
 class ParallelMaxDivSolverBuilder(SolverBuilderBase):
-    """A portfolio builder configures several workers over one problem, and the best result wins.
+    """A parallel-solver builder configures several workers over one problem, and the best result wins.
 
     There is no `with_preset`: a preset belongs to a worker (`WorkerConfig`), and workers may run
     different ones.
@@ -31,7 +31,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     #  Constructor
     # -------------------------------------------------------------------------
     def __init__(self, problem: MaxDivProblem) -> None:
-        """Configure a portfolio over the given problem.
+        """Configure a parallel solve over the given problem.
 
         Args:
             problem: The MaxDivProblem every worker solves.
@@ -50,16 +50,16 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
         n_groups: int | None = None,
     ) -> Self:
-        """Set what the portfolio runs, for how long each worker runs it, and how workers form groups.
+        """Set what the workers run, for how long each worker runs it, and how workers form groups.
 
-        The workers run side by side, so the portfolio takes as long as one of them rather than the
+        The workers run side by side, so the solve takes as long as one of them rather than the
         sum.  Presets differ in iteration speed, so when workers run different ones a wall-clock
         budget keeps them to the same real time where an iteration count would not.
 
         Workers form **worker groups**: within a group, workers adopt the best selection any
         member has found so far; groups never communicate, and the best worker over all groups
         wins.  Groups of one make those workers fully independent — `n_groups` equal to the
-        worker count is the fully independent portfolio.
+        worker count makes every worker fully independent.
 
         Args:
             target_duration: the wall-clock budget each worker runs for (see `TargetDuration`).
@@ -104,13 +104,13 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     #  Build
     # -------------------------------------------------------------------------
     def build(self) -> ParallelMaxDivSolver:
-        """Build the portfolio: one solver configuration per worker over a store they will share.
+        """Build the parallel solver: one solver configuration per worker over a store they will share.
 
         Raises:
             ValueError: If no workers were configured.
         """
         if self._target_duration is None or not self._worker_configs:
-            raise ValueError("A portfolio needs workers; call with_workers before build.")
+            raise ValueError("A parallel solver needs workers; call with_workers before build.")
         warn_about_worker_count(len(self._worker_configs))
         resolved, label = self._select_storage()
         group_size_per_worker = [size for size in self._group_sizes for _ in range(size)]
@@ -130,9 +130,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     ) -> SolverConfig:
         """Return the solver configuration for one worker.
 
-        Worker seeds are derived from the portfolio seed rather than set, so one seed pins every
+        Worker seeds are derived from the parallel solver's seed rather than set, so one seed pins every
         worker's search while the workers still search differently (with cooperating groups the
-        run stays timing-dependent, so the seed only makes a fully independent portfolio
+        run stays timing-dependent, so the seed only makes a fully independent run
         reproducible).  The derivation reduces to an int64 because the seed is reported back for
         replaying a worker on its own, and salts the tuple so a worker seed cannot coincide with a
         seed derived the same way elsewhere.

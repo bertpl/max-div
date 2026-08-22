@@ -41,7 +41,7 @@ _POLL_SECONDS = 0.2
 _JOIN_SECONDS = 30.0
 
 
-def run_portfolio(
+def run_workers(
     configs: list[SolverConfig],
     spec: SharedStoreSpec,
     coordinators: Sequence[WorkerCoordinator],

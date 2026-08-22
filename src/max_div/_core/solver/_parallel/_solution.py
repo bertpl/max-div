@@ -1,4 +1,4 @@
-"""A portfolio returns the winning selection together with what every worker found."""
+"""A parallel solve returns the winning selection together with what every worker found."""
 
 from dataclasses import dataclass, field
 
@@ -39,7 +39,7 @@ class ParallelMaxDivSolution(MaxDivSolution):
     def n_workers_with_best_score(self) -> int:
         """Return how many workers reached the best score, the winner included.
 
-        The count equals the worker count when every worker tied, which means the portfolio found
+        The count equals the worker count when every worker tied, which means the parallel solve found
         nothing a single worker would not have.
         """
         return sum(1 for worker in self.workers if worker.has_best_score)

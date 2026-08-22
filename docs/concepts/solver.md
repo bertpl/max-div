@@ -135,7 +135,7 @@ The workers form **[worker groups](glossary.md#worker-group)** — the parallel-
 literature calls them *islands*: within a group, every worker adopts the best selection any
 member has found so far, exchanged many times per second while solving; groups never communicate
 with each other. Groups of one worker are fully independent — a fully
-independent portfolio is the special case where every group has one member.
+independent run is the special case where every group has one member.
 
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
@@ -192,7 +192,7 @@ Each worker is configured by a `WorkerConfig`: the preset it runs, and optionall
 initialization strategy it starts from. `init_strategy` lets two workers run the same preset from
 different starting points.
 
-Everything that decides **which selection is better** is fixed for the whole portfolio, whether it
+Everything that decides **which selection is better** is fixed for all workers, whether it
 comes from the problem (the diversity metric, the constraints) or from the builder (the
 tie-breakers, the constraint penalty). Comparing what workers found requires a single answer to that
 question.
@@ -201,11 +201,11 @@ Distance storage is fixed for a different reason: the workers read one shared bu
 
 ### Seeds and Reproducibility
 
-The portfolio takes one seed and derives a seed per worker from that seed, so the workers search
+The parallel solver takes one seed and derives a seed per worker from that seed, so the workers search
 differently while the whole configuration derives from a single number.
 
-**Reproducibility follows the grouping.** A fully independent portfolio (`n_groups` equal to the
-worker count) run twice from one seed returns the same selection. A portfolio with cooperating
+**Reproducibility follows the grouping.** A fully independent run (`n_groups` equal to the
+worker count) repeated from one seed returns the same selection. A run with cooperating
 groups does not: which selections get adopted depends on how far each worker happens to have
 come when it reaches an exchange, and that inter-worker timing varies from run to run.
 
@@ -220,9 +220,9 @@ on top.
 `solve()` returns a `ParallelMaxDivSolution`: the winning worker's solution, with a `WorkerSummary`
 per worker attached. The number worth looking at is `n_workers_with_best_score`:
 
-- **Well below the worker count**: seeds mattered on this problem, and the portfolio earned its
+- **Well below the worker count**: seeds mattered on this problem, and the parallel run earned its
   cost.
-- **Equal to the worker count**: every worker tied. In a fully independent portfolio that means
+- **Equal to the worker count**: every worker tied. In a fully independent run that means
   the run found nothing a single worker would not have — lower the worker count or solve once.
   With cooperating groups, ties *within* a group are partly structural (members adopt each
   other's best), so read the count against the number of groups rather than of workers.

@@ -40,7 +40,7 @@ def test_best_result_breaks_ties_by_lowest_worker_index():
     assert best_result(list(reversed(tied))).worker_index == 0  # and not on list order either
 
 
-def test_best_result_rejects_an_empty_portfolio():
+def test_best_result_rejects_an_empty_result_list():
     """No results means every worker failed, which is an error rather than an empty answer."""
     # --- arrange / act / assert -------
     with pytest.raises(ValueError, match="every worker failed"):

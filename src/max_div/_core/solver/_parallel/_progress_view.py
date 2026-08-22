@@ -31,7 +31,7 @@ class ParallelProgressView:
 
         Args:
             reporter: an ordinary rendering reporter (a tabular one laid out with worker columns).
-            n_workers: how many workers the portfolio runs; indices `0..n_workers-1` are tracked.
+            n_workers: how many workers the parallel solver runs; indices `0..n_workers-1` are tracked.
         """
         self._reporter = reporter
         self._n_workers = n_workers

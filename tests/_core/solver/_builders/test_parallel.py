@@ -25,7 +25,7 @@ def _problem() -> MaxDivProblem:
     return MaxDivProblem.new(np.random.default_rng(20260809).random((80, 3)).astype(np.float32), k=8)
 
 
-def _solve_portfolio(workers, seed: int = 5, n_groups: int | None = None) -> ParallelMaxDivSolution:
+def _solve_parallel(workers, seed: int = 5, n_groups: int | None = None) -> ParallelMaxDivSolution:
     """Solve the shared test problem with the given workers."""
     builder = ParallelMaxDivSolverBuilder(_problem()).with_seed(seed)
     return builder.with_workers(_BUDGET, workers, n_groups=n_groups).build().solve()
@@ -34,10 +34,10 @@ def _solve_portfolio(workers, seed: int = 5, n_groups: int | None = None) -> Par
 # =================================================================================================
 #  Solving
 # =================================================================================================
-def test_a_portfolio_returns_an_ordinary_solution():
+def test_a_parallel_solve_returns_an_ordinary_solution():
     """The winner is a MaxDivSolution, so code written for a single solve keeps working."""
     # --- arrange / act ----------------
-    solution = _solve_portfolio(2)
+    solution = _solve_parallel(2)
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
@@ -48,7 +48,7 @@ def test_a_portfolio_returns_an_ordinary_solution():
 def test_every_worker_is_summarized():
     """Each worker reports what it ran, what it scored, and whether it reached the best score."""
     # --- arrange / act ----------------
-    solution = _solve_portfolio([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
+    solution = _solve_parallel([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
 
     # --- assert -----------------------
     assert [worker.worker_index for worker in solution.workers] == [0, 1]
@@ -65,7 +65,7 @@ def test_workers_may_differ_by_initialization_alone():
     ]
 
     # --- act --------------------------
-    solution = _solve_portfolio(workers)
+    solution = _solve_parallel(workers)
 
     # --- assert -----------------------
     assert solution.workers[0].config.init_strategy is None
@@ -73,9 +73,9 @@ def test_workers_may_differ_by_initialization_alone():
 
 
 def test_workers_at_the_best_score_are_counted():
-    """The count says how many workers tied for best; when every worker ties, the portfolio did not help."""
+    """The count says how many workers tied for best; when every worker ties, the parallel solve did not help."""
     # --- arrange / act ----------------
-    solution = _solve_portfolio(3)
+    solution = _solve_parallel(3)
 
     # --- assert -----------------------
     counted = solution.n_workers_with_best_score
@@ -86,10 +86,10 @@ def test_workers_at_the_best_score_are_counted():
 # =================================================================================================
 #  Seeds
 # =================================================================================================
-def test_one_seed_reproduces_an_independent_portfolio():
-    """An independent portfolio run twice from one seed selects the same items and seeds its workers alike."""
+def test_one_seed_reproduces_an_independent_run():
+    """An independent run repeated from one seed selects the same items and seeds its workers alike."""
     # --- arrange / act ----------------
-    first, second = _solve_portfolio(2, n_groups=2), _solve_portfolio(2, n_groups=2)
+    first, second = _solve_parallel(2, n_groups=2), _solve_parallel(2, n_groups=2)
 
     # --- assert -----------------------
     np.testing.assert_array_equal(first.i_selected, second.i_selected)
@@ -99,7 +99,7 @@ def test_one_seed_reproduces_an_independent_portfolio():
 def test_workers_are_seeded_differently_from_each_other():
     """Derived seeds differ per worker, so the workers search differently."""
     # --- arrange / act ----------------
-    seeds = [worker.seed for worker in _solve_portfolio(4).workers]
+    seeds = [worker.seed for worker in _solve_parallel(4).workers]
 
     # --- assert -----------------------
     assert len(set(seeds)) == len(seeds)
@@ -112,7 +112,7 @@ def test_a_worker_can_be_replayed_on_its_own():
     depends on its group mates, so only independent workers carry this replay contract.
     """
     # --- arrange ----------------------
-    solution = _solve_portfolio([[WorkerConfig(preset=SolverPreset.SMART)], [WorkerConfig(preset=SolverPreset.GUIDED)]])
+    solution = _solve_parallel([[WorkerConfig(preset=SolverPreset.SMART)], [WorkerConfig(preset=SolverPreset.GUIDED)]])
     winner = solution.workers[solution.winning_worker]
 
     # --- act --------------------------
@@ -149,7 +149,7 @@ def test_more_workers_than_cores_warns(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_building_without_workers_is_rejected():
-    """A portfolio with no workers is a configuration error rather than an empty run."""
+    """A parallel solver with no workers is a configuration error rather than an empty run."""
     # --- arrange / act / assert -------
     with pytest.raises(ValueError, match="needs workers"):
         ParallelMaxDivSolverBuilder(_problem()).build()
@@ -159,7 +159,7 @@ def test_building_without_workers_is_rejected():
 #  Default worker count
 # =================================================================================================
 def test_omitting_the_count_uses_the_default(monkeypatch: pytest.MonkeyPatch):
-    """With no worker count given, the portfolio runs 3/4 of the logical cores (here 8 * 3/4 = 6)."""
+    """With no worker count given, the parallel solver runs 3/4 of the logical cores (here 8 * 3/4 = 6)."""
     # --- arrange ----------------------
     monkeypatch.setattr("max_div._core.solver._parallel._solver.os.cpu_count", lambda: 8)
 
@@ -271,10 +271,10 @@ def test_an_integer_worker_count_defaults_to_cooperative_groups_of_about_four():
     assert solver._group_sizes == [4, 4]
 
 
-def test_a_cooperative_portfolio_solves():
+def test_a_cooperative_group_solves():
     """A group of cooperating workers produces an ordinary, valid solution."""
     # --- arrange / act ----------------
-    solution = _solve_portfolio(2, n_groups=1)
+    solution = _solve_parallel(2, n_groups=1)
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
