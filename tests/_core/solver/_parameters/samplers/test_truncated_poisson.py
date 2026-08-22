@@ -105,3 +105,19 @@ def test_sampled_poisson_alias(lambda_prior: float | None):
     assert sampler._tau_learn == pytest.approx(123.45)
     assert sampler._tau_forget == pytest.approx(123.45 * 123.45)
     assert sampler._large_value_penalty_exponent_f32 == pytest.approx(0.1234)
+
+
+def test_truncated_poisson_adaptive_sampler_reset():
+    """reset() restores the prior lambda after feedback has shifted it."""
+    # --- arrange ----------------------
+    sampler = sampled_poisson(min_value=1, max_value=8, lambda_prior=2.0, tau_learn=5.0)
+    for _ in range(200):
+        sample = sampler.new_sample()
+        sampler.feedback(success=sample >= 4)
+    assert sampler.summary_statistic() != pytest.approx(2.0)
+
+    # --- act --------------------------
+    sampler.reset(seed=42)
+
+    # --- assert -----------------------
+    assert sampler.summary_statistic() == pytest.approx(2.0)
