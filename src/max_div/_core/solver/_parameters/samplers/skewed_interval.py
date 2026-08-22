@@ -41,8 +41,7 @@ class SkewedIntervalAdaptiveSampler(AdaptiveSampler[np.float32]):
         self._min_value = np.float32(min_value)
         self._max_value = np.float32(max_value)
         self._median_prior: np.float32 = np.float32(median_prior)
-        self._median: np.float32 = self._median_prior
-        self._last_sample: np.float32 = self._median
+        self._reset_learning()
 
     def new_sample(self) -> np.float32:
         normalized_median = (self._median - self._min_value) / (self._max_value - self._min_value)
@@ -63,8 +62,8 @@ class SkewedIntervalAdaptiveSampler(AdaptiveSampler[np.float32]):
             self._median += self._c_forget_f32 * (self._median_prior - self._median)
 
     def _reset_learning(self) -> None:
-        self._median = self._median_prior
-        self._last_sample = self._median_prior
+        self._median: np.float32 = self._median_prior
+        self._last_sample: np.float32 = self._median_prior
 
 
 # =================================================================================================

@@ -41,9 +41,8 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
         self._min_value = np.int32(min_value)
         self._max_value = np.int32(max_value)
         self._lambda_prior: np.float32 = np.float32(lambda_prior)
-        self._lambda: np.float32 = self._lambda_prior
-        self._last_sample: int = round(lambda_prior)
         self._large_value_penalty_exponent_f32 = np.float32(large_value_penalty_exponent)
+        self._reset_learning()
 
     def new_sample(self) -> int:
         sample = int(
@@ -73,8 +72,8 @@ class TruncatedPoissonAdaptiveSampler(AdaptiveSampler[int]):
             self._lambda += self._c_forget_f32 * (self._lambda_prior - self._lambda)
 
     def _reset_learning(self) -> None:
-        self._lambda = self._lambda_prior
-        self._last_sample = round(float(self._lambda_prior))
+        self._lambda: np.float32 = self._lambda_prior
+        self._last_sample: int = round(float(self._lambda_prior))
 
 
 # =================================================================================================

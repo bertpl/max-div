@@ -30,8 +30,7 @@ class BooleanAdaptiveSampler(AdaptiveSampler[bool]):
             raise ValueError(f"p_true_prior {p_true_prior} not in range [0.0, 1.0].")
 
         self._p_true_prior: np.float32 = np.float32(p_true_prior)
-        self._p_true: np.float32 = self._p_true_prior
-        self._last_sample: bool = p_true_prior >= 0.5
+        self._reset_learning()
 
     def new_sample(self) -> bool:
         r = rand_float32(self._rng_state)
@@ -50,8 +49,8 @@ class BooleanAdaptiveSampler(AdaptiveSampler[bool]):
             self._p_true += self._c_forget_f32 * (self._p_true_prior - self._p_true)
 
     def _reset_learning(self) -> None:
-        self._p_true = self._p_true_prior
-        self._last_sample = bool(self._p_true_prior >= 0.5)
+        self._p_true: np.float32 = self._p_true_prior
+        self._last_sample: bool = bool(self._p_true_prior >= 0.5)
 
 
 # =================================================================================================
