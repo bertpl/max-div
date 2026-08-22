@@ -13,7 +13,7 @@ from max_div._core.solver._parallel import (
     GroupIncumbentSlot,
     IndependentCoordinator,
     best_result,
-    run_portfolio,
+    run_workers,
 )
 from max_div._core.solver._parallel._executor import _drain, _notice_dead_workers, solve_in_worker
 from max_div._core.solver._parallel._progress_view import ParallelProgressView
@@ -32,43 +32,43 @@ def _builder() -> MaxDivSolverBuilder:
 
 
 @pytest.fixture
-def portfolio_results():
-    """Run one portfolio over spawned workers, and hand back its results with the builder used."""
+def parallel_results():
+    """Run one set of spawned workers, and hand back their results with the builder used."""
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
     with build_shared_distance_store(builder._problem, resolved) as shared:
         yield (
             builder,
-            run_portfolio(
+            run_workers(
                 [config.with_seed(seed) for seed in _SEEDS], shared.spec, [IndependentCoordinator() for _ in _SEEDS]
             ),
         )
 
 
-def test_every_worker_reports_a_result(portfolio_results):
-    """A portfolio returns one result per configuration, each carrying a full selection."""
+def test_every_worker_reports_a_result(parallel_results):
+    """A parallel solve returns one result per configuration, each carrying a full selection."""
     # --- arrange / act ----------------
-    builder, results = portfolio_results
+    builder, results = parallel_results
 
     # --- assert -----------------------
     assert len(results) == len(_SEEDS)
     assert all(result.i_selected.size == builder._k for result in results)
 
 
-def test_results_come_back_in_worker_order(portfolio_results):
+def test_results_come_back_in_worker_order(parallel_results):
     """Results are ordered by worker rather than by who finished first."""
     # --- arrange / act ----------------
-    _, results = portfolio_results
+    _, results = parallel_results
 
     # --- assert -----------------------
     assert [result.worker_index for result in results] == list(range(len(_SEEDS)))
     assert [result.seed for result in results] == list(_SEEDS)
 
 
-def test_a_worker_reproduces_the_same_solve_run_alone(portfolio_results):
+def test_a_worker_reproduces_the_same_solve_run_alone(parallel_results):
     """A worker's selection is what the same configuration and seed produce in a single process."""
     # --- arrange ----------------------
-    builder, results = portfolio_results
+    builder, results = parallel_results
 
     # --- act --------------------------
     alone = builder.with_seed(_SEEDS[0]).build().solve(verbosity=Verbosity.SILENT)
@@ -77,10 +77,10 @@ def test_a_worker_reproduces_the_same_solve_run_alone(portfolio_results):
     np.testing.assert_array_equal(np.sort(results[0].i_selected), np.sort(alone.i_selected))
 
 
-def test_the_best_reported_result_wins(portfolio_results):
+def test_the_best_reported_result_wins(parallel_results):
     """The winner is the best-scoring worker, not the first to report."""
     # --- arrange / act ----------------
-    _, results = portfolio_results
+    _, results = parallel_results
     winner = best_result(results)
 
     # --- assert -----------------------
@@ -95,7 +95,7 @@ def test_one_coordinator_per_worker_is_required():
 
     # --- act & assert -----------------
     with build_shared_distance_store(builder._problem, resolved) as shared, pytest.raises(ValueError):
-        run_portfolio([config.with_seed(1), config.with_seed(2)], shared.spec, [IndependentCoordinator()])
+        run_workers([config.with_seed(1), config.with_seed(2)], shared.spec, [IndependentCoordinator()])
 
 
 def test_a_group_of_cooperative_workers_solves_and_exchanges():
@@ -109,7 +109,7 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
 
     # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
-        results = run_portfolio([config.with_seed(seed) for seed in _SEEDS], shared.spec, coordinators)
+        results = run_workers([config.with_seed(seed) for seed in _SEEDS], shared.spec, coordinators)
 
     # --- assert -----------------------
     assert len(results) == len(_SEEDS)
@@ -117,8 +117,8 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
     assert slot.written  # at least the first boundary reached published into the empty slot
 
 
-def test_portfolio_renders_coherent_progress(capsys):
-    """A rendered portfolio prints one non-interleaved table and still collects every result."""
+def test_parallel_solve_renders_coherent_progress(capsys):
+    """A rendered parallel solve prints one non-interleaved table and still collects every result."""
     # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
@@ -126,7 +126,7 @@ def test_portfolio_renders_coherent_progress(capsys):
 
     # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
-        results = run_portfolio(
+        results = run_workers(
             [config.with_seed(seed) for seed in _SEEDS],
             shared.spec,
             [IndependentCoordinator() for _ in _SEEDS],

@@ -1,6 +1,6 @@
-"""A solver builder and a portfolio builder both carry the settings defined here.
+"""A single-solver builder and a parallel-solver builder both carry the settings defined here.
 
-Settings are split by one rule: **anything that influences the score is shared**.  A portfolio
+Settings are split by one rule: **anything that influences the score is shared**.  A parallel solver
 compares what its workers found, so one answer to "which selection is better" has to hold across all
 of them.
 

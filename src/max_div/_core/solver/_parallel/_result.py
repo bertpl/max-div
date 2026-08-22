@@ -50,5 +50,5 @@ def best_result(results: list[WorkerResult]) -> WorkerResult:
         ValueError: If no results were collected, which means every worker failed.
     """
     if not results:
-        raise ValueError("A portfolio returned no results at all; every worker failed to report one.")
+        raise ValueError("A parallel solve returned no results at all; every worker failed to report one.")
     return max(results, key=lambda result: (result.score, -result.worker_index))

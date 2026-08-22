@@ -1,4 +1,4 @@
-"""A portfolio solver runs several workers over one shared store and returns the best result they reach."""
+"""The parallel solver runs several workers over one shared store and returns the best result they reach."""
 
 import multiprocessing
 import os
@@ -13,7 +13,7 @@ from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
 
 from ._coordinator import CooperativeCoordinator, IndependentCoordinator, WorkerCoordinator
-from ._executor import run_portfolio
+from ._executor import run_workers
 from ._incumbent_slot import GroupIncumbentSlot
 from ._result import best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
@@ -21,7 +21,7 @@ from ._worker_config import WorkerConfig
 
 
 class ParallelMaxDivSolver:
-    """A portfolio solver solves one problem with several workers at once, returning the best selection.
+    """A parallel solver solves one problem with several workers at once, returning the best selection.
 
     `ParallelMaxDivSolverBuilder` builds this solver, and is where the workers and the shared
     settings are configured.
@@ -73,7 +73,7 @@ class ParallelMaxDivSolver:
         """
         progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)
         with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:
-            results = run_portfolio(
+            results = run_workers(
                 self._solver_configs,
                 shared_distance_store.spec,
                 self._build_coordinators(),
@@ -114,7 +114,7 @@ def warn_about_worker_count(n_workers: int) -> None:
     # stacklevel 3 points at the caller of build, two frames up
     if n_workers < 2:
         warnings.warn(
-            f"A portfolio of {n_workers} worker cannot do better than solving once; "
+            f"A parallel solve with {n_workers} worker cannot do better than solving once; "
             "use MaxDivSolverBuilder for a single solve, or configure more workers.",
             ParallelSolvingWarning,
             stacklevel=3,
@@ -123,7 +123,7 @@ def warn_about_worker_count(n_workers: int) -> None:
     n_cores = os.cpu_count() or 1
     if n_workers > n_cores:
         warnings.warn(
-            f"A portfolio of {n_workers} workers on {n_cores} cores makes the workers share cores, "
+            f"A parallel solve with {n_workers} workers on {n_cores} cores makes the workers share cores, "
             "so each searches less than it would with fewer of them.",
             ParallelSolvingWarning,
             stacklevel=3,
@@ -131,12 +131,11 @@ def warn_about_worker_count(n_workers: int) -> None:
 
 
 def default_worker_count() -> int:
-    """Return the default portfolio size when the caller names none: 3/4 of the logical cores, at least 2.
+    """Return the default worker count when the caller names none.
 
-    The default portfolio is cooperative, and cooperation converts extra workers into shared
-    search progress — so more cores in use keep paying off, and the default takes 3/4 where a
-    purely independent portfolio would justify only half.  An explicit count on `with_workers`
-    overrides it.
+    The default configuration is cooperative, and cooperation converts extra workers into shared
+    search progress — so more cores in use keep paying off, and the default takes 3/4 of the
+    logical cores where purely independent workers would justify only half.
     """
     return max(2, (os.cpu_count() or 2) * 3 // 4)
 

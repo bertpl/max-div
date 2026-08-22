@@ -1,4 +1,4 @@
-"""A worker configuration says what one worker in a portfolio runs.
+"""A worker configuration says what one worker of a parallel solver runs.
 
 Only the search varies per worker; the `SolverBuilderBase` docstring explains why the rest cannot.
 """
