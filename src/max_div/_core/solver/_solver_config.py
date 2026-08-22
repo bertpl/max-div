@@ -54,9 +54,7 @@ class SolverConfig:
             ValueError: if neither or both are given.
         """
         if store is not None and store_provider is None:
-
-            def provider() -> DistanceStore:
-                return store
+            provider: Callable[[], DistanceStore] = lambda: store
         elif store is None and store_provider is not None:
             provider = store_provider
         else:
