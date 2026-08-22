@@ -50,7 +50,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
         n_groups: int | None = None,
     ) -> Self:
-        """Set what the workers run, for how long each worker runs it, and how workers form groups.
+        """Set what the workers run, how long they run, and how they form groups.
 
         The workers run side by side, so the solve takes as long as one of them rather than the
         sum.  Presets differ in iteration speed, so when workers run different ones a wall-clock

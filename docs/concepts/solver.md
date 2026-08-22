@@ -192,8 +192,8 @@ Each worker is configured by a `WorkerConfig`: the preset it runs, and optionall
 initialization strategy it starts from. `init_strategy` lets two workers run the same preset from
 different starting points.
 
-Everything that decides **which selection is better** is fixed for all workers, whether it
-comes from the problem (the diversity metric, the constraints) or from the builder (the
+Everything that decides **which selection is better** is fixed for all workers, whether that
+setting comes from the problem (the diversity metric, the constraints) or from the builder (the
 tie-breakers, the constraint penalty). Comparing what workers found requires a single answer to that
 question.
 
