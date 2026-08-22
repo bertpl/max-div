@@ -74,7 +74,7 @@ class ParallelMaxDivSolver:
         """
         progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)
         # The anchor is stamped before the store build, so an end-to-end budget charges the whole
-        # setup; workers read it from their config against their own (machine-wide) clock.
+        # setup; workers read the anchor from their config against their own (machine-wide) clock.
         solver_configs = self._solver_configs
         if any(config.end_to_end_budget_sec is not None for config in solver_configs):
             budget_anchor = time.monotonic()

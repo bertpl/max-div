@@ -57,7 +57,7 @@ def solve(
     elif seconds is not None:
         duration = TargetDuration.seconds(float(seconds))
     else:
-        duration = TargetDuration.iterations(100)  # default to 100 iterations
+        duration = TargetDuration.iterations(100)
 
     # --- show what we'll do ---------------------
     click.echo(f"Solving test problem '{test_problem}' for a duration of {duration!s} using {preset.upper()} preset...")
