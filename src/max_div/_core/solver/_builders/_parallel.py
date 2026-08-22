@@ -132,7 +132,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
 
         Worker seeds are derived from the parallel solver's seed rather than set, so one seed pins every
         worker's search while the workers still search differently (with cooperating groups the
-        run stays timing-dependent, so the seed only makes a fully independent run
+        run stays timing-dependent, so the seed only makes a fully independent set of workers
         reproducible).  The derivation reduces to an int64 because the seed is reported back for
         replaying a worker on its own, and salts the tuple so a worker seed cannot coincide with a
         seed derived the same way elsewhere.

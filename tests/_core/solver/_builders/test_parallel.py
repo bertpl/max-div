@@ -86,8 +86,8 @@ def test_workers_at_the_best_score_are_counted():
 # =================================================================================================
 #  Seeds
 # =================================================================================================
-def test_one_seed_reproduces_an_independent_run():
-    """An independent run repeated from one seed selects the same items and seeds its workers alike."""
+def test_one_seed_reproduces_an_independent_set_of_workers():
+    """An independent set of workers repeated from one seed selects the same items and seeds each worker alike."""
     # --- arrange / act ----------------
     first, second = _solve_parallel(2, n_groups=2), _solve_parallel(2, n_groups=2)
 
