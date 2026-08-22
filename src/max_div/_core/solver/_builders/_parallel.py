@@ -59,7 +59,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         Workers form **worker groups**: within a group, workers adopt the best selection any
         member has found so far; groups never communicate, and the best worker over all groups
         wins.  Groups of one make those workers fully independent — `n_groups` equal to the
-        worker count makes every worker fully independent.
+        worker count puts every worker in a group of one.
 
         Args:
             target_duration: the wall-clock budget each worker runs for (see `TargetDuration`).

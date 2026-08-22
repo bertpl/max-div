@@ -131,12 +131,12 @@ def warn_about_worker_count(n_workers: int) -> None:
 
 
 def default_worker_count() -> int:
-    """Return the default worker count when the caller names none: 3/4 of the logical cores, at least 2.
+    """Return the default worker count when the caller names none.
 
     The default configuration is cooperative, and cooperation converts extra workers into shared
-    search progress — so more cores in use keep paying off, and the default takes 3/4 where a
-    purely independent workers would justify only half.  An explicit count on `with_workers`
-    overrides it.
+    search progress — so more cores in use keep paying off, and the default takes 3/4 of the
+    logical cores where purely independent workers would justify only half.  An explicit count on
+    `with_workers` overrides it.
     """
     return max(2, (os.cpu_count() or 2) * 3 // 4)
 
