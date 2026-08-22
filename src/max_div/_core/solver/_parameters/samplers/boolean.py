@@ -50,7 +50,6 @@ class BooleanAdaptiveSampler(AdaptiveSampler[bool]):
             self._p_true += self._c_forget_f32 * (self._p_true_prior - self._p_true)
 
     def reset_learning(self) -> None:
-        """Reset the sampled distribution back to its prior, discarding everything learned from feedback."""
         self._p_true = self._p_true_prior
         self._last_sample = bool(self._p_true_prior >= 0.5)
 

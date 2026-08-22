@@ -128,9 +128,9 @@ class OptimizationStrategy(StrategyBase, ABC):
     def set_seed(self, seed: int | np.int64) -> None:
         """Reseed the strategy and its samplers, and reset the samplers' learned state.
 
-        The solver calls this at the start of every solve, and it is what makes a repeated
-        `solve()` reproduce the first one: the strategy objects are reused across solves, so any
-        state learned during one solve must not leak into the next.
+        The solver calls this at the start of every solve, so a repeated `solve()` reproduces
+        the first one: the strategy objects are reused across solves, so any state learned during
+        one solve must not leak into the next.
         """
         super().set_seed(seed)
         for i_sampler, sampler in enumerate(self.sampled_params.values()):
