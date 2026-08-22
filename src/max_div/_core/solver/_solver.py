@@ -65,12 +65,12 @@ class MaxDivSolver:
             constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
             distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
-            end_to_end_budget_sec: wall-clock budget for the whole solve — store build and
-                initialization included; each optimization step receives whatever remains.
-                `None` leaves every step on its own configured duration.
-            budget_anchor: the `time.monotonic()` value the budget counts from; `None` (the
-                default) stamps it when `solve` starts.  The parallel solver passes its own
-                solve start here, so worker setup is charged against the budget too.
+            end_to_end_budget_sec: (float | None) Wall-clock budget for the whole solve — store
+                build and initialization included; each optimization step receives whatever
+                remains.  `None` leaves every step on its own configured duration.
+            budget_anchor: (float | None) The `time.monotonic()` value the budget counts from;
+                `None` stamps it when `solve` starts.  The parallel solver passes its own solve
+                start here, so worker setup is charged against the budget too.
         """
         # --- problem description ----------------
         self._n = n
@@ -176,8 +176,8 @@ class MaxDivSolver:
         if (self._end_to_end_budget_sec is None) or (not isinstance(step, OptimizationStep)):
             return step.run(state, progress_reporter, coordinator, self._batch_seconds)
         # NOTE: with several optimization steps under one budget, each receives everything that
-        # remains, so an earlier step can starve the later ones.  Every preset today produces
-        # exactly one optimization step; how several should share the remainder is undecided.
+        # remains, so an earlier step can starve the later ones.  Every preset produces exactly
+        # one optimization step; how several should share the remainder is undecided.
         remaining_sec = self._end_to_end_budget_sec - (time.monotonic() - t_budget_anchor)
         if remaining_sec <= 0.0:
             warnings.warn(

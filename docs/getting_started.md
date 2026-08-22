@@ -212,11 +212,11 @@ solver = (
 )
 ```
 
-By default the budget covers the **optimization only** — computing the distances and initializing
-come on top. Pass `end_to_end_budget=True` to make a time budget cover the **whole solve**
-instead: the optimization then gets whatever time remains after setup, and is skipped with a
-`SolverBudgetWarning` when setup consumed everything (the result is then the initialization's
-selection). An iteration count cannot be an end-to-end budget.
+By default the budget covers the **optimization only** — computing the distances and initializing come on top. `end_to_end_budget=True` changes that:
+
+- the same time budget covers the **whole solve**, and the optimization gets whatever time remains after setup;
+- when setup consumed everything, the optimization is skipped with a `SolverBudgetWarning` and the result is the initialization's selection;
+- an iteration count cannot be an end-to-end budget.
 
 ```python
 # the whole solve — distances, initialization and optimization — within two minutes
