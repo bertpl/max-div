@@ -45,7 +45,7 @@ class MaxDivSolver:
         distance_storage_label: str = "",
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         end_to_end_budget_sec: float | None = None,
-        budget_anchor: float | None = None,
+        budget_t_start: float | None = None,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -68,7 +68,7 @@ class MaxDivSolver:
             end_to_end_budget_sec: (float | None) Wall-clock budget for the whole solve — store
                 build and initialization included; each optimization step receives whatever
                 remains.  `None` leaves every step on its own configured duration.
-            budget_anchor: (float | None) The `time.monotonic()` value the budget counts from;
+            budget_t_start: (float | None) The `time.monotonic()` value the budget counts from;
                 `None` stamps it when `solve` starts.  The parallel solver passes its own solve
                 start here, so worker setup is charged against the budget too.
         """
@@ -87,7 +87,7 @@ class MaxDivSolver:
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
         self._end_to_end_budget_sec = end_to_end_budget_sec
-        self._budget_anchor = budget_anchor
+        self._budget_t_start = budget_t_start
 
     # -------------------------------------------------------------------------
     #  API
@@ -112,7 +112,7 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
-        t_budget_anchor = self._budget_anchor if self._budget_anchor is not None else time.monotonic()
+        t_budget_start = self._budget_t_start if self._budget_t_start is not None else time.monotonic()
 
         # --- progress reporting -----------------
         if progress_reporter is None:
@@ -154,7 +154,7 @@ class MaxDivSolver:
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
             step_results[step_name.strip()] = self._run_step(
-                step, state, progress_reporter, coordinator, t_budget_anchor
+                step, state, progress_reporter, coordinator, t_budget_start
             )
 
         # --- Construct result -------------------
@@ -166,7 +166,7 @@ class MaxDivSolver:
         state: SolverState,
         progress_reporter: ProgressReporter,
         coordinator: "WorkerCoordinator | None",
-        t_budget_anchor: float,
+        t_budget_start: float,
     ) -> SolverStepResult:
         """Run one step, converting the end-to-end budget into the step's remaining time where one is set.
 
@@ -178,7 +178,7 @@ class MaxDivSolver:
         # NOTE: with several optimization steps under one budget, each receives everything that
         # remains, so an earlier step can starve the later ones.  Every preset produces exactly
         # one optimization step; how several should share the remainder is undecided.
-        remaining_sec = self._end_to_end_budget_sec - (time.monotonic() - t_budget_anchor)
+        remaining_sec = self._end_to_end_budget_sec - (time.monotonic() - t_budget_start)
         if remaining_sec <= 0.0:
             warnings.warn(
                 f"The end-to-end budget of {self._end_to_end_budget_sec}s was spent before optimization "

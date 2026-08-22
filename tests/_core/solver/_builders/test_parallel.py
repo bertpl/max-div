@@ -304,7 +304,7 @@ def test_an_end_to_end_budget_requires_a_time_budget():
         ParallelMaxDivSolverBuilder(_problem()).with_workers(iterations(100), 2, end_to_end_budget=True)
 
 
-def test_the_budget_anchor_is_stamped_at_solve_start(fake_clock, monkeypatch):
+def test_the_budget_start_time_is_stamped_at_solve_start(fake_clock, monkeypatch):
     """Workers receive the parent's solve-start clock, so setup time is charged against the budget."""
     # --- arrange ----------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 2, end_to_end_budget=True).build()
@@ -323,7 +323,7 @@ def test_the_budget_anchor_is_stamped_at_solve_start(fake_clock, monkeypatch):
 
     # --- assert -----------------------
     assert [config.end_to_end_budget_sec for config in received["configs"]] == [10.0, 10.0]
-    assert [config.budget_anchor for config in received["configs"]] == [fake_clock.monotonic()] * 2
+    assert [config.budget_t_start for config in received["configs"]] == [fake_clock.monotonic()] * 2
 
 
 def test_a_budget_spent_during_setup_reaches_the_workers_as_spent():
