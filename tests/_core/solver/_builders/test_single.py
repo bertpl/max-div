@@ -331,7 +331,7 @@ def test_a_total_budget_spent_before_solving_skips_the_optimization(dummy_proble
     fake_clock.advance(11.0)
 
     # --- act --------------------------
-    with pytest.warns(SolverBudgetWarning):  # its own test covers the warning; here it must not escape
+    with pytest.warns(SolverBudgetWarning):  # a spent budget both warns and skips; this test pins the skip
         solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
