@@ -4,9 +4,8 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._utils import stdout_to_file
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import DistanceStore
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver import MaxDivSolution, MaxDivSolverBuilder, Verbosity
+from max_div._core.solver import DistanceStorage, MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._duration import Elapsed, iterations
 from max_div._core.solver._score import Score
 
@@ -169,13 +168,21 @@ def test_solver_alternative_backend_bit_identical_selection(backend: str, distan
     problem = MaxDivProblem.new(
         vectors, k=8, distance_metric=distance_metric, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
     )
-    solver_condensed = MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build()
-    solver_other = MaxDivSolverBuilder(problem).with_preset(iterations(500)).with_seed(7).build()
-    # the builder always constructs a condensed store; swap in the alternative backend directly
-    if backend == "lazy":
-        solver_other._store = DistanceStore.lazy(vectors, distance_metric)
-    else:
-        solver_other._store = DistanceStore.full_matrix_from_vectors(vectors, distance_metric)
+    other_storage = DistanceStorage.LAZY if backend == "lazy" else DistanceStorage.FULL_MATRIX
+    solver_condensed = (
+        MaxDivSolverBuilder(problem)
+        .with_preset(iterations(500))
+        .with_seed(7)
+        .with_distance_storage(DistanceStorage.CONDENSED)
+        .build()
+    )
+    solver_other = (
+        MaxDivSolverBuilder(problem)
+        .with_preset(iterations(500))
+        .with_seed(7)
+        .with_distance_storage(other_storage)
+        .build()
+    )
 
     # --- act --------------------------
     solution_condensed = solver_condensed.solve(verbosity=Verbosity.SILENT)

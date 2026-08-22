@@ -240,8 +240,9 @@ solver = (
 )
 ```
 
-Running the same solver multiple times with different seeds and keeping the best result is a simple
-way to improve solution quality.
+Solving several times with different seeds and keeping the best result is a simple way to improve
+quality; [`ParallelMaxDivSolverBuilder`](concepts/solver.md) does exactly that, running the seeds at
+once over a single shared copy of the distances or vectors.
 
 
 ## Next Steps

@@ -198,6 +198,7 @@ select = [
 ]
 ignore = [
     "B905",    # numba nopython mode can't take zip()'s strict= kwarg
+    "E731",    # assigning a lambda to a name is fine here; a trivial thunk reads better than a def
 ]
 
 [tool.ruff.lint.mccabe]

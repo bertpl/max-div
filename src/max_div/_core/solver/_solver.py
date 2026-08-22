@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
@@ -30,7 +31,7 @@ class MaxDivSolver:
     def __init__(
         self,
         n: int,
-        store: DistanceStore,
+        store_provider: Callable[[], DistanceStore],
         k: int,
         diversity_metric: DiversityMetric,
         diversity_tie_breakers: list[DiversityMetric],
@@ -45,7 +46,9 @@ class MaxDivSolver:
 
         Args:
             n: (int) The number of items in the problem ('universe').
-            store: (DistanceStore) Pairwise-distance storage the solver reads from.
+            store_provider: called at the start of each `solve` to obtain the pairwise-distance
+                storage to read from, so `build` stays lean and fast rather than building the
+                store up front.
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_metric: (DiversityMetric) The diversity metric to use.
             diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
@@ -60,7 +63,7 @@ class MaxDivSolver:
         """
         # --- problem description ----------------
         self._n = n
-        self._store = store
+        self._store_provider = store_provider
         self._distance_storage_label = distance_storage_label
         self._k = k
         self._diversity_metric = diversity_metric
@@ -90,7 +93,7 @@ class MaxDivSolver:
                 plain integer value; see `Verbosity` for the levels.
             coordinator: a `WorkerCoordinator` the solver calls at each batch boundary.
             progress_reporter: a ready-made reporter to report into, overriding `verbosity`; this
-                is how a portfolio worker reports to its parent process.
+                is how a parallel worker reports to its parent process.
 
         Returns:
             A MaxDivSolution object representing the solution found.
@@ -110,9 +113,10 @@ class MaxDivSolver:
         # --- solver state -----------------------
         with Timer() as timer:
             progress_reporter.solver_step_started(step_names[0])
+            store = self._store_provider()
             state = SolverState.new(
                 n=self._n,
-                store=self._store,
+                store=store,
                 k=self._k,
                 diversity_metric=self._diversity_metric,
                 diversity_tie_breakers=self._diversity_tie_breakers,

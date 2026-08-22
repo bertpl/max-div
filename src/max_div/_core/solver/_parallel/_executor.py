@@ -110,7 +110,7 @@ def solve_in_worker(
     else:
         reporter = ProgressReporter.silent()
     with attached_distance_store(spec) as store:
-        solution = config.build_solver(store).solve(coordinator=coordinator, progress_reporter=reporter)
+        solution = config.build_solver(store=store).solve(coordinator=coordinator, progress_reporter=reporter)
         messages.put(WorkerResult(worker_index=worker_index, seed=config.seed, solution=solution))
 
 
