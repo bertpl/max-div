@@ -7,6 +7,7 @@ from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import DistanceStorage, MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._duration import Elapsed, iterations
+from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._score import Score
 
 
@@ -155,6 +156,23 @@ def test_solver_deterministic_above_candidate_cap():
 
     # --- assert -----------------------
     assert list(solution_1.i_selected) == list(solution_2.i_selected)
+
+
+def test_solver_repeated_solve_reproduces_the_first():
+    """A second solve() on the same SMART solver selects what the first did; adaptive learning must not leak."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(20260822)
+    vectors = rng.random((80, 3)).astype(np.float32)
+    problem = MaxDivProblem.new(vectors, k=8)
+    solver = MaxDivSolverBuilder(problem).with_preset(iterations(200), SolverPreset.SMART).with_seed(7).build()
+
+    # --- act --------------------------
+    first = solver.solve(verbosity=Verbosity.SILENT)
+    second = solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert list(first.i_selected) == list(second.i_selected)
+    assert first.score == second.score
 
 
 @pytest.mark.parametrize("backend", ["lazy", "full_matrix"])

@@ -126,10 +126,17 @@ class OptimizationStrategy(StrategyBase, ABC):
         return self.has_scheduled_params or self.has_sampled_params
 
     def set_seed(self, seed: int | np.int64) -> None:
+        """Reseed the strategy and its samplers, and reset the samplers' learned state.
+
+        The solver calls this at the start of every solve, and it is what makes a repeated
+        `solve()` reproduce the first one: the strategy objects are reused across solves, so any
+        state learned during one solve must not leak into the next.
+        """
         super().set_seed(seed)
         for i_sampler, sampler in enumerate(self.sampled_params.values()):
             # set seed for each sampler, offset by multiple of large prime
             sampler.update_seed(seed + (1_234_577 * i_sampler))
+            sampler.reset_learning()
 
     # -------------------------------------------------------------------------
     #  Main API
@@ -317,6 +324,11 @@ class SwapBasedOptimizationStrategy(OptimizationStrategy, ABC):
         )
         self.constraint_softness: float = self.initial_param_value(constraint_softness)
         self._success_rate_state = np.zeros(20, dtype=np.int64)  # buffer for last 10 success & 10 fail iters
+
+    def set_seed(self, seed: int | np.int64) -> None:
+        """Reseed the strategy and also clear the success-rate history, which is per-solve state too."""
+        super().set_seed(seed)
+        self._success_rate_state[:] = 0
 
     def get_success_rate(self) -> float:
         """Estimate the swap success rate of the strategy, based on recent history of successes and failures.

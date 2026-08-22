@@ -86,3 +86,19 @@ def test_sampled_boolean_alias():
     assert sampler._p_true_prior == pytest.approx(0.8)
     assert sampler._tau_learn == pytest.approx(123.45)
     assert sampler._tau_forget == pytest.approx(123.45 * 123.45)
+
+
+def test_boolean_adaptive_sampler_reset_learning():
+    """reset_learning() restores the prior probability after feedback has shifted it."""
+    # --- arrange ----------------------
+    sampler = sampled_boolean(p_true_prior=0.5, tau_learn=5.0)
+    for _ in range(200):
+        sample = sampler.new_sample()
+        sampler.feedback(success=sample)
+    assert sampler.summary_statistic() != pytest.approx(0.5)
+
+    # --- act --------------------------
+    sampler.reset_learning()
+
+    # --- assert -----------------------
+    assert sampler.summary_statistic() == pytest.approx(0.5)

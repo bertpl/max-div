@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Re-solving the same solver with the SMART or THOROUGH preset now reproduces the first solve's selection for a given seed, instead of carrying adaptive state across solves
 
 ### Security
 
