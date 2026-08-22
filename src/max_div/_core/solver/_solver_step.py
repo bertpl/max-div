@@ -1,8 +1,11 @@
+import time
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from max_div._core._utils._timer import Timer
+from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 
 from ._duration import Elapsed, Progress, TargetDuration
@@ -51,6 +54,12 @@ class SolverStep(ABC, Generic[S]):
 
     def set_seed(self, seed: int) -> None:
         self._strategy.set_seed(seed)
+
+    def set_e2e_budget(self, e2e_budget_sec: float | None, t_e2e_budget_start: float) -> None:
+        """Take note of the solve's end-to-end budget; only optimization steps act on one.
+
+        The solver calls this on every step at the start of every solve, like `set_seed`.
+        """
 
     @abstractmethod
     def run(
@@ -147,6 +156,25 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             )
         super().__init__(optim_strategy)
         self._duration = duration
+        self._e2e_budget_sec: float | None = None
+        self._t_e2e_budget_start: float = 0.0
+
+    def set_e2e_budget(self, e2e_budget_sec: float | None, t_e2e_budget_start: float) -> None:
+        """Store the solve's end-to-end budget, replacing this step's duration with the remaining time at run."""
+        self._e2e_budget_sec = e2e_budget_sec
+        self._t_e2e_budget_start = t_e2e_budget_start
+
+    def _effective_duration(self) -> TargetDuration | None:
+        """Return the duration this run gets — the budget's remaining time where one is set — or None when spent.
+
+        NOTE: with several optimization steps under one budget, each receives everything that
+        remains, so an earlier step can starve the later ones.  Every preset produces exactly
+        one optimization step; how several should share the remainder is undecided.
+        """
+        if self._e2e_budget_sec is None:
+            return self._duration
+        remaining_sec = self._e2e_budget_sec - (time.monotonic() - self._t_e2e_budget_start)
+        return TargetDuration.seconds(remaining_sec) if remaining_sec > 0.0 else None
 
     def run(
         self,
@@ -154,16 +182,25 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
-        *,
-        duration_override: TargetDuration | None = None,
     ) -> SolverStepResult:
-        """Run the optimization, under `duration_override` where given instead of the configured duration.
+        """Run the optimization for its duration — the end-to-end budget's remaining time where one is set.
 
-        The override is how the solver hands a step the remaining part of an end-to-end budget.
+        With that budget spent before the step starts, the step is skipped with a
+        `SolverBudgetWarning`, leaving the selection the earlier steps built.
         """
         # --- init -------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
-        tracker = (duration_override or self._duration).track()
+        duration = self._effective_duration()
+        if duration is None:
+            warnings.warn(
+                f"The end-to-end budget of {self._e2e_budget_sec}s was spent before optimization "
+                "started; the returned selection is the initialization's.",
+                SolverBudgetWarning,
+                stacklevel=3,
+            )
+            progress_reporter.solver_step_finished(None, state)
+            return SolverStepResult(score_checkpoints=[(Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)])
+        tracker = duration.track()
         score_checkpoints: list[tuple[Elapsed, Score]] = []
         next_checkpoint_iter_count = 1
 

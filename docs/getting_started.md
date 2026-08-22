@@ -214,7 +214,7 @@ solver = (
 
 By default the budget covers the **optimization only** — computing the distances and initializing come on top. `end_to_end_budget=True` changes that:
 
-- the same time budget covers the **whole solve**, and the optimization gets whatever time remains after setup;
+- the same time budget covers the **whole solve**, and the optimization gets whatever time remains after setup — the store build and initialization have no budgets of their own (they always run to completion), so the optimization step is the only place remaining time can be applied;
 - when setup consumed everything, the optimization is skipped with a `SolverBudgetWarning` and the result is the initialization's selection;
 - an iteration count cannot be an end-to-end budget.
 

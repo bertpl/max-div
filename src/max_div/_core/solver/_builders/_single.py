@@ -11,7 +11,7 @@ from max_div._core.solver._solver_config import SolverConfig
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStep
 from max_div._core.solver._strategies import InitializationStrategy
 
-from ._base import SolverBuilderBase, _resolve_end_to_end_budget
+from ._base import SolverBuilderBase
 
 
 class MaxDivSolverBuilder(SolverBuilderBase):
@@ -83,7 +83,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         Raises:
             ValueError: If `end_to_end_budget` is combined with an iteration budget.
         """
-        self._end_to_end_budget_sec = _resolve_end_to_end_budget(target_duration, end_to_end_budget)
+        self._set_e2e_budget(target_duration, end_to_end_budget)
 
         # --- apply main preset logic ------------
         init_strategy, optim_steps = get_preset_strategies(
@@ -133,5 +133,5 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             seed=self._seed,
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=label,
-            end_to_end_budget_sec=self._end_to_end_budget_sec,
+            e2e_budget_sec=self._e2e_budget_sec,
         )

@@ -6,6 +6,7 @@ import pytest
 from numpy._typing import NDArray
 
 from max_div._core._utils import Timer
+from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.solver._duration import Elapsed, iterations, seconds
 from max_div._core.solver._score import Score
 from max_div._core.solver._solver_state import SolverState
@@ -211,6 +212,38 @@ def test_optimization_step_run_seconds(fake_clock):
     assert result.elapsed.t_elapsed_sec >= 0.1
     assert result.elapsed.n_iterations == strategy._n_iterations > 0
     assert_score_checkpoints_are_sane(result.score_checkpoints)
+
+
+def test_optimization_step_runs_under_the_budgets_remaining_time(fake_clock):
+    """With an end-to-end budget set, the step runs for what remains of it, not its configured duration."""
+    # --- arrange ----------------------
+    strategy = OptimTickingTest(fake_clock, dt_sec=0.001)
+    step = OptimizationStep(strategy, duration=seconds(100.0))
+    step.set_e2e_budget(10.0, fake_clock.monotonic())
+    fake_clock.advance(9.9)  # setup ate all but 0.1s of the budget
+
+    # --- act --------------------------
+    result = step.run(Mock())
+
+    # --- assert -----------------------
+    assert 0.1 <= result.elapsed.t_elapsed_sec < 1.0  # the remaining 0.1s, nowhere near the 100s duration
+
+
+def test_optimization_step_skips_when_the_budget_is_spent(fake_clock):
+    """A spent end-to-end budget warns and returns a zero-iteration result with the current score."""
+    # --- arrange ----------------------
+    strategy = OptimTest()
+    step = OptimizationStep(strategy, duration=seconds(100.0))
+    step.set_e2e_budget(10.0, fake_clock.monotonic())
+    fake_clock.advance(11.0)
+
+    # --- act --------------------------
+    with pytest.warns(SolverBudgetWarning, match="spent before optimization started"):
+        result = step.run(Mock())
+
+    # --- assert -----------------------
+    assert strategy._n_iterations == 0
+    assert result.elapsed.n_iterations == 0
 
 
 # --- caller-provided batch interval ----------------------

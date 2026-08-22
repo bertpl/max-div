@@ -366,31 +366,37 @@ def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_
     assert len(solution.i_selected) == dummy_problem.k
 
 
-def test_the_optimization_receives_what_the_setup_left(dummy_problem, fake_clock, monkeypatch):
-    """The optimization step runs under the remaining part of the budget, not the full duration."""
+def test_solve_hands_every_step_the_budget_and_its_start(dummy_problem, fake_clock, monkeypatch):
+    """Each solve pushes the budget and the solve-start time into the steps, like the seeds."""
     # --- arrange ----------------------
     solver = (
         MaxDivSolverBuilder(dummy_problem)
         .with_preset(seconds(10.0), SolverPreset.RANDOM, end_to_end_budget=True)
         .build()
     )
-    store_provider = solver._store_provider
-    solver._store_provider = lambda: (fake_clock.advance(4.0), store_provider())[1]  # the build eats 4 of 10 seconds
-    received = {}
+    fake_clock.advance(4.0)  # time before solve is not part of the budget
+    received = []
+    original = OptimizationStep.set_e2e_budget
 
-    def record_duration(
-        self, state, progress_reporter=None, coordinator=None, batch_seconds=0.5, *, duration_override=None
-    ):
-        received["duration"] = duration_override
-        return SolverStepResult(score_checkpoints=[(Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)])
+    def record_budget(self, e2e_budget_sec, t_e2e_budget_start):
+        received.append((e2e_budget_sec, t_e2e_budget_start))
+        original(self, e2e_budget_sec, t_e2e_budget_start)
 
-    monkeypatch.setattr(OptimizationStep, "run", record_duration)
+    monkeypatch.setattr(OptimizationStep, "set_e2e_budget", record_budget)
+    # stub the run: under a frozen fake clock a real time-budgeted run would never finish
+    monkeypatch.setattr(
+        OptimizationStep,
+        "run",
+        lambda self, state, *args, **kwargs: SolverStepResult(
+            score_checkpoints=[(Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)]
+        ),
+    )
 
     # --- act --------------------------
     solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
-    assert received["duration"].value() == pytest.approx(6.0)
+    assert received == [(10.0, fake_clock.monotonic())]
 
 
 @pytest.mark.parametrize("duration", [seconds(0.05), iterations(5)])

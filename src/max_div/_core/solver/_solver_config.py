@@ -34,10 +34,10 @@ class SolverConfig:
     # the parallel builder)
     batch_seconds: float = REPORTING_BATCH_SECONDS
     # an end-to-end budget bounds the whole solve (store build and initialization included) with
-    # `end_to_end_budget_sec`; `budget_t_start` is the `time.monotonic()` reading the parallel solver
+    # `e2e_budget_sec`; `t_e2e_budget_start` is the `time.monotonic()` reading the parallel solver
     # stamps at its own solve start, so workers charge the parent's setup against the budget too
-    end_to_end_budget_sec: float | None = None
-    budget_t_start: float | None = None
+    e2e_budget_sec: float | None = None
+    t_e2e_budget_start: float | None = None
 
     def build_solver(
         self,
@@ -76,14 +76,14 @@ class SolverConfig:
             constraint_penalty=self.constraint_penalty,
             distance_storage_label=self.distance_storage_label,
             batch_seconds=self.batch_seconds,
-            end_to_end_budget_sec=self.end_to_end_budget_sec,
-            budget_t_start=self.budget_t_start,
+            e2e_budget_sec=self.e2e_budget_sec,
+            t_e2e_budget_start=self.t_e2e_budget_start,
         )
 
     def with_seed(self, seed: int) -> "SolverConfig":
         """Return a copy of this configuration carrying a different seed."""
         return replace(self, seed=seed)
 
-    def with_budget_t_start(self, budget_t_start: float) -> "SolverConfig":
+    def with_t_e2e_budget_start(self, t_e2e_budget_start: float) -> "SolverConfig":
         """Return a copy of this configuration carrying the given budget start time (`time.monotonic()`)."""
-        return replace(self, budget_t_start=budget_t_start)
+        return replace(self, t_e2e_budget_start=t_e2e_budget_start)

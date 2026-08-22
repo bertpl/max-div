@@ -17,7 +17,7 @@ from max_div._core.solver._presets import get_preset_strategies
 from max_div._core.solver._solver_config import SolverConfig
 from max_div._core.solver._solver_step import COOPERATIVE_BATCH_SECONDS, REPORTING_BATCH_SECONDS, InitializationStep
 
-from ._base import SolverBuilderBase, _resolve_end_to_end_budget
+from ._base import SolverBuilderBase
 
 
 class ParallelMaxDivSolverBuilder(SolverBuilderBase):
@@ -81,7 +81,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 the sequence mixes configurations and groups, or `end_to_end_budget` is combined
                 with an iteration budget.
         """
-        self._end_to_end_budget_sec = _resolve_end_to_end_budget(target_duration, end_to_end_budget)
+        self._set_e2e_budget(target_duration, end_to_end_budget)
         self._target_duration = target_duration
         if workers is None:
             workers = default_worker_count()
@@ -159,7 +159,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             distance_storage_label=storage_label,
             # tighter batches give cooperative workers faster incumbent exchanges
             batch_seconds=COOPERATIVE_BATCH_SECONDS if group_size > 1 else REPORTING_BATCH_SECONDS,
-            end_to_end_budget_sec=self._end_to_end_budget_sec,
+            e2e_budget_sec=self._e2e_budget_sec,
         )
 
 

@@ -77,9 +77,9 @@ class ParallelMaxDivSolver:
         # charges the whole setup; workers read it from their config against their own
         # (machine-wide) clock.
         solver_configs = self._solver_configs
-        if any(config.end_to_end_budget_sec is not None for config in solver_configs):
-            budget_t_start = time.monotonic()
-            solver_configs = [config.with_budget_t_start(budget_t_start) for config in solver_configs]
+        if any(config.e2e_budget_sec is not None for config in solver_configs):
+            t_e2e_budget_start = time.monotonic()
+            solver_configs = [config.with_t_e2e_budget_start(t_e2e_budget_start) for config in solver_configs]
         with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:
             results = run_workers(
                 solver_configs,
