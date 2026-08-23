@@ -2,7 +2,7 @@
 
 The **largest n within memory** is the largest problem size a configuration handles within the memory budget `M_max`. The values below come from the memory sweep of the [measurement protocol](protocol.md) (section IV.B), which also defines the budget, the fit, and its trust conditions.
 
-*Measured with max-div v0.14.2. Only the smoke subset — max-div, RDKit MaxMinPicker, and DPPy — is measured; the remaining solver configurations are not yet.*
+*Measured with max-div v0.14.2. Only a limited set of solvers — max-div, RDKit MaxMinPicker, and DPPy — is measured; the remaining solver configurations are not yet.*
 
 ![Memory footprint against problem size, per solver configuration, with fitted growth curves](images/scaling_memory.webp)
 

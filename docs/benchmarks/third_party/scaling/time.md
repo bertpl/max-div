@@ -2,7 +2,7 @@
 
 The **largest n within the time budget** is the largest problem size a configuration solves within `T_max`, end to end. The values below come from the time sweep of the [measurement protocol](protocol.md) (section IV.C); the [solver configurations page](solver_configs.md) lists every configuration.
 
-*Measured with max-div v0.14.2. Only the smoke subset — max-div, RDKit MaxMinPicker, and DPPy — is measured; the remaining solver configurations are not yet.*
+*Measured with max-div v0.14.2. Only a limited set of solvers — max-div, RDKit MaxMinPicker, and DPPy — is measured; the remaining solver configurations are not yet.*
 
 ![End-to-end solve time against problem size, per solver configuration](images/scaling_time.webp)
 

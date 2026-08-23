@@ -1,8 +1,8 @@
-"""The per-solver run configurations of the solver-scaling benchmarks — the smoke subset.
+"""The per-solver run configurations of the solver-scaling benchmarks — the limited set measured first.
 
 Each solver enters the measurements as one or more named configurations, mirroring the
 published solver-configurations page; every configuration is measured independently and the
-best result per (axis, n) is taken. This module carries only the smoke set:
+best result per (axis, n) is taken. This module carries only a limited set of solvers:
 
 * max-div's three configurations — `lean`, `optimal-eager`, `optimal-lazy` — spanning init-only
   linear memory, a forced full matrix (quadratic), and forced lazy storage (linear anytime);
