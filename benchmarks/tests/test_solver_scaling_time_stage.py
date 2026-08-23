@@ -1,6 +1,6 @@
 from benchmarks.solver_scaling import time_stage
 from benchmarks.solver_scaling.configs import resolve
-from benchmarks.solver_scaling.grid import DEFAULT_SEED
+from benchmarks.solver_scaling.grid import DEFAULT_SEED, WARMUP_BUDGET_SEC
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records
 
 
@@ -68,7 +68,7 @@ def test_a_fresh_config_gets_one_discarded_warmup_run(monkeypatch, tmp_path):
     time_stage._ascend(resolve("rdkit", "default"), {}, data_path, 60.0)
 
     # --- assert -----------------------
-    assert calls[0] == (20, time_stage._WARMUP_BUDGET_SEC)
+    assert calls[0] == (20, WARMUP_BUDGET_SEC)
     assert calls[1] == (20, 60.0)
     recorded = load_scaling_records(data_path)
     assert all(r.budget_sec == 60.0 for r in recorded)  # the warm-up run was discarded

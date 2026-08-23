@@ -39,15 +39,18 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from benchmarks.solver_scaling.configs import CONFIGS  # noqa: E402
 from benchmarks.solver_scaling.grid import (  # noqa: E402
+    GRID_MIN,
     MEMORY_CAP_BYTES,
     REFERENCE_BUDGET_SEC,
     operational_bound,
     size_grid,
 )
-from benchmarks.solver_scaling.memory_fit import FIT_PATH, N_FIT_SIZES  # noqa: E402
+from benchmarks.solver_scaling.memory_fit import FIT_PATH  # noqa: E402
+from benchmarks.solver_scaling.memory_stage import DATA_PATH as MEMORY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records  # noqa: E402
-from benchmarks.solver_scaling.time_stage import DATA_PATH, passes_time  # noqa: E402
+from benchmarks.solver_scaling.time_stage import DATA_PATH as TIME_DATA_PATH  # noqa: E402
+from benchmarks.solver_scaling.time_stage import passes_time  # noqa: E402
 
 IMAGES_DIR = REPO_ROOT / "docs" / "benchmarks" / "third_party" / "scaling" / "images"
 GENERATED_DIR = REPO_ROOT / "generated"
@@ -181,17 +184,17 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
     """Render recorded memory footprints against problem size, with each configuration's fitted curve overlaid."""
     fig, ax = plt.subplots(figsize=(12.0, 7.0))
     for index, ((tool, config), rows) in enumerate(grouped.items()):
-        completed = [r for r in rows if r.completed and r.peak_memory_bytes]
-        if not completed:
+        observed = _footprint_rows(rows)
+        if not observed:
             continue
         handles = ax.plot(
-            [r.n for r in completed],
-            [r.peak_memory_bytes for r in completed],
+            [r.n for r in observed],
+            [r.peak_memory_bytes for r in observed],
             linestyle="none",
             label=_series_label(tool, config, names),
             **_series_marker(index),
         )
-        _draw_fit_curve(ax, fits.get(f"{tool}/{config}", {}), completed, handles[0].get_color())
+        _draw_fit_curve(ax, fits.get(f"{tool}/{config}", {}), observed, handles[0].get_color())
     ax.axhline(MEMORY_CAP_BYTES, color="#888888", linestyle="--", linewidth=1.2)
     # x in axes fraction, y in data coordinates, so the label hugs the line's right end
     ax.text(
@@ -218,12 +221,19 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
     _save_webp(fig, IMAGES_DIR / "scaling_memory.webp")
 
 
-def _draw_fit_curve(ax: plt.Axes, fit: dict, completed: list[ScalingRunRecord], color: str) -> None:
-    """Draw a configuration's fitted peak-RSS curve, from its measured sizes up to the memory cap."""
+def _footprint_rows(rows: list[ScalingRunRecord]) -> list[ScalingRunRecord]:
+    """Return the runs carrying a memory footprint: completed, or killed at the window's end."""
+    return [
+        r for r in rows if r.peak_memory_bytes and classify(r.completed, r.reason) in (Outcome.SUCCESS, Outcome.TIMEOUT)
+    ]
+
+
+def _draw_fit_curve(ax: plt.Axes, fit: dict, observed: list[ScalingRunRecord], color: str) -> None:
+    """Draw a configuration's fitted footprint curve, from its measured sizes up to the memory cap."""
     coef = fit.get("coef")
     if not coef:
         return
-    n_lo = completed[0].n
+    n_lo = observed[0].n
     n_hi = operational_bound()  # the largest grid size; extrapolating past it publishes nothing
     ns = np.geomspace(n_lo, n_hi, 200)
     predicted = sum(c * ns**p for p, c in enumerate(coef))
@@ -238,24 +248,44 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
     own chart on an adaptive linear scale — just its footprints and fitted curve, annotated with
     the fitted coefficients and R^2 — making visible that the fit follows a trend in the data.
     """
-    fragment: list[str] = []
-    for (tool, config), rows in grouped.items():
+    thumbnails: list[str] = []
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    for index, ((tool, config), rows) in enumerate(grouped.items()):
         fit = fits.get(f"{tool}/{config}", {})
-        completed = [r for r in rows if r.completed and r.peak_memory_bytes]
-        if not completed or not fit.get("coef"):
+        observed = _footprint_rows(rows)
+        if not observed or not fit.get("coef"):
             continue
+        # index into the same cycle as the combined chart's series order, so each configuration
+        # keeps one color across all memory charts
+        color = colors[index % len(colors)]
+        settled = [r for r in observed if r.memory_settled]
+        unsettled = [r for r in observed if not r.memory_settled]
         label = _series_label(tool, config, names)
         fig, ax = plt.subplots(figsize=(7.0, 4.2))
         ax.plot(
-            [r.n for r in completed],
-            [r.peak_memory_bytes / 2**20 for r in completed],
+            [r.n for r in settled],
+            [r.peak_memory_bytes / 2**20 for r in settled],
             marker="o",
             linestyle="none",
+            color=color,
         )
+        if unsettled:
+            # open markers: the footprint was still growing at the window's end, so the point
+            # under-reads and did not feed the fit
+            ax.plot(
+                [r.n for r in unsettled],
+                [r.peak_memory_bytes / 2**20 for r in unsettled],
+                marker="o",
+                markerfacecolor="none",
+                linestyle="none",
+                color=color,
+                label="not settled (excluded from the fit)",
+            )
+            ax.legend(loc="lower right", fontsize=8)
         coef = fit["coef"]
-        fit_ns = np.geomspace(sorted(r.n for r in completed)[-N_FIT_SIZES:][0], completed[-1].n, 200)
+        fit_ns = np.geomspace(GRID_MIN, observed[-1].n, 200)
         predicted = sum(c * fit_ns**p for p, c in enumerate(coef)) / 2**20
-        ax.plot(fit_ns, predicted, linestyle="--", linewidth=1.2)
+        ax.plot(fit_ns, predicted, linestyle="--", linewidth=1.2, color=color)
         ax.text(
             0.03,
             0.94,
@@ -265,15 +295,21 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
             fontsize=9,
         )
         ax.set_xscale("log")
-        _grid_xticks(ax, completed[-1].n)
+        _grid_xticks(ax, observed[-1].n)
         ax.set_xlabel("problem size n")
         ax.set_ylabel("peak memory use [MB]")
         ax.set_title(f"Memory fit — {label}", fontweight="bold")
         ax.grid(True, which="major")
         name = f"scaling_memory_fit_{tool}_{config}.webp"
         _save_webp(fig, IMAGES_DIR / name)
-        fragment += [f"![Memory footprints and fitted curve for {label}](images/{name})", ""]
-    _write_generated("scaling_memory_fits.md", fragment)
+        # raw HTML paths are not rewritten by mkdocs (unlike markdown image syntax), so they must
+        # be relative to the page's built directory URL, one level below the section
+        thumbnails.append(
+            f'<a href="../images/{name}"><img src="../images/{name}" '
+            f'alt="Memory footprints and fitted curve for {label}" width="32%"></a>'
+        )
+    # a clickable grid: three thumbnails per row, each linking to the full-size chart
+    _write_generated("scaling_memory_fits.md", [" ".join(thumbnails)] if thumbnails else [])
 
 
 def _format_fit(coef: tuple) -> str:
@@ -313,14 +349,14 @@ def write_time_table(grouped: dict, names: dict[str, str]) -> None:
     _write_generated("scaling_time.md", lines)
 
 
-def write_memory_table(grouped: dict, fits: dict, names: dict[str, str]) -> None:
-    """Write the per-configuration largest-n-within-memory table."""
+def write_memory_table(fits: dict, names: dict[str, str]) -> None:
+    """Write the per-configuration largest-n-within-memory table, one row per fit entry."""
     lines = [
         "| Solver | Largest n within memory | Determination |",
         "|---|---|---|",
     ]
-    for tool, config in grouped:
-        fit = fits.get(f"{tool}/{config}", {})
+    for key, fit in fits.items():
+        tool, config = key.split("/", 1)
         largest = f"**{fit['max_n']:,}**" if fit.get("max_n") else "—"
         lines.append(
             f"| {_series_label(tool, config, names, markdown=True)} | {largest} | {fit.get('reason', 'no fit')} |"
@@ -339,16 +375,17 @@ def _write_generated(name: str, lines: list[str]) -> None:
 #  Main entrypoint
 # =================================================================================================
 def main() -> None:
-    """Regenerate both charts and both tables from the tracked data files."""
+    """Regenerate the charts and tables from the two sweeps' tracked data files."""
     plt.style.use(STYLE_SHEET)
     names = _solver_names()
-    grouped = _records_by_config(load_scaling_records(DATA_PATH))
+    time_grouped = _records_by_config(load_scaling_records(TIME_DATA_PATH) if TIME_DATA_PATH.exists() else [])
+    memory_grouped = _records_by_config(load_scaling_records(MEMORY_DATA_PATH) if MEMORY_DATA_PATH.exists() else [])
     fits = json.loads(FIT_PATH.read_text(encoding="utf-8")) if FIT_PATH.exists() else {}
-    render_time_chart(grouped, names)
-    render_memory_chart(grouped, fits, names)
-    render_fit_charts(grouped, fits, names)
-    write_time_table(grouped, names)
-    write_memory_table(grouped, fits, names)
+    render_time_chart(time_grouped, names)
+    render_memory_chart(memory_grouped, fits, names)
+    render_fit_charts(memory_grouped, fits, names)
+    write_time_table(time_grouped, names)
+    write_memory_table(fits, names)
 
 
 if __name__ == "__main__":

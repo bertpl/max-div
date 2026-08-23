@@ -18,6 +18,7 @@ def _record(**overrides) -> ScalingRunRecord:
         "reason": None,
         "measured_sec": 1.5,
         "peak_memory_bytes": 123456,
+        "memory_settled": True,
         "min_separation": 0.42,
     }
     fields.update(overrides)

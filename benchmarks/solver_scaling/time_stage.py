@@ -3,8 +3,8 @@
 For each configuration: run it once at each candidate size, smallest first, under the protocol's
 fixed seed, and stop at the first size that fails. A run passes when it returns a valid selection
 within the time budget, measured end-to-end. The largest passing size is the configuration's
-largest n within the time budget; the tool's value is the best over its configurations. Peak
-memory is recorded on every run, so this stage doubles as the memory-fit calibration.
+largest n within the time budget; the tool's value is the best over its configurations. The
+memory sweep (`memory_stage`) is independent and runs first.
 
 One run decides each size's verdict, per the measurement protocol: runtime noise can at worst
 shift a result by one grid step, an inaccuracy the grid's granularity already accepts.
@@ -19,15 +19,11 @@ import sys
 from pathlib import Path
 
 from .configs import CONFIGS, ScalingConfig
-from .grid import DEFAULT_SEED, GRID_MIN, REFERENCE_BUDGET_SEC, operational_bound, size_grid
+from .grid import DEFAULT_SEED, GRID_MIN, REFERENCE_BUDGET_SEC, WARMUP_BUDGET_SEC, operational_bound, size_grid
 from .records import ScalingRunRecord, append_scaling_record, load_scaling_records
 from .runner import run_measurement
 
 DATA_PATH = Path(__file__).resolve().parent / "data" / "time_stage.jsonl"
-
-# Budget for the discarded warm-up run: enough for any configuration to produce a tiny-size
-# answer, small enough that budget-honoring configurations return quickly.
-_WARMUP_BUDGET_SEC = 5.0
 
 
 def passes_time(record: ScalingRunRecord, budget_sec: float = REFERENCE_BUDGET_SEC) -> bool:
@@ -67,7 +63,7 @@ def _ascend(config: ScalingConfig, done: dict, data_path: Path, budget_sec: floa
     real measurement.
     """
     if not any(key[0] == config.tool and key[1] == config.name for key in done):
-        run_measurement(config.tool, config.name, GRID_MIN, GRID_MIN // 10, DEFAULT_SEED, _WARMUP_BUDGET_SEC)
+        run_measurement(config.tool, config.name, GRID_MIN, GRID_MIN // 10, DEFAULT_SEED, WARMUP_BUDGET_SEC)
     limit: int | None = None
     for n in size_grid(operational_bound()):
         record = done.get((config.tool, config.name, n, DEFAULT_SEED))

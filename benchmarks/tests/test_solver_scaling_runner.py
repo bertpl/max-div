@@ -27,10 +27,10 @@ def test_supervise_returns_no_reason_when_the_child_finishes_on_its_own(monkeypa
     monkeypatch.setattr(runner, "_observe_child", lambda _pid: (1024, False))
 
     # --- act --------------------------
-    reason, _peak, _spawned = runner._supervise(_FakeChild(running=False), budget_sec=60.0, baseline_bytes=10_000)
+    sup = runner._supervise(_FakeChild(running=False), budget_sec=60.0, baseline_bytes=10_000)
 
     # --- assert -----------------------
-    assert reason is None
+    assert sup.reason is None
 
 
 def test_supervise_kills_on_crossing_the_memory_cap(monkeypatch):
@@ -40,12 +40,12 @@ def test_supervise_kills_on_crossing_the_memory_cap(monkeypatch):
     monkeypatch.setattr(runner, "_observe_child", lambda _pid: (1024, True))
 
     # --- act --------------------------
-    reason, _peak, spawned = runner._supervise(child, budget_sec=60.0, baseline_bytes=grid.MEMORY_CAP_BYTES + 1)
+    sup = runner._supervise(child, budget_sec=60.0, baseline_bytes=grid.MEMORY_CAP_BYTES + 1)
 
     # --- assert -----------------------
-    assert reason == REASON_MEMORY
+    assert sup.reason == REASON_MEMORY
     assert child.killed
-    assert spawned  # child processes were observed before the kill
+    assert sup.spawned  # child processes were observed before the kill
 
 
 def test_supervise_kills_on_passing_the_deadline(monkeypatch):
@@ -56,10 +56,10 @@ def test_supervise_kills_on_passing_the_deadline(monkeypatch):
     monkeypatch.setattr(grid, "SETUP_GRACE_SEC", 0.0)
 
     # --- act --------------------------
-    reason, _peak, _spawned = runner._supervise(child, budget_sec=0.0, baseline_bytes=10_000)
+    sup = runner._supervise(child, budget_sec=0.0, baseline_bytes=10_000)
 
     # --- assert -----------------------
-    assert reason == REASON_TIMEOUT
+    assert sup.reason == REASON_TIMEOUT
     assert child.killed
 
 
@@ -74,3 +74,15 @@ def test_run_measurement_kills_a_child_that_outlives_its_budget(monkeypatch):
     # --- assert -----------------------
     assert not record.completed
     assert record.reason == REASON_TIMEOUT
+
+
+def test_is_settled_judges_the_final_window():
+    """A footprint still growing in the final window is not settled; a flat one is."""
+    # --- arrange ----------------------
+    flat = [(t, 100) for t in range(0, 60)]
+    growing = [(t, 100 + t) for t in range(0, 60)]
+
+    # --- act / assert -----------------
+    assert runner._is_settled(flat)
+    assert not runner._is_settled(growing)
+    assert not runner._is_settled([(0.0, 100)])  # too short to judge

@@ -59,21 +59,21 @@ Our testing protocol implements the same spirit in order to avoid testing a 3rd 
 
 #### IV.B.1. Considerations
 
+The memory sweep is **independent of the time sweep** (IV.C), and runs first — the stages read memory → time → quality, matching the nesting of section II.  Its key liberty: a run here does not need to *complete* — it needs to *allocate*.  Each size runs for up to `T_max` as an **observation window**; a run that outlives its window is killed and still yields a footprint.  This decouples memory observation from the time limit, which would otherwise truncate the sweep at sizes where a solver's memory growth is still invisible under its process's fixed startup cost.
+
 We assume...
 
 - memory usage increases monotonically with increasing `n` and does so either linearly or quadratically
 - memory usage is sufficiently deterministic to not require multiple runs with different seeds
 
-A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and stops the sweep like a resource limit does.
+Two safeguards keep a killed window's footprint honest:
+
+- a window's footprint counts as **settled** when it had stopped growing before the kill (observed from the poll samples); an unsettled footprint under-reads and does not feed the fit
+- the extrapolating fit is only trusted once the settled footprints **span a 2x range** (the growth term dominates the fixed baseline within the data) **and** the fitted model explains them (**R² >= 0.95**) — together these mean the extrapolation extends a measured trend, not an assumption
+
+A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and brackets the result like a memory kill does: nothing larger runs at all.
 
 Each configuration gets one discarded warm-up run before its sweep: the first process after a fresh environment install pays a one-off import/bytecode-compilation cost that would otherwise land in its first measurement.
-
-Since the memory-bound setting is the least restrictive and the only one that does not consider time budget constraints, care needs to be taken to keep the protocol practical.
-
-Therefore we will...
-
-- limit actual measurements to our earlier defined time budget T_max
-- extrapolate observations beyond T_max, if needed, to determine the largest `n` with the memory budget M_max.
 
 #### IV.B.2. Protocol
 
@@ -82,36 +82,31 @@ Therefore we will...
     ```text
     FOR EACH solver configuration:
 
+        IF worker processes are observed on its first run:
+            RECORD not measured                   # RSS misses the workers; the solver's
+            CONTINUE                              # single-process configurations carry
+                                                  # its memory-bound size
+
         FOR EACH n in N (smallest to largest):
-            run under hard M_max and T_max          # M_max enforced machine-level; kill on either
-            outcome is one of: success | T_exceeded | M_exceeded | failed
-            record peak memory M(n)                 # solver-process RSS
-            record whether worker processes were observed
-            STOP at the first non-success
+            run for up to T_max                   # observation window: completion not
+                                                  # required; M_max kill (machine-level)
+            record footprint M(n) + settled flag  # solver-process RSS
 
-        # memory-bound size, from the final run's outcome:
-        IF success or M_exceeded:
-            RECORD largest n that succeeded          (None if never)
-
-        IF T_exceeded or failed:                     # did not reach M_max
-            IF worker processes were observed:       # RSS misses them; the solver's
-                RECORD no extrapolation              # single-process configurations
-                                                     # carry its memory-bound size
-            ELSE extrapolate from the successful M(n), by how many there are:
-                >= 3   ->  fit f(n) = c0 + c1*n + c2*n^2   (c0,c2 >= 0; c1 >= 4d = 8)
-                           IF c2 < 0.1                # < 1 byte per k*n entry: no real
-                               refit with c2 = 0      # allocation can grow this slowly
-                           RECORD largest n in N with f(n) <= M_max
-                   2   ->  same, but a linear fit
-                   1   ->  RECORD that single n
-                   0   ->  RECORD None
+            STOP when one of:
+                M_max crossed  ->  RECORD previous n                  (bracket)
+                solver failed  ->  RECORD previous n                  (bracket; disclosed)
+                settled M(n) span >= 2x  AND  fit R^2 >= 0.95:
+                    fit f(n) = c0 + c1*n + c2*n^2   (c0,c2 >= 0; c1 >= 4d = 8)
+                    IF c2 < 0.1                   # < 1 byte per k*n entry: no real
+                        refit with c2 = 0         # allocation can grow this slowly
+                    RECORD largest n in N with f(n) <= M_max
     ```
 
 ### IV.C. Time-Bound Setting
 
 #### IV.C.1. Considerations
 
-The time-bound setting adds the time budget T_max on top of the memory budget — but the measurement runs of the memory-bound setting (IV.B.2) already enforce both budgets: every run there was executed under hard M_max and T_max kills.  No additional runs are therefore needed; the time-bound result is derived from the runs already executed.
+The time sweep is its own pass over the grid, independent of the memory sweep: here a run must **complete** — return a valid selection — within `T_max`, measured end-to-end.  Every run still executes under the machine-level `M_max` kill, so a time verdict is genuinely "within both budgets" whatever the solver's process tree looks like.
 
 We assume...
 
@@ -126,9 +121,12 @@ A run may be allowed to finish somewhat past `T_max` instead of being killed exa
 
     ```text
     FOR EACH solver configuration:
-        take the run outcomes recorded by the memory-bound protocol (IV.B.2)
+        FOR EACH n in N (smallest to largest):
+            run under T_max and M_max               # both kills active
+            PASS = completed within T_max
+            STOP at the first non-pass
 
-        time-bound size = largest n in N with a 'success' outcome   (None if none)
+        time-bound size = largest passing n          (None if none)
     ```
 
 ### IV.D. Quality-Bound Setting

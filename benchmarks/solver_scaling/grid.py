@@ -6,6 +6,11 @@ the same grid shape.
 """
 
 REFERENCE_BUDGET_SEC = 60.0  # T_max: the budget every time/quality run is judged against
+
+# Budget for the discarded warm-up run each sweep gives a configuration without recorded runs:
+# enough for any configuration to produce a tiny-size answer, small enough that budget-honoring
+# configurations return quickly.
+WARMUP_BUDGET_SEC = 5.0
 DEFAULT_SEED = 42  # the protocol's fixed seed; only the quality runs enumerate other seeds
 MEMORY_CAP_BYTES = 32 * 2**30  # M_max: the machine-level cap on every run, and the largest-n-within-memory bar
 GRID_MIN = 20  # the smallest size the benchmark problems build at

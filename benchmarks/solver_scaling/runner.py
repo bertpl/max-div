@@ -12,7 +12,7 @@ Two memory measurements serve two purposes:
   child reports its kernel-maintained high-water mark (catching transients shorter than the
   poll interval) and the parent's poll complements it for killed children. RSS sees one process
   fully, threads included — so the parent also records whether the child was ever observed with
-  live child processes, and the memory fit excludes such configurations from extrapolation.
+  live child processes, and the memory sweep does not measure such configurations.
 
 The time kill fires at the run's budget plus a setup grace, since the child's untimed setup
 (imports, problem construction) happens inside the same process. A completed child reports its
@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import psutil
@@ -34,6 +35,21 @@ from .outcome import REASON_MEMORY, REASON_TIMEOUT
 from .records import ScalingRunRecord
 
 _POLL_SEC = 0.5
+
+# A killed run's footprint counts as settled when its peak gained less than this fraction over
+# the final window — the solver had stopped allocating, so the recorded peak is trustworthy.
+_SETTLE_WINDOW_SEC = 20.0
+_SETTLE_TOLERANCE = 0.02
+
+
+@dataclass(frozen=True)
+class _Supervision:
+    """What the supervisor observed: how the run ended, and the child's memory behavior."""
+
+    reason: str | None
+    peak_rss: int
+    spawned: bool
+    settled: bool
 
 
 def run_measurement(tool: str, config: str, n: int, k: int, seed: int, budget_sec: float) -> ScalingRunRecord:
@@ -62,10 +78,10 @@ def run_measurement(tool: str, config: str, n: int, k: int, seed: int, budget_se
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        reason, peak_rss, spawned = _supervise(child, budget_sec, baseline)
+        sup = _supervise(child, budget_sec, baseline)
         result = json.loads(result_path.read_text(encoding="utf-8")) if result_path.exists() else {}
 
-    completed = bool(result.get("completed", False)) and reason is None
+    completed = bool(result.get("completed", False)) and sup.reason is None
     return ScalingRunRecord(
         tool=tool,
         config=config,
@@ -74,15 +90,18 @@ def run_measurement(tool: str, config: str, n: int, k: int, seed: int, budget_se
         seed=seed,
         budget_sec=budget_sec,
         completed=completed,
-        reason=reason or (None if completed else result.get("reason", "child exited without a result")),
+        reason=sup.reason or (None if completed else result.get("reason", "child exited without a result")),
         measured_sec=result.get("measured_sec"),
-        peak_memory_bytes=max(result.get("peak_memory_bytes") or 0, peak_rss) or None,
+        peak_memory_bytes=max(result.get("peak_memory_bytes") or 0, sup.peak_rss) or None,
         min_separation=result.get("min_separation"),
-        spawned_processes=spawned,
+        spawned_processes=sup.spawned,
+        # a run that ended on its own finished allocating by definition; only a deadline kill
+        # leaves the question open, answered by the poll series
+        memory_settled=sup.settled if sup.reason == REASON_TIMEOUT else True,
     )
 
 
-def _supervise(child: subprocess.Popen, budget_sec: float, baseline_bytes: int) -> tuple[str | None, int, bool]:
+def _supervise(child: subprocess.Popen, budget_sec: float, baseline_bytes: int) -> _Supervision:
     """Wait for the child while enforcing the deadline and the machine-level memory cap.
 
     Args:
@@ -90,26 +109,40 @@ def _supervise(child: subprocess.Popen, budget_sec: float, baseline_bytes: int) 
             cap is enforced on the drop below this level.
 
     Returns:
-        `(reason, peak_child_rss, spawned_processes)` — reason is None when the child ended on
-        its own, `timeout` or `memory` when the parent killed it.
+        The run's `_Supervision`: reason is None when the child ended on its own, `timeout` or
+        `memory` when the parent killed it.
     """
     deadline = time.monotonic() + budget_sec + grid.SETUP_GRACE_SEC
-    peak_rss = 0
+    samples: list[tuple[float, int]] = []
     spawned = False
     while child.poll() is None:
         rss, has_children = _observe_child(child.pid)
-        peak_rss = max(peak_rss, rss)
+        samples.append((time.monotonic(), rss))
         spawned = spawned or has_children
+        peak_rss = max(rss for _, rss in samples)
         if baseline_bytes - _available_bytes() > grid.MEMORY_CAP_BYTES:
             child.kill()
             child.wait()
-            return REASON_MEMORY, peak_rss, spawned
+            return _Supervision(REASON_MEMORY, peak_rss, spawned, _is_settled(samples))
         if time.monotonic() > deadline:
             child.kill()
             child.wait()
-            return REASON_TIMEOUT, peak_rss, spawned
+            return _Supervision(REASON_TIMEOUT, peak_rss, spawned, _is_settled(samples))
         time.sleep(_POLL_SEC)
-    return None, peak_rss, spawned
+    peak_rss = max((rss for _, rss in samples), default=0)
+    return _Supervision(None, peak_rss, spawned, settled=True)
+
+
+def _is_settled(samples: list[tuple[float, int]]) -> bool:
+    """Return whether the sampled footprint had stopped growing over the final window."""
+    if not samples:
+        return False
+    t_end = samples[-1][0]
+    before = [rss for t, rss in samples if t <= t_end - _SETTLE_WINDOW_SEC]
+    if not before:
+        return False  # the run was too short to judge
+    peak_total = max(rss for _, rss in samples)
+    return peak_total <= max(before) * (1 + _SETTLE_TOLERANCE)
 
 
 def _observe_child(pid: int) -> tuple[int, bool]:
