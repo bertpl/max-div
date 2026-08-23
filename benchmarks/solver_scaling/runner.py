@@ -29,8 +29,9 @@ from .records import ScalingRunRecord
 
 _POLL_SEC = 0.5
 
-# A killed run's footprint counts as settled when its peak gained less than this fraction over
-# the final window — the solver had stopped allocating, so the recorded peak is trustworthy.
+# Diagnostic only, recorded on each run and not used to weight or exclude fit points: a killed
+# run's footprint is flagged "settled" when its peak gained less than this fraction over the final
+# window, i.e. the solver had stopped allocating by the kill.
 _SETTLE_WINDOW_SEC = 20.0
 _SETTLE_TOLERANCE = 0.02
 

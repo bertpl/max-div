@@ -249,32 +249,17 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
         # index into the same cycle as the combined chart's series order, so each configuration
         # keeps one color across all memory charts
         color = colors[index % len(colors)]
-        settled = [r for r in observed if r.memory_settled]
-        unsettled = [r for r in observed if not r.memory_settled]
         label = _series_label(tool, config, names)
         # the combined chart's marker for this config, so shape and fill match its color there
         marker_style = _series_marker(index)
         fig, ax = plt.subplots(figsize=(7.0, 4.2))
         ax.plot(
-            [r.n for r in settled],
-            [r.peak_memory_bytes / 2**20 for r in settled],
+            [r.n for r in observed],
+            [r.peak_memory_bytes / 2**20 for r in observed],
             linestyle="none",
             color=color,
             **marker_style,
         )
-        if unsettled:
-            # the same shape, greyed and hollow: the footprint was still growing at the window's
-            # end, so the point under-reads and did not feed the fit
-            ax.plot(
-                [r.n for r in unsettled],
-                [r.peak_memory_bytes / 2**20 for r in unsettled],
-                marker=marker_style["marker"],
-                markerfacecolor="none",
-                markeredgecolor="0.6",
-                linestyle="none",
-                label="not settled (excluded from the fit)",
-            )
-            ax.legend(loc="lower right", fontsize=8)
         coef = fit["coef"]
         fit_ns = np.geomspace(GRID_MIN, observed[-1].n, 200)
         predicted = sum(c * fit_ns**p for p, c in enumerate(coef)) / 2**20

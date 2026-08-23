@@ -1,4 +1,4 @@
-"""Memory-fit arithmetic: turn a series of settled footprints into a memory-cap crossing.
+"""Memory-fit arithmetic: turn a series of recorded footprints into a memory-cap crossing.
 
 The memory sweep (`memory_stage`) collects the footprints and decides when to stop; this module
 owns the fit itself. The fit is bound-constrained (`c0 >= 0`, `c1 >= 8`, `c2 >= 0`): the
@@ -23,7 +23,7 @@ _INPUT_MIN_BYTES = 8.0  # 4 bytes x d=2: the raw float32 vectors, the linear coe
 # extrapolation to the cap — refit linear.
 _C2_MIN_BYTES = 0.1
 
-# The trust conditions (measurement protocol, IV.B.1): the settled footprints must span this
+# The trust conditions (measurement protocol, IV.B.1): the recorded footprints must span this
 # range factor, and the fitted model must reach this R^2.
 _SPAN_FACTOR = 2.0
 _R2_MIN = 0.95
@@ -46,7 +46,7 @@ class MemoryFit:
 
 
 def fit_series(sizes_peaks: dict[int, float]) -> MemoryFit:
-    """Fit the given settled footprints and return the crossing read off at the memory cap."""
+    """Fit the given footprints and return the crossing read off at the memory cap."""
     ns = np.asarray(sorted(sizes_peaks), dtype=np.float64)
     peaks = np.asarray([sizes_peaks[n] for n in sorted(sizes_peaks)], dtype=np.float64)
     model = "linear"

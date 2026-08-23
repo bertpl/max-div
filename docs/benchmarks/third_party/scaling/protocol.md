@@ -72,10 +72,9 @@ We assume...
 - memory usage increases monotonically with increasing `n` and does so either linearly or quadratically
 - memory usage is sufficiently deterministic to not require multiple runs with different seeds
 
-Two safeguards keep a killed window's footprint trustworthy:
+The extrapolating fit is only trusted once its **trust conditions** hold: the recorded footprints **span a 2x range** (the growth term dominates the fixed baseline within the data) **and** the fitted model explains them (**R² >= 0.95**) — together these mean the extrapolation extends a measured trend, not an assumption.
 
-- a window's footprint counts as **settled** when it had stopped growing before the kill (observed from the poll samples); an unsettled footprint under-reads and does not feed the fit
-- the extrapolating fit is only trusted once its **trust conditions** hold: the settled footprints **span a 2x range** (the growth term dominates the fixed baseline within the data) **and** the fitted model explains them (**R² >= 0.95**) — together these mean the extrapolation extends a measured trend, not an assumption
+(Every run also records a `settled` flag — whether its footprint had stopped growing by the kill — as a diagnostic for spotting a window killed mid-allocation; it does not weight or exclude points.)
 
 A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and brackets the result like a memory kill does: nothing larger runs at all.
 
@@ -96,12 +95,12 @@ Each configuration gets one discarded warm-up run before its sweep: the first pr
         FOR EACH n in N (smallest to largest):
             run for up to T_max                   # observation window: completion not
                                                   # required; M_max kill (machine-level)
-            record footprint M(n) + settled flag  # solver-process RSS
+            record footprint M(n)                 # solver-process RSS
 
             STOP when one of:
                 M_max crossed  ->  RECORD previous n                  (bracket)
                 solver failed  ->  RECORD previous n                  (bracket; disclosed)
-                settled M(n) span >= 2x  AND  fit R^2 >= 0.95:
+                M(n) span >= 2x  AND  fit R^2 >= 0.95:
                     fit f(n) = c0 + c1*n + c2*n^2   (c0,c2 >= 0; c1 >= 4d = 8)
                     IF c2 < 0.1                   # < 1 byte per k*n entry: no real
                         refit with c2 = 0         # allocation can grow this slowly

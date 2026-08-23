@@ -89,15 +89,13 @@ def test_a_config_observed_spawning_workers_is_not_measured(monkeypatch, tmp_pat
     assert calls == [(20, WARMUP_BUDGET_SEC), (20, 60.0)]  # the sweep aborted after one real run
 
 
-def test_unsettled_footprints_do_not_feed_the_fit(monkeypatch, tmp_path):
-    """Unsettled footprints are excluded, so the fit recovers the settled points' slope."""
+def test_unsettled_footprints_still_feed_the_fit(monkeypatch, tmp_path):
+    """The settled flag is diagnostic only: unsettled points feed the fit like any other."""
     # --- arrange ----------------------
-    # two mid-sweep sizes report unsettled windows with absurd peaks; a fit that ingested them
-    # could not recover the clean 40 B/item slope of the settled points
+    # every run reports an unsettled window (still growing at the kill), yet the fit must be
+    # built from them and the sweep must terminate on the trust conditions
     def fake_run(tool, config, n, k, seed, budget_sec):
-        if n in (1000, 2000):
-            return _record(n, settled=False, peak=int(3.2e10))
-        return _record(n)
+        return _record(n, completed=False, reason="timeout", settled=False)
 
     monkeypatch.setattr(memory_stage, "run_measurement", fake_run)
 
@@ -105,8 +103,9 @@ def test_unsettled_footprints_do_not_feed_the_fit(monkeypatch, tmp_path):
     fit = memory_stage._sweep(resolve("rdkit", "default"), {}, tmp_path / "runs.jsonl")
 
     # --- assert -----------------------
+    # same 40 B/item slope and crossing as the all-settled case, from unsettled points alone
     assert fit.coef is not None and fit.coef[1] == pytest.approx(40.0, rel=1e-6)
-    assert fit.r2 is not None and fit.r2 >= 0.95
+    assert fit.max_n == 500_000_000
 
     recorded = load_scaling_records(tmp_path / "runs.jsonl")
     assert all(r.budget_sec == 60.0 for r in recorded)  # the warm-up run was discarded

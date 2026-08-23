@@ -2,12 +2,14 @@
 
 Independent of the time sweep — a run here does not need to complete, it needs to allocate. Each
 size runs for up to the reference budget while the runner records the footprint reached; a run
-that outlives its window is killed and still yields a footprint, flagged settled when it had
-stopped growing. The sweep walks upward until one of:
+that outlives its window is killed and still yields a footprint. Every footprint feeds the fit
+equally; each run also carries a `memory_settled` diagnostic (whether its footprint had stopped
+growing by the kill), recorded for later inspection but not used to weight or exclude points. The
+sweep walks upward until one of:
 
 * the machine-level memory cap kills a run — the previous size **brackets** the result;
 * the solver fails outright — the previous size brackets the result, with the failure disclosed;
-* the settled footprints span a `2x` range and the fitted model explains them — the crossing is
+* the recorded footprints span a `2x` range and the fitted model explains them — the crossing is
   read off the fit at the cap (`memory_fit` owns the fit and the trust conditions);
 * the grid is exhausted — the fit is published with that noted.
 
@@ -56,7 +58,7 @@ def _sweep(config: ScalingConfig, done: dict, data_path: Path) -> MemoryFit:
     """
     if not any(key[0] == config.tool and key[1] == config.name for key in done):
         run_measurement(config.tool, config.name, GRID_MIN, GRID_MIN // 10, DEFAULT_SEED, WARMUP_BUDGET_SEC)
-    settled: dict[int, float] = {}
+    footprints: dict[int, float] = {}
     last_under_cap: int | None = None
     fit = MemoryFit(None, None, "no runs")
     for n in size_grid(operational_bound()):
@@ -74,10 +76,10 @@ def _sweep(config: ScalingConfig, done: dict, data_path: Path) -> MemoryFit:
         if outcome is Outcome.SCALING_FAILURE:
             return MemoryFit(last_under_cap, None, f"bracketed: fails at the next size (`{record.reason}`)")
         last_under_cap = n
-        if record.peak_memory_bytes and record.memory_settled:
-            settled[n] = max(settled.get(n, 0.0), float(record.peak_memory_bytes))
-            fit = fit_series(settled)
-            if trust_conditions_met(settled, fit):
+        if record.peak_memory_bytes:
+            footprints[n] = max(footprints.get(n, 0.0), float(record.peak_memory_bytes))
+            fit = fit_series(footprints)
+            if trust_conditions_met(footprints, fit):
                 return fit
     return MemoryFit(fit.max_n, fit.coef, fit.reason + "; grid exhausted before the trust conditions held", fit.r2)
 
