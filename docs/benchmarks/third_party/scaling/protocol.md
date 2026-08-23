@@ -56,41 +56,42 @@ Our testing protocol implements the same spirit in order to avoid testing a 3rd 
 #### IV.B.1. Considerations
 
 We assume...
+
 - memory usage increases monotonically with increasing `n` and does so either linearly or quadratically
 - memory usage is sufficiently deterministic to not require multiple runs with different seeds
 
 Since the memory-bound setting is the least restrictive and the only one that does not consider time budget constraints, care needs to be taken to keep the protocol practical.
 
 Therefore we will...
+
 - limit actual measurements to our earlier defined time budget T_max
 - extrapolate observations beyond T_max, if needed, to determine the largest `n` with the memory budget M_max.
 
 #### IV.B.2. Protocol
 
-```
-For each solver configuration:
-  - For each `n` in `N`:
-    - Run the solver configuration under hard **M_max** and **T_max**
-      constraints (killing the solver when exceeding either)
-    - Each run resulting in `success`, `T_exceeded` or `M_exceeded` outcome
-    - Record memory usage M(n) for each evaluated n and stop after
-      the first `*_exceeded` outcome
-  - if the final run resulted in `M_exceeded` or `success`:
-    - Record the last successful `n` (or None if there is none) as the result for this solver configuration
-  - if the final run resulted in `T_exceeded`:
-    - if # successes >= 3
-      - Perform a least-squares regression f(n) = c0 + c1*n + c2*(n^2) through
-        all obtained observations M(n), enforcing c0>=0, c1>=4d=8 (assuming 8 bytes per vector minimal memory usage), c2 >= 0.
-      - Find the largest `n` in `N` for which f(n) <= M_max
-      - Record this `n` as this solver configuration's
-        maximum problem size in the memory-bound setting
-    - if # successes = 2
-      - Same procedure but using a linear regression
-    - if # successes = 1
-      - Record that single `n` as the result for this solver configuration
-    - if # successes = 0
-      - Record 'None' as the result
-```
+!!! note "Pseudo-code"
+
+    ```text
+    FOR EACH solver configuration:
+
+        FOR EACH n in N (smallest to largest):
+            run under hard M_max and T_max          # kill on either
+            outcome is one of: success | T_exceeded | M_exceeded
+            record peak memory M(n)
+            STOP after the first *_exceeded
+
+        # memory-bound size, from the final run's outcome:
+        IF success or M_exceeded:
+            RECORD largest n that succeeded          (None if never)
+
+        IF T_exceeded:                               # too slow to reach M_max
+            extrapolate from the successful M(n), by how many there are:
+                >= 3   ->  fit f(n) = c0 + c1*n + c2*n^2   (c0,c2 >= 0; c1 >= 4d = 8)
+                           RECORD largest n in N with f(n) <= M_max
+                   2   ->  same, but a linear fit
+                   1   ->  RECORD that single n
+                   0   ->  RECORD None
+    ```
 
 ### IV.C. Time-Bound Setting
 
@@ -99,18 +100,20 @@ For each solver configuration:
 The time-bound setting adds the time budget T_max on top of the memory budget — but the measurement runs of the memory-bound setting (IV.B.2) already enforce both budgets: every run there was executed under hard M_max and T_max kills.  No additional runs are therefore needed; the time-bound result is derived from the runs already executed.
 
 We assume...
+
 - runtime increases monotonically with increasing `n`, so the first `*_exceeded` outcome bounds all larger sizes
 - a single run per (configuration, `n`) decides the pass/fail verdict: runtime noise can at worst shift a result by one step in `N`, an inaccuracy the granularity of `N` already accepts
 
 #### IV.C.2. Protocol
 
-```
-For each solver configuration:
-  - Take the run outcomes of the memory-bound protocol (IV.B.2)
-  - Record the largest `n` in `N` with a `success` outcome as this solver
-    configuration's maximum problem size in the time-bound setting
-    (`None` if no run succeeded)
-```
+!!! note "Pseudo-code"
+
+    ```text
+    FOR EACH solver configuration:
+        take the run outcomes recorded by the memory-bound protocol (IV.B.2)
+
+        time-bound size = largest n in N with a 'success' outcome   (None if none)
+    ```
 
 ### IV.D. Quality-Bound Setting
 
@@ -126,61 +129,71 @@ The additional criterion that comes into play here is `median(Q_observed) >= 0.1
 
 > `Q_random` is recorded per `n`.
 
-```
-- determine n_max = largest n for any solver under the time-bound setting
-- for each n <= n_max in `N`:
-  - determine 31 randomized selections of size `k`
-  - compute the selection quality (diversity) of each such random selection
-  - the median value is recorded as `Q_random(n)`
-```
+!!! note "Pseudo-code"
+
+    ```text
+    n_max = largest n reached by any solver under the time-bound setting
+
+    FOR EACH n in N up to n_max:
+        draw 31 random selections of size k
+        Q_random(n) = median quality (diversity) over those 31 selections
+    ```
 
 #### IV.D.2. Determining `Q_extended`
 
 > `Q_extended` is recorded per `(solver_config, n)`.
 
-```
-- determine n_max = largest n for any solver under the time-bound setting
-- for each solver configuration:
-  - for each n <= n_max in `N`:
-    - execute the solver under `M_max` memory constraint and `T_extended = 15 T_max` time budget
-    - if the solver finished successfully within memory and (extended) time budget, record the selection quality (diversity) as `Q_extended` for this `(solver_config, n)`
-    - if the solver exceeded the memory or (extended) time budget, proceed with the next solver config
-```
+!!! note "Pseudo-code"
+
+    ```text
+    n_max = largest n reached by any solver under the time-bound setting
+
+    FOR EACH solver configuration:
+        FOR EACH n in N up to n_max:
+            run under M_max and the extended budget T_extended = 15 * T_max
+            IF success within both budgets:
+                Q_extended(solver_config, n) = quality (diversity)
+            ELSE:                                   # exceeded memory or time
+                STOP and move to the next configuration
+    ```
 
 #### IV.D.3. Determining `Q_observed`
 
 > `Q_observed` is recorded per `(solver_config, n, seed)`.
 
-```
-- for each solver configuration:
-  - determine `n_max` for this solver config as the largest `n` under the time-bound setting
-  - if `n_max = None`, record `None` for all `Q_observed` for this solver config
-  - if `n_max != None`:
-    - determine `n_seeds`:
-      - if the solver is deterministic and/or does not support seeds: `n_seeds = 1`
-      - otherwise: `n_seeds = 3`
-    - for each n <= n_max in `N`:
-      - for each `seed = 1,...,n_seeds`:
-        - execute the solver and record the selection quality (diversity) as `Q_observed` for this `(solver_config, n, seed)`
-```
+!!! note "Pseudo-code"
+
+    ```text
+    FOR EACH solver configuration:
+        n_max = this configuration's largest n under the time-bound setting
+        IF n_max = None:
+            Q_observed = None for this configuration
+        ELSE:
+            n_seeds = 1 if the solver is deterministic or unseeded, else 3
+            FOR EACH n in N up to n_max:
+                FOR seed = 1 .. n_seeds:
+                    run the solver
+                    Q_observed(solver_config, n, seed) = quality (diversity)
+    ```
 
 #### IV.D.4. Determining the quality-bound problem size limits
 
 > The quality-bound problem size limit is recorded per `solver_config`.  No solver runs are involved in this phase; it only combines the quantities recorded in IV.D.1–IV.D.3.
 
-```
-- determine n_max = largest n for any solver under the time-bound setting
-- for each n <= n_max in `N`:
-  - `Q_best_known(n)` = the maximum over all recorded `Q_observed(*, n, *)`
-    (all solver configs, all seeds) and all recorded `Q_extended(*, n)`
-  - `Q_threshold(n)` = 0.1 `Q_random(n)` + 0.9 `Q_best_known(n)`
-- for each solver configuration:
-  - for each n <= n_max of this solver config (as in IV.D.3):
-    - `Q_median(solver_config, n)` = the median over seeds of
-      `Q_observed(solver_config, n, *)`
-  - record the largest `n` for which `Q_median(solver_config, n) >= Q_threshold(n)`
-    as this solver configuration's maximum problem size in the quality-bound
-    setting (`None` if no such `n` exists)
-```
+!!! note "Pseudo-code"
+
+    ```text
+    n_max = largest n reached by any solver under the time-bound setting
+
+    FOR EACH n in N up to n_max:
+        Q_best_known(n) = max over all Q_observed(*, n, *) and all Q_extended(*, n)
+                          (every configuration, every seed)
+        Q_threshold(n)  = 0.1 * Q_random(n) + 0.9 * Q_best_known(n)
+
+    FOR EACH solver configuration:
+        FOR EACH n it reached (as in IV.D.3):
+            Q_median(solver_config, n) = median over seeds of Q_observed(solver_config, n, *)
+        quality-bound size = largest n with Q_median >= Q_threshold(n)   (None if never)
+    ```
 
 Note that a `Q_observed` value competes for `Q_best_known` per seed (a lucky draw is still a known solution), while the pass/fail verdict uses the per-config **median** over seeds — so a lucky seed can raise the bar for everyone, but can never carry its own configuration over it.
