@@ -57,7 +57,7 @@ class SolverStep(ABC, Generic[S]):
     def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:
         """Take note of the solve's running end-to-end budget; only optimization steps act on one.
 
-        The solver calls this on every step at the start of every solve, like `set_seed`.
+        The solver calls this on every step when a solve starts.
         """
 
     @abstractmethod
@@ -158,20 +158,30 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         self._e2e_budget: E2eBudget | None = None
 
     def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:
-        """Store the solve's running end-to-end budget, replacing this step's duration with its remaining time."""
+        """Store the solve's running e2e budget, replacing this step's duration with the e2e budget's remaining time."""
         self._e2e_budget = e2e_budget
 
     def _effective_duration(self) -> TargetDuration | None:
-        """Return the duration this run gets — the budget's remaining time where one is set — or None when spent.
+        """Return the duration this run gets — the e2e budget's remaining time where one is set.
 
-        NOTE: with several optimization steps under one budget, each receives everything that
+        Return None, after raising a `SolverBudgetWarning`, when the e2e budget is already spent.
+
+        NOTE: with several optimization steps under one e2e budget, each receives everything that
         remains, so an earlier step can starve the later ones.  Every preset produces exactly
         one optimization step; how several should share the remainder is undecided.
         """
         if self._e2e_budget is None:
             return self._duration
         remaining_sec = self._e2e_budget.remaining_sec()
-        return TargetDuration.seconds(remaining_sec) if remaining_sec > 0.0 else None
+        if remaining_sec <= 0.0:
+            warnings.warn(
+                f"The end-to-end budget of {self._e2e_budget.budget_sec}s was spent before optimization "
+                "started; the returned selection is the initialization's.",
+                SolverBudgetWarning,
+                stacklevel=4,  # 4 frames up from here is the caller of solve(), whose budget it is
+            )
+            return None
+        return TargetDuration.seconds(remaining_sec)
 
     def run(
         self,
@@ -180,21 +190,15 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
     ) -> SolverStepResult:
-        """Run the optimization for its duration — the end-to-end budget's remaining time where one is set.
+        """Iteratively improve the selection until the step's effective duration is spent.
 
-        With that budget spent before the step starts, the step is skipped with a
-        `SolverBudgetWarning`, leaving the selection the earlier steps built.
+        A step whose effective duration is already gone (see `_effective_duration`) is skipped,
+        leaving the selection the earlier steps built.
         """
         # --- init -------------------------------
         progress_reporter = progress_reporter or SilentProgressReporter()
         duration = self._effective_duration()
         if duration is None:
-            warnings.warn(
-                f"The end-to-end budget of {self._e2e_budget.budget_sec}s was spent before optimization "  # ty: ignore[unresolved-attribute]  # the duration is None only under a budget
-                "started; the returned selection is the initialization's.",
-                SolverBudgetWarning,
-                stacklevel=3,
-            )
             progress_reporter.solver_step_finished(None, state)
             return SolverStepResult(score_checkpoints=[(Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)])
         tracker = duration.track()

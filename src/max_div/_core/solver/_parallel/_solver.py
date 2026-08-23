@@ -72,8 +72,9 @@ class ParallelMaxDivSolver:
             ValueError: If no worker reported a result, which means every one of them failed.
         """
         progress_reporter = ProgressReporter.from_verbosity(verbosity, worker_columns=True)
-        # The budget starts counting before the store build, so it charges the whole setup;
-        # the workers receive the started copy and read it against their own (machine-wide) clock.
+        # The budget starts counting before the distances are computed, so it charges the whole
+        # setup; the workers receive the started copy and read it against their own (machine-wide)
+        # clock.
         solver_configs = self._solver_configs
         if solver_configs[0].e2e_budget is not None:
             e2e_budget = solver_configs[0].e2e_budget.started()

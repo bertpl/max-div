@@ -140,9 +140,8 @@ hours = TargetDuration.hours
 class E2eBudget:
     """A wall-clock budget for a whole solve, optionally already counting from `t_start`.
 
-    The budget a builder records is unstarted; `started()` turns it into the running budget of
-    one solve.  Frozen on purpose: the recorded budget never starts, so every solve counts its
-    own copy — and a worker's budget, started by the parallel parent, passes through untouched.
+    Frozen on purpose: `started()` hands each solve its own counting copy, so a recorded budget
+    itself never starts.
     """
 
     budget_sec: float

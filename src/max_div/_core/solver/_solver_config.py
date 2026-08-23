@@ -34,9 +34,9 @@ class SolverConfig:
     # `batch_seconds` targets the wall-clock size of one optimization batch (set per worker by
     # the parallel builder)
     batch_seconds: float = REPORTING_BATCH_SECONDS
-    # an end-to-end budget bounds the whole solve, store build and initialization included; the
-    # parallel solver replaces it with a started copy at its own solve start, so workers charge
-    # the parent's setup against the budget too
+    # an end-to-end budget bounds the whole solve, distance computation and initialization
+    # included; the parallel solver replaces it with a started copy at its own solve start, so
+    # workers charge the parent's setup against the budget too
     e2e_budget: E2eBudget | None = None
 
     def build_solver(

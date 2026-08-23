@@ -58,8 +58,8 @@ class SolverBuilderBase:
         end-to-end budget is recorded.
 
         Raises:
-            ValueError: If `end_to_end_budget` is combined with an iteration budget — iterations
-                cannot bound the store build and initialization.
+            ValueError: If `end_to_end_budget` is combined with an iteration budget — not all
+                solver phases can be expressed in iteration counts.
         """
         if not end_to_end_budget:
             self._e2e_budget = None
@@ -67,7 +67,7 @@ class SolverBuilderBase:
         if not isinstance(target_duration, TargetTimeDuration):
             raise ValueError(
                 "end_to_end_budget requires a time budget (seconds/minutes/hours); "
-                "an iteration budget cannot bound the store build and initialization."
+                "not all solver phases can be expressed in iteration counts."
             )
         self._e2e_budget = E2eBudget(budget_sec=target_duration.value())
 

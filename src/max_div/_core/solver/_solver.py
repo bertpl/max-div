@@ -61,8 +61,9 @@ class MaxDivSolver:
             constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
             distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
-            e2e_budget: (E2eBudget | None) Wall-clock budget for the whole solve — store build
-                and initialization included; each optimization step receives whatever remains.
+            e2e_budget: (E2eBudget | None) Wall-clock budget for the whole solve — distance
+                computation and initialization included; each optimization step receives whatever
+                remains.
                 An unstarted budget starts counting when `solve` starts; the parallel solver
                 hands its workers a budget already counting from its own solve start.
         """
@@ -105,7 +106,9 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
-        e2e_budget = self._e2e_budget.started() if self._e2e_budget is not None else None
+        e2e_budget = self._e2e_budget.started() if self._e2e_budget else None
+        for step in self._solver_steps:
+            step.set_e2e_budget(e2e_budget)
 
         # --- progress reporting -----------------
         if progress_reporter is None:
@@ -146,7 +149,6 @@ class MaxDivSolver:
         for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
-            step.set_e2e_budget(e2e_budget)
             step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
 
         # --- Construct result -------------------
