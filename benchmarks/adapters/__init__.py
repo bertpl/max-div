@@ -2,7 +2,7 @@
 
 from .apricot_fl import ApricotFacilityLocation
 from .base import SelectionAdapter
-from .code_fdm import CodeFdmFairFlow
+from .code_fdm import CodeFdmFairFlow, CodeFdmSingleColor
 from .fps import FpsampleFPS, SkmatterFPS
 from .greedy_maxsum import GreedyMaxSum
 from .kmedoids_fasterpam import KMedoidsFasterPAM
@@ -13,6 +13,7 @@ from .rdkit_maxmin import RdkitMaxMin
 __all__ = [
     "ApricotFacilityLocation",
     "CodeFdmFairFlow",
+    "CodeFdmSingleColor",
     "FpsampleFPS",
     "GreedyMaxSum",
     "KMedoidsFasterPAM",

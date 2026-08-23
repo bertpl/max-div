@@ -56,6 +56,34 @@ class CodeFdmFairFlow(SelectionAdapter):
         return np.asarray(sorted(selected), dtype=np.int64)
 
 
+class CodeFdmSingleColor(SelectionAdapter):
+    """FairFlow on an unconstrained problem: one color for every item, count = k.
+
+    code-FDM's model is fairness-colored max-min selection; with a single color it reduces to
+    plain max-min diverse selection, which is how the solver-scaling benchmarks run it on the
+    unconstrained reference problem.
+    """
+
+    @property
+    def name(self) -> str:
+        """Return the tool name as it appears in records and figures."""
+        return "code-FDM[single-color]"
+
+    def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
+        """Run FairFlow with one color spanning all items.
+
+        FairFlow returns `None` for the selection on some degenerate tiny instances (observed at
+        n=20, k=2); that is surfaced as a clear failure rather than an opaque unpacking error.
+        """
+        algorithms, utils = _load_code_fdm()
+        vectors = problem_vectors(problem)
+        elements = [utils.Element(idx=i, color=0, features=vectors[i].tolist()) for i in range(problem.n)]
+        selected, _diversity, _t = algorithms.FairFlow(elements, 1, [problem.k], utils.euclidean_dist)
+        if selected is None:
+            raise RuntimeError("code-FDM (FairFlow) produced no selection")
+        return np.asarray(sorted(selected), dtype=np.int64)
+
+
 def _constraints_to_colors(problem: MaxDivProblem) -> tuple[NDArray[np.int64], list[int]]:
     """Map the problem's constraints onto code-FDM's disjoint-color model.
 

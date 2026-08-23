@@ -4,8 +4,8 @@ solver:
   source: https://developers.google.com/optimization/cp/cp_solver
   verified: 2026-07-27
   scale:
-    max_n_memory: pending
-    max_n_time: pending
+    max_n_memory: 20000
+    max_n_time: 20000
     max_n_quality: pending
   metadata:
     guarantee: proven optimum

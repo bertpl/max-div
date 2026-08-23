@@ -20,6 +20,66 @@
     "reason": "not measured: spawns worker processes",
     "r2": null
   },
+  "ortools-cpsat/feasible": {
+    "max_n": 20000,
+    "coef": [
+      214541376.84371987,
+      49.23567054091851,
+      28.291764314720456
+    ],
+    "reason": "quadratic fit over 8 sizes",
+    "r2": 0.9999487872812871
+  },
+  "ortools-cpsat/optimal": {
+    "max_n": 2000,
+    "coef": [
+      205711126.99401402,
+      586205.0713990107,
+      7499.2520152423585
+    ],
+    "reason": "quadratic fit over 4 sizes",
+    "r2": 0.9986355580836719
+  },
+  "scip/feasible": {
+    "max_n": 2000,
+    "coef": [
+      171723676.43333468,
+      243233.88783416615,
+      1871.4882780377063
+    ],
+    "reason": "quadratic fit over 5 sizes",
+    "r2": 0.9995289214959753
+  },
+  "scip/optimal": {
+    "max_n": 1000,
+    "coef": [
+      143892693.74793875,
+      8.000000000000002,
+      31718.125795053
+    ],
+    "reason": "quadratic fit over 3 sizes",
+    "r2": 0.9722924254703316
+  },
+  "highs/feasible": {
+    "max_n": 2000,
+    "coef": [
+      162234152.11586976,
+      8.000000000000002,
+      1691.9301400483698
+    ],
+    "reason": "quadratic fit over 5 sizes",
+    "r2": 0.9986985204631201
+  },
+  "highs/optimal": {
+    "max_n": 1000,
+    "coef": [
+      147485268.82235664,
+      414332.3181709234,
+      11711.303118853173
+    ],
+    "reason": "quadratic fit over 4 sizes",
+    "r2": 0.9978636865170177
+  },
   "rdkit/default": {
     "max_n": 1000000000,
     "coef": [
@@ -29,10 +89,63 @@
     "reason": "linear fit over 18 sizes",
     "r2": 0.9996195401469562
   },
+  "fpsample/vanilla": {
+    "max_n": 1000000000,
+    "coef": [
+      162297820.2505245,
+      27.787928208016595
+    ],
+    "reason": "linear fit over 18 sizes",
+    "r2": 0.9992727293003074
+  },
+  "fpsample/kdline": {
+    "max_n": 500000000,
+    "coef": [
+      161531201.55303788,
+      46.61205368042925
+    ],
+    "reason": "linear fit over 17 sizes",
+    "r2": 0.9978369611459519
+  },
+  "skmatter/default": {
+    "max_n": 200000000,
+    "coef": [
+      250045946.8698386,
+      129.7893161979146
+    ],
+    "reason": "linear fit over 16 sizes",
+    "r2": 0.9979264505563875
+  },
+  "apricot-select/default": {
+    "max_n": 50000,
+    "coef": [
+      310879887.030274,
+      8.000000000000002,
+      8.04990544897722
+    ],
+    "reason": "quadratic fit over 9 sizes",
+    "r2": 0.9999453637265935
+  },
+  "qc-selector/maxmin": {
+    "max_n": 20000,
+    "coef": [
+      139371338.75378168,
+      8.000000000000002,
+      57.625749415724115
+    ],
+    "reason": "quadratic fit over 8 sizes",
+    "r2": 0.9915560530276926
+  },
   "dppy/default": {
     "max_n": 500,
     "coef": null,
     "reason": "measurement series truncated: the solver fails at the next size (`ValueError: size k=100 > rank=98`)",
+    "r2": null
+  },
+  "code-fdm/default": {
+    "max_n": null,
+    "coef": null,
+    "reason": "measurement series truncated: the solver fails at the next size (`RuntimeError: code-FDM (FairFlow) produced no selection`)",
     "r2": null
   }
 }

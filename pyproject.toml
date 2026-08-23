@@ -61,6 +61,7 @@ benchmarks = [
     "scikit-learn>=1.4",   # runtime dependency of the code-FDM research code
     "ortools>=9.10",       # CP-SAT: exact max-min reference
     "pyscipopt>=5.0",      # SCIP: exact mean/geomean-of-NN reference
+    "highspy>=1.7",        # HiGHS: exact big-M max-min MIP reference
     "dppy>=0.3",           # k-DPP sampler: diverse-subset draws over an RBF kernel
 ]
 # GPL-3 competitor kept in its own opt-in group so the default benchmarks group stays GPL-free.

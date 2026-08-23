@@ -4,8 +4,8 @@ solver:
   source: https://scikit-matter.readthedocs.io/
   verified: 2026-07-27
   scale:
-    max_n_memory: pending
-    max_n_time: pending
+    max_n_memory: 200000000
+    max_n_time: 500000
     max_n_quality: pending
   metadata:
     guarantee: 2-approximation (farthest-point traversal)

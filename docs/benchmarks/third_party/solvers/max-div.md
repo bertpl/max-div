@@ -4,8 +4,8 @@ solver:
   source: https://max-div.readthedocs.io/
   verified: 2026-08-11
   scale:
-    max_n_memory: pending
-    max_n_time: pending
+    max_n_memory: 1000000000
+    max_n_time: 500000
     max_n_quality: pending
   metadata:
     guarantee: heuristic
