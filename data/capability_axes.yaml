@@ -251,11 +251,10 @@ groups:
         definition: Runs several workers on one problem at once, and the workers exchange information mid-run.
 
 # The solver-scaling columns are not marks: each cell is a measured problem size, or `pending`
-# while it has not been measured yet. They render as the last three columns of the hero table
+# while it has not been measured yet. They render as the rightmost columns of the hero table
 # and the comparison grid, and as rows of each per-solver feature table. The shared `definition`
-# is the preamble the capability-definitions page prints before the three columns; the
-# measurement procedure behind them is the published solver-scaling protocol, which the page
-# links to.
+# is the preamble the capability-definitions page prints before its columns; the measurement
+# procedure behind them is the published solver-scaling protocol, which the page links to.
 scale_columns:
   hero_label: solver scaling (n)
   label: solver scaling

@@ -145,7 +145,7 @@ NAME_FS = "12.5"  # solver-name size
 MARK_FS = "13.5"  # check-mark and tilde size
 SMALL_FS = 11  # group labels, category labels, caption
 PENDING_GLYPH = "\u2026"  # a scaling cell awaiting its measurement
-DAGGER = "\u2020"  # anchors the scaling column headers to the footnote row under the table
+DAGGER = "\u2020"  # the dagger anchors the scaling column headers to the footnote row under the table
 SCALING_FOOTNOTE = "based on the built-in benchmark problem U1 and the published measurement protocol"
 CAPTION2_H = 16  # the footnote row under the mark-legend row
 
@@ -213,10 +213,7 @@ class _Layout:
         return bool(measured) and row["scales"][j] != capability_data.PENDING and int(row["scales"][j]) == max(measured)
 
     def any_pending(self):
-        """Return True while any scaling cell awaits its measurement.
-
-        The pending legend entry is drawn only while one does.
-        """
+        """Return True while any scaling cell awaits its measurement."""
         return any(value == capability_data.PENDING for row in self.rows for value in row["scales"])
 
     def col_x(self, i):
@@ -270,10 +267,10 @@ def _group_bands(lay):
             f'y2="{lay.y_group + 5}" stroke="{t["rule"]}" stroke-width="1"/>'
         )
         idx += len(cols)
-    # A hairline where one group ends and the next begins, and on the outer edges of the first
-    # and last group — the bracket rules' color at half their weight, so the verticals read as
-    # quieter scaffolding. Each follows its band's edge: slanted alongside the rotated labels,
-    # then vertical from the corner down to the last row.
+    # A hairline is drawn where one group ends and the next begins, and on the outer edges of the
+    # first and last group — the bracket rules' color at half their weight, so the verticals are
+    # lighter than the horizontal rules. Each follows its band's edge: slanted alongside the
+    # rotated labels, then vertical from the corner down to the last row.
     for x in sorted(edges):
         pts = f"{x + lay.skew},{lay.y_top} {x},{lay.y_corner} {x},{lay.y_end}"
         out.append(f'<polyline points="{pts}" fill="none" stroke="{t["rule"]}" stroke-width="0.5"/>')
@@ -370,7 +367,7 @@ def _data_rows(lay):
 
 
 def _legend(lay, y):
-    """The two legend rows under the table: the marks, then the scaling footnote and pending marker.
+    """Return the two legend rows under the table: the marks, then the scaling footnote and pending marker.
 
     Both glyphs are bolded here whatever weight they carry in the grid: at legend size they sit
     inline in a line of prose, where the grid's lighter tilde would disappear.

@@ -217,7 +217,9 @@ def check_scale_cells(key: str, record: dict, scale_columns: list[dict]) -> list
     for column_key in sorted(expected & set(cells)):
         value = cells[column_key]
         if value != PENDING and not GRID_VALUE.match(str(value)):
-            problems.append(f"{key}: limit `{column_key}` is {value!r}, expected `pending` or a 1-2-5 grid size")
+            problems.append(
+                f"{key}: scaling column `{column_key}` is {value!r}, expected `pending` or a 1-2-5 grid size"
+            )
     return problems
 
 
@@ -225,7 +227,7 @@ def check_definitions(axes: dict) -> list[str]:
     """Every column a table can show must carry the definition the definitions page prints."""
     named = [
         *((f"axis `{g['key']}.{a['key']}`", a) for g in axes["groups"] for a in g["axes"]),
-        *((f"limit `{c['key']}`", c) for c in axes["scale_columns"]["columns"]),
+        *((f"scaling column `{c['key']}`", c) for c in axes["scale_columns"]["columns"]),
         ("scale_columns", axes["scale_columns"]),
         *((f"metadata `{f['label']}`", f) for f in axes["metadata"]),
     ]
@@ -547,7 +549,7 @@ def render_definitions(axes: dict) -> str:
         "## Marks",
         "",
         "Every capability cell carries one of three marks. A mark composes with the column's "
-        "definition: it states *how far* the tool meets the criterion the column claims.",
+        "definition: the mark states *how far* the tool meets the criterion the column claims.",
         "",
         '<div class="capability-definitions" markdown>',
         "",

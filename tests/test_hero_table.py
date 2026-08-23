@@ -282,7 +282,7 @@ def test_pending_cells_render_as_the_pending_marker_with_a_legend(builder, synth
     assert "measurement pending" in svg
 
 
-def test_the_pending_legend_disappears_once_every_limit_is_measured(builder, synthetic):
+def test_the_pending_legend_disappears_once_every_cell_is_measured(builder, synthetic):
     """The legend explains a marker; once no cell draws it, explaining it would be noise."""
     # --- arrange ----------------------
     axes, registry, records = synthetic

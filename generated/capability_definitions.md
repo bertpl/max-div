@@ -2,7 +2,7 @@
 
 ## Marks
 
-Every capability cell carries one of three marks. A mark composes with the column's definition: it states *how far* the tool meets the criterion the column claims.
+Every capability cell carries one of three marks. A mark composes with the column's definition: the mark states *how far* the tool meets the criterion the column claims.
 
 <div class="capability-definitions" markdown>
 

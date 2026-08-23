@@ -172,7 +172,7 @@ table th {
     color: color-mix(in srgb, var(--md-default-fg-color--light) 91%, transparent);
 }
 
-/* Capability-definition tables (generated): two columns of prose, so — unlike the feature
+/* Capability-definition tables (generated) hold two columns of prose, so — unlike the feature
    tables, whose second column is a mark — both columns wrap. */
 .md-typeset .capability-definitions table {
     font-size: 0.72rem;

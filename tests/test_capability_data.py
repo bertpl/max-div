@@ -56,7 +56,7 @@ def synthetic(cd):
         "scale_columns": {
             "hero_label": "solver scaling (n)",
             "label": "measured solver scaling (n)",
-            "definition": "Measured scaling limits on a 1-2-5 grid.",
+            "definition": "Measured scaling values on a 1-2-5 grid.",
             "columns": [
                 {
                     "key": "max_n_memory",
@@ -279,7 +279,7 @@ def test_metadata_falls_back_to_the_record_top_level(cd, synthetic):
     assert cd.check_structure(axes, registry, records) == []
 
 
-def test_a_missing_limit_cell_is_rejected(cd, synthetic):
+def test_a_missing_scaling_cell_is_rejected(cd, synthetic):
     """A record must carry a cell for every declared scaling column."""
     # --- arrange ----------------------
     del synthetic[2]["tool"][0]["scale"]["max_n_time"]
@@ -288,7 +288,7 @@ def test_a_missing_limit_cell_is_rejected(cd, synthetic):
     assert any("no cell for scaling column `max_n_time`" in p for p in problems(cd, synthetic))
 
 
-def test_an_unknown_limit_cell_is_rejected(cd, synthetic):
+def test_an_unknown_scaling_cell_is_rejected(cd, synthetic):
     """`max_practical_n` is a key no declared column carries, and it must not survive silently."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["max_practical_n"] = "4"
@@ -298,7 +298,7 @@ def test_an_unknown_limit_cell_is_rejected(cd, synthetic):
 
 
 @pytest.mark.parametrize("value", ["", "12", "300", "4-5", "10^3", 10, 150000])
-def test_a_limit_off_the_grid_is_rejected(cd, synthetic, value):
+def test_a_scaling_value_off_the_grid_is_rejected(cd, synthetic, value):
     """Only 1-2-5 grid sizes (smallest 20) or `pending` are accepted — anything else is a typo or an old value."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["max_n_memory"] = value
@@ -434,7 +434,7 @@ def test_grid_sizes_format_in_suffix_notation(cd, value, expected):
     assert cd.format_scale_value(value) == expected
 
 
-def test_a_pending_limit_renders_as_the_pending_marker(cd):
+def test_a_pending_scaling_cell_renders_as_the_pending_marker(cd):
     """A pending cell renders as the styled marker, a measured one as its formatted size."""
     # --- act / assert -----------------
     assert cd._scale_markup("pending") == '<span class="scale-pending">pending</span>'
