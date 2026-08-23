@@ -6,6 +6,7 @@ the same grid shape.
 """
 
 REFERENCE_BUDGET_SEC = 60.0  # T_max: the budget every time/quality run is judged against
+DEFAULT_SEED = 42  # the protocol's fixed seed; only the quality runs enumerate other seeds
 MEMORY_CAP_BYTES = 32 * 2**30  # M_max: caps every run's peak memory, and defines the largest n within memory
 GRID_MIN = 20  # the smallest size the benchmark problems build at
 

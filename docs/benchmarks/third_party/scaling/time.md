@@ -1,3 +1,11 @@
 # Solver Scaling — Time
 
-*Stub — this page will be filled in as the time-bound measurement results come in.*
+Each solver configuration runs at every size of the 1-2-5 grid, smallest first, until it can no longer return a valid selection within the time budget `T_max` (one minute, measured end to end, under the memory cap). The largest passing size is the configuration's **largest n within the time budget**; per solver, the best configuration counts. The [measurement protocol](protocol.md) defines the procedure, and the [solver configurations page](solver_configs.md) lists every configuration.
+
+*Measured with max-div v0.14.2. Only the smoke subset — max-div, RDKit MaxMinPicker, and DPPy — is measured; the remaining solver configurations are not yet.*
+
+![End-to-end solve time against problem size, per solver configuration](images/scaling_time.webp)
+
+Runs that completed are shown, including any that finished past the time budget; killed runs have no measured time and do not appear. Budget-honoring configurations (max-div `optimal-*`) track the `T_max` line by construction — their limit is the size where even the full budget no longer suffices.
+
+--8<-- "generated/scaling_time.md"

@@ -1,0 +1,43 @@
+{
+  "max-div/lean": {
+    "max_n": 20000000,
+    "coef": [
+      159853093.42853338,
+      63.92115460878834,
+      5.631181333150186e-05
+    ],
+    "reason": "fit over 5 sizes"
+  },
+  "max-div/optimal-eager": {
+    "max_n": 50000,
+    "coef": null,
+    "reason": "bracketed: the memory cap was reached at the next size"
+  },
+  "max-div/optimal-lazy": {
+    "max_n": 1000000000,
+    "coef": [
+      160809014.35596782,
+      30.223453210949646,
+      1.3776865741687882e-18
+    ],
+    "reason": "fit over 5 sizes"
+  },
+  "rdkit/default": {
+    "max_n": 200000000,
+    "coef": [
+      166114614.33579725,
+      69.4611531151003,
+      4.210110309557404e-23
+    ],
+    "reason": "fit over 5 sizes"
+  },
+  "dppy/default": {
+    "max_n": 2000000000,
+    "coef": [
+      217614172.79999998,
+      8.000000000000002,
+      3.944304526105059e-31
+    ],
+    "reason": "fit over 5 sizes"
+  }
+}

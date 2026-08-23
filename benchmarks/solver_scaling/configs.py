@@ -40,7 +40,9 @@ class ScalingConfig:
 
     `tool` is the registry key (`data/solver_registry.yaml`); `name` is the configuration name as
     the solver-configurations page lists it; `description` is a terse echo of that page's wording.
-    `stochastic` decides the seed count (`seeds_for`).
+    `stochastic` records whether repeated runs under different seeds can differ — per the
+    measurement protocol, only the quality runs enumerate seeds, and only for stochastic
+    configurations.
     """
 
     tool: str
@@ -195,8 +197,3 @@ def resolve(tool: str, name: str) -> ScalingConfig:
 def configs_for(tool: str) -> list[ScalingConfig]:
     """Return every configuration of one solver, in declaration order."""
     return [config for config in CONFIGS if config.tool == tool]
-
-
-def seeds_for(config: ScalingConfig) -> tuple[int, ...]:
-    """Return the campaign seeds for a configuration: five when stochastic, three otherwise."""
-    return (0, 1, 2, 3, 4) if config.stochastic else (0, 1, 2)

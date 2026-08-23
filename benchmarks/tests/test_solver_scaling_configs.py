@@ -1,6 +1,6 @@
 import pytest
 
-from benchmarks.solver_scaling.configs import CONFIGS, TEST_SLEEP_CONFIG, configs_for, resolve, seeds_for
+from benchmarks.solver_scaling.configs import CONFIGS, TEST_SLEEP_CONFIG, configs_for, resolve
 
 SMOKE_TOOLS = {"max-div", "rdkit", "dppy"}
 
@@ -24,15 +24,6 @@ def test_resolve_reaches_the_kill_path_fixture_outside_the_registry():
     # --- act / assert -----------------
     assert resolve("_test_sleep", "sleep") is TEST_SLEEP_CONFIG
     assert TEST_SLEEP_CONFIG.tool not in SMOKE_TOOLS
-
-
-@pytest.mark.parametrize(
-    ("tool", "name", "n_seeds"),
-    [("max-div", "lean", 5), ("dppy", "default", 5), ("rdkit", "default", 3)],
-)
-def test_seed_count_follows_whether_a_config_is_stochastic(tool, name, n_seeds):
-    # --- act / assert -----------------
-    assert len(seeds_for(resolve(tool, name))) == n_seeds
 
 
 def test_every_config_carries_a_callable_selector():

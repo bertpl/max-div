@@ -49,7 +49,7 @@ def fit_memory_limit(sizes_peaks: dict[int, float], terminal: Outcome) -> Memory
     """Return the largest-n-within-memory result for one configuration.
 
     Args:
-        sizes_peaks: per completed size, the largest peak RSS observed across seeds.
+        sizes_peaks: per completed size, the peak RSS observed there.
         terminal: the outcome that ended the size sweep — `MEMORY` brackets directly, any other
             outcome extrapolates from the recorded peaks.
     """
@@ -77,7 +77,7 @@ def fit_all(records: list[ScalingRunRecord]) -> dict[str, MemoryFit]:
 
 
 def _peaks_by_size(rows: list[ScalingRunRecord]) -> dict[int, float]:
-    """Return, per size with a completed run carrying a peak, the largest peak across seeds."""
+    """Return, per size with a completed run carrying a peak, the largest peak recorded there."""
     per_size: dict[int, float] = {}
     for row in rows:
         if row.completed and row.peak_rss_bytes:
@@ -88,17 +88,13 @@ def _peaks_by_size(rows: list[ScalingRunRecord]) -> dict[int, float]:
 def _terminal_outcome(rows: list[ScalingRunRecord]) -> Outcome:
     """Return the outcome at the largest attempted size — what ended the sweep.
 
-    Reduced to the median seed's outcome, matching the time stage's per-size verdict; SUCCESS when
-    no run was recorded (nothing bounded the sweep).
+    The time stage runs one measurement per size, so the largest attempted size carries a single
+    outcome; SUCCESS when no run was recorded (nothing bounded the sweep).
     """
     if not rows:
         return Outcome.SUCCESS
-    largest = max(row.n for row in rows)
-    outcomes = sorted(
-        (classify(row.completed, row.reason) for row in rows if row.n == largest),
-        key=lambda o: o is not Outcome.SUCCESS,
-    )
-    return outcomes[len(outcomes) // 2]
+    largest = max(rows, key=lambda row: row.n)
+    return classify(largest.completed, largest.reason)
 
 
 def _fit_quadratic(ns: np.ndarray, peaks: np.ndarray) -> tuple[float, float, float]:
