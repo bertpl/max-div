@@ -15,7 +15,7 @@
 #
 # `definition` is the exact criterion a cell is judged by — what capability the column claims,
 # composed with the mark vocabulary below. The definitions render as the capability-definitions
-# page, so every column the tables show is pinned to one published criterion. Axes, scale columns
+# page, so every column the tables show has one published criterion. Axes, scale columns
 # and metadata fields all carry one; scripts/capability_data.py rejects a column without it.
 
 # The mark vocabulary, shared by every surface that renders a cell — including the hero SVG, whose
@@ -104,7 +104,7 @@ metadata:
     definition: The upstream repository or documentation every fact in the record was checked against.
   - key: verified
     label: Last verified
-    definition: The date the record's facts were last checked against that source.
+    definition: The date the record's facts were last checked against the record's source.
 
 groups:
   - key: distance

@@ -548,7 +548,7 @@ def render_definitions(axes: dict) -> str:
         "",
         "## Marks",
         "",
-        "Every capability cell carries one of three marks. A mark composes with the column's "
+        "Every capability cell carries one of the marks below. A mark composes with the column's "
         "definition: the mark states *how far* the tool meets the criterion the column claims.",
         "",
         '<div class="capability-definitions" markdown>',

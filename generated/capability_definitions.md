@@ -2,7 +2,7 @@
 
 ## Marks
 
-Every capability cell carries one of three marks. A mark composes with the column's definition: the mark states *how far* the tool meets the criterion the column claims.
+Every capability cell carries one of the marks below. A mark composes with the column's definition: the mark states *how far* the tool meets the criterion the column claims.
 
 <div class="capability-definitions" markdown>
 
@@ -108,6 +108,6 @@ These fields appear on each profile page and in the comparison page's companion 
 | Determinism | Whether repeated runs on the same input reproduce the same selection, and under what stated conditions (a fixed seed, a fixed thread count, ...). "Deterministic" without qualification means identical output on every run. |
 | Input | The input forms the tool accepts — vectors, a precomputed distance matrix, or both. |
 | Source | The upstream repository or documentation every fact in the record was checked against. |
-| Last verified | The date the record's facts were last checked against that source. |
+| Last verified | The date the record's facts were last checked against the record's source. |
 
 </div>
