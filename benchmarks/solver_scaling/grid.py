@@ -21,11 +21,12 @@ GRID_MIN = 20  # the smallest size the benchmark problems build at
 # against. One-shot tools take no budget and ignore this.
 SELF_LIMIT_MARGIN_SEC = 1.0
 
-# Added to a run's hard-kill deadline on top of its budget. The child's untimed setup (interpreter
-# start, imports, problem construction) runs in the same process, and killing during setup would
-# misreport a slow import as a solver failure. This kill only bounds a stuck run: a run that
-# finishes over T_max is failed on its measured time, not by this kill.
-SETUP_GRACE_SEC = 90.0
+# Added to a run's hard-kill deadline on top of its budget. The child's untimed work (interpreter
+# start, imports, loading the vectors, scoring the selection) runs in the same process, and killing
+# during it would misreport a finished solve as a failure; at every size a run can pass at, that
+# work stays well under this margin. This kill only bounds a stuck run: a run that finishes over
+# T_max is failed on its measured time, not by this kill.
+SETUP_GRACE_SEC = 15.0
 
 
 def size_grid(bound: int) -> list[int]:
