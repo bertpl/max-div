@@ -1,8 +1,8 @@
-"""The per-solver run configurations of the solver-scaling benchmarks — the smoke subset.
+"""The per-solver run configurations of the solver-scaling benchmarks — the limited set measured first.
 
 Each solver enters the measurements as one or more named configurations, mirroring the
 published solver-configurations page; every configuration is measured independently and the
-best result per (axis, n) is taken. This module carries only the smoke set:
+best result per (axis, n) is taken. This module carries only a limited set of solvers:
 
 * max-div's three configurations — `lean`, `optimal-eager`, `optimal-lazy` — spanning init-only
   linear memory, a forced full matrix (quadratic), and forced lazy storage (linear anytime);
@@ -40,7 +40,8 @@ class ScalingConfig:
 
     `tool` is the registry key (`data/solver_registry.yaml`); `name` is the configuration name as
     the solver-configurations page lists it; `description` is a terse echo of that page's wording.
-    `stochastic` decides the seed count (`seeds_for`).
+    `stochastic` records whether repeated runs under different seeds can differ; the
+    measurement protocol decides when seeds are enumerated.
     """
 
     tool: str
@@ -54,14 +55,21 @@ class ScalingConfig:
 #  select() builders
 # ==================================================================================================
 def _maxdiv_lean() -> SelectFn:
-    """Build max-div's `lean` selector: default random one-shot init, no optimization, lazy storage."""
+    """Build max-div's `lean` selector: uniform random one-shot init, no optimization, lazy storage."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
-        from max_div.solver import DistanceStorage, MaxDivSolverBuilder, Verbosity
+        from max_div.solver import DistanceStorage, InitializationStrategy, MaxDivSolverBuilder, Verbosity
 
-        # No with_preset: the builder's default pipeline is a single random-one-shot init step, so
-        # the solve returns that initialization and nothing more — the fastest valid configuration.
-        builder = MaxDivSolverBuilder(problem).with_seed(seed).with_distance_storage(DistanceStorage.LAZY)
+        # No with_preset: the pipeline is a single init step, so the solve returns that
+        # initialization and nothing more. Uniform sampling replaces the default
+        # contribution-weighted variant, whose dataset-wide distance sweep would dominate this
+        # configuration's runtime.
+        builder = (
+            MaxDivSolverBuilder(problem)
+            .with_seed(seed)
+            .with_distance_storage(DistanceStorage.LAZY)
+            .set_initialization_strategy(InitializationStrategy.random_one_shot(uniform=True))
+        )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
 
     return select
@@ -141,7 +149,7 @@ CONFIGS: tuple[ScalingConfig, ...] = (
     ScalingConfig(
         "max-div",
         "lean",
-        "random one-shot initialization only, no optimization step, lazy distance storage, 1 worker",
+        "uniform random one-shot initialization only, no optimization step, lazy distance storage, 1 worker",
         _maxdiv_lean(),
         stochastic=True,
     ),
@@ -195,8 +203,3 @@ def resolve(tool: str, name: str) -> ScalingConfig:
 def configs_for(tool: str) -> list[ScalingConfig]:
     """Return every configuration of one solver, in declaration order."""
     return [config for config in CONFIGS if config.tool == tool]
-
-
-def seeds_for(config: ScalingConfig) -> tuple[int, ...]:
-    """Return the campaign seeds for a configuration: five when stochastic, three otherwise."""
-    return (0, 1, 2, 3, 4) if config.stochastic else (0, 1, 2)

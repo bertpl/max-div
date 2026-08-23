@@ -1,10 +1,16 @@
 """Parent-side runner: one subprocess per run, with time and memory kills.
 
-The parent polls the child's resident set size on a fixed interval and kills it the moment it
-crosses the memory cap; the time kill fires at the run's budget plus a setup grace, since the
-child's untimed setup (imports, problem construction) happens inside the same process. A
-completed child reports its own timed measurement, so the grace never inflates a measured value
-— it only decides when a stuck child is declared dead.
+The two memory measurements follow the published measurement protocol (its section III justifies
+the split): the cap is enforced on the machine-level drop of available memory below a baseline
+sampled just before launch (it sees worker processes), while the recorded footprint is the solver
+process's peak RSS (precise enough to fit growth rates from) — the child reports its
+kernel-maintained high-water mark, complemented by the parent's poll for killed children. The
+parent also records whether the child was ever observed with live child processes.
+
+The time kill fires at the run's budget plus a setup grace, since the child's untimed setup
+(imports, problem construction) happens inside the same process. A completed child reports its
+own timed measurement, so the grace never inflates a measured value — it only decides when a
+stuck child is declared dead.
 """
 
 import json
@@ -12,7 +18,10 @@ import subprocess
 import sys
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
+
+import psutil
 
 from . import grid
 from .outcome import REASON_MEMORY, REASON_TIMEOUT
@@ -20,13 +29,29 @@ from .records import ScalingRunRecord
 
 _POLL_SEC = 0.5
 
+# Diagnostic only, recorded on each run and not used to weight or exclude fit points: a killed
+# run's footprint is flagged "settled" when its peak gained less than this fraction over the final
+# window, i.e. the solver had stopped allocating by the kill.
+_SETTLE_WINDOW_SEC = 20.0
+_SETTLE_TOLERANCE = 0.02
+
+
+@dataclass(frozen=True)
+class _Supervision:
+    """Records how the run ended and the child's memory behavior, as the supervisor observed them."""
+
+    reason: str | None
+    peak_rss: int
+    spawned: bool
+    settled: bool
+
 
 def run_measurement(tool: str, config: str, n: int, k: int, seed: int, budget_sec: float) -> ScalingRunRecord:
     """Execute one run in a subprocess and return its record.
 
-    A run ends one of three ways: the child reports a result (completed or failed), the memory
-    poll catches it crossing the cap, or the deadline fires — `timeout` and `memory` reasons come
-    from the parent, every other reason from the child itself.
+    A run ends one of three ways: the child reports a result (completed or failed), the
+    machine-level memory poll catches it crossing the cap, or the deadline fires — `timeout`
+    and `memory` reasons come from the parent, every other reason from the child itself.
     """
     with tempfile.TemporaryDirectory() as tmp:
         vectors_path = Path(tmp) / "vectors.npy"
@@ -41,15 +66,16 @@ def run_measurement(tool: str, config: str, n: int, k: int, seed: int, budget_se
             "budget_sec": budget_sec,
             "vectors_path": str(vectors_path),
         }
+        baseline = _available_bytes()
         child = subprocess.Popen(  # noqa: S603 -- fixed module invocation, repo-local
             [sys.executable, "-m", "benchmarks.solver_scaling.run_one", json.dumps(spec), str(result_path)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        reason, peak_seen = _supervise(child, budget_sec)
+        sup = _supervise(child, budget_sec, baseline)
         result = json.loads(result_path.read_text(encoding="utf-8")) if result_path.exists() else {}
 
-    completed = bool(result.get("completed", False)) and reason is None
+    completed = bool(result.get("completed", False)) and sup.reason is None
     return ScalingRunRecord(
         tool=tool,
         config=config,
@@ -58,43 +84,87 @@ def run_measurement(tool: str, config: str, n: int, k: int, seed: int, budget_se
         seed=seed,
         budget_sec=budget_sec,
         completed=completed,
-        reason=reason or (None if completed else result.get("reason", "child exited without a result")),
+        reason=sup.reason or (None if completed else result.get("reason", "child exited without a result")),
         measured_sec=result.get("measured_sec"),
-        peak_rss_bytes=max(result.get("peak_rss_bytes") or 0, peak_seen) or None,
+        peak_memory_bytes=max(result.get("peak_memory_bytes") or 0, sup.peak_rss) or None,
         min_separation=result.get("min_separation"),
+        spawned_processes=sup.spawned,
+        # a run that ended on its own finished allocating by definition; only a deadline kill
+        # leaves the question open, answered by the poll series
+        memory_settled=sup.settled if sup.reason == REASON_TIMEOUT else True,
     )
 
 
-def _supervise(child: subprocess.Popen, budget_sec: float) -> tuple[str | None, int]:
-    """Wait for the child while enforcing the deadline and the memory cap.
+def _supervise(child: subprocess.Popen, budget_sec: float, baseline_bytes: int) -> _Supervision:
+    """Wait for the child while enforcing the deadline and the machine-level memory cap.
+
+    Args:
+        baseline_bytes: the machine's available memory just before the child was launched; the
+            cap is enforced on the drop below this level.
 
     Returns:
-        `(reason, peak_rss_seen)` — reason is None when the child ended on its own, `timeout` or
-        `memory` when the parent killed it. The polled peak complements the child's own report,
-        which is lost when the child is killed.
+        The run's `_Supervision`: reason is None when the child ended on its own, `timeout` or
+        `memory` when the parent killed it.
     """
     deadline = time.monotonic() + budget_sec + grid.SETUP_GRACE_SEC
-    peak_seen = 0
+    samples: list[tuple[float, int]] = []
+    spawned = False
     while child.poll() is None:
-        rss = _rss_bytes(child.pid)
-        peak_seen = max(peak_seen, rss)
-        if rss > grid.MEMORY_CAP_BYTES:
+        rss, has_children = _observe_child(child.pid)
+        samples.append((time.monotonic(), rss))
+        spawned = spawned or has_children
+        peak_rss = max(rss for _, rss in samples)
+        # two kill conditions: the child's own RSS (exact, but blind to worker processes) and the
+        # machine-level drop (sees any process tree, but macOS memory compression can mask it)
+        if rss > grid.MEMORY_CAP_BYTES or baseline_bytes - _available_bytes() > grid.MEMORY_CAP_BYTES:
             child.kill()
             child.wait()
-            return REASON_MEMORY, peak_seen
+            return _Supervision(REASON_MEMORY, peak_rss, spawned, _is_settled(samples))
         if time.monotonic() > deadline:
             child.kill()
             child.wait()
-            return REASON_TIMEOUT, peak_seen
+            return _Supervision(REASON_TIMEOUT, peak_rss, spawned, _is_settled(samples))
         time.sleep(_POLL_SEC)
-    return None, peak_seen
+    peak_rss = max((rss for _, rss in samples), default=0)
+    return _Supervision(None, peak_rss, spawned, settled=True)
+
+
+def _is_settled(samples: list[tuple[float, int]]) -> bool:
+    """Return whether the sampled footprint had stopped growing over the final window."""
+    if not samples:
+        return False
+    t_end = samples[-1][0]
+    before = [rss for t, rss in samples if t <= t_end - _SETTLE_WINDOW_SEC]
+    if not before:
+        return False  # the run was too short to judge
+    peak_total = max(rss for _, rss in samples)
+    return peak_total <= max(before) * (1 + _SETTLE_TOLERANCE)
+
+
+def _observe_child(pid: int) -> tuple[int, bool]:
+    """Return the child's current RSS and whether it has live child processes of its own.
+
+    A failed observation returns zeros rather than failing the supervisor: the child may exit
+    between the liveness poll and this read.
+    """
+    try:
+        process = psutil.Process(pid)
+        return int(process.memory_info().rss), bool(process.children())
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return 0, False
+
+
+def _available_bytes() -> int:
+    """Return the machine's currently available memory."""
+    return int(psutil.virtual_memory().available)
 
 
 def _save_problem_vectors(n: int, path: Path) -> None:
     """Build the reference problem in the parent and save its float32 vectors for the child.
 
     Building here rather than in the child keeps the problem-generation transients out of the
-    child's measured peak RSS — the child loads only the persistent input array.
+    measured memory — generation happens before the baseline is sampled, and the child loads
+    only the persistent input array.
     """
     import numpy as np
 
@@ -103,16 +173,3 @@ def _save_problem_vectors(n: int, path: Path) -> None:
 
     problem = build_problem("U1", n=n, diversity_metric=DiversityMetric.MIN_SEPARATION)
     np.save(path, np.ascontiguousarray(problem.vectors))
-
-
-def _rss_bytes(pid: int) -> int:
-    """Return the process's current resident set size, via ps (kilobytes on macOS and Linux alike)."""
-    try:
-        out = subprocess.run(  # noqa: S603 -- fixed command, numeric argument
-            ["/bin/ps", "-o", "rss=", "-p", str(pid)], capture_output=True, encoding="utf-8", check=False
-        ).stdout.strip()
-        return int(out) * 1024 if out else 0
-    except (ValueError, OSError):
-        # A failed poll must never kill the supervisor: without ps the memory cap simply goes
-        # unenforced for that tick, and the child's own peak report still arrives.
-        return 0

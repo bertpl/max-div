@@ -6,7 +6,14 @@ the same grid shape.
 """
 
 REFERENCE_BUDGET_SEC = 60.0  # T_max: the budget every time/quality run is judged against
-MEMORY_CAP_BYTES = 32 * 2**30  # M_max: caps every run's peak memory, and defines the largest n within memory
+
+# The discarded warm-up run each sweep gives a fresh configuration uses this budget.
+# The first child process after a fresh environment install pays a one-off import/bytecode-
+# compilation cost that would otherwise land in the configuration's first measurement; the small
+# budget lets any configuration produce a tiny-size answer while self-limiting ones return fast.
+WARMUP_BUDGET_SEC = 5.0
+DEFAULT_SEED = 42  # the protocol's fixed seed
+MEMORY_CAP_BYTES = 32 * 2**30  # M_max: caps every run, and the largest-n-within-memory results are read against it
 GRID_MIN = 20  # the smallest size the benchmark problems build at
 
 # A self-limiting solver (max-div under an end-to-end budget) is handed this much less than
@@ -15,11 +22,12 @@ GRID_MIN = 20  # the smallest size the benchmark problems build at
 # against. One-shot tools take no budget and ignore this.
 SELF_LIMIT_MARGIN_SEC = 1.0
 
-# Added to a run's hard-kill deadline on top of its budget. The child's untimed setup (interpreter
-# start, imports, problem construction) runs in the same process, and killing during setup would
-# misreport a slow import as a solver failure. This kill only bounds a stuck run: a run that
-# finishes over T_max is failed on its measured time, not by this kill.
-SETUP_GRACE_SEC = 90.0
+# Added to a run's hard-kill deadline on top of its budget. The child's untimed work (interpreter
+# start, imports, loading the vectors, scoring the selection) runs in the same process, and killing
+# during it would misreport a finished solve as a failure; at every size a run can pass at, that
+# work stays well under this margin. This kill only bounds a stuck run: a run that finishes over
+# T_max is failed on its measured time, not by this kill.
+SETUP_GRACE_SEC = 15.0
 
 
 def size_grid(bound: int) -> list[int]:

@@ -1,0 +1,38 @@
+{
+  "max-div/lean": {
+    "max_n": 1000000000,
+    "coef": [
+      161699219.27031156,
+      21.30214995044129
+    ],
+    "reason": "linear fit over 18 sizes",
+    "r2": 0.9983647496846901
+  },
+  "max-div/optimal-eager": {
+    "max_n": null,
+    "coef": null,
+    "reason": "not measured: spawns worker processes",
+    "r2": null
+  },
+  "max-div/optimal-lazy": {
+    "max_n": null,
+    "coef": null,
+    "reason": "not measured: spawns worker processes",
+    "r2": null
+  },
+  "rdkit/default": {
+    "max_n": 1000000000,
+    "coef": [
+      165481238.883,
+      23.971062117850312
+    ],
+    "reason": "linear fit over 18 sizes",
+    "r2": 0.9996195401469562
+  },
+  "dppy/default": {
+    "max_n": 500,
+    "coef": null,
+    "reason": "measurement series truncated: the solver fails at the next size (`ValueError: size k=100 > rank=98`)",
+    "r2": null
+  }
+}

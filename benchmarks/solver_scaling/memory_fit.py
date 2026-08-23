@@ -1,104 +1,76 @@
-"""Largest-n-within-memory fits: per configuration, turn recorded peaks into a memory-cap crossing.
+"""Memory-fit arithmetic: turn a series of recorded footprints into a memory-cap crossing.
 
-No runs happen here — the time stage recorded peak RSS on every run, and this reads those back.
-Per the measurement protocol, a configuration whose sweep ended by crossing the memory cap is
-bracketed directly (its largest completed size is the answer); one that ended any other way is
-extrapolated: a constrained least-squares fit of `rss = c0 + c1*n [+ c2*n^2]` over its largest
-completed sizes, read off at the cap.
-
-The fit is bound-constrained (`c0 >= 0`, `c1 >= 8`, `c2 >= 0`): the `c1 >= 8` lower bound is the
-input-array cost — every solver holds at least the n x d float32 vectors, 8 bytes per item at d=2
-— which keeps the extrapolation well-posed even when the recorded peaks are dominated by the
-interpreter's fixed footprint. Degree follows the completed-size count (three or more → quadratic,
-two → linear).
-
-Usage: python -m benchmarks.solver_scaling.memory_fit
+The memory sweep (`memory_stage`) collects the footprints and decides when to stop; this module
+owns the fit itself. The fit is bound-constrained (`c0 >= 0`, `c1 >= 8`, `c2 >= 0`): the
+`c1 >= 8` lower bound is the input-array cost — every solver holds at least the n x d float32
+vectors, 8 bytes per item at d=2. A quadratic term is kept only when physically plausible
+(`_C2_MIN_BYTES`); otherwise the fit is linear.
 """
 
-import json
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 from scipy.optimize import lsq_linear
 
-from .configs import CONFIGS
 from .grid import MEMORY_CAP_BYTES, operational_bound, size_grid
-from .outcome import Outcome, classify
-from .records import ScalingRunRecord, load_scaling_records
-from .time_stage import DATA_PATH
 
-# Only a configuration's largest completed sizes feed the fit: the smallest sizes sit below the
-# interpreter's fixed footprint and would drag the growth term toward zero.
-N_FIT_SIZES = 5
 _INPUT_MIN_BYTES = 8.0  # 4 bytes x d=2: the raw float32 vectors, the linear coefficient's lower bound
+
+# Physical-plausibility threshold for the fitted quadratic coefficient: the smallest real
+# quadratically growing structure is one byte per k x n entry, i.e. 0.1 bytes per n^2 at k = n/10.
+# A fitted c2 below this cannot be an allocation and is measurement noise amplified by the long
+# extrapolation to the cap — refit linear.
+_C2_MIN_BYTES = 0.1
+
+# The trust conditions (measurement protocol, IV.B.1): the recorded footprints must span this
+# range factor, and the fitted model must reach this R^2.
+_SPAN_FACTOR = 2.0
+_R2_MIN = 0.95
+
 FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
 
 
 @dataclass(frozen=True)
 class MemoryFit:
-    """One configuration's memory result: the largest n within the cap, and how it was found."""
+    """One configuration's memory result: the largest n within the cap, and how it was found.
+
+    `coef` and `r2` are set only when the value comes from a fit — a value measured directly
+    from the runs, or an unmeasured configuration, has neither.
+    """
 
     max_n: int | None
     coef: tuple[float, ...] | None
     reason: str
+    r2: float | None = None
 
 
-def fit_memory_limit(sizes_peaks: dict[int, float], terminal: Outcome) -> MemoryFit:
-    """Return the largest-n-within-memory result for one configuration.
-
-    Args:
-        sizes_peaks: per completed size, the largest peak RSS observed across seeds.
-        terminal: the outcome that ended the size sweep — `MEMORY` brackets directly, any other
-            outcome extrapolates from the recorded peaks.
-    """
-    sizes = sorted(sizes_peaks)
-    if not sizes:
-        return MemoryFit(None, None, "no completed runs")
-    if terminal is Outcome.MEMORY:
-        return MemoryFit(sizes[-1], None, "bracketed: the memory cap was reached at the next size")
-    fit_sizes = sizes[-N_FIT_SIZES:]
-    if len(fit_sizes) == 1:
-        return MemoryFit(fit_sizes[0], None, "single completed size; no growth term to extrapolate")
-    ns = np.asarray(fit_sizes, dtype=np.float64)
-    peaks = np.asarray([sizes_peaks[n] for n in fit_sizes], dtype=np.float64)
-    coef = _fit_quadratic(ns, peaks) if len(fit_sizes) >= 3 else _fit_linear(ns, peaks)
-    return MemoryFit(_crossing(coef), coef, f"fit over {len(fit_sizes)} sizes")
+def fit_series(sizes_peaks: dict[int, float]) -> MemoryFit:
+    """Fit the given footprints and return the crossing read off at the memory cap."""
+    ns = np.asarray(sorted(sizes_peaks), dtype=np.float64)
+    peaks = np.asarray([sizes_peaks[n] for n in sorted(sizes_peaks)], dtype=np.float64)
+    model = "linear"
+    coef = _fit_linear(ns, peaks)
+    if len(ns) >= 3:
+        quadratic = _fit_quadratic(ns, peaks)
+        if quadratic[2] >= _C2_MIN_BYTES:
+            model, coef = "quadratic", quadratic
+    return MemoryFit(_crossing(coef), coef, f"{model} fit over {len(ns)} sizes", _r_squared(ns, peaks, coef))
 
 
-def fit_all(records: list[ScalingRunRecord]) -> dict[str, MemoryFit]:
-    """Fit every smoke configuration and key the results by ``tool/config``."""
-    fits: dict[str, MemoryFit] = {}
-    for config in CONFIGS:
-        rows = [r for r in records if r.tool == config.tool and r.config == config.name]
-        fits[f"{config.tool}/{config.name}"] = fit_memory_limit(_peaks_by_size(rows), _terminal_outcome(rows))
-    return fits
+def trust_conditions_met(sizes_peaks: dict[int, float], fit: MemoryFit) -> bool:
+    """Return whether the fitted crossing is trustworthy enough to end the memory sweep."""
+    if len(sizes_peaks) < 3 or fit.r2 is None:
+        return False
+    return max(sizes_peaks.values()) >= _SPAN_FACTOR * min(sizes_peaks.values()) and fit.r2 >= _R2_MIN
 
 
-def _peaks_by_size(rows: list[ScalingRunRecord]) -> dict[int, float]:
-    """Return, per size with a completed run carrying a peak, the largest peak across seeds."""
-    per_size: dict[int, float] = {}
-    for row in rows:
-        if row.completed and row.peak_rss_bytes:
-            per_size[row.n] = max(per_size.get(row.n, 0.0), float(row.peak_rss_bytes))
-    return per_size
-
-
-def _terminal_outcome(rows: list[ScalingRunRecord]) -> Outcome:
-    """Return the outcome at the largest attempted size — what ended the sweep.
-
-    Reduced to the median seed's outcome, matching the time stage's per-size verdict; SUCCESS when
-    no run was recorded (nothing bounded the sweep).
-    """
-    if not rows:
-        return Outcome.SUCCESS
-    largest = max(row.n for row in rows)
-    outcomes = sorted(
-        (classify(row.completed, row.reason) for row in rows if row.n == largest),
-        key=lambda o: o is not Outcome.SUCCESS,
-    )
-    return outcomes[len(outcomes) // 2]
+def _r_squared(ns: np.ndarray, peaks: np.ndarray, coef: tuple[float, ...]) -> float:
+    """Return the coefficient of determination of the fitted model over the series."""
+    predicted = sum(c * ns**p for p, c in enumerate(coef))
+    ss_res = float(np.sum((peaks - predicted) ** 2))
+    ss_tot = float(np.sum((peaks - peaks.mean()) ** 2))
+    return 1.0 - ss_res / ss_tot if ss_tot else 1.0
 
 
 def _fit_quadratic(ns: np.ndarray, peaks: np.ndarray) -> tuple[float, float, float]:
@@ -122,18 +94,3 @@ def _crossing(coef: tuple[float, ...]) -> int | None:
     predicted = [sum(c * n**p for c, p in zip(coef, powers, strict=True)) for n in grid]
     passing = [n for n, peak in zip(grid, predicted, strict=True) if peak <= MEMORY_CAP_BYTES]
     return passing[-1] if passing else None
-
-
-if __name__ == "__main__":
-    all_fits = fit_all(load_scaling_records(DATA_PATH))
-    FIT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    FIT_PATH.write_text(
-        json.dumps(
-            {key: {"max_n": f.max_n, "coef": f.coef, "reason": f.reason} for key, f in all_fits.items()}, indent=2
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    for key, fit in all_fits.items():
-        print(f"{key}: largest n within memory = {fit.max_n}  ({fit.reason})")
-    sys.exit(0)

@@ -51,6 +51,7 @@ classifiers = [
 # Comparison-benchmark harness (see benchmarks/README.md); never part of the published package.
 benchmarks = [
     "matplotlib>=3.9",
+    "psutil>=5.9",       # machine-level memory measurement in the solver-scaling runner
     "fpsample>=1.0",
     "skmatter>=0.3",
     "rdkit>=2025.3",

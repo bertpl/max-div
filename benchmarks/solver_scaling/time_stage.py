@@ -1,23 +1,24 @@
 """Largest-n-within-time stage: every configuration ascends the size grid at the reference budget.
 
-For each configuration: run it once per seed at each candidate size, smallest first, and stop at
-the first size where the median seed fails. A run passes when it returns a valid selection within
-the time budget, measured end-to-end. The largest passing size is the configuration's largest n
-within the time budget; the tool's value is the best over its configurations. Peak memory is
-recorded on every run, so this stage doubles as the memory-fit calibration.
+For each configuration: run it once at each candidate size, smallest first, under the protocol's
+fixed seed, and stop at the first size that fails. A run passes when it returns a valid selection
+within the time budget, measured end-to-end. The largest passing size is the configuration's
+largest n within the time budget; the tool's value is the best over its configurations. The
+memory sweep (`memory_stage`) is independent and runs first.
+
+One run decides each size's verdict (see the measurement protocol, IV.C.1).
 
 Records are appended after every run to the tracked data file, so an interrupted stage resumes by
 rerunning: already-recorded runs are skipped.
 
-Usage: python -m benchmarks.solver_scaling.time_stage [tool ...]   # default: every smoke tool
+Usage: python -m benchmarks.solver_scaling.time_stage [tool | tool/config ...]   # default: all
 """
 
-import statistics
 import sys
 from pathlib import Path
 
-from .configs import CONFIGS, ScalingConfig, seeds_for
-from .grid import REFERENCE_BUDGET_SEC, operational_bound, size_grid
+from .configs import CONFIGS, ScalingConfig
+from .grid import DEFAULT_SEED, GRID_MIN, REFERENCE_BUDGET_SEC, WARMUP_BUDGET_SEC, operational_bound, size_grid
 from .records import ScalingRunRecord, append_scaling_record, load_scaling_records
 from .runner import run_measurement
 
@@ -53,18 +54,22 @@ def run_time_stage(
 
 
 def _ascend(config: ScalingConfig, done: dict, data_path: Path, budget_sec: float) -> int | None:
-    """Run one configuration up the grid; return its largest passing size."""
+    """Run one configuration up the grid; return its largest passing size.
+
+    A configuration with no recorded runs first gets one discarded warm-up run at the smallest
+    grid size (see `WARMUP_BUDGET_SEC`).
+    """
+    if not any(key[0] == config.tool and key[1] == config.name for key in done):
+        run_measurement(config.tool, config.name, GRID_MIN, GRID_MIN // 10, DEFAULT_SEED, WARMUP_BUDGET_SEC)
     limit: int | None = None
     for n in size_grid(operational_bound()):
-        outcomes = []
-        for seed in seeds_for(config):
-            record = done.get((config.tool, config.name, n, seed))
-            if record is None:
-                record = run_measurement(config.tool, config.name, n, n // 10, seed, budget_sec)
-                append_scaling_record(record, data_path)
-            outcomes.append(1 if passes_time(record, budget_sec) else 0)
-            print(f"  {config.tool}/{config.name} n={n} seed={seed}: {'ok' if outcomes[-1] else record.reason}")
-        if statistics.median(outcomes) < 1:  # the median seed failed
+        record = done.get((config.tool, config.name, n, DEFAULT_SEED))
+        if record is None:
+            record = run_measurement(config.tool, config.name, n, n // 10, DEFAULT_SEED, budget_sec)
+            append_scaling_record(record, data_path)
+        passed = passes_time(record, budget_sec)
+        print(f"  {config.tool}/{config.name} n={n}: {'ok' if passed else record.reason}")
+        if not passed:
             return limit
         limit = n
     return limit
@@ -72,5 +77,5 @@ def _ascend(config: ScalingConfig, done: dict, data_path: Path, budget_sec: floa
 
 if __name__ == "__main__":
     selected = sys.argv[1:]
-    chosen = [c for c in CONFIGS if c.tool in selected] if selected else list(CONFIGS)
+    chosen = [c for c in CONFIGS if c.tool in selected or f"{c.tool}/{c.name}" in selected] if selected else list(CONFIGS)
     run_time_stage(chosen)
