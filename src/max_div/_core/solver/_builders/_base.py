@@ -20,6 +20,7 @@ from max_div._core.solver._distance_storage import (
     select_distance_storage,
     total_physical_memory_bytes,
 )
+from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
 
 if TYPE_CHECKING:
     from max_div._core.constraints import Constraint
@@ -48,6 +49,27 @@ class SolverBuilderBase:
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
         self._distance_storage: DistanceStorage = DistanceStorage.AUTO
+        self._e2e_budget: E2eBudget | None = None
+
+    def _set_e2e_budget(self, target_duration: TargetDuration, end_to_end_budget: bool) -> None:
+        """Record `target_duration` as the whole solve's budget when the flag asks for it.
+
+        Without the flag the duration stays what it always was — a per-step budget — and no
+        end-to-end budget is recorded.
+
+        Raises:
+            ValueError: If `end_to_end_budget` is combined with an iteration budget — not all
+                solver phases can be expressed in iteration counts.
+        """
+        if not end_to_end_budget:
+            self._e2e_budget = None
+            return
+        if not isinstance(target_duration, TargetTimeDuration):
+            raise ValueError(
+                "end_to_end_budget requires a time budget (seconds/minutes/hours); "
+                "not all solver phases can be expressed in iteration counts."
+            )
+        self._e2e_budget = E2eBudget(budget_sec=target_duration.value())
 
     # -------------------------------------------------------------------------
     #  Shared builder API

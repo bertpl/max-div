@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from max_div._core._utils import format_time_duration
@@ -131,6 +131,35 @@ iterations = TargetDuration.iterations
 seconds = TargetDuration.seconds
 minutes = TargetDuration.minutes
 hours = TargetDuration.hours
+
+
+# =================================================================================================
+#  E2eBudget
+# =================================================================================================
+@dataclass(frozen=True)
+class E2eBudget:
+    """A wall-clock budget for a whole solve, optionally already counting from `t_start`.
+
+    Frozen on purpose: `started()` hands each solve its own counting copy, so a recorded budget
+    itself never starts.
+    """
+
+    budget_sec: float
+    t_start: float | None = None  # a `time.monotonic()` reading; None = not counting yet
+
+    def started(self) -> E2eBudget:
+        """Return the running budget: self if the clock is already counting, else a copy counting from now."""
+        return self if self.t_start is not None else replace(self, t_start=time.monotonic())
+
+    def remaining_sec(self) -> float:
+        """Return the seconds left of a started budget; negative once the budget is spent.
+
+        Raises:
+            ValueError: If the budget was never started.
+        """
+        if self.t_start is None:
+            raise ValueError("Only a started budget has remaining time; call started() first.")
+        return self.budget_sec - (time.monotonic() - self.t_start)
 
 
 # =================================================================================================

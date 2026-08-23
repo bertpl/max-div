@@ -5,7 +5,7 @@ from max_div._core._warnings import ParallelSolvingWarning
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder, ParallelMaxDivSolverBuilder
 from max_div._core.solver._builders._parallel import _resolve_group_sizes
-from max_div._core.solver._duration import iterations
+from max_div._core.solver._duration import iterations, seconds
 from max_div._core.solver._parallel import (
     ParallelMaxDivSolution,
     WorkerConfig,
@@ -292,3 +292,48 @@ def test_cooperative_workers_batch_at_the_cooperative_interval():
         COOPERATIVE_BATCH_SECONDS,
         REPORTING_BATCH_SECONDS,
     ]
+
+
+# =================================================================================================
+#  End-to-end budget
+# =================================================================================================
+def test_an_end_to_end_budget_requires_a_time_budget():
+    """An iteration count cannot bound the store build and worker setup, so the flag rejects it."""
+    # --- arrange / act / assert -------
+    with pytest.raises(ValueError, match="requires a time budget"):
+        ParallelMaxDivSolverBuilder(_problem()).with_workers(iterations(100), 2, end_to_end_budget=True)
+
+
+def test_the_budget_start_time_is_stamped_at_solve_start(fake_clock, monkeypatch):
+    """Workers receive the parent's solve-start clock, so setup time is charged against the budget."""
+    # --- arrange ----------------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 2, end_to_end_budget=True).build()
+    fake_clock.advance(4.0)  # time between build and solve is not part of the solve
+    received = {}
+
+    def record_configs(configs, *args, **kwargs):
+        received["configs"] = configs
+        return []
+
+    monkeypatch.setattr("max_div._core.solver._parallel._solver.run_workers", record_configs)
+
+    # --- act --------------------------
+    with pytest.raises(ValueError, match="no results"):  # no worker ran, so there is no winner to return
+        solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert [config.e2e_budget.budget_sec for config in received["configs"]] == [10.0, 10.0]
+    assert [config.e2e_budget.t_start for config in received["configs"]] == [fake_clock.monotonic()] * 2
+
+
+def test_a_budget_spent_during_setup_reaches_the_workers_as_spent():
+    """Spawning the workers alone outlasts a tiny budget, so every worker skips its optimization."""
+    # --- arrange / act ----------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(0.01), 2, end_to_end_budget=True).build()
+    solution = solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    optimization_steps = [name for name in solution.step_durations if "Optim" in name]
+    assert len(optimization_steps) == 1
+    assert solution.step_durations[optimization_steps[0]].n_iterations == 0
+    assert len(solution.i_selected) == 8  # the shared test problem's k

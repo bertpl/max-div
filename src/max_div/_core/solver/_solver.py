@@ -8,7 +8,7 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
-from ._duration import Elapsed
+from ._duration import E2eBudget, Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
@@ -41,6 +41,7 @@ class MaxDivSolver:
         constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
         distance_storage_label: str = "",
         batch_seconds: float = REPORTING_BATCH_SECONDS,
+        e2e_budget: E2eBudget | None = None,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -60,6 +61,11 @@ class MaxDivSolver:
             constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
             distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
+            e2e_budget: (E2eBudget | None) Wall-clock budget for the whole solve — distance
+                computation and initialization included; each optimization step receives whatever
+                remains.
+                An unstarted budget starts counting when `solve` starts; the parallel solver
+                hands its workers a budget already counting from its own solve start.
         """
         # --- problem description ----------------
         self._n = n
@@ -75,6 +81,7 @@ class MaxDivSolver:
         self._seed = seed
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
+        self._e2e_budget = e2e_budget
 
     # -------------------------------------------------------------------------
     #  API
@@ -99,6 +106,9 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
+        e2e_budget = self._e2e_budget.started() if self._e2e_budget else None
+        for step in self._solver_steps:
+            step.set_e2e_budget(e2e_budget)
 
         # --- progress reporting -----------------
         if progress_reporter is None:
