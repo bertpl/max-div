@@ -33,7 +33,7 @@ def test_supervise_returns_no_reason_when_the_child_finishes_on_its_own(monkeypa
     assert sup.reason is None
 
 
-def test_supervise_kills_on_crossing_the_memory_cap(monkeypatch):
+def test_supervise_kills_on_crossing_the_memory_cap_machine_level(monkeypatch):
     # --- arrange ----------------------
     child = _FakeChild(running=True)
     monkeypatch.setattr(runner, "_available_bytes", lambda: 0)
@@ -86,3 +86,18 @@ def test_is_settled_judges_the_final_window():
     assert runner._is_settled(flat)
     assert not runner._is_settled(growing)
     assert not runner._is_settled([(0.0, 100)])  # too short to judge
+
+
+def test_supervise_kills_on_the_child_rss_alone(monkeypatch):
+    """The per-process check backstops the machine-level one, which OS memory compression can mask."""
+    # --- arrange ----------------------
+    child = _FakeChild(running=True)
+    monkeypatch.setattr(runner, "_available_bytes", lambda: 10_000)
+    monkeypatch.setattr(runner, "_observe_child", lambda _pid: (grid.MEMORY_CAP_BYTES + 1, False))
+
+    # --- act --------------------------
+    sup = runner._supervise(child, budget_sec=60.0, baseline_bytes=10_000)
+
+    # --- assert -----------------------
+    assert sup.reason == REASON_MEMORY
+    assert child.killed

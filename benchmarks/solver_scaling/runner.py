@@ -120,7 +120,11 @@ def _supervise(child: subprocess.Popen, budget_sec: float, baseline_bytes: int) 
         samples.append((time.monotonic(), rss))
         spawned = spawned or has_children
         peak_rss = max(rss for _, rss in samples)
-        if baseline_bytes - _available_bytes() > grid.MEMORY_CAP_BYTES:
+        # two kill conditions: the child's own RSS (exact, but blind to worker processes) and the
+        # machine-level drop (sees any process tree, but macOS memory compression can mask it —
+        # observed absorbing a 40 GB single-process matrix without the available-memory drop ever
+        # reaching the cap)
+        if rss > grid.MEMORY_CAP_BYTES or baseline_bytes - _available_bytes() > grid.MEMORY_CAP_BYTES:
             child.kill()
             child.wait()
             return _Supervision(REASON_MEMORY, peak_rss, spawned, _is_settled(samples))
