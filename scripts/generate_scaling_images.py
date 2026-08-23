@@ -239,6 +239,7 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
     the fitted coefficients and R^2 — making visible that the fit follows a trend in the data.
     """
     thumbnails: list[str] = []
+    written: set[Path] = set()
     colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     for index, ((tool, config), rows) in enumerate(grouped.items()):
         fit = fits.get(f"{tool}/{config}", {})
@@ -294,12 +295,18 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
         ax.grid(True, which="major")
         name = f"scaling_memory_fit_{tool}_{config}.webp"
         _save_webp(fig, IMAGES_DIR / name)
+        written.add(IMAGES_DIR / name)
         # raw HTML paths are not rewritten by mkdocs (unlike markdown image syntax), so they must
         # be relative to the page's built directory URL, one level below the section
         thumbnails.append(
             f'<a href="../images/{name}"><img src="../images/{name}" '
             f'alt="Memory footprints and fitted curve for {label}" width="32%"></a>'
         )
+    # A configuration that stops getting a fit (e.g. it now brackets) leaves a stale chart behind,
+    # since a run only ever writes files; drop any fit chart not written this run.
+    for stale in set(IMAGES_DIR.glob("scaling_memory_fit_*.webp")) - written:
+        stale.unlink()
+        print(f"removed {stale.relative_to(REPO_ROOT)}")
     # The fragment lays three thumbnails per row, each linking to the full-size chart.
     _write_generated("scaling_memory_fits.md", [" ".join(thumbnails)] if thumbnails else [])
 
