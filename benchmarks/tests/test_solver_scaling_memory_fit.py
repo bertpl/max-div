@@ -94,3 +94,18 @@ def test_an_implausibly_small_quadratic_term_falls_back_to_linear():
     # --- assert -----------------------
     assert fit.coef is not None and len(fit.coef) == 2
     assert fit.reason == "linear fit over 5 sizes"
+
+
+def test_a_config_with_worker_processes_is_excluded_from_extrapolation():
+    """Per-process footprints miss the workers, so only a bracket is valid for such a config."""
+    # --- arrange ----------------------
+    sizes_peaks = {n: 1.6e8 + 40.0 * n for n in (1000, 2000, 5000)}
+
+    # --- act --------------------------
+    excluded = fit_memory_limit(sizes_peaks, Outcome.TIMEOUT, spawned=True)
+    bracketed = fit_memory_limit(sizes_peaks, Outcome.MEMORY, spawned=True)
+
+    # --- assert -----------------------
+    assert excluded.max_n is None and excluded.coef is None
+    assert excluded.reason == "excluded from extrapolation: spawns worker processes"
+    assert bracketed.max_n == 5000  # the machine-level cap kill brackets any process tree

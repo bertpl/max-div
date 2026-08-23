@@ -23,10 +23,11 @@ class _FakeChild:
 
 def test_supervise_returns_no_reason_when_the_child_finishes_on_its_own(monkeypatch):
     # --- arrange ----------------------
-    monkeypatch.setattr(runner, "_rss_bytes", lambda _pid: 1024)
+    monkeypatch.setattr(runner, "_available_bytes", lambda: 10_000)
+    monkeypatch.setattr(runner, "_observe_child", lambda _pid: (1024, False))
 
     # --- act --------------------------
-    reason, _peak = runner._supervise(_FakeChild(running=False), budget_sec=60.0)
+    reason, _peak, _spawned = runner._supervise(_FakeChild(running=False), budget_sec=60.0, baseline_bytes=10_000)
 
     # --- assert -----------------------
     assert reason is None
@@ -35,25 +36,27 @@ def test_supervise_returns_no_reason_when_the_child_finishes_on_its_own(monkeypa
 def test_supervise_kills_on_crossing_the_memory_cap(monkeypatch):
     # --- arrange ----------------------
     child = _FakeChild(running=True)
-    monkeypatch.setattr(runner, "_rss_bytes", lambda _pid: grid.MEMORY_CAP_BYTES + 1)
+    monkeypatch.setattr(runner, "_available_bytes", lambda: 0)
+    monkeypatch.setattr(runner, "_observe_child", lambda _pid: (1024, True))
 
     # --- act --------------------------
-    reason, peak = runner._supervise(child, budget_sec=60.0)
+    reason, _peak, spawned = runner._supervise(child, budget_sec=60.0, baseline_bytes=grid.MEMORY_CAP_BYTES + 1)
 
     # --- assert -----------------------
     assert reason == REASON_MEMORY
     assert child.killed
-    assert peak > grid.MEMORY_CAP_BYTES
+    assert spawned  # child processes were observed before the kill
 
 
 def test_supervise_kills_on_passing_the_deadline(monkeypatch):
     # --- arrange ----------------------
     child = _FakeChild(running=True)
-    monkeypatch.setattr(runner, "_rss_bytes", lambda _pid: 1024)
+    monkeypatch.setattr(runner, "_available_bytes", lambda: 10_000)
+    monkeypatch.setattr(runner, "_observe_child", lambda _pid: (1024, False))
     monkeypatch.setattr(grid, "SETUP_GRACE_SEC", 0.0)
 
     # --- act --------------------------
-    reason, _peak = runner._supervise(child, budget_sec=0.0)
+    reason, _peak, _spawned = runner._supervise(child, budget_sec=0.0, baseline_bytes=10_000)
 
     # --- assert -----------------------
     assert reason == REASON_TIMEOUT

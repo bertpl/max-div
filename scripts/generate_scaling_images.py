@@ -4,8 +4,12 @@ Reads the run records and memory fits under ``benchmarks/solver_scaling/data/`` 
 
 * ``docs/benchmarks/third_party/scaling/images/scaling_time.webp`` — end-to-end solve time
   against problem size, with the time budget drawn in;
-* ``docs/benchmarks/third_party/scaling/images/scaling_memory.webp`` — recorded peak RSS against
-  problem size, each configuration's fitted growth curve overlaid, with the memory cap drawn in;
+* ``docs/benchmarks/third_party/scaling/images/scaling_memory.webp`` — recorded memory footprints
+  against problem size, each configuration's fitted growth curve overlaid, with the memory cap
+  drawn in;
+* ``docs/benchmarks/third_party/scaling/images/scaling_memory_fit_<tool>_<config>.webp`` — one
+  per fitted configuration: its footprints and fitted curve alone, on an adaptive linear scale,
+  with the fitted coefficients and R^2 — plus ``generated/scaling_memory_fits.md`` embedding them;
 * ``generated/scaling_time.md`` / ``generated/scaling_memory.md`` — the per-configuration result
   tables the results pages include.
 
@@ -40,7 +44,7 @@ from benchmarks.solver_scaling.grid import (  # noqa: E402
     operational_bound,
     size_grid,
 )
-from benchmarks.solver_scaling.memory_fit import FIT_PATH  # noqa: E402
+from benchmarks.solver_scaling.memory_fit import FIT_PATH, N_FIT_SIZES  # noqa: E402
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records  # noqa: E402
 from benchmarks.solver_scaling.time_stage import DATA_PATH, passes_time  # noqa: E402
@@ -174,15 +178,15 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
 
 
 def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> None:
-    """Render recorded peak RSS against problem size, with each configuration's fitted curve overlaid."""
+    """Render recorded memory footprints against problem size, with each configuration's fitted curve overlaid."""
     fig, ax = plt.subplots(figsize=(12.0, 7.0))
     for index, ((tool, config), rows) in enumerate(grouped.items()):
-        completed = [r for r in rows if r.completed and r.peak_rss_bytes]
+        completed = [r for r in rows if r.completed and r.peak_memory_bytes]
         if not completed:
             continue
         handles = ax.plot(
             [r.n for r in completed],
-            [r.peak_rss_bytes for r in completed],
+            [r.peak_memory_bytes for r in completed],
             linestyle="none",
             label=_series_label(tool, config, names),
             **_series_marker(index),
@@ -203,7 +207,7 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
     ax.set_yscale("log")
     _grid_xticks(ax, operational_bound())
     ax.set_xlabel("problem size n")
-    ax.set_ylabel("peak RSS")
+    ax.set_ylabel("peak memory use")
     # fixed factor-4 ticks in whole binary units; the default decade ticks label awkward values
     ax.set_yticks([2**27, 2**29, 2**31, 2**33, 2**35])
     ax.yaxis.set_major_formatter(FuncFormatter(_format_bytes))
@@ -225,6 +229,59 @@ def _draw_fit_curve(ax: plt.Axes, fit: dict, completed: list[ScalingRunRecord], 
     predicted = sum(c * ns**p for p, c in enumerate(coef))
     visible = predicted <= 2 * MEMORY_CAP_BYTES  # stop shortly above the cap; further extrapolation says nothing
     ax.plot(ns[visible], predicted[visible], color=color, linestyle="--", linewidth=1.0, alpha=0.8)
+
+
+def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
+    """Render one chart per fitted configuration and the markdown fragment embedding them.
+
+    The combined chart's log y-scale flattens most series, so each configuration also gets its
+    own chart on an adaptive linear scale — just its footprints and fitted curve, annotated with
+    the fitted coefficients and R^2 — making visible that the fit follows a trend in the data.
+    """
+    fragment: list[str] = []
+    for (tool, config), rows in grouped.items():
+        fit = fits.get(f"{tool}/{config}", {})
+        completed = [r for r in rows if r.completed and r.peak_memory_bytes]
+        if not completed or not fit.get("coef"):
+            continue
+        label = _series_label(tool, config, names)
+        fig, ax = plt.subplots(figsize=(7.0, 4.2))
+        ax.plot(
+            [r.n for r in completed],
+            [r.peak_memory_bytes / 2**20 for r in completed],
+            marker="o",
+            linestyle="none",
+        )
+        coef = fit["coef"]
+        fit_ns = np.geomspace(sorted(r.n for r in completed)[-N_FIT_SIZES:][0], completed[-1].n, 200)
+        predicted = sum(c * fit_ns**p for p, c in enumerate(coef)) / 2**20
+        ax.plot(fit_ns, predicted, linestyle="--", linewidth=1.2)
+        ax.text(
+            0.03,
+            0.94,
+            f"{_format_fit(coef)}\n$R^2$ = {fit['r2']:.3f}",
+            transform=ax.transAxes,
+            va="top",
+            fontsize=9,
+        )
+        ax.set_xscale("log")
+        _grid_xticks(ax, completed[-1].n)
+        ax.set_xlabel("problem size n")
+        ax.set_ylabel("peak memory use [MB]")
+        ax.set_title(f"Memory fit — {label}", fontweight="bold")
+        ax.grid(True, which="major")
+        name = f"scaling_memory_fit_{tool}_{config}.webp"
+        _save_webp(fig, IMAGES_DIR / name)
+        fragment += [f"![Memory footprints and fitted curve for {label}](images/{name})", ""]
+    _write_generated("scaling_memory_fits.md", fragment)
+
+
+def _format_fit(coef: tuple) -> str:
+    """Format a fitted model as `f(n) = <c0> + <c1> B·n [+ <c2> B·n²]`."""
+    terms = [_format_bytes(coef[0]), f"{coef[1]:.1f} B·n"]
+    if len(coef) > 2:
+        terms.append(f"{coef[2]:.1f} B·n²")
+    return "f(n) = " + " + ".join(terms)
 
 
 # =================================================================================================
@@ -289,6 +346,7 @@ def main() -> None:
     fits = json.loads(FIT_PATH.read_text(encoding="utf-8")) if FIT_PATH.exists() else {}
     render_time_chart(grouped, names)
     render_memory_chart(grouped, fits, names)
+    render_fit_charts(grouped, fits, names)
     write_time_table(grouped, names)
     write_memory_table(grouped, fits, names)
 

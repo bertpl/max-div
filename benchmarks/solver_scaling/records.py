@@ -10,10 +10,13 @@ class ScalingRunRecord:
     """One campaign run: a solver in one configuration at one size under one seed.
 
     `measured_sec` is the child-reported wall-clock of the solver call alone — problem
-    construction, imports and scoring are excluded. A killed or failed run carries
-    `completed=False` and names its `reason` (`timeout`, `memory`, or the error text);
-    `outcome.classify` maps those two fields to the run's `Outcome`. A run's other measured
-    fields hold whatever was known when it ended (None when nothing was).
+    construction, imports and scoring are excluded. `peak_memory_bytes` is the solver process's
+    peak RSS, the memory fit's input; `spawned_processes` records whether the solver was ever
+    observed with live child processes, which excludes it from memory extrapolation (see the
+    runner). A killed or failed run carries `completed=False` and names its `reason` (`timeout`,
+    `memory`, or the error text); `outcome.classify` maps those two fields to the run's
+    `Outcome`. A run's other measured fields hold whatever was known when it ended (None when
+    nothing was).
     """
 
     tool: str
@@ -25,8 +28,9 @@ class ScalingRunRecord:
     completed: bool
     reason: str | None
     measured_sec: float | None
-    peak_rss_bytes: int | None
+    peak_memory_bytes: int | None
     min_separation: float | None
+    spawned_processes: bool = False
 
 
 def save_scaling_records(records: list[ScalingRunRecord], path: Path) -> None:

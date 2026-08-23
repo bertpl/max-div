@@ -3,8 +3,8 @@
 The run executes in its own process so the parent can kill it — a solver stuck inside compiled
 code cannot be interrupted in-process — and so its peak memory is its own, not the driver's. The
 parent builds the problem and hands the child only the final float32 vectors (`vectors_path`), so
-the child's peak RSS carries the persistent input and the solver's own allocations but not the
-problem-generation transients. The clock runs over the solver call alone: loading the vectors and
+the measured memory footprint carries the persistent input and the solver's own allocations but
+not the problem-generation transients. The clock runs over the solver call alone: loading the vectors and
 scoring the result are outside it.
 
 Usage: python -m benchmarks.solver_scaling.run_one '<spec json>' <result path>
@@ -67,9 +67,10 @@ def main() -> int:
         result = execute(spec)
     except Exception as error:  # noqa: BLE001 -- every failure must reach the parent as data
         result = {"completed": False, "reason": f"{type(error).__name__}: {error}"}
-    # ru_maxrss is bytes on macOS and kilobytes on Linux; the campaign machine is a Mac, and the
-    # parent's live polling is the enforcement path either way.
-    result["peak_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    # The kernel-maintained high-water mark catches millisecond-scale allocation transients the
+    # parent's poll cannot. ru_maxrss is bytes on macOS and kilobytes on Linux; the campaign
+    # machine is a Mac.
+    result["peak_memory_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     result_path.write_text(json.dumps(result), encoding="utf-8")
     return 0
 

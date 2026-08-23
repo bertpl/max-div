@@ -12,7 +12,7 @@ shift a result by one grid step, an inaccuracy the grid's granularity already ac
 Records are appended after every run to the tracked data file, so an interrupted stage resumes by
 rerunning: already-recorded runs are skipped.
 
-Usage: python -m benchmarks.solver_scaling.time_stage [tool ...]   # default: every smoke tool
+Usage: python -m benchmarks.solver_scaling.time_stage [tool | tool/config ...]   # default: all
 """
 
 import sys
@@ -84,5 +84,5 @@ def _ascend(config: ScalingConfig, done: dict, data_path: Path, budget_sec: floa
 
 if __name__ == "__main__":
     selected = sys.argv[1:]
-    chosen = [c for c in CONFIGS if c.tool in selected] if selected else list(CONFIGS)
+    chosen = [c for c in CONFIGS if c.tool in selected or f"{c.tool}/{c.name}" in selected] if selected else list(CONFIGS)
     run_time_stage(chosen)

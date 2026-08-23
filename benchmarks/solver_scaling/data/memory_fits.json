@@ -1,40 +1,42 @@
 {
   "max-div/lean": {
-    "max_n": 500000000,
-    "coef": [
-      161636921.9935274,
-      34.914091909385085
-    ],
-    "reason": "linear fit over 5 sizes"
-  },
-  "max-div/optimal-eager": {
-    "max_n": 50000,
-    "coef": null,
-    "reason": "bracketed: the memory cap was reached at the next size"
-  },
-  "max-div/optimal-lazy": {
     "max_n": 1000000000,
     "coef": [
-      160809014.34162512,
-      30.22345339966853
+      161625310.0323624,
+      32.35946045307442
     ],
-    "reason": "linear fit over 5 sizes"
+    "reason": "linear fit over 5 sizes",
+    "r2": 0.9933703942195107
+  },
+  "max-div/optimal-eager": {
+    "max_n": null,
+    "coef": null,
+    "reason": "no completed runs",
+    "r2": null
+  },
+  "max-div/optimal-lazy": {
+    "max_n": null,
+    "coef": null,
+    "reason": "no completed runs",
+    "r2": null
   },
   "rdkit/default": {
-    "max_n": 200000000,
+    "max_n": 2000000000,
     "coef": [
-      166114614.33579722,
-      69.46115311510044
+      168770009.6,
+      8.000000000000002
     ],
-    "reason": "linear fit over 5 sizes"
+    "reason": "linear fit over 5 sizes",
+    "r2": 0.0006634426897637047
   },
   "dppy/default": {
     "max_n": 20000,
     "coef": [
-      203708519.43516406,
-      5039.220527771245,
-      37.89079222522004
+      207194528.5723189,
+      8.00000000000029,
+      62.19445737340876
     ],
-    "reason": "quadratic fit over 5 sizes"
+    "reason": "quadratic fit over 5 sizes",
+    "r2": 0.9775617354338064
   }
 }
