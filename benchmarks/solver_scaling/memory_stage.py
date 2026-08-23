@@ -12,8 +12,8 @@ stopped growing. The sweep walks upward until one of:
 * the grid is exhausted — the fit is published with that noted.
 
 A configuration observed spawning worker processes is not measured: the recorded per-process
-footprints would miss the workers. No information is lost — worker processes only ever add
-memory, so a solver's memory-bound size is reached by its single-process configurations.
+footprints would miss the workers (the measurement protocol, section III, argues why nothing is
+lost).
 
 Records are appended after every run to the tracked data file, so an interrupted sweep resumes
 by rerunning: already-recorded runs are skipped.

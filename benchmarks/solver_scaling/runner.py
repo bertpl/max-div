@@ -1,18 +1,11 @@
 """Parent-side runner: one subprocess per run, with time and memory kills.
 
-Two memory measurements serve two purposes:
-
-* **Enforcement and bracketing are machine-level**: the parent samples the machine's available
-  memory just before launching the child and kills the run once the drop below that level
-  crosses the memory cap. This counts every process the solver spawns and counts shared memory
-  once, with no knowledge of any solver's internals. Its noise (a few hundred MB of unrelated
-  OS activity) is negligible at the cap's scale.
-* **The recorded footprint is the solver process's peak RSS**: precise to ~1 MB, which the
-  extrapolating memory fit needs and machine-level readings are far too noisy to provide. The
-  child reports its kernel-maintained high-water mark (catching transients shorter than the
-  poll interval) and the parent's poll complements it for killed children. RSS sees one process
-  fully, threads included — so the parent also records whether the child was ever observed with
-  live child processes, and the memory sweep does not measure such configurations.
+The two memory measurements follow the published measurement protocol (its section III justifies
+the split): the cap is enforced on the machine-level drop of available memory below a baseline
+sampled just before launch (it sees worker processes), while the recorded footprint is the solver
+process's peak RSS (precise enough to fit growth rates from) — the child reports its
+kernel-maintained high-water mark, complemented by the parent's poll for killed children. The
+parent also records whether the child was ever observed with live child processes.
 
 The time kill fires at the run's budget plus a setup grace, since the child's untimed setup
 (imports, problem construction) happens inside the same process. A completed child reports its
@@ -44,7 +37,7 @@ _SETTLE_TOLERANCE = 0.02
 
 @dataclass(frozen=True)
 class _Supervision:
-    """What the supervisor observed: how the run ended, and the child's memory behavior."""
+    """Records how the run ended and the child's memory behavior, as the supervisor observed them."""
 
     reason: str | None
     peak_rss: int

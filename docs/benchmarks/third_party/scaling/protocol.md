@@ -33,8 +33,12 @@ These three descriptions are consciously kept qualitative in nature.  The next s
   - _**distance metric**_: L2 distance, as this has widest support among competing solvers.
   - _**diversity metric**_: `max-min` (or `minimal separation`), as this has the widest support among competing solvers.  Some solvers can only be configured to optimize for a different metric (or don't explicitly optimize at all), in which case this is explicitly indicated.
 - **memory**: we define the memory budget as **M_max = 32GB** in line with typical memory of current high-end desktop machines.  Two measurements serve two purposes:
-    - **enforcement and bracketing are machine-level**: a run is killed once the machine's memory in use rises more than M_max above its level right before the solver process started.  This counts every process a solver spawns, counts shared memory once, and requires no knowledge of any solver's internals.  Its noise (unrelated OS activity) is negligible at the cap's scale, and an otherwise-quiet machine is assumed, as the timing measurements already do.
-    - **the recorded memory footprint** — the input to the extrapolating fit of IV.B.2 — is the **peak RSS of the solver process**: precise where machine-level readings are far too noisy to fit growth rates from.  It fully covers a single process, threads included, but not worker *processes* — so a solver observed spawning worker processes is excluded from memory extrapolation.  No information is lost: worker processes only ever add memory, so a solver's memory-bound size is reached by its single-process configurations.
+    - **enforcement and bracketing are machine-level**: a run is killed once the machine's memory in use rises more than M_max above its level right before the solver process started.
+        - This counts every process a solver spawns, counts shared memory once, and requires no knowledge of any solver's internals.
+        - Its noise (unrelated OS activity) is negligible at the cap's scale, and an otherwise-quiet machine is assumed, as the timing measurements already do.
+    - **the recorded memory footprint** — the input to the extrapolating fit of IV.B.2 — is the **peak RSS of the solver process**: precise where machine-level readings are far too noisy to fit growth rates from.
+        - RSS fully covers a single process, threads included, but not worker *processes* — so a solver observed spawning worker processes is excluded from memory extrapolation.
+        - No information is lost by that exclusion: worker processes only ever add memory, so a solver's memory-bound size is reached by its single-process configurations.
 
     Memory used for problem construction — which happens before the solver process starts — is excluded from both.
 - **time**: we define time budget as **T_max = 1min**, mostly driven by keeping the overall protocol executable.  Time is measured **end-to-end**: the clock runs from handing the raw input vectors to the solver until it returns a selection, so any distance computation or other setup work the solver performs is included in its cost.
@@ -71,7 +75,7 @@ We assume...
 Two safeguards keep a killed window's footprint trustworthy:
 
 - a window's footprint counts as **settled** when it had stopped growing before the kill (observed from the poll samples); an unsettled footprint under-reads and does not feed the fit
-- the extrapolating fit is only trusted once the settled footprints **span a 2x range** (the growth term dominates the fixed baseline within the data) **and** the fitted model explains them (**R² >= 0.95**) — together these mean the extrapolation extends a measured trend, not an assumption
+- the extrapolating fit is only trusted once its **trust conditions** hold: the settled footprints **span a 2x range** (the growth term dominates the fixed baseline within the data) **and** the fitted model explains them (**R² >= 0.95**) — together these mean the extrapolation extends a measured trend, not an assumption
 
 A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and brackets the result like a memory kill does: nothing larger runs at all.
 

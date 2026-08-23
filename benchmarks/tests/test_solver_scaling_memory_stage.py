@@ -90,6 +90,7 @@ def test_a_config_observed_spawning_workers_is_not_measured(monkeypatch, tmp_pat
 
 
 def test_unsettled_footprints_do_not_feed_the_fit(monkeypatch, tmp_path):
+    """Unsettled footprints are excluded, so the fit recovers the settled points' slope."""
     # --- arrange ----------------------
     # two mid-sweep sizes report unsettled windows with absurd peaks; a fit that ingested them
     # could not recover the clean 40 B/item slope of the settled points

@@ -7,7 +7,7 @@ the same grid shape.
 
 REFERENCE_BUDGET_SEC = 60.0  # T_max: the budget every time/quality run is judged against
 
-# Budget for the discarded warm-up run each sweep gives a configuration without recorded runs.
+# The discarded warm-up run each sweep gives a fresh configuration uses this budget.
 # The first child process after a fresh environment install pays a one-off import/bytecode-
 # compilation cost that would otherwise land in the configuration's first measurement; the small
 # budget lets any configuration produce a tiny-size answer while self-limiting ones return fast.

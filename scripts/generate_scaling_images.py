@@ -298,7 +298,7 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
             f'<a href="../images/{name}"><img src="../images/{name}" '
             f'alt="Memory footprints and fitted curve for {label}" width="32%"></a>'
         )
-    # a clickable grid: three thumbnails per row, each linking to the full-size chart
+    # The fragment lays three thumbnails per row, each linking to the full-size chart.
     _write_generated("scaling_memory_fits.md", [" ".join(thumbnails)] if thumbnails else [])
 
 

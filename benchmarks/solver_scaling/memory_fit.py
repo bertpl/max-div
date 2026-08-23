@@ -23,9 +23,8 @@ _INPUT_MIN_BYTES = 8.0  # 4 bytes x d=2: the raw float32 vectors, the linear coe
 # extrapolation to the cap — refit linear.
 _C2_MIN_BYTES = 0.1
 
-# The fit is trusted once the settled footprints span a 2x range (the growth term dominates the
-# fixed baseline within the data) AND the model explains them (R^2) — both conditions together
-# mean the extrapolation extends a measured trend, not an assumption.
+# The trust conditions (measurement protocol, IV.B.1): the settled footprints must span this
+# range factor, and the fitted model must reach this R^2.
 _SPAN_FACTOR = 2.0
 _R2_MIN = 0.95
 

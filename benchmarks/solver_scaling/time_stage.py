@@ -6,8 +6,7 @@ within the time budget, measured end-to-end. The largest passing size is the con
 largest n within the time budget; the tool's value is the best over its configurations. The
 memory sweep (`memory_stage`) is independent and runs first.
 
-One run decides each size's verdict, per the measurement protocol: runtime noise can at worst
-shift a result by one grid step, an inaccuracy the grid's granularity already accepts.
+One run decides each size's verdict (see the measurement protocol, IV.C.1).
 
 Records are appended after every run to the tracked data file, so an interrupted stage resumes by
 rerunning: already-recorded runs are skipped.
