@@ -56,14 +56,20 @@ class ScalingConfig:
 #  select() builders
 # ==================================================================================================
 def _maxdiv_lean() -> SelectFn:
-    """Build max-div's `lean` selector: default random one-shot init, no optimization, lazy storage."""
+    """Build max-div's `lean` selector: uniform random one-shot init, no optimization, lazy storage."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
-        from max_div.solver import DistanceStorage, MaxDivSolverBuilder, Verbosity
+        from max_div.solver import DistanceStorage, InitializationStrategy, MaxDivSolverBuilder, Verbosity
 
-        # No with_preset: the builder's default pipeline is a single random-one-shot init step, so
-        # the solve returns that initialization and nothing more — the fastest valid configuration.
-        builder = MaxDivSolverBuilder(problem).with_seed(seed).with_distance_storage(DistanceStorage.LAZY)
+        # No with_preset: the pipeline is a single init step, so the solve returns that
+        # initialization and nothing more. Uniform sampling replaces the default
+        # contribution-weighted variant, whose dataset-wide distance sweep is the opposite of lean.
+        builder = (
+            MaxDivSolverBuilder(problem)
+            .with_seed(seed)
+            .with_distance_storage(DistanceStorage.LAZY)
+            .set_initialization_strategy(InitializationStrategy.random_one_shot(uniform=True))
+        )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
 
     return select
@@ -143,7 +149,7 @@ CONFIGS: tuple[ScalingConfig, ...] = (
     ScalingConfig(
         "max-div",
         "lean",
-        "random one-shot initialization only, no optimization step, lazy distance storage, 1 worker",
+        "uniform random one-shot initialization only, no optimization step, lazy distance storage, 1 worker",
         _maxdiv_lean(),
         stochastic=True,
     ),

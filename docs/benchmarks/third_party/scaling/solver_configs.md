@@ -6,7 +6,7 @@ For every configuration, the time budget is handed to the solver where it accept
 
 | Solver | Config | Description |
 |---|---|---|
-| max-div | `lean` | random one-shot initialization only, no optimization step, lazy distance storage, 1 worker |
+| max-div | `lean` | uniform random one-shot initialization only, no optimization step, lazy distance storage, 1 worker |
 | max-div | `optimal-eager` | SMART preset, full end-to-end time budget, full-matrix distance storage forced, 12 cooperative workers |
 | max-div | `optimal-lazy` | SMART preset, full end-to-end time budget, lazy distance storage forced, 12 cooperative workers |
 | OR-Tools CP-SAT | `feasible` | max-min CP-SAT model, stop at the first feasible solution, 1 worker |
