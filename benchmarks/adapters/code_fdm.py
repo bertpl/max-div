@@ -70,11 +70,17 @@ class CodeFdmSingleColor(SelectionAdapter):
         return "code-FDM[single-color]"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
-        """Run FairFlow with one color spanning all items."""
+        """Run FairFlow with one color spanning all items.
+
+        FairFlow returns `None` for the selection on some degenerate tiny instances (observed at
+        n=20, k=2); that is surfaced as a clear failure rather than an opaque unpacking error.
+        """
         algorithms, utils = _load_code_fdm()
         vectors = problem_vectors(problem)
         elements = [utils.Element(idx=i, color=0, features=vectors[i].tolist()) for i in range(problem.n)]
         selected, _diversity, _t = algorithms.FairFlow(elements, 1, [problem.k], utils.euclidean_dist)
+        if selected is None:
+            raise RuntimeError("code-FDM (FairFlow) produced no selection")
         return np.asarray(sorted(selected), dtype=np.int64)
 
 
