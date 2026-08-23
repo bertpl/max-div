@@ -322,8 +322,8 @@ def test_the_budget_start_time_is_stamped_at_solve_start(fake_clock, monkeypatch
         solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
-    assert [config.e2e_budget_sec for config in received["configs"]] == [10.0, 10.0]
-    assert [config.t_e2e_budget_start for config in received["configs"]] == [fake_clock.monotonic()] * 2
+    assert [config.e2e_budget.budget_sec for config in received["configs"]] == [10.0, 10.0]
+    assert [config.e2e_budget.t_start for config in received["configs"]] == [fake_clock.monotonic()] * 2
 
 
 def test_a_budget_spent_during_setup_reaches_the_workers_as_spent():

@@ -13,6 +13,7 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
+from ._duration import E2eBudget
 from ._solver import MaxDivSolver
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep
 
@@ -33,11 +34,10 @@ class SolverConfig:
     # `batch_seconds` targets the wall-clock size of one optimization batch (set per worker by
     # the parallel builder)
     batch_seconds: float = REPORTING_BATCH_SECONDS
-    # an end-to-end budget bounds the whole solve (store build and initialization included) with
-    # `e2e_budget_sec`; `t_e2e_budget_start` is the `time.monotonic()` reading the parallel solver
-    # stamps at its own solve start, so workers charge the parent's setup against the budget too
-    e2e_budget_sec: float | None = None
-    t_e2e_budget_start: float | None = None
+    # an end-to-end budget bounds the whole solve, store build and initialization included; the
+    # parallel solver replaces it with a started copy at its own solve start, so workers charge
+    # the parent's setup against the budget too
+    e2e_budget: E2eBudget | None = None
 
     def build_solver(
         self,
@@ -76,14 +76,13 @@ class SolverConfig:
             constraint_penalty=self.constraint_penalty,
             distance_storage_label=self.distance_storage_label,
             batch_seconds=self.batch_seconds,
-            e2e_budget_sec=self.e2e_budget_sec,
-            t_e2e_budget_start=self.t_e2e_budget_start,
+            e2e_budget=self.e2e_budget,
         )
 
     def with_seed(self, seed: int) -> "SolverConfig":
         """Return a copy of this configuration carrying a different seed."""
         return replace(self, seed=seed)
 
-    def with_t_e2e_budget_start(self, t_e2e_budget_start: float) -> "SolverConfig":
-        """Return a copy of this configuration carrying the given budget start time (`time.monotonic()`)."""
-        return replace(self, t_e2e_budget_start=t_e2e_budget_start)
+    def with_e2e_budget(self, e2e_budget: E2eBudget) -> "SolverConfig":
+        """Return a copy of this configuration carrying the given end-to-end budget."""
+        return replace(self, e2e_budget=e2e_budget)

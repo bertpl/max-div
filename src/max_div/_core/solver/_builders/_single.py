@@ -133,5 +133,5 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             seed=self._seed,
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=label,
-            e2e_budget_sec=self._e2e_budget_sec,
+            e2e_budget=self._e2e_budget,
         )

@@ -1,4 +1,3 @@
-import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -9,7 +8,7 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
-from ._duration import Elapsed
+from ._duration import E2eBudget, Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
@@ -42,8 +41,7 @@ class MaxDivSolver:
         constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
         distance_storage_label: str = "",
         batch_seconds: float = REPORTING_BATCH_SECONDS,
-        e2e_budget_sec: float | None = None,
-        t_e2e_budget_start: float | None = None,
+        e2e_budget: E2eBudget | None = None,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -63,12 +61,10 @@ class MaxDivSolver:
             constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
             distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
-            e2e_budget_sec: (float | None) Wall-clock budget for the whole solve — store build
+            e2e_budget: (E2eBudget | None) Wall-clock budget for the whole solve — store build
                 and initialization included; each optimization step receives whatever remains.
-                `None` leaves every step on its own configured duration.
-            t_e2e_budget_start: (float | None) The `time.monotonic()` value the budget counts
-                from; `None` stamps it when `solve` starts.  The parallel solver passes its own
-                solve start here, so worker setup is charged against the budget too.
+                An unstarted budget starts counting when `solve` starts; the parallel solver
+                hands its workers a budget already counting from its own solve start.
         """
         # --- problem description ----------------
         self._n = n
@@ -84,8 +80,7 @@ class MaxDivSolver:
         self._seed = seed
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
-        self._e2e_budget_sec = e2e_budget_sec
-        self._t_e2e_budget_start = t_e2e_budget_start
+        self._e2e_budget = e2e_budget
 
     # -------------------------------------------------------------------------
     #  API
@@ -110,7 +105,7 @@ class MaxDivSolver:
             A MaxDivSolution object representing the solution found.
         """
         # --- Init -------------------------------
-        t_e2e_budget_start = self._t_e2e_budget_start if self._t_e2e_budget_start is not None else time.monotonic()
+        e2e_budget = self._e2e_budget.started() if self._e2e_budget is not None else None
 
         # --- progress reporting -----------------
         if progress_reporter is None:
@@ -151,7 +146,7 @@ class MaxDivSolver:
         for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
-            step.set_e2e_budget(self._e2e_budget_sec, t_e2e_budget_start)
+            step.set_e2e_budget(e2e_budget)
             step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
 
         # --- Construct result -------------------

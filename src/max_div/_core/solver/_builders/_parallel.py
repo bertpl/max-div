@@ -159,7 +159,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             distance_storage_label=storage_label,
             # tighter batches give cooperative workers faster incumbent exchanges
             batch_seconds=COOPERATIVE_BATCH_SECONDS if group_size > 1 else REPORTING_BATCH_SECONDS,
-            e2e_budget_sec=self._e2e_budget_sec,
+            e2e_budget=self._e2e_budget,
         )
 
 

@@ -7,7 +7,7 @@ from numpy._typing import NDArray
 
 from max_div._core._utils import Timer
 from max_div._core._warnings import SolverBudgetWarning
-from max_div._core.solver._duration import Elapsed, iterations, seconds
+from max_div._core.solver._duration import E2eBudget, Elapsed, iterations, seconds
 from max_div._core.solver._score import Score
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
@@ -219,7 +219,7 @@ def test_optimization_step_runs_under_the_budgets_remaining_time(fake_clock):
     # --- arrange ----------------------
     strategy = OptimTickingTest(fake_clock, dt_sec=0.001)
     step = OptimizationStep(strategy, duration=seconds(100.0))
-    step.set_e2e_budget(10.0, fake_clock.monotonic())
+    step.set_e2e_budget(E2eBudget(10.0).started())
     fake_clock.advance(9.9)  # setup ate all but 0.1s of the budget
 
     # --- act --------------------------
@@ -234,7 +234,7 @@ def test_optimization_step_skips_when_the_budget_is_spent(fake_clock):
     # --- arrange ----------------------
     strategy = OptimTest()
     step = OptimizationStep(strategy, duration=seconds(100.0))
-    step.set_e2e_budget(10.0, fake_clock.monotonic())
+    step.set_e2e_budget(E2eBudget(10.0).started())
     fake_clock.advance(11.0)
 
     # --- act --------------------------

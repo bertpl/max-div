@@ -378,9 +378,9 @@ def test_solve_hands_every_step_the_budget_and_its_start(dummy_problem, fake_clo
     received = []
     original = OptimizationStep.set_e2e_budget
 
-    def record_budget(self, e2e_budget_sec, t_e2e_budget_start):
-        received.append((e2e_budget_sec, t_e2e_budget_start))
-        original(self, e2e_budget_sec, t_e2e_budget_start)
+    def record_budget(self, e2e_budget):
+        received.append((e2e_budget.budget_sec, e2e_budget.t_start))
+        original(self, e2e_budget)
 
     monkeypatch.setattr(OptimizationStep, "set_e2e_budget", record_budget)
     # stub the run: under a frozen fake clock a real time-budgeted run would never finish

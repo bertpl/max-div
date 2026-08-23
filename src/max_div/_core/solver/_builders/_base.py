@@ -20,7 +20,7 @@ from max_div._core.solver._distance_storage import (
     select_distance_storage,
     total_physical_memory_bytes,
 )
-from max_div._core.solver._duration import TargetDuration, TargetTimeDuration
+from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
 
 if TYPE_CHECKING:
     from max_div._core.constraints import Constraint
@@ -49,7 +49,7 @@ class SolverBuilderBase:
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
         self._distance_storage: DistanceStorage = DistanceStorage.AUTO
-        self._e2e_budget_sec: float | None = None
+        self._e2e_budget: E2eBudget | None = None
 
     def _set_e2e_budget(self, target_duration: TargetDuration, end_to_end_budget: bool) -> None:
         """Record `target_duration` as the whole solve's budget when the flag asks for it.
@@ -62,14 +62,14 @@ class SolverBuilderBase:
                 cannot bound the store build and initialization.
         """
         if not end_to_end_budget:
-            self._e2e_budget_sec = None
+            self._e2e_budget = None
             return
         if not isinstance(target_duration, TargetTimeDuration):
             raise ValueError(
                 "end_to_end_budget requires a time budget (seconds/minutes/hours); "
                 "an iteration budget cannot bound the store build and initialization."
             )
-        self._e2e_budget_sec = target_duration.value()
+        self._e2e_budget = E2eBudget(budget_sec=target_duration.value())
 
     # -------------------------------------------------------------------------
     #  Shared builder API
