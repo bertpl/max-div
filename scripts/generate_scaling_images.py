@@ -1,20 +1,10 @@
 """Regenerate the solver-scaling result images and tables from the tracked measurement data.
 
-Reads the run records and memory fits under ``benchmarks/solver_scaling/data/`` and renders:
-
-* ``docs/benchmarks/third_party/scaling/images/scaling_time.webp`` — end-to-end solve time
-  against problem size, with the time budget drawn in;
-* ``docs/benchmarks/third_party/scaling/images/scaling_memory.webp`` — recorded memory footprints
-  against problem size, each configuration's fitted growth curve overlaid, with the memory cap
-  drawn in;
-* ``docs/benchmarks/third_party/scaling/images/scaling_memory_fit_<tool>_<config>.webp`` — one
-  per fitted configuration: its footprints and fitted curve alone, on an adaptive linear scale,
-  with the fitted coefficients and R^2 — plus ``generated/scaling_memory_fits.md`` embedding them;
-* ``generated/scaling_time.md`` / ``generated/scaling_memory.md`` — the per-configuration result
-  tables the results pages include.
-
-Charts use the docs Matplotlib style sheet (``local/docs/figures/docs.mplstyle``), shared with
-the benchmark-problem and preset-results figures.
+Reads the two sweeps' run records and the memory fits, and renders the combined time and memory
+charts, one fit chart per fitted configuration, and the markdown tables and fragments the results
+pages include — images under the scaling docs' `images/` folder (`IMAGES_DIR`), markdown under
+`generated/`. Charts use the docs Matplotlib style sheet (`STYLE_SHEET`), shared with the
+benchmark-problem and preset-results figures.
 
 Run:  uv run --group benchmarks --python 3.13 python scripts/generate_scaling_images.py
 """
@@ -63,9 +53,9 @@ _SWEEP_END_LABELS = {
 }
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Data access
-# =================================================================================================
+# ==================================================================================================
 def _solver_names() -> dict[str, str]:
     """Return the registry's tool key -> display name mapping."""
     registry = yaml.safe_load(REGISTRY_FILE.read_text(encoding="utf-8"))
@@ -93,9 +83,9 @@ def _series_label(tool: str, config: str, names: dict[str, str], markdown: bool 
     return f"{display} `{config}`" if markdown else f"{display} {config}"
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Charts
-# =================================================================================================
+# ==================================================================================================
 def _save_webp(fig: plt.Figure, path: Path) -> None:
     """Render the figure to quality-92 webp via PIL (matplotlib has no native webp writer)."""
     buffer = io.BytesIO()
@@ -111,7 +101,7 @@ def _series_marker(index: int) -> dict:
     """Return per-series marker kwargs: shapes alternate and every other series is drawn open.
 
     Distinct shapes and open-vs-filled markers keep coinciding series tellable apart — the
-    budget-honoring configurations all sit on the `T_max` line, where identical dots would
+    self-limiting configurations all sit on the `T_max` line, where identical dots would
     hide one another completely.
     """
     shapes = ("o", "s", "D", "^", "v", "P", "X")
@@ -320,9 +310,9 @@ def _format_fit(coef: tuple) -> str:
     return "f(n) = " + " + ".join(terms)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Tables
-# =================================================================================================
+# ==================================================================================================
 def _sweep_end(rows: list[ScalingRunRecord]) -> str:
     """Describe what ended a configuration's size sweep, from its largest attempted size's record."""
     last = rows[-1]
@@ -371,9 +361,9 @@ def _write_generated(name: str, lines: list[str]) -> None:
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Main entrypoint
-# =================================================================================================
+# ==================================================================================================
 def main() -> None:
     """Regenerate the charts and tables from the two sweeps' tracked data files."""
     plt.style.use(STYLE_SHEET)

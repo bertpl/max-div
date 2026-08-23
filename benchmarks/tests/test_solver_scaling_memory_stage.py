@@ -7,6 +7,7 @@ from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_rec
 
 
 def _record(n, *, completed=True, reason=None, peak=None, settled=True, spawned=False):
+    """Build one run record with a footprint following a 40 B/item baseline unless overridden."""
     peak = peak if peak is not None else int(1.6e8 + 40 * n)
     return ScalingRunRecord(
         "rdkit", "default", n, n // 10, DEFAULT_SEED, 60.0, completed, reason, 1.0, peak, 0.2, spawned, settled
@@ -14,6 +15,7 @@ def _record(n, *, completed=True, reason=None, peak=None, settled=True, spawned=
 
 
 def test_sweep_stops_once_the_trust_conditions_hold(monkeypatch, tmp_path):
+    """The sweep ends at the first size where the fit passes the trust conditions and publishes it."""
     # --- arrange ----------------------
     def fake_run(tool, config, n, k, seed, budget_sec):
         return _record(n)
@@ -32,6 +34,7 @@ def test_sweep_stops_once_the_trust_conditions_hold(monkeypatch, tmp_path):
 
 
 def test_a_memory_kill_brackets_at_the_previous_size(monkeypatch, tmp_path):
+    """A cap kill ends the sweep with the last under-cap size as the bracketed result."""
     # --- arrange ----------------------
     def fake_run(tool, config, n, k, seed, budget_sec):
         if n >= 200:
@@ -49,6 +52,7 @@ def test_a_memory_kill_brackets_at_the_previous_size(monkeypatch, tmp_path):
 
 
 def test_a_solver_failure_brackets_at_the_previous_size(monkeypatch, tmp_path):
+    """A non-resource failure brackets like a cap kill, with the failure disclosed in the reason."""
     # --- arrange ----------------------
     def fake_run(tool, config, n, k, seed, budget_sec):
         if n >= 1000:
@@ -66,6 +70,7 @@ def test_a_solver_failure_brackets_at_the_previous_size(monkeypatch, tmp_path):
 
 
 def test_a_config_observed_spawning_workers_is_not_measured(monkeypatch, tmp_path):
+    """One observed worker-spawning run aborts the sweep with the disclosed exclusion."""
     # --- arrange ----------------------
     calls = []
 

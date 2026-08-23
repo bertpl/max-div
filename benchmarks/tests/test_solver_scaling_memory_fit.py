@@ -1,7 +1,7 @@
 import pytest
 
 from benchmarks.solver_scaling.grid import MEMORY_CAP_BYTES, operational_bound, size_grid
-from benchmarks.solver_scaling.memory_fit import conditions_met, fit_series
+from benchmarks.solver_scaling.memory_fit import trust_conditions_met, fit_series
 
 
 def test_quadratic_fit_recovers_a_known_crossing():
@@ -53,6 +53,6 @@ def test_conditions_require_span_and_model_quality():
     grown = {n: 1.6e8 + 40.0 * n for n in (1_000_000, 2_000_000, 5_000_000, 10_000_000)}  # spans > 2x
 
     # --- act / assert -----------------
-    assert not conditions_met(flat, fit_series(flat))
-    assert conditions_met(grown, fit_series(grown))
-    assert not conditions_met({100: 1.0e8, 200: 3.0e8}, fit_series({100: 1.0e8, 200: 3.0e8}))  # two points never do
+    assert not trust_conditions_met(flat, fit_series(flat))
+    assert trust_conditions_met(grown, fit_series(grown))
+    assert not trust_conditions_met({100: 1.0e8, 200: 3.0e8}, fit_series({100: 1.0e8, 200: 3.0e8}))  # two points never do

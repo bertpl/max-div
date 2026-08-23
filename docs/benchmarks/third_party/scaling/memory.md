@@ -12,6 +12,6 @@ Dots are recorded footprints; dashed curves are each configuration's fitted grow
 
 ## Per-configuration fits
 
-The combined chart's log scale flattens most series, so each fitted configuration is shown again on its own adaptive linear scale — its footprints and fitted curve, with the fitted coefficients and `R²`. Click a chart for the full-size version; open markers are windows whose footprint had not settled, which do not feed the fit.
+The combined chart's log scale flattens most series, so each fitted configuration is shown again on its own adaptive linear scale — its footprints and fitted curve, with the fitted coefficients and `R²`. Click a chart for the full-size version. Open markers show runs whose footprint had not settled; those runs do not feed the fit.
 
 --8<-- "generated/scaling_memory_fits.md"

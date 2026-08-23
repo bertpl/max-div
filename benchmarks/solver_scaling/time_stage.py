@@ -58,9 +58,7 @@ def _ascend(config: ScalingConfig, done: dict, data_path: Path, budget_sec: floa
     """Run one configuration up the grid; return its largest passing size.
 
     A configuration with no recorded runs first gets one discarded warm-up run at the smallest
-    grid size: the first child process after a fresh environment install pays a one-off
-    import/bytecode-compilation cost in its peak RSS, which would otherwise land in the first
-    real measurement.
+    grid size (see `WARMUP_BUDGET_SEC`).
     """
     if not any(key[0] == config.tool and key[1] == config.name for key in done):
         run_measurement(config.tool, config.name, GRID_MIN, GRID_MIN // 10, DEFAULT_SEED, WARMUP_BUDGET_SEC)

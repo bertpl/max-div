@@ -6,6 +6,6 @@ The **largest n within the time budget** is the largest problem size a configura
 
 ![End-to-end solve time against problem size, per solver configuration](images/scaling_time.webp)
 
-Runs that completed are shown, including any that finished past the time budget; killed runs have no measured time and do not appear. Budget-honoring configurations (max-div `optimal-*`) track the `T_max` line by construction — their limit is the size where even the full budget no longer suffices.
+Runs that completed are shown, including any that finished past the time budget; killed runs have no measured time and do not appear. Self-limiting configurations (max-div `optimal-*`) track the `T_max` line by construction — their limit is the size where even the full budget no longer suffices.
 
 --8<-- "generated/scaling_time.md"

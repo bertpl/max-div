@@ -59,14 +59,16 @@ Our testing protocol implements the same spirit in order to avoid testing a 3rd 
 
 #### IV.B.1. Considerations
 
-The memory sweep is **independent of the time sweep** (IV.C), and runs first — the stages read memory → time → quality, matching the nesting of section II.  Its key liberty: a run here does not need to *complete* — it needs to *allocate*.  Each size runs for up to `T_max` as an **observation window**; a run that outlives its window is killed and still yields a footprint.  This decouples memory observation from the time limit, which would otherwise truncate the sweep at sizes where a solver's memory growth is still invisible under its process's fixed startup cost.
+The memory sweep is **independent of the time sweep** (IV.C), and runs first — the stages read memory → time → quality, matching the nesting of section II.
+
+The key relaxation is that a run here does not need to *complete* — only to *allocate*.  Each size runs for up to `T_max` as an **observation window**; a run that outlives its window is killed and still yields a footprint.  This decouples memory observation from the time limit, which would otherwise truncate the sweep at sizes where a solver's memory growth is still invisible under its process's fixed startup cost.
 
 We assume...
 
 - memory usage increases monotonically with increasing `n` and does so either linearly or quadratically
 - memory usage is sufficiently deterministic to not require multiple runs with different seeds
 
-Two safeguards keep a killed window's footprint honest:
+Two safeguards keep a killed window's footprint trustworthy:
 
 - a window's footprint counts as **settled** when it had stopped growing before the kill (observed from the poll samples); an unsettled footprint under-reads and does not feed the fit
 - the extrapolating fit is only trusted once the settled footprints **span a 2x range** (the growth term dominates the fixed baseline within the data) **and** the fitted model explains them (**R² >= 0.95**) — together these mean the extrapolation extends a measured trend, not an assumption
@@ -113,7 +115,7 @@ We assume...
 - runtime increases monotonically with increasing `n`, so the first `*_exceeded` outcome bounds all larger sizes
 - a single run per (configuration, `n`) decides the pass/fail verdict: runtime noise can at worst shift a result by one step in `N`, an inaccuracy the granularity of `N` already accepts
 
-A run may be allowed to finish somewhat past `T_max` instead of being killed exactly at it; it then counts as `T_exceeded` for the verdicts, while its completed measurements (notably its memory footprint) remain usable.
+A run may be allowed to finish somewhat past `T_max` instead of being killed exactly at it; it then counts as `T_exceeded` for the verdicts, while its completed measurements remain usable.
 
 #### IV.C.2. Protocol
 

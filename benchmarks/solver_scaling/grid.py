@@ -7,12 +7,13 @@ the same grid shape.
 
 REFERENCE_BUDGET_SEC = 60.0  # T_max: the budget every time/quality run is judged against
 
-# Budget for the discarded warm-up run each sweep gives a configuration without recorded runs:
-# enough for any configuration to produce a tiny-size answer, small enough that budget-honoring
-# configurations return quickly.
+# Budget for the discarded warm-up run each sweep gives a configuration without recorded runs.
+# The first child process after a fresh environment install pays a one-off import/bytecode-
+# compilation cost that would otherwise land in the configuration's first measurement; the small
+# budget lets any configuration produce a tiny-size answer while self-limiting ones return fast.
 WARMUP_BUDGET_SEC = 5.0
-DEFAULT_SEED = 42  # the protocol's fixed seed; only the quality runs enumerate other seeds
-MEMORY_CAP_BYTES = 32 * 2**30  # M_max: the machine-level cap on every run, and the largest-n-within-memory bar
+DEFAULT_SEED = 42  # the protocol's fixed seed
+MEMORY_CAP_BYTES = 32 * 2**30  # M_max: caps every run, and the largest-n-within-memory results are read against it
 GRID_MIN = 20  # the smallest size the benchmark problems build at
 
 # A self-limiting solver (max-div under an end-to-end budget) is handed this much less than

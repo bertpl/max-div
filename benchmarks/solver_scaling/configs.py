@@ -40,9 +40,8 @@ class ScalingConfig:
 
     `tool` is the registry key (`data/solver_registry.yaml`); `name` is the configuration name as
     the solver-configurations page lists it; `description` is a terse echo of that page's wording.
-    `stochastic` records whether repeated runs under different seeds can differ — per the
-    measurement protocol, only the quality runs enumerate seeds, and only for stochastic
-    configurations.
+    `stochastic` records whether repeated runs under different seeds can differ; the
+    measurement protocol decides when seeds are enumerated.
     """
 
     tool: str
@@ -63,7 +62,8 @@ def _maxdiv_lean() -> SelectFn:
 
         # No with_preset: the pipeline is a single init step, so the solve returns that
         # initialization and nothing more. Uniform sampling replaces the default
-        # contribution-weighted variant, whose dataset-wide distance sweep is the opposite of lean.
+        # contribution-weighted variant, whose dataset-wide distance sweep would dominate this
+        # configuration's runtime.
         builder = (
             MaxDivSolverBuilder(problem)
             .with_seed(seed)

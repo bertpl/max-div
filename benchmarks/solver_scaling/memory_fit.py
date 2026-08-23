@@ -59,7 +59,7 @@ def fit_series(sizes_peaks: dict[int, float]) -> MemoryFit:
     return MemoryFit(_crossing(coef), coef, f"{model} fit over {len(ns)} sizes", _r_squared(ns, peaks, coef))
 
 
-def conditions_met(sizes_peaks: dict[int, float], fit: MemoryFit) -> bool:
+def trust_conditions_met(sizes_peaks: dict[int, float], fit: MemoryFit) -> bool:
     """Return whether the fitted crossing is trustworthy enough to end the memory sweep."""
     if len(sizes_peaks) < 3 or fit.r2 is None:
         return False

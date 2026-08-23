@@ -9,15 +9,18 @@ from pathlib import Path
 class ScalingRunRecord:
     """One campaign run: a solver in one configuration at one size under one seed.
 
-    `measured_sec` is the child-reported wall-clock of the solver call alone — problem
-    construction, imports and scoring are excluded. `peak_memory_bytes` is the solver process's
-    peak RSS; `memory_settled` is whether that footprint had stopped growing when the run ended
-    (always true for a run that ended on its own); `spawned_processes` records whether the
-    solver was ever observed with live child processes, which excludes it from the memory sweep
-    (see the runner). A killed or failed run carries `completed=False` and names its `reason`
-    (`timeout`, `memory`, or the error text); `outcome.classify` maps those two fields to the
-    run's `Outcome`. A run's other measured fields hold whatever was known when it ended (None
-    when nothing was).
+    The measured fields, each holding whatever was known when the run ended (None when nothing was):
+
+    * `measured_sec` — child-reported wall-clock of the solver call alone; problem construction,
+      imports and scoring are excluded.
+    * `peak_memory_bytes` — the solver process's peak RSS.
+    * `memory_settled` — whether that footprint had stopped growing when the run ended (always
+      true for a run that ended on its own).
+    * `spawned_processes` — whether the solver was ever observed with live child processes,
+      which excludes it from the memory sweep (see the runner).
+
+    A killed or failed run carries `completed=False` and names its `reason` (`timeout`, `memory`,
+    or the error text); `outcome.classify` maps those two fields to the run's `Outcome`.
     """
 
     tool: str

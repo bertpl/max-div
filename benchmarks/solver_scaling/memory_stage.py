@@ -27,7 +27,7 @@ from pathlib import Path
 
 from .configs import CONFIGS, ScalingConfig
 from .grid import DEFAULT_SEED, GRID_MIN, REFERENCE_BUDGET_SEC, WARMUP_BUDGET_SEC, operational_bound, size_grid
-from .memory_fit import FIT_PATH, MemoryFit, conditions_met, fit_series
+from .memory_fit import FIT_PATH, MemoryFit, trust_conditions_met, fit_series
 from .outcome import Outcome, classify
 from .records import append_scaling_record, load_scaling_records
 from .runner import run_measurement
@@ -49,7 +49,11 @@ def run_memory_stage(configs: list[ScalingConfig] | None = None, data_path: Path
 
 
 def _sweep(config: ScalingConfig, done: dict, data_path: Path) -> MemoryFit:
-    """Walk one configuration up the grid and return its memory result."""
+    """Walk one configuration up the grid and return its memory result.
+
+    A configuration with no recorded runs first gets one discarded warm-up run at the smallest
+    grid size (see `WARMUP_BUDGET_SEC`).
+    """
     if not any(key[0] == config.tool and key[1] == config.name for key in done):
         run_measurement(config.tool, config.name, GRID_MIN, GRID_MIN // 10, DEFAULT_SEED, WARMUP_BUDGET_SEC)
     settled: dict[int, float] = {}
@@ -73,7 +77,7 @@ def _sweep(config: ScalingConfig, done: dict, data_path: Path) -> MemoryFit:
         if record.peak_memory_bytes and record.memory_settled:
             settled[n] = max(settled.get(n, 0.0), float(record.peak_memory_bytes))
             fit = fit_series(settled)
-            if conditions_met(settled, fit):
+            if trust_conditions_met(settled, fit):
                 return fit
     return MemoryFit(fit.max_n, fit.coef, fit.reason + "; grid exhausted before the trust conditions held", fit.r2)
 
