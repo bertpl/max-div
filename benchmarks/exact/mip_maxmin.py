@@ -1,13 +1,13 @@
-"""Max-min selection as a MIP/CP model, for the exact solvers in the tool-scaling benchmarks.
+"""Max-min selection as a MIP/CP model, for the exact solvers in the solver-scaling benchmarks.
 
 The model carries one binary variable per item and a per-pair constraint (big-M for the
 MIP solvers, an enforcement literal for CP-SAT), so it is quadratic in n — which is what
 bounds how large a problem an exact solver can handle in memory and in time.
 
 All three entry points share one contract: return a valid size-k selection within the
-wall-clock budget. With ``first_feasible`` the solver stops at its first (improving)
-solution — the fastest standard setting that still produces a valid selection, and the
-configuration the tool-scaling time measurements use. Without it the solver optimizes until the budget runs out.
+wall-clock budget. With ``first_feasible`` the solver stops at its first (improving) solution
+— the fastest standard setting that still produces a valid selection; without it the solver
+optimizes until the budget runs out.
 """
 
 import numpy as np
@@ -28,9 +28,8 @@ def solve_maxmin_cpsat_selection(
 ) -> NDArray[np.int64]:
     """CP-SAT: pick k items maximizing the minimum pairwise distance.
 
-    Modeled directly as a satisfaction/optimization problem over scaled integer distances:
-    a pair closer than the objective threshold cannot be jointly selected. With
-    ``first_feasible`` the search stops at the first solution found; ``num_workers`` sets the
+    Modeled directly as a satisfaction/optimization problem over scaled integer distances: a
+    pair closer than the objective threshold cannot be jointly selected. `num_workers` sets the
     portfolio-search parallelism.
     """
     from ortools.sat.python import cp_model
@@ -61,10 +60,10 @@ def solve_maxmin_cpsat_selection(
     return np.asarray([i for i in range(n) if solver.value(x[i])], dtype=np.int64)
 
 
-def solve_maxmin_scip(
+def solve_maxmin_scip_selection(
     problem: MaxDivProblem, budget_sec: float, first_feasible: bool, seed: int
 ) -> NDArray[np.int64]:
-    """SCIP on the big-M max-min MIP; ``first_feasible`` stops at the first solution."""
+    """SCIP on the big-M max-min MIP."""
     from pyscipopt import Model, quicksum
 
     dist = _pairwise(problem)
@@ -91,13 +90,10 @@ def solve_maxmin_scip(
     return np.asarray([i for i in range(n) if model.getSolVal(sol, x[i]) > 0.5], dtype=np.int64)
 
 
-def solve_maxmin_highs(
+def solve_maxmin_highs_selection(
     problem: MaxDivProblem, budget_sec: float, first_feasible: bool, seed: int, num_workers: int = 1
 ) -> NDArray[np.int64]:
-    """HiGHS on the big-M max-min MIP; ``first_feasible`` stops at the first improving solution.
-
-    ``num_workers`` sets the parallel branch-and-bound thread count.
-    """
+    """HiGHS on the big-M max-min MIP; ``num_workers`` sets the parallel branch-and-bound threads."""
     import highspy
 
     dist = _pairwise(problem)

@@ -44,7 +44,7 @@ class ScalingConfig:
 
 
 def _exact_budget(budget_sec: float) -> float:
-    """The budget handed to an exact solver: under the run budget by the self-limit margin.
+    """Return an exact solver's budget: the run budget less the self-limit margin.
 
     An exact solver honors its own time limit, but its untimed model build adds to the measured
     end-to-end time; aiming under `T_max` keeps the whole run within the budget it is judged
@@ -129,9 +129,9 @@ def _scip_select(first_feasible: bool) -> SelectFn:
     """Build a SCIP big-M max-min MIP selector; `first_feasible` stops at the first solution."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
-        from benchmarks.exact.mip_maxmin import solve_maxmin_scip
+        from benchmarks.exact.mip_maxmin import solve_maxmin_scip_selection
 
-        return solve_maxmin_scip(problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed)
+        return solve_maxmin_scip_selection(problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed)
 
     return select
 
@@ -140,9 +140,9 @@ def _highs_select(first_feasible: bool, num_workers: int) -> SelectFn:
     """Build a HiGHS big-M max-min MIP selector; `first_feasible` stops at the first improving solution."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
-        from benchmarks.exact.mip_maxmin import solve_maxmin_highs
+        from benchmarks.exact.mip_maxmin import solve_maxmin_highs_selection
 
-        return solve_maxmin_highs(
+        return solve_maxmin_highs_selection(
             problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed, num_workers=num_workers
         )
 
