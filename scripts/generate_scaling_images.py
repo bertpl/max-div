@@ -34,7 +34,12 @@ REPO_ROOT = SCRIPTS_DIR.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from benchmarks.solver_scaling.configs import CONFIGS  # noqa: E402
-from benchmarks.solver_scaling.grid import MEMORY_CAP_BYTES, REFERENCE_BUDGET_SEC, operational_bound  # noqa: E402
+from benchmarks.solver_scaling.grid import (  # noqa: E402
+    MEMORY_CAP_BYTES,
+    REFERENCE_BUDGET_SEC,
+    operational_bound,
+    size_grid,
+)
 from benchmarks.solver_scaling.memory_fit import FIT_PATH  # noqa: E402
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records  # noqa: E402
@@ -109,6 +114,22 @@ def _series_marker(index: int) -> dict:
     return {"marker": marker}
 
 
+def _grid_xticks(ax: plt.Axes, n_max: int) -> None:
+    """Put ticks, labels and gridlines on every grid size up to `n_max`."""
+    ticks = size_grid(n_max)
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([_format_count(n) for n in ticks], rotation=45, ha="right", fontsize=8)
+    ax.set_xticks([], minor=True)
+
+
+def _format_count(n: int) -> str:
+    """Format a grid size compactly (20, 50, ..., 1K, 2K, ..., 1M, ..., 1B)."""
+    for suffix, factor in (("B", 10**9), ("M", 10**6), ("K", 10**3)):
+        if n >= factor:
+            return f"{n // factor}{suffix}"
+    return str(n)
+
+
 def _format_bytes(value: float, _pos=None) -> str:
     """Format a byte count as a whole number of KB / MB / GB for axis ticks."""
     for unit, factor in (("GB", 2**30), ("MB", 2**20), ("KB", 2**10)):
@@ -119,7 +140,7 @@ def _format_bytes(value: float, _pos=None) -> str:
 
 def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
     """Render end-to-end solve time against problem size, one series per configuration."""
-    fig, ax = plt.subplots(figsize=(8.0, 5.0))
+    fig, ax = plt.subplots(figsize=(12.0, 7.0))
     for index, ((tool, config), rows) in enumerate(grouped.items()):
         completed = [r for r in rows if r.completed and r.measured_sec is not None]
         if completed:
@@ -142,6 +163,8 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
+    largest = max(r.n for rows in grouped.values() for r in rows if r.completed and r.measured_sec is not None)
+    _grid_xticks(ax, largest)
     ax.set_xlabel("problem size n")
     ax.set_ylabel("end-to-end solve time [s]")
     ax.set_title("Solver Scaling — Time", fontweight="bold")
@@ -152,7 +175,7 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
 
 def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> None:
     """Render recorded peak RSS against problem size, with each configuration's fitted curve overlaid."""
-    fig, ax = plt.subplots(figsize=(8.0, 5.0))
+    fig, ax = plt.subplots(figsize=(12.0, 7.0))
     for index, ((tool, config), rows) in enumerate(grouped.items()):
         completed = [r for r in rows if r.completed and r.peak_rss_bytes]
         if not completed:
@@ -178,6 +201,7 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
+    _grid_xticks(ax, operational_bound())
     ax.set_xlabel("problem size n")
     ax.set_ylabel("peak RSS")
     # fixed factor-4 ticks in whole binary units; the default decade ticks label awkward values
