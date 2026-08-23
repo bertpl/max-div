@@ -7,8 +7,8 @@ equally; each run also carries a `memory_settled` diagnostic (whether its footpr
 growing by the kill), recorded for later inspection but not used to weight or exclude points. The
 sweep walks upward until one of:
 
-* the machine-level memory cap kills a run — the previous size is the result, measured directly;
-* the solver fails outright — the previous size is the result, with the failure disclosed;
+* the machine-level memory cap kills a run — the measurement series is truncated, the previous size is the result;
+* the solver fails outright — the measurement series is truncated, with the failure disclosed;
 * the recorded footprints span a `2x` range and the fitted model explains them — the crossing is
   read off the fit at the cap (`memory_fit` owns the fit and the trust conditions);
 * the grid is exhausted — the fit is published with that noted.
@@ -72,9 +72,11 @@ def _sweep(config: ScalingConfig, done: dict, data_path: Path) -> MemoryFit:
         print(f"  {config.tool}/{config.name} n={n}: {outcome.value}"
               f"{'' if record.memory_settled else ' (footprint not settled)'}")
         if outcome is Outcome.MEMORY:
-            return MemoryFit(last_under_cap, None, "largest size measured; the next size exceeds the memory cap")
+            return MemoryFit(last_under_cap, None, "measurement series truncated: the next size exceeds the memory cap")
         if outcome is Outcome.SCALING_FAILURE:
-            return MemoryFit(last_under_cap, None, f"largest size measured; the solver fails at the next size (`{record.reason}`)")
+            return MemoryFit(
+                last_under_cap, None, f"measurement series truncated: the solver fails at the next size (`{record.reason}`)"
+            )
         last_under_cap = n
         if record.peak_memory_bytes:
             footprints[n] = max(footprints.get(n, 0.0), float(record.peak_memory_bytes))

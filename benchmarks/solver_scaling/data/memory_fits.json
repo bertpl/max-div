@@ -32,7 +32,7 @@
   "dppy/default": {
     "max_n": 500,
     "coef": null,
-    "reason": "largest size measured; the solver fails at the next size (`ValueError: size k=100 > rank=98`)",
+    "reason": "measurement series truncated: the solver fails at the next size (`ValueError: size k=100 > rank=98`)",
     "r2": null
   }
 }
