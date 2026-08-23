@@ -33,7 +33,7 @@ These three descriptions are consciously kept qualitative in nature.  The next s
   - _**distance metric**_: L2 distance, as this has widest support among competing solvers.
   - _**diversity metric**_: `max-min` (or `minimal separation`), as this has the widest support among competing solvers.  Some solvers can only be configured to optimize for a different metric (or don't explicitly optimize at all), in which case this is explicitly indicated.
 - **memory**: we define the memory budget as **M_max = 32GB** in line with typical memory of current high-end desktop machines.  Two measurements serve two purposes:
-    - **enforcement and bracketing are machine-level**: a run is killed once the machine's memory in use rises more than M_max above its level right before the solver process started.
+    - **enforcement is machine-level**: a run is killed once the machine's memory in use rises more than M_max above its level right before the solver process started.
         - This counts every process a solver spawns, counts shared memory once, and requires no knowledge of any solver's internals.
         - Its noise (unrelated OS activity) is negligible at the cap's scale, and an otherwise-quiet machine is assumed, as the timing measurements already do.
     - **the recorded memory footprint** — the input to the extrapolating fit of IV.B.2 — is the **peak RSS of the solver process**: precise where machine-level readings are far too noisy to fit growth rates from.
@@ -74,9 +74,7 @@ We assume...
 
 The extrapolating fit is only trusted once its **trust conditions** hold: the recorded footprints **span a 2x range** (the growth term dominates the fixed baseline within the data) **and** the fitted model explains them (**R² >= 0.95**) — together these mean the extrapolation extends a measured trend, not an assumption.
 
-(Every run also records a `settled` flag — whether its footprint had stopped growing by the kill — as a diagnostic for spotting a window killed mid-allocation; it does not weight or exclude points.)
-
-A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and brackets the result like a memory kill does: nothing larger runs at all.
+A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and ends the sweep like a memory kill does — the previous size is the result, since nothing larger runs at all.
 
 Each configuration gets one discarded warm-up run before its sweep: the first process after a fresh environment install pays a one-off import/bytecode-compilation cost that would otherwise land in its first measurement.
 
@@ -98,8 +96,8 @@ Each configuration gets one discarded warm-up run before its sweep: the first pr
             record footprint M(n)                 # solver-process RSS
 
             STOP when one of:
-                M_max crossed  ->  RECORD previous n                  (bracket)
-                solver failed  ->  RECORD previous n                  (bracket; disclosed)
+                M_max crossed  ->  RECORD previous n                  # measured directly
+                solver failed  ->  RECORD previous n                  # measured directly; disclosed
                 M(n) span >= 2x  AND  fit R^2 >= 0.95:
                     fit f(n) = c0 + c1*n + c2*n^2   (c0,c2 >= 0; c1 >= 4d = 8)
                     IF c2 < 0.1                   # < 1 byte per k*n entry: no real

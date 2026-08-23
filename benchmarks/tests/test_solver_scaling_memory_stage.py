@@ -33,8 +33,8 @@ def test_sweep_stops_once_the_trust_conditions_hold(monkeypatch, tmp_path):
     assert fit.max_n == 500_000_000  # (32 GB - c0) / 40 B, on the grid
 
 
-def test_a_memory_kill_brackets_at_the_previous_size(monkeypatch, tmp_path):
-    """A cap kill ends the sweep with the last under-cap size as the bracketed result."""
+def test_a_memory_kill_stops_at_the_previous_size(monkeypatch, tmp_path):
+    """A cap kill ends the sweep with the last under-cap size as the result."""
     # --- arrange ----------------------
     def fake_run(tool, config, n, k, seed, budget_sec):
         if n >= 200:
@@ -48,11 +48,11 @@ def test_a_memory_kill_brackets_at_the_previous_size(monkeypatch, tmp_path):
 
     # --- assert -----------------------
     assert fit.max_n == 100
-    assert fit.reason.startswith("bracketed: the memory cap")
+    assert "exceeds the memory cap" in fit.reason
 
 
-def test_a_solver_failure_brackets_at_the_previous_size(monkeypatch, tmp_path):
-    """A non-resource failure brackets like a cap kill, with the failure disclosed in the reason."""
+def test_a_solver_failure_stops_at_the_previous_size(monkeypatch, tmp_path):
+    """A non-resource failure ends the sweep like a cap kill, with the failure disclosed in the reason."""
     # --- arrange ----------------------
     def fake_run(tool, config, n, k, seed, budget_sec):
         if n >= 1000:

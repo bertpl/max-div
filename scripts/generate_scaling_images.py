@@ -287,8 +287,8 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
             f'<a href="../images/{name}"><img src="../images/{name}" '
             f'alt="Memory footprints and fitted curve for {label}" width="32%"></a>'
         )
-    # A configuration that stops getting a fit (e.g. it now brackets) leaves a stale chart behind,
-    # since a run only ever writes files; drop any fit chart not written this run.
+    # A configuration that stops getting a fit (e.g. it now hits the cap or fails instead) leaves a
+    # stale chart behind, since a run only ever writes files; drop any fit chart not written this run.
     for stale in set(IMAGES_DIR.glob("scaling_memory_fit_*.webp")) - written:
         stale.unlink()
         print(f"removed {stale.relative_to(REPO_ROOT)}")

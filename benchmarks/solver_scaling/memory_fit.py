@@ -35,8 +35,8 @@ FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
 class MemoryFit:
     """One configuration's memory result: the largest n within the cap, and how it was found.
 
-    `coef` and `r2` are set only when the value comes from a fit — a bracketed or excluded
-    result has neither.
+    `coef` and `r2` are set only when the value comes from a fit — a value measured directly
+    from the runs, or an unmeasured configuration, has neither.
     """
 
     max_n: int | None
