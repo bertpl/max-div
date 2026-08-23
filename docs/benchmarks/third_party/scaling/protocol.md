@@ -87,6 +87,8 @@ Therefore we will...
         IF T_exceeded:                               # too slow to reach M_max
             extrapolate from the successful M(n), by how many there are:
                 >= 3   ->  fit f(n) = c0 + c1*n + c2*n^2   (c0,c2 >= 0; c1 >= 4d = 8)
+                           IF c2 < 0.1                # < 1 byte per k*n entry: no real
+                               refit with c2 = 0      # allocation can grow this slowly
                            RECORD largest n in N with f(n) <= M_max
                    2   ->  same, but a linear fit
                    1   ->  RECORD that single n

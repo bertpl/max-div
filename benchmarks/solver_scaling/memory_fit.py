@@ -9,8 +9,8 @@ completed sizes, read off at the cap.
 The fit is bound-constrained (`c0 >= 0`, `c1 >= 8`, `c2 >= 0`): the `c1 >= 8` lower bound is the
 input-array cost — every solver holds at least the n x d float32 vectors, 8 bytes per item at d=2
 — which keeps the extrapolation well-posed even when the recorded peaks are dominated by the
-interpreter's fixed footprint. Degree follows the completed-size count (three or more → quadratic,
-two → linear).
+interpreter's fixed footprint. Three or more completed sizes admit a quadratic term, but it is
+kept only when physically plausible (`_C2_MIN_BYTES`); two sizes fit linear.
 
 Usage: python -m benchmarks.solver_scaling.memory_fit
 """
@@ -33,6 +33,12 @@ from .time_stage import DATA_PATH
 # interpreter's fixed footprint and would drag the growth term toward zero.
 N_FIT_SIZES = 5
 _INPUT_MIN_BYTES = 8.0  # 4 bytes x d=2: the raw float32 vectors, the linear coefficient's lower bound
+
+# Physical-plausibility threshold for the fitted quadratic coefficient: the smallest real
+# quadratically growing structure is one byte per k x n entry, i.e. 0.1 bytes per n^2 at k = n/10.
+# A fitted c2 below this cannot be an allocation and is measurement noise amplified by the long
+# extrapolation from time-limited (hence small-n, small-RSS) runs to the cap — refit linear.
+_C2_MIN_BYTES = 0.1
 FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
 
 
@@ -63,8 +69,13 @@ def fit_memory_limit(sizes_peaks: dict[int, float], terminal: Outcome) -> Memory
         return MemoryFit(fit_sizes[0], None, "single completed size; no growth term to extrapolate")
     ns = np.asarray(fit_sizes, dtype=np.float64)
     peaks = np.asarray([sizes_peaks[n] for n in fit_sizes], dtype=np.float64)
-    coef = _fit_quadratic(ns, peaks) if len(fit_sizes) >= 3 else _fit_linear(ns, peaks)
-    return MemoryFit(_crossing(coef), coef, f"fit over {len(fit_sizes)} sizes")
+    model = "linear"
+    coef = _fit_linear(ns, peaks)
+    if len(fit_sizes) >= 3:
+        quadratic = _fit_quadratic(ns, peaks)
+        if quadratic[2] >= _C2_MIN_BYTES:
+            model, coef = "quadratic", quadratic
+    return MemoryFit(_crossing(coef), coef, f"{model} fit over {len(fit_sizes)} sizes")
 
 
 def fit_all(records: list[ScalingRunRecord]) -> dict[str, MemoryFit]:

@@ -80,3 +80,17 @@ def test_fit_all_groups_by_tool_and_config():
     assert "rdkit/default" in fits  # every smoke config gets an entry, even with no records
     assert fits["max-div/lean"].max_n is not None
     assert fits["rdkit/default"].max_n is None
+
+
+def test_an_implausibly_small_quadratic_term_falls_back_to_linear():
+    """A fitted c2 below one byte per k*n entry cannot be a real allocation, so the fit is linear."""
+    # --- arrange ----------------------
+    # linear growth plus a curvature far below the plausibility threshold of 0.1 bytes per n^2
+    sizes_peaks = {n: 1.6e8 + 40.0 * n + 1e-5 * n**2 for n in (50_000, 100_000, 200_000, 500_000, 1_000_000)}
+
+    # --- act --------------------------
+    fit = fit_memory_limit(sizes_peaks, Outcome.TIMEOUT)
+
+    # --- assert -----------------------
+    assert fit.coef is not None and len(fit.coef) == 2
+    assert fit.reason == "linear fit over 5 sizes"
