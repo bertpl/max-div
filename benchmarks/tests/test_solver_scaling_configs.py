@@ -2,14 +2,28 @@ import pytest
 
 from benchmarks.solver_scaling.configs import CONFIGS, TEST_SLEEP_CONFIG, configs_for, resolve
 
-EXPECTED_TOOLS = {"max-div", "rdkit", "dppy"}
+# The registry keys every configuration's `tool` must be one of (data/solver_registry.yaml).
+EXPECTED_TOOLS = {
+    "max-div",
+    "ortools-cpsat",
+    "scip",
+    "highs",
+    "rdkit",
+    "fpsample",
+    "skmatter",
+    "apricot-select",
+    "qc-selector",
+    "dppy",
+    "code-fdm",
+}
 
 
-def test_configs_cover_max_div_three_configs_plus_two_one_shots():
+def test_configs_cover_every_registered_tool():
     # --- act / assert -----------------
     assert {c.tool for c in CONFIGS} == EXPECTED_TOOLS
     assert [c.name for c in configs_for("max-div")] == ["lean", "optimal-eager", "optimal-lazy"]
-    assert [c.name for c in configs_for("rdkit")] == ["default"]
+    assert [c.name for c in configs_for("ortools-cpsat")] == ["feasible", "optimal"]
+    assert [c.name for c in configs_for("fpsample")] == ["vanilla", "kdline"]
     assert [c.name for c in configs_for("dppy")] == ["default"]
 
 

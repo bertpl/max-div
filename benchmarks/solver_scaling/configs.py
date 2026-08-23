@@ -1,21 +1,13 @@
-"""The per-solver run configurations of the solver-scaling benchmarks — the limited set measured first.
+"""The per-solver run configurations of the solver-scaling benchmarks.
 
-Each solver enters the measurements as one or more named configurations, mirroring the
-published solver-configurations page; every configuration is measured independently and the
-best result per (axis, n) is taken. This module carries only a limited set of solvers:
+Each solver enters the measurements as one or more named configurations, mirroring the published
+solver-configurations page; every configuration is measured independently and the best result per
+(axis, n) is taken. `tool` is the registry key (`data/solver_registry.yaml`).
 
-* max-div's three configurations — `lean`, `optimal-eager`, `optimal-lazy` — spanning init-only
-  linear memory, a forced full matrix (quadratic), and forced lazy storage (linear anytime);
-* RDKit MaxMinPicker `default` — a one-shot picker;
-* DPPy `default` — a sampler whose limit is expressiveness rather than resources.
-
-Together they exercise linear vs quadratic memory growth, anytime vs one-shot solving, and a
-non-resource scaling failure — enough to validate the harness and design the results pages.
-
-`select` runs a configuration for a problem, seed and time budget, returning the selected
-indices; the runner enforces the budget with a hard kill, and a configuration that accepts a
-budget honors it itself. max-div's imports happen inside `select`, not at module load, so a run
-of another solver never pays them.
+`select` runs a configuration for a problem, seed and time budget, returning the selected indices;
+the runner enforces the budget with a hard kill, and a configuration that accepts a budget honors
+it itself. Every solver's imports happen inside `select`, not at module load, so a run of one
+solver never pays another's.
 """
 
 from collections.abc import Callable
@@ -40,8 +32,8 @@ class ScalingConfig:
 
     `tool` is the registry key (`data/solver_registry.yaml`); `name` is the configuration name as
     the solver-configurations page lists it; `description` is a terse echo of that page's wording.
-    `stochastic` records whether repeated runs under different seeds can differ; the
-    measurement protocol decides when seeds are enumerated.
+    `stochastic` records whether repeated runs under different seeds can differ; the measurement
+    protocol decides when seeds are enumerated.
     """
 
     tool: str
@@ -51,8 +43,18 @@ class ScalingConfig:
     stochastic: bool
 
 
+def _exact_budget(budget_sec: float) -> float:
+    """The budget handed to an exact solver: under the run budget by the self-limit margin.
+
+    An exact solver honors its own time limit, but its untimed model build adds to the measured
+    end-to-end time; aiming under `T_max` keeps the whole run within the budget it is judged
+    against.
+    """
+    return max(budget_sec - SELF_LIMIT_MARGIN_SEC, 0.1)
+
+
 # ==================================================================================================
-#  select() builders
+#  select() builders — max-div
 # ==================================================================================================
 def _maxdiv_lean() -> SelectFn:
     """Build max-div's `lean` selector: uniform random one-shot init, no optimization, lazy storage."""
@@ -107,7 +109,50 @@ def _maxdiv_optimal(lazy: bool) -> SelectFn:
     return select
 
 
-def _adapter_select(make_adapter: Callable) -> SelectFn:
+# ==================================================================================================
+#  select() builders — exact solvers
+# ==================================================================================================
+def _cpsat_select(first_feasible: bool, num_workers: int) -> SelectFn:
+    """Build a CP-SAT max-min selector; `first_feasible` stops at the first solution."""
+
+    def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
+        from benchmarks.exact.mip_maxmin import solve_maxmin_cpsat_selection
+
+        return solve_maxmin_cpsat_selection(
+            problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed, num_workers=num_workers
+        )
+
+    return select
+
+
+def _scip_select(first_feasible: bool) -> SelectFn:
+    """Build a SCIP big-M max-min MIP selector; `first_feasible` stops at the first solution."""
+
+    def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
+        from benchmarks.exact.mip_maxmin import solve_maxmin_scip
+
+        return solve_maxmin_scip(problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed)
+
+    return select
+
+
+def _highs_select(first_feasible: bool, num_workers: int) -> SelectFn:
+    """Build a HiGHS big-M max-min MIP selector; `first_feasible` stops at the first improving solution."""
+
+    def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
+        from benchmarks.exact.mip_maxmin import solve_maxmin_highs
+
+        return solve_maxmin_highs(
+            problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed, num_workers=num_workers
+        )
+
+    return select
+
+
+# ==================================================================================================
+#  select() builders — single-shot adapters
+# ==================================================================================================
+def _adapter_select(make_adapter: Callable[[], SelectionAdapter]) -> SelectFn:
     """Build a selector around a single-shot adapter; the runner's kill enforces its budget."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
@@ -121,6 +166,41 @@ def _rdkit() -> SelectionAdapter:
     from benchmarks.adapters.rdkit_maxmin import RdkitMaxMin
 
     return RdkitMaxMin()
+
+
+def _fpsample(variant: str) -> Callable[[], SelectionAdapter]:
+    """Return a factory for the fpsample adapter in the given variant (`vanilla` or `kdline`)."""
+    from benchmarks.adapters.fps import FpsampleFPS
+
+    return lambda: FpsampleFPS(variant=variant)
+
+
+def _skmatter() -> SelectionAdapter:
+    """Instantiate the skmatter FPS adapter."""
+    from benchmarks.adapters.fps import SkmatterFPS
+
+    return SkmatterFPS()
+
+
+def _apricot() -> SelectionAdapter:
+    """Instantiate the apricot facility-location adapter."""
+    from benchmarks.adapters.apricot_fl import ApricotFacilityLocation
+
+    return ApricotFacilityLocation()
+
+
+def _qc_selector() -> SelectionAdapter:
+    """Instantiate the qc-selector max-min adapter."""
+    from benchmarks.adapters.qc_selector_maxmin import QcSelectorMaxMin
+
+    return QcSelectorMaxMin()
+
+
+def _code_fdm() -> SelectionAdapter:
+    """Instantiate the code-FDM single-color adapter (its unconstrained reduction)."""
+    from benchmarks.adapters.code_fdm import CodeFdmSingleColor
+
+    return CodeFdmSingleColor()
 
 
 def _dppy() -> SelectionAdapter:
@@ -168,10 +248,87 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         stochastic=True,
     ),
     ScalingConfig(
+        "ortools-cpsat",
+        "feasible",
+        "max-min CP-SAT model, stop at the first feasible solution, 1 worker",
+        _cpsat_select(first_feasible=True, num_workers=1),
+        stochastic=True,
+    ),
+    ScalingConfig(
+        "ortools-cpsat",
+        "optimal",
+        "max-min CP-SAT model, full time budget, 12 portfolio workers",
+        _cpsat_select(first_feasible=False, num_workers=_QUALITY_WORKERS),
+        stochastic=False,
+    ),
+    ScalingConfig(
+        "scip",
+        "feasible",
+        "big-M max-min MIP, stop at the first feasible solution",
+        _scip_select(first_feasible=True),
+        stochastic=True,
+    ),
+    ScalingConfig(
+        "scip",
+        "optimal",
+        "big-M max-min MIP, full time budget",
+        _scip_select(first_feasible=False),
+        stochastic=False,
+    ),
+    ScalingConfig(
+        "highs",
+        "feasible",
+        "big-M max-min MIP, stop at the first improving solution",
+        _highs_select(first_feasible=True, num_workers=1),
+        stochastic=True,
+    ),
+    ScalingConfig(
+        "highs",
+        "optimal",
+        "big-M max-min MIP, full time budget, parallel branch-and-bound",
+        _highs_select(first_feasible=False, num_workers=_QUALITY_WORKERS),
+        stochastic=False,
+    ),
+    ScalingConfig(
         "rdkit",
         "default",
         "MaxMinPicker with a Euclidean distance callable (its only mode)",
         _adapter_select(_rdkit),
+        stochastic=False,
+    ),
+    ScalingConfig(
+        "fpsample",
+        "vanilla",
+        "plain farthest-point sampling",
+        _adapter_select(_fpsample("vanilla")),
+        stochastic=True,
+    ),
+    ScalingConfig(
+        "fpsample",
+        "kdline",
+        "bucket KD-line farthest-point sampling — the tree-accelerated variant, well suited to d=2",
+        _adapter_select(_fpsample("kdline")),
+        stochastic=True,
+    ),
+    ScalingConfig(
+        "skmatter",
+        "default",
+        "FPS selector (its only mode)",
+        _adapter_select(_skmatter),
+        stochastic=True,
+    ),
+    ScalingConfig(
+        "apricot-select",
+        "default",
+        "facility-location selection, lazy greedy, RBF similarity matrix",
+        _adapter_select(_apricot),
+        stochastic=False,
+    ),
+    ScalingConfig(
+        "qc-selector",
+        "maxmin",
+        "max-min selection on a precomputed distance matrix",
+        _adapter_select(_qc_selector),
         stochastic=False,
     ),
     ScalingConfig(
@@ -180,6 +337,13 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         "one exact k-DPP sample over an RBF likelihood kernel, median-pairwise-distance bandwidth",
         _adapter_select(_dppy),
         stochastic=True,
+    ),
+    ScalingConfig(
+        "code-fdm",
+        "default",
+        "FairFlow with a single color spanning all items (its unconstrained reduction)",
+        _adapter_select(_code_fdm),
+        stochastic=False,
     ),
 )
 
