@@ -19,11 +19,15 @@ import sys
 from pathlib import Path
 
 from .configs import CONFIGS, ScalingConfig
-from .grid import DEFAULT_SEED, REFERENCE_BUDGET_SEC, operational_bound, size_grid
+from .grid import DEFAULT_SEED, GRID_MIN, REFERENCE_BUDGET_SEC, operational_bound, size_grid
 from .records import ScalingRunRecord, append_scaling_record, load_scaling_records
 from .runner import run_measurement
 
 DATA_PATH = Path(__file__).resolve().parent / "data" / "time_stage.jsonl"
+
+# Budget for the discarded warm-up run: enough for any configuration to produce a tiny-size
+# answer, small enough that budget-honoring configurations return quickly.
+_WARMUP_BUDGET_SEC = 5.0
 
 
 def passes_time(record: ScalingRunRecord, budget_sec: float = REFERENCE_BUDGET_SEC) -> bool:
@@ -55,7 +59,15 @@ def run_time_stage(
 
 
 def _ascend(config: ScalingConfig, done: dict, data_path: Path, budget_sec: float) -> int | None:
-    """Run one configuration up the grid; return its largest passing size."""
+    """Run one configuration up the grid; return its largest passing size.
+
+    A configuration with no recorded runs first gets one discarded warm-up run at the smallest
+    grid size: the first child process after a fresh environment install pays a one-off
+    import/bytecode-compilation cost in its peak RSS, which would otherwise land in the first
+    real measurement.
+    """
+    if not any(key[0] == config.tool and key[1] == config.name for key in done):
+        run_measurement(config.tool, config.name, GRID_MIN, GRID_MIN // 10, DEFAULT_SEED, _WARMUP_BUDGET_SEC)
     limit: int | None = None
     for n in size_grid(operational_bound()):
         record = done.get((config.tool, config.name, n, DEFAULT_SEED))

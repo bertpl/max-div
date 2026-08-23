@@ -238,10 +238,12 @@ def write_memory_table(grouped: dict, fits: dict, names: dict[str, str]) -> None
         "| Solver | Largest n within memory | Determination |",
         "|---|---|---|",
     ]
-    for (tool, config) in grouped:
+    for tool, config in grouped:
         fit = fits.get(f"{tool}/{config}", {})
         largest = f"**{fit['max_n']:,}**" if fit.get("max_n") else "—"
-        lines.append(f"| {_series_label(tool, config, names, markdown=True)} | {largest} | {fit.get('reason', 'no fit')} |")
+        lines.append(
+            f"| {_series_label(tool, config, names, markdown=True)} | {largest} | {fit.get('reason', 'no fit')} |"
+        )
     _write_generated("scaling_memory.md", lines)
 
 

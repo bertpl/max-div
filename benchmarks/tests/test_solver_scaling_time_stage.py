@@ -1,7 +1,7 @@
 from benchmarks.solver_scaling import time_stage
 from benchmarks.solver_scaling.configs import resolve
 from benchmarks.solver_scaling.grid import DEFAULT_SEED
-from benchmarks.solver_scaling.records import ScalingRunRecord
+from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records
 
 
 def _record(n, seed=DEFAULT_SEED, *, completed=True, measured_sec=1.0):
@@ -50,3 +50,25 @@ def test_ascend_reuses_already_recorded_runs(monkeypatch, tmp_path):
     # --- assert -----------------------
     assert limit == 50
     assert 20 not in calls  # the recorded size was not re-run
+
+
+def test_a_fresh_config_gets_one_discarded_warmup_run(monkeypatch, tmp_path):
+    """The warm-up run precedes the sweep, uses a short budget, and is not recorded."""
+    # --- arrange ----------------------
+    calls = []
+
+    def fake_run(tool, config, n, k, seed, budget_sec):
+        calls.append((n, budget_sec))
+        return _record(n, completed=(n <= 50))
+
+    monkeypatch.setattr(time_stage, "run_measurement", fake_run)
+    data_path = tmp_path / "runs.jsonl"
+
+    # --- act --------------------------
+    time_stage._ascend(resolve("rdkit", "default"), {}, data_path, 60.0)
+
+    # --- assert -----------------------
+    assert calls[0] == (20, time_stage._WARMUP_BUDGET_SEC)
+    assert calls[1] == (20, 60.0)
+    recorded = load_scaling_records(data_path)
+    assert all(r.budget_sec == 60.0 for r in recorded)  # the warm-up run was discarded
