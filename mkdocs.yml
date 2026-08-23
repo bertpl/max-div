@@ -162,6 +162,7 @@ nav:
       - C4: benchmarks/solver/presets_c4.md
     - 3rd Party Solvers:
       - Comparison: benchmarks/third_party/comparison.md
+      - Capability Definitions: benchmarks/third_party/capability_definitions.md
       - Solver Scaling:
         - Protocol: benchmarks/third_party/scaling/protocol.md
         - Solver Configurations: benchmarks/third_party/scaling/solver_configs.md

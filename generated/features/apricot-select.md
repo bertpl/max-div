@@ -27,7 +27,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 |---|:---:|---|
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
-| distance metrics · Linf (Chebyshev) distance | <span class="mark mark-full">✔</span> |  |
+| distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · cosine distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^apricot-select-2] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^apricot-select-3] |
@@ -43,7 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^apricot-select-5] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^apricot-select-6] |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| largest practical problem size | n ≈ 10<sup>5</sup> | [^apricot-select-7] |
+| solver scaling · largest n within memory | <span class="scale-pending">pending</span> | |
+| solver scaling · largest n within the time budget | <span class="scale-pending">pending</span> | |
+| solver scaling · largest n at good quality | <span class="scale-pending">pending</span> | |
 
 </div>
 
@@ -53,4 +55,3 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^apricot-select-4]: Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
 [^apricot-select-5]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
 [^apricot-select-6]: The optimizers accept an n_jobs argument, but it is unused: the greedy selection runs single-threaded.
-[^apricot-select-7]: Facility location needs an n × n similarity matrix unless you supply a sparse one, which puts the ceiling where any quadratic-memory method's sits. Its lazy and stochastic greedy variants cut the number of function evaluations, not the storage.

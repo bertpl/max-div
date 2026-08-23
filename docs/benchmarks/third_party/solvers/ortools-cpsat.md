@@ -4,11 +4,9 @@ solver:
   source: https://developers.google.com/optimization/cp/cp_solver
   verified: 2026-07-27
   scale:
-    max_practical_n: "3"
-    rationale: >-
-      Max-min is solved by repeatedly asking a feasibility question — "can k items all be at least
-      t apart?" — and each question is a fresh constraint-propagation search over O(n²) pairwise
-      constraints. That stays tractable to around n ≈ 10³ and degrades sharply beyond it.
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: proven optimum
     license: Apache-2.0

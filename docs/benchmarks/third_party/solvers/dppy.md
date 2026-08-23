@@ -4,11 +4,9 @@ solver:
   source: https://dppy.readthedocs.io/
   verified: 2026-07-27
   scale:
-    max_practical_n: "4"
-    rationale: >-
-      An n × n kernel matrix must be materialized, and exact k-DPP sampling eigendecomposes it —
-      an O(n³) step that dominates well before memory does. Around n ≈ 10⁴ that is still minutes;
-      beyond it, approximate samplers are the only route.
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: sampler, not optimizer
     license: MIT

@@ -156,11 +156,36 @@ table th {
 .comparison-grid .mark-partial,
 .comparison-grid .mark-none,
 .solver-features .mark-partial,
-.solver-features .mark-none {
+.solver-features .mark-none,
+.capability-definitions .mark-partial,
+.capability-definitions .mark-none {
     font-weight: 400;
     /* Mixed down from the theme's own muted foreground rather than written as a literal, so the
        light and dark palettes stay in step instead of one restating the other. */
     color: color-mix(in srgb, var(--md-default-fg-color--light) 91%, transparent);
+}
+
+/* A pending solver-scaling cell takes the same muted tone as the partial/none marks: pending is
+   the absence of a claim, and full ink would read as a claim. */
+.scale-pending {
+    font-style: italic;
+    color: color-mix(in srgb, var(--md-default-fg-color--light) 91%, transparent);
+}
+
+/* Capability-definition tables (generated) hold two columns of prose, so — unlike the feature
+   tables, whose second column is a mark — both columns wrap. */
+.md-typeset .capability-definitions table {
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+.capability-definitions table td,
+.capability-definitions table th {
+    white-space: normal;
+    vertical-align: top;
+}
+.capability-definitions table td:first-child,
+.capability-definitions table th:first-child {
+    min-width: 11em;
 }
 
 /* Comparison metadata table (generated): prose fields, so cells wrap instead. */

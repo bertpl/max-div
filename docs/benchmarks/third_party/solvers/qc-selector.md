@@ -4,11 +4,9 @@ solver:
   source: https://selector.qcdevs.org/
   verified: 2026-07-27
   scale:
-    max_practical_n: "4"
-    rationale: >-
-      Its selection methods work from a full distance matrix, and the diversity measures it offers
-      are computed over that matrix rather than incrementally, so both memory and per-pick cost are
-      quadratic. Comfortable in the tens of thousands.
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: heuristic
     license: GPL-3.0

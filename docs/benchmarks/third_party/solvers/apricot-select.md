@@ -4,11 +4,9 @@ solver:
   source: https://apricot-select.readthedocs.io/
   verified: 2026-07-27
   scale:
-    max_practical_n: "5"
-    rationale: >-
-      Facility location needs an n × n similarity matrix unless you supply a sparse one, which puts
-      the ceiling where any quadratic-memory method's sits. Its lazy and stochastic greedy variants
-      cut the number of function evaluations, not the storage.
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: 1−1/e (lazy greedy on a monotone submodular function)
     license: MIT

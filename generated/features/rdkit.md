@@ -27,7 +27,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 |---|:---:|---|
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
-| distance metrics · Linf (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
+| distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^rdkit-1] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^rdkit-2] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
@@ -43,7 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^rdkit-4] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
-| largest practical problem size | n ≈ 10<sup>6</sup> | [^rdkit-5] |
+| solver scaling · largest n within memory | <span class="scale-pending">pending</span> | |
+| solver scaling · largest n within the time budget | <span class="scale-pending">pending</span> | |
+| solver scaling · largest n at good quality | <span class="scale-pending">pending</span> | |
 
 </div>
 
@@ -51,4 +53,3 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^rdkit-2]: The callback is the native interface rather than an escape hatch: it never needs all n² distances to exist at once, which is what lets this picker scale into the millions.
 [^rdkit-3]: No per-group counting of any kind. It does accept a set of items that must appear in the result, which is a different guarantee entirely: membership for named items, not proportions across groups.
 [^rdkit-4]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^rdkit-5]: Never materializes a distance matrix: it calls your distance function lazily and keeps one running nearest-selected distance per candidate, so memory is O(n) and the ceiling is set by how fast your callback is rather than by n² storage.
