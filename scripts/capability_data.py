@@ -559,21 +559,21 @@ def render_definitions(axes: dict) -> str:
         ),
         "",
         "</div>",
-        "",
-        "## Capabilities",
-        "",
-        "Each table below states what its capability columns claim.",
     ]
+    # One section per hero group, in hero order, headed by the group's long label and naming each
+    # column by its hero header — so a reader can go from any hero column to its definition without
+    # translating names. The scaling section renders the same way, since the hero draws it as just
+    # another group.
     for group in axes["groups"]:
         lines += [
             "",
-            f"### {group['label']}",
+            f"## {group['label']}",
             "",
             '<div class="capability-definitions" markdown>',
             "",
             "| Column | Definition |",
             "|---|---|",
-            *(f"| {axis['label']} | {inline(axis['definition'])} |" for axis in group["axes"]),
+            *(f"| {axis['hero_label']} | {inline(axis['definition'])} |" for axis in group["axes"]),
             "",
             "</div>",
         ]
@@ -583,15 +583,15 @@ def render_definitions(axes: dict) -> str:
         "",
         inline(scales["definition"]),
         "",
-        "Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.",
-        "",
         '<div class="capability-definitions" markdown>',
         "",
         "| Column | Definition |",
         "|---|---|",
-        *(f"| {column['label']} | {inline(column['definition'])} |" for column in scales["columns"]),
+        *(f"| {column['hero_label']} | {inline(column['definition'])} |" for column in scales["columns"]),
         "",
         "</div>",
+        "",
+        "Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.",
         "",
         "## Tool facts",
         "",

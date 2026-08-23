@@ -14,88 +14,84 @@ Every capability cell carries one of three marks. A mark composes with the colum
 
 </div>
 
-## Capabilities
-
-Each table below states what its capability columns claim.
-
-### distance metrics
+## distance metrics
 
 <div class="capability-definitions" markdown>
 
 | Column | Definition |
 |---|---|
-| L1 (Manhattan) distance | Selects under L1 (Manhattan) distance computed by the tool from vector input. |
-| L2 (Euclidean) distance | Selects under L2 (Euclidean) distance computed by the tool from vector input. |
-| L∞ (Chebyshev) distance | Selects under L∞ (Chebyshev) distance computed by the tool from vector input. |
-| cosine distance | Selects under cosine distance computed by the tool from vector input. Reaching it through a documented transform — L2-normalize, then select under Euclidean — counts as reachable, not built in. |
-| caller-supplied distances | Accepts distances the caller computed — a distance matrix or a distance callable — so a metric the tool does not implement is usable anyway. |
+| L1 | Selects under L1 (Manhattan) distance computed by the tool from vector input. |
+| L2 | Selects under L2 (Euclidean) distance computed by the tool from vector input. |
+| L∞ | Selects under L∞ (Chebyshev) distance computed by the tool from vector input. |
+| cosine | Selects under cosine distance computed by the tool from vector input. Reaching it through a documented transform — L2-normalize, then select under Euclidean — counts as reachable, not built in. |
+| custom | Accepts distances the caller computed — a distance matrix or a distance callable — so a metric the tool does not implement is usable anyway. |
 
 </div>
 
-### diversity objectives
+## diversity objectives
 
 <div class="capability-definitions" markdown>
 
 | Column | Definition |
 |---|---|
-| maximize the minimum separation | Optimizes the minimum pairwise distance within the selection (max-min diversity, also known as p-dispersion). |
-| maximize the mean nearest-neighbor separation | Optimizes the mean, over the selected items, of each item's distance to its nearest selected neighbor. |
-| maximize the geometric-mean nearest-neighbor separation | Optimizes the geometric mean, over the selected items, of each item's distance to its nearest selected neighbor. |
-| maximize the mean pairwise distance | Optimizes the mean (equivalently the sum) of all pairwise distances within the selection (max-sum diversity). |
+| max-min | Optimizes the minimum pairwise distance within the selection (max-min diversity, also known as p-dispersion). |
+| mean-of-NN | Optimizes the mean, over the selected items, of each item's distance to its nearest selected neighbor. |
+| geomean-of-NN | Optimizes the geometric mean, over the selected items, of each item's distance to its nearest selected neighbor. |
+| max-sum | Optimizes the mean (equivalently the sum) of all pairwise distances within the selection (max-sum diversity). |
 
 </div>
 
-### constraints beyond k
+## constraints beyond k
 
 <div class="capability-definitions" markdown>
 
 | Column | Definition |
 |---|---|
-| per-group counts over disjoint groups | Enforces per-group selection counts when every item belongs to exactly one group (a partition of the items). |
-| per-group counts over overlapping groups | Enforces per-group selection counts when an item may belong to several groups at once. |
-| minimum and maximum counts per group | Accepts a two-sided count constraint per group — a minimum and a maximum — rather than only one-sided bounds. |
-| certified verdicts on whether a constraint set is satisfiable | Answers whether a constraint set admits any valid selection with a certified verdict — a witness selection or an independently checkable infeasibility certificate — rather than a heuristic guess. |
+| disjoint groups | Enforces per-group selection counts when every item belongs to exactly one group (a partition of the items). |
+| overlapping groups | Enforces per-group selection counts when an item may belong to several groups at once. |
+| ranged counts | Accepts a two-sided count constraint per group — a minimum and a maximum — rather than only one-sided bounds. |
+| feasibility proofs | Answers whether a constraint set admits any valid selection with a certified verdict — a witness selection or an independently checkable infeasibility certificate — rather than a heuristic guess. |
 
 </div>
 
-### time budget
+## time budget
 
 <div class="capability-definitions" markdown>
 
 | Column | Definition |
 |---|---|
-| budget expressed as an iteration count | Accepts a compute budget expressed as an iteration count. |
-| budget expressed as wall-clock time | Accepts a compute budget expressed as wall-clock time. |
-| the answer improves when given more budget | Produces a better answer when given a larger budget — the mark that separates anytime search from one-shot construction, whose answer is the same however long you wait. |
+| iterations | Accepts a compute budget expressed as an iteration count. |
+| wall clock | Accepts a compute budget expressed as wall-clock time. |
+| improves with budget | Produces a better answer when given a larger budget — the mark that separates anytime search from one-shot construction, whose answer is the same however long you wait. |
 
 </div>
 
-### multi-worker
+## multi-worker
 
 <div class="capability-definitions" markdown>
 
 | Column | Definition |
 |---|---|
-| several workers search one problem separately and the best result wins | Runs several workers on one problem at once with no exchange between them; the best result wins. |
-| parallel workers share information mid-run | Runs several workers on one problem at once, and the workers exchange information mid-run. |
+| multi-worker - independent | Runs several workers on one problem at once with no exchange between them; the best result wins. |
+| multi-worker - cooperative | Runs several workers on one problem at once, and the workers exchange information mid-run. |
 
 </div>
 
 ## Solver scaling
 
-The three size columns state how far each solver scales, as measured values rather than order-of-magnitude claims: each is the largest problem size n — on a logarithmic grid with three values per decade (20, 50, 100, 200, 500, ...) — at which the solver still meets that column's criterion on one unconstrained reference problem, in the best of its tested configurations. No memory means no solution, and no solution means no good solution — so each value can only be at or below the previous one. The full procedure, including the test problem and the per-solver configurations, is the [measurement protocol](scaling/protocol.md). A cell reading `pending` has not been measured yet.
-
-Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.
+Each column is the largest measured problem size n at which the solver still meets that column's criterion — see the [measurement protocol](scaling/protocol.md) for the full procedure. A cell reading `pending` has not been measured yet.
 
 <div class="capability-definitions" markdown>
 
 | Column | Definition |
 |---|---|
-| largest n within memory | The largest grid size at which the solver's peak memory use — problem construction excluded — stays within 32 GB. Determined by extrapolating a per-solver memory model fitted to measured smaller-size runs, never by a run at that size itself: at full memory most solvers are far too slow to run at all. |
-| largest n within the time budget | The largest grid size at which the solver returns a valid size-k selection within one minute, timed end-to-end: the clock runs from handing the solver the raw vectors until it returns a selection, so distance computation and any other setup count. |
-| largest n at good quality | The largest grid size at which the solver, within the one-minute budget, closes at least 90% of the diversity gap between a uniform-random selection and the best known solution at that size. |
+| memory | peak memory stays within 32 GB. |
+| time | a valid selection is returned within one minute, end-to-end. |
+| quality | at least 90% of the diversity gap to the best known solution is closed. |
 
 </div>
+
+Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.
 
 ## Tool facts
 

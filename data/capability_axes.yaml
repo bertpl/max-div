@@ -260,34 +260,20 @@ scale_columns:
   hero_label: solver scaling (n)
   label: solver scaling
   definition: >-
-    The three size columns state how far each solver scales, as measured values rather than
-    order-of-magnitude claims: each is the largest problem size n — on a logarithmic grid with
-    three values per decade (20, 50, 100, 200, 500, ...) — at which the solver still meets that
-    column's criterion on one unconstrained reference problem, in the best of its tested
-    configurations. No memory means no solution, and no solution means no good solution — so
-    each value can only be at or below the previous one. The full procedure, including the test
-    problem and the per-solver configurations, is the [measurement
-    protocol](scaling/protocol.md). A cell reading `pending` has not been measured yet.
+    Each column is the largest measured problem size n at which the solver still meets that
+    column's criterion — see the [measurement protocol](scaling/protocol.md) for the full
+    procedure. A cell reading `pending` has not been measured yet.
   columns:
     - key: max_n_memory
       hero_label: memory
       label: largest n within memory
-      definition: >-
-        The largest grid size at which the solver's peak memory use — problem construction
-        excluded — stays within 32 GB. Determined by extrapolating a per-solver memory model
-        fitted to measured smaller-size runs, never by a run at that size itself: at full
-        memory most solvers are far too slow to run at all.
+      definition: peak memory stays within 32 GB.
     - key: max_n_time
       hero_label: time
       label: largest n within the time budget
-      definition: >-
-        The largest grid size at which the solver returns a valid size-k selection within one
-        minute, timed end-to-end: the clock runs from handing the solver the raw vectors until
-        it returns a selection, so distance computation and any other setup count.
+      definition: a valid selection is returned within one minute, end-to-end.
     - key: max_n_quality
       hero_label: quality
       label: largest n at good quality
       definition: >-
-        The largest grid size at which the solver, within the one-minute budget, closes at
-        least 90% of the diversity gap between a uniform-random selection and the best known
-        solution at that size.
+        at least 90% of the diversity gap to the best known solution is closed.
