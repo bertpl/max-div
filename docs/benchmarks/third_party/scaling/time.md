@@ -1,6 +1,6 @@
 # Solver Scaling — Time
 
-Each solver configuration runs at every size of the 1-2-5 grid, smallest first, until it can no longer return a valid selection within the time budget `T_max` (one minute, measured end to end, under the memory cap). The largest passing size is the configuration's **largest n within the time budget**; per solver, the best configuration counts. The [measurement protocol](protocol.md) defines the procedure, and the [solver configurations page](solver_configs.md) lists every configuration.
+The **largest n within the time budget** is the largest problem size a configuration solves within `T_max`, end to end. The values below come from the time sweep of the [measurement protocol](protocol.md) (section IV.C); the [solver configurations page](solver_configs.md) lists every configuration.
 
 *Measured with max-div v0.14.2. Only the smoke subset — max-div, RDKit MaxMinPicker, and DPPy — is measured; the remaining solver configurations are not yet.*
 
