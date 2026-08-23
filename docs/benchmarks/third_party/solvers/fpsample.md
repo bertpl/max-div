@@ -4,11 +4,9 @@ solver:
   source: https://github.com/leonardodalinky/fpsample
   verified: 2026-07-27
   scale:
-    max_practical_n: "6"
-    rationale: >-
-      A Rust implementation with KD-tree accelerated variants, so the traversal avoids the O(nk)
-      distance evaluations a naive sweep needs. The tree variants degrade in high dimension and are
-      documented as practical below roughly d ≈ 9; the plain variant has no such limit.
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: 2-approximation (farthest-point traversal)
     license: MIT

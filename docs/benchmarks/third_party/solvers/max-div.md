@@ -4,18 +4,15 @@ solver:
   source: https://max-div.readthedocs.io/
   verified: 2026-08-11
   scale:
-    max_practical_n: "5-6"
-    rationale: >-
-      Vector problems can be solved with lazy distance storage, which computes pair distances on
-      demand and never materializes the O(n²) matrix, so the ceiling is time rather than memory:
-      each solver iteration costs O(n), and the iteration count a useful anytime run needs grows
-      with n as well. Precomputed-distance problems keep the stored-matrix ceiling of n ≈ 10⁵.
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: heuristic
     license: Apache-2.0
     last_release: {version: "0.11.0", date: "2026-08-11"}
     determinism: seeded, fully reproducible
-    input: vectors (L1 / L2 / L2² / Linf / cosine) or a precomputed distance matrix
+    input: vectors (L1 / L2 / L2² / L∞ / cosine) or a precomputed distance matrix
   capabilities:
     distance.l1: {mark: full}
     distance.l2: {mark: full}

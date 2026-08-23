@@ -9,18 +9,21 @@ Three kinds of file feed this, split by what they describe:
   capability and the text defending it cannot drift apart.
 
 Generated feature tables are written under ``generated/features/`` and pulled into each page by
-a snippet line, which keeps the seam between hand-authored and generated content visible. The
+a snippet line, which keeps the boundary between hand-authored and generated content visible. The
 comparison page's two tables come from the same records and are written the same way, to
 ``generated/comparison.md`` — so the capability grid read across tools and the feature table read
-down one tool cannot disagree. The README hero SVGs are rendered from these same three files by
-``scripts/build_hero_table.py``, which is why the rules below are worth enforcing here rather than
-per surface.
+down one tool cannot disagree. The capability-definitions page's body is generated the same way,
+to ``generated/capability_definitions.md``, from the ``definition`` fields in the axes file — so
+the criterion a column is judged by and the tables that judge by it share one source. The README
+hero SVGs are rendered from these same three files by ``scripts/build_hero_table.py``, which is
+why the rules below are worth enforcing here rather than per surface.
 
 Two severities are reported. **Structural problems always fail**: an unknown axis, a missing
 cell, a mark outside the vocabulary, a record that is not registered (or a registration with no
-record), a missing scale rationale, a page that forgot its include. **Near-duplicate note text
-also fails**, because two notes that differ only in wording produce two footnotes where one was
-meant; a note may opt out with ``distinct: true`` when the resemblance really is coincidental.
+record), a scaling cell that is neither ``pending`` nor on the 1-2-5 grid, a column with no
+definition, a page that forgot its include. **Near-duplicate note text also fails**, because two
+notes that differ only in wording produce two footnotes where one was meant; a note may opt out
+with ``distinct: true`` when the resemblance really is coincidental.
 
 Usage:
     python scripts/capability_data.py            # validate, then write the fragments
@@ -43,8 +46,14 @@ FRAGMENTS_DIR = REPO_ROOT / "generated" / "features"
 COMPARISON_FRAGMENT = REPO_ROOT / "generated" / "comparison.md"
 COMPARISON_PAGE = REPO_ROOT / "docs" / "benchmarks" / "third_party" / "comparison.md"
 COMPARISON_INCLUDE = '--8<-- "generated/comparison.md"'
+DEFINITIONS_FRAGMENT = REPO_ROOT / "generated" / "capability_definitions.md"
+DEFINITIONS_PAGE = REPO_ROOT / "docs" / "benchmarks" / "third_party" / "capability_definitions.md"
+DEFINITIONS_INCLUDE = '--8<-- "generated/capability_definitions.md"'
 
-SCALE_PATTERN = re.compile(r"^\d(-\d)?$")
+# A measured scaling value sits on the protocol's 1-2-5 grid in n, smallest size 20 — the first
+# alternative admits the two sub-100 grid sizes without admitting 10.
+GRID_VALUE = re.compile(r"^(?:[25]0|[125]0{2,})$")
+PENDING = "pending"
 FRONT_MATTER = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.DOTALL)
 
 
@@ -129,9 +138,17 @@ def check_note(location: str, note) -> list[str]:
     return []
 
 
-def check_structure(axes: dict, registry: dict, records: dict, comparison_page: Path = COMPARISON_PAGE) -> list[str]:
+def check_structure(
+    axes: dict,
+    registry: dict,
+    records: dict,
+    comparison_page: Path = COMPARISON_PAGE,
+    definitions_page: Path = DEFINITIONS_PAGE,
+) -> list[str]:
     """Return every structural problem found. An empty list means the data is well formed."""
     problems = check_comparison_include(comparison_page)
+    problems += check_definitions_include(definitions_page)
+    problems += check_definitions(axes)
     tools = registered_tools(registry)
     registered = {tool["key"] for tool in tools}
 
@@ -145,19 +162,17 @@ def check_structure(axes: dict, registry: dict, records: dict, comparison_page: 
         if tool["key"] not in records:
             continue
         record, body = records[tool["key"]]
-        problems += check_record(tool, record, body, expected_axes, set(axes["marks"]), axes["metadata"])
+        problems += check_record(tool, record, body, expected_axes, axes)
     return problems
 
 
-def check_record(
-    tool: dict, record: dict, body: str, expected_axes: set[str], marks: set[str], axes_metadata: list[dict]
-) -> list[str]:
+def check_record(tool: dict, record: dict, body: str, expected_axes: set[str], axes: dict) -> list[str]:
     """Every rule a single record must satisfy, gathered from the four things a record declares."""
     key = tool["key"]
     return [
-        *check_cells(key, record, expected_axes, marks),
-        *check_metadata(key, record, axes_metadata),
-        *check_scale(key, record),
+        *check_cells(key, record, expected_axes, set(axes["marks"])),
+        *check_metadata(key, record, axes["metadata"]),
+        *check_scale_cells(key, record, axes["scale_columns"]["columns"]),
         *check_include(tool, body),
     ]
 
@@ -190,17 +205,31 @@ def check_metadata(key: str, record: dict, axes_metadata: list[dict]) -> list[st
     return problems
 
 
-def check_scale(key: str, record: dict) -> list[str]:
-    """A power of ten (or a range of them), and always an explanation of the value claimed."""
+def check_scale_cells(key: str, record: dict, scale_columns: list[dict]) -> list[str]:
+    """A record carries one cell per scaling column, no others, each `pending` or a 1-2-5 grid size."""
     problems: list[str] = []
-    scale = record.get("scale") or {}
-    if not SCALE_PATTERN.match(str(scale.get("max_practical_n", ""))):
-        problems.append(
-            f"{key}: scale {str(scale.get('max_practical_n', ''))!r} is not a power of ten or a range of them"
-        )
-    if not (scale.get("rationale") or "").strip():
-        problems.append(f"{key}: scale has no rationale")
+    cells = record.get("scale") or {}
+    expected = {column["key"] for column in scale_columns}
+    for missing in sorted(expected - set(cells)):
+        problems.append(f"{key}: no cell for scaling column `{missing}`")
+    for unknown in sorted(set(cells) - expected):
+        problems.append(f"{key}: cell for unknown scaling column `{unknown}`")
+    for column_key in sorted(expected & set(cells)):
+        value = cells[column_key]
+        if value != PENDING and not GRID_VALUE.match(str(value)):
+            problems.append(f"{key}: limit `{column_key}` is {value!r}, expected `pending` or a 1-2-5 grid size")
     return problems
+
+
+def check_definitions(axes: dict) -> list[str]:
+    """Every column a table can show must carry the definition the definitions page prints."""
+    named = [
+        *((f"axis `{g['key']}.{a['key']}`", a) for g in axes["groups"] for a in g["axes"]),
+        *((f"limit `{c['key']}`", c) for c in axes["scale_columns"]["columns"]),
+        ("scale_columns", axes["scale_columns"]),
+        *((f"metadata `{f['label']}`", f) for f in axes["metadata"]),
+    ]
+    return [f"axes: {name} has no definition" for name, spec in named if not (spec.get("definition") or "").strip()]
 
 
 def check_include(tool: dict, body: str) -> list[str]:
@@ -222,6 +251,15 @@ def check_comparison_include(page_path: Path) -> list[str]:
         return [f"{_display_path(page_path)}: comparison page is missing"]
     if COMPARISON_INCLUDE not in page_path.read_text(encoding="utf-8"):
         return [f"{_display_path(page_path)}: page does not include its generated comparison tables"]
+    return []
+
+
+def check_definitions_include(page_path: Path = DEFINITIONS_PAGE) -> list[str]:
+    """The definitions page must pull in its generated body — the same rule as the comparison page."""
+    if not page_path.exists():
+        return [f"{_display_path(page_path)}: capability-definitions page is missing"]
+    if DEFINITIONS_INCLUDE not in page_path.read_text(encoding="utf-8"):
+        return [f"{_display_path(page_path)}: page does not include its generated definitions"]
     return []
 
 
@@ -274,10 +312,9 @@ def render_feature_table(axes: dict, record: dict, key: str) -> str:
             label = f"{group['label']} · {axis['label']}"
             rows.append(f"| {label} | {_mark_markup(marks, cell['mark'])} | {notes.reference(cell.get('note'))} |")
 
-    scale = record["scale"]
-    rows.append(
-        f"| {axes['scale']['label']} | {_scale_markup(scale)} | {notes.reference({'text': scale['rationale']})} |"
-    )
+    scales = axes["scale_columns"]
+    for column in scales["columns"]:
+        rows.append(f"| {scales['label']} · {column['label']} | {_scale_markup(record['scale'][column['key']])} | |")
 
     # Declaration order in the axes file, so a mark added there cannot render in the table while
     # going unmentioned in the legend.
@@ -367,7 +404,8 @@ def _capability_grid(axes: dict, registry: dict, records: dict, notes: "_NoteInd
     live inside the raw HTML.
     """
     marks = axes["marks"]
-    width = 2 + sum(len(group["axes"]) for group in axes["groups"])
+    scale_columns = axes["scale_columns"]["columns"]
+    width = 1 + sum(len(group["axes"]) for group in axes["groups"]) + len(scale_columns)
 
     def tool_row(tool: dict, record: dict) -> str:
         cells = [
@@ -377,11 +415,11 @@ def _capability_grid(axes: dict, registry: dict, records: dict, notes: "_NoteInd
             for axis in group["axes"]
             for cell in [record["capabilities"][f"{group['key']}.{axis['key']}"]]
         ]
-        scale = record["scale"]
-        cells.append(
-            f'<td{_edge(True)} markdown="span">{_scale_markup(scale)}'
-            f"{notes.reference({'text': scale['rationale']})}</td>"
-        )
+        cells += [
+            f'<td{_edge(column is scale_columns[0])} markdown="span">'
+            f"{_scale_markup(record['scale'][column['key']])}</td>"
+            for column in scale_columns
+        ]
         return f'<tr markdown="block"><td markdown="span">{_tool_label(tool)}</td>{"".join(cells)}</tr>'
 
     def category_row(category: dict) -> str:
@@ -393,11 +431,14 @@ def _capability_grid(axes: dict, registry: dict, records: dict, notes: "_NoteInd
 
     band = ['<th rowspan="2">Tool</th>']
     band += [f'<th{_edge(True)} colspan="{len(group["axes"])}">{group["label"]}</th>' for group in axes["groups"]]
-    band.append(f'<th{_edge(True)} rowspan="2">{axes["scale"]["hero_label"]}</th>')
+    band.append(f'<th{_edge(True)} colspan="{len(scale_columns)}">{axes["scale_columns"]["hero_label"]}</th>')
     axis_names = "".join(
         f"<th{_edge(axis is group['axes'][0])}>{axis['hero_label']}</th>"
         for group in axes["groups"]
         for axis in group["axes"]
+    )
+    axis_names += "".join(
+        f"<th{_edge(column is scale_columns[0])}>{column['hero_label']}</th>" for column in scale_columns
     )
 
     legend = " · ".join(f"{m['glyph']} {m['legend']}" for m in marks.values())
@@ -490,6 +531,84 @@ def _row(cells: list[str]) -> str:
 
 
 # =================================================================================================
+#  Rendering — the capability-definitions page
+# =================================================================================================
+def render_definitions(axes: dict) -> str:
+    """Render the body of the capability-definitions page from the axes file's definition fields.
+
+    Each table is wrapped in a `capability-definitions` div of its own: the docs theme keeps
+    table cells on one line, and here both columns are prose that has to wrap — unlike the feature
+    tables, whose second column is a mark and must not.
+    """
+    scales = axes["scale_columns"]
+    lines = [
+        "<!-- Generated by scripts/capability_data.py — do not edit. -->",
+        "",
+        "## Marks",
+        "",
+        "Every capability cell carries one of three marks. A mark composes with the column's "
+        "definition: it states *how far* the tool meets the criterion the column claims.",
+        "",
+        '<div class="capability-definitions" markdown>',
+        "",
+        "| Mark | Meaning |",
+        "|:---:|---|",
+        *(
+            f"| {_mark_markup(axes['marks'], name)} | {inline(mark['legend'])} |"
+            for name, mark in axes["marks"].items()
+        ),
+        "",
+        "</div>",
+        "",
+        "## Capabilities",
+        "",
+        "Each table below states what its capability columns claim.",
+    ]
+    for group in axes["groups"]:
+        lines += [
+            "",
+            f"### {group['label']}",
+            "",
+            '<div class="capability-definitions" markdown>',
+            "",
+            "| Column | Definition |",
+            "|---|---|",
+            *(f"| {axis['label']} | {inline(axis['definition'])} |" for axis in group["axes"]),
+            "",
+            "</div>",
+        ]
+    lines += [
+        "",
+        f"## {scales['label'].capitalize()}",
+        "",
+        inline(scales["definition"]),
+        "",
+        "Sizes print in suffix notation: k = 10³, M = 10⁶, B = 10⁹.",
+        "",
+        '<div class="capability-definitions" markdown>',
+        "",
+        "| Column | Definition |",
+        "|---|---|",
+        *(f"| {column['label']} | {inline(column['definition'])} |" for column in scales["columns"]),
+        "",
+        "</div>",
+        "",
+        "## Tool facts",
+        "",
+        "These fields appear on each profile page and in the comparison page's companion table.",
+        "",
+        '<div class="capability-definitions" markdown>',
+        "",
+        "| Field | Definition |",
+        "|---|---|",
+        *(f"| {field['label']} | {inline(field['definition'])} |" for field in axes["metadata"]),
+        "",
+        "</div>",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+# =================================================================================================
 #  Rendering — shared
 # =================================================================================================
 def _mark_markup(marks: dict, mark: str) -> str:
@@ -511,15 +630,23 @@ def _edge(starts_group: bool) -> str:
     return ' class="group-edge"' if starts_group else ""
 
 
-def _scale_markup(scale: dict) -> str:
-    """Render a practical-scale value as a power of ten, or a range spelled out as two of them.
+def format_scale_value(n: int) -> str:
+    """Return a grid size in the suffix notation the tables use: 500 -> `500`, 20000 -> `20k`.
 
-    A range is written as two full powers rather than as `10<sup>4-5</sup>`, which renders as a
-    single exponent reading `4-5`.
+    Grid values are 1, 2 or 5 times a power of ten, so the mantissa is always a whole number of
+    the chosen unit and the formatting never rounds.
     """
-    lo, _, hi = str(scale["max_practical_n"]).partition("-")
-    power = f"10<sup>{lo}</sup>"
-    return f"n ≈ {power}&ndash;10<sup>{hi}</sup>" if hi else f"n ≈ {power}"
+    for divisor, suffix in ((10**9, "B"), (10**6, "M"), (10**3, "k")):
+        if n >= divisor:
+            return f"{n // divisor}{suffix}"
+    return str(n)
+
+
+def _scale_markup(value) -> str:
+    """Render one scaling cell: a measured grid size in suffix notation, or the pending marker."""
+    if value == PENDING:
+        return '<span class="scale-pending">pending</span>'
+    return f"n = {format_scale_value(int(value))}"
 
 
 def _metadata_note(field: dict, record_notes: dict):
@@ -560,6 +687,7 @@ def check_fragments_are_current(
     records: dict,
     fragments_dir: Path = FRAGMENTS_DIR,
     comparison_fragment: Path = COMPARISON_FRAGMENT,
+    definitions_fragment: Path = DEFINITIONS_FRAGMENT,
 ) -> list[str]:
     """Report committed fragments that no longer match what the records would render.
 
@@ -592,6 +720,14 @@ def check_fragments_are_current(
             f"comparison: {_display_path(comparison_fragment)} is stale — a record has changed "
             f"since it was generated. Run scripts/capability_data.py."
         )
+
+    if not definitions_fragment.exists():
+        problems.append("definitions: no generated body — run scripts/capability_data.py")
+    elif definitions_fragment.read_text(encoding="utf-8") != render_definitions(axes):
+        problems.append(
+            f"definitions: {_display_path(definitions_fragment)} is stale — the axes file has "
+            f"changed since it was generated. Run scripts/capability_data.py."
+        )
     return problems
 
 
@@ -604,7 +740,11 @@ def _display_path(path: Path) -> str:
 
 
 def validate(
-    axes: dict, registry: dict, records: dict, comparison_page: Path = COMPARISON_PAGE
+    axes: dict,
+    registry: dict,
+    records: dict,
+    comparison_page: Path = COMPARISON_PAGE,
+    definitions_page: Path = DEFINITIONS_PAGE,
 ) -> tuple[list[str], list[str]]:
     """Everything wrong with the data itself, split into the two severities.
 
@@ -613,7 +753,10 @@ def validate(
     refuse to regenerate precisely when regeneration is what is needed, with an error telling the
     reader to run the command that just refused.
     """
-    return check_structure(axes, registry, records, comparison_page), check_near_duplicate_notes(records)
+    return (
+        check_structure(axes, registry, records, comparison_page, definitions_page),
+        check_near_duplicate_notes(records),
+    )
 
 
 def write_fragments(
@@ -622,8 +765,10 @@ def write_fragments(
     records: dict,
     fragments_dir: Path = FRAGMENTS_DIR,
     comparison_fragment: Path = COMPARISON_FRAGMENT,
+    definitions_fragment: Path = DEFINITIONS_FRAGMENT,
 ) -> list[Path]:
-    """Write one fragment per tool that has a profile page, plus the comparison page's tables.
+    """Write one fragment per tool that has a profile page, plus the comparison page's tables and
+    the capability-definitions body.
 
     Excluded tools get no feature table — they have no page for one to land in — but they are still
     rows in the comparison tables, which is the reason their records exist at all.
@@ -641,6 +786,8 @@ def write_fragments(
     comparison_fragment.parent.mkdir(parents=True, exist_ok=True)
     comparison_fragment.write_text(render_comparison(axes, registry, records), encoding="utf-8")
     written.append(comparison_fragment)
+    definitions_fragment.write_text(render_definitions(axes), encoding="utf-8")
+    written.append(definitions_fragment)
     return written
 
 
@@ -662,11 +809,15 @@ def main() -> int:
     fragments_dir = args.root / "generated" / "features"
     comparison_fragment = args.root / "generated" / "comparison.md"
     comparison_page = args.root / "docs" / "benchmarks" / "third_party" / "comparison.md"
-    structural, near_duplicates = validate(axes, registry, records, comparison_page)
+    definitions_fragment = args.root / "generated" / "capability_definitions.md"
+    definitions_page = args.root / "docs" / "benchmarks" / "third_party" / "capability_definitions.md"
+    structural, near_duplicates = validate(axes, registry, records, comparison_page, definitions_page)
     # Drift is only a problem in --check mode; in write mode the write is the fix. Rendering needs
     # sound data, so it is skipped when the structure is already broken.
     if args.check and not structural:
-        structural += check_fragments_are_current(axes, registry, records, fragments_dir, comparison_fragment)
+        structural += check_fragments_are_current(
+            axes, registry, records, fragments_dir, comparison_fragment, definitions_fragment
+        )
 
     for problem in structural:
         print(f"ERROR  {problem}", file=sys.stderr)
@@ -683,7 +834,7 @@ def main() -> int:
         print(f"capability data OK: {len(records)} record(s), {len(axes['keys'])} axes")
         return 0
 
-    written = write_fragments(axes, registry, records, fragments_dir, comparison_fragment)
+    written = write_fragments(axes, registry, records, fragments_dir, comparison_fragment, definitions_fragment)
     print(f"wrote {len(written)} fragment(s) under {_display_path(args.root / 'generated')}/")
     return 0
 

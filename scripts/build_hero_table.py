@@ -38,7 +38,7 @@ import capability_data  # noqa: E402
 # --- geometry (all integers; no float formatting anywhere) --
 LABEL_W = 148  # solver-name gutter
 COL_W = 26  # one mark column
-SCALE_W = 90  # wide enough for the group label "max practical n" to sit over it without colliding
+SCALE_W = 46  # one measured-scaling column — wide enough for the longest suffix value ("500M")
 ROW_H = 23
 HEADER_H = 132  # room for the 45-degree labels
 GROUP_H = 18
@@ -105,10 +105,11 @@ class HeroTable:
             (group["hero_label"], [(axis["hero_label"], 1) for axis in group["axes"] if axis.get("hero")])
             for group in axes["groups"]
         ]
-        # The scale column is not a mark column: it is wider, it carries no rotated header, and its
-        # group label is the only thing naming it. It is a group of one so the band that carries
-        # that label is drawn by the same code as every other group's.
-        self.groups.append((axes["scale"]["hero_label"], [("", 2)]))
+        # The scaling columns are not mark columns: each is wider, and its cell is a measured size
+        # (or the pending marker) rather than a glyph. They form one group so the band that carries
+        # the scale-columns band label is drawn by the same code as every other group's.
+        scale_columns = axes["scale_columns"]["columns"]
+        self.groups.append((axes["scale_columns"]["hero_label"], [(c["hero_label"], 2) for c in scale_columns]))
         self.categories = [category["label"] for category in registry["categories"]]
         self.rows = [
             {
@@ -116,7 +117,7 @@ class HeroTable:
                 "name": tool.get("hero_name") or tool["name"],
                 "subject": bool(tool.get("subject")),
                 "marks": [records[tool["key"]][0]["capabilities"][key]["mark"] for key in axis_keys],
-                "scale": str(records[tool["key"]][0]["scale"]["max_practical_n"]),
+                "scales": [records[tool["key"]][0]["scale"][c["key"]] for c in scale_columns],
             }
             for index, category in enumerate(registry["categories"])
             for tool in category["tools"]
@@ -139,39 +140,23 @@ def esc(text):
     )
 
 
-SCALE_FS = 12  # base size for the scale figures
+SCALE_FS = 12  # base size for the scaling figures
 NAME_FS = "12.5"  # solver-name size
 MARK_FS = "13.5"  # check-mark and tilde size
 SMALL_FS = 11  # group labels, category labels, caption
-SUP_FS = 8  # exponent size — unicode superscripts render around 7px here, which reads too small
-SUP_DY = 4  # how far the exponent is raised
+PENDING_GLYPH = "\u2026"  # a scaling cell awaiting its measurement
+DAGGER = "\u2020"  # anchors the scaling column headers to the footnote row under the table
+SCALING_FOOTNOTE = "based on the built-in benchmark problem U1 and the published measurement protocol"
+CAPTION2_H = 16  # the footnote row under the mark-legend row
 
 
-def scale_markup(spec):
-    """`4-5` -> `~10^4 en-dash 10^5` as SVG markup, `3` -> `~10^3`.
+def scale_text(value):
+    """Return one scaling cell's text: the measured size in suffix notation, or the pending marker.
 
-    The leading tilde is the same glyph as the `partial` mark, which is a deliberate choice
-    rather than an oversight: an approximation sign was tried and read worse. The two senses are
-    told apart by column, and by the marks being grey while the figures are ink or green.
-
-    Exponents are `<tspan>`s rather than unicode superscript characters: those are locked to
-    roughly 0.6x the surrounding size, which is too small to read at this scale. `dy` shifts are
-    cumulative in SVG, so every raised span is followed by an equal lowering span.
-
-    The figures are indicative orders of magnitude, not measured ceilings, and the binding limit
-    differs per tool (memory, runtime, dimensionality).
+    The notation is `format_scale_value`'s; sharing the formatter guarantees the hero and the
+    documentation tables cannot print one value two ways.
     """
-
-    def sup(digits):
-        return f'<tspan font-size="{SUP_FS}" dy="-{SUP_DY}">{digits}</tspan>'
-
-    def baseline(text):
-        return f'<tspan font-size="{SCALE_FS}" dy="{SUP_DY}">{text}</tspan>'
-
-    if "-" in spec:
-        lo, hi = spec.split("-")
-        return "~10" + sup(lo) + baseline("\u201310") + sup(hi)
-    return "~10" + sup(spec)
+    return PENDING_GLYPH if value == capability_data.PENDING else capability_data.format_scale_value(int(value))
 
 
 class _Layout:
@@ -183,13 +168,15 @@ class _Layout:
         self.groups = table.groups
         self.rows = table.rows
         self.categories = table.categories
-        self.mark_cols = [(h, w) for _, cols in self.groups for (h, w) in cols][:-1]
+        flat = [(h, w) for _, cols in self.groups for (h, w) in cols]
+        self.mark_cols = [(h, w) for h, w in flat if w == 1]
+        self.scale_cols = [(h, w) for h, w in flat if w != 1]
         self.n_marks = len(self.mark_cols)
-        self.grid_w = self.n_marks * COL_W + SCALE_W
+        self.grid_w = self.n_marks * COL_W + len(self.scale_cols) * SCALE_W
 
         # The longest header, rotated 45 degrees, sticks out to the right by width/sqrt(2). That
         # same overhang sizes the header band and the skew of the group bands.
-        longest = max(len(h) for h, _ in self.mark_cols)
+        longest = max(len(h) for h, _ in self.mark_cols + self.scale_cols)
         self.overhang = (longest * CHAR_W * 7) // 100  # /10 for tenths, *0.707 for the rotation
         self.header_h = self.overhang + 18
 
@@ -201,6 +188,7 @@ class _Layout:
             + len(self.categories) * CAT_H
             + len(self.rows) * ROW_H
             + CAPTION_H
+            + CAPTION2_H
             + BOTTOM_PAD
         )
 
@@ -214,18 +202,30 @@ class _Layout:
         self.skew = self.y_corner - self.y_top  # a 45-degree edge shifts right by its own height
         self.table_w = LABEL_W + self.grid_w
 
-    def leads_on_scale(self, row):
-        """True for the row(s) carrying the highest scale figure.
+    def leads_on_scale(self, row, j):
+        """Return True when this row carries scaling column j's highest measured value.
 
-        Deliberately not keyed to max-div: the leader here is a competitor, and saying so is the
-        point of showing the column at all.
+        Deliberately not keyed to max-div: whoever measures highest leads, and saying so is the
+        point of showing the columns at all. A pending cell never leads, and a column with no
+        measured value yet has no leader.
         """
-        best = max(int(r["scale"].split("-")[-1]) for r in self.rows)
-        return int(row["scale"].split("-")[-1]) == best
+        measured = [int(r["scales"][j]) for r in self.rows if r["scales"][j] != capability_data.PENDING]
+        return bool(measured) and row["scales"][j] != capability_data.PENDING and int(row["scales"][j]) == max(measured)
+
+    def any_pending(self):
+        """Return True while any scaling cell awaits its measurement.
+
+        The pending legend entry is drawn only while one does.
+        """
+        return any(value == capability_data.PENDING for row in self.rows for value in row["scales"])
 
     def col_x(self, i):
-        """Left edge of mark column i."""
+        """Return the left edge of mark column i."""
         return PAD + LABEL_W + i * COL_W
+
+    def scale_x(self, j):
+        """Return the left edge of scaling column j, which sits right of every mark column."""
+        return PAD + LABEL_W + self.n_marks * COL_W + j * SCALE_W
 
     def rule(self, y):
         """A full-width horizontal rule at y."""
@@ -243,10 +243,12 @@ def _group_bands(lay):
     sits `skew` px right of its bottom, which is why the labels are offset by the same amount.
     """
     out, idx, t = [], 0, lay.t
+    edges = set()
     for gi, (glabel, cols) in enumerate(lay.groups):
         span = sum(COL_W if w == 1 else SCALE_W for _, w in cols)
         x0 = lay.col_x(idx)
         x1 = x0 + span
+        edges.update((x0, x1))
         if gi % 2 == 0:
             corners = [
                 (x0 + lay.skew, lay.y_top),
@@ -268,6 +270,13 @@ def _group_bands(lay):
             f'y2="{lay.y_group + 5}" stroke="{t["rule"]}" stroke-width="1"/>'
         )
         idx += len(cols)
+    # A hairline where one group ends and the next begins, and on the outer edges of the first
+    # and last group — the bracket rules' color at half their weight, so the verticals read as
+    # quieter scaffolding. Each follows its band's edge: slanted alongside the rotated labels,
+    # then vertical from the corner down to the last row.
+    for x in sorted(edges):
+        pts = f"{x + lay.skew},{lay.y_top} {x},{lay.y_corner} {x},{lay.y_end}"
+        out.append(f'<polyline points="{pts}" fill="none" stroke="{t["rule"]}" stroke-width="0.5"/>')
     return out
 
 
@@ -286,7 +295,12 @@ def _column_headers(lay):
             f'<text x="{x}" y="{y}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
             f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header)}</text>'
         )
-    # the scale column gets no diagonal header — its group label already reads "max practical n"
+    for j, (header, _w) in enumerate(lay.scale_cols):
+        x = lay.scale_x(j) + SCALE_W // 2 - 3
+        out.append(
+            f'<text x="{x}" y="{y}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
+            f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header + " " + DAGGER)}</text>'
+        )
     return out
 
 
@@ -338,23 +352,25 @@ def _data_rows(lay):
                 f'font-size="{NAME_FS}" font-weight="{weight}">{esc(row["name"])}</text>'
             )
             out.extend(_row_marks(lay, row, y))
-            leads = lay.leads_on_scale(row)
-            scale_fill = t["mark"] if leads else t["ink"]
-            # Bold in this column means "leads on scale" and nothing else. The row-name weight is
-            # a separate signal (the subject), so inheriting it here would imply max-div leads a
-            # column it does not.
-            scale_weight = "700" if leads else "400"
-            out.append(
-                f'<text x="{lay.col_x(lay.n_marks) + SCALE_W // 2}" y="{y + ROW_H - 7}" fill="{scale_fill}" '
-                f'font-size="{SCALE_FS}" font-weight="{scale_weight}" text-anchor="middle">'
-                f"{scale_markup(row['scale'])}</text>"
-            )
+            for j, value in enumerate(row["scales"]):
+                pending = value == capability_data.PENDING
+                leads = lay.leads_on_scale(row, j)
+                fill = t["partial"] if pending else (t["mark"] if leads else t["ink"])
+                # Bold in a scaling column means "leads this column" and nothing else. The
+                # row-name weight is a separate signal (the subject), so inheriting it here would
+                # imply max-div leads a column it does not.
+                weight = "700" if leads else "400"
+                out.append(
+                    f'<text x="{lay.scale_x(j) + SCALE_W // 2}" y="{y + ROW_H - 7}" fill="{fill}" '
+                    f'font-size="{SCALE_FS}" font-weight="{weight}" text-anchor="middle">'
+                    f"{esc(scale_text(value))}</text>"
+                )
             y += ROW_H
     return out, y
 
 
 def _legend(lay, y):
-    """The mark legend under the table — every mark the hero draws, in declaration order.
+    """The two legend rows under the table: the marks, then the scaling footnote and pending marker.
 
     Both glyphs are bolded here whatever weight they carry in the grid: at legend size they sit
     inline in a line of prose, where the grid's lighter tilde would disappear.
@@ -368,7 +384,18 @@ def _legend(lay, y):
             spans.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
         spans.append(f'<tspan fill="{t[MARK_STYLE[mark][0]]}" font-weight="700"{gap}>{esc(spec["hero_glyph"])}</tspan>')
         spans.append(f'<tspan fill="{t["muted"]}" dx="5">{esc(spec["legend"])}</tspan>')
-    return [f'<text x="{PAD}" y="{y + CAPTION_H - 8}" font-size="{SMALL_FS}">' + "".join(spans) + "</text>"]
+    notes = [
+        f'<tspan fill="{t["muted"]}" font-weight="700">{esc(DAGGER)}</tspan>',
+        f'<tspan fill="{t["muted"]}" dx="5">{esc(SCALING_FOOTNOTE)}</tspan>',
+    ]
+    if lay.any_pending():
+        notes.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
+        notes.append(f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">{esc(PENDING_GLYPH)}</tspan>')
+        notes.append(f'<tspan fill="{t["muted"]}" dx="5">measurement pending</tspan>')
+    return [
+        f'<text x="{PAD}" y="{y + CAPTION_H - 8}" font-size="{SMALL_FS}">' + "".join(spans) + "</text>",
+        f'<text x="{PAD}" y="{y + CAPTION_H + CAPTION2_H - 8}" font-size="{SMALL_FS}">' + "".join(notes) + "</text>",
+    ]
 
 
 def build_svg(table, theme_name):

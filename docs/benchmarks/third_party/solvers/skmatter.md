@@ -4,11 +4,9 @@ solver:
   source: https://scikit-matter.readthedocs.io/
   verified: 2026-07-27
   scale:
-    max_practical_n: "5"
-    rationale: >-
-      A NumPy implementation following scikit-learn conventions: no distance matrix is stored, but
-      each pick scans all remaining candidates, so cost grows as n·k. Comfortable into the
-      hundreds of thousands, an order below the compiled implementations.
+    max_n_memory: pending
+    max_n_time: pending
+    max_n_quality: pending
   metadata:
     guarantee: 2-approximation (farthest-point traversal)
     license: BSD-3-Clause

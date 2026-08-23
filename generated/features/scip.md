@@ -27,7 +27,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 |---|:---:|---|
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
-| distance metrics · Linf (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
+| distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^scip-3] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^scip-4] |
@@ -43,7 +43,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^scip-8] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-partial">◐</span> | [^scip-9] |
-| largest practical problem size | n ≈ 10<sup>3</sup> | [^scip-10] |
+| solver scaling · largest n within memory | <span class="scale-pending">pending</span> | |
+| solver scaling · largest n within the time budget | <span class="scale-pending">pending</span> | |
+| solver scaling · largest n at good quality | <span class="scale-pending">pending</span> | |
 
 </div>
 
@@ -56,4 +58,3 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^scip-7]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
 [^scip-8]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
 [^scip-9]: Reachable through SCIP's concurrent solving and the FiberSCIP / UG frameworks, which share bounds and solutions between the racing solvers but need a TPI-enabled build; the default PySCIPOpt wheel does not expose it.
-[^scip-10]: The limit differs sharply by objective. A max-min model with big-M linearization is routinely solved to optimality around n ≈ 10³; the mean-of-NN objective needs an assignment MILP whose size grows far faster and which stops being tractable near n ≈ 60 — below the floor of the benchmark generators used here. The single value reported is the max-min one, because that is the formulation this comparison actually exercises.
