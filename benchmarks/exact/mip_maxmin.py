@@ -8,9 +8,9 @@ All three entry points share one contract: return a valid size-k selection by ``
 a ``time.monotonic()`` timestamp. Each solver's internal time limit only covers its solving
 phase, so it is set to the time remaining at the moment solving starts — model construction
 shrinks the solver's budget instead of adding to the measured end-to-end time. With
-``first_feasible`` the solver stops at its first
-(improving) solution — the fastest standard setting that still produces a valid selection;
-without it the solver optimizes until its time runs out.
+``first_feasible`` the solver stops at its first (improving) solution — the fastest standard
+setting that still produces a valid selection; without it the solver optimizes until its
+time runs out.
 """
 
 import time

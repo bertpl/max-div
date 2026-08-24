@@ -50,19 +50,19 @@ def test_every_config_carries_a_callable_selector():
 
 
 def test_exact_deadline_sits_margin_under_the_budget():
-    """Pins that an exact solver's deadline is now + budget − margin, clamped for tiny budgets."""
+    """An exact solver's deadline is now + budget − margin, clamped for tiny budgets."""
     # --- act --------------------------
     deadline = _exact_deadline(60.0)
-    floored = _exact_deadline(0.0)
+    zero_budget_deadline = _exact_deadline(0.0)
     now = time.monotonic()
 
     # --- assert -----------------------
     assert deadline - now == pytest.approx(60.0 - SELF_LIMIT_MARGIN_SEC, abs=0.1)
-    assert floored - now == pytest.approx(0.1, abs=0.1)
+    assert zero_budget_deadline - now == pytest.approx(0.1, abs=0.1)
 
 
 def test_remaining_sec_shrinks_with_elapsed_time_and_never_reaches_zero():
-    """Pins that time spent before a solver's limit is set comes out of the limit, not on top of it."""
+    """Time spent before a solver's limit is set comes out of the limit, not on top of it."""
     # --- act / assert -----------------
     assert _remaining_sec(time.monotonic() + 10.0) == pytest.approx(10.0, abs=0.1)
     assert _remaining_sec(time.monotonic() - 5.0) == 0.01
