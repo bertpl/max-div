@@ -116,6 +116,18 @@ def _series_marker(index: int) -> dict:
     return {"marker": marker}
 
 
+def _series_color(index: int) -> str:
+    """Return the per-series color, keyed by the series index rather than plot order.
+
+    The renderers skip series with no plottable rows; the axes' color cycle advances only on
+    plotted series while `_series_marker` advances on the index, so one skipped series would
+    desynchronize colors from marker shapes between the combined charts and the per-config
+    fit charts.
+    """
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    return colors[index % len(colors)]
+
+
 def _grid_xticks(ax: plt.Axes, n_max: int) -> None:
     """Put ticks, labels and gridlines on every grid size up to `n_max`."""
     ticks = size_grid(n_max)
@@ -151,6 +163,7 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
                 [r.measured_sec for r in completed],
                 label=_legend_label(tool, config, names),
                 linewidth=_LINE_WIDTH,
+                color=_series_color(index),
                 **_series_marker(index),
             )
     ax.axhline(REFERENCE_BUDGET_SEC, color="#888888", linestyle="--", linewidth=1.2)
@@ -183,14 +196,15 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
         observed = _footprint_rows(rows)
         if not observed:
             continue
-        handles = ax.plot(
+        ax.plot(
             [r.n for r in observed],
             [r.peak_memory_bytes for r in observed],
             linestyle="none",
             label=_legend_label(tool, config, names),
+            color=_series_color(index),
             **_series_marker(index),
         )
-        _draw_fit_curve(ax, fits.get(f"{tool}/{config}", {}), observed, handles[0].get_color())
+        _draw_fit_curve(ax, fits.get(f"{tool}/{config}", {}), observed, _series_color(index))
     ax.axhline(MEMORY_CAP_BYTES, color="#888888", linestyle="--", linewidth=1.2)
     # x in axes fraction, y in data coordinates, so the label hugs the line's right end
     ax.text(
@@ -254,15 +268,12 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
     """
     thumbnails: list[str] = []
     written: set[Path] = set()
-    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     for index, ((tool, config), rows) in enumerate(grouped.items()):
         fit = fits.get(f"{tool}/{config}", {})
         observed = _footprint_rows(rows)
         if not observed or not fit.get("coef"):
             continue
-        # index into the same cycle as the combined chart's series order, so each configuration
-        # keeps one color across all memory charts
-        color = colors[index % len(colors)]
+        color = _series_color(index)
         label = _legend_label(tool, config, names)
         # the combined chart's marker for this config, so shape and fill match its color there
         marker_style = _series_marker(index)
