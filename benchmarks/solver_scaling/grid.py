@@ -24,10 +24,10 @@ GRID_MIN = 20  # the smallest size the benchmark problems build at
 # (`_exact_deadline` in configs.py). One-shot tools take no budget and ignore this.
 SELF_LIMIT_MARGIN_SEC = 1.0
 
-# The margin for runs at the extended budget. The overshoot the margin absorbs grows with n
-# (measured: 0.2 s at n=20 to ~2.7 s at n=2000 for the exact solvers), and the extended budget is
-# what lets solvers reach sizes beyond anything the 1 s margin was validated on; 5 s is still
-# negligible against `EXTENDED_BUDGET_SEC`.
+# Runs at the extended budget subtract this margin instead of `SELF_LIMIT_MARGIN_SEC`: the
+# overshoot a margin absorbs grows with n, the extended budget lets solvers reach sizes beyond
+# anything the smaller margin was validated on, and the cost stays negligible against
+# `EXTENDED_BUDGET_SEC`.
 EXTENDED_SELF_LIMIT_MARGIN_SEC = 5.0
 
 # Added to a run's hard-kill deadline on top of its budget. The child's untimed work (interpreter
@@ -42,7 +42,8 @@ def self_limit_margin_sec(budget_sec: float) -> float:
     """Return the margin a self-limiting solver subtracts from `budget_sec` before honoring it.
 
     Runs at the extended budget get the larger margin; every shorter budget (the reference
-    budget, the warm-up budget) keeps the 1 s margin those budgets were validated with.
+    budget, the warm-up budget) keeps `SELF_LIMIT_MARGIN_SEC`, which those budgets were
+    validated with.
     """
     return EXTENDED_SELF_LIMIT_MARGIN_SEC if budget_sec > REFERENCE_BUDGET_SEC else SELF_LIMIT_MARGIN_SEC
 

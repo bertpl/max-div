@@ -1,16 +1,17 @@
 """Best-known-solution stage: every configuration ascends the size grid at the extended budget.
 
-The extended runs exist only to feed the best-known reference pool — no published size limit
-comes from them — so the stopping rule is more lenient than the time stage's: a completed run
-never ends a configuration's series, however long it took, since a late solution can only raise
-the reference for every solver alike. Only a kill (the extended budget plus the setup grace, or
-the memory cap) or a crash ends the series. Sizes run up to the largest n any configuration
-reached within the time budget: beyond it no quality verdict exists that would need a reference.
+The runs feed the best-known reference pool and publish no size limit, so the stopping rule is
+more lenient than the time stage's: a completed run never ends a configuration's series, however
+long it took — only a kill (the extended budget plus the setup grace, or the memory cap) or a
+crash does. The measurement protocol's `Q_extended` section carries the rationale.
+
+Sizes run up to the largest n any configuration reached within the time budget: beyond it no
+quality verdict exists that would need a reference.
 
 Records are appended after every run to the tracked data file, so an interrupted stage resumes by
 rerunning: already-recorded runs are skipped.
 
-Usage: python -m benchmarks.solver_scaling.extended_stage [tool | tool/config ...]   # default: all
+Usage: python -m benchmarks.solver_scaling.best_known_stage [tool | tool/config ...]  # default: all
 """
 
 import sys
@@ -24,7 +25,7 @@ from .runner import run_measurement
 from .time_stage import DATA_PATH as TIME_DATA_PATH
 from .time_stage import passes_time
 
-DATA_PATH = Path(__file__).resolve().parent / "data" / "extended_stage.jsonl"
+DATA_PATH = Path(__file__).resolve().parent / "data" / "best_known_stage.jsonl"
 
 
 def size_bound_from_time_stage(time_data_path: Path = TIME_DATA_PATH) -> int:
@@ -50,7 +51,7 @@ def best_known_by_size(records: list[ScalingRunRecord]) -> dict[int, ScalingRunR
     return dict(sorted(best.items()))
 
 
-def run_extended_stage(
+def run_best_known_stage(
     configs: list[ScalingConfig] | None = None,
     data_path: Path = DATA_PATH,
     budget_sec: float = EXTENDED_BUDGET_SEC,
@@ -101,4 +102,4 @@ def _ascend(config: ScalingConfig, done: dict, data_path: Path, n_bound: int, bu
 if __name__ == "__main__":
     selected = sys.argv[1:]
     chosen = [c for c in CONFIGS if c.tool in selected or f"{c.tool}/{c.name}" in selected] if selected else list(CONFIGS)
-    run_extended_stage(chosen)
+    run_best_known_stage(chosen)

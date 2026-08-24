@@ -185,7 +185,9 @@ The additional criterion that comes into play here is `median(Q_observed) >= 0.1
                 STOP and move to the next configuration
     ```
 
-A run that completes somewhat past `T_extended` (bounded by the kill, which allows a small overrun) still counts and does not end the configuration's series.  The extended runs feed only the best-known reference, and a late solution can only raise that reference for every solver alike; the published best-known table reports each entry's measured time, so a late entry is visible.  The time-bound setting (IV.C) keeps its strict criterion — there, completion within `T_max` is itself the published value.
+The kill allows a small overrun past `T_extended`, so a completed-but-late run can occur; it counts, because the extended runs feed only the best-known reference, which a late solution can only raise for every solver alike.  The published best-known table reports each entry's measured time.
+
+The time-bound setting (IV.C) keeps its strict criterion: there, completion within `T_max` is itself the published value.
 
 #### IV.D.3. Determining `Q_observed`
 
