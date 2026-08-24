@@ -4,8 +4,8 @@ from benchmarks.solver_scaling.grid import DEFAULT_SEED, WARMUP_BUDGET_SEC
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records
 
 
-def _record(n, seed=DEFAULT_SEED, *, completed=True, measured_sec=1.0):
-    return ScalingRunRecord("rdkit", "default", n, n // 10, seed, 60.0, completed, None, measured_sec, 1000, 0.2)
+def _record(n, seed=DEFAULT_SEED, *, completed=True, reason=None, measured_sec=1.0):
+    return ScalingRunRecord("rdkit", "default", n, n // 10, seed, 60.0, completed, reason, measured_sec, 1000, 0.2)
 
 
 def test_passes_time_requires_completion_within_the_budget():
@@ -72,3 +72,22 @@ def test_a_fresh_config_gets_one_discarded_warmup_run(monkeypatch, tmp_path):
     assert calls[1] == (20, 60.0)
     recorded = load_scaling_records(data_path)
     assert all(r.budget_sec == 60.0 for r in recorded)  # the warm-up run was discarded
+
+
+def test_ascend_skips_a_crash_before_any_pass_but_a_timeout_stops(monkeypatch, tmp_path):
+    """A non-resource crash with no size passed yet is skipped; a later timeout still ends the sweep."""
+    # --- arrange ----------------------
+    def fake_run(tool, config, n, k, seed, budget_sec):
+        if n < 100:
+            return _record(n, completed=False, reason="RuntimeError: degenerate")  # crash, no pass yet
+        if n > 1000:
+            return _record(n, completed=False, reason="timeout")  # a real, monotonic time limit
+        return _record(n)  # passes at 100, 200, 500, 1000
+
+    monkeypatch.setattr(time_stage, "run_measurement", fake_run)
+
+    # --- act --------------------------
+    limit = time_stage._ascend(resolve("rdkit", "default"), {}, tmp_path / "runs.jsonl", 60.0)
+
+    # --- assert -----------------------
+    assert limit == 1000  # the n<100 crashes were skipped; the sweep stopped at the n=2000 timeout

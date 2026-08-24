@@ -19,6 +19,7 @@ from pathlib import Path
 
 from .configs import CONFIGS, ScalingConfig
 from .grid import DEFAULT_SEED, GRID_MIN, REFERENCE_BUDGET_SEC, WARMUP_BUDGET_SEC, operational_bound, size_grid
+from .outcome import Outcome, classify
 from .records import ScalingRunRecord, append_scaling_record, load_scaling_records
 from .runner import run_measurement
 
@@ -70,6 +71,11 @@ def _ascend(config: ScalingConfig, done: dict, data_path: Path, budget_sec: floa
         passed = passes_time(record, budget_sec)
         print(f"  {config.tool}/{config.name} n={n}: {'ok' if passed else record.reason}")
         if not passed:
+            # A non-resource failure before any passing size is a small-size degeneracy, not a
+            # limit — skip it and try the next size. A timeout (a real, monotonic time limit) or
+            # any failure once a size has passed ends the sweep.
+            if limit is None and classify(record.completed, record.reason) is Outcome.SCALING_FAILURE:
+                continue
             return limit
         limit = n
     return limit

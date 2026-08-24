@@ -26,8 +26,8 @@ def test_sweep_stops_once_the_trust_conditions_hold(monkeypatch, tmp_path):
     fit = memory_stage._sweep(resolve("rdkit", "default"), {}, tmp_path / "runs.jsonl")
 
     # --- assert -----------------------
-    # 40 B/item growth doubles the ~160 MB baseline by n = 4M; the sweep stops at the next grid
-    # size where both trust conditions hold and publishes the fitted crossing
+    # 40 B/item growth triples the ~160 MB baseline by ~n=8M; the sweep stops at the grid size
+    # where all trust conditions hold and publishes the fitted crossing
     assert fit.coef is not None
     assert fit.r2 is not None and fit.r2 >= 0.95
     assert fit.max_n == 500_000_000  # (32 GB - c0) / 40 B, on the grid
@@ -109,3 +109,23 @@ def test_unsettled_footprints_still_feed_the_fit(monkeypatch, tmp_path):
 
     recorded = load_scaling_records(tmp_path / "runs.jsonl")
     assert all(r.budget_sec == 60.0 for r in recorded)  # the warm-up run was discarded
+
+
+def test_a_failure_before_any_success_is_skipped(monkeypatch, tmp_path):
+    """A non-resource failure with no successful measurement yet is skipped, not terminal."""
+    # --- arrange ----------------------
+    # fails the two smallest sizes (as code-FDM does at the smallest instance), then succeeds
+    def fake_run(tool, config, n, k, seed, budget_sec):
+        if n < 100:
+            return _record(n, completed=False, reason="RuntimeError: degenerate", peak=None)
+        return _record(n)
+
+    monkeypatch.setattr(memory_stage, "run_measurement", fake_run)
+
+    # --- act --------------------------
+    fit = memory_stage._sweep(resolve("code-fdm", "default"), {}, tmp_path / "runs.jsonl")
+
+    # --- assert -----------------------
+    # the n=20, 50 failures were skipped; the fit rests on the >= 100 successes and reaches a crossing
+    assert fit.coef is not None
+    assert fit.max_n == 500_000_000

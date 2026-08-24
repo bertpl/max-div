@@ -8,9 +8,11 @@ growing by the kill), recorded for later inspection but not used to weight or ex
 sweep walks upward until one of:
 
 * the machine-level memory cap kills a run — the measurement series is truncated, the previous size is the result;
-* the solver fails outright — the measurement series is truncated, with the failure disclosed;
-* the recorded footprints span a `2x` range and the fitted model explains them — the crossing is
-  read off the fit at the cap (`memory_fit` owns the fit and the trust conditions);
+* the solver fails outright after at least one successful size — the series is truncated, with the
+  failure disclosed (a failure before any success is skipped, since a solver can fail the tiny
+  smallest instance yet work above it);
+* the recorded footprints reach the trust conditions (>= 5 sizes spanning a `3x` range with a fit
+  that explains them) — the crossing is read off the fit at the cap (`memory_fit` owns them);
 * the grid is exhausted — the fit is published with that noted.
 
 A configuration observed spawning worker processes is not measured: the recorded per-process
@@ -74,9 +76,17 @@ def _sweep(config: ScalingConfig, done: dict, data_path: Path) -> MemoryFit:
         if outcome is Outcome.MEMORY:
             return MemoryFit(last_under_cap, None, "measurement series truncated: the next size exceeds the memory cap")
         if outcome is Outcome.SCALING_FAILURE:
-            return MemoryFit(
-                last_under_cap, None, f"measurement series truncated: the solver fails at the next size (`{record.reason}`)"
-            )
+            # A non-resource failure ends the sweep only once there is a measurement to report;
+            # a failure before any successful size is a small-size degeneracy (a solver that can't
+            # express the smallest instance but works above it), so the sweep skips it and tries
+            # the next size rather than declaring the tool unmeasurable.
+            if footprints:
+                return MemoryFit(
+                    last_under_cap,
+                    None,
+                    f"measurement series truncated: the solver fails at the next size (`{record.reason}`)",
+                )
+            continue
         last_under_cap = n
         if record.peak_memory_bytes:
             footprints[n] = max(footprints.get(n, 0.0), float(record.peak_memory_bytes))

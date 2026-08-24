@@ -72,9 +72,9 @@ We assume...
 - memory usage increases monotonically with increasing `n` and does so either linearly or quadratically
 - memory usage is sufficiently deterministic to not require multiple runs with different seeds
 
-The extrapolating fit is only trusted once its **trust conditions** hold: the recorded footprints **span a 2x range** (the growth term dominates the fixed baseline within the data) **and** the fitted model explains them (**R² >= 0.95**) — together these mean the extrapolation extends a measured trend, not an assumption.
+The extrapolating fit is only trusted once its **trust conditions** hold: the recorded footprints **span a 3x range** (the growth term dominates the fixed baseline within the data), the fitted model explains them (**R² >= 0.95**), and there are **at least 5 measured sizes** — a clean fit over only three or four points is too thin an extrapolation to the cap to trust. Together these mean the extrapolation extends a measured trend, not an assumption.
 
-A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and ends the sweep like a memory kill does — the previous size is the result, since nothing larger runs at all.
+A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and ends the sweep like a memory kill does — the previous size is the result, since nothing larger runs at all.  The one exception is a failure **before any size has succeeded**: some solvers fail the tiny smallest instance yet work above it, so a failure with no measurement yet is skipped and the sweep tries the next size.
 
 Each configuration gets one discarded warm-up run before its sweep: the first process after a fresh environment install pays a one-off import/bytecode-compilation cost that would otherwise land in its first measurement.
 
@@ -97,8 +97,11 @@ Each configuration gets one discarded warm-up run before its sweep: the first pr
 
             STOP when one of:
                 M_max crossed  ->  RECORD previous n                  # measured directly
-                solver failed  ->  RECORD previous n                  # measured directly; disclosed
-                M(n) span >= 2x  AND  fit R^2 >= 0.95:
+                solver failed AND >= 1 size already succeeded:
+                                   RECORD previous n                  # measured directly; disclosed
+                                                                      # (a failure before any
+                                                                      #  success is skipped)
+                >= 5 sizes  AND  M(n) span >= 3x  AND  fit R^2 >= 0.95:
                     fit f(n) = c0 + c1*n + c2*n^2   (c0,c2 >= 0; c1 >= 4d = 8)
                     IF c2 < 0.1                   # < 1 byte per k*n entry: no real
                         refit with c2 = 0         # allocation can grow this slowly
@@ -127,7 +130,10 @@ A run may be allowed to finish somewhat past `T_max` instead of being killed exa
         FOR EACH n in N (smallest to largest):
             run under T_max and M_max               # both kills active
             PASS = completed within T_max
-            STOP at the first non-pass
+            STOP at the first non-pass, UNLESS it is a non-resource failure
+                with no size passed yet — then skip it and try the next size
+                (as in the memory sweep: some solvers fail the tiny smallest
+                 instance yet work above it)
 
         time-bound size = largest passing n          (None if none)
     ```

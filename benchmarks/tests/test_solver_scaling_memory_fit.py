@@ -46,13 +46,14 @@ def test_an_implausibly_small_quadratic_term_falls_back_to_linear():
     assert fit.reason == "linear fit over 5 sizes"
 
 
-def test_conditions_require_span_and_model_quality():
-    """The sweep may stop only once the footprints span 2x and the model explains them."""
+def test_conditions_require_span_model_quality_and_enough_sizes():
+    """The sweep may stop only with >= 5 sizes that span 3x and a model that explains them."""
     # --- arrange ----------------------
-    flat = {n: 1.6e8 + 8.0 * n for n in (100, 200, 500)}  # true growth, but span far below 2x
-    grown = {n: 1.6e8 + 40.0 * n for n in (1_000_000, 2_000_000, 5_000_000, 10_000_000)}  # spans > 2x
+    flat = {n: 1.6e8 + 8.0 * n for n in (100, 200, 500, 1000, 2000)}  # 5 sizes, but span far below 3x
+    four = {n: 1.6e8 + 40.0 * n for n in (2_000_000, 5_000_000, 10_000_000, 20_000_000)}  # spans > 3x, only 4 sizes
+    grown = {n: 1.6e8 + 40.0 * n for n in (200_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000)}  # 5 sizes, spans > 3x
 
     # --- act / assert -----------------
-    assert not trust_conditions_met(flat, fit_series(flat))
+    assert not trust_conditions_met(flat, fit_series(flat))  # span fails
+    assert not trust_conditions_met(four, fit_series(four))  # only 4 sizes
     assert trust_conditions_met(grown, fit_series(grown))
-    assert not trust_conditions_met({100: 1.0e8, 200: 3.0e8}, fit_series({100: 1.0e8, 200: 3.0e8}))  # two points never do
