@@ -48,6 +48,10 @@ GENERATED_DIR = REPO_ROOT / "generated"
 STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 REGISTRY_FILE = REPO_ROOT / "data" / "solver_registry.yaml"
 
+# One width for every plotted line, so the time chart's series and the memory chart's fit curves
+# read the same weight.
+_LINE_WIDTH = 1.0
+
 
 # ==================================================================================================
 #  Data access
@@ -146,7 +150,7 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
                 [r.n for r in completed],
                 [r.measured_sec for r in completed],
                 label=_legend_label(tool, config, names),
-                linewidth=1.4,
+                linewidth=_LINE_WIDTH,
                 **_series_marker(index),
             )
     ax.axhline(REFERENCE_BUDGET_SEC, color="#888888", linestyle="--", linewidth=1.2)
@@ -238,7 +242,7 @@ def _draw_fit_curve(ax: plt.Axes, fit: dict, observed: list[ScalingRunRecord], c
     ns = np.geomspace(n_lo, n_hi, 200)
     predicted = sum(c * ns**p for p, c in enumerate(coef))
     visible = predicted <= 2 * MEMORY_CAP_BYTES  # stop shortly above the cap; further extrapolation says nothing
-    ax.plot(ns[visible], predicted[visible], color=color, linestyle="--", linewidth=1.0, alpha=0.8)
+    ax.plot(ns[visible], predicted[visible], color=color, linestyle="--", linewidth=_LINE_WIDTH, alpha=0.8)
 
 
 def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
