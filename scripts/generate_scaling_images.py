@@ -176,7 +176,7 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
         ha="right",
         fontsize=9,
         transform=ax.get_yaxis_transform(),
-        bbox={"facecolor": "white", "alpha": 0.75, "edgecolor": "none"},
+        bbox={"facecolor": "white", "alpha": 0.9, "edgecolor": "none"},
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -216,7 +216,7 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
         ha="right",
         fontsize=9,
         transform=ax.get_yaxis_transform(),
-        bbox={"facecolor": "white", "alpha": 0.75, "edgecolor": "none"},
+        bbox={"facecolor": "white", "alpha": 0.9, "edgecolor": "none"},
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
