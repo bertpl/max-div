@@ -47,10 +47,8 @@ class ScalingConfig:
 def _exact_deadline(budget_sec: float) -> float:
     """Return the `time.monotonic()` deadline an exact solver must finish by: now + budget − margin.
 
-    The exact-solver entry points set their internal time limit to whatever remains of this
-    deadline when solving starts, so their model-construction time is covered. The margin under
-    the run budget covers what an internal limit cannot: result extraction after the solver's
-    clock stops, and the limit's own imprecision.
+    The margin under the run budget covers what a solver's internal time limit cannot: result
+    extraction after the solver's clock stops, and the limit's own imprecision.
     """
     return time.monotonic() + max(budget_sec - SELF_LIMIT_MARGIN_SEC, 0.1)
 

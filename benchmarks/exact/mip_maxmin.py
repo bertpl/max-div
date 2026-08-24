@@ -6,9 +6,9 @@ bounds how large a problem an exact solver can handle in memory and in time.
 
 All three entry points share one contract: return a valid size-k selection by ``deadline``,
 a ``time.monotonic()`` timestamp. Each solver's internal time limit only covers its solving
-phase, so it is set to the time remaining at the moment solving starts — the model
-construction before it shrinks the solver's budget instead of adding to the measured
-end-to-end time on top of it. With ``first_feasible`` the solver stops at its first
+phase, so it is set to the time remaining at the moment solving starts — model construction
+shrinks the solver's budget instead of adding to the measured end-to-end time. With
+``first_feasible`` the solver stops at its first
 (improving) solution — the fastest standard setting that still produces a valid selection;
 without it the solver optimizes until its time runs out.
 """
@@ -29,7 +29,7 @@ def _pairwise(problem: MaxDivProblem) -> NDArray[np.float64]:
 
 
 def _remaining_sec(deadline: float) -> float:
-    """Return the time left until `deadline` (a `time.monotonic()` value), floored at 0.01 s."""
+    """Return the time left until `deadline` (a `time.monotonic()` value), clamped to a small positive value."""
     return max(deadline - time.monotonic(), 0.01)
 
 

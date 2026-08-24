@@ -50,7 +50,7 @@ def test_every_config_carries_a_callable_selector():
 
 
 def test_exact_deadline_sits_margin_under_the_budget():
-    """Pins that an exact solver's deadline is now + budget − margin, floored for tiny budgets."""
+    """Pins that an exact solver's deadline is now + budget − margin, clamped for tiny budgets."""
     # --- act --------------------------
     deadline = _exact_deadline(60.0)
     floored = _exact_deadline(0.0)
