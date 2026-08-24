@@ -20,7 +20,7 @@ from numpy.typing import NDArray
 from benchmarks.adapters.base import SelectionAdapter
 from max_div.problem import VectorMaxDivProblem
 
-from .grid import SELF_LIMIT_MARGIN_SEC
+from .grid import self_limit_margin_sec
 
 SelectFn = Callable[[VectorMaxDivProblem, int, float], NDArray[np.int64]]
 
@@ -50,7 +50,7 @@ def _exact_deadline(budget_sec: float) -> float:
     The margin under the run budget covers what a solver's internal time limit cannot: result
     extraction after the solver's clock stops, and the limit's own imprecision.
     """
-    return time.monotonic() + max(budget_sec - SELF_LIMIT_MARGIN_SEC, 0.1)
+    return time.monotonic() + max(budget_sec - self_limit_margin_sec(budget_sec), 0.1)
 
 
 # ==================================================================================================
@@ -80,7 +80,7 @@ def _maxdiv_lean() -> SelectFn:
 def _maxdiv_optimal(lazy: bool) -> SelectFn:
     """Build max-div's `optimal-*` selector: SMART, one cooperative worker group, forced storage, e2e budget.
 
-    The budget handed to the solver is `SELF_LIMIT_MARGIN_SEC` under the run budget, so the real
+    The budget handed to the solver is the self-limit margin under the run budget, so the real
     end-to-end time — which overshoots by up to one optimization batch — still lands within the
     time budget the run is judged against.
     """
@@ -96,7 +96,7 @@ def _maxdiv_optimal(lazy: bool) -> SelectFn:
         )
 
         storage = DistanceStorage.LAZY if lazy else DistanceStorage.FULL_MATRIX
-        budget = seconds(max(budget_sec - SELF_LIMIT_MARGIN_SEC, 0.1))
+        budget = seconds(max(budget_sec - self_limit_margin_sec(budget_sec), 0.1))
         group = [WorkerConfig(SolverPreset.SMART) for _ in range(_QUALITY_WORKERS)]
         builder = (
             ParallelMaxDivSolverBuilder(problem)

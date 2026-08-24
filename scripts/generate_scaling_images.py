@@ -1,6 +1,6 @@
 """Regenerate the solver-scaling result images and tables from the tracked measurement data.
 
-Reads the two sweeps' run records and the memory fits, and renders the combined time and memory
+Reads the stages' run records and the memory fits, and renders the combined time and memory
 charts, one fit chart per fitted configuration, and the markdown tables and fragments the results
 pages include — images under the scaling docs' `images/` folder (`IMAGES_DIR`), markdown under
 `generated/`. Charts use the docs Matplotlib style sheet (`STYLE_SHEET`), shared with the
@@ -27,6 +27,8 @@ REPO_ROOT = SCRIPTS_DIR.parent
 # repo root on the path. Running the script from the repo root does not do that by itself.
 sys.path.insert(0, str(REPO_ROOT))
 
+from benchmarks.solver_scaling.best_known_stage import DATA_PATH as BEST_KNOWN_DATA_PATH  # noqa: E402
+from benchmarks.solver_scaling.best_known_stage import best_known_by_size  # noqa: E402
 from benchmarks.solver_scaling.configs import CONFIGS  # noqa: E402
 from benchmarks.solver_scaling.grid import (  # noqa: E402
     GRID_MIN,
@@ -379,6 +381,24 @@ def write_memory_table(fits: dict, names: dict[str, str]) -> None:
     _write_generated("scaling_memory.md", lines)
 
 
+def write_best_known_table(records: list[ScalingRunRecord], names: dict[str, str]) -> None:
+    """Write the best-known-solution provenance table: per size, the best extended-run result.
+
+    The measured-time column keeps a late completion visible — the best-known stage keeps a run
+    that finished past its budget (see `best_known_stage`).
+    """
+    lines = [
+        "| Problem size n | Best-known quality (min. separation) | Solver | Config | Measured time |",
+        "|---|---|---|---|---|",
+    ]
+    for n, record in best_known_by_size(records).items():
+        lines.append(
+            f"| {n:,} | {record.min_separation:.4f} | {_display_name(record.tool, names)}"
+            f" | `{record.config}` | {record.measured_sec:.0f} s |"
+        )
+    _write_generated("scaling_best_known.md", lines)
+
+
 def _write_generated(name: str, lines: list[str]) -> None:
     """Write one generated markdown fragment."""
     path = GENERATED_DIR / name
@@ -390,12 +410,15 @@ def _write_generated(name: str, lines: list[str]) -> None:
 #  Main entrypoint
 # ==================================================================================================
 def main() -> None:
-    """Regenerate the charts and tables from the two sweeps' tracked data files."""
+    """Regenerate the charts and tables from the stages' tracked data files."""
     plt.style.use(STYLE_SHEET)
     names = _solver_names()
     time_grouped = _records_by_config(load_scaling_records(TIME_DATA_PATH) if TIME_DATA_PATH.exists() else [])
     memory_grouped = _records_by_config(load_scaling_records(MEMORY_DATA_PATH) if MEMORY_DATA_PATH.exists() else [])
     fits = json.loads(FIT_PATH.read_text(encoding="utf-8")) if FIT_PATH.exists() else {}
+    best_known_records = load_scaling_records(BEST_KNOWN_DATA_PATH) if BEST_KNOWN_DATA_PATH.exists() else []
+    if best_known_records:
+        write_best_known_table(best_known_records, names)
     render_time_chart(time_grouped, names)
     render_memory_chart(memory_grouped, fits, names)
     render_fit_charts(memory_grouped, fits, names)

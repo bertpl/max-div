@@ -4,7 +4,12 @@ import pytest
 
 from benchmarks.exact.mip_maxmin import _remaining_sec
 from benchmarks.solver_scaling.configs import CONFIGS, TEST_SLEEP_CONFIG, _exact_deadline, configs_for, resolve
-from benchmarks.solver_scaling.grid import SELF_LIMIT_MARGIN_SEC
+from benchmarks.solver_scaling.grid import (
+    EXTENDED_BUDGET_SEC,
+    EXTENDED_SELF_LIMIT_MARGIN_SEC,
+    SELF_LIMIT_MARGIN_SEC,
+    self_limit_margin_sec,
+)
 
 # The registry keys every configuration's `tool` must be one of (data/solver_registry.yaml).
 EXPECTED_TOOLS = {
@@ -59,6 +64,14 @@ def test_exact_deadline_sits_margin_under_the_budget():
     # --- assert -----------------------
     assert deadline - now == pytest.approx(60.0 - SELF_LIMIT_MARGIN_SEC, abs=0.1)
     assert zero_budget_deadline - now == pytest.approx(0.1, abs=0.1)
+
+
+def test_self_limit_margin_grows_with_the_extended_budget():
+    """Extended-budget runs get the larger margin; the reference and warm-up budgets keep 1 s."""
+    # --- act / assert -----------------
+    assert self_limit_margin_sec(EXTENDED_BUDGET_SEC) == EXTENDED_SELF_LIMIT_MARGIN_SEC
+    assert self_limit_margin_sec(60.0) == SELF_LIMIT_MARGIN_SEC
+    assert self_limit_margin_sec(5.0) == SELF_LIMIT_MARGIN_SEC
 
 
 def test_remaining_sec_shrinks_with_elapsed_time_and_never_reaches_zero():
