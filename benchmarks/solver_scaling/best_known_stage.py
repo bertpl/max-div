@@ -2,11 +2,11 @@
 
 The runs feed the best-known reference pool and publish no size limit, so the stopping rule is
 more lenient than the time stage's: a completed run never ends a configuration's series, however
-long it took — only a kill (the extended budget plus the setup grace, or the memory cap) or a
-crash does. The measurement protocol's `Q_extended` section carries the rationale.
+long it took. Only a kill (the extended budget plus the setup grace, or the memory cap) or a
+crash ends it. The measurement protocol's `Q_extended` section carries the rationale.
 
-Sizes run up to the largest n any configuration reached within the time budget: beyond it no
-quality verdict exists that would need a reference.
+Sizes run up to the largest n any configuration reached within the time budget: beyond that size
+no quality verdict exists that would need a reference.
 
 Records are appended after every run to the tracked data file, so an interrupted stage resumes by
 rerunning: already-recorded runs are skipped.

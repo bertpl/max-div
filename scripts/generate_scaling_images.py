@@ -1,6 +1,6 @@
 """Regenerate the solver-scaling result images and tables from the tracked measurement data.
 
-Reads the two sweeps' run records and the memory fits, and renders the combined time and memory
+Reads the stages' run records and the memory fits, and renders the combined time and memory
 charts, one fit chart per fitted configuration, and the markdown tables and fragments the results
 pages include — images under the scaling docs' `images/` folder (`IMAGES_DIR`), markdown under
 `generated/`. Charts use the docs Matplotlib style sheet (`STYLE_SHEET`), shared with the
@@ -27,9 +27,9 @@ REPO_ROOT = SCRIPTS_DIR.parent
 # repo root on the path. Running the script from the repo root does not do that by itself.
 sys.path.insert(0, str(REPO_ROOT))
 
-from benchmarks.solver_scaling.configs import CONFIGS  # noqa: E402
 from benchmarks.solver_scaling.best_known_stage import DATA_PATH as BEST_KNOWN_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.best_known_stage import best_known_by_size  # noqa: E402
+from benchmarks.solver_scaling.configs import CONFIGS  # noqa: E402
 from benchmarks.solver_scaling.grid import (  # noqa: E402
     GRID_MIN,
     MEMORY_CAP_BYTES,
@@ -410,7 +410,7 @@ def _write_generated(name: str, lines: list[str]) -> None:
 #  Main entrypoint
 # ==================================================================================================
 def main() -> None:
-    """Regenerate the charts and tables from the sweeps' tracked data files."""
+    """Regenerate the charts and tables from the stages' tracked data files."""
     plt.style.use(STYLE_SHEET)
     names = _solver_names()
     time_grouped = _records_by_config(load_scaling_records(TIME_DATA_PATH) if TIME_DATA_PATH.exists() else [])
