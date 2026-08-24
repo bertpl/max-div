@@ -10,6 +10,7 @@ it itself. Every solver's imports happen inside `select`, not at module load, so
 solver never pays another's.
 """
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -43,14 +44,15 @@ class ScalingConfig:
     stochastic: bool
 
 
-def _exact_budget(budget_sec: float) -> float:
-    """Return an exact solver's budget: the run budget less the self-limit margin.
+def _exact_deadline(budget_sec: float) -> float:
+    """Return the `time.monotonic()` deadline an exact solver must finish by: now + budget − margin.
 
-    An exact solver honors its own time limit, but its untimed model build adds to the measured
-    end-to-end time; aiming under `T_max` keeps the whole run within the budget it is judged
-    against.
+    The exact-solver entry points set their internal time limit to whatever remains of this
+    deadline when solving starts, so their model-construction time is covered. The margin under
+    the run budget covers what an internal limit cannot: result extraction after the solver's
+    clock stops, and the limit's own imprecision.
     """
-    return max(budget_sec - SELF_LIMIT_MARGIN_SEC, 0.1)
+    return time.monotonic() + max(budget_sec - SELF_LIMIT_MARGIN_SEC, 0.1)
 
 
 # ==================================================================================================
@@ -119,7 +121,7 @@ def _cpsat_select(first_feasible: bool, num_workers: int) -> SelectFn:
         from benchmarks.exact.mip_maxmin import solve_maxmin_cpsat_selection
 
         return solve_maxmin_cpsat_selection(
-            problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed, num_workers=num_workers
+            problem, _exact_deadline(budget_sec), first_feasible=first_feasible, seed=seed, num_workers=num_workers
         )
 
     return select
@@ -131,7 +133,9 @@ def _scip_select(first_feasible: bool) -> SelectFn:
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from benchmarks.exact.mip_maxmin import solve_maxmin_scip_selection
 
-        return solve_maxmin_scip_selection(problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed)
+        return solve_maxmin_scip_selection(
+            problem, _exact_deadline(budget_sec), first_feasible=first_feasible, seed=seed
+        )
 
     return select
 
@@ -143,7 +147,7 @@ def _highs_select(first_feasible: bool, num_workers: int) -> SelectFn:
         from benchmarks.exact.mip_maxmin import solve_maxmin_highs_selection
 
         return solve_maxmin_highs_selection(
-            problem, _exact_budget(budget_sec), first_feasible=first_feasible, seed=seed, num_workers=num_workers
+            problem, _exact_deadline(budget_sec), first_feasible=first_feasible, seed=seed, num_workers=num_workers
         )
 
     return select

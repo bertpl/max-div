@@ -4,11 +4,16 @@ The model carries one binary variable per item and a per-pair constraint (big-M 
 MIP solvers, an enforcement literal for CP-SAT), so it is quadratic in n — which is what
 bounds how large a problem an exact solver can handle in memory and in time.
 
-All three entry points share one contract: return a valid size-k selection within the
-wall-clock budget. With ``first_feasible`` the solver stops at its first (improving) solution
-— the fastest standard setting that still produces a valid selection; without it the solver
-optimizes until the budget runs out.
+All three entry points share one contract: return a valid size-k selection by ``deadline``,
+a ``time.monotonic()`` timestamp. Each solver's internal time limit only covers its solving
+phase, so it is set to the time remaining at the moment solving starts — the model
+construction before it shrinks the solver's budget instead of adding to the measured
+end-to-end time on top of it. With ``first_feasible`` the solver stops at its first
+(improving) solution — the fastest standard setting that still produces a valid selection;
+without it the solver optimizes until its time runs out.
 """
+
+import time
 
 import numpy as np
 from numpy.typing import NDArray
@@ -23,8 +28,13 @@ def _pairwise(problem: MaxDivProblem) -> NDArray[np.float64]:
     return squareform(pdist(problem_vectors(problem).astype(np.float64)))
 
 
+def _remaining_sec(deadline: float) -> float:
+    """Return the time left until `deadline` (a `time.monotonic()` value), floored at 0.01 s."""
+    return max(deadline - time.monotonic(), 0.01)
+
+
 def solve_maxmin_cpsat_selection(
-    problem: MaxDivProblem, budget_sec: float, first_feasible: bool, seed: int, num_workers: int = 1
+    problem: MaxDivProblem, deadline: float, first_feasible: bool, seed: int, num_workers: int = 1
 ) -> NDArray[np.int64]:
     """CP-SAT: pick k items maximizing the minimum pairwise distance.
 
@@ -49,7 +59,7 @@ def solve_maxmin_cpsat_selection(
         model.maximize(t)
 
     solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = max(budget_sec, 0.01)
+    solver.parameters.max_time_in_seconds = _remaining_sec(deadline)
     solver.parameters.random_seed = seed
     solver.parameters.num_search_workers = num_workers
     if first_feasible:
@@ -61,7 +71,7 @@ def solve_maxmin_cpsat_selection(
 
 
 def solve_maxmin_scip_selection(
-    problem: MaxDivProblem, budget_sec: float, first_feasible: bool, seed: int
+    problem: MaxDivProblem, deadline: float, first_feasible: bool, seed: int
 ) -> NDArray[np.int64]:
     """SCIP on the big-M max-min MIP."""
     from pyscipopt import Model, quicksum
@@ -72,7 +82,6 @@ def solve_maxmin_scip_selection(
 
     model = Model()
     model.hideOutput()
-    model.setParam("limits/time", max(budget_sec, 0.01))
     model.setParam("randomization/randomseedshift", seed)
     if first_feasible:
         model.setParam("limits/solutions", 1)
@@ -83,6 +92,7 @@ def solve_maxmin_scip_selection(
         for j in range(i + 1, n):
             model.addCons(t <= dist[i, j] + big_m * (2 - x[i] - x[j]))
     model.setObjective(t, "maximize")
+    model.setParam("limits/time", _remaining_sec(deadline))
     model.optimize()
     if model.getNSols() == 0:
         raise RuntimeError("SCIP returned no solution within the budget")
@@ -91,7 +101,7 @@ def solve_maxmin_scip_selection(
 
 
 def solve_maxmin_highs_selection(
-    problem: MaxDivProblem, budget_sec: float, first_feasible: bool, seed: int, num_workers: int = 1
+    problem: MaxDivProblem, deadline: float, first_feasible: bool, seed: int, num_workers: int = 1
 ) -> NDArray[np.int64]:
     """HiGHS on the big-M max-min MIP; ``num_workers`` sets the parallel branch-and-bound threads."""
     import highspy
@@ -102,7 +112,6 @@ def solve_maxmin_highs_selection(
 
     h = highspy.Highs()
     h.setOptionValue("output_flag", False)
-    h.setOptionValue("time_limit", max(budget_sec, 0.01))
     h.setOptionValue("random_seed", seed)
     h.setOptionValue("threads", num_workers)
     if first_feasible:
@@ -125,6 +134,7 @@ def solve_maxmin_highs_selection(
             coef = np.asarray([big_m, big_m, 1.0])
             h.addRow(-inf, dist[i, j] + 2 * big_m, 3, idx, coef)
 
+    h.setOptionValue("time_limit", _remaining_sec(deadline))
     h.run()
     values = np.asarray(h.getSolution().col_value[:n])
     # a valid answer needs exactly k variables at 1; a fractional or wrong-count solution (no
