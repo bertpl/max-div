@@ -32,6 +32,7 @@ from benchmarks.solver_scaling.grid import (  # noqa: E402
     GRID_MIN,
     MEMORY_CAP_BYTES,
     REFERENCE_BUDGET_SEC,
+    SETUP_GRACE_SEC,
     operational_bound,
     size_grid,
 )
@@ -47,10 +48,9 @@ GENERATED_DIR = REPO_ROOT / "generated"
 STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 REGISTRY_FILE = REPO_ROOT / "data" / "solver_registry.yaml"
 
-_SWEEP_END_LABELS = {
-    Outcome.TIMEOUT: "time budget exceeded",
-    Outcome.MEMORY: "memory cap exceeded",
-}
+# One width for every plotted line, so the time chart's series and the memory chart's fit curves
+# read the same weight.
+_LINE_WIDTH = 1.0
 
 
 # ==================================================================================================
@@ -71,16 +71,21 @@ def _records_by_config(records: list[ScalingRunRecord]) -> dict[tuple[str, str],
     return {key: sorted(rows, key=lambda r: r.n) for key, rows in grouped.items() if rows}
 
 
-def _series_label(tool: str, config: str, names: dict[str, str], markdown: bool = False) -> str:
-    """Return a series label: the display name, with the configuration appended when a tool has several.
+def _display_name(tool: str, names: dict[str, str]) -> str:
+    """Return the tool's display name (its own column in the result tables)."""
+    return names.get(tool, tool)
 
-    With `markdown` the configuration renders as inline code, matching the solver-configurations
-    page; chart legends get the plain form, since matplotlib renders backticks literally.
+
+def _legend_label(tool: str, config: str, names: dict[str, str]) -> str:
+    """Return a chart-legend label: the display name, with `[config]` appended when a tool has several.
+
+    Brackets match the plain text a matplotlib legend renders (backticks would show literally);
+    the result tables keep the configuration in its own column instead.
     """
-    display = names.get(tool, tool)
+    display = _display_name(tool, names)
     if len([c for c in CONFIGS if c.tool == tool]) == 1:
         return display
-    return f"{display} `{config}`" if markdown else f"{display} {config}"
+    return f"{display} [{config}]"
 
 
 # ==================================================================================================
@@ -144,7 +149,8 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
             ax.plot(
                 [r.n for r in completed],
                 [r.measured_sec for r in completed],
-                label=_series_label(tool, config, names),
+                label=_legend_label(tool, config, names),
+                linewidth=_LINE_WIDTH,
                 **_series_marker(index),
             )
     ax.axhline(REFERENCE_BUDGET_SEC, color="#888888", linestyle="--", linewidth=1.2)
@@ -181,7 +187,7 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
             [r.n for r in observed],
             [r.peak_memory_bytes for r in observed],
             linestyle="none",
-            label=_series_label(tool, config, names),
+            label=_legend_label(tool, config, names),
             **_series_marker(index),
         )
         _draw_fit_curve(ax, fits.get(f"{tool}/{config}", {}), observed, handles[0].get_color())
@@ -212,9 +218,17 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
 
 
 def _footprint_rows(rows: list[ScalingRunRecord]) -> list[ScalingRunRecord]:
-    """Return the runs carrying a memory footprint: completed, or killed at the window's end."""
+    """Return the runs carrying a usable memory footprint: completed, or killed at the window's end.
+
+    Worker-spawning configurations are excluded — they are not measured on the memory axis, so
+    their runs must not appear as points or in the legend.
+    """
     return [
-        r for r in rows if r.peak_memory_bytes and classify(r.completed, r.reason) in (Outcome.SUCCESS, Outcome.TIMEOUT)
+        r
+        for r in rows
+        if r.peak_memory_bytes
+        and not r.spawned_processes
+        and classify(r.completed, r.reason) in (Outcome.SUCCESS, Outcome.TIMEOUT)
     ]
 
 
@@ -228,7 +242,7 @@ def _draw_fit_curve(ax: plt.Axes, fit: dict, observed: list[ScalingRunRecord], c
     ns = np.geomspace(n_lo, n_hi, 200)
     predicted = sum(c * ns**p for p, c in enumerate(coef))
     visible = predicted <= 2 * MEMORY_CAP_BYTES  # stop shortly above the cap; further extrapolation says nothing
-    ax.plot(ns[visible], predicted[visible], color=color, linestyle="--", linewidth=1.0, alpha=0.8)
+    ax.plot(ns[visible], predicted[visible], color=color, linestyle="--", linewidth=_LINE_WIDTH, alpha=0.8)
 
 
 def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
@@ -249,7 +263,7 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
         # index into the same cycle as the combined chart's series order, so each configuration
         # keeps one color across all memory charts
         color = colors[index % len(colors)]
-        label = _series_label(tool, config, names)
+        label = _legend_label(tool, config, names)
         # the combined chart's marker for this config, so shape and fill match its color there
         marker_style = _series_marker(index)
         fig, ax = plt.subplots(figsize=(7.0, 4.2))
@@ -313,38 +327,42 @@ def _sweep_end(rows: list[ScalingRunRecord]) -> str:
     if passes_time(last):
         return "grid exhausted"
     outcome = classify(last.completed, last.reason)
-    if outcome is Outcome.SUCCESS:  # completed, but past the time budget
-        return f"completed past the time budget at n={last.n:,} ({last.measured_sec:.0f} s)"
     if outcome is Outcome.SCALING_FAILURE:
         return f"failure at n={last.n:,}: `{last.reason}`"
-    return f"{_SWEEP_END_LABELS[outcome]} at n={last.n:,}"
+    if outcome is Outcome.MEMORY:
+        return f"memory cap exceeded at n={last.n:,}"
+    # A run over the time budget gets one message with the time shown, whether it finished within
+    # the kill grace (measured time known) or was killed at the deadline (time only bounded below).
+    if last.completed and last.measured_sec is not None:
+        elapsed = f"{last.measured_sec:.0f} s"
+    else:
+        elapsed = f"≥{int(REFERENCE_BUDGET_SEC + SETUP_GRACE_SEC)} s"
+    return f"time budget exceeded at n={last.n:,} ({elapsed})"
 
 
 def write_time_table(grouped: dict, names: dict[str, str]) -> None:
     """Write the per-configuration largest-n-within-time table."""
     lines = [
-        "| Solver | Largest n within the time budget | Sweep ended by |",
-        "|---|---|---|",
+        "| Solver | Config | Largest n within the time budget | Sweep ended by |",
+        "|---|---|---|---|",
     ]
     for (tool, config), rows in grouped.items():
         passing = [r.n for r in rows if passes_time(r)]
         largest = f"**{max(passing):,}**" if passing else "—"
-        lines.append(f"| {_series_label(tool, config, names, markdown=True)} | {largest} | {_sweep_end(rows)} |")
+        lines.append(f"| {_display_name(tool, names)} | `{config}` | {largest} | {_sweep_end(rows)} |")
     _write_generated("scaling_time.md", lines)
 
 
 def write_memory_table(fits: dict, names: dict[str, str]) -> None:
     """Write the per-configuration largest-n-within-memory table, one row per fit entry."""
     lines = [
-        "| Solver | Largest n within memory | Determination |",
-        "|---|---|---|",
+        "| Solver | Config | Largest n within memory | Determination |",
+        "|---|---|---|---|",
     ]
     for key, fit in fits.items():
         tool, config = key.split("/", 1)
         largest = f"**{fit['max_n']:,}**" if fit.get("max_n") else "—"
-        lines.append(
-            f"| {_series_label(tool, config, names, markdown=True)} | {largest} | {fit.get('reason', 'no fit')} |"
-        )
+        lines.append(f"| {_display_name(tool, names)} | `{config}` | {largest} | {fit.get('reason', 'no fit')} |")
     _write_generated("scaling_memory.md", lines)
 
 

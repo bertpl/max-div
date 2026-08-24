@@ -4,7 +4,7 @@ solver:
   source: https://scikit-matter.readthedocs.io/
   verified: 2026-07-27
   scale:
-    max_n_memory: 200000000
+    max_n_memory: 500000000
     max_n_time: 500000
     max_n_quality: pending
   metadata:

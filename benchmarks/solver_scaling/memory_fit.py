@@ -24,9 +24,12 @@ _INPUT_MIN_BYTES = 8.0  # 4 bytes x d=2: the raw float32 vectors, the linear coe
 _C2_MIN_BYTES = 0.1
 
 # The trust conditions (measurement protocol, IV.B.1): the recorded footprints must span this
-# range factor, and the fitted model must reach this R^2.
-_SPAN_FACTOR = 2.0
+# range factor, the fitted model must reach this R^2, and there must be at least this many
+# distinct sizes — a high-R^2 fit over only a few points spanning a small range extrapolates to
+# the memory cap on too little evidence to trust.
+_SPAN_FACTOR = 3.0
 _R2_MIN = 0.95
+_MIN_TRUST_SIZES = 5
 
 FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
 
@@ -60,7 +63,7 @@ def fit_series(sizes_peaks: dict[int, float]) -> MemoryFit:
 
 def trust_conditions_met(sizes_peaks: dict[int, float], fit: MemoryFit) -> bool:
     """Return whether the fitted crossing is trustworthy enough to end the memory sweep."""
-    if len(sizes_peaks) < 3 or fit.r2 is None:
+    if len(sizes_peaks) < _MIN_TRUST_SIZES or fit.r2 is None:
         return False
     return max(sizes_peaks.values()) >= _SPAN_FACTOR * min(sizes_peaks.values()) and fit.r2 >= _R2_MIN
 
