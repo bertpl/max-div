@@ -4,8 +4,8 @@ solver:
   source: https://github.com/yhwang1990/code-FDM
   verified: 2026-07-27
   scale:
-    max_n_memory: pending
-    max_n_time: pending
+    max_n_memory: 100000000
+    max_n_time: 10000
     max_n_quality: pending
   metadata:
     guarantee: heuristic with approximation bounds stated in the paper
