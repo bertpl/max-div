@@ -171,11 +171,12 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
     ax.text(
         0.99,
         REFERENCE_BUDGET_SEC * 1.2,
-        "T_max (1 min)",
+        "$\\mathrm{T_{max}}$ (1 min)",
         color="#555555",
         ha="right",
         fontsize=9,
         transform=ax.get_yaxis_transform(),
+        bbox={"facecolor": "white", "alpha": 0.75, "edgecolor": "none"},
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -210,11 +211,12 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
     ax.text(
         0.99,
         MEMORY_CAP_BYTES * 1.3,
-        "M_max (32 GB)",
+        "$\\mathrm{M_{max}}$ (32 GB)",
         color="#555555",
         ha="right",
         fontsize=9,
         transform=ax.get_yaxis_transform(),
+        bbox={"facecolor": "white", "alpha": 0.75, "edgecolor": "none"},
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
