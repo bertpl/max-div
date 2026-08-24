@@ -19,7 +19,8 @@ GRID_MIN = 20  # the smallest size the benchmark problems build at
 # A self-limiting solver (max-div under an end-to-end budget) is handed this much less than
 # REFERENCE_BUDGET_SEC. Its real end-to-end time overshoots the budget it is given — by up to one
 # optimization batch — so aiming under T_max keeps the measured time within the budget it is judged
-# against. One-shot tools take no budget and ignore this.
+# against. The exact solvers subtract the same margin from their deadline, for their own reason
+# (`_exact_deadline` in configs.py). One-shot tools take no budget and ignore this.
 SELF_LIMIT_MARGIN_SEC = 1.0
 
 # Added to a run's hard-kill deadline on top of its budget. The child's untimed work (interpreter
