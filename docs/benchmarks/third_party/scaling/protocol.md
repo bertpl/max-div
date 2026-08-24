@@ -178,12 +178,14 @@ The additional criterion that comes into play here is `median(Q_observed) >= 0.1
 
     FOR EACH solver configuration:
         FOR EACH n in N up to n_max:
-            run under M_max and the extended budget T_extended = 15 * T_max
-            IF success within both budgets:
+            run under M_max with the extended budget T_extended = 15 * T_max
+            IF the run completes:                   # however long it took
                 Q_extended(solver_config, n) = quality (diversity)
-            ELSE:                                   # exceeded memory or time
+            ELSE:                                   # killed on memory or time, or crashed
                 STOP and move to the next configuration
     ```
+
+A run that completes somewhat past `T_extended` (bounded by the kill, which allows a small overrun) still counts and does not end the configuration's series.  The extended runs feed only the best-known reference, and a late solution can only raise that reference for every solver alike; the published best-known table reports each entry's measured time, so a late entry is visible.  The time-bound setting (IV.C) keeps its strict criterion — there, completion within `T_max` is itself the published value.
 
 #### IV.D.3. Determining `Q_observed`
 

@@ -6,6 +6,7 @@ the same grid shape.
 """
 
 REFERENCE_BUDGET_SEC = 60.0  # T_max: the budget every time/quality run is judged against
+EXTENDED_BUDGET_SEC = 15 * REFERENCE_BUDGET_SEC  # T_extended: the best-known reference runs' budget
 
 # The discarded warm-up run each sweep gives a fresh configuration uses this budget.
 # The first child process after a fresh environment install pays a one-off import/bytecode-
@@ -23,12 +24,27 @@ GRID_MIN = 20  # the smallest size the benchmark problems build at
 # (`_exact_deadline` in configs.py). One-shot tools take no budget and ignore this.
 SELF_LIMIT_MARGIN_SEC = 1.0
 
+# The margin for runs at the extended budget. The overshoot the margin absorbs grows with n
+# (measured: 0.2 s at n=20 to ~2.7 s at n=2000 for the exact solvers), and the extended budget is
+# what lets solvers reach sizes beyond anything the 1 s margin was validated on; 5 s is still
+# negligible against `EXTENDED_BUDGET_SEC`.
+EXTENDED_SELF_LIMIT_MARGIN_SEC = 5.0
+
 # Added to a run's hard-kill deadline on top of its budget. The child's untimed work (interpreter
 # start, imports, loading the vectors, scoring the selection) runs in the same process, and killing
 # during it would misreport a finished solve as a failure; at every size a run can pass at, that
 # work stays well under this margin. This kill only bounds a stuck run: a run that finishes over
 # T_max is failed on its measured time, not by this kill.
 SETUP_GRACE_SEC = 15.0
+
+
+def self_limit_margin_sec(budget_sec: float) -> float:
+    """Return the margin a self-limiting solver subtracts from `budget_sec` before honoring it.
+
+    Runs at the extended budget get the larger margin; every shorter budget (the reference
+    budget, the warm-up budget) keeps the 1 s margin those budgets were validated with.
+    """
+    return EXTENDED_SELF_LIMIT_MARGIN_SEC if budget_sec > REFERENCE_BUDGET_SEC else SELF_LIMIT_MARGIN_SEC
 
 
 def size_grid(bound: int) -> list[int]:
