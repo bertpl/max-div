@@ -25,8 +25,8 @@ _C2_MIN_BYTES = 0.1
 
 # The trust conditions (measurement protocol, IV.B.1): the recorded footprints must span this
 # range factor, the fitted model must reach this R^2, and there must be at least this many
-# distinct sizes — a small span and a clean fit over only a few points is too thin an
-# extrapolation to the memory cap to trust.
+# distinct sizes — a high-R^2 fit over only a few points spanning a small range extrapolates to
+# the memory cap on too little evidence to trust.
 _SPAN_FACTOR = 3.0
 _R2_MIN = 0.95
 _MIN_TRUST_SIZES = 5

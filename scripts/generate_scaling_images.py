@@ -331,8 +331,8 @@ def _sweep_end(rows: list[ScalingRunRecord]) -> str:
         return f"failure at n={last.n:,}: `{last.reason}`"
     if outcome is Outcome.MEMORY:
         return f"memory cap exceeded at n={last.n:,}"
-    # A run over the time budget, whether it finished within the kill grace (measured time known)
-    # or was killed at the deadline (time only bounded below) — one message, with the time shown.
+    # A run over the time budget gets one message with the time shown, whether it finished within
+    # the kill grace (measured time known) or was killed at the deadline (time only bounded below).
     if last.completed and last.measured_sec is not None:
         elapsed = f"{last.measured_sec:.0f} s"
     else:

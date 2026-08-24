@@ -9,10 +9,9 @@ sweep walks upward until one of:
 
 * the machine-level memory cap kills a run — the measurement series is truncated, the previous size is the result;
 * the solver fails outright after at least one successful size — the series is truncated, with the
-  failure disclosed (a failure before any success is skipped, since a solver can fail the tiny
-  smallest instance yet work above it);
-* the recorded footprints reach the trust conditions (>= 5 sizes spanning a `3x` range with a fit
-  that explains them) — the crossing is read off the fit at the cap (`memory_fit` owns them);
+  failure disclosed (a failure before any success is skipped);
+* the recorded footprints reach the trust conditions — the crossing is read off the fit at the cap
+  (`memory_fit` owns the fit and the trust conditions);
 * the grid is exhausted — the fit is published with that noted.
 
 A configuration observed spawning worker processes is not measured: the recorded per-process

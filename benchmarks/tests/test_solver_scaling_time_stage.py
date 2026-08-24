@@ -5,6 +5,7 @@ from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_rec
 
 
 def _record(n, seed=DEFAULT_SEED, *, completed=True, reason=None, measured_sec=1.0):
+    """Build one time-stage run record; overrides drive the pass/fail and crash cases."""
     return ScalingRunRecord("rdkit", "default", n, n // 10, seed, 60.0, completed, reason, measured_sec, 1000, 0.2)
 
 
