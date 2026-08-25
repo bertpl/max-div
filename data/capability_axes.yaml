@@ -265,24 +265,24 @@ scale_columns:
   columns:
     - key: max_n_memory
       hero_label: memory
-      hero_subtitle: (solvable using ≤32GB RAM)
+      hero_subtitle: (≤32GB RAM)
       label: largest n within memory
       definition: peak memory stays within 32 GB.
     - key: max_n_time
       hero_label: time
-      hero_subtitle: ( + solvable in ≤1min)
+      hero_subtitle: ( + ≤1min)
       label: largest n within the time budget
       definition: a valid selection is returned within one minute, end-to-end.
     - key: max_n_quality_50
-      hero_label: quality 50%
-      hero_subtitle: ( + bridges 50% of random→best delta)
+      hero_label: quality – 50%
+      hero_subtitle: ( + ≥50% random→best)
       label: largest n closing 50% of the quality gap
       definition: >-
         at least 50% of the diversity gap between a random selection and the best known solution
         is closed, at this and every smaller measured size.
     - key: max_n_quality_90
-      hero_label: quality 90%
-      hero_subtitle: ( + bridges 90% of random→best delta)
+      hero_label: quality – 90%
+      hero_subtitle: ( + ≥90% random→best)
       label: largest n closing 90% of the quality gap
       definition: >-
         at least 90% of the diversity gap between a random selection and the best known solution

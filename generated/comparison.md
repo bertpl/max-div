@@ -5,7 +5,7 @@
 <table markdown="block">
 <thead>
 <tr><th rowspan="2">Tool</th><th class="group-edge" colspan="5">distance metrics</th><th class="group-edge" colspan="4">diversity objectives</th><th class="group-edge" colspan="4">constraints beyond k</th><th class="group-edge" colspan="3">time budget</th><th class="group-edge" colspan="2">multi-worker</th><th class="group-edge" colspan="4">solver scaling (n)</th></tr>
-<tr><th class="group-edge">L1</th><th>L2</th><th>L∞</th><th>cosine</th><th>custom</th><th class="group-edge">max-min</th><th>mean-of-NN</th><th>geomean-of-NN</th><th>max-sum</th><th class="group-edge">disjoint groups</th><th>overlapping groups</th><th>ranged counts</th><th>feasibility proofs</th><th class="group-edge">iterations</th><th>wall clock</th><th>improves with budget</th><th class="group-edge">multi-worker - independent</th><th>multi-worker - cooperative</th><th class="group-edge">memory</th><th>time</th><th>quality 50%</th><th>quality 90%</th></tr>
+<tr><th class="group-edge">L1</th><th>L2</th><th>L∞</th><th>cosine</th><th>custom</th><th class="group-edge">max-min</th><th>mean-of-NN</th><th>geomean-of-NN</th><th>max-sum</th><th class="group-edge">disjoint groups</th><th>overlapping groups</th><th>ranged counts</th><th>feasibility proofs</th><th class="group-edge">iterations</th><th>wall clock</th><th>improves with budget</th><th class="group-edge">multi-worker - independent</th><th>multi-worker - cooperative</th><th class="group-edge">memory</th><th>time</th><th>quality – 50%</th><th>quality – 90%</th></tr>
 </thead>
 <tbody markdown="block">
 <tr><th colspan="23" scope="rowgroup"><span class="row-group-label">Anytime optimizers</span></th></tr>

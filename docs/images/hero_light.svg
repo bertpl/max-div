@@ -1,237 +1,240 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="978" height="555" viewBox="0 0 978 555" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
-<rect width="978" height="555" fill="#ffffff"/>
-<polygon points="315,32 445,32 292,185 292,513 162,513 162,185" fill="#f6f8fa"/>
-<text x="380" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">distance</text>
-<line x1="317" y1="31" x2="443" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<text x="497" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">objective</text>
-<line x1="447" y1="31" x2="547" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<polygon points="549,32 653,32 500,185 500,513 396,513 396,185" fill="#f6f8fa"/>
-<text x="601" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">constraints</text>
-<line x1="551" y1="31" x2="651" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<text x="692" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">budget</text>
-<line x1="655" y1="31" x2="729" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<polygon points="731,32 783,32 630,185 630,513 578,513 578,185" fill="#f6f8fa"/>
-<text x="757" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle"></text>
-<line x1="733" y1="31" x2="781" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<text x="875" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">solver scaling (n)</text>
-<line x1="785" y1="31" x2="965" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<polyline points="315,32 162,185 162,513" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="445,32 292,185 292,513" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="549,32 396,185 396,513" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="653,32 500,185 500,513" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="731,32 578,185 578,513" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="783,32 630,185 630,513" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="967,32 814,185 814,513" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<text x="172" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 172 193)">L1</text>
-<text x="198" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 198 193)">L2</text>
-<text x="224" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 224 193)">L∞</text>
-<text x="250" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 250 193)">cosine</text>
-<text x="276" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 276 193)">custom</text>
-<text x="302" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 302 193)">max-min</text>
-<text x="328" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 328 193)">mean-of-NN</text>
-<text x="354" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 354 193)">geomean-of-NN</text>
-<text x="380" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 380 193)">max-sum</text>
-<text x="406" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 406 193)">disjoint groups</text>
-<text x="432" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 432 193)">overlapping groups</text>
-<text x="458" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 458 193)">ranged counts</text>
-<text x="484" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 484 193)">feasibility proofs</text>
-<text x="510" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 510 193)">iterations</text>
-<text x="536" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 536 193)">wall clock</text>
-<text x="562" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 562 193)">improves with budget</text>
-<text x="588" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 588 193)">multi-worker - independent</text>
-<text x="614" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 614 193)">multi-worker - cooperative</text>
-<text x="632" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 632 193)">memory †</text>
-<text x="650" y="193" fill="#656d76" font-size="11" text-anchor="start" transform="rotate(-45 650 193)">(solvable using ≤32GB RAM)</text>
-<text x="678" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 678 193)">time †</text>
-<text x="696" y="193" fill="#656d76" font-size="11" text-anchor="start" transform="rotate(-45 696 193)">( + solvable in ≤1min)</text>
-<text x="724" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 724 193)">quality 50% †</text>
-<text x="742" y="193" fill="#656d76" font-size="11" text-anchor="start" transform="rotate(-45 742 193)">( + bridges 50% of random→best delta)</text>
-<text x="770" y="193" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 770 193)">quality 90% †</text>
-<text x="788" y="193" fill="#656d76" font-size="11" text-anchor="start" transform="rotate(-45 788 193)">( + bridges 90% of random→best delta)</text>
-<rect x="14" y="200" width="800" height="20" fill="#57606a" fill-opacity="0.06"/>
-<text x="14" y="214" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">ANYTIME OPTIMIZERS</text>
-<rect x="14" y="220" width="800" height="23" fill="#ddf4e4"/>
-<line x1="14" y1="220" x2="814" y2="220" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="236" fill="#1f2328" font-size="12.5" font-weight="700">max-div</text>
-<text x="175" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="201" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="227" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="253" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="279" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="331" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="357" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="383" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="409" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="435" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="461" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="487" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="513" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="539" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="565" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="591" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="617" y="236" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="236" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
-<text x="699" y="236" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
-<text x="745" y="236" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="236" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<rect x="14" y="243" width="800" height="20" fill="#57606a" fill-opacity="0.06"/>
-<text x="14" y="257" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">EXACT SOLVERS</text>
-<line x1="14" y1="263" x2="814" y2="263" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="279" fill="#1f2328" font-size="12.5" font-weight="400">OR-Tools CP-SAT</text>
-<text x="175" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="201" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="227" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="253" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="279" y="279" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="331" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="357" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="383" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="409" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="435" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="461" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="487" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="513" y="279" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="539" y="279" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="565" y="279" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="591" y="279" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="617" y="279" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="279" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="699" y="279" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="279" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="279" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="286" x2="814" y2="286" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="302" fill="#1f2328" font-size="12.5" font-weight="400">SCIP</text>
-<text x="175" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="201" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="227" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="253" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="279" y="302" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="331" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="357" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="383" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="409" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="435" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="461" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="487" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="513" y="302" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="539" y="302" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="565" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="617" y="302" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="653" y="302" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="699" y="302" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="745" y="302" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="302" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="309" x2="814" y2="309" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="325" fill="#1f2328" font-size="12.5" font-weight="400">HiGHS</text>
-<text x="175" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="201" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="227" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="253" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="279" y="325" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="331" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="357" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="383" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="409" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="435" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="461" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="487" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="513" y="325" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="539" y="325" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="565" y="325" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="617" y="325" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="325" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="699" y="325" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="745" y="325" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="325" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<rect x="14" y="332" width="800" height="20" fill="#57606a" fill-opacity="0.06"/>
-<text x="14" y="346" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">ONE-SHOT PICKERS &amp; SAMPLERS</text>
-<line x1="14" y1="352" x2="814" y2="352" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="368" fill="#1f2328" font-size="12.5" font-weight="400">RDKit MaxMinPicker</text>
-<text x="175" y="368" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="201" y="368" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="227" y="368" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="253" y="368" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="279" y="368" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="368" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="368" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
-<text x="699" y="368" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="368" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="368" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="375" x2="814" y2="375" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="391" fill="#1f2328" font-size="12.5" font-weight="400">fpsample</text>
-<text x="201" y="391" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="253" y="391" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="305" y="391" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="391" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
-<text x="699" y="391" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">5M</text>
-<text x="745" y="391" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="391" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="398" x2="814" y2="398" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="414" fill="#1f2328" font-size="12.5" font-weight="400">skmatter</text>
-<text x="201" y="414" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="253" y="414" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="305" y="414" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="414" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500M</text>
-<text x="699" y="414" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
-<text x="745" y="414" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="414" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="421" x2="814" y2="421" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="437" fill="#1f2328" font-size="12.5" font-weight="400">apricot-select</text>
-<text x="175" y="437" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="201" y="437" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="227" y="437" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="253" y="437" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="279" y="437" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="383" y="437" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="437" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
-<text x="699" y="437" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
-<text x="745" y="437" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="437" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="444" x2="814" y2="444" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="460" fill="#1f2328" font-size="12.5" font-weight="400">qc-selector</text>
-<text x="175" y="460" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="201" y="460" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="227" y="460" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="253" y="460" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="279" y="460" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="460" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="383" y="460" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="409" y="460" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="513" y="460" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="653" y="460" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="699" y="460" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="460" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="460" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="467" x2="814" y2="467" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="483" fill="#1f2328" font-size="12.5" font-weight="400">DPPy</text>
-<text x="175" y="483" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="201" y="483" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="227" y="483" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="253" y="483" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="279" y="483" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="513" y="483" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="653" y="483" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
-<text x="699" y="483" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
-<text x="745" y="483" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="483" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="490" x2="814" y2="490" stroke="#d8dee4" stroke-width="1"/>
-<text x="16" y="506" fill="#1f2328" font-size="12.5" font-weight="400">code-FDM</text>
-<text x="175" y="506" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="201" y="506" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="227" y="506" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="253" y="506" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="279" y="506" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="506" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="409" y="506" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="506" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">100M</text>
-<text x="699" y="506" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">10k</text>
-<text x="745" y="506" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="506" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="513" x2="814" y2="513" stroke="#d8dee4" stroke-width="1"/>
-<text x="14" y="526" font-size="11"><tspan fill="#1a7f37" font-weight="700">✓</tspan><tspan fill="#656d76" dx="5">built in</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">~</tspan><tspan fill="#656d76" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan></text>
-<text x="14" y="542" font-size="11"><tspan fill="#656d76" font-weight="700">†</tspan><tspan fill="#656d76" dx="5">based on the built-in benchmark problem U1 and the published measurement protocol</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">…</tspan><tspan fill="#656d76" dx="5">measurement pending</tspan></text>
+<svg xmlns="http://www.w3.org/2000/svg" width="966" height="519" viewBox="0 0 966 519" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="966" height="519" fill="#ffffff"/>
+<polygon points="279,32 409,32 292,149 292,477 162,477 162,149" fill="#f6f8fa"/>
+<text x="344" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">distance</text>
+<line x1="281" y1="31" x2="407" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<text x="461" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">objective</text>
+<line x1="411" y1="31" x2="511" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<polygon points="513,32 617,32 500,149 500,477 396,477 396,149" fill="#f6f8fa"/>
+<text x="565" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">constraints</text>
+<line x1="515" y1="31" x2="615" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<text x="656" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">budget</text>
+<line x1="619" y1="31" x2="693" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<polygon points="695,32 747,32 630,149 630,477 578,477 578,149" fill="#f6f8fa"/>
+<text x="721" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle"></text>
+<line x1="697" y1="31" x2="745" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<text x="851" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">solver scaling (n)</text>
+<line x1="749" y1="31" x2="953" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<polyline points="279,32 162,149 162,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="409,32 292,149 292,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="513,32 396,149 396,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="617,32 500,149 500,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="695,32 578,149 578,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="747,32 630,149 630,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="955,32 838,149 838,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="799,32 682,149 682,477" fill="none" stroke="#d8dee4" stroke-width="0.5" stroke-opacity="0.75"/>
+<polyline points="851,32 734,149 734,477" fill="none" stroke="#d8dee4" stroke-width="0.5" stroke-opacity="0.75"/>
+<polyline points="903,32 786,149 786,477" fill="none" stroke="#d8dee4" stroke-width="0.5" stroke-opacity="0.75"/>
+<text x="172" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 172 157)">L1</text>
+<text x="198" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 198 157)">L2</text>
+<text x="224" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 224 157)">L∞</text>
+<text x="250" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 250 157)">cosine</text>
+<text x="276" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 276 157)">custom</text>
+<text x="302" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 302 157)">max-min</text>
+<text x="328" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 328 157)">mean-of-NN</text>
+<text x="354" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 354 157)">geomean-of-NN</text>
+<text x="380" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 380 157)">max-sum</text>
+<text x="406" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 406 157)">disjoint groups</text>
+<text x="432" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 432 157)">overlapping groups</text>
+<text x="458" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 458 157)">ranged counts</text>
+<text x="484" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 484 157)">feasibility proofs</text>
+<text x="510" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 510 157)">iterations</text>
+<text x="536" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 536 157)">wall clock</text>
+<text x="562" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 562 157)">improves with budget</text>
+<text x="588" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 588 157)">multi-worker - independent</text>
+<text x="614" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 614 157)">multi-worker - cooperative</text>
+<text x="644" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 644 157)">memory †</text>
+<text x="662" y="157" fill="#656d76" font-size="10" text-anchor="start" transform="rotate(-45 662 157)">(≤32GB RAM)</text>
+<text x="696" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 696 157)">time †</text>
+<text x="714" y="157" fill="#656d76" font-size="10" text-anchor="start" transform="rotate(-45 714 157)">( + ≤1min)</text>
+<text x="748" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 748 157)">quality – 50% †</text>
+<text x="766" y="157" fill="#656d76" font-size="10" text-anchor="start" transform="rotate(-45 766 157)">( + ≥50% random→best)</text>
+<text x="800" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 800 157)">quality – 90% †</text>
+<text x="818" y="157" fill="#656d76" font-size="10" text-anchor="start" transform="rotate(-45 818 157)">( + ≥90% random→best)</text>
+<rect x="14" y="164" width="824" height="20" fill="#57606a" fill-opacity="0.06"/>
+<text x="14" y="178" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">ANYTIME OPTIMIZERS</text>
+<rect x="14" y="184" width="824" height="23" fill="#ddf4e4"/>
+<line x1="14" y1="184" x2="838" y2="184" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="200" fill="#1f2328" font-size="12.5" font-weight="700">max-div</text>
+<text x="175" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="201" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="227" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="253" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="279" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="331" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="357" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="383" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="409" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="435" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="461" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="487" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="513" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="539" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="565" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="591" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="617" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="656" y="200" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
+<text x="708" y="200" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
+<text x="760" y="200" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="200" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<rect x="14" y="207" width="824" height="20" fill="#57606a" fill-opacity="0.06"/>
+<text x="14" y="221" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">EXACT SOLVERS</text>
+<line x1="14" y1="227" x2="838" y2="227" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="243" fill="#1f2328" font-size="12.5" font-weight="400">OR-Tools CP-SAT</text>
+<text x="175" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="201" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="227" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="253" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="331" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="357" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="383" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="409" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="435" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="461" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="487" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="513" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="539" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="565" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="591" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="617" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="656" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="708" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="760" y="243" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="243" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="250" x2="838" y2="250" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="266" fill="#1f2328" font-size="12.5" font-weight="400">SCIP</text>
+<text x="175" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="201" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="227" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="253" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="266" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="331" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="357" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="383" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="409" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="435" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="461" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="487" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="513" y="266" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="539" y="266" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="565" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="617" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="656" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
+<text x="708" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
+<text x="760" y="266" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="266" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="273" x2="838" y2="273" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="289" fill="#1f2328" font-size="12.5" font-weight="400">HiGHS</text>
+<text x="175" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="201" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="227" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="253" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="331" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="357" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="383" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="409" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="435" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="461" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="487" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="513" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="539" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="565" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="617" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="656" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
+<text x="708" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
+<text x="760" y="289" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="289" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<rect x="14" y="296" width="824" height="20" fill="#57606a" fill-opacity="0.06"/>
+<text x="14" y="310" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">ONE-SHOT PICKERS &amp; SAMPLERS</text>
+<line x1="14" y1="316" x2="838" y2="316" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="332" fill="#1f2328" font-size="12.5" font-weight="400">RDKit MaxMinPicker</text>
+<text x="175" y="332" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="201" y="332" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="227" y="332" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="253" y="332" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="332" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="332" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="656" y="332" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
+<text x="708" y="332" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="760" y="332" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="332" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="339" x2="838" y2="339" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="355" fill="#1f2328" font-size="12.5" font-weight="400">fpsample</text>
+<text x="201" y="355" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="253" y="355" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="305" y="355" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="656" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
+<text x="708" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">5M</text>
+<text x="760" y="355" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="355" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="362" x2="838" y2="362" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="378" fill="#1f2328" font-size="12.5" font-weight="400">skmatter</text>
+<text x="201" y="378" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="253" y="378" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="305" y="378" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="656" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500M</text>
+<text x="708" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
+<text x="760" y="378" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="378" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="385" x2="838" y2="385" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="401" fill="#1f2328" font-size="12.5" font-weight="400">apricot-select</text>
+<text x="175" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="201" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="227" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="253" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="279" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="383" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="656" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
+<text x="708" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
+<text x="760" y="401" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="401" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="408" x2="838" y2="408" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="424" fill="#1f2328" font-size="12.5" font-weight="400">qc-selector</text>
+<text x="175" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="201" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="227" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="253" y="424" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="383" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="409" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="513" y="424" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="656" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="708" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="760" y="424" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="424" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="431" x2="838" y2="431" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="447" fill="#1f2328" font-size="12.5" font-weight="400">DPPy</text>
+<text x="175" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="201" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="227" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="253" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="447" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="513" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="656" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
+<text x="708" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
+<text x="760" y="447" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="447" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="454" x2="838" y2="454" stroke="#d8dee4" stroke-width="1"/>
+<text x="16" y="470" fill="#1f2328" font-size="12.5" font-weight="400">code-FDM</text>
+<text x="175" y="470" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="201" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="227" y="470" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="253" y="470" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="409" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="656" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">100M</text>
+<text x="708" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">10k</text>
+<text x="760" y="470" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="812" y="470" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<line x1="14" y1="477" x2="838" y2="477" stroke="#d8dee4" stroke-width="1"/>
+<text x="14" y="490" font-size="11"><tspan fill="#1a7f37" font-weight="700">✓</tspan><tspan fill="#656d76" dx="5">built in</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">~</tspan><tspan fill="#656d76" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan></text>
+<text x="14" y="506" font-size="11"><tspan fill="#656d76" font-weight="700">†</tspan><tspan fill="#656d76" dx="5">based on the built-in benchmark problem U1 and the published measurement protocol</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">…</tspan><tspan fill="#656d76" dx="5">measurement pending</tspan></text>
 </svg>

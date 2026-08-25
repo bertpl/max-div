@@ -87,8 +87,8 @@ Each column is the largest measured problem size n at which the solver still mee
 |---|---|
 | memory | peak memory stays within 32 GB. |
 | time | a valid selection is returned within one minute, end-to-end. |
-| quality 50% | at least 50% of the diversity gap between a random selection and the best known solution is closed, at this and every smaller measured size. |
-| quality 90% | at least 90% of the diversity gap between a random selection and the best known solution is closed, at this and every smaller measured size. |
+| quality – 50% | at least 50% of the diversity gap between a random selection and the best known solution is closed, at this and every smaller measured size. |
+| quality – 90% | at least 90% of the diversity gap between a random selection and the best known solution is closed, at this and every smaller measured size. |
 
 </div>
 

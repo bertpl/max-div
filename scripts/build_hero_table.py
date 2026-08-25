@@ -38,7 +38,7 @@ import capability_data  # noqa: E402
 # --- geometry (all integers; no float formatting anywhere) --
 LABEL_W = 148  # solver-name gutter
 COL_W = 26  # one mark column
-SCALE_W = 46  # one measured-scaling column — wide enough for the longest suffix value ("500M")
+SCALE_W = 52  # one measured-scaling column — wide enough for the longest suffix value ("500M")
 ROW_H = 23
 HEADER_H = 132  # room for the 45-degree labels
 GROUP_H = 18
@@ -49,8 +49,8 @@ CORNER_LIFT = 15  # where the band edge turns diagonal, above the first row
 PAD = 14
 HEADER_FS = 12  # header font size; the width estimate below is calibrated to it
 CHAR_W = 63  # tenths of a px per character at HEADER_FS, averaged over mixed-case text
-SUB_FS = 11  # scaling-column subtitle size, one step under HEADER_FS
-SUB_CHAR_W = 58  # tenths of a px per character at SUB_FS
+SUB_FS = 10  # scaling-column subtitle size, two steps under HEADER_FS
+SUB_CHAR_W = 53  # tenths of a px per character at SUB_FS
 LINE_GAP = 18  # horizontal shift between a title and its subtitle anchor (a 13px gap after rotation)
 
 THEMES = {
@@ -185,8 +185,8 @@ class _Layout:
         longest_sub = max((len(sub) for sub in self.scale_subtitles if sub), default=0)
         self.overhang = max(
             (longest * CHAR_W * 7) // 100,
-            (longest_sub * SUB_CHAR_W * 7) // 100,
-        )  # /10 for tenths, *0.707 for the rotation
+            (longest_sub * SUB_CHAR_W * 7) // 100 + (LINE_GAP // 2 if longest_sub else 0),
+        )  # /10 for tenths, *0.707 for the rotation; the subtitle anchor sits half a line gap right
         self.header_h = self.overhang + 18
 
         self.width = PAD + LABEL_W + self.grid_w + self.overhang + PAD
@@ -283,6 +283,14 @@ def _group_bands(lay):
     for x in sorted(edges):
         pts = f"{x + lay.skew},{lay.y_top} {x},{lay.y_corner} {x},{lay.y_end}"
         out.append(f'<polyline points="{pts}" fill="none" stroke="{t["rule"]}" stroke-width="0.5"/>')
+    # The scaling columns additionally get separators between one another, at three-quarters the opacity of
+    # the group edges above: four value columns in one band read as one run of text without them.
+    for j in range(1, len(lay.scale_cols)):
+        x = lay.scale_x(j)
+        pts = f"{x + lay.skew},{lay.y_top} {x},{lay.y_corner} {x},{lay.y_end}"
+        out.append(
+            f'<polyline points="{pts}" fill="none" stroke="{t["rule"]}" stroke-width="0.5" stroke-opacity="0.75"/>'
+        )
     return out
 
 
@@ -305,9 +313,10 @@ def _column_headers(lay):
         x = lay.scale_x(j) + SCALE_W // 2 - 3
         subtitle = lay.scale_subtitles[j]
         if subtitle:
-            # The title's anchor shifts left at the same baseline height, so both rotated lines
-            # start at the same vertical position and read as two parallel lines.
-            tx, ty = x - LINE_GAP, y
+            # The pair centers on the column's anchor: title and subtitle shift half the line
+            # gap to either side at the same baseline height, reading as two parallel lines.
+            tx, ty = x - LINE_GAP // 2, y
+            x += LINE_GAP // 2
             out.append(
                 f'<text x="{tx}" y="{ty}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
                 f'text-anchor="start" transform="rotate(-45 {tx} {ty})">{esc(header + " " + DAGGER)}</text>'
