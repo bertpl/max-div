@@ -5,12 +5,14 @@ For each configuration: run it at every grid size up to its own largest n within
 protocol's fixed seed for a deterministic one.
 
 A configuration's verdict at a size compares its median quality over seeds against the threshold
-`(1 - gap_closure) * Q_random + gap_closure * Q_best_known`, once per gap-closure bar in `GAP_CLOSURE_BARS`. The
-best-known pool combines the extended runs (`best_known_stage`) with every per-seed quality run:
-one seed's high quality raises the threshold for every configuration, but each configuration is
-judged on its median, so that seed alone cannot make its own configuration pass. Per bar, the
-reported limit is the largest n up to which every judged size passes — a failing size ends the
-range (see `quality_limits`). The measurement protocol's section IV.D carries the full rationale.
+`(1 - gap_closure) * Q_random + gap_closure * Q_best_known`, once per value in
+`GAP_CLOSURE_FRACTIONS`; `gap_closure`, wherever it appears below, is the fraction of the
+random-to-best gap that must be closed. The best-known pool combines the extended runs
+(`best_known_stage`) with every per-seed quality run: one seed's high quality raises the
+threshold for every configuration, but each configuration is judged on its median, so that seed
+alone cannot make its own configuration pass. Per fraction, the reported limit is the largest n
+up to which every judged size passes — a failing size ends the range (see `quality_limits`).
+The measurement protocol's section IV.D carries the full rationale.
 
 `Q_random` — the per-size median quality of `N_RANDOM_DRAWS` random selections — is computed
 in-process (no solver involved) and persisted beside the run records.
@@ -41,7 +43,7 @@ Q_RANDOM_PATH = Path(__file__).resolve().parent / "data" / "q_random.json"
 
 QUALITY_SEEDS = (1, 2, 3, 4, 5)
 N_RANDOM_DRAWS = 31  # each Q_random value is the median over this many random selections
-GAP_CLOSURE_BARS = (0.9, 0.5)  # gap-closure fractions, each judged separately; strictest first
+GAP_CLOSURE_FRACTIONS = (0.9, 0.5)  # strictest first; each yields its own verdicts and size limits
 
 
 def seeds_for(config: ScalingConfig) -> tuple[int, ...]:
@@ -168,20 +170,14 @@ def quality_limits(
     q_random: dict[int, float],
     gap_closure: float,
 ) -> dict[str, int | None]:
-    """Return each configuration's largest n at good quality for one gap-closure bar.
+    """Return each configuration's quality-limit size for one gap-closure fraction.
 
-    A size whose median misses the verdict threshold ends the configuration's passing range:
-    sizes beyond it are not reported even when they pass again, because at the largest sizes
-    only a few configurations still complete, so the best-known reference there rests on fewer
-    solutions and a pass against it is not evidence of good quality (protocol section IV.D.4).
-
-    Args:
-        gap_closure: The fraction of the random-to-best gap that must be closed (a `GAP_CLOSURE_BARS` value).
+    A failing size ends the passing range even when larger sizes pass again (rationale:
+    protocol section IV.D.4).
 
     Returns:
-        `tool/config` -> the largest n up to which every judged size reaches the verdict
-        threshold (the module docstring carries the formula), or None when the smallest judged
-        size already misses it.
+        `tool/config` -> the largest n up to which every judged size reaches the threshold, or
+        None when the smallest judged size already misses it.
         Only configurations with at least one completed quality run appear.
     """
     pool = best_known_pool(quality_records, best_known_records)
@@ -197,20 +193,16 @@ def tool_quality_limits(
     q_random: dict[int, float],
     gap_closure: float,
 ) -> dict[str, int | None]:
-    """Return each tool's largest n at good quality, judging its best configuration per size.
+    """Return each tool's quality-limit size, judging its best configuration per size.
 
     At each size the tool's quality is the best per-configuration median — the protocol's
-    best-result-across-configurations rule (section III), on the assumption that a user picks
-    the configuration fitting the size. The passing range still ends at the first failing size,
-    so this can reach beyond every single configuration's limit when the configurations cover
-    each other's failing sizes.
-
-    Args:
-        gap_closure: The fraction of the random-to-best gap that must be closed (a `GAP_CLOSURE_BARS` value).
+    best-result-across-configurations rule (section III). The passing range still ends at the
+    first failing size, so this can reach beyond every single configuration's limit when the
+    configurations cover each other's failing sizes.
 
     Returns:
-        tool -> the largest n up to which the best configuration's median reaches the verdict
-        threshold at every judged size, or None when the smallest judged size already misses it.
+        tool -> the largest n up to which every judged size reaches the threshold, or None when
+        the smallest judged size already misses it.
     """
     pool = best_known_pool(quality_records, best_known_records)
     tool_medians: dict[str, dict[int, float]] = {}
@@ -243,7 +235,7 @@ if __name__ == "__main__":
     q_random_values = compute_q_random(grid_sizes)
     records = load_scaling_records(DATA_PATH)
     extended = load_scaling_records(BEST_KNOWN_DATA_PATH)
-    for gap_closure in GAP_CLOSURE_BARS:
+    for gap_closure in GAP_CLOSURE_FRACTIONS:
         for name, limit in quality_limits(records, extended, q_random_values, gap_closure).items():
             print(f"{name}: largest n closing {gap_closure:.0%} of the gap = {limit}")
         for tool, limit in tool_quality_limits(records, extended, q_random_values, gap_closure).items():

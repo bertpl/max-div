@@ -43,8 +43,8 @@ from benchmarks.solver_scaling.memory_stage import DATA_PATH as MEMORY_DATA_PATH
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
 from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.quality_stage import (  # noqa: E402
+    GAP_CLOSURE_FRACTIONS,
     Q_RANDOM_PATH,
-    GAP_CLOSURE_BARS,
     best_known_pool,
     median_qualities,
     quality_limits,
@@ -413,15 +413,20 @@ def write_quality_table(
     q_random: dict[int, float],
     names: dict[str, str],
 ) -> None:
-    """Write the per-configuration largest-n-at-good-quality table, one column per gap-closure bar."""
-    per_bar = [quality_limits(quality_records, best_known_records, q_random, gap_closure) for gap_closure in GAP_CLOSURE_BARS]
-    lines = [
-        "| Solver | Config | " + " | ".join(f"Largest n closing {gap_closure:.0%} of the gap" for gap_closure in GAP_CLOSURE_BARS) + " |",
-        "|---|---|" + "---|" * len(GAP_CLOSURE_BARS),
+    """Write the per-configuration quality-limit table, one column per gap-closure fraction."""
+    per_fraction = [
+        quality_limits(quality_records, best_known_records, q_random, gap_closure)
+        for gap_closure in GAP_CLOSURE_FRACTIONS
     ]
-    for key in per_bar[0]:
+    lines = [
+        "| Solver | Config | "
+        + " | ".join(f"Largest n closing {gap_closure:.0%} of the gap" for gap_closure in GAP_CLOSURE_FRACTIONS)
+        + " |",
+        "|---|---|" + "---|" * len(GAP_CLOSURE_FRACTIONS),
+    ]
+    for key in per_fraction[0]:
         tool, config = key.split("/", 1)
-        cells = " | ".join(f"**{limits[key]:,}**" if limits[key] else "—" for limits in per_bar)
+        cells = " | ".join(f"**{limits[key]:,}**" if limits[key] else "—" for limits in per_fraction)
         lines.append(f"| {_display_name(tool, names)} | `{config}` | {cells} |")
     _write_generated("scaling_quality.md", lines)
 
@@ -435,8 +440,8 @@ def write_quality_gap_table(
     """Write the gap-closure table: per configuration and size, the fraction of the random-to-best gap closed.
 
     A cell holds `(Q_median - Q_random) / (Q_best_known - Q_random)`; the verdict criterion is the
-    same fraction reaching a `GAP_CLOSURE_BARS` value, so a cell clearing the strictest bar is bold and
-    one clearing only the lowest bar is italic. An empty cell is a size the configuration was not
+    same fraction reaching a `GAP_CLOSURE_FRACTIONS` value: a cell whose fraction reaches the
+    strictest one is bold, one reaching only the lowest is italic. An empty cell is a size the configuration was not
     judged at (beyond its time limit, or no completed run).
     """
     pool = best_known_pool(quality_records, best_known_records)
@@ -459,14 +464,15 @@ def write_quality_gap_table(
 
 
 def _format_gap_fraction(median: float, random_quality: float, best_known: float) -> str:
-    """Format one gap-closure cell: bold clears the strictest bar, italic only the lowest."""
+    """Format one gap-closure cell: bold when the fraction reaches the strictest
+    `GAP_CLOSURE_FRACTIONS` value, italic when it reaches only the lowest."""
     gap = best_known - random_quality
     # a degenerate size where the best-known equals the random reference leaves no gap to close;
     # matching the best-known is then the only way to pass
     fraction = (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
-    if fraction >= max(GAP_CLOSURE_BARS):
+    if fraction >= max(GAP_CLOSURE_FRACTIONS):
         return f"**{fraction:.2f}**"
-    if fraction >= min(GAP_CLOSURE_BARS):
+    if fraction >= min(GAP_CLOSURE_FRACTIONS):
         return f"*{fraction:.2f}*"
     return f"{fraction:.2f}"
 

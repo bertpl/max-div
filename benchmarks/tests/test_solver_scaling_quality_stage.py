@@ -142,8 +142,8 @@ def test_quality_limits_stops_at_the_first_failing_size() -> None:
     assert limits == {"rdkit/default": 20, "fpsample/vanilla": 100}
 
 
-def test_quality_limits_judges_each_bar_separately() -> None:
-    """A configuration closing 60% of the gap passes the 0.5 bar but not the 0.9 bar."""
+def test_quality_limits_judges_each_fraction_separately() -> None:
+    """A configuration closing 60% of the gap passes the 0.5 fraction but not the 0.9 fraction."""
     # --- arrange ----------------------
     quality = [
         _record(20, min_separation=0.6),
