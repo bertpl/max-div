@@ -83,7 +83,7 @@ class OptimizationStrategy(StrategyBase, ABC):
         #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params
         self.has_scheduled_params = False
         self.scheduled_params = []
-        self.scheduled_param_configs = np.empty(0, dtype=np.float32)
+        self.scheduled_param_configs = np.empty(0, dtype=np.float64)
 
         # --- adaptively sampled parameters ------
         #  --> first initialize as if we don't have any; potentially overridden by _configure_dynamic_params
