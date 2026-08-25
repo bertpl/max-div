@@ -42,8 +42,8 @@
 <text x="614" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 614 157)">multi-worker - cooperative</text>
 <text x="650" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 650 157)">memory †</text>
 <text x="696" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 696 157)">time †</text>
-<text x="742" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 742 157)">quality 90% †</text>
-<text x="788" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 788 157)">quality 50% †</text>
+<text x="742" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 742 157)">quality 50% †</text>
+<text x="788" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 788 157)">quality 90% †</text>
 <rect x="14" y="164" width="800" height="20" fill="#57606a" fill-opacity="0.06"/>
 <text x="14" y="178" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">ANYTIME OPTIMIZERS</text>
 <rect x="14" y="184" width="800" height="23" fill="#ddf4e4"/>

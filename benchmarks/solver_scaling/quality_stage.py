@@ -43,7 +43,7 @@ Q_RANDOM_PATH = Path(__file__).resolve().parent / "data" / "q_random.json"
 
 QUALITY_SEEDS = (1, 2, 3, 4, 5)
 N_RANDOM_DRAWS = 31  # each Q_random value is the median over this many random selections
-GAP_CLOSURE_FRACTIONS = (0.9, 0.5)  # strictest first; each yields its own verdicts and size limits
+GAP_CLOSURE_FRACTIONS = (0.5, 0.9)  # least strict first, matching the capability columns' tightening order
 
 
 def seeds_for(config: ScalingConfig) -> tuple[int, ...]:

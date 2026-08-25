@@ -6,8 +6,8 @@ solver:
   scale:
     max_n_memory: 1000000000
     max_n_time: 5000000
-    max_n_quality_90: pending
     max_n_quality_50: pending
+    max_n_quality_90: pending
   metadata:
     guarantee: 2-approximation (farthest-point traversal)
     license: MIT

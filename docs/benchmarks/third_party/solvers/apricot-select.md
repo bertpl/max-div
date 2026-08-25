@@ -6,8 +6,8 @@ solver:
   scale:
     max_n_memory: 50000
     max_n_time: 50000
-    max_n_quality_90: pending
     max_n_quality_50: pending
+    max_n_quality_90: pending
   metadata:
     guarantee: 1−1/e (lazy greedy on a monotone submodular function)
     license: MIT

@@ -6,8 +6,8 @@ solver:
   scale:
     max_n_memory: 500
     max_n_time: 500
-    max_n_quality_90: pending
     max_n_quality_50: pending
+    max_n_quality_90: pending
   metadata:
     guarantee: sampler, not optimizer
     license: MIT
