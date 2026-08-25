@@ -23,8 +23,8 @@ def _record(n, *, tool="rdkit", config="default", seed=DEFAULT_SEED, completed=T
     )
 
 
-def test_seeds_for_stochastic_and_deterministic() -> None:
-    """A stochastic configuration runs every quality seed; a deterministic one keeps the fixed seed."""
+def test_seeds_for_seed_influenceable_and_fixed() -> None:
+    """A configuration whose seed can influence the result runs every quality seed; the rest keep the fixed seed."""
     # --- act / assert -----------------
     assert seeds_for(resolve("fpsample", "vanilla")) == QUALITY_SEEDS
     assert seeds_for(resolve("code-fdm", "default")) == (DEFAULT_SEED,)

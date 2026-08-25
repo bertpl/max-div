@@ -147,7 +147,7 @@ A run may be allowed to finish somewhat past `T_max` instead of being killed exa
 
 The additional criterion that comes into play here is `median(Q_observed) >= (1 - b) Q_random + b Q_best_known`, judged once per gap-closure fraction `b` (50% and 90%; the median taken over seeds, see IV.D.4).  So we need 3 elements here
 
-- `Q_observed`: regular solver executions within `T_max` and `M_max` but now using different seeds for non-deterministic solvers that support seeding (as opposed to memory and time usage, quality _is_ expected to be strongly influenced by random seeds)
+- `Q_observed`: regular solver executions within `T_max` and `M_max` but now using different seeds for solver configurations whose seed can influence the result (a literal seed, or a seeded initial pick) (as opposed to memory and time usage, quality _is_ expected to be strongly influenced by random seeds)
 - `Q_random`: determined as the median quality (diversity) of 31 random selections of size `k` for each relevant `n`
 - `Q_best_known`: taken as the best (for each relevant `n`) observed quality...
   - over all `Q_observed` (any solver configuration)
@@ -201,7 +201,7 @@ The time-bound setting (IV.C) keeps its strict criterion: there, completion with
         IF n_max = None:
             Q_observed = None for this configuration
         ELSE:
-            seeds = [the fixed seed] if the solver is deterministic or unseeded, else [1, 2, 3, 4, 5]
+            seeds = [the fixed seed] if the seed cannot influence the result, else [1, 2, 3, 4, 5]
             FOR EACH n in N up to n_max:
                 FOR EACH seed IN seeds:
                     run the solver

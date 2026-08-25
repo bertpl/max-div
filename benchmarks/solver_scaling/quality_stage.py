@@ -1,8 +1,8 @@
 """Quality stage: every configuration re-runs its passing sizes at the reference budget, once per seed.
 
 For each configuration: run it at every grid size up to its own largest n within the time budget
-(`time_stage`), once per quality seed — `QUALITY_SEEDS` for a stochastic configuration, the
-protocol's fixed seed for a deterministic one.
+(`time_stage`), once per quality seed — `QUALITY_SEEDS` for a configuration whose seed can
+influence the result, the protocol's fixed seed otherwise.
 
 A configuration's verdict at a size compares its median quality over seeds against the threshold
 `(1 - gap_closure) * Q_random + gap_closure * Q_best_known`, once per value in
@@ -48,7 +48,7 @@ GAP_CLOSURE_FRACTIONS = (0.5, 0.9)  # least strict first, matching the capabilit
 
 def seeds_for(config: ScalingConfig) -> tuple[int, ...]:
     """Return the seeds the quality stage runs a configuration under."""
-    return QUALITY_SEEDS if config.stochastic else (DEFAULT_SEED,)
+    return QUALITY_SEEDS if config.seed_varies_result else (DEFAULT_SEED,)
 
 
 def time_limits(time_data_path: Path = TIME_DATA_PATH) -> dict[tuple[str, str], int]:

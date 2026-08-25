@@ -33,15 +33,17 @@ class ScalingConfig:
 
     `tool` is the registry key (`data/solver_registry.yaml`); `name` is the configuration name as
     the solver-configurations page lists it; `description` is a terse echo of that page's wording.
-    `stochastic` records whether repeated runs under different seeds can differ; the measurement
-    protocol decides when seeds are enumerated.
+    `seed_varies_result` records whether the seed can influence the returned selection — through
+    a literal seed knob or an adapter-chosen start item; the measurement protocol decides when
+    seeds are enumerated. It deliberately does not cover a tool with unseedable internal
+    randomness (runs differ, no seed reaches them) — no registry tool behaves that way.
     """
 
     tool: str
     name: str
     description: str
     select: SelectFn
-    stochastic: bool
+    seed_varies_result: bool
 
 
 def _exact_deadline(budget_sec: float) -> float:
@@ -233,126 +235,126 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         "lean",
         "uniform random one-shot initialization only, no optimization step, lazy distance storage, 1 worker",
         _maxdiv_lean(),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "max-div",
         "optimal-eager",
         "SMART preset, full end-to-end time budget, full-matrix distance storage forced, 12 cooperative workers",
         _maxdiv_optimal(lazy=False),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "max-div",
         "optimal-lazy",
         "SMART preset, full end-to-end time budget, lazy distance storage forced, 12 cooperative workers",
         _maxdiv_optimal(lazy=True),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "ortools-cpsat",
         "feasible",
         "max-min CP-SAT model, stop at the first feasible solution, 1 worker",
         _cpsat_select(first_feasible=True, num_workers=1),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "ortools-cpsat",
         "optimal",
         "max-min CP-SAT model, full time budget, 12 portfolio workers",
         _cpsat_select(first_feasible=False, num_workers=_QUALITY_WORKERS),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "scip",
         "feasible",
         "big-M max-min MIP, stop at the first feasible solution",
         _scip_select(first_feasible=True),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "scip",
         "optimal",
         "big-M max-min MIP, full time budget",
         _scip_select(first_feasible=False),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "highs",
         "feasible",
         "big-M max-min MIP, stop at the first improving solution",
         _highs_select(first_feasible=True, num_workers=1),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "highs",
         "optimal",
         "big-M max-min MIP, full time budget, parallel branch-and-bound",
         _highs_select(first_feasible=False, num_workers=_QUALITY_WORKERS),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "rdkit",
         "default",
         "MaxMinPicker with a Euclidean distance callable (its only mode)",
         _adapter_select(_rdkit),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "fpsample",
         "vanilla",
         "plain farthest-point sampling",
         _adapter_select(_fpsample("vanilla")),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "fpsample",
         "kdline",
         "bucket KD-line farthest-point sampling — the tree-accelerated variant, well suited to d=2",
         _adapter_select(_fpsample("kdline")),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "skmatter",
         "default",
         "FPS selector (its only mode)",
         _adapter_select(_skmatter),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "apricot-select",
         "default",
         "facility-location selection, lazy greedy, RBF similarity matrix",
         _adapter_select(_apricot),
-        stochastic=False,
+        seed_varies_result=False,
     ),
     ScalingConfig(
         "qc-selector",
         "maxmin",
         "max-min selection on a precomputed distance matrix",
         _adapter_select(_qc_selector),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "dppy",
         "default",
         "one exact k-DPP sample over an RBF likelihood kernel, median-pairwise-distance bandwidth",
         _adapter_select(_dppy),
-        stochastic=True,
+        seed_varies_result=True,
     ),
     ScalingConfig(
         "code-fdm",
         "default",
         "FairFlow with a single color spanning all items (its unconstrained reduction)",
         _adapter_select(_code_fdm),
-        stochastic=False,
+        seed_varies_result=False,
     ),
 )
 
 # The kill-path test fixture sits outside CONFIGS: it must never look like a registry
 # configuration, but the runner's kill test needs a child that outlives any budget.
 TEST_SLEEP_CONFIG = ScalingConfig(
-    "_test_sleep", "sleep", "test fixture that sleeps past any budget", _test_sleep_select(), stochastic=False
+    "_test_sleep", "sleep", "test fixture that sleeps past any budget", _test_sleep_select(), seed_varies_result=False
 )
 
 
