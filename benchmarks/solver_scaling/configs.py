@@ -261,7 +261,7 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         "optimal",
         "max-min CP-SAT model, full time budget, 12 portfolio workers",
         _cpsat_select(first_feasible=False, num_workers=_QUALITY_WORKERS),
-        stochastic=False,
+        stochastic=True,
     ),
     ScalingConfig(
         "scip",
@@ -275,7 +275,7 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         "optimal",
         "big-M max-min MIP, full time budget",
         _scip_select(first_feasible=False),
-        stochastic=False,
+        stochastic=True,
     ),
     ScalingConfig(
         "highs",
@@ -289,14 +289,14 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         "optimal",
         "big-M max-min MIP, full time budget, parallel branch-and-bound",
         _highs_select(first_feasible=False, num_workers=_QUALITY_WORKERS),
-        stochastic=False,
+        stochastic=True,
     ),
     ScalingConfig(
         "rdkit",
         "default",
         "MaxMinPicker with a Euclidean distance callable (its only mode)",
         _adapter_select(_rdkit),
-        stochastic=False,
+        stochastic=True,
     ),
     ScalingConfig(
         "fpsample",
@@ -331,7 +331,7 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         "maxmin",
         "max-min selection on a precomputed distance matrix",
         _adapter_select(_qc_selector),
-        stochastic=False,
+        stochastic=True,
     ),
     ScalingConfig(
         "dppy",

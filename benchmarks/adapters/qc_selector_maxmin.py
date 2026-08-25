@@ -22,9 +22,9 @@ class QcSelectorMaxMin(SelectionAdapter):
         return "qc-selector[MaxMin]"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
-        """Run qc-selector's MaxMin on the full distance matrix (deterministic; seed unused)."""
+        """Run qc-selector's MaxMin on the full distance matrix, seeding via the reference start sample."""
         from selector.methods.distance import MaxMin
 
         distances = square_distances(problem)
-        selected = MaxMin().select(distances, size=problem.k)
+        selected = MaxMin(ref_index=seed % problem.n).select(distances, size=problem.k)
         return np.asarray(selected, dtype=np.int64)

@@ -27,7 +27,7 @@ def test_seeds_for_stochastic_and_deterministic() -> None:
     """A stochastic configuration runs every quality seed; a deterministic one keeps the fixed seed."""
     # --- act / assert -----------------
     assert seeds_for(resolve("fpsample", "vanilla")) == QUALITY_SEEDS
-    assert seeds_for(resolve("rdkit", "default")) == (DEFAULT_SEED,)
+    assert seeds_for(resolve("code-fdm", "default")) == (DEFAULT_SEED,)
 
 
 def test_time_limits_takes_each_configs_largest_passing_size(tmp_path) -> None:
