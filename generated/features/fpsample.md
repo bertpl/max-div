@@ -45,8 +45,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
 | solver scaling · largest n within memory | n = 1B | |
 | solver scaling · largest n within the time budget | n = 5M | |
-| solver scaling · largest n closing 50% of the quality gap | <span class="scale-pending">pending</span> | |
-| solver scaling · largest n closing 90% of the quality gap | <span class="scale-pending">pending</span> | |
+| solver scaling · largest n closing 50% of the quality gap | n = 5M | |
+| solver scaling · largest n closing 90% of the quality gap | — | |
 
 </div>
 

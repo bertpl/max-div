@@ -15,5 +15,5 @@
 | 200,000 | 0.0056 | max-div | `optimal-lazy` | 895 s |
 | 500,000 | 0.0035 | max-div | `optimal-lazy` | 895 s |
 | 1,000,000 | 0.0025 | fpsample | `kdline` | 2 s |
-| 2,000,000 | 0.0017 | fpsample | `vanilla` | 703 s |
+| 2,000,000 | 0.0017 | fpsample | `kdline` | 8 s |
 | 5,000,000 | 0.0011 | fpsample | `kdline` | 48 s |

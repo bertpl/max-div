@@ -261,7 +261,8 @@ scale_columns:
   definition: >-
     Each column is the largest measured problem size n at which the solver still meets that
     column's criterion — see the [measurement protocol](scaling/protocol.md) for the full
-    procedure. A cell reading `pending` has not been measured yet.
+    procedure. A cell reading `pending` has not been measured yet; a dash marks a measured
+    column where no size meets the criterion.
   columns:
     - key: max_n_memory
       hero_label: memory

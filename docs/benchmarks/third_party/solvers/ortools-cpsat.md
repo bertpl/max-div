@@ -6,8 +6,8 @@ solver:
   scale:
     max_n_memory: 20000
     max_n_time: 20000
-    max_n_quality_50: pending
-    max_n_quality_90: pending
+    max_n_quality_50: 1000
+    max_n_quality_90: 1000
   metadata:
     guarantee: proven optimum
     license: Apache-2.0

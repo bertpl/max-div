@@ -6,8 +6,8 @@ solver:
   scale:
     max_n_memory: 1000000000
     max_n_time: 500000
-    max_n_quality_50: pending
-    max_n_quality_90: pending
+    max_n_quality_50: 200000
+    max_n_quality_90: 200000
   metadata:
     guarantee: heuristic
     license: Apache-2.0

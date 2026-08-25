@@ -69,8 +69,8 @@
 <text x="617" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="653" y="200" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
 <text x="699" y="200" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
-<text x="745" y="200" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="200" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="200" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">200k</text>
+<text x="791" y="200" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">200k</text>
 <rect x="14" y="207" width="800" height="20" fill="#57606a" fill-opacity="0.06"/>
 <text x="14" y="221" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">EXACT SOLVERS</text>
 <line x1="14" y1="227" x2="814" y2="227" stroke="#d8dee4" stroke-width="1"/>
@@ -95,8 +95,8 @@
 <text x="617" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="653" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
 <text x="699" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="243" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="243" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">1k</text>
+<text x="791" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">1k</text>
 <line x1="14" y1="250" x2="814" y2="250" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="266" fill="#1f2328" font-size="12.5" font-weight="400">SCIP</text>
 <text x="175" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
@@ -118,8 +118,8 @@
 <text x="617" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="653" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
 <text x="699" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="745" y="266" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="266" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
+<text x="791" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">200</text>
 <line x1="14" y1="273" x2="814" y2="273" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="289" fill="#1f2328" font-size="12.5" font-weight="400">HiGHS</text>
 <text x="175" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
@@ -141,8 +141,8 @@
 <text x="617" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="653" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
 <text x="699" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="745" y="289" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="289" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">200</text>
+<text x="791" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">200</text>
 <rect x="14" y="296" width="800" height="20" fill="#57606a" fill-opacity="0.06"/>
 <text x="14" y="310" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">ONE-SHOT PICKERS &amp; SAMPLERS</text>
 <line x1="14" y1="316" x2="814" y2="316" stroke="#d8dee4" stroke-width="1"/>
@@ -155,8 +155,8 @@
 <text x="305" y="332" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="653" y="332" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
 <text x="699" y="332" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="332" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="332" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="332" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="791" y="332" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50</text>
 <line x1="14" y1="339" x2="814" y2="339" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="355" fill="#1f2328" font-size="12.5" font-weight="400">fpsample</text>
 <text x="201" y="355" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -164,8 +164,8 @@
 <text x="305" y="355" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="653" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
 <text x="699" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">5M</text>
-<text x="745" y="355" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="355" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">5M</text>
+<text x="791" y="355" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
 <line x1="14" y1="362" x2="814" y2="362" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="378" fill="#1f2328" font-size="12.5" font-weight="400">skmatter</text>
 <text x="201" y="378" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -173,8 +173,8 @@
 <text x="305" y="378" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="653" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500M</text>
 <text x="699" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
-<text x="745" y="378" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="378" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
+<text x="791" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
 <line x1="14" y1="385" x2="814" y2="385" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="401" fill="#1f2328" font-size="12.5" font-weight="400">apricot-select</text>
 <text x="175" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -185,8 +185,8 @@
 <text x="383" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="653" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
 <text x="699" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
-<text x="745" y="401" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="401" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<text x="791" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
 <line x1="14" y1="408" x2="814" y2="408" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="424" fill="#1f2328" font-size="12.5" font-weight="400">qc-selector</text>
 <text x="175" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -200,8 +200,8 @@
 <text x="513" y="424" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="653" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
 <text x="699" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="424" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="424" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="791" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
 <line x1="14" y1="431" x2="814" y2="431" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="447" fill="#1f2328" font-size="12.5" font-weight="400">DPPy</text>
 <text x="175" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
@@ -212,8 +212,8 @@
 <text x="513" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="653" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
 <text x="699" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
-<text x="745" y="447" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="447" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<text x="791" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
 <line x1="14" y1="454" x2="814" y2="454" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="470" fill="#1f2328" font-size="12.5" font-weight="400">code-FDM</text>
 <text x="175" y="470" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
@@ -225,10 +225,10 @@
 <text x="409" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="653" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">100M</text>
 <text x="699" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">10k</text>
-<text x="745" y="470" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="791" y="470" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="745" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">10k</text>
+<text x="791" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50</text>
 <line x1="14" y1="477" x2="814" y2="477" stroke="#d8dee4" stroke-width="1"/>
 <text x="14" y="490" font-size="11"><tspan fill="#1a7f37" font-weight="700">✓</tspan><tspan fill="#656d76" dx="5">built in</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">~</tspan><tspan fill="#656d76" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan></text>
 <text x="14" y="506" font-size="11"><tspan fill="#656d76" font-weight="700">†</tspan><tspan fill="#656d76" dx="5">largest solvable n on benchmark problem U1, per the published measurement protocol:</tspan></text>
-<text x="24" y="522" font-size="11"><tspan fill="#656d76">memory: using ≤32GB RAM · time: + in ≤1min · quality: + bridging ≥50% / ≥90% of the random→best diversity gap</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">…</tspan><tspan fill="#656d76" dx="5">measurement pending</tspan></text>
+<text x="24" y="522" font-size="11"><tspan fill="#656d76">memory: using ≤32GB RAM · time: + in ≤1min · quality: + bridging ≥50% / ≥90% of the random→best diversity gap</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">—</tspan><tspan fill="#656d76" dx="5">no measured size meets the criterion</tspan></text>
 </svg>

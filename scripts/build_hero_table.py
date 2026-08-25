@@ -145,6 +145,7 @@ NAME_FS = "12.5"  # solver-name size
 MARK_FS = "13.5"  # check-mark and tilde size
 SMALL_FS = 11  # group labels, category labels, caption
 PENDING_GLYPH = "\u2026"  # a scaling cell awaiting its measurement
+NONE_GLYPH = "\u2014"  # a measured scaling cell where no size meets the criterion
 DAGGER = "\u2020"  # the dagger anchors the scaling column headers to the footnote row under the table
 SCALING_FOOTNOTE = "largest solvable n on benchmark problem U1, per the published measurement protocol:"
 SCALING_CRITERIA = (
@@ -160,7 +161,11 @@ def scale_text(value):
     The notation is `format_scale_value`'s; sharing the formatter guarantees the hero and the
     documentation tables cannot print one value two ways.
     """
-    return PENDING_GLYPH if value == capability_data.PENDING else capability_data.format_scale_value(int(value))
+    if value == capability_data.PENDING:
+        return PENDING_GLYPH
+    if value == capability_data.NO_PASSING_SIZE:
+        return NONE_GLYPH
+    return capability_data.format_scale_value(int(value))
 
 
 class _Layout:
@@ -213,12 +218,17 @@ class _Layout:
         point of showing the columns at all. A pending cell never leads, and a column with no
         measured value yet has no leader.
         """
-        measured = [int(r["scales"][j]) for r in self.rows if r["scales"][j] != capability_data.PENDING]
-        return bool(measured) and row["scales"][j] != capability_data.PENDING and int(row["scales"][j]) == max(measured)
+        unmeasured = (capability_data.PENDING, capability_data.NO_PASSING_SIZE)
+        measured = [int(r["scales"][j]) for r in self.rows if r["scales"][j] not in unmeasured]
+        return bool(measured) and row["scales"][j] not in unmeasured and int(row["scales"][j]) == max(measured)
 
     def any_pending(self):
         """Return True while any scaling cell awaits its measurement."""
         return any(value == capability_data.PENDING for row in self.rows for value in row["scales"])
+
+    def any_none(self):
+        """Return True when any scaling cell records that no size meets its criterion."""
+        return any(value == capability_data.NO_PASSING_SIZE for row in self.rows for value in row["scales"])
 
     def col_x(self, i):
         """Return the left edge of mark column i."""
@@ -394,6 +404,10 @@ def _legend(lay, y):
         criteria.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
         criteria.append(f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">{esc(PENDING_GLYPH)}</tspan>')
         criteria.append(f'<tspan fill="{t["muted"]}" dx="5">measurement pending</tspan>')
+    if lay.any_none():
+        criteria.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
+        criteria.append(f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">{esc(NONE_GLYPH)}</tspan>')
+        criteria.append(f'<tspan fill="{t["muted"]}" dx="5">no measured size meets the criterion</tspan>')
     return [
         f'<text x="{PAD}" y="{y + CAPTION_H - 8}" font-size="{SMALL_FS}">' + "".join(spans) + "</text>",
         f'<text x="{PAD}" y="{y + CAPTION_H + CAPTION2_H - 8}" font-size="{SMALL_FS}">' + "".join(notes) + "</text>",

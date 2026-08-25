@@ -79,7 +79,7 @@ Every capability cell carries one of the marks below. A mark composes with the c
 
 ## Solver scaling
 
-Each column is the largest measured problem size n at which the solver still meets that column's criterion — see the [measurement protocol](scaling/protocol.md) for the full procedure. A cell reading `pending` has not been measured yet.
+Each column is the largest measured problem size n at which the solver still meets that column's criterion — see the [measurement protocol](scaling/protocol.md) for the full procedure. A cell reading `pending` has not been measured yet; a dash marks a measured column where no size meets the criterion.
 
 <div class="capability-definitions" markdown>
 

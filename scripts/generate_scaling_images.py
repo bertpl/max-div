@@ -495,9 +495,10 @@ def main() -> None:
     memory_grouped = _records_by_config(load_scaling_records(MEMORY_DATA_PATH) if MEMORY_DATA_PATH.exists() else [])
     fits = json.loads(FIT_PATH.read_text(encoding="utf-8")) if FIT_PATH.exists() else {}
     best_known_records = load_scaling_records(BEST_KNOWN_DATA_PATH) if BEST_KNOWN_DATA_PATH.exists() else []
-    if best_known_records:
-        write_best_known_table(best_known_records, names)
     quality_records = load_scaling_records(QUALITY_DATA_PATH) if QUALITY_DATA_PATH.exists() else []
+    if best_known_records:
+        # The quality runs join the pool: a reference-budget run can hold a size's best solution.
+        write_best_known_table(best_known_records + quality_records, names)
     if quality_records and Q_RANDOM_PATH.exists():
         q_random = {int(n): v for n, v in json.loads(Q_RANDOM_PATH.read_text(encoding="utf-8")).items()}
         write_quality_table(quality_records, best_known_records, q_random, names)
