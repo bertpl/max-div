@@ -2,7 +2,7 @@
 
 The **largest n within the time budget** is the largest problem size a configuration solves within `T_max`, end to end. The values below come from the time sweep of the [measurement protocol](protocol.md) (section IV.C); the [solver configurations page](solver_configs.md) lists every configuration.
 
-*Measured with max-div v0.14.2, on the reference machine the [protocol](protocol.md) names. Quality is not yet measured.*
+*Quality is not yet measured.*
 
 ![End-to-end solve time against problem size, per solver configuration](images/scaling_time.webp)
 

@@ -1,28 +1,28 @@
 # Solver Scaling — Solver Configurations
 
-Each solver enters the [scaling measurements](protocol.md) as one or more of the configurations below.
+Each solver enters the [scaling measurements](protocol.md) as one or more of the configurations below. The **Version** column names the solver version every scaling measurement ran with (for the SCIP and HiGHS rows: the Python package's version — `PySCIPOpt` and `highspy`).
 
 For every configuration, the time budget is handed to the solver where it accepts one, and a run counts as successful when a valid size-`k` selection is available when the run ends — for the exact solvers, a proven-optimal solution and an incumbent held at the budget kill are both valid outcomes.
 
-| Solver | Config | Description |
-|---|---|---|
-| max-div | `lean` | uniform random one-shot initialization only, no optimization step, lazy distance storage, 1 worker |
-| max-div | `optimal-eager` | SMART preset, full end-to-end time budget, full-matrix distance storage forced, 12 cooperative workers |
-| max-div | `optimal-lazy` | SMART preset, full end-to-end time budget, lazy distance storage forced, 12 cooperative workers |
-| OR-Tools CP-SAT | `feasible` | max-min CP-SAT model, stop at the first feasible solution, 1 worker |
-| OR-Tools CP-SAT | `optimal` | max-min CP-SAT model, full time budget, 12 portfolio workers |
-| SCIP | `feasible` | big-M max-min MIP, stop at the first feasible solution |
-| SCIP | `optimal` | big-M max-min MIP, full time budget |
-| HiGHS | `feasible` | big-M max-min MIP, stop at the first improving solution |
-| HiGHS | `optimal` | big-M max-min MIP, full time budget, parallel branch-and-bound |
-| RDKit MaxMinPicker | `default` | MaxMinPicker with a Euclidean distance callable (its only mode) |
-| fpsample | `vanilla` | plain farthest-point sampling |
-| fpsample | `kdline` | bucket KD-line farthest-point sampling — the tree-accelerated variant, well suited to `d=2` |
-| skmatter | `default` | FPS selector (its only mode) |
-| apricot-select | `default` | facility-location selection, lazy greedy, RBF similarity matrix |
-| qc-selector | `maxmin` | max-min selection on a precomputed distance matrix |
-| DPPy | `default` | one exact k-DPP sample over an RBF likelihood kernel, bandwidth set by the median-pairwise-distance heuristic |
-| code-FDM | `default` | FairFlow with a single color spanning all items (its unconstrained reduction) |
+| Solver | Version | Config | Description |
+|---|---|---|---|
+| max-div | 0.14.2 | `lean` | uniform random one-shot initialization only, no optimization step, lazy distance storage, 1 worker |
+| max-div | 0.14.2 | `optimal-eager` | SMART preset, full end-to-end time budget, full-matrix distance storage forced, 12 cooperative workers |
+| max-div | 0.14.2 | `optimal-lazy` | SMART preset, full end-to-end time budget, lazy distance storage forced, 12 cooperative workers |
+| OR-Tools CP-SAT | 9.15.6755 | `feasible` | max-min CP-SAT model, stop at the first feasible solution, 1 worker |
+| OR-Tools CP-SAT | 9.15.6755 | `optimal` | max-min CP-SAT model, full time budget, 12 portfolio workers |
+| SCIP | 6.2.1 | `feasible` | big-M max-min MIP, stop at the first feasible solution |
+| SCIP | 6.2.1 | `optimal` | big-M max-min MIP, full time budget |
+| HiGHS | 1.15.1 | `feasible` | big-M max-min MIP, stop at the first improving solution |
+| HiGHS | 1.15.1 | `optimal` | big-M max-min MIP, full time budget, parallel branch-and-bound |
+| RDKit MaxMinPicker | 2026.3.5 | `default` | MaxMinPicker with a Euclidean distance callable (its only mode) |
+| fpsample | 1.0.2 | `vanilla` | plain farthest-point sampling |
+| fpsample | 1.0.2 | `kdline` | bucket KD-line farthest-point sampling — the tree-accelerated variant, well suited to `d=2` |
+| skmatter | 0.3.3 | `default` | FPS selector (its only mode) |
+| apricot-select | 0.6.1 | `default` | facility-location selection, lazy greedy, RBF similarity matrix |
+| qc-selector | 0.1.4 | `maxmin` | max-min selection on a precomputed distance matrix |
+| DPPy | 0.3.3 | `default` | one exact k-DPP sample over an RBF likelihood kernel, bandwidth set by the median-pairwise-distance heuristic |
+| code-FDM | commit `d18758a` | `default` | FairFlow with a single color spanning all items (its unconstrained reduction) |
 
 Notes:
 
