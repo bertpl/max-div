@@ -41,6 +41,13 @@ from benchmarks.solver_scaling.grid import (  # noqa: E402
 from benchmarks.solver_scaling.memory_fit import FIT_PATH  # noqa: E402
 from benchmarks.solver_scaling.memory_stage import DATA_PATH as MEMORY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
+from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
+from benchmarks.solver_scaling.quality_stage import (  # noqa: E402
+    Q_RANDOM_PATH,
+    best_known_pool,
+    median_qualities,
+    quality_limits,
+)
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records  # noqa: E402
 from benchmarks.solver_scaling.time_stage import DATA_PATH as TIME_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.time_stage import passes_time  # noqa: E402
@@ -399,6 +406,65 @@ def write_best_known_table(records: list[ScalingRunRecord], names: dict[str, str
     _write_generated("scaling_best_known.md", lines)
 
 
+def write_quality_table(
+    quality_records: list[ScalingRunRecord],
+    best_known_records: list[ScalingRunRecord],
+    q_random: dict[int, float],
+    names: dict[str, str],
+) -> None:
+    """Write the per-configuration largest-n-at-good-quality table."""
+    limits = quality_limits(quality_records, best_known_records, q_random)
+    lines = [
+        "| Solver | Config | Largest n at good quality |",
+        "|---|---|---|",
+    ]
+    for key, limit in limits.items():
+        tool, config = key.split("/", 1)
+        largest = f"**{limit:,}**" if limit else "—"
+        lines.append(f"| {_display_name(tool, names)} | `{config}` | {largest} |")
+    _write_generated("scaling_quality.md", lines)
+
+
+def write_quality_gap_table(
+    quality_records: list[ScalingRunRecord],
+    best_known_records: list[ScalingRunRecord],
+    q_random: dict[int, float],
+    names: dict[str, str],
+) -> None:
+    """Write the gap-closure table: per configuration and size, the fraction of the random-to-best gap closed.
+
+    A cell holds `(Q_median - Q_random) / (Q_best_known - Q_random)`; the verdict criterion is the
+    same fraction reaching 0.9, so a passing cell is bold. An empty cell is a size the
+    configuration was not judged at (beyond its time limit, or no completed run).
+    """
+    pool = best_known_pool(quality_records, best_known_records)
+    medians = median_qualities(quality_records)
+    sizes = size_grid(max(pool)) if pool else []
+    lines = [
+        "| Solver | Config | " + " | ".join(_format_count(n) for n in sizes) + " |",
+        "|---|---|" + "---|" * len(sizes),
+    ]
+    for (tool, config), by_size in medians.items():
+        cells = []
+        for n in sizes:
+            median = by_size.get(n)
+            if median is None:
+                cells.append("")
+                continue
+            cells.append(_format_gap_fraction(median, q_random[n], pool[n]))
+        lines.append(f"| {_display_name(tool, names)} | `{config}` | " + " | ".join(cells) + " |")
+    _write_generated("scaling_quality_gaps.md", lines)
+
+
+def _format_gap_fraction(median: float, random_quality: float, best_known: float) -> str:
+    """Format one gap-closure cell, bold when it reaches the 0.9 verdict threshold."""
+    gap = best_known - random_quality
+    # a degenerate size where the best-known equals the random reference leaves no gap to close;
+    # matching the best-known is then the only way to pass
+    fraction = (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
+    return f"**{fraction:.2f}**" if fraction >= 0.9 else f"{fraction:.2f}"
+
+
 def _write_generated(name: str, lines: list[str]) -> None:
     """Write one generated markdown fragment."""
     path = GENERATED_DIR / name
@@ -419,6 +485,11 @@ def main() -> None:
     best_known_records = load_scaling_records(BEST_KNOWN_DATA_PATH) if BEST_KNOWN_DATA_PATH.exists() else []
     if best_known_records:
         write_best_known_table(best_known_records, names)
+    quality_records = load_scaling_records(QUALITY_DATA_PATH) if QUALITY_DATA_PATH.exists() else []
+    if quality_records and Q_RANDOM_PATH.exists():
+        q_random = {int(n): v for n, v in json.loads(Q_RANDOM_PATH.read_text(encoding="utf-8")).items()}
+        write_quality_table(quality_records, best_known_records, q_random, names)
+        write_quality_gap_table(quality_records, best_known_records, q_random, names)
     render_time_chart(time_grouped, names)
     render_memory_chart(memory_grouped, fits, names)
     render_fit_charts(memory_grouped, fits, names)
