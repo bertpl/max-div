@@ -49,6 +49,9 @@ CORNER_LIFT = 15  # where the band edge turns diagonal, above the first row
 PAD = 14
 HEADER_FS = 12  # header font size; the width estimate below is calibrated to it
 CHAR_W = 63  # tenths of a px per character at HEADER_FS, averaged over mixed-case text
+SUB_FS = 11  # scaling-column subtitle size, one step under HEADER_FS
+SUB_CHAR_W = 58  # tenths of a px per character at SUB_FS
+LINE_GAP = 18  # horizontal shift between a title and its subtitle anchor (a 13px gap after rotation)
 
 THEMES = {
     "light": {
@@ -110,6 +113,7 @@ class HeroTable:
         # the scale-columns band label is drawn by the same code as every other group's.
         scale_columns = axes["scale_columns"]["columns"]
         self.groups.append((axes["scale_columns"]["hero_label"], [(c["hero_label"], 2) for c in scale_columns]))
+        self.scale_subtitles = [c.get("hero_subtitle") for c in scale_columns]
         self.categories = [category["label"] for category in registry["categories"]]
         self.rows = [
             {
@@ -168,6 +172,7 @@ class _Layout:
         self.groups = table.groups
         self.rows = table.rows
         self.categories = table.categories
+        self.scale_subtitles = table.scale_subtitles
         flat = [(h, w) for _, cols in self.groups for (h, w) in cols]
         self.mark_cols = [(h, w) for h, w in flat if w == 1]
         self.scale_cols = [(h, w) for h, w in flat if w != 1]
@@ -177,7 +182,11 @@ class _Layout:
         # The longest header, rotated 45 degrees, sticks out to the right by width/sqrt(2). That
         # same overhang sizes the header band and the skew of the group bands.
         longest = max(len(h) for h, _ in self.mark_cols + self.scale_cols)
-        self.overhang = (longest * CHAR_W * 7) // 100  # /10 for tenths, *0.707 for the rotation
+        longest_sub = max((len(sub) for sub in self.scale_subtitles if sub), default=0)
+        self.overhang = max(
+            (longest * CHAR_W * 7) // 100,
+            (longest_sub * SUB_CHAR_W * 7) // 100,
+        )  # /10 for tenths, *0.707 for the rotation
         self.header_h = self.overhang + 18
 
         self.width = PAD + LABEL_W + self.grid_w + self.overhang + PAD
@@ -294,10 +303,24 @@ def _column_headers(lay):
         )
     for j, (header, _w) in enumerate(lay.scale_cols):
         x = lay.scale_x(j) + SCALE_W // 2 - 3
-        out.append(
-            f'<text x="{x}" y="{y}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
-            f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header + " " + DAGGER)}</text>'
-        )
+        subtitle = lay.scale_subtitles[j]
+        if subtitle:
+            # The title's anchor shifts left at the same baseline height, so both rotated lines
+            # start at the same vertical position and read as two parallel lines.
+            tx, ty = x - LINE_GAP, y
+            out.append(
+                f'<text x="{tx}" y="{ty}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
+                f'text-anchor="start" transform="rotate(-45 {tx} {ty})">{esc(header + " " + DAGGER)}</text>'
+            )
+            out.append(
+                f'<text x="{x}" y="{y}" fill="{lay.t["muted"]}" font-size="{SUB_FS}" '
+                f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(subtitle)}</text>'
+            )
+        else:
+            out.append(
+                f'<text x="{x}" y="{y}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
+                f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header + " " + DAGGER)}</text>'
+            )
     return out
 
 
