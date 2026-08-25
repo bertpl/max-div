@@ -168,7 +168,6 @@ nav:
         - Solver Configurations: benchmarks/third_party/scaling/solver_configs.md
         - Memory: benchmarks/third_party/scaling/memory.md
         - Time: benchmarks/third_party/scaling/time.md
-        - Best-Known Solutions: benchmarks/third_party/scaling/best_known.md
         - Quality: benchmarks/third_party/scaling/quality.md
       - Head-to-Head:
         - Overview: benchmarks/third_party/head_to_head/overview.md
