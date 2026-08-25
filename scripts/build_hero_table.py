@@ -38,7 +38,7 @@ import capability_data  # noqa: E402
 # --- geometry (all integers; no float formatting anywhere) --
 LABEL_W = 148  # solver-name gutter
 COL_W = 26  # one mark column
-SCALE_W = 52  # one measured-scaling column — wide enough for the longest suffix value ("500M")
+SCALE_W = 46  # one measured-scaling column — wide enough for the longest suffix value ("500M")
 ROW_H = 23
 HEADER_H = 132  # room for the 45-degree labels
 GROUP_H = 18
@@ -49,9 +49,6 @@ CORNER_LIFT = 15  # where the band edge turns diagonal, above the first row
 PAD = 14
 HEADER_FS = 12  # header font size; the width estimate below is calibrated to it
 CHAR_W = 63  # tenths of a px per character at HEADER_FS, averaged over mixed-case text
-SUB_FS = 10  # scaling-column subtitle size, two steps under HEADER_FS
-SUB_CHAR_W = 53  # tenths of a px per character at SUB_FS
-LINE_GAP = 18  # horizontal shift between a title and its subtitle anchor (a 13px gap after rotation)
 
 THEMES = {
     "light": {
@@ -113,7 +110,6 @@ class HeroTable:
         # the scale-columns band label is drawn by the same code as every other group's.
         scale_columns = axes["scale_columns"]["columns"]
         self.groups.append((axes["scale_columns"]["hero_label"], [(c["hero_label"], 2) for c in scale_columns]))
-        self.scale_subtitles = [c.get("hero_subtitle") for c in scale_columns]
         self.categories = [category["label"] for category in registry["categories"]]
         self.rows = [
             {
@@ -150,8 +146,12 @@ MARK_FS = "13.5"  # check-mark and tilde size
 SMALL_FS = 11  # group labels, category labels, caption
 PENDING_GLYPH = "\u2026"  # a scaling cell awaiting its measurement
 DAGGER = "\u2020"  # the dagger anchors the scaling column headers to the footnote row under the table
-SCALING_FOOTNOTE = "based on the built-in benchmark problem U1 and the published measurement protocol"
-CAPTION2_H = 16  # the footnote row under the mark-legend row
+SCALING_FOOTNOTE = "largest solvable n on benchmark problem U1, per the published measurement protocol:"
+SCALING_CRITERIA = (
+    "memory: using \u226432GB RAM \u00b7 time: + in \u22641min"
+    " \u00b7 quality: + bridging \u226550% / \u226590% of the random\u2192best diversity gap"
+)
+CAPTION2_H = 16  # each footnote row under the mark-legend row (the scaling footnote spans two)
 
 
 def scale_text(value):
@@ -172,7 +172,6 @@ class _Layout:
         self.groups = table.groups
         self.rows = table.rows
         self.categories = table.categories
-        self.scale_subtitles = table.scale_subtitles
         flat = [(h, w) for _, cols in self.groups for (h, w) in cols]
         self.mark_cols = [(h, w) for h, w in flat if w == 1]
         self.scale_cols = [(h, w) for h, w in flat if w != 1]
@@ -182,11 +181,7 @@ class _Layout:
         # The longest header, rotated 45 degrees, sticks out to the right by width/sqrt(2). That
         # same overhang sizes the header band and the skew of the group bands.
         longest = max(len(h) for h, _ in self.mark_cols + self.scale_cols)
-        longest_sub = max((len(sub) for sub in self.scale_subtitles if sub), default=0)
-        self.overhang = max(
-            (longest * CHAR_W * 7) // 100,
-            (longest_sub * SUB_CHAR_W * 7) // 100 + (LINE_GAP // 2 if longest_sub else 0),
-        )  # /10 for tenths, *0.707 for the rotation; the subtitle anchor sits half a line gap right
+        self.overhang = (longest * CHAR_W * 7) // 100  # /10 for tenths, *0.707 for the rotation
         self.header_h = self.overhang + 18
 
         self.width = PAD + LABEL_W + self.grid_w + self.overhang + PAD
@@ -197,7 +192,7 @@ class _Layout:
             + len(self.categories) * CAT_H
             + len(self.rows) * ROW_H
             + CAPTION_H
-            + CAPTION2_H
+            + 2 * CAPTION2_H
             + BOTTOM_PAD
         )
 
@@ -283,14 +278,6 @@ def _group_bands(lay):
     for x in sorted(edges):
         pts = f"{x + lay.skew},{lay.y_top} {x},{lay.y_corner} {x},{lay.y_end}"
         out.append(f'<polyline points="{pts}" fill="none" stroke="{t["rule"]}" stroke-width="0.5"/>')
-    # The scaling columns additionally get separators between one another, at three-quarters the opacity of
-    # the group edges above: four value columns in one band read as one run of text without them.
-    for j in range(1, len(lay.scale_cols)):
-        x = lay.scale_x(j)
-        pts = f"{x + lay.skew},{lay.y_top} {x},{lay.y_corner} {x},{lay.y_end}"
-        out.append(
-            f'<polyline points="{pts}" fill="none" stroke="{t["rule"]}" stroke-width="0.5" stroke-opacity="0.75"/>'
-        )
     return out
 
 
@@ -311,25 +298,10 @@ def _column_headers(lay):
         )
     for j, (header, _w) in enumerate(lay.scale_cols):
         x = lay.scale_x(j) + SCALE_W // 2 - 3
-        subtitle = lay.scale_subtitles[j]
-        if subtitle:
-            # The pair centers on the column's anchor: title and subtitle shift half the line
-            # gap to either side at the same baseline height, reading as two parallel lines.
-            tx, ty = x - LINE_GAP // 2, y
-            x += LINE_GAP // 2
-            out.append(
-                f'<text x="{tx}" y="{ty}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
-                f'text-anchor="start" transform="rotate(-45 {tx} {ty})">{esc(header + " " + DAGGER)}</text>'
-            )
-            out.append(
-                f'<text x="{x}" y="{y}" fill="{lay.t["muted"]}" font-size="{SUB_FS}" '
-                f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(subtitle)}</text>'
-            )
-        else:
-            out.append(
-                f'<text x="{x}" y="{y}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
-                f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header + " " + DAGGER)}</text>'
-            )
+        out.append(
+            f'<text x="{x}" y="{y}" fill="{lay.t["ink"]}" font-size="{HEADER_FS}" '
+            f'text-anchor="start" transform="rotate(-45 {x} {y})">{esc(header + " " + DAGGER)}</text>'
+        )
     return out
 
 
@@ -417,13 +389,17 @@ def _legend(lay, y):
         f'<tspan fill="{t["muted"]}" font-weight="700">{esc(DAGGER)}</tspan>',
         f'<tspan fill="{t["muted"]}" dx="5">{esc(SCALING_FOOTNOTE)}</tspan>',
     ]
+    criteria = [f'<tspan fill="{t["muted"]}">{esc(SCALING_CRITERIA)}</tspan>']
     if lay.any_pending():
-        notes.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
-        notes.append(f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">{esc(PENDING_GLYPH)}</tspan>')
-        notes.append(f'<tspan fill="{t["muted"]}" dx="5">measurement pending</tspan>')
+        criteria.append(f'<tspan fill="{t["muted"]}" dx="9">·</tspan>')
+        criteria.append(f'<tspan fill="{t["partial"]}" font-weight="700" dx="9">{esc(PENDING_GLYPH)}</tspan>')
+        criteria.append(f'<tspan fill="{t["muted"]}" dx="5">measurement pending</tspan>')
     return [
         f'<text x="{PAD}" y="{y + CAPTION_H - 8}" font-size="{SMALL_FS}">' + "".join(spans) + "</text>",
         f'<text x="{PAD}" y="{y + CAPTION_H + CAPTION2_H - 8}" font-size="{SMALL_FS}">' + "".join(notes) + "</text>",
+        f'<text x="{PAD + 10}" y="{y + CAPTION_H + 2 * CAPTION2_H - 8}" font-size="{SMALL_FS}">'
+        + "".join(criteria)
+        + "</text>",
     ]
 
 
