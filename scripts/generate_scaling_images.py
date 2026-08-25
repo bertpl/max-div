@@ -41,14 +41,14 @@ from benchmarks.solver_scaling.grid import (  # noqa: E402
 from benchmarks.solver_scaling.memory_fit import FIT_PATH  # noqa: E402
 from benchmarks.solver_scaling.memory_stage import DATA_PATH as MEMORY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
+from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.quality_stage import (  # noqa: E402
-    BEST_KNOWN_WEIGHT,
     Q_RANDOM_PATH,
+    GAP_CLOSURE_BARS,
     best_known_pool,
     median_qualities,
     quality_limits,
 )
-from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records  # noqa: E402
 from benchmarks.solver_scaling.time_stage import DATA_PATH as TIME_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.time_stage import passes_time  # noqa: E402
@@ -413,16 +413,16 @@ def write_quality_table(
     q_random: dict[int, float],
     names: dict[str, str],
 ) -> None:
-    """Write the per-configuration largest-n-at-good-quality table."""
-    limits = quality_limits(quality_records, best_known_records, q_random)
+    """Write the per-configuration largest-n-at-good-quality table, one column per gap-closure bar."""
+    per_bar = [quality_limits(quality_records, best_known_records, q_random, gap_closure) for gap_closure in GAP_CLOSURE_BARS]
     lines = [
-        "| Solver | Config | Largest n at good quality |",
-        "|---|---|---|",
+        "| Solver | Config | " + " | ".join(f"Largest n closing {gap_closure:.0%} of the gap" for gap_closure in GAP_CLOSURE_BARS) + " |",
+        "|---|---|" + "---|" * len(GAP_CLOSURE_BARS),
     ]
-    for key, limit in limits.items():
+    for key in per_bar[0]:
         tool, config = key.split("/", 1)
-        largest = f"**{limit:,}**" if limit else "—"
-        lines.append(f"| {_display_name(tool, names)} | `{config}` | {largest} |")
+        cells = " | ".join(f"**{limits[key]:,}**" if limits[key] else "—" for limits in per_bar)
+        lines.append(f"| {_display_name(tool, names)} | `{config}` | {cells} |")
     _write_generated("scaling_quality.md", lines)
 
 
@@ -435,8 +435,9 @@ def write_quality_gap_table(
     """Write the gap-closure table: per configuration and size, the fraction of the random-to-best gap closed.
 
     A cell holds `(Q_median - Q_random) / (Q_best_known - Q_random)`; the verdict criterion is the
-    same fraction reaching `BEST_KNOWN_WEIGHT`, so a passing cell is bold. An empty cell is a size
-    the configuration was not judged at (beyond its time limit, or no completed run).
+    same fraction reaching a `GAP_CLOSURE_BARS` value, so a cell clearing the strictest bar is bold and
+    one clearing only the lowest bar is italic. An empty cell is a size the configuration was not
+    judged at (beyond its time limit, or no completed run).
     """
     pool = best_known_pool(quality_records, best_known_records)
     medians = median_qualities(quality_records)
@@ -458,12 +459,16 @@ def write_quality_gap_table(
 
 
 def _format_gap_fraction(median: float, random_quality: float, best_known: float) -> str:
-    """Format one gap-closure cell, bold when it reaches the verdict threshold (`BEST_KNOWN_WEIGHT`)."""
+    """Format one gap-closure cell: bold clears the strictest bar, italic only the lowest."""
     gap = best_known - random_quality
     # a degenerate size where the best-known equals the random reference leaves no gap to close;
     # matching the best-known is then the only way to pass
     fraction = (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
-    return f"**{fraction:.2f}**" if fraction >= BEST_KNOWN_WEIGHT else f"{fraction:.2f}"
+    if fraction >= max(GAP_CLOSURE_BARS):
+        return f"**{fraction:.2f}**"
+    if fraction >= min(GAP_CLOSURE_BARS):
+        return f"*{fraction:.2f}*"
+    return f"{fraction:.2f}"
 
 
 def _write_generated(name: str, lines: list[str]) -> None:

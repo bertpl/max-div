@@ -44,7 +44,7 @@ These three descriptions are consciously kept qualitative in nature.  The next s
 - **time**: we define time budget as **T_max = 1min**, mostly driven by keeping the overall protocol executable.  Time is measured **end-to-end**: the clock runs from handing the raw input vectors to the solver until it returns a selection, so any distance computation or other setup work the solver performs is included in its cost.
 - **machine**: all measurements are executed on the same reference machine: an Apple M3 Max (12 performance cores, 4 efficiency cores).
 - **seeding**: every solver run uses the fixed seed `42`, except where a phase explicitly enumerates multiple seeds (the quality runs of IV.D.3).
-- **quality**: the minimum solution quality (=diversity) threshold is defined as **Q_threshold = 0.1 Q_random + 0.9 Q_best_known**, i.e. the solver reached at least 90% of the quality delta between a purely random selection and the best known solution.
+- **quality**: judged at two gap-closure bars, 90% and 50%.  For a bar `b`, the minimum solution quality (=diversity) threshold is defined as **Q_threshold(b) = (1-b) Q_random + b Q_best_known**, i.e. the solver closed at least the fraction `b` of the quality delta between a purely random selection and the best known solution.  Each bar yields its own recorded size limit: the 90% bar marks near-best quality, the 50% bar marks closing at least half the gap.
 
 ## IV. Measurement Protocol
 
@@ -145,7 +145,7 @@ A run may be allowed to finish somewhat past `T_max` instead of being killed exa
 
 ### IV.D. Quality-Bound Setting
 
-The additional criterion that comes into play here is `median(Q_observed) >= 0.1 Q_random + 0.9 Q_best_known` (the median taken over seeds, see IV.D.4).  So we need 3 elements here
+The additional criterion that comes into play here is `median(Q_observed) >= (1 - bar) Q_random + bar Q_best_known`, judged once per gap-closure bar (90% and 50%; the median taken over seeds, see IV.D.4).  So we need 3 elements here
 
 - `Q_observed`: regular solver executions within `T_max` and `M_max` but now using different seeds for non-deterministic solvers that support seeding (as opposed to memory and time usage, quality _is_ expected to be strongly influenced by random seeds)
 - `Q_random`: determined as the median quality (diversity) of 31 random selections of size `k` for each relevant `n`
@@ -210,7 +210,7 @@ The time-bound setting (IV.C) keeps its strict criterion: there, completion with
 
 #### IV.D.4. Determining the quality-bound problem size limits
 
-> The quality-bound problem size limit is recorded per `solver_config`.  No solver runs are involved in this phase; it only combines the quantities recorded in IV.D.1–IV.D.3.
+> The quality-bound problem size limit is recorded per `solver_config` and per gap-closure bar, and per solver by judging its best configuration at each size (the best-result-across-configurations rule of section III).  No solver runs are involved in this phase; it only combines the quantities recorded in IV.D.1–IV.D.3.
 
 !!! note "Pseudo-code"
 
@@ -220,12 +220,22 @@ The time-bound setting (IV.C) keeps its strict criterion: there, completion with
     FOR EACH n in N up to n_max:
         Q_best_known(n) = max over all Q_observed(*, n, *) and all Q_extended(*, n)
                           (every configuration, every seed)
-        Q_threshold(n)  = 0.1 * Q_random(n) + 0.9 * Q_best_known(n)
 
-    FOR EACH solver configuration:
-        FOR EACH n it reached (as in IV.D.3):
-            Q_median(solver_config, n) = median over seeds of Q_observed(solver_config, n, *)
-        quality-bound size = largest n with Q_median >= Q_threshold(n)   (None if never)
+    FOR EACH bar IN {90%, 50%}:
+        Q_threshold(bar, n) = (1 - bar) * Q_random(n) + bar * Q_best_known(n)
+
+        FOR EACH solver configuration:
+            FOR EACH n it reached (as in IV.D.3):
+                Q_median(solver_config, n) = median over seeds of Q_observed(solver_config, n, *)
+            quality-bound size = largest n such that Q_median >= Q_threshold(bar) at it and
+                                 at every smaller judged n   (None if the smallest judged n fails)
+
+        FOR EACH solver:
+            FOR EACH n reached by any of its configurations:
+                Q_median(solver, n) = best Q_median(solver_config, n) over its configurations
+            quality-bound size = the same passing-prefix rule over these
     ```
 
 Note that a `Q_observed` value competes for `Q_best_known` per seed (a lucky draw is still a known solution), while the pass/fail verdict uses the per-config **median** over seeds — so a lucky seed can raise the bar for everyone, but can never carry its own configuration over it.
+
+A failing size ends the passing range even when larger sizes pass again. At the largest sizes only a few configurations still complete, so `Q_best_known` there rests on fewer solutions — a configuration meeting the threshold in that regime may simply be measured against a weaker reference, so such a pass cannot lift it over failures at smaller, better-referenced sizes.

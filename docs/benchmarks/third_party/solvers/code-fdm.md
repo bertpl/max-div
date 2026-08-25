@@ -6,7 +6,8 @@ solver:
   scale:
     max_n_memory: 100000000
     max_n_time: 10000
-    max_n_quality: pending
+    max_n_quality_90: pending
+    max_n_quality_50: pending
   metadata:
     guarantee: heuristic with approximation bounds stated in the paper
     license: none declared

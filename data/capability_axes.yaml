@@ -271,8 +271,15 @@ scale_columns:
       hero_label: time
       label: largest n within the time budget
       definition: a valid selection is returned within one minute, end-to-end.
-    - key: max_n_quality
-      hero_label: quality
-      label: largest n at good quality
+    - key: max_n_quality_90
+      hero_label: quality 90%
+      label: largest n closing 90% of the quality gap
       definition: >-
-        at least 90% of the diversity gap to the best known solution is closed.
+        at least 90% of the diversity gap between a random selection and the best known solution
+        is closed, at this and every smaller measured size.
+    - key: max_n_quality_50
+      hero_label: quality 50%
+      label: largest n closing 50% of the quality gap
+      definition: >-
+        at least 50% of the diversity gap between a random selection and the best known solution
+        is closed, at this and every smaller measured size.
