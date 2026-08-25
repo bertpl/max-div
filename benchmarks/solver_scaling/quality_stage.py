@@ -1,15 +1,18 @@
 """Quality stage: every configuration re-runs its passing sizes at the reference budget, judged per seed.
 
 For each configuration: run it at every grid size up to its own largest n within the time budget
-(`time_stage`), once per quality seed — five seeds for a stochastic configuration, the protocol's
-fixed seed for a deterministic one. A configuration's verdict at a size compares its median
-quality over seeds against the threshold `0.1 * Q_random + 0.9 * Q_best_known`; the best-known
-pool combines the extended runs (`best_known_stage`) with every per-seed quality run, so a lucky
-seed can raise the bar for everyone but never carries its own configuration over it. The
-measurement protocol's section IV.D carries the full rationale.
+(`time_stage`), once per quality seed — `QUALITY_SEEDS` for a stochastic configuration, the
+protocol's fixed seed for a deterministic one.
 
-`Q_random` — the per-size median quality of 31 random selections — is computed in-process (no
-solver involved) and persisted beside the run records.
+A configuration's verdict at a size compares its median quality over seeds against the threshold
+`RANDOM_WEIGHT * Q_random + BEST_KNOWN_WEIGHT * Q_best_known`. The best-known pool combines the
+extended runs (`best_known_stage`) with every per-seed quality run: one seed's high quality
+raises the threshold for every configuration, but each configuration is judged on its median, so
+that seed alone cannot make its own configuration pass. The measurement protocol's section IV.D
+carries the full rationale.
+
+`Q_random` — the per-size median quality of `N_RANDOM_DRAWS` random selections — is computed
+in-process (no solver involved) and persisted beside the run records.
 
 Records are appended after every run to the tracked data file, so an interrupted stage resumes by
 rerunning: already-recorded runs are skipped.
@@ -36,8 +39,8 @@ DATA_PATH = Path(__file__).resolve().parent / "data" / "quality_stage.jsonl"
 Q_RANDOM_PATH = Path(__file__).resolve().parent / "data" / "q_random.json"
 
 QUALITY_SEEDS = (1, 2, 3, 4, 5)  # a stochastic configuration runs each; a deterministic one keeps the fixed seed
-N_RANDOM_DRAWS = 31  # selections behind each Q_random median
-RANDOM_WEIGHT = 0.1  # threshold = RANDOM_WEIGHT * Q_random + BEST_KNOWN_WEIGHT * Q_best_known
+N_RANDOM_DRAWS = 31  # each Q_random value is the median over this many random selections
+RANDOM_WEIGHT = 0.1  # the verdict threshold's weights; quality_limits owns the formula
 BEST_KNOWN_WEIGHT = 0.9
 
 
@@ -46,7 +49,7 @@ def seeds_for(config: ScalingConfig) -> tuple[int, ...]:
     return QUALITY_SEEDS if config.stochastic else (DEFAULT_SEED,)
 
 
-def config_time_limits(time_data_path: Path = TIME_DATA_PATH) -> dict[tuple[str, str], int]:
+def time_limits(time_data_path: Path = TIME_DATA_PATH) -> dict[tuple[str, str], int]:
     """Return, per (tool, config), the largest n that passed within the time budget.
 
     A configuration with no passing size is absent from the result.
@@ -73,7 +76,7 @@ def run_quality_stage(
 ) -> None:
     """Run every configuration's quality runs; a configuration with no passing time-stage size is skipped."""
     configs = list(CONFIGS) if configs is None else configs
-    limits = config_time_limits()
+    limits = time_limits()
     done = {(r.tool, r.config, r.n, r.seed): r for r in (load_scaling_records(data_path) if data_path.exists() else [])}
     for config in configs:
         n_bound = limits.get((config.tool, config.name))
@@ -187,7 +190,7 @@ if __name__ == "__main__":
     selected = sys.argv[1:]
     chosen = [c for c in CONFIGS if c.tool in selected or f"{c.tool}/{c.name}" in selected] if selected else list(CONFIGS)
     run_quality_stage(chosen)
-    grid_sizes = size_grid(max(config_time_limits().values()))
+    grid_sizes = size_grid(max(time_limits().values()))
     q_random_values = compute_q_random(grid_sizes)
     records = load_scaling_records(DATA_PATH)
     extended = load_scaling_records(BEST_KNOWN_DATA_PATH)

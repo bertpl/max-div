@@ -7,10 +7,10 @@ from benchmarks.solver_scaling.quality_stage import (
     QUALITY_SEEDS,
     best_known_pool,
     compute_q_random,
-    config_time_limits,
     median_qualities,
     quality_limits,
     seeds_for,
+    time_limits,
 )
 from benchmarks.solver_scaling.records import ScalingRunRecord, save_scaling_records
 
@@ -29,7 +29,7 @@ def test_seeds_for_stochastic_and_deterministic() -> None:
     assert seeds_for(resolve("rdkit", "default")) == (DEFAULT_SEED,)
 
 
-def test_config_time_limits_takes_each_configs_largest_passing_size(tmp_path) -> None:
+def test_time_limits_takes_each_configs_largest_passing_size(tmp_path) -> None:
     """The per-configuration bound is the largest passing size, and over-budget runs do not count."""
     # --- arrange ----------------------
     path = tmp_path / "time.jsonl"
@@ -37,14 +37,14 @@ def test_config_time_limits_takes_each_configs_largest_passing_size(tmp_path) ->
         [
             _record(20),
             _record(50),
-            _record(100, sec=REFERENCE_BUDGET_SEC + 5.0),  # completed but over budget
+            _record(100, sec=REFERENCE_BUDGET_SEC + 5.0),  # the run completed, but over budget, so it must not count
             _record(20, tool="dppy"),
         ],
         path,
     )
 
     # --- act --------------------------
-    limits = config_time_limits(path)
+    limits = time_limits(path)
 
     # --- assert -----------------------
     assert limits == {("rdkit", "default"): 50, ("dppy", "default"): 20}
@@ -102,7 +102,7 @@ def test_best_known_pool_takes_per_seed_maximum_over_both_stages() -> None:
 
 
 def test_quality_limits_judges_the_median_against_the_pooled_threshold() -> None:
-    """A lucky seed raises the bar for everyone but never carries its own configuration."""
+    """One seed's high quality raises the shared threshold but cannot make its own configuration pass."""
     # --- arrange ----------------------
     # fpsample's seed 1 sets Q_best_known = 1.0, so the threshold is 0.1*0.0 + 0.9*1.0 = 0.9;
     # its own median over seeds (0.5) fails it, while rdkit's single run (0.95) passes
@@ -136,7 +136,7 @@ def test_median_qualities_ignores_failed_runs() -> None:
 def test_run_quality_stage_skips_a_config_without_a_passing_time_size(monkeypatch, tmp_path, capsys) -> None:
     """A configuration absent from the time-stage limits is skipped, not run."""
     # --- arrange ----------------------
-    monkeypatch.setattr(quality_stage, "config_time_limits", lambda: {})
+    monkeypatch.setattr(quality_stage, "time_limits", lambda: {})
     monkeypatch.setattr(
         quality_stage, "run_measurement", lambda *args: pytest.fail("ran a config with no passing size")
     )

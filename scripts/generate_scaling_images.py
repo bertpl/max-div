@@ -41,13 +41,14 @@ from benchmarks.solver_scaling.grid import (  # noqa: E402
 from benchmarks.solver_scaling.memory_fit import FIT_PATH  # noqa: E402
 from benchmarks.solver_scaling.memory_stage import DATA_PATH as MEMORY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
-from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.quality_stage import (  # noqa: E402
+    BEST_KNOWN_WEIGHT,
     Q_RANDOM_PATH,
     best_known_pool,
     median_qualities,
     quality_limits,
 )
+from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records  # noqa: E402
 from benchmarks.solver_scaling.time_stage import DATA_PATH as TIME_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.time_stage import passes_time  # noqa: E402
@@ -434,8 +435,8 @@ def write_quality_gap_table(
     """Write the gap-closure table: per configuration and size, the fraction of the random-to-best gap closed.
 
     A cell holds `(Q_median - Q_random) / (Q_best_known - Q_random)`; the verdict criterion is the
-    same fraction reaching 0.9, so a passing cell is bold. An empty cell is a size the
-    configuration was not judged at (beyond its time limit, or no completed run).
+    same fraction reaching `BEST_KNOWN_WEIGHT`, so a passing cell is bold. An empty cell is a size
+    the configuration was not judged at (beyond its time limit, or no completed run).
     """
     pool = best_known_pool(quality_records, best_known_records)
     medians = median_qualities(quality_records)
@@ -457,12 +458,12 @@ def write_quality_gap_table(
 
 
 def _format_gap_fraction(median: float, random_quality: float, best_known: float) -> str:
-    """Format one gap-closure cell, bold when it reaches the 0.9 verdict threshold."""
+    """Format one gap-closure cell, bold when it reaches the verdict threshold (`BEST_KNOWN_WEIGHT`)."""
     gap = best_known - random_quality
     # a degenerate size where the best-known equals the random reference leaves no gap to close;
     # matching the best-known is then the only way to pass
     fraction = (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
-    return f"**{fraction:.2f}**" if fraction >= 0.9 else f"{fraction:.2f}"
+    return f"**{fraction:.2f}**" if fraction >= BEST_KNOWN_WEIGHT else f"{fraction:.2f}"
 
 
 def _write_generated(name: str, lines: list[str]) -> None:
