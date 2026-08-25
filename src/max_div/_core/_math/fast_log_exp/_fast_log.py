@@ -45,7 +45,7 @@ def fast_log2_f64(x: np.float64) -> np.float64:
     log2_mantissa = _D20 + m * (_D21 + m * _D22)
 
     # Return log2(x) = exponent + log2(m)
-    return exponent + log2_mantissa
+    return np.float64(exponent) + log2_mantissa
 
 
 @numba.njit(numba.float32(numba.float32), fastmath=True, inline="always", cache=True)
