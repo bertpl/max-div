@@ -201,9 +201,9 @@ The time-bound setting (IV.C) keeps its strict criterion: there, completion with
         IF n_max = None:
             Q_observed = None for this configuration
         ELSE:
-            n_seeds = 1 if the solver is deterministic or unseeded, else 3
+            seeds = [the fixed seed] if the solver is deterministic or unseeded, else [1, 2, 3, 4, 5]
             FOR EACH n in N up to n_max:
-                FOR seed = 1 .. n_seeds:
+                FOR EACH seed IN seeds:
                     run the solver
                     Q_observed(solver_config, n, seed) = quality (diversity)
     ```
