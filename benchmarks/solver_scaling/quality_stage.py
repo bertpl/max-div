@@ -1,4 +1,4 @@
-"""Quality stage: every configuration re-runs its passing sizes at the reference budget, judged per seed.
+"""Quality stage: every configuration re-runs its passing sizes at the reference budget, once per seed.
 
 For each configuration: run it at every grid size up to its own largest n within the time budget
 (`time_stage`), once per quality seed — `QUALITY_SEEDS` for a stochastic configuration, the
@@ -38,7 +38,7 @@ from .time_stage import passes_time
 DATA_PATH = Path(__file__).resolve().parent / "data" / "quality_stage.jsonl"
 Q_RANDOM_PATH = Path(__file__).resolve().parent / "data" / "q_random.json"
 
-QUALITY_SEEDS = (1, 2, 3, 4, 5)  # a stochastic configuration runs each; a deterministic one keeps the fixed seed
+QUALITY_SEEDS = (1, 2, 3, 4, 5)
 N_RANDOM_DRAWS = 31  # each Q_random value is the median over this many random selections
 RANDOM_WEIGHT = 0.1  # the verdict threshold's weights; quality_limits owns the formula
 BEST_KNOWN_WEIGHT = 0.9
@@ -170,8 +170,8 @@ def quality_limits(
     """Return each configuration's largest n at good quality.
 
     Returns:
-        `tool/config` -> largest n whose median quality reaches the threshold
-        `RANDOM_WEIGHT * Q_random + BEST_KNOWN_WEIGHT * Q_best_known`, or None when no size does.
+        `tool/config` -> largest n whose median quality reaches the verdict threshold (the module
+        docstring carries the formula), or None when no size does.
         Only configurations with at least one completed quality run appear.
     """
     pool = best_known_pool(quality_records, best_known_records)
