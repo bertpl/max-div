@@ -8,7 +8,8 @@ from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.solver import SolverPreset
 
 from ._cmd_benchmark_solver import solver
-from .bm_solver_presets import (
+from .benchmarks._helpers.solver_sizing import determine_problem_size_for_k
+from .benchmarks.solver_presets import (
     K_TARGET,
     determine_benchmark_scope,
     estimate_execution_time_sec_multi,
@@ -16,7 +17,6 @@ from .bm_solver_presets import (
     get_n_processes,
     show_solver_presets_benchmark_results,
 )
-from .bm_solver_sizing import determine_problem_size_for_k
 
 
 # =================================================================================================

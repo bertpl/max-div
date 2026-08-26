@@ -1,0 +1,7 @@
+from max_div._core._cli.benchmarks._helpers.speed_scaling import SpeedParam
+
+# Every internal benchmark times its function through `benchmark()` with the same settings;
+# the speed-dependent values are shared here, module-specific parameters stay in their modules.
+TIME_PER_RUN_SEC = SpeedParam(0.01, 1e-5)
+N_WARMUP = SpeedParam(8, 2, scale="linear")
+N_BENCHMARK = SpeedParam(25, 1, scale="linear")
