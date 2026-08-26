@@ -47,11 +47,16 @@ def estimate_execution_time_sec_multi(
 
 
 def estimate_execution_time_sec_single(params: SolverPresetBenchmarkParams) -> float:
-    """Estimate execution time in seconds for a single benchmark run."""
-    overhead_sec = 4.0 * ((params.problem_size / 10000.0) ** 2)  # initial distance computation of solver init is O(n^2)
+    """Estimate execution time in seconds for a single benchmark run.
+
+    Runs carry an end-to-end budget, so setup (distance computation, worker spawning) is spent
+    inside the budget rather than on top of it — but a budget cannot cut setup short, so setup
+    is the estimate whenever it exceeds the budget.
+    """
+    setup_sec = 4.0 * ((params.problem_size / 10000.0) ** 2)  # initial distance computation is O(n^2)
     if params.is_parallel:
-        overhead_sec += 2.0  # spawning the worker processes
-    return params.duration.value() + overhead_sec
+        setup_sec += 2.0  # spawning the worker processes
+    return max(params.duration.value(), setup_sec)
 
 
 # =================================================================================================

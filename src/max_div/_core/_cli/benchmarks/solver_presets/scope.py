@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from max_div._core._cli.benchmarks._helpers.solver_sizing import determine_problem_size_for_k
 from max_div._core._cli.benchmarks._helpers.speed_scaling import SpeedParam
 from max_div._core.solver import SolverPreset, TargetTimeDuration
@@ -5,27 +7,64 @@ from max_div._core.solver._parallel._solver import default_worker_count
 
 from ._models import SolverPresetBenchmarkParams
 
-# The full-scope budget ladder (speed=0.0, the configuration the docs pages are generated with)
-# runs LADDER_N_POINTS log-spaced budget points per (problem, preset)-curve, each with a fresh
-# seed, so repeat variability shows up as scatter between neighboring ladder points.  The
-# parallel arm (SMART re-run on the machine's default worker count) starts at
-# PARALLEL_ARM_T_MIN_SEC — below that a parallel run mostly measures process-spawn overhead.
-LADDER_T_MAX_SEC = 600.0
-LADDER_T_MIN_SEC = 0.03
-LADDER_N_POINTS = 50
-PARALLEL_ARM_T_MIN_SEC = 1.0
 
-# The speed parameter shrinks the range of budget points from the full scope above to the
-# turbo scope.
-_MAX_DURATION_SEC = SpeedParam(slow=LADDER_T_MAX_SEC, fast=1e-3)
-_MIN_DURATION_SEC = SpeedParam(slow=LADDER_T_MIN_SEC, fast=1e-4)
-_N_POINTS = SpeedParam(slow=LADDER_N_POINTS, fast=2)
+# =================================================================================================
+#  Budget series
+# =================================================================================================
+@dataclass(frozen=True, kw_only=True)
+class BudgetSeries:
+    """A log-spaced series of time budgets for one benchmark arm, shrinking with `speed`."""
+
+    t_min_sec: SpeedParam[float]
+    t_max_sec: SpeedParam[float]
+    n_points: SpeedParam[int]
+
+    def durations_sec(self, speed: float, max_run_duration_sec: float | None = None) -> list[float]:
+        """Return the ascending budget values at the given speed.
+
+        Args:
+            speed: 0.0 yields the full series (the docs-page configuration); values toward
+                1.0 shrink both the budget range and the point count.
+            max_run_duration_sec: When given, replaces the series' longest budget.
+
+        Returns:
+            Ascending budgets; a single-point series (or a maximum at or below the minimum)
+            collapses to just the longest budget.
+        """
+        t_max = max_run_duration_sec if max_run_duration_sec is not None else self.t_max_sec.at(speed)
+        t_min = min(self.t_min_sec.at(speed), t_max)
+        n_points = self.n_points.at(speed)
+        if n_points <= 1 or t_min == t_max:
+            return [t_max]
+        ratio = t_min / t_max
+        return sorted({t_max * ratio ** (i / (n_points - 1)) for i in range(n_points)})
+
+
+# Each (problem, preset)-curve runs the single-worker series, one run with a fresh seed per
+# budget point, so repeat variability shows up as scatter between neighboring points.  The
+# parallel arm (SMART re-run on the machine's default worker count) has its own shorter and
+# shallower series: its minimum stays well above the parallel solver's process-spawn cost —
+# which an end-to-end budget includes — and its maximum stays below the single-worker one
+# since the arm runs serially, one machine-filling run at a time.
+SINGLE_SERIES = BudgetSeries(
+    t_min_sec=SpeedParam(slow=0.03, fast=1e-4),
+    t_max_sec=SpeedParam(slow=1800.0, fast=1e-3),
+    n_points=SpeedParam(slow=50, fast=2),
+)
+PARALLEL_SERIES = BudgetSeries(
+    t_min_sec=SpeedParam(slow=3.0, fast=2.0),
+    t_max_sec=SpeedParam(slow=900.0, fast=2.0),
+    n_points=SpeedParam(slow=30, fast=1),
+)
 
 # Every problem is benchmarked at the size where it selects this many items, so the suite's
 # curves are comparable across problems: k is what drives the swap space and per-iteration cost.
 K_TARGET = 100
 
 
+# =================================================================================================
+#  Scope
+# =================================================================================================
 def determine_benchmark_scope(
     presets: list[SolverPreset],
     problems: list[str],
@@ -36,37 +75,27 @@ def determine_benchmark_scope(
     """Compute full list of benchmark runs to be executed based on presets, problems, problem size n, and speed.
 
     Args:
-        presets: Solver presets to run; each gets the full budget ladder on every problem.
+        presets: Solver presets to run; each gets the full single-worker budget series on
+            every problem.
         problems: Benchmark problem names.
         n: Problem size, or None to size each problem such that it selects `K_TARGET` items.
-        speed: 0.0 runs the full ladder (the docs-page configuration); values toward 1.0
+        speed: 0.0 runs the full series (the docs-page configuration); values toward 1.0
             shrink both the budget range and the point count for quick runs.
-        max_run_duration_sec: When given, overrides the ladder's longest budget.
+        max_run_duration_sec: When given, replaces both series' longest budget.
 
     Returns:
         One `SolverPresetBenchmarkParams` per run: every (problem, preset, budget) combination
-        with a fresh seed per budget point, plus — when SMART is among `presets` — the parallel
-        arm: SMART on the machine's default worker count, on the ladder points above
-        `PARALLEL_ARM_T_MIN_SEC`.
+        on the single-worker series, with a fresh seed per budget point, plus — when SMART is
+        among `presets` — the parallel arm: SMART on the machine's default worker count, on
+        its own budget series.
     """
-    # --- speed-dependent settings ---------------
-    max_duration_sec = max_run_duration_sec if max_run_duration_sec is not None else _MAX_DURATION_SEC.at(speed)
-    min_duration_sec = min(_MIN_DURATION_SEC.at(speed), max_duration_sec)
-    n_points = _N_POINTS.at(speed)
-
-    # --- budget ladder --------------------------
-    if n_points <= 1 or min_duration_sec == max_duration_sec:
-        durations_sec = [max_duration_sec]
-    else:
-        ratio = min_duration_sec / max_duration_sec
-        durations_sec = sorted({max_duration_sec * ratio ** (i / (n_points - 1)) for i in range(n_points)})
-
     # --- problem sizes --------------------------
     problem_sizes = {
         problem: n if n is not None else determine_problem_size_for_k(problem, K_TARGET) for problem in problems
     }
 
     # --- single-worker scope --------------------
+    single_durations_sec = SINGLE_SERIES.durations_sec(speed, max_run_duration_sec)
     scope = [
         SolverPresetBenchmarkParams(
             preset=preset,
@@ -77,13 +106,14 @@ def determine_benchmark_scope(
         )
         for problem in problems
         for preset in presets
-        for seed, duration_sec in enumerate(durations_sec, start=1)
+        for seed, duration_sec in enumerate(single_durations_sec, start=1)
     ]
 
     # --- parallel arm ---------------------------
     # one arm, not a preset replica: SMART on the default parallel setup answers "what does the
     # default parallel invocation buy over serial SMART" without overloading the pages
     if SolverPreset.SMART in presets:
+        parallel_durations_sec = PARALLEL_SERIES.durations_sec(speed, max_run_duration_sec)
         n_workers = default_worker_count()
         scope += [
             SolverPresetBenchmarkParams(
@@ -95,8 +125,7 @@ def determine_benchmark_scope(
                 n_workers=n_workers,
             )
             for problem in problems
-            for seed, duration_sec in enumerate(durations_sec, start=1)
-            if duration_sec >= PARALLEL_ARM_T_MIN_SEC
+            for seed, duration_sec in enumerate(parallel_durations_sec, start=1)
         ]
 
     return scope
