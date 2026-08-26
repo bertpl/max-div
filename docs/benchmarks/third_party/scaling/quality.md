@@ -6,9 +6,9 @@ The scoring objective (minimum separation under L2) was chosen because it is the
 
 --8<-- "generated/scaling_quality.md"
 
-## Gap Closure per Size
+## Detailed Results
 
-Each cell holds the fraction of the random-to-best-known quality gap a configuration's median closes at that size — **bold** reaches the 90% fraction, *italic* only the 50% one. An empty cell is a size the configuration was not judged at — beyond its time limit, or no completed run.
+Each cell holds the percentage of the random-to-best-known quality gap a configuration's median closes at that size, rounded down to 0.1% — **bold** reaches the 90% fraction, *italic* only the 50% one. An empty cell is a size the configuration was not judged at — beyond its time limit, or no completed run.
 
 --8<-- "generated/scaling_quality_gaps.md"
 

@@ -11,6 +11,7 @@ Run:  uv run --group benchmarks --python 3.13 python scripts/generate_scaling_im
 
 import io
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -464,17 +465,22 @@ def write_quality_gap_table(
 
 
 def _format_gap_fraction(median: float, random_quality: float, best_known: float) -> str:
-    """Format one gap-closure cell: bold when the fraction reaches the strictest
-    `GAP_CLOSURE_FRACTIONS` value, italic when it reaches only the lowest."""
+    """Format one gap-closure cell as a percentage: bold when the fraction reaches the strictest
+    `GAP_CLOSURE_FRACTIONS` value, italic when it reaches only the lowest.
+
+    The display rounds down to 0.1% while the marking judges the exact fraction, so a printed
+    50.0% is genuinely at or above the fraction and the marking never contradicts the number.
+    """
     gap = best_known - random_quality
     # a degenerate size where the best-known equals the random reference leaves no gap to close;
     # matching the best-known is then the only way to pass
     fraction = (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
+    percent = math.floor(fraction * 1000) / 10
     if fraction >= max(GAP_CLOSURE_FRACTIONS):
-        return f"**{fraction:.2f}**"
+        return f"**{percent:.1f}%**"
     if fraction >= min(GAP_CLOSURE_FRACTIONS):
-        return f"*{fraction:.2f}*"
-    return f"{fraction:.2f}"
+        return f"*{percent:.1f}%*"
+    return f"{percent:.1f}%"
 
 
 def _write_generated(name: str, lines: list[str]) -> None:
