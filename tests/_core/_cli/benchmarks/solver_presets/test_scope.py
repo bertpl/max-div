@@ -23,13 +23,13 @@ def test_determine_benchmark_scope_full_series():
     singles = [s for s in scope if not s.is_parallel]
     parallels = [s for s in scope if s.is_parallel]
 
-    # single-worker series: n_points log-spaced budgets spanning [t_min, t_max]
+    # the single-worker series has n_points log-spaced budgets spanning [t_min, t_max]
     single_durations = sorted({s.duration.value() for s in singles})
     assert len(single_durations) == SINGLE_SERIES.n_points.at(0.0)
     assert single_durations[0] == pytest.approx(SINGLE_SERIES.t_min_sec.at(0.0))
     assert single_durations[-1] == pytest.approx(SINGLE_SERIES.t_max_sec.at(0.0))
 
-    # parallel series: its own point count and budget range, independent of the single series
+    # the parallel series keeps its own point count and range, independent of the single series
     parallel_durations = sorted({s.duration.value() for s in parallels})
     assert len(parallel_durations) == PARALLEL_SERIES.n_points.at(0.0)
     assert parallel_durations[0] == pytest.approx(PARALLEL_SERIES.t_min_sec.at(0.0))
@@ -45,7 +45,7 @@ def test_determine_benchmark_scope_full_series():
     u1_parallel = [s for s in parallels if s.problem_name == "U1"]
     assert len({s.seed for s in u1_parallel}) == len(u1_parallel) == PARALLEL_SERIES.n_points.at(0.0)
 
-    # parallel runs: SMART only, machine default workers
+    # parallel runs use SMART only, on the machine's default worker count
     assert {s.preset for s in parallels} == {SolverPreset.SMART}
     assert len({s.n_workers for s in parallels}) == 1
     assert all(s.n_workers > 1 for s in parallels)

@@ -13,10 +13,7 @@ from ._models import SolverPresetBenchmarkParams
 # =================================================================================================
 @dataclass(frozen=True, kw_only=True)
 class BudgetSeries:
-    """A `BudgetSeries` holds the log-spaced time budgets for one family of benchmark runs.
-
-    The `speed` argument of `durations_sec` shrinks both the budget range and the point count.
-    """
+    """A `BudgetSeries` holds the log-spaced time budgets for one family of benchmark runs."""
 
     t_min_sec: SpeedParam[float]
     t_max_sec: SpeedParam[float]
@@ -51,10 +48,9 @@ SINGLE_SERIES = BudgetSeries(
     n_points=SpeedParam(slow=50, fast=2),
 )
 # The parallel runs (SMART re-run on the machine's default worker count) get their own series
-# with a smaller budget range and fewer points: the minimum stays well above the parallel
-# solver's process-spawn cost — which an end-to-end budget includes — and the maximum stays
-# below the single-worker one since parallel runs execute serially, one at a time, each using
-# all cores.
+# with a smaller budget range and fewer points.  The minimum stays well above the parallel
+# solver's process-spawn cost, which an end-to-end budget includes.  The maximum stays below
+# the single-worker one since parallel runs execute serially, one at a time, each using all cores.
 PARALLEL_SERIES = BudgetSeries(
     t_min_sec=SpeedParam(slow=3.0, fast=2.0),
     t_max_sec=SpeedParam(slow=900.0, fast=2.0),
