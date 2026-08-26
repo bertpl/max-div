@@ -227,8 +227,8 @@ The time-bound setting (IV.C) keeps its strict criterion: there, completion with
         FOR EACH solver configuration:
             FOR EACH n it reached (as in IV.D.3):
                 Q_median(solver_config, n) = median over seeds of Q_observed(solver_config, n, *)
-            quality-bound size = largest n such that Q_median >= Q_threshold(b) at it and
-                                 at every smaller judged n   (None if the smallest judged n fails)
+            quality-bound size = largest n such that Q_median >= Q_threshold(b, n) at that n
+                                 and at every smaller judged n   (None if the smallest judged n fails)
 
         FOR EACH solver:
             FOR EACH n reached by any of its configurations:
