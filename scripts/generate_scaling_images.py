@@ -390,19 +390,29 @@ def write_memory_table(fits: dict, names: dict[str, str]) -> None:
     _write_generated("scaling_memory.md", lines)
 
 
-def write_best_known_table(records: list[ScalingRunRecord], names: dict[str, str]) -> None:
-    """Write the best-known-solution provenance table: per size, the best extended-run result.
+def write_best_known_table(records: list[ScalingRunRecord], q_random: dict[int, float], names: dict[str, str]) -> None:
+    """Write the best-known-solution provenance table: per size, the best result and the bounds.
 
-    The measured-time column keeps a late completion visible — the best-known stage keeps a run
+    Beside each size's best-known value sit `Q_random` and the two verdict thresholds derived
+    from the pair, so the table shows the whole scale a size's verdicts are judged on. The
+    measured-time column keeps a late completion visible — the best-known stage keeps a run
     that finished past its budget (see `best_known_stage`).
     """
     lines = [
-        "| Problem size n | Best-known quality (min. separation) | Solver | Config | Measured time |",
-        "|---|---|---|---|---|",
+        "| Problem size n | Q_random | 50% threshold | 90% threshold"
+        " | Best-known quality (min. separation) | Solver | Config | Measured time |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for n, record in best_known_by_size(records).items():
+        random_quality = q_random.get(n)
+        thresholds = [
+            f"{(1 - b) * random_quality + b * record.min_separation:.4f}" if random_quality is not None else ""
+            for b in sorted(GAP_CLOSURE_FRACTIONS)
+        ]
+        random_cell = f"{random_quality:.4f}" if random_quality is not None else ""
         lines.append(
-            f"| {n:,} | {record.min_separation:.4f} | {_display_name(record.tool, names)}"
+            f"| {n:,} | {random_cell} | {thresholds[0]} | {thresholds[1]}"
+            f" | {record.min_separation:.4f} | {_display_name(record.tool, names)}"
             f" | `{record.config}` | {record.measured_sec:.0f} s |"
         )
     _write_generated("scaling_best_known.md", lines)
@@ -502,13 +512,17 @@ def main() -> None:
     fits = json.loads(FIT_PATH.read_text(encoding="utf-8")) if FIT_PATH.exists() else {}
     best_known_records = load_scaling_records(BEST_KNOWN_DATA_PATH) if BEST_KNOWN_DATA_PATH.exists() else []
     quality_records = load_scaling_records(QUALITY_DATA_PATH) if QUALITY_DATA_PATH.exists() else []
+    q_random_values = (
+        {int(n): v for n, v in json.loads(Q_RANDOM_PATH.read_text(encoding="utf-8")).items()}
+        if Q_RANDOM_PATH.exists()
+        else {}
+    )
     if best_known_records:
         # The quality runs join the pool: a reference-budget run can hold a size's best solution.
-        write_best_known_table(best_known_records + quality_records, names)
-    if quality_records and Q_RANDOM_PATH.exists():
-        q_random = {int(n): v for n, v in json.loads(Q_RANDOM_PATH.read_text(encoding="utf-8")).items()}
-        write_quality_table(quality_records, best_known_records, q_random, names)
-        write_quality_gap_table(quality_records, best_known_records, q_random, names)
+        write_best_known_table(best_known_records + quality_records, q_random_values, names)
+    if quality_records and q_random_values:
+        write_quality_table(quality_records, best_known_records, q_random_values, names)
+        write_quality_gap_table(quality_records, best_known_records, q_random_values, names)
     render_time_chart(time_grouped, names)
     render_memory_chart(memory_grouped, fits, names)
     render_fit_charts(memory_grouped, fits, names)

@@ -14,7 +14,7 @@ Each cell holds the percentage of the random-to-best-known quality gap a configu
 
 ## Best-Known Solutions
 
-The **best-known solution** per problem size is the reference the quality verdicts are judged against. The values below are the best over every measured run — the extended runs and the reference-budget quality runs of the [measurement protocol](protocol.md) (section IV.D).
+The **best-known solution** per problem size is the reference the quality verdicts are judged against; beside it sit `Q_random` and the two thresholds the pair yields. The values below are the best over every measured run — the extended runs and the reference-budget quality runs of the [measurement protocol](protocol.md) (section IV.D).
 
 The measured-time column shows each winning run's end-to-end time. A run that finishes somewhat past the extended budget still counts — see the overrun rule in the [protocol](protocol.md), section IV.D.2.
 
