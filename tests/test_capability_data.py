@@ -308,7 +308,7 @@ def test_a_scaling_value_off_the_grid_is_rejected(cd, synthetic, value):
 
 
 @pytest.mark.parametrize("value", ["pending", "none", 20, 50, 100, 500, 20000, 2000000000, "1000"])
-def test_pending_and_grid_sizes_are_both_accepted(cd, synthetic, value):
+def test_pending_none_and_grid_sizes_are_accepted(cd, synthetic, value):
     """`pending`, `none`, and every 1-2-5 grid size pass validation, as int or as string."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["max_n_memory"] = value

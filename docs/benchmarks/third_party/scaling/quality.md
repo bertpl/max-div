@@ -10,13 +10,15 @@ The scoring objective (minimum separation under L2) was chosen because it is the
 
 Each cell holds the percentage of the random-to-best-known quality gap a configuration's median closes at that size, rounded down to 0.1% — **bold** reaches the 90% fraction, *italic* only the 50% one. An empty cell is a size the configuration was not judged at — beyond its time limit, or no completed run.
 
-Percentages rising with n say more about the reference than about the solver: the best-known solutions come from a fixed extended budget, so they are less converged as n grows, and at the largest sizes they come from the same fast tools being judged. A high percentage there means the solver matches the best *known* solution, not that it approaches the optimum — which is why a pass at a large size cannot lift a configuration over failures at smaller, better-referenced sizes ([protocol](protocol.md), section IV.D.4).
+Percentages rising with n say more about the reference than about the solver: the best-known solutions come from a fixed extended budget, so they are less converged as n grows, and at the largest sizes they come from the same fast tools being judged.
+
+A high percentage there means the solver matches the best *known* solution, not that it approaches the optimum — the reason the [protocol](protocol.md) (section IV.D.4) ends a passing range at the first failing size.
 
 --8<-- "generated/scaling_quality_gaps.md"
 
 ## Best-Known Solutions
 
-The **best-known solution** per problem size is the reference the quality verdicts are judged against; beside it sit `Q_random` and the two thresholds the pair yields. The values below are the best over every measured run — the extended runs and the reference-budget quality runs of the [measurement protocol](protocol.md) (section IV.D).
+The **best-known solution** per problem size is the reference the quality verdicts are judged against; beside the best-known value sit `Q_random` and the two thresholds the pair yields. The values below are the best over every measured run — the extended runs and the reference-budget quality runs of the [measurement protocol](protocol.md) (section IV.D).
 
 The measured-time column shows each winning run's end-to-end time. A run that finishes somewhat past the extended budget still counts — see the overrun rule in the [protocol](protocol.md), section IV.D.2.
 

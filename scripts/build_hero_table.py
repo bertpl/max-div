@@ -215,8 +215,8 @@ class _Layout:
         """Return True when this row carries scaling column j's highest measured value.
 
         Deliberately not keyed to max-div: whoever measures highest leads, and saying so is the
-        point of showing the columns at all. A pending cell never leads, and a column with no
-        measured value yet has no leader.
+        point of showing the columns at all. A cell without a measured size never leads, and a
+        column with no measured value yet has no leader.
         """
         unmeasured = (capability_data.PENDING, capability_data.NO_PASSING_SIZE)
         measured = [int(r["scales"][j]) for r in self.rows if r["scales"][j] not in unmeasured]
