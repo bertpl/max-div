@@ -10,6 +10,8 @@ The scoring objective (minimum separation under L2) was chosen because it is the
 
 Each cell holds the percentage of the random-to-best-known quality gap a configuration's median closes at that size, rounded down to 0.1% — **bold** reaches the 90% fraction, *italic* only the 50% one. An empty cell is a size the configuration was not judged at — beyond its time limit, or no completed run.
 
+Percentages rising with n say more about the reference than about the solver: the best-known solutions come from a fixed extended budget, so they are less converged as n grows, and at the largest sizes they come from the same fast tools being judged. A high percentage there means the solver matches the best *known* solution, not that it approaches the optimum — which is why a pass at a large size cannot lift a configuration over failures at smaller, better-referenced sizes ([protocol](protocol.md), section IV.D.4).
+
 --8<-- "generated/scaling_quality_gaps.md"
 
 ## Best-Known Solutions
