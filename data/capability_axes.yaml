@@ -174,6 +174,13 @@ groups:
         definition: >-
           Optimizes the mean (equivalently the sum) of all pairwise distances within the selection
           (max-sum diversity).
+      - key: optimality_proofs
+        hero_label: optimality proofs
+        label: certified proofs that a selection is optimal
+        hero: true
+        definition: >-
+          Can terminate with a proof that its selection is optimal for the modeled objective,
+          given enough time — rather than a heuristic result of unknown distance to the optimum.
 
   - key: constraints
     hero_label: constraints
@@ -261,7 +268,8 @@ scale_columns:
   definition: >-
     Each column is the largest measured problem size n at which the solver still meets that
     column's criterion — see the [measurement protocol](scaling/protocol.md) for the full
-    procedure. A cell reading `pending` has not been measured yet.
+    procedure. A cell reading `pending` has not been measured yet; a dash marks a measured
+    column where no size meets the criterion.
   columns:
     - key: max_n_memory
       hero_label: memory
@@ -271,8 +279,15 @@ scale_columns:
       hero_label: time
       label: largest n within the time budget
       definition: a valid selection is returned within one minute, end-to-end.
-    - key: max_n_quality
-      hero_label: quality
-      label: largest n at good quality
+    - key: max_n_quality_50
+      hero_label: quality – 50%
+      label: largest n closing 50% of the quality gap
       definition: >-
-        at least 90% of the diversity gap to the best known solution is closed.
+        at least 50% of the diversity gap between a random selection and the best known solution
+        is closed, at this and every smaller measured size.
+    - key: max_n_quality_90
+      hero_label: quality – 90%
+      label: largest n closing 90% of the quality gap
+      definition: >-
+        at least 90% of the diversity gap between a random selection and the best known solution
+        is closed, at this and every smaller measured size.

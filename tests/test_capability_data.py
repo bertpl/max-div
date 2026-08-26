@@ -299,17 +299,17 @@ def test_an_unknown_scaling_cell_is_rejected(cd, synthetic):
 
 @pytest.mark.parametrize("value", ["", "12", "300", "4-5", "10^3", 10, 150000])
 def test_a_scaling_value_off_the_grid_is_rejected(cd, synthetic, value):
-    """Only 1-2-5 grid sizes (smallest 20) or `pending` are accepted — anything else is a typo or an old value."""
+    """Only 1-2-5 grid sizes (smallest 20), `pending`, or `none` pass — anything else is a typo or an old value."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["max_n_memory"] = value
 
     # --- act / assert -----------------
-    assert any("expected `pending` or a 1-2-5 grid size" in p for p in problems(cd, synthetic))
+    assert any("expected `pending`, `none`, or a 1-2-5 grid size" in p for p in problems(cd, synthetic))
 
 
-@pytest.mark.parametrize("value", ["pending", 20, 50, 100, 500, 20000, 2000000000, "1000"])
-def test_pending_and_grid_sizes_are_both_accepted(cd, synthetic, value):
-    """`pending` and every 1-2-5 grid size pass validation, as int or as string."""
+@pytest.mark.parametrize("value", ["pending", "none", 20, 50, 100, 500, 20000, 2000000000, "1000"])
+def test_pending_none_and_grid_sizes_are_accepted(cd, synthetic, value):
+    """`pending`, `none`, and every 1-2-5 grid size pass validation, as int or as string."""
     # --- arrange ----------------------
     synthetic[2]["tool"][0]["scale"]["max_n_memory"] = value
 

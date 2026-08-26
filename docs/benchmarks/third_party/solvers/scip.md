@@ -6,7 +6,8 @@ solver:
   scale:
     max_n_memory: 2000
     max_n_time: 2000
-    max_n_quality: pending
+    max_n_quality_50: 500
+    max_n_quality_90: 200
   metadata:
     guarantee: proven optimum
     license: Apache-2.0 (SCIP)
@@ -60,6 +61,7 @@ solver:
     objective.max_sum:
       mark: partial
       note: *linearize
+    objective.optimality_proofs: {mark: full}
     constraints.disjoint_groups:
       mark: partial
       note: &linear_constraints

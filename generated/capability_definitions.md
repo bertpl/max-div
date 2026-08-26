@@ -38,6 +38,7 @@ Every capability cell carries one of the marks below. A mark composes with the c
 | mean-of-NN | Optimizes the mean, over the selected items, of each item's distance to its nearest selected neighbor. |
 | geomean-of-NN | Optimizes the geometric mean, over the selected items, of each item's distance to its nearest selected neighbor. |
 | max-sum | Optimizes the mean (equivalently the sum) of all pairwise distances within the selection (max-sum diversity). |
+| optimality proofs | Can terminate with a proof that its selection is optimal for the modeled objective, given enough time — rather than a heuristic result of unknown distance to the optimum. |
 
 </div>
 
@@ -79,7 +80,7 @@ Every capability cell carries one of the marks below. A mark composes with the c
 
 ## Solver scaling
 
-Each column is the largest measured problem size n at which the solver still meets that column's criterion — see the [measurement protocol](scaling/protocol.md) for the full procedure. A cell reading `pending` has not been measured yet.
+Each column is the largest measured problem size n at which the solver still meets that column's criterion — see the [measurement protocol](scaling/protocol.md) for the full procedure. A cell reading `pending` has not been measured yet; a dash marks a measured column where no size meets the criterion.
 
 <div class="capability-definitions" markdown>
 
@@ -87,7 +88,8 @@ Each column is the largest measured problem size n at which the solver still mee
 |---|---|
 | memory | peak memory stays within 32 GB. |
 | time | a valid selection is returned within one minute, end-to-end. |
-| quality | at least 90% of the diversity gap to the best known solution is closed. |
+| quality – 50% | at least 50% of the diversity gap between a random selection and the best known solution is closed, at this and every smaller measured size. |
+| quality – 90% | at least 90% of the diversity gap between a random selection and the best known solution is closed, at this and every smaller measured size. |
 
 </div>
 

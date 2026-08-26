@@ -34,6 +34,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
+| diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-full">✔</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
 | constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
@@ -45,7 +46,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^ortools-cpsat-9] |
 | solver scaling · largest n within memory | n = 20k | |
 | solver scaling · largest n within the time budget | n = 20k | |
-| solver scaling · largest n at good quality | <span class="scale-pending">pending</span> | |
+| solver scaling · largest n closing 50% of the quality gap | n = 1k | |
+| solver scaling · largest n closing 90% of the quality gap | n = 1k | |
 
 </div>
 

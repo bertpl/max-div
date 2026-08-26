@@ -11,6 +11,7 @@ from benchmarks.solver_scaling.quality_stage import (
     quality_limits,
     seeds_for,
     time_limits,
+    tool_quality_limits,
 )
 from benchmarks.solver_scaling.records import ScalingRunRecord, save_scaling_records
 
@@ -22,11 +23,11 @@ def _record(n, *, tool="rdkit", config="default", seed=DEFAULT_SEED, completed=T
     )
 
 
-def test_seeds_for_stochastic_and_deterministic() -> None:
-    """A stochastic configuration runs every quality seed; a deterministic one keeps the fixed seed."""
+def test_seeds_for_seed_influenceable_and_fixed() -> None:
+    """A configuration whose seed can influence the result runs every quality seed; the rest keep the fixed seed."""
     # --- act / assert -----------------
     assert seeds_for(resolve("fpsample", "vanilla")) == QUALITY_SEEDS
-    assert seeds_for(resolve("rdkit", "default")) == (DEFAULT_SEED,)
+    assert seeds_for(resolve("code-fdm", "default")) == (DEFAULT_SEED,)
 
 
 def test_time_limits_takes_each_configs_largest_passing_size(tmp_path) -> None:
@@ -114,10 +115,72 @@ def test_quality_limits_judges_the_median_against_the_pooled_threshold() -> None
     ]
 
     # --- act --------------------------
-    limits = quality_limits(quality, [], {20: 0.0})
+    limits = quality_limits(quality, [], {20: 0.0}, gap_closure=0.9)
 
     # --- assert -----------------------
     assert limits == {"fpsample/vanilla": None, "rdkit/default": 20}
+
+
+def test_quality_limits_stops_at_the_first_failing_size() -> None:
+    """A size that misses the threshold ends the passing range; a larger passing size is not reported."""
+    # --- arrange ----------------------
+    # the reference config sets Q_best_known = 1.0 at every size; rdkit passes at 20 and 100
+    # but misses at 50, so its limit is 20 — the pass at 100 must not lift it
+    quality = [
+        _record(20, min_separation=1.0),
+        _record(50, min_separation=0.5),
+        _record(100, min_separation=1.0),
+        _record(20, tool="fpsample", config="vanilla", min_separation=1.0),
+        _record(50, tool="fpsample", config="vanilla", min_separation=1.0),
+        _record(100, tool="fpsample", config="vanilla", min_separation=1.0),
+    ]
+
+    # --- act --------------------------
+    limits = quality_limits(quality, [], {20: 0.0, 50: 0.0, 100: 0.0}, gap_closure=0.9)
+
+    # --- assert -----------------------
+    assert limits == {"rdkit/default": 20, "fpsample/vanilla": 100}
+
+
+def test_quality_limits_judges_each_fraction_separately() -> None:
+    """A configuration closing 60% of the gap passes the 0.5 fraction but not the 0.9 fraction."""
+    # --- arrange ----------------------
+    quality = [
+        _record(20, min_separation=0.6),
+        _record(20, tool="fpsample", config="vanilla", min_separation=1.0),
+    ]
+    q_random = {20: 0.0}
+
+    # --- act / assert -----------------
+    assert quality_limits(quality, [], q_random, gap_closure=0.5)["rdkit/default"] == 20
+    assert quality_limits(quality, [], q_random, gap_closure=0.9)["rdkit/default"] is None
+
+
+def test_tool_quality_limits_judges_the_best_configuration_per_size() -> None:
+    """Configurations covering each other's failing sizes extend the tool's range beyond either one's."""
+    # --- arrange ----------------------
+    # fpsample sets Q_best_known = 1.0 at every size; rdkit's configs each fail one size
+    # (default at 50, alt at 20 and 100) but their per-size best passes everywhere
+    quality = [
+        _record(20, min_separation=1.0),
+        _record(50, min_separation=0.5),
+        _record(100, min_separation=1.0),
+        _record(20, config="alt", min_separation=0.5),
+        _record(50, config="alt", min_separation=1.0),
+        _record(100, config="alt", min_separation=0.5),
+        _record(20, tool="fpsample", config="vanilla", min_separation=1.0),
+        _record(50, tool="fpsample", config="vanilla", min_separation=1.0),
+        _record(100, tool="fpsample", config="vanilla", min_separation=1.0),
+    ]
+    q_random = {20: 0.0, 50: 0.0, 100: 0.0}
+
+    # --- act --------------------------
+    tool_limits = tool_quality_limits(quality, [], q_random, gap_closure=0.9)
+    config_limits = quality_limits(quality, [], q_random, gap_closure=0.9)
+
+    # --- assert -----------------------
+    assert tool_limits == {"rdkit": 100, "fpsample": 100}
+    assert config_limits == {"rdkit/default": 20, "rdkit/alt": None, "fpsample/vanilla": 100}
 
 
 def test_median_qualities_ignores_failed_runs() -> None:

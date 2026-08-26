@@ -1,27 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="896" height="519" viewBox="0 0 896 519" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
-<rect width="896" height="519" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="968" height="535" viewBox="0 0 968 535" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="968" height="535" fill="#ffffff"/>
 <polygon points="279,32 409,32 292,149 292,477 162,477 162,149" fill="#f6f8fa"/>
 <text x="344" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">distance</text>
 <line x1="281" y1="31" x2="407" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<text x="461" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">objective</text>
-<line x1="411" y1="31" x2="511" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<polygon points="513,32 617,32 500,149 500,477 396,477 396,149" fill="#f6f8fa"/>
-<text x="565" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">constraints</text>
-<line x1="515" y1="31" x2="615" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<text x="656" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">budget</text>
-<line x1="619" y1="31" x2="693" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<polygon points="695,32 747,32 630,149 630,477 578,477 578,149" fill="#f6f8fa"/>
-<text x="721" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle"></text>
-<line x1="697" y1="31" x2="745" y2="31" stroke="#d8dee4" stroke-width="1"/>
-<text x="816" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">solver scaling (n)</text>
-<line x1="749" y1="31" x2="883" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<text x="474" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">objective</text>
+<line x1="411" y1="31" x2="537" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<polygon points="539,32 643,32 526,149 526,477 422,477 422,149" fill="#f6f8fa"/>
+<text x="591" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">constraints</text>
+<line x1="541" y1="31" x2="641" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<text x="682" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">budget</text>
+<line x1="645" y1="31" x2="719" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<polygon points="721,32 773,32 656,149 656,477 604,477 604,149" fill="#f6f8fa"/>
+<text x="747" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle"></text>
+<line x1="723" y1="31" x2="771" y2="31" stroke="#d8dee4" stroke-width="1"/>
+<text x="865" y="26" fill="#656d76" font-size="11" font-weight="600" text-anchor="middle">solver scaling (n)</text>
+<line x1="775" y1="31" x2="955" y2="31" stroke="#d8dee4" stroke-width="1"/>
 <polyline points="279,32 162,149 162,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
 <polyline points="409,32 292,149 292,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="513,32 396,149 396,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="617,32 500,149 500,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="695,32 578,149 578,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="747,32 630,149 630,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
-<polyline points="885,32 768,149 768,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="539,32 422,149 422,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="643,32 526,149 526,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="721,32 604,149 604,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="773,32 656,149 656,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
+<polyline points="957,32 840,149 840,477" fill="none" stroke="#d8dee4" stroke-width="0.5"/>
 <text x="172" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 172 157)">L1</text>
 <text x="198" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 198 157)">L2</text>
 <text x="224" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 224 157)">L∞</text>
@@ -31,22 +31,24 @@
 <text x="328" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 328 157)">mean-of-NN</text>
 <text x="354" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 354 157)">geomean-of-NN</text>
 <text x="380" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 380 157)">max-sum</text>
-<text x="406" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 406 157)">disjoint groups</text>
-<text x="432" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 432 157)">overlapping groups</text>
-<text x="458" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 458 157)">ranged counts</text>
-<text x="484" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 484 157)">feasibility proofs</text>
-<text x="510" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 510 157)">iterations</text>
-<text x="536" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 536 157)">wall clock</text>
-<text x="562" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 562 157)">improves with budget</text>
-<text x="588" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 588 157)">multi-worker - independent</text>
-<text x="614" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 614 157)">multi-worker - cooperative</text>
-<text x="650" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 650 157)">memory †</text>
-<text x="696" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 696 157)">time †</text>
-<text x="742" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 742 157)">quality †</text>
-<rect x="14" y="164" width="754" height="20" fill="#57606a" fill-opacity="0.06"/>
+<text x="406" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 406 157)">optimality proofs</text>
+<text x="432" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 432 157)">disjoint groups</text>
+<text x="458" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 458 157)">overlapping groups</text>
+<text x="484" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 484 157)">ranged counts</text>
+<text x="510" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 510 157)">feasibility proofs</text>
+<text x="536" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 536 157)">iterations</text>
+<text x="562" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 562 157)">wall clock</text>
+<text x="588" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 588 157)">improves with budget</text>
+<text x="614" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 614 157)">multi-worker - independent</text>
+<text x="640" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 640 157)">multi-worker - cooperative</text>
+<text x="676" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 676 157)">memory †</text>
+<text x="722" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 722 157)">time †</text>
+<text x="768" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 768 157)">quality – 50% †</text>
+<text x="814" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 814 157)">quality – 90% †</text>
+<rect x="14" y="164" width="826" height="20" fill="#57606a" fill-opacity="0.06"/>
 <text x="14" y="178" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">ANYTIME OPTIMIZERS</text>
-<rect x="14" y="184" width="754" height="23" fill="#ddf4e4"/>
-<line x1="14" y1="184" x2="768" y2="184" stroke="#d8dee4" stroke-width="1"/>
+<rect x="14" y="184" width="826" height="23" fill="#ddf4e4"/>
+<line x1="14" y1="184" x2="840" y2="184" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="200" fill="#1f2328" font-size="12.5" font-weight="700">max-div</text>
 <text x="175" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="201" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -57,7 +59,6 @@
 <text x="331" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="357" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="383" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="409" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="435" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="461" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="487" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -66,12 +67,14 @@
 <text x="565" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="591" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="617" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="200" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
-<text x="699" y="200" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
-<text x="745" y="200" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<rect x="14" y="207" width="754" height="20" fill="#57606a" fill-opacity="0.06"/>
+<text x="643" y="200" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="679" y="200" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
+<text x="725" y="200" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
+<text x="771" y="200" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">200k</text>
+<text x="817" y="200" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">200k</text>
+<rect x="14" y="207" width="826" height="20" fill="#57606a" fill-opacity="0.06"/>
 <text x="14" y="221" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">EXACT SOLVERS</text>
-<line x1="14" y1="227" x2="768" y2="227" stroke="#d8dee4" stroke-width="1"/>
+<line x1="14" y1="227" x2="840" y2="227" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="243" fill="#1f2328" font-size="12.5" font-weight="400">OR-Tools CP-SAT</text>
 <text x="175" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
@@ -82,19 +85,21 @@
 <text x="331" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="357" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="383" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="409" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="409" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="435" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="461" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="487" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="513" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="513" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="539" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="565" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="591" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="565" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="591" y="243" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="617" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="699" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="243" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="250" x2="768" y2="250" stroke="#d8dee4" stroke-width="1"/>
+<text x="643" y="243" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="679" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="725" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="771" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">1k</text>
+<text x="817" y="243" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">1k</text>
+<line x1="14" y1="250" x2="840" y2="250" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="266" fill="#1f2328" font-size="12.5" font-weight="400">SCIP</text>
 <text x="175" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
@@ -105,18 +110,20 @@
 <text x="331" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="357" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="383" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="409" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="409" y="266" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="435" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="461" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="487" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="513" y="266" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="513" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="539" y="266" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="565" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="617" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="653" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="699" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="745" y="266" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="273" x2="768" y2="273" stroke="#d8dee4" stroke-width="1"/>
+<text x="565" y="266" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="591" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="643" y="266" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="679" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
+<text x="725" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
+<text x="771" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
+<text x="817" y="266" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">200</text>
+<line x1="14" y1="273" x2="840" y2="273" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="289" fill="#1f2328" font-size="12.5" font-weight="400">HiGHS</text>
 <text x="175" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
@@ -127,20 +134,22 @@
 <text x="331" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="357" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="383" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="409" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="409" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="435" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="461" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="487" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="513" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="513" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="539" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="565" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="617" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="699" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
-<text x="745" y="289" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<rect x="14" y="296" width="754" height="20" fill="#57606a" fill-opacity="0.06"/>
+<text x="565" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="591" y="289" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="643" y="289" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="679" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
+<text x="725" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">2k</text>
+<text x="771" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">200</text>
+<text x="817" y="289" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">200</text>
+<rect x="14" y="296" width="826" height="20" fill="#57606a" fill-opacity="0.06"/>
 <text x="14" y="310" fill="#656d76" font-size="11" font-weight="600" letter-spacing="0.5">ONE-SHOT PICKERS &amp; SAMPLERS</text>
-<line x1="14" y1="316" x2="768" y2="316" stroke="#d8dee4" stroke-width="1"/>
+<line x1="14" y1="316" x2="840" y2="316" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="332" fill="#1f2328" font-size="12.5" font-weight="400">RDKit MaxMinPicker</text>
 <text x="175" y="332" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="332" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
@@ -148,26 +157,29 @@
 <text x="253" y="332" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="279" y="332" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="305" y="332" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="332" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
-<text x="699" y="332" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="332" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="339" x2="768" y2="339" stroke="#d8dee4" stroke-width="1"/>
+<text x="679" y="332" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
+<text x="725" y="332" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="771" y="332" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="817" y="332" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50</text>
+<line x1="14" y1="339" x2="840" y2="339" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="355" fill="#1f2328" font-size="12.5" font-weight="400">fpsample</text>
 <text x="201" y="355" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="253" y="355" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="305" y="355" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
-<text x="699" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">5M</text>
-<text x="745" y="355" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="362" x2="768" y2="362" stroke="#d8dee4" stroke-width="1"/>
+<text x="679" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
+<text x="725" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">5M</text>
+<text x="771" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">5M</text>
+<text x="817" y="355" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<line x1="14" y1="362" x2="840" y2="362" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="378" fill="#1f2328" font-size="12.5" font-weight="400">skmatter</text>
 <text x="201" y="378" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="253" y="378" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="305" y="378" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500M</text>
-<text x="699" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
-<text x="745" y="378" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="385" x2="768" y2="385" stroke="#d8dee4" stroke-width="1"/>
+<text x="679" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500M</text>
+<text x="725" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
+<text x="771" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500k</text>
+<text x="817" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<line x1="14" y1="385" x2="840" y2="385" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="401" fill="#1f2328" font-size="12.5" font-weight="400">apricot-select</text>
 <text x="175" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="201" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -175,10 +187,11 @@
 <text x="253" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="279" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="383" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
-<text x="699" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
-<text x="745" y="401" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="408" x2="768" y2="408" stroke="#d8dee4" stroke-width="1"/>
+<text x="679" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
+<text x="725" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50k</text>
+<text x="771" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<text x="817" y="401" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<line x1="14" y1="408" x2="840" y2="408" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="424" fill="#1f2328" font-size="12.5" font-weight="400">qc-selector</text>
 <text x="175" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="201" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -187,23 +200,25 @@
 <text x="279" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="305" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="383" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="409" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="513" y="424" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="653" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="699" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
-<text x="745" y="424" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="431" x2="768" y2="431" stroke="#d8dee4" stroke-width="1"/>
+<text x="435" y="424" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="539" y="424" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="679" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="725" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="771" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">20k</text>
+<text x="817" y="424" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<line x1="14" y1="431" x2="840" y2="431" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="447" fill="#1f2328" font-size="12.5" font-weight="400">DPPy</text>
 <text x="175" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="227" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="253" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="279" y="447" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="513" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="653" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
-<text x="699" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
-<text x="745" y="447" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="454" x2="768" y2="454" stroke="#d8dee4" stroke-width="1"/>
+<text x="539" y="447" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="679" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
+<text x="725" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500</text>
+<text x="771" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<text x="817" y="447" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<line x1="14" y1="454" x2="840" y2="454" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="470" fill="#1f2328" font-size="12.5" font-weight="400">code-FDM</text>
 <text x="175" y="470" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="201" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
@@ -211,11 +226,13 @@
 <text x="253" y="470" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="279" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="305" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="409" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="653" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">100M</text>
-<text x="699" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">10k</text>
-<text x="745" y="470" fill="#8c959f" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<line x1="14" y1="477" x2="768" y2="477" stroke="#d8dee4" stroke-width="1"/>
+<text x="435" y="470" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="679" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">100M</text>
+<text x="725" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">10k</text>
+<text x="771" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">10k</text>
+<text x="817" y="470" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">50</text>
+<line x1="14" y1="477" x2="840" y2="477" stroke="#d8dee4" stroke-width="1"/>
 <text x="14" y="490" font-size="11"><tspan fill="#1a7f37" font-weight="700">✓</tspan><tspan fill="#656d76" dx="5">built in</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">~</tspan><tspan fill="#656d76" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan></text>
-<text x="14" y="506" font-size="11"><tspan fill="#656d76" font-weight="700">†</tspan><tspan fill="#656d76" dx="5">based on the built-in benchmark problem U1 and the published measurement protocol</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">…</tspan><tspan fill="#656d76" dx="5">measurement pending</tspan></text>
+<text x="14" y="506" font-size="11"><tspan fill="#656d76" font-weight="700">†</tspan><tspan fill="#656d76" dx="5">largest solvable n on benchmark problem U1, per the published measurement protocol:</tspan></text>
+<text x="24" y="522" font-size="11"><tspan fill="#656d76">memory: using ≤32GB RAM · time: + in ≤1min · quality: + closing ≥50% / ≥90% of the random→best diversity gap</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">—</tspan><tspan fill="#656d76" dx="5">no measured size meets the criterion</tspan></text>
 </svg>

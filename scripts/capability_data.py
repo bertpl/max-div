@@ -54,6 +54,7 @@ DEFINITIONS_INCLUDE = '--8<-- "generated/capability_definitions.md"'
 # alternative admits the two sub-100 grid sizes without admitting 10.
 GRID_VALUE = re.compile(r"^(?:[25]0|[125]0{2,})$")
 PENDING = "pending"
+NO_PASSING_SIZE = "none"  # a measured column where no size meets the criterion
 FRONT_MATTER = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.DOTALL)
 
 
@@ -206,7 +207,7 @@ def check_metadata(key: str, record: dict, axes_metadata: list[dict]) -> list[st
 
 
 def check_scale_cells(key: str, record: dict, scale_columns: list[dict]) -> list[str]:
-    """A record carries one cell per scaling column, no others, each `pending` or a 1-2-5 grid size."""
+    """A record carries one cell per scaling column, no others, each `pending`, `none`, or a grid size."""
     problems: list[str] = []
     cells = record.get("scale") or {}
     expected = {column["key"] for column in scale_columns}
@@ -216,9 +217,9 @@ def check_scale_cells(key: str, record: dict, scale_columns: list[dict]) -> list
         problems.append(f"{key}: cell for unknown scaling column `{unknown}`")
     for column_key in sorted(expected & set(cells)):
         value = cells[column_key]
-        if value != PENDING and not GRID_VALUE.match(str(value)):
+        if value not in (PENDING, NO_PASSING_SIZE) and not GRID_VALUE.match(str(value)):
             problems.append(
-                f"{key}: scaling column `{column_key}` is {value!r}, expected `pending` or a 1-2-5 grid size"
+                f"{key}: scaling column `{column_key}` is {value!r}, expected `pending`, `none`, or a 1-2-5 grid size"
             )
     return problems
 
@@ -645,9 +646,11 @@ def format_scale_value(n: int) -> str:
 
 
 def _scale_markup(value) -> str:
-    """Render one scaling cell: a measured grid size in suffix notation, or the pending marker."""
+    """Render one scaling cell: a measured grid size in suffix notation, the pending marker, or a dash."""
     if value == PENDING:
         return '<span class="scale-pending">pending</span>'
+    if value == NO_PASSING_SIZE:
+        return "\u2014"
     return f"n = {format_scale_value(int(value))}"
 
 

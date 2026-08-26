@@ -6,7 +6,8 @@ solver:
   scale:
     max_n_memory: 1000000000
     max_n_time: 20000
-    max_n_quality: pending
+    max_n_quality_50: 20000
+    max_n_quality_90: 50
   metadata:
     guarantee: 2-approximation (farthest-point traversal)
     license: BSD-3-Clause
@@ -37,6 +38,7 @@ solver:
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}
     objective.max_sum: {mark: none}
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups:
       mark: none
       note:

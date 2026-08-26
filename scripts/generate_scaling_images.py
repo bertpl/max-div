@@ -11,6 +11,7 @@ Run:  uv run --group benchmarks --python 3.13 python scripts/generate_scaling_im
 
 import io
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -41,14 +42,14 @@ from benchmarks.solver_scaling.grid import (  # noqa: E402
 from benchmarks.solver_scaling.memory_fit import FIT_PATH  # noqa: E402
 from benchmarks.solver_scaling.memory_stage import DATA_PATH as MEMORY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
+from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.quality_stage import (  # noqa: E402
-    BEST_KNOWN_WEIGHT,
+    GAP_CLOSURE_FRACTIONS,
     Q_RANDOM_PATH,
     best_known_pool,
     median_qualities,
     quality_limits,
 )
-from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.records import ScalingRunRecord, load_scaling_records  # noqa: E402
 from benchmarks.solver_scaling.time_stage import DATA_PATH as TIME_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.time_stage import passes_time  # noqa: E402
@@ -389,19 +390,29 @@ def write_memory_table(fits: dict, names: dict[str, str]) -> None:
     _write_generated("scaling_memory.md", lines)
 
 
-def write_best_known_table(records: list[ScalingRunRecord], names: dict[str, str]) -> None:
-    """Write the best-known-solution provenance table: per size, the best extended-run result.
+def write_best_known_table(records: list[ScalingRunRecord], q_random: dict[int, float], names: dict[str, str]) -> None:
+    """Write the best-known-solution provenance table: per size, the best result and the bounds.
 
-    The measured-time column keeps a late completion visible — the best-known stage keeps a run
+    Beside each size's best-known value sit `Q_random` and the two verdict thresholds derived
+    from the pair, so the table shows the whole scale a size's verdicts are judged on. The
+    measured-time column keeps a late completion visible — the best-known stage keeps a run
     that finished past its budget (see `best_known_stage`).
     """
     lines = [
-        "| Problem size n | Best-known quality (min. separation) | Solver | Config | Measured time |",
-        "|---|---|---|---|---|",
+        "| Problem size n | Q_random | 50% threshold | 90% threshold"
+        " | Best-known quality | Solver | Config | Measured time |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for n, record in best_known_by_size(records).items():
+        random_quality = q_random.get(n)
+        thresholds = [
+            f"{(1 - b) * random_quality + b * record.min_separation:.4f}" if random_quality is not None else ""
+            for b in sorted(GAP_CLOSURE_FRACTIONS)
+        ]
+        random_cell = f"{random_quality:.4f}" if random_quality is not None else ""
         lines.append(
-            f"| {n:,} | {record.min_separation:.4f} | {_display_name(record.tool, names)}"
+            f"| {n:,} | {random_cell} | {thresholds[0]} | {thresholds[1]}"
+            f" | {record.min_separation:.4f} | {_display_name(record.tool, names)}"
             f" | `{record.config}` | {record.measured_sec:.0f} s |"
         )
     _write_generated("scaling_best_known.md", lines)
@@ -413,16 +424,21 @@ def write_quality_table(
     q_random: dict[int, float],
     names: dict[str, str],
 ) -> None:
-    """Write the per-configuration largest-n-at-good-quality table."""
-    limits = quality_limits(quality_records, best_known_records, q_random)
-    lines = [
-        "| Solver | Config | Largest n at good quality |",
-        "|---|---|---|",
+    """Write the per-configuration quality-limit table, one column per gap-closure fraction."""
+    per_fraction = [
+        quality_limits(quality_records, best_known_records, q_random, gap_closure)
+        for gap_closure in GAP_CLOSURE_FRACTIONS
     ]
-    for key, limit in limits.items():
+    lines = [
+        "| Solver | Config | "
+        + " | ".join(f"Largest n closing {gap_closure:.0%} of the gap" for gap_closure in GAP_CLOSURE_FRACTIONS)
+        + " |",
+        "|---|---|" + "---|" * len(GAP_CLOSURE_FRACTIONS),
+    ]
+    for key in per_fraction[0]:
         tool, config = key.split("/", 1)
-        largest = f"**{limit:,}**" if limit else "—"
-        lines.append(f"| {_display_name(tool, names)} | `{config}` | {largest} |")
+        cells = " | ".join(f"**{limits[key]:,}**" if limits[key] else "—" for limits in per_fraction)
+        lines.append(f"| {_display_name(tool, names)} | `{config}` | {cells} |")
     _write_generated("scaling_quality.md", lines)
 
 
@@ -435,8 +451,9 @@ def write_quality_gap_table(
     """Write the gap-closure table: per configuration and size, the fraction of the random-to-best gap closed.
 
     A cell holds `(Q_median - Q_random) / (Q_best_known - Q_random)`; the verdict criterion is the
-    same fraction reaching `BEST_KNOWN_WEIGHT`, so a passing cell is bold. An empty cell is a size
-    the configuration was not judged at (beyond its time limit, or no completed run).
+    same fraction reaching a `GAP_CLOSURE_FRACTIONS` value: a cell whose fraction reaches the
+    strictest one is bold, one reaching only the lowest is italic. An empty cell is a size the configuration was not
+    judged at (beyond its time limit, or no completed run).
     """
     pool = best_known_pool(quality_records, best_known_records)
     medians = median_qualities(quality_records)
@@ -458,12 +475,22 @@ def write_quality_gap_table(
 
 
 def _format_gap_fraction(median: float, random_quality: float, best_known: float) -> str:
-    """Format one gap-closure cell, bold when it reaches the verdict threshold (`BEST_KNOWN_WEIGHT`)."""
+    """Format one gap-closure cell as a percentage: bold when the fraction reaches the strictest
+    `GAP_CLOSURE_FRACTIONS` value, italic when it reaches only the lowest.
+
+    The display rounds down to 0.1% while the marking judges the exact fraction, so a printed
+    50.0% is genuinely at or above the fraction and the marking never contradicts the number.
+    """
     gap = best_known - random_quality
     # a degenerate size where the best-known equals the random reference leaves no gap to close;
     # matching the best-known is then the only way to pass
     fraction = (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
-    return f"**{fraction:.2f}**" if fraction >= BEST_KNOWN_WEIGHT else f"{fraction:.2f}"
+    percent = math.floor(fraction * 1000) / 10
+    if fraction >= max(GAP_CLOSURE_FRACTIONS):
+        return f"**{percent:.1f}%**"
+    if fraction >= min(GAP_CLOSURE_FRACTIONS):
+        return f"*{percent:.1f}%*"
+    return f"{percent:.1f}%"
 
 
 def _write_generated(name: str, lines: list[str]) -> None:
@@ -484,13 +511,18 @@ def main() -> None:
     memory_grouped = _records_by_config(load_scaling_records(MEMORY_DATA_PATH) if MEMORY_DATA_PATH.exists() else [])
     fits = json.loads(FIT_PATH.read_text(encoding="utf-8")) if FIT_PATH.exists() else {}
     best_known_records = load_scaling_records(BEST_KNOWN_DATA_PATH) if BEST_KNOWN_DATA_PATH.exists() else []
-    if best_known_records:
-        write_best_known_table(best_known_records, names)
     quality_records = load_scaling_records(QUALITY_DATA_PATH) if QUALITY_DATA_PATH.exists() else []
-    if quality_records and Q_RANDOM_PATH.exists():
-        q_random = {int(n): v for n, v in json.loads(Q_RANDOM_PATH.read_text(encoding="utf-8")).items()}
-        write_quality_table(quality_records, best_known_records, q_random, names)
-        write_quality_gap_table(quality_records, best_known_records, q_random, names)
+    q_random_values = (
+        {int(n): v for n, v in json.loads(Q_RANDOM_PATH.read_text(encoding="utf-8")).items()}
+        if Q_RANDOM_PATH.exists()
+        else {}
+    )
+    if best_known_records:
+        # The quality runs join the pool: a reference-budget run can hold a size's best solution.
+        write_best_known_table(best_known_records + quality_records, q_random_values, names)
+    if quality_records and q_random_values:
+        write_quality_table(quality_records, best_known_records, q_random_values, names)
+        write_quality_gap_table(quality_records, best_known_records, q_random_values, names)
     render_time_chart(time_grouped, names)
     render_memory_chart(memory_grouped, fits, names)
     render_fit_charts(memory_grouped, fits, names)

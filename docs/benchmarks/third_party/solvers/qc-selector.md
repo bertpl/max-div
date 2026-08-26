@@ -6,7 +6,8 @@ solver:
   scale:
     max_n_memory: 20000
     max_n_time: 20000
-    max_n_quality: pending
+    max_n_quality_50: 20000
+    max_n_quality_90: none
   metadata:
     guarantee: heuristic
     license: GPL-3.0
@@ -43,6 +44,7 @@ solver:
       mark: none
       note: *no_nn_family
     objective.max_sum: {mark: full}
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups:
       mark: full
       note:

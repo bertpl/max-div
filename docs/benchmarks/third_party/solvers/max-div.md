@@ -6,7 +6,8 @@ solver:
   scale:
     max_n_memory: 1000000000
     max_n_time: 500000
-    max_n_quality: pending
+    max_n_quality_50: 200000
+    max_n_quality_90: 200000
   metadata:
     guarantee: heuristic
     license: Apache-2.0
@@ -28,6 +29,7 @@ solver:
     objective.mean_nn: {mark: full}
     objective.geomean_nn: {mark: full}
     objective.max_sum: {mark: full}
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: full}
     constraints.overlapping_groups: {mark: full}
     constraints.ranged_counts:

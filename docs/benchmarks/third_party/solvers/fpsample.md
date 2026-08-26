@@ -6,7 +6,8 @@ solver:
   scale:
     max_n_memory: 1000000000
     max_n_time: 5000000
-    max_n_quality: pending
+    max_n_quality_50: 5000000
+    max_n_quality_90: none
   metadata:
     guarantee: 2-approximation (farthest-point traversal)
     license: MIT
@@ -31,6 +32,7 @@ solver:
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}
     objective.max_sum: {mark: none}
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}
     constraints.ranged_counts: {mark: none}

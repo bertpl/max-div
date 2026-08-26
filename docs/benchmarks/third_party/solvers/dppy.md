@@ -6,7 +6,8 @@ solver:
   scale:
     max_n_memory: 500
     max_n_time: 500
-    max_n_quality: pending
+    max_n_quality_50: none
+    max_n_quality_90: none
   metadata:
     guarantee: sampler, not optimizer
     license: MIT
@@ -54,6 +55,7 @@ solver:
     objective.max_sum:
       mark: none
       note: *samples_not_optimizes
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}
     constraints.ranged_counts: {mark: none}

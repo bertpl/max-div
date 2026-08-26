@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A time budget can now cover the whole solve end to end, distance computation and initialization included: `end_to_end_budget=True` on `with_preset()` and `with_workers()`, and `--total-seconds` on `max-div solve`
 
 ### Changed
-- The comparison tables' single `max practical n` column is replaced by three measured solver-scaling values (memory, time, quality), each with a published definition; cells show `pending` until they are measured
+- The comparison tables' single `max practical n` column is replaced by four measured solver-scaling values — memory, time, and quality at two gap-closure fractions — each with a published definition
 
 ### Deprecated
 
