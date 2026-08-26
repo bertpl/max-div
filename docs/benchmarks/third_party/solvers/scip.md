@@ -61,6 +61,7 @@ solver:
     objective.max_sum:
       mark: partial
       note: *linearize
+    objective.optimality_proofs: {mark: full}
     constraints.disjoint_groups:
       mark: partial
       note: &linear_constraints

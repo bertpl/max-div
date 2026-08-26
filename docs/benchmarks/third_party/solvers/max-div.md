@@ -29,6 +29,7 @@ solver:
     objective.mean_nn: {mark: full}
     objective.geomean_nn: {mark: full}
     objective.max_sum: {mark: full}
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: full}
     constraints.overlapping_groups: {mark: full}
     constraints.ranged_counts:

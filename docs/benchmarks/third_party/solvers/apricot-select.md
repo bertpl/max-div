@@ -47,6 +47,7 @@ solver:
       note:
         text: >-
           Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}
     constraints.ranged_counts: {mark: none}

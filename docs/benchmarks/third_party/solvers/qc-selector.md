@@ -44,6 +44,7 @@ solver:
       mark: none
       note: *no_nn_family
     objective.max_sum: {mark: full}
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups:
       mark: full
       note:

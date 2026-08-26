@@ -55,6 +55,7 @@ solver:
     objective.max_sum:
       mark: none
       note: *samples_not_optimizes
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}
     constraints.ranged_counts: {mark: none}

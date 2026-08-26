@@ -43,6 +43,7 @@ solver:
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}
     objective.max_sum: {mark: none}
+    objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups:
       mark: full
       note:

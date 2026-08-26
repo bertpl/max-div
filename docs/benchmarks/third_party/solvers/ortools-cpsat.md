@@ -50,6 +50,7 @@ solver:
     objective.max_sum:
       mark: partial
       note: *no_cp_encoding
+    objective.optimality_proofs: {mark: full}
     constraints.disjoint_groups:
       mark: partial
       note: &linear_cons
