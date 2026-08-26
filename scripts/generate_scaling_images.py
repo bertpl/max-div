@@ -400,7 +400,7 @@ def write_best_known_table(records: list[ScalingRunRecord], q_random: dict[int, 
     """
     lines = [
         "| Problem size n | Q_random | 50% threshold | 90% threshold"
-        " | Best-known quality (min. separation) | Solver | Config | Measured time |",
+        " | Best-known quality | Solver | Config | Measured time |",
         "|---|---|---|---|---|---|---|---|",
     ]
     for n, record in best_known_by_size(records).items():

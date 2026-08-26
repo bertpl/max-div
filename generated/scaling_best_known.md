@@ -1,4 +1,4 @@
-| Problem size n | Q_random | 50% threshold | 90% threshold | Best-known quality (min. separation) | Solver | Config | Measured time |
+| Problem size n | Q_random | 50% threshold | 90% threshold | Best-known quality | Solver | Config | Measured time |
 |---|---|---|---|---|---|---|---|
 | 20 | 0.3962 | 0.7854 | 1.0967 | 1.1746 | max-div | `optimal-eager` | 895 s |
 | 50 | 0.0427 | 0.3332 | 0.5655 | 0.6236 | max-div | `optimal-eager` | 895 s |
