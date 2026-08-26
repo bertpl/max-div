@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
 from local.docs.utils import LogTransform, PresetQuantilesTable, QuantileCurves, UpperLogTransform
-from max_div._core._cli.bm_solver_presets._models import SolverPresetBenchmarkResult, results_from_json
+from max_div._core._cli.benchmarks.solver_presets._models import SolverPresetBenchmarkResult, results_from_json
 from max_div._core._utils import format_long_time_duration
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.solver import SolverPreset
@@ -133,8 +133,8 @@ def create_single_figure(
             # --- plot data per preset ------------------------
             for preset in all_presets:
                 # --- collect data ---
-                # single-worker runs only; the parallel arm is a separate series (see the
-                # "plot the parallel arm" block), so its records must not fold into the preset's
+                # single-worker runs only; the parallel runs are a separate series (see the
+                # "plot the parallel series" block), so their records must not fold into the preset's
                 # own scatter or quantile band
                 x: list[float] = []
                 y: list[float] = []
@@ -185,7 +185,7 @@ def create_single_figure(
                     ax.plot(x_q, q10, color=color, linestyle="-", lw=0.5, alpha=0.5, label="q10, q90")
                     ax.plot(x_q, q90, color=color, linestyle="-", lw=0.5, alpha=0.5)
 
-            # --- plot the parallel arm -----------------------
+            # --- plot the parallel series --------------------
             # The default parallel invocation (one preset, several cooperative workers) is shown as
             # a plain black-circle scatter with no quantile band: it is a single reference series,
             # not a preset sweep, and one run per budget point makes the scatter itself the spread.
@@ -199,7 +199,7 @@ def create_single_figure(
                     parallel_label = result.params.column_label()
             if parallel_x:
                 parallel_y_plot = y_transform.f(parallel_y) if use_y_transform else parallel_y
-                # hollow black circles, so the parallel arm reads as distinct from the filled
+                # hollow black circles, so the parallel series reads as distinct from the filled
                 # preset dots
                 ax.plot(
                     parallel_x,
@@ -279,8 +279,8 @@ def create_single_figure(
         handles, labels = axes[i_row, 1].get_legend_handles_labels()
         if len(handles) > n_presets:
             # One row per series, three fixed columns [dot, q50, q10-q90]. Handles arrive grouped
-            # per series (a preset contributes dot, q50, q10-q90; the parallel arm just a dot), so
-            # group them, pad the parallel arm's row with blank cells, and emit column-first to
+            # per series (a preset contributes dot, q50, q10-q90; the parallel series just a dot), so
+            # group them, pad the parallel series' row with blank cells, and emit column-first to
             # match matplotlib's column-major legend fill — keeping every series on its own row.
             band_labels = ("q50", "q10, q90")
             series: list[tuple[list, list]] = []

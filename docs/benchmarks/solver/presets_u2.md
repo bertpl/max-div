@@ -8,7 +8,7 @@ See [Problem U2](problem_u2.md) for the problem definition.
 
 These results compare the built-in solver presets on problem U2 at n=1000 — the size at which the problem selects k=100 items, so every page compares presets at the same selection size.
 
---8<-- "docs/benchmarks/solver/results/note_preset_methodology.md"
+--8<-- "docs/benchmarks/solver/results/note_preset_methodology_unconstrained.md"
 
 ## II. Results
 
