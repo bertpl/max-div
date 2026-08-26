@@ -47,8 +47,8 @@ SINGLE_SERIES = BudgetSeries(
     t_max_sec=SpeedParam(slow=1800.0, fast=1e-3),
     n_points=SpeedParam(slow=50, fast=2),
 )
-# The parallel runs (SMART re-run on the machine's default worker count) get their own series
-# with a smaller budget range and fewer points.  The minimum stays well above the parallel
+# The parallel runs (SMART re-run on the machine's default worker count) get their own series.
+# The minimum stays well above the parallel
 # solver's process-spawn cost, which an end-to-end budget includes.  The maximum stays below
 # the single-worker one since parallel runs execute serially, one at a time, each using all cores.
 PARALLEL_SERIES = BudgetSeries(
@@ -86,7 +86,7 @@ def determine_benchmark_scope(
         One `SolverPresetBenchmarkParams` per run: every (problem, preset, budget) combination
         on the single-worker series, with a fresh seed per budget point, plus — when SMART is
         among `presets` — the parallel runs: SMART on the machine's default worker count, on
-        its own budget series.
+        `PARALLEL_SERIES`.
     """
     # --- problem sizes --------------------------
     problem_sizes = {

@@ -29,7 +29,7 @@ def _params(duration_sec: float, n_workers: int = 1) -> SolverPresetBenchmarkPar
 #  Tests
 # =================================================================================================
 def test_estimate_execution_time_sec_single():
-    """An end-to-end budget absorbs setup when it fits, and setup dominates a smaller budget."""
+    """The estimate equals the budget when setup fits inside it, and equals setup when setup exceeds the budget."""
     # --- act --------------------------
     est_budget_dominant = estimate_execution_time_sec_single(_params(10.0, n_workers=4))
     est_setup_dominant = estimate_execution_time_sec_single(_params(0.001, n_workers=4))
