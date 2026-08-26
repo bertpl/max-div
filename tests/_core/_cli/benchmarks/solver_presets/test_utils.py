@@ -29,14 +29,14 @@ def _params(duration_sec: float, n_workers: int = 1) -> SolverPresetBenchmarkPar
 #  Tests
 # =================================================================================================
 def test_estimate_execution_time_sec_single():
-    """A parallel run carries extra spawn overhead on top of the shared O(n^2) build overhead."""
+    """The estimate equals the budget when setup fits inside it, and equals setup when setup exceeds the budget."""
     # --- act --------------------------
-    est_single = estimate_execution_time_sec_single(_params(10.0))
-    est_parallel = estimate_execution_time_sec_single(_params(10.0, n_workers=4))
+    est_budget_dominant = estimate_execution_time_sec_single(_params(10.0, n_workers=4))
+    est_setup_dominant = estimate_execution_time_sec_single(_params(0.001, n_workers=4))
 
     # --- assert -----------------------
-    assert est_single > 10.0
-    assert est_parallel > est_single
+    assert est_budget_dominant == pytest.approx(10.0)  # setup is spent inside the budget
+    assert est_setup_dominant > 2.0  # a budget cannot cut worker spawning short
 
 
 def test_estimate_execution_time_sec_multi_packs_singles_but_not_parallels():

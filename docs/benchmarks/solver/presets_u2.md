@@ -2,7 +2,7 @@
 
 See [Problem U2](problem_u2.md) for the problem definition.
 
---8<-- "docs/benchmarks/solver/results/note_measured_presets.md"
+--8<-- "docs/benchmarks/solver/results/note_measured_presets_unconstrained.md"
 
 ## I. Introduction
 
