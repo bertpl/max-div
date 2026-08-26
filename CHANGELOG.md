@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.14.2 (2026-08-26)
 
 ### Added
 - A time budget can now cover the whole solve end to end, distance computation and initialization included: `end_to_end_budget=True` on `with_preset()` and `with_workers()`, and `--total-seconds` on `max-div solve`
@@ -13,14 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The comparison tables' single `max practical n` column is replaced by four measured solver-scaling values — memory, time, and quality at two gap-closure fractions — each with a published definition
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - Re-solving the same solver with the SMART or THOROUGH preset now reproduces the first solve's selection for a given seed, instead of carrying adaptive state across solves
-
-### Security
 
 ## 0.14.1 (2026-08-21)
 
