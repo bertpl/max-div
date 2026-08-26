@@ -13,7 +13,10 @@ from ._models import SolverPresetBenchmarkParams
 # =================================================================================================
 @dataclass(frozen=True, kw_only=True)
 class BudgetSeries:
-    """A log-spaced series of time budgets for one benchmark arm, shrinking with `speed`."""
+    """A `BudgetSeries` holds the log-spaced time budgets for one family of benchmark runs.
+
+    The `speed` argument of `durations_sec` shrinks both the budget range and the point count.
+    """
 
     t_min_sec: SpeedParam[float]
     t_max_sec: SpeedParam[float]
@@ -41,16 +44,17 @@ class BudgetSeries:
 
 
 # Each (problem, preset)-curve runs the single-worker series, one run with a fresh seed per
-# budget point, so repeat variability shows up as scatter between neighboring points.  The
-# parallel arm (SMART re-run on the machine's default worker count) has its own shorter and
-# shallower series: its minimum stays well above the parallel solver's process-spawn cost —
-# which an end-to-end budget includes — and its maximum stays below the single-worker one
-# since the arm runs serially, one machine-filling run at a time.
+# budget point, so repeat variability shows up as scatter between neighboring points.
 SINGLE_SERIES = BudgetSeries(
     t_min_sec=SpeedParam(slow=0.03, fast=1e-4),
     t_max_sec=SpeedParam(slow=1800.0, fast=1e-3),
     n_points=SpeedParam(slow=50, fast=2),
 )
+# The parallel runs (SMART re-run on the machine's default worker count) get their own series
+# with a smaller budget range and fewer points: the minimum stays well above the parallel
+# solver's process-spawn cost — which an end-to-end budget includes — and the maximum stays
+# below the single-worker one since parallel runs execute serially, one at a time, each using
+# all cores.
 PARALLEL_SERIES = BudgetSeries(
     t_min_sec=SpeedParam(slow=3.0, fast=2.0),
     t_max_sec=SpeedParam(slow=900.0, fast=2.0),
@@ -79,14 +83,13 @@ def determine_benchmark_scope(
             every problem.
         problems: Benchmark problem names.
         n: Problem size, or None to size each problem such that it selects `K_TARGET` items.
-        speed: 0.0 runs the full series (the docs-page configuration); values toward 1.0
-            shrink both the budget range and the point count for quick runs.
+        speed: See `BudgetSeries.durations_sec`; 0.0 runs the full series.
         max_run_duration_sec: When given, replaces both series' longest budget.
 
     Returns:
         One `SolverPresetBenchmarkParams` per run: every (problem, preset, budget) combination
         on the single-worker series, with a fresh seed per budget point, plus — when SMART is
-        among `presets` — the parallel arm: SMART on the machine's default worker count, on
+        among `presets` — the parallel runs: SMART on the machine's default worker count, on
         its own budget series.
     """
     # --- problem sizes --------------------------
@@ -109,8 +112,8 @@ def determine_benchmark_scope(
         for seed, duration_sec in enumerate(single_durations_sec, start=1)
     ]
 
-    # --- parallel arm ---------------------------
-    # one arm, not a preset replica: SMART on the default parallel setup answers "what does the
+    # --- parallel runs --------------------------
+    # one series, not a preset replica: SMART on the default parallel setup answers "what does the
     # default parallel invocation buy over serial SMART" without overloading the pages
     if SolverPreset.SMART in presets:
         parallel_durations_sec = PARALLEL_SERIES.durations_sec(speed, max_run_duration_sec)

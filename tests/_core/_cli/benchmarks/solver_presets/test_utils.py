@@ -35,7 +35,7 @@ def test_estimate_execution_time_sec_single():
     est_setup_dominant = estimate_execution_time_sec_single(_params(0.001, n_workers=4))
 
     # --- assert -----------------------
-    assert est_budget_dominant == pytest.approx(10.0)  # spawn + build spent inside the budget
+    assert est_budget_dominant == pytest.approx(10.0)  # setup is spent inside the budget
     assert est_setup_dominant > 2.0  # a budget cannot cut worker spawning short
 
 

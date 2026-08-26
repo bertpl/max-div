@@ -92,8 +92,8 @@ def test_cli_benchmark_solver_presets(options: list[str], test_problem: str):
         assert result.exit_code == 0
 
 
-def test_cli_benchmark_solver_presets_turbo_runs_parallel_arm():
-    """--turbo with SMART executes the parallel arm's single short run end to end."""
+def test_cli_benchmark_solver_presets_turbo_runs_parallel_run():
+    """--turbo with SMART executes the parallel series' single short run end to end."""
     # --- arrange ----------------------
     runner = CliRunner()
 

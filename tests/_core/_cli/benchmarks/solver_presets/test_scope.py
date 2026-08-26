@@ -12,7 +12,7 @@ from max_div._core.solver import SolverPreset
 #  determine_benchmark_scope
 # =================================================================================================
 def test_determine_benchmark_scope_full_series():
-    """speed=0 produces the full docs-page configuration: both arms on their own budget series."""
+    """speed=0 produces the full docs-page configuration: single and parallel runs each on their own budget series."""
     # --- arrange ----------------------
     presets = [SolverPreset.RANDOM, SolverPreset.SMART]
 
@@ -39,20 +39,20 @@ def test_determine_benchmark_scope_full_series():
     assert {s.problem_size for s in scope if s.problem_name == "U1"} == {1000}
     assert {s.problem_size for s in scope if s.problem_name == "C3"} == {1500}
 
-    # each curve has a fresh seed per budget point, per arm
+    # each curve has a fresh seed per budget point, for single and parallel runs separately
     u1_random = [s for s in singles if (s.problem_name, s.preset) == ("U1", SolverPreset.RANDOM)]
     assert len({s.seed for s in u1_random}) == len(u1_random) == SINGLE_SERIES.n_points.at(0.0)
     u1_parallel = [s for s in parallels if s.problem_name == "U1"]
     assert len({s.seed for s in u1_parallel}) == len(u1_parallel) == PARALLEL_SERIES.n_points.at(0.0)
 
-    # parallel arm: SMART only, machine default workers
+    # parallel runs: SMART only, machine default workers
     assert {s.preset for s in parallels} == {SolverPreset.SMART}
     assert len({s.n_workers for s in parallels}) == 1
     assert all(s.n_workers > 1 for s in parallels)
 
 
-def test_determine_benchmark_scope_no_parallel_arm_without_smart():
-    """The parallel arm only accompanies SMART."""
+def test_determine_benchmark_scope_no_parallel_runs_without_smart():
+    """Parallel runs only accompany SMART."""
     # --- act --------------------------
     scope = determine_benchmark_scope([SolverPreset.RANDOM], ["U1"], 100, speed=0.0)
 

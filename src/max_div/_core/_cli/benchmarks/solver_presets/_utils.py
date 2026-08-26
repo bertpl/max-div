@@ -55,7 +55,7 @@ def estimate_execution_time_sec_single(params: SolverPresetBenchmarkParams) -> f
     """
     setup_sec = 4.0 * ((params.problem_size / 10000.0) ** 2)  # initial distance computation is O(n^2)
     if params.is_parallel:
-        setup_sec += 2.0  # spawning the worker processes
+        setup_sec += 2.0  # parallel runs also spawn worker processes
     return max(params.duration.value(), setup_sec)
 
 
