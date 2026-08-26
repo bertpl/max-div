@@ -34,14 +34,17 @@ def test_speed_param_linear_interpolation():
     assert value == pytest.approx(5.0)
 
 
-def test_speed_param_at_int_rounds():
-    """`at_int()` rounds to the nearest integer and returns an int."""
+def test_speed_param_integer_endpoints_round_to_int():
+    """Two integer endpoints make `at()` round to an int; a float endpoint keeps it a float."""
     # --- act --------------------------
-    value = SpeedParam(slow=50, fast=2).at_int(0.5)
+    int_value = SpeedParam(slow=50, fast=2).at(0.5)
+    float_value = SpeedParam(slow=50.0, fast=2.0).at(0.5)
 
     # --- assert -----------------------
-    assert isinstance(value, int)
-    assert value == round(50 * (2 / 50) ** 0.5)
+    assert isinstance(int_value, int)
+    assert int_value == round(50 * (2 / 50) ** 0.5)
+    assert isinstance(float_value, float)
+    assert float_value == pytest.approx(10.0)
 
 
 def test_speed_param_log_rejects_non_positive():
@@ -57,4 +60,4 @@ def test_speed_param_rejects_positional_construction():
     """Construction is keyword-only, so positional endpoint values raise."""
     # --- act / assert -----------------
     with pytest.raises(TypeError):
-        SpeedParam(600.0, 1e-3)  # type: ignore[misc]
+        SpeedParam(600.0, 1e-3)  # type: ignore[missing-argument]

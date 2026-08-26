@@ -52,7 +52,7 @@ def determine_benchmark_scope(
     # --- speed-dependent settings ---------------
     max_duration_sec = max_run_duration_sec if max_run_duration_sec is not None else _MAX_DURATION_SEC.at(speed)
     min_duration_sec = min(_MIN_DURATION_SEC.at(speed), max_duration_sec)
-    n_points = _N_POINTS.at_int(speed)
+    n_points = _N_POINTS.at(speed)
 
     # --- budget ladder --------------------------
     if n_points <= 1 or min_duration_sec == max_duration_sec:

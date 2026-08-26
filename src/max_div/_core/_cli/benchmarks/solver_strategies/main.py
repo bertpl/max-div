@@ -51,7 +51,7 @@ def run_solver_strategies_benchmark(
                 solver_constructor=BenchmarkSolverConstructor_Optimization(
                     problem_name=name,
                     diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
-                    n_iterations=SpeedParam(slow=1000, fast=1).at_int(speed),
+                    n_iterations=SpeedParam(slow=1000, fast=1).at(speed),
                 ),
                 speed=speed,
                 leave_pbar=file,

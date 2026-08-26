@@ -58,7 +58,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
         file: If `True`, redirects output to a file instead of console.
     """
     # --- speed-dependent settings ---------------
-    max_count = SpeedParam(slow=100, fast=1).at_int(speed)
+    max_count = SpeedParam(slow=100, fast=1).at(speed)
 
     # --- build scenarios ------------------------
     scenarios = [ScenarioA(), ScenarioB()]
@@ -162,10 +162,10 @@ def _benchmark(
     k = np.int32(k)
 
     # speed-dependent settings
-    index_range = SpeedParam(slow=100, fast=2).at_int(speed)
+    index_range = SpeedParam(slow=100, fast=2).at(speed)
     t_per_run = TIME_PER_RUN_SEC.at(speed)
-    n_warmup = N_WARMUP.at_int(speed)
-    n_benchmark = N_BENCHMARK.at_int(speed)
+    n_warmup = N_WARMUP.at(speed)
+    n_benchmark = N_BENCHMARK.at(speed)
 
     # build a <index_range> number of different constraints, to randomize the problems we benchmark
     lst_cons = []
@@ -232,7 +232,7 @@ def _determine_precision(
     """Determines how often (%) the constraints are satisfied when sampling."""
     p = np.zeros(0, dtype=np.float32) if p is None else p.astype(np.float32)
 
-    n_runs = SpeedParam(slow=200, fast=1).at_int(speed)
+    n_runs = SpeedParam(slow=200, fast=1).at(speed)
 
     satisfied_count = 0
     for run_idx in range(n_runs):

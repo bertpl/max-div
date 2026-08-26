@@ -29,10 +29,10 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
     print("Benchmarking `DiversityMetric`...")
 
     # --- speed-dependent settings ---------------
-    max_size = SpeedParam(slow=100_000, fast=100).at_int(speed)
+    max_size = SpeedParam(slow=100_000, fast=100).at(speed)
     t_per_run = TIME_PER_RUN_SEC.at(speed)
-    n_warmup = N_WARMUP.at_int(speed)
-    n_benchmark = N_BENCHMARK.at_int(speed)
+    n_warmup = N_WARMUP.at(speed)
+    n_benchmark = N_BENCHMARK.at(speed)
 
     # --- create diversity metrics ---------------
     metrics = [

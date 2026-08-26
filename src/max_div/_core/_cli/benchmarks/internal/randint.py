@@ -37,9 +37,9 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
 
     # --- speed-dependent settings ---------------
     t_per_run = TIME_PER_RUN_SEC.at(speed)
-    n_warmup = N_WARMUP.at_int(speed)
-    n_benchmark = N_BENCHMARK.at_int(speed)
-    max_size = SpeedParam(slow=10_000, fast=100).at_int(speed)
+    n_warmup = N_WARMUP.at(speed)
+    n_benchmark = N_BENCHMARK.at(speed)
+    max_size = SpeedParam(slow=10_000, fast=100).at(speed)
 
     # --- benchmark scenarios --------------------
     i_file = 0
