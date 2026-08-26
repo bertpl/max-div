@@ -1,11 +1,9 @@
-import numpy as np
-
 from max_div._core._cli.bm_solver_sizing import determine_problem_size_for_k
+from max_div._core._cli.bm_speed import SpeedParam
 from max_div._core.solver import SolverPreset, TargetTimeDuration
 from max_div._core.solver._parallel._solver import default_worker_count
 
 from ._models import SolverPresetBenchmarkParams
-from ._utils import estimate_execution_time_sec_multi
 
 # The full-scope budget ladder (speed=0.0, the configuration the docs pages are generated with)
 # runs LADDER_N_POINTS log-spaced budget points per (problem, preset)-curve, each with a fresh
@@ -17,54 +15,14 @@ LADDER_T_MIN_SEC = 0.03
 LADDER_N_POINTS = 50
 PARALLEL_ARM_T_MIN_SEC = 1.0
 
+# The speed knob shrinks the ladder from the full scope above to a millisecond-cheap turbo scope.
+_MAX_DURATION_SEC = SpeedParam(LADDER_T_MAX_SEC, 1e-3)
+_MIN_DURATION_SEC = SpeedParam(LADDER_T_MIN_SEC, 1e-4)
+_N_POINTS = SpeedParam(LADDER_N_POINTS, 2)
+
 # Every problem is benchmarked at the size where it selects this many items, so the suite's
 # curves are comparable across problems: k is what drives the swap space and per-iteration cost.
 K_TARGET = 100
-
-
-def determine_benchmark_scope_for_max_duration(
-    presets: list[SolverPreset],
-    problems: list[str],
-    n: int | None,
-    max_duration_sec: float,
-    max_run_duration_sec: float | None = None,
-) -> tuple[float, list[SolverPresetBenchmarkParams]]:
-    """Compute the full benchmark-run list from presets, problems, problem size n, and target duration.
-
-    This method auto-tunes speed to fall just within the target duration.
-    Returns (speed, scope)-tuple.
-    """
-
-    def _get_scope_for_speed(_speed: float) -> list[SolverPresetBenchmarkParams]:
-        return determine_benchmark_scope(presets, problems, n, _speed, max_run_duration_sec)
-
-    def _get_duration_for_speed(_speed: float) -> float:
-        return estimate_execution_time_sec_multi(_get_scope_for_speed(_speed))
-
-    # check speed=0
-    lb_speed = 0.0
-    lb_duration = _get_duration_for_speed(lb_speed)
-    if lb_duration <= max_duration_sec:
-        # slowest setting is already fast enough
-        return lb_speed, _get_scope_for_speed(lb_speed)
-
-    # check speed=1
-    ub_speed = 1.0
-    ub_duration = _get_duration_for_speed(ub_speed)
-    if ub_duration >= max_duration_sec:
-        # fastest setting is still too slow
-        return ub_speed, _get_scope_for_speed(ub_speed)
-
-    # bisection
-    for _ in range(30):
-        mid_speed = 0.5 * (lb_speed + ub_speed)
-        mid_duration = _get_duration_for_speed(mid_speed)
-        if mid_duration <= max_duration_sec:
-            ub_speed = mid_speed
-        else:
-            lb_speed = mid_speed
-
-    return ub_speed, _get_scope_for_speed(ub_speed)
 
 
 def determine_benchmark_scope(
@@ -91,17 +49,9 @@ def determine_benchmark_scope(
         `PARALLEL_ARM_T_MIN_SEC`.
     """
     # --- speed-dependent settings ---------------
-    interp_speed = [0.0, 0.5, 0.99, 1.0]
-    interp_max_duration_sec = [LADDER_T_MAX_SEC, 60.0, 2.0, 1e-3]
-    interp_min_duration_sec = [LADDER_T_MIN_SEC, LADDER_T_MIN_SEC, LADDER_T_MIN_SEC, 1e-4]
-    interp_n_points = [LADDER_N_POINTS, 25, 10, 2]
-
-    if max_run_duration_sec is not None:
-        max_duration_sec = max_run_duration_sec
-    else:
-        max_duration_sec = float(np.interp(speed, interp_speed, interp_max_duration_sec))
-    min_duration_sec = min(float(np.interp(speed, interp_speed, interp_min_duration_sec)), max_duration_sec)
-    n_points = round(float(np.interp(speed, interp_speed, interp_n_points)))
+    max_duration_sec = max_run_duration_sec if max_run_duration_sec is not None else _MAX_DURATION_SEC.at(speed)
+    min_duration_sec = min(_MIN_DURATION_SEC.at(speed), max_duration_sec)
+    n_points = _N_POINTS.at_int(speed)
 
     # --- budget ladder --------------------------
     if n_points <= 1 or min_duration_sec == max_duration_sec:

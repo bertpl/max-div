@@ -6,7 +6,6 @@ from max_div._core._cli.bm_solver_presets.scope import (
     LADDER_T_MIN_SEC,
     PARALLEL_ARM_T_MIN_SEC,
     determine_benchmark_scope,
-    determine_benchmark_scope_for_max_duration,
 )
 from max_div._core.solver import SolverPreset
 
@@ -86,29 +85,3 @@ def test_determine_benchmark_scope_degenerate_ladder():
 
     # --- assert -----------------------
     assert {s.duration.value() for s in scope} == {LADDER_T_MIN_SEC}
-
-
-# =================================================================================================
-#  determine_benchmark_scope_for_max_duration
-# =================================================================================================
-@pytest.mark.parametrize(
-    "max_duration_sec, expected_speed",
-    [
-        (1e12, 0.0),  # slowest setting already fits
-        (1e-6, 1.0),  # fastest setting still too slow
-        (600.0, None),  # in between: bisected speed in (0, 1)
-    ],
-)
-def test_determine_benchmark_scope_for_max_duration(max_duration_sec: float, expected_speed: float | None):
-    """The auto-tuner returns the boundary speeds directly and bisects in between."""
-    # --- act --------------------------
-    speed, scope = determine_benchmark_scope_for_max_duration(
-        [SolverPreset.SMART], ["U1"], 100, max_duration_sec=max_duration_sec
-    )
-
-    # --- assert -----------------------
-    assert len(scope) > 0
-    if expected_speed is not None:
-        assert speed == expected_speed
-    else:
-        assert 0.0 < speed < 1.0

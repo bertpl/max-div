@@ -11,7 +11,6 @@ from ._cmd_benchmark_solver import solver
 from .bm_solver_presets import (
     K_TARGET,
     determine_benchmark_scope,
-    determine_benchmark_scope_for_max_duration,
     estimate_execution_time_sec_multi,
     execute_solver_presets_benchmark,
     get_n_processes,
@@ -67,13 +66,6 @@ from .bm_solver_sizing import determine_problem_size_for_k
     help="Values closer to 1.0 result in shorter, less accurate benchmark; Overridden by --turbo when provided.",
 )
 @click.option(
-    "--target-max-minutes",
-    type=float,
-    required=False,
-    default=None,
-    help="When provided, overrides --speed or --turbo setting and chooses speed parameter based on max duration.",
-)
-@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -100,7 +92,6 @@ def presets(
     markdown_file: bool,
     turbo: bool,
     speed: float,
-    target_max_minutes: float | None,
     dry_run: bool,
     max_run_duration_minutes: float | None,
     markdown: bool,
@@ -121,22 +112,13 @@ def presets(
     max_run_duration_sec = 60.0 * max_run_duration_minutes if max_run_duration_minutes else None
 
     # --- determine scope ------------------------
-    if target_max_minutes:
-        speed, scope = determine_benchmark_scope_for_max_duration(
-            presets=presets,
-            problems=problems,
-            n=n,
-            max_duration_sec=60.0 * target_max_minutes,
-            max_run_duration_sec=max_run_duration_sec,
-        )
-    else:
-        scope = determine_benchmark_scope(
-            presets=presets,
-            problems=problems,
-            n=n,
-            speed=speed,
-            max_run_duration_sec=max_run_duration_sec,
-        )
+    scope = determine_benchmark_scope(
+        presets=presets,
+        problems=problems,
+        n=n,
+        speed=speed,
+        max_run_duration_sec=max_run_duration_sec,
+    )
 
     # --- report scope & estimated duration ------
 

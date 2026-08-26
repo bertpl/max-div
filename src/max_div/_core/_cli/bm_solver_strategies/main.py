@@ -1,3 +1,4 @@
+from max_div._core._cli.bm_speed import SpeedParam
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.metrics import DiversityMetric
 
@@ -50,7 +51,7 @@ def run_solver_strategies_benchmark(
                 solver_constructor=BenchmarkSolverConstructor_Optimization(
                     problem_name=name,
                     diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
-                    n_iterations=round(1000 ** (1.0 - speed)),
+                    n_iterations=SpeedParam(1000, 1).at_int(speed),
                 ),
                 speed=speed,
                 leave_pbar=file,

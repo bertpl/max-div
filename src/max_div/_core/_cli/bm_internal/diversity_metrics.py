@@ -1,9 +1,12 @@
 import numpy as np
 from tqdm import tqdm
 
+from max_div._core._cli.bm_speed import SpeedParam
 from max_div._core._markdown import Report, Table, TableAggregationType, TableElement, TableTimeElapsed, h2
 from max_div._core._utils import benchmark, stdout_to_file
 from max_div._core.metrics import DiversityMetric
+
+from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 
 
 def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
@@ -26,10 +29,10 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
     print("Benchmarking `DiversityMetric`...")
 
     # --- speed-dependent settings ---------------
-    max_size = round(100_000 / (1_000**speed))
-    t_per_run = 0.01 / (1000.0**speed)
-    n_warmup = int(8 - 6 * speed)
-    n_benchmark = int(25 - 24 * speed)
+    max_size = SpeedParam(100_000, 100).at_int(speed)
+    t_per_run = TIME_PER_RUN_SEC.at(speed)
+    n_warmup = N_WARMUP.at_int(speed)
+    n_benchmark = N_BENCHMARK.at_int(speed)
 
     # --- create diversity metrics ---------------
     metrics = [

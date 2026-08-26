@@ -1,6 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
+from max_div._core._cli.bm_speed import SpeedParam
 from max_div._core._markdown import (
     Report,
     Table,
@@ -11,6 +12,8 @@ from max_div._core._markdown import (
 )
 from max_div._core._random import new_rng_state, randint, randint_python
 from max_div._core._utils import benchmark, stdout_to_file
+
+from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 
 
 def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
@@ -33,10 +36,10 @@ def benchmark_randint(speed: float = 0.0, markdown: bool = False, file: bool = F
     print("Benchmarking `randint`...")
 
     # --- speed-dependent settings ---------------
-    t_per_run = 0.01 / (1000.0**speed)
-    n_warmup = int(8 - 6 * speed)
-    n_benchmark = int(25 - 24 * speed)
-    max_size = round(10_000 / (100**speed))
+    t_per_run = TIME_PER_RUN_SEC.at(speed)
+    n_warmup = N_WARMUP.at_int(speed)
+    n_benchmark = N_BENCHMARK.at_int(speed)
+    max_size = SpeedParam(10_000, 100).at_int(speed)
 
     # --- benchmark scenarios --------------------
     i_file = 0

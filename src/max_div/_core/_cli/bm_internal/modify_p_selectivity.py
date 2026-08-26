@@ -1,6 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
+from max_div._core._cli.bm_speed import SpeedParam
 from max_div._core._markdown import (
     Report,
     Table,
@@ -16,6 +17,8 @@ from max_div._core._math.modify_p_selectivity import (
     modify_p_selectivity,
 )
 from max_div._core._utils import benchmark, stdout_to_file
+
+from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 
 MODIFY_P_METHODS = [np.int32(0), np.int32(10), np.int32(20), np.int32(100)]
 
@@ -41,11 +44,11 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
     print("Benchmarking `modify_p_selectivity`...")
 
     # --- speed-dependent settings ---------------
-    n_accuracy = round(1000.0 / (100.0**speed))  # 1000 when speed=0, 10 when speed=1
-    max_size = round(100_000 / (1_000**speed))
-    t_per_run = 0.01 / (1000.0**speed)
-    n_warmup = int(8 - 6 * speed)
-    n_benchmark = int(25 - 24 * speed)
+    n_accuracy = SpeedParam(1000, 10).at_int(speed)
+    max_size = SpeedParam(100_000, 100).at_int(speed)
+    t_per_run = TIME_PER_RUN_SEC.at(speed)
+    n_warmup = N_WARMUP.at_int(speed)
+    n_benchmark = N_BENCHMARK.at_int(speed)
 
     # --- compute approximation errors -----------
     # compute errors by method (by comparing exact power method vs other methods on calibration data)

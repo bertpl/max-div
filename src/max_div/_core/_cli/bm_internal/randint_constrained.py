@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from tqdm import tqdm
 
+from max_div._core._cli.bm_speed import SpeedParam
 from max_div._core._markdown import (
     Report,
     Table,
@@ -19,6 +20,8 @@ from max_div._core._markdown import (
 from max_div._core._random import P_UNIFORM, new_rng_state, randint, randint_constrained
 from max_div._core._utils import benchmark, stdout_to_file
 from max_div._core.constraints import Constraint, ConstraintList
+
+from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 
 
 # =================================================================================================
@@ -55,7 +58,7 @@ def benchmark_randint_constrained(speed: float = 0.0, markdown: bool = False, fi
         file: If `True`, redirects output to a file instead of console.
     """
     # --- speed-dependent settings ---------------
-    max_count = int(100 * (0.01**speed))  # max_count=100 if speed=0;  max_count=1 at speed=1
+    max_count = SpeedParam(100, 1).at_int(speed)
 
     # --- build scenarios ------------------------
     scenarios = [ScenarioA(), ScenarioB()]
@@ -159,10 +162,10 @@ def _benchmark(
     k = np.int32(k)
 
     # speed-dependent settings
-    index_range = int(100 * (0.02**speed))  # 100 at speed=0, 2 at speed=1
-    t_per_run = 0.01 / (1000.0**speed)
-    n_warmup = int(8 - 6 * speed)
-    n_benchmark = int(25 - 24 * speed)
+    index_range = SpeedParam(100, 2).at_int(speed)
+    t_per_run = TIME_PER_RUN_SEC.at(speed)
+    n_warmup = N_WARMUP.at_int(speed)
+    n_benchmark = N_BENCHMARK.at_int(speed)
 
     # build a <index_range> number of different constraints, to randomize the problems we benchmark
     lst_cons = []
@@ -229,8 +232,7 @@ def _determine_precision(
     """Determines how often (%) the constraints are satisfied when sampling."""
     p = np.zeros(0, dtype=np.float32) if p is None else p.astype(np.float32)
 
-    # Calculate number of runs based on speed (200 at speed=0, 1 at speed=1)
-    n_runs = round(200 ** (1 - speed))
+    n_runs = SpeedParam(200, 1).at_int(speed)
 
     satisfied_count = 0
     for run_idx in range(n_runs):

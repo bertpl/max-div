@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 from tqdm import tqdm
 
 from max_div._core._cli.bm_solver_sizing import K_VALUES, determine_problem_size_for_k
+from max_div._core._cli.bm_speed import SpeedParam
 from max_div._core._markdown import (
     Report,
     ReportElement,
@@ -153,8 +154,6 @@ class SolverBenchmarkScope:
     def params(self) -> list[tuple[int, str, int]]:
         """Return the list of (n, strat_name, seed)-tuples to benchmark."""
         # --- calibrate --------------------------
-        n_seeds_min = 3  # we don't execute benchmarks if n_seeds < n_seeds_min
-        n_seeds_max = 16  # we never do more than n_seeds_max
         # at speed=0.0 the size axis maps each k in K_VALUES to this problem's n
         full_n_range = sorted({determine_problem_size_for_k(self.problem_name, k) for k in K_VALUES})
 
@@ -163,11 +162,10 @@ class SolverBenchmarkScope:
         # formulas here are tuned for
         speed = self._speed
         max_weight = max(full_n_range) / 100.0
-        n_seeds_min = round(n_seeds_min ** (1 - speed))  # reduce to 1 at speed=1.0
-        n_seeds_max = round(n_seeds_max - speed * (n_seeds_max - n_seeds_min))  # reduce to n_seeds_min at speed=1.0
-        # speed = 0.0  -->  weight_seeds_limit = n_seeds_min * max_weight
-        # speed = 1.0  -->  weight_seeds_limit = n_seeds_min * 1
-        weight_seeds_limit = round(n_seeds_min * (max_weight ** (1 - speed)))
+        n_seeds_min = SpeedParam(3, 1).at_int(speed)  # we don't execute benchmarks below this
+        n_seeds_max = SpeedParam(16, 1, scale="linear").at_int(speed)  # we never do more
+        # the per-problem seed budget: n_seeds_min curves at the largest size, more at smaller sizes
+        weight_seeds_limit = round(n_seeds_min * SpeedParam(max_weight, 1.0).at(speed))
 
         # --- generate list ----------------------
         lst = []
