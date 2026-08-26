@@ -15,8 +15,8 @@ LADDER_T_MIN_SEC = 0.03
 LADDER_N_POINTS = 50
 PARALLEL_ARM_T_MIN_SEC = 1.0
 
-# The speed parameter shrinks the range of budget points from the full scope above to a
-# millisecond-cheap turbo scope.
+# The speed parameter shrinks the range of budget points from the full scope above to the
+# turbo scope.
 _MAX_DURATION_SEC = SpeedParam(LADDER_T_MAX_SEC, 1e-3)
 _MIN_DURATION_SEC = SpeedParam(LADDER_T_MIN_SEC, 1e-4)
 _N_POINTS = SpeedParam(LADDER_N_POINTS, 2)
