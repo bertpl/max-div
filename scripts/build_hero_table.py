@@ -150,7 +150,7 @@ DAGGER = "\u2020"  # the dagger anchors the scaling column headers to the footno
 SCALING_FOOTNOTE = "largest solvable n on benchmark problem U1, per the published measurement protocol:"
 SCALING_CRITERIA = (
     "memory: using \u226432GB RAM \u00b7 time: + in \u22641min"
-    " \u00b7 quality: + bridging \u226550% / \u226590% of the random\u2192best diversity gap"
+    " \u00b7 quality: + closing \u226550% / \u226590% of the random\u2192best diversity gap"
 )
 CAPTION2_H = 16  # each footnote row under the mark-legend row (the scaling footnote spans two)
 

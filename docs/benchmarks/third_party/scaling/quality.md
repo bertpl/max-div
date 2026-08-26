@@ -1,6 +1,6 @@
 # Solver Scaling — Quality
 
-The **largest n at good quality** is the largest problem size up to which a configuration's median solution quality reaches the verdict threshold at every measured size, judged at two gap-closure fractions (50% and 90%) per the [measurement protocol](protocol.md) (section IV.D).
+The **largest n closing 50% / 90% of the quality gap** is the largest problem size up to which a configuration's median solution quality reaches that gap-closure fraction's verdict threshold at every measured size, per the [measurement protocol](protocol.md) (section IV.D).
 
 The scoring objective (minimum separation under L2) was chosen because it is the one most benchmarked tools can pursue. Tools designed specifically for this objective are measured on home ground; tools supporting a wider range of distance and diversity metrics (see the [comparison table](../comparison.md)'s metric axes) are compared on this shared objective only.
 

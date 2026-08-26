@@ -230,5 +230,5 @@
 <line x1="14" y1="477" x2="814" y2="477" stroke="#d8dee4" stroke-width="1"/>
 <text x="14" y="490" font-size="11"><tspan fill="#1a7f37" font-weight="700">✓</tspan><tspan fill="#656d76" dx="5">built in</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">~</tspan><tspan fill="#656d76" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan></text>
 <text x="14" y="506" font-size="11"><tspan fill="#656d76" font-weight="700">†</tspan><tspan fill="#656d76" dx="5">largest solvable n on benchmark problem U1, per the published measurement protocol:</tspan></text>
-<text x="24" y="522" font-size="11"><tspan fill="#656d76">memory: using ≤32GB RAM · time: + in ≤1min · quality: + bridging ≥50% / ≥90% of the random→best diversity gap</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">—</tspan><tspan fill="#656d76" dx="5">no measured size meets the criterion</tspan></text>
+<text x="24" y="522" font-size="11"><tspan fill="#656d76">memory: using ≤32GB RAM · time: + in ≤1min · quality: + closing ≥50% / ≥90% of the random→best diversity gap</tspan><tspan fill="#656d76" dx="9">·</tspan><tspan fill="#8c959f" font-weight="700" dx="9">—</tspan><tspan fill="#656d76" dx="5">no measured size meets the criterion</tspan></text>
 </svg>

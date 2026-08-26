@@ -34,9 +34,9 @@ class ScalingConfig:
     `tool` is the registry key (`data/solver_registry.yaml`); `name` is the configuration name as
     the solver-configurations page lists it; `description` is a terse echo of that page's wording.
     `seed_varies_result` records whether the seed can influence the returned selection — through
-    a literal seed knob or an adapter-chosen start item; the measurement protocol decides when
-    seeds are enumerated. It deliberately does not cover a tool with unseedable internal
-    randomness (runs differ, no seed reaches them) — no registry tool behaves that way.
+    a literal seed parameter or an adapter-chosen start item; the measurement protocol decides
+    when seeds are enumerated. The flag deliberately does not cover a tool with unseedable
+    internal randomness (runs differ, no seed reaches them) — no registry tool behaves that way.
     """
 
     tool: str

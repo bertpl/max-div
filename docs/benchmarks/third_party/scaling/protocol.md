@@ -238,4 +238,4 @@ The time-bound setting (IV.C) keeps its strict criterion: there, completion with
 
 Note that a `Q_observed` value competes for `Q_best_known` per seed (a lucky draw is still a known solution), while the pass/fail verdict uses the per-config **median** over seeds — so a lucky seed can raise the bar for everyone, but can never carry its own configuration over it.
 
-A failing size ends the passing range even when larger sizes pass again. At the largest sizes only a few configurations still complete, so `Q_best_known` there rests on fewer solutions — a configuration meeting the threshold in that regime may simply be measured against a weaker reference, so such a pass cannot lift it over failures at smaller, better-referenced sizes.
+A failing size ends the passing range even when larger sizes pass again. At the largest sizes only a few configurations still complete, so `Q_best_known` there is taken over fewer solutions. A configuration meeting the threshold in that regime may simply be measured against a weaker reference, so such a pass cannot lift it over failures at smaller, better-referenced sizes.

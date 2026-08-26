@@ -7,12 +7,12 @@ influence the result, the protocol's fixed seed otherwise.
 A configuration's verdict at a size compares its median quality over seeds against the threshold
 `(1 - gap_closure) * Q_random + gap_closure * Q_best_known`, once per value in
 `GAP_CLOSURE_FRACTIONS`; `gap_closure`, wherever it appears below, is the fraction of the
-random-to-best gap that must be closed. The best-known pool combines the extended runs
-(`best_known_stage`) with every per-seed quality run: one seed's high quality raises the
-threshold for every configuration, but each configuration is judged on its median, so that seed
-alone cannot make its own configuration pass. Per fraction, the reported limit is the largest n
-up to which every judged size passes — a failing size ends the range (see `quality_limits`).
-The measurement protocol's section IV.D carries the full rationale.
+random-to-best gap that must be closed.
+
+The best-known pool combines the extended runs (`best_known_stage`) with every per-seed quality
+run. Per fraction, the reported limit is the largest n up to which every judged size passes — a
+failing size ends the range (see `quality_limits`). The measurement protocol's section IV.D
+carries the full rationale.
 
 `Q_random` — the per-size median quality of `N_RANDOM_DRAWS` random selections — is computed
 in-process (no solver involved) and persisted beside the run records.
@@ -197,7 +197,7 @@ def tool_quality_limits(
 
     At each size the tool's quality is the best per-configuration median — the protocol's
     best-result-across-configurations rule (section III). The passing range still ends at the
-    first failing size, so this can reach beyond every single configuration's limit when the
+    first failing size, so the tool's limit can reach beyond every single configuration's when the
     configurations cover each other's failing sizes.
 
     Returns:
