@@ -6,11 +6,10 @@ from typing import Literal
 class SpeedParam:
     """A benchmark-scope parameter interpolated between its full-scope and turbo values.
 
-    Every benchmark CLI exposes a `speed` knob: 0.0 runs the full scope (the configuration
-    the docs pages are generated with) and 1.0 the turbo scope (the cheap path used by tests
-    and smoke runs; `--turbo` is shorthand for it).  A `SpeedParam` declares one scope
-    parameter's value at both ends; `at()` interpolates in between, and `at_int()` is the
-    rounding variant for integer-valued parameters such as counts.
+    Every benchmark CLI exposes a `speed` parameter: 0.0 runs the full scope and 1.0 the
+    turbo scope.  A `SpeedParam` declares one scope parameter's value at both ends; `at()`
+    interpolates in between, and `at_int()` is the rounding variant for integer-valued
+    parameters such as counts.
 
     Args:
         full: The value at speed 0.0.
