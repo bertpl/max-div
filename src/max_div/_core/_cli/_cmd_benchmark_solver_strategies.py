@@ -1,7 +1,7 @@
 import click
 
 from ._cmd_benchmark_solver import solver
-from .bm_solver_strategies import run_solver_strategies_benchmark
+from .benchmarks.solver_strategies import run_solver_strategies_benchmark
 
 
 # =================================================================================================

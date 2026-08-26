@@ -222,10 +222,10 @@ convention = "google"
 "scripts/**" = ["INP001", "S", "D", "ANN"]           # maintainer tooling, not the shipped library
 ".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
 # benchmark closures are constructed and invoked within the same loop iteration, so late binding never bites
-"src/max_div/_core/_cli/bm_internal/**" = ["B023"]
+"src/max_div/_core/_cli/benchmarks/internal/**" = ["B023"]
 # problem-ID / benchmark-ID class-name suffixes (C1..C4, U1..U4, _Initialization, ...) are deliberate
 "src/max_div/_core/benchmark_problems/_problems/**" = ["N801"]
-"src/max_div/_core/_cli/bm_solver_strategies/**" = ["N801"]
+"src/max_div/_core/_cli/benchmarks/solver_strategies/**" = ["N801"]
 # calibration tooling & tests import the currently-committed constants under working-variable aliases
 "src/max_div/_core/_math/fast_pow/_calibration.py" = ["N811"]
 "tests/_core/_math/fast_log_exp/test_calibration.py" = ["N811"]

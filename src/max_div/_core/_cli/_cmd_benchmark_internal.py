@@ -1,7 +1,7 @@
 import click
 
 from ._cmd_benchmark import benchmark
-from .bm_internal import (
+from .benchmarks.internal import (
     benchmark_diversity_metrics,
     benchmark_modify_p_selectivity,
     benchmark_randint,

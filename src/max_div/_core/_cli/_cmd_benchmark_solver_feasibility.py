@@ -1,7 +1,7 @@
 import click
 
 from ._cmd_benchmark_solver import solver
-from .bm_solver_feasibility import run_solver_feasibility_benchmark
+from .benchmarks.solver_feasibility import run_solver_feasibility_benchmark
 
 
 # =================================================================================================
