@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- The benchmark CLI's `--target-max-minutes` auto-scoping option is removed; preview a run's estimated duration with `--dry-run` and pick `--speed` directly
+- The benchmark CLI's `--target-max-minutes` option, which picked a `--speed` to fit a target duration, is removed; preview a run's estimated duration with `--dry-run` and pick `--speed` directly
 
 ### Deprecated
 
