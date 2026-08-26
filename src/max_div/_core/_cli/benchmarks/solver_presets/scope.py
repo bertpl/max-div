@@ -17,9 +17,9 @@ PARALLEL_ARM_T_MIN_SEC = 1.0
 
 # The speed parameter shrinks the range of budget points from the full scope above to the
 # turbo scope.
-_MAX_DURATION_SEC = SpeedParam(LADDER_T_MAX_SEC, 1e-3)
-_MIN_DURATION_SEC = SpeedParam(LADDER_T_MIN_SEC, 1e-4)
-_N_POINTS = SpeedParam(LADDER_N_POINTS, 2)
+_MAX_DURATION_SEC = SpeedParam(slow=LADDER_T_MAX_SEC, fast=1e-3)
+_MIN_DURATION_SEC = SpeedParam(slow=LADDER_T_MIN_SEC, fast=1e-4)
+_N_POINTS = SpeedParam(slow=LADDER_N_POINTS, fast=2)
 
 # Every problem is benchmarked at the size where it selects this many items, so the suite's
 # curves are comparable across problems: k is what drives the swap space and per-iteration cost.

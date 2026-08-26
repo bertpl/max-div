@@ -44,8 +44,8 @@ def benchmark_modify_p_selectivity(speed: float = 0.0, markdown: bool = False, f
     print("Benchmarking `modify_p_selectivity`...")
 
     # --- speed-dependent settings ---------------
-    n_accuracy = SpeedParam(1000, 10).at_int(speed)
-    max_size = SpeedParam(100_000, 100).at_int(speed)
+    n_accuracy = SpeedParam(slow=1000, fast=10).at_int(speed)
+    max_size = SpeedParam(slow=100_000, fast=100).at_int(speed)
     t_per_run = TIME_PER_RUN_SEC.at(speed)
     n_warmup = N_WARMUP.at_int(speed)
     n_benchmark = N_BENCHMARK.at_int(speed)

@@ -162,10 +162,10 @@ class SolverBenchmarkScope:
         # formulas here are tuned for
         speed = self._speed
         max_weight = max(full_n_range) / 100.0
-        n_seeds_min = SpeedParam(3, 1).at_int(speed)  # skip the benchmark when n_seeds falls below this
-        n_seeds_max = SpeedParam(16, 1, scale="linear").at_int(speed)  # the seed count never exceeds this
+        n_seeds_min = SpeedParam(slow=3, fast=1).at_int(speed)  # skip the benchmark when n_seeds falls below this
+        n_seeds_max = SpeedParam(slow=16, fast=1, scale="linear").at_int(speed)  # the seed count never exceeds this
         # The per-problem seed budget allows n_seeds_min curves at the largest size and more at smaller sizes.
-        weight_seeds_limit = round(n_seeds_min * SpeedParam(max_weight, 1.0).at(speed))
+        weight_seeds_limit = round(n_seeds_min * SpeedParam(slow=max_weight, fast=1.0).at(speed))
 
         # --- generate list ----------------------
         lst = []
