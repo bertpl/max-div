@@ -173,7 +173,7 @@ def create_single_figure(
                     # Add to quantiles table for markdown generation
                     quantiles_table.add_quantile_curves(
                         quantile_curves=quantile_curves,
-                        preset=preset,
+                        column=preset.value.upper(),
                         x_axis=x_axis,
                         y_axis=y_axis,
                     )
@@ -189,8 +189,8 @@ def create_single_figure(
 
             # --- plot the parallel series --------------------
             # The default parallel invocation (one preset, several cooperative workers) is shown as
-            # a plain black-circle scatter with no quantile band: it is a single reference series,
-            # not a preset sweep, and one run per budget point makes the scatter itself the spread.
+            # black-circle scatter with black quantile lines instead of a colored band, so it reads
+            # as the reference series next to the preset sweeps.
             parallel_x: list[float] = []
             parallel_y: list[float] = []
             parallel_label = ""
@@ -212,6 +212,31 @@ def create_single_figure(
                     markerfacecolor="none",
                     markeredgecolor="black",
                 )
+                if use_y_transform:
+                    quantile_curves = QuantileCurves.from_data(
+                        x_data=np.array(parallel_x),
+                        y_data=np.array(parallel_y),
+                        n_knots=max(3, len(parallel_x) // 8),
+                        x_transform=LogTransform(),
+                        y_transform=UpperLogTransform.from_values(np.array(parallel_y)),
+                        q50_reg=0.25,
+                        q10_q90_reg=5.0,
+                    )
+                    quantiles_table.add_quantile_curves(
+                        quantile_curves=quantile_curves,
+                        column=parallel_label,
+                        x_axis=x_axis,
+                        y_axis=y_axis,
+                    )
+                    x_q, q10, q50, q90 = quantile_curves.get_full_curves()
+                    q10 = y_transform.f(q10)
+                    q50 = y_transform.f(q50)
+                    q90 = y_transform.f(q90)
+                    # solid q50 + thin dashed q10/q90 in black, no fill: line style alone
+                    # separates the reference series from the presets' colored bands
+                    ax.plot(x_q, q50, color="black", linestyle="-", lw=0.8, alpha=0.8, label="q50")
+                    ax.plot(x_q, q10, color="black", linestyle="--", lw=0.5, alpha=0.5, label="q10, q90")
+                    ax.plot(x_q, q90, color="black", linestyle="--", lw=0.5, alpha=0.5)
 
             # --- decorations ---------------------------------
 
