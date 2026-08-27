@@ -7,8 +7,8 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/bertpl/max-div/blob/main/LICENSE)
 [![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/bertpl/max-div/badge)](https://scorecard.dev/viewer/?uri=github.com/bertpl/max-div)
-<p>
-  <img src="https://raw.githubusercontent.com/bertpl/max-div/v0.14.2/images/splash_with_version.webp" alt="max-div logo" style="max-width: max(60%, min(100%,800px)); height: auto;">
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bertpl/max-div/v0.14.2/images/splash_with_version.webp" alt="max-div logo" style="max-width: max(60%, min(100%,1000px)); height: auto;">
 </p>
 
 # max-div
@@ -24,10 +24,10 @@ freely available tools: it is the only
 the only one offering a **geometric-mean separation** objective — one of four diversity metrics
 it provides (minimum, mean, and geometric-mean separation, plus mean pairwise distance).
 
-<p>
+<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero_dark.svg">
-    <img src="docs/images/hero_light.svg" alt="Feature comparison of max-div against exact solvers and one-shot pickers: distance metrics, diversity objectives, constraint handling, time budgets and practical scale" style="max-width: max(60%, min(100%,800px)); height: auto;">
+    <img src="docs/images/hero_light.svg" alt="Feature comparison of max-div against exact solvers and one-shot pickers: distance metrics, diversity objectives, constraint handling, time budgets and practical scale" style="max-width: max(60%, min(100%,1000px)); height: auto;">
   </picture>
 </p>
 
