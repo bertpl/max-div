@@ -40,6 +40,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         self._worker_configs: list[WorkerConfig] = []
         self._group_sizes: list[int] = []
         self._target_duration: TargetDuration | None = None
+        self._adaptive_groups: bool = False
 
     # -------------------------------------------------------------------------
     #  Builder API
@@ -50,6 +51,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
         n_groups: int | None = None,
         end_to_end_budget: bool = False,
+        adaptive_groups: bool = False,
     ) -> Self:
         """Set what the workers run, how long they run, and how they form groups.
 
@@ -75,19 +77,33 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 shared store build, worker spawning and initialization included — counted from
                 the parent's solve start, so every worker's optimization gets whatever time
                 remains.  Requires a time budget.
+            adaptive_groups: when True, the workers regroup during the solve — every worker
+                starts in its own group and groups consolidate toward one, dissolving the
+                worst-scoring group as the budget advances (see `_adaptive_groups`).  Requires
+                `end_to_end_budget` (the schedule lives on its progress fraction) and an integer
+                (or omitted) `workers`; excludes `n_groups`.
 
         Raises:
             ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
-                the sequence mixes configurations and groups, or `end_to_end_budget` is combined
-                with an iteration budget.
+                the sequence mixes configurations and groups, `end_to_end_budget` is combined
+                with an iteration budget, or `adaptive_groups` lacks its requirements.
         """
+        if adaptive_groups:
+            if not end_to_end_budget:
+                raise ValueError("adaptive_groups schedules on the end-to-end budget; pass end_to_end_budget=True.")
+            if n_groups is not None:
+                raise ValueError("adaptive_groups manages the grouping itself; do not pass n_groups.")
+            if workers is not None and not isinstance(workers, int):
+                raise ValueError("adaptive_groups only combines with an integer (or omitted) worker count.")
+        self._adaptive_groups = adaptive_groups
         self._set_e2e_budget(target_duration, end_to_end_budget)
         self._target_duration = target_duration
         if workers is None:
             workers = default_worker_count()
         if isinstance(workers, int):
             self._worker_configs = [WorkerConfig() for _ in range(workers)]
-            self._group_sizes = _resolve_group_sizes(workers, n_groups)
+            # an adaptive solve starts every worker in its own group; the orchestrator regroups from there
+            self._group_sizes = [1] * workers if adaptive_groups else _resolve_group_sizes(workers, n_groups)
         elif any(isinstance(entry, WorkerConfig) for entry in workers):
             if not all(isinstance(entry, WorkerConfig) for entry in workers):
                 raise ValueError("Workers must be all configurations (flat) or all groups (nested), not a mix.")
@@ -120,7 +136,11 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             raise ValueError("A parallel solver needs workers; call with_workers before build.")
         warn_about_worker_count(len(self._worker_configs))
         resolved, label = self._select_storage()
-        group_size_per_worker = [size for size in self._group_sizes for _ in range(size)]
+        if self._adaptive_groups:
+            # every adaptive worker cooperates through the assignment table, so all get the tight batches
+            group_size_per_worker = [len(self._worker_configs)] * len(self._worker_configs)
+        else:
+            group_size_per_worker = [size for size in self._group_sizes for _ in range(size)]
         return ParallelMaxDivSolver(
             problem=self._problem,
             storage=resolved,
@@ -130,6 +150,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 for index, worker in enumerate(self._worker_configs)
             ],
             group_sizes=self._group_sizes,
+            adaptive_groups=self._adaptive_groups,
         )
 
     def _solver_config_for(

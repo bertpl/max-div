@@ -80,3 +80,8 @@ class GroupIncumbentSlot:
         """Return whether any selection was ever stored."""
         with self._lock:
             return bool(self._written.value)
+
+    def peek_score(self) -> tuple[float, ...] | None:
+        """Return the stored score without touching the selection, or None for a never-written slot."""
+        with self._lock:
+            return tuple(self._score) if self._written.value else None
