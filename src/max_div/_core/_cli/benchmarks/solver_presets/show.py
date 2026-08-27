@@ -14,8 +14,9 @@ if TYPE_CHECKING:
     from ._models import SolverPresetBenchmarkResult
 
 
-# placeholder for a table cell whose (duration, column) combination has no runs — the parallel
-# arm only covers the longer budgets, so its column is blank at the short-duration rows
+# placeholder for a table cell whose (duration, column) combination has no runs — the
+# single-worker and parallel series use different budget values, so each row fills only the
+# columns whose series contains that duration
 _EMPTY_CELL = "—"
 
 
@@ -44,8 +45,8 @@ def show_solver_presets_benchmark_results(
     problem_names = sorted({result.params.problem_name for result in results})
     target_durations = sorted({result.params.duration for result in results})
 
-    # each (n_workers, preset)-combination gets its own results column, so the parallel arm shows
-    # up next to the serial presets rather than folded into one of them
+    # each (n_workers, preset)-combination gets its own results column, so the parallel series
+    # shows up next to the serial presets rather than folded into one of them
     columns: dict[tuple[int, SolverPreset], str] = {}
     for result in results:
         columns[result.params.n_workers, result.params.preset] = result.params.column_label()

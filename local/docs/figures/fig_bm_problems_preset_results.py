@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
 from local.docs.utils import LogTransform, PresetQuantilesTable, QuantileCurves, UpperLogTransform
-from max_div._core._cli.bm_solver_presets._models import SolverPresetBenchmarkResult, results_from_json
+from max_div._core._cli.benchmarks.solver_presets._models import SolverPresetBenchmarkResult, results_from_json
 from max_div._core._utils import format_long_time_duration
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.solver import SolverPreset
@@ -133,8 +133,8 @@ def create_single_figure(
             # --- plot data per preset ------------------------
             for preset in all_presets:
                 # --- collect data ---
-                # single-worker runs only; the parallel arm is a separate series (see the
-                # "plot the parallel arm" block), so its records must not fold into the preset's
+                # single-worker runs only; the parallel runs are a separate series (see the
+                # "plot the parallel series" block), so their records must not fold into the preset's
                 # own scatter or quantile band
                 x: list[float] = []
                 y: list[float] = []
@@ -146,23 +146,26 @@ def create_single_figure(
                 # a preset may be absent from a partial run; skip it rather than reducing over empties
                 if not x:
                     continue
+                preset_label = f"{preset.value.upper()} (1 worker)"
 
                 # --- plot data ---
                 if use_y_transform:
                     y_trans = y_transform.f(y)
-                    h = ax.plot(x, y_trans, label=preset.value, linestyle="None", marker="o")
+                    h = ax.plot(x, y_trans, label=preset_label, linestyle="None", marker="o")
                 else:
-                    h = ax.plot(x, y, label=preset.value, linestyle="None", marker="o")
+                    h = ax.plot(x, y, label=preset_label, linestyle="None", marker="o")
                     if y_axis == "constraint_score" and min(y) == 1.0:
                         ax.set_ylim([0.0, 1.1])
                 color = h[0].get_color()
 
                 # --- get uncertainty bounds & plot ---
                 if use_y_transform:
+                    # knot count scales with the number of budget points, keeping ~8 points per
+                    # spline segment so seed noise cannot bend the curve between knots
                     quantile_curves = QuantileCurves.from_data(
                         x_data=np.array(x),
                         y_data=np.array(y),
-                        n_knots=10,
+                        n_knots=max(3, len(x) // 8),
                         x_transform=LogTransform(),
                         y_transform=UpperLogTransform.from_values(np.array(y)),  # specific to this curve
                         q50_reg=0.25,
@@ -171,7 +174,7 @@ def create_single_figure(
                     # Add to quantiles table for markdown generation
                     quantiles_table.add_quantile_curves(
                         quantile_curves=quantile_curves,
-                        preset=preset,
+                        column=preset_label,
                         x_axis=x_axis,
                         y_axis=y_axis,
                     )
@@ -185,10 +188,10 @@ def create_single_figure(
                     ax.plot(x_q, q10, color=color, linestyle="-", lw=0.5, alpha=0.5, label="q10, q90")
                     ax.plot(x_q, q90, color=color, linestyle="-", lw=0.5, alpha=0.5)
 
-            # --- plot the parallel arm -----------------------
+            # --- plot the parallel series --------------------
             # The default parallel invocation (one preset, several cooperative workers) is shown as
-            # a plain black-circle scatter with no quantile band: it is a single reference series,
-            # not a preset sweep, and one run per budget point makes the scatter itself the spread.
+            # black-circle scatter with black quantile lines instead of a colored band, so it reads
+            # as the reference series next to the preset sweeps.
             parallel_x: list[float] = []
             parallel_y: list[float] = []
             parallel_label = ""
@@ -199,7 +202,7 @@ def create_single_figure(
                     parallel_label = result.params.column_label()
             if parallel_x:
                 parallel_y_plot = y_transform.f(parallel_y) if use_y_transform else parallel_y
-                # hollow black circles, so the parallel arm reads as distinct from the filled
+                # hollow black circles, so the parallel series reads as distinct from the filled
                 # preset dots
                 ax.plot(
                     parallel_x,
@@ -210,6 +213,31 @@ def create_single_figure(
                     markerfacecolor="none",
                     markeredgecolor="black",
                 )
+                if use_y_transform:
+                    quantile_curves = QuantileCurves.from_data(
+                        x_data=np.array(parallel_x),
+                        y_data=np.array(parallel_y),
+                        n_knots=max(3, len(parallel_x) // 8),
+                        x_transform=LogTransform(),
+                        y_transform=UpperLogTransform.from_values(np.array(parallel_y)),
+                        q50_reg=0.25,
+                        q10_q90_reg=5.0,
+                    )
+                    quantiles_table.add_quantile_curves(
+                        quantile_curves=quantile_curves,
+                        column=parallel_label,
+                        x_axis=x_axis,
+                        y_axis=y_axis,
+                    )
+                    x_q, q10, q50, q90 = quantile_curves.get_full_curves()
+                    q10 = y_transform.f(q10)
+                    q50 = y_transform.f(q50)
+                    q90 = y_transform.f(q90)
+                    # solid q50 + thin dashed q10/q90 in black, no fill: line style alone
+                    # separates the reference series from the presets' colored bands
+                    ax.plot(x_q, q50, color="black", linestyle="-", lw=0.8, alpha=0.8, label="q50")
+                    ax.plot(x_q, q10, color="black", linestyle="--", lw=0.5, alpha=0.5, label="q10, q90")
+                    ax.plot(x_q, q90, color="black", linestyle="--", lw=0.5, alpha=0.5)
 
             # --- decorations ---------------------------------
 
@@ -279,8 +307,8 @@ def create_single_figure(
         handles, labels = axes[i_row, 1].get_legend_handles_labels()
         if len(handles) > n_presets:
             # One row per series, three fixed columns [dot, q50, q10-q90]. Handles arrive grouped
-            # per series (a preset contributes dot, q50, q10-q90; the parallel arm just a dot), so
-            # group them, pad the parallel arm's row with blank cells, and emit column-first to
+            # per series (a preset contributes dot, q50, q10-q90; the parallel series just a dot), so
+            # group them, pad the parallel series' row with blank cells, and emit column-first to
             # match matplotlib's column-major legend fill — keeping every series on its own row.
             band_labels = ("q50", "q10, q90")
             series: list[tuple[list, list]] = []

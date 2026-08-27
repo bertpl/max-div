@@ -7,7 +7,6 @@ from typing import Literal
 from local.docs.utils.quantile_curves import QuantileCurves
 from max_div._core._markdown import Report, Table, TableElement, TableValueRange, h4
 from max_div._core._utils import format_long_time_duration
-from max_div._core.solver import SolverPreset
 
 
 @dataclass
@@ -15,18 +14,24 @@ class _QuantileCurvesEntry:
     """Internal data class to store a QuantileCurves object with its axis meanings."""
 
     quantile_curves: QuantileCurves
-    preset: SolverPreset
+    column: str
     x_axis: Literal["iteration", "elapsed_sec"]
     y_axis: Literal["constraint_score", "diversity_score"]
+
+
+def _split_header(column: str) -> str:
+    """Render a column label as a two-line table header, backticked name above the bracket part."""
+    name, bracket = column.split(" (", 1)
+    return f"`{name}`<br>({bracket}"
 
 
 class PresetQuantilesTable:
     """
     A class to generate Markdown tables with quantile data for solver presets.
 
-    Collects QuantileCurves for different presets and axis configurations,
-    then generates a Markdown report with tables showing q10/q50/q90 values
-    at selected x-values (iterations or elapsed time).
+    Collects QuantileCurves for different result columns (one per preset, plus the
+    parallel series) and axis configurations, then generates a Markdown report with
+    tables showing q10/q50/q90 values at selected x-values (iterations or elapsed time).
     """
 
     # Row x-values for iteration-based tables (1000, 2000, 5000, then multiply by 10)
@@ -61,7 +66,7 @@ class PresetQuantilesTable:
     def add_quantile_curves(
         self,
         quantile_curves: QuantileCurves,
-        preset: SolverPreset,
+        column: str,
         x_axis: Literal["iteration", "elapsed_sec"],
         y_axis: Literal["constraint_score", "diversity_score"],
     ) -> None:
@@ -69,14 +74,15 @@ class PresetQuantilesTable:
         Add a QuantileCurves object with its axis meanings.
 
         :param quantile_curves: The QuantileCurves object to add.
-        :param preset: The solver preset this curve belongs to.
+        :param column: Label of the result column this curve belongs to (a preset name,
+                       or the parallel series' label).
         :param x_axis: The meaning of the x-axis ("iteration" or "elapsed_sec").
         :param y_axis: The meaning of the y-axis ("constraint_score" or "diversity_score").
         """
         self._entries.append(
             _QuantileCurvesEntry(
                 quantile_curves=quantile_curves,
-                preset=preset,
+                column=column,
                 x_axis=x_axis,
                 y_axis=y_axis,
             )
@@ -87,12 +93,13 @@ class PresetQuantilesTable:
         Generate Markdown tables and output to a .md file in the repo root.
 
         Creates a Markdown report with tables for each (y_axis, x_axis) combination,
-        showing q10/q50/q90 quantile values at selected x-values for each preset.
+        showing q10/q50/q90 quantile values at selected x-values for each column.
         """
         if not self._entries:
             return
 
-        all_presets = SolverPreset.all_sorted()
+        # column order = insertion order of first appearance (presets first, parallel last)
+        all_columns = list(dict.fromkeys(e.column for e in self._entries))
 
         # Group entries by (y_axis, x_axis)
         # Sort to ensure iteration tables come before elapsed_sec tables
@@ -108,12 +115,12 @@ class PresetQuantilesTable:
             # Filter entries for this axis combination
             entries_for_axes = [e for e in self._entries if e.x_axis == x_axis and e.y_axis == y_axis]
 
-            # Build a dict: preset -> QuantileCurves
-            preset_quantile_curves: dict[SolverPreset, QuantileCurves] = {
-                e.preset: e.quantile_curves for e in entries_for_axes
+            # Build a dict: column -> QuantileCurves
+            column_quantile_curves: dict[str, QuantileCurves] = {
+                e.column: e.quantile_curves for e in entries_for_axes
             }
 
-            if not preset_quantile_curves:
+            if not column_quantile_curves:
                 continue
 
             # Determine x/y axis labels and title
@@ -128,21 +135,22 @@ class PresetQuantilesTable:
                 y_title = "Diversity Score"
 
             # Determine x values and row labels
-            all_x_max = [qc.x_max for qc in preset_quantile_curves.values()]
+            all_x_max = [qc.x_max for qc in column_quantile_curves.values()]
             max_x = max(all_x_max)
 
             row_x_values, row_labels = self._get_row_x_values_and_labels(x_axis, max_x)
 
-            # Create table with headers = presets
-            table_headers = [x_title] + [f"`{preset.value.upper()}`" for preset in all_presets]
+            # Create table with one column per result series; the worker-layout bracket goes
+            # on a second header line so column widths stay driven by the preset name
+            table_headers = [x_title] + [_split_header(column) for column in all_columns]
             table = Table(table_headers)
 
             # Fill table rows
             for row_label, x_val in zip(row_labels, row_x_values):
                 row: list[str | TableElement] = [row_label]
-                for preset in all_presets:
-                    if preset in preset_quantile_curves:
-                        qc = preset_quantile_curves[preset]
+                for column in all_columns:
+                    if column in column_quantile_curves:
+                        qc = column_quantile_curves[column]
                         # Only add data if x_val is within the valid range of the quantile curves
                         if qc.x_min <= x_val <= qc.x_max:
                             q10, q50, q90 = qc.get_quantiles_at_x(x_val)
