@@ -2,7 +2,7 @@
 
 (estimated q10...q90 ranges)
 
-| Total Iterations | `RANDOM`                                               | `GUIDED`                                               | `SMART`                                                | `THOROUGH`                                             | `SMART (parallel x12)`                                 |
+| Total Iterations | `RANDOM`<br>(1 worker)                                 | `GUIDED`<br>(1 worker)                                 | `SMART`<br>(1 worker)                                  | `THOROUGH`<br>(1 worker)                               | `SMART`<br>(3x4 workers)                               |
 | ---------------- | ------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------ |
 | 1_000            | <span style="color:#dd0000">**0.27(196...532)**</span> | 0.29(129...423)                                        | <span style="color:#00aa00">**0.(298...301)**</span>   | <span style="color:#00aa00">**0.(298...303)**</span>   | -                                                      |
 | 2_000            | <span style="color:#dd0000">**0.28(276...597)**</span> | 0.29(283...652)                                        | <span style="color:#00aa00">**0.30(0...3)**</span>     | <span style="color:#00aa00">**0.30(0...4)**</span>     | -                                                      |
@@ -24,7 +24,7 @@
 
 (estimated q10...q90 ranges)
 
-| Total Time | `RANDOM`                                               | `GUIDED`                                               | `SMART`                                                | `THOROUGH`                                             | `SMART (parallel x12)`                                 |
+| Total Time | `RANDOM`<br>(1 worker)                                 | `GUIDED`<br>(1 worker)                                 | `SMART`<br>(1 worker)                                  | `THOROUGH`<br>(1 worker)                               | `SMART`<br>(3x4 workers)                               |
 | ---------- | ------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------ |
 | 10.0s      | <span style="color:#dd0000">**0.30(267...553)**</span> | <span style="color:#dd0000">**0.30(275...516)**</span> | 0.30(397...619)                                        | <span style="color:#dd0000">**0.30(313...623)**</span> | <span style="color:#00aa00">**0.30(516...659)**</span> |
 | 15.0s      | <span style="color:#dd0000">**0.30(288...572)**</span> | <span style="color:#dd0000">**0.30(291...531)**</span> | <span style="color:#dd0000">**0.30(402...628)**</span> | <span style="color:#dd0000">**0.30(318...626)**</span> | <span style="color:#00aa00">**0.30(520...662)**</span> |

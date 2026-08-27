@@ -58,9 +58,9 @@ def test_params_parallel_fields():
 
     # --- act & assert -----------------
     assert not serial.is_parallel
-    assert serial.column_label() == "SMART"
+    assert serial.column_label() == "SMART (1 worker)"
     assert parallel.is_parallel
-    assert parallel.column_label() == "SMART (parallel x8)"
+    assert parallel.column_label() == "SMART (2x4 workers)"
 
     # dict roundtrip keeps the worker count; dicts predating the field load as single-worker
     assert SolverPresetBenchmarkParams.from_dict(parallel.to_dict()) == parallel

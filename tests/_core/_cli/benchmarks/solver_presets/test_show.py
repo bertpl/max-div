@@ -54,5 +54,5 @@ def test_show_renders_ragged_parallel_arm(tmp_path: Path) -> None:
 
     # --- assert -----------------------
     text = out_file.read_text()
-    assert "SMART (parallel x8)" in text  # the arm gets its own column
+    assert "SMART (2x4 workers)" in text  # the parallel series gets its own column
     assert "—" in text  # the 0.5s row's parallel cell is a placeholder

@@ -146,13 +146,14 @@ def create_single_figure(
                 # a preset may be absent from a partial run; skip it rather than reducing over empties
                 if not x:
                     continue
+                preset_label = f"{preset.value.upper()} (1 worker)"
 
                 # --- plot data ---
                 if use_y_transform:
                     y_trans = y_transform.f(y)
-                    h = ax.plot(x, y_trans, label=preset.value, linestyle="None", marker="o")
+                    h = ax.plot(x, y_trans, label=preset_label, linestyle="None", marker="o")
                 else:
-                    h = ax.plot(x, y, label=preset.value, linestyle="None", marker="o")
+                    h = ax.plot(x, y, label=preset_label, linestyle="None", marker="o")
                     if y_axis == "constraint_score" and min(y) == 1.0:
                         ax.set_ylim([0.0, 1.1])
                 color = h[0].get_color()
@@ -173,7 +174,7 @@ def create_single_figure(
                     # Add to quantiles table for markdown generation
                     quantiles_table.add_quantile_curves(
                         quantile_curves=quantile_curves,
-                        column=preset.value.upper(),
+                        column=preset_label,
                         x_axis=x_axis,
                         y_axis=y_axis,
                     )

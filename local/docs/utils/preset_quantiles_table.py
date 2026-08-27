@@ -19,6 +19,12 @@ class _QuantileCurvesEntry:
     y_axis: Literal["constraint_score", "diversity_score"]
 
 
+def _split_header(column: str) -> str:
+    """Render a column label as a two-line table header, backticked name above the bracket part."""
+    name, bracket = column.split(" (", 1)
+    return f"`{name}`<br>({bracket}"
+
+
 class PresetQuantilesTable:
     """
     A class to generate Markdown tables with quantile data for solver presets.
@@ -134,8 +140,9 @@ class PresetQuantilesTable:
 
             row_x_values, row_labels = self._get_row_x_values_and_labels(x_axis, max_x)
 
-            # Create table with one column per result series
-            table_headers = [x_title] + [f"`{column}`" for column in all_columns]
+            # Create table with one column per result series; the worker-layout bracket goes
+            # on a second header line so column widths stay driven by the preset name
+            table_headers = [x_title] + [_split_header(column) for column in all_columns]
             table = Table(table_headers)
 
             # Fill table rows
