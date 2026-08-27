@@ -379,8 +379,7 @@ def _data_rows(lay):
                 # Bold in a scaling column means "leads this column" and nothing else. The
                 # row-name weight is a separate signal (the subject), so inheriting it here would
                 # imply max-div leads a column it does not. Below the leader, cells step down in
-                # emphasis: runner-up at full ink, then lower measured values, faintest where no
-                # size meets the criterion.
+                # emphasis with their rank in the column.
                 fill = t["partial"] if pending else (t["mark"] if leads else t["ink"])
                 weight = "700" if leads else "400"
                 if pending or leads or lay.second_on_scale(row, j):
