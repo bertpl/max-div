@@ -223,7 +223,7 @@ class _Layout:
         return bool(measured) and row["scales"][j] not in unmeasured and int(row["scales"][j]) == max(measured)
 
     def second_on_scale(self, row, j):
-        """Return True when this cell carries scaling column j's second-highest distinct measured value.
+        """Return True when this row carries scaling column j's second-highest distinct measured value.
 
         Ties share a level, so ranking is over distinct values: every cell at the runner-up value
         is "second", however many rows share the leading value above it.
@@ -379,8 +379,8 @@ def _data_rows(lay):
                 # Bold in a scaling column means "leads this column" and nothing else. The
                 # row-name weight is a separate signal (the subject), so inheriting it here would
                 # imply max-div leads a column it does not. Below the leader, cells step down in
-                # emphasis: runner-up value at full ink, lower measured values at 80% opacity,
-                # and cells where no size meets the criterion at 50%.
+                # emphasis: runner-up at full ink, then lower measured values, faintest where no
+                # size meets the criterion.
                 fill = t["partial"] if pending else (t["mark"] if leads else t["ink"])
                 weight = "700" if leads else "400"
                 if pending or leads or lay.second_on_scale(row, j):
