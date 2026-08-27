@@ -159,10 +159,12 @@ def create_single_figure(
 
                 # --- get uncertainty bounds & plot ---
                 if use_y_transform:
+                    # knot count scales with the number of budget points, keeping ~8 points per
+                    # spline segment so seed noise cannot bend the curve between knots
                     quantile_curves = QuantileCurves.from_data(
                         x_data=np.array(x),
                         y_data=np.array(y),
-                        n_knots=10,
+                        n_knots=max(3, len(x) // 8),
                         x_transform=LogTransform(),
                         y_transform=UpperLogTransform.from_values(np.array(y)),  # specific to this curve
                         q50_reg=0.25,
