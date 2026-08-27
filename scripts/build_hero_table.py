@@ -222,6 +222,16 @@ class _Layout:
         measured = [int(r["scales"][j]) for r in self.rows if r["scales"][j] not in unmeasured]
         return bool(measured) and row["scales"][j] not in unmeasured and int(row["scales"][j]) == max(measured)
 
+    def second_on_scale(self, row, j):
+        """Return True when this row carries scaling column j's second-highest distinct measured value.
+
+        Ties share a level, so ranking is over distinct values: every cell at the runner-up value
+        is "second", however many rows share the leading value above it.
+        """
+        unmeasured = (capability_data.PENDING, capability_data.NO_PASSING_SIZE)
+        distinct = sorted({int(r["scales"][j]) for r in self.rows if r["scales"][j] not in unmeasured}, reverse=True)
+        return len(distinct) >= 2 and row["scales"][j] not in unmeasured and int(row["scales"][j]) == distinct[1]
+
     def any_pending(self):
         """Return True while any scaling cell awaits its measurement."""
         return any(value == capability_data.PENDING for row in self.rows for value in row["scales"])
@@ -366,13 +376,20 @@ def _data_rows(lay):
             for j, value in enumerate(row["scales"]):
                 pending = value == capability_data.PENDING
                 leads = lay.leads_on_scale(row, j)
-                fill = t["partial"] if pending else (t["mark"] if leads else t["ink"])
                 # Bold in a scaling column means "leads this column" and nothing else. The
                 # row-name weight is a separate signal (the subject), so inheriting it here would
-                # imply max-div leads a column it does not.
+                # imply max-div leads a column it does not. Below the leader, cells step down in
+                # emphasis with their rank in the column.
+                fill = t["partial"] if pending else (t["mark"] if leads else t["ink"])
                 weight = "700" if leads else "400"
+                if pending or leads or lay.second_on_scale(row, j):
+                    opacity = ""
+                elif value == capability_data.NO_PASSING_SIZE:
+                    opacity = ' fill-opacity="0.5"'
+                else:
+                    opacity = ' fill-opacity="0.8"'
                 out.append(
-                    f'<text x="{lay.scale_x(j) + SCALE_W // 2}" y="{y + ROW_H - 7}" fill="{fill}" '
+                    f'<text x="{lay.scale_x(j) + SCALE_W // 2}" y="{y + ROW_H - 7}" fill="{fill}"{opacity} '
                     f'font-size="{SCALE_FS}" font-weight="{weight}" text-anchor="middle">'
                     f"{esc(scale_text(value))}</text>"
                 )
