@@ -5,20 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.14.3 (2026-08-27)
 
 ### Changed
 - The benchmark CLI's `--target-max-minutes` option, which picked a `--speed` to fit a target duration, is removed; preview a run's estimated duration with `--dry-run` and pick `--speed` directly
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.14.2 (2026-08-26)
 
