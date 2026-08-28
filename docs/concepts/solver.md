@@ -188,10 +188,7 @@ follows a schedule over the budget's progress:
 - every worker starts in its own group;
 - the group count decreases linearly, reaching one all-worker group at the end;
 - each decrease dissolves the group whose shared best selection scores worst, and its workers
-  join the strongest groups still short a member.
-
-The lowest-scoring groups are dissolved as they fall behind, and their workers reinforce
-searches that can still win.
+  join the strongest groups still short a member — reinforcing searches that can still win.
 
 **Fixed grouping.** The grouping stays fixed for the whole solve when the caller pins it —
 `n_groups`, a nested sequence, or `adaptive_groups=False` — and for iteration budgets, whose

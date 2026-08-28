@@ -64,10 +64,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         wins.  Groups of one make those workers fully independent — `n_groups` equal to the
         worker count puts every worker in a group of one.
 
-        By default the grouping is **adaptive**: every worker starts in its own group, and groups
-        consolidate toward one all-worker group as the time budget advances (see `_adaptive_groups`
-        for the schedule).  The `adaptive_groups` entry below says when the fixed grouping applies
-        instead.
+        By default the grouping is **adaptive**: every worker starts in its own group, and the
+        group count decreases linearly over the time budget toward one all-worker group, dissolving
+        the worst-scoring group at each decrease.
 
         Args:
             target_duration: the wall-clock budget each worker runs for (see `TargetDuration`).

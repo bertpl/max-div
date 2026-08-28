@@ -5,7 +5,7 @@ time budget.  Each decrease dissolves the group whose incumbent slot holds the w
 the group whose best score is lowest so far — and reassigns its workers to the strongest groups that are
 short a member, so they reinforce searches that can still win.
 
-The moving parts, on top of the fixed-group machinery in `_coordinator` / `_incumbent_slot`:
+The module adds three pieces on top of the fixed-group code in `_coordinator` / `_incumbent_slot`:
 
 - **One slot per worker**, allocated up front; a group is the set of workers currently assigned to
   one slot, and dissolving a group simply stops assigning workers to its slot.
@@ -17,8 +17,8 @@ The moving parts, on top of the fixed-group machinery in `_coordinator` / `_incu
   discard the overall best selection.
 
 A worker learns of its reassignment at its next batch boundary, so membership changes are eventual
-rather than synchronized — a worker mid-batch keeps exchanging with its old slot until it looks
-again, which costs at most one batch of stale cooperation.
+rather than synchronized — a worker mid-batch keeps exchanging with its old slot for at most one
+more batch.
 """
 
 import math
