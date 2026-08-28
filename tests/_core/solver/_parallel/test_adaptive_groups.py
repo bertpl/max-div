@@ -96,7 +96,7 @@ def test_reassignment_prefers_groups_short_of_the_largest():
     orchestrator._dissolve_worst(t_sec=2.0, fraction=0.6)
 
     # --- assert -----------------------
-    # group 2 dissolves; its worker goes to group 1 (one short of group 0's size), not to richer group 0
+    # group 2 dissolves; its worker goes to group 1 (one short of group 0's size), not to the larger group 0
     assert orchestrator._members == {0: [0, 3], 1: [1, 2]}
     assert orchestrator._assignment[2] == 1
 

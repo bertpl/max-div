@@ -66,7 +66,7 @@ class ParallelMaxDivSolver:
         self._group_sizes = group_sizes
         self._adaptive_groups = adaptive_groups
         self._schedule_budget_sec = schedule_budget_sec
-        # dissolutions of the most recent adaptive solve, for inspecting the mechanism
+        # `last_adaptive_events` holds the most recent adaptive solve's dissolutions, for inspection
         self.last_adaptive_events: list[DissolutionEvent] = []
 
     # -------------------------------------------------------------------------
@@ -209,7 +209,7 @@ def default_group_count(n_workers_total: int) -> int:
     Groups of about four workers matched one all-worker group's result quality in benchmarks while
     spreading the risk of a bad seed over several independent groups.  Rounding to the nearest count keeps
     every group's size between 3 and 5; five workers or fewer form a single group.  This fixed default
-    serves the solves that opt out of adaptive grouping without naming `n_groups` themselves —
-    iteration budgets, and `adaptive_groups=False`.
+    applies wherever the builder resolves the grouping to fixed without an explicit grouping given
+    (see `ParallelMaxDivSolverBuilder._resolve_adaptive`).
     """
     return max(1, (n_workers_total + 2) // 4)

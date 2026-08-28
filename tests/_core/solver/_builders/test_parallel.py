@@ -404,7 +404,7 @@ def test_an_adaptive_solver_without_any_time_budget_is_rejected_at_solve():
     """The schedule has no clock without a time budget; solve() refuses rather than running unscheduled."""
     # --- arrange ----------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(0.2), 2).build()
-    solver._schedule_budget_sec = None  # builder invariant broken on purpose: no clock source remains
+    solver._schedule_budget_sec = None  # the builder invariant is broken on purpose, so no clock source remains
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="no time budget"):

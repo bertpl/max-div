@@ -1,8 +1,8 @@
 """Adaptive worker groups: every worker starts in its own group, and groups consolidate toward one.
 
 The group count decreases linearly from `n_workers` to 1 over the progress fraction of the solve's
-end-to-end budget.  Each decrease dissolves the group whose incumbent slot holds the worst score —
-the seed that earned the least so far — and reassigns its workers to the strongest groups that are
+time budget.  Each decrease dissolves the group whose incumbent slot holds the worst score —
+the group whose best score is lowest so far — and reassigns its workers to the strongest groups that are
 short a member, so they reinforce searches that can still win.
 
 The moving parts, on top of the fixed-group machinery in `_coordinator` / `_incumbent_slot`:
@@ -37,16 +37,16 @@ if TYPE_CHECKING:
     from multiprocessing.context import BaseContext
 
 # The orchestrator re-checks the schedule this often.  It only bounds how late a dissolution can
-# fire after its scheduled progress fraction; small enough to be negligible against the shortest
-# spike budgets, and its cost is a handful of shared-memory reads.
+# fire after its scheduled progress fraction; small enough to be negligible against even
+# sub-second budgets, and its cost is a handful of shared-memory reads.
 _TICK_SECONDS = 0.05
 
 
 def adaptive_group_count(n_workers: int, progress_fraction: float) -> int:
     """Return the scheduled group count at the given progress fraction.
 
-    Linear from `n_workers` at fraction 0 to 1 from fraction `(n_workers - 1) / n_workers` on, so
-    every group count holds for an equal share of the budget.
+    The count decreases linearly from `n_workers` at fraction 0 and reaches 1 at fraction
+    `(n_workers - 1) / n_workers`, so every group count holds for an equal share of the budget.
     """
     fraction = min(max(progress_fraction, 0.0), 1.0)
     return max(1, math.ceil(n_workers * (1.0 - fraction)))
@@ -105,7 +105,6 @@ class AdaptiveGroupOrchestrator:
         """Allocate one slot per worker and the identity assignment, all in shared memory.
 
         Args:
-            context: the multiprocessing context the workers spawn from.
             n_workers: the worker count, fixing the slot and assignment-table sizes.
             k: maximum selection size the slots hold.
             score_length: number of components in the workers' score tuples.
@@ -113,7 +112,7 @@ class AdaptiveGroupOrchestrator:
         self._n_workers = n_workers
         self._slots = [GroupIncumbentSlot(context, k=k, score_length=score_length) for _ in range(n_workers)]
         self._assignment = context.Array("i", list(range(n_workers)), lock=False)
-        # parent-local group state; the orchestrator thread is the only mutator
+        # `_members` is parent-local; the orchestrator thread is its only mutator
         self._members: dict[int, list[int]] = {index: [index] for index in range(n_workers)}
         self.events: list[DissolutionEvent] = []
 

@@ -168,9 +168,8 @@ and then flattening rather than vanishing.
 Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
 
-The adaptive default removes the need to trade the two counts against each other: the solve
-starts with every worker independent — the most seeds it can have — and converts seed diversity
-into shared search capacity as evidence accumulates about which seeds earned it.
+The adaptive default removes the need to trade the two counts against each other; how it does so
+is described under [Workers and Groups](#workers-and-groups).
 
 ### Workers and Groups
 
@@ -184,11 +183,15 @@ into shared search capacity as evidence accumulates about which seeds earned it.
 The worker total, when not given, defaults to **3/4 of the logical cores**.
 
 **Adaptive grouping (the default).** With a time budget and no grouping pinned, the group count
-follows a schedule over the budget's progress: every worker starts in its own group, the count
-decreases linearly to one all-worker group at the end, and each decrease dissolves the group
-whose shared best selection scores worst — its workers join the strongest groups still short a
-member. Unlucky seeds are abandoned as the evidence against them accumulates, and their workers
-reinforce searches that can still win.
+follows a schedule over the budget's progress:
+
+- every worker starts in its own group;
+- the group count decreases linearly, reaching one all-worker group at the end;
+- each decrease dissolves the group whose shared best selection scores worst, and its workers
+  join the strongest groups still short a member.
+
+The lowest-scoring groups are dissolved as they fall behind, and their workers reinforce
+searches that can still win.
 
 **Fixed grouping.** The grouping stays fixed for the whole solve when the caller pins it —
 `n_groups`, a nested sequence, or `adaptive_groups=False` — and for iteration budgets, whose

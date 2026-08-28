@@ -64,12 +64,10 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         wins.  Groups of one make those workers fully independent — `n_groups` equal to the
         worker count puts every worker in a group of one.
 
-        By default the grouping is **adaptive**: every worker starts in its own group, and as the
-        time budget advances the worst-scoring group is dissolved and its workers reinforce the
-        strongest remaining groups, ending in one all-worker group (see `_adaptive_groups` for
-        the schedule).  A fixed grouping applies instead when the caller pins one (`n_groups`, a
-        nested sequence, or `adaptive_groups=False`) — and for iteration budgets, whose progress
-        the schedule cannot follow across processes.
+        By default the grouping is **adaptive**: every worker starts in its own group, and groups
+        consolidate toward one all-worker group as the time budget advances (see `_adaptive_groups`
+        for the schedule).  The `adaptive_groups` entry below says when the fixed grouping applies
+        instead.
 
         Args:
             target_duration: the wall-clock budget each worker runs for (see `TargetDuration`).
@@ -159,7 +157,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         warn_about_worker_count(len(self._worker_configs))
         resolved, label = self._select_storage()
         if self._adaptive_groups:
-            # every adaptive worker cooperates through the assignment table, so all get the tight batches
+            # every adaptive worker cooperates through the assignment table, so all get the cooperative batch interval
             group_size_per_worker = [len(self._worker_configs)] * len(self._worker_configs)
         else:
             group_size_per_worker = [size for size in self._group_sizes for _ in range(size)]
