@@ -105,6 +105,8 @@ class AdaptiveGroupOrchestrator:
         """Allocate one slot per worker and the identity assignment, all in shared memory.
 
         Args:
+            context: the spawn context whose shared-memory primitives back the slots and the
+                assignment table, so workers inherit them at spawn.
             n_workers: the worker count, fixing the slot and assignment-table sizes.
             k: maximum selection size the slots hold.
             score_length: number of components in the workers' score tuples.
