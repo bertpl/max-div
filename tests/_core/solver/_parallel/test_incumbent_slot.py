@@ -102,3 +102,16 @@ def test_returned_selection_is_an_independent_copy(slot: GroupIncumbentSlot):
 
     # --- assert -----------------------
     np.testing.assert_array_equal(slot.exchange((1.0, 1.0, 0.4), _selection(4, 5, 6, 7)), [0, 1, 2, 3])
+
+
+def test_peek_score_reads_without_disturbing_the_slot(slot: GroupIncumbentSlot):
+    """A never-written slot peeks as None; a written one returns its score and stays adoptable."""
+    # --- arrange ----------------------
+    assert slot.peek_score() is None
+
+    # --- act --------------------------
+    slot.exchange((1.0, 1.0, 0.5), _selection(0, 1, 2, 3))
+
+    # --- assert -----------------------
+    assert slot.peek_score() == (1.0, 1.0, 0.5)
+    assert slot.exchange((1.0, 1.0, 0.1), _selection(0, 1, 2, 3)) is not None  # the selection is still served

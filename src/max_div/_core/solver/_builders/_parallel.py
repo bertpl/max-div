@@ -5,7 +5,7 @@ from typing import Self, cast
 
 from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._duration import TargetDuration
+from max_div._core.solver._duration import TargetDuration, TargetTimeDuration
 from max_div._core.solver._parallel import (
     ParallelMaxDivSolver,
     WorkerConfig,
@@ -51,7 +51,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
         n_groups: int | None = None,
         end_to_end_budget: bool = False,
-        adaptive_groups: bool = False,
+        adaptive_groups: bool | None = None,
     ) -> Self:
         """Set what the workers run, how long they run, and how they form groups.
 
@@ -64,46 +64,45 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         wins.  Groups of one make those workers fully independent — `n_groups` equal to the
         worker count puts every worker in a group of one.
 
+        By default the grouping is **adaptive**: every worker starts in its own group, and as the
+        time budget advances the worst-scoring group is dissolved and its workers reinforce the
+        strongest remaining groups, ending in one all-worker group (see `_adaptive_groups` for
+        the schedule).  A fixed grouping applies instead when the caller pins one (`n_groups`, a
+        nested sequence, or `adaptive_groups=False`) — and for iteration budgets, whose progress
+        the schedule cannot follow across processes.
+
         Args:
             target_duration: the wall-clock budget each worker runs for (see `TargetDuration`).
             workers: an integer runs the default configuration that many times; a flat sequence
                 gives one configuration per worker; a nested sequence gives one inner
                 sequence per group, fixing both grouping and configurations; omitting it
                 uses `default_worker_count()`.
-            n_groups: number of groups; only combines with an integer (or omitted) `workers` —
-                a nested sequence carries its own grouping, a flat sequence uses the
-                default.  Omitting it uses `default_group_count()`.
+            n_groups: number of *fixed* groups; only combines with an integer (or omitted)
+                `workers` — a nested sequence carries its own grouping.  Omitting it
+                keeps the adaptive default (`default_group_count()` fixes the grouping
+                where the adaptive schedule cannot run).
             end_to_end_budget: when True, `target_duration` bounds the whole parallel solve —
                 shared store build, worker spawning and initialization included — counted from
                 the parent's solve start, so every worker's optimization gets whatever time
                 remains.  Requires a time budget.
-            adaptive_groups: when True, the workers regroup during the solve — every worker
-                starts in its own group and groups consolidate toward one, dissolving the
-                worst-scoring group as the budget advances (see `_adaptive_groups`).  Requires
-                `end_to_end_budget` (the schedule lives on its progress fraction) and an integer
-                (or omitted) `workers`; excludes `n_groups`.
+            adaptive_groups: True forces the adaptive grouping (requires a time budget and an
+                integer or flat `workers`, and excludes `n_groups`); False forces a fixed
+                grouping; None (default) resolves to adaptive exactly where forcing it would
+                be valid, and to the fixed default grouping otherwise.
 
         Raises:
             ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
                 the sequence mixes configurations and groups, `end_to_end_budget` is combined
-                with an iteration budget, or `adaptive_groups` lacks its requirements.
+                with an iteration budget, or `adaptive_groups=True` lacks its requirements.
         """
-        if adaptive_groups:
-            if not end_to_end_budget:
-                raise ValueError("adaptive_groups schedules on the end-to-end budget; pass end_to_end_budget=True.")
-            if n_groups is not None:
-                raise ValueError("adaptive_groups manages the grouping itself; do not pass n_groups.")
-            if workers is not None and not isinstance(workers, int):
-                raise ValueError("adaptive_groups only combines with an integer (or omitted) worker count.")
-        self._adaptive_groups = adaptive_groups
         self._set_e2e_budget(target_duration, end_to_end_budget)
         self._target_duration = target_duration
         if workers is None:
             workers = default_worker_count()
+        is_nested = False
         if isinstance(workers, int):
             self._worker_configs = [WorkerConfig() for _ in range(workers)]
-            # an adaptive solve starts every worker in its own group; the orchestrator regroups from there
-            self._group_sizes = [1] * workers if adaptive_groups else _resolve_group_sizes(workers, n_groups)
+            self._group_sizes = _resolve_group_sizes(workers, n_groups)
         elif any(isinstance(entry, WorkerConfig) for entry in workers):
             if not all(isinstance(entry, WorkerConfig) for entry in workers):
                 raise ValueError("Workers must be all configurations (flat) or all groups (nested), not a mix.")
@@ -118,10 +117,33 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 raise ValueError(
                     "n_groups only combines with an integer worker count; a nested sequence carries its own grouping."
                 )
+            is_nested = True
             groups = [list(cast("Sequence[WorkerConfig]", group)) for group in workers]
             self._worker_configs = [config for group in groups for config in group]
             self._group_sizes = [len(group) for group in groups]
+        self._adaptive_groups = self._resolve_adaptive(adaptive_groups, target_duration, n_groups, is_nested)
+        if self._adaptive_groups:
+            # every worker starts in its own group; the orchestrator regroups from there
+            self._group_sizes = [1] * len(self._worker_configs)
         return self
+
+    @staticmethod
+    def _resolve_adaptive(
+        adaptive_groups: bool | None, target_duration: TargetDuration, n_groups: int | None, is_nested: bool
+    ) -> bool:
+        """Resolve the adaptive-grouping choice: validate a forced True, apply the default for None.
+
+        Raises:
+            ValueError: If `adaptive_groups=True` is combined with an iteration budget, an
+                explicit `n_groups`, or a nested worker sequence.
+        """
+        eligible = isinstance(target_duration, TargetTimeDuration) and n_groups is None and not is_nested
+        if adaptive_groups and not eligible:
+            raise ValueError(
+                "adaptive_groups=True needs a time budget and no fixed grouping: "
+                "it excludes iteration budgets, n_groups, and nested worker sequences."
+            )
+        return eligible if adaptive_groups is None else adaptive_groups
 
     # -------------------------------------------------------------------------
     #  Build
@@ -151,6 +173,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             ],
             group_sizes=self._group_sizes,
             adaptive_groups=self._adaptive_groups,
+            schedule_budget_sec=self._target_duration.value() if self._adaptive_groups else None,
         )
 
     def _solver_config_for(

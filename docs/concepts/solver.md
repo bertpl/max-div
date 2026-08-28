@@ -135,7 +135,9 @@ The workers form **[worker groups](glossary.md#worker-group)** — the parallel-
 literature calls them *islands*: within a group, every worker adopts the best selection any
 member has found so far, exchanged many times per second while solving; groups never communicate
 with each other. Groups of one worker are fully independent — a fully
-independent set of workers is the special case where every group has one member.
+independent set of workers is the special case where every group has one member. By default the
+grouping **adapts during the solve** (described under [Workers and Groups](#workers-and-groups));
+`n_groups` keeps it fixed instead.
 
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
@@ -143,7 +145,7 @@ from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
 solution = (
     ParallelMaxDivSolverBuilder(problem)
     .with_seed(42)
-    .with_workers(seconds(60), 8, n_groups=4)   # 8 workers in 4 groups of 2
+    .with_workers(seconds(60), 8)   # 8 workers, adaptively grouped (the default)
     .build()
     .solve()
 )
@@ -166,23 +168,35 @@ and then flattening rather than vanishing.
 Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
 
+The adaptive default removes the need to trade the two counts against each other: the solve
+starts with every worker independent — the most seeds it can have — and converts seed diversity
+into shared search capacity as evidence accumulates about which seeds earned it.
+
 ### Workers and Groups
 
 `with_workers` accepts the worker set in three forms:
 
-- **an integer** — that many default workers, grouped into `n_groups` groups (both counts have
-  defaults, below); the only form `n_groups` combines with;
-- **a flat sequence of `WorkerConfig`** — one configuration per worker, grouped by the default
-  rule;
+- **an integer** — that many default workers; the only form `n_groups` combines with;
+- **a flat sequence of `WorkerConfig`** — one configuration per worker;
 - **a nested sequence** — one inner sequence per group, fixing the grouping and every
   configuration at once; groups may differ in size and mix presets freely.
 
-When the counts are not given:
+The worker total, when not given, defaults to **3/4 of the logical cores**.
 
-- the worker total defaults to **3/4 of the logical cores**;
+**Adaptive grouping (the default).** With a time budget and no grouping pinned, the group count
+follows a schedule over the budget's progress: every worker starts in its own group, the count
+decreases linearly to one all-worker group at the end, and each decrease dissolves the group
+whose shared best selection scores worst — its workers join the strongest groups still short a
+member. Unlucky seeds are abandoned as the evidence against them accumulates, and their workers
+reinforce searches that can still win.
+
+**Fixed grouping.** The grouping stays fixed for the whole solve when the caller pins it —
+`n_groups`, a nested sequence, or `adaptive_groups=False` — and for iteration budgets, whose
+progress the schedule cannot follow across processes. Where a fixed grouping applies without an
+explicit `n_groups`:
+
 - the group count defaults to **groups of about four workers** (the count nearest a quarter of
-  the worker total; five workers or fewer form a single group), spreading the risk of a bad seed
-  over independent groups without losing quality;
+  the worker total; five workers or fewer form a single group);
 - a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
   to the first groups.
 
@@ -205,9 +219,10 @@ The parallel solver takes one seed and derives a seed per worker from that seed,
 differently while the whole configuration derives from a single number.
 
 **Reproducibility follows the grouping.** A fully independent set of workers (`n_groups` equal
-to the worker count) repeated from one seed returns the same selection. With cooperating groups
-it does not: which selections get adopted depends on how far each worker happens to have
-come when it reaches an exchange, and that inter-worker timing varies from run to run.
+to the worker count) repeated from one seed returns the same selection. With cooperating groups —
+the adaptive default included — it does not: which selections get adopted, and under the adaptive
+schedule which groups get dissolved, depends on how far each worker happens to have come when it
+reaches an exchange, and that inter-worker timing varies from run to run.
 
 Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran. For an
 independent worker that is enough to replay it on its own with `MaxDivSolverBuilder`; a
@@ -225,7 +240,9 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
 - **Equal to the worker count**: every worker tied. With a fully independent set of workers that means
   the run found nothing a single worker would not have — lower the worker count or solve once.
   With cooperating groups, ties *within* a group are partly structural (members adopt each
-  other's best), so read the count against the number of groups rather than of workers.
+  other's best), so read the count against the number of groups rather than of workers — and
+  under the adaptive default, which ends in one all-worker group, an all-worker tie is the
+  expected outcome rather than a signal.
 
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.

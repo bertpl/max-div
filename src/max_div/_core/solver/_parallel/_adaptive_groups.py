@@ -23,7 +23,6 @@ again, which costs at most one batch of stale cooperation.
 
 import math
 import threading
-import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -34,6 +33,7 @@ from ._coordinator import WorkerCoordinator
 from ._incumbent_slot import GroupIncumbentSlot
 
 if TYPE_CHECKING:
+    import ctypes
     from multiprocessing.context import BaseContext
 
 # The orchestrator re-checks the schedule this often.  It only bounds how late a dissolution can
@@ -74,7 +74,9 @@ class DissolutionEvent:
 class AdaptiveGroupCoordinator(WorkerCoordinator):
     """A worker of an adaptive solve exchanges with whichever slot the assignment table names."""
 
-    def __init__(self, slots: list[GroupIncumbentSlot], assignment, worker_index: int) -> None:
+    def __init__(
+        self, slots: list[GroupIncumbentSlot], assignment: "ctypes.Array[ctypes.c_int]", worker_index: int
+    ) -> None:
         """Bind the coordinator to the shared slots and the worker's assignment-table entry."""
         self._slots = slots
         self._assignment = assignment
@@ -104,6 +106,7 @@ class AdaptiveGroupOrchestrator:
 
         Args:
             context: the multiprocessing context the workers spawn from.
+            n_workers: the worker count, fixing the slot and assignment-table sizes.
             k: maximum selection size the slots hold.
             score_length: number of components in the workers' score tuples.
         """

@@ -5,6 +5,12 @@ the objective does not, because comparing what they found needs one answer to wh
 better.
 """
 
+from ._adaptive_groups import (
+    AdaptiveGroupCoordinator,
+    AdaptiveGroupOrchestrator,
+    DissolutionEvent,
+    adaptive_group_count,
+)
 from ._coordinator import CooperativeCoordinator, IndependentCoordinator, WorkerCoordinator
 from ._executor import run_workers, solve_in_worker
 from ._incumbent_slot import GroupIncumbentSlot
@@ -14,7 +20,10 @@ from ._solver import ParallelMaxDivSolver, default_group_count, default_worker_c
 from ._worker_config import WorkerConfig
 
 __all__ = [
+    "AdaptiveGroupCoordinator",
+    "AdaptiveGroupOrchestrator",
     "CooperativeCoordinator",
+    "DissolutionEvent",
     "GroupIncumbentSlot",
     "IndependentCoordinator",
     "ParallelMaxDivSolution",
@@ -23,6 +32,7 @@ __all__ = [
     "WorkerCoordinator",
     "WorkerResult",
     "WorkerSummary",
+    "adaptive_group_count",
     "best_result",
     "default_group_count",
     "default_worker_count",
