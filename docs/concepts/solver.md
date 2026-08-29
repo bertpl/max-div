@@ -136,7 +136,7 @@ literature calls them *islands*: within a group, every worker adopts the best se
 member has found so far, exchanged many times per second while solving; groups never communicate
 with each other. Groups of one worker are fully independent — a fully
 independent set of workers is the special case where every group has one member. By default the
-grouping **adapts during the solve** (described under [Workers and Groups](#workers-and-groups));
+grouping **evolves during the solve** (described under [Workers and Groups](#workers-and-groups));
 `n_groups` keeps it fixed instead.
 
 ```python
@@ -247,7 +247,7 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
   With cooperating groups, ties *within* a group are partly structural (members adopt each
   other's best), so read the count against the number of groups rather than of workers — and
   under the dynamic default, which ends in one all-worker group, an all-worker tie is the
-  expected outcome rather than a signal.
+  expected outcome.
 
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.

@@ -241,10 +241,10 @@ only where the coordinates themselves matter — how distances are computed, or 
 
 A set of parallel workers that share their best selection while solving: at regular exchange
 points, every member adopts the group's best-so-far selection. Groups never communicate with each
-other, so each group explores independently and the best worker over all groups wins.
+other, so each group explores independently and the best worker over all groups wins. The
+parallel-metaheuristics literature calls this concept an *island*; the documentation and API say
+"worker group" throughout as the more accessible name.
 
 By default the grouping is dynamic — it consolidates from one group per worker toward a single
-all-worker group as the solve progresses; an explicit `n_groups` keeps the groups fixed. The
-parallel-metaheuristics literature calls this concept an *island*; the documentation and API say
-"worker group" throughout as the more accessible name. See
+all-worker group as the solve progresses; an explicit `n_groups` keeps the groups fixed. See
 [Solving in Parallel](solver.md#solving-in-parallel).
