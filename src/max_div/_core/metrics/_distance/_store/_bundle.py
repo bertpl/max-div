@@ -60,7 +60,7 @@ class DistanceStore(NamedTuple):
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
     vectors: NDArray[np.float32]  # (n, d) vectors distances are computed from, KIND_LAZY
     metric_kind: np.int32  # pair-function selector, KIND_LAZY only
-    metric_p: np.float64  # the metric's power parameter, NaN for metrics without one
+    metric_p: np.float64  # `DistanceMetric.p` at the njit boundary; NaN encodes None
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -121,7 +121,7 @@ class DistanceStore(NamedTuple):
         Args:
             vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
             metric_kind: (int32) metric selector, as `lazy` would have derived from the metric.
-            metric_p: (float64) the metric's power parameter, NaN when the metric has none.
+            metric_p: (float64) `DistanceMetric.p`, NaN when that is None.
         """
         return cls(
             kind=KIND_LAZY,

@@ -1,10 +1,11 @@
-"""Shared fixtures for the distance test tree."""
+"""The `metric` fixture here runs a test once per named distance metric."""
 
 import pytest
 
 from max_div._core.metrics import DistanceMetric
 
-# Every metric the factory methods can produce, for tests that must hold for each of them.
+# NAMED_METRICS lists every metric the factory methods can produce, for tests that must hold for
+# each of them.
 NAMED_METRICS = (
     DistanceMetric.l1_manhattan(),
     DistanceMetric.l2_euclidean(),
@@ -16,5 +17,5 @@ NAMED_METRICS = (
 
 @pytest.fixture(params=NAMED_METRICS, ids=repr)
 def metric(request: pytest.FixtureRequest) -> DistanceMetric:
-    """Each named distance metric in turn."""
+    """Return each named distance metric in turn."""
     return request.param

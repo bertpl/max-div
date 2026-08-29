@@ -1,5 +1,4 @@
 from max_div._core.metrics import DistanceMetric
-
 from tests._core.metrics._distance.conftest import NAMED_METRICS
 
 
