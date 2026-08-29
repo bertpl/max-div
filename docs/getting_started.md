@@ -141,11 +141,11 @@ problem = MaxDivProblem.new(
 
 | Metric | Description |
 |--------|-------------|
-| `L2_EUCLIDEAN` | Standard Euclidean distance (default) |
-| `L1_MANHATTAN` | Sum of absolute differences |
-| `L2S_EUCLIDEAN_SQUARED` | Squared Euclidean -- avoids the square root, produces identical solutions when used with `GEOMEAN_SEPARATION` |
-| `LINF_CHEBYSHEV` | Chebyshev distance -- the largest per-dimension difference |
-| `COSINE` | Cosine distance (1 &minus; cosine similarity) -- angular, magnitude-invariant, for embedding-style vectors; zero vectors are rejected |
+| `l2_euclidean()` | Standard Euclidean distance (default) |
+| `l1_manhattan()` | Sum of absolute differences |
+| `l2s_euclidean_squared()` | Squared Euclidean -- avoids the square root, produces identical solutions when used with `GEOMEAN_SEPARATION` |
+| `linf_chebyshev()` | Chebyshev distance -- the largest per-dimension difference |
+| `cosine()` | Cosine distance (1 &minus; cosine similarity) -- angular, magnitude-invariant, for embedding-style vectors; zero vectors are rejected |
 
 #### Precomputed distances
 
