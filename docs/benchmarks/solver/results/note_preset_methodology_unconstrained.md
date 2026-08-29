@@ -4,6 +4,6 @@ Budgets are end-to-end: a run's time budget covers the whole solve, computing th
 
 The uncertainty band is a q10-q90 estimate from monotone cubic-spline quantile regression through that scatter, approximating the best of about ten seeded runs (around q90). The band covers the diversity score.
 
-A separate black-circle series is the default parallel invocation: the SMART preset on the machine's default set of cooperative workers, shown as a reference for the best result the workers jointly reach. The parallel series runs its own set of budgets and carries no band, because it is one reference series rather than a preset sweep.
+A separate black-circle series is a parallel invocation: the SMART preset on fixed cooperative worker groups of about four, the default grouping at measurement time, shown as a reference for the best result the workers jointly reach. The parallel series runs its own set of budgets and carries no band, because it is one reference series rather than a preset sweep.
 
 The parallel series' shortest budget points sit below the serial presets: an end-to-end budget includes the roughly one second the parallel solver spends spawning its worker processes.
