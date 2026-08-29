@@ -262,16 +262,6 @@ def test_a_nested_sequence_fixes_grouping_and_configurations():
     ]
 
 
-def test_an_iteration_budget_defaults_to_fixed_groups_of_about_four():
-    """Iteration budgets fall back to the fixed default grouping; the adaptive schedule needs wall-clock progress."""
-    # --- act --------------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 8).build()
-
-    # --- assert -----------------------
-    assert not solver._adaptive_groups
-    assert solver._group_sizes == [4, 4]
-
-
 def test_a_cooperative_group_solves():
     """A group of cooperating workers produces an ordinary, valid solution."""
     # --- arrange / act ----------------
@@ -298,10 +288,11 @@ def test_cooperative_workers_batch_at_the_cooperative_interval():
 # =================================================================================================
 #  Adaptive grouping
 # =================================================================================================
-def test_a_time_budget_defaults_to_adaptive_grouping():
-    """With a time budget and no fixed grouping, workers start in groups of one and cooperate throughout."""
+@pytest.mark.parametrize("budget", [seconds(10.0), iterations(200)])
+def test_any_budget_kind_defaults_to_adaptive_grouping(budget):
+    """With no fixed grouping pinned, workers start in groups of one and cooperate, whatever the budget kind."""
     # --- act --------------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 8).build()
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(budget, 8).build()
 
     # --- assert -----------------------
     assert solver._adaptive_groups
@@ -353,13 +344,12 @@ def test_a_nested_sequence_opts_out_of_the_adaptive_default():
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"target_duration": iterations(100)},
         {"n_groups": 2},
         {"workers": [[WorkerConfig()], [WorkerConfig()]]},
     ],
 )
-def test_forcing_adaptive_without_its_requirements_is_rejected(kwargs):
-    """adaptive_groups=True needs a time budget and no fixed grouping; anything else is a configuration error."""
+def test_forcing_adaptive_alongside_a_pinned_grouping_is_rejected(kwargs):
+    """adaptive_groups=True contradicts a pinned grouping, so combining them is a configuration error."""
     # --- arrange ----------------------
     arguments = {"target_duration": seconds(10.0), "workers": 4} | kwargs
 
@@ -368,15 +358,11 @@ def test_forcing_adaptive_without_its_requirements_is_rejected(kwargs):
         ParallelMaxDivSolverBuilder(_problem()).with_workers(adaptive_groups=True, **arguments)
 
 
-def test_an_adaptive_solve_returns_a_valid_solution_and_records_its_dissolutions():
+@pytest.mark.parametrize("budget", [seconds(0.2), iterations(200)])
+def test_an_adaptive_solve_returns_a_valid_solution_and_records_its_dissolutions(budget):
     """An adaptive solve produces an ordinary solution, with the schedule's dissolutions inspectable afterwards."""
     # --- arrange ----------------------
-    solver = (
-        ParallelMaxDivSolverBuilder(_problem())
-        .with_seed(5)
-        .with_workers(seconds(0.05), 2, end_to_end_budget=True)
-        .build()
-    )
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_seed(5).with_workers(budget, 2).build()
 
     # --- act --------------------------
     solution = solver.solve(verbosity=Verbosity.SILENT)
@@ -387,28 +373,22 @@ def test_an_adaptive_solve_returns_a_valid_solution_and_records_its_dissolutions
     assert solver.last_adaptive_events[0].reassignments  # the freed worker was re-pointed
 
 
-def test_an_adaptive_solve_without_e2e_budget_schedules_on_the_step_budget():
-    """Without an end-to-end budget, the schedule spans the per-step time budget from the solve's start."""
+def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
+    """With no optimization batches, no worker ever runs the schedule, so no dissolution fires."""
     # --- arrange ----------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_seed(5).with_workers(seconds(0.2), 2).build()
+    solver = (
+        ParallelMaxDivSolverBuilder(_problem())
+        .with_seed(5)
+        .with_workers(seconds(0.01), 2, end_to_end_budget=True)
+        .build()
+    )
 
     # --- act --------------------------
     solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
-    assert len(solver.last_adaptive_events) == 1
-
-
-def test_an_adaptive_solver_without_any_time_budget_is_rejected_at_solve():
-    """The schedule has no clock without a time budget; solve() refuses rather than running unscheduled."""
-    # --- arrange ----------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(0.2), 2).build()
-    solver._schedule_budget_sec = None  # the builder invariant is broken on purpose, so no clock source remains
-
-    # --- act / assert -----------------
-    with pytest.raises(ValueError, match="no time budget"):
-        solver.solve(verbosity=Verbosity.SILENT)
+    assert solver.last_adaptive_events == []
 
 
 # =================================================================================================

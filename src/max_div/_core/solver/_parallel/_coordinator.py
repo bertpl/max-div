@@ -5,8 +5,10 @@ How the pieces connect, in every setup:
 - **One coordinator per worker**, handed to the worker process at spawn.  Workers never talk to
   each other directly; a coordinator is their only sideways channel.
 - **Independent workers** hold the no-op `IndependentCoordinator`.
-- **A worker group's members** each hold a `CooperativeCoordinator` bound to the group's one
+- **A fixed worker group's members** each hold a `CooperativeCoordinator` bound to the group's one
   `GroupIncumbentSlot`; groups never share slots, so no information crosses group boundaries.
+- **An adaptive solve's workers** each hold an `AdaptiveGroupCoordinator` bound to one shared
+  `AdaptiveGroupState`, which regroups the workers mid-solve (see `_adaptive_groups`).
 - **Progress reporting is a separate channel entirely** — the one-way queue from workers to the
   parent (see `_progress_channel`).  Coordinators carry search information sideways between a
   group's workers and never progress; the queue carries progress up to the parent and never
@@ -24,28 +26,34 @@ class WorkerCoordinator(ABC):
     """A worker uses its coordinator to reach the other workers solving the same problem."""
 
     @abstractmethod
-    def at_batch_boundary(self, state: SolverState) -> None:
+    def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
         """React to a worker finishing a batch, with the state the worker holds at that moment.
 
         Called on every batch of every optimization step, so keep an implementation cheap.
+
+        Args:
+            state: the worker's mutable solver state at this boundary.
+            progress_fraction: the worker's own progress through its optimization step, 0 to 1 —
+                meaningful under time and iteration budgets alike, which is
+                what lets the adaptive schedule run inside the workers.
         """
 
 
 class IndependentCoordinator(WorkerCoordinator):
     """Workers that share nothing hold this coordinator."""
 
-    def at_batch_boundary(self, state: SolverState) -> None:
+    def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
         """Do nothing: an independent worker has nobody to tell and nothing to ask."""
 
 
 class CooperativeCoordinator(WorkerCoordinator):
-    """The members of one worker group hold this coordinator, all bound to the group's shared slot."""
+    """The members of one fixed worker group hold this coordinator, all bound to the group's shared slot."""
 
     def __init__(self, slot: GroupIncumbentSlot) -> None:
         """Bind the coordinator to its worker group's incumbent slot."""
         self._slot = slot
 
-    def at_batch_boundary(self, state: SolverState) -> None:
+    def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
         """Publish this worker's selection if it is the group's best, else adopt a strictly better one.
 
         The slot visit is a single lock acquisition; the adoption — the expensive part — runs

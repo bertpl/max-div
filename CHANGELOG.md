@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Parallel solving with a time budget now adapts its worker grouping during the solve — starting from independent per-worker groups and consolidating toward one group — instead of using fixed groups of about four; an explicit `n_groups` keeps the fixed behavior
+- Parallel solving now adapts its worker grouping during the solve — starting from independent per-worker groups and consolidating toward one group — instead of using fixed groups of about four; an explicit `n_groups` keeps the fixed behavior
 
 ### Deprecated
 

@@ -182,18 +182,21 @@ is described under [Workers and Groups](#workers-and-groups).
 
 The worker total, when not given, defaults to **3/4 of the logical cores**.
 
-**Adaptive grouping (the default).** With a time budget and no grouping pinned, the group count
-follows a schedule over the budget's progress:
+**Adaptive grouping (the default).** With no grouping pinned, the group count follows a schedule
+over the workers' progress through the budget:
 
 - every worker starts in its own group;
 - the group count decreases linearly, reaching one all-worker group at the end;
 - each decrease dissolves the group whose shared best selection scores worst, and its workers
   join the strongest groups still short a member — reinforcing searches that can still win.
 
+Each worker evaluates the schedule against its own progress, so this works for time and iteration
+budgets alike; under a time budget every worker sees nearly the same fraction, while under an
+iteration budget the schedule follows whichever worker crosses each threshold first.
+
 **Fixed grouping.** The grouping stays fixed for the whole solve when the caller pins it —
-`n_groups`, a nested sequence, or `adaptive_groups=False` — and for iteration budgets, whose
-progress the schedule cannot follow across processes. Where a fixed grouping applies without an
-explicit `n_groups`:
+`n_groups`, a nested sequence, or `adaptive_groups=False`. Where a fixed grouping applies without
+an explicit `n_groups`:
 
 - the group count defaults to **groups of about four workers** (the count nearest a quarter of
   the worker total; five workers or fewer form a single group);

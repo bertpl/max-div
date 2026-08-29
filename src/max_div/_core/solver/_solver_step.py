@@ -229,7 +229,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
             # --- batch boundary -----------------
             if coordinator is not None:
-                coordinator.at_batch_boundary(state)
+                coordinator.at_batch_boundary(state, progress.fraction)
 
             # --- create checkpoint if needed ----
             if tracker.iter_count() >= next_checkpoint_iter_count:

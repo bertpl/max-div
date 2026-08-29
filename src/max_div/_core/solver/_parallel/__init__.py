@@ -7,7 +7,7 @@ better.
 
 from ._adaptive_groups import (
     AdaptiveGroupCoordinator,
-    AdaptiveGroupOrchestrator,
+    AdaptiveGroupState,
     DissolutionEvent,
     adaptive_group_count,
 )
@@ -21,7 +21,7 @@ from ._worker_config import WorkerConfig
 
 __all__ = [
     "AdaptiveGroupCoordinator",
-    "AdaptiveGroupOrchestrator",
+    "AdaptiveGroupState",
     "CooperativeCoordinator",
     "DissolutionEvent",
     "GroupIncumbentSlot",

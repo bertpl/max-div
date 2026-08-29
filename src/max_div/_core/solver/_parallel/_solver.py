@@ -2,19 +2,17 @@
 
 import multiprocessing
 import os
-import threading
 import warnings
 from dataclasses import fields
 
 from max_div._core._warnings import ParallelSolvingWarning
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._distance_storage import DistanceStorage, build_shared_distance_store
-from max_div._core.solver._duration import E2eBudget
 from max_div._core.solver._progress_reporting import ProgressReporter, Verbosity
 from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
 
-from ._adaptive_groups import AdaptiveGroupOrchestrator, DissolutionEvent
+from ._adaptive_groups import AdaptiveGroupState, DissolutionEvent
 from ._coordinator import CooperativeCoordinator, IndependentCoordinator, WorkerCoordinator
 from ._executor import run_workers
 from ._incumbent_slot import GroupIncumbentSlot
@@ -41,7 +39,6 @@ class ParallelMaxDivSolver:
         solver_configs: list[SolverConfig],
         group_sizes: list[int],
         adaptive_groups: bool = False,
-        schedule_budget_sec: float | None = None,
     ) -> None:
         """Hold the problem, the resolved backend, and one configuration per worker.
 
@@ -54,10 +51,6 @@ class ParallelMaxDivSolver:
                 the worker order; sizes must sum to the worker count.
             adaptive_groups: when True, `group_sizes` is ignored and the workers regroup during
                 the solve per the schedule in `_adaptive_groups`.
-            schedule_budget_sec: wall-clock seconds the adaptive schedule spans when the solver
-                configurations carry no end-to-end budget — the per-step time
-                budget, counted from the parent's solve start.  With an
-                end-to-end budget the schedule reads that budget instead.
         """
         self._problem = problem
         self._storage = storage
@@ -65,7 +58,6 @@ class ParallelMaxDivSolver:
         self._solver_configs = solver_configs
         self._group_sizes = group_sizes
         self._adaptive_groups = adaptive_groups
-        self._schedule_budget_sec = schedule_budget_sec
         # `last_adaptive_events` holds the most recent adaptive solve's dissolutions, for inspection
         self.last_adaptive_events: list[DissolutionEvent] = []
 
@@ -91,46 +83,25 @@ class ParallelMaxDivSolver:
         # setup; the workers receive the started copy and read it against their own (machine-wide)
         # clock.
         solver_configs = self._solver_configs
-        e2e_budget = None
         if solver_configs[0].e2e_budget is not None:
             e2e_budget = solver_configs[0].e2e_budget.started()
             solver_configs = [config.with_e2e_budget(e2e_budget) for config in solver_configs]
-        orchestrator, orchestrator_thread, stop_orchestrator = None, None, threading.Event()
-        if self._adaptive_groups:
-            # the schedule reads the e2e budget where one is set; otherwise it spans the per-step
-            # time budget from the parent's solve start — a close-enough clock, since the schedule
-            # needs only approximate alignment with the workers' own optimization clocks
-            if e2e_budget is not None:
-                schedule_budget = e2e_budget
-            elif self._schedule_budget_sec is not None:
-                schedule_budget = E2eBudget(self._schedule_budget_sec).started()
-            else:
-                raise ValueError("Adaptive worker groups schedule on wall-clock progress; no time budget is set.")
-            orchestrator = self._build_orchestrator()
+        group_state = self._build_group_state() if self._adaptive_groups else None
+        if group_state is not None:
             coordinators: list[WorkerCoordinator] = [
-                orchestrator.coordinator_for(index) for index in range(len(solver_configs))
+                group_state.coordinator_for(index) for index in range(len(solver_configs))
             ]
-            orchestrator_thread = threading.Thread(
-                target=orchestrator.run, args=(schedule_budget, stop_orchestrator), daemon=True
-            )
         else:
             coordinators = self._build_coordinators()
         with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:
-            if orchestrator_thread is not None:
-                orchestrator_thread.start()
-            try:
-                results = run_workers(
-                    solver_configs,
-                    shared_distance_store.spec,
-                    coordinators,
-                    progress_reporter=progress_reporter,
-                )
-            finally:
-                if orchestrator_thread is not None:
-                    stop_orchestrator.set()
-                    orchestrator_thread.join(timeout=5.0)
-        if orchestrator is not None:
-            self.last_adaptive_events = orchestrator.events
+            results = run_workers(
+                solver_configs,
+                shared_distance_store.spec,
+                coordinators,
+                progress_reporter=progress_reporter,
+            )
+        if group_state is not None:
+            self.last_adaptive_events = group_state.events()
         winner = best_result(results)
         summaries = [
             WorkerSummary(
@@ -146,11 +117,11 @@ class ParallelMaxDivSolver:
         inherited = {field.name: getattr(winner.solution, field.name) for field in fields(MaxDivSolution)}
         return ParallelMaxDivSolution(**inherited, workers=summaries, winning_worker=winner.worker_index)
 
-    def _build_orchestrator(self) -> AdaptiveGroupOrchestrator:
-        """Return the orchestrator of an adaptive solve, with one slot per worker."""
+    def _build_group_state(self) -> AdaptiveGroupState:
+        """Return an adaptive solve's shared group state, with one slot per worker."""
         config = self._solver_configs[0]
         context = multiprocessing.get_context("spawn")
-        return AdaptiveGroupOrchestrator(
+        return AdaptiveGroupState(
             context,
             n_workers=len(self._solver_configs),
             k=config.k,

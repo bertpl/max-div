@@ -25,7 +25,7 @@ class _RecordingCoordinator(WorkerCoordinator):
         self.calls = 0
         self.sizes: list[int] = []
 
-    def at_batch_boundary(self, state: SolverState) -> None:
+    def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
         """Record the call, and the selection size the worker held at that moment."""
         self.calls += 1
         self.sizes.append(int(state.n_selected))
@@ -86,8 +86,8 @@ def test_cooperative_coordinator_moves_the_best_selection_between_states():
     clustered = _cooperation_state([0, 1, 2])  # min separation 1
 
     # --- act --------------------------
-    coordinator.at_batch_boundary(spread_out)
-    coordinator.at_batch_boundary(clustered)
+    coordinator.at_batch_boundary(spread_out, progress_fraction=0.0)
+    coordinator.at_batch_boundary(clustered, progress_fraction=0.0)
 
     # --- assert -----------------------
     assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted the published incumbent
@@ -103,14 +103,14 @@ def test_cooperative_coordinator_keeps_the_better_state_untouched():
     spread_out = _cooperation_state([0, 3, 5])
 
     # --- act --------------------------
-    coordinator.at_batch_boundary(clustered)  # publishes (empty slot)
-    coordinator.at_batch_boundary(spread_out)  # better: replaces the stored incumbent
-    coordinator.at_batch_boundary(spread_out)  # equal to the slot now: nothing happens
+    coordinator.at_batch_boundary(clustered, progress_fraction=0.0)  # publishes (empty slot)
+    coordinator.at_batch_boundary(spread_out, progress_fraction=0.0)  # better: replaces the stored incumbent
+    coordinator.at_batch_boundary(spread_out, progress_fraction=0.0)  # equal to the slot now: nothing happens
 
     # --- assert -----------------------
     assert spread_out.selected_index_array.tolist() == [0, 3, 5]
     late_arrival = _cooperation_state([0, 1, 2])  # a worse state adopting proves the replacement stored
-    coordinator.at_batch_boundary(late_arrival)
+    coordinator.at_batch_boundary(late_arrival, progress_fraction=0.0)
     assert late_arrival.selected_index_array.tolist() == [0, 3, 5]
 
 

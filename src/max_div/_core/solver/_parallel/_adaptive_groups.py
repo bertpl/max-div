@@ -1,20 +1,26 @@
 """Adaptive worker groups: every worker starts in its own group, and groups consolidate toward one.
 
-The group count decreases linearly from `n_workers` to 1 over the progress fraction of the solve's
-time budget.  Each decrease dissolves the group whose incumbent slot holds the worst score —
-the group whose best score is lowest so far — and reassigns its workers to the strongest groups that are
-short a member, so they reinforce searches that can still win.
+The group count decreases linearly from `n_workers` to 1 over the progress fraction of each
+worker's optimization step.  Each decrease dissolves the group whose incumbent slot holds the
+worst score — the group whose best score is lowest so far — and reassigns its workers to the
+strongest groups that are short a member, so they reinforce searches that can still win.
 
-The module adds three pieces on top of the fixed-group code in `_coordinator` / `_incumbent_slot`:
+The module adds two pieces on top of the fixed-group code in `_coordinator` / `_incumbent_slot`,
+and no process runs the schedule — the workers themselves do:
 
-- **One slot per worker**, allocated up front; a group is the set of workers currently assigned to
-  one slot, and dissolving a group simply stops assigning workers to its slot.
-- **A shared assignment table** maps each worker to its slot.  Workers read their entry at every
-  batch boundary and exchange with the slot it names; the orchestrator is the only writer.
-- **The orchestrator runs in the parent**, on a thread beside the result-draining loop.  It ranks
-  groups on their slots at each dissolution, which the slots' publish-if-better semantics make
-  safe: a slot holds its group's best score so far, so dissolving the worst-slot group can never
-  discard the overall best selection.
+- **`AdaptiveGroupState` is the shared-memory record of the grouping**: one slot per worker, an
+  assignment table mapping each worker to its slot, the live group count, and the dissolution
+  log.  The parent allocates it before workers spawn and reads the log after they finish.
+- **`AdaptiveGroupCoordinator` runs the schedule from inside the workers**: at each batch
+  boundary a worker computes the scheduled group count from its own progress fraction, and
+  whichever worker first sees the count exceed the schedule executes the dissolution itself,
+  under a single transition lock.  Under a time budget every worker computes nearly the same
+  fraction; under an iteration budget the schedule follows whichever worker crosses each
+  threshold first.
+
+Ranking groups on their slots is what makes dissolution safe: publish-if-better means a slot
+holds its group's best score so far, so dissolving the worst-slot group can never discard the
+overall best selection.
 
 A worker learns of its reassignment at its next batch boundary, so membership changes are eventual
 rather than synchronized — a worker mid-batch keeps exchanging with its old slot for at most one
@@ -22,24 +28,19 @@ more batch.
 """
 
 import math
-import threading
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from max_div._core.solver._duration import E2eBudget
 from max_div._core.solver._solver_state import SolverState
 
 from ._coordinator import WorkerCoordinator
 from ._incumbent_slot import GroupIncumbentSlot
 
 if TYPE_CHECKING:
-    import ctypes
     from multiprocessing.context import BaseContext
 
-# The orchestrator re-checks the schedule this often.  It only bounds how late a dissolution can
-# fire after its scheduled progress fraction; small enough to be negligible against even
-# sub-second budgets, and its cost is a handful of shared-memory reads.
-_TICK_SECONDS = 0.05
+    import numpy as np
+    from numpy.typing import NDArray
 
 
 def adaptive_group_count(n_workers: int, progress_fraction: float) -> int:
@@ -57,117 +58,174 @@ class DissolutionEvent:
     """A record of one group dissolution, kept for inspecting the mechanism after a solve.
 
     Args:
-        t_sec: seconds since the budget's start when the dissolution fired.
-        progress_fraction: budget fraction spent at that moment.
+        progress_fraction: progress fraction of the worker that executed the dissolution.
         dissolved_group: index of the dissolved group's slot.
         slot_scores: every then-alive group's slot score, None for a never-written slot.
         reassignments: target group per freed worker.
     """
 
-    t_sec: float
     progress_fraction: float
     dissolved_group: int
     slot_scores: dict[int, tuple[float, ...] | None]
     reassignments: dict[int, int]
 
 
-class AdaptiveGroupCoordinator(WorkerCoordinator):
-    """A worker of an adaptive solve exchanges with whichever slot the assignment table names."""
+class AdaptiveGroupState:
+    """The shared-memory record of an adaptive solve's grouping, and the transitions over it.
 
-    def __init__(
-        self, slots: list[GroupIncumbentSlot], assignment: "ctypes.Array[ctypes.c_int]", worker_index: int
-    ) -> None:
-        """Bind the coordinator to the shared slots and the worker's assignment-table entry."""
-        self._slots = slots
-        self._assignment = assignment
-        self._worker_index = worker_index
-
-    def at_batch_boundary(self, state: SolverState) -> None:
-        """Exchange with the currently assigned slot, adopting a strictly better incumbent.
-
-        The assignment read is one shared-memory element; re-reading it every boundary keeps the
-        coordinator free of any synchronization with the orchestrator's writes.
-        """
-        slot = self._slots[self._assignment[self._worker_index]]
-        incoming = slot.exchange(state.score.as_tuple(), state.selected_index_array)
-        if incoming is not None:
-            state.adopt_selection(incoming)
-
-
-class AdaptiveGroupOrchestrator:
-    """The orchestrator owns the schedule: it dissolves groups as the budget's progress advances.
-
-    Created in the parent before workers spawn; `run` executes on a parent thread while the
-    workers solve, and `events` afterwards holds every dissolution for inspection.
+    Allocated in the parent before workers spawn; every worker's coordinator holds it and any
+    worker may execute a dissolution.  After the workers finish, `events()` returns the
+    dissolution log.
     """
 
     def __init__(self, context: "BaseContext", n_workers: int, k: int, score_length: int) -> None:
-        """Allocate one slot per worker and the identity assignment, all in shared memory.
+        """Allocate the slots, the identity assignment, and the dissolution log in shared memory.
 
         Args:
-            context: the spawn context whose shared-memory primitives back the slots and the
-                assignment table, so workers inherit them at spawn.
-            n_workers: the worker count, fixing the slot and assignment-table sizes.
+            context: the spawn context whose shared-memory primitives back everything here, so
+                workers inherit the state at spawn.
+            n_workers: the worker count, fixing the slot count and every table size.
             k: maximum selection size the slots hold.
             score_length: number of components in the workers' score tuples.
         """
         self._n_workers = n_workers
+        self._score_length = score_length
         self._slots = [GroupIncumbentSlot(context, k=k, score_length=score_length) for _ in range(n_workers)]
         self._assignment = context.Array("i", list(range(n_workers)), lock=False)
-        # `_members` is parent-local; the orchestrator thread is its only mutator
-        self._members: dict[int, list[int]] = {index: [index] for index in range(n_workers)}
-        self.events: list[DissolutionEvent] = []
+        self._n_active = context.Value("i", n_workers, lock=False)
+        self._transition_lock = context.Lock()
+        # the dissolution log: exactly n_workers - 1 dissolutions can ever happen, so every
+        # array is preallocated; per event: the executing worker's fraction, the dissolved
+        # group, the post-event assignment table, and every slot's score (NaN = unwritten)
+        n_events = max(n_workers - 1, 1)
+        self._ev_count = context.Value("i", 0, lock=False)
+        self._ev_fraction = context.Array("d", n_events, lock=False)
+        self._ev_dissolved = context.Array("i", n_events, lock=False)
+        self._ev_assignment = context.Array("i", n_events * n_workers, lock=False)
+        self._ev_scores = context.Array("d", n_events * n_workers * score_length, lock=False)
 
-    def coordinator_for(self, worker_index: int) -> AdaptiveGroupCoordinator:
-        """Return the given worker's coordinator, bound to the shared slots and assignment table."""
-        return AdaptiveGroupCoordinator(self._slots, self._assignment, worker_index)
+    def coordinator_for(self, worker_index: int) -> "AdaptiveGroupCoordinator":
+        """Return the given worker's coordinator, bound to this shared state."""
+        return AdaptiveGroupCoordinator(self, worker_index)
 
-    def run(self, budget: E2eBudget, stop: threading.Event) -> None:
-        """Dissolve groups per the schedule until the budget is spent or `stop` is set.
+    # -------------------------------------------------------------------------
+    #  Worker-side operations
+    # -------------------------------------------------------------------------
+    def maybe_dissolve(self, progress_fraction: float) -> None:
+        """Dissolve groups until the live count matches the schedule at the given fraction.
 
-        Runs on a parent thread beside the executor's drain loop; exits on its own once the
-        schedule reaches one group, since no further dissolution can fire.
+        The no-transition case — by far the common one — costs a single lock-free read; the
+        transition itself runs under the one transition lock, and the count re-check inside it
+        makes concurrent callers idempotent.
         """
-        while not stop.is_set():
-            spent_sec = budget.budget_sec - budget.remaining_sec()
-            fraction = spent_sec / budget.budget_sec
-            target = adaptive_group_count(self._n_workers, fraction)
-            while len(self._members) > target:
-                self._dissolve_worst(spent_sec, fraction)
-            if len(self._members) == 1:
-                return
-            stop.wait(_TICK_SECONDS)
+        target = adaptive_group_count(self._n_workers, progress_fraction)
+        if self._n_active.value <= target:
+            return
+        with self._transition_lock:
+            while self._n_active.value > target:
+                self._dissolve_worst(progress_fraction)
 
-    def _dissolve_worst(self, t_sec: float, fraction: float) -> None:
-        """Dissolve the worst-scoring group and reassign its workers to the strongest short groups."""
-        scores = {group: self._slots[group].peek_score() for group in self._members}
+    def exchange(
+        self, worker_index: int, score: tuple[float, ...], selection: "NDArray[np.int32]"
+    ) -> "NDArray[np.int32] | None":
+        """Exchange with the worker's currently assigned slot; see `GroupIncumbentSlot.exchange`.
+
+        The assignment read is one shared-memory element; re-reading it every exchange keeps the
+        workers free of any synchronization with dissolution writes.
+        """
+        return self._slots[self._assignment[worker_index]].exchange(score, selection)
+
+    def _dissolve_worst(self, progress_fraction: float) -> None:
+        """Dissolve the worst-scoring group and reassign its workers to the strongest short groups.
+
+        Runs under the transition lock; the assignment table is the single source of membership,
+        so sizes are counted from it rather than tracked separately.
+        """
+        assignment = list(self._assignment)
+        alive = sorted(set(assignment))
+        scores = {group: self._slots[group].peek_score() for group in alive}
         # a never-written slot ranks below any written one (the empty tuple sorts below any real
         # score tuple); ties go to the lowest group index
-        worst = min(self._members, key=lambda group: (scores[group] or (), group))
-        freed = self._members.pop(worst)
+        worst = min(alive, key=lambda group: (scores[group] or (), group))
+        sizes = {group: assignment.count(group) for group in alive if group != worst}
         reassignments: dict[int, int] = {}
-        for worker in freed:
-            target = self._reassignment_target(scores)
-            self._members[target].append(worker)
+        for worker in [index for index, group in enumerate(assignment) if group == worst]:
+            target = self._reassignment_target(scores, sizes)
+            sizes[target] += 1
             self._assignment[worker] = target
             reassignments[worker] = target
-        self.events.append(
-            DissolutionEvent(
-                t_sec=t_sec,
-                progress_fraction=fraction,
-                dissolved_group=worst,
-                slot_scores=scores,
-                reassignments=reassignments,
-            )
-        )
+        self._n_active.value -= 1
+        self._record_event(progress_fraction, worst, scores)
 
-    def _reassignment_target(self, scores: dict[int, tuple[float, ...] | None]) -> int:
+    @staticmethod
+    def _reassignment_target(scores: dict[int, tuple[float, ...] | None], sizes: dict[int, int]) -> int:
         """Return the group a freed worker joins: the best-scoring one still short of the largest.
 
         When every surviving group has the same size, no group is short and the best-scoring one
         overall takes the worker.
         """
-        largest = max(len(members) for members in self._members.values())
-        short = [group for group, members in self._members.items() if len(members) < largest]
-        pool = short if short else list(self._members)
-        return max(pool, key=lambda group: (scores.get(group) or (), -group))
+        largest = max(sizes.values())
+        short = [group for group, size in sizes.items() if size < largest]
+        pool = short if short else list(sizes)
+        return max(pool, key=lambda group: (scores[group] or (), -group))
+
+    # -------------------------------------------------------------------------
+    #  Dissolution log
+    # -------------------------------------------------------------------------
+    def _record_event(
+        self, progress_fraction: float, dissolved: int, scores: dict[int, tuple[float, ...] | None]
+    ) -> None:
+        """Append one dissolution to the shared log; runs under the transition lock."""
+        index = self._ev_count.value
+        self._ev_fraction[index] = progress_fraction
+        self._ev_dissolved[index] = dissolved
+        self._ev_assignment[index * self._n_workers : (index + 1) * self._n_workers] = list(self._assignment)
+        flat_scores = []
+        for group in range(self._n_workers):
+            score = scores.get(group)
+            flat_scores.extend(score if score is not None else [math.nan] * self._score_length)
+        start = index * self._n_workers * self._score_length
+        self._ev_scores[start : start + len(flat_scores)] = flat_scores
+        self._ev_count.value = index + 1
+
+    def events(self) -> list[DissolutionEvent]:
+        """Return the dissolution log as `DissolutionEvent`s; call after the workers finished."""
+        events = []
+        previous_assignment = list(range(self._n_workers))
+        alive = set(range(self._n_workers))
+        for index in range(self._ev_count.value):
+            assignment = list(self._ev_assignment[index * self._n_workers : (index + 1) * self._n_workers])
+            start = index * self._n_workers * self._score_length
+            slot_scores: dict[int, tuple[float, ...] | None] = {}
+            for group in sorted(alive):
+                score = tuple(self._ev_scores[start + group * self._score_length :][: self._score_length])
+                slot_scores[group] = None if math.isnan(score[0]) else score
+            events.append(
+                DissolutionEvent(
+                    progress_fraction=self._ev_fraction[index],
+                    dissolved_group=self._ev_dissolved[index],
+                    slot_scores=slot_scores,
+                    reassignments={
+                        worker: group for worker, group in enumerate(assignment) if group != previous_assignment[worker]
+                    },
+                )
+            )
+            alive.discard(self._ev_dissolved[index])
+            previous_assignment = assignment
+        return events
+
+
+class AdaptiveGroupCoordinator(WorkerCoordinator):
+    """A worker of an adaptive solve runs the schedule and exchanges through the shared state."""
+
+    def __init__(self, group_state: AdaptiveGroupState, worker_index: int) -> None:
+        """Bind the coordinator to the solve's shared group state and the worker's index."""
+        self._group_state = group_state
+        self._worker_index = worker_index
+
+    def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
+        """Dissolve groups the schedule is due, then exchange with the currently assigned slot."""
+        self._group_state.maybe_dissolve(progress_fraction)
+        incoming = self._group_state.exchange(self._worker_index, state.score.as_tuple(), state.selected_index_array)
+        if incoming is not None:
+            state.adopt_selection(incoming)
