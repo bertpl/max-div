@@ -231,7 +231,7 @@ def test_a_fixed_grouping_never_dissolves():
 
 
 def test_a_fixed_group_exchanges_through_its_shared_slot():
-    """Members of one fixed group adopt each other's best, exactly as before through their group's slot."""
+    """Members of one fixed group adopt each other's best through their group's slot."""
     # --- arrange ----------------------
     group_state = _group_state(2, group_sizes=[2], dynamic=False)
     spread_out = _state_with([0, 3, 5])  # min separation 10

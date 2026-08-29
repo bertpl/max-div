@@ -2,6 +2,7 @@
 
 Every parallel worker holds a `WorkerGroupCoordinator` (see `_worker_groups`) bound to the
 solve's one shared `WorkerGroupState` — the coordinator is a worker's only sideways channel.
+
 Progress reporting is a separate channel entirely: the one-way queue from workers to the parent
 (see `_progress_channel`). Coordinators carry search information sideways between workers and
 never progress; the queue carries progress up to the parent and never search information.

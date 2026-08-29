@@ -1,13 +1,15 @@
-"""One grouping framework for every parallel solve: fixed and dynamic groups differ only in the schedule.
+"""Fixed and dynamic worker groups share one framework and differ only in the schedule.
 
 At every point of a solve, each worker is assigned to exactly one group, and at each batch
-boundary it exchanges its selection through its group's slot. A **fixed** grouping keeps the
-assignment as configured for the whole solve — its scheduled group count is a constant, so no
-transition ever fires. A **dynamic** grouping starts every worker in its own group and decreases
-the scheduled count linearly to one over each worker's progress fraction; each decrease dissolves
-the group whose exchange slot holds the worst score — the group whose best score is lowest so
-far — and reassigns its workers to the strongest groups that are short a member, so they
-reinforce searches that can still win.
+boundary it exchanges its selection through its group's slot.
+
+- A **fixed** grouping keeps the assignment as configured for the whole solve — its scheduled
+  group count is a constant, so no transition ever fires.
+- A **dynamic** grouping starts every worker in its own group and decreases the scheduled count
+  linearly to one over each worker's progress fraction.  Each decrease dissolves the group whose
+  exchange slot holds the worst score — the group whose best score is lowest so far — and
+  reassigns its workers to the strongest groups that are short a member, so they reinforce
+  searches that can still win.
 
 The workers themselves run the schedule; no separate process does:
 

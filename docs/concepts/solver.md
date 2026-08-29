@@ -198,7 +198,7 @@ iteration budgets alike:
 - under an iteration budget, the schedule follows whichever worker crosses each threshold first.
 
 **Fixed grouping.** On the `with_custom_worker_groups` path the grouping never changes
-mid-solve. Where it applies without an explicit `n_groups`:
+mid-solve. Without an explicit `n_groups`:
 
 - the group count defaults to **groups of about four workers** (the count nearest a quarter of
   the worker total; five workers or fewer form a single group);

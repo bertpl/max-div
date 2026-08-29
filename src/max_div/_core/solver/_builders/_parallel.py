@@ -46,16 +46,12 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     #  Builder API
     # -------------------------------------------------------------------------
     def with_workers(self, target_duration: TargetDuration, n_workers: int | None = None) -> Self:
-        """Run the default worker configuration `n_workers` times, with the dynamic grouping.
+        """Set `n_workers` default workers with the **dynamic** grouping.
 
-        The workers run side by side, so the solve takes as long as one of them.  They form
-        **worker groups**: within a group, workers adopt the best selection any member has found
-        so far; groups never communicate, and the best worker over all groups wins.
-
-        Here the grouping is **dynamic**: every worker starts in its own group, and the group
-        count decreases linearly over the workers' progress toward one all-worker group,
-        dissolving the worst-scoring group at each decrease.  `with_custom_worker_groups` is the
-        alternative for a fixed grouping or per-worker configurations.
+        The workers run side by side and the best result wins; their grouping consolidates from
+        one group per worker toward a single all-worker group (see `_worker_groups`).
+        `with_custom_worker_groups` is the alternative for a fixed grouping or per-worker
+        configurations.
 
         Args:
             target_duration: the budget each worker runs for (see `TargetDuration`).
@@ -64,7 +60,6 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         self._target_duration = target_duration
         n = default_worker_count() if n_workers is None else n_workers
         self._worker_configs = [WorkerConfig() for _ in range(n)]
-        # every worker starts in its own group; the workers regroup from there
         self._group_sizes = [1] * n
         self._dynamic_groups = True
         return self
@@ -152,9 +147,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
     def _batch_interval_per_worker(self) -> list[float]:
         """Return each worker's batch interval: tight for workers that can share a group, coarse for lone ones.
 
-        Under the dynamic grouping every worker can end up sharing a group; under a fixed grouping
-        only the members of groups of two or more can, and a permanently lone worker keeps the
-        coarser reporting interval.
+        Under the dynamic grouping every worker can end up sharing a group.  Under a fixed
+        grouping only the members of groups of two or more can, and a permanently lone worker
+        keeps the coarser reporting interval.
         """
         if self._dynamic_groups:
             return [COOPERATIVE_BATCH_SECONDS] * len(self._worker_configs)

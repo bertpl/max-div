@@ -85,8 +85,9 @@ class SolverBuilderBase:
     def with_end_to_end_budget(self, enabled: bool = True) -> Self:
         """Make the configured budget bound the whole solve, setup included (default: per-step budgets).
 
-        With this enabled, the budget covers distance computation, worker spawning, and
-        initialization too, and the optimization gets whatever time remains (a
+        With the end-to-end budget enabled, the budget also covers distance computation,
+        initialization, and — for a parallel solve — worker spawning, and the optimization gets
+        whatever time remains (a
         `SolverBudgetWarning` is raised and the optimization skipped when nothing remains).
         The budget itself is the one configured on `with_preset` / `with_workers` /
         `with_custom_worker_groups`; `build()` rejects the combination with an iteration budget.
