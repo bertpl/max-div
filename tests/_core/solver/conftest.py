@@ -31,7 +31,7 @@ def example_solver() -> MaxDivSolver:
             VectorMaxDivProblem(
                 vectors=vectors,
                 k=selection_size,
-                distance_metric=DistanceMetric.L1_MANHATTAN,
+                distance_metric=DistanceMetric.l1_manhattan(),
                 diversity_metric=DiversityMetric.MIN_SEPARATION,
                 constraints=constraints,
             )

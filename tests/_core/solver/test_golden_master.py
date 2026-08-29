@@ -95,11 +95,11 @@ def _distances_from(vectors: NDArray[np.float32], metric: DistanceMetric) -> NDA
     reasoning that quantizes the vectors below, applied one step later.
     """
     diff = vectors[:, None, :].astype(np.float64) - vectors[None, :, :].astype(np.float64)
-    if metric == DistanceMetric.L1_MANHATTAN:
+    if metric == DistanceMetric.l1_manhattan():
         raw = np.abs(diff).sum(axis=-1)
-    elif metric == DistanceMetric.LINF_CHEBYSHEV:
+    elif metric == DistanceMetric.linf_chebyshev():
         raw = np.abs(diff).max(axis=-1)
-    elif metric == DistanceMetric.L2S_EUCLIDEAN_SQUARED:
+    elif metric == DistanceMetric.l2s_euclidean_squared():
         raw = (diff * diff).sum(axis=-1)
     else:  # euclidean, and cosine's pre-normalized rows reduce to it monotonically
         raw = np.sqrt((diff * diff).sum(axis=-1))

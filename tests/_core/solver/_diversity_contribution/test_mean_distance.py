@@ -20,7 +20,7 @@ N = 20
 def pdist() -> np.ndarray:
     rng = random.default_rng(seed=20260713)
     vectors = rng.random((N, 3)).astype(np.float32)
-    return compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN)
+    return compute_pdist(vectors, DistanceMetric.l2_euclidean())
 
 
 @pytest.fixture
@@ -217,7 +217,7 @@ def test_compute_mean_distance_elements_partial_fill():
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((30, 4)).astype(np.float32)
     m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
     expected = (squareform(d).astype(np.float64).sum(axis=1) / (m - 1)).astype(np.float32)
     out = np.full(m, np.nan, dtype=np.float32)
     requested = np.array([0, 7, 29, 13], dtype=np.int32)
@@ -239,7 +239,7 @@ def test_update_distance_sums_add_remove():
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((20, 3)).astype(np.float32)
     m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d).astype(np.float64)
 
     dist_sums = np.zeros(m, dtype=np.float64)
@@ -269,7 +269,7 @@ def test_update_distance_sums_own_entry_untouched():
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
     m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
     dist_sums = np.zeros(m, dtype=np.float64)
 
     # selection {1}: point 1's own entry stays 0 (no other selected points yet)
@@ -298,11 +298,11 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
     # --- arrange ----------------------
     rng = random.default_rng(20260805)
     vectors = rng.random((N, 3)).astype(np.float32)
-    condensed = compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN)
+    condensed = compute_pdist(vectors, DistanceMetric.l2_euclidean())
     store = {
-        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.L2_EUCLIDEAN),
+        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         "condensed": DistanceStore.condensed(condensed, n=N),
-        "lazy": DistanceStore.lazy(vectors, DistanceMetric.L2_EUCLIDEAN),
+        "lazy": DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean()),
     }[backend]
     tracker = MeanDistanceTracker(store)
     selection: list[int] = []

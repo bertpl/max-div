@@ -18,7 +18,7 @@ def test_problem_properties():
     problem = VectorMaxDivProblem(
         vectors=np.ones((13, 7), dtype=np.float32),
         k=5,
-        distance_metric=DistanceMetric.L2_EUCLIDEAN,
+        distance_metric=DistanceMetric.l2_euclidean(),
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         constraints=[],
     )
@@ -49,7 +49,7 @@ def test_problem_new_happy_path(con_type: str):
     problem = MaxDivProblem.new(
         vectors=np.ones((13, 7), dtype=np.float64),
         k=5,
-        distance_metric=DistanceMetric.L1_MANHATTAN,
+        distance_metric=DistanceMetric.l1_manhattan(),
         diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
         constraints=constraints,
     )
@@ -58,7 +58,7 @@ def test_problem_new_happy_path(con_type: str):
     assert problem.vectors.dtype == np.float32
     assert np.array_equal(problem.vectors, np.ones((13, 7), dtype=np.float64))
     assert problem.k == 5
-    assert problem.distance_metric == DistanceMetric.L1_MANHATTAN
+    assert problem.distance_metric == DistanceMetric.l1_manhattan()
     assert problem.diversity_metric == DiversityMetric.APPROX_GEOMEAN_SEPARATION
     if constraints is not None:
         assert problem.m == 2
@@ -99,7 +99,7 @@ def test_problem_new_cosine_zero_vector_raises():
 
     # --- act & assert -----------------
     with pytest.raises(ValueError, match=r"zero vector.*row 4"):
-        _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.COSINE)
+        _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.cosine())
 
 
 def test_problem_new_cosine_non_zero_vectors_ok():
@@ -110,10 +110,10 @@ def test_problem_new_cosine_non_zero_vectors_ok():
     vectors = rng.standard_normal((10, 3)).astype(np.float32)
 
     # --- act --------------------------
-    problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.COSINE)
+    problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.cosine())
 
     # --- assert -----------------------
-    assert problem.distance_metric == DistanceMetric.COSINE
+    assert problem.distance_metric == DistanceMetric.cosine()
 
 
 # -------------------------------------------------------------------------
@@ -126,7 +126,7 @@ def test_problem_from_distances_happy_path(form: str):
     # --- arrange ----------------------
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((10, 4)).astype(np.float32)
-    condensed = compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN)
+    condensed = compute_pdist(vectors, DistanceMetric.l2_euclidean())
     distances = squareform(condensed) if form == "square" else condensed
 
     # --- act --------------------------

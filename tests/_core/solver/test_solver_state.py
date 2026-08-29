@@ -17,7 +17,7 @@ def new_solver_state() -> SolverState:
     vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0]),
         k=3,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
@@ -33,7 +33,7 @@ def new_solver_state_unconstrained() -> SolverState:
     vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0]),
         k=3,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
@@ -71,7 +71,7 @@ def test_solver_state_con_weights_reach_the_state():
     # --- act --------------------------
     state = SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0]),
         k=3,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],
@@ -349,7 +349,7 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
     """A mean-distance main metric constructs only a MeanDistanceTracker; mixed metrics construct both."""
     # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [2.0], [3.0]], dtype=np.float32)
-    pdist = compute_pdist(vectors, DistanceMetric.L1_MANHATTAN)
+    pdist = compute_pdist(vectors, DistanceMetric.l1_manhattan())
 
     # --- act --------------------------
     state_pure = SolverState.new(
@@ -382,7 +382,7 @@ def test_solver_state_mean_pairwise_distance_score():
     vectors = np.array([[0.0], [1.0], [3.0], [7.0]], dtype=np.float32)
     state = SolverState.new(
         n=4,
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=4),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=4),
         k=3,
         diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
         diversity_tie_breakers=[],
@@ -431,7 +431,7 @@ def _make_reference_state() -> SolverState:
     vectors = rng.random((30, 3)).astype(np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=vectors.shape[0]),
         k=8,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
@@ -556,7 +556,7 @@ def test_selected_index_list_survives_random_mutation_sequences(seed: int):
     def fresh() -> SolverState:
         return SolverState.new(
             n=n,
-            store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=n),
+            store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=n),
             k=8,
             diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
             diversity_tie_breakers=[],
@@ -616,7 +616,7 @@ def _make_adoption_state(
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0], [15.0], [21.0], [28.0]], dtype=np.float32)
     return SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0]),
         k=4,
         diversity_metric=diversity_metric,
         diversity_tie_breakers=diversity_tie_breakers,

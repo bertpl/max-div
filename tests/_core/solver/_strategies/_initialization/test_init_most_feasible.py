@@ -18,7 +18,7 @@ def _state(constraints: list[Constraint], n: int = 20, k: int = 8) -> SolverStat
     vectors = np.random.default_rng(42).random((n, 3)).astype(np.float32)
     return SolverState.new(
         n=n,
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN), n=n),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=n),
         k=k,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],

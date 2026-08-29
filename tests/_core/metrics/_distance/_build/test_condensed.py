@@ -6,7 +6,6 @@ from max_div._core.metrics._distance._build import compute_pdist
 from max_div._core.metrics._distance._build._common import BUILD_BLOCK_WIDTH
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 @pytest.mark.parametrize(
     "n", [30, BUILD_BLOCK_WIDTH, BUILD_BLOCK_WIDTH * 2, BUILD_BLOCK_WIDTH * 2 + 2]
 )  # below one block / exact block multiples / uneven
@@ -26,7 +25,6 @@ def test_condensed_parallel_build_bit_identical(monkeypatch: pytest.MonkeyPatch,
     assert np.array_equal(parallel, sequential)
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_condensed_build_fills_a_supplied_buffer(metric: DistanceMetric):
     """A supplied buffer is filled and returned, holding what a freshly allocated one would."""
     # --- arrange ----------------------
@@ -41,7 +39,6 @@ def test_condensed_build_fills_a_supplied_buffer(metric: DistanceMetric):
     assert np.array_equal(filled, compute_pdist(vectors, metric))
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_condensed_build_accepts_read_only_vectors(metric: DistanceMetric):
     """Vectors held read-only — as a DistanceStore holds them — are a valid input."""
     # --- arrange ----------------------

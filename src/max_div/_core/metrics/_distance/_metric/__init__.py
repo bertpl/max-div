@@ -4,9 +4,8 @@ The layer everything else in `_distance` is built on — the builds and the on-d
 through the same pair functions, which is what keeps stored and computed values bit-equal.
 """
 
-from ._enum import DistanceMetric
+from ._distance_metric import DistanceMetric
 from ._pair import (
-    _METRIC_KINDS,
     _l2sq_pair,
     _metric_pair,
     normalize_rows,
@@ -14,7 +13,6 @@ from ._pair import (
 )
 
 __all__ = [
-    "_METRIC_KINDS",
     "DistanceMetric",
     "_l2sq_pair",
     "_metric_pair",

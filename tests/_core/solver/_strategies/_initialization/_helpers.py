@@ -20,7 +20,7 @@ def new_solver_state(has_constraints: bool) -> SolverState:
 
     return SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=vectors.shape[0]),
         k=50,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],

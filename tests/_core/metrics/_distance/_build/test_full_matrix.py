@@ -6,7 +6,6 @@ from max_div._core.metrics._distance._build import compute_full_matrix, compute_
 from max_div._core.metrics._distance._build._common import BUILD_BLOCK_WIDTH
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 @pytest.mark.parametrize(
     "n", [30, BUILD_BLOCK_WIDTH, BUILD_BLOCK_WIDTH * 2, BUILD_BLOCK_WIDTH * 2 + 2]
 )  # below one block / exact block multiples / uneven
@@ -35,7 +34,7 @@ def test_fills_leave_a_complete_matrix_in_a_dirty_buffer(monkeypatch: pytest.Mon
     dirty = np.full((40, 40), 7.0, dtype=np.float32)
 
     # --- act --------------------------
-    matrix = compute_full_matrix(vectors, DistanceMetric.L2_EUCLIDEAN, out=dirty)
+    matrix = compute_full_matrix(vectors, DistanceMetric.l2_euclidean(), out=dirty)
 
     # --- assert -----------------------
     assert matrix is dirty
@@ -50,11 +49,11 @@ def test_expanding_a_condensed_vector_into_a_dirty_buffer():
     dirty = np.full((24, 24), -1.0, dtype=np.float32)
 
     # --- act --------------------------
-    expanded = expand_condensed(compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN), 24, out=dirty)
+    expanded = expand_condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), 24, out=dirty)
 
     # --- assert -----------------------
     assert expanded is dirty
-    np.testing.assert_array_equal(expanded, compute_full_matrix(vectors, DistanceMetric.L2_EUCLIDEAN))
+    np.testing.assert_array_equal(expanded, compute_full_matrix(vectors, DistanceMetric.l2_euclidean()))
 
 
 def test_full_matrix_build_accepts_read_only_vectors():
@@ -65,7 +64,7 @@ def test_full_matrix_build_accepts_read_only_vectors():
     read_only.flags.writeable = False
 
     # --- act --------------------------
-    from_read_only = compute_full_matrix(read_only, DistanceMetric.COSINE)
+    from_read_only = compute_full_matrix(read_only, DistanceMetric.cosine())
 
     # --- assert -----------------------
-    np.testing.assert_array_equal(from_read_only, compute_full_matrix(vectors, DistanceMetric.COSINE))
+    np.testing.assert_array_equal(from_read_only, compute_full_matrix(vectors, DistanceMetric.cosine()))

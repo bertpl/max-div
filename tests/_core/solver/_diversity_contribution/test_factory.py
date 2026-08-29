@@ -20,7 +20,7 @@ from max_div._core.solver._diversity_contribution import (
 def test_build_diversity_contribution_tracker(family: DiversityContributionFamily, expected_type: type):
     # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [3.0]], dtype=np.float32)
-    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=3)
+    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=3)
 
     # --- act --------------------------
     tracker = build_diversity_contribution_tracker(family, store)

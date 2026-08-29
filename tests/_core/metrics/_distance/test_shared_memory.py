@@ -37,9 +37,9 @@ def _reference_stores() -> dict[str, DistanceStore]:
     """Return one ordinary (unshared) store per backend, as the values to reproduce."""
     vectors = _vectors()
     return {
-        "condensed": DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L2_EUCLIDEAN), n=_N),
-        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.L2_EUCLIDEAN),
-        "lazy": DistanceStore.lazy(vectors, DistanceMetric.L2_EUCLIDEAN),
+        "condensed": DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=_N),
+        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
+        "lazy": DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean()),
     }
 
 
@@ -127,7 +127,10 @@ def test_spec_survives_pickling():
         restored = pickle.loads(pickle.dumps(owner.spec))  # noqa: S301 -- our own spec, not untrusted input
 
     # --- assert -----------------------
-    assert restored == owner.spec
+    # Compare field-wise, because the placeholder metric_p is NaN and NaN never compares equal to itself.
+    assert restored._replace(metric_p=0.0) == owner.spec._replace(metric_p=0.0)
+    assert np.isnan(restored.metric_p)
+    assert np.isnan(owner.spec.metric_p)
 
 
 # =================================================================================================

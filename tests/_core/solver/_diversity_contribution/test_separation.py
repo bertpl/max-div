@@ -14,7 +14,7 @@ from max_div._core.solver._diversity_contribution._separation import backend_for
 @pytest.fixture
 def tracker() -> SeparationTracker:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
-    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0])
+    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0])
     return SeparationTracker(store)
 
 
@@ -49,7 +49,7 @@ def test_construction_fresh(tracker: SeparationTracker):
 def test_construction_precomputed_arrays_skip_recompute():
     # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
-    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=3)
+    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=3)
     sep_global = _all_separations(store)
     sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
 
@@ -181,7 +181,7 @@ def test_compute_separation_elements_partial_fill():
 
     # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
-    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=5)
+    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=5)
     sep = np.full(5, np.nan, dtype=np.float32)
     requested = np.array([1, 4], dtype=np.int32)
 
@@ -198,7 +198,7 @@ def test_elements_over_every_item():
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
     m = vectors.shape[0]
     d_squared = squareform(d)
 
@@ -223,7 +223,7 @@ def test_update_separation_add():
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
     m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d)
 
     # initial separation, assuming vector 0 forms the initial selection
@@ -265,7 +265,7 @@ def test_update_separation_remove():
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
     m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d)
 
     # initial separation, assuming vector 0 & 2 form the initial selection
@@ -337,7 +337,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
     # --- arrange ----------------------
     rng = np.random.default_rng(20260805)
     vectors = rng.random((25, 3)).astype(np.float32)
-    store = _stores_for(vectors, DistanceMetric.L2_EUCLIDEAN)[backend]
+    store = _stores_for(vectors, DistanceMetric.l2_euclidean())[backend]
     tracker = SeparationTracker(store)
     selection: list[int] = []
     rescans_triggered = 0
@@ -358,7 +358,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
             tracker.add(np.int32(index))
             selection.append(index)
 
-        expected = _brute_force_separation(vectors, DistanceMetric.L2_EUCLIDEAN, selection)
+        expected = _brute_force_separation(vectors, DistanceMetric.l2_euclidean(), selection)
         actual = tracker.contribution_wrt_selection(*_selection_args(selection, 25))
         np.testing.assert_allclose(actual, expected, rtol=1e-5, err_msg=f"{backend} diverged")
 
@@ -371,7 +371,7 @@ def test_every_backend_computes_the_same_separations():
     # --- arrange ----------------------
     rng = np.random.default_rng(20260805)
     vectors = rng.random((30, 4)).astype(np.float32)
-    stores = _stores_for(vectors, DistanceMetric.L2_EUCLIDEAN)
+    stores = _stores_for(vectors, DistanceMetric.l2_euclidean())
     tolerance = 8.0 * np.sqrt(vectors.shape[1]) * np.finfo(np.float32).eps
 
     # --- act --------------------------
