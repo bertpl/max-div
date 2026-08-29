@@ -60,7 +60,6 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         self,
         target_duration: TargetDuration,
         preset: SolverPreset = SolverPreset.DEFAULT,
-        end_to_end_budget: bool = False,
     ) -> Self:
         """Configure the builder with specified preset settings (overriding any previous settings).
 
@@ -75,15 +74,10 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             target_duration: Target duration for the init+optim phases (either in time or iterations).
                 --> rule of thumb for #iterations : 10-100x 'k' should be a good starting point.
             preset: Preset to use (default: SolverPreset.DEFAULT)
-            end_to_end_budget: when True, `target_duration` bounds the whole solve — distance-store
-                build and initialization included — and the optimization step receives whatever
-                time remains when it starts (a `SolverBudgetWarning` is raised and the step
-                skipped when nothing remains).  Requires a time budget.
 
-        Raises:
-            ValueError: If `end_to_end_budget` is combined with an iteration budget.
+        `with_end_to_end_budget` makes `target_duration` bound the whole solve, setup included.
         """
-        self._set_e2e_budget(target_duration, end_to_end_budget)
+        self._target_duration = target_duration
 
         # --- apply main preset logic ------------
         init_strategy, optim_steps = get_preset_strategies(
@@ -133,5 +127,5 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             seed=self._seed,
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=label,
-            e2e_budget=self._e2e_budget,
+            e2e_budget=self._resolve_e2e_budget(),
         )

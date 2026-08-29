@@ -1,4 +1,4 @@
-"""The incumbent slot holds one worker group's shared best: the top-scoring selection published so far.
+"""An exchange slot holds one worker group's shared best: the top-scoring selection published so far.
 
 A worker group — what the parallel-metaheuristics literature calls an *island* — is a set of
 workers that exchange selections through one shared slot.  The slot lives in shared memory
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-class GroupIncumbentSlot:
+class GroupExchangeSlot:
     """The slot holds one worker group's shared best selection.
 
     Score tuples are compared lexicographically, exactly as `Score.as_tuple()` orders them, so
@@ -80,3 +80,8 @@ class GroupIncumbentSlot:
         """Return whether any selection was ever stored."""
         with self._lock:
             return bool(self._written.value)
+
+    def peek_score(self) -> tuple[float, ...] | None:
+        """Return the stored score without touching the selection, or None for a never-written slot."""
+        with self._lock:
+            return tuple(self._score) if self._written.value else None

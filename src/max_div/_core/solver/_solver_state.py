@@ -341,7 +341,7 @@ class SolverState:
     def adopt_selection(self, indices: NDArray[np.int32]) -> None:
         """Replace the current selection with `indices`, updating all incremental state to match.
 
-        Adoption installs a selection produced elsewhere (e.g. another worker's incumbent) as if it
+        Adoption installs a selection produced elsewhere (e.g. another worker's published best) as if it
         had been built through this state's own mutators, applying the cheaper of a selection diff
         or a reset-then-rebuild.
 

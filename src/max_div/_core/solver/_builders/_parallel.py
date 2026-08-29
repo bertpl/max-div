@@ -5,7 +5,7 @@ from typing import Self, cast
 
 from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._duration import TargetDuration
+from max_div._core.solver._duration import E2eBudget, TargetDuration
 from max_div._core.solver._parallel import (
     ParallelMaxDivSolver,
     WorkerConfig,
@@ -40,49 +40,59 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         self._worker_configs: list[WorkerConfig] = []
         self._group_sizes: list[int] = []
         self._target_duration: TargetDuration | None = None
+        self._dynamic_groups: bool = False
 
     # -------------------------------------------------------------------------
     #  Builder API
     # -------------------------------------------------------------------------
-    def with_workers(
+    def with_workers(self, target_duration: TargetDuration, n_workers: int | None = None) -> Self:
+        """Set `n_workers` default workers with the **dynamic** grouping.
+
+        The workers run side by side and the best result wins; their grouping consolidates from
+        one group per worker toward a single all-worker group (see `_worker_groups`).
+        `with_custom_worker_groups` is the alternative for a fixed grouping or per-worker
+        configurations.
+
+        Args:
+            target_duration: the budget each worker runs for (see `TargetDuration`).
+            n_workers: how many workers solve; omitting it uses `default_worker_count()`.
+        """
+        self._target_duration = target_duration
+        n = default_worker_count() if n_workers is None else n_workers
+        self._worker_configs = [WorkerConfig() for _ in range(n)]
+        self._group_sizes = [1] * n
+        self._dynamic_groups = True
+        return self
+
+    def with_custom_worker_groups(
         self,
         target_duration: TargetDuration,
         workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
         n_groups: int | None = None,
-        end_to_end_budget: bool = False,
     ) -> Self:
-        """Set what the workers run, how long they run, and how they form groups.
+        """Set custom worker configurations and a **fixed** grouping, kept for the whole solve.
 
-        The workers run side by side, so the solve takes as long as one of them rather than the
-        sum.  Presets differ in iteration speed, so when workers run different ones a wall-clock
-        budget keeps them to the same real time where an iteration count would not.
-
-        Workers form **worker groups**: within a group, workers adopt the best selection any
-        member has found so far; groups never communicate, and the best worker over all groups
-        wins.  Groups of one make those workers fully independent — `n_groups` equal to the
-        worker count puts every worker in a group of one.
+        Presets differ in iteration speed, so when workers run different ones a wall-clock
+        budget keeps them to the same real time where an iteration count would not.  Groups of
+        one make workers fully independent — `n_groups` equal to the worker count puts every
+        worker in a group of one.
 
         Args:
-            target_duration: the wall-clock budget each worker runs for (see `TargetDuration`).
+            target_duration: the budget each worker runs for (see `TargetDuration`).
             workers: an integer runs the default configuration that many times; a flat sequence
                 gives one configuration per worker; a nested sequence gives one inner
                 sequence per group, fixing both grouping and configurations; omitting it
                 uses `default_worker_count()`.
             n_groups: number of groups; only combines with an integer (or omitted) `workers` —
-                a nested sequence carries its own grouping, a flat sequence uses the
-                default.  Omitting it uses `default_group_count()`.
-            end_to_end_budget: when True, `target_duration` bounds the whole parallel solve —
-                shared store build, worker spawning and initialization included — counted from
-                the parent's solve start, so every worker's optimization gets whatever time
-                remains.  Requires a time budget.
+                a nested sequence carries its own grouping.  Omitting it uses
+                `default_group_count()`.
 
         Raises:
             ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
-                the sequence mixes configurations and groups, or `end_to_end_budget` is combined
-                with an iteration budget.
+                or the sequence mixes configurations and groups.
         """
-        self._set_e2e_budget(target_duration, end_to_end_budget)
         self._target_duration = target_duration
+        self._dynamic_groups = False
         if workers is None:
             workers = default_worker_count()
         if isinstance(workers, int):
@@ -117,23 +127,46 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             ValueError: If no workers were configured.
         """
         if self._target_duration is None or not self._worker_configs:
-            raise ValueError("A parallel solver needs workers; call with_workers before build.")
+            raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
         warn_about_worker_count(len(self._worker_configs))
         resolved, label = self._select_storage()
-        group_size_per_worker = [size for size in self._group_sizes for _ in range(size)]
+        e2e_budget = self._resolve_e2e_budget()
+        batch_intervals = self._batch_interval_per_worker()
         return ParallelMaxDivSolver(
             problem=self._problem,
             storage=resolved,
             worker_configs=self._worker_configs,
             solver_configs=[
-                self._solver_config_for(index, worker, self._target_duration, label, group_size_per_worker[index])
+                self._solver_config_for(index, worker, self._target_duration, label, batch_intervals[index], e2e_budget)
                 for index, worker in enumerate(self._worker_configs)
             ],
             group_sizes=self._group_sizes,
+            dynamic_groups=self._dynamic_groups,
         )
 
+    def _batch_interval_per_worker(self) -> list[float]:
+        """Return each worker's batch interval: tight for workers that can share a group, coarse for lone ones.
+
+        Under the dynamic grouping every worker can end up sharing a group.  Under a fixed
+        grouping only the members of groups of two or more can, and a permanently lone worker
+        keeps the coarser reporting interval.
+        """
+        if self._dynamic_groups:
+            return [COOPERATIVE_BATCH_SECONDS] * len(self._worker_configs)
+        return [
+            COOPERATIVE_BATCH_SECONDS if size > 1 else REPORTING_BATCH_SECONDS
+            for size in self._group_sizes
+            for _ in range(size)
+        ]
+
     def _solver_config_for(
-        self, index: int, worker: WorkerConfig, duration: TargetDuration, storage_label: str, group_size: int
+        self,
+        index: int,
+        worker: WorkerConfig,
+        duration: TargetDuration,
+        storage_label: str,
+        batch_seconds: float,
+        e2e_budget: "E2eBudget | None",
     ) -> SolverConfig:
         """Return the solver configuration for one worker.
 
@@ -157,9 +190,8 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=storage_label,
-            # tighter batches give cooperative workers faster incumbent exchanges
-            batch_seconds=COOPERATIVE_BATCH_SECONDS if group_size > 1 else REPORTING_BATCH_SECONDS,
-            e2e_budget=self._e2e_budget,
+            batch_seconds=batch_seconds,
+            e2e_budget=e2e_budget,
         )
 
 

@@ -71,7 +71,8 @@ def solve(
                 diversity_metric=DiversityMetric.APPROX_GEOMEAN_SEPARATION,
             ),
         )
-        .with_preset(target_duration=duration, preset=SolverPreset(preset), end_to_end_budget=end_to_end_budget)
+        .with_preset(target_duration=duration, preset=SolverPreset(preset))
+        .with_end_to_end_budget(end_to_end_budget)
         .build()
     )
 

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 # A caller passes one of these wall-clock targets into `run` as the size of one optimization
 # batch.  The default is sized so progress reports can fire ~2x per second; the cooperative value
-# gives a group's workers faster incumbent exchanges, and must stay below the default, or it
+# gives a group's workers faster exchanges of their shared best, and must stay below the default, or it
 # would coarsen reporting instead of tightening exchanges.
 REPORTING_BATCH_SECONDS = 0.5
 COOPERATIVE_BATCH_SECONDS = 0.05
@@ -229,7 +229,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
             # --- batch boundary -----------------
             if coordinator is not None:
-                coordinator.at_batch_boundary(state)
+                coordinator.at_batch_boundary(state, progress.fraction)
 
             # --- create checkpoint if needed ----
             if tracker.iter_count() >= next_checkpoint_iter_count:

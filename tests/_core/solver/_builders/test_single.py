@@ -338,10 +338,10 @@ def test_with_preset_switches_init_on_constraints(
 #  MaxDivSolverBuilder - end-to-end budget
 # =================================================================================================
 def test_an_end_to_end_budget_requires_a_time_budget(dummy_problem):
-    """An iteration count cannot bound the store build and initialization, so the flag rejects it."""
+    """An iteration count cannot bound the store build and initialization, so build() rejects the combination."""
     # --- arrange / act / assert -------
     with pytest.raises(ValueError, match="requires a time budget"):
-        MaxDivSolverBuilder(dummy_problem).with_preset(iterations(100), end_to_end_budget=True)
+        MaxDivSolverBuilder(dummy_problem).with_preset(iterations(100)).with_end_to_end_budget().build()
 
 
 def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_clock):
@@ -349,7 +349,8 @@ def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_
     # --- arrange ----------------------
     solver = (
         MaxDivSolverBuilder(dummy_problem)
-        .with_preset(seconds(10.0), SolverPreset.RANDOM, end_to_end_budget=True)
+        .with_preset(seconds(10.0), SolverPreset.RANDOM)
+        .with_end_to_end_budget()
         .build()
     )
     store_provider = solver._store_provider
@@ -371,7 +372,8 @@ def test_solve_hands_every_step_the_budget_and_its_start(dummy_problem, fake_clo
     # --- arrange ----------------------
     solver = (
         MaxDivSolverBuilder(dummy_problem)
-        .with_preset(seconds(10.0), SolverPreset.RANDOM, end_to_end_budget=True)
+        .with_preset(seconds(10.0), SolverPreset.RANDOM)
+        .with_end_to_end_budget()
         .build()
     )
     fake_clock.advance(4.0)  # time before solve is not part of the budget

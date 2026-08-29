@@ -135,7 +135,9 @@ The workers form **[worker groups](glossary.md#worker-group)** — the parallel-
 literature calls them *islands*: within a group, every worker adopts the best selection any
 member has found so far, exchanged many times per second while solving; groups never communicate
 with each other. Groups of one worker are fully independent — a fully
-independent set of workers is the special case where every group has one member.
+independent set of workers is the special case where every group has one member. By default the
+grouping is **dynamic** — it evolves during the solve (described under
+[Workers and Groups](#workers-and-groups)); `with_custom_worker_groups` keeps it fixed instead.
 
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
@@ -143,7 +145,7 @@ from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
 solution = (
     ParallelMaxDivSolverBuilder(problem)
     .with_seed(42)
-    .with_workers(seconds(60), 8, n_groups=4)   # 8 workers in 4 groups of 2
+    .with_workers(seconds(60), 8)   # 8 workers, dynamically grouped (the default)
     .build()
     .solve()
 )
@@ -166,23 +168,40 @@ and then flattening rather than vanishing.
 Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
 
+The dynamic default removes the need to trade the two counts against each other.
+
 ### Workers and Groups
 
-`with_workers` accepts the worker set in three forms:
+Two builder methods configure the workers, and each implies its grouping:
 
-- **an integer** — that many default workers, grouped into `n_groups` groups (both counts have
-  defaults, below); the only form `n_groups` combines with;
-- **a flat sequence of `WorkerConfig`** — one configuration per worker, grouped by the default
-  rule;
-- **a nested sequence** — one inner sequence per group, fixing the grouping and every
-  configuration at once; groups may differ in size and mix presets freely.
+- **`with_workers(budget, n_workers)`** — the simple path: that many default workers, grouped
+  **dynamically**;
+- **`with_custom_worker_groups(budget, workers, n_groups)`** — the custom path, with a **fixed**
+  grouping; `workers` takes an integer (grouped into `n_groups` groups), a flat sequence of
+  `WorkerConfig` (one configuration per worker), or a nested sequence (one inner sequence per
+  group, fixing the grouping and every configuration at once).
 
-When the counts are not given:
+The worker total, when not given, defaults to **3/4 of the logical cores** on either path.
 
-- the worker total defaults to **3/4 of the logical cores**;
+**Dynamic grouping.** On the `with_workers` path, the group count follows a schedule over the
+workers' progress through the budget:
+
+- every worker starts in its own group;
+- the group count decreases linearly, reaching one all-worker group at the end;
+- each decrease dissolves the group whose shared best selection scores worst, and its workers
+  join the strongest groups still short a member — reinforcing searches that can still win.
+
+Each worker evaluates the schedule against its own progress, so the schedule works for time and
+iteration budgets alike:
+
+- under a time budget, every worker sees nearly the same fraction;
+- under an iteration budget, the schedule follows whichever worker crosses each threshold first.
+
+**Fixed grouping.** On the `with_custom_worker_groups` path the grouping never changes
+mid-solve. Without an explicit `n_groups`:
+
 - the group count defaults to **groups of about four workers** (the count nearest a quarter of
-  the worker total; five workers or fewer form a single group), spreading the risk of a bad seed
-  over independent groups without losing quality;
+  the worker total; five workers or fewer form a single group);
 - a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
   to the first groups.
 
@@ -204,10 +223,14 @@ Distance storage is fixed for a different reason: the workers read one shared bu
 The parallel solver takes one seed and derives a seed per worker from that seed, so the workers search
 differently while the whole configuration derives from a single number.
 
-**Reproducibility follows the grouping.** A fully independent set of workers (`n_groups` equal
-to the worker count) repeated from one seed returns the same selection. With cooperating groups
-it does not: which selections get adopted depends on how far each worker happens to have
-come when it reaches an exchange, and that inter-worker timing varies from run to run.
+**Reproducibility follows the grouping.** A fully independent set of workers
+(`with_custom_worker_groups` with `n_groups` equal to the worker count) repeated from one seed
+returns the same selection. With cooperating groups —
+the dynamic default included — it does not.
+
+Which selections get adopted — and, under the dynamic grouping, which groups get dissolved —
+depends on how far each worker has come when it reaches an exchange, and that timing varies from
+run to run.
 
 Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran. For an
 independent worker that is enough to replay it on its own with `MaxDivSolverBuilder`; a
@@ -225,7 +248,9 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
 - **Equal to the worker count**: every worker tied. With a fully independent set of workers that means
   the run found nothing a single worker would not have — lower the worker count or solve once.
   With cooperating groups, ties *within* a group are partly structural (members adopt each
-  other's best), so read the count against the number of groups rather than of workers.
+  other's best), so read the count against the number of groups — read against the worker
+  count, those structural ties would look like independent confirmations. Under the dynamic
+  default, which ends in one all-worker group, an all-worker tie is the expected outcome.
 
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
