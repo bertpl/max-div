@@ -20,9 +20,9 @@ Ranking groups on their slots makes dissolution safe: a slot only ever accepts a
 selection (`GroupExchangeSlot.exchange`), so it holds its group's best score so far, and
 dissolving the worst-slot group can never discard the overall best selection.
 
-A worker learns of its reassignment at its next batch boundary, so membership changes are eventual
-rather than synchronized — a worker mid-batch keeps exchanging with its old slot for at most one
-more batch.
+A worker learns of its reassignment at its next batch boundary, so membership changes are
+eventual, not synchronized — a worker mid-batch keeps exchanging with its old slot for at most
+one more batch.
 """
 
 import math

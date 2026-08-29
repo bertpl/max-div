@@ -246,9 +246,9 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
 - **Equal to the worker count**: every worker tied. With a fully independent set of workers that means
   the run found nothing a single worker would not have — lower the worker count or solve once.
   With cooperating groups, ties *within* a group are partly structural (members adopt each
-  other's best), so read the count against the number of groups rather than of workers — and
-  under the dynamic default, which ends in one all-worker group, an all-worker tie is the
-  expected outcome.
+  other's best), so read the count against the number of groups — read against the worker
+  count, those structural ties would look like independent confirmations. Under the dynamic
+  default, which ends in one all-worker group, an all-worker tie is the expected outcome.
 
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
