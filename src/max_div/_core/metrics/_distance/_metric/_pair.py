@@ -155,7 +155,9 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
         acc = _minkowski_pair_powered_p025(vectors, i, j)
         squared = acc * acc
         return np.float32(squared * squared)
-    return np.float32(_minkowski_pair_powered_p025(vectors, i, j))  # MINKOWSKI_P025_POWERED
+    else:
+        # only MINKOWSKI_P025_POWERED remains
+        return np.float32(_minkowski_pair_powered_p025(vectors, i, j))
 
 
 @numba.njit(numba.float32[:, ::1](numba.types.Array(numba.float32, 2, "C", readonly=True)), cache=True)
