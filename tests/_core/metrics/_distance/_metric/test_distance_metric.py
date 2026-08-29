@@ -4,7 +4,7 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric
 
-# Every metric the factory methods can produce, mirroring the `metric` fixture's parameter set.
+# Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
     DistanceMetric.l1_manhattan(),
     DistanceMetric.l2_euclidean(),
@@ -21,11 +21,11 @@ def test_factory_metrics_have_distinct_kinds():
     assert len(set(kinds)) == len(kinds)
 
 
-@pytest.mark.parametrize("named_metric", _FACTORY_METRICS, ids=repr)
-def test_factory_metrics_carry_no_p(named_metric: DistanceMetric):
+@pytest.mark.parametrize("factory_metric", _FACTORY_METRICS, ids=repr)
+def test_factory_metrics_carry_no_p(factory_metric: DistanceMetric):
     """None of the dedicated factories uses the power parameter."""
     # --- act / assert -----------------
-    assert named_metric.p is None
+    assert factory_metric.p is None
 
 
 def test_equal_factories_compare_equal():
@@ -96,7 +96,7 @@ def test_minkowski_rejects_non_positive_p(p: float):
 
 
 def test_njit_p_encodes_none_as_nan():
-    """`njit_p` is the one place the None-to-NaN encoding lives."""
+    """`njit_p` encodes p=None as NaN and a set p as its float64 value."""
     # --- act / assert -----------------
     assert math.isnan(DistanceMetric.l2_euclidean().njit_p)
     assert DistanceMetric.minkowski(3).njit_p == 3.0

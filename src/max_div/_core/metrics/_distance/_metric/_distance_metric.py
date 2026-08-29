@@ -32,8 +32,8 @@ _FACTORY_NAMES = {
     METRIC_KIND_LINF: "linf_chebyshev",
 }
 
-# `_IMPLIED_P` gives the p each specialized Minkowski kind implies, for `__repr__`; the value
-# itself stores p=None.
+# `_IMPLIED_P` gives the p each specialized Minkowski kind implies, for `__repr__`; a metric of
+# these kinds stores p=None.
 _IMPLIED_P = {
     METRIC_KIND_MINKOWSKI_P05: 0.5,
     METRIC_KIND_MINKOWSKI_P05_POWERED: 0.5,
@@ -109,8 +109,8 @@ class DistanceMetric(NamedTuple):
         ``pow`` call per dimension, well over an order of magnitude more per term.
 
         For 0 < p < 1 the `root=True` form violates the triangle inequality — not a strict
-        metric, while the `root=False` form is one — which the solver never relies on, so both
-        are usable.
+        metric, while the `root=False` form is one.  The solver never relies on the triangle
+        inequality, so both are usable.
 
         Args:
             p: The exponent; any value > 0, with inf giving `linf_chebyshev()`.

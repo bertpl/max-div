@@ -42,7 +42,7 @@ The distance metric determines how the distance between two vectors is measured.
 
 - **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()` -- see that row above.
-- **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on that property, so both are usable.
+- **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on the triangle inequality, so both are usable.
 
 ## Separation
 
