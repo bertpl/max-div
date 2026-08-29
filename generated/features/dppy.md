@@ -28,8 +28,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
 | distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
-| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^dppy-2] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^dppy-3] |
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^dppy-3] |

@@ -18,8 +18,8 @@ solver:
     distance.l1: {mark: full}
     distance.l2: {mark: full}
     distance.linf: {mark: full}
-    distance.cosine: {mark: full}
     distance.minkowski: {mark: full}
+    distance.cosine: {mark: full}
     distance.custom:
       mark: full
       note:

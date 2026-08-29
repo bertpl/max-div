@@ -26,10 +26,10 @@ solver:
     distance.linf:
       mark: partial
       note: *coeffs
-    distance.cosine:
+    distance.minkowski:
       mark: partial
       note: *coeffs
-    distance.minkowski:
+    distance.cosine:
       mark: partial
       note: *coeffs
     distance.custom:

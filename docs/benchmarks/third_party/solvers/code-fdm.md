@@ -31,10 +31,10 @@ solver:
     distance.linf:
       mark: partial
       note: *edit_source
-    distance.cosine:
+    distance.minkowski:
       mark: partial
       note: *edit_source
-    distance.minkowski:
+    distance.cosine:
       mark: partial
       note: *edit_source
     distance.custom:

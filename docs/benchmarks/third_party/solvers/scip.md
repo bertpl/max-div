@@ -33,10 +33,10 @@ solver:
     distance.linf:
       mark: partial
       note: *coefficients
-    distance.cosine:
+    distance.minkowski:
       mark: partial
       note: *coefficients
-    distance.minkowski:
+    distance.cosine:
       mark: partial
       note: *coefficients
     distance.custom:

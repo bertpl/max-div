@@ -28,10 +28,10 @@ solver:
     distance.linf:
       mark: partial
       note: *via_kernel
-    distance.cosine:
+    distance.minkowski:
       mark: partial
       note: *via_kernel
-    distance.minkowski:
+    distance.cosine:
       mark: partial
       note: *via_kernel
     distance.custom:
