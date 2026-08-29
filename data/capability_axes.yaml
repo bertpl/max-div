@@ -126,6 +126,13 @@ groups:
         label: L∞ (Chebyshev) distance
         hero: true
         definition: Selects under L∞ (Chebyshev) distance computed by the tool from vector input.
+      - key: minkowski
+        hero_label: L*
+        label: Minkowski distance
+        hero: true
+        definition: >-
+          Selects under Minkowski distance with caller-chosen power p, computed by the tool from
+          vector input.
       - key: cosine
         hero_label: cosine
         label: cosine distance

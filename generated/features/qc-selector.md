@@ -28,21 +28,22 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-full">✔</span> | [^qc-selector-1] |
-| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^qc-selector-2] |
-| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^qc-selector-3] |
+| distance metrics · Minkowski distance | <span class="mark mark-full">✔</span> | [^qc-selector-2] |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^qc-selector-3] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^qc-selector-4] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
-| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^qc-selector-4] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^qc-selector-4] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^qc-selector-5] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^qc-selector-5] |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-full">✔</span> |  |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
-| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^qc-selector-5] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^qc-selector-6] |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
-| time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^qc-selector-6] |
+| time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^qc-selector-7] |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^qc-selector-7] |
-| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^qc-selector-8] |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^qc-selector-8] |
+| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^qc-selector-9] |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
 | solver scaling · largest n within memory | n = 20k | |
 | solver scaling · largest n within the time budget | n = 20k | |
@@ -52,10 +53,11 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^qc-selector-1]: Available through the same Minkowski-exponent parameter that provides L1: its radius-based methods forward `p` to scipy, which treats p=∞ as the Chebyshev norm; the greedy pickers accept any metric as a precomputed distance matrix or callable.
-[^qc-selector-2]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
-[^qc-selector-3]: A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
-[^qc-selector-4]: Its diversity measures are computed over the whole selection rather than over nearest-neighbor pairs, so the nearest-neighbor family is absent.
-[^qc-selector-5]: Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.
-[^qc-selector-6]: Several of its methods take a parameter that controls how much work they do — a sphere-exclusion radius, an OptiSim subsample size — but these change the character of the search rather than lengthening it. Raising one does not mean a better answer.
-[^qc-selector-7]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^qc-selector-8]: MaxMin and MaxSum selection is sequential; OptiSim and DISE parallelize only their KDTree neighbor queries, not the search over selections.
+[^qc-selector-2]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
+[^qc-selector-3]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
+[^qc-selector-4]: A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
+[^qc-selector-5]: Its diversity measures are computed over the whole selection rather than over nearest-neighbor pairs, so the nearest-neighbor family is absent.
+[^qc-selector-6]: Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.
+[^qc-selector-7]: Several of its methods take a parameter that controls how much work they do — a sphere-exclusion radius, an OptiSim subsample size — but these change the character of the search rather than lengthening it. Raising one does not mean a better answer.
+[^qc-selector-8]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
+[^qc-selector-9]: MaxMin and MaxSum selection is sequential; OptiSim and DISE parallelize only their KDTree neighbor queries, not the search over selections.

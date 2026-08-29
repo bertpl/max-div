@@ -18,6 +18,7 @@ solver:
     distance.l1: {mark: none}
     distance.l2: {mark: full}
     distance.linf: {mark: none}
+    distance.minkowski: {mark: none}
     distance.cosine:
       mark: partial
       note: &cosine_norm

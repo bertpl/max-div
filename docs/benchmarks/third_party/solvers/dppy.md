@@ -28,6 +28,9 @@ solver:
     distance.linf:
       mark: partial
       note: *via_kernel
+    distance.minkowski:
+      mark: partial
+      note: *via_kernel
     distance.cosine:
       mark: partial
       note: *via_kernel

@@ -24,6 +24,11 @@ solver:
           Available through the same Minkowski-exponent parameter that provides L1: its radius-based
           methods forward `p` to scipy, which treats p=∞ as the Chebyshev norm; the greedy pickers
           accept any metric as a precomputed distance matrix or callable.
+    distance.minkowski:
+      mark: full
+      note:
+        text: >-
+          The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
     distance.cosine:
       mark: partial
       note:

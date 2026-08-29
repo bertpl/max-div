@@ -31,6 +31,9 @@ solver:
     distance.linf:
       mark: partial
       note: *edit_source
+    distance.minkowski:
+      mark: partial
+      note: *edit_source
     distance.cosine:
       mark: partial
       note: *edit_source

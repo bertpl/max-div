@@ -26,6 +26,9 @@ solver:
     distance.linf:
       mark: partial
       note: *coeffs
+    distance.minkowski:
+      mark: partial
+      note: *coeffs
     distance.cosine:
       mark: partial
       note: *coeffs

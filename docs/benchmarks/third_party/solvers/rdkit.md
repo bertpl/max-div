@@ -26,6 +26,9 @@ solver:
     distance.linf:
       mark: partial
       note: *callback
+    distance.minkowski:
+      mark: partial
+      note: *callback
     distance.cosine:
       mark: partial
       note: *callback
