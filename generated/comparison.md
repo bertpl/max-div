@@ -85,7 +85,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-31]: Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
 [^cmp-32]: The optimizers accept an n_jobs argument, but it is unused: the greedy selection runs single-threaded.
 [^cmp-33]: Available through the same Minkowski-exponent parameter that provides L1: its radius-based methods forward `p` to scipy, which treats p=∞ as the Chebyshev norm; the greedy pickers accept any metric as a precomputed distance matrix or callable.
-[^cmp-34]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p, forwarded to scipy by the radius-based methods; the greedy pickers accept a precomputed matrix or callable instead.
+[^cmp-34]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
 [^cmp-35]: A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
 [^cmp-36]: Its diversity measures are computed over the whole selection rather than over nearest-neighbor pairs, so the nearest-neighbor family is absent.
 [^cmp-37]: Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.

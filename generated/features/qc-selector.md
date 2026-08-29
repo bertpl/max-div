@@ -54,7 +54,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^qc-selector-1]: Available through the same Minkowski-exponent parameter that provides L1: its radius-based methods forward `p` to scipy, which treats p=∞ as the Chebyshev norm; the greedy pickers accept any metric as a precomputed distance matrix or callable.
 [^qc-selector-2]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
-[^qc-selector-3]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p, forwarded to scipy by the radius-based methods; the greedy pickers accept a precomputed matrix or callable instead.
+[^qc-selector-3]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
 [^qc-selector-4]: A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
 [^qc-selector-5]: Its diversity measures are computed over the whole selection rather than over nearest-neighbor pairs, so the nearest-neighbor family is absent.
 [^qc-selector-6]: Label-stratified selection: given class labels, it picks proportionally across them. That covers disjoint groups with proportional targets, but not arbitrary minimum and maximum counts, and not groups an item can belong to more than once.

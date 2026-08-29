@@ -33,9 +33,7 @@ solver:
       mark: full
       note:
         text: >-
-          The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p, forwarded
-          to scipy by the radius-based methods; the greedy pickers accept a precomputed matrix or
-          callable instead.
+          The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
     distance.custom:
       mark: full
       note:
