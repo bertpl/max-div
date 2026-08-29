@@ -122,7 +122,7 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
     rng = np.random.default_rng(20260713)
     vectors = rng.random((40, 4)).astype(np.float32)
     kwargs: dict = {"k": 8, "diversity_metric": DiversityMetric.GEOMEAN_SEPARATION}
-    problem_vec = MaxDivProblem.new(vectors, distance_metric=DistanceMetric.L2_EUCLIDEAN, **kwargs)
+    problem_vec = MaxDivProblem.new(vectors, distance_metric=DistanceMetric.l2_euclidean(), **kwargs)
     condensed = problem_vec.condensed_distances()
     distances = np.ascontiguousarray(squareform(condensed)) if form == "square" else condensed
     problem_dist = MaxDivProblem.from_distances(distances, **kwargs)
@@ -176,7 +176,7 @@ def test_solver_repeated_solve_reproduces_the_first():
 
 
 @pytest.mark.parametrize("backend", ["lazy", "full_matrix"])
-@pytest.mark.parametrize("distance_metric", [DistanceMetric.L2_EUCLIDEAN, DistanceMetric.COSINE])
+@pytest.mark.parametrize("distance_metric", [DistanceMetric.l2_euclidean(), DistanceMetric.cosine()])
 def test_solver_alternative_backend_bit_identical_selection(backend: str, distance_metric: DistanceMetric):
     """A solve on any alternative distance backend selects exactly what the condensed solve selects."""
 
@@ -231,7 +231,7 @@ def _make_mean_pairwise_distance_problem(n: int = 60, k: int = 8) -> tuple[MaxDi
     problem = MaxDivProblem.new(
         vectors=vectors,
         k=k,
-        distance_metric=DistanceMetric.L2_EUCLIDEAN,
+        distance_metric=DistanceMetric.l2_euclidean(),
         diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
     )
     return problem, vectors

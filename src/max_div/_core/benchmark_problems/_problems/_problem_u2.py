@@ -43,7 +43,7 @@ class BenchmarkProblem_U2(BenchmarkProblem):
         return VectorMaxDivProblem(
             vectors=vectors,
             k=k,
-            distance_metric=DistanceMetric.L2_EUCLIDEAN,
+            distance_metric=DistanceMetric.l2_euclidean(),
             diversity_metric=diversity_metric,
             constraints=[],
         )

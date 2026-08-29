@@ -102,7 +102,7 @@ class MaxDivProblem(ABC):
         cls,
         vectors: np.ndarray,
         k: int,
-        distance_metric: DistanceMetric = DistanceMetric.L2_EUCLIDEAN,
+        distance_metric: DistanceMetric = DistanceMetric.l2_euclidean(),  # noqa: B008 -- immutable NamedTuple, safe as a default
         diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION,
         constraints: list[Constraint] | None = None,
     ) -> "VectorMaxDivProblem":
@@ -125,7 +125,7 @@ class MaxDivProblem(ABC):
             raise ValueError("Vectors must have at least one dimension.")
         if vectors.dtype != np.float32:
             vectors = vectors.astype(np.float32)
-        if distance_metric == DistanceMetric.COSINE:
+        if distance_metric == DistanceMetric.cosine():
             validate_cosine_vectors(vectors)  # fail fast: zero vectors have no defined angle
 
         _validate_k(k, vectors.shape[0])

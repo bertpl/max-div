@@ -8,18 +8,17 @@ from max_div._core.metrics._distance import (
 )
 
 _SCIPY_METRIC = {
-    "L1_MANHATTAN": "cityblock",
-    "L2_EUCLIDEAN": "euclidean",
-    "L2S_EUCLIDEAN_SQUARED": "sqeuclidean",
-    "LINF_CHEBYSHEV": "chebyshev",
-    "COSINE": "cosine",
+    DistanceMetric.l1_manhattan(): "cityblock",
+    DistanceMetric.l2_euclidean(): "euclidean",
+    DistanceMetric.l2s_euclidean_squared(): "sqeuclidean",
+    DistanceMetric.linf_chebyshev(): "chebyshev",
+    DistanceMetric.cosine(): "cosine",
 }
 
 
 # -------------------------------------------------------------------------
 #  Compute
 # -------------------------------------------------------------------------
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_compute_pdist_metrics(metric: DistanceMetric):
     """Check if compute_pdist implements all metrics."""
 
@@ -38,10 +37,10 @@ def test_compute_pdist_metrics(metric: DistanceMetric):
 @pytest.mark.parametrize(
     "metric, expected_value",
     [
-        (DistanceMetric.L1_MANHATTAN, 7.0),
-        (DistanceMetric.L2_EUCLIDEAN, 5.0),
-        (DistanceMetric.L2S_EUCLIDEAN_SQUARED, 25.0),
-        (DistanceMetric.LINF_CHEBYSHEV, 4.0),
+        (DistanceMetric.l1_manhattan(), 7.0),
+        (DistanceMetric.l2_euclidean(), 5.0),
+        (DistanceMetric.l2s_euclidean_squared(), 25.0),
+        (DistanceMetric.linf_chebyshev(), 4.0),
     ],
 )
 def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
@@ -57,14 +56,13 @@ def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
     assert d[0] == pytest.approx(expected_value)
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_compute_pdist_matches_scipy(metric: DistanceMetric):
     """The hand-rolled float32 kernel matches scipy's float64→float32 result within float32 tolerance."""
 
     # --- arrange ----------------------
     rng = np.random.default_rng(20260711)
     vectors = rng.standard_normal((60, 8)).astype(np.float32)
-    expected = scipy_pdist(vectors, metric=_SCIPY_METRIC[metric.value]).astype(np.float32)
+    expected = scipy_pdist(vectors, metric=_SCIPY_METRIC[metric]).astype(np.float32)
 
     # --- act --------------------------
     result = compute_pdist(vectors, metric=metric)
@@ -90,7 +88,7 @@ def test_compute_pdist_cosine_values(x: list[float], y: list[float], expected_va
     vectors = np.array([x, y], dtype=np.float32)
 
     # --- act --------------------------
-    d = compute_pdist(vectors, metric=DistanceMetric.COSINE)
+    d = compute_pdist(vectors, metric=DistanceMetric.cosine())
 
     # --- assert -----------------------
     assert d[0] == pytest.approx(expected_value, abs=1e-6)
@@ -104,10 +102,9 @@ def test_compute_pdist_cosine_zero_vector_raises():
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match=r"zero vector.*row 1"):
-        compute_pdist(vectors, metric=DistanceMetric.COSINE)
+        compute_pdist(vectors, metric=DistanceMetric.cosine())
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_compute_pdist_zero_for_identical_vectors(metric: DistanceMetric):
     """Identical vectors have exactly-zero distance under every metric."""
 

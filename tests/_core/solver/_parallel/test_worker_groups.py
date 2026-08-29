@@ -30,7 +30,7 @@ def _state_with(indices: list[int]) -> SolverState:
     vectors = np.array([[0.0], [1.0], [2.0], [10.0], [20.0], [30.0]], dtype=np.float32)
     state = SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=vectors.shape[0]),
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0]),
         k=3,
         diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[],

@@ -13,7 +13,6 @@ from numpy.typing import NDArray
 
 from max_div._core.metrics._distance._build import compute_full_matrix, expand_condensed
 from max_div._core.metrics._distance._metric import (
-    _METRIC_KINDS,
     DistanceMetric,
     normalize_rows,
     validate_cosine_vectors,
@@ -60,7 +59,8 @@ class DistanceStore(NamedTuple):
     pdist: NDArray[np.float32]  # (n*(n-1)/2,) condensed distances (scipy layout), KIND_CONDENSED
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
     vectors: NDArray[np.float32]  # (n, d) vectors distances are computed from, KIND_LAZY
-    metric_kind: np.int32  # pair-kernel selector, KIND_LAZY only
+    metric_kind: np.int32  # pair-function selector, KIND_LAZY only
+    metric_p: np.float64  # the metric's power parameter, NaN for metrics without one
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -80,6 +80,7 @@ class DistanceStore(NamedTuple):
             matrix=_EMPTY_2D,
             vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
+            metric_p=np.float64(np.nan),
         )
 
     @classmethod
@@ -94,7 +95,7 @@ class DistanceStore(NamedTuple):
             metric: (DistanceMetric) the distance metric to use.
         """
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-        if metric == DistanceMetric.COSINE:
+        if metric == DistanceMetric.cosine():
             validate_cosine_vectors(vectors)
             vectors = normalize_rows(vectors)
         return cls(
@@ -103,11 +104,14 @@ class DistanceStore(NamedTuple):
             pdist=_EMPTY_1D,
             matrix=_EMPTY_2D,
             vectors=_readonly(vectors),
-            metric_kind=_METRIC_KINDS[metric],
+            metric_kind=np.int32(metric.kind),
+            metric_p=np.float64(np.nan if metric.p is None else metric.p),
         )
 
     @classmethod
-    def lazy_prepared(cls, vectors: NDArray[np.float32], metric_kind: np.int32) -> "DistanceStore":
+    def lazy_prepared(
+        cls, vectors: NDArray[np.float32], metric_kind: np.int32, metric_p: np.float64
+    ) -> "DistanceStore":
         """Return a lazy DistanceStore over vectors already in the form the distance reads expect.
 
         `lazy` prepares its input — for cosine, normalizing the rows into a fresh array — so it
@@ -117,6 +121,7 @@ class DistanceStore(NamedTuple):
         Args:
             vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
             metric_kind: (int32) metric selector, as `lazy` would have derived from the metric.
+            metric_p: (float64) the metric's power parameter, NaN when the metric has none.
         """
         return cls(
             kind=KIND_LAZY,
@@ -125,6 +130,7 @@ class DistanceStore(NamedTuple):
             matrix=_EMPTY_2D,
             vectors=_readonly(vectors),
             metric_kind=metric_kind,
+            metric_p=metric_p,
         )
 
     @classmethod
@@ -146,6 +152,7 @@ class DistanceStore(NamedTuple):
             matrix=_readonly(matrix),
             vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
+            metric_p=np.float64(np.nan),
         )
 
     @classmethod

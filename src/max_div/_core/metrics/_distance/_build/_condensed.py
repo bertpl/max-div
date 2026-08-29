@@ -13,7 +13,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.metrics._distance._metric import (
-    _METRIC_KINDS,
     DistanceMetric,
     _l2sq_pair,
     _metric_pair,
@@ -50,7 +49,7 @@ def compute_pdist(
     n = vectors.shape[0]
     if out is None:
         out = np.empty((n * (n - 1)) // 2, dtype=np.float32)
-    if metric == DistanceMetric.COSINE:
+    if metric == DistanceMetric.cosine():
         validate_cosine_vectors(vectors)
         normalized = normalize_rows(vectors)
         if parallel_build_enabled():
@@ -59,9 +58,9 @@ def compute_pdist(
             _fill_pdist_cos(normalized, out)
         return out
     if parallel_build_enabled():
-        _fill_pdist_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_BLOCK_WIDTH), out)
+        _fill_pdist_parallel(vectors, np.int32(metric.kind), np.int64(BUILD_BLOCK_WIDTH), out)
     else:
-        _fill_pdist(vectors, _METRIC_KINDS[metric], out)
+        _fill_pdist(vectors, np.int32(metric.kind), out)
     return out
 
 

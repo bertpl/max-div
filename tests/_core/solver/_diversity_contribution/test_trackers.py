@@ -19,7 +19,7 @@ N = 6
 @pytest.fixture
 def store() -> DistanceStore:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0], [15.0]], dtype=np.float32)
-    return DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.L1_MANHATTAN), n=N)
+    return DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=N)
 
 
 # =================================================================================================

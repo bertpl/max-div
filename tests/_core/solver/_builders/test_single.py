@@ -194,7 +194,7 @@ def test_max_div_solver_builder_end_to_end():
             MaxDivProblem.new(
                 vectors=vectors,
                 k=k,
-                distance_metric=DistanceMetric.L1_MANHATTAN,
+                distance_metric=DistanceMetric.l1_manhattan(),
                 diversity_metric=DiversityMetric.MIN_SEPARATION,
                 constraints=constraints,
             )

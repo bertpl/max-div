@@ -30,7 +30,7 @@ def test_evaluate_selection_matches_squareform_oracle(small_problem):
 
 @pytest.mark.parametrize(
     "distance_metric",
-    [DistanceMetric.L1_MANHATTAN, DistanceMetric.L2S_EUCLIDEAN_SQUARED, DistanceMetric.COSINE],
+    [DistanceMetric.l1_manhattan(), DistanceMetric.l2s_euclidean_squared(), DistanceMetric.cosine()],
 )
 def test_evaluate_selection_respects_distance_metric(distance_metric):
     # the vector fast path must score under the problem's own distance metric,

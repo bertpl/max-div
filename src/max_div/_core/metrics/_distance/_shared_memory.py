@@ -62,6 +62,7 @@ class SharedStoreSpec(NamedTuple):
     kind: int  # which DistanceStore backend the segment's array holds data for
     n: int  # number of items the store covers
     metric_kind: int  # metric the lazy backend computes with; the stored backends ignore it
+    metric_p: float  # the metric's power parameter, NaN for metrics without one
     shape: tuple[int, ...]  # shape of the float32 array in the segment, not of the problem
 
 
@@ -78,16 +79,31 @@ class SharedDistanceStore:
     # --------------------------------------------------------------------------
     #  Construction
     # --------------------------------------------------------------------------
-    def __init__(self, segment: SharedMemory, shape: tuple[int, ...], kind: int, n: int, metric_kind: int) -> None:
+    def __init__(
+        self,
+        segment: SharedMemory,
+        shape: tuple[int, ...],
+        kind: int,
+        n: int,
+        metric_kind: int,
+        metric_p: float,
+    ) -> None:
         """Wrap an owned segment; prefer `allocate`, which sizes the segment for the shape."""
         self._segment = segment
         self._buffer: NDArray[np.float32] = np.ndarray(shape, dtype=np.float32, buffer=segment.buf)
         self._spec = SharedStoreSpec(
-            segment_name=segment.name, kind=int(kind), n=int(n), metric_kind=int(metric_kind), shape=shape
+            segment_name=segment.name,
+            kind=int(kind),
+            n=int(n),
+            metric_kind=int(metric_kind),
+            metric_p=float(metric_p),
+            shape=shape,
         )
 
     @classmethod
-    def allocate(cls, shape: tuple[int, ...], kind: int, n: int, metric_kind: int = 0) -> "SharedDistanceStore":
+    def allocate(
+        cls, shape: tuple[int, ...], kind: int, n: int, metric_kind: int = 0, metric_p: float = float("nan")
+    ) -> "SharedDistanceStore":
         """Create a segment sized for `shape` and return the owner reading from it.
 
         The buffer starts uninitialized: the caller fills it before publishing the spec.
@@ -97,10 +113,11 @@ class SharedDistanceStore:
             kind: the DistanceStore backend selector the buffer holds data for.
             n: the number of items the distances are over.
             metric_kind: metric selector, meaningful for the lazy backend only.
+            metric_p: the metric's power parameter, NaN when the metric has none.
         """
         # a zero-size segment is rejected by the OS, so degenerate shapes still claim one byte
         size_bytes = max(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize, 1)
-        return cls(SharedMemory(create=True, size=size_bytes), shape, kind, n, metric_kind)
+        return cls(SharedMemory(create=True, size=size_bytes), shape, kind, n, metric_kind, metric_p)
 
     # --------------------------------------------------------------------------
     #  Access
@@ -147,7 +164,9 @@ def publish_distance_store(store: DistanceStore, n: int) -> SharedDistanceStore:
     buffer, which is the same bytes without the transient second copy.
     """
     array = _populated_array(store)
-    shared = SharedDistanceStore.allocate(array.shape, int(store.kind), n, int(store.metric_kind))
+    shared = SharedDistanceStore.allocate(
+        array.shape, int(store.kind), n, int(store.metric_kind), float(store.metric_p)
+    )
     shared.buffer[:] = array
     return shared
 
@@ -211,5 +230,5 @@ def _store_over(buffer: NDArray[np.float32], spec: SharedStoreSpec) -> DistanceS
     if spec.kind == KIND_FULL_MATRIX:
         return DistanceStore.full_matrix(buffer)
     if spec.kind == KIND_LAZY:
-        return DistanceStore.lazy_prepared(buffer, np.int32(spec.metric_kind))
+        return DistanceStore.lazy_prepared(buffer, np.int32(spec.metric_kind), np.float64(spec.metric_p))
     return DistanceStore.condensed(buffer, spec.n)

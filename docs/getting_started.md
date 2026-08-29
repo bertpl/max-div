@@ -131,11 +131,11 @@ from max_div import DistanceMetric
 
 problem = MaxDivProblem.new(
     vectors, k=20,
-    distance_metric=DistanceMetric.L2_EUCLIDEAN,       # default
-    # distance_metric=DistanceMetric.L1_MANHATTAN,
-    # distance_metric=DistanceMetric.L2S_EUCLIDEAN_SQUARED,
-    # distance_metric=DistanceMetric.LINF_CHEBYSHEV,
-    # distance_metric=DistanceMetric.COSINE,
+    distance_metric=DistanceMetric.l2_euclidean(),       # default
+    # distance_metric=DistanceMetric.l1_manhattan(),
+    # distance_metric=DistanceMetric.l2s_euclidean_squared(),
+    # distance_metric=DistanceMetric.linf_chebyshev(),
+    # distance_metric=DistanceMetric.cosine(),
 )
 ```
 

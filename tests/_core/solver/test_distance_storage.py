@@ -30,7 +30,7 @@ def _vector_problem(n: int = 10) -> MaxDivProblem:
 def _distance_problem(form: str) -> MaxDivProblem:
     from scipy.spatial.distance import squareform
 
-    condensed = compute_pdist(_vector_problem().vectors, DistanceMetric.L2_EUCLIDEAN)  # ty: ignore[unresolved-attribute]
+    condensed = compute_pdist(_vector_problem().vectors, DistanceMetric.l2_euclidean())  # ty: ignore[unresolved-attribute]
     distances = np.ascontiguousarray(squareform(condensed)) if form == "square" else condensed
     return MaxDivProblem.from_distances(distances, k=3)
 

@@ -20,7 +20,7 @@ def test_condensed_factory_fields():
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
 
     # --- act --------------------------
     store = DistanceStore.condensed(d, n=4)
@@ -44,7 +44,7 @@ def test_get_distance_condensed_values(i: int, j: int):
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
-    d = compute_pdist(vectors, metric=DistanceMetric.L2_EUCLIDEAN)
+    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
     store = DistanceStore.condensed(d, n=vectors.shape[0])
 
     expected_value = squareform(d)[i, j]
@@ -66,7 +66,7 @@ def test_lazy_factory_fields():
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
 
     # --- act --------------------------
-    store = DistanceStore.lazy(vectors, DistanceMetric.L2_EUCLIDEAN)
+    store = DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean())
 
     # --- assert -----------------------
     assert store.kind == KIND_LAZY
@@ -74,15 +74,6 @@ def test_lazy_factory_fields():
     assert store.pdist.size == 0
     assert store.matrix.size == 0
     assert store.vectors.shape == (4, 2)
-
-
-def test_metric_kinds_cover_every_distance_metric():
-    """Every DistanceMetric member must have an on-demand pair-kernel mapping (drift guard)."""
-
-    # --- act / assert -----------------
-    from max_div._core.metrics._distance._metric import _METRIC_KINDS
-
-    assert set(_METRIC_KINDS) == set(DistanceMetric)
 
 
 def test_lazy_factory_cosine_zero_vector_raises():
@@ -93,7 +84,7 @@ def test_lazy_factory_cosine_zero_vector_raises():
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="zero vector"):
-        DistanceStore.lazy(vectors, DistanceMetric.COSINE)
+        DistanceStore.lazy(vectors, DistanceMetric.cosine())
 
 
 # -------------------------------------------------------------------------
@@ -116,7 +107,6 @@ def test_full_matrix_factory_fields():
     assert store.vectors.size == 0
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_full_matrix_construction_exactly_symmetric(metric: DistanceMetric):
     """Both full-matrix construction paths produce exactly symmetric matrices with zero diagonals."""
 
@@ -160,7 +150,6 @@ def _distances_per_backend(vectors: np.ndarray, metric: DistanceMetric) -> dict[
     }
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_get_distance_agrees_across_backends(metric: DistanceMetric):
     """Every backend returns the same distance for every pair, to within summation rounding.
 
@@ -189,7 +178,6 @@ def test_get_distance_agrees_across_backends(metric: DistanceMetric):
         )
 
 
-@pytest.mark.parametrize("metric", list(DistanceMetric))
 def test_get_distance_bit_equal_across_backends_canary(metric: DistanceMetric):
     """Canary: the backends currently agree bit-for-bit, which is stronger than they promise.
 

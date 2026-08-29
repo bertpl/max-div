@@ -14,7 +14,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.metrics._distance._metric import (
-    _METRIC_KINDS,
     DistanceMetric,
     _metric_pair,
     normalize_rows,
@@ -51,14 +50,14 @@ def compute_full_matrix(
         whenever one was given, following numpy's convention for such a parameter.
     """
     vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-    if metric == DistanceMetric.COSINE:
+    if metric == DistanceMetric.cosine():
         validate_cosine_vectors(vectors)
         vectors = normalize_rows(vectors)
     out = _allocate_if_needed(out, vectors.shape[0])
     if parallel_build_enabled():
-        _fill_matrix_parallel(vectors, _METRIC_KINDS[metric], np.int64(BUILD_BLOCK_WIDTH), out)
+        _fill_matrix_parallel(vectors, np.int32(metric.kind), np.int64(BUILD_BLOCK_WIDTH), out)
     else:
-        _fill_matrix(vectors, _METRIC_KINDS[metric], out)
+        _fill_matrix(vectors, np.int32(metric.kind), out)
     return out
 
 
