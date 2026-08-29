@@ -1,5 +1,5 @@
 from max_div._core.metrics._distance._metric import _distance_metric
-from tests._core.metrics._distance.conftest import NAMED_METRICS
+from tests._core.metrics._distance.conftest import MINKOWSKI_METRICS, NAMED_METRICS
 
 
 def test_fixture_covers_every_metric_kind():
@@ -8,7 +8,7 @@ def test_fixture_covers_every_metric_kind():
     all_kinds = {value for name, value in vars(_distance_metric).items() if name.startswith("METRIC_KIND_")}
 
     # --- act --------------------------
-    covered_kinds = {metric.kind for metric in NAMED_METRICS}
+    covered_kinds = {metric.kind for metric in NAMED_METRICS + MINKOWSKI_METRICS}
 
     # --- assert -----------------------
     assert covered_kinds == all_kinds
