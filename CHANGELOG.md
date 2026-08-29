@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Minkowski distance with caller-chosen power `p` via `DistanceMetric.minkowski(p, root=True)`; `p` = 1, 2, inf resolve to the existing dedicated metrics, and `p` = 0.5 and 0.25 get specialized fast implementations
 
 ### Changed
 - Parallel solving now adapts its worker grouping during the solve — starting from independent per-worker groups and consolidating toward one group — instead of using fixed groups of about four

@@ -136,6 +136,7 @@ problem = MaxDivProblem.new(
     # distance_metric=DistanceMetric.l2s_euclidean_squared(),
     # distance_metric=DistanceMetric.linf_chebyshev(),
     # distance_metric=DistanceMetric.cosine(),
+    # distance_metric=DistanceMetric.minkowski(1.5),
 )
 ```
 
@@ -146,6 +147,7 @@ problem = MaxDivProblem.new(
 | `l2s_euclidean_squared()` | Squared Euclidean -- avoids the square root, produces identical solutions when used with `GEOMEAN_SEPARATION` |
 | `linf_chebyshev()` | Chebyshev distance -- the largest per-dimension difference |
 | `cosine()` | Cosine distance (1 &minus; cosine similarity) -- angular, magnitude-invariant, for embedding-style vectors; zero vectors are rejected |
+| `minkowski(p, root=True)` | Minkowski distance with caller-chosen power `p` > 0; `p` = 1, 2, inf resolve to the dedicated metrics above |
 
 #### Precomputed distances
 

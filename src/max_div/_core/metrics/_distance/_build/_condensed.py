@@ -58,34 +58,44 @@ def compute_pdist(
             _fill_pdist_cos(normalized, out)
         return out
     if parallel_build_enabled():
-        _fill_pdist_parallel(vectors, np.int32(metric.kind), np.int64(BUILD_BLOCK_WIDTH), out)
+        _fill_pdist_parallel(vectors, np.int32(metric.kind), metric.njit_p, np.int64(BUILD_BLOCK_WIDTH), out)
     else:
-        _fill_pdist(vectors, np.int32(metric.kind), out)
+        _fill_pdist(vectors, np.int32(metric.kind), metric.njit_p, out)
     return out
 
 
 # =================================================================================================
 #  Fills
 # =================================================================================================
-@numba.njit(numba.void(READONLY_F32_2D, numba.int32, WRITABLE_F32_1D), cache=True, fastmath={"reassoc", "contract"})
-def _fill_pdist(vectors: NDArray[np.float32], metric_kind: np.int32, out: NDArray[np.float32]) -> None:
+@numba.njit(
+    numba.void(READONLY_F32_2D, numba.int32, numba.float64, WRITABLE_F32_1D),
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
+def _fill_pdist(
+    vectors: NDArray[np.float32], metric_kind: np.int32, metric_p: np.float64, out: NDArray[np.float32]
+) -> None:
     """Write condensed distances for every metric except cosine into `out`, sequentially."""
     n = vectors.shape[0]
     idx = np.int64(0)
     for i in range(n):
         for j in range(i + 1, n):
-            out[idx] = _metric_pair(vectors, metric_kind, np.int32(i), np.int32(j))
+            out[idx] = _metric_pair(vectors, metric_kind, metric_p, np.int32(i), np.int32(j))
             idx += 1
 
 
 @numba.njit(
-    numba.void(READONLY_F32_2D, numba.int32, numba.int64, WRITABLE_F32_1D),
+    numba.void(READONLY_F32_2D, numba.int32, numba.float64, numba.int64, WRITABLE_F32_1D),
     parallel=True,
     cache=True,
     fastmath={"reassoc", "contract"},
 )
 def _fill_pdist_parallel(
-    vectors: NDArray[np.float32], metric_kind: np.int32, block_width: np.int64, out: NDArray[np.float32]
+    vectors: NDArray[np.float32],
+    metric_kind: np.int32,
+    metric_p: np.float64,
+    block_width: np.int64,
+    out: NDArray[np.float32],
 ) -> None:
     """Write condensed distances for every metric except cosine into `out`, in parallel."""
     n = vectors.shape[0]
@@ -94,7 +104,7 @@ def _fill_pdist_parallel(
         for i in numba.prange(j_end):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
             base = np.int64(i) * n - (np.int64(i) * (i + 1)) // 2 - i - 1
             for j in range(max(j_block, i + 1), j_end):
-                out[base + j] = _metric_pair(vectors, metric_kind, np.int32(i), np.int32(j))
+                out[base + j] = _metric_pair(vectors, metric_kind, metric_p, np.int32(i), np.int32(j))
 
 
 @numba.njit(numba.void(READONLY_F32_2D, WRITABLE_F32_1D), cache=True)
