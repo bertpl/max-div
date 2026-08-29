@@ -1,11 +1,12 @@
 """A worker calls its coordinator at every batch boundary; this module holds the contract.
 
-Every parallel worker holds a `WorkerGroupCoordinator` (see `_worker_groups`) bound to the
-solve's one shared `WorkerGroupState` — the coordinator is a worker's only sideways channel.
+Two channels leave a worker, each carrying one kind of information:
 
-Progress reporting is a separate channel entirely: the one-way queue from workers to the parent
-(see `_progress_channel`). Coordinators carry search information sideways between workers and
-never progress; the queue carries progress up to the parent and never search information.
+- **the coordinator** carries only search information, sideways between workers — every parallel
+  worker holds a `WorkerGroupCoordinator` (see `_worker_groups`) bound to the solve's one shared
+  `WorkerGroupState`;
+- **the progress queue** (see `_progress_channel`) carries only progress, one-way up to the
+  parent.
 """
 
 from abc import ABC, abstractmethod

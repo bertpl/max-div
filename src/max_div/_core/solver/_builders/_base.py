@@ -87,8 +87,7 @@ class SolverBuilderBase:
 
         With the end-to-end budget enabled, the budget also covers distance computation,
         initialization, and — for a parallel solve — worker spawning, and the optimization gets
-        whatever time remains (a
-        `SolverBudgetWarning` is raised and the optimization skipped when nothing remains).
+        whatever time remains.
         The budget itself is the one configured on `with_preset` / `with_workers` /
         `with_custom_worker_groups`; `build()` rejects the combination with an iteration budget.
         """

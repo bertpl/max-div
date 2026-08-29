@@ -46,16 +46,6 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def dynamic_group_count(n_workers: int, progress_fraction: float) -> int:
-    """Return the dynamic schedule's group count at the given progress fraction.
-
-    The count decreases linearly from `n_workers` at fraction 0 and reaches 1 at fraction
-    `(n_workers - 1) / n_workers`, so every group count holds for an equal share of the budget.
-    """
-    fraction = min(max(progress_fraction, 0.0), 1.0)
-    return max(1, math.ceil(n_workers * (1.0 - fraction)))
-
-
 @dataclass(frozen=True)
 class DissolutionEvent:
     """A record of one group dissolution, kept for inspecting the mechanism after a solve.
@@ -96,15 +86,23 @@ class WorkerGroupState:
             dynamic: whether the group count follows the dynamic schedule; a fixed grouping's
                 scheduled count is the configured group count, so it never changes.
         """
-        self._n_workers = sum(group_sizes)
-        self._initial_group_count = len(group_sizes)
-        self._dynamic = dynamic
-        self._score_length = score_length
+        # --- configuration ----------------------
+        self._n_workers: int = sum(group_sizes)
+        self._initial_group_count: int = len(group_sizes)
+        self._dynamic: bool = dynamic
+        self._score_length: int = score_length
+
+        # --- shared grouping state --------------
+        # one exchange slot per worker, so the dynamic schedule can start from groups of one
         self._slots = [GroupExchangeSlot(context, k=k, score_length=score_length) for _ in range(self._n_workers)]
+        # the assignment table: each worker's current group (= slot index), starting as configured
         initial_assignment = [group for group, size in enumerate(group_sizes) for _ in range(size)]
         self._assignment = context.Array("i", initial_assignment, lock=False)
+        # the number of groups that still have workers; read lock-free as the transition guard
         self._n_alive_groups = context.Value("i", self._initial_group_count, lock=False)
         self._transition_lock = context.Lock()
+
+        # --- shared dissolution log -------------
         # The dissolution log is preallocated: exactly n_workers - 1 dissolutions can ever
         # happen.  The stored assignment is the post-event table; NaN marks a never-written
         # slot's score.
@@ -148,10 +146,17 @@ class WorkerGroupState:
         return self._slots[self._assignment[worker_index]].exchange(score, selection)
 
     def _scheduled_count(self, progress_fraction: float) -> int:
-        """Return the group count the schedule asks for: the dynamic schedule's, or the fixed count."""
-        if self._dynamic:
-            return dynamic_group_count(self._n_workers, progress_fraction)
-        return self._initial_group_count
+        """Return the group count the schedule asks for at the given progress fraction.
+
+        A fixed grouping's scheduled count is the configured group count.  The dynamic count
+        decreases linearly from the worker count at fraction 0 and reaches 1 at fraction
+        `(n_workers - 1) / n_workers`, so every group count holds for an equal share of the
+        budget.
+        """
+        if not self._dynamic:
+            return self._initial_group_count
+        fraction = min(max(progress_fraction, 0.0), 1.0)
+        return max(1, math.ceil(self._n_workers * (1.0 - fraction)))
 
     def _dissolve_worst(self, progress_fraction: float) -> None:
         """Dissolve the worst-scoring group and reassign its workers to the strongest short groups.
@@ -159,39 +164,51 @@ class WorkerGroupState:
         The caller holds the transition lock; the assignment table is the single source of
         membership, so sizes are counted from it.
         """
-        assignment = list(self._assignment)
-        alive = sorted(set(assignment))
-        scores = {group: self._slots[group].peek_score() for group in alive}
+        group_per_worker: list[int] = list(self._assignment)
+        alive_groups: list[int] = sorted(set(group_per_worker))
+        score_per_group = {group: self._slots[group].peek_score() for group in alive_groups}
         # a never-written slot ranks below any written one (the empty tuple sorts below any real
         # score tuple); ties go to the lowest group index
-        worst = min(alive, key=lambda group: (scores[group] or (), group))
-        sizes = {group: assignment.count(group) for group in alive if group != worst}
+        worst_group = min(alive_groups, key=lambda group: (score_per_group[group] or (), group))
+        size_per_surviving_group = {
+            group: group_per_worker.count(group) for group in alive_groups if group != worst_group
+        }
         reassignments: dict[int, int] = {}
-        for worker in [index for index, group in enumerate(assignment) if group == worst]:
-            target = self._reassignment_target(scores, sizes)
-            sizes[target] += 1
+        # hand each of the dissolved group's workers to a surviving group, one at a time, so
+        # every placement sees the sizes the previous one produced
+        for worker in [index for index, group in enumerate(group_per_worker) if group == worst_group]:
+            target = self._reassignment_target(score_per_group, size_per_surviving_group)
+            size_per_surviving_group[target] += 1
             self._assignment[worker] = target
             reassignments[worker] = target
         self._n_alive_groups.value -= 1
-        self._record_event(progress_fraction, worst, scores)
+        self._record_event(progress_fraction, worst_group, score_per_group)
 
     @staticmethod
-    def _reassignment_target(scores: dict[int, tuple[float, ...] | None], sizes: dict[int, int]) -> int:
+    def _reassignment_target(
+        score_per_group: dict[int, tuple[float, ...] | None], size_per_surviving_group: dict[int, int]
+    ) -> int:
         """Return the group a freed worker joins: the best-scoring one still short of the largest.
 
         When every surviving group has the same size, no group is short and the best-scoring one
         overall takes the worker.
+
+        Args:
+            score_per_group: each group's slot score, None for a never-written slot; among the
+                candidate groups, the best score takes the worker.
+            size_per_surviving_group: current member count per surviving group; the sizes decide
+                which groups are candidates — those still short of the largest.
         """
-        largest = max(sizes.values())
-        short = [group for group, size in sizes.items() if size < largest]
-        pool = short if short else list(sizes)
-        return max(pool, key=lambda group: (scores[group] or (), -group))
+        largest = max(size_per_surviving_group.values())
+        short = [group for group, size in size_per_surviving_group.items() if size < largest]
+        pool = short if short else list(size_per_surviving_group)
+        return max(pool, key=lambda group: (score_per_group[group] or (), -group))
 
     # -------------------------------------------------------------------------
     #  Dissolution log
     # -------------------------------------------------------------------------
     def _record_event(
-        self, progress_fraction: float, dissolved: int, scores: dict[int, tuple[float, ...] | None]
+        self, progress_fraction: float, dissolved: int, score_per_group: dict[int, tuple[float, ...] | None]
     ) -> None:
         """Append one dissolution to the shared log; the caller holds the transition lock."""
         index = self._ev_count.value
@@ -200,7 +217,7 @@ class WorkerGroupState:
         self._ev_assignment[index * self._n_workers : (index + 1) * self._n_workers] = list(self._assignment)
         flat_scores = []
         for group in range(self._n_workers):
-            score = scores.get(group)
+            score = score_per_group.get(group)
             flat_scores.extend(score if score is not None else [math.nan] * self._score_length)
         start = index * self._n_workers * self._score_length
         self._ev_scores[start : start + len(flat_scores)] = flat_scores

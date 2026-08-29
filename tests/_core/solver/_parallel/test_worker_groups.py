@@ -5,7 +5,7 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
-from max_div._core.solver._parallel import WorkerGroupState, dynamic_group_count
+from max_div._core.solver._parallel import WorkerGroupState
 from max_div._core.solver._solver_state import SolverState
 
 
@@ -61,7 +61,7 @@ def _state_with(indices: list[int]) -> SolverState:
 def test_the_group_count_decreases_linearly_over_the_progress_fraction(n_workers, fraction, expected):
     """Each group count holds for an equal share of the budget, from n_workers down to one."""
     # --- act / assert -----------------
-    assert dynamic_group_count(n_workers, fraction) == expected
+    assert _group_state(n_workers)._scheduled_count(fraction) == expected
 
 
 # =================================================================================================
