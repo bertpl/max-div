@@ -35,7 +35,8 @@ class WorkerCoordinator(ABC):
             state: the worker's mutable solver state at this boundary.
             progress_fraction: the worker's own progress through its optimization step, 0 to 1 —
                 meaningful under time and iteration budgets alike, which lets
-                the grouping schedule run inside the workers.
+                `DynamicGroupCoordinator` run its regrouping schedule inside the
+                workers (see `_dynamic_groups`).
         """
 
 

@@ -10,7 +10,7 @@ the workers themselves run the schedule:
 
 - **`DynamicGroupState` is the shared-memory record of the grouping**: one slot per worker, an
   assignment table mapping each worker to its slot, the alive group count, and the dissolution
-  log.  The parent allocates it before workers spawn and reads the log after they finish.
+  log.
 - **`DynamicGroupCoordinator` runs the schedule from inside the workers**: at each batch
   boundary a worker computes the scheduled group count from its own progress fraction, and
   whichever worker first sees the alive count exceed the schedule executes the dissolution
@@ -93,8 +93,8 @@ class DynamicGroupState:
         self._n_alive_groups = context.Value("i", n_workers, lock=False)
         self._transition_lock = context.Lock()
         # The dissolution log is preallocated: exactly n_workers - 1 dissolutions can ever
-        # happen.  Each event records the executing worker's fraction, the dissolved group, the
-        # post-event assignment table, and every slot's score (NaN = unwritten).
+        # happen.  The stored assignment is the post-event table; NaN marks a never-written
+        # slot's score.
         n_events = max(n_workers - 1, 1)
         self._ev_count = context.Value("i", 0, lock=False)
         self._ev_fraction = context.Array("d", n_events, lock=False)
@@ -137,7 +137,7 @@ class DynamicGroupState:
         """Dissolve the worst-scoring group and reassign its workers to the strongest short groups.
 
         The caller holds the transition lock; the assignment table is the single source of
-        membership, so sizes are counted from it rather than tracked separately.
+        membership, so sizes are counted from it.
         """
         assignment = list(self._assignment)
         alive = sorted(set(assignment))

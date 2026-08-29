@@ -136,8 +136,8 @@ literature calls them *islands*: within a group, every worker adopts the best se
 member has found so far, exchanged many times per second while solving; groups never communicate
 with each other. Groups of one worker are fully independent — a fully
 independent set of workers is the special case where every group has one member. By default the
-grouping **evolves during the solve** (described under [Workers and Groups](#workers-and-groups));
-`n_groups` keeps it fixed instead.
+grouping is **dynamic** — it evolves during the solve (described under
+[Workers and Groups](#workers-and-groups)); `n_groups` keeps it fixed instead.
 
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
@@ -168,8 +168,7 @@ and then flattening rather than vanishing.
 Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
 
-The dynamic default removes the need to trade the two counts against each other; how it does so
-is described under [Workers and Groups](#workers-and-groups).
+The dynamic default removes the need to trade the two counts against each other.
 
 ### Workers and Groups
 
@@ -225,9 +224,11 @@ differently while the whole configuration derives from a single number.
 
 **Reproducibility follows the grouping.** A fully independent set of workers (`n_groups` equal
 to the worker count) repeated from one seed returns the same selection. With cooperating groups —
-the dynamic default included — it does not: which selections get adopted, and under the dynamic
-grouping which groups get dissolved, depends on how far each worker happens to have come when it
-reaches an exchange, and that inter-worker timing varies from run to run.
+the dynamic default included — it does not.
+
+Which selections get adopted — and, under the dynamic grouping, which groups get dissolved —
+depends on how far each worker has come when it reaches an exchange, and that timing varies from
+run to run.
 
 Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran. For an
 independent worker that is enough to replay it on its own with `MaxDivSolverBuilder`; a

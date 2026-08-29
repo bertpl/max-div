@@ -179,8 +179,7 @@ def default_group_count(n_workers_total: int) -> int:
 
     Groups of about four workers matched one all-worker group's result quality in benchmarks while
     spreading the risk of a bad seed over several independent groups.  Rounding to the nearest count keeps
-    every group's size between 3 and 5; five workers or fewer form a single group.  This fixed default
-    applies wherever the builder resolves the grouping to fixed without an explicit grouping given
-    (see `ParallelMaxDivSolverBuilder._resolve_dynamic`).
+    every group's size between 3 and 5; five workers or fewer form a single group.
+    `ParallelMaxDivSolverBuilder._resolve_dynamic` decides where the fixed default applies.
     """
     return max(1, (n_workers_total + 2) // 4)

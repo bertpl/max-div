@@ -81,10 +81,11 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 shared store build, worker spawning and initialization included — counted from
                 the parent's solve start, so every worker's optimization gets whatever time
                 remains.  Requires a time budget.
-            dynamic_groups: True forces the dynamic grouping (excludes `n_groups` and nested
-                `workers`, which pin a fixed grouping); False forces the fixed default
-                grouping of `default_group_count()`; None (default) resolves to dynamic
-                exactly where forcing it would be valid.
+            dynamic_groups: True forces the dynamic grouping, and excludes `n_groups` and
+                nested `workers`, which pin a fixed grouping.
+                False forces the fixed default grouping of `default_group_count()`.
+                None (the default) means dynamic unless `n_groups` or a nested `workers`
+                pins a fixed grouping.
 
         Raises:
             ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
