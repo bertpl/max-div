@@ -42,7 +42,7 @@ The distance metric determines how the distance between two vectors is measured.
 
 Two Minkowski specifics are worth knowing:
 
-- **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, roughly an order of magnitude more per term.
+- **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()`: per-pair distance ordering is unchanged and solutions are identical under `GEOMEAN_SEPARATION`. For $0 < p < 1$ the rooted form violates the triangle inequality, so it is not a strict metric while the rootless form is one -- the solver never relies on that property, so both are usable.
 
 ## Separation

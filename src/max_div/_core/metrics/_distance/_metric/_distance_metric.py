@@ -108,7 +108,7 @@ class DistanceMetric(NamedTuple):
         construction point of that guarantee.
 
         Cost: p in {1, 2, inf, 0.5, 0.25} computes with hardware arithmetic; any other p pays a
-        ``pow`` call per dimension, roughly an order of magnitude more per term.
+        ``pow`` call per dimension, well over an order of magnitude more per term.
 
         For 0 < p < 1 the rooted form violates the triangle inequality — not a strict metric,
         while the `root=False` form is one — which the solver never relies on, so both are usable.
