@@ -6,15 +6,14 @@ user-facing metric value and the compiled dispatch share a single classification
 
 from typing import NamedTuple
 
-# These selector values let njit functions branch on the metric without object-mode.  Cosine holds
-# pre-normalized vectors, so its pair read is the half-squared-L2 form on those.
+# These selector values let njit functions branch on the metric without object-mode.
 METRIC_KIND_L1 = 0
 METRIC_KIND_L2 = 1
 METRIC_KIND_L2S = 2
 METRIC_KIND_COS = 3
 METRIC_KIND_LINF = 4
 
-# `_FACTORY_NAMES` maps each kind to its factory-method name, for `__repr__`.
+# `__repr__` looks up each kind's factory-method name here.
 _FACTORY_NAMES = {
     METRIC_KIND_L1: "l1_manhattan",
     METRIC_KIND_L2: "l2_euclidean",
@@ -27,9 +26,9 @@ _FACTORY_NAMES = {
 class DistanceMetric(NamedTuple):
     """A distance metric: a `kind` selector plus the parameters that kind needs.
 
-    Create instances via the factory methods only — they canonicalize the fields, so metrics that
-    compute the same distance compare equal.  `p` is the metric's power parameter; it is `None`
-    for every kind that does not use one, and crosses the njit boundary as NaN in that case.
+    Create instances via the factory methods only, so metrics that compute the same distance
+    compare equal.  `p` is the metric's power parameter; it is `None` for every kind that does
+    not use one, and crosses the njit boundary as NaN in that case.
     """
 
     kind: int
@@ -52,25 +51,21 @@ class DistanceMetric(NamedTuple):
     def l2s_euclidean_squared(cls) -> "DistanceMetric":
         """Return the squared L2 (Euclidean squared) distance metric: ``sum_i (x_i - y_i)^2``.
 
-        Avoids computing a square root, and produces identical solutions for the
+        The squared form avoids the square root and produces identical solutions under the
         GEOMEAN_SEPARATION diversity metric.
         """
         return cls(kind=METRIC_KIND_L2S, p=None)
 
     @classmethod
     def linf_chebyshev(cls) -> "DistanceMetric":
-        """Return the Linf (Chebyshev) distance metric: ``max_i |x_i - y_i|``.
-
-        The distance is set by the single largest per-dimension gap.
-        """
+        """Return the Linf (Chebyshev) distance metric: ``max_i |x_i - y_i|``."""
         return cls(kind=METRIC_KIND_LINF, p=None)
 
     @classmethod
     def cosine(cls) -> "DistanceMetric":
         """Return the cosine distance metric: ``1 - (x . y) / (|x| |y|)``.
 
-        Range [0, 2]; angular, for embedding-style vectors.  Undefined for zero vectors, which
-        are rejected with an error.
+        The range is [0, 2].  Zero vectors have no defined angle and are rejected with an error.
         """
         return cls(kind=METRIC_KIND_COS, p=None)
 

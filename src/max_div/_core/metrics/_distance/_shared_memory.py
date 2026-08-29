@@ -62,7 +62,7 @@ class SharedStoreSpec(NamedTuple):
     kind: int  # which DistanceStore backend the segment's array holds data for
     n: int  # number of items the store covers
     metric_kind: int  # metric the lazy backend computes with; the stored backends ignore it
-    metric_p: float  # `DistanceMetric.p`; NaN encodes None
+    metric_p: float  # `DistanceMetric.p`, in the njit encoding that class defines
     shape: tuple[int, ...]  # shape of the float32 array in the segment, not of the problem
 
 
@@ -113,7 +113,7 @@ class SharedDistanceStore:
             kind: the DistanceStore backend selector the buffer holds data for.
             n: the number of items the distances are over.
             metric_kind: metric selector, meaningful for the lazy backend only.
-            metric_p: `DistanceMetric.p`, NaN when that is None.
+            metric_p: `DistanceMetric.p`, in the njit encoding that class defines.
         """
         # a zero-size segment is rejected by the OS, so degenerate shapes still claim one byte
         size_bytes = max(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize, 1)

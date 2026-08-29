@@ -1,16 +1,24 @@
 from max_div._core.metrics import DistanceMetric
-from tests._core.metrics._distance.conftest import NAMED_METRICS
+
+# Every metric the factory methods can produce, mirroring the `metric` fixture's parameter set.
+_FACTORY_METRICS = (
+    DistanceMetric.l1_manhattan(),
+    DistanceMetric.l2_euclidean(),
+    DistanceMetric.l2s_euclidean_squared(),
+    DistanceMetric.linf_chebyshev(),
+    DistanceMetric.cosine(),
+)
 
 
-def test_named_metrics_have_distinct_kinds():
+def test_factory_metrics_have_distinct_kinds():
     """Each factory must map to its own selector value, or two metrics would dispatch identically."""
     # --- act / assert -----------------
-    kinds = [metric.kind for metric in NAMED_METRICS]
+    kinds = [metric.kind for metric in _FACTORY_METRICS]
     assert len(set(kinds)) == len(kinds)
 
 
-def test_named_metrics_carry_no_p(metric: DistanceMetric):
-    """None of the named metrics uses the power parameter."""
+def test_factory_metrics_carry_no_p(metric: DistanceMetric):
+    """No factory-produced metric uses the power parameter."""
     # --- act / assert -----------------
     assert metric.p is None
 

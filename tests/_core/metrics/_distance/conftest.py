@@ -1,4 +1,4 @@
-"""The `metric` fixture here runs a test once per named distance metric."""
+"""Fixtures shared across the distance test tree live here."""
 
 import pytest
 
@@ -17,5 +17,5 @@ NAMED_METRICS = (
 
 @pytest.fixture(params=NAMED_METRICS, ids=repr)
 def metric(request: pytest.FixtureRequest) -> DistanceMetric:
-    """Return each named distance metric in turn."""
+    """Return each metric from NAMED_METRICS in turn."""
     return request.param
