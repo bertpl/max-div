@@ -122,7 +122,7 @@ def test_a_late_fraction_dissolves_several_groups_at_once():
     group_state.maybe_dissolve(progress_fraction=1.0)
 
     # --- assert -----------------------
-    assert group_state._n_active.value == 1
+    assert group_state._n_alive_groups.value == 1
     assert len(group_state.events()) == 2
     assert len(set(group_state._assignment)) == 1
 
@@ -136,12 +136,12 @@ def test_an_on_schedule_count_dissolves_nothing():
     group_state.maybe_dissolve(progress_fraction=0.0)
 
     # --- assert -----------------------
-    assert group_state._n_active.value == 3
+    assert group_state._n_alive_groups.value == 3
     assert group_state.events() == []
 
 
 def test_dead_groups_drop_out_of_later_event_scores():
-    """An event's slot scores cover only the then-alive groups, so the log reads as the mechanism ran."""
+    """An event's slot scores cover only the then-alive groups, showing the grouping as it stood when it fired."""
     # --- arrange ----------------------
     group_state = _group_state(3)
     for worker, diversity in enumerate([0.9, 0.5, 0.1]):

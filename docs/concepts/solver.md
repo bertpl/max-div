@@ -190,9 +190,11 @@ over the workers' progress through the budget:
 - each decrease dissolves the group whose shared best selection scores worst, and its workers
   join the strongest groups still short a member — reinforcing searches that can still win.
 
-Each worker evaluates the schedule against its own progress, so this works for time and iteration
-budgets alike; under a time budget every worker sees nearly the same fraction, while under an
-iteration budget the schedule follows whichever worker crosses each threshold first.
+Each worker evaluates the schedule against its own progress, so the schedule works for time and
+iteration budgets alike:
+
+- under a time budget, every worker sees nearly the same fraction;
+- under an iteration budget, the schedule follows whichever worker crosses each threshold first.
 
 **Fixed grouping.** The grouping stays fixed for the whole solve when the caller pins it —
 `n_groups`, a nested sequence, or `adaptive_groups=False`. Where a fixed grouping applies without

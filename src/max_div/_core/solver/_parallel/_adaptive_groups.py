@@ -5,22 +5,20 @@ worker's optimization step.  Each decrease dissolves the group whose incumbent s
 worst score — the group whose best score is lowest so far — and reassigns its workers to the
 strongest groups that are short a member, so they reinforce searches that can still win.
 
-The module adds two pieces on top of the fixed-group code in `_coordinator` / `_incumbent_slot`,
-and no process runs the schedule — the workers themselves do:
+The module adds two pieces on top of the fixed-group code in `_coordinator` / `_incumbent_slot`;
+the workers themselves run the schedule:
 
 - **`AdaptiveGroupState` is the shared-memory record of the grouping**: one slot per worker, an
-  assignment table mapping each worker to its slot, the live group count, and the dissolution
+  assignment table mapping each worker to its slot, the alive group count, and the dissolution
   log.  The parent allocates it before workers spawn and reads the log after they finish.
 - **`AdaptiveGroupCoordinator` runs the schedule from inside the workers**: at each batch
   boundary a worker computes the scheduled group count from its own progress fraction, and
-  whichever worker first sees the count exceed the schedule executes the dissolution itself,
-  under a single transition lock.  Under a time budget every worker computes nearly the same
-  fraction; under an iteration budget the schedule follows whichever worker crosses each
-  threshold first.
+  whichever worker first sees the alive count exceed the schedule executes the dissolution
+  itself, under a single transition lock.
 
-Ranking groups on their slots is what makes dissolution safe: publish-if-better means a slot
-holds its group's best score so far, so dissolving the worst-slot group can never discard the
-overall best selection.
+Ranking groups on their slots makes dissolution safe: a slot only ever accepts a strictly better
+selection (`GroupIncumbentSlot.exchange`), so it holds its group's best score so far, and
+dissolving the worst-slot group can never discard the overall best selection.
 
 A worker learns of its reassignment at its next batch boundary, so membership changes are eventual
 rather than synchronized — a worker mid-batch keeps exchanging with its old slot for at most one
@@ -71,7 +69,7 @@ class DissolutionEvent:
 
 
 class AdaptiveGroupState:
-    """The shared-memory record of an adaptive solve's grouping, and the transitions over it.
+    """The shared group state records an adaptive solve's grouping and executes the transitions over it.
 
     Allocated in the parent before workers spawn; every worker's coordinator holds it and any
     worker may execute a dissolution.  After the workers finish, `events()` returns the
@@ -92,11 +90,11 @@ class AdaptiveGroupState:
         self._score_length = score_length
         self._slots = [GroupIncumbentSlot(context, k=k, score_length=score_length) for _ in range(n_workers)]
         self._assignment = context.Array("i", list(range(n_workers)), lock=False)
-        self._n_active = context.Value("i", n_workers, lock=False)
+        self._n_alive_groups = context.Value("i", n_workers, lock=False)
         self._transition_lock = context.Lock()
         # the dissolution log: exactly n_workers - 1 dissolutions can ever happen, so every
-        # array is preallocated; per event: the executing worker's fraction, the dissolved
-        # group, the post-event assignment table, and every slot's score (NaN = unwritten)
+        # array is preallocated.  Each event records the executing worker's fraction, the
+        # dissolved group, the post-event assignment table, and every slot's score (NaN = unwritten)
         n_events = max(n_workers - 1, 1)
         self._ev_count = context.Value("i", 0, lock=False)
         self._ev_fraction = context.Array("d", n_events, lock=False)
@@ -112,17 +110,17 @@ class AdaptiveGroupState:
     #  Worker-side operations
     # -------------------------------------------------------------------------
     def maybe_dissolve(self, progress_fraction: float) -> None:
-        """Dissolve groups until the live count matches the schedule at the given fraction.
+        """Dissolve groups until the alive count matches the schedule at the given fraction.
 
         The no-transition case — by far the common one — costs a single lock-free read; the
         transition itself runs under the one transition lock, and the count re-check inside it
-        makes concurrent callers idempotent.
+        means a concurrent caller that lost the race dissolves nothing.
         """
         target = adaptive_group_count(self._n_workers, progress_fraction)
-        if self._n_active.value <= target:
+        if self._n_alive_groups.value <= target:
             return
         with self._transition_lock:
-            while self._n_active.value > target:
+            while self._n_alive_groups.value > target:
                 self._dissolve_worst(progress_fraction)
 
     def exchange(
@@ -154,7 +152,7 @@ class AdaptiveGroupState:
             sizes[target] += 1
             self._assignment[worker] = target
             reassignments[worker] = target
-        self._n_active.value -= 1
+        self._n_alive_groups.value -= 1
         self._record_event(progress_fraction, worst, scores)
 
     @staticmethod
