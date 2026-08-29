@@ -133,6 +133,21 @@ def test_spec_survives_pickling():
     assert np.isnan(owner.spec.metric_p)
 
 
+def test_attached_minkowski_store_reads_the_published_values():
+    """The metric's p must survive publish and attach, or an attached reader computes another distance."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(20260829)
+    vectors = rng.standard_normal((12, 4)).astype(np.float32)
+    metric = DistanceMetric.minkowski(3)
+    reference = DistanceStore.lazy(vectors, metric)
+
+    # --- act --------------------------
+    with _published(reference) as owner, attached_distance_store(owner.spec) as attached:
+        # --- assert -------------------
+        assert owner.spec.metric_p == 3.0
+        assert _read_pairs(attached) == _read_pairs(reference)
+
+
 # =================================================================================================
 #  Read-only enforcement
 # =================================================================================================

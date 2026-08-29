@@ -1,3 +1,7 @@
+import math
+
+import pytest
+
 from max_div._core.metrics import DistanceMetric
 
 # Every metric the factory methods can produce, mirroring the `metric` fixture's parameter set.
@@ -17,10 +21,11 @@ def test_factory_metrics_have_distinct_kinds():
     assert len(set(kinds)) == len(kinds)
 
 
-def test_factory_metrics_carry_no_p(metric: DistanceMetric):
-    """No factory-produced metric uses the power parameter."""
+@pytest.mark.parametrize("named_metric", _FACTORY_METRICS, ids=repr)
+def test_factory_metrics_carry_no_p(named_metric: DistanceMetric):
+    """None of the dedicated factories uses the power parameter."""
     # --- act / assert -----------------
-    assert metric.p is None
+    assert named_metric.p is None
 
 
 def test_equal_factories_compare_equal():
@@ -30,12 +35,68 @@ def test_equal_factories_compare_equal():
     assert DistanceMetric.l2_euclidean() != DistanceMetric.l2s_euclidean_squared()
 
 
-def test_repr_names_the_factory(metric: DistanceMetric):
-    """The repr is the factory call that constructs the metric."""
+def test_repr_round_trips(metric: DistanceMetric):
+    """The repr is a factory call that reconstructs an equal metric."""
     # --- act --------------------------
     text = repr(metric)
 
     # --- assert -----------------------
     assert text.startswith("DistanceMetric.")
-    assert text.endswith("()")
     assert eval(text) == metric  # noqa: S307 -- round-trip of our own repr
+
+
+@pytest.mark.parametrize(
+    "p, root, expected",
+    [
+        (1.0, True, DistanceMetric.l1_manhattan()),
+        (1.0, False, DistanceMetric.l1_manhattan()),
+        (2.0, True, DistanceMetric.l2_euclidean()),
+        (2.0, False, DistanceMetric.l2s_euclidean_squared()),
+        (math.inf, True, DistanceMetric.linf_chebyshev()),
+        (math.inf, False, DistanceMetric.linf_chebyshev()),
+    ],
+)
+def test_minkowski_canonicalizes_onto_named_metrics(p: float, root: bool, expected: DistanceMetric):
+    """A p coinciding with a dedicated metric must return that metric, never a generic Minkowski value."""
+    # --- act / assert -----------------
+    assert DistanceMetric.minkowski(p, root=root) == expected
+
+
+@pytest.mark.parametrize("p", [0.5, 0.25])
+@pytest.mark.parametrize("root", [True, False])
+def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
+    """A specializable p must return its dedicated kind with p=None, so only one code path computes it."""
+    # --- act --------------------------
+    metric = DistanceMetric.minkowski(p, root=root)
+
+    # --- assert -----------------------
+    assert metric.p is None
+    assert metric.kind not in {m.kind for m in _FACTORY_METRICS}
+    assert metric.kind != DistanceMetric.minkowski(3, root=root).kind
+
+
+def test_minkowski_generic_carries_p():
+    """A non-specializable p stays on the generic kinds, carried in the value."""
+    # --- act --------------------------
+    rooted = DistanceMetric.minkowski(3)
+    powered = DistanceMetric.minkowski(3, root=False)
+
+    # --- assert -----------------------
+    assert rooted.p == 3.0
+    assert powered.p == 3.0
+    assert rooted.kind != powered.kind
+
+
+@pytest.mark.parametrize("p", [0.0, -1.0, -math.inf, math.nan])
+def test_minkowski_rejects_non_positive_p(p: float):
+    """The factory must reject p values outside (0, inf]."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="requires p > 0"):
+        DistanceMetric.minkowski(p)
+
+
+def test_njit_p_encodes_none_as_nan():
+    """`njit_p` is the one place the None-to-NaN encoding lives."""
+    # --- act / assert -----------------
+    assert math.isnan(DistanceMetric.l2_euclidean().njit_p)
+    assert DistanceMetric.minkowski(3).njit_p == 3.0

@@ -52,7 +52,7 @@ def get_distance_condensed(store: DistanceStore, i: int | np.integer, j: int | n
 @numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int64), inline="always", cache=True)
 def get_distance_lazy(store: DistanceStore, i: int | np.integer, j: int | np.integer) -> np.float32:
     """Compute the distance between two items from a lazy store's vectors."""
-    return _metric_pair(store.vectors, store.metric_kind, np.int32(i), np.int32(j))
+    return _metric_pair(store.vectors, store.metric_kind, store.metric_p, np.int32(i), np.int32(j))
 
 
 @numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int32, numba.int32), inline="always", cache=True)
@@ -72,7 +72,7 @@ def get_distance(store: DistanceStore, i: np.int32, j: np.int32) -> np.float32:
     if store.kind == KIND_FULL_MATRIX:
         return store.matrix[i, j]
     if store.kind == KIND_LAZY:
-        return _metric_pair(store.vectors, store.metric_kind, i, j)
+        return _metric_pair(store.vectors, store.metric_kind, store.metric_p, i, j)
     if i < j:
         return store.pdist[_condensed_index(i, j, store.n)]
     return store.pdist[_condensed_index(j, i, store.n)]

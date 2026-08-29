@@ -105,7 +105,7 @@ class DistanceStore(NamedTuple):
             matrix=_EMPTY_2D,
             vectors=_readonly(vectors),
             metric_kind=np.int32(metric.kind),
-            metric_p=np.float64(np.nan if metric.p is None else metric.p),
+            metric_p=metric.njit_p,
         )
 
     @classmethod

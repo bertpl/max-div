@@ -56,6 +56,7 @@ def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
     assert d[0] == pytest.approx(expected_value)
 
 
+@pytest.mark.parametrize("metric", list(_SCIPY_METRIC), ids=repr)
 def test_compute_pdist_matches_scipy(metric: DistanceMetric):
     """The hand-rolled float32 kernel matches scipy's float64→float32 result within float32 tolerance."""
 
@@ -70,6 +71,25 @@ def test_compute_pdist_matches_scipy(metric: DistanceMetric):
     # --- assert -----------------------
     assert result.dtype == np.float32
     np.testing.assert_allclose(result, expected, rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.parametrize("p", [0.25, 0.5, 1.5, 3.0])
+@pytest.mark.parametrize("root", [True, False])
+def test_compute_pdist_minkowski_matches_reference(p: float, root: bool):
+    """Minkowski distances match a float64 numpy reference, for specialized and generic p."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(20260829)
+    vectors = rng.standard_normal((40, 6)).astype(np.float32)
+    diffs = np.abs(vectors[:, None, :].astype(np.float64) - vectors[None, :, :].astype(np.float64))
+    powered = (diffs**p).sum(axis=2)
+    expected_matrix = powered ** (1.0 / p) if root else powered
+    expected = expected_matrix[np.triu_indices(40, k=1)].astype(np.float32)
+
+    # --- act --------------------------
+    result = compute_pdist(vectors, metric=DistanceMetric.minkowski(p, root=root))
+
+    # --- assert -----------------------
+    np.testing.assert_allclose(result, expected, rtol=2e-5, atol=2e-6)
 
 
 @pytest.mark.parametrize(
