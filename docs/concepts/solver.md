@@ -145,7 +145,7 @@ from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
 solution = (
     ParallelMaxDivSolverBuilder(problem)
     .with_seed(42)
-    .with_workers(seconds(60), 8)   # 8 workers, adaptively grouped (the default)
+    .with_workers(seconds(60), 8)   # 8 workers, dynamically grouped (the default)
     .build()
     .solve()
 )
@@ -168,7 +168,7 @@ and then flattening rather than vanishing.
 Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
 
-The adaptive default removes the need to trade the two counts against each other; how it does so
+The dynamic default removes the need to trade the two counts against each other; how it does so
 is described under [Workers and Groups](#workers-and-groups).
 
 ### Workers and Groups
@@ -182,7 +182,7 @@ is described under [Workers and Groups](#workers-and-groups).
 
 The worker total, when not given, defaults to **3/4 of the logical cores**.
 
-**Adaptive grouping (the default).** With no grouping pinned, the group count follows a schedule
+**Dynamic grouping (the default).** With no grouping pinned, the group count follows a schedule
 over the workers' progress through the budget:
 
 - every worker starts in its own group;
@@ -197,7 +197,7 @@ iteration budgets alike:
 - under an iteration budget, the schedule follows whichever worker crosses each threshold first.
 
 **Fixed grouping.** The grouping stays fixed for the whole solve when the caller pins it —
-`n_groups`, a nested sequence, or `adaptive_groups=False`. Where a fixed grouping applies without
+`n_groups`, a nested sequence, or `dynamic_groups=False`. Where a fixed grouping applies without
 an explicit `n_groups`:
 
 - the group count defaults to **groups of about four workers** (the count nearest a quarter of
@@ -225,8 +225,8 @@ differently while the whole configuration derives from a single number.
 
 **Reproducibility follows the grouping.** A fully independent set of workers (`n_groups` equal
 to the worker count) repeated from one seed returns the same selection. With cooperating groups —
-the adaptive default included — it does not: which selections get adopted, and under the adaptive
-schedule which groups get dissolved, depends on how far each worker happens to have come when it
+the dynamic default included — it does not: which selections get adopted, and under the dynamic
+grouping which groups get dissolved, depends on how far each worker happens to have come when it
 reaches an exchange, and that inter-worker timing varies from run to run.
 
 Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran. For an
@@ -246,7 +246,7 @@ per worker attached. The number worth looking at is `n_workers_with_best_score`:
   the run found nothing a single worker would not have — lower the worker count or solve once.
   With cooperating groups, ties *within* a group are partly structural (members adopt each
   other's best), so read the count against the number of groups rather than of workers — and
-  under the adaptive default, which ends in one all-worker group, an all-worker tie is the
+  under the dynamic default, which ends in one all-worker group, an all-worker tie is the
   expected outcome rather than a signal.
 
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more

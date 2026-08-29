@@ -40,7 +40,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         self._worker_configs: list[WorkerConfig] = []
         self._group_sizes: list[int] = []
         self._target_duration: TargetDuration | None = None
-        self._adaptive_groups: bool = False
+        self._dynamic_groups: bool = False
 
     # -------------------------------------------------------------------------
     #  Builder API
@@ -51,7 +51,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         workers: int | Sequence[WorkerConfig] | Sequence[Sequence[WorkerConfig]] | None = None,
         n_groups: int | None = None,
         end_to_end_budget: bool = False,
-        adaptive_groups: bool | None = None,
+        dynamic_groups: bool | None = None,
     ) -> Self:
         """Set what the workers run, how long they run, and how they form groups.
 
@@ -64,7 +64,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         wins.  Groups of one make those workers fully independent — `n_groups` equal to the
         worker count puts every worker in a group of one.
 
-        By default the grouping is **adaptive**: every worker starts in its own group, and the
+        By default the grouping is **dynamic**: every worker starts in its own group, and the
         group count decreases linearly over the workers' progress toward one all-worker group,
         dissolving the worst-scoring group at each decrease.
 
@@ -76,20 +76,20 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 uses `default_worker_count()`.
             n_groups: number of *fixed* groups; only combines with an integer (or omitted)
                 `workers` — a nested sequence carries its own grouping.  Omitting it
-                leaves the grouping to `adaptive_groups`.
+                leaves the grouping to `dynamic_groups`.
             end_to_end_budget: when True, `target_duration` bounds the whole parallel solve —
                 shared store build, worker spawning and initialization included — counted from
                 the parent's solve start, so every worker's optimization gets whatever time
                 remains.  Requires a time budget.
-            adaptive_groups: True forces the adaptive grouping (excludes `n_groups` and nested
+            dynamic_groups: True forces the dynamic grouping (excludes `n_groups` and nested
                 `workers`, which pin a fixed grouping); False forces the fixed default
-                grouping of `default_group_count()`; None (default) resolves to adaptive
+                grouping of `default_group_count()`; None (default) resolves to dynamic
                 exactly where forcing it would be valid.
 
         Raises:
             ValueError: If `n_groups` accompanies a sequence form, falls outside 1..worker count,
                 the sequence mixes configurations and groups, `end_to_end_budget` is combined
-                with an iteration budget, or `adaptive_groups=True` accompanies a pinned
+                with an iteration budget, or `dynamic_groups=True` accompanies a pinned
                 grouping.
         """
         self._set_e2e_budget(target_duration, end_to_end_budget)
@@ -118,27 +118,27 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             groups = [list(cast("Sequence[WorkerConfig]", group)) for group in workers]
             self._worker_configs = [config for group in groups for config in group]
             self._group_sizes = [len(group) for group in groups]
-        self._adaptive_groups = self._resolve_adaptive(adaptive_groups, n_groups, is_nested)
-        if self._adaptive_groups:
+        self._dynamic_groups = self._resolve_dynamic(dynamic_groups, n_groups, is_nested)
+        if self._dynamic_groups:
             # every worker starts in its own group; the workers regroup from there
             self._group_sizes = [1] * len(self._worker_configs)
         return self
 
     @staticmethod
-    def _resolve_adaptive(adaptive_groups: bool | None, n_groups: int | None, is_nested: bool) -> bool:
-        """Resolve the adaptive-grouping choice: validate a forced True, apply the default for None.
+    def _resolve_dynamic(dynamic_groups: bool | None, n_groups: int | None, is_nested: bool) -> bool:
+        """Resolve the dynamic-grouping choice: validate a forced True, apply the default for None.
 
         Raises:
-            ValueError: If `adaptive_groups=True` is combined with an explicit `n_groups` or a
+            ValueError: If `dynamic_groups=True` is combined with an explicit `n_groups` or a
                 nested worker sequence.
         """
         eligible = n_groups is None and not is_nested
-        if adaptive_groups and not eligible:
+        if dynamic_groups and not eligible:
             raise ValueError(
-                "adaptive_groups=True excludes a pinned grouping: do not combine it with n_groups "
+                "dynamic_groups=True excludes a pinned grouping: do not combine it with n_groups "
                 "or a nested worker sequence."
             )
-        return eligible if adaptive_groups is None else adaptive_groups
+        return eligible if dynamic_groups is None else dynamic_groups
 
     # -------------------------------------------------------------------------
     #  Build
@@ -153,8 +153,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             raise ValueError("A parallel solver needs workers; call with_workers before build.")
         warn_about_worker_count(len(self._worker_configs))
         resolved, label = self._select_storage()
-        if self._adaptive_groups:
-            # every adaptive worker cooperates through the assignment table, so all get the cooperative batch interval
+        if self._dynamic_groups:
+            # every worker of a dynamic solve cooperates through the assignment table, so all get
+            # the cooperative batch interval
             group_size_per_worker = [len(self._worker_configs)] * len(self._worker_configs)
         else:
             group_size_per_worker = [size for size in self._group_sizes for _ in range(size)]
@@ -167,7 +168,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 for index, worker in enumerate(self._worker_configs)
             ],
             group_sizes=self._group_sizes,
-            adaptive_groups=self._adaptive_groups,
+            dynamic_groups=self._dynamic_groups,
         )
 
     def _solver_config_for(
@@ -195,7 +196,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=storage_label,
-            # tighter batches give cooperative workers faster incumbent exchanges
+            # tighter batches give cooperative workers faster exchanges of their shared best
             batch_seconds=COOPERATIVE_BATCH_SECONDS if group_size > 1 else REPORTING_BATCH_SECONDS,
             e2e_budget=self._e2e_budget,
         )

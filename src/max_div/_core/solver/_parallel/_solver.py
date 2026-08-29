@@ -12,10 +12,10 @@ from max_div._core.solver._progress_reporting import ProgressReporter, Verbosity
 from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
 
-from ._adaptive_groups import AdaptiveGroupState, DissolutionEvent
 from ._coordinator import CooperativeCoordinator, IndependentCoordinator, WorkerCoordinator
+from ._dynamic_groups import DissolutionEvent, DynamicGroupState
+from ._exchange_slot import GroupExchangeSlot
 from ._executor import run_workers
-from ._incumbent_slot import GroupIncumbentSlot
 from ._result import best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._worker_config import WorkerConfig
@@ -38,7 +38,7 @@ class ParallelMaxDivSolver:
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
         group_sizes: list[int],
-        adaptive_groups: bool = False,
+        dynamic_groups: bool = False,
     ) -> None:
         """Hold the problem, the resolved backend, and one configuration per worker.
 
@@ -49,17 +49,17 @@ class ParallelMaxDivSolver:
             solver_configs: the solver each worker assembles, in the same order.
             group_sizes: how the workers split into groups, as consecutive run lengths over
                 the worker order; sizes must sum to the worker count.
-            adaptive_groups: when True, `group_sizes` is ignored and the workers regroup during
-                the solve per the schedule in `_adaptive_groups`.
+            dynamic_groups: when True, `group_sizes` is ignored and the workers regroup during
+                the solve per the schedule in `_dynamic_groups`.
         """
         self._problem = problem
         self._storage = storage
         self._worker_configs = worker_configs
         self._solver_configs = solver_configs
         self._group_sizes = group_sizes
-        self._adaptive_groups = adaptive_groups
-        # `last_adaptive_events` holds the most recent adaptive solve's dissolutions, for inspection
-        self.last_adaptive_events: list[DissolutionEvent] = []
+        self._dynamic_groups = dynamic_groups
+        # `last_dynamic_events` holds the most recent dynamic solve's dissolutions, for inspection
+        self.last_dynamic_events: list[DissolutionEvent] = []
 
     # -------------------------------------------------------------------------
     #  API
@@ -86,7 +86,7 @@ class ParallelMaxDivSolver:
         if solver_configs[0].e2e_budget is not None:
             e2e_budget = solver_configs[0].e2e_budget.started()
             solver_configs = [config.with_e2e_budget(e2e_budget) for config in solver_configs]
-        group_state = self._build_group_state() if self._adaptive_groups else None
+        group_state = self._build_group_state() if self._dynamic_groups else None
         if group_state is not None:
             coordinators: list[WorkerCoordinator] = [
                 group_state.coordinator_for(index) for index in range(len(solver_configs))
@@ -101,7 +101,7 @@ class ParallelMaxDivSolver:
                 progress_reporter=progress_reporter,
             )
         if group_state is not None:
-            self.last_adaptive_events = group_state.events()
+            self.last_dynamic_events = group_state.events()
         winner = best_result(results)
         summaries = [
             WorkerSummary(
@@ -117,11 +117,11 @@ class ParallelMaxDivSolver:
         inherited = {field.name: getattr(winner.solution, field.name) for field in fields(MaxDivSolution)}
         return ParallelMaxDivSolution(**inherited, workers=summaries, winning_worker=winner.worker_index)
 
-    def _build_group_state(self) -> AdaptiveGroupState:
-        """Return an adaptive solve's shared group state, with one slot per worker."""
+    def _build_group_state(self) -> DynamicGroupState:
+        """Return a dynamic solve's shared group state, with one slot per worker."""
         config = self._solver_configs[0]
         context = multiprocessing.get_context("spawn")
-        return AdaptiveGroupState(
+        return DynamicGroupState(
             context,
             n_workers=len(self._solver_configs),
             k=config.k,
@@ -138,7 +138,7 @@ class ParallelMaxDivSolver:
                 coordinators.append(IndependentCoordinator())
             else:
                 # the score length is the three fixed components plus one per tie-breaker (Score.as_tuple)
-                slot = GroupIncumbentSlot(context, k=config.k, score_length=3 + len(config.diversity_tie_breakers))
+                slot = GroupExchangeSlot(context, k=config.k, score_length=3 + len(config.diversity_tie_breakers))
                 coordinators.extend([CooperativeCoordinator(slot)] * size)
         return coordinators
 
@@ -175,12 +175,12 @@ def default_worker_count() -> int:
 
 
 def default_group_count(n_workers_total: int) -> int:
-    """Return the fixed group count used where the adaptive schedule does not apply: nearest a quarter of the total.
+    """Return the fixed group count used where the grouping schedule does not apply: nearest a quarter of the total.
 
     Groups of about four workers matched one all-worker group's result quality in benchmarks while
     spreading the risk of a bad seed over several independent groups.  Rounding to the nearest count keeps
     every group's size between 3 and 5; five workers or fewer form a single group.  This fixed default
     applies wherever the builder resolves the grouping to fixed without an explicit grouping given
-    (see `ParallelMaxDivSolverBuilder._resolve_adaptive`).
+    (see `ParallelMaxDivSolverBuilder._resolve_dynamic`).
     """
     return max(1, (n_workers_total + 2) // 4)

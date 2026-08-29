@@ -6,9 +6,9 @@ How the pieces connect, in every setup:
   each other directly; a coordinator is their only sideways channel.
 - **Independent workers** hold the no-op `IndependentCoordinator`.
 - **A fixed worker group's members** each hold a `CooperativeCoordinator` bound to the group's one
-  `GroupIncumbentSlot`; groups never share slots, so no information crosses group boundaries.
-- **An adaptive solve's workers** each hold an `AdaptiveGroupCoordinator` bound to one shared
-  `AdaptiveGroupState`, which regroups the workers mid-solve (see `_adaptive_groups`).
+  `GroupExchangeSlot`; groups never share slots, so no information crosses group boundaries.
+- **A dynamic solve's workers** each hold a `DynamicGroupCoordinator` bound to one shared
+  `DynamicGroupState`, which regroups the workers mid-solve (see `_dynamic_groups`).
 - **Progress reporting is a separate channel entirely** — the one-way queue from workers to the
   parent (see `_progress_channel`).  Coordinators carry search information sideways between a
   group's workers and never progress; the queue carries progress up to the parent and never
@@ -19,7 +19,7 @@ from abc import ABC, abstractmethod
 
 from max_div._core.solver._solver_state import SolverState
 
-from ._incumbent_slot import GroupIncumbentSlot
+from ._exchange_slot import GroupExchangeSlot
 
 
 class WorkerCoordinator(ABC):
@@ -35,7 +35,7 @@ class WorkerCoordinator(ABC):
             state: the worker's mutable solver state at this boundary.
             progress_fraction: the worker's own progress through its optimization step, 0 to 1 —
                 meaningful under time and iteration budgets alike, which lets
-                the adaptive schedule run inside the workers.
+                the grouping schedule run inside the workers.
         """
 
 
@@ -49,8 +49,8 @@ class IndependentCoordinator(WorkerCoordinator):
 class CooperativeCoordinator(WorkerCoordinator):
     """The members of one fixed worker group hold this coordinator, all bound to the group's shared slot."""
 
-    def __init__(self, slot: GroupIncumbentSlot) -> None:
-        """Bind the coordinator to its worker group's incumbent slot."""
+    def __init__(self, slot: GroupExchangeSlot) -> None:
+        """Bind the coordinator to its worker group's exchange slot."""
         self._slot = slot
 
     def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:

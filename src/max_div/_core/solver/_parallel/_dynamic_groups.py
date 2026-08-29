@@ -1,23 +1,23 @@
-"""Adaptive worker groups: every worker starts in its own group, and groups consolidate toward one.
+"""Dynamic worker groups: every worker starts in its own group, and groups consolidate toward one.
 
 The group count decreases linearly from `n_workers` to 1 over the progress fraction of each
-worker's optimization step.  Each decrease dissolves the group whose incumbent slot holds the
+worker's optimization step.  Each decrease dissolves the group whose exchange slot holds the
 worst score — the group whose best score is lowest so far — and reassigns its workers to the
 strongest groups that are short a member, so they reinforce searches that can still win.
 
-The module adds two pieces on top of the fixed-group code in `_coordinator` / `_incumbent_slot`;
+The module adds two pieces on top of the fixed-group code in `_coordinator` / `_exchange_slot`;
 the workers themselves run the schedule:
 
-- **`AdaptiveGroupState` is the shared-memory record of the grouping**: one slot per worker, an
+- **`DynamicGroupState` is the shared-memory record of the grouping**: one slot per worker, an
   assignment table mapping each worker to its slot, the alive group count, and the dissolution
   log.  The parent allocates it before workers spawn and reads the log after they finish.
-- **`AdaptiveGroupCoordinator` runs the schedule from inside the workers**: at each batch
+- **`DynamicGroupCoordinator` runs the schedule from inside the workers**: at each batch
   boundary a worker computes the scheduled group count from its own progress fraction, and
   whichever worker first sees the alive count exceed the schedule executes the dissolution
   itself, under a single transition lock.
 
 Ranking groups on their slots makes dissolution safe: a slot only ever accepts a strictly better
-selection (`GroupIncumbentSlot.exchange`), so it holds its group's best score so far, and
+selection (`GroupExchangeSlot.exchange`), so it holds its group's best score so far, and
 dissolving the worst-slot group can never discard the overall best selection.
 
 A worker learns of its reassignment at its next batch boundary, so membership changes are eventual
@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 from max_div._core.solver._solver_state import SolverState
 
 from ._coordinator import WorkerCoordinator
-from ._incumbent_slot import GroupIncumbentSlot
+from ._exchange_slot import GroupExchangeSlot
 
 if TYPE_CHECKING:
     from multiprocessing.context import BaseContext
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def adaptive_group_count(n_workers: int, progress_fraction: float) -> int:
+def dynamic_group_count(n_workers: int, progress_fraction: float) -> int:
     """Return the scheduled group count at the given progress fraction.
 
     The count decreases linearly from `n_workers` at fraction 0 and reaches 1 at fraction
@@ -68,8 +68,8 @@ class DissolutionEvent:
     reassignments: dict[int, int]
 
 
-class AdaptiveGroupState:
-    """The shared group state records an adaptive solve's grouping and executes the transitions over it.
+class DynamicGroupState:
+    """The shared group state records a dynamic solve's grouping and executes the transitions over it.
 
     The parent allocates the state before workers spawn; every worker's coordinator holds it
     and any worker may execute a dissolution.  After the workers finish, `events()` returns the
@@ -88,7 +88,7 @@ class AdaptiveGroupState:
         """
         self._n_workers = n_workers
         self._score_length = score_length
-        self._slots = [GroupIncumbentSlot(context, k=k, score_length=score_length) for _ in range(n_workers)]
+        self._slots = [GroupExchangeSlot(context, k=k, score_length=score_length) for _ in range(n_workers)]
         self._assignment = context.Array("i", list(range(n_workers)), lock=False)
         self._n_alive_groups = context.Value("i", n_workers, lock=False)
         self._transition_lock = context.Lock()
@@ -102,9 +102,9 @@ class AdaptiveGroupState:
         self._ev_assignment = context.Array("i", n_events * n_workers, lock=False)
         self._ev_scores = context.Array("d", n_events * n_workers * score_length, lock=False)
 
-    def coordinator_for(self, worker_index: int) -> "AdaptiveGroupCoordinator":
+    def coordinator_for(self, worker_index: int) -> "DynamicGroupCoordinator":
         """Return the given worker's coordinator, bound to this shared state."""
-        return AdaptiveGroupCoordinator(self, worker_index)
+        return DynamicGroupCoordinator(self, worker_index)
 
     # -------------------------------------------------------------------------
     #  Worker-side operations
@@ -116,7 +116,7 @@ class AdaptiveGroupState:
         transition itself runs under the one transition lock, and the count re-check inside it
         means a concurrent caller that lost the race dissolves nothing.
         """
-        target = adaptive_group_count(self._n_workers, progress_fraction)
+        target = dynamic_group_count(self._n_workers, progress_fraction)
         if self._n_alive_groups.value <= target:
             return
         with self._transition_lock:
@@ -126,7 +126,7 @@ class AdaptiveGroupState:
     def exchange(
         self, worker_index: int, score: tuple[float, ...], selection: "NDArray[np.int32]"
     ) -> "NDArray[np.int32] | None":
-        """Exchange with the worker's currently assigned slot; see `GroupIncumbentSlot.exchange`.
+        """Exchange with the worker's currently assigned slot; see `GroupExchangeSlot.exchange`.
 
         The assignment read is one shared-memory element; re-reading it every exchange keeps the
         workers free of any synchronization with dissolution writes.
@@ -213,10 +213,10 @@ class AdaptiveGroupState:
         return events
 
 
-class AdaptiveGroupCoordinator(WorkerCoordinator):
-    """A worker of an adaptive solve runs the schedule and exchanges through the shared state."""
+class DynamicGroupCoordinator(WorkerCoordinator):
+    """A worker of a dynamic solve runs the schedule and exchanges through the shared state."""
 
-    def __init__(self, group_state: AdaptiveGroupState, worker_index: int) -> None:
+    def __init__(self, group_state: DynamicGroupState, worker_index: int) -> None:
         """Bind the coordinator to the solve's shared group state and the worker's index."""
         self._group_state = group_state
         self._worker_index = worker_index

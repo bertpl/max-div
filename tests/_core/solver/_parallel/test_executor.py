@@ -10,7 +10,7 @@ from max_div._core.solver._distance_storage import build_shared_distance_store
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import (
     CooperativeCoordinator,
-    GroupIncumbentSlot,
+    GroupExchangeSlot,
     IndependentCoordinator,
     best_result,
     run_workers,
@@ -99,12 +99,12 @@ def test_one_coordinator_per_worker_is_required():
 
 
 def test_a_group_of_cooperative_workers_solves_and_exchanges():
-    """Spawned workers sharing one incumbent slot all report results, and the slot was published to."""
+    """Spawned workers sharing one exchange slot all report results, and the slot was published to."""
     # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
     n_score_components = 3 + len(config.diversity_tie_breakers)
-    slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=builder._k, score_length=n_score_components)
+    slot = GroupExchangeSlot(multiprocessing.get_context("spawn"), k=builder._k, score_length=n_score_components)
     coordinators = [CooperativeCoordinator(slot) for _ in _SEEDS]
 
     # --- act --------------------------

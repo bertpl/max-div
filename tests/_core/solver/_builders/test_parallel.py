@@ -286,49 +286,49 @@ def test_cooperative_workers_batch_at_the_cooperative_interval():
 
 
 # =================================================================================================
-#  Adaptive grouping
+#  Dynamic grouping
 # =================================================================================================
 @pytest.mark.parametrize("budget", [seconds(10.0), iterations(200)])
-def test_any_budget_kind_defaults_to_adaptive_grouping(budget):
+def test_any_budget_kind_defaults_to_dynamic_grouping(budget):
     """With no fixed grouping pinned, workers start in groups of one and cooperate, whatever the budget kind."""
     # --- act --------------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(budget, 8).build()
 
     # --- assert -----------------------
-    assert solver._adaptive_groups
+    assert solver._dynamic_groups
     assert solver._group_sizes == [1] * 8
     assert all(config.batch_seconds == COOPERATIVE_BATCH_SECONDS for config in solver._solver_configs)
 
 
-def test_a_flat_sequence_with_a_time_budget_is_adaptive():
-    """Per-worker configurations do not pin a grouping, so the adaptive default applies to them too."""
+def test_a_flat_sequence_with_a_time_budget_is_dynamic():
+    """Per-worker configurations do not pin a grouping, so the dynamic default applies to them too."""
     # --- act --------------------------
     solver = (
         ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), [WorkerConfig(), WorkerConfig()]).build()
     )
 
     # --- assert -----------------------
-    assert solver._adaptive_groups
+    assert solver._dynamic_groups
 
 
 @pytest.mark.parametrize(
     "kwargs",
     [
         {"n_groups": 2},
-        {"adaptive_groups": False},
+        {"dynamic_groups": False},
     ],
 )
-def test_a_pinned_grouping_opts_out_of_the_adaptive_default(kwargs):
+def test_a_pinned_grouping_opts_out_of_the_dynamic_default(kwargs):
     """Naming a fixed grouping keeps the workers in their groups for the whole solve."""
     # --- act --------------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 8, **kwargs).build()
 
     # --- assert -----------------------
-    assert not solver._adaptive_groups
+    assert not solver._dynamic_groups
     assert solver._group_sizes == [4, 4]
 
 
-def test_a_nested_sequence_opts_out_of_the_adaptive_default():
+def test_a_nested_sequence_opts_out_of_the_dynamic_default():
     """A nested sequence carries its own grouping, which the schedule must not dissolve."""
     # --- act --------------------------
     solver = (
@@ -338,7 +338,7 @@ def test_a_nested_sequence_opts_out_of_the_adaptive_default():
     )
 
     # --- assert -----------------------
-    assert not solver._adaptive_groups
+    assert not solver._dynamic_groups
 
 
 @pytest.mark.parametrize(
@@ -348,19 +348,19 @@ def test_a_nested_sequence_opts_out_of_the_adaptive_default():
         {"workers": [[WorkerConfig()], [WorkerConfig()]]},
     ],
 )
-def test_forcing_adaptive_alongside_a_pinned_grouping_is_rejected(kwargs):
-    """adaptive_groups=True contradicts a pinned grouping, so combining them is a configuration error."""
+def test_forcing_dynamic_alongside_a_pinned_grouping_is_rejected(kwargs):
+    """dynamic_groups=True contradicts a pinned grouping, so combining them is a configuration error."""
     # --- arrange ----------------------
     arguments = {"target_duration": seconds(10.0), "workers": 4} | kwargs
 
     # --- act / assert -----------------
-    with pytest.raises(ValueError, match="adaptive_groups=True"):
-        ParallelMaxDivSolverBuilder(_problem()).with_workers(adaptive_groups=True, **arguments)
+    with pytest.raises(ValueError, match="dynamic_groups=True"):
+        ParallelMaxDivSolverBuilder(_problem()).with_workers(dynamic_groups=True, **arguments)
 
 
 @pytest.mark.parametrize("budget", [seconds(0.2), iterations(200)])
-def test_an_adaptive_solve_returns_a_valid_solution_and_records_its_dissolutions(budget):
-    """An adaptive solve produces an ordinary solution, with the schedule's dissolutions inspectable afterwards."""
+def test_a_dynamic_solve_returns_a_valid_solution_and_records_its_dissolutions(budget):
+    """A dynamic solve produces an ordinary solution, with the schedule's dissolutions inspectable afterwards."""
     # --- arrange ----------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_seed(5).with_workers(budget, 2).build()
 
@@ -369,8 +369,8 @@ def test_an_adaptive_solve_returns_a_valid_solution_and_records_its_dissolutions
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
-    assert len(solver.last_adaptive_events) == 1  # two groups consolidate into one
-    assert solver.last_adaptive_events[0].reassignments  # the freed worker was re-pointed
+    assert len(solver.last_dynamic_events) == 1  # two groups consolidate into one
+    assert solver.last_dynamic_events[0].reassignments  # the freed worker was re-pointed
 
 
 def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
@@ -388,7 +388,7 @@ def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
-    assert solver.last_adaptive_events == []
+    assert solver.last_dynamic_events == []
 
 
 # =================================================================================================

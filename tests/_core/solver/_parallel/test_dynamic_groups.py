@@ -5,16 +5,16 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
-from max_div._core.solver._parallel import AdaptiveGroupState, adaptive_group_count
+from max_div._core.solver._parallel import DynamicGroupState, dynamic_group_count
 from max_div._core.solver._solver_state import SolverState
 
 
-def _group_state(n_workers: int) -> AdaptiveGroupState:
+def _group_state(n_workers: int) -> DynamicGroupState:
     """Return a shared group state over the given worker count, with three-component score slots."""
-    return AdaptiveGroupState(multiprocessing.get_context("spawn"), n_workers=n_workers, k=3, score_length=3)
+    return DynamicGroupState(multiprocessing.get_context("spawn"), n_workers=n_workers, k=3, score_length=3)
 
 
-def _publish(group_state: AdaptiveGroupState, worker: int, diversity: float) -> None:
+def _publish(group_state: DynamicGroupState, worker: int, diversity: float) -> None:
     """Publish a selection with the given diversity through the given worker's assigned slot."""
     group_state.exchange(worker, (3.0, 1.0, diversity), np.array([0, 1, 2], dtype=np.int32))
 
@@ -55,7 +55,7 @@ def _state_with(indices: list[int]) -> SolverState:
 def test_the_group_count_decreases_linearly_over_the_progress_fraction(n_workers, fraction, expected):
     """Each group count holds for an equal share of the budget, from n_workers down to one."""
     # --- act / assert -----------------
-    assert adaptive_group_count(n_workers, fraction) == expected
+    assert dynamic_group_count(n_workers, fraction) == expected
 
 
 # =================================================================================================
@@ -160,7 +160,7 @@ def test_dead_groups_drop_out_of_later_event_scores():
 #  Coordinator
 # =================================================================================================
 def test_the_coordinator_exchanges_with_whichever_slot_the_assignment_names():
-    """After a reassignment, a worker's next boundary reaches the new slot and adopts its better incumbent."""
+    """After a reassignment, a worker's next boundary reaches the new slot and adopts its better stored selection."""
     # --- arrange ----------------------
     group_state = _group_state(2)
     spread_out = _state_with([0, 3, 5])  # min separation 10
@@ -175,7 +175,7 @@ def test_the_coordinator_exchanges_with_whichever_slot_the_assignment_names():
     coordinator.at_batch_boundary(clustered, progress_fraction=0.0)
 
     # --- assert -----------------------
-    assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted slot 1's incumbent
+    assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted slot 1's stored selection
 
 
 def test_a_boundary_past_the_threshold_regroups_and_adopts_in_one_visit():

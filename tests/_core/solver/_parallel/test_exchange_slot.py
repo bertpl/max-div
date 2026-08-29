@@ -3,16 +3,16 @@ import multiprocessing
 import numpy as np
 import pytest
 
-from max_div._core.solver._parallel import GroupIncumbentSlot
+from max_div._core.solver._parallel import GroupExchangeSlot
 
 
 # =================================================================================================
 #  Fixtures / helpers
 # =================================================================================================
 @pytest.fixture
-def slot() -> GroupIncumbentSlot:
+def slot() -> GroupExchangeSlot:
     """Return a fresh, never-written slot."""
-    return GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=4, score_length=3)
+    return GroupExchangeSlot(multiprocessing.get_context("spawn"), k=4, score_length=3)
 
 
 def _selection(*indices: int) -> np.ndarray:
@@ -23,7 +23,7 @@ def _selection(*indices: int) -> np.ndarray:
 # =================================================================================================
 #  Tests
 # =================================================================================================
-def test_first_exchange_publishes(slot: GroupIncumbentSlot):
+def test_first_exchange_publishes(slot: GroupExchangeSlot):
     """The first visitor always publishes: a never-written slot holds nothing to compare against."""
     # --- arrange ----------------------
     assert not slot.written
@@ -36,7 +36,7 @@ def test_first_exchange_publishes(slot: GroupIncumbentSlot):
     assert slot.written
 
 
-def test_better_score_publishes(slot: GroupIncumbentSlot):
+def test_better_score_publishes(slot: GroupExchangeSlot):
     """A strictly better score replaces the stored selection."""
     # --- arrange ----------------------
     slot.exchange((1.0, 1.0, 0.5), _selection(0, 1, 2, 3))
@@ -50,7 +50,7 @@ def test_better_score_publishes(slot: GroupIncumbentSlot):
     np.testing.assert_array_equal(slot.exchange((1.0, 1.0, 0.6), _selection(0, 1, 2, 3)), [4, 5, 6, 7])
 
 
-def test_worse_score_receives_the_stored_selection(slot: GroupIncumbentSlot):
+def test_worse_score_receives_the_stored_selection(slot: GroupExchangeSlot):
     """A strictly worse visitor gets the stored selection back and stores nothing."""
     # --- arrange ----------------------
     slot.exchange((1.0, 1.0, 0.5), _selection(3, 1, 0, 2))
@@ -65,7 +65,7 @@ def test_worse_score_receives_the_stored_selection(slot: GroupIncumbentSlot):
     np.testing.assert_array_equal(slot.exchange((1.0, 0.9, 0.8), _selection(4, 5, 6, 7)), [3, 1, 0, 2])
 
 
-def test_equal_score_neither_publishes_nor_returns(slot: GroupIncumbentSlot):
+def test_equal_score_neither_publishes_nor_returns(slot: GroupExchangeSlot):
     """Equal scores leave the slot untouched: adoption is strictly-better only."""
     # --- arrange ----------------------
     slot.exchange((1.0, 1.0, 0.5), _selection(0, 1, 2, 3))
@@ -79,7 +79,7 @@ def test_equal_score_neither_publishes_nor_returns(slot: GroupIncumbentSlot):
     np.testing.assert_array_equal(slot.exchange((1.0, 1.0, 0.4), _selection(4, 5, 6, 7)), [0, 1, 2, 3])
 
 
-def test_partial_selection_round_trips(slot: GroupIncumbentSlot):
+def test_partial_selection_round_trips(slot: GroupExchangeSlot):
     """A selection smaller than k comes back at its own size, not padded to k."""
     # --- arrange ----------------------
     slot.exchange((0.5, 1.0, 0.5), _selection(2, 3))
@@ -91,7 +91,7 @@ def test_partial_selection_round_trips(slot: GroupIncumbentSlot):
     np.testing.assert_array_equal(outcome, [2, 3])
 
 
-def test_returned_selection_is_an_independent_copy(slot: GroupIncumbentSlot):
+def test_returned_selection_is_an_independent_copy(slot: GroupExchangeSlot):
     """Mutating a returned selection must not corrupt what the slot stores."""
     # --- arrange ----------------------
     slot.exchange((1.0, 1.0, 0.5), _selection(0, 1, 2, 3))
@@ -104,7 +104,7 @@ def test_returned_selection_is_an_independent_copy(slot: GroupIncumbentSlot):
     np.testing.assert_array_equal(slot.exchange((1.0, 1.0, 0.4), _selection(4, 5, 6, 7)), [0, 1, 2, 3])
 
 
-def test_peek_score_reads_without_disturbing_the_slot(slot: GroupIncumbentSlot):
+def test_peek_score_reads_without_disturbing_the_slot(slot: GroupExchangeSlot):
     """A never-written slot peeks as None; a written one returns its score and stays adoptable."""
     # --- arrange ----------------------
     assert slot.peek_score() is None

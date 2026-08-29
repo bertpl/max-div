@@ -9,7 +9,7 @@ from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import (
     CooperativeCoordinator,
-    GroupIncumbentSlot,
+    GroupExchangeSlot,
     IndependentCoordinator,
     WorkerCoordinator,
 )
@@ -80,7 +80,7 @@ def _cooperation_state(indices: list[int]) -> SolverState:
 def test_cooperative_coordinator_moves_the_best_selection_between_states():
     """The better state's boundary publishes its selection; the worse state's boundary adopts it."""
     # --- arrange ----------------------
-    slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
+    slot = GroupExchangeSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
     coordinator = CooperativeCoordinator(slot)
     spread_out = _cooperation_state([0, 3, 5])  # min separation 10
     clustered = _cooperation_state([0, 1, 2])  # min separation 1
@@ -90,21 +90,21 @@ def test_cooperative_coordinator_moves_the_best_selection_between_states():
     coordinator.at_batch_boundary(clustered, progress_fraction=0.0)
 
     # --- assert -----------------------
-    assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted the published incumbent
+    assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted the published best
     assert spread_out.selected_index_array.tolist() == [0, 3, 5]  # publisher keeps its own
 
 
 def test_cooperative_coordinator_keeps_the_better_state_untouched():
     """A worker that beats the slot publishes without adopting; one that matches it leaves the slot untouched."""
     # --- arrange ----------------------
-    slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
+    slot = GroupExchangeSlot(multiprocessing.get_context("spawn"), k=3, score_length=3)
     coordinator = CooperativeCoordinator(slot)
     clustered = _cooperation_state([0, 1, 2])
     spread_out = _cooperation_state([0, 3, 5])
 
     # --- act --------------------------
     coordinator.at_batch_boundary(clustered, progress_fraction=0.0)  # publishes (empty slot)
-    coordinator.at_batch_boundary(spread_out, progress_fraction=0.0)  # better: replaces the stored incumbent
+    coordinator.at_batch_boundary(spread_out, progress_fraction=0.0)  # better: replaces the stored best
     coordinator.at_batch_boundary(spread_out, progress_fraction=0.0)  # equal to the slot now: nothing happens
 
     # --- assert -----------------------
@@ -119,7 +119,7 @@ def test_a_lone_cooperative_worker_searches_exactly_as_if_alone():
     # --- arrange ----------------------
     builder = MaxDivSolverBuilder(MaxDivProblem.new(np.random.default_rng(4).random((50, 3)).astype(np.float32), k=5))
     n_score_components = 3 + len(builder._determine_diversity_tie_breakers())
-    slot = GroupIncumbentSlot(multiprocessing.get_context("spawn"), k=5, score_length=n_score_components)
+    slot = GroupExchangeSlot(multiprocessing.get_context("spawn"), k=5, score_length=n_score_components)
 
     # --- act --------------------------
     cooperative = _solve_with(CooperativeCoordinator(slot))
