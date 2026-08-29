@@ -76,7 +76,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 uses `default_worker_count()`.
             n_groups: number of *fixed* groups; only combines with an integer (or omitted)
                 `workers` — a nested sequence carries its own grouping.  Omitting it
-                keeps the adaptive default.
+                leaves the grouping to `adaptive_groups`.
             end_to_end_budget: when True, `target_duration` bounds the whole parallel solve —
                 shared store build, worker spawning and initialization included — counted from
                 the parent's solve start, so every worker's optimization gets whatever time

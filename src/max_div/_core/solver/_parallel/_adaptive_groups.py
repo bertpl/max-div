@@ -71,8 +71,8 @@ class DissolutionEvent:
 class AdaptiveGroupState:
     """The shared group state records an adaptive solve's grouping and executes the transitions over it.
 
-    Allocated in the parent before workers spawn; every worker's coordinator holds it and any
-    worker may execute a dissolution.  After the workers finish, `events()` returns the
+    The parent allocates the state before workers spawn; every worker's coordinator holds it
+    and any worker may execute a dissolution.  After the workers finish, `events()` returns the
     dissolution log.
     """
 
@@ -92,9 +92,9 @@ class AdaptiveGroupState:
         self._assignment = context.Array("i", list(range(n_workers)), lock=False)
         self._n_alive_groups = context.Value("i", n_workers, lock=False)
         self._transition_lock = context.Lock()
-        # the dissolution log: exactly n_workers - 1 dissolutions can ever happen, so every
-        # array is preallocated.  Each event records the executing worker's fraction, the
-        # dissolved group, the post-event assignment table, and every slot's score (NaN = unwritten)
+        # The dissolution log is preallocated: exactly n_workers - 1 dissolutions can ever
+        # happen.  Each event records the executing worker's fraction, the dissolved group, the
+        # post-event assignment table, and every slot's score (NaN = unwritten).
         n_events = max(n_workers - 1, 1)
         self._ev_count = context.Value("i", 0, lock=False)
         self._ev_fraction = context.Array("d", n_events, lock=False)
@@ -136,8 +136,8 @@ class AdaptiveGroupState:
     def _dissolve_worst(self, progress_fraction: float) -> None:
         """Dissolve the worst-scoring group and reassign its workers to the strongest short groups.
 
-        Runs under the transition lock; the assignment table is the single source of membership,
-        so sizes are counted from it rather than tracked separately.
+        The caller holds the transition lock; the assignment table is the single source of
+        membership, so sizes are counted from it rather than tracked separately.
         """
         assignment = list(self._assignment)
         alive = sorted(set(assignment))
@@ -173,7 +173,7 @@ class AdaptiveGroupState:
     def _record_event(
         self, progress_fraction: float, dissolved: int, scores: dict[int, tuple[float, ...] | None]
     ) -> None:
-        """Append one dissolution to the shared log; runs under the transition lock."""
+        """Append one dissolution to the shared log; the caller holds the transition lock."""
         index = self._ev_count.value
         self._ev_fraction[index] = progress_fraction
         self._ev_dissolved[index] = dissolved
@@ -222,7 +222,7 @@ class AdaptiveGroupCoordinator(WorkerCoordinator):
         self._worker_index = worker_index
 
     def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
-        """Dissolve groups the schedule is due, then exchange with the currently assigned slot."""
+        """Bring the group count down to the schedule's target, then exchange with the currently assigned slot."""
         self._group_state.maybe_dissolve(progress_fraction)
         incoming = self._group_state.exchange(self._worker_index, state.score.as_tuple(), state.selected_index_array)
         if incoming is not None:

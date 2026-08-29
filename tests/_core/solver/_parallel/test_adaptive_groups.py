@@ -128,7 +128,7 @@ def test_a_late_fraction_dissolves_several_groups_at_once():
 
 
 def test_an_on_schedule_count_dissolves_nothing():
-    """A fraction whose scheduled count matches the live count leaves the grouping untouched."""
+    """A fraction whose scheduled count matches the alive count leaves the grouping untouched."""
     # --- arrange ----------------------
     group_state = _group_state(3)
 
@@ -141,7 +141,7 @@ def test_an_on_schedule_count_dissolves_nothing():
 
 
 def test_dead_groups_drop_out_of_later_event_scores():
-    """An event's slot scores cover only the then-alive groups, showing the grouping as it stood when it fired."""
+    """An event's slot scores cover only the then-alive groups: the grouping as it stood when the event fired."""
     # --- arrange ----------------------
     group_state = _group_state(3)
     for worker, diversity in enumerate([0.9, 0.5, 0.1]):
