@@ -31,6 +31,9 @@ solver:
     distance.cosine:
       mark: partial
       note: *via_kernel
+    distance.minkowski:
+      mark: partial
+      note: *via_kernel
     distance.custom:
       mark: full
       note:

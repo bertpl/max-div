@@ -24,6 +24,7 @@ Every capability cell carries one of the marks below. A mark composes with the c
 | L2 | Selects under L2 (Euclidean) distance computed by the tool from vector input. |
 | L∞ | Selects under L∞ (Chebyshev) distance computed by the tool from vector input. |
 | cosine | Selects under cosine distance computed by the tool from vector input. Reaching it through a documented transform — L2-normalize, then select under Euclidean — counts as reachable, not built in. |
+| Lp | Selects under Minkowski distance with caller-chosen power p, computed by the tool from vector input. |
 | custom | Accepts distances the caller computed — a distance matrix or a distance callable — so a metric the tool does not implement is usable anyway. |
 
 </div>

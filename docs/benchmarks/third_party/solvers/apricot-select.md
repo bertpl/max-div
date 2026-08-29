@@ -26,6 +26,12 @@ solver:
     distance.l2: {mark: full}
     distance.linf: {mark: full}
     distance.cosine: {mark: full}
+    distance.minkowski:
+      mark: partial
+      note:
+        text: >-
+          The metric argument is a name forwarded to scikit-learn without the power parameter, so
+          a caller-chosen p is reachable only through the precomputed-similarity input.
     distance.custom:
       mark: full
       note:

@@ -134,6 +134,13 @@ groups:
           Selects under cosine distance computed by the tool from vector input. Reaching it through
           a documented transform — L2-normalize, then select under Euclidean — counts as reachable,
           not built in.
+      - key: minkowski
+        hero_label: Lp
+        label: Minkowski distance
+        hero: true
+        definition: >-
+          Selects under Minkowski distance with caller-chosen power p, computed by the tool from
+          vector input.
       - key: custom
         hero_label: custom
         label: caller-supplied distances

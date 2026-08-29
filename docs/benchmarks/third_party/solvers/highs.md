@@ -29,6 +29,9 @@ solver:
     distance.cosine:
       mark: partial
       note: *coeffs
+    distance.minkowski:
+      mark: partial
+      note: *coeffs
     distance.custom:
       mark: full
       note:

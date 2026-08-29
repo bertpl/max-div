@@ -23,6 +23,7 @@ solver:
       note: &cosine_norm
         text: >-
           Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
+    distance.minkowski: {mark: none}
     distance.custom:
       mark: none
       note:

@@ -36,6 +36,9 @@ solver:
     distance.cosine:
       mark: partial
       note: *coefficients
+    distance.minkowski:
+      mark: partial
+      note: *coefficients
     distance.custom:
       mark: full
       note:

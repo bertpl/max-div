@@ -29,6 +29,9 @@ solver:
     distance.cosine:
       mark: partial
       note: *callback
+    distance.minkowski:
+      mark: partial
+      note: *callback
     distance.custom:
       mark: full
       note:

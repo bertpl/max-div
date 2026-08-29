@@ -29,6 +29,13 @@ solver:
       note:
         text: >-
           Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
+    distance.minkowski:
+      mark: full
+      note:
+        text: >-
+          The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p, forwarded
+          to scipy by the radius-based methods; the greedy pickers accept a precomputed matrix or
+          callable instead.
     distance.custom:
       mark: full
       note:
