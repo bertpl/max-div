@@ -83,12 +83,15 @@ class SharedDistanceStore:
         self,
         segment: SharedMemory,
         shape: tuple[int, ...],
-        kind: int,
+        kind: int | np.integer,
         n: int,
-        metric_kind: int,
-        metric_p: float,
+        metric_kind: int | np.integer,
+        metric_p: float | np.floating,
     ) -> None:
-        """Wrap an owned segment; prefer `allocate`, which sizes the segment for the shape."""
+        """Wrap an owned segment; prefer `allocate`, which sizes the segment for the shape.
+
+        The one place a store's numpy scalars become the spec's plain Python types.
+        """
         self._segment = segment
         self._buffer: NDArray[np.float32] = np.ndarray(shape, dtype=np.float32, buffer=segment.buf)
         self._spec = SharedStoreSpec(
@@ -102,7 +105,12 @@ class SharedDistanceStore:
 
     @classmethod
     def allocate(
-        cls, shape: tuple[int, ...], kind: int, n: int, metric_kind: int = 0, metric_p: float = float("nan")
+        cls,
+        shape: tuple[int, ...],
+        kind: int | np.integer,
+        n: int,
+        metric_kind: int | np.integer = 0,
+        metric_p: float | np.floating = float("nan"),
     ) -> "SharedDistanceStore":
         """Create a segment sized for `shape` and return the owner reading from it.
 
@@ -164,9 +172,7 @@ def publish_distance_store(store: DistanceStore, n: int) -> SharedDistanceStore:
     buffer, which is the same bytes without the transient second copy.
     """
     array = _populated_array(store)
-    shared = SharedDistanceStore.allocate(
-        array.shape, int(store.kind), n, int(store.metric_kind), float(store.metric_p)
-    )
+    shared = SharedDistanceStore.allocate(array.shape, store.kind, n, store.metric_kind, store.metric_p)
     shared.buffer[:] = array
     return shared
 

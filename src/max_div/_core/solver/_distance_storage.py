@@ -139,12 +139,12 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
         match resolved:
             case DistanceStorage.CONDENSED:
                 _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), True)
-                shared = SharedDistanceStore.allocate(((n * (n - 1)) // 2,), int(KIND_CONDENSED), n)
+                shared = SharedDistanceStore.allocate(((n * (n - 1)) // 2,), KIND_CONDENSED, n)
                 compute_pdist(problem.vectors, problem.distance_metric, out=shared.buffer)
                 return shared
             case DistanceStorage.FULL_MATRIX:
                 _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), True)
-                shared = SharedDistanceStore.allocate((n, n), int(KIND_FULL_MATRIX), n)
+                shared = SharedDistanceStore.allocate((n, n), KIND_FULL_MATRIX, n)
                 compute_full_matrix(problem.vectors, problem.distance_metric, out=shared.buffer)
                 return shared
             case DistanceStorage.LAZY:
@@ -157,7 +157,7 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
             # condensed input, full matrix asked for: expanding into the segment makes it the one
             # n²-sized allocation on this path
             _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), False)
-            shared = SharedDistanceStore.allocate((n, n), int(KIND_FULL_MATRIX), n)
+            shared = SharedDistanceStore.allocate((n, n), KIND_FULL_MATRIX, n)
             expand_condensed(as_given.pdist, n, out=shared.buffer)
             return shared
     return publish_distance_store(build_distance_store(problem, resolved), n)
