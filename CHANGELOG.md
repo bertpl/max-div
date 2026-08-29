@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Parallel solving now adapts its worker grouping during the solve — starting from independent per-worker groups and consolidating toward one group — instead of using fixed groups of about four; an explicit `n_groups` keeps the fixed behavior
+- Parallel solving now adapts its worker grouping during the solve — starting from independent per-worker groups and consolidating toward one group — instead of using fixed groups of about four
+- Configuring parallel workers is split over two builder methods: `with_workers()` takes just a worker count and uses the dynamic grouping, and `with_custom_worker_groups()` takes per-worker configurations and keeps a fixed grouping
+- The end-to-end budget option moved from an `end_to_end_budget` argument on `with_preset()` and the worker configuration to a `with_end_to_end_budget()` method on both builders
 
 ### Deprecated
 

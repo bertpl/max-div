@@ -9,9 +9,7 @@ from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._distance_storage import build_shared_distance_store
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import (
-    CooperativeCoordinator,
-    GroupExchangeSlot,
-    IndependentCoordinator,
+    WorkerGroupState,
     best_result,
     run_workers,
 )
@@ -20,6 +18,19 @@ from max_div._core.solver._parallel._progress_view import ParallelProgressView
 from max_div._core.solver._parallel._result import WorkerResult
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import ProgressReporter, SnapshotRequirements, Verbosity
+
+
+def _independent_coordinators(config, n: int):
+    """Return n coordinators over a fixed grouping of singleton groups — fully independent workers."""
+    state = WorkerGroupState(
+        multiprocessing.get_context("spawn"),
+        group_sizes=[1] * n,
+        k=config.k,
+        score_length=3 + len(config.diversity_tie_breakers),
+        dynamic=False,
+    )
+    return [state.coordinator_for(index) for index in range(n)]
+
 
 _SEEDS = (11, 22, 33)
 
@@ -40,7 +51,7 @@ def parallel_results():
         yield (
             builder,
             run_workers(
-                [config.with_seed(seed) for seed in _SEEDS], shared.spec, [IndependentCoordinator() for _ in _SEEDS]
+                [config.with_seed(seed) for seed in _SEEDS], shared.spec, _independent_coordinators(config, len(_SEEDS))
             ),
         )
 
@@ -95,7 +106,7 @@ def test_one_coordinator_per_worker_is_required():
 
     # --- act & assert -----------------
     with build_shared_distance_store(builder._problem, resolved) as shared, pytest.raises(ValueError):
-        run_workers([config.with_seed(1), config.with_seed(2)], shared.spec, [IndependentCoordinator()])
+        run_workers([config.with_seed(1), config.with_seed(2)], shared.spec, _independent_coordinators(config, 1))
 
 
 def test_a_group_of_cooperative_workers_solves_and_exchanges():
@@ -103,9 +114,14 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
     # --- arrange ----------------------
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
-    n_score_components = 3 + len(config.diversity_tie_breakers)
-    slot = GroupExchangeSlot(multiprocessing.get_context("spawn"), k=builder._k, score_length=n_score_components)
-    coordinators = [CooperativeCoordinator(slot) for _ in _SEEDS]
+    group_state = WorkerGroupState(
+        multiprocessing.get_context("spawn"),
+        group_sizes=[len(_SEEDS)],
+        k=config.k,
+        score_length=3 + len(config.diversity_tie_breakers),
+        dynamic=False,
+    )
+    coordinators = [group_state.coordinator_for(index) for index in range(len(_SEEDS))]
 
     # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
@@ -114,7 +130,7 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
     # --- assert -----------------------
     assert len(results) == len(_SEEDS)
     assert all(result.i_selected.size == builder._k for result in results)
-    assert slot.written  # at least the first boundary reached published into the empty slot
+    assert group_state._slots[0].written  # at least the first boundary reached published into the empty slot
 
 
 def test_parallel_solve_renders_coherent_progress(capsys):
@@ -129,7 +145,7 @@ def test_parallel_solve_renders_coherent_progress(capsys):
         results = run_workers(
             [config.with_seed(seed) for seed in _SEEDS],
             shared.spec,
-            [IndependentCoordinator() for _ in _SEEDS],
+            _independent_coordinators(config, len(_SEEDS)),
             progress_reporter=reporter,
         )
 
@@ -153,8 +169,10 @@ def test_solve_in_worker_runs_in_process():
 
     # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
-        solve_in_worker(0, config.with_seed(1), shared.spec, IndependentCoordinator(), messages, None)
-        solve_in_worker(1, config.with_seed(2), shared.spec, IndependentCoordinator(), messages, requirements)
+        solve_in_worker(0, config.with_seed(1), shared.spec, _independent_coordinators(config, 1)[0], messages, None)
+        solve_in_worker(
+            1, config.with_seed(2), shared.spec, _independent_coordinators(config, 1)[0], messages, requirements
+        )
 
     # --- assert -----------------------
     received = []
@@ -184,7 +202,7 @@ def test_drain_collects_in_flight_results_of_dead_workers():
     resolved, config = builder.prepare_storage_and_config()
     messages = queue.Queue()
     with build_shared_distance_store(builder._problem, resolved) as shared:
-        solve_in_worker(0, config.with_seed(1), shared.spec, IndependentCoordinator(), messages, None)
+        solve_in_worker(0, config.with_seed(1), shared.spec, _independent_coordinators(config, 1)[0], messages, None)
     workers = [_StubWorker(alive=False), _StubWorker(alive=False)]  # worker 1 died without reporting
 
     # --- act --------------------------

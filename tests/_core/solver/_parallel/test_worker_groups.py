@@ -5,16 +5,22 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
-from max_div._core.solver._parallel import DynamicGroupState, dynamic_group_count
+from max_div._core.solver._parallel import WorkerGroupState, dynamic_group_count
 from max_div._core.solver._solver_state import SolverState
 
 
-def _group_state(n_workers: int) -> DynamicGroupState:
+def _group_state(n_workers: int, group_sizes: list[int] | None = None, dynamic: bool = True) -> WorkerGroupState:
     """Return a shared group state over the given worker count, with three-component score slots."""
-    return DynamicGroupState(multiprocessing.get_context("spawn"), n_workers=n_workers, k=3, score_length=3)
+    return WorkerGroupState(
+        multiprocessing.get_context("spawn"),
+        group_sizes=group_sizes if group_sizes is not None else [1] * n_workers,
+        k=3,
+        score_length=3,
+        dynamic=dynamic,
+    )
 
 
-def _publish(group_state: DynamicGroupState, worker: int, diversity: float) -> None:
+def _publish(group_state: WorkerGroupState, worker: int, diversity: float) -> None:
     """Publish a selection with the given diversity through the given worker's assigned slot."""
     group_state.exchange(worker, (3.0, 1.0, diversity), np.array([0, 1, 2], dtype=np.int32))
 
@@ -196,3 +202,44 @@ def test_a_boundary_past_the_threshold_regroups_and_adopts_in_one_visit():
     assert event.dissolved_group == 0  # the caller's own, lower-scoring group
     assert event.reassignments == {0: 1}
     assert clustered.selected_index_array.tolist() == [0, 3, 5]  # exchanged with the survivor's slot
+
+
+# =================================================================================================
+#  Fixed grouping
+# =================================================================================================
+def test_a_fixed_grouping_starts_from_its_configured_assignment():
+    """Group sizes translate into consecutive worker runs, one slot per group."""
+    # --- arrange / act ----------------
+    group_state = _group_state(5, group_sizes=[3, 2], dynamic=False)
+
+    # --- assert -----------------------
+    assert list(group_state._assignment) == [0, 0, 0, 1, 1]
+    assert group_state._n_alive_groups.value == 2
+
+
+def test_a_fixed_grouping_never_dissolves():
+    """The fixed schedule's target equals the configured count, so no progress fraction fires a transition."""
+    # --- arrange ----------------------
+    group_state = _group_state(4, group_sizes=[2, 2], dynamic=False)
+
+    # --- act --------------------------
+    group_state.maybe_dissolve(progress_fraction=1.0)
+
+    # --- assert -----------------------
+    assert list(group_state._assignment) == [0, 0, 1, 1]
+    assert group_state.events() == []
+
+
+def test_a_fixed_group_exchanges_through_its_shared_slot():
+    """Members of one fixed group adopt each other's best, exactly as before through their group's slot."""
+    # --- arrange ----------------------
+    group_state = _group_state(2, group_sizes=[2], dynamic=False)
+    spread_out = _state_with([0, 3, 5])  # min separation 10
+    clustered = _state_with([0, 1, 2])  # min separation 1
+    group_state.coordinator_for(0).at_batch_boundary(spread_out, progress_fraction=1.0)
+
+    # --- act --------------------------
+    group_state.coordinator_for(1).at_batch_boundary(clustered, progress_fraction=1.0)
+
+    # --- assert -----------------------
+    assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted its group mate's published best

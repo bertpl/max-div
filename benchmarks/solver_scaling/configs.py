@@ -104,7 +104,8 @@ def _maxdiv_optimal(lazy: bool) -> SelectFn:
             ParallelMaxDivSolverBuilder(problem)
             .with_seed(seed)
             .with_distance_storage(storage)
-            .with_workers(budget, workers=[group], end_to_end_budget=True)  # one cooperative group
+            .with_custom_worker_groups(budget, [group])  # one fixed cooperative group
+            .with_end_to_end_budget()
         )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
 

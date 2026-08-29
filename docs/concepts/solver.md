@@ -137,7 +137,7 @@ member has found so far, exchanged many times per second while solving; groups n
 with each other. Groups of one worker are fully independent — a fully
 independent set of workers is the special case where every group has one member. By default the
 grouping is **dynamic** — it evolves during the solve (described under
-[Workers and Groups](#workers-and-groups)); `n_groups` keeps it fixed instead.
+[Workers and Groups](#workers-and-groups)); `with_custom_worker_groups` keeps it fixed instead.
 
 ```python
 from max_div.solver import ParallelMaxDivSolverBuilder, WorkerConfig, seconds
@@ -172,17 +172,19 @@ The dynamic default removes the need to trade the two counts against each other.
 
 ### Workers and Groups
 
-`with_workers` accepts the worker set in three forms:
+Two builder methods configure the workers, and each implies its grouping:
 
-- **an integer** — that many default workers; the only form `n_groups` combines with;
-- **a flat sequence of `WorkerConfig`** — one configuration per worker;
-- **a nested sequence** — one inner sequence per group, fixing the grouping and every
-  configuration at once; groups may differ in size and mix presets freely.
+- **`with_workers(budget, n_workers)`** — the simple path: that many default workers, grouped
+  **dynamically**;
+- **`with_custom_worker_groups(budget, workers, n_groups)`** — the custom path, with a **fixed**
+  grouping; `workers` takes an integer (grouped into `n_groups` groups), a flat sequence of
+  `WorkerConfig` (one configuration per worker), or a nested sequence (one inner sequence per
+  group, fixing the grouping and every configuration at once).
 
-The worker total, when not given, defaults to **3/4 of the logical cores**.
+The worker total, when not given, defaults to **3/4 of the logical cores** on either path.
 
-**Dynamic grouping (the default).** With no grouping pinned, the group count follows a schedule
-over the workers' progress through the budget:
+**Dynamic grouping.** On the `with_workers` path, the group count follows a schedule over the
+workers' progress through the budget:
 
 - every worker starts in its own group;
 - the group count decreases linearly, reaching one all-worker group at the end;
@@ -195,9 +197,8 @@ iteration budgets alike:
 - under a time budget, every worker sees nearly the same fraction;
 - under an iteration budget, the schedule follows whichever worker crosses each threshold first.
 
-**Fixed grouping.** The grouping stays fixed for the whole solve when the caller pins it —
-`n_groups`, a nested sequence, or `dynamic_groups=False`. Where a fixed grouping applies without
-an explicit `n_groups`:
+**Fixed grouping.** On the `with_custom_worker_groups` path the grouping never changes
+mid-solve. Where it applies without an explicit `n_groups`:
 
 - the group count defaults to **groups of about four workers** (the count nearest a quarter of
   the worker total; five workers or fewer form a single group);
@@ -222,8 +223,9 @@ Distance storage is fixed for a different reason: the workers read one shared bu
 The parallel solver takes one seed and derives a seed per worker from that seed, so the workers search
 differently while the whole configuration derives from a single number.
 
-**Reproducibility follows the grouping.** A fully independent set of workers (`n_groups` equal
-to the worker count) repeated from one seed returns the same selection. With cooperating groups —
+**Reproducibility follows the grouping.** A fully independent set of workers
+(`with_custom_worker_groups` with `n_groups` equal to the worker count) repeated from one seed
+returns the same selection. With cooperating groups —
 the dynamic default included — it does not.
 
 Which selections get adopted — and, under the dynamic grouping, which groups get dissolved —

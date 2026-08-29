@@ -49,27 +49,8 @@ class SolverBuilderBase:
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
         self._distance_storage: DistanceStorage = DistanceStorage.AUTO
-        self._e2e_budget: E2eBudget | None = None
-
-    def _set_e2e_budget(self, target_duration: TargetDuration, end_to_end_budget: bool) -> None:
-        """Record `target_duration` as the whole solve's budget when the flag asks for it.
-
-        Without the flag the duration stays what it always was — a per-step budget — and no
-        end-to-end budget is recorded.
-
-        Raises:
-            ValueError: If `end_to_end_budget` is combined with an iteration budget — not all
-                solver phases can be expressed in iteration counts.
-        """
-        if not end_to_end_budget:
-            self._e2e_budget = None
-            return
-        if not isinstance(target_duration, TargetTimeDuration):
-            raise ValueError(
-                "end_to_end_budget requires a time budget (seconds/minutes/hours); "
-                "not all solver phases can be expressed in iteration counts."
-            )
-        self._e2e_budget = E2eBudget(budget_sec=target_duration.value())
+        self._e2e_enabled: bool = False
+        self._target_duration: TargetDuration | None = None
 
     # -------------------------------------------------------------------------
     #  Shared builder API
@@ -101,9 +82,37 @@ class SolverBuilderBase:
         self._distance_storage = storage
         return self
 
+    def with_end_to_end_budget(self, enabled: bool = True) -> Self:
+        """Make the configured budget bound the whole solve, setup included (default: per-step budgets).
+
+        With this enabled, the budget covers distance computation, worker spawning, and
+        initialization too, and the optimization gets whatever time remains (a
+        `SolverBudgetWarning` is raised and the optimization skipped when nothing remains).
+        The budget itself is the one configured on `with_preset` / `with_workers` /
+        `with_custom_worker_groups`; `build()` rejects the combination with an iteration budget.
+        """
+        self._e2e_enabled = enabled
+        return self
+
     # -------------------------------------------------------------------------
     #  Resolution
     # -------------------------------------------------------------------------
+    def _resolve_e2e_budget(self) -> E2eBudget | None:
+        """Return the end-to-end budget this configuration asks for, or None; called at build time.
+
+        Raises:
+            ValueError: If the end-to-end budget is enabled without a time budget — not all
+                solver phases can be expressed in iteration counts.
+        """
+        if not self._e2e_enabled:
+            return None
+        if not isinstance(self._target_duration, TargetTimeDuration):
+            raise ValueError(
+                "with_end_to_end_budget requires a time budget (seconds/minutes/hours); "
+                "not all solver phases can be expressed in iteration counts."
+            )
+        return E2eBudget(budget_sec=self._target_duration.value())
+
     def _select_storage(self) -> tuple[DistanceStorage, str]:
         """Return the backend this configuration selects, and the label reported to the user."""
         resolved = select_distance_storage(self._problem, self._distance_storage, total_physical_memory_bytes())

@@ -1,20 +1,23 @@
-"""Dynamic worker groups: every worker starts in its own group, and groups consolidate toward one.
+"""One grouping framework for every parallel solve: fixed and dynamic groups differ only in the schedule.
 
-The group count decreases linearly from `n_workers` to 1 over the progress fraction of each
-worker's optimization step.  Each decrease dissolves the group whose exchange slot holds the
-worst score — the group whose best score is lowest so far — and reassigns its workers to the
-strongest groups that are short a member, so they reinforce searches that can still win.
+At every point of a solve, each worker is assigned to exactly one group, and at each batch
+boundary it exchanges its selection through its group's slot. A **fixed** grouping keeps the
+assignment as configured for the whole solve — its scheduled group count is a constant, so no
+transition ever fires. A **dynamic** grouping starts every worker in its own group and decreases
+the scheduled count linearly to one over each worker's progress fraction; each decrease dissolves
+the group whose exchange slot holds the worst score — the group whose best score is lowest so
+far — and reassigns its workers to the strongest groups that are short a member, so they
+reinforce searches that can still win.
 
-The module adds two pieces on top of the fixed-group code in `_coordinator` / `_exchange_slot`;
-the workers themselves run the schedule:
+The workers themselves run the schedule; no separate process does:
 
-- **`DynamicGroupState` is the shared-memory record of the grouping**: one slot per worker, an
+- **`WorkerGroupState` is the shared-memory record of the grouping**: one slot per worker, an
   assignment table mapping each worker to its slot, the alive group count, and the dissolution
   log.
-- **`DynamicGroupCoordinator` runs the schedule from inside the workers**: at each batch
-  boundary a worker computes the scheduled group count from its own progress fraction, and
-  whichever worker first sees the alive count exceed the schedule executes the dissolution
-  itself, under a single transition lock.
+- **`WorkerGroupCoordinator` runs the schedule from inside the workers**: at each batch boundary
+  a worker computes the scheduled group count from its own progress fraction, and whichever
+  worker first sees the alive count exceed the schedule executes the dissolution itself, under a
+  single transition lock.
 
 Ranking groups on their slots makes dissolution safe: a slot only ever accepts a strictly better
 selection (`GroupExchangeSlot.exchange`), so it holds its group's best score so far, and
@@ -42,7 +45,7 @@ if TYPE_CHECKING:
 
 
 def dynamic_group_count(n_workers: int, progress_fraction: float) -> int:
-    """Return the scheduled group count at the given progress fraction.
+    """Return the dynamic schedule's group count at the given progress fraction.
 
     The count decreases linearly from `n_workers` at fraction 0 and reaches 1 at fraction
     `(n_workers - 1) / n_workers`, so every group count holds for an equal share of the budget.
@@ -68,43 +71,51 @@ class DissolutionEvent:
     reassignments: dict[int, int]
 
 
-class DynamicGroupState:
-    """The shared group state records a dynamic solve's grouping and executes the transitions over it.
+class WorkerGroupState:
+    """The shared group state records a parallel solve's grouping and executes the transitions over it.
 
     The parent allocates the state before workers spawn; every worker's coordinator holds it
     and any worker may execute a dissolution.  After the workers finish, `events()` returns the
-    dissolution log.
+    dissolution log — empty for a fixed grouping, whose schedule never fires a transition.
     """
 
-    def __init__(self, context: "BaseContext", n_workers: int, k: int, score_length: int) -> None:
-        """Allocate the slots, the identity assignment, and the dissolution log in shared memory.
+    def __init__(
+        self, context: "BaseContext", group_sizes: list[int], k: int, score_length: int, dynamic: bool
+    ) -> None:
+        """Allocate the slots, the configured assignment, and the dissolution log in shared memory.
 
         Args:
             context: the spawn context whose shared-memory primitives back everything here, so
                 workers inherit the state at spawn.
-            n_workers: the worker count, fixing the slot count and every table size.
+            group_sizes: the initial grouping, as consecutive run lengths over the worker order;
+                a dynamic grouping starts from groups of one.
             k: maximum selection size the slots hold.
             score_length: number of components in the workers' score tuples.
+            dynamic: whether the group count follows the dynamic schedule; a fixed grouping's
+                scheduled count is the configured group count, so it never changes.
         """
-        self._n_workers = n_workers
+        self._n_workers = sum(group_sizes)
+        self._initial_group_count = len(group_sizes)
+        self._dynamic = dynamic
         self._score_length = score_length
-        self._slots = [GroupExchangeSlot(context, k=k, score_length=score_length) for _ in range(n_workers)]
-        self._assignment = context.Array("i", list(range(n_workers)), lock=False)
-        self._n_alive_groups = context.Value("i", n_workers, lock=False)
+        self._slots = [GroupExchangeSlot(context, k=k, score_length=score_length) for _ in range(self._n_workers)]
+        initial_assignment = [group for group, size in enumerate(group_sizes) for _ in range(size)]
+        self._assignment = context.Array("i", initial_assignment, lock=False)
+        self._n_alive_groups = context.Value("i", self._initial_group_count, lock=False)
         self._transition_lock = context.Lock()
         # The dissolution log is preallocated: exactly n_workers - 1 dissolutions can ever
         # happen.  The stored assignment is the post-event table; NaN marks a never-written
         # slot's score.
-        n_events = max(n_workers - 1, 1)
+        n_events = max(self._n_workers - 1, 1)
         self._ev_count = context.Value("i", 0, lock=False)
         self._ev_fraction = context.Array("d", n_events, lock=False)
         self._ev_dissolved = context.Array("i", n_events, lock=False)
-        self._ev_assignment = context.Array("i", n_events * n_workers, lock=False)
-        self._ev_scores = context.Array("d", n_events * n_workers * score_length, lock=False)
+        self._ev_assignment = context.Array("i", n_events * self._n_workers, lock=False)
+        self._ev_scores = context.Array("d", n_events * self._n_workers * score_length, lock=False)
 
-    def coordinator_for(self, worker_index: int) -> "DynamicGroupCoordinator":
+    def coordinator_for(self, worker_index: int) -> "WorkerGroupCoordinator":
         """Return the given worker's coordinator, bound to this shared state."""
-        return DynamicGroupCoordinator(self, worker_index)
+        return WorkerGroupCoordinator(self, worker_index)
 
     # -------------------------------------------------------------------------
     #  Worker-side operations
@@ -112,11 +123,12 @@ class DynamicGroupState:
     def maybe_dissolve(self, progress_fraction: float) -> None:
         """Dissolve groups until the alive count matches the schedule at the given fraction.
 
-        The no-transition case — by far the common one — costs a single lock-free read; the
-        transition itself runs under the one transition lock, and the count re-check inside it
-        means a concurrent caller that lost the race dissolves nothing.
+        The no-transition case — every boundary of a fixed grouping, and most boundaries of a
+        dynamic one — costs a single lock-free read; the transition itself runs under the one
+        transition lock, and the count re-check inside it means a concurrent caller that lost
+        the race dissolves nothing.
         """
-        target = dynamic_group_count(self._n_workers, progress_fraction)
+        target = self._scheduled_count(progress_fraction)
         if self._n_alive_groups.value <= target:
             return
         with self._transition_lock:
@@ -132,6 +144,12 @@ class DynamicGroupState:
         workers free of any synchronization with dissolution writes.
         """
         return self._slots[self._assignment[worker_index]].exchange(score, selection)
+
+    def _scheduled_count(self, progress_fraction: float) -> int:
+        """Return the group count the schedule asks for: the dynamic schedule's, or the fixed count."""
+        if self._dynamic:
+            return dynamic_group_count(self._n_workers, progress_fraction)
+        return self._initial_group_count
 
     def _dissolve_worst(self, progress_fraction: float) -> None:
         """Dissolve the worst-scoring group and reassign its workers to the strongest short groups.
@@ -189,8 +207,8 @@ class DynamicGroupState:
     def events(self) -> list[DissolutionEvent]:
         """Return the dissolution log as `DissolutionEvent`s; call after the workers finished."""
         events = []
-        previous_assignment = list(range(self._n_workers))
-        alive = set(range(self._n_workers))
+        previous_assignment = self._initial_assignment()
+        alive = set(previous_assignment)
         for index in range(self._ev_count.value):
             assignment = list(self._ev_assignment[index * self._n_workers : (index + 1) * self._n_workers])
             start = index * self._n_workers * self._score_length
@@ -212,11 +230,21 @@ class DynamicGroupState:
             previous_assignment = assignment
         return events
 
+    def _initial_assignment(self) -> list[int]:
+        """Return the assignment the solve started from.
 
-class DynamicGroupCoordinator(WorkerCoordinator):
-    """A worker of a dynamic solve runs the schedule and exchanges through the shared state."""
+        A dynamic grouping starts from the identity assignment; a fixed grouping never moves a
+        worker, so its current table is still the initial one.
+        """
+        if self._dynamic:
+            return list(range(self._n_workers))
+        return list(self._assignment)
 
-    def __init__(self, group_state: DynamicGroupState, worker_index: int) -> None:
+
+class WorkerGroupCoordinator(WorkerCoordinator):
+    """A parallel solve's workers run the grouping schedule and exchange through the shared state."""
+
+    def __init__(self, group_state: WorkerGroupState, worker_index: int) -> None:
         """Bind the coordinator to the solve's shared group state and the worker's index."""
         self._group_state = group_state
         self._worker_index = worker_index

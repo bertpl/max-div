@@ -25,10 +25,16 @@ def _problem() -> MaxDivProblem:
     return MaxDivProblem.new(np.random.default_rng(20260809).random((80, 3)).astype(np.float32), k=8)
 
 
-def _solve_parallel(workers, seed: int = 5, n_groups: int | None = None) -> ParallelMaxDivSolution:
-    """Solve the shared test problem with the given workers."""
+def _solve_dynamic(n_workers: int, seed: int = 5) -> ParallelMaxDivSolution:
+    """Solve the shared test problem on the dynamic path, with the given worker count."""
     builder = ParallelMaxDivSolverBuilder(_problem()).with_seed(seed)
-    return builder.with_workers(_BUDGET, workers, n_groups=n_groups).build().solve()
+    return builder.with_workers(_BUDGET, n_workers).build().solve()
+
+
+def _solve_custom(workers, seed: int = 5, n_groups: int | None = None) -> ParallelMaxDivSolution:
+    """Solve the shared test problem on the custom fixed-grouping path."""
+    builder = ParallelMaxDivSolverBuilder(_problem()).with_seed(seed)
+    return builder.with_custom_worker_groups(_BUDGET, workers, n_groups=n_groups).build().solve()
 
 
 # =================================================================================================
@@ -37,7 +43,7 @@ def _solve_parallel(workers, seed: int = 5, n_groups: int | None = None) -> Para
 def test_a_parallel_solve_returns_an_ordinary_solution():
     """The winner is a MaxDivSolution, so code written for a single solve keeps working."""
     # --- arrange / act ----------------
-    solution = _solve_parallel(2)
+    solution = _solve_dynamic(2)
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
@@ -48,7 +54,7 @@ def test_a_parallel_solve_returns_an_ordinary_solution():
 def test_every_worker_is_summarized():
     """Each worker reports what it ran, what it scored, and whether it reached the best score."""
     # --- arrange / act ----------------
-    solution = _solve_parallel([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
+    solution = _solve_custom([WorkerConfig(preset=SolverPreset.SMART), WorkerConfig(preset=SolverPreset.GUIDED)])
 
     # --- assert -----------------------
     assert [worker.worker_index for worker in solution.workers] == [0, 1]
@@ -65,7 +71,7 @@ def test_workers_may_differ_by_initialization_alone():
     ]
 
     # --- act --------------------------
-    solution = _solve_parallel(workers)
+    solution = _solve_custom(workers)
 
     # --- assert -----------------------
     assert solution.workers[0].config.init_strategy is None
@@ -75,7 +81,7 @@ def test_workers_may_differ_by_initialization_alone():
 def test_workers_at_the_best_score_are_counted():
     """The count says how many workers tied for best; when every worker ties, the parallel solve did not help."""
     # --- arrange / act ----------------
-    solution = _solve_parallel(3)
+    solution = _solve_dynamic(3)
 
     # --- assert -----------------------
     counted = solution.n_workers_with_best_score
@@ -89,7 +95,7 @@ def test_workers_at_the_best_score_are_counted():
 def test_one_seed_reproduces_an_independent_set_of_workers():
     """An independent set of workers repeated from one seed selects the same items and seeds each worker alike."""
     # --- arrange / act ----------------
-    first, second = _solve_parallel(2, n_groups=2), _solve_parallel(2, n_groups=2)
+    first, second = _solve_custom(2, n_groups=2), _solve_custom(2, n_groups=2)
 
     # --- assert -----------------------
     np.testing.assert_array_equal(first.i_selected, second.i_selected)
@@ -99,7 +105,7 @@ def test_one_seed_reproduces_an_independent_set_of_workers():
 def test_workers_are_seeded_differently_from_each_other():
     """Derived seeds differ per worker, so the workers search differently."""
     # --- arrange / act ----------------
-    seeds = [worker.seed for worker in _solve_parallel(4).workers]
+    seeds = [worker.seed for worker in _solve_dynamic(4).workers]
 
     # --- assert -----------------------
     assert len(set(seeds)) == len(seeds)
@@ -112,7 +118,7 @@ def test_a_worker_can_be_replayed_on_its_own():
     depends on its group mates, so only independent workers carry this replay contract.
     """
     # --- arrange ----------------------
-    solution = _solve_parallel([[WorkerConfig(preset=SolverPreset.SMART)], [WorkerConfig(preset=SolverPreset.GUIDED)]])
+    solution = _solve_custom([[WorkerConfig(preset=SolverPreset.SMART)], [WorkerConfig(preset=SolverPreset.GUIDED)]])
     winner = solution.workers[solution.winning_worker]
 
     # --- act --------------------------
@@ -215,9 +221,9 @@ def test_group_count_outside_the_worker_count_is_rejected():
 
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="n_groups"):
-        builder.with_workers(_BUDGET, 4, n_groups=5)
+        builder.with_custom_worker_groups(_BUDGET, 4, n_groups=5)
     with pytest.raises(ValueError, match="n_groups"):
-        builder.with_workers(_BUDGET, 4, n_groups=0)
+        builder.with_custom_worker_groups(_BUDGET, 4, n_groups=0)
 
 
 def test_group_count_only_combines_with_an_integer_worker_count():
@@ -227,9 +233,9 @@ def test_group_count_only_combines_with_an_integer_worker_count():
 
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="integer worker count"):
-        builder.with_workers(_BUDGET, [WorkerConfig(), WorkerConfig()], n_groups=1)
+        builder.with_custom_worker_groups(_BUDGET, [WorkerConfig(), WorkerConfig()], n_groups=1)
     with pytest.raises(ValueError, match="integer worker count"):
-        builder.with_workers(_BUDGET, [[WorkerConfig()], [WorkerConfig()]], n_groups=2)
+        builder.with_custom_worker_groups(_BUDGET, [[WorkerConfig()], [WorkerConfig()]], n_groups=2)
 
 
 def test_mixing_configurations_and_groups_is_rejected():
@@ -239,7 +245,7 @@ def test_mixing_configurations_and_groups_is_rejected():
 
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="not a mix"):
-        builder.with_workers(_BUDGET, [WorkerConfig(), [WorkerConfig()]])
+        builder.with_custom_worker_groups(_BUDGET, [WorkerConfig(), [WorkerConfig()]])
 
 
 def test_a_nested_sequence_fixes_grouping_and_configurations():
@@ -251,7 +257,7 @@ def test_a_nested_sequence_fixes_grouping_and_configurations():
     ]
 
     # --- act --------------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, groups).build()
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_custom_worker_groups(_BUDGET, groups).build()
 
     # --- assert -----------------------
     assert solver._group_sizes == [2, 1]
@@ -265,7 +271,7 @@ def test_a_nested_sequence_fixes_grouping_and_configurations():
 def test_a_cooperative_group_solves():
     """A group of cooperating workers produces an ordinary, valid solution."""
     # --- arrange / act ----------------
-    solution = _solve_parallel(2, n_groups=1)
+    solution = _solve_custom(2, n_groups=1)
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
@@ -275,7 +281,7 @@ def test_a_cooperative_group_solves():
 def test_cooperative_workers_batch_at_the_cooperative_interval():
     """Workers in groups of two or more carry the tighter batch interval; lone workers keep the default."""
     # --- arrange / act ----------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(_BUDGET, 3, n_groups=2).build()
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_custom_worker_groups(_BUDGET, 3, n_groups=2).build()
 
     # --- assert -----------------------
     assert [config.batch_seconds for config in solver._solver_configs] == [
@@ -289,8 +295,8 @@ def test_cooperative_workers_batch_at_the_cooperative_interval():
 #  Dynamic grouping
 # =================================================================================================
 @pytest.mark.parametrize("budget", [seconds(10.0), iterations(200)])
-def test_any_budget_kind_defaults_to_dynamic_grouping(budget):
-    """With no fixed grouping pinned, workers start in groups of one and cooperate, whatever the budget kind."""
+def test_with_workers_uses_dynamic_grouping_for_any_budget_kind(budget):
+    """with_workers is the dynamic path: workers start in groups of one and cooperate, whatever the budget kind."""
     # --- act --------------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(budget, 8).build()
 
@@ -300,62 +306,30 @@ def test_any_budget_kind_defaults_to_dynamic_grouping(budget):
     assert all(config.batch_seconds == COOPERATIVE_BATCH_SECONDS for config in solver._solver_configs)
 
 
-def test_a_flat_sequence_with_a_time_budget_is_dynamic():
-    """Per-worker configurations do not pin a grouping, so the dynamic default applies to them too."""
-    # --- act --------------------------
-    solver = (
-        ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), [WorkerConfig(), WorkerConfig()]).build()
-    )
-
-    # --- assert -----------------------
-    assert solver._dynamic_groups
-
-
 @pytest.mark.parametrize(
-    "kwargs",
+    "workers",
     [
-        {"n_groups": 2},
-        {"dynamic_groups": False},
+        8,
+        [WorkerConfig(), WorkerConfig()],
+        [[WorkerConfig()], [WorkerConfig()]],
     ],
 )
-def test_a_pinned_grouping_opts_out_of_the_dynamic_default(kwargs):
-    """Naming a fixed grouping keeps the workers in their groups for the whole solve."""
+def test_custom_worker_groups_are_fixed(workers):
+    """with_custom_worker_groups is the fixed path, whichever worker form it is given."""
     # --- act --------------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 8, **kwargs).build()
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_custom_worker_groups(seconds(10.0), workers).build()
 
     # --- assert -----------------------
     assert not solver._dynamic_groups
+
+
+def test_custom_worker_groups_default_to_groups_of_about_four():
+    """Without an explicit count, the fixed path groups an integer worker count by default_group_count."""
+    # --- act --------------------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_custom_worker_groups(seconds(10.0), 8).build()
+
+    # --- assert -----------------------
     assert solver._group_sizes == [4, 4]
-
-
-def test_a_nested_sequence_opts_out_of_the_dynamic_default():
-    """A nested sequence carries its own grouping, which the schedule must not dissolve."""
-    # --- act --------------------------
-    solver = (
-        ParallelMaxDivSolverBuilder(_problem())
-        .with_workers(seconds(10.0), [[WorkerConfig()], [WorkerConfig()]])
-        .build()
-    )
-
-    # --- assert -----------------------
-    assert not solver._dynamic_groups
-
-
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        {"n_groups": 2},
-        {"workers": [[WorkerConfig()], [WorkerConfig()]]},
-    ],
-)
-def test_forcing_dynamic_alongside_a_pinned_grouping_is_rejected(kwargs):
-    """dynamic_groups=True contradicts a pinned grouping, so combining them is a configuration error."""
-    # --- arrange ----------------------
-    arguments = {"target_duration": seconds(10.0), "workers": 4} | kwargs
-
-    # --- act / assert -----------------
-    with pytest.raises(ValueError, match="dynamic_groups=True"):
-        ParallelMaxDivSolverBuilder(_problem()).with_workers(dynamic_groups=True, **arguments)
 
 
 @pytest.mark.parametrize("budget", [seconds(0.2), iterations(200)])
@@ -379,7 +353,8 @@ def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
     solver = (
         ParallelMaxDivSolverBuilder(_problem())
         .with_seed(5)
-        .with_workers(seconds(0.01), 2, end_to_end_budget=True)
+        .with_workers(seconds(0.01), 2)
+        .with_end_to_end_budget()
         .build()
     )
 
@@ -395,16 +370,16 @@ def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
 #  End-to-end budget
 # =================================================================================================
 def test_an_end_to_end_budget_requires_a_time_budget():
-    """An iteration count cannot bound the store build and worker setup, so the flag rejects it."""
+    """An iteration count cannot bound the store build and worker setup, so build() rejects the combination."""
     # --- arrange / act / assert -------
     with pytest.raises(ValueError, match="requires a time budget"):
-        ParallelMaxDivSolverBuilder(_problem()).with_workers(iterations(100), 2, end_to_end_budget=True)
+        ParallelMaxDivSolverBuilder(_problem()).with_workers(iterations(100), 2).with_end_to_end_budget().build()
 
 
 def test_the_budget_start_time_is_stamped_at_solve_start(fake_clock, monkeypatch):
     """Workers receive the parent's solve-start clock, so setup time is charged against the budget."""
     # --- arrange ----------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 2, end_to_end_budget=True).build()
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 2).with_end_to_end_budget().build()
     fake_clock.advance(4.0)  # time between build and solve is not part of the solve
     received = {}
 
@@ -426,7 +401,7 @@ def test_the_budget_start_time_is_stamped_at_solve_start(fake_clock, monkeypatch
 def test_a_budget_spent_during_setup_reaches_the_workers_as_spent():
     """Spawning the workers alone outlasts a tiny budget, so every worker skips its optimization."""
     # --- arrange / act ----------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(0.01), 2, end_to_end_budget=True).build()
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(0.01), 2).with_end_to_end_budget().build()
     solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
@@ -434,3 +409,12 @@ def test_a_budget_spent_during_setup_reaches_the_workers_as_spent():
     assert len(optimization_steps) == 1
     assert solution.step_durations[optimization_steps[0]].n_iterations == 0
     assert len(solution.i_selected) == 8  # the shared test problem's k
+
+
+def test_custom_worker_groups_default_the_worker_count_too():
+    """Omitting `workers` on the custom path uses the same default count as the dynamic path."""
+    # --- act --------------------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_custom_worker_groups(seconds(10.0)).build()
+
+    # --- assert -----------------------
+    assert len(solver._worker_configs) == default_worker_count()

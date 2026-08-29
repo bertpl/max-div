@@ -80,14 +80,16 @@ def _execute_single_run(params: SolverPresetBenchmarkParams) -> SolverPresetBenc
         if params.is_parallel:
             solver = (
                 ParallelMaxDivSolverBuilder(problem)
-                .with_workers(target_duration=params.duration, workers=params.n_workers, end_to_end_budget=True)
+                .with_workers(target_duration=params.duration, n_workers=params.n_workers)
+                .with_end_to_end_budget()
                 .with_seed(params.seed)
                 .build()
             )
         else:
             solver = (
                 MaxDivSolverBuilder(problem)
-                .with_preset(target_duration=params.duration, preset=params.preset, end_to_end_budget=True)
+                .with_preset(target_duration=params.duration, preset=params.preset)
+                .with_end_to_end_budget()
                 .with_seed(params.seed)
                 .build()
             )
