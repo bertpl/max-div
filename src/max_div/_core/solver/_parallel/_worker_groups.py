@@ -188,20 +188,16 @@ class WorkerGroupState:
     def _reassignment_target(
         score_per_group: dict[int, tuple[float, ...] | None], size_per_surviving_group: dict[int, int]
     ) -> int:
-        """Return the group a freed worker joins: the best-scoring one still short of the largest.
-
-        When every surviving group has the same size, no group is short and the best-scoring one
-        overall takes the worker.
+        """Return the group a freed worker joins: the best-scoring one among the smallest groups.
 
         Args:
             score_per_group: each group's slot score, None for a never-written slot; among the
                 candidate groups, the best score takes the worker.
             size_per_surviving_group: current member count per surviving group; the sizes decide
-                which groups are candidates — those still short of the largest.
+                which groups are candidates — those of the smallest size.
         """
-        largest = max(size_per_surviving_group.values())
-        short = [group for group, size in size_per_surviving_group.items() if size < largest]
-        pool = short if short else list(size_per_surviving_group)
+        smallest = min(size_per_surviving_group.values())
+        pool = [group for group, size in size_per_surviving_group.items() if size == smallest]
         return max(pool, key=lambda group: (score_per_group[group] or (), -group))
 
     # -------------------------------------------------------------------------

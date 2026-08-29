@@ -87,8 +87,8 @@ def test_the_worst_slot_group_is_dissolved_and_its_worker_joins_the_best():
     assert event.progress_fraction == 0.4
 
 
-def test_reassignment_prefers_groups_short_of_the_largest():
-    """A freed worker fills a group one short of the largest, even when a full group scores higher."""
+def test_reassignment_prefers_the_smallest_groups():
+    """A freed worker fills one of the smallest groups, even when a larger group scores higher."""
     # --- arrange ----------------------
     group_state = _group_state(4)
     for worker, diversity in enumerate([0.9, 0.7, 0.5, 0.3]):
@@ -99,7 +99,7 @@ def test_reassignment_prefers_groups_short_of_the_largest():
     group_state.maybe_dissolve(progress_fraction=0.6)
 
     # --- assert -----------------------
-    # group 2 dissolves; its worker goes to group 1 (one short of group 0's size), not to the larger group 0
+    # group 2 dissolves; its worker goes to group 1 (the smallest), not to the larger group 0
     assert list(group_state._assignment) == [0, 1, 1, 0]
 
 
