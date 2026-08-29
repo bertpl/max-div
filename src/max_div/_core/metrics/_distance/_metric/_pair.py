@@ -156,8 +156,7 @@ def _metric_pair(
 ) -> np.float32:
     """Compute the distance between vectors i and j, per the given metric selector.
 
-    The Minkowski kinds sit behind the final fall-through, so the original metrics pay no extra
-    compares.
+    The Minkowski kinds are tested last, so the non-Minkowski kinds pay no extra compares.
     """
     if metric_kind == METRIC_KIND_L1:
         return np.float32(_l1_pair(vectors, i, j))
