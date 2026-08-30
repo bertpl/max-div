@@ -13,16 +13,28 @@
 
 # max-div
 
-Configurable solver for **Maximum Diversity Problems** with optional **fairness constraints**:
-given `n` items — vectors or precomputed distances — select the `k` most diverse, optionally
-subject to per-group minimum/maximum quotas.
+**A versatile, high-performance solver for Maximum Diversity Problems** — select the `k` most
+diverse of `n` items, under optional fairness constraints.
 
-max-div is an **anytime heuristic**: it returns a good selection quickly and keeps improving it
-for as long as you allow (wall-clock time or iteration count). Two things set it apart among
-freely available tools: it is the only
-**dedicated diversity solver** with native support for **overlapping fairness constraints**, and
-the only one offering a **geometric-mean separation** objective — one of four diversity metrics
-it provides (minimum, mean, and geometric-mean separation, plus mean pairwise distance).
+## Highlights
+
+- ⚡ obtains **near-optimal results within seconds-to-one-minute** for problems up to `n=200k`
+
+- 🚀 leverages [numba](https://pypi.org/project/numba/) **JIT-compilation for maximum speed** without relying on pre-compiled binaries
+
+- ⚖️ natively supports flexible **fairness constraints**
+
+  - uniquely supports **constraints with overlapping sets & ranged counts**
+
+  - returns the **least infeasible solution** (with configurable weighted linear or quadratic penalties) when constraints conflict
+
+  - provides **proofs of (in)feasibility**
+
+- 📐 uniquely supports **5+ distance metrics** (L1, L2, L∞, Minkowski, cosine — or precomputed distances) and **4 diversity metrics** (minimum, mean & geomean separation + mean pairwise distance) in any combination
+
+- 💾 computes item distances **eagerly when memory allows** (maximum speed), **lazily when problem size requires** (minimal memory usage)
+
+- 🤝 leverages multi-core CPUs with **parallel workers** in independent, cooperative or dynamically grouped configurations, **without duplicating core problem data**
 
 <p align="center">
   <picture>
@@ -31,10 +43,8 @@ it provides (minimum, mean, and geometric-mean separation, plus mean pairwise di
   </picture>
 </p>
 
-It fills the gap between exact MIP/CP solvers, which prove optimal answers but do not scale, and
-single-shot pickers, which are fast but at best have very limited support for constraints. The
-[benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) show where
-it leads and where it does not.
+The [benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/)
+compare max-div in depth with 10 other freely available solvers.
 
 ## Installation
 
