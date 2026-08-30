@@ -142,8 +142,8 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
     """Compute the distance between vectors i and j, per the given metric selector.
 
     The selector is loop-invariant in every calling loop, so the branch order is not
-    performance-relevant; the arms read in kind order.  The specialized Minkowski
-    p = 0.5 / 0.25 / 0.125 kinds apply the outer root as one / two / three squarings.
+    performance-relevant.  The specialized Minkowski p = 0.5 / 0.25 / 0.125 kinds apply the
+    outer root as one / two / three squarings.
     """
     if metric_kind == METRIC_KIND_L1:
         return np.float32(_l1_pair(vectors, i, j))

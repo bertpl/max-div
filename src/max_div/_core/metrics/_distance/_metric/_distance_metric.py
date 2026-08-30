@@ -110,8 +110,8 @@ class DistanceMetric(NamedTuple):
         The factory canonicalizes `p`: p = 1, 2, inf return the dedicated metrics and p = 0.5,
         0.25, 0.125 the specialized kinds, so each metric computes through exactly one code path.
 
-        Cost: p in {1, 2, inf, 0.5, 0.25, 0.125} computes with hardware arithmetic; any other p
-        pays a ``pow`` call per dimension, well over an order of magnitude more per term.
+        Cost: every canonicalized p above computes with hardware arithmetic; any other p pays a
+        ``pow`` call per dimension, well over an order of magnitude more per term.
 
         For 0 < p < 1 the `root=True` form violates the triangle inequality — not a strict
         metric, while the `root=False` form is one.  The solver never relies on the triangle
