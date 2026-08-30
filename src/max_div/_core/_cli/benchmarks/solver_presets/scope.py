@@ -48,13 +48,13 @@ SINGLE_SERIES = BudgetSeries(
     n_points=SpeedParam(slow=50, fast=2),
 )
 # The parallel runs (SMART re-run on the machine's default worker count) get their own series.
-# The minimum stays well above the parallel
-# solver's process-spawn cost, which an end-to-end budget includes.  The maximum stays below
-# the single-worker one since parallel runs execute serially, one at a time, each using all cores.
+# The maximum matches the single-worker series.  The minimum sits at the parallel solver's
+# process-spawn cost (roughly one second), which an end-to-end budget includes — so the lowest
+# points deliberately show what a caller gets when the budget barely covers start-up.
 PARALLEL_SERIES = BudgetSeries(
-    t_min_sec=SpeedParam(slow=3.0, fast=2.0),
-    t_max_sec=SpeedParam(slow=900.0, fast=2.0),
-    n_points=SpeedParam(slow=30, fast=1),
+    t_min_sec=SpeedParam(slow=1.0, fast=2.0),
+    t_max_sec=SpeedParam(slow=1800.0, fast=2.0),
+    n_points=SpeedParam(slow=35, fast=1),
 )
 
 # Every problem is benchmarked at the size where it selects this many items, so the suite's

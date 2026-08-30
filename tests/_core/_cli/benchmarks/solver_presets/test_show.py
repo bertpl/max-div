@@ -34,14 +34,14 @@ def _result(duration_sec: float, n_workers: int, diversity: float) -> SolverPres
 # =================================================================================================
 #  Tests
 # =================================================================================================
-def test_show_renders_ragged_parallel_arm(tmp_path: Path) -> None:
-    """A parallel arm covering only the longer budgets renders a placeholder at the short rows.
+def test_show_renders_ragged_parallel_series(tmp_path: Path) -> None:
+    """A parallel series covering only the longer budgets renders a placeholder at the short rows.
 
-    The union of durations across columns includes budgets the parallel arm never ran, so those
-    cells have no sample; the table must render them rather than reduce over an empty list.
+    The union of durations across columns includes budgets the parallel series never ran, so those
+    cells have no sample; the table must render them, not reduce over an empty list.
     """
     # --- arrange ----------------------
-    # single-worker SMART at 0.5s and 2.0s; the parallel arm only at 2.0s
+    # single-worker SMART at 0.5s and 2.0s; the parallel series only at 2.0s
     results = [
         _result(0.5, n_workers=1, diversity=0.10),
         _result(2.0, n_workers=1, diversity=0.12),
@@ -54,5 +54,5 @@ def test_show_renders_ragged_parallel_arm(tmp_path: Path) -> None:
 
     # --- assert -----------------------
     text = out_file.read_text()
-    assert "SMART (2x4 workers)" in text  # the parallel series gets its own column
+    assert "SMART (8 workers)" in text  # the parallel series gets its own column
     assert "—" in text  # the 0.5s row's parallel cell is a placeholder

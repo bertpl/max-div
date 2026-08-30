@@ -5,7 +5,6 @@ import json
 from dataclasses import asdict, dataclass
 
 from max_div._core.solver import Score, SolverPreset, TargetTimeDuration
-from max_div._core.solver._parallel._solver import default_group_count
 
 
 # =================================================================================================
@@ -16,7 +15,7 @@ class SolverPresetBenchmarkParams:
     """A SolverPresetBenchmarkParams identifies one benchmark run.
 
     `n_workers=1` is a plain single solve; a higher count runs the parallel solver with that many
-    workers in the default (cooperative) grouping, so records carry the actual worker count of the
+    workers in the default (dynamic) grouping, so records carry the actual worker count of the
     machine that ran them.
     """
 
@@ -35,17 +34,13 @@ class SolverPresetBenchmarkParams:
     def column_label(self) -> str:
         """Return the label identifying this run's results column in reports.
 
-        The bracket part states the worker layout: "(1 worker)" for a single solve,
-        "(3x4 workers)" for a parallel solve with 3 groups of 4 workers, falling back to
-        "(12 workers, 5 groups)" when the default grouping does not divide evenly.
+        The bracket part states the worker count: "(1 worker)" for a single solve,
+        "(12 workers)" for a parallel solve.
         """
         label = self.preset.value.upper()
         if not self.is_parallel:
             return f"{label} (1 worker)"
-        n_groups = default_group_count(self.n_workers)
-        if self.n_workers % n_groups == 0:
-            return f"{label} ({n_groups}x{self.n_workers // n_groups} workers)"
-        return f"{label} ({self.n_workers} workers, {n_groups} groups)"
+        return f"{label} ({self.n_workers} workers)"
 
     def to_dict(self) -> dict:
         return {
