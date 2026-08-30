@@ -1,4 +1,4 @@
-"""Verdict types of the feasibility pipeline: the three-valued status and the result record it comes wrapped in."""
+"""This module defines the feasibility verdict types: the three-valued status and the result record around it."""
 
 from dataclasses import dataclass
 from enum import IntEnum
@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 #  FeasibilityStatus / FeasibilityResult
 # =================================================================================================
 class FeasibilityStatus(IntEnum):
-    """Three-valued outcome of the feasibility pipeline; the definite verdicts are proofs."""
+    """`FeasibilityStatus` is the three-valued outcome of a feasibility analysis; the definite verdicts are proofs."""
 
     INFEASIBLE = -1
     UNKNOWN = 0
@@ -20,7 +20,7 @@ class FeasibilityStatus(IntEnum):
 
 @dataclass(frozen=True)
 class FeasibilityResult:
-    """Whether a constraint set can be satisfied, with the evidence behind the answer.
+    """A `FeasibilityResult` records whether a constraint set can be satisfied, with the evidence behind the answer.
 
     Two of the result's numbers describe different things and are easy to conflate:
 
@@ -31,18 +31,18 @@ class FeasibilityResult:
 
     They relate as `violation_floor <= violation = sum of weight_i * violation_per_constraint[i]`.
     Equality proves `selection` is a minimum-violation selection, since it attains a bound nothing
-    can beat; a gap proves nothing either way, because the bound may simply be loose.  The floor is
-    a fractional dual value (`max(bound, 0)`), so compare the two with a tolerance rather than `==`.
+    can beat; a gap proves nothing either way, because the bound may simply be loose.  `violation_floor` is
+    a fractional dual value (`max(bound, 0)`), so compare the two with a tolerance, not `==`.
 
     Attributes:
         status: `FEASIBLE` (selection satisfies every constraint), `INFEASIBLE` (the multipliers
             prove none can), or `UNKNOWN` (nothing was established, in either direction).
         selection: the constructed selection of k item indices.  Always populated, under every
             status — an `UNKNOWN` verdict says nothing was *proven*, not that nothing was built,
-            so a caller wanting a starting selection rather than a verdict can use it unchanged.
+            so a caller wanting a starting selection, not a verdict, can use it unchanged.
         violation: the total weighted violation of `selection` (0 when it satisfies everything).
         violation_per_constraint: how much `selection` misses each constraint by, in items, in
-            constraint order.  Describes the selection, not the floor; weighted and summed it
+            constraint order.  Describes the selection, not the certified lower bound; weighted and summed it
             gives `violation`.  Being a real selection's profile, it is exact under both the
             linear and the quadratic violation penalty.
         bound: the best dual value reached.  `violation_floor` is its non-negative reading; the raw
@@ -70,7 +70,7 @@ class FeasibilityResult:
 
     @property
     def is_certified(self) -> bool:
-        """Return whether the verdict is one of the two proofs, rather than `UNKNOWN`."""
+        """Return whether the verdict is one of the two proofs."""
         return self.status is not FeasibilityStatus.UNKNOWN
 
     def __str__(self) -> str:
@@ -88,4 +88,3 @@ class FeasibilityResult:
             f"UNKNOWN verdict says nothing about whether the constraints can be satisfied.  The best "
             f"selection found carries a total weighted violation of {self.violation:g}."
         )
-

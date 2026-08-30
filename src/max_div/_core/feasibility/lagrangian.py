@@ -56,7 +56,7 @@ from .evaluation import (
     _top_k_items,
 )
 from .indexing import _constraint_set_sizes, build_item_constraint_csr
-from .repair import SWAP_CAP_FLOOR, SWAP_CAP_PER_K, _repair_selection
+from .repair import SWAP_CAP_MIN, SWAP_CAP_PER_K, _repair_selection
 from .result import FeasibilityResult, FeasibilityStatus
 
 # =================================================================================================
@@ -331,7 +331,7 @@ def _candidate_rounds(
     """
     m = con_min.shape[0]
     noise_scale = NOISE_SCALE * (np.sum(weights) / m) if m > 0 else 0.0
-    max_swaps = max(SWAP_CAP_FLOOR, SWAP_CAP_PER_K * k)
+    max_swaps = max(SWAP_CAP_MIN, SWAP_CAP_PER_K * k)
     rng_state = new_rng_state(np.int64(seed))
 
     best_violation = np.inf

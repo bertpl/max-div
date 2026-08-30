@@ -1,8 +1,8 @@
-"""Selection and certificate evaluation over the packed constraint arrays.
+"""This module evaluates selections and certificates over the packed constraint arrays.
 
-Per-item scores at given prices, exact top-k selection, per-constraint counts, violation
-aggregates, and the dual values that certify infeasibility.  Everything here is a pure
-function of its arrays; the pipelines that search for good prices live in sibling modules.
+It computes per-item scores at given prices, exact top-k selections, per-constraint counts,
+violation aggregates, and the dual values that certify infeasibility.  Every function is pure
+in its arrays; the pipelines that search for good prices live in sibling modules.
 """
 
 import numba
@@ -10,7 +10,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._math import select_k_max
-
 
 # soundness margin: g must exceed this before it counts as an infeasibility proof
 G_POSITIVE_TOL = 1e-9

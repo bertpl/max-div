@@ -1,7 +1,6 @@
-"""Greedy swap repair: local search that drives a selection's weighted violation down in place.
+"""This module repairs selections: greedy local search driving the weighted violation down in place.
 
-Each round targets the worst-violated constraint, pairs the best primary move among its members
-with the best size-preserving counterpart, and executes only strictly improving pairs.
+`_repair_selection` is the entry point and documents the loop; the other functions are its moves.
 """
 
 import numba
@@ -10,9 +9,8 @@ from numpy.typing import NDArray
 
 from .evaluation import _weighted_violation
 
-
-SWAP_CAP_PER_K = 10  # repair swap budget per unit of k ...
-SWAP_CAP_FLOOR = 500  # ... floored here (strict improvement already guarantees termination)
+SWAP_CAP_PER_K = 10  # swap budget per unit of k
+SWAP_CAP_MIN = 500  # minimum swap budget (strict improvement already guarantees termination)
 TIE_TOL = 1e-12  # improvement threshold for repair swaps
 
 
@@ -63,7 +61,7 @@ def _remove_gain(
 ) -> float:
     """Return the estimated violation decrease of removing `item` at the current counts.
 
-    Mirror image of `_add_gain`: `+w` when the constraint is in excess, `-w` when the removal
+    The removal counterpart of `_add_gain`: `+w` when the constraint is in excess, `-w` when the removal
     would create or worsen a shortfall.
 
     Args:
@@ -286,4 +284,3 @@ def _repair_selection(
         else:
             _apply_swap(counterpart, primary, item_indptr, item_cons, sel_mask, counts)
     return _weighted_violation(counts, con_min, con_max, weights)
-

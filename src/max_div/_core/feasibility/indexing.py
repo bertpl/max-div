@@ -1,4 +1,4 @@
-"""Index transforms between the packed constraint->item layout and an item->constraint CSR."""
+"""This module transposes the packed constraint->item layout into an item->constraint CSR index."""
 
 import numba
 import numpy as np
@@ -53,4 +53,3 @@ def _constraint_set_sizes(item_cons: NDArray[np.int32], m: int) -> NDArray[np.in
     for e in range(item_cons.shape[0]):
         sizes[item_cons[e]] += 1
     return sizes
-

@@ -23,13 +23,13 @@ def _result(status: FeasibilityStatus, bound: float = 0.0, violation: float = 0.
     ids=["infeasible", "feasible", "unknown"],
 )
 def test_violation_floor_only_follows_from_a_proof(status: FeasibilityStatus, expected_floor: float):
-    """Only an infeasibility proof bounds anything; the other verdicts certify no floor."""
+    """Only an infeasibility proof bounds anything; the other verdicts certify no lower bound."""
     # --- act & assert -----------------
     assert _result(status, bound=3.0).violation_floor == expected_floor
 
 
 def test_violation_floor_clamps_a_negative_bound():
-    """A dual value below zero bounds nothing, so it must not surface as a negative floor."""
+    """A dual value below zero bounds nothing, so it must not surface as a negative violation floor."""
     # --- act & assert -----------------
     assert _result(FeasibilityStatus.INFEASIBLE, bound=-1.0).violation_floor == 0.0
 
@@ -74,6 +74,5 @@ def test_rendering_reports_the_floor_and_the_selection_violation():
     rendered = str(_result(FeasibilityStatus.INFEASIBLE, bound=3.0, violation=5.0))
 
     # --- assert -----------------------
-    assert "at least 3" in rendered  # the certified floor
+    assert "at least 3" in rendered  # the certified violation floor
     assert "carries 5" in rendered  # the best selection found
-

@@ -36,4 +36,3 @@ def test_build_item_constraint_csr_no_constraints():
     # --- assert -----------------------
     assert item_indptr.tolist() == [0, 0, 0, 0]
     assert item_cons.size == 0
-

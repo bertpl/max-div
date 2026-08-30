@@ -1,9 +1,9 @@
-"""Primal--dual interior-point solver for the relaxed feasibility problem.
+"""This module solves the relaxed feasibility problem exactly, with a primal--dual interior-point method.
 
-The problem it solves exactly: minimize the total penalty `sum of phi_i(shortfall_i) +
+The problem: minimize the total penalty `sum of phi_i(shortfall_i) +
 phi_i(excess_i)` over fractional selections `x in [0, 1]^n` with `sum(x) = k`, where each
 constraint's penalty is `phi_i(t) = w_lin_i * t + w_quad_i * t^2` and shortfall/excess are slack
-variables bounded below by the count constraints.  One solve yields three consumables:
+variables bounded below by the count constraints.  One solve yields three outputs:
 
 - the optimal value: zero exactly when a fractional selection satisfies every constraint;
 - the count-constraint multipliers `(lam_min, lam_max)`: after clamping, an infeasibility
@@ -17,8 +17,8 @@ rows (two count blocks and the cardinality row) and simple bounds on the variabl
 solve reduces to normal equations of size `2m + 1` whose one expensive block is the weighted Gram
 matrix `A diag(d) A^T`; everything else is diagonal.  This shape is deliberately chosen over the
 smaller inequality-form reduction: with near-coinciding count bounds the latter's elimination
-diagonals span too many decades for double precision (measured: its Newton directions lose the
-linearized system entirely near convergence), while the standard form converges robustly on the
+diagonals span too many decades for double precision (measured: near convergence its Newton
+directions no longer satisfy the linearized system), while the standard form converges robustly on the
 same instances.
 
 Architecture: the iteration loop is plain Python + numpy/scipy — the solver runs a few dozen
@@ -37,14 +37,13 @@ from scipy.linalg import cho_factor, cho_solve
 from .evaluation import _item_scores
 from .indexing import build_item_constraint_csr
 
-
 # =================================================================================================
 #  Constants
 # =================================================================================================
 TOLERANCE = 1e-8  # convergence: duality measure and relative primal/dual residual norms
 MAX_ITERATIONS = 100  # safety cap; the path-following iteration count is a few dozen in practice
 STEP_FRACTION = 0.995  # fraction of the largest positivity-preserving step actually taken
-REGULARIZATION = 1e-10  # relative diagonal bump of the normal matrix (rank-deficient groups)
+REGULARIZATION = 1e-10  # relative diagonal bump; keeps the factorization valid for duplicated groups
 
 
 # =================================================================================================
@@ -52,15 +51,15 @@ REGULARIZATION = 1e-10  # relative diagonal bump of the normal matrix (rank-defi
 # =================================================================================================
 @dataclass(frozen=True)
 class RelaxationSolution:
-    """The consumable outputs of one relaxation solve.
+    """A `RelaxationSolution` carries the outputs of one relaxation solve.
 
     Attributes:
         value: the optimal total penalty of the relaxation; zero (up to tolerance) exactly when a
             fractional selection satisfies every constraint.
         marginals: the interior optimal fractional selection, one entry in [0, 1] per item,
             summing to `k` — the inclusion probabilities randomized rounding draws from.
-        lam_min: the lower-count multipliers; with `lam_max` the raw material for infeasibility
-            certificates (clamp, then evaluate `certified_bound`).
+        lam_min: the lower-count multipliers; with `lam_max` the inputs to an infeasibility
+            certificate (clamp, then evaluate `certified_bound`).
         lam_max: the upper-count multipliers.
         iterations: the number of predictor--corrector iterations run.
         converged: whether the convergence tolerances were met within the iteration cap.  An
@@ -127,7 +126,7 @@ def _weighted_gram(
 # =================================================================================================
 #  solve_relaxation
 # =================================================================================================
-def solve_relaxation(  # noqa: C901, PLR0915 — one function per solver run keeps the iterate state local
+def solve_relaxation(
     con_min: NDArray[np.int64],
     con_max: NDArray[np.int64],
     w_lin: NDArray[np.float64],
@@ -148,7 +147,7 @@ def solve_relaxation(  # noqa: C901, PLR0915 — one function per solver run kee
         k: the selection size (0 < k < n).
 
     Returns:
-        The solve's consumable outputs; see `RelaxationSolution`.
+        The solve's outputs; see `RelaxationSolution`.
     """
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     m = con_min.shape[0]
@@ -208,11 +207,7 @@ def solve_relaxation(  # noqa: C901, PLR0915 — one function per solver run kee
         rd = c + h * z - mt_dot(y) - r_lo + q_ub
         ru = np.where(has_ub, 1.0 - z - v, 0.0)
         mu = (z @ r_lo + (v * q_ub)[has_ub].sum()) / (big_n + n)
-        if (
-            mu < TOLERANCE
-            and np.linalg.norm(rp) / b_norm < TOLERANCE
-            and np.linalg.norm(rd) / c_norm < TOLERANCE
-        ):
+        if mu < TOLERANCE and np.linalg.norm(rp) / b_norm < TOLERANCE and np.linalg.norm(rd) / c_norm < TOLERANCE:
             converged = True
             break
 
@@ -234,7 +229,20 @@ def solve_relaxation(  # noqa: C901, PLR0915 — one function per solver run kee
         s_mat[np.diag_indices_from(s_mat)] += REGULARIZATION * (1.0 + np.abs(np.diag(s_mat)))
         factor = cho_factor(s_mat, lower=True, check_finite=False)
 
-        def solve_newton(rc_lo: NDArray[np.float64], rc_ub: NDArray[np.float64]) -> tuple:
+        def solve_newton(  # bind the iteration's state at definition time (B023)
+            rc_lo: NDArray[np.float64],
+            rc_ub: NDArray[np.float64],
+            *,
+            d: NDArray[np.float64] = d,
+            rp: NDArray[np.float64] = rp,
+            rd: NDArray[np.float64] = rd,
+            ru: NDArray[np.float64] = ru,
+            factor: tuple = factor,
+            z: NDArray[np.float64] = z,
+            v: NDArray[np.float64] = v,
+            r_lo: NDArray[np.float64] = r_lo,
+            q_ub: NDArray[np.float64] = q_ub,
+        ) -> tuple:
             """Solve one Newton system at the given complementarity residual targets.
 
             The bound duals and the upper-bound slack eliminate against their product rows,
@@ -249,7 +257,17 @@ def solve_relaxation(  # noqa: C901, PLR0915 — one function per solver run kee
             dq = np.where(has_ub, (rc_ub - q_ub * dv) / v, 0.0)
             return dz, dy, dr, dv, dq
 
-        def max_steps(dz, dr, dv, dq) -> tuple[float, float]:
+        def max_steps(
+            dz: NDArray[np.float64],
+            dr: NDArray[np.float64],
+            dv: NDArray[np.float64],
+            dq: NDArray[np.float64],
+            *,
+            z: NDArray[np.float64] = z,
+            v: NDArray[np.float64] = v,
+            r_lo: NDArray[np.float64] = r_lo,
+            q_ub: NDArray[np.float64] = q_ub,
+        ) -> tuple[float, float]:
             """Return the primal/dual positivity-preserving step fractions for a direction."""
 
             def ratio(arr: NDArray[np.float64], darr: NDArray[np.float64]) -> float:
@@ -264,8 +282,7 @@ def solve_relaxation(  # noqa: C901, PLR0915 — one function per solver run kee
         dz_a, _, dr_a, dv_a, dq_a = solve_newton(-z * r_lo, np.where(has_ub, -v * q_ub, 0.0))
         a_pri, a_dual = max_steps(dz_a, dr_a, dv_a, dq_a)
         mu_aff = (
-            (z + a_pri * dz_a) @ (r_lo + a_dual * dr_a)
-            + ((v + a_pri * dv_a) * (q_ub + a_dual * dq_a))[has_ub].sum()
+            (z + a_pri * dz_a) @ (r_lo + a_dual * dr_a) + ((v + a_pri * dv_a) * (q_ub + a_dual * dq_a))[has_ub].sum()
         ) / (big_n + n)
 
         # --- centering weight + corrector -------

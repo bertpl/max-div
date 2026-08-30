@@ -38,7 +38,12 @@ def test_repair_fixes_a_near_feasible_selection():
     # --- assert -----------------------
     assert violation == 0.0
     assert sel_mask.sum() == 2  # size preserved
-    assert _weighted_violation(_selection_counts(item_indptr, item_cons, np.where(sel_mask)[0], 2), con_min, con_max, weights) == 0.0
+    assert (
+        _weighted_violation(
+            _selection_counts(item_indptr, item_cons, np.where(sel_mask)[0], 2), con_min, con_max, weights
+        )
+        == 0.0
+    )
 
 
 def test_repair_reports_residual_violation_at_the_swap_cap():

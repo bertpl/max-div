@@ -151,7 +151,7 @@ def test_marginals_are_a_valid_fractional_selection(seed: int):
 
 
 def test_bound_not_below_the_ascent_floor():
-    """The exact solve must certify at least what the dual ascent certifies."""
+    """The exact solve's violation floor must be at least the dual ascent's."""
     # --- arrange ----------------------
     cons = [
         Constraint(int_set={0, 1}, min_count=2, max_count=2),
