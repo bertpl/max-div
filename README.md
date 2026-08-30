@@ -13,16 +13,24 @@
 
 # max-div
 
-Configurable solver for **Maximum Diversity Problems** with optional **fairness constraints**:
-given `n` items — vectors or precomputed distances — select the `k` most diverse, optionally
-subject to per-group minimum/maximum quotas.
+**A versatile, high-performance solver for Maximum Diversity Problems** — select the `k` most
+diverse of `n` items, under optional fairness constraints.
 
-max-div is an **anytime heuristic**: it returns a good selection quickly and keeps improving it
-for as long as you allow (wall-clock time or iteration count). Two things set it apart among
-freely available tools: it is the only
-**dedicated diversity solver** with native support for **overlapping fairness constraints**, and
-the only one offering a **geometric-mean separation** objective — one of four diversity metrics
-it provides (minimum, mean, and geometric-mean separation, plus mean pairwise distance).
+## Highlights
+
+- **Anytime**: returns a good selection quickly and keeps improving it for as long as you
+  allow — a wall-clock or iteration budget, covering the whole solve end to end.
+- **Four diversity objectives**, including **geometric-mean separation** — unique among freely
+  available tools.
+- **Overlapping fairness constraints**: per-group minimum/maximum quotas, supported natively by
+  no other dedicated diversity solver.
+- **Distance metrics** from L1 to Minkowski with caller-chosen power `p` — or bring your own
+  precomputed distances.
+- **Feasibility proofs**: witnesses for feasible constraint sets, certificates for infeasible
+  ones, and an explicit *unknown* in between.
+- **Parallel solving**: cooperative workers in dynamically consolidating groups.
+- **Openly benchmarked** against 10 third-party tools, on a published measurement protocol.
+- **Easy to adopt**: `pip install max-div`, Python 3.11+, free-threaded builds supported.
 
 <p align="center">
   <picture>
@@ -31,10 +39,8 @@ it provides (minimum, mean, and geometric-mean separation, plus mean pairwise di
   </picture>
 </p>
 
-It fills the gap between exact MIP/CP solvers, which prove optimal answers but do not scale, and
-single-shot pickers, which are fast but at best have very limited support for constraints. The
-[benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) show where
-it leads and where it does not.
+The [benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/)
+compare max-div in depth with exact MIP/CP solvers and one-shot pickers.
 
 ## Installation
 
