@@ -58,6 +58,7 @@ plugins:
         solvers/apricot-select.md: benchmarks/third_party/solvers/apricot-select.md
         solvers/qc-selector.md: benchmarks/third_party/solvers/qc-selector.md
         solvers/dppy.md: benchmarks/third_party/solvers/dppy.md
+        concepts/feasibility.md: concepts/constraints.md
         solvers/code-fdm.md: benchmarks/third_party/solvers/code-fdm.md
   - mkdocstrings:
       handlers:
@@ -116,7 +117,6 @@ nav:
     - How the Solver Works: concepts/solver.md
     - Scoring: concepts/scoring.md
     - Constraints: concepts/constraints.md
-    - Proving Feasibility: concepts/feasibility.md
     - Diversity & Distance: concepts/diversity.md
     - Objectives & the Landscape: concepts/objectives.md
     - Glossary: concepts/glossary.md

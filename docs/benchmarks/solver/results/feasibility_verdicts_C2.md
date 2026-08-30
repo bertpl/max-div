@@ -1,4 +1,4 @@
-Certified feasibility verdicts for problem C2, computed with `check_feasibility(thorough=True, max_iter=8000)`:
+Certified feasibility verdicts for problem C2, computed with `check_feasibility(thorough=True)`:
 
 | $n$   | $d$ | $k$  | $m$ | Verdict                                                  | Constraints-score ceiling |
 | ----- | --- | ---- | --- | -------------------------------------------------------- | ------------------------- |
