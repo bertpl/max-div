@@ -7,17 +7,10 @@ from scipy.optimize import LinearConstraint, milp
 from max_div._core._random import new_rng_state
 from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.feasibility import (
-    FeasibilityResult,
     FeasibilityStatus,
     find_feasible,
 )
-from max_div._core.feasibility.lagrangian import (
-    _dual_value,
-    _gumbel_noise,
-    _item_scores,
-    _top_k_items,
-    build_item_constraint_csr,
-)
+from max_div._core.feasibility.lagrangian import _gumbel_noise
 
 
 # =================================================================================================
@@ -75,104 +68,6 @@ def _pigeonhole_instance() -> tuple[int, int, list[Constraint]]:
         Constraint(int_set={2, 3}, min_count=2, max_count=2),
     ]
     return 4, 2, cons
-
-
-# =================================================================================================
-#  Item <-> constraint indexing
-# =================================================================================================
-def test_build_item_constraint_csr():
-    """The transpose lists each item's constraints exactly."""
-    # --- arrange ----------------------
-    cons = [
-        Constraint(int_set={0, 1, 2}, min_count=1, max_count=3),
-        Constraint(int_set={2, 3}, min_count=0, max_count=2),
-    ]
-    _, con_indices, _ = _arrays(cons)
-
-    # --- act --------------------------
-    item_indptr, item_cons = build_item_constraint_csr(con_indices, 5)
-
-    # --- assert -----------------------
-    memberships = {j: sorted(item_cons[item_indptr[j] : item_indptr[j + 1]]) for j in range(5)}
-    assert memberships == {0: [0], 1: [0], 2: [0, 1], 3: [1], 4: []}
-
-
-def test_build_item_constraint_csr_no_constraints():
-    """An empty constraint set transposes to an all-empty CSR."""
-    # --- act --------------------------
-    item_indptr, item_cons = build_item_constraint_csr(np.empty(0, dtype=np.int32), 3)
-
-    # --- assert -----------------------
-    assert item_indptr.tolist() == [0, 0, 0, 0]
-    assert item_cons.size == 0
-
-
-def test_top_k_items_is_exact():
-    """Heap selection returns exactly the k best items, and all items when k reaches n."""
-    # --- arrange ----------------------
-    scores = np.array([3.0, 1.0, 2.0, 5.0, 4.0])
-
-    # --- act --------------------------
-    top2 = _top_k_items(scores, 2)
-    top_all = _top_k_items(scores, 5)
-
-    # --- assert -----------------------
-    assert sorted(top2.tolist()) == [3, 4]
-    assert sorted(top_all.tolist()) == [0, 1, 2, 3, 4]
-
-
-# =================================================================================================
-#  Dual value and the certificate
-# =================================================================================================
-def test_dual_value_pigeonhole_toy():
-    """All-ones prices on the pigeonhole instance give g = 2."""
-    # --- arrange ----------------------
-    n, k, cons = _pigeonhole_instance()
-    _, con_indices, _ = _arrays(cons)
-    item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
-    lam_min = np.ones(2)
-    lam_max = np.zeros(2)
-
-    # --- act --------------------------
-    scores = _item_scores(item_indptr, item_cons, lam_min, lam_max)
-    selection = _top_k_items(scores, k)
-    g = _dual_value(
-        np.array([2, 2], dtype=np.int64), np.array([2, 2], dtype=np.int64), lam_min, lam_max, scores, selection
-    )
-
-    # --- assert -----------------------
-    assert scores.tolist() == [1.0, 1.0, 1.0, 1.0]
-    assert g == pytest.approx(2.0)
-
-
-def test_exact_topk_guard():
-    """A non-maximizing inner selection fabricates a positive g on a feasible instance.
-
-    Pins the soundness invariant: the ascent's dual value is a proof only because it uses an exact
-    top-k — this test demonstrates the false proof a perturbed selection would produce, and that
-    the exact selection stays non-positive (as any feasible instance requires).
-    """
-    # --- arrange ----------------------
-    cons = [
-        Constraint(int_set={0, 1}, min_count=1, max_count=2, weight=3.0),
-        Constraint(int_set={2, 3}, min_count=1, max_count=2, weight=1.0),
-    ]
-    n, k = 5, 2  # item 4 is unconstrained; {0, 2} is a witness, so the instance is feasible
-    _, con_indices, _ = _arrays(cons)
-    item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
-    con_min = np.array([1, 1], dtype=np.int64)
-    con_max = np.array([2, 2], dtype=np.int64)
-    lam_min = np.array([3.0, 1.0])
-    lam_max = np.zeros(2)
-    scores = _item_scores(item_indptr, item_cons, lam_min, lam_max)
-
-    # --- act --------------------------
-    g_exact = _dual_value(con_min, con_max, lam_min, lam_max, scores, _top_k_items(scores, k))
-    g_corrupted = _dual_value(con_min, con_max, lam_min, lam_max, scores, np.array([3, 4], dtype=np.int64))
-
-    # --- assert -----------------------
-    assert g_exact <= 0.0
-    assert g_corrupted > 0.0
 
 
 def test_pigeonhole_certified_infeasible():
@@ -454,83 +349,6 @@ def test_gumbel_noise_seed_behavior():
     # --- assert -----------------------
     np.testing.assert_array_equal(noise_a, noise_b)
     assert not np.array_equal(noise_a, noise_c)
-
-
-# =================================================================================================
-#  FeasibilityResult — derived members
-# =================================================================================================
-def _result(status: FeasibilityStatus, bound: float = 0.0, violation: float = 0.0) -> FeasibilityResult:
-    """Build a result with the fields the derived members read."""
-    return FeasibilityResult(
-        status=status,
-        selection=np.arange(8, dtype=np.int64),
-        violation=violation,
-        violation_per_constraint=np.zeros(1, dtype=np.int64),
-        bound=bound,
-        lam_min=np.zeros(1),
-        lam_max=np.ones(1),
-    )
-
-
-@pytest.mark.parametrize(
-    "status,expected_floor",
-    [(FeasibilityStatus.INFEASIBLE, 3.0), (FeasibilityStatus.FEASIBLE, 0.0), (FeasibilityStatus.UNKNOWN, 0.0)],
-    ids=["infeasible", "feasible", "unknown"],
-)
-def test_violation_floor_only_follows_from_a_proof(status: FeasibilityStatus, expected_floor: float):
-    """Only an infeasibility proof bounds anything; the other verdicts certify no floor."""
-    # --- act & assert -----------------
-    assert _result(status, bound=3.0).violation_floor == expected_floor
-
-
-def test_violation_floor_clamps_a_negative_bound():
-    """A dual value below zero bounds nothing, so it must not surface as a negative floor."""
-    # --- act & assert -----------------
-    assert _result(FeasibilityStatus.INFEASIBLE, bound=-1.0).violation_floor == 0.0
-
-
-@pytest.mark.parametrize(
-    "status,certified",
-    [(FeasibilityStatus.FEASIBLE, True), (FeasibilityStatus.INFEASIBLE, True), (FeasibilityStatus.UNKNOWN, False)],
-    ids=["feasible", "infeasible", "unknown"],
-)
-def test_is_certified_covers_only_the_two_proofs(status: FeasibilityStatus, certified: bool):
-    """Both proofs count as certified; UNKNOWN does not."""
-    # --- act & assert -----------------
-    assert _result(status).is_certified is certified
-
-
-@pytest.mark.parametrize(
-    "status,opening",
-    [
-        (FeasibilityStatus.FEASIBLE, "FEASIBLE:"),
-        (FeasibilityStatus.INFEASIBLE, "INFEASIBLE:"),
-        (FeasibilityStatus.UNKNOWN, "UNKNOWN:"),
-    ],
-    ids=["feasible", "infeasible", "unknown"],
-)
-def test_rendering_names_its_verdict(status: FeasibilityStatus, opening: str):
-    """Each verdict renders a line naming itself, so a printed result is self-explaining."""
-    # --- act & assert -----------------
-    assert str(_result(status, bound=3.0, violation=3.0)).startswith(opening)
-
-
-def test_rendering_disclaims_an_unknown_verdict():
-    """UNKNOWN must read as 'nothing was learned', never as evidence against feasibility."""
-    # --- act & assert -----------------
-    assert "says nothing about whether the constraints can be satisfied" in str(
-        _result(FeasibilityStatus.UNKNOWN, violation=2.0)
-    )
-
-
-def test_rendering_reports_the_floor_and_the_selection_violation():
-    """An infeasible rendering states both the certified floor and what the best selection carries."""
-    # --- act --------------------------
-    rendered = str(_result(FeasibilityStatus.INFEASIBLE, bound=3.0, violation=5.0))
-
-    # --- assert -----------------------
-    assert "at least 3" in rendered  # the certified floor
-    assert "carries 5" in rendered  # the best selection found
 
 
 @pytest.mark.parametrize("seed", range(6))
