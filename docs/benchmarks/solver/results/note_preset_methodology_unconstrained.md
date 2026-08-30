@@ -1,9 +1,6 @@
-Each preset is run for a series of increasing time budgets, one run per budget point with a fresh seed, so the spread across seeds shows up as scatter alongside the time trend.
+Some notes:
 
-Budgets are end-to-end: a run's time budget covers the whole solve, computing the distances and initialization included, so a budget point shows what a caller gets for that much time.
-
-The uncertainty band is a q10-q90 estimate from monotone cubic-spline quantile regression through that scatter, approximating the best of about ten seeded runs (around q90). The band covers the diversity score.
-
-A separate black-circle series is a parallel run with the default parallel settings, shown as a reference for the best result the workers jointly reach. It runs its own set of budgets, omitting the lowest ones, where the fixed start-up cost of the parallel workers dominates.
-
-The parallel series' shortest budget points sit below the serial presets: an end-to-end budget includes the roughly one second the parallel solver spends spawning its worker processes.
+- **Each benchmark run gets a different seed**, so the scatter between neighboring budget points also gives an idea of result variability.
+- **Budgets are end-to-end**: they include the initial setup cost (distance computations, worker setup).
+- The q10-q50-q90 trend lines are obtained using **cubic-spline quantile regression** through that scatter.
+- The runs compare the four presets **using 1 worker**, plus the default preset **under default multi-worker settings** (for the benchmark machine used).
