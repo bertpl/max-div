@@ -13,14 +13,10 @@ arbitrarily, which makes the decision NP-complete, so the pipeline returns one o
 
 The mechanism has three stages:
 
-- `ipm.solve_relaxation` solves the continuous relaxation exactly, yielding its value, the
-  count-constraint multipliers, and the maximally spread fractional optimizer (`marginals`).
-- The multipliers, clamped into the admissible region, are evaluated through the exact closed
-  form (`evaluation.certified_bound`); a positive bound proves infeasibility.
-- Witness construction rounds the marginals: seed-controlled randomized draws (`rounding`),
-  each finished by greedy swap repair, with the deterministic top-k as one fallback candidate
-  when no draw ends feasible.  Any zero-violation round is a witness; otherwise the
-  least-violating round is returned.
+- `ipm.solve_relaxation` solves the continuous relaxation exactly.
+- `evaluation.certified_bound`, at the clamped multipliers, proves infeasibility when positive.
+- `rounding` draws seed-controlled selections from the marginals, each swap-repaired; a
+  zero-violation draw is a witness, and the least-violating one is returned either way.
 
 Violation is weighted-linearly throughout — `sum of w_i * (shortfall_i + excess_i)` with `w_i` the
 user-set constraint weights — so the certified bound and the least-infeasible grading are
@@ -44,7 +40,6 @@ from .ipm import solve_relaxation
 from .repair import SWAP_CAP_MIN, SWAP_CAP_PER_K
 from .result import FeasibilityResult, FeasibilityStatus
 from .rounding import deterministic_round, sample_and_repair
-
 
 # =================================================================================================
 #  Constants
@@ -91,14 +86,14 @@ def find_feasible(
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     max_swaps = max(SWAP_CAP_MIN, SWAP_CAP_PER_K * k)
 
-    # --- exact relaxation solve + certificate ---
+    # --- relaxation solve + certificate ---------
     solution = solve_relaxation(con_min, con_max, w_lin, w_quad, con_indices, n=n, k=k)
     lam_min = clamp_admissible(solution.lam_min, w_lin, w_quad)
     lam_max = clamp_admissible(solution.lam_max, w_lin, w_quad)
     bound = float(certified_bound(con_min, con_max, w_lin, w_quad, lam_min, lam_max, item_indptr, item_cons, k))
     certified_infeasible = bound > G_POSITIVE_TOL
 
-    # --- witness attempts: seeded draws first, deterministic round as fallback ---
+    # --- witness attempts -----------------------
     # The seeded draws come FIRST and a witness among them returns immediately: on easily feasible
     # problems the first draw usually is one, and it is the draw -- not a deterministic
     # construction -- that makes the returned selection vary with the seed.
@@ -123,7 +118,7 @@ def find_feasible(
         if violation < best_violation:
             best_selection, best_violation = selection, violation
 
-    # --- verdict ------------------------------
+    # --- verdict --------------------------------
     if best_violation == 0.0:
         status = FeasibilityStatus.FEASIBLE
     elif certified_infeasible:

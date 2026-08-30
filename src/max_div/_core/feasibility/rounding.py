@@ -17,9 +17,7 @@ from .repair import _repair_selection
 
 
 @numba.njit(cache=True)
-def systematic_sample(
-    marginals: NDArray[np.float64], k: int, rng_state: NDArray[np.uint64]
-) -> NDArray[np.int64]:
+def systematic_sample(marginals: NDArray[np.float64], k: int, rng_state: NDArray[np.uint64]) -> NDArray[np.int64]:
     """Draw a selection of exactly `k` items with per-item inclusion probabilities `marginals`.
 
     Systematic sampling: traverse the items in a random order, accumulate the probabilities, and
@@ -139,8 +137,8 @@ def deterministic_round(
 ) -> tuple[NDArray[np.int64], float]:
     """Take the `k` largest marginals as the selection and greedily swap-repair it.
 
-    The seed-free baseline candidate beside the randomized draws: cheap and reasonable, but it
-    discards the spread the marginals encode, so it is one candidate — never the only one.
+    This is the seed-free baseline beside the randomized draws: cheap, but it discards the
+    spread the marginals encode.
 
     Returns:
         `(selection, violation)` as in `sample_and_repair`.

@@ -43,14 +43,13 @@ class InitMostFeasible(InitializationStrategy):
         """Create the strategy.
 
         Args:
-            max_iter: Deprecated and ignored.  The former dual ascent took an iteration budget;
-                the interior-point relaxation solve converges in a size-independent handful of
-                iterations, so a budget no longer means anything.
+            max_iter: Deprecated and ignored; the relaxation is solved exactly, without an
+                iteration budget.
         """
         super().__init__()
         if max_iter is not None:
             warnings.warn(
-                "InitMostFeasible(max_iter=...) is deprecated and ignored: the relaxation is now "
+                "InitMostFeasible(max_iter=...) is deprecated and ignored: the relaxation is "
                 "solved exactly by an interior-point method, which needs no iteration budget.",
                 DeprecationWarning,
                 stacklevel=2,

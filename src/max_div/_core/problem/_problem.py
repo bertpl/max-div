@@ -80,12 +80,12 @@ class MaxDivProblem(ABC):
             thorough: Spend more rounding attempts on the returned selection.  Verdicts are
                 unaffected; on problems where neither proof exists, the extra attempts can lower
                 the violation of the selection returned.
-            max_iter: Deprecated and ignored.  The former dual ascent took an iteration budget;
-                the exact relaxation solve has no budget to set.
+            max_iter: Deprecated and ignored; the exact relaxation solve has no iteration
+                budget to set.
         """
         if max_iter is not None:
             warnings.warn(
-                "check_feasibility(max_iter=...) is deprecated and ignored: the relaxation is now "
+                "check_feasibility(max_iter=...) is deprecated and ignored: the relaxation is "
                 "solved exactly by an interior-point method, which needs no iteration budget.",
                 DeprecationWarning,
                 stacklevel=2,

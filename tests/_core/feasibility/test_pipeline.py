@@ -30,7 +30,7 @@ def _brute_force_feasible(n: int, k: int, cons: list[Constraint]) -> bool:
 
 
 def _recomputed_dual_value(n: int, k: int, cons: list[Constraint], lam_min: np.ndarray, lam_max: np.ndarray) -> float:
-    """Independently recompute g from returned multipliers — the one-line certificate check."""
+    """Independently recompute the dual value from the returned multipliers — the one-line certificate check."""
     scores = np.zeros(n)
     for i, con in enumerate(cons):
         for j in con.int_set:
@@ -210,34 +210,33 @@ def test_metamorphic_tightening_never_creates_feasibility(seed: int):
         assert _selection_satisfies(tight.selection, tightened)
 
 
-def test_milp_cross_check():
-    """An exact integer solve agrees with every definite verdict on a batch of random instances."""
-    for seed in range(12):
-        # --- arrange ----------------------
-        n, k, cons = _random_instance(seed)
+@pytest.mark.parametrize("seed", range(12))
+def test_milp_cross_check(seed: int):
+    """An exact integer solve agrees with every definite verdict."""
+    # --- arrange ----------------------
+    n, k, cons = _random_instance(seed)
+    a = np.zeros((len(cons), n))
+    for i, con in enumerate(cons):
+        for j in con.int_set:
+            a[i, j] = 1.0
+    lo = np.array([con.min_count for con in cons], dtype=float)
+    hi = np.array([con.max_count for con in cons], dtype=float)
 
-        # --- act --------------------------
-        result = _run(n, k, cons, seed=seed)
+    # --- act --------------------------
+    result = _run(n, k, cons, seed=seed)
+    milp_result = milp(
+        c=np.zeros(n),
+        constraints=[LinearConstraint(a, lo, hi), LinearConstraint(np.ones((1, n)), k, k)],
+        integrality=np.ones(n),
+        bounds=(0, 1),
+    )
+    milp_feasible = milp_result.status == 0
 
-        a = np.zeros((len(cons), n))
-        for i, con in enumerate(cons):
-            for j in con.int_set:
-                a[i, j] = 1.0
-        lo = np.array([con.min_count for con in cons], dtype=float)
-        hi = np.array([con.max_count for con in cons], dtype=float)
-        milp_result = milp(
-            c=np.zeros(n),
-            constraints=[LinearConstraint(a, lo, hi), LinearConstraint(np.ones((1, n)), k, k)],
-            integrality=np.ones(n),
-            bounds=(0, 1),
-        )
-        milp_feasible = milp_result.status == 0
-
-        # --- assert -----------------------
-        if result.status is FeasibilityStatus.FEASIBLE:
-            assert milp_feasible
-        elif result.status is FeasibilityStatus.INFEASIBLE:
-            assert not milp_feasible
+    # --- assert -----------------------
+    if result.status is FeasibilityStatus.FEASIBLE:
+        assert milp_feasible
+    elif result.status is FeasibilityStatus.INFEASIBLE:
+        assert not milp_feasible
 
 
 # =================================================================================================
@@ -295,7 +294,7 @@ def test_deterministic_fallback_can_beat_the_draws(monkeypatch):
 
     n, k, cons = _pigeonhole_instance()
 
-    def _bad_draw(marginals, k, rng_state, *arrays):  # noqa: ANN001, ANN202 -- test stub matching the njit signature
+    def _bad_draw(marginals, k, rng_state, *arrays):
         return np.arange(k, dtype=np.int64), 99.0
 
     monkeypatch.setattr(pipeline, "sample_and_repair", _bad_draw)

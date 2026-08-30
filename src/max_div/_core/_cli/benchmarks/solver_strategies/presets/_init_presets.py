@@ -21,8 +21,7 @@ class InitPreset(StrEnum):
     """StrEnum for all initialization presets we want to benchmark.
 
     Tunable strategies appear at several settings: random-batched and eager at two batch/candidate
-    sizes each.  Shipped-preset correspondences live in
-    `_PRESET_NOTES`.
+    sizes each.  Shipped-preset correspondences live in `_PRESET_NOTES`.
     """
 
     # --- fast -----------------------------------
