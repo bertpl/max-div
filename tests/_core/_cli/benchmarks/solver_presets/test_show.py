@@ -38,7 +38,7 @@ def test_show_renders_ragged_parallel_series(tmp_path: Path) -> None:
     """A parallel series covering only the longer budgets renders a placeholder at the short rows.
 
     The union of durations across columns includes budgets the parallel series never ran, so those
-    cells have no sample; the table must render them rather than reduce over an empty list.
+    cells have no sample; the table must render them, not reduce over an empty list.
     """
     # --- arrange ----------------------
     # single-worker SMART at 0.5s and 2.0s; the parallel series only at 2.0s
