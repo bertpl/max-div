@@ -21,6 +21,8 @@ METRIC_KIND_MINKOWSKI_P05 = 7
 METRIC_KIND_MINKOWSKI_P05_POWERED = 8
 METRIC_KIND_MINKOWSKI_P025 = 9
 METRIC_KIND_MINKOWSKI_P025_POWERED = 10
+METRIC_KIND_MINKOWSKI_P0125 = 11
+METRIC_KIND_MINKOWSKI_P0125_POWERED = 12
 
 # `__repr__` looks up each kind's factory-method name here; the Minkowski kinds render as a
 # `minkowski(...)` call instead.
@@ -39,6 +41,8 @@ _IMPLIED_P = {
     METRIC_KIND_MINKOWSKI_P05_POWERED: 0.5,
     METRIC_KIND_MINKOWSKI_P025: 0.25,
     METRIC_KIND_MINKOWSKI_P025_POWERED: 0.25,
+    METRIC_KIND_MINKOWSKI_P0125: 0.125,
+    METRIC_KIND_MINKOWSKI_P0125_POWERED: 0.125,
 }
 
 # These Minkowski kinds skip the outer 1/p root.
@@ -46,6 +50,7 @@ _POWERED_KINDS = (
     METRIC_KIND_MINKOWSKI_POWERED,
     METRIC_KIND_MINKOWSKI_P05_POWERED,
     METRIC_KIND_MINKOWSKI_P025_POWERED,
+    METRIC_KIND_MINKOWSKI_P0125_POWERED,
 )
 
 
@@ -103,9 +108,9 @@ class DistanceMetric(NamedTuple):
         `l2_euclidean()`: the root is monotone, so per-pair distance ordering is unchanged.
 
         The factory canonicalizes `p`: p = 1, 2, inf return the dedicated metrics and p = 0.5,
-        0.25 the specialized kinds, so each metric computes through exactly one code path.
+        0.25, 0.125 the specialized kinds, so each metric computes through exactly one code path.
 
-        Cost: p in {1, 2, inf, 0.5, 0.25} computes with hardware arithmetic; any other p pays a
+        Cost: every canonicalized p above computes with hardware arithmetic; any other p pays a
         ``pow`` call per dimension, well over an order of magnitude more per term.
 
         For 0 < p < 1 the `root=True` form violates the triangle inequality — not a strict
@@ -129,6 +134,8 @@ class DistanceMetric(NamedTuple):
             return cls(kind=METRIC_KIND_MINKOWSKI_P05 if root else METRIC_KIND_MINKOWSKI_P05_POWERED, p=None)
         if p == 0.25:
             return cls(kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED, p=None)
+        if p == 0.125:
+            return cls(kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED, p=None)
         return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, p=p)
 
     # --------------------------------------------------------------------------

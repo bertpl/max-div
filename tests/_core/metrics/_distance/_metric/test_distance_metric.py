@@ -62,7 +62,7 @@ def test_minkowski_canonicalizes_onto_named_metrics(p: float, root: bool, expect
     assert DistanceMetric.minkowski(p, root=root) == expected
 
 
-@pytest.mark.parametrize("p", [0.5, 0.25])
+@pytest.mark.parametrize("p", [0.5, 0.25, 0.125])
 @pytest.mark.parametrize("root", [True, False])
 def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
     """A specializable p must return its dedicated kind with p=None, so only one code path computes it."""

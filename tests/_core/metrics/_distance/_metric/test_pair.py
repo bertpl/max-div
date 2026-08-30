@@ -73,7 +73,7 @@ def test_compute_pdist_matches_scipy(metric: DistanceMetric):
     np.testing.assert_allclose(result, expected, rtol=1e-5, atol=1e-5)
 
 
-@pytest.mark.parametrize("p", [0.25, 0.5, 1.5, 3.0])
+@pytest.mark.parametrize("p", [0.125, 0.25, 0.5, 1.5, 3.0])
 @pytest.mark.parametrize("root", [True, False])
 def test_compute_pdist_minkowski_matches_reference(p: float, root: bool):
     """Minkowski distances match a float64 numpy reference, for specialized and generic p."""
