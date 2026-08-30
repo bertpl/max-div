@@ -1,7 +1,7 @@
 """The feasibility pipeline decides whether a feasible selection exists and, where possible, constructs one.
 
-The question it answers: can exactly `k` of `n` items be selected such that every constraint `i`
-counts between `min_count_i` and `max_count_i` selected members?  Constraint sets may overlap
+Can exactly `k` of `n` items be selected such that every constraint `i` counts between
+`min_count_i` and `max_count_i` selected members?  Constraint sets may overlap
 arbitrarily, which makes the decision NP-complete, so the pipeline returns one of three statuses:
 
 - `FEASIBLE`: a witness selection satisfying every constraint is returned.
@@ -19,7 +19,7 @@ The mechanism has three stages:
   zero-violation draw is a witness, and the least-violating one is returned either way.
 
 Violation is weighted-linearly throughout — `sum of w_i * (shortfall_i + excess_i)` with `w_i` the
-user-set constraint weights — so the certified bound and the least-infeasible grading are
+user-set constraint weights — so the certified bound and the returned selection's violation are
 statements about that aggregate.  Verdicts and witnesses are penalty-shape-independent (zero
 violation is zero violation under any shape).  The relaxation solver itself also handles
 quadratic penalties; this pipeline fixes the linear aggregate its consumers report.
@@ -41,16 +41,16 @@ from .repair import SWAP_CAP_MIN, SWAP_CAP_PER_K
 from .result import FeasibilityResult, FeasibilityStatus
 from .rounding import deterministic_round, sample_and_repair
 
-# =================================================================================================
+# ==================================================================================================
 #  Constants
-# =================================================================================================
+# ==================================================================================================
 N_DRAWS = 16  # randomized rounding draws per pipeline run
 N_DRAWS_THOROUGH = 64  # draws when the caller asks to keep improving the returned selection
 
 
-# =================================================================================================
+# ==================================================================================================
 #  find_feasible
-# =================================================================================================
+# ==================================================================================================
 def find_feasible(
     con_values: NDArray[np.int32],
     con_indices: NDArray[np.int32],
@@ -95,8 +95,8 @@ def find_feasible(
 
     # --- witness attempts -----------------------
     # The seeded draws come FIRST and a witness among them returns immediately: on easily feasible
-    # problems the first draw usually is one, and it is the draw -- not a deterministic
-    # construction -- that makes the returned selection vary with the seed.
+    # problems the first draw usually is one, and the draw -- not a deterministic
+    # construction -- makes the returned selection vary with the seed.
     # mask to a non-negative int64: caller seeds may be any int, and the uint64 conversion in
     # new_rng_state rejects negatives outside compiled code
     rng_state = new_rng_state(np.int64(seed & 0x7FFFFFFFFFFFFFFF))

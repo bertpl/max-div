@@ -115,11 +115,11 @@ def test_no_constraints_is_trivially_feasible():
 
 
 def test_lp_feasible_integer_infeasible_returns_unknown():
-    """Two disjoint 5-cycles with per-edge min-1 cover and k=5: fractionally feasible, integrally not — UNKNOWN.
+    """The two-5-cycles instance is fractionally feasible but integrally infeasible, so it is UNKNOWN.
 
-    No certificate can exist (the relaxation has value 0) and no witness can exist (covering one
-    5-cycle takes 3 vertices, so both need 6 > k) — the honest verdict under any correct
-    algorithm.
+    Per-edge min-1 cover over two disjoint 5-cycles with k=5: no certificate can exist (the
+    relaxation has value 0) and no witness can exist (covering one 5-cycle takes 3 vertices, so
+    both need 6 > k) — the honest verdict under any correct algorithm.
     """
     # --- arrange ----------------------
     edges = [(i, (i + 1) % 5) for i in range(5)] + [(5 + i, 5 + (i + 1) % 5) for i in range(5)]
