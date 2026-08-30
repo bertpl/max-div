@@ -35,8 +35,7 @@ class SolverPresetBenchmarkParams:
         """Return the label identifying this run's results column in reports.
 
         The bracket part states the worker count: "(1 worker)" for a single solve,
-        "(12 workers)" for a parallel solve. The worker grouping is not mentioned —
-        parallel runs use the default dynamic grouping.
+        "(12 workers)" for a parallel solve.
         """
         label = self.preset.value.upper()
         if not self.is_parallel:
