@@ -14,7 +14,7 @@ from max_div._core.solver._strategies import InitializationStrategy
     [
         InitializationStrategy.fast,
         partial(InitializationStrategy.farthest_point, top_k=4),
-        partial(InitializationStrategy.most_feasible, max_iter=100),
+        partial(InitializationStrategy.most_feasible),
         partial(InitializationStrategy.random_one_shot, ignore_constraints=False),
         partial(InitializationStrategy.random_one_shot, ignore_constraints=True),
         partial(InitializationStrategy.random_batched, b=2, ignore_constraints=False),

@@ -3,7 +3,6 @@ import pytest
 from scipy.optimize import linprog
 
 from max_div._core.constraints import Constraint, ConstraintList
-from max_div._core.feasibility import find_feasible
 from max_div._core.feasibility.evaluation import certified_bound, clamp_admissible
 from max_div._core.feasibility.indexing import build_item_constraint_csr
 from max_div._core.feasibility.ipm import RelaxationSolution, solve_relaxation
@@ -150,8 +149,8 @@ def test_marginals_are_a_valid_fractional_selection(seed: int):
         assert np.all(counts <= hi + 1e-5)
 
 
-def test_bound_not_below_the_ascent_floor():
-    """The exact solve's violation floor must be at least the dual ascent's."""
+def test_bound_matches_the_lp_value_on_an_infeasible_instance():
+    """On an infeasible instance the certified bound equals the exact relaxation value."""
     # --- arrange ----------------------
     cons = [
         Constraint(int_set={0, 1}, min_count=2, max_count=2),
@@ -160,15 +159,14 @@ def test_bound_not_below_the_ascent_floor():
     ]
     n, k = 6, 2
     w = np.ones(3)
-    con_values, con_indices = ConstraintList(cons).to_numpy()
-    ascent = find_feasible(con_values, con_indices, w, k=k, n=n, max_iter=2000, seed=1)
 
     # --- act --------------------------
     sol = _solve(n, k, cons, w, np.zeros(3))
     bound = _bound(sol, n, k, cons, w, np.zeros(3))
 
     # --- assert -----------------------
-    assert bound >= ascent.violation_floor - 1e-6
+    assert bound == pytest.approx(_linprog_value(n, k, cons, w), abs=1e-6)
+    assert bound == pytest.approx(2.0, abs=1e-6)  # k=2 cannot fill two disjoint min-2 sets
 
 
 def test_lp_feasible_integer_infeasible_has_zero_value():

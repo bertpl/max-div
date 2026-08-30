@@ -3,11 +3,6 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
-from max_div._core.feasibility import (
-    FEASIBILITY_MAX_ITER_HIGH,
-    FEASIBILITY_MAX_ITER_LOW,
-    FEASIBILITY_MAX_ITER_MEDIUM,
-)
 from max_div._core.solver._strategies._initialization._init_eager import InitEager
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_fast import InitFast
@@ -26,7 +21,7 @@ class InitPreset(StrEnum):
     """StrEnum for all initialization presets we want to benchmark.
 
     Tunable strategies appear at several settings: random-batched and eager at two batch/candidate
-    sizes each, most-feasible at its three budget grades.  Shipped-preset correspondences live in
+    sizes each.  Shipped-preset correspondences live in
     `_PRESET_NOTES`.
     """
 
@@ -52,9 +47,7 @@ class InitPreset(StrEnum):
     FPS_8 = "fps(8)"
 
     # --- most feasible --------------------------
-    MF_LOW = "mf(200)"
-    MF_MEDIUM = "mf(2000)"
-    MF_HIGH = "mf(8000)"
+    MF = "mf"
 
     # -------------------------------------------------------------------------
     #  Factory
@@ -88,9 +81,7 @@ class InitPreset(StrEnum):
         if problem_has_constraints:
             return True
         dropped_when_unconstrained = {
-            InitPreset.MF_LOW,
-            InitPreset.MF_MEDIUM,
-            InitPreset.MF_HIGH,
+            InitPreset.MF,
             InitPreset.ROS_U_UNCON,
             InitPreset.ROS_NU_UNCON,
         }
@@ -129,13 +120,11 @@ _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], d
     InitPreset.E_16: (InitEager, {"nc": 16, "ignore_constraints": False}),
     InitPreset.FPS_1: (InitFarthestPoint, {"top_k": 1}),
     InitPreset.FPS_8: (InitFarthestPoint, {"top_k": 8}),
-    InitPreset.MF_LOW: (InitMostFeasible, {"max_iter": FEASIBILITY_MAX_ITER_LOW}),
-    InitPreset.MF_MEDIUM: (InitMostFeasible, {"max_iter": FEASIBILITY_MAX_ITER_MEDIUM}),
-    InitPreset.MF_HIGH: (InitMostFeasible, {"max_iter": FEASIBILITY_MAX_ITER_HIGH}),
+    InitPreset.MF: (InitMostFeasible, {}),
 }
 
 _PRESET_NOTES: dict[InitPreset, str] = {
     InitPreset.ROS_U_UNCON: "= the RANDOM/GUIDED presets' initialization",
     InitPreset.FPS_8: "= the SMART/THOROUGH presets' initialization (unconstrained problems)",
-    InitPreset.MF_MEDIUM: "= the SMART/THOROUGH presets' initialization (constrained problems)",
+    InitPreset.MF: "= the SMART/THOROUGH presets' initialization (constrained problems)",
 }

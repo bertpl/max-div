@@ -11,7 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `most_feasible()` initialization and `check_feasibility()` now solve their underlying relaxation exactly via an interior-point method: exact certified infeasibility floors, and genuinely different feasible initializations per seed (parallel workers no longer start identically on easily feasible problems).
+
 ### Deprecated
+
+- The `max_iter` parameter of `check_feasibility()` and `most_feasible()`: the exact relaxation solve has no iteration budget to set; the parameter is ignored and will be removed.
 
 ### Removed
 

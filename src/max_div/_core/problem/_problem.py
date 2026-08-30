@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -6,7 +7,6 @@ from numpy.typing import NDArray
 
 from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.feasibility import (
-    FEASIBILITY_MAX_ITER_MEDIUM,
     FeasibilityResult,
     find_feasible,
 )
@@ -69,22 +69,27 @@ class MaxDivProblem(ABC):
         return sum([len(con.int_set) for con in self.constraints])
 
     # --- feasibility ----------------------------
-    def check_feasibility(
-        self, thorough: bool = False, max_iter: int = FEASIBILITY_MAX_ITER_MEDIUM
-    ) -> FeasibilityResult:
+    def check_feasibility(self, thorough: bool = False, max_iter: int | None = None) -> FeasibilityResult:
         """Report whether `k` items can be selected such that every constraint holds.
 
         Deciding feasibility is NP-complete in general, so the verdict is three-valued; see
         `FeasibilityStatus` for what each value claims.  No solver path calls `check_feasibility`.
+        The certified violation floor is exact: the underlying relaxation is solved to optimality.
 
         Args:
-            thorough: Changes only what happens once infeasibility is proven. The default stops
-                there, having the verdict; `thorough=True` keeps searching, which tightens the certified
-                violation floor and can improve the selection returned, at a proportional cost in time.
-                Feasible and unknown outcomes are reached identically either way.
-            max_iter: Search budget in ascent iterations; cost is proportional. A larger budget
-                can only move an unknown verdict toward a proof, never flip one proof into another.
+            thorough: Spend more rounding attempts on the returned selection.  Verdicts are
+                unaffected; on problems where neither proof exists, the extra attempts can lower
+                the violation of the selection returned.
+            max_iter: Deprecated and ignored.  The former dual ascent took an iteration budget;
+                the exact relaxation solve has no budget to set.
         """
+        if max_iter is not None:
+            warnings.warn(
+                "check_feasibility(max_iter=...) is deprecated and ignored: the relaxation is now "
+                "solved exactly by an interior-point method, which needs no iteration budget.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         con_values, con_indices = ConstraintList(self.constraints).to_numpy()
         return find_feasible(
             con_values=con_values,
@@ -92,8 +97,7 @@ class MaxDivProblem(ABC):
             con_weights=np.array([con.weight for con in self.constraints], dtype=np.float64),
             n=self.n,
             k=self.k,
-            max_iter=max_iter,
-            stop_at_first_proof=not thorough,
+            thorough=thorough,
         )
 
     # --- factory methods ------------------------

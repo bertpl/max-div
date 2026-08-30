@@ -6,4 +6,4 @@ from ._randint import (
     randint_constrained,
     randint_python,
 )
-from ._rng import new_rng_state, rand_nz_float64
+from ._rng import new_rng_state, rand_float64, rand_nz_float64

@@ -373,8 +373,8 @@ def test_check_feasibility_proves_infeasibility_with_a_recheckable_certificate()
     assert dual_value > 0.0
 
 
-def test_check_feasibility_thorough_tightens_the_floor():
-    """The default stops at the first proof; searching harder tightens the bound it certifies."""
+def test_check_feasibility_thorough_does_not_change_the_floor():
+    """The certified violation floor is exact either way; `thorough` only affects the selection search."""
     # --- arrange ----------------------
     problem = _problem_with([Constraint(int_set=set(range(20)), min_count=0, max_count=5)])
 
@@ -384,23 +384,23 @@ def test_check_feasibility_thorough_tightens_the_floor():
 
     # --- assert -----------------------
     assert fast.status is thorough.status is FeasibilityStatus.INFEASIBLE
-    assert thorough.violation_floor > fast.violation_floor
+    assert thorough.violation_floor == pytest.approx(fast.violation_floor)
+    assert fast.violation_floor == pytest.approx(3.0, abs=1e-6)  # k=8 forced into a max-5 cover: 3 over
 
 
-def test_check_feasibility_max_iter_sets_the_search_budget():
-    """A larger budget tightens the certified floor; the default equals an explicit 2000."""
+def test_check_feasibility_max_iter_is_deprecated_and_ignored():
+    """Passing the former iteration budget warns and changes nothing."""
     # --- arrange ----------------------
     problem = _problem_with([Constraint(int_set=set(range(20)), min_count=0, max_count=5)])
 
     # --- act --------------------------
     default = problem.check_feasibility(thorough=True)
-    explicit = problem.check_feasibility(thorough=True, max_iter=2000)
-    small = problem.check_feasibility(thorough=True, max_iter=10)
+    with pytest.warns(DeprecationWarning, match="max_iter"):
+        deprecated = problem.check_feasibility(thorough=True, max_iter=2000)
 
     # --- assert -----------------------
-    assert default.violation_floor == explicit.violation_floor
-    assert small.status is FeasibilityStatus.INFEASIBLE  # a proof survives even a tiny budget here
-    assert small.violation_floor <= default.violation_floor
+    assert deprecated.status is default.status
+    assert deprecated.violation_floor == default.violation_floor
 
 
 def test_check_feasibility_reports_unknown_without_claiming_anything():

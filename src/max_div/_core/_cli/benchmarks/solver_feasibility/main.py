@@ -1,21 +1,15 @@
 """Certified feasibility verdicts for the constrained benchmark problems.
 
 For each constrained benchmark problem and each size in the shared `k`-based size series, this runs
-`check_feasibility` at the pipeline's verdict-grade budget, `FEASIBILITY_MAX_ITER_HIGH`, and
-reports the verdict, plus the constraints-score ceiling wherever infeasibility is certified. The
-output feeds the committed per-problem verdict tables in the docs.
+`check_feasibility` and reports the verdict, plus the constraints-score ceiling wherever
+infeasibility is certified. The output feeds the committed per-problem verdict tables in the docs.
 """
 
 from max_div._core._cli.benchmarks._helpers.solver_sizing import K_VALUES, determine_problem_size_for_k
 from max_div._core._markdown import Report, Table
 from max_div._core._utils import stdout_to_file
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
-from max_div._core.feasibility import (
-    FEASIBILITY_MAX_ITER_HIGH,
-    FEASIBILITY_MAX_ITER_LOW,
-    FeasibilityResult,
-    FeasibilityStatus,
-)
+from max_div._core.feasibility import FeasibilityResult, FeasibilityStatus
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import VectorMaxDivProblem
 from max_div._core.solver._score import ScoreGenerator
@@ -68,12 +62,11 @@ def _ceiling_cell(problem: VectorMaxDivProblem, result: FeasibilityResult) -> st
     return f"{score_generator.constraints_score_for_violation(result.violation_floor):.5f}"
 
 
-def _build_report(problem_name: str, sizes: list[int], max_iter: int) -> Report:
+def _build_report(problem_name: str, sizes: list[int]) -> Report:
     """Build the verdict table report for one constrained problem."""
     report = Report()
     report += (
-        f"Certified feasibility verdicts for problem {problem_name}, "
-        f"computed with `check_feasibility(thorough=True, max_iter={max_iter})`:"
+        f"Certified feasibility verdicts for problem {problem_name}, computed with `check_feasibility(thorough=True)`:"
     )
     table = Table(["$n$", "$d$", "$k$", "$m$", "Verdict", "Constraints-score ceiling"])
     for n in sizes:
@@ -81,7 +74,7 @@ def _build_report(problem_name: str, sizes: list[int], max_iter: int) -> Report:
         problem = BenchmarkProblemFactory.construct_problem(
             name=problem_name, n=n, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
         )
-        result = problem.check_feasibility(thorough=True, max_iter=max_iter)
+        result = problem.check_feasibility(thorough=True)
         table.add_row([str(n), str(d), str(k), str(m), _verdict_cell(result.status), _ceiling_cell(problem, result)])
     report += table
     return report
@@ -104,11 +97,10 @@ def run_solver_feasibility_benchmark(name: str, markdown: bool, file: bool, turb
         raise ValueError(f"Not a constrained benchmark problem: {', '.join(unknown)}")
 
     k_values = K_VALUES[:TURBO_N_SIZES] if turbo else K_VALUES
-    max_iter = FEASIBILITY_MAX_ITER_LOW if turbo else FEASIBILITY_MAX_ITER_HIGH
 
     for problem_name in problem_names:
         sizes = [determine_problem_size_for_k(problem_name, k) for k in k_values]
-        report = _build_report(problem_name, sizes, max_iter)
+        report = _build_report(problem_name, sizes)
         with stdout_to_file(enabled=file, filename=f"feasibility_verdicts_{problem_name}.md"):
             report.print(markdown=markdown or file)
         if file:
