@@ -18,11 +18,11 @@ diverse of `n` items, under optional fairness constraints.
 
 ## Highlights
 
-- obtains **near-optimal results within seconds-to-one-minute** for problems up to `n=200k`
+- ⚡ obtains **near-optimal results within seconds-to-one-minute** for problems up to `n=200k`
 
-- leverages [numba](https://pypi.org/project/numba/) **JIT-compilation for maximum speed** without relying on pre-compiled binaries
+- 🚀 leverages [numba](https://pypi.org/project/numba/) **JIT-compilation for maximum speed** without relying on pre-compiled binaries
 
-- natively supports flexible **fairness constraints**
+- ⚖️ natively supports flexible **fairness constraints**
 
   - uniquely supports **constraints with overlapping sets & ranged counts**
 
@@ -30,11 +30,11 @@ diverse of `n` items, under optional fairness constraints.
 
   - provides **proofs of (in)feasibility**
 
-- uniquely supports **5+ distance metrics** (L1, L2, L∞, Minkowski, cosine — or precomputed distances) and **4 diversity metrics** (minimum, mean & geomean separation + mean pairwise distance) in any combination
+- 📐 uniquely supports **5+ distance metrics** (L1, L2, L∞, Minkowski, cosine — or precomputed distances) and **4 diversity metrics** (minimum, mean & geomean separation + mean pairwise distance) in any combination
 
-- computes item distances **eagerly when memory allows** (maximum speed), **lazily when problem size requires** (minimal memory usage)
+- 💾 computes item distances **eagerly when memory allows** (maximum speed), **lazily when problem size requires** (minimal memory usage)
 
-- leverages multi-core CPUs with **parallel workers** in independent, cooperative or dynamically grouped configurations, **without duplicating core problem data**
+- 🤝 leverages multi-core CPUs with **parallel workers** in independent, cooperative or dynamically grouped configurations, **without duplicating core problem data**
 
 <p align="center">
   <picture>
