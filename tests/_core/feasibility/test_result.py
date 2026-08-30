@@ -69,7 +69,7 @@ def test_rendering_disclaims_an_unknown_verdict():
 
 
 def test_rendering_reports_the_floor_and_the_selection_violation():
-    """An infeasible rendering states both the certified floor and what the best selection carries."""
+    """An infeasible rendering states both the certified violation floor and what the best selection carries."""
     # --- act --------------------------
     rendered = str(_result(FeasibilityStatus.INFEASIBLE, bound=3.0, violation=5.0))
 

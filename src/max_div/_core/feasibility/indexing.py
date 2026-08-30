@@ -1,4 +1,4 @@
-"""This module transposes the packed constraint->item layout into an item->constraint CSR index."""
+"""`build_item_constraint_csr` transposes the packed constraint->item layout into an item->constraint CSR index."""
 
 import numba
 import numpy as np

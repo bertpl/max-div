@@ -1,6 +1,6 @@
-"""This module evaluates selections and certificates over the packed constraint arrays.
+"""The evaluation functions turn prices and selections into scores, counts, violations, and dual values.
 
-It computes per-item scores at given prices, exact top-k selections, per-constraint counts,
+Covered here: per-item scores at given prices, exact top-k selections, per-constraint counts,
 violation aggregates, and the dual values that certify infeasibility.  Every function is pure
 in its arrays; the pipelines that search for good prices live in sibling modules.
 """

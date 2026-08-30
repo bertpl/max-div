@@ -1,4 +1,4 @@
-"""This module defines the feasibility verdict types: the three-valued status and the result record around it."""
+"""`FeasibilityStatus` and `FeasibilityResult` record the feasibility verdict and the evidence behind it."""
 
 from dataclasses import dataclass
 from enum import IntEnum

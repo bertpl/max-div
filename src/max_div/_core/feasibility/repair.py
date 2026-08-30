@@ -1,6 +1,7 @@
-"""This module repairs selections: greedy local search driving the weighted violation down in place.
+"""Greedy local search repairs selections, driving the weighted violation down in place.
 
-`_repair_selection` is the entry point and documents the loop; the other functions are its moves.
+`_repair_selection` is the entry point and documents the loop; the other functions evaluate
+and apply the moves.
 """
 
 import numba

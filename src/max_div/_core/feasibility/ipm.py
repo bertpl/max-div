@@ -1,4 +1,4 @@
-"""This module solves the relaxed feasibility problem exactly, with a primal--dual interior-point method.
+"""A primal--dual interior-point method solves the relaxed feasibility problem exactly.
 
 The problem: minimize the total penalty `sum of phi_i(shortfall_i) +
 phi_i(excess_i)` over fractional selections `x in [0, 1]^n` with `sum(x) = k`, where each
@@ -14,12 +14,11 @@ variables bounded below by the count constraints.  One solve yields three output
 The method is the standard Mehrotra predictor--corrector scheme on the equality standard form: the
 stacked variable `(x, shortfall, excess, lower-surplus, upper-surplus)` with `2m + 1` equality
 rows (two count blocks and the cardinality row) and simple bounds on the variables.  Every Newton
-solve reduces to normal equations of size `2m + 1` whose one expensive block is the weighted Gram
-matrix `A diag(d) A^T`; everything else is diagonal.  This shape is deliberately chosen over the
-smaller inequality-form reduction: with near-coinciding count bounds the latter's elimination
-diagonals span too many decades for double precision (measured: near convergence its Newton
-directions no longer satisfy the linearized system), while the standard form converges robustly on the
-same instances.
+solve reduces to normal equations of size `2m + 1` (a dense block assembled by `_weighted_gram`;
+everything else diagonal).  The standard form is deliberately chosen over the smaller
+inequality-form reduction: with near-coinciding count bounds the latter's elimination diagonals
+span too many decades for double precision, while the standard form converges on the same
+instances.
 
 Architecture: the iteration loop is plain Python + numpy/scipy — the solver runs a few dozen
 iterations once per call, so control flow needs no compilation; only the O(n)/O(nnz) array passes
@@ -43,7 +42,7 @@ from .indexing import build_item_constraint_csr
 TOLERANCE = 1e-8  # convergence: duality measure and relative primal/dual residual norms
 MAX_ITERATIONS = 100  # safety cap; the path-following iteration count is a few dozen in practice
 STEP_FRACTION = 0.995  # fraction of the largest positivity-preserving step actually taken
-REGULARIZATION = 1e-10  # relative diagonal bump; keeps the factorization valid for duplicated groups
+REGULARIZATION = 1e-10  # relative diagonal increase; keeps the factorization valid for duplicated constraints
 
 
 # =================================================================================================
