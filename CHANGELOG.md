@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.15.0 (2026-08-30)
 
 ### Added
 - Minkowski distance with caller-chosen power `p` via `DistanceMetric.minkowski(p, root=True)`; `p` = 1, 2, inf resolve to the existing dedicated metrics, and `p` = 0.5, 0.25 and 0.125 get specialized fast implementations
@@ -15,14 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configuring parallel workers is split over two builder methods: `with_workers()` takes just a worker count and uses the dynamic grouping, and `with_custom_worker_groups()` takes per-worker configurations and keeps a fixed grouping
 - The end-to-end budget option moved from an `end_to_end_budget` argument on `with_preset()` and `with_workers()` to a `with_end_to_end_budget()` method on both builders
 - `DistanceMetric` values are now created via factory methods (`DistanceMetric.l2_euclidean()`, ...), not accessed as enum members
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.14.3 (2026-08-27)
 
