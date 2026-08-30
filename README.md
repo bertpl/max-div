@@ -18,19 +18,23 @@ diverse of `n` items, under optional fairness constraints.
 
 ## Highlights
 
-- **Anytime**: returns a good selection quickly and keeps improving it for as long as you
-  allow — a wall-clock or iteration budget, covering the whole solve end to end.
-- **Four diversity objectives**, including **geometric-mean separation** — unique among freely
-  available tools.
-- **Overlapping fairness constraints**: per-group minimum/maximum quotas, supported natively by
-  no other dedicated diversity solver.
-- **Distance metrics** from L1 to Minkowski with caller-chosen power `p` — or bring your own
-  precomputed distances.
-- **Feasibility proofs**: witnesses for feasible constraint sets, certificates for infeasible
-  ones, and an explicit *unknown* in between.
-- **Parallel solving**: cooperative workers in dynamically consolidating groups.
-- **Openly benchmarked** against 10 third-party tools, on a published measurement protocol.
-- **Easy to adopt**: `pip install max-div`, Python 3.11+, free-threaded builds supported.
+- obtains **near-optimal results within seconds-to-one-minute** for problems up to `n=200k`
+
+- leverages [numba](https://pypi.org/project/numba/) **JIT-compilation for maximum speed** without relying on pre-compiled binaries
+
+- natively supports flexible **fairness constraints**
+
+  - uniquely supports **constraints with overlapping sets & ranged counts**
+
+  - returns the **least infeasible solution** (with configurable weighted linear or quadratic penalties) when constraints conflict
+
+  - provides **proofs of (in)feasibility**
+
+- uniquely supports **5+ distance metrics** (L1, L2, L∞, Minkowski, cosine — or precomputed distances) and **4 diversity metrics** (minimum, mean & geomean separation + mean pairwise distance) in any combination
+
+- computes item distances **eagerly when memory allows** (maximum speed), **lazily when problem size requires** (minimal memory usage)
+
+- leverages multi-core CPUs with **parallel workers** in independent, cooperative or dynamically grouped configurations, **without duplicating core problem data**
 
 <p align="center">
   <picture>
@@ -40,7 +44,7 @@ diverse of `n` items, under optional fairness constraints.
 </p>
 
 The [benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/)
-compare max-div in depth with exact MIP/CP solvers and one-shot pickers.
+compare max-div in depth with 10 other freely available solvers.
 
 ## Installation
 
