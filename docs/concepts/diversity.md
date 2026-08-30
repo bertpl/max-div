@@ -40,7 +40,7 @@ The distance metric determines how the distance between two vectors is measured.
 | `cosine()` | $$d = 1 - \frac{x \cdot y}{\lVert x \rVert \, \lVert y \rVert}$$ | Angular distance in $[0, 2]$, invariant to vector magnitude -- the natural choice for embedding-style vectors. Undefined for zero vectors, which are rejected at problem construction. |
 | `minkowski(p, root=True)` | $$d = \Big( \sum_i \lvert x_i - y_i \rvert^p \Big)^{1/p}$$ | The general family behind `l1_manhattan()` ($p=1$), `l2_euclidean()` ($p=2$) and `linf_chebyshev()` ($p=\infty$); any $p > 0$ is accepted, and those special values resolve to the dedicated metrics. |
 
-- **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
+- **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25, 0.125\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()` -- see that row above.
 - **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on the triangle inequality, so both are usable.
 

@@ -21,6 +21,8 @@ MINKOWSKI_METRICS = (
     DistanceMetric.minkowski(0.5, root=False),
     DistanceMetric.minkowski(0.25),
     DistanceMetric.minkowski(0.25, root=False),
+    DistanceMetric.minkowski(0.125),
+    DistanceMetric.minkowski(0.125, root=False),
 )
 
 
