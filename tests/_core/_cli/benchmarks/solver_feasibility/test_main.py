@@ -75,7 +75,7 @@ def test_build_report_renders_one_row_per_size():
     sizes = [determine_problem_size_for_k("C1", k) for k in K_VALUES[:2]]
 
     # --- act --------------------------
-    lines = _build_report("C1", sizes, max_iter=50).render(markdown=True)
+    lines = _build_report("C1", sizes).render(markdown=True)
 
     # --- assert -----------------------
     table_rows = [line for line in lines if line.startswith("|")]

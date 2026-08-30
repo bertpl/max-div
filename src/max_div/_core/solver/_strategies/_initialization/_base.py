@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from max_div._core.feasibility import FEASIBILITY_MAX_ITER_MEDIUM
 from max_div._core.solver._strategies._base import StrategyBase
 
 if TYPE_CHECKING:
@@ -75,15 +74,14 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitFarthestPoint(top_k=top_k)
 
     @classmethod
-    def most_feasible(cls, max_iter: int = FEASIBILITY_MAX_ITER_MEDIUM) -> InitMostFeasible:
+    def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:
         """Initialization that constructs a selection satisfying every constraint, where it can.
 
         Constrained problems only; see `InitMostFeasible` for the full contract.
 
         Args:
-            max_iter: Search budget; a higher budget more often finds a feasible selection, and
-                lowers the violation of the one returned when none exists, at a proportional cost in
-                setup time.
+            max_iter: Deprecated and ignored; the relaxation is solved exactly, without an
+                iteration budget.
         """
         from ._init_most_feasible import InitMostFeasible
 

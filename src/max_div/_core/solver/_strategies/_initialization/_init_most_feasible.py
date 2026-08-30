@@ -1,14 +1,16 @@
+import warnings
+
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.feasibility import FEASIBILITY_MAX_ITER_MEDIUM, FeasibilityStatus, find_feasible
+from max_div._core.feasibility import FeasibilityStatus, find_feasible
 from max_div._core.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy
 
 
 class InitMostFeasible(InitializationStrategy):
-    """Initialize from the most nearly feasible selection the Lagrangian pipeline can construct.
+    """Initialize from the most nearly feasible selection the feasibility pipeline can construct.
 
     The pipeline always hands back a selection of `k` items, and the solve always starts from it:
 
@@ -24,27 +26,34 @@ class InitMostFeasible(InitializationStrategy):
 
     The whole selection is produced in one batch, so the state must still be empty.
 
-    Feasibility is all this strategy optimizes for, so its selection is no more diverse than a
-    random one.
+    The selection is drawn by randomized rounding of the relaxation's maximally spread fractional
+    optimizer, so different seeds give genuinely different near-feasible selections — parallel
+    workers with distinct seeds start decorrelated.
 
     Suggested use: constrained problems where reaching feasibility consumes a meaningful share of
     the optimization budget, or where feasibility may be unreachable altogether.
 
     Time Complexity:
-       - ~O(max_iter * (n log k + total constraint membership)) for the ascent, plus a bounded
-         number of repair rounds.
+       - one interior-point relaxation solve (a few dozen iterations, each dominated by an
+         m x m factorization plus O(nnz) array passes), plus a bounded number of rounding and
+         repair rounds.
     """
 
-    def __init__(self, max_iter: int = FEASIBILITY_MAX_ITER_MEDIUM) -> None:
+    def __init__(self, max_iter: int | None = None) -> None:
         """Create the strategy.
 
-        Raises:
-            ValueError: If `max_iter` is below 1.
+        Args:
+            max_iter: Deprecated and ignored; the relaxation is solved exactly, without an
+                iteration budget.
         """
         super().__init__()
-        if max_iter < 1:
-            raise ValueError(f"max_iter must be >= 1, got {max_iter}")
-        self._max_iter = max_iter
+        if max_iter is not None:
+            warnings.warn(
+                "InitMostFeasible(max_iter=...) is deprecated and ignored: the relaxation is "
+                "solved exactly by an interior-point method, which needs no iteration budget.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         self._status: FeasibilityStatus | None = None
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
@@ -64,7 +73,6 @@ class InitMostFeasible(InitializationStrategy):
             con_weights=state.con_weights,
             n=int(state.n),
             k=int(state.k),
-            max_iter=self._max_iter,
             seed=int(self._seed),
         )
         self._status = result.status

@@ -89,7 +89,7 @@ def test_most_feasible_still_starts_from_a_selection_on_unknown():
     """An inconclusive verdict still yields the least-violating selection the search reached."""
     # --- arrange ----------------------
     state = _state(UNKNOWN_CONS, n=10, k=5)
-    strategy = InitializationStrategy.most_feasible(max_iter=300)
+    strategy = InitializationStrategy.most_feasible()
 
     # --- act --------------------------
     selection = strategy.get_next_samples(state, 5)
@@ -113,11 +113,11 @@ def test_most_feasible_rejects_an_unconstrained_problem():
 # =================================================================================================
 #  Configuration & contract
 # =================================================================================================
-def test_most_feasible_rejects_a_max_iter_below_one():
-    """A max_iter below 1 is rejected at construction."""
+def test_most_feasible_max_iter_is_deprecated_and_ignored():
+    """Passing the former iteration budget warns; the strategy still works."""
     # --- act & assert -----------------
-    with pytest.raises(ValueError, match="max_iter"):
-        InitMostFeasible(max_iter=0)
+    with pytest.warns(DeprecationWarning, match="max_iter"):
+        InitMostFeasible(max_iter=2000)
 
 
 def test_most_feasible_needs_an_empty_state():
