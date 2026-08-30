@@ -96,8 +96,8 @@ report = problem.check_feasibility()
 print(report)
 ```
 
-The answer is a proof either way, or an explicit "unknown" --
-[Proving Feasibility](feasibility.md) explains how it is reached and what each verdict claims.
+The answer is a proof either way -- `feasible` or `infeasible`, each carrying a checkable proof --
+or an explicit `unknown` when neither could be established.
 
 ## How Constraints Are Tracked
 
