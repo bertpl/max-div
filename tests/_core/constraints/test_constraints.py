@@ -39,7 +39,7 @@ def test_constraint_rejects_non_positive_weight(weight: float):
         ({"int_set": {0.5, 1}, "min_count": 1, "max_count": 2}, "must be integers"),
         ({"int_set": {-1, 1}, "min_count": 1, "max_count": 2}, "must be >= 0"),
         ({"int_set": {0, 1}, "min_count": -1, "max_count": 2}, "min_count must be >= 0"),
-        ({"int_set": {0, 1}, "min_count": 3, "max_count": 1}, "inverted bounds"),
+        ({"int_set": {0, 1}, "min_count": 3, "max_count": 1}, "must be >= min_count"),
     ],
     ids=["empty-int_set", "non-integer-member", "negative-member", "negative-min_count", "min-above-max"],
 )

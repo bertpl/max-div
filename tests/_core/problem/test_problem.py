@@ -1,4 +1,5 @@
 import warnings
+from contextlib import nullcontext
 
 import numpy as np
 import pytest
@@ -90,33 +91,27 @@ def test_problem_new_value_error(ndims: int, n: int, d: int, k: int):
         _ = MaxDivProblem.new(vectors, k)
 
 
-def test_problem_rejects_out_of_range_constraint_index():
-    """A constraint referencing an item index >= n raises at construction, naming the constraint."""
+@pytest.mark.parametrize("largest_index, valid", [(9, True), (10, False)], ids=["n-1-in-range", "n-out-of-range"])
+def test_problem_constraint_index_range_check(largest_index: int, valid: bool):
+    """A constraint index >= n raises at construction naming the constraint; n - 1 is in range."""
     # --- arrange ----------------------
     vectors = np.ones((10, 3), dtype=np.float32)
     distances = np.zeros((10, 10), dtype=np.float32)
     constraints = [
         Constraint(int_set={0, 1}, min_count=1, max_count=2),
-        Constraint(int_set={0, 1, 999}, min_count=1, max_count=2),
+        Constraint(int_set={0, 1, largest_index}, min_count=1, max_count=2),
     ]
 
+    def expectation():
+        if valid:
+            return nullcontext()
+        return pytest.raises(ValueError, match=rf"Constraint 1 references item index {largest_index}")
+
     # --- act & assert -----------------
-    with pytest.raises(ValueError, match=r"Constraint 1 references item index 999"):
+    with expectation():
         _ = MaxDivProblem.new(vectors, k=4, constraints=constraints)
-    with pytest.raises(ValueError, match=r"Constraint 1 references item index 999"):
+    with expectation():
         _ = MaxDivProblem.from_distances(distances, k=4, constraints=constraints)
-
-
-def test_problem_accepts_constraint_index_at_boundary():
-    """An index of exactly n - 1 is in range."""
-    # --- arrange ----------------------
-    vectors = np.ones((10, 3), dtype=np.float32)
-
-    # --- act --------------------------
-    problem = MaxDivProblem.new(vectors, k=4, constraints=[Constraint(int_set={0, 9}, min_count=1, max_count=2)])
-
-    # --- assert -----------------------
-    assert problem.m == 1
 
 
 def test_problem_new_cosine_zero_vector_raises():

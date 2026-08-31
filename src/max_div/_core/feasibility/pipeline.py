@@ -94,15 +94,16 @@ def find_feasible(
     max_swaps = max(SWAP_CAP_MIN, SWAP_CAP_PER_K * k)
 
     # --- forced full selection ------------------
-    if k >= n:  # == through the public API; >= keeps the shortcut total for direct callers
+    if k >= n:  # k == n via the public API (which validates k <= n); >= also covers a direct caller passing k > n
         # every item is selected, so the only possible selection decides the verdict exactly and
         # no relaxation solve is needed -- the proof is enumeration over the one selection, so
         # the status is never UNKNOWN.  A full selection can still break max_counts.
         selection = np.arange(n, dtype=np.int64)
         counts = _selection_counts(item_indptr, item_cons, selection, m)
         violation = float(_weighted_violation(counts, con_min, con_max, w_lin))
-        # pricing each violated constraint at exactly its linear weight makes the dual value equal
-        # the violation, so the returned multipliers still re-verify via `certified_bound`
+        # the result must keep find_feasible's promise that INFEASIBLE verdicts re-verify via
+        # `certified_bound`: with each violated constraint's multiplier set to its linear weight,
+        # that dual value equals `violation` exactly
         lam_min = np.where(counts < con_min, w_lin, 0.0)
         lam_max = np.where(counts > con_max, w_lin, 0.0)
         bound = float(certified_bound(con_min, con_max, w_lin, w_quad, lam_min, lam_max, item_indptr, item_cons, k))

@@ -72,7 +72,7 @@ class Constraint:
     def __post_init__(self) -> None:
         """Validate every field that needs no problem context; the check against `n` happens at problem construction.
 
-        The rationale where the check alone does not show it:
+        Some clarifications on non-trivial checks:
 
         - an empty `int_set` can constrain nothing, and its packed representation has no valid empty form;
         - negative or non-integral members cannot index the per-item numpy arrays;
@@ -89,10 +89,7 @@ class Constraint:
         if self.min_count < 0:
             raise ValueError(f"Constraint min_count must be >= 0 (got {self.min_count}).")
         if self.max_count < self.min_count:
-            raise ValueError(
-                f"Constraint max_count ({self.max_count}) must be >= min_count ({self.min_count}); "
-                "no selection count can satisfy inverted bounds."
-            )
+            raise ValueError(f"Constraint max_count ({self.max_count}) must be >= min_count ({self.min_count}).")
 
 
 class ConstraintList:
