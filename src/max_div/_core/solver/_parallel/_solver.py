@@ -96,8 +96,8 @@ class ParallelMaxDivSolver:
             )
         self.last_dynamic_events = group_state.events()
         if failures and results:
-            # the surviving workers' best result still comes back, but a solve silently running
-            # on part of the configured compute would be indistinguishable from a healthy one
+            # some workers returned a result and some failed: warn about the partial failure,
+            # and still return the best result that could be retrieved
             failed = ", ".join(f"{failure.worker_index} ({failure.error})" for failure in failures)
             warnings.warn(
                 f"{len(failures)} of {len(solver_configs)} parallel workers failed and were left out "
