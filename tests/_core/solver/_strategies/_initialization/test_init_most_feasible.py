@@ -137,7 +137,7 @@ def test_most_feasible_warns_when_the_relaxation_did_not_converge(monkeypatch):
     # --- arrange ----------------------
     import dataclasses
 
-    from max_div._core._warnings import FeasibilityWarning
+    from max_div._core._warnings import FeasibilityConvergenceWarning
     from max_div._core.solver._strategies._initialization import _init_most_feasible
 
     constraints = [Constraint(int_set=set(range(6)), min_count=2, max_count=4)]
@@ -152,6 +152,6 @@ def test_most_feasible_warns_when_the_relaxation_did_not_converge(monkeypatch):
     strategy.set_seed(0)
 
     # --- act & assert -----------------
-    with pytest.warns(FeasibilityWarning, match="did not converge"):
+    with pytest.warns(FeasibilityConvergenceWarning, match="did not converge"):
         samples = strategy.get_next_samples(state, k_remaining=state.k)
     assert samples.shape[0] == state.k

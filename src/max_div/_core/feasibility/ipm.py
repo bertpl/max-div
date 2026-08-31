@@ -302,7 +302,7 @@ def solve_relaxation(
     value = float(c @ z + 0.5 * (h * z) @ z)
     return RelaxationSolution(
         value=value,
-        marginals=_shift_onto_sum_k(np.clip(z[i_x], 0.0, 1.0), k),
+        marginals=_adjust_marginals_to_sum_k(np.clip(z[i_x], 0.0, 1.0), k),
         lam_min=np.maximum(y[:m], 0.0),
         lam_max=np.maximum(-y[m : 2 * m], 0.0),
         iterations=iterations,
@@ -311,25 +311,41 @@ def solve_relaxation(
 
 
 # =================================================================================================
-#  _shift_onto_sum_k
+#  _adjust_marginals_to_sum_k
 # =================================================================================================
-def _shift_onto_sum_k(marginals: NDArray[np.float64], k: int) -> NDArray[np.float64]:
+def _adjust_marginals_to_sum_k(marginals: NDArray[np.float64], k: int) -> NDArray[np.float64]:
     """Return the marginals shifted (and re-clipped) so they sum to `k`, each staying in [0, 1].
 
     `RelaxationSolution.marginals` promises a sum of `k` — the property `rounding.systematic_sample`'s
     correctness rests on — but the post-solve clip can perturb the sum, and an unconverged solve
-    can miss it outright.  Marginals already summing to `k` (within 1e-9) are returned unshifted;
-    otherwise a bisection finds the constant shift whose clipped sum is `k` (the clipped sum is
-    continuous and monotone in the shift, reaching 0 at -1 and `n >= k` at +1, so the target is
-    always bracketed).
+    can miss it outright.  A bisection finds the constant shift whose clipped sum is `k`: the
+    clipped sum is continuous and monotone in the shift, and the starting bracket — the deficit
+    `k - sum`, doubled until it encloses the target — stays as small as the deficit itself, so
+    the usual near-zero case converges in a few iterations.
     """
-    if abs(float(marginals.sum()) - k) <= 1e-9:
-        return marginals
-    lo, hi = -1.0, 1.0
-    for _ in range(60):  # 60 halvings put the shift within ~2e-18 of exact
-        mid = 0.5 * (lo + hi)
-        if float(np.clip(marginals + mid, 0.0, 1.0).sum()) < k:
-            lo = mid
+
+    def shifted(shift: float) -> NDArray[np.float64]:
+        """Return the marginals moved by `shift` and re-clipped into [0, 1]."""
+        return np.clip(marginals + shift, 0.0, 1.0)
+
+    # bracket [lo, hi] sized by the deficit: grow from it until the target sum is enclosed
+    # (the clipped sum reaches 0 by shift -1 and n >= k by shift +1, so growth always ends)
+    deficit = float(k - marginals.sum())
+    if deficit >= 0.0:
+        lo, hi = 0.0, max(deficit, 1e-15)
+        while float(shifted(hi).sum()) < k and hi < 1.0:
+            hi = min(2.0 * hi, 1.0)
+    else:
+        lo, hi = min(deficit, -1e-15), 0.0
+        while float(shifted(lo).sum()) > k and lo > -1.0:
+            lo = max(2.0 * lo, -1.0)
+
+    # bisect until the sum is on target; the interval-width floor is the can't-improve backstop
+    shift = 0.5 * (lo + hi)
+    while abs(float(shifted(shift).sum()) - k) > 1e-9 and (hi - lo) > 1e-15:
+        if float(shifted(shift).sum()) < k:
+            lo = shift
         else:
-            hi = mid
-    return np.clip(marginals + 0.5 * (lo + hi), 0.0, 1.0)
+            hi = shift
+        shift = 0.5 * (lo + hi)
+    return shifted(shift)

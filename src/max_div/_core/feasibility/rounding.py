@@ -65,8 +65,9 @@ def systematic_sample(marginals: NDArray[np.float64], k: int, rng_state: NDArray
 def _top_up_selection(marginals: NDArray[np.float64], selection: NDArray[np.int64], n_selected: int, k: int) -> None:
     """Fill `selection[n_selected:k]` in place with the largest-marginal items not yet selected.
 
-    `systematic_sample` calls this as its float-drift guard: the grid walk can end one short
-    when accumulation drifts a grid point across an interval edge.
+    `systematic_sample` calls this as its float-drift guard: floating-point accumulation in its
+    main loop can drift a grid point across an interval edge, ending the traversal with fewer
+    than `k` selected.
     """
     n = marginals.shape[0]
     selected_mask = np.zeros(n, dtype=np.bool_)

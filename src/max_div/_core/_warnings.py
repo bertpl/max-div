@@ -25,5 +25,5 @@ class SolverBudgetWarning(MaxDivWarning):
     """A solve reached its optimization with no end-to-end budget left, so it returns what initialization built."""
 
 
-class FeasibilityWarning(MaxDivWarning):
+class FeasibilityConvergenceWarning(MaxDivWarning):
     """The feasibility relaxation solve stopped at its iteration cap before converging; verdicts stay sound."""
