@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   core:
-    name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }}${{ matrix.boundscheck == 'true' && ' / boundscheck' || '' }}
+    name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }}
     # ARM, which runs this suite about twice as fast as the x64 runner for the same work.
     # Standardized rather than mixed: the matrix does not set out to test architectures, and
     # picking x64 for some legs would be the old default dressed up as a decision.
@@ -31,9 +31,6 @@ jobs:
           - { python: "3.14", resolution: lowest-direct, jit: "on"  }
           - { python: "3.11", resolution: highest,       jit: "off" }  # coverage leg
           - { python: "3.14", resolution: highest,       jit: "off" }  # coverage leg
-          # This entry compiles bounds checks in: the low-level primitives rely on it in place
-          # of per-call runtime checks (the boundscheck input documents the mechanism).
-          - { python: "3.13", resolution: highest,       jit: "on", boundscheck: "true" }
           # Free-threaded build. `highest` only, deliberately: the numba floor for 3.14 is 0.63,
           # which predates numba's free-threaded wheels (first shipped in 0.65), and no PEP 508
           # marker can raise that floor for free-threaded builds alone — so a lowest-direct leg
@@ -50,7 +47,6 @@ jobs:
           python_version: ${{ matrix.python }}
           dependency_resolution: ${{ matrix.resolution }}
           jit: ${{ matrix.jit }}
-          boundscheck: ${{ matrix.boundscheck || 'false' }}
           # the jit-off legs upload their data; the coverage job combines + gates
           coverage: ${{ matrix.jit == 'off' && 'true' || 'false' }}
 

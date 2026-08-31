@@ -15,10 +15,6 @@ inputs:
         required: false
         description: "'on' (default) runs numba-compiled; 'off' sets NUMBA_DISABLE_JIT=1 (interpreted, line-coverage capable)."
         default: "on"
-    boundscheck:
-        required: false
-        description: "'true' sets NUMBA_BOUNDSCHECK=1, so any out-of-bounds access inside a compiled function raises instead of corrupting memory; 'false' (default) compiles without bounds checks."
-        default: "false"
     coverage:
         required: false
         description: "'true' runs under coverage and uploads the per-combo data file for a cross-matrix combine; 'false' (default) runs plain pytest."
@@ -59,17 +55,17 @@ runs:
           PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
           RES: ${{ inputs.dependency_resolution }}
           JIT: ${{ inputs.jit }}
-          BOUNDSCHECK: ${{ inputs.boundscheck }}
           COV: ${{ inputs.coverage }}
           # distinct per-combo data file so the coverage job combines rather than overwrites
           COVERAGE_FILE: .coverage.${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}
         run: |
           # NUMBA_DISABLE_JIT: interpreted execution, required for line coverage of njit functions
           [ "$JIT" = "off" ] && export NUMBA_DISABLE_JIT=1
-          # NUMBA_BOUNDSCHECK=1 compiles bounds checks in, so an out-of-bounds access under any
-          # test raises (the jit-off jobs don't give the same guarantee: numpy raises on
-          # overruns but silently wraps negative indices)
-          [ "$BOUNDSCHECK" = "true" ] && export NUMBA_BOUNDSCHECK=1
+          # NUMBA_BOUNDSCHECK=1 compiles bounds checks into every njit function, so an
+          # out-of-bounds access under any test raises instead of corrupting memory; worth
+          # the modest slowdown on every matrix cell (numpy alone does not substitute: it
+          # raises on overruns but silently wraps negative indices)
+          export NUMBA_BOUNDSCHECK=1
           COV_FLAG=""
           # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"

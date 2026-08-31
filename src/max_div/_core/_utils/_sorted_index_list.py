@@ -132,13 +132,13 @@ def delete_sorted(index_list: NDArray[np.int32], n_live: np.int32, value: np.int
     `value` must be present.  The vacated last entry keeps its old contents, so the list is the
     first `n_live - 1` entries once the caller has shrunk its count.
 
-    Only the negative-count case is guarded: a `value` absent and sorting past every live entry
-    yields a negative count, which `memmove` would read as a huge unsigned length — a heap write.
-    An absent `value` sorting into the middle stays a silent wrong deletion; the precondition is
-    enforced by the callers' tests, not here.
+    An absent `value` sorting into the middle silently deletes the wrong entry; the precondition
+    is enforced by the callers' tests, not here.
     """
     position = np.searchsorted(index_list[:n_live], value)
     count = n_live - position - 1
     if count < 0:
+        # `value` is absent and sorts past every live entry; the negative count would reach
+        # memmove as a huge unsigned length -- return instead of writing
         return
     move_within(index_list, position, position + 1, count)
