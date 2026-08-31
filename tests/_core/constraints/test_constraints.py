@@ -332,3 +332,16 @@ def test_np_con_count_satisfied_empty():
 
     # --- assert -----------------------
     assert n_satisfied == 0
+
+
+def test_np_largest_con_index_skips_an_empty_segment():
+    """An empty constraint segment in a raw packed array is skipped, not read at [-1].
+
+    `Constraint` rejects empty sets, so this can only arise from directly built arrays.
+    """
+    # --- arrange ----------------------
+    # 2 constraints: first empty (start == end), second holding {4, 7}
+    con_indices = np.array([4, 4, 4, 6, 4, 7], dtype=np.int32)
+
+    # --- act & assert -----------------
+    assert _np_largest_con_index(con_indices) == 7

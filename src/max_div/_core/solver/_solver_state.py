@@ -216,7 +216,11 @@ class SolverState:
         """Remove `index` from the ascending index list; call before `_n_selected` shrinks."""
         delete_sorted(self._selected_indices, self._n_selected, index)
 
+    # The four mutation methods below leave their range and duplicate preconditions UNCHECKED:
+    # they run every swap iteration, so enforcement lives in the strategies' tests (which pin
+    # that emitted batches are in range and duplicate-free), not in runtime code.
     def add(self, index: int | np.int32) -> None:
+        """Add `index` to the selection; it must be in `[0, n)` and not already selected."""
         # --- validation -------------------------
         index = np.int32(index)
         if self._selected[index]:
@@ -239,6 +243,11 @@ class SolverState:
         self._score_dirty = True
 
     def add_many(self, indices: NDArray[np.int32]) -> None:
+        """Add all of `indices` to the selection; they must be in `[0, n)`, duplicate-free, and not selected.
+
+        A duplicate would desynchronize `n_selected` from the mask; `adopt_selection` is the
+        entry point that dedups for you.
+        """
         # --- validation -------------------------
         if self._selected[indices].any():
             raise ValueError(f"Cannot add index that is already selected ({list(indices)}).")
@@ -264,6 +273,7 @@ class SolverState:
         self._score_dirty = True
 
     def remove(self, index: int | np.int32) -> None:
+        """Remove `index` from the selection; it must be in `[0, n)` and currently selected."""
         # --- validation -------------------------
         index = np.int32(index)
         if not self._selected[index]:
@@ -286,6 +296,11 @@ class SolverState:
         self._score_dirty = True
 
     def remove_many(self, indices: NDArray[np.int32]) -> None:
+        """Remove all of `indices` from the selection; they must be in `[0, n)`, duplicate-free, and selected.
+
+        A duplicate passes the is-selected check yet reaches `delete_sorted` a second time with
+        an absent value.
+        """
         # --- validation -------------------------
         if (~self._selected[indices]).any():
             raise ValueError(f"Cannot remove index that is not selected ({list(indices)}).")

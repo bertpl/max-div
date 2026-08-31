@@ -221,11 +221,15 @@ def _np_con_membership(con_membership: NDArray[np.int32], index: int | np.int32)
 
 @numba.njit("int32(int32[:])", inline="always", fastmath=True, cache=True)
 def _np_largest_con_index(con_indices: NDArray[np.int32]) -> np.int32:
-    """Return the largest index referenced in con_indices array."""
+    """Return the largest index referenced in con_indices array, or -1 when every segment is empty."""
     m = np.int32(con_indices[0] // 2)
     largest = np.int32(-1)
     for i in range(m):
         con_indices_i = _np_con_indices(con_indices, np.int32(i))
+        if con_indices_i.shape[0] == 0:
+            # an empty segment has no [-1] to read; Constraint rejects empty sets, so only
+            # directly built packed arrays reach this
+            continue
         if con_indices_i[-1] > largest:  # indices are sorted small-to-large for each constraint, so [-1] is the largest
             largest = con_indices_i[-1]
 

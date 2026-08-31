@@ -1,3 +1,10 @@
+"""Heap-based selection of the k smallest / largest elements' indices.
+
+Both functions clamp `k` into [0, n]: k <= 0 returns an empty array, k >= n returns every index.
+An out-of-range k would index past the array inside compiled code, where that is a memory error,
+not an exception.
+"""
+
 import numba
 import numpy as np
 from numpy.typing import NDArray
@@ -32,8 +39,14 @@ def select_k_min(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
     - 2-8x faster than np.argpartition for small to moderate k (k ~ 10-100)
     - Best when k << n (e.g., k=100, n=10000)
     - Uses fastmath=True for additional SIMD optimizations
+
+    The module docstring covers the clamping of `k`.
     """
     n = len(arr)
+    if k > n:
+        k = np.int32(n)
+    if k <= 0:
+        return np.empty(0, dtype=np.int32)
     heap_idx = np.empty(k, dtype=np.int32)  # indices (into arr) of elements in the heap
     heap_values = np.empty(k, dtype=arr.dtype)  # values of elements in the heap; largest at heap_values[0]
 
@@ -155,8 +168,14 @@ def select_k_max(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
     - 2-8x faster than np.argpartition for small to moderate k (k ~ 10-100)
     - Best when k << n (e.g., k=100, n=10000)
     - Uses fastmath=True for additional SIMD optimizations
+
+    The module docstring covers the clamping of `k`.
     """
     n = len(arr)
+    if k > n:
+        k = np.int32(n)
+    if k <= 0:
+        return np.empty(0, dtype=np.int32)
     heap_idx = np.empty(k, dtype=np.int32)  # indices (into arr) of elements in the heap
     heap_values = np.empty(k, dtype=arr.dtype)  # values of elements in the heap; smallest at heap_values[0]
 

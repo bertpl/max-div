@@ -132,3 +132,15 @@ def test_the_list_stays_ascending_under_many_mixed_operations():
 
     # --- assert -----------------------
     assert list(buffer[:n_live]) == sorted(reference)
+
+
+def test_delete_sorted_absent_value_past_the_end_is_a_safe_no_op():
+    """A value absent and sorting past every live entry leaves the list untouched (see `delete_sorted`)."""
+    # --- arrange ----------------------
+    buffer = _buffer([10, 20, 30])
+
+    # --- act --------------------------
+    delete_sorted(buffer, np.int32(3), np.int32(999))
+
+    # --- assert -----------------------
+    assert list(buffer[:3]) == [10, 20, 30]
