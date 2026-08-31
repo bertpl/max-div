@@ -70,9 +70,26 @@ class Constraint:
     weight: float = 1.0
 
     def __post_init__(self) -> None:
-        """Validate that the weight is strictly positive (a zero weight would hide a real violation)."""
+        """Validate every field that needs no problem context; the check against `n` happens at problem construction.
+
+        Some clarifications on non-trivial checks:
+
+        - an empty `int_set` can constrain nothing, and its packed representation has no valid empty form;
+        - negative or non-integral members cannot index the per-item numpy arrays;
+        - a negative `min_count` is satisfied by every selection, so the lower bound would silently do nothing.
+        """
         if self.weight <= 0:
             raise ValueError(f"Constraint weight must be > 0 (got {self.weight}).")
+        if not self.int_set:
+            raise ValueError("Constraint int_set must not be empty.")
+        if any(not isinstance(value, (int, np.integer)) for value in self.int_set):
+            raise ValueError("Constraint int_set members must be integers.")
+        if min(self.int_set) < 0:
+            raise ValueError(f"Constraint int_set members must be >= 0 (got {min(self.int_set)}).")
+        if self.min_count < 0:
+            raise ValueError(f"Constraint min_count must be >= 0 (got {self.min_count}).")
+        if self.max_count < self.min_count:
+            raise ValueError(f"Constraint max_count ({self.max_count}) must be >= min_count ({self.min_count}).")
 
 
 class ConstraintList:

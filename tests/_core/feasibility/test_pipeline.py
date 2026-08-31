@@ -304,3 +304,53 @@ def test_deterministic_fallback_can_beat_the_draws(monkeypatch):
 
     # --- assert -----------------------
     assert result.violation < 99.0  # the fallback's selection won
+
+
+# =================================================================================================
+#  Forced full selection (k == n)
+# =================================================================================================
+def test_k_equals_n_feasible_when_the_full_selection_satisfies():
+    """k == n short-circuits to the only possible selection; when it satisfies the constraints, FEASIBLE."""
+    # --- arrange ----------------------
+    cons = [Constraint(int_set={0, 1, 2}, min_count=1, max_count=5)]
+
+    # --- act --------------------------
+    result = _run(6, 6, cons)
+
+    # --- assert -----------------------
+    assert result.status is FeasibilityStatus.FEASIBLE
+    assert np.array_equal(result.selection, np.arange(6))
+    assert result.violation == 0.0
+
+
+def test_k_equals_n_infeasible_with_an_exact_recheckable_violation_floor():
+    """A max_count below a set's size is violated by the forced full selection, with an exact violation floor.
+
+    The verdict is decided by enumeration (only one selection exists), but the returned
+    multipliers still re-verify through the standard dual-value check.
+    """
+    # --- arrange ----------------------
+    cons = [Constraint(int_set={0, 1, 2, 3}, min_count=0, max_count=1)]  # 4 members, max 1 -> excess 3
+
+    # --- act --------------------------
+    result = _run(6, 6, cons)
+
+    # --- assert -----------------------
+    assert result.status is FeasibilityStatus.INFEASIBLE
+    assert result.violation == 3.0
+    assert result.violation_floor == pytest.approx(3.0)
+    assert _recomputed_dual_value(6, 6, cons, result.lam_min, result.lam_max) == pytest.approx(3.0)
+
+
+def test_k_equals_n_minus_one_still_runs_the_full_pipeline():
+    """k == n - 1 does not take the k == n short-circuit: the relaxation pipeline runs and returns 5 valid items."""
+    # --- arrange ----------------------
+    cons = [Constraint(int_set={0, 1, 2}, min_count=1, max_count=3)]
+
+    # --- act --------------------------
+    result = _run(6, 5, cons)
+
+    # --- assert -----------------------
+    assert result.status is FeasibilityStatus.FEASIBLE
+    assert result.selection.shape[0] == 5
+    assert len(set(result.selection.tolist())) == 5

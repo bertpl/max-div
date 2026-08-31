@@ -1,4 +1,5 @@
 import warnings
+from contextlib import nullcontext
 
 import numpy as np
 import pytest
@@ -88,6 +89,29 @@ def test_problem_new_value_error(ndims: int, n: int, d: int, k: int):
     # --- act & assert -----------------
     with pytest.raises(ValueError):
         _ = MaxDivProblem.new(vectors, k)
+
+
+@pytest.mark.parametrize("largest_index, valid", [(9, True), (10, False)], ids=["n-1-in-range", "n-out-of-range"])
+def test_problem_constraint_index_range_check(largest_index: int, valid: bool):
+    """A constraint index >= n raises at construction naming the constraint; n - 1 is in range."""
+    # --- arrange ----------------------
+    vectors = np.ones((10, 3), dtype=np.float32)
+    distances = np.zeros((10, 10), dtype=np.float32)
+    constraints = [
+        Constraint(int_set={0, 1}, min_count=1, max_count=2),
+        Constraint(int_set={0, 1, largest_index}, min_count=1, max_count=2),
+    ]
+
+    def expectation():
+        if valid:
+            return nullcontext()
+        return pytest.raises(ValueError, match=rf"Constraint 1 references item index {largest_index}")
+
+    # --- act & assert -----------------
+    with expectation():
+        _ = MaxDivProblem.new(vectors, k=4, constraints=constraints)
+    with expectation():
+        _ = MaxDivProblem.from_distances(distances, k=4, constraints=constraints)
 
 
 def test_problem_new_cosine_zero_vector_raises():

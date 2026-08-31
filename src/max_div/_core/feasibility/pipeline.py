@@ -34,7 +34,14 @@ from numpy.typing import NDArray
 
 from max_div._core._random import new_rng_state
 
-from .evaluation import G_POSITIVE_TOL, _per_constraint_violation, _selection_counts, certified_bound, clamp_admissible
+from .evaluation import (
+    G_POSITIVE_TOL,
+    _per_constraint_violation,
+    _selection_counts,
+    _weighted_violation,
+    certified_bound,
+    clamp_admissible,
+)
 from .indexing import build_item_constraint_csr
 from .ipm import solve_relaxation
 from .repair import SWAP_CAP_MIN, SWAP_CAP_PER_K
@@ -85,6 +92,30 @@ def find_feasible(
     w_quad = np.zeros(m, dtype=np.float64)
     item_indptr, item_cons = build_item_constraint_csr(con_indices, n)
     max_swaps = max(SWAP_CAP_MIN, SWAP_CAP_PER_K * k)
+
+    # --- forced full selection ------------------
+    if k >= n:  # k == n via the public API (which validates k <= n); >= also covers a direct caller passing k > n
+        # every item is selected, so the only possible selection decides the verdict exactly and
+        # no relaxation solve is needed -- the proof is enumeration over the one selection, so
+        # the status is never UNKNOWN.  A full selection can still break max_counts.
+        selection = np.arange(n, dtype=np.int64)
+        counts = _selection_counts(item_indptr, item_cons, selection, m)
+        violation = float(_weighted_violation(counts, con_min, con_max, w_lin))
+        # the result must keep find_feasible's promise that INFEASIBLE verdicts re-verify via
+        # `certified_bound`: with each violated constraint's multiplier set to its linear weight,
+        # that dual value equals `violation` exactly
+        lam_min = np.where(counts < con_min, w_lin, 0.0)
+        lam_max = np.where(counts > con_max, w_lin, 0.0)
+        bound = float(certified_bound(con_min, con_max, w_lin, w_quad, lam_min, lam_max, item_indptr, item_cons, k))
+        return FeasibilityResult(
+            status=FeasibilityStatus.FEASIBLE if violation == 0.0 else FeasibilityStatus.INFEASIBLE,
+            selection=selection,
+            violation=violation,
+            violation_per_constraint=_per_constraint_violation(counts, con_min, con_max),
+            bound=bound,
+            lam_min=lam_min,
+            lam_max=lam_max,
+        )
 
     # --- relaxation solve + certificate ---------
     solution = solve_relaxation(con_min, con_max, w_lin, w_quad, con_indices, n=n, k=k)

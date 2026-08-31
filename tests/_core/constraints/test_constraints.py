@@ -32,6 +32,42 @@ def test_constraint_rejects_non_positive_weight(weight: float):
         Constraint(int_set={0, 1}, min_count=1, max_count=2, weight=weight)
 
 
+@pytest.mark.parametrize(
+    "kwargs, match",
+    [
+        ({"int_set": set(), "min_count": 1, "max_count": 2}, "must not be empty"),
+        ({"int_set": {0.5, 1}, "min_count": 1, "max_count": 2}, "must be integers"),
+        ({"int_set": {-1, 1}, "min_count": 1, "max_count": 2}, "must be >= 0"),
+        ({"int_set": {0, 1}, "min_count": -1, "max_count": 2}, "min_count must be >= 0"),
+        ({"int_set": {0, 1}, "min_count": 3, "max_count": 1}, "must be >= min_count"),
+    ],
+    ids=["empty-int_set", "non-integer-member", "negative-member", "negative-min_count", "min-above-max"],
+)
+def test_constraint_rejects_invalid_definitions(kwargs: dict, match: str):
+    """Every malformed constraint definition raises at construction; none reaches compiled code."""
+    # --- act & assert -----------------
+    with pytest.raises(ValueError, match=match):
+        Constraint(**kwargs)
+
+
+def test_constraint_accepts_numpy_integer_members():
+    """numpy integers count as integral int_set members (a set built from a numpy array is common)."""
+    # --- act --------------------------
+    con = Constraint(int_set=set(np.array([0, 1, 2], dtype=np.int32)), min_count=1, max_count=2)
+
+    # --- assert -----------------------
+    assert con.min_count == 1
+
+
+def test_constraint_min_equal_max_is_valid():
+    """Coinciding bounds are an exact-count constraint, not an inverted one."""
+    # --- act --------------------------
+    con = Constraint(int_set={0, 1, 2}, min_count=2, max_count=2)
+
+    # --- assert -----------------------
+    assert (con.min_count, con.max_count) == (2, 2)
+
+
 def test_build_array_repr():
     # --- arrange ----------------------
     cons = [

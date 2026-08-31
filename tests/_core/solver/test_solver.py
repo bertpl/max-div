@@ -3,6 +3,7 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core._utils import stdout_to_file
+from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import DistanceStorage, MaxDivSolution, MaxDivSolverBuilder, Verbosity
@@ -298,3 +299,41 @@ def test_solver_mean_pairwise_distance_meets_greedy_baseline():
 
     # --- assert -----------------------
     assert solution.score.diversity >= greedy_score * (1.0 - 1e-6)
+
+
+@pytest.mark.parametrize("preset", [SolverPreset.RANDOM, SolverPreset.GUIDED, SolverPreset.SMART])
+@pytest.mark.parametrize("constrained", [False, True], ids=["unconstrained", "constrained"])
+def test_solver_k_equals_n_returns_the_forced_full_selection(preset: SolverPreset, constrained: bool):
+    """k == n adopts every item and skips the solver steps, whatever the preset and constraints."""
+    # --- arrange ----------------------
+    n = 20
+    vectors = np.random.default_rng(0).random((n, 3)).astype(np.float32)
+    constraints = [Constraint(int_set=set(range(8)), min_count=2, max_count=4)] if constrained else None
+    problem = MaxDivProblem.new(vectors, k=n, constraints=constraints)
+
+    # --- act --------------------------
+    solution = MaxDivSolverBuilder(problem).with_preset(iterations(50), preset=preset).build().solve(verbosity=0)
+
+    # --- assert -----------------------
+    assert np.array_equal(np.sort(solution.i_selected), np.arange(n, dtype=np.int32))
+    assert solution.score.size == 1.0
+    assert solution.score.diversity > 0.0
+
+
+@pytest.mark.parametrize("k", [2, 19, 20])
+def test_solver_selection_is_valid_at_every_k_boundary(k: int):
+    """Selections at the k boundaries (2, n-1, n) are in range, duplicate-free, and of size k."""
+    # --- arrange ----------------------
+    n = 20
+    vectors = np.random.default_rng(1).random((n, 3)).astype(np.float32)
+    problem = MaxDivProblem.new(vectors, k=k)
+
+    # --- act --------------------------
+    solution = MaxDivSolverBuilder(problem).with_preset(iterations(50)).build().solve(verbosity=0)
+
+    # --- assert -----------------------
+    selected = solution.i_selected
+    assert selected.shape[0] == k
+    assert len(set(selected.tolist())) == k
+    assert selected.min() >= 0
+    assert selected.max() < n
