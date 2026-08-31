@@ -189,7 +189,7 @@ class ProgressReporter(ABC):
             self._t_start_solver = self._t_start_step
         self.show_step_started(step_name)
 
-    def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
+    def wants_update(self, progress: Progress | None, t_elapsed_step: float) -> bool:
         """Return whether the next update would be rendered.
 
         `update` consults this before building the snapshot, because building one is not free —
@@ -332,7 +332,7 @@ class SilentProgressReporter(ProgressReporter):
         """Return None: nothing is rendered, so no snapshots need to reach this reporter."""
         return None
 
-    def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
+    def wants_update(self, progress: Progress | None, t_elapsed_step: float) -> bool:
         """Return False: nothing is rendered, so no snapshot is worth building."""
         return False
 
@@ -437,9 +437,10 @@ class TabularProgressReporter(ProgressReporter):
         # reset progress reporting thresholds
         self._throttle.reset()
 
-    def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
+    def wants_update(self, progress: Progress | None, t_elapsed_step: float) -> bool:
         """Return whether the throttle would pass this update."""
-        return self._throttle.would_pass(progress.iter_count, t_elapsed_step)
+        iter_now = progress.iter_count if (progress is not None) else 0
+        return self._throttle.would_pass(iter_now, t_elapsed_step)
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         iter_now = snapshot.progress.iter_count if (snapshot.progress is not None) else 0
