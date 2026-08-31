@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._math import select_k_max
+from max_div._core._math import select_k_max_masked
 from max_div._core._random import P_UNIFORM, randint
 from max_div._core.solver._solver_state import SolverState
 
@@ -46,11 +46,12 @@ class InitFarthestPoint(InitializationStrategy):
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         if state.n_selected == 0:
             return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
-        # both arrays below are ascending-index, so positions align
-        contributions = state.not_selected_contribution_array
+        # the masked selection skips selected items in place, so no per-pick compacted copies of
+        # the contribution and index arrays are built (each was a fresh O(n) allocation)
+        contributions = state.full_contribution_array
         if self._top_k == 1:
-            return np.array([state.not_selected_index_array[np.argmax(contributions)]], dtype=np.int32)
-        k_eff = min(self._top_k, len(contributions))
-        top_positions = select_k_max(contributions, np.int32(k_eff))
+            return select_k_max_masked(contributions, np.int32(1), state.selected_mask)
+        k_eff = min(self._top_k, int(state.n) - int(state.n_selected))
+        top_indices = select_k_max_masked(contributions, np.int32(k_eff), state.selected_mask)
         drawn = randint(n=np.int32(k_eff), k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
-        return np.array([state.not_selected_index_array[top_positions[drawn[0]]]], dtype=np.int32)
+        return np.array([top_indices[drawn[0]]], dtype=np.int32)

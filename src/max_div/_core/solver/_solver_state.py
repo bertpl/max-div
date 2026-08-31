@@ -445,6 +445,11 @@ class SolverState:
         return self._selected_indices[: self._n_selected]
 
     @property
+    def selected_mask(self) -> NDArray[np.bool]:
+        """Return the n-sized selection mask (reference; do not modify)."""
+        return self._selected
+
+    @property
     def not_selected_index_array(self) -> NDArray[np.int32]:
         """Return not selected indices as a numpy array of np.int32."""
         return np.flatnonzero(~self._selected).astype(np.int32)
