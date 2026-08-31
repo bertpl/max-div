@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Random one-shot initialization updates its distance bookkeeping in one batched pass — an order of magnitude faster at large n, with a `parallel` option that speeds it up further when the solve runs single-process
+- Farthest-point initialization no longer rebuilds its candidate arrays on every pick, removing about a third of its cost at large n; selections are unchanged
 
 ### Deprecated
 
