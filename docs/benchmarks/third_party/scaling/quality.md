@@ -8,18 +8,16 @@ The scoring objective (minimum separation under L2) was chosen because it is the
 
 ## Detailed Results
 
-Each cell holds the percentage of the random-to-best-known quality gap a configuration's median closes at that size, rounded down to 0.1% — **bold** reaches the 90% fraction, *italic* only the 50% one. An empty cell is a size the configuration was not judged at — beyond its time limit, or no completed run.
+Each configuration's curve is the percentage of the random-to-best-known quality gap its median closes at each size, connected across sizes. The gray dashed lines mark the 50%, 90% and 100% levels; a curve dipping below zero is a configuration worse than a random selection at that size.
+
+![Gap-closure percentage against problem size, per solver configuration](images/scaling_gap_closure.webp)
 
 Percentages rising with n say more about the reference than about the solver: the best-known solutions come from a fixed extended budget, so they are less converged as n grows, and at the largest sizes they come from the same fast tools being judged.
 
 A high percentage there means the solver matches the best *known* solution, not that it approaches the optimum — the reason the [protocol](protocol.md) (section IV.D.4) ends a passing range at the first failing size.
 
---8<-- "generated/scaling_quality_gaps.md"
-
 ## Best-Known Solutions
 
-The **best-known solution** per problem size is the reference the quality verdicts are judged against; beside the best-known value sit `Q_random` and the two thresholds the pair yields. The values below are the best over every measured run — the extended runs and the reference-budget quality runs of the [measurement protocol](protocol.md) (section IV.D).
+The **best-known solution** per problem size is the reference the quality verdicts are judged against, and `Q_random` is the value the gap closes from. Both are the best over every measured run — the extended runs and the reference-budget quality runs of the [measurement protocol](protocol.md) (section IV.D) — and the gap-closure percentages above normalize against the band between them.
 
-The measured-time column shows each winning run's end-to-end time. A run that finishes somewhat past the extended budget still counts — see the overrun rule in the [protocol](protocol.md), section IV.D.2.
-
---8<-- "generated/scaling_best_known.md"
+![Best-known diversity and the random reference against problem size](images/scaling_best_known.webp)

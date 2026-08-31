@@ -342,6 +342,131 @@ def _format_fit(coef: tuple) -> str:
     return "f(n) = " + " + ".join(terms)
 
 
+# Per-point label geometry for the best-known chart. The solver name (bold, dark) stacks one text
+# line above its config (lighter gray), both rotated together so the two-line block runs up and to
+# the right of its marker.
+_BEST_KNOWN_LABEL_ROTATION = 30
+_BEST_KNOWN_LABEL_FONTSIZE = 7
+
+
+def _annotate_best_known_point(ax: plt.Axes, x: float, y: float, solver: str, config: str) -> None:
+    """Annotate one best-known point with the bold solver name over its config name.
+
+    Two short lines with contrasting weight and color tell the solver and config apart, which a
+    single run-on `solver [config]` label in a single weight and color would not — and each line is far shorter
+    than the joined one, so the rotated labels crowd the curve less.
+    """
+    theta = math.radians(_BEST_KNOWN_LABEL_ROTATION)
+    # step one text line up along the rotated text's normal, so the solver name sits above the config
+    line_gap = _BEST_KNOWN_LABEL_FONTSIZE + 3
+    up = (-math.sin(theta) * line_gap, math.cos(theta) * line_gap)
+    shared = {
+        "textcoords": "offset points",
+        "ha": "left",
+        "va": "bottom",
+        "fontsize": _BEST_KNOWN_LABEL_FONTSIZE,
+        "rotation": _BEST_KNOWN_LABEL_ROTATION,
+        "rotation_mode": "anchor",
+    }
+    ax.annotate(f"[{config}]", (x, y), xytext=(2, 4), color="#666666", **shared)
+    ax.annotate(solver, (x, y), xytext=(2 + up[0], 4 + up[1]), color="#333333", fontweight="bold", **shared)
+
+
+def render_best_known_chart(records: list[ScalingRunRecord], q_random: dict[int, float], names: dict[str, str]) -> None:
+    """Render the best-known diversity and the random reference against problem size (log--log).
+
+    The two curves are the band the gap-closure percentages normalize against: the best-known
+    curve (the highest quality any run reached at each size) on top, the random reference below.
+    Each best-known point is labeled with the tool that produced it and its winning configuration.
+    """
+    by_size = best_known_by_size(records)
+    sizes = sorted(by_size)
+    fig, ax = plt.subplots(figsize=(12.0, 7.0))
+    ax.plot(
+        sizes,
+        [by_size[n].min_separation for n in sizes],
+        label="best-known",
+        linewidth=_LINE_WIDTH,
+        color=_series_color(0),
+        **_series_marker(0),
+    )
+    for n in sizes:
+        record = by_size[n]
+        _annotate_best_known_point(ax, n, record.min_separation, _display_name(record.tool, names), record.config)
+    random_sizes = [n for n in sizes if n in q_random]
+    ax.plot(
+        random_sizes,
+        [q_random[n] for n in random_sizes],
+        label="$Q_{\\mathrm{random}}$",
+        linewidth=_LINE_WIDTH,
+        color=_series_color(1),
+        **_series_marker(1),
+    )
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_ylim(top=ax.get_ylim()[1] * 3)  # headroom above the top curve for its rotated labels
+    ax.set_xlim(right=ax.get_xlim()[1] * 1.5)  # and to the right, so the last size's label fits
+    _grid_xticks(ax, max(sizes))
+    ax.set_xlabel("problem size n")
+    ax.set_ylabel("diversity (minimum separation)")
+    ax.set_title("Solver Scaling — Best-Known Quality", fontweight="bold")
+    ax.grid(True, which="major")
+    ax.legend()
+    _save_webp(fig, IMAGES_DIR / "scaling_best_known.webp")
+
+
+def render_gap_closure_chart(
+    quality_records: list[ScalingRunRecord],
+    best_known_records: list[ScalingRunRecord],
+    q_random: dict[int, float],
+    names: dict[str, str],
+) -> None:
+    """Render each configuration's gap-closure percentage against problem size (log x, linear y).
+
+    Gray dashed lines mark the 50%, 90% and 100% levels; a configuration below the random
+    reference plots a negative percentage, so the y-axis is left free to descend below zero.
+    """
+    pool = best_known_pool(quality_records, best_known_records)
+    medians = median_qualities(quality_records)
+    fig, ax = plt.subplots(figsize=(12.0, 7.0))
+    for index, ((tool, config), by_size) in enumerate(medians.items()):
+        points = [
+            (n, _gap_fraction(median, q_random[n], pool[n]) * 100)
+            for n, median in sorted(by_size.items())
+            if n in pool and n in q_random
+        ]
+        if points:
+            ax.plot(
+                [n for n, _ in points],
+                [percent for _, percent in points],
+                label=_legend_label(tool, config, names),
+                linewidth=_LINE_WIDTH,
+                color=_series_color(index),
+                **_series_marker(index),
+            )
+    for level in (50, 90, 100):
+        ax.axhline(level, color="#888888", linestyle="--", linewidth=1.0)
+        ax.text(
+            0.99,
+            level,
+            f"{level}%",
+            color="#555555",
+            ha="right",
+            va="bottom",
+            fontsize=9,
+            transform=ax.get_yaxis_transform(),
+            bbox={"facecolor": "white", "alpha": 0.9, "edgecolor": "none"},
+        )
+    ax.set_xscale("log")
+    _grid_xticks(ax, max(pool))
+    ax.set_xlabel("problem size n")
+    ax.set_ylabel("gap closure [%]")
+    ax.set_title("Solver Scaling — Gap Closure", fontweight="bold")
+    ax.grid(True, which="major", axis="x")
+    ax.legend()
+    _save_webp(fig, IMAGES_DIR / "scaling_gap_closure.webp")
+
+
 # ==================================================================================================
 #  Tables
 # ==================================================================================================
@@ -474,6 +599,16 @@ def write_quality_gap_table(
     _write_generated("scaling_quality_gaps.md", lines)
 
 
+def _gap_fraction(median: float, random_quality: float, best_known: float) -> float:
+    """Return the fraction of the random-to-best-known gap a median quality closes.
+
+    A degenerate size where the best-known equals the random reference leaves no gap to close;
+    matching the best-known is then the only way to reach 1.
+    """
+    gap = best_known - random_quality
+    return (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
+
+
 def _format_gap_fraction(median: float, random_quality: float, best_known: float) -> str:
     """Format one gap-closure cell as a percentage: bold when the fraction reaches the strictest
     `GAP_CLOSURE_FRACTIONS` value, italic when it reaches only the lowest.
@@ -481,10 +616,7 @@ def _format_gap_fraction(median: float, random_quality: float, best_known: float
     The display rounds down to 0.1% while the marking judges the exact fraction, so a printed
     50.0% is genuinely at or above the fraction and the marking never contradicts the number.
     """
-    gap = best_known - random_quality
-    # a degenerate size where the best-known equals the random reference leaves no gap to close;
-    # matching the best-known is then the only way to pass
-    fraction = (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
+    fraction = _gap_fraction(median, random_quality, best_known)
     percent = math.floor(fraction * 1000) / 10
     if fraction >= max(GAP_CLOSURE_FRACTIONS):
         return f"**{percent:.1f}%**"
@@ -519,10 +651,13 @@ def main() -> None:
     )
     if best_known_records:
         # The quality runs join the pool: a reference-budget run can hold a size's best solution.
-        write_best_known_table(best_known_records + quality_records, q_random_values, names)
+        pool_records = best_known_records + quality_records
+        write_best_known_table(pool_records, q_random_values, names)
+        render_best_known_chart(pool_records, q_random_values, names)
     if quality_records and q_random_values:
         write_quality_table(quality_records, best_known_records, q_random_values, names)
         write_quality_gap_table(quality_records, best_known_records, q_random_values, names)
+        render_gap_closure_chart(quality_records, best_known_records, q_random_values, names)
     render_time_chart(time_grouped, names)
     render_memory_chart(memory_grouped, fits, names)
     render_fit_charts(memory_grouped, fits, names)
