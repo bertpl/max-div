@@ -90,6 +90,35 @@ def test_problem_new_value_error(ndims: int, n: int, d: int, k: int):
         _ = MaxDivProblem.new(vectors, k)
 
 
+def test_problem_rejects_out_of_range_constraint_index():
+    """A constraint referencing an item index >= n raises at construction, naming the constraint."""
+    # --- arrange ----------------------
+    vectors = np.ones((10, 3), dtype=np.float32)
+    distances = np.zeros((10, 10), dtype=np.float32)
+    constraints = [
+        Constraint(int_set={0, 1}, min_count=1, max_count=2),
+        Constraint(int_set={0, 1, 999}, min_count=1, max_count=2),
+    ]
+
+    # --- act & assert -----------------
+    with pytest.raises(ValueError, match=r"Constraint 1 references item index 999"):
+        _ = MaxDivProblem.new(vectors, k=4, constraints=constraints)
+    with pytest.raises(ValueError, match=r"Constraint 1 references item index 999"):
+        _ = MaxDivProblem.from_distances(distances, k=4, constraints=constraints)
+
+
+def test_problem_accepts_constraint_index_at_boundary():
+    """An index of exactly n - 1 is in range."""
+    # --- arrange ----------------------
+    vectors = np.ones((10, 3), dtype=np.float32)
+
+    # --- act --------------------------
+    problem = MaxDivProblem.new(vectors, k=4, constraints=[Constraint(int_set={0, 9}, min_count=1, max_count=2)])
+
+    # --- assert -----------------------
+    assert problem.m == 1
+
+
 def test_problem_new_cosine_zero_vector_raises():
     """COSINE problems reject all-zero vectors at construction time."""
 

@@ -1,6 +1,8 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
 from max_div._core.constraints.constraints import _np_con_count_satisfied
@@ -133,6 +135,12 @@ class MaxDivSolver:
                 constraints=self._constraints,
                 penalty_quadratic=(self._constraint_penalty == ConstraintPenalty.QUADRATIC),
             )
+            if self._k == self._n:
+                # k == n forces every item into the selection; adopt it here so the solve can skip
+                # every solver step below -- no strategy ever sees the degenerate case, and the
+                # solve returns immediately (spending the budget would only propose swaps that
+                # cannot change a full selection).
+                state.add_many(np.arange(self._n, dtype=np.int32))
             progress_reporter.solver_step_finished(None, state)
 
         # init step results with solver state initialization as virtual step 0
@@ -144,6 +152,10 @@ class MaxDivSolver:
                 )
             ]
         )
+
+        # --- forced full selection --------------
+        if self._k == self._n:
+            return self._construct_final_solution(state, step_results)
 
         # --- Main loop --------------------------
         for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):

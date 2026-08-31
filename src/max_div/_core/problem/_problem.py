@@ -136,6 +136,7 @@ class MaxDivProblem(ABC):
 
         if constraints is None:
             constraints = []
+        _validate_constraints(constraints, vectors.shape[0])
 
         # --- build ------------------------------
         return VectorMaxDivProblem(
@@ -183,6 +184,7 @@ class MaxDivProblem(ABC):
 
         if constraints is None:
             constraints = []
+        _validate_constraints(constraints, n)
 
         # --- build ------------------------------
         return DistanceMaxDivProblem(
@@ -256,6 +258,25 @@ class DistanceMaxDivProblem(MaxDivProblem):
 #  Helpers
 # =================================================================================================
 def _validate_k(k: int, n: int) -> None:
-    """Raise ValueError unless 2 <= k <= n."""
+    """Raise ValueError unless 2 <= k <= n.
+
+    `k == n` is allowed: the selection is then forced to every item (`MaxDivSolver.solve` adopts
+    that selection directly).
+    """
     if not (2 <= k <= n):
         raise ValueError(f"k must be in range [2, number of items (={n})]; here: {k}.")
+
+
+def _validate_constraints(constraints: list[Constraint], n: int) -> None:
+    """Raise ValueError when a constraint references an item index outside the problem's `[0, n)`.
+
+    `Constraint.__post_init__` owns every check that needs no problem context; the index-vs-`n`
+    check is the one that does.  An out-of-range index would reach compiled code with bounds
+    checking off, where it is a memory error, not an exception.  `min_count` or `max_count`
+    above `k` stay legal: such a constraint is unsatisfiable but meaningful, and `find_feasible`
+    reports it as infeasible with its exact violation.
+    """
+    for i, con in enumerate(constraints):
+        largest = max(con.int_set)
+        if largest >= n:
+            raise ValueError(f"Constraint {i} references item index {largest}, outside the problem's [0, {n}) items.")
