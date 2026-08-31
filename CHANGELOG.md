@@ -5,15 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
+## 0.16.2 (2026-08-31)
 
 ### Fixed
 - Invalid constraint definitions (empty groups, negative counts, `min_count > max_count`, out-of-range item indices) are rejected with a `ValueError` at construction (an out-of-range index is reported with the constraint's position) — previously they crashed or silently mis-solved
@@ -23,8 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Out-of-bounds accesses in low-level selection primitives are guarded — previously invalid input could corrupt memory
 - Failed parallel workers are reported (a warning naming them on partial failure, the original traceback on total failure) — previously they died silently; empty custom worker groups are rejected at configuration
 - Unconverged feasibility relaxations are surfaced (a `converged` field on the result, a warning on the initialization path) and their marginals renormalized so they sum to k
-
-### Security
 
 ## 0.16.1 (2026-08-31)
 
