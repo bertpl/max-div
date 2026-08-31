@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -173,11 +174,17 @@ def step_7_check_changelog_has_entries() -> None:
 
 
 # Gathering the badge metrics is the last precondition: the fetch runs after every cheap check
-# has passed and before the first write, so an abort here — most often because CI on current
-# main has not gone green yet — costs nothing to recover from.
+# has passed and before the first write. When the 'Push to Main' run for HEAD is still in flight,
+# the step waits for it rather than aborting — the common case after a last-minute commit (e.g. a
+# changelog entry) is CI that simply has not finished yet, and waiting turns a manual
+# watch-and-rerun loop into one invocation.
 
 # warn if the cumulative union exceeds this multiple of the largest single combo
 TEST_COUNT_UNION_RATIO_WARN = 1.5
+
+# how long to wait for an in-flight 'Push to Main' run on HEAD, and how often to re-check
+CI_WAIT_TIMEOUT_SEC = 25 * 60
+CI_POLL_INTERVAL_SEC = 30
 
 
 @dataclass(frozen=True)
@@ -213,20 +220,69 @@ def _latest_main_coverage_run() -> tuple[str, str]:
     return str(runs[0]["databaseId"]), runs[0]["headSha"]
 
 
+def _main_run_for(head_sha: str) -> tuple[str, str, str] | None:
+    """Return (run_id, status, conclusion) of the latest 'Push to Main' run for `head_sha`, or None."""
+    out = run_command(
+        [
+            "gh",
+            "run",
+            "list",
+            "--workflow",
+            "push_to_main.yml",
+            "--branch",
+            "main",
+            "--limit",
+            "10",
+            "--json",
+            "databaseId,headSha,status,conclusion",
+        ]
+    )
+    for run in json.loads(out):
+        if run["headSha"] == head_sha:
+            return str(run["databaseId"]), run["status"], run.get("conclusion") or ""
+    return None
+
+
+def _wait_for_main_ci(local_head: str) -> str:
+    """Return the run id of a successful 'Push to Main' run for `local_head`, waiting one out if in flight.
+
+    Aborts when no run exists for `local_head` (the push did not trigger CI), when the run
+    concluded without success, or after `CI_WAIT_TIMEOUT_SEC` of waiting.
+    """
+    found = _main_run_for(local_head)
+    if found is None:
+        fail_with_message(f"no 'Push to Main' run found for HEAD {local_head[:8]} — did the push trigger CI?")
+    deadline = time.monotonic() + CI_WAIT_TIMEOUT_SEC
+    announced = False
+    while True:
+        run_id, status, conclusion = found
+        if status == "completed":
+            if conclusion != "success":
+                fail_with_message(f"'Push to Main' run for HEAD {local_head[:8]} concluded '{conclusion}'")
+            return run_id
+        if not announced:
+            print(f"       CI for HEAD {local_head[:8]} is {status} — waiting up to {CI_WAIT_TIMEOUT_SEC // 60} min")
+            announced = True
+        if time.monotonic() >= deadline:
+            fail_with_message(f"timed out after {CI_WAIT_TIMEOUT_SEC // 60} min waiting for CI on {local_head[:8]}")
+        time.sleep(CI_POLL_INTERVAL_SEC)
+        found = _main_run_for(local_head)
+        if found is None:
+            fail_with_message(f"the 'Push to Main' run for HEAD {local_head[:8]} disappeared while waiting")
+
+
 def _fetch_release_metrics() -> dict[str, float]:
     """Download CI's cumulative metrics for the commit being released.
 
     The numbers come from the matrix combine job, not a local run, so the
-    badge matches the CI gate exactly. Fails if the latest green main run is
-    not the commit at HEAD (i.e. CI on current main hasn't gone green yet).
+    badge matches the CI gate exactly. When the latest green main run is not
+    the commit at HEAD, an in-flight run for HEAD is waited out; only a HEAD
+    with no run at all, a failed run, or a timeout aborts.
     """
     run_id, head_sha = _latest_main_coverage_run()
     local_head = run_command(["git", "rev-parse", "HEAD"]).strip()
     if head_sha != local_head:
-        fail_with_message(
-            f"latest main coverage run is for {head_sha[:8]}, not HEAD {local_head[:8]} — "
-            "wait for CI on current main to go green before releasing"
-        )
+        run_id = _wait_for_main_ci(local_head)
     with tempfile.TemporaryDirectory() as tmp:
         run_command(["gh", "run", "download", run_id, "--name", "release-metrics", "--dir", tmp])
         return json.loads((Path(tmp) / "metrics.json").read_text())
