@@ -265,3 +265,17 @@ def test_marginals_sum_to_k_after_the_solve(seed: int):
 
     # --- assert -----------------------
     assert sol.marginals.sum() == pytest.approx(float(k), abs=1e-8)
+
+
+def test_adjust_marginals_clips_an_out_of_range_vector_even_when_the_sum_is_right():
+    """A vector summing to k but leaving [0, 1] is clipped and re-adjusted, not returned as-is."""
+    # --- arrange ----------------------
+    marginals = np.array([1.2, -0.2, 1.0, 1.0], dtype=np.float64)  # sums to 3.0 == k, out of range
+
+    # --- act --------------------------
+    adjusted = _adjust_marginals_to_sum_k(marginals, k=3)
+
+    # --- assert -----------------------
+    assert adjusted.min() >= 0.0
+    assert adjusted.max() <= 1.0
+    assert adjusted.sum() == pytest.approx(3.0, abs=1e-9)

@@ -302,7 +302,7 @@ def solve_relaxation(
     value = float(c @ z + 0.5 * (h * z) @ z)
     return RelaxationSolution(
         value=value,
-        marginals=_adjust_marginals_to_sum_k(np.clip(z[i_x], 0.0, 1.0), k),
+        marginals=_adjust_marginals_to_sum_k(z[i_x], k),
         lam_min=np.maximum(y[:m], 0.0),
         lam_max=np.maximum(-y[m : 2 * m], 0.0),
         iterations=iterations,
@@ -314,13 +314,14 @@ def solve_relaxation(
 #  _adjust_marginals_to_sum_k
 # =================================================================================================
 def _adjust_marginals_to_sum_k(marginals: NDArray[np.float64], k: int) -> NDArray[np.float64]:
-    """Return the marginals shifted (and re-clipped) so they sum to `k`, each staying in [0, 1].
+    """Return the marginals clipped into [0, 1] and shifted so they sum to `k`.
 
-    `RelaxationSolution.marginals` promises a sum of `k` — the property `rounding.systematic_sample`'s
-    correctness rests on — but the post-solve clip can perturb the sum, and an unconverged solve
-    can miss it outright.  A bisection finds the constant shift whose clipped sum is `k`: the
-    clipped sum is continuous and monotone in the shift, and a deficit-sized bracket always
-    encloses the target, so the usual near-zero case converges in a few iterations.
+    `RelaxationSolution.marginals` promises both properties — the sum is what
+    `rounding.systematic_sample`'s correctness rests on — but the solve's iterate honors neither
+    exactly, and an unconverged solve can miss the sum outright.  A bisection finds the constant
+    shift whose clipped sum is `k`: the clipped sum is continuous and monotone in the shift, and
+    a deficit-sized bracket always encloses the target, so the usual near-zero case converges in
+    a few iterations.
     """
 
     def shifted(shift: float) -> NDArray[np.float64]:
@@ -330,7 +331,7 @@ def _adjust_marginals_to_sum_k(marginals: NDArray[np.float64], k: int) -> NDArra
     # a deficit-sized bracket always encloses the target: shifting by the full deficit gains at
     # least the deficit -- upward, the headroom above the marginals (n - sum, > deficit since
     # k < n) absorbs it; downward, the mass below (sum, > -deficit) does
-    deficit = float(k - marginals.sum())
+    deficit = float(k - shifted(0.0).sum())  # measured on the clipped vector
     lo = -(abs(deficit) + 1e-15)
     hi = abs(deficit) + 1e-15
 
