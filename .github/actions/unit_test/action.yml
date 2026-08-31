@@ -61,6 +61,13 @@ runs:
         run: |
           # NUMBA_DISABLE_JIT: interpreted execution, required for line coverage of njit functions
           [ "$JIT" = "off" ] && export NUMBA_DISABLE_JIT=1
+          # NUMBA_BOUNDSCHECK=1 compiles bounds checks into every njit function, so an
+          # out-of-bounds access under any test raises instead of corrupting memory; worth
+          # the modest slowdown (numpy alone does not substitute: it raises on overruns but
+          # silently wraps negative indices).  Not on the lowest-direct cells: the numba
+          # floor fails to serialize bounds-checked functions at import (a deep-recursion
+          # PicklingError), so those cells run without it.
+          [ "$RES" = "highest" ] && export NUMBA_BOUNDSCHECK=1
           COV_FLAG=""
           # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
