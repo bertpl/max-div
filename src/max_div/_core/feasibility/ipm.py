@@ -319,33 +319,28 @@ def _adjust_marginals_to_sum_k(marginals: NDArray[np.float64], k: int) -> NDArra
     `RelaxationSolution.marginals` promises a sum of `k` — the property `rounding.systematic_sample`'s
     correctness rests on — but the post-solve clip can perturb the sum, and an unconverged solve
     can miss it outright.  A bisection finds the constant shift whose clipped sum is `k`: the
-    clipped sum is continuous and monotone in the shift, and the starting bracket — the deficit
-    `k - sum`, doubled until it encloses the target — stays as small as the deficit itself, so
-    the usual near-zero case converges in a few iterations.
+    clipped sum is continuous and monotone in the shift, and a deficit-sized bracket always
+    encloses the target, so the usual near-zero case converges in a few iterations.
     """
 
     def shifted(shift: float) -> NDArray[np.float64]:
         """Return the marginals moved by `shift` and re-clipped into [0, 1]."""
         return np.clip(marginals + shift, 0.0, 1.0)
 
-    # bracket [lo, hi] sized by the deficit: grow from it until the target sum is enclosed
-    # (the clipped sum reaches 0 by shift -1 and n >= k by shift +1, so growth always ends)
+    # a deficit-sized bracket always encloses the target: shifting by the full deficit gains at
+    # least the deficit -- upward, the headroom above the marginals (n - sum, > deficit since
+    # k < n) absorbs it; downward, the mass below (sum, > -deficit) does
     deficit = float(k - marginals.sum())
-    if deficit >= 0.0:
-        lo, hi = 0.0, max(deficit, 1e-15)
-        while float(shifted(hi).sum()) < k and hi < 1.0:
-            hi = min(2.0 * hi, 1.0)
-    else:
-        lo, hi = min(deficit, -1e-15), 0.0
-        while float(shifted(lo).sum()) > k and lo > -1.0:
-            lo = max(2.0 * lo, -1.0)
+    lo = -(abs(deficit) + 1e-15)
+    hi = abs(deficit) + 1e-15
 
     # bisect until the sum is on target; the interval-width floor is the can't-improve backstop
-    shift = 0.5 * (lo + hi)
-    while abs(float(shifted(shift).sum()) - k) > 1e-9 and (hi - lo) > 1e-15:
-        if float(shifted(shift).sum()) < k:
+    while True:
+        shift = 0.5 * (lo + hi)
+        total = float(shifted(shift).sum())
+        if abs(total - k) <= 1e-9 or (hi - lo) <= 1e-15:
+            return shifted(shift)
+        if total < k:
             lo = shift
         else:
             hi = shift
-        shift = 0.5 * (lo + hi)
-    return shifted(shift)
