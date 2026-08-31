@@ -50,9 +50,8 @@ class InitializationStrategy(StrategyBase, ABC):
     def parallel_batch_add(self) -> bool:
         """Return whether adding this strategy's sample batches may update trackers over parallel threads.
 
-        Results are identical either way; a strategy only returns True when explicitly configured
-        to, by a caller that knows no other worker process is competing for the cores (see the
-        tracker base class).
+        Results are identical either way; a strategy returns True only when explicitly configured
+        to (see the tracker base class for the contract).
         """
         return False
 
@@ -108,9 +107,8 @@ class InitializationStrategy(StrategyBase, ABC):
         Args:
             uniform: If True, sample uniformly instead of using contribution-based probabilities.
             ignore_constraints: If True, ignore constraints during sampling.
-            parallel: If True, the batched tracker update runs over parallel threads — identical
-                results, faster on large problems; only opt in when no other worker process is
-                competing for the cores.
+            parallel: If True, the batched tracker update runs over parallel threads; see
+                `DiversityContributionTracker.add_many` for the contract.
         """
         from ._init_random_one_shot import InitRandomOneShot
 

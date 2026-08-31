@@ -27,8 +27,11 @@ class SeparationBackend(NamedTuple):
     """What the separation tracker needs from one storage layout.
 
     `elements` computes separations for the given items from scratch; `add`, `add_many` and
-    `remove` update them after items join or leave the selection.  `add_many_parallel` is
-    `add_many` over parallel threads — identical results, for callers with no competing worker process.
+    `remove` update them after items join or leave the selection.  `add_many` fuses a batch into
+    one pass over all items — the same distance pairs feed the same `min`, so the result is
+    identical to sequential adds, but `sep` is read and written once.  `add_many_parallel` is
+    `add_many` over parallel threads: items are independent and `min` is order-free, so results
+    are identical there too.
     """
 
     elements: Callable[..., None]

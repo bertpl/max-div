@@ -43,11 +43,7 @@ def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> No
 
 @numba.njit(ADD_MANY_SIGNATURE, cache=True)
 def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArray[np.int32]) -> None:
-    """Update separation of each item wrt selection after adding all of i_added_many.
-
-    One fused pass over all items instead of one `add` sweep per added item: the same distance
-    pairs, so the result is identical, but `sep` is read and written once.
-    """
+    """Update separation of each item wrt selection after adding all of i_added_many, in one fused pass."""
     for j in range(store.n):
         nearest = sep[j]
         for i in i_added_many:
@@ -58,7 +54,7 @@ def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArr
 
 @numba.njit(ADD_MANY_SIGNATURE, parallel=True, cache=True)
 def add_many_parallel(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArray[np.int32]) -> None:
-    """Run `add_many` over parallel threads: items are independent, and `min` is order-free, so results are identical."""
+    """Update separations as `add_many` does, over parallel threads."""
     for j in numba.prange(store.n):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
         nearest = sep[j]
         for i in i_added_many:

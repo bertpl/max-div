@@ -25,9 +25,8 @@ class InitRandomOneShot(InitializationStrategy):
                                          high-contribution items with higher probability (default: `False`)
     - ignore_constraints (bool): If `False`, respects problem constraints during initialization, if present.
                                  If `True`, constraints are ignored. (default: `False`)
-    - parallel (bool): If `True`, the single batched tracker update runs over parallel threads —
-                       identical results, faster on large problems; only opt in when no other worker
-                       process is competing for the cores. (default: `False`)
+    - parallel (bool): If `True`, the single batched tracker update runs over parallel threads;
+                       see `DiversityContributionTracker.add_many` for the contract. (default: `False`)
 
     Notes:
         - using the global diversity contribution as sampling weights is a heuristic, not an exactly optimal

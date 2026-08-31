@@ -99,7 +99,7 @@ class DiversityContributionTracker(ABC):
         `parallel` lets the update run over parallel threads where a tracker implements that;
         results are identical either way, and this default implementation ignores the flag.
         Callers may only opt in when no other worker process is competing for the cores —
-        inside one of several concurrently solving workers, the threads would oversubscribe them.
+        inside one of several concurrently solving workers, the threads would oversubscribe the cores.
         """
         for index in indices:
             self.add(index)
