@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core._warnings import FeasibilityWarning
 from max_div._core.feasibility import FeasibilityStatus, find_feasible
 from max_div._core.solver._solver_state import SolverState
 
@@ -76,6 +77,16 @@ class InitMostFeasible(InitializationStrategy):
             seed=int(self._seed),
         )
         self._status = result.status
+        if not result.converged:
+            # a solve() caller never sees the FeasibilityResult, so this warning is the only
+            # trace that the relaxation solve behind the initialization did not converge
+            warnings.warn(
+                "The feasibility relaxation behind most_feasible() did not converge; the "
+                "initialization is still valid, but its selection may be further from feasible "
+                "than a converged solve would give.",
+                FeasibilityWarning,
+                stacklevel=2,
+            )
         return result.selection.astype(np.int32)
 
     def get_debug_info(self) -> str:

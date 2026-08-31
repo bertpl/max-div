@@ -50,6 +50,10 @@ class FeasibilityResult:
         lam_min: the shortfall multipliers behind `bound`; with `lam_max` they form the
             infeasibility certificate when `status` is `INFEASIBLE`, and nothing otherwise.
         lam_max: the excess multipliers behind `bound`.
+        converged: whether the underlying relaxation solve met its convergence tolerances.
+            Verdicts stay sound either way (proofs are re-verified exactly), but an unconverged
+            `UNKNOWN` means the solver stopped at its iteration cap before its outputs were
+            accurate.
     """
 
     status: FeasibilityStatus
@@ -59,6 +63,7 @@ class FeasibilityResult:
     bound: float
     lam_min: NDArray[np.float64]
     lam_max: NDArray[np.float64]
+    converged: bool = True
 
     @property
     def violation_floor(self) -> float:

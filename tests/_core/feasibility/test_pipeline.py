@@ -354,3 +354,88 @@ def test_k_equals_n_minus_one_still_runs_the_full_pipeline():
     assert result.status is FeasibilityStatus.FEASIBLE
     assert result.selection.shape[0] == 5
     assert len(set(result.selection.tolist())) == 5
+
+
+# =================================================================================================
+#  Violation-floor soundness and selection optimality against exhaustive enumeration
+# =================================================================================================
+def _brute_force_min_violation(n: int, k: int, cons: list[Constraint]) -> float:
+    """Exhaustively compute the minimum weighted violation over all k-selections (small n only)."""
+
+    def violation_of(chosen: set[int]) -> float:
+        v = 0.0
+        for con in cons:
+            count = len(con.int_set & chosen)
+            if count < con.min_count:
+                v += con.weight * (con.min_count - count)
+            elif count > con.max_count:
+                v += con.weight * (count - con.max_count)
+        return v
+
+    return min(violation_of(set(combo)) for combo in itertools.combinations(range(n), k))
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_floor_never_exceeds_the_true_optimum_and_the_selection_attains_it(seed: int):
+    """The certified violation floor is sound against enumeration, and the returned selection is optimal.
+
+    `violation_floor <= true optimum` is the soundness half (a violation floor above the optimum
+    would be a false proof).  The optimality half pins the pipeline's observed behavior on these seeds; a
+    future change returning a merely-good selection would fail here and force a deliberate decision.
+    """
+    # --- arrange ----------------------
+    n, k, cons = _random_instance(seed)
+    optimum = _brute_force_min_violation(n, k, cons)
+
+    # --- act --------------------------
+    result = _run(n, k, cons, seed=seed)
+
+    # --- assert -----------------------
+    assert result.violation_floor <= optimum + 1e-9
+    assert result.violation == pytest.approx(optimum)
+
+
+# =================================================================================================
+#  Convergence surfacing and the contradiction guard
+# =================================================================================================
+def test_an_unconverged_relaxation_is_surfaced_on_the_result(monkeypatch):
+    """`converged=False` from the relaxation reaches the FeasibilityResult unchanged."""
+    # --- arrange ----------------------
+    from max_div._core.feasibility import pipeline
+    from max_div._core.feasibility.ipm import RelaxationSolution
+
+    n, k, cons = 8, 3, [Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=3)]
+    real_solve = pipeline.solve_relaxation
+
+    def unconverged_solve(*args, **kwargs):
+        real = real_solve(*args, **kwargs)
+        return RelaxationSolution(
+            value=real.value,
+            marginals=real.marginals,
+            lam_min=real.lam_min,
+            lam_max=real.lam_max,
+            iterations=real.iterations,
+            converged=False,
+        )
+
+    monkeypatch.setattr(pipeline, "solve_relaxation", unconverged_solve)
+
+    # --- act --------------------------
+    result = _run(n, k, cons)
+
+    # --- assert -----------------------
+    assert result.converged is False
+    assert len(set(result.selection.tolist())) == k  # the selection stays valid regardless
+
+
+def test_a_certificate_beside_a_witness_raises(monkeypatch):
+    """A positive bound next to a zero-violation witness (impossible by the math) raises, never resolves silently."""
+    # --- arrange ----------------------
+    from max_div._core.feasibility import pipeline
+
+    n, k, cons = 8, 3, [Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=3)]  # easily feasible
+    monkeypatch.setattr(pipeline, "certified_bound", lambda *args, **kwargs: 123.0)
+
+    # --- act & assert -----------------
+    with pytest.raises(RuntimeError, match="contradiction"):
+        _run(n, k, cons)

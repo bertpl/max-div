@@ -118,3 +118,19 @@ def test_deterministic_round_takes_the_largest_marginals():
     # --- assert -----------------------
     assert sorted(selection.tolist()) == [0, 1, 2]
     assert violation == 0.0
+
+
+def test_systematic_sample_degrades_to_a_valid_selection_on_nan_marginals():
+    """All-NaN marginals (a bug upstream) still yield k distinct in-range items, never -1."""
+    # --- arrange ----------------------
+    marginals = np.full(10, np.nan, dtype=np.float64)
+    rng_state = new_rng_state(np.int64(0))
+
+    # --- act --------------------------
+    selection = systematic_sample(marginals, 4, rng_state)
+
+    # --- assert -----------------------
+    assert selection.shape[0] == 4
+    assert len(set(selection.tolist())) == 4
+    assert selection.min() >= 0
+    assert selection.max() < 10

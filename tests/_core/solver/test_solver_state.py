@@ -479,6 +479,11 @@ def _apply_random_operation(state: SolverState, rng: random.Generator, open_save
     operations = ["enter_savepoint"]
     if open_savepoints:
         operations += ["exit_restore", "exit_keep"]
+    else:
+        # reset and adopt_selection replace the selection wholesale, which the savepoint
+        # machinery does not track; the solver only ever calls them outside any open savepoint
+        # (reset is rejected inside)
+        operations += ["reset", "adopt_selection"]
     if not_selected.size > 0:
         operations += ["add", "add_many"]
     if selected.size > 0:
@@ -487,6 +492,19 @@ def _apply_random_operation(state: SolverState, rng: random.Generator, open_save
     match rng.choice(operations):
         case ("enter_savepoint" | "exit_restore" | "exit_keep") as operation:
             _apply_savepoint_operation(state, operation, open_savepoints)
+        case "reset":
+            state.reset()
+        case "adopt_selection":
+            state.adopt_selection(rng.choice(state.n, size=int(state.k), replace=False).astype(np.int32))
+        case operation:
+            _apply_mutation_operation(state, operation, rng, selected, not_selected)
+
+
+def _apply_mutation_operation(
+    state: SolverState, operation: str, rng: random.Generator, selected: np.ndarray, not_selected: np.ndarray
+) -> None:
+    """Apply one incremental add/remove operation to 'state' per 'operation'."""
+    match operation:
         case "add":
             state.add(rng.choice(not_selected))
         case "add_many":

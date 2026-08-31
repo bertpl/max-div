@@ -150,6 +150,11 @@ def find_feasible(
             best_selection, best_violation = selection, violation
 
     # --- verdict --------------------------------
+    if best_violation == 0.0 and certified_infeasible:
+        # cannot happen by the math (weak duality: a positive bound is a lower bound on every
+        # selection's violation, a witness attains zero); one check makes a future contradiction
+        # raise instead of silently taking the FEASIBLE branch
+        raise RuntimeError(f"certificate/witness contradiction: bound={bound} beside a zero-violation witness")
     if best_violation == 0.0:
         status = FeasibilityStatus.FEASIBLE
     elif certified_infeasible:
@@ -165,4 +170,5 @@ def find_feasible(
         bound=bound,
         lam_min=lam_min,
         lam_max=lam_max,
+        converged=solution.converged,
     )

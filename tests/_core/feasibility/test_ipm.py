@@ -5,7 +5,7 @@ from scipy.optimize import linprog
 from max_div._core.constraints import Constraint, ConstraintList
 from max_div._core.feasibility.evaluation import certified_bound, clamp_admissible
 from max_div._core.feasibility.indexing import build_item_constraint_csr
-from max_div._core.feasibility.ipm import RelaxationSolution, solve_relaxation
+from max_div._core.feasibility.ipm import RelaxationSolution, _shift_onto_sum_k, solve_relaxation
 
 
 # =================================================================================================
@@ -221,3 +221,44 @@ def test_iteration_cap_reports_unconverged(monkeypatch):
     assert sol.iterations == 1
     assert np.all(sol.marginals >= 0.0)
     assert np.all(sol.marginals <= 1.0)
+
+
+# =================================================================================================
+#  _shift_onto_sum_k
+# =================================================================================================
+def test_shift_onto_sum_k_repairs_a_wrong_sum():
+    """Marginals whose sum misses k are shifted onto the sum-k simplex, each entry staying in [0, 1]."""
+    # --- arrange ----------------------
+    marginals = np.array([0.9, 0.9, 0.9, 0.9, 0.9, 0.9], dtype=np.float64)  # sums to 5.4 against k=3
+
+    # --- act --------------------------
+    repaired = _shift_onto_sum_k(marginals, k=3)
+
+    # --- assert -----------------------
+    assert repaired.sum() == pytest.approx(3.0, abs=1e-9)
+    assert repaired.min() >= 0.0
+    assert repaired.max() <= 1.0
+
+
+def test_shift_onto_sum_k_leaves_a_correct_sum_untouched():
+    """Marginals already summing to k come back as the same object — no shift, no copy."""
+    # --- arrange ----------------------
+    marginals = np.array([0.5, 0.5, 1.0, 1.0], dtype=np.float64)
+
+    # --- act & assert -----------------
+    assert _shift_onto_sum_k(marginals, k=3) is marginals
+
+
+@pytest.mark.parametrize("seed", range(3))
+def test_marginals_sum_to_k_after_the_solve(seed: int):
+    """The solve's returned marginals honor the documented sum-to-k contract exactly."""
+    # --- arrange ----------------------
+    n, k, cons = _random_instance(seed)
+    w_lin = np.array([c.weight for c in cons], dtype=np.float64)
+    w_quad = np.zeros(len(cons), dtype=np.float64)
+
+    # --- act --------------------------
+    sol = _solve(n, k, cons, w_lin, w_quad)
+
+    # --- assert -----------------------
+    assert sol.marginals.sum() == pytest.approx(float(k), abs=1e-8)

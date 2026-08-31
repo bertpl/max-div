@@ -243,6 +243,9 @@ def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
     Fast path for the common case (all weights 1, linear penalization); the weighted / quadratic
     generalization lives in `_np_con_total_weighted_violation`.
 
+    The two independent ifs sum shortfall and excess; `feasibility.evaluation._weighted_violation`
+    documents why this agrees with its exclusive if/elif form.
+
     This assumes con_values represents how many _additional_ samples to select from each constraint.
     """
     s = np.int32(0)

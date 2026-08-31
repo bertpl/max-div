@@ -302,9 +302,34 @@ def solve_relaxation(
     value = float(c @ z + 0.5 * (h * z) @ z)
     return RelaxationSolution(
         value=value,
-        marginals=np.clip(z[i_x], 0.0, 1.0),
+        marginals=_shift_onto_sum_k(np.clip(z[i_x], 0.0, 1.0), k),
         lam_min=np.maximum(y[:m], 0.0),
         lam_max=np.maximum(-y[m : 2 * m], 0.0),
         iterations=iterations,
         converged=converged,
     )
+
+
+# =================================================================================================
+#  _shift_onto_sum_k
+# =================================================================================================
+def _shift_onto_sum_k(marginals: NDArray[np.float64], k: int) -> NDArray[np.float64]:
+    """Return the marginals shifted (and re-clipped) so they sum to `k`, each staying in [0, 1].
+
+    `RelaxationSolution.marginals` promises a sum of `k` — the property `rounding.systematic_sample`'s
+    correctness rests on — but the post-solve clip can perturb the sum, and an unconverged solve
+    can miss it outright.  Marginals already summing to `k` (within 1e-9) are returned unshifted;
+    otherwise a bisection finds the constant shift whose clipped sum is `k` (the clipped sum is
+    continuous and monotone in the shift, reaching 0 at -1 and `n >= k` at +1, so the target is
+    always bracketed).
+    """
+    if abs(float(marginals.sum()) - k) <= 1e-9:
+        return marginals
+    lo, hi = -1.0, 1.0
+    for _ in range(60):  # 60 halvings put the shift within ~2e-18 of exact
+        mid = 0.5 * (lo + hi)
+        if float(np.clip(marginals + mid, 0.0, 1.0).sum()) < k:
+            lo = mid
+        else:
+            hi = mid
+    return np.clip(marginals + 0.5 * (lo + hi), 0.0, 1.0)

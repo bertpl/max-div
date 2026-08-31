@@ -89,6 +89,11 @@ def _weighted_violation(
 ) -> float:
     """Return the total weighted violation `sum of w_i * (shortfall_i + excess_i)`.
 
+    The if/elif treats shortfall and excess as exclusive, whereas the constraints package's
+    aggregates (`_np_con_total_violation`, `_np_con_total_weighted_violation`) sum both branches
+    independently; they agree exactly because `Constraint` guarantees `min_count <= max_count`,
+    under which at most one branch can be nonzero.
+
     Args:
         counts: per-constraint counts of selected members.
         con_min: per-constraint minimum counts.

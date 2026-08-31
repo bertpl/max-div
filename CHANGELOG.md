@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `k = n` problems now return the forced full selection immediately (also usable to score an existing selection) — previously they failed
 - Out-of-bounds accesses in low-level selection primitives are guarded — previously invalid input could corrupt memory
 - Failed parallel workers are reported (a warning naming them on partial failure, the original traceback on total failure) — previously they died silently; empty custom worker groups are rejected at configuration
+- Unconverged feasibility relaxations are surfaced (a `converged` field on the result, a warning on the initialization path) and their marginals renormalized so they sum to k
 
 ### Security
 
