@@ -403,10 +403,10 @@ def test_tabular_reporter_skips_snapshots_for_throttled_updates(capsys):
     reporter.solver_step_started("step A")
     reporter.update(_stub_progress(iter_count=1), state)  # first update always passes
     reads_after_first = state.n_score_reads
-    reporter.update(_stub_progress(iter_count=1), state)  # same iteration: throttled away
-    reporter.solver_step_finished(_stub_progress(iter_count=1), state)  # step ends always build
+    reporter.update(_stub_progress(iter_count=1), state)  # same iteration: the throttle drops it
+    reporter.solver_step_finished(_stub_progress(iter_count=1), state)  # a step end always builds a snapshot
 
     # --- assert -----------------------
     assert reads_after_first == 1
     assert state.n_score_reads == 2
-    capsys.readouterr()  # swallow the rendered table rows
+    capsys.readouterr()  # discard the rendered table rows

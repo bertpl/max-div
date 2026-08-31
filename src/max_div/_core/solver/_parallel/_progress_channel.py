@@ -55,7 +55,7 @@ class ForwardingProgressReporter(ProgressReporter):
         self._throttle.reset()
 
     def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
-        """Return the forward throttle's peek, so dropped updates skip snapshot construction."""
+        """Return whether the forward throttle would pass this update, so dropped updates skip snapshot construction."""
         iter_now = progress.iter_count if (progress is not None) else 0
         return self._throttle.would_pass(iter_now, t_elapsed_step)
 

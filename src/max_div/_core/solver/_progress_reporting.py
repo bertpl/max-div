@@ -118,8 +118,9 @@ class ReportThrottle:
     def would_pass(self, iter_now: int, t_elapsed: float) -> bool:
         """Return whether `passes` would show this update, without advancing the thresholds.
 
-        The peek lets a reporter decide against an update before the snapshot it would render is
-        built; a later `passes` call with the same iteration and an equal-or-later time agrees.
+        Checking without advancing lets a reporter decide against an update before the snapshot
+        it would render is built; a later `passes` call with the same iteration and an
+        equal-or-later time agrees.
         """
         return (iter_now >= self._next_iter) and (t_elapsed >= self._next_t)
 
@@ -205,7 +206,7 @@ class ProgressReporter(ABC):
         *,
         ignore_infeasible_diversity: bool = False,
     ) -> None:
-        """Report current progress and state to the renderer; skipped when `wants_update` declines."""
+        """Report current progress and state to the renderer; the report is skipped when `wants_update` declines."""
         if not self.wants_update(progress, time.perf_counter() - self._t_start_step):
             return
         self.show_update(self._build_snapshot(progress, state, ignore_infeasible_diversity), get_debug_info)
@@ -437,7 +438,7 @@ class TabularProgressReporter(ProgressReporter):
         self._throttle.reset()
 
     def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
-        """Return the throttle's peek, so throttled-away updates skip snapshot construction."""
+        """Return whether the throttle would pass this update, so dropped updates skip snapshot construction."""
         iter_now = progress.iter_count if (progress is not None) else 0
         return self._throttle.would_pass(iter_now, t_elapsed_step)
 
