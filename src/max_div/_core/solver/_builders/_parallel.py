@@ -113,6 +113,10 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                     "n_groups only combines with an integer worker count; a nested sequence carries its own grouping."
                 )
             groups = [list(cast("Sequence[WorkerConfig]", group)) for group in workers]
+            if any(not group for group in groups):
+                # the empty group is rejected here so the error names the user's input; the
+                # WorkerGroupState re-check documents the assignment-table mechanism it breaks
+                raise ValueError("Worker groups must not be empty; drop the empty inner sequence(s).")
             self._worker_configs = [config for group in groups for config in group]
             self._group_sizes = [len(group) for group in groups]
         return self

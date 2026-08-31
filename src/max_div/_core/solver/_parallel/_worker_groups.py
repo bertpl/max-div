@@ -87,6 +87,10 @@ class WorkerGroupState:
                 scheduled count is the configured group count, so it never changes.
         """
         # --- configuration ----------------------
+        if any(size <= 0 for size in group_sizes):
+            # the builder validates this too; the re-check protects direct construction: an
+            # empty group makes the assignment table reference slots that were never allocated
+            raise ValueError(f"Every worker group needs at least one worker; got sizes {group_sizes}.")
         self._n_workers: int = sum(group_sizes)
         self._initial_group_count: int = len(group_sizes)
         self._dynamic: bool = dynamic

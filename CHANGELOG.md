@@ -18,7 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Invalid constraint definitions (empty groups, negative counts, `min_count > max_count`, out-of-range item indices) are rejected with a `ValueError` at construction (an out-of-range index is reported with the constraint's position) — previously they crashed or silently mis-solved
 - `k = n` problems now return the forced full selection immediately (also usable to score an existing selection) — previously they failed
+- Invalid constraint definitions (empty groups, negative counts, `min_count > max_count`, out-of-range item indices) are rejected with a `ValueError` at construction (an out-of-range index is reported with the constraint's position) — previously they crashed or silently mis-solved
+- `k = n` problems now return the forced full selection immediately (also usable to score an existing selection) — previously they failed
 - Out-of-bounds accesses in low-level selection primitives are guarded — previously invalid input could corrupt memory
+- Failed parallel workers are reported (a warning naming them on partial failure, the original traceback on total failure) — previously they died silently; empty custom worker groups are rejected at configuration
 
 ### Security
 

@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import numpy as np
 import pytest
 
@@ -248,6 +250,16 @@ def test_mixing_configurations_and_groups_is_rejected():
         builder.with_custom_worker_groups(_BUDGET, [WorkerConfig(), [WorkerConfig()]])
 
 
+def test_an_empty_inner_group_is_rejected():
+    """An empty inner group would desynchronize the grouping from the assignment table, killing workers at startup."""
+    # --- arrange ----------------------
+    builder = ParallelMaxDivSolverBuilder(_problem())
+
+    # --- act & assert -----------------
+    with pytest.raises(ValueError, match="must not be empty"):
+        builder.with_custom_worker_groups(_BUDGET, [[WorkerConfig()], [], [WorkerConfig()]])
+
+
 def test_a_nested_sequence_fixes_grouping_and_configurations():
     """Each inner sequence becomes one group, at its own size, with its own worker configurations."""
     # --- arrange ----------------------
@@ -385,7 +397,7 @@ def test_the_budget_start_time_is_stamped_at_solve_start(fake_clock, monkeypatch
 
     def record_configs(configs, *args, **kwargs):
         received["configs"] = configs
-        return []
+        return [], []
 
     monkeypatch.setattr("max_div._core.solver._parallel._solver.run_workers", record_configs)
 
@@ -418,3 +430,28 @@ def test_custom_worker_groups_default_the_worker_count_too():
 
     # --- assert -----------------------
     assert len(solver._worker_configs) == default_worker_count()
+
+
+@dataclass(frozen=True)
+class _FailingConfig:
+    """A picklable stand-in for a SolverConfig whose solver construction raises inside the worker."""
+
+    seed: int = 99
+
+    def build_solver(self, store) -> None:
+        raise RuntimeError("boom: deliberately failing worker")
+
+
+def test_a_partially_failed_parallel_solve_warns_and_returns():
+    """One dead worker yields a warning naming it, and the surviving workers' best result still comes back."""
+    # --- arrange ----------------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_seed(7).with_workers(_BUDGET, 2).build()
+    solver._solver_configs[1] = _FailingConfig()  # sabotage the second worker only
+
+    # --- act --------------------------
+    with pytest.warns(ParallelSolvingWarning, match=r"1 of 2 parallel workers failed"):
+        solution = solver.solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert solution.winning_worker == 0
+    assert len(solution.workers) == 1
