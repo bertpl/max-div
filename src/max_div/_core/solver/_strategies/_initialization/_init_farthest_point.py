@@ -46,7 +46,7 @@ class InitFarthestPoint(InitializationStrategy):
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         if state.n_selected == 0:
             return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
-        # masked selection skips selected items in place; compacting the contribution and index
+        # masked selection reads the full array directly; compacting the contribution and index
         # arrays would allocate two fresh O(n) copies per pick
         contributions = state.full_contribution_array
         if self._top_k == 1:

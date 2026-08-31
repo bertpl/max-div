@@ -274,7 +274,7 @@ def select_k_max_masked(  # noqa: C901 — case-dispatch structure is clearer un
     itself; the function otherwise matches `select_k_max`. Non-excluded elements are visited in
     the same ascending order a compacted copy would present them in, feeding the identical
     min-heap algorithm — so the result slots match `select_k_max` over that copy, mapped back to
-    `arr` indices. The equivalence lets callers skip building a compacted copy.
+    `arr` indices.
 
     `k` is clamped into [0, #non-excluded]: k <= 0 returns an empty array, k at or above the
     non-excluded count returns every non-excluded index.
