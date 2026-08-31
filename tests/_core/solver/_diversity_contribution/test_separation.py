@@ -357,7 +357,7 @@ def test_add_many_fused_matches_sequential_adds(backend: str, parallel: bool):
 
 
 def test_add_many_empty_batch_is_noop(tracker: SeparationTracker):
-    """An empty batch must leave separations untouched (and skip the backend pass entirely)."""
+    """An empty batch must leave separations untouched."""
 
     # --- arrange ----------------------
     tracker.add(np.int32(2))

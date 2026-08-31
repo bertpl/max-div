@@ -28,7 +28,7 @@ class SeparationBackend(NamedTuple):
 
     `elements` computes separations for the given items from scratch; `add`, `add_many` and
     `remove` update them after items join or leave the selection.  `add_many_parallel` is
-    `add_many` over parallel threads — identical results, for callers that own the machine.
+    `add_many` over parallel threads — identical results, for callers with no competing worker process.
     """
 
     elements: Callable[..., None]

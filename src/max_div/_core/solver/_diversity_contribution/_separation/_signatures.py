@@ -1,7 +1,7 @@
 """The interface every separation backend implements.
 
 Shared so the three backend modules are interchangeable by construction: a function that does
-not match cannot be registered, and a signature change lands in one place rather than once per backend module.
+not match cannot be registered, and a signature change lands in one place.
 """
 
 import numba

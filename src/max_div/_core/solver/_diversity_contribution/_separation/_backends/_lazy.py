@@ -58,7 +58,7 @@ def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArr
 
 @numba.njit(ADD_MANY_SIGNATURE, parallel=True, cache=True, fastmath={"reassoc", "contract"})
 def add_many_parallel(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArray[np.int32]) -> None:
-    """Parallel `add_many`: items are independent, and `min` is order-free, so results are identical."""
+    """Run `add_many` over parallel threads: items are independent, and `min` is order-free, so results are identical."""
     for j in numba.prange(store.n):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
         nearest = sep[j]
         for i in i_added_many:
