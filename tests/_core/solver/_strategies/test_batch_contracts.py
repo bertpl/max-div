@@ -21,13 +21,13 @@ def _checked(method_name: str, violations: list[str]):
     """Return a wrapper of the named SolverState method that records precondition violations."""
     original = getattr(SolverState, method_name)
 
-    def checked(self: SolverState, indices_or_index) -> None:
+    def checked(self: SolverState, indices_or_index, *args, **kwargs) -> None:
         indices = np.atleast_1d(np.asarray(indices_or_index))
         if indices.size and (indices.min() < 0 or indices.max() >= self.n):
             violations.append(f"{method_name}: out of range {indices.tolist()}")
         if len(np.unique(indices)) != len(indices):
             violations.append(f"{method_name}: duplicates {indices.tolist()}")
-        return original(self, indices_or_index)
+        return original(self, indices_or_index, *args, **kwargs)
 
     return checked
 

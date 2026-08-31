@@ -46,6 +46,15 @@ class InitializationStrategy(StrategyBase, ABC):
         """
         raise NotImplementedError
 
+    @property
+    def parallel_batch_add(self) -> bool:
+        """Whether adding this strategy's sample batches may update trackers over parallel threads.
+
+        Results are identical either way; a strategy only returns True when explicitly configured
+        to, by a caller that knows the process owns the machine (see the tracker base class).
+        """
+        return False
+
     # -------------------------------------------------------------------------
     #  Factory Methods
     # -------------------------------------------------------------------------
@@ -88,7 +97,9 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitMostFeasible(max_iter=max_iter)
 
     @classmethod
-    def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:
+    def random_one_shot(
+        cls, uniform: bool = False, ignore_constraints: bool = False, parallel: bool = False
+    ) -> InitRandomOneShot:
         """Random initialization that selects all ``k`` items in a single batch.
 
         Probabilities are biased by the global diversity contribution (unless ``uniform=True``).
@@ -96,12 +107,15 @@ class InitializationStrategy(StrategyBase, ABC):
         Args:
             uniform: If True, sample uniformly instead of using contribution-based probabilities.
             ignore_constraints: If True, ignore constraints during sampling.
+            parallel: If True, the batched tracker update runs over parallel threads — identical
+                results, faster on large problems; only opt in when the process owns the machine.
         """
         from ._init_random_one_shot import InitRandomOneShot
 
         return InitRandomOneShot(
             uniform=uniform,
             ignore_constraints=ignore_constraints,
+            parallel=parallel,
         )
 
     @classmethod

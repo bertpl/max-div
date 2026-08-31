@@ -25,6 +25,10 @@ class InitRandomOneShot(InitializationStrategy):
                                          high-contribution items with higher probability (default: `False`)
     - ignore_constraints (bool): If `False`, respects problem constraints during initialization, if present.
                                  If `True`, constraints are ignored. (default: `False`)
+    - parallel (bool): If `True`, the single batched tracker update runs over parallel threads —
+                       identical results, faster on large problems.  Only opt in when the process
+                       owns the machine: inside one of several concurrently solving workers, the
+                       threads would oversubscribe the cores. (default: `False`)
 
     Notes:
         - using the global diversity contribution as sampling weights is a heuristic, not an exactly optimal
@@ -40,11 +44,17 @@ class InitRandomOneShot(InitializationStrategy):
        - with constraints:    ~O(kn)
     """
 
-    def __init__(self, uniform: bool = False, ignore_constraints: bool = False) -> None:
+    def __init__(self, uniform: bool = False, ignore_constraints: bool = False, parallel: bool = False) -> None:
         name = "InitRandomOneShot(" + ("u" if uniform else "nu") + (",uncon)" if ignore_constraints else ")")
         super().__init__(name)
         self.uniform = uniform
         self.ignore_constraints = ignore_constraints
+        self.parallel = parallel
+
+    @property
+    def parallel_batch_add(self) -> bool:
+        """Return the constructor's `parallel` choice; see the base class for the contract."""
+        return self.parallel
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         # --- sample -----------------------------

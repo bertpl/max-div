@@ -2,7 +2,7 @@
 
 One of three interchangeable modules — see this package's `__init__` for the pattern and why the
 layout is chosen once per tracker rather than tested inside these loops.  Each module defines
-the same three calculations over the same signatures, differing only in how a distance is read.
+the same calculations over the same signatures, differing only in how a distance is read.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import numpy as np
 
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance_condensed
 
-from .._signatures import ADD_SIGNATURE, ELEMENTS_SIGNATURE, REMOVE_SIGNATURE
+from .._signatures import ADD_MANY_SIGNATURE, ADD_SIGNATURE, ELEMENTS_SIGNATURE, REMOVE_SIGNATURE
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -39,6 +39,32 @@ def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> No
         sep[j] = min(sep[j], get_distance_condensed(store, i_added, j))
     for j in range(i_added + 1, store.n):
         sep[j] = min(sep[j], get_distance_condensed(store, i_added, j))
+
+
+@numba.njit(ADD_MANY_SIGNATURE, cache=True)
+def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArray[np.int32]) -> None:
+    """Update separation of each item wrt selection after adding all of i_added_many.
+
+    One fused pass over all items instead of one `add` sweep per added item: the same distance
+    pairs, so the result is identical, but `sep` is read and written once.
+    """
+    for j in range(store.n):
+        nearest = sep[j]
+        for i in i_added_many:
+            if i != j:
+                nearest = min(nearest, get_distance_condensed(store, i, j))
+        sep[j] = nearest
+
+
+@numba.njit(ADD_MANY_SIGNATURE, parallel=True, cache=True)
+def add_many_parallel(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArray[np.int32]) -> None:
+    """Parallel `add_many`: items are independent, and `min` is order-free, so results are identical."""
+    for j in numba.prange(store.n):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
+        nearest = sep[j]
+        for i in i_added_many:
+            if i != j:
+                nearest = min(nearest, get_distance_condensed(store, i, j))
+        sep[j] = nearest
 
 
 @numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int32[::1]), inline="always", cache=True)

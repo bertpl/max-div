@@ -123,7 +123,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
                 )
 
                 # --- add items to state ---------
-                state.add_many(samples)
+                state.add_many(samples, parallel=self._strategy.parallel_batch_add)
 
                 tracker.report_iterations_done(len(samples))
 

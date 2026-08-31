@@ -67,12 +67,13 @@ def _maxdiv_lean() -> SelectFn:
         # No with_preset: the pipeline is a single init step, so the solve returns that
         # initialization and nothing more. Uniform sampling replaces the default
         # contribution-weighted variant, whose dataset-wide distance sweep would dominate this
-        # configuration's runtime.
+        # configuration's runtime. The parallel batched tracker update is safe here: this
+        # configuration runs a single process that owns the machine.
         builder = (
             MaxDivSolverBuilder(problem)
             .with_seed(seed)
             .with_distance_storage(DistanceStorage.LAZY)
-            .set_initialization_strategy(InitializationStrategy.random_one_shot(uniform=True))
+            .set_initialization_strategy(InitializationStrategy.random_one_shot(uniform=True, parallel=True))
         )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
 
