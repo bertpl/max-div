@@ -115,6 +115,14 @@ class ReportThrottle:
         self._next_t = 0.0
         self._n_passed = 0
 
+    def would_pass(self, iter_now: int, t_elapsed: float) -> bool:
+        """Return whether `passes` would show this update, without advancing the thresholds.
+
+        The peek lets a reporter decide against an update before the snapshot it would render is
+        built; a later `passes` call with the same iteration and an equal-or-later time agrees.
+        """
+        return (iter_now >= self._next_iter) and (t_elapsed >= self._next_t)
+
     def passes(self, iter_now: int, t_elapsed: float) -> bool:
         """Return whether this update should be shown, advancing both thresholds when it is."""
         if (iter_now < self._next_iter) or (t_elapsed < self._next_t):
@@ -180,6 +188,15 @@ class ProgressReporter(ABC):
             self._t_start_solver = self._t_start_step
         self.show_step_started(step_name)
 
+    def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
+        """Return whether the next update would be rendered.
+
+        `update` consults this before building the snapshot, because building one is not free —
+        it reads the state's score, an O(k) computation. The default accepts every update;
+        renderers that show nothing or throttle decline here, so declined updates cost nothing.
+        """
+        return True
+
     def update(
         self,
         progress: Progress,
@@ -188,7 +205,9 @@ class ProgressReporter(ABC):
         *,
         ignore_infeasible_diversity: bool = False,
     ) -> None:
-        """Report current progress and state to the renderer."""
+        """Report current progress and state to the renderer; skipped when `wants_update` declines."""
+        if not self.wants_update(progress, time.perf_counter() - self._t_start_step):
+            return
         self.show_update(self._build_snapshot(progress, state, ignore_infeasible_diversity), get_debug_info)
 
     def solver_step_finished(
@@ -312,6 +331,10 @@ class SilentProgressReporter(ProgressReporter):
         """Return None: nothing is rendered, so no snapshots need to reach this reporter."""
         return None
 
+    def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
+        """Return False: nothing is rendered, so no snapshot is worth building."""
+        return False
+
     def show_step_started(self, step_name: str) -> None: ...  # no-op
     def show_update(
         self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None
@@ -412,6 +435,11 @@ class TabularProgressReporter(ProgressReporter):
 
         # reset progress reporting thresholds
         self._throttle.reset()
+
+    def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
+        """Return the throttle's peek, so throttled-away updates skip snapshot construction."""
+        iter_now = progress.iter_count if (progress is not None) else 0
+        return self._throttle.would_pass(iter_now, t_elapsed_step)
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         iter_now = snapshot.progress.iter_count if (snapshot.progress is not None) else 0

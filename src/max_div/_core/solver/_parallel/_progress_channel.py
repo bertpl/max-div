@@ -15,6 +15,7 @@ from collections.abc import Callable
 from dataclasses import replace
 from multiprocessing.queues import Queue
 
+from max_div._core.solver._duration import Progress
 from max_div._core.solver._progress_reporting import (
     TABULAR_C_SLOWDOWNS,
     ProgressReporter,
@@ -52,6 +53,11 @@ class ForwardingProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     def show_step_started(self, step_name: str) -> None:
         self._throttle.reset()
+
+    def wants_update(self, progress: Progress, t_elapsed_step: float) -> bool:
+        """Return the forward throttle's peek, so dropped updates skip snapshot construction."""
+        iter_now = progress.iter_count if (progress is not None) else 0
+        return self._throttle.would_pass(iter_now, t_elapsed_step)
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         iter_now = snapshot.progress.iter_count if (snapshot.progress is not None) else 0

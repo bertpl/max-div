@@ -347,3 +347,66 @@ def test_tabular_hash_column_blank_without_selection_or_hash(capsys):
     row = capsys.readouterr().out.splitlines()[-1]
     assert row.rstrip().endswith("|")
     assert all(char in "| " for char in row.split("|")[-2])  # hash column is blank
+
+
+class _ScoreCountingState:
+    """A stand-in for SolverState that counts how often its score is read."""
+
+    def __init__(self) -> None:
+        self.n_score_reads = 0
+        self.n_selected = 3
+        self.k = 5
+        self.m = 0
+        self.selected_index_array = np.arange(3, dtype=np.int32)
+
+    @property
+    def score(self) -> Score:
+        self.n_score_reads += 1
+        return Score(size=1.0, constraints=0.5, diversity=0.25, div_tie_breakers=())
+
+
+def test_report_throttle_would_pass_peeks_without_advancing():
+    """would_pass reports what passes would decide, and leaves the thresholds untouched."""
+    # --- arrange ----------------------
+    throttle = ReportThrottle(c_slowdown=1.05)
+
+    # --- act / assert -----------------
+    assert throttle.would_pass(iter_now=0, t_elapsed=0.0)
+    assert throttle.would_pass(iter_now=0, t_elapsed=0.0)  # unchanged: nothing advanced
+    assert throttle.passes(iter_now=0, t_elapsed=0.0)  # agrees with the peek
+    assert not throttle.would_pass(iter_now=0, t_elapsed=0.0)  # passes advanced the thresholds
+    assert not throttle.passes(iter_now=0, t_elapsed=0.0)
+
+
+def test_silent_reporter_update_builds_no_snapshot():
+    """A silent reporter's update must not read the state's score (an O(k) computation per read)."""
+    # --- arrange ----------------------
+    reporter = SilentProgressReporter()
+    state = _ScoreCountingState()
+
+    # --- act --------------------------
+    reporter.solver_step_started("step A")
+    for _ in range(5):
+        reporter.update(_stub_progress(), state)
+
+    # --- assert -----------------------
+    assert state.n_score_reads == 0
+
+
+def test_tabular_reporter_skips_snapshots_for_throttled_updates(capsys):
+    """Updates the tabular throttle drops must not build a snapshot; shown ones still must."""
+    # --- arrange ----------------------
+    reporter = TabularProgressReporter(c_slowdown=1.05)
+    state = _ScoreCountingState()
+
+    # --- act --------------------------
+    reporter.solver_step_started("step A")
+    reporter.update(_stub_progress(iter_count=1), state)  # first update always passes
+    reads_after_first = state.n_score_reads
+    reporter.update(_stub_progress(iter_count=1), state)  # same iteration: throttled away
+    reporter.solver_step_finished(_stub_progress(iter_count=1), state)  # step ends always build
+
+    # --- assert -----------------------
+    assert reads_after_first == 1
+    assert state.n_score_reads == 2
+    capsys.readouterr()  # swallow the rendered table rows
