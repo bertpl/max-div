@@ -44,15 +44,9 @@ class InitRandomOneShot(InitializationStrategy):
 
     def __init__(self, uniform: bool = False, ignore_constraints: bool = False, parallel: bool = False) -> None:
         name = "InitRandomOneShot(" + ("u" if uniform else "nu") + (",uncon)" if ignore_constraints else ")")
-        super().__init__(name)
+        super().__init__(name, parallel_batch_add=parallel)
         self.uniform = uniform
         self.ignore_constraints = ignore_constraints
-        self.parallel = parallel
-
-    @property
-    def parallel_batch_add(self) -> bool:
-        """Return the constructor's `parallel` choice; see the base class for the contract."""
-        return self.parallel
 
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         # --- sample -----------------------------

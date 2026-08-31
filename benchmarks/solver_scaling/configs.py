@@ -68,7 +68,7 @@ def _maxdiv_lean() -> SelectFn:
         # initialization and nothing more. Uniform sampling replaces the default
         # contribution-weighted variant, whose dataset-wide distance sweep would dominate this
         # configuration's runtime. The parallel batched tracker update is safe here: this
-        # configuration runs a single process, so no worker competes for the cores.
+        # configuration runs a single process, so no worker competes for the CPU cores.
         builder = (
             MaxDivSolverBuilder(problem)
             .with_seed(seed)

@@ -112,10 +112,7 @@ class SeparationTracker(DiversityContributionTracker):
         if len(indices) == 0:
             return
         indices = np.ascontiguousarray(indices, dtype=np.int32)
-        if parallel:
-            self._backend.add_many_parallel(self._sep_selected, self._store, indices)
-        else:
-            self._backend.add_many(self._sep_selected, self._store, indices)
+        self._backend.add_many(self._sep_selected, self._store, indices, parallel)
 
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Update separations after removing point `index`, rescanning against `new_selection` where needed."""

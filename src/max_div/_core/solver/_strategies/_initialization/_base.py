@@ -28,6 +28,17 @@ class InitializationStrategy(StrategyBase, ABC):
     Use the factory methods below to create instances.
     """
 
+    def __init__(self, name: str | None = None, parallel_batch_add: bool = False) -> None:
+        """Initialize the strategy.
+
+        Args:
+            name: optional name of the strategy; if omitted the class name is used.
+            parallel_batch_add: whether this strategy's batched adds may update trackers over
+                parallel threads; see the tracker base class for the contract.
+        """
+        super().__init__(name)
+        self._parallel_batch_add = parallel_batch_add
+
     @abstractmethod
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         """Return next batch of samples to be added to the initial selection.
@@ -53,7 +64,7 @@ class InitializationStrategy(StrategyBase, ABC):
         Results are identical either way; a strategy returns True only when explicitly configured
         to (see the tracker base class for the contract).
         """
-        return False
+        return self._parallel_batch_add
 
     # -------------------------------------------------------------------------
     #  Factory Methods
