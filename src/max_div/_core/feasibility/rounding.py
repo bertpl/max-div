@@ -57,20 +57,40 @@ def systematic_sample(marginals: NDArray[np.float64], k: int, rng_state: NDArray
 
     # float-drift guard: top up from the traversal order's largest-marginal leftovers
     if n_selected < k:
-        selected_mask = np.zeros(n, dtype=np.bool_)
-        for t in range(n_selected):
-            selected_mask[selection[t]] = True
-        while n_selected < k:
-            best = np.int64(-1)
-            best_p = -1.0
-            for j in range(n):
-                if not selected_mask[j] and marginals[j] > best_p:
-                    best_p = marginals[j]
-                    best = j
-            selected_mask[best] = True
-            selection[n_selected] = best
-            n_selected += 1
+        _top_up_selection(marginals, selection, n_selected, k)
     return selection
+
+
+@numba.njit(cache=True)
+def _top_up_selection(marginals: NDArray[np.float64], selection: NDArray[np.int64], n_selected: int, k: int) -> None:
+    """Fill `selection[n_selected:k]` in place with the largest-marginal items not yet selected.
+
+    `systematic_sample` calls this as its float-drift guard: floating-point accumulation in its
+    main loop can drift a grid point across an interval edge, ending the traversal with fewer
+    than `k` selected.
+    """
+    n = marginals.shape[0]
+    selected_mask = np.zeros(n, dtype=np.bool_)
+    for t in range(n_selected):
+        selected_mask[selection[t]] = True
+    while n_selected < k:
+        best = np.int64(-1)
+        best_p = -1.0
+        for j in range(n):
+            if not selected_mask[j] and marginals[j] > best_p:
+                best_p = marginals[j]
+                best = j
+        if best < 0:
+            # non-finite marginals (a bug upstream) compare False everywhere; degrade to the
+            # first unselected item so the guard always yields a VALID selection, never a -1
+            # written into it
+            for j in range(n):
+                if not selected_mask[j]:
+                    best = j
+                    break
+        selected_mask[best] = True
+        selection[n_selected] = best
+        n_selected += 1
 
 
 @numba.njit(cache=True)

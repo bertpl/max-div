@@ -130,3 +130,28 @@ def test_most_feasible_needs_an_empty_state():
     # --- act & assert -----------------
     with pytest.raises(RuntimeError, match="empty state"):
         strategy.get_next_samples(state, state.k - 1)
+
+
+def test_most_feasible_warns_when_the_relaxation_did_not_converge(monkeypatch):
+    """An unconverged relaxation warns on the init path — the solve() caller never sees the FeasibilityResult."""
+    # --- arrange ----------------------
+    import dataclasses
+
+    from max_div._core._warnings import FeasibilityConvergenceWarning
+    from max_div._core.solver._strategies._initialization import _init_most_feasible
+
+    constraints = [Constraint(int_set=set(range(6)), min_count=2, max_count=4)]
+    state = _state(constraints)
+    real_find_feasible = _init_most_feasible.find_feasible
+
+    def unconverged_find_feasible(*args, **kwargs):
+        return dataclasses.replace(real_find_feasible(*args, **kwargs), converged=False)
+
+    monkeypatch.setattr(_init_most_feasible, "find_feasible", unconverged_find_feasible)
+    strategy = InitializationStrategy.most_feasible()
+    strategy.set_seed(0)
+
+    # --- act & assert -----------------
+    with pytest.warns(FeasibilityConvergenceWarning, match="did not converge"):
+        samples = strategy.get_next_samples(state, k_remaining=state.k)
+    assert samples.shape[0] == state.k

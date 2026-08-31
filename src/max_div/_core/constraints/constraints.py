@@ -247,6 +247,7 @@ def _np_con_total_violation(con_values: NDArray[np.int32]) -> np.int32:
     """
     s = np.int32(0)
     for i_con in range(con_values.shape[0]):
+        # at most one of the two ifs fires: min_count <= max_count is guaranteed at construction
         if con_values[i_con, 0] > 0:
             # not yet enough samples for this constraint
             s = s + con_values[i_con, 0]

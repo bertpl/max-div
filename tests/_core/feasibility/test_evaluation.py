@@ -2,10 +2,12 @@ import numpy as np
 import pytest
 
 from max_div._core.constraints import Constraint, ConstraintList
+from max_div._core.constraints.constraints import _np_con_total_weighted_violation
 from max_div._core.feasibility.evaluation import (
     _dual_value,
     _item_scores,
     _top_k_items,
+    _weighted_violation,
     certified_bound,
     clamp_admissible,
 )
@@ -131,3 +133,26 @@ def test_certified_bound_reduces_to_linear_dual_value():
     # --- act / assert -----------------
     g = certified_bound(con_min, con_max, w_lin, w_quad, lam_min, lam_max, item_indptr, item_cons, 2)
     assert g == pytest.approx(2.0)  # lam.con_min - top-2 of scores = 4 - 2
+
+
+# =================================================================================================
+#  The two violation definitions agree
+# =================================================================================================
+@pytest.mark.parametrize("seed", range(6))
+def test_weighted_violation_matches_the_constraints_package_aggregate(seed: int):
+    """`_weighted_violation` and `_np_con_total_weighted_violation` agree (rationale in the former's docstring)."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(seed)
+    m = 5
+    con_min = rng.integers(0, 5, size=m).astype(np.int64)
+    con_max = con_min + rng.integers(0, 5, size=m).astype(np.int64)  # well-formed: max >= min
+    counts = rng.integers(0, 9, size=m).astype(np.int64)
+    weights = rng.uniform(0.5, 3.0, size=m).astype(np.float64)
+    remaining = np.stack([con_min - counts, con_max - counts], axis=1).astype(np.int32)
+
+    # --- act --------------------------
+    from_feasibility = _weighted_violation(counts, con_min, con_max, weights)
+    from_constraints = float(_np_con_total_weighted_violation(remaining, weights.astype(np.float32), np.bool_(False)))
+
+    # --- assert -----------------------
+    assert from_feasibility == pytest.approx(from_constraints, rel=1e-6)
