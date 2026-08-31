@@ -1,11 +1,11 @@
 | Problem size n | Q_random | 50% threshold | 90% threshold | Best-known quality | Solver | Config | Measured time |
 |---|---|---|---|---|---|---|---|
-| 20 | 0.3962 | 0.7854 | 1.0967 | 1.1746 | OR-Tools CP-SAT | `optimal` | 0 s |
-| 50 | 0.0427 | 0.3332 | 0.5655 | 0.6236 | OR-Tools CP-SAT | `optimal` | 0 s |
+| 20 | 0.3962 | 0.7854 | 1.0967 | 1.1746 | fpsample | `vanilla` | 0 s |
+| 50 | 0.0427 | 0.3332 | 0.5655 | 0.6236 | fpsample | `vanilla` | 0 s |
 | 100 | 0.0114 | 0.1761 | 0.3078 | 0.3407 | OR-Tools CP-SAT | `optimal` | 1 s |
 | 200 | 0.0054 | 0.1307 | 0.2310 | 0.2561 | OR-Tools CP-SAT | `optimal` | 2 s |
-| 500 | 0.0029 | 0.0779 | 0.1379 | 0.1529 | OR-Tools CP-SAT | `optimal` | 18 s |
-| 1,000 | 0.0012 | 0.0513 | 0.0915 | 0.1015 | OR-Tools CP-SAT | `optimal` | 131 s |
+| 500 | 0.0029 | 0.0779 | 0.1379 | 0.1529 | OR-Tools CP-SAT | `optimal` | 13 s |
+| 1,000 | 0.0012 | 0.0513 | 0.0915 | 0.1015 | OR-Tools CP-SAT | `optimal` | 60 s |
 | 2,000 | 0.0006 | 0.0331 | 0.0592 | 0.0657 | OR-Tools CP-SAT | `optimal` | 899 s |
 | 5,000 | 0.0002 | 0.0203 | 0.0365 | 0.0405 | max-div | `optimal-eager` | 895 s |
 | 10,000 | 0.0001 | 0.0140 | 0.0251 | 0.0278 | max-div | `optimal-eager` | 895 s |
