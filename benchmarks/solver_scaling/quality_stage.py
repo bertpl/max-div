@@ -154,13 +154,20 @@ def best_known_pool(
 
 
 def median_qualities(quality_records: list[ScalingRunRecord]) -> dict[tuple[str, str], dict[int, float]]:
-    """Return, per (tool, config) and size, the median quality over that size's completed seeds."""
+    """Return, per (tool, config) and size, the median quality over that size's completed seeds.
+
+    Configurations are returned in the canonical `CONFIGS` registry order, so the tables built from
+    these medians stay in a fixed row order however the underlying records happen to be ordered
+    (re-running one configuration would otherwise move it).
+    """
     grouped: dict[tuple[str, str], dict[int, list[float]]] = {}
     for record in quality_records:
         if record.completed and record.min_separation is not None:
             grouped.setdefault((record.tool, record.config), {}).setdefault(record.n, []).append(record.min_separation)
+    order = {(config.tool, config.name): i for i, config in enumerate(CONFIGS)}
     return {
-        key: {n: statistics.median(draws) for n, draws in sorted(sizes.items())} for key, sizes in grouped.items()
+        key: {n: statistics.median(draws) for n, draws in sorted(grouped[key].items())}
+        for key in sorted(grouped, key=lambda k: order.get(k, len(order)))
     }
 
 

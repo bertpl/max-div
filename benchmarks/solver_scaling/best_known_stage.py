@@ -40,13 +40,21 @@ def size_bound_from_time_stage(time_data_path: Path = TIME_DATA_PATH) -> int:
 
 
 def best_known_by_size(records: list[ScalingRunRecord]) -> dict[int, ScalingRunRecord]:
-    """Return, per size, the completed run with the best quality (highest minimum separation)."""
+    """Return, per size, the completed run with the best quality (highest minimum separation).
+
+    Ties in quality are broken by speed: the fastest run wins, so a solver that reaches an optimum
+    in seconds is credited over one that matches it after a long budget.  The tie-break is total, so
+    the choice is independent of record order.
+    """
     best: dict[int, ScalingRunRecord] = {}
     for record in records:
         if not record.completed or record.min_separation is None:
             continue
         incumbent = best.get(record.n)
-        if incumbent is None or record.min_separation > incumbent.min_separation:
+        if incumbent is None or (record.min_separation, -record.measured_sec) > (
+            incumbent.min_separation,
+            -incumbent.measured_sec,
+        ):
             best[record.n] = record
     return dict(sorted(best.items()))
 

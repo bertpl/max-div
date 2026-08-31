@@ -80,7 +80,7 @@ def _maxdiv_lean() -> SelectFn:
 
 
 def _maxdiv_optimal(lazy: bool) -> SelectFn:
-    """Build max-div's `optimal-*` selector: SMART, one cooperative worker group, forced storage, e2e budget.
+    """Build max-div's `optimal-*` selector: SMART workers, dynamic grouping, forced storage, e2e budget.
 
     The budget handed to the solver is the self-limit margin under the run budget, so the real
     end-to-end time — which overshoots by up to one optimization batch — still lands within the
@@ -91,20 +91,17 @@ def _maxdiv_optimal(lazy: bool) -> SelectFn:
         from max_div.solver import (
             DistanceStorage,
             ParallelMaxDivSolverBuilder,
-            SolverPreset,
             Verbosity,
-            WorkerConfig,
             seconds,
         )
 
         storage = DistanceStorage.LAZY if lazy else DistanceStorage.FULL_MATRIX
         budget = seconds(max(budget_sec - self_limit_margin_sec(budget_sec), 0.1))
-        group = [WorkerConfig(SolverPreset.SMART) for _ in range(_QUALITY_WORKERS)]
         builder = (
             ParallelMaxDivSolverBuilder(problem)
             .with_seed(seed)
             .with_distance_storage(storage)
-            .with_custom_worker_groups(budget, [group])  # one fixed cooperative group
+            .with_workers(budget, _QUALITY_WORKERS)  # dynamic worker groups
             .with_end_to_end_budget()
         )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)

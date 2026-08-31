@@ -113,3 +113,18 @@ def test_best_known_by_size_takes_the_best_completed_run_per_size():
     assert list(best) == [100]
     assert best[100].tool == "max-div"
     assert best[100].min_separation == pytest.approx(0.5)
+
+
+def test_best_known_by_size_breaks_quality_ties_by_speed():
+    """When two runs reach the same quality, the faster one is credited, independent of order."""
+    # --- arrange ----------------------
+    slow = ScalingRunRecord("max-div", "optimal", 100, 10, DEFAULT_SEED, 900.0, True, None, 895.0, 1000, 0.5)
+    fast = ScalingRunRecord("cpsat", "optimal", 100, 10, DEFAULT_SEED, 900.0, True, None, 2.0, 1000, 0.5)
+
+    # --- act --------------------------
+    slow_first = best_known_stage.best_known_by_size([slow, fast])
+    fast_first = best_known_stage.best_known_by_size([fast, slow])
+
+    # --- assert -----------------------
+    assert slow_first[100].tool == "cpsat"  # faster wins the tie
+    assert fast_first[100].tool == "cpsat"  # and the choice does not depend on record order
