@@ -8,7 +8,7 @@
 [![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/bertpl/max-div/badge)](https://scorecard.dev/viewer/?uri=github.com/bertpl/max-div)
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bertpl/max-div/v0.16.0/images/splash_with_version.webp" alt="max-div logo" style="max-width: max(60%, min(100%,900px)); height: auto;">
+  <img src="https://raw.githubusercontent.com/bertpl/max-div/v0.16.1/images/splash_with_version.webp" alt="max-div logo" style="max-width: max(60%, min(100%,900px)); height: auto;">
 </p>
 
 # max-div
