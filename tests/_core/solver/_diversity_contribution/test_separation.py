@@ -331,6 +331,47 @@ def _brute_force_separation(vectors: np.ndarray, metric: DistanceMetric, selecti
 
 
 @pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+@pytest.mark.parametrize("parallel", [False, True])
+def test_add_many_fused_matches_sequential_adds(backend: str, parallel: bool):
+    """One fused add_many pass must equal the same additions applied one add at a time, exactly."""
+
+    # --- arrange ----------------------
+    rng = np.random.default_rng(20260831)
+    vectors = rng.random((40, 3)).astype(np.float32)
+    store = _stores_for(vectors, DistanceMetric.l2_euclidean())[backend]
+    fused = SeparationTracker(store)
+    sequential = SeparationTracker(store)
+    batch = np.array([0, 3, 4, 17, 18, 39], dtype=np.int32)
+
+    # --- act --------------------------
+    fused.add_many(batch, parallel=parallel)
+    for index in batch:
+        sequential.add(index)
+
+    # --- assert -----------------------
+    selected, n_selected = _selection_args(list(batch), 40)
+    np.testing.assert_array_equal(
+        fused.contribution_wrt_selection(selected, n_selected),
+        sequential.contribution_wrt_selection(selected, n_selected),
+    )
+
+
+def test_add_many_empty_batch_is_noop(tracker: SeparationTracker):
+    """An empty batch must leave separations untouched."""
+
+    # --- arrange ----------------------
+    tracker.add(np.int32(2))
+    selected, n_selected = _selection_args([2], 5)
+    before = tracker.contribution_wrt_selection(selected, n_selected).copy()
+
+    # --- act --------------------------
+    tracker.add_many(np.array([], dtype=np.int32))
+
+    # --- assert -----------------------
+    np.testing.assert_array_equal(tracker.contribution_wrt_selection(selected, n_selected), before)
+
+
+@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
 def test_backend_matches_brute_force_over_random_operations(backend: str):
     """Random add/remove sequences must match a brute-force recompute, on every layout."""
 

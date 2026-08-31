@@ -67,7 +67,7 @@ class DummySolverState:
     def add(self, s: int):
         self.n_selected += 1
 
-    def add_many(self, samples: NDArray[np.int32]):
+    def add_many(self, samples: NDArray[np.int32], parallel: bool = False):
         self.n_selected += len(samples)
 
     @property

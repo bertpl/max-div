@@ -25,6 +25,8 @@ class InitRandomOneShot(InitializationStrategy):
                                          high-contribution items with higher probability (default: `False`)
     - ignore_constraints (bool): If `False`, respects problem constraints during initialization, if present.
                                  If `True`, constraints are ignored. (default: `False`)
+    - parallel (bool): If `True`, the single batched tracker update runs over parallel threads;
+                       see `DiversityContributionTracker.add_many` for the contract. (default: `False`)
 
     Notes:
         - using the global diversity contribution as sampling weights is a heuristic, not an exactly optimal
@@ -40,9 +42,9 @@ class InitRandomOneShot(InitializationStrategy):
        - with constraints:    ~O(kn)
     """
 
-    def __init__(self, uniform: bool = False, ignore_constraints: bool = False) -> None:
+    def __init__(self, uniform: bool = False, ignore_constraints: bool = False, parallel: bool = False) -> None:
         name = "InitRandomOneShot(" + ("u" if uniform else "nu") + (",uncon)" if ignore_constraints else ")")
-        super().__init__(name)
+        super().__init__(name, parallel_batch_add=parallel)
         self.uniform = uniform
         self.ignore_constraints = ignore_constraints
 

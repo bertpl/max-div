@@ -93,8 +93,14 @@ class DiversityContributionTracker(ABC):
         """
         raise NotImplementedError
 
-    def add_many(self, indices: NDArray[np.int32]) -> None:
-        """Update contributions after adding all points in `indices` to the selection."""
+    def add_many(self, indices: NDArray[np.int32], parallel: bool = False) -> None:
+        """Update contributions after adding all points in `indices` to the selection.
+
+        `parallel` lets the update run over parallel threads where a tracker implements that;
+        results are identical either way, and this default implementation ignores the flag.
+        Callers may only opt in when no other worker process is competing for the CPU cores —
+        inside one of several concurrently solving workers, the threads would oversubscribe them.
+        """
         for index in indices:
             self.add(index)
 

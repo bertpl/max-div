@@ -28,6 +28,17 @@ class InitializationStrategy(StrategyBase, ABC):
     Use the factory methods below to create instances.
     """
 
+    def __init__(self, name: str | None = None, parallel_batch_add: bool = False) -> None:
+        """Initialize the strategy.
+
+        Args:
+            name: optional name of the strategy; if omitted the class name is used.
+            parallel_batch_add: whether this strategy's batched adds may update trackers over
+                parallel threads; see the tracker base class for the contract.
+        """
+        super().__init__(name)
+        self._parallel_batch_add = parallel_batch_add
+
     @abstractmethod
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         """Return next batch of samples to be added to the initial selection.
@@ -45,6 +56,15 @@ class InitializationStrategy(StrategyBase, ABC):
             b can be any value in range [1, k_remaining].  Samples should be unique and not yet selected.
         """
         raise NotImplementedError
+
+    @property
+    def parallel_batch_add(self) -> bool:
+        """Return whether adding this strategy's sample batches may update trackers over parallel threads.
+
+        Results are identical either way; a strategy returns True only when explicitly configured
+        to (see the tracker base class for the contract).
+        """
+        return self._parallel_batch_add
 
     # -------------------------------------------------------------------------
     #  Factory Methods
@@ -88,7 +108,9 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitMostFeasible(max_iter=max_iter)
 
     @classmethod
-    def random_one_shot(cls, uniform: bool = False, ignore_constraints: bool = False) -> InitRandomOneShot:
+    def random_one_shot(
+        cls, uniform: bool = False, ignore_constraints: bool = False, parallel: bool = False
+    ) -> InitRandomOneShot:
         """Random initialization that selects all ``k`` items in a single batch.
 
         Probabilities are biased by the global diversity contribution (unless ``uniform=True``).
@@ -96,12 +118,15 @@ class InitializationStrategy(StrategyBase, ABC):
         Args:
             uniform: If True, sample uniformly instead of using contribution-based probabilities.
             ignore_constraints: If True, ignore constraints during sampling.
+            parallel: If True, the batched tracker update runs over parallel threads; see
+                `DiversityContributionTracker.add_many` for the contract.
         """
         from ._init_random_one_shot import InitRandomOneShot
 
         return InitRandomOneShot(
             uniform=uniform,
             ignore_constraints=ignore_constraints,
+            parallel=parallel,
         )
 
     @classmethod

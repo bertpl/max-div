@@ -1,5 +1,6 @@
 from typing import Any
 
+import numpy as np
 import pytest
 
 from max_div._core.solver._solver_step import InitializationStep
@@ -49,3 +50,34 @@ def test_init_random_one_shot_name(kwargs: dict[str, Any], expected_name: str):
 
     # --- act & assert -----------------
     assert optim_strategy.name == expected_name
+
+
+@pytest.mark.parametrize("arg_parallel", [False, True])
+def test_init_random_one_shot_parallel_flag(arg_parallel: bool):
+    """The constructor's parallel choice must surface through the batch-add property."""
+
+    # --- arrange / act ----------------
+    strategy = InitializationStrategy.random_one_shot(uniform=True, parallel=arg_parallel)
+
+    # --- assert -----------------------
+    assert strategy.parallel_batch_add is arg_parallel
+
+
+def test_init_random_one_shot_parallel_matches_serial():
+    """A parallel init must produce the exact same selection and separations as a serial one."""
+
+    # --- arrange ----------------------
+    states = [new_solver_state(has_constraints=False) for _ in range(2)]
+    steps = [
+        InitializationStep(InitializationStrategy.random_one_shot(uniform=True, parallel=parallel))
+        for parallel in (False, True)
+    ]
+
+    # --- act --------------------------
+    for step, state in zip(steps, states, strict=True):
+        step.run(state)
+
+    # --- assert -----------------------
+    serial_state, parallel_state = states
+    np.testing.assert_array_equal(serial_state.selected_index_array, parallel_state.selected_index_array)
+    assert serial_state.score == parallel_state.score

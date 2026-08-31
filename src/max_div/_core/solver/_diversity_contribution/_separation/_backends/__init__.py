@@ -1,6 +1,6 @@
 """One module per storage layout, and the lookup that picks the right one.
 
-Each module provides the same three calculations over the signatures in `_signatures`, so the
+Each module provides the same calculations over the signatures in `_signatures`, so the
 modules are interchangeable by construction and a fourth layout is a module plus an entry below.
 
 Which one to use is decided here, in Python, and never inside a compiled function. A layout test
@@ -26,19 +26,26 @@ if TYPE_CHECKING:
 class SeparationBackend(NamedTuple):
     """What the separation tracker needs from one storage layout.
 
-    `elements` computes separations for the given items from scratch; `add` and `remove` update
-    them after an item joins or leaves the selection.
+    `elements` computes separations for the given items from scratch; `add`, `add_many` and
+    `remove` update them after items join or leave the selection.  `add_many` fuses a batch into
+    one pass over all items — the same distance pairs feed the same `min`, so the result is
+    identical to sequential adds, but `sep` is read and written once; its `parallel` flag runs
+    that pass over parallel threads (items are independent and `min` is order-free, so results
+    are identical there too).
     """
 
     elements: Callable[..., None]
     add: Callable[..., None]
+    add_many: Callable[..., None]
     remove: Callable[..., None]
 
 
 BACKEND_BY_KIND: dict[int, SeparationBackend] = {
-    int(KIND_FULL_MATRIX): SeparationBackend(_full_matrix.elements, _full_matrix.add, _full_matrix.remove),
-    int(KIND_CONDENSED): SeparationBackend(_condensed.elements, _condensed.add, _condensed.remove),
-    int(KIND_LAZY): SeparationBackend(_lazy.elements, _lazy.add, _lazy.remove),
+    int(KIND_FULL_MATRIX): SeparationBackend(
+        _full_matrix.elements, _full_matrix.add, _full_matrix.add_many, _full_matrix.remove
+    ),
+    int(KIND_CONDENSED): SeparationBackend(_condensed.elements, _condensed.add, _condensed.add_many, _condensed.remove),
+    int(KIND_LAZY): SeparationBackend(_lazy.elements, _lazy.add, _lazy.add_many, _lazy.remove),
 }
 
 

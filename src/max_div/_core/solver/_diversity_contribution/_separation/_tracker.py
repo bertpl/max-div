@@ -103,6 +103,17 @@ class SeparationTracker(DiversityContributionTracker):
         """Update separations after adding point `index` to the selection."""
         self._backend.add(self._sep_selected, self._store, index)
 
+    def add_many(self, indices: NDArray[np.int32], parallel: bool = False) -> None:
+        """Update separations after adding all points in `indices`, in one fused pass.
+
+        `parallel` runs that pass over parallel threads — identical results; see the base class
+        for when a caller may opt in.
+        """
+        if len(indices) == 0:
+            return
+        indices = np.ascontiguousarray(indices, dtype=np.int32)
+        self._backend.add_many(self._sep_selected, self._store, indices, parallel)
+
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Update separations after removing point `index`, rescanning against `new_selection` where needed."""
         self._backend.remove(self._sep_selected, self._store, index, new_selection)

@@ -111,10 +111,10 @@ class DiversityContributionTrackers:
         for tracker in self._trackers:
             tracker.add(index)
 
-    def add_many(self, indices: NDArray[np.int32]) -> None:
-        """Update all trackers after adding all points in `indices` to the selection."""
+    def add_many(self, indices: NDArray[np.int32], parallel: bool = False) -> None:
+        """Update all trackers after adding all points in `indices`; see the base class on `parallel`."""
         for tracker in self._trackers:
-            tracker.add_many(indices)
+            tracker.add_many(indices, parallel=parallel)
 
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Update all trackers after removing point `index` from the selection."""

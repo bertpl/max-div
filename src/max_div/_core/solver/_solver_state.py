@@ -242,11 +242,12 @@ class SolverState:
         # --- score ------------------------------
         self._score_dirty = True
 
-    def add_many(self, indices: NDArray[np.int32]) -> None:
+    def add_many(self, indices: NDArray[np.int32], parallel: bool = False) -> None:
         """Add all of `indices` to the selection; they must be in `[0, n)`, duplicate-free, and not selected.
 
         A duplicate would desynchronize `n_selected` from the mask; `adopt_selection` is the
-        entry point that dedups for you.
+        entry point that dedups for you.  `parallel` lets the contribution trackers update over
+        parallel threads (identical results; see the tracker base class for when to opt in).
         """
         # --- validation -------------------------
         if self._selected[indices].any():
@@ -261,7 +262,7 @@ class SolverState:
             self._n_selected += np.int32(1)
 
         # --- diversity contributions ------------
-        self._contribution_trackers.add_many(indices)
+        self._contribution_trackers.add_many(indices, parallel=parallel)
 
         # --- constraints ------------------------
         # decrease both min_count and max_count for all constraints that include any of 'indices'

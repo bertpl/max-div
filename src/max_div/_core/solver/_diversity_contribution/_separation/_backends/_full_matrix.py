@@ -2,7 +2,7 @@
 
 One of three interchangeable modules — see this package's `__init__` for the pattern and why the
 layout is chosen once per tracker rather than tested inside these loops.  Each module defines
-the same three calculations over the same signatures, differing only in how a distance is read.
+the same calculations over the same signatures, differing only in how a distance is read.
 """
 
 from __future__ import annotations
@@ -13,8 +13,12 @@ import numba
 import numpy as np
 
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance_full_matrix
-
-from .._signatures import ADD_SIGNATURE, ELEMENTS_SIGNATURE, REMOVE_SIGNATURE
+from max_div._core.solver._diversity_contribution._separation._signatures import (
+    ADD_MANY_SIGNATURE,
+    ADD_SIGNATURE,
+    ELEMENTS_SIGNATURE,
+    REMOVE_SIGNATURE,
+)
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -39,6 +43,29 @@ def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> No
         sep[j] = min(sep[j], get_distance_full_matrix(store, i_added, j))
     for j in range(i_added + 1, store.n):
         sep[j] = min(sep[j], get_distance_full_matrix(store, i_added, j))
+
+
+@numba.njit(ADD_MANY_SIGNATURE, parallel=True, cache=True)
+def add_many(sep: NDArray[np.float32], store: DistanceStore, i_added_many: NDArray[np.int32], parallel: bool) -> None:
+    """Update separation of each item wrt selection after adding all of i_added_many, in one fused pass.
+
+    `parallel` picks the arm at runtime; `prange` only needs the function compiled with
+    `parallel=True`, and the threading layer engages only when the parallel arm runs.
+    """
+    if parallel:
+        for j in numba.prange(store.n):  # ty: ignore[not-iterable] -- prange is iterable inside njit; the stub doesn't know
+            nearest = sep[j]
+            for i in i_added_many:
+                if i != j:
+                    nearest = min(nearest, get_distance_full_matrix(store, i, j))
+            sep[j] = nearest
+    else:
+        for j in range(store.n):
+            nearest = sep[j]
+            for i in i_added_many:
+                if i != j:
+                    nearest = min(nearest, get_distance_full_matrix(store, i, j))
+            sep[j] = nearest
 
 
 @numba.njit(numba.float32(DISTANCE_STORE_TYPE, numba.int64, numba.int32[::1]), inline="always", cache=True)
