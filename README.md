@@ -20,15 +20,17 @@ diverse of `n` items, under optional fairness constraints.
 
 - ⚡ obtains **near-optimal results within seconds-to-one-minute** for problems up to `n=200k`
 
+- ⏱️ runs within an **arbitrary solve budget** — wall-clock time or iteration count
+
 - 🚀 leverages [numba](https://pypi.org/project/numba/) **JIT-compilation for maximum speed** without relying on pre-compiled binaries
 
 - ⚖️ natively supports flexible **fairness constraints**
 
-  - uniquely supports **constraints with overlapping sets & ranged counts**
+    - uniquely supports **constraints with overlapping groups & ranged counts**
 
-  - returns the **least infeasible solution** (with configurable weighted linear or quadratic penalties) when constraints conflict
+    - returns the **least infeasible solution** (with configurable weighted linear or quadratic penalties) when constraints conflict
 
-  - provides **proofs of (in)feasibility**
+    - provides **proofs of (in)feasibility**
 
 - 📐 uniquely supports **5+ distance metrics** (L1, L2, L∞, Minkowski, cosine — or precomputed distances) and **4 diversity metrics** (minimum, mean & geomean separation + mean pairwise distance) in any combination
 
