@@ -88,14 +88,24 @@ class ParallelMaxDivSolver:
         group_state = self._build_group_state()
         coordinators = [group_state.coordinator_for(index) for index in range(len(solver_configs))]
         with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:
-            results = run_workers(
+            results, failures = run_workers(
                 solver_configs,
                 shared_distance_store.spec,
                 coordinators,
                 progress_reporter=progress_reporter,
             )
         self.last_dynamic_events = group_state.events()
-        winner = best_result(results)
+        if failures and results:
+            # some workers returned a result and some failed: warn about the partial failure,
+            # and still return the best result that could be retrieved
+            failed = ", ".join(f"{failure.worker_index} ({failure.error})" for failure in failures)
+            warnings.warn(
+                f"{len(failures)} of {len(solver_configs)} parallel workers failed and were left out "
+                f"of the result: worker(s) {failed}.",
+                ParallelSolvingWarning,
+                stacklevel=2,
+            )
+        winner = best_result(results, failures)
         summaries = [
             WorkerSummary(
                 worker_index=result.worker_index,

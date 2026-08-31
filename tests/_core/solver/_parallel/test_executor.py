@@ -1,5 +1,6 @@
 import multiprocessing
 import queue
+from dataclasses import dataclass
 
 import numpy as np
 import pytest
@@ -48,12 +49,11 @@ def parallel_results():
     builder = _builder()
     resolved, config = builder.prepare_storage_and_config()
     with build_shared_distance_store(builder._problem, resolved) as shared:
-        yield (
-            builder,
-            run_workers(
-                [config.with_seed(seed) for seed in _SEEDS], shared.spec, _independent_coordinators(config, len(_SEEDS))
-            ),
+        results, failures = run_workers(
+            [config.with_seed(seed) for seed in _SEEDS], shared.spec, _independent_coordinators(config, len(_SEEDS))
         )
+        assert failures == []
+        yield (builder, results)
 
 
 def test_every_worker_reports_a_result(parallel_results):
@@ -125,7 +125,7 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
 
     # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
-        results = run_workers([config.with_seed(seed) for seed in _SEEDS], shared.spec, coordinators)
+        results, _failures = run_workers([config.with_seed(seed) for seed in _SEEDS], shared.spec, coordinators)
 
     # --- assert -----------------------
     assert len(results) == len(_SEEDS)
@@ -142,7 +142,7 @@ def test_parallel_solve_renders_coherent_progress(capsys):
 
     # --- act --------------------------
     with build_shared_distance_store(builder._problem, resolved) as shared:
-        results = run_workers(
+        results, _failures = run_workers(
             [config.with_seed(seed) for seed in _SEEDS],
             shared.spec,
             _independent_coordinators(config, len(_SEEDS)),
@@ -206,7 +206,7 @@ def test_drain_collects_in_flight_results_of_dead_workers():
     workers = [_StubWorker(alive=False), _StubWorker(alive=False)]  # worker 1 died without reporting
 
     # --- act --------------------------
-    collected = _drain(messages, workers, view=None)
+    collected, _failures = _drain(messages, workers, view=None)
 
     # --- assert -----------------------
     assert [result.worker_index for result in collected] == [0]
@@ -226,3 +226,52 @@ def test_dead_workers_are_reported_to_the_view_once():
 
     # --- assert -----------------------
     assert reported_dead == {1}
+
+
+@dataclass(frozen=True)
+class _FailingConfig:
+    """A picklable stand-in for a SolverConfig whose solver construction raises inside the worker."""
+
+    seed: int = 0
+
+    def build_solver(self, store) -> None:
+        raise RuntimeError("boom: deliberately failing worker")
+
+
+def test_a_failing_worker_is_reported_with_its_traceback():
+    """A worker whose solve raises reports a WorkerFailure carrying the traceback; the rest still report results."""
+    # --- arrange ----------------------
+    builder = _builder()
+    resolved, config = builder.prepare_storage_and_config()
+    configs = [config.with_seed(1), _FailingConfig(), config.with_seed(2)]
+
+    # --- act --------------------------
+    with build_shared_distance_store(builder._problem, resolved) as shared:
+        results, failures = run_workers(configs, shared.spec, _independent_coordinators(config, len(configs)))
+
+    # --- assert -----------------------
+    assert [result.worker_index for result in results] == [0, 2]
+    assert [failure.worker_index for failure in failures] == [1]
+    assert "boom" in failures[0].error
+    assert "RuntimeError" in failures[0].traceback_text
+
+
+def test_all_workers_failing_raises_with_the_first_traceback():
+    """When every worker fails, best_result raises and the error carries the first failure's traceback."""
+    # --- arrange ----------------------
+    builder = _builder()
+    resolved, config = builder.prepare_storage_and_config()
+    configs = [_FailingConfig(seed=1), _FailingConfig(seed=2)]
+
+    # --- act --------------------------
+    with build_shared_distance_store(builder._problem, resolved) as shared:
+        results, failures = run_workers(configs, shared.spec, _independent_coordinators(config, len(configs)))
+
+    # --- assert -----------------------
+    assert results == []
+    assert len(failures) == 2
+
+    # --- act & assert -----------------
+    with pytest.raises(ValueError, match="every worker failed") as exc_info:
+        best_result(results, failures)
+    assert "boom" in str(exc_info.value)

@@ -243,3 +243,12 @@ def test_a_fixed_group_exchanges_through_its_shared_slot():
 
     # --- assert -----------------------
     assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted its group mate's published best
+
+
+def test_a_zero_sized_group_is_rejected():
+    """A zero group size makes the assignment table reference slots that were never allocated."""
+    # --- act & assert -----------------
+    with pytest.raises(ValueError, match="at least one worker"):
+        WorkerGroupState(
+            multiprocessing.get_context("spawn"), group_sizes=[1, 0, 1], k=5, score_length=3, dynamic=False
+        )
