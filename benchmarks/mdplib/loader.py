@@ -36,7 +36,7 @@ from max_div.problem import MaxDivProblem
 
 
 class ArchiveDigest(NamedTuple):
-    """Byte count and hex SHA-256 of an archive; two files match when their digests are equal."""
+    """A digest is an archive's byte count and hex SHA-256; two files match when their digests are equal."""
 
     size: int
     sha256: str
@@ -69,9 +69,6 @@ def fetch_mmdp_archive(
     retry_delay_sec: float = _RETRY_DELAY_SEC,
 ) -> Path:
     """Download (once) and extract the MMDP instance archive; return the instances dir.
-
-    The archive is extracted only after its digest equals `expected`; see
-    `_ensure_intact_archive` for how a failing download or cached copy is handled.
 
     Args:
         cache_dir: Where the archive and its extracted instances live.
