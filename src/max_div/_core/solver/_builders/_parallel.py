@@ -16,6 +16,7 @@ from max_div._core.solver._parallel import (
 from max_div._core.solver._presets import get_preset_strategies
 from max_div._core.solver._solver_config import SolverConfig
 from max_div._core.solver._solver_step import COOPERATIVE_BATCH_SECONDS, REPORTING_BATCH_SECONDS, InitializationStep
+from max_div._core.solver._strategies import InitializationStrategy
 
 from ._base import SolverBuilderBase
 
@@ -41,6 +42,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         self._group_sizes: list[int] = []
         self._target_duration: TargetDuration | None = None
         self._dynamic_groups: bool = False
+        self._init_strategy: InitializationStrategy | None = None
 
     # -------------------------------------------------------------------------
     #  Builder API
@@ -62,6 +64,16 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         self._worker_configs = [WorkerConfig() for _ in range(n)]
         self._group_sizes = [1] * n
         self._dynamic_groups = True
+        return self
+
+    def set_initialization_strategy(self, init_strategy: InitializationStrategy) -> Self:
+        """Replace every worker's preset initialization with the given strategy.
+
+        A worker whose `WorkerConfig.init_strategy` is set keeps that — the per-worker choice is
+        the more specific one.  Every worker still gets its own derived seed, so a randomized
+        strategy varies per worker as it would under the preset initialization.
+        """
+        self._init_strategy = init_strategy
         return self
 
     def with_custom_worker_groups(
@@ -133,6 +145,9 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
         warn_about_worker_count(len(self._worker_configs))
+        if self._init_strategy is not None:
+            # fail here, in the building process, not first inside a spawned worker
+            self._init_strategy.validate_diversity_metric(self._diversity_metric)
         resolved, label = self._select_storage()
         e2e_budget = self._resolve_e2e_budget()
         batch_intervals = self._batch_interval_per_worker()
@@ -190,7 +205,10 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             diversity_metric=self._diversity_metric,
             diversity_tie_breakers=self._determine_diversity_tie_breakers(),
             constraints=self._constraints,
-            solver_steps=[InitializationStep(worker.init_strategy or init_strategy), *optim_steps],
+            solver_steps=[
+                InitializationStep(worker.init_strategy or self._init_strategy or init_strategy),
+                *optim_steps,
+            ],
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),
             constraint_penalty=self._constraint_penalty,
             distance_storage_label=storage_label,

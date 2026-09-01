@@ -18,6 +18,7 @@ from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
 from max_div._core.solver._solver_step import COOPERATIVE_BATCH_SECONDS, REPORTING_BATCH_SECONDS
 from max_div._core.solver._strategies import InitializationStrategy
+from max_div.metrics import DiversityMetric
 
 _BUDGET = iterations(120)
 
@@ -455,3 +456,55 @@ def test_a_partially_failed_parallel_solve_warns_and_returns():
     # --- assert -----------------------
     assert solution.winning_worker == 0
     assert len(solution.workers) == 1
+
+
+def test_set_initialization_strategy_reaches_every_worker():
+    """The builder-level override replaces the preset init in every worker's configuration."""
+    # --- arrange ----------------------
+    override = InitializationStrategy.farthest_point_batched(batch_max=4)
+    builder = (
+        ParallelMaxDivSolverBuilder(_problem()).with_workers(iterations(10), 2).set_initialization_strategy(override)
+    )
+
+    # --- act --------------------------
+    solver = builder.build()
+
+    # --- assert -----------------------
+    for config in solver._solver_configs:
+        assert config.solver_steps[0]._strategy is override
+
+
+def test_worker_config_init_strategy_beats_the_builder_override():
+    """A per-worker init strategy is the more specific choice and wins over the override."""
+    # --- arrange ----------------------
+    per_worker = InitializationStrategy.fast()
+    override = InitializationStrategy.random_one_shot(uniform=True)
+    builder = (
+        ParallelMaxDivSolverBuilder(_problem())
+        .with_custom_worker_groups(iterations(10), [WorkerConfig(init_strategy=per_worker), WorkerConfig()])
+        .set_initialization_strategy(override)
+    )
+
+    # --- act --------------------------
+    solver = builder.build()
+
+    # --- assert -----------------------
+    strategies = [config.solver_steps[0]._strategy for config in solver._solver_configs]
+    assert strategies[0] is per_worker
+    assert strategies[1] is override
+
+
+def test_parallel_build_rejects_unsupported_metric_for_the_override():
+    """An override that refuses the diversity metric fails at build, in the building process."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((30, 2)).astype(np.float32)
+    problem = MaxDivProblem.new(vectors, k=5, diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE)
+    builder = (
+        ParallelMaxDivSolverBuilder(problem)
+        .with_workers(iterations(10), 2)
+        .set_initialization_strategy(InitializationStrategy.farthest_point_batched())
+    )
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="separation-based diversity metrics"):
+        builder.build()

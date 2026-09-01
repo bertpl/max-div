@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `set_initialization_strategy()` on the parallel solver builder applies one initialization strategy to every worker; a per-worker `WorkerConfig.init_strategy` still wins
 - A batched farthest-point initialization, `InitializationStrategy.farthest_point_batched()`: the same greedy construction with one pass over the dataset per batch of picks instead of per pick — several times faster at large n, offering each pick the same candidates as `farthest_point()` (separation-family diversity metrics only)
 
 ### Changed
