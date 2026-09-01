@@ -10,6 +10,92 @@ from max_div._core.solver._solver_state import SolverState
 from ._base import InitializationStrategy
 
 
+class InitFarthestPointBatched(InitializationStrategy):
+    """Initialize by farthest-point sampling in rounds, drawing many items per pass over the dataset.
+
+    A round collects the `batch_size` highest-contribution not-selected items into a pool with one
+    pass over the dataset, then draws from that pool without touching the dataset again, ending
+    once the pool can no longer be shown to hold the dataset's best candidates (see `_draw_round`).
+    The solver applies the whole batch in one tracker update. Every draw ranges over the same
+    candidates `InitFarthestPoint` would offer, so selections are of the same quality but not the
+    same, and the batched strategy is several times faster at large n.
+
+    Separation-family diversity metrics only — their contributions only fall as items are selected,
+    which the stopping rule rests on; other families are rejected when the solver is built.
+    Constraints are ignored by design, like `InitFarthestPoint`.
+
+    Parameters:
+    - top_k (int): every draw samples uniformly among the `top_k` best remaining candidates — the
+                   meaning it has on `InitFarthestPoint`; 1 keeps the exact greedy pick. (default: 8)
+    - batch_size (int): how many candidates a round collects, which bounds how many items it can
+                        draw. A deeper pool needs fewer passes over the dataset but refreshes more
+                        candidates per draw; above a few hundred the extra refreshing costs more
+                        than the saved passes. `batch_size` cannot affect the selection's quality,
+                        only the time spent. (default: 256)
+    """
+
+    def __init__(self, top_k: int = 8, batch_size: int = 256) -> None:
+        """Create the strategy.
+
+        Raises:
+            ValueError: If `top_k` is below 1, or `batch_size` is below `top_k` (a round could then
+                not offer a full draw).
+        """
+        super().__init__()
+        if top_k < 1:
+            raise ValueError(f"top_k must be >= 1, got {top_k}")
+        if batch_size < top_k:
+            raise ValueError(f"batch_size must be >= top_k ({top_k}), got {batch_size}")
+        self._top_k = top_k
+        self._batch_size = batch_size
+
+    def validate_diversity_metric(self, diversity_metric: DiversityMetric) -> None:
+        """Reject metric families the round heuristics are not tailored to."""
+        if diversity_metric.contribution_family != DiversityContributionFamily.SEPARATION:
+            raise ValueError(
+                f"InitFarthestPointBatched does not support diversity metric {diversity_metric}: "
+                "the heuristics of the algorithm are tailored to separation-based diversity metrics. "
+                "Use InitializationStrategy.farthest_point() instead."
+            )
+
+    def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
+        """Run one round: collect a candidate pool from the current contributions and draw a batch from it.
+
+        On an empty selection the round is the seeded random start item, as for `InitFarthestPoint`.
+        Otherwise the state supplies the `batch_size` highest-contribution not-selected items, and
+        the pool's lowest value becomes the round's admission threshold: every item left outside the
+        pool was below it, so a pool candidate still at or above it is among the dataset's best. When
+        the pool holds every remaining item there is nothing outside it, and the threshold is dropped
+        to -inf so the round may run the pool down. The draw loop itself (`_draw_round`) takes the
+        pool, the threshold and this strategy's RNG state, and returns however many items it drew
+        before the pool could no longer be shown to hold the best — at least one. The solver applies
+        that batch in a single tracker update before the next round.
+        """
+        if state.n_selected == 0:
+            return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
+        cand_idx, cand_val = state.top_not_selected_contributions(self._batch_size)
+        # a pool holding every remaining item has nothing outside it to be measured against
+        threshold = np.float32(-np.inf) if len(cand_idx) < self._batch_size else np.float32(cand_val.min())
+        b_target = min(len(cand_idx), int(k_remaining))
+        out_batch = np.empty(b_target, dtype=np.int32)
+        top_positions = np.empty(self._top_k, dtype=np.int32)
+        n_drawn = _draw_round(
+            cand_idx,
+            cand_val,
+            np.int32(self._top_k),
+            threshold,
+            np.int64(b_target),
+            state.distance_store,
+            self._rng_state,
+            out_batch,
+            top_positions,
+        )
+        return out_batch[:n_drawn]
+
+
+# =================================================================================================
+#  Helpers
+# =================================================================================================
 @numba.njit(
     numba.void(numba.float32[:], numba.int32[:], numba.int64, numba.int64),
     inline="always",
@@ -17,7 +103,13 @@ from ._base import InitializationStrategy
     fastmath={"reassoc", "contract"},
 )
 def _sift_down(values: NDArray[np.float32], positions: NDArray[np.int32], size: np.int64, start: np.int64) -> None:
-    """Restore the min-heap property below `start` in a heap of positions ordered by `values`."""
+    """Sink the entry at `start` until every parent again holds a value no larger than its children's.
+
+    `positions` is laid out as a binary heap (see `_select_highest` for the layout): the children
+    of slot i sit at 2i+1 and 2i+2. A parent that has become larger than a child is swapped with its
+    smaller child, and the check repeats one level down until the entry rests below no larger
+    value or reaches the bottom.
+    """
     i_parent = start
     while True:
         i_left = 2 * i_parent + 1
@@ -41,11 +133,29 @@ def _sift_down(values: NDArray[np.float32], positions: NDArray[np.int32], size: 
 def _select_highest(
     values: NDArray[np.float32], n_live: np.int64, n_top: np.int64, out_positions: NDArray[np.int32]
 ) -> np.float32:
-    """Fill `out_positions` with the `n_top` highest values' positions among the first `n_live`; return the lowest.
+    r"""Fill `out_positions` with the `n_top` highest values' positions among the first `n_live`; return the lowest.
 
     The positions come back in unspecified order. Ties keep the earlier position, so with
     `n_top == 1` the result is the first maximum. The caller owns `out_positions` (at least
     `n_top` long), so a draw allocates nothing.
+
+    How it works: `out_positions` is kept as a min-heap of the `n_top` best candidates seen so far —
+    a binary tree stored in an array, where slot i's children are slots 2i+1 and 2i+2 and every
+    parent's value is no larger than its children's, so slot 0 always holds the *smallest* of the
+    kept values:
+
+              v0                 v0 <= v1, v2
+            /    \\               v1 <= v3, v4
+          v1      v2             v2 <= v5, v6     (siblings are not ordered among themselves)
+         /  \\    /  \
+        v3  v4  v5  v6
+
+    The first `n_top` positions seed the heap, and each later value is compared with slot 0: a
+    value no larger than the smallest kept value cannot belong to the top `n_top`, so it is skipped;
+    a larger one replaces slot 0 and sinks to its place (`_sift_down`), evicting the old smallest.
+    After the pass the heap holds exactly the `n_top` largest, and slot 0 — the smallest of them —
+    is the `n_top`-th largest overall, which is the value returned. One pass, `log(n_top)` work per
+    replacement, no sorting of the rest.
     """
     for i in range(n_top):
         out_positions[i] = i
@@ -123,74 +233,3 @@ def _draw_round(
         for c in range(count - bi - 1):
             cand_val[c] = min(cand_val[c], get_distance(store, x, cand_idx[c]))
     return n_drawn
-
-
-class InitFarthestPointBatched(InitializationStrategy):
-    """Initialize by farthest-point sampling in rounds, drawing many items per pass over the dataset.
-
-    A round collects the `batch_size` highest-contribution not-selected items into a pool with one
-    pass over the dataset, then draws from that pool without touching the dataset again, ending
-    once the pool can no longer be shown to hold the dataset's best candidates (see `_draw_round`).
-    The solver applies the whole batch in one tracker update. Every draw ranges over the same
-    candidates `InitFarthestPoint` would offer, so selections are of the same quality but not the
-    same, and the batched strategy is several times faster at large n.
-
-    Separation-family diversity metrics only — their contributions only fall as items are selected,
-    which the stopping rule rests on; other families are rejected when the solver is built.
-    Constraints are ignored by design, like `InitFarthestPoint`.
-
-    Parameters:
-    - top_k (int): every draw samples uniformly among the `top_k` best remaining candidates — the
-                   meaning it has on `InitFarthestPoint`; 1 keeps the exact greedy pick. (default: 8)
-    - batch_size (int): how many candidates a round collects, which bounds how many items it can
-                        draw. A deeper pool needs fewer passes over the dataset but refreshes more
-                        candidates per draw; above a few hundred the extra refreshing costs more
-                        than the saved passes. `batch_size` cannot affect the selection's quality,
-                        only the time spent. (default: 256)
-    """
-
-    def __init__(self, top_k: int = 8, batch_size: int = 256) -> None:
-        """Create the strategy.
-
-        Raises:
-            ValueError: If `top_k` is below 1, or `batch_size` is below `top_k` (a round could then
-                not offer a full draw).
-        """
-        super().__init__()
-        if top_k < 1:
-            raise ValueError(f"top_k must be >= 1, got {top_k}")
-        if batch_size < top_k:
-            raise ValueError(f"batch_size must be >= top_k ({top_k}), got {batch_size}")
-        self._top_k = top_k
-        self._batch_size = batch_size
-
-    def validate_diversity_metric(self, diversity_metric: DiversityMetric) -> None:
-        """Reject metric families the round heuristics are not tailored to."""
-        if diversity_metric.contribution_family != DiversityContributionFamily.SEPARATION:
-            raise ValueError(
-                f"InitFarthestPointBatched does not support diversity metric {diversity_metric}: "
-                "the heuristics of the algorithm are tailored to separation-based diversity metrics. "
-                "Use InitializationStrategy.farthest_point() instead."
-            )
-
-    def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
-        if state.n_selected == 0:
-            return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
-        cand_idx, cand_val = state.top_not_selected_contributions(self._batch_size)
-        # a pool holding every remaining item has nothing outside it to be measured against
-        threshold = np.float32(-np.inf) if len(cand_idx) < self._batch_size else np.float32(cand_val.min())
-        b_target = min(len(cand_idx), int(k_remaining))
-        out_batch = np.empty(b_target, dtype=np.int32)
-        top_positions = np.empty(self._top_k, dtype=np.int32)
-        n_drawn = _draw_round(
-            cand_idx,
-            cand_val,
-            np.int32(self._top_k),
-            threshold,
-            np.int64(b_target),
-            state.distance_store,
-            self._rng_state,
-            out_batch,
-            top_positions,
-        )
-        return out_batch[:n_drawn]
