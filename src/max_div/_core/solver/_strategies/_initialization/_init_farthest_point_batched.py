@@ -11,6 +11,25 @@ from ._base import InitializationStrategy
 
 
 @numba.njit(
+    numba.void(numba.int32[:], numba.float32[:], numba.int64, numba.int64),
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
+def _move_top_to_front(
+    cand_idx: NDArray[np.int32], cand_val: NDArray[np.float32], n_top: np.int64, n_remaining: np.int64
+) -> None:
+    """Reorder the first `n_top` pool slots to hold the highest values among the first `n_remaining`, descending."""
+    for s in range(n_top):
+        best = s
+        for c in range(s + 1, n_remaining):
+            if cand_val[c] > cand_val[best]:
+                best = c
+        if best != s:
+            cand_val[s], cand_val[best] = cand_val[best], cand_val[s]
+            cand_idx[s], cand_idx[best] = cand_idx[best], cand_idx[s]
+
+
+@numba.njit(
     numba.int64(
         numba.int32[:],
         numba.float32[:],
@@ -36,11 +55,15 @@ def _draw_round(
 ) -> np.int64:
     """Draw up to `b_target` items from the candidate pool into `out_batch`; return the count drawn.
 
-    Each draw samples uniformly among the top `top_k` remaining candidates by current value; the
-    remaining pool is then refreshed against the drawn item, so every drawn item's value is exact
-    wrt the full selection at its draw moment. The round ends early when the pool's best remaining
-    value falls below `alpha` times the round's opening best — the pool no longer offers near-top
-    candidates, so drawing more would accept items a fresh pool would beat.
+    `alpha` sets one acceptance rule, applied twice: a candidate may be drawn while its value is
+    at least `alpha` times the pool's current best, and the round ends once even that best falls
+    below `alpha` times the round's opening best. Each draw samples uniformly among the acceptable
+    candidates within the top `top_k`, then refreshes the remaining pool against the drawn item, so
+    every drawn item's value is exact wrt the full selection at its draw moment.
+
+    Filtering the draw window matters because refreshes can leave a just-drawn item's neighbors far
+    down the window: drawing one of those would put a near-duplicate pair in the selection, which a
+    separation objective scores by its worst pair.
     """
     count = len(cand_idx)
     p_uniform = np.zeros(0, dtype=np.float32)  # module globals freeze to readonly inside njit
@@ -50,21 +73,19 @@ def _draw_round(
         k_eff = min(np.int64(top_k), np.int64(count - bi))
         if k_eff <= 0:
             break
-        # move the top k_eff remaining candidates to the front, by current value (the pool is small)
-        for s in range(k_eff):
-            best = s
-            for c in range(s + 1, count - bi):
-                if cand_val[c] > cand_val[best]:
-                    best = c
-            if best != s:
-                cand_val[s], cand_val[best] = cand_val[best], cand_val[s]
-                cand_idx[s], cand_idx[best] = cand_idx[best], cand_idx[s]
+        _move_top_to_front(cand_idx, cand_val, k_eff, np.int64(count - bi))
         if v_round_open < 0:
             v_round_open = cand_val[0]
         elif cand_val[0] < alpha * v_round_open:
             break
+        # the front k_eff are sorted descending, so acceptable candidates form the leading run
+        n_acceptable = np.int64(1)
+        while n_acceptable < k_eff and cand_val[n_acceptable] >= alpha * cand_val[0]:
+            n_acceptable += 1
         # a single candidate needs no draw, matching `InitFarthestPoint`'s argmax path
-        pick_pos = 0 if k_eff == 1 else randint(np.int32(k_eff), np.int32(1), False, p_uniform, rng_state)[0]
+        pick_pos = (
+            0 if n_acceptable == 1 else randint(np.int32(n_acceptable), np.int32(1), False, p_uniform, rng_state)[0]
+        )
         x = cand_idx[pick_pos]
         out_batch[n_drawn] = x
         n_drawn += 1
@@ -81,7 +102,8 @@ class InitFarthestPointBatched(InitializationStrategy):
     """Initialize by farthest-point sampling in self-sizing rounds, not one pick at a time.
 
     Per round: the top `batch_max * top_k` not-selected items by diversity contribution form a
-    candidate pool; each draw refreshes the remaining pool against the drawn item, and the round
+    candidate pool; each draw samples among the top `top_k` candidates whose value is still within
+    `alpha` of the pool's best, refreshes the remaining pool against the drawn item, and the round
     ends when the pool's best remaining value falls below `alpha` times the round's opening best.
     One round is one `get_next_samples` call, so the state applies each batch in a single tracker
     pass — several times faster than `InitFarthestPoint` at large n, while every drawn item's
@@ -96,9 +118,11 @@ class InitFarthestPointBatched(InitializationStrategy):
     - top_k (int): every draw samples uniformly among the `top_k` best remaining candidates by
                    current value — the meaning it has on `InitFarthestPoint`; 1 keeps the exact
                    greedy pick. (default: 8)
-    - alpha (float): round-stop threshold in (0, 1]; measured quality is insensitive across
-                     [0.85, 0.95], and higher values approach the per-pick construction at the
-                     cost of smaller rounds. (default: 0.9)
+    - alpha (float): acceptance threshold in (0, 1] — a candidate is drawable while its value is
+                     at least `alpha` times the pool's current best, and the round ends once that
+                     best falls below `alpha` times the round's opening best. Higher values
+                     approach the per-pick construction at the cost of smaller rounds.
+                     (default: 0.9)
     - batch_max (int): upper bound on items drawn per round; the pool holds
                        `batch_max * top_k` candidates. (default: 256)
     """

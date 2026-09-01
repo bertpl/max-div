@@ -1,9 +1,15 @@
 import numpy as np
 import pytest
 
+from max_div._core._random import new_rng_state
+from max_div._core.metrics import DistanceMetric
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._strategies import InitializationStrategy
-from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
+from max_div._core.solver._strategies._initialization._init_farthest_point_batched import (
+    InitFarthestPointBatched,
+    _draw_round,
+)
 from max_div.metrics import DiversityMetric
 
 from ._helpers import new_solver_state
@@ -99,3 +105,33 @@ def test_init_farthest_point_batched_batches_respect_the_contract():
         assert batch.max() < state.n
         assert not np.isin(batch, state.selected_index_array).any()
         state.add_many(batch)
+
+
+def test_draw_round_never_draws_a_candidate_below_the_acceptance_threshold():
+    """A window straddling a value cliff must not offer the far-below-best candidate to the draw."""
+    # --- arrange ----------------------
+    vectors = np.arange(20, dtype=np.float32).reshape(-1, 1)
+    store = DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean())
+    cliff_index = 7
+    drawn_first = set()
+
+    # --- act --------------------------
+    for seed in range(20):
+        cand_idx = np.array([1, 3, 5, cliff_index], dtype=np.int32)
+        cand_val = np.array([1.0, 0.99, 0.98, 0.01], dtype=np.float32)  # the last one is the cliff
+        out_batch = np.empty(1, dtype=np.int32)
+        _draw_round(
+            cand_idx,
+            cand_val,
+            np.int32(4),
+            np.float32(0.9),
+            np.int64(1),
+            store,
+            new_rng_state(np.int64(seed)),
+            out_batch,
+        )
+        drawn_first.add(int(out_batch[0]))
+
+    # --- assert -----------------------
+    assert cliff_index not in drawn_first
+    assert len(drawn_first) > 1, "the acceptable candidates should still vary across seeds"
