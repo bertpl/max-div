@@ -98,10 +98,9 @@ class InitializationStrategy(StrategyBase, ABC):
     def farthest_point_batched(cls, top_k: int = 8, batch_size: int = 256) -> InitFarthestPointBatched:
         """Create a farthest-point initialization that draws a batch of items per pass over the dataset.
 
-        It offers each draw the same candidates `farthest_point` would, so selections are of equal
-        quality without being the same, and it is several times faster at large n; it supports
-        separation-family diversity metrics only — see `InitFarthestPointBatched` for the mechanism
-        and the parameters.
+        The strategy offers each draw the same candidates as `farthest_point`, so selections are of
+        equal quality but not identical, and it is several times faster at large n. Separation-family
+        diversity metrics only; see `InitFarthestPointBatched` for the mechanism and the parameters.
         """
         from ._init_farthest_point_batched import InitFarthestPointBatched
 

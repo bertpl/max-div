@@ -28,7 +28,7 @@ def new_solver_state(has_constraints: bool) -> SolverState:
     )
 
 
-def new_unconstrained_solver_state(n: int = 300, k: int = 30) -> SolverState:
+def new_solver_state_unconstrained(n: int = 300, k: int = 30) -> SolverState:
     """Build a small unconstrained state over precomputed distances."""
     vectors = np.random.default_rng(20260901).random((n, 3)).astype(np.float32)
     return SolverState.new(

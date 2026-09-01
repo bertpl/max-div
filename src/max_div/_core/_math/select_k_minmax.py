@@ -270,12 +270,9 @@ def select_k_max_masked(  # noqa: C901 — case-dispatch structure is clearer un
 ) -> NDArray[np.int32]:
     """Find indices of the k largest non-excluded elements, without building a compacted copy.
 
-    Elements with `excluded[i]` True are skipped, and the returned indices point into `arr`
-    itself; the function otherwise matches `select_k_max`: the result slots equal `select_k_max`
-    over the compacted non-excluded copy, mapped back to `arr` indices.
-
-    `k` is clamped into [0, #non-excluded]: k <= 0 returns an empty array, k at or above the
-    non-excluded count returns every non-excluded index.
+    Excluded elements are skipped. The result equals `select_k_max` over the non-excluded elements,
+    with every index mapped back into `arr`; `k` is clamped as in `select_k_max`, against the
+    non-excluded count.
     """
     n = len(arr)
     n_candidates = np.int32(0)

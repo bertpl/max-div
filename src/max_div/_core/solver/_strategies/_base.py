@@ -44,7 +44,7 @@ class StrategyBase:
 
         Called when the solver is built, so an unsupported combination fails before any work.
         The default accepts every metric; a strategy whose algorithm is tailored to specific
-        metric families overrides this.
+        metric families overrides `validate_diversity_metric`.
         """
 
     def set_seed(self, seed: int | np.int64) -> None:

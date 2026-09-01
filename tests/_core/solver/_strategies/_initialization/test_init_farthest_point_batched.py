@@ -12,7 +12,7 @@ from max_div._core.solver._strategies._initialization._init_farthest_point_batch
 )
 from max_div.metrics import DiversityMetric
 
-from ._helpers import new_solver_state, new_unconstrained_solver_state
+from ._helpers import new_solver_state, new_solver_state_unconstrained
 
 
 @pytest.mark.parametrize("top_k", [1, 8])
@@ -85,7 +85,7 @@ def test_init_farthest_point_batched_rejects_mean_family_metric():
     [{"top_k": 0}, {"batch_size": 0}, {"top_k": 8, "batch_size": 4}],
 )
 def test_init_farthest_point_batched_rejects_invalid_parameters(kwargs: dict):
-    """Constructor bounds: top_k >= 1, and a pool at least wide enough for one full draw."""
+    """The constructor rejects `top_k` below 1 and `batch_size` below `top_k`."""
     with pytest.raises(ValueError):
         InitFarthestPointBatched(**kwargs)
 
@@ -108,10 +108,10 @@ def test_init_farthest_point_batched_batches_respect_the_contract():
 
 
 def test_draw_round_ends_once_the_pool_can_no_longer_be_shown_to_hold_the_best():
-    """A refresh that pushes the live pool below its admission value ends the round instead of drawing on."""
+    """A refresh that pushes the live pool below `threshold` ends the round instead of drawing on."""
     # --- arrange ----------------------
-    # items 1, 2, 3 sit far from item 0 but close to each other, so drawing one collapses the
-    # separations of the others far below the pool's admission value
+    # items 1, 2, 3 sit far from item 0 but close to each other, so drawing one drops the
+    # separations of the others far below `threshold`
     vectors = np.array([[0.0], [100.0], [101.0], [102.0]], dtype=np.float32)
     store = DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean())
     cand_idx = np.array([1, 2, 3], dtype=np.int32)
@@ -134,11 +134,11 @@ def test_draw_round_ends_once_the_pool_can_no_longer_be_shown_to_hold_the_best()
 
     # --- assert -----------------------
     assert n_drawn == 1
-    assert out_batch[0] == 3  # the farthest item; its neighbors then fall below the admission value
+    assert out_batch[0] == 3  # the farthest item; its neighbors then fall below `threshold`
 
 
 def test_draw_round_draws_while_the_pool_still_holds_the_best():
-    """With every candidate far apart, no refresh drops below the admission value and the round runs on."""
+    """With every candidate far apart, no refresh drops below `threshold` and the round runs on."""
     # --- arrange ----------------------
     vectors = np.array([[0.0], [100.0], [200.0], [300.0]], dtype=np.float32)
     store = DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean())
@@ -168,7 +168,7 @@ def test_every_draw_is_among_the_top_k_contributions(seed: int):
     """Each draw lands among the top_k highest contributions over all not-selected items."""
     # --- arrange ----------------------
     top_k = 4
-    state = new_unconstrained_solver_state()
+    state = new_solver_state_unconstrained()
     strategy = InitializationStrategy.farthest_point_batched(top_k=top_k, batch_size=16)
     strategy.set_seed(seed)
 
@@ -190,9 +190,9 @@ def test_every_draw_is_among_the_top_k_contributions(seed: int):
 
 @pytest.mark.parametrize("seed", [1, 2, 3])
 def test_top_k_one_reproduces_the_per_pick_construction_exactly(seed: int):
-    """With a draw width of one, both constructions take the same greedy pick and agree item for item."""
+    """With `top_k=1`, both constructions take the same greedy pick and agree item for item."""
     # --- arrange ----------------------
-    states = [new_unconstrained_solver_state() for _ in range(2)]
+    states = [new_solver_state_unconstrained() for _ in range(2)]
     steps = [
         InitializationStep(InitializationStrategy.farthest_point(top_k=1)),
         InitializationStep(InitializationStrategy.farthest_point_batched(top_k=1)),

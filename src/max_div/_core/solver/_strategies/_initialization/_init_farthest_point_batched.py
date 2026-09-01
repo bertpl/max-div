@@ -84,19 +84,19 @@ def _draw_round(
     out_batch: NDArray[np.int32],
     top_positions: NDArray[np.int32],
 ) -> np.int64:
-    """Draw items from the candidate pool into `out_batch` until the pool goes stale; return the count drawn.
+    """Draw items from the candidate pool into `out_batch` while it provably holds the dataset's best; return the count.
 
-    `threshold` is the pool's admission value — the lowest contribution it held when the round
-    opened. Every item outside the pool was below it then, and contributions only fall as items are
-    selected, so any pool candidate still at or above it is among the whole dataset's best. The
-    round therefore draws while the pool holds a `top_k`-th best live candidate at or above
-    `threshold`, which makes each draw range over the same candidates the per-pick construction
-    would offer, and ends as soon as that stops being provable — including when the pool has been
-    drawn down below `top_k` live candidates, unless it holds every remaining item anyway.
+    `threshold` is the lowest contribution the pool held when the round opened. Every item outside
+    the pool was below it then, and contributions only fall as items are selected, so a pool
+    candidate still at or above it is among the whole dataset's best — which is what makes each
+    draw range over the candidates the per-pick construction would offer. The round ends when the
+    pool's `top_k`-th best live candidate is below `threshold`, or when fewer than `top_k` live
+    candidates remain while `threshold` is finite. After each draw the remaining pool is refreshed
+    against the drawn item.
 
-    After each draw the remaining pool is refreshed against the drawn item, so a candidate that the
-    draw brought close to the selection drops out of contention immediately. `top_positions` is a
-    caller-owned scratch buffer of at least `top_k` slots, so a draw allocates nothing.
+    `cand_idx` and `cand_val` are reordered and overwritten in place; `out_batch` needs `b_target`
+    slots; `top_positions` is caller-owned scratch of at least `top_k` slots, so a draw allocates
+    nothing.
     """
     count = len(cand_idx)
     p_uniform = np.zeros(0, dtype=np.float32)  # module globals freeze to readonly inside njit
@@ -129,33 +129,24 @@ class InitFarthestPointBatched(InitializationStrategy):
     """Initialize by farthest-point sampling in rounds, drawing many items per pass over the dataset.
 
     A round collects the `batch_size` highest-contribution not-selected items into a pool with one
-    pass over the dataset, then draws from that pool without touching the dataset again: each draw
-    samples uniformly among the pool's `top_k` best remaining candidates and refreshes the rest
-    against the drawn item. The round ends once the pool can no longer be shown to hold the
-    dataset's best candidates, and the solver applies the whole batch in one tracker update.
+    pass over the dataset, then draws from that pool without touching the dataset again, ending
+    once the pool can no longer be shown to hold the dataset's best candidates (see `_draw_round`).
+    The solver applies the whole batch in one tracker update. Every draw ranges over the same
+    candidates `InitFarthestPoint` would offer, so selections are of the same quality but not the
+    same, and the batched strategy is several times faster at large n.
 
-    Every draw ranges over the same candidates `InitFarthestPoint` would offer at that point (see
-    `_draw_round` for why), so the two strategies build selections of the same quality; they differ
-    in which of the equally-good candidates a given seed happens to draw. The gain is that a pass
-    over the dataset serves a whole batch instead of a single pick, which at large n makes this
-    several times faster.
-
-    The construction is tailored to separation-family diversity metrics, whose contributions only
-    fall as items are selected — the property the round's stopping rule rests on; other metric
-    families are rejected when the solver is built. Constraints are ignored by design, like
-    `InitFarthestPoint`.
+    Separation-family diversity metrics only — their contributions only fall as items are selected,
+    which the stopping rule rests on; other families are rejected when the solver is built.
+    Constraints are ignored by design, like `InitFarthestPoint`.
 
     Parameters:
     - top_k (int): every draw samples uniformly among the `top_k` best remaining candidates — the
-                   meaning it has on `InitFarthestPoint`; 1 keeps the exact greedy pick. This is
-                   the knob that decorrelates runs sharing a seed source. (default: 8)
+                   meaning it has on `InitFarthestPoint`; 1 keeps the exact greedy pick. (default: 8)
     - batch_size (int): how many candidates a round collects, which bounds how many items it can
-                        draw. Deeper pools reach further down the contribution ranking, so rounds
-                        run longer and fewer passes over the dataset are needed, at the cost of
-                        refreshing more candidates per draw — measured across problem sizes and
-                        dimensionalities, the refreshing outweighs the saved passes above a few
-                        hundred. It cannot affect the selection's quality, only the time spent.
-                        (default: 256)
+                        draw. A deeper pool needs fewer passes over the dataset but refreshes more
+                        candidates per draw; above a few hundred the extra refreshing costs more
+                        than the saved passes. `batch_size` cannot affect the selection's quality,
+                        only the time spent. (default: 256)
     """
 
     def __init__(self, top_k: int = 8, batch_size: int = 256) -> None:
