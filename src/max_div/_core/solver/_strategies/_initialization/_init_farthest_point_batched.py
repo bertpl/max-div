@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 
 from max_div._core._random import P_UNIFORM, randint
 from max_div._core.metrics import DiversityContributionFamily, DiversityMetric
-from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, get_distance
+from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 from max_div._core.solver._solver_state import SolverState
 
 from ._base import InitializationStrategy
@@ -24,7 +24,16 @@ from ._base import InitializationStrategy
     cache=True,
     fastmath={"reassoc", "contract"},
 )
-def _draw_round(cand_idx, cand_val, top_k, alpha, b_target, store, rng_state, out_batch):  # noqa: C901
+def _draw_round(
+    cand_idx: NDArray[np.int32],
+    cand_val: NDArray[np.float32],
+    top_k: np.int32,
+    alpha: np.float32,
+    b_target: np.int64,
+    store: DistanceStore,
+    rng_state: NDArray[np.uint64],
+    out_batch: NDArray[np.int32],
+) -> np.int64:
     """Draw up to `b_target` items from the candidate pool into `out_batch`; return the count drawn.
 
     Each draw samples uniformly among the top `top_k` remaining candidates by current value; the
@@ -54,10 +63,8 @@ def _draw_round(cand_idx, cand_val, top_k, alpha, b_target, store, rng_state, ou
             v_round_open = cand_val[0]
         elif cand_val[0] < alpha * v_round_open:
             break
-        if k_eff == 1:
-            pick_pos = 0  # a single candidate needs no draw, matching `InitFarthestPoint`'s argmax path
-        else:
-            pick_pos = randint(np.int32(k_eff), np.int32(1), False, p_uniform, rng_state)[0]
+        # a single candidate needs no draw, matching `InitFarthestPoint`'s argmax path
+        pick_pos = 0 if k_eff == 1 else randint(np.int32(k_eff), np.int32(1), False, p_uniform, rng_state)[0]
         x = cand_idx[pick_pos]
         out_batch[n_drawn] = x
         n_drawn += 1
