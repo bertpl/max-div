@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A batched farthest-point initialization, `InitializationStrategy.farthest_point_batched()`: the same greedy construction with one pass over the dataset per batch of picks instead of per pick — several times faster at large n, offering each pick the same candidates as `farthest_point()` (separation-family diversity metrics only)
 
 ### Changed
+- The SMART and THOROUGH presets initialize unconstrained problems with the batched farthest-point construction — several times faster at large n, offering each pick the same candidates as before (the per-pick construction remains under `MEAN_PAIRWISE_DISTANCE`)
 - Random one-shot initialization updates its distance bookkeeping in one batched pass — an order of magnitude faster at large n, with a `parallel` option that speeds it up further when the solve runs single-process
 
 ### Deprecated
