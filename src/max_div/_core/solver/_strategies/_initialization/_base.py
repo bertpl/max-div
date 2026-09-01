@@ -95,18 +95,17 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitFarthestPoint(top_k=top_k)
 
     @classmethod
-    def farthest_point_batched(
-        cls, top_k: int = 8, alpha: float = 0.9, batch_max: int = 256
-    ) -> InitFarthestPointBatched:
-        """Create a farthest-point initialization that draws in self-sizing rounds — several times faster at large n.
+    def farthest_point_batched(cls, top_k: int = 8, batch_size: int = 1024) -> InitFarthestPointBatched:
+        """Create a farthest-point initialization that draws a batch of items per pass over the dataset.
 
-        It uses the same greedy construction and `top_k` meaning as `farthest_point` but does not
-        reproduce its picks, and it supports separation-family diversity metrics only — see
-        `InitFarthestPointBatched` for the mechanism and the parameters.
+        It offers each draw the same candidates `farthest_point` would, so selections are of equal
+        quality without being the same, and it is several times faster at large n; it supports
+        separation-family diversity metrics only — see `InitFarthestPointBatched` for the mechanism
+        and the parameters.
         """
         from ._init_farthest_point_batched import InitFarthestPointBatched
 
-        return InitFarthestPointBatched(top_k=top_k, alpha=alpha, batch_max=batch_max)
+        return InitFarthestPointBatched(top_k=top_k, batch_size=batch_size)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:
