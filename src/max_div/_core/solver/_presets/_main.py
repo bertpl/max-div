@@ -20,8 +20,8 @@ def get_preset_strategies(
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     """Return the initialization strategy and optimization steps a preset resolves to.
 
-    `diversity_metric` and `has_constraints` describe the problem being solved; the SMART and
-    THOROUGH presets choose their initialization on them.
+    `diversity_metric` and `has_constraints` describe the problem; SMART and THOROUGH pick their
+    initialization from them (see `get_preset_strategies_smart`).
     """
     match preset.resolve_alias():
         case SolverPreset.RANDOM:
