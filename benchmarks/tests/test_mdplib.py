@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from benchmarks.mdplib import list_instances, load_instance
-from benchmarks.mdplib.loader import MdplibFetchError, fetch_mmdp_archive
+from benchmarks.mdplib.loader import ArchiveDigest, MdplibFetchError, fetch_mmdp_archive
 from max_div.problem import DistanceMaxDivProblem, VectorMaxDivProblem
 
 
@@ -51,8 +51,7 @@ def _fetch(tmp_path: Path, archive: bytes) -> Path:
     return fetch_mmdp_archive(
         cache_dir=tmp_path,
         url="https://example.test/mmdp.zip",
-        expected_size=len(archive),
-        expected_sha256=hashlib.sha256(archive).hexdigest(),
+        expected=ArchiveDigest(len(archive), hashlib.sha256(archive).hexdigest()),
         retry_delay_sec=0.0,
     )
 
@@ -60,11 +59,18 @@ def _fetch(tmp_path: Path, archive: bytes) -> Path:
 # =================================================================================================
 #  Archive download & verification (no network)
 # =================================================================================================
-def test_short_download_is_retried_until_intact(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
-    """A truncated transfer is discarded and the next attempt's intact archive is extracted."""
+@pytest.mark.parametrize(
+    "first_attempt",
+    [_stand_in_archive()[:-20], urllib.error.URLError("connection reset")],
+    ids=["short", "failed"],
+)
+def test_bad_first_download_is_retried(
+    first_attempt: bytes | Exception, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """A truncated or failed transfer is discarded and the next attempt's intact archive is extracted."""
     # --- arrange ----------------------
     archive = _stand_in_archive()
-    requested = _serve(monkeypatch, [archive[:-20], archive])
+    requested = _serve(monkeypatch, [first_attempt, archive])
 
     # --- act --------------------------
     instances_dir = _fetch(tmp_path, archive)
@@ -75,22 +81,8 @@ def test_short_download_is_retried_until_intact(monkeypatch: pytest.MonkeyPatch,
     assert (tmp_path / "mmdp_instances.zip").read_bytes() == archive
 
 
-def test_failed_download_is_retried(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
-    """A download that errors out counts as a failed attempt and is retried."""
-    # --- arrange ----------------------
-    archive = _stand_in_archive()
-    requested = _serve(monkeypatch, [urllib.error.URLError("connection reset"), archive])
-
-    # --- act --------------------------
-    instances_dir = _fetch(tmp_path, archive)
-
-    # --- assert -----------------------
-    assert len(requested) == 2
-    assert instances_dir.is_dir()
-
-
 def test_corrupt_cached_archive_is_replaced(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
-    """A cached archive failing the check is downloaded again instead of being extracted."""
+    """A cached archive failing the check is downloaded again."""
     # --- arrange ----------------------
     archive = _stand_in_archive()
     (tmp_path / "mmdp_instances.zip").write_bytes(archive[:-20])

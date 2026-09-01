@@ -93,8 +93,8 @@ jobs:
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
       # The MDPLIB loader keeps a downloaded archive only after its pinned SHA-256 matched, so a
       # cache hit is always an intact archive; the key carries the pinned digest's prefix so a
-      # re-pinned archive misses. Spares the job the download from the maintainers' site, which
-      # has arrived truncated.
+      # re-pinned archive misses. The cache spares the job the download from the maintainers'
+      # site, whose transfers sometimes arrive truncated.
       - name: Cache the MDPLIB archive
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
