@@ -474,7 +474,7 @@ def test_set_initialization_strategy_reaches_every_worker():
         assert config.solver_steps[0]._strategy is override
 
 
-def test_worker_config_init_strategy_beats_the_builder_override():
+def test_worker_config_init_strategy_wins_over_the_builder_override():
     """A per-worker init strategy is the more specific choice and wins over the override."""
     # --- arrange ----------------------
     per_worker = InitializationStrategy.fast()
