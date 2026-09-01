@@ -8,6 +8,11 @@ problem"* (Computers & Operations Research 37(3)), hosted with the
 time and never redistributed; the reference values are vendored in the repo so the
 comparison is pinned.
 
+**Terms.** The maintainers' site states no license for the instances ("all rights reserved")
+and asks that the library be cited as Martí, Duarte, Martínez-Gavara & Sánchez-Oro (2021),
+*"The MDPLIB 2.0 Library of Benchmark Instances for Diversity Problems"*. The harness therefore
+keeps only a run-time copy, checked against the archive's pinned size and SHA-256 before use.
+
 ## Protocol
 
 - Objective: `MIN_SEPARATION` (the MMDP objective). All 195 published (instance, k)
