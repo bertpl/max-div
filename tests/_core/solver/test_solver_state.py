@@ -786,5 +786,5 @@ def test_top_not_selected_contributions_returns_top_items(new_solver_state_uncon
 
 
 def test_distance_store_property_exposes_the_trackers_store(new_solver_state_unconstrained):
-    """distance_store hands back the store the main tracker reads."""
+    """distance_store returns the store the main tracker reads."""
     assert new_solver_state_unconstrained.distance_store.n == new_solver_state_unconstrained.n

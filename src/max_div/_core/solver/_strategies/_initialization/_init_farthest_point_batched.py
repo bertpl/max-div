@@ -55,7 +55,7 @@ def _draw_round(cand_idx, cand_val, top_k, alpha, b_target, store, rng_state, ou
         elif cand_val[0] < alpha * v_round_open:
             break
         if k_eff == 1:
-            pick_pos = 0  # a single candidate needs no draw, matching the sibling's argmax path
+            pick_pos = 0  # a single candidate needs no draw, matching `InitFarthestPoint`'s argmax path
         else:
             pick_pos = randint(np.int32(k_eff), np.int32(1), False, p_uniform, rng_state)[0]
         x = cand_idx[pick_pos]
@@ -71,26 +71,24 @@ def _draw_round(cand_idx, cand_val, top_k, alpha, b_target, store, rng_state, ou
 
 
 class InitFarthestPointBatched(InitializationStrategy):
-    """Initialize by farthest-point sampling in self-sizing rounds instead of one pick at a time.
+    """Initialize by farthest-point sampling in self-sizing rounds, not one pick at a time.
 
     Per round: the top `batch_max * top_k` not-selected items by diversity contribution form a
-    candidate pool; draws sample uniformly among the top `top_k` remaining candidates by current
-    value (so `top_k` keeps the meaning it has on `InitFarthestPoint`), each draw refreshing the
-    remaining pool against the drawn item; the round ends when the pool's best remaining value
-    falls below `alpha` times the round's opening best. One round is one `get_next_samples` call,
-    so the state applies each batch in a single tracker pass — several times faster than the
-    per-pick sibling at large n, while every drawn item's contribution is exact at its draw
-    moment.
+    candidate pool; each draw refreshes the remaining pool against the drawn item, and the round
+    ends when the pool's best remaining value falls below `alpha` times the round's opening best.
+    One round is one `get_next_samples` call, so the state applies each batch in a single tracker
+    pass — several times faster than `InitFarthestPoint` at large n, while every drawn item's
+    contribution is exact at its draw moment.
 
     The construction heuristics — most notably the round-stop rule — are tailored to
     separation-family diversity metrics, whose contributions only decrease within a round; other
     metric families are rejected when the solver is built. Constraints are ignored by design,
-    like the per-pick sibling. Picks and randomness differ from `InitFarthestPoint`: the two
-    strategies are spirit-equivalent, not bit-comparable.
+    like `InitFarthestPoint` — whose picks and randomness this strategy does not reproduce.
 
     Parameters:
-    - top_k (int): every draw samples uniformly among the `top_k` best remaining candidates;
-                   1 keeps the exact greedy pick. (default: 8)
+    - top_k (int): every draw samples uniformly among the `top_k` best remaining candidates by
+                   current value — the meaning it has on `InitFarthestPoint`; 1 keeps the exact
+                   greedy pick. (default: 8)
     - alpha (float): round-stop threshold in (0, 1]; measured quality is insensitive across
                      [0.85, 0.95], and higher values approach the per-pick construction at the
                      cost of smaller rounds. (default: 0.9)

@@ -44,7 +44,7 @@ def test_init_farthest_point_batched_is_deterministic_per_seed():
 
 
 def test_init_farthest_point_batched_quality_near_exact_sibling():
-    """The batched construction's min-separation lands near the exact per-pick sibling's."""
+    """The batched construction's min-separation is near `InitFarthestPoint`'s."""
     # --- arrange ----------------------
     results = {}
     for label, strategy in (

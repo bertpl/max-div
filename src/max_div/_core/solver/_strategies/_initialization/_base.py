@@ -98,11 +98,11 @@ class InitializationStrategy(StrategyBase, ABC):
     def farthest_point_batched(
         cls, top_k: int = 8, alpha: float = 0.9, batch_max: int = 256
     ) -> InitFarthestPointBatched:
-        """Farthest-point sampling in self-sizing rounds — several times faster than `farthest_point` at large n.
+        """Create a farthest-point initialization that draws in self-sizing rounds — several times faster at large n.
 
-        Spirit-equivalent to `farthest_point` (same greedy construction, same `top_k` variance
-        knob) but not bit-comparable; separation-family diversity metrics only — see
-        `InitFarthestPointBatched` for the mechanism and the parameters.
+        Same greedy construction and `top_k` meaning as `farthest_point`, but not the same picks;
+        separation-family diversity metrics only — see `InitFarthestPointBatched` for the
+        mechanism and the parameters.
         """
         from ._init_farthest_point_batched import InitFarthestPointBatched
 
