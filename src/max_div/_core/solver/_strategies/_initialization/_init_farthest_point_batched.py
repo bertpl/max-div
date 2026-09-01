@@ -58,9 +58,10 @@ def _draw_round(
     `threshold` is the pool's admission value — the lowest contribution it held when the round
     opened. Every item outside the pool was below it then, and contributions only fall as items are
     selected, so any pool candidate still at or above it is among the whole dataset's best. The
-    round therefore draws while the `top_k`-th best live candidate holds at or above `threshold`,
-    which makes each draw range over the same candidates the per-pick construction would offer, and
-    ends the round as soon as that stops being provable.
+    round therefore draws while the pool holds a `top_k`-th best live candidate at or above
+    `threshold`, which makes each draw range over the same candidates the per-pick construction
+    would offer, and ends as soon as that stops being provable — including when the pool has been
+    drawn down below `top_k` live candidates, unless it holds every remaining item anyway.
 
     After each draw the remaining pool is refreshed against the drawn item, so a candidate that the
     draw brought close to the selection drops out of contention immediately.
@@ -69,10 +70,13 @@ def _draw_round(
     p_uniform = np.zeros(0, dtype=np.float32)  # module globals freeze to readonly inside njit
     n_drawn = np.int64(0)
     for bi in range(b_target):
-        k_eff = min(np.int64(top_k), np.int64(count - bi))
+        n_live = np.int64(count - bi)
+        k_eff = min(np.int64(top_k), n_live)
         if k_eff <= 0:
             break
-        _move_top_to_front(cand_idx, cand_val, k_eff, np.int64(count - bi))
+        if k_eff < top_k and threshold > -np.inf:
+            break  # too few live candidates to show the draw would range over the dataset's best
+        _move_top_to_front(cand_idx, cand_val, k_eff, n_live)
         if cand_val[k_eff - 1] < threshold:
             break
         # a single candidate needs no draw, matching `InitFarthestPoint`'s argmax path
