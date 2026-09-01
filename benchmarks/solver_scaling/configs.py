@@ -91,6 +91,7 @@ def _maxdiv_optimal(lazy: bool) -> SelectFn:
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from max_div.solver import (
             DistanceStorage,
+            InitializationStrategy,
             ParallelMaxDivSolverBuilder,
             Verbosity,
             seconds,
@@ -98,12 +99,16 @@ def _maxdiv_optimal(lazy: bool) -> SelectFn:
 
         storage = DistanceStorage.LAZY if lazy else DistanceStorage.FULL_MATRIX
         budget = seconds(max(budget_sec - self_limit_margin_sec(budget_sec), 0.1))
+        # The batched farthest-point initialization replaces the preset's per-pick one: at large n
+        # the per-pick construction alone overruns the run budget, so workers would be killed
+        # mid-initialization before returning anything.
         builder = (
             ParallelMaxDivSolverBuilder(problem)
             .with_seed(seed)
             .with_distance_storage(storage)
             .with_workers(budget, _QUALITY_WORKERS)  # dynamic worker groups
             .with_end_to_end_budget()
+            .set_initialization_strategy(InitializationStrategy.farthest_point_batched())
         )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
 
@@ -239,14 +244,14 @@ CONFIGS: tuple[ScalingConfig, ...] = (
     ScalingConfig(
         "max-div",
         "optimal-eager",
-        "SMART preset, full end-to-end time budget, full-matrix distance storage forced, 12 cooperative workers",
+        "SMART preset with batched farthest-point initialization, full end-to-end time budget, full-matrix distance storage forced, 12 cooperative workers",
         _maxdiv_optimal(lazy=False),
         seed_varies_result=True,
     ),
     ScalingConfig(
         "max-div",
         "optimal-lazy",
-        "SMART preset, full end-to-end time budget, lazy distance storage forced, 12 cooperative workers",
+        "SMART preset with batched farthest-point initialization, full end-to-end time budget, lazy distance storage forced, 12 cooperative workers",
         _maxdiv_optimal(lazy=True),
         seed_varies_result=True,
     ),
