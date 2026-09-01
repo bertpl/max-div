@@ -26,3 +26,16 @@ def new_solver_state(has_constraints: bool) -> SolverState:
         diversity_tie_breakers=[],
         constraints=constraints,
     )
+
+
+def new_unconstrained_solver_state(n: int = 300, k: int = 30) -> SolverState:
+    """Build a small unconstrained state over precomputed distances."""
+    vectors = np.random.default_rng(20260901).random((n, 3)).astype(np.float32)
+    return SolverState.new(
+        n=n,
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=n),
+        k=k,
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_tie_breakers=[],
+        constraints=[],
+    )

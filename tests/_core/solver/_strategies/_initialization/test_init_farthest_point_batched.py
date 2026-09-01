@@ -12,7 +12,7 @@ from max_div._core.solver._strategies._initialization._init_farthest_point_batch
 )
 from max_div.metrics import DiversityMetric
 
-from ._helpers import new_solver_state
+from ._helpers import new_solver_state, new_unconstrained_solver_state
 
 
 @pytest.mark.parametrize("top_k", [1, 8])
@@ -96,7 +96,7 @@ def test_init_farthest_point_batched_batches_respect_the_contract():
     state = new_solver_state(has_constraints=False)
     strategy = InitializationStrategy.farthest_point_batched(batch_size=16)
 
-    # --- act / assert -----------------
+    # --- arrange / act / assert -------
     while state.n_selected < state.k:
         batch = strategy.get_next_samples(state, np.int32(state.k - state.n_selected))
         assert 1 <= len(batch) <= state.k - state.n_selected
@@ -152,3 +152,28 @@ def test_draw_round_draws_while_the_pool_still_holds_the_best():
 
     # --- assert -----------------------
     assert n_drawn >= 2
+
+
+@pytest.mark.parametrize("seed", [1, 2, 3])
+def test_every_draw_is_among_the_top_k_contributions(seed: int):
+    """Each draw lands among the top_k highest contributions over all not-selected items."""
+    # --- arrange ----------------------
+    top_k = 4
+    state = new_unconstrained_solver_state()
+    strategy = InitializationStrategy.farthest_point_batched(top_k=top_k, batch_size=16)
+    strategy.set_seed(seed)
+
+    # --- arrange / act / assert -------
+    while state.n_selected < state.k:
+        batch = strategy.get_next_samples(state, np.int32(state.k - state.n_selected))
+        assert len(batch) >= 1, "a round must always draw at least one item"
+        for item in batch:
+            # the comparison values are read from SolverState, not from the strategy's candidate
+            # pool, so a candidate pool that is out of date produces a draw below the true top-k
+            contributions = state.full_contribution_array
+            selected = np.zeros(state.n, dtype=bool)
+            selected[state.selected_index_array] = True
+            available = contributions[~selected]
+            kth_best = np.sort(available)[-top_k] if len(available) >= top_k else available.min()
+            assert contributions[item] >= kth_best
+            state.add(item)  # one at a time, so the contributions update after every draw in the batch
