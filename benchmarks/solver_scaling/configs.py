@@ -81,7 +81,7 @@ def _maxdiv_lean() -> SelectFn:
 
 
 def _maxdiv_optimal(lazy: bool) -> SelectFn:
-    """Build max-div's `optimal-*` selector: SMART workers, dynamic grouping, forced storage, e2e budget.
+    """Build max-div's `optimal-*` selector: SMART workers, batched init, dynamic grouping, forced storage, e2e budget.
 
     The budget handed to the solver is the self-limit margin under the run budget, so the real
     end-to-end time — which overshoots by up to one optimization batch — still lands within the
