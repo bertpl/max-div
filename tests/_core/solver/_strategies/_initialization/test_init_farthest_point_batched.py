@@ -95,6 +95,7 @@ def test_init_farthest_point_batched_batches_respect_the_contract():
         batch = strategy.get_next_samples(state, np.int32(state.k - state.n_selected))
         assert 1 <= len(batch) <= state.k - state.n_selected
         assert len(np.unique(batch)) == len(batch)
-        assert batch.min() >= 0 and batch.max() < state.n
+        assert batch.min() >= 0
+        assert batch.max() < state.n
         assert not np.isin(batch, state.selected_index_array).any()
         state.add_many(batch)
