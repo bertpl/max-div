@@ -56,7 +56,8 @@ class SolverConfig:
                 stays lean and the store is built inside `solve`.
 
         Raises:
-            ValueError: if neither or both are given.
+            ValueError: if neither or both are given, or a step's strategy does not support the
+                diversity metric.
         """
         for step in self.solver_steps:
             step.validate_diversity_metric(self.diversity_metric)

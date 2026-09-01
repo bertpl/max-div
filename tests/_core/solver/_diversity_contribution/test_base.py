@@ -16,7 +16,7 @@ class _CallRecordingTracker(DiversityContributionTracker):
 
     @property
     def store(self):
-        """Unused; the mutation-delegation tests never read distances."""
+        """The store is unused: the mutation-delegation tests never read distances."""
         raise NotImplementedError
 
     def contribution_wrt_selection(self, selected: NDArray[np.bool], n_selected: np.int32) -> NDArray[np.float32]:

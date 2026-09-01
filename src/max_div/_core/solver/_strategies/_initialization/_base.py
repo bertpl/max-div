@@ -100,9 +100,9 @@ class InitializationStrategy(StrategyBase, ABC):
     ) -> InitFarthestPointBatched:
         """Create a farthest-point initialization that draws in self-sizing rounds — several times faster at large n.
 
-        Same greedy construction and `top_k` meaning as `farthest_point`, but not the same picks;
-        separation-family diversity metrics only — see `InitFarthestPointBatched` for the
-        mechanism and the parameters.
+        It uses the same greedy construction and `top_k` meaning as `farthest_point` but does not
+        reproduce its picks, and it supports separation-family diversity metrics only — see
+        `InitFarthestPointBatched` for the mechanism and the parameters.
         """
         from ._init_farthest_point_batched import InitFarthestPointBatched
 
