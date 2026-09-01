@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A batched farthest-point initialization, `InitializationStrategy.farthest_point_batched()`: the same greedy construction selected in self-sizing rounds, several times faster at large n (separation-family diversity metrics only)
 
 ### Changed
 - Random one-shot initialization updates its distance bookkeeping in one batched pass — an order of magnitude faster at large n, with a `parallel` option that speeds it up further when the solve runs single-process

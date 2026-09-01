@@ -77,6 +77,11 @@ class MeanDistanceTracker(DiversityContributionTracker):
             dist_sums=self._dist_sums.copy(),
         )
 
+    @property
+    def store(self) -> DistanceStore:
+        """Return the distance store this tracker reads (shared, immutable)."""
+        return self._store
+
     # -------------------------------------------------------------------------
     #  Contribution reads
     # -------------------------------------------------------------------------

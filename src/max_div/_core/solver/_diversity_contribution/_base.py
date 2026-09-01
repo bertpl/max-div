@@ -7,6 +7,8 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
+    from max_div._core.metrics._distance import DistanceStore
+
 
 # =================================================================================================
 #  DiversityContributionTracker
@@ -32,6 +34,12 @@ class DiversityContributionTracker(ABC):
     # -------------------------------------------------------------------------
     #  Contribution reads
     # -------------------------------------------------------------------------
+    @property
+    @abstractmethod
+    def store(self) -> DistanceStore:
+        """Return the distance store this tracker reads (shared, immutable)."""
+        raise NotImplementedError
+
     @abstractmethod
     def contribution_wrt_selection(self, selected: NDArray[np.bool], n_selected: np.int32) -> NDArray[np.floating]:
         """Return per-point contribution of all n points wrt the current selection.

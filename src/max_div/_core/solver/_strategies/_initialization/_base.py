@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
     from ._init_eager import InitEager
     from ._init_farthest_point import InitFarthestPoint
+    from ._init_farthest_point_batched import InitFarthestPointBatched
     from ._init_fast import InitFast
     from ._init_most_feasible import InitMostFeasible
     from ._init_random_batched import InitRandomBatched
@@ -92,6 +93,20 @@ class InitializationStrategy(StrategyBase, ABC):
         from ._init_farthest_point import InitFarthestPoint
 
         return InitFarthestPoint(top_k=top_k)
+
+    @classmethod
+    def farthest_point_batched(
+        cls, top_k: int = 8, alpha: float = 0.9, batch_max: int = 256
+    ) -> InitFarthestPointBatched:
+        """Farthest-point sampling in self-sizing rounds — several times faster than `farthest_point` at large n.
+
+        Spirit-equivalent to `farthest_point` (same greedy construction, same `top_k` variance
+        knob) but not bit-comparable; separation-family diversity metrics only — see
+        `InitFarthestPointBatched` for the mechanism and the parameters.
+        """
+        from ._init_farthest_point_batched import InitFarthestPointBatched
+
+        return InitFarthestPointBatched(top_k=top_k, alpha=alpha, batch_max=batch_max)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:

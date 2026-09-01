@@ -58,6 +58,8 @@ class SolverConfig:
         Raises:
             ValueError: if neither or both are given.
         """
+        for step in self.solver_steps:
+            step.validate_diversity_metric(self.diversity_metric)
         if store is not None and store_provider is None:
             provider: Callable[[], DistanceStore] = lambda: store
         elif store is None and store_provider is not None:

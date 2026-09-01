@@ -69,6 +69,11 @@ class SeparationTracker(DiversityContributionTracker):
             sep_selected=self._sep_selected.copy(),
         )
 
+    @property
+    def store(self) -> DistanceStore:
+        """Return the distance store this tracker reads (shared, immutable)."""
+        return self._store
+
     # -------------------------------------------------------------------------
     #  Contribution reads
     # -------------------------------------------------------------------------

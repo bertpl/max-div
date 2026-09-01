@@ -259,3 +259,112 @@ def select_k_max(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
                 i_parent = i_child_smallest
 
     return heap_idx
+
+
+# =================================================================================================
+#  select_k_max_masked
+# =================================================================================================
+@numba.njit("int32[:](float32[:], int32, boolean[:])", fastmath=True, cache=True)
+def select_k_max_masked(  # noqa: C901 — case-dispatch structure is clearer un-split
+    arr: NDArray[np.float32], k: np.int32, excluded: NDArray[np.bool]
+) -> NDArray[np.int32]:
+    """Find indices of the k largest non-excluded elements, without building a compacted copy.
+
+    Elements with `excluded[i]` True are skipped, and the returned indices point into `arr`
+    itself; the function otherwise matches `select_k_max`. Non-excluded elements are visited in
+    the same ascending order a compacted copy would present them in, feeding the identical
+    min-heap algorithm — so the result slots match `select_k_max` over that copy, mapped back to
+    `arr` indices.
+
+    `k` is clamped into [0, #non-excluded]: k <= 0 returns an empty array, k at or above the
+    non-excluded count returns every non-excluded index.
+    """
+    n = len(arr)
+    n_candidates = np.int32(0)
+    for i in range(n):
+        if not excluded[i]:
+            n_candidates += np.int32(1)
+    k = min(k, n_candidates)
+    if k <= 0:
+        return np.empty(0, dtype=np.int32)
+    heap_idx = np.empty(k, dtype=np.int32)  # indices (into arr) of elements in the heap
+    heap_values = np.empty(k, dtype=arr.dtype)  # values of elements in the heap; smallest at heap_values[0]
+
+    # Build initial heap with first k non-excluded elements
+    count = 0
+    i_next = 0
+    while count < k:
+        if not excluded[i_next]:
+            heap_idx[count] = i_next
+            heap_values[count] = arr[i_next]
+            count += 1
+        i_next += 1
+
+    # Heapify: convert the initial k elements into a min-heap (see select_k_max for the layout)
+    for i in range(k // 2 - 1, -1, -1):
+        i_parent = i
+        value = heap_values[i_parent]
+        idx = heap_idx[i_parent]
+
+        # Sift down: move element down until heap property is restored
+        while True:
+            i_child_left = 2 * i_parent + 1
+            i_child_right = i_child_left + 1
+            i_child_smallest = -1
+
+            # Find the smallest child
+            if i_child_left < k:
+                if i_child_right < k:
+                    i_child_smallest = (
+                        i_child_left if heap_values[i_child_left] < heap_values[i_child_right] else i_child_right
+                    )
+                else:
+                    i_child_smallest = i_child_left
+
+            # If no children or value is smaller than the smallest child, we're done
+            if i_child_smallest == -1 or value <= heap_values[i_child_smallest]:
+                heap_values[i_parent] = value
+                heap_idx[i_parent] = idx
+                break
+
+            # Otherwise, move the smaller child up and continue
+            heap_values[i_parent] = heap_values[i_child_smallest]
+            heap_idx[i_parent] = heap_idx[i_child_smallest]
+            i_parent = i_child_smallest
+
+    # Process remaining non-excluded elements
+    # For each element, if it's larger than the heap minimum, replace and sift down
+    for i in range(i_next, n):
+        if excluded[i]:
+            continue
+        value = arr[i]
+        if value > heap_values[0]:  # heap_values[0] is the minimum of k largest
+            i_parent = 0
+
+            # Sift down from root
+            while True:
+                i_child_left = 2 * i_parent + 1
+                i_child_right = i_child_left + 1
+                i_child_smallest = -1
+
+                # Find the smallest child
+                if i_child_left < k:
+                    if i_child_right < k:
+                        i_child_smallest = (
+                            i_child_left if heap_values[i_child_left] < heap_values[i_child_right] else i_child_right
+                        )
+                    else:
+                        i_child_smallest = i_child_left
+
+                # If no children or val is smaller than smallest child, we're done
+                if i_child_smallest == -1 or value <= heap_values[i_child_smallest]:
+                    heap_values[i_parent] = value
+                    heap_idx[i_parent] = i
+                    break
+
+                # Otherwise, move the smaller child up and continue
+                heap_values[i_parent] = heap_values[i_child_smallest]
+                heap_idx[i_parent] = heap_idx[i_child_smallest]
+                i_parent = i_child_smallest
+
+    return heap_idx
