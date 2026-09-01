@@ -95,7 +95,7 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitFarthestPoint(top_k=top_k)
 
     @classmethod
-    def farthest_point_batched(cls, top_k: int = 8, batch_size: int = 1024) -> InitFarthestPointBatched:
+    def farthest_point_batched(cls, top_k: int = 8, batch_size: int = 256) -> InitFarthestPointBatched:
         """Create a farthest-point initialization that draws a batch of items per pass over the dataset.
 
         It offers each draw the same candidates `farthest_point` would, so selections are of equal

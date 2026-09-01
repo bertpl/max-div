@@ -120,11 +120,13 @@ class InitFarthestPointBatched(InitializationStrategy):
     - batch_size (int): how many candidates a round collects, which bounds how many items it can
                         draw. Deeper pools reach further down the contribution ranking, so rounds
                         run longer and fewer passes over the dataset are needed, at the cost of
-                        refreshing more candidates per draw. It cannot affect the selection's
-                        quality, only the time spent. (default: 1024)
+                        refreshing more candidates per draw — measured across problem sizes and
+                        dimensionalities, the refreshing outweighs the saved passes above a few
+                        hundred. It cannot affect the selection's quality, only the time spent.
+                        (default: 256)
     """
 
-    def __init__(self, top_k: int = 8, batch_size: int = 1024) -> None:
+    def __init__(self, top_k: int = 8, batch_size: int = 256) -> None:
         """Create the strategy.
 
         Raises:

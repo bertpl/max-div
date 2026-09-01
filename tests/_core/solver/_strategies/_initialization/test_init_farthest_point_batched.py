@@ -177,3 +177,22 @@ def test_every_draw_is_among_the_top_k_contributions(seed: int):
             kth_best = np.sort(available)[-top_k] if len(available) >= top_k else available.min()
             assert contributions[item] >= kth_best
             state.add(item)  # one at a time, so the contributions update after every draw in the batch
+
+
+@pytest.mark.parametrize("seed", [1, 2, 3])
+def test_top_k_one_reproduces_the_per_pick_construction_exactly(seed: int):
+    """With a draw width of one, both constructions take the same greedy pick and agree item for item."""
+    # --- arrange ----------------------
+    states = [new_unconstrained_solver_state() for _ in range(2)]
+    steps = [
+        InitializationStep(InitializationStrategy.farthest_point(top_k=1)),
+        InitializationStep(InitializationStrategy.farthest_point_batched(top_k=1)),
+    ]
+
+    # --- act --------------------------
+    for step, state in zip(steps, states, strict=True):
+        step.set_seed(seed)
+        step.run(state)
+
+    # --- assert -----------------------
+    np.testing.assert_array_equal(states[0].selected_index_array, states[1].selected_index_array)
