@@ -67,11 +67,10 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         return self
 
     def set_initialization_strategy(self, init_strategy: InitializationStrategy) -> Self:
-        """Replace every worker's preset initialization with the given strategy.
+        """Set the initialization strategy for every worker without a `WorkerConfig.init_strategy` of its own.
 
-        A worker whose `WorkerConfig.init_strategy` is set keeps that — the per-worker choice is
-        the more specific one.  Every worker still gets its own derived seed, so a randomized
-        strategy varies per worker as it would under the preset initialization.
+        Every worker still gets its own derived seed, so a randomized strategy varies per worker as
+        it would under the preset initialization.
         """
         self._init_strategy = init_strategy
         return self
@@ -140,7 +139,8 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         """Build the parallel solver: one solver configuration per worker over a store they will share.
 
         Raises:
-            ValueError: If no workers were configured.
+            ValueError: If no workers were configured, or the strategy set with
+                `set_initialization_strategy` does not support the diversity metric.
         """
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")

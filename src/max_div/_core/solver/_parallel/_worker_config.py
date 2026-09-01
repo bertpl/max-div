@@ -14,7 +14,8 @@ class WorkerConfig:
     """A worker configuration holds one worker's search: its preset, and where it starts from.
 
     Args:
-        init_strategy: replaces the preset's own initialization; None keeps it.  Different
+        init_strategy: replaces the initialization this worker would otherwise run (the builder's
+            `set_initialization_strategy` choice, else the preset's own); None keeps it.  Different
             seeds already vary a random initialization, so this is for giving workers a
             different kind of start, not merely a different one.
     """

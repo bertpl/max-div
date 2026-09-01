@@ -23,9 +23,10 @@ from max_div.metrics import DiversityMetric
 _BUDGET = iterations(120)
 
 
-def _problem() -> MaxDivProblem:
+def _problem(diversity_metric: DiversityMetric = DiversityMetric.GEOMEAN_SEPARATION) -> MaxDivProblem:
     """Return a problem small enough to solve several times over in a test."""
-    return MaxDivProblem.new(np.random.default_rng(20260809).random((80, 3)).astype(np.float32), k=8)
+    vectors = np.random.default_rng(20260809).random((80, 3)).astype(np.float32)
+    return MaxDivProblem.new(vectors, k=8, diversity_metric=diversity_metric)
 
 
 def _solve_dynamic(n_workers: int, seed: int = 5) -> ParallelMaxDivSolution:
@@ -458,10 +459,13 @@ def test_a_partially_failed_parallel_solve_warns_and_returns():
     assert len(solution.workers) == 1
 
 
+# =================================================================================================
+#  Initialization override
+# =================================================================================================
 def test_set_initialization_strategy_reaches_every_worker():
     """The builder-level override replaces the preset init in every worker's configuration."""
     # --- arrange ----------------------
-    override = InitializationStrategy.farthest_point_batched(batch_max=4)
+    override = InitializationStrategy.farthest_point_batched(batch_size=16)
     builder = (
         ParallelMaxDivSolverBuilder(_problem()).with_workers(iterations(10), 2).set_initialization_strategy(override)
     )
@@ -497,10 +501,8 @@ def test_worker_config_init_strategy_wins_over_the_builder_override():
 def test_parallel_build_rejects_unsupported_metric_for_the_override():
     """An override that does not support the diversity metric fails at build."""
     # --- arrange ----------------------
-    vectors = np.random.default_rng(0).random((30, 2)).astype(np.float32)
-    problem = MaxDivProblem.new(vectors, k=5, diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE)
     builder = (
-        ParallelMaxDivSolverBuilder(problem)
+        ParallelMaxDivSolverBuilder(_problem(diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE))
         .with_workers(iterations(10), 2)
         .set_initialization_strategy(InitializationStrategy.farthest_point_batched())
     )
