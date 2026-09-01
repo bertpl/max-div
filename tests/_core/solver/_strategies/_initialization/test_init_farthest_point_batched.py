@@ -121,7 +121,15 @@ def test_draw_round_ends_once_the_pool_can_no_longer_be_shown_to_hold_the_best()
 
     # --- act --------------------------
     n_drawn = _draw_round(
-        cand_idx, cand_val, np.int32(1), threshold, np.int64(3), store, new_rng_state(np.int64(1)), out_batch
+        cand_idx,
+        cand_val,
+        np.int32(1),
+        threshold,
+        np.int64(3),
+        store,
+        new_rng_state(np.int64(1)),
+        out_batch,
+        np.empty(1, dtype=np.int32),
     )
 
     # --- assert -----------------------
@@ -148,6 +156,7 @@ def test_draw_round_draws_while_the_pool_still_holds_the_best():
         store,
         new_rng_state(np.int64(1)),
         out_batch,
+        np.empty(1, dtype=np.int32),
     )
 
     # --- assert -----------------------

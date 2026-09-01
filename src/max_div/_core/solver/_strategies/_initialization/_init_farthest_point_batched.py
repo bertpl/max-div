@@ -11,22 +11,51 @@ from ._base import InitializationStrategy
 
 
 @numba.njit(
-    numba.void(numba.int32[:], numba.float32[:], numba.int64, numba.int64),
+    numba.void(numba.float32[:], numba.int32[:], numba.int64, numba.int64),
+    inline="always",
     cache=True,
     fastmath={"reassoc", "contract"},
 )
-def _move_top_to_front(
-    cand_idx: NDArray[np.int32], cand_val: NDArray[np.float32], n_top: np.int64, n_remaining: np.int64
-) -> None:
-    """Reorder the first `n_top` pool slots to hold the highest values among the first `n_remaining`, descending."""
-    for s in range(n_top):
-        best = s
-        for c in range(s + 1, n_remaining):
-            if cand_val[c] > cand_val[best]:
-                best = c
-        if best != s:
-            cand_val[s], cand_val[best] = cand_val[best], cand_val[s]
-            cand_idx[s], cand_idx[best] = cand_idx[best], cand_idx[s]
+def _sift_down(values: NDArray[np.float32], positions: NDArray[np.int32], size: np.int64, start: np.int64) -> None:
+    """Restore the min-heap property below `start` in a heap of positions ordered by `values`."""
+    i_parent = start
+    while True:
+        i_left = 2 * i_parent + 1
+        i_right = i_left + 1
+        i_min = i_parent
+        if i_left < size and values[positions[i_left]] < values[positions[i_min]]:
+            i_min = i_left
+        if i_right < size and values[positions[i_right]] < values[positions[i_min]]:
+            i_min = i_right
+        if i_min == i_parent:
+            return
+        positions[i_parent], positions[i_min] = positions[i_min], positions[i_parent]
+        i_parent = i_min
+
+
+@numba.njit(
+    numba.float32(numba.float32[:], numba.int64, numba.int64, numba.int32[:]),
+    cache=True,
+    fastmath={"reassoc", "contract"},
+)
+def _select_highest(
+    values: NDArray[np.float32], n_live: np.int64, n_top: np.int64, out_positions: NDArray[np.int32]
+) -> np.float32:
+    """Fill `out_positions` with the `n_top` highest values' positions among the first `n_live`; return the lowest.
+
+    The positions come back in unspecified order. Ties keep the earlier position, so with
+    `n_top == 1` the result is the first maximum. The caller owns `out_positions` (at least
+    `n_top` long), so a draw allocates nothing.
+    """
+    for i in range(n_top):
+        out_positions[i] = i
+    for i in range(n_top // 2 - 1, -1, -1):
+        _sift_down(values, out_positions, n_top, np.int64(i))
+    for i in range(n_top, n_live):
+        if values[i] > values[out_positions[0]]:
+            out_positions[0] = i
+            _sift_down(values, out_positions, n_top, np.int64(0))
+    return values[out_positions[0]]
 
 
 @numba.njit(
@@ -38,6 +67,7 @@ def _move_top_to_front(
         numba.int64,
         DISTANCE_STORE_TYPE,
         numba.uint64[:],
+        numba.int32[:],
         numba.int32[:],
     ),
     cache=True,
@@ -52,6 +82,7 @@ def _draw_round(
     store: DistanceStore,
     rng_state: NDArray[np.uint64],
     out_batch: NDArray[np.int32],
+    top_positions: NDArray[np.int32],
 ) -> np.int64:
     """Draw items from the candidate pool into `out_batch` until the pool goes stale; return the count drawn.
 
@@ -64,7 +95,8 @@ def _draw_round(
     drawn down below `top_k` live candidates, unless it holds every remaining item anyway.
 
     After each draw the remaining pool is refreshed against the drawn item, so a candidate that the
-    draw brought close to the selection drops out of contention immediately.
+    draw brought close to the selection drops out of contention immediately. `top_positions` is a
+    caller-owned scratch buffer of at least `top_k` slots, so a draw allocates nothing.
     """
     count = len(cand_idx)
     p_uniform = np.zeros(0, dtype=np.float32)  # module globals freeze to readonly inside njit
@@ -76,11 +108,11 @@ def _draw_round(
             break
         if k_eff < top_k and threshold > -np.inf:
             break  # too few live candidates to show the draw would range over the dataset's best
-        _move_top_to_front(cand_idx, cand_val, k_eff, n_live)
-        if cand_val[k_eff - 1] < threshold:
+        if _select_highest(cand_val, n_live, k_eff, top_positions) < threshold:
             break
         # a single candidate needs no draw, matching `InitFarthestPoint`'s argmax path
-        pick_pos = 0 if k_eff == 1 else randint(np.int32(k_eff), np.int32(1), False, p_uniform, rng_state)[0]
+        slot = 0 if k_eff == 1 else randint(np.int32(k_eff), np.int32(1), False, p_uniform, rng_state)[0]
+        pick_pos = top_positions[slot]
         x = cand_idx[pick_pos]
         out_batch[n_drawn] = x
         n_drawn += 1
@@ -158,6 +190,7 @@ class InitFarthestPointBatched(InitializationStrategy):
         threshold = np.float32(-np.inf) if len(cand_idx) < self._batch_size else np.float32(cand_val.min())
         b_target = min(len(cand_idx), int(k_remaining))
         out_batch = np.empty(b_target, dtype=np.int32)
+        top_positions = np.empty(self._top_k, dtype=np.int32)
         n_drawn = _draw_round(
             cand_idx,
             cand_val,
@@ -167,5 +200,6 @@ class InitFarthestPointBatched(InitializationStrategy):
             state.distance_store,
             self._rng_state,
             out_batch,
+            top_positions,
         )
         return out_batch[:n_drawn]
