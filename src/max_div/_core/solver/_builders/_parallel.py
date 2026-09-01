@@ -146,7 +146,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
         warn_about_worker_count(len(self._worker_configs))
         if self._init_strategy is not None:
-            # fail here, in the building process, not first inside a spawned worker
+            # fail at build, not first inside a spawned worker
             self._init_strategy.validate_diversity_metric(self._diversity_metric)
         resolved, label = self._select_storage()
         e2e_budget = self._resolve_e2e_budget()

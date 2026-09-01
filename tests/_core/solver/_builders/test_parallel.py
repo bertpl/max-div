@@ -495,7 +495,7 @@ def test_worker_config_init_strategy_beats_the_builder_override():
 
 
 def test_parallel_build_rejects_unsupported_metric_for_the_override():
-    """An override that refuses the diversity metric fails at build, in the building process."""
+    """An override that does not support the diversity metric fails at build."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((30, 2)).astype(np.float32)
     problem = MaxDivProblem.new(vectors, k=5, diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE)
