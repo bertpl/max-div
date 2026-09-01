@@ -12,7 +12,7 @@ Tested Initialization strategies:
 | `e(4)`          | InitEager         | nc=4<br>ignore_constraints=False          | True             |                                                                       |
 | `e(16)`         | InitEager         | nc=16<br>ignore_constraints=False         | True             |                                                                       |
 | `fps(1)`        | InitFarthestPoint | top_k=1                                   | False            |                                                                       |
-| `fps(8)`        | InitFarthestPoint | top_k=8                                   | False            | = the SMART/THOROUGH presets' initialization (unconstrained problems) |
+| `fps(8)`        | InitFarthestPoint | top_k=8                                   | False            |                                                                       |
 | `mf`            | InitMostFeasible  |                                           | True             | = the SMART/THOROUGH presets' initialization (constrained problems)   |
 
 ### Time Duration

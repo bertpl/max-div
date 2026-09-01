@@ -182,7 +182,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         seed derived the same way elsewhere.
         """
         init_strategy, optim_steps = get_preset_strategies(
-            worker.preset, duration, has_constraints=bool(self._constraints)
+            worker.preset, duration, self._diversity_metric, has_constraints=bool(self._constraints)
         )
         return SolverConfig(
             n=self._n,
