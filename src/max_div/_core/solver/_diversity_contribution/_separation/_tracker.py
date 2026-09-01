@@ -72,6 +72,11 @@ class SeparationTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     #  Contribution reads
     # -------------------------------------------------------------------------
+    @property
+    def store(self) -> DistanceStore:
+        """Return the shared distance store."""
+        return self._store
+
     def contribution_wrt_selection(self, selected: NDArray[np.bool], n_selected: np.int32) -> NDArray[np.float32]:
         """Return separation of all points wrt the current selection (reference; do not modify)."""
         return self._sep_selected

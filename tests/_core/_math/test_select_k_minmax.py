@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core._math.select_k_minmax import select_k_max, select_k_min
+from max_div._core._math.select_k_minmax import select_k_max, select_k_max_masked, select_k_min
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -81,3 +81,35 @@ def test_select_k_clamps_k_into_valid_range(select_k, k: int):
     if expected_size:
         assert result.min() >= 0
         assert result.max() < arr.shape[0]
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2, 3])
+@pytest.mark.parametrize("k", [1, 3, 8, 40])
+def test_select_k_max_masked_matches_compacted(seed: int, k: int):
+    """Masked selection must equal select_k_max over a compacted copy, slot for slot."""
+
+    # --- arrange ----------------------
+    rng = np.random.default_rng(seed)
+    arr = rng.choice(np.linspace(0.0, 1.0, num=10), size=50).astype(np.float32)  # duplicates force tie handling
+    excluded = rng.random(50) < 0.4
+
+    # --- act --------------------------
+    masked = select_k_max_masked(arr, np.int32(k), excluded)
+    compact_positions = select_k_max(arr[~excluded], np.int32(k))
+    mapped = np.flatnonzero(~excluded).astype(np.int32)[compact_positions]
+
+    # --- assert -----------------------
+    np.testing.assert_array_equal(masked, mapped)
+
+
+def test_select_k_max_masked_clamps_k_and_handles_all_excluded():
+    """k above the candidate count returns every candidate; no candidates returns an empty array."""
+
+    # --- arrange ----------------------
+    arr = np.array([0.5, 0.1, 0.9, 0.3], dtype=np.float32)
+    half_excluded = np.array([True, False, True, False])
+
+    # --- act / assert -----------------
+    assert set(select_k_max_masked(arr, np.int32(10), half_excluded)) == {1, 3}
+    assert len(select_k_max_masked(arr, np.int32(2), np.full(4, True))) == 0
+    assert len(select_k_max_masked(arr, np.int32(0), half_excluded)) == 0

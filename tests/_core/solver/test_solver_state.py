@@ -765,3 +765,26 @@ def test_adopt_selection_validation():
     with state.savepoint(), pytest.raises(RuntimeError):
         state.adopt_selection(np.array([2, 3], dtype=np.int32))  # open savepoint
     assert state.selected_index_array.tolist() == [0, 1]  # untouched by the rejected calls
+
+
+def test_top_not_selected_contributions_returns_top_items(new_solver_state_unconstrained):
+    """The pool query returns the highest-contribution not-selected items, indices and values aligned."""
+    # --- arrange ----------------------
+    state = new_solver_state_unconstrained
+    state.add_many(np.array([0, 1], dtype=np.int32))
+
+    # --- act --------------------------
+    indices, values = state.top_not_selected_contributions(3)
+
+    # --- assert -----------------------
+    full = state.full_contribution_array
+    assert not np.isin(indices, state.selected_index_array).any()
+    np.testing.assert_array_equal(values, full[indices])
+    not_selected = np.setdiff1d(np.arange(state.n), state.selected_index_array)
+    expected_top = np.sort(full[not_selected])[-3:]
+    np.testing.assert_array_equal(np.sort(values), expected_top)
+
+
+def test_distance_store_property_exposes_the_trackers_store(new_solver_state_unconstrained):
+    """distance_store returns the store the main tracker reads."""
+    assert new_solver_state_unconstrained.distance_store.n == new_solver_state_unconstrained.n

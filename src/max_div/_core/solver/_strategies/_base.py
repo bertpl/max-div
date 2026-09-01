@@ -8,6 +8,8 @@ from max_div._core._utils import deterministic_hash_int64, int_to_int64
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from max_div._core.metrics import DiversityMetric
+
 
 class StrategyBase:
     """Base class for OptimizationStrategy & InitializationStrategy, centralizing some overlapping functionality."""
@@ -36,6 +38,14 @@ class StrategyBase:
     def seed(self) -> np.int64:
         """Return _seed without updating it."""
         return self._seed
+
+    def validate_diversity_metric(self, diversity_metric: "DiversityMetric") -> None:
+        """Raise when this strategy does not support the solve's main diversity metric.
+
+        Called when the solver is built, so an unsupported combination fails before any work.
+        The default accepts every metric; a strategy whose algorithm is tailored to specific
+        metric families overrides `validate_diversity_metric`.
+        """
 
     def set_seed(self, seed: int | np.int64) -> None:
         """Sets the random seed for the strategy, to be used by child classes."""

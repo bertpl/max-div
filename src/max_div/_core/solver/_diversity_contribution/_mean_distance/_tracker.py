@@ -80,6 +80,11 @@ class MeanDistanceTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     #  Contribution reads
     # -------------------------------------------------------------------------
+    @property
+    def store(self) -> DistanceStore:
+        """Return the shared distance store."""
+        return self._store
+
     def contribution_wrt_selection(self, selected: NDArray[np.bool], n_selected: np.int32) -> NDArray[np.float32]:
         """Return mean distance of all points wrt the current selection (freshly allocated array)."""
         # per-point divisor: number of selected neighbors — a selected point's own 0-distance is not a neighbor

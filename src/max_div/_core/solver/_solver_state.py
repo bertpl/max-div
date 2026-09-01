@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from max_div._core._math import select_k_max_masked
 from max_div._core._utils import delete_sorted, insert_sorted
 from max_div._core.constraints import Constraint, ConstraintList, _np_con_membership, to_numpy_membership
 
@@ -443,6 +444,21 @@ class SolverState:
     def selected_index_array(self) -> NDArray[np.int32]:
         """Return the selected indices, ascending (reference; do not modify)."""
         return self._selected_indices[: self._n_selected]
+
+    @property
+    def distance_store(self) -> DistanceStore:
+        """Return the distance store backing this state's trackers (shared, immutable)."""
+        return self._contribution_tracker.store
+
+    def top_not_selected_contributions(self, m: int | np.int32) -> tuple[NDArray[np.int32], NDArray[np.float32]]:
+        """Return indices and contributions of the up-to-m not-selected items with the highest contribution.
+
+        Both arrays are freshly allocated (safe for in-place mutation by the caller); fewer than
+        m items come back when fewer are not selected.
+        """
+        contributions = self.full_contribution_array
+        indices = select_k_max_masked(contributions, np.int32(m), self._selected)
+        return indices, contributions[indices]
 
     @property
     def not_selected_index_array(self) -> NDArray[np.int32]:
