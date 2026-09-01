@@ -9,6 +9,10 @@ Gallego & Duarte (2010), "GRASP and path relinking for the max-min diversity pro
 Computers & Operations Research 37(3); the hosting library (MDPLIB) is surveyed in Marti,
 Martinez-Gavara, Perez-Pelo & Sanchez-Oro (2022), EJOR 299(3).
 
+The archive has not changed since 2008, so its size and SHA-256 are pinned here. A download
+or cached copy is extracted only after it matches both; `_ensure_intact_archive` describes
+what happens when it does not.
+
 Formats (verified against the archive):
   - Glover / Geo: line 1 = n, line 2 = d, then n rows ``index coord_1 ... coord_d``.
   - Ran: line 1 = n, then an ``i j distance`` edge list (all unordered pairs).
@@ -17,33 +21,108 @@ The MMDP instances fix the ground set only; the selection size k is supplied by 
 caller (published results pair each instance with specific k values).
 """
 
+import hashlib
+import time
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
 
+
+class ArchiveDigest(NamedTuple):
+    """A digest is an archive's byte count and hex SHA-256; two files match when their digests are equal."""
+
+    size: int
+    sha256: str
+
+    @classmethod
+    def from_file(cls, path: Path) -> "ArchiveDigest":
+        """Compute the digest of the file at `path`."""
+        data = path.read_bytes()
+        return cls(len(data), hashlib.sha256(data).hexdigest())
+
+
 _ARCHIVE_URL = "https://www.uv.es/rmarti/paper/results/mmdp%20instances.zip"
+_ARCHIVE_DIGEST = ArchiveDigest(
+    size=12_411_255, sha256="32c437ded98f9dfdc554d78db262c2d7cd1a516775efbd04487b3e24b4fde6fc"
+)
 _CACHE_DIR = Path("reports/benchmarks/mdplib")
+_DOWNLOAD_ATTEMPTS = 3
+_RETRY_DELAY_SEC = 5.0
 FAMILIES = ("Glover", "Geo", "Ran")
 
 
-def fetch_mmdp_archive(cache_dir: Path = _CACHE_DIR) -> Path:
-    """Download (once) and extract the MMDP instance archive; return the instances dir."""
+class MdplibFetchError(RuntimeError):
+    """The MMDP archive could not be downloaded intact within the allowed attempts."""
+
+
+def fetch_mmdp_archive(
+    cache_dir: Path = _CACHE_DIR,
+    url: str = _ARCHIVE_URL,
+    expected: ArchiveDigest = _ARCHIVE_DIGEST,
+    retry_delay_sec: float = _RETRY_DELAY_SEC,
+) -> Path:
+    """Download (once) and extract the MMDP instance archive; return the instances dir.
+
+    Args:
+        cache_dir: Where the archive and its extracted instances live.
+        url: Archive location; a parameter so tests can serve a stand-in archive.
+        expected: Digest the downloaded archive must have.
+        retry_delay_sec: Pause between download attempts.
+
+    Raises:
+        MdplibFetchError: If no attempt yields an archive with digest `expected`.
+    """
     instances_dir = cache_dir / "instances"
     if instances_dir.is_dir():
         return instances_dir
     cache_dir.mkdir(parents=True, exist_ok=True)
     archive = cache_dir / "mmdp_instances.zip"
-    if not archive.exists():
-        with urllib.request.urlopen(_ARCHIVE_URL, timeout=60) as response:  # noqa: S310 -- fixed https URL
-            archive.write_bytes(response.read())
+    _ensure_intact_archive(archive, url, expected, retry_delay_sec)
     with zipfile.ZipFile(archive) as z:
         z.extractall(cache_dir)
     return instances_dir
+
+
+def _ensure_intact_archive(archive: Path, url: str, expected: ArchiveDigest, retry_delay_sec: float) -> None:
+    """Leave an archive with digest `expected` at `archive`, downloading as needed.
+
+    - A cached file whose digest differs is deleted and downloaded again.
+    - A download whose digest differs, or that fails outright, is deleted; the archive is
+      downloaded up to `_DOWNLOAD_ATTEMPTS` times.
+
+    The error raised when the attempts run out describes every failed one, so a truncated
+    transfer is reported with its byte count, not as an EOFError from the extraction.
+    """
+    if archive.exists():
+        if ArchiveDigest.from_file(archive) == expected:
+            return
+        archive.unlink()
+    failures: list[str] = []
+    for attempt in range(1, _DOWNLOAD_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(url, timeout=60) as response:  # noqa: S310 -- defaults to a fixed https URL; tests override it
+                archive.write_bytes(response.read())
+        except (urllib.error.URLError, OSError) as e:
+            failures.append(f"attempt {attempt}: download failed ({e})")
+        else:
+            got = ArchiveDigest.from_file(archive)
+            if got == expected:
+                return
+            failures.append(f"attempt {attempt}: got {got.size} bytes, sha256 {got.sha256}")
+        archive.unlink(missing_ok=True)
+        if attempt < _DOWNLOAD_ATTEMPTS:
+            time.sleep(retry_delay_sec)
+    raise MdplibFetchError(
+        f"Could not download an intact MMDP archive from {url} "
+        f"(expected {expected.size} bytes, sha256 {expected.sha256}): " + "; ".join(failures)
+    )
 
 
 def list_instances(family: str, cache_dir: Path = _CACHE_DIR) -> list[str]:
