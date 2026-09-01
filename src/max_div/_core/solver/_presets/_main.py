@@ -21,7 +21,7 @@ def get_preset_strategies(
     """Return the initialization strategy and optimization steps a preset resolves to.
 
     `diversity_metric` and `has_constraints` describe the problem; SMART and THOROUGH pick their
-    initialization from them (see `get_preset_strategies_smart`).
+    initialization from those two values (see `get_preset_strategies_smart`).
     """
     match preset.resolve_alias():
         case SolverPreset.RANDOM:

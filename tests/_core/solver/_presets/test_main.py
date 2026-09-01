@@ -75,7 +75,9 @@ def test_get_preset_strategies_init_follows_the_problem(
     has_constraints: bool,
     expected_init: dict[SolverPreset, type[InitializationStrategy]],
 ):
-    """SMART/THOROUGH start from most_feasible() when constrained, and from per-pick FPS under mean distance."""
+    """SMART/THOROUGH start from most_feasible() when constrained, and from the per-pick farthest-point
+    construction under MEAN_PAIRWISE_DISTANCE.
+    """
 
     # --- act --------------------------
     init_strat, _ = get_preset_strategies(preset, iterations(30), diversity_metric, has_constraints=has_constraints)

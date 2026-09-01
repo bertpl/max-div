@@ -32,7 +32,7 @@ def get_preset_strategies_smart(
         # several times faster at large n, so it is preferred wherever it applies.
         init_strategy = InitFarthestPointBatched(top_k=8)
     else:
-        # Unconstrained, other families: the per-pick construction, same top_k.
+        # The batched construction rejects other families; the per-pick one covers them.
         init_strategy = InitFarthestPoint(top_k=8)
 
     # --- optimization steps ---------------------
