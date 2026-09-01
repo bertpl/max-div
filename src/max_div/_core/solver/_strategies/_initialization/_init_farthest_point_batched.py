@@ -61,24 +61,28 @@ class InitFarthestPointBatched(InitializationStrategy):
     def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
         """Run one round: collect a candidate pool from the current contributions and draw a batch from it.
 
-        On an empty selection the round is the seeded random start item, as for `InitFarthestPoint`.
-        Otherwise the state supplies the `batch_size` highest-contribution not-selected items, and
-        the pool's lowest value becomes the round's admission threshold: every item left outside the
-        pool was below it, so a pool candidate still at or above it is among the dataset's best. When
-        the pool holds every remaining item there is nothing outside it, and the threshold is dropped
-        to -inf so the round may run the pool down. The draw loop itself (`_draw_round`) takes the
-        pool, the threshold and this strategy's RNG state, and returns however many items it drew
-        before the pool could no longer be shown to hold the best — at least one. The solver applies
-        that batch in a single tracker update before the next round.
+        The batch holds as many items as the round could draw before the pool could no longer be shown
+        to hold the best candidates — at least one; the solver applies it in a single tracker update.
         """
+        # --- empty selection --------------------
+        # the seeded random start item, as for `InitFarthestPoint`
         if state.n_selected == 0:
             return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
+
+        # --- candidate pool ---------------------
+        # the batch_size highest-contribution not-selected items
         cand_idx, cand_val = state.top_not_selected_contributions(self._batch_size)
-        # a pool holding every remaining item has nothing outside it to be measured against
-        threshold = np.float32(-np.inf) if len(cand_idx) < self._batch_size else np.float32(cand_val.min())
+        # every item outside the pool is below the pool's lowest value, so a pool candidate still at
+        # or above that value is among the dataset's best: it is the round's admission threshold
+        threshold = np.float32(cand_val.min())
+        if len(cand_idx) < self._batch_size:
+            # the pool holds every remaining item, so nothing is outside it: run the pool down
+            threshold = np.float32(-np.inf)
+
+        # --- draw -------------------------------
         b_target = min(len(cand_idx), int(k_remaining))
         out_batch = np.empty(b_target, dtype=np.int32)
-        top_positions = np.empty(self._top_k, dtype=np.int32)
+        top_positions = np.empty(self._top_k, dtype=np.int32)  # scratch for the draw loop's top-k positions
         n_drawn = _draw_round(
             cand_idx,
             cand_val,
