@@ -21,7 +21,7 @@ def _state_with_selection(has_constraints: bool):
 @pytest.mark.parametrize("has_constraints", [False, True])
 @pytest.mark.parametrize("sampling_type", [SamplingType.GROUP, SamplingType.CANDIDATES])
 def test_build_then_draw_equals_select_items_to_add(has_constraints: bool, sampling_type: SamplingType) -> None:
-    """The split (build probabilities, then draw) reproduces the one-call function draw for draw."""
+    """Building the probabilities and then drawing reproduces `select_items_to_add` exactly, draw for draw."""
     # --- arrange ----------------------
     state = _state_with_selection(has_constraints)
     candidates = state.not_selected_index_array
@@ -42,7 +42,7 @@ def test_build_then_draw_equals_select_items_to_add(has_constraints: bool, sampl
 @pytest.mark.parametrize("has_constraints", [False, True])
 @pytest.mark.parametrize("sampling_type", [SamplingType.GROUP, SamplingType.CANDIDATES])
 def test_drawing_leaves_the_probabilities_intact(has_constraints: bool, sampling_type: SamplingType) -> None:
-    """One probability array serves repeated draws: a draw reads p and never writes it."""
+    """A draw reads `p` and never writes it, so one array can be reused across draws."""
     # --- arrange ----------------------
     state = _state_with_selection(has_constraints)
     candidates = state.not_selected_index_array

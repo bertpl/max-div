@@ -35,9 +35,8 @@ def build_add_probabilities(
 ) -> NDArray[np.float32]:
     """Return the sampling probabilities of `candidates` for addition, derived from the current state.
 
-    Split off from `select_items_to_add` so a caller that draws several times from one unchanged state
-    (each trial add reverted before the next draw) builds the probabilities once.  The result is
-    only valid until the selection changes.
+    Lets a caller that draws several times from one unchanged state (each trial add reverted before
+    the next draw) build the probabilities once.  The result is only valid until the selection changes.
 
     Args:
         state: (SolverState) The current solver state containing selected items and other relevant information.
@@ -85,7 +84,7 @@ def select_items_to_add_with_p(
 ) -> NDArray[np.int32]:
     """Draw k items from `candidates` with the probabilities `p` built by `build_add_probabilities`.
 
-    `p` is read, never written, so one array serves any number of draws from the same state.
+    `p` is read, never written, so the same array can be passed to any number of draws from the same state.
 
     Args:
         state: (SolverState) The current solver state containing selected items and other relevant information.
@@ -158,27 +157,8 @@ def select_items_to_add(
 ) -> NDArray[np.int32]:
     """Select k items from 'candidates' to be added to the provided SolverState.
 
-    One build of the probabilities followed by one draw; see `build_add_probabilities` and
-    `select_items_to_add_with_p` for the two halves.
-
-    Candidates are guaranteed to be a subset of the not-selected items in the SolverState.
-
-    Args:
-        state: (SolverState) The current solver state containing selected items and other relevant information.
-        candidates: (NDArray[np.int32]) array of candidate item indices to choose from
-            (must be a subset of not-selected items; must be of size>=k)
-        k: (int) number of items to add to the selection.
-        selectivity_modifier: (float) value in [-1, 1] that modifies the selectivity of the
-            diversity-contribution-based probabilities used for sampling items to be added.
-            -1: maximally un-selective --> uniform
-            0: no modification to the contribution-based probabilities
-            +1: maximally selective --> only the items with very lowest contribution are sampled
-        rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
-        sampling_type: (SamplingType) context in which the k items are being sampled (GROUP vs CANDIDATES)
-        include_within_group_contribution: (bool) flag that influences how sampling probabilities are built.
-            True: start from contribution wrt already selected items + within-group contribution
-            False: start from contribution wrt already selected items only
-        ignore_constraints: (bool) If True, constraints are ignored even if present in the SolverState.
+    Build the probabilities once and draw once; `build_add_probabilities` and `select_items_to_add_with_p`
+    document the two halves and their arguments.  Candidates must be a subset of the not-selected items.
 
     Returns:
         list of np.int32 indices of the items to be added to the selection (unique values, unsorted).
