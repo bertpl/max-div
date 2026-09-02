@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core.solver._strategies._sampling import (
+    gather_f32,
     remove_sample_from_candidates,
     remove_sample_from_candidates_and_p,
 )
@@ -69,3 +70,28 @@ def test_remove_sample_from_candidates_value_error(sample: np.int32):
     # --- act & assert -----------------
     with pytest.raises(ValueError):
         _ = remove_sample_from_candidates(candidates, sample)
+
+
+# =================================================================================================
+#  gather_f32
+# =================================================================================================
+def test_gather_f32_matches_numpy_indexing():
+    # --- arrange ----------------------
+    values = np.arange(20, dtype=np.float32) * 0.5
+    indices = np.array([19, 0, 7, 7, 3], dtype=np.int32)
+
+    # --- act --------------------------
+    gathered = gather_f32(values, indices)
+
+    # --- assert -----------------------
+    np.testing.assert_array_equal(gathered, values[indices])
+    assert gathered.dtype == np.float32
+    assert not np.shares_memory(gathered, values)
+
+
+def test_gather_f32_empty_indices():
+    # --- arrange / act ----------------
+    gathered = gather_f32(np.ones(5, dtype=np.float32), np.empty(0, dtype=np.int32))
+
+    # --- assert -----------------------
+    assert gathered.shape == (0,)

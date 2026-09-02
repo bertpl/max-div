@@ -7,7 +7,7 @@ from max_div._core._math.modify_p_selectivity import DEFAULT_LOW_VALUE, exponent
 from max_div._core._random import choice, choice_constrained
 from max_div._core.solver._solver_state import SolverState
 
-from ._helpers import remove_sample_from_candidates_and_p
+from ._helpers import gather_f32, remove_sample_from_candidates_and_p
 
 
 class SamplingType(StrEnum):
@@ -59,7 +59,8 @@ def build_add_probabilities(
         p = state.global_contribution_for(candidates)  # contribution of candidates wrt all other items
     else:
         # standard path
-        p = state.full_contribution_array[candidates]  # new array; contribution of candidates wrt selected items
+        # new array; contribution of candidates wrt selected items (candidates are nearly all n items)
+        p = gather_f32(state.full_contribution_array, candidates)
         if include_within_group_contribution:
             p += state.global_contribution_for(candidates)  # add contribution of candidates wrt all other items
 

@@ -64,3 +64,18 @@ def remove_sample_from_candidates(candidates: NDArray[np.int32], sample: np.int3
 
     # --- we're done -----------------------------
     return new_candidates
+
+
+@numba.njit("float32[::1](float32[:], int32[:])", cache=True)
+def gather_f32(values: NDArray[np.float32], indices: NDArray[np.int32]) -> NDArray[np.float32]:
+    """Return `values[indices]` as a fresh float32 array, for an index array that is most of `values`.
+
+    numpy's `values[indices]` first casts the int32 index array to its native index type, and for
+    an index array of nearly n elements that cast roughly doubles the cost of the gather; this loop
+    reads each element once.  For a short index list (the selected items) numpy's index gather is
+    cheapest, so this helper is for the dense side only.
+    """
+    out = np.empty(indices.shape[0], dtype=np.float32)
+    for i in range(indices.shape[0]):
+        out[i] = values[indices[i]]
+    return out
