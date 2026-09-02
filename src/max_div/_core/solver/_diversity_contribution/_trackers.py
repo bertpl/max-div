@@ -164,13 +164,11 @@ class DiversityContributionTrackers:
             n_selected: (np.int32) number of True values in `selected`.
             selected_indices: (n_selected-sized int32 ndarray) the indices where `selected` is True.
         """
-        sep_tracker = self._separation_tracker
-        mean_tracker = self._mean_distance_tracker
-        if sep_tracker is None:
+        if (sep_tracker := self._separation_tracker) is None:
             sep = _EMPTY_NP_ARRAY_FLOAT32
         else:
             sep = sep_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
-        if mean_tracker is None:
+        if (mean_tracker := self._mean_distance_tracker) is None:
             mean = _EMPTY_NP_ARRAY_FLOAT32
         else:
             mean = mean_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
