@@ -71,9 +71,8 @@ def gather_f32(values: NDArray[np.float32], indices: NDArray[np.int32]) -> NDArr
     """Return `values[indices]` as a fresh float32 array, for an index array that is most of `values`.
 
     numpy's `values[indices]` first casts the int32 index array to its native index type, and for
-    an index array of nearly n elements that cast roughly doubles the cost of the gather; this loop
-    reads each element once.  For a short index list (the selected items) numpy's index gather is
-    cheapest, so this helper is for the dense side only.
+    an index array nearly as long as `values` that cast roughly doubles the cost of the gather.
+    For a short index list numpy's own gather is cheaper.
     """
     out = np.empty(indices.shape[0], dtype=np.float32)
     for i in range(indices.shape[0]):

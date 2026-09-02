@@ -76,6 +76,7 @@ def test_remove_sample_from_candidates_value_error(sample: np.int32):
 #  gather_f32
 # =================================================================================================
 def test_gather_f32_matches_numpy_indexing():
+    """gather_f32 equals numpy fancy indexing and returns a fresh float32 array."""
     # --- arrange ----------------------
     values = np.arange(20, dtype=np.float32) * 0.5
     indices = np.array([19, 0, 7, 7, 3], dtype=np.int32)
@@ -90,6 +91,7 @@ def test_gather_f32_matches_numpy_indexing():
 
 
 def test_gather_f32_empty_indices():
+    """An empty index array yields an empty result."""
     # --- arrange / act ----------------
     gathered = gather_f32(np.ones(5, dtype=np.float32), np.empty(0, dtype=np.int32))
 
