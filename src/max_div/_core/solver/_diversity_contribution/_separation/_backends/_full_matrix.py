@@ -38,11 +38,17 @@ def elements(sep: NDArray[np.float32], store: DistanceStore, indices: NDArray[np
 
 @numba.njit(ADD_SIGNATURE, cache=True)
 def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> None:
-    """Update separation of each item wrt selection after adding i_added."""
-    for j in range(i_added):
-        sep[j] = min(sep[j], get_distance_full_matrix(store, i_added, j))
-    for j in range(i_added + 1, store.n):
-        sep[j] = min(sep[j], get_distance_full_matrix(store, i_added, j))
+    """Update separation of each item wrt selection after adding i_added.
+
+    One contiguous sweep over the added item's row: a loop split around the item's own column does
+    not vectorize.  The sweep would set the item's own entry to its zero self-distance, so that
+    entry is saved and put back; the result is bit-identical to the split loop.
+    """
+    row = store.matrix[i_added]
+    own = sep[i_added]
+    for j in range(store.n):
+        sep[j] = min(sep[j], row[j])
+    sep[i_added] = own
 
 
 @numba.njit(ADD_MANY_SIGNATURE, parallel=True, cache=True)

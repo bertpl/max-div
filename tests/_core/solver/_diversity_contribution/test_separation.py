@@ -259,6 +259,23 @@ def test_update_separation_add():
     np.testing.assert_allclose(separation, expected_separation)
 
 
+def test_full_matrix_add_keeps_the_added_items_own_entry():
+    """The full-matrix add sweeps the whole row, so the added item's own entry is put back, not zeroed."""
+
+    # --- arrange ----------------------
+    vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
+    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean())
+    separation = np.array([np.inf, 5.0, 1.0, 2.0, 1.1], dtype=np.float32)  # selection: item 0
+    own_before = separation[2]
+
+    # --- act --------------------------
+    backend_for(store).add(separation, store, np.int32(2))
+
+    # --- assert -----------------------
+    assert separation[2] == own_before
+    assert (separation[[0, 1, 3, 4]] > 0).all()
+
+
 def test_update_separation_remove():
     """Check if update_separation_remove correctly updates separation after adding a vector."""
 
