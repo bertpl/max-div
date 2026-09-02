@@ -166,14 +166,15 @@ class DiversityContributionTrackers:
         """
         sep_tracker = self._separation_tracker
         mean_tracker = self._mean_distance_tracker
-        return (
-            sep_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
-            if sep_tracker is not None
-            else _EMPTY_NP_ARRAY_FLOAT32,
-            mean_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
-            if mean_tracker is not None
-            else _EMPTY_NP_ARRAY_FLOAT32,
-        )
+        if sep_tracker is None:
+            sep = _EMPTY_NP_ARRAY_FLOAT32
+        else:
+            sep = sep_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
+        if mean_tracker is None:
+            mean = _EMPTY_NP_ARRAY_FLOAT32
+        else:
+            mean = mean_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
+        return sep, mean
 
 
 # shared placeholder for the contribution values of untracked families

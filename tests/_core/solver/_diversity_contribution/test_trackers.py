@@ -128,9 +128,10 @@ def test_selected_contributions_slots(store: DistanceStore):
     trackers.add(np.int32(2))  # selection: points 0.0 and 3.0 on a line
     selected = np.full(N, False, dtype=np.bool)
     selected[[0, 2]] = True
+    selected_indices = np.array([0, 2], dtype=np.int32)
 
     # --- act --------------------------
-    contributions = trackers.selected_contributions(selected, np.int32(2), np.array([0, 2], dtype=np.int32))
+    contributions = trackers.selected_contributions(selected, np.int32(2), selected_indices)
 
     # --- assert -----------------------
     sep_slot = selected_contributions_slot(DiversityContributionFamily.SEPARATION)
