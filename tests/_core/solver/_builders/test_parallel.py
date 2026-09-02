@@ -10,11 +10,12 @@ from max_div._core.solver._builders._parallel import _resolve_group_sizes
 from max_div._core.solver._duration import iterations, seconds
 from max_div._core.solver._parallel import (
     DEFAULT_GROUP_MERGE_RATE,
+    FixedGroupCount,
     ParallelMaxDivSolution,
+    PowerLawGroupMerge,
     WorkerConfig,
     default_group_count,
     default_worker_count,
-    merge_fractions,
 )
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
@@ -315,28 +316,27 @@ def test_with_workers_uses_dynamic_grouping_for_any_budget_kind(budget):
     solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(budget, 8).build()
 
     # --- assert -----------------------
-    assert solver._dynamic_groups
+    assert isinstance(solver._merge_schedule, PowerLawGroupMerge)
     assert solver._group_sizes == [1] * 8
     assert all(config.batch_seconds == COOPERATIVE_BATCH_SECONDS for config in solver._solver_configs)
 
 
-def test_with_workers_passes_the_group_merge_rate_to_the_solver():
-    """The merge rate reaches the solver, which hands it to the shared group state it builds."""
+@pytest.mark.parametrize("group_merge_rate", [None, 3.0])
+def test_with_workers_builds_a_power_law_schedule_at_the_given_rate(group_merge_rate):
+    """The solver's schedule is a power law over the worker count at the given rate, or the default when omitted."""
+    # --- arrange ----------------------
+    builder = ParallelMaxDivSolverBuilder(_problem())
+    if group_merge_rate is None:
+        builder = builder.with_workers(seconds(10.0), 4)
+    else:
+        builder = builder.with_workers(seconds(10.0), 4, group_merge_rate=group_merge_rate)
+    expected = PowerLawGroupMerge(4, group_merge_rate if group_merge_rate is not None else DEFAULT_GROUP_MERGE_RATE)
+
     # --- act --------------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 4, group_merge_rate=3.0).build()
+    schedule = builder.build()._merge_schedule
 
     # --- assert -----------------------
-    assert solver._group_merge_rate == 3.0
-    assert solver._build_group_state()._merge_fractions == pytest.approx(merge_fractions(4, 3.0))
-
-
-def test_with_workers_defaults_to_the_default_group_merge_rate():
-    """Omitting the rate uses DEFAULT_GROUP_MERGE_RATE."""
-    # --- act --------------------------
-    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 4).build()
-
-    # --- assert -----------------------
-    assert solver._group_merge_rate == DEFAULT_GROUP_MERGE_RATE
+    assert [schedule.group_count(f / 10) for f in range(11)] == [expected.group_count(f / 10) for f in range(11)]
 
 
 @pytest.mark.parametrize("group_merge_rate", [0.5, 0.999, 10.001, 25.0])
@@ -361,7 +361,7 @@ def test_custom_worker_groups_are_fixed(workers):
     solver = ParallelMaxDivSolverBuilder(_problem()).with_custom_worker_groups(seconds(10.0), workers).build()
 
     # --- assert -----------------------
-    assert not solver._dynamic_groups
+    assert isinstance(solver._merge_schedule, FixedGroupCount)
 
 
 def test_custom_worker_groups_default_to_groups_of_about_four():

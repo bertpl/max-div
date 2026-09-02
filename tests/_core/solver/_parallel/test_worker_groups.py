@@ -1,4 +1,3 @@
-import math
 import multiprocessing
 
 import numpy as np
@@ -6,25 +5,20 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
-from max_div._core.solver._parallel import WorkerGroupState, merge_fractions
+from max_div._core.solver._parallel import FixedGroupCount, PowerLawGroupMerge, WorkerGroupState
 from max_div._core.solver._solver_state import SolverState
 
 
-def _group_state(
-    n_workers: int, group_sizes: list[int] | None = None, dynamic: bool = True, merge_rate: float = 1.0
-) -> WorkerGroupState:
+def _group_state(n_workers: int, group_sizes: list[int] | None = None, dynamic: bool = True) -> WorkerGroupState:
     """Return a shared group state over the given worker count, with three-component score slots.
 
-    The merge rate defaults to 1 so the dissolution tests below read against the linear
-    schedule's evenly spaced thresholds.
+    A dynamic state follows the linear schedule (rate 1), so the dissolution tests below read
+    against evenly spaced merge thresholds.
     """
+    sizes = group_sizes if group_sizes is not None else [1] * n_workers
+    schedule = PowerLawGroupMerge(n_workers, rate=1.0) if dynamic else FixedGroupCount(len(sizes))
     return WorkerGroupState(
-        multiprocessing.get_context("spawn"),
-        group_sizes=group_sizes if group_sizes is not None else [1] * n_workers,
-        k=3,
-        score_length=3,
-        dynamic=dynamic,
-        merge_rate=merge_rate,
+        multiprocessing.get_context("spawn"), group_sizes=sizes, k=3, score_length=3, schedule=schedule
     )
 
 
@@ -51,65 +45,13 @@ def _state_with(indices: list[int]) -> SolverState:
 # =================================================================================================
 #  Schedule
 # =================================================================================================
-@pytest.mark.parametrize(
-    "n_workers,merge_rate,fraction,expected",
-    [
-        (12, 1.0, 0.0, 12),
-        (12, 1.0, 0.05, 12),
-        (12, 1.0, 0.1, 11),
-        (12, 1.0, 0.5, 6),
-        (12, 1.0, 0.92, 1),  # just past the last merge at 11/12
-        (12, 1.0, 1.0, 1),
-        (12, 1.0, -0.5, 12),  # a not-yet-started tracker clamps to the start
-        (12, 1.0, 1.5, 1),  # an overspent budget clamps to the end
-        (4, 1.0, 0.5, 2),
-        (1, 1.0, 0.3, 1),
-        (12, 2.0, 0.1, 10),  # 12 * 0.81 = 9.72
-        (12, 2.0, 0.5, 3),  # 12 * 0.25
-        (12, 2.0, 0.7, 2),  # 12 * 0.09 = 1.08
-        (12, 2.0, 0.72, 1),  # just past the last merge at 1 - sqrt(1/12) = 0.711
-        (4, 2.0, 0.5, 1),  # 4 * 0.25
-    ],
-)
-def test_the_group_count_follows_the_merge_rate_over_the_progress_fraction(n_workers, merge_rate, fraction, expected):
-    """The count is ceil(n_workers * (1 - fraction) ** rate), floored at one and clamped at the budget's ends."""
-    # --- act / assert -----------------
-    assert _group_state(n_workers, merge_rate=merge_rate)._scheduled_count(fraction) == expected
-
-
-@pytest.mark.parametrize(
-    "n_workers,merge_rate,expected",
-    [
-        (4, 1.0, [0.25, 0.5, 0.75]),
-        (4, 2.0, [1 - math.sqrt(0.75), 1 - math.sqrt(0.5), 0.5]),
-        (1, 2.0, []),
-    ],
-)
-def test_merge_fractions_are_where_the_schedule_reaches_each_lower_count(n_workers, merge_rate, expected):
-    """The i-th merge fires where (1 - f) ** rate drops to (n_workers - i) / n_workers; rate 1 spaces them evenly."""
-    # --- act / assert -----------------
-    assert merge_fractions(n_workers, merge_rate) == pytest.approx(expected)
-
-
-@pytest.mark.parametrize("n_workers", [2, 5, 12])
-def test_rate_one_reproduces_the_linear_schedule_at_every_fraction(n_workers):
-    """At rate 1 the merge-fraction schedule equals ceil(n_workers * (1 - f)) over a fine grid of fractions."""
+def test_the_scheduled_count_is_the_schedule_s_count():
+    """The state asks its schedule for the count at the given fraction, without a schedule of its own."""
     # --- arrange ----------------------
-    group_state = _group_state(n_workers, merge_rate=1.0)
+    group_state = _group_state(12)
 
     # --- act / assert -----------------
-    for step in range(1001):
-        fraction = step / 1000
-        assert group_state._scheduled_count(fraction) == max(1, math.ceil(n_workers * (1.0 - fraction)))
-
-
-def test_a_fixed_grouping_schedules_no_merges():
-    """A fixed grouping's merge-fraction list is empty, whatever rate it is given."""
-    # --- act --------------------------
-    group_state = _group_state(4, group_sizes=[2, 2], dynamic=False, merge_rate=3.0)
-
-    # --- assert -----------------------
-    assert group_state._merge_fractions == []
+    assert group_state._scheduled_count(0.5) == PowerLawGroupMerge(12, rate=1.0).group_count(0.5) == 6
 
 
 # =================================================================================================
@@ -298,5 +240,9 @@ def test_a_zero_sized_group_is_rejected():
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="at least one worker"):
         WorkerGroupState(
-            multiprocessing.get_context("spawn"), group_sizes=[1, 0, 1], k=5, score_length=3, dynamic=False
+            multiprocessing.get_context("spawn"),
+            group_sizes=[1, 0, 1],
+            k=5,
+            score_length=3,
+            schedule=FixedGroupCount(3),
         )

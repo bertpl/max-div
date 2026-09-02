@@ -193,7 +193,8 @@ workers' progress through the budget:
     - the default of 2 drops the count quickly at first, giving the best-scoring groups extra
       workers while most of the budget is still ahead;
     - a rate of 1 spreads the merges evenly over the budget;
-    - larger rates merge sooner;
+    - a larger rate starts the solve with the count dropping that many times faster than under
+      a rate of 1, so the merges happen sooner;
 - each decrease dissolves the group whose shared best selection scores worst, and its workers
   join the strongest groups still short a member — reinforcing searches that can still win.
 
