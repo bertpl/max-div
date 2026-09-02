@@ -1,7 +1,7 @@
 import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 from max_div._core._utils._timer import Timer
 from max_div._core._warnings import SolverBudgetWarning
@@ -43,10 +43,7 @@ class SolverStepResult:
 # =================================================================================================
 #  SolverStep
 # =================================================================================================
-S = TypeVar("S", bound=StrategyBase)
-
-
-class SolverStep(ABC, Generic[S]):
+class SolverStep[S: StrategyBase](ABC):
     def __init__(self, strategy: S) -> None:
         self._strategy: S = strategy
 
@@ -60,7 +57,7 @@ class SolverStep(ABC, Generic[S]):
         """Raise when this step's strategy does not support the solve's main diversity metric."""
         self._strategy.validate_diversity_metric(diversity_metric)
 
-    def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:
+    def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:  # noqa: B027 — deliberately concrete: ignoring the budget is the right default
         """Take note of the solve's running end-to-end budget; only optimization steps act on one.
 
         The solver calls this on every step when a solve starts.

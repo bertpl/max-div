@@ -74,11 +74,6 @@ updates:
       - dependency-name: "ortools"
       - dependency-name: "pyscipopt"
       - dependency-name: "qc-selector"
-      # numpy 2.5 dropped Python 3.11, which this package still supports, so every release from
-      # 2.5 on is unresolvable here. Patches to 2.4.x still come through. Delete this entry when
-      # the 3.11 floor goes.
-      - dependency-name: "numpy"
-        versions: [">=2.5"]
     # Split by update type, as on the github-actions entry above and for the same reason. Here
     # it also lets the longer major cooldown below do its job: a mixed batch would hold the
     # minor and patch bumps back for the major's cooldown too.

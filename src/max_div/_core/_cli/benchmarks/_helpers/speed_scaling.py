@@ -1,11 +1,9 @@
 from dataclasses import dataclass
-from typing import Generic, Literal, TypeVar, cast
-
-T = TypeVar("T", int, float)
+from typing import Literal, cast
 
 
 @dataclass(frozen=True, kw_only=True)
-class SpeedParam(Generic[T]):
+class SpeedParam[T: (int, float)]:
     """A benchmark-scope parameter interpolated between its slow (full-scope) and fast (turbo) values.
 
     Every benchmark CLI exposes a `speed` parameter: 0.0 runs the full scope and 1.0 the

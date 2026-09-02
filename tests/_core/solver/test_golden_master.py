@@ -26,8 +26,8 @@ test asserts against the dataset matching the active regime:
 - 'nojit' (interpreted) output is environment-independent (verified across platforms and
   Python versions), so it is asserted unconditionally — including on the coverage legs.
 - 'jit' output depends on numba's codegen, which varies with Python and numba version (numba
-  compiles from Python bytecode; e.g. Python 3.11 produces different float rounding than
-  3.12+ with the same numba). The jit dataset therefore records the fingerprint of the
+  compiles from Python bytecode, so two Python minors can round floats differently under the
+  same numba). The jit dataset therefore records the fingerprint of the
   environment it was generated in, and the test skips when the runtime doesn't match —
   a version-driven codegen change is numba's business, not a regression of this codebase.
 
