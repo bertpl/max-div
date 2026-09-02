@@ -33,7 +33,7 @@ test asserts against the dataset matching the active regime:
 
 To regenerate the expected data (both regimes) after an intentional numeric change:
 
-    uv run --all-extras --python 3.13 python -m tests._core.solver.test_golden_master
+    uv run --all-extras --python 3.14 python -m tests._core.solver.test_golden_master
 """
 
 import json
