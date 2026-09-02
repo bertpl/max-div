@@ -105,10 +105,9 @@ class DiversityContributionTracker(ABC):
         """Update the contributions of the points in `new_selection` after removing point `index`.
 
         For a removal that is only scored and then reverted: the score reads the selected points
-        only, so the other points' contributions may be left stale, which is what makes this
-        cheaper than `remove`.  The caller must restore a snapshot taken before the call, since
-        the tracker is otherwise inconsistent.  This default performs the full `remove`, which is
-        correct but forgoes the saving.
+        only, so the other points' contributions may be left stale; that staleness is the saving
+        over `remove`.  The caller must restore a snapshot taken before the call.  This default
+        performs the full `remove`, which is correct but not cheaper.
         """
         self.remove(index, new_selection)
 

@@ -344,8 +344,8 @@ def test_reset_returns_to_empty_selection(tracker: MeanDistanceTracker):
     np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched
 
 
-@pytest.mark.parametrize("layout", ["full_matrix", "condensed", "lazy"])
-def test_remove_trial_matches_remove_on_the_selected_entries(layout: str):
+@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+def test_remove_trial_matches_remove_on_the_selected_entries(backend: str):
     """The selected-only subtraction agrees with the full update wherever the score reads."""
     # --- arrange ----------------------
     rng = random.default_rng(20260902)
@@ -355,7 +355,7 @@ def test_remove_trial_matches_remove_on_the_selected_entries(layout: str):
         "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, metric),
         "condensed": DistanceStore.condensed(compute_pdist(vectors, metric), n=N),
         "lazy": DistanceStore.lazy(vectors, metric),
-    }[layout]
+    }[backend]
     indices = [1, 4, 7, 12, 18]
     full, trial = MeanDistanceTracker(store), MeanDistanceTracker(store)
     for i in indices:

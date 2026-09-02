@@ -129,7 +129,7 @@ class MeanDistanceTracker(DiversityContributionTracker):
         self._backend.remove(self._dist_sums, self._store, index)
 
     def remove_trial(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
-        """Update the distance sums of `new_selection` only after removing `index` (contract: base class)."""
+        """Update the distance sums of `new_selection` only after removing `index`; see the base class contract."""
         remove_trial(self._dist_sums, self._store, index, new_selection)
 
     def reset(self) -> None:

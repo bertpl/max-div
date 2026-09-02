@@ -176,22 +176,31 @@ class SolverState:
                 score_without_i = state.score
 
         Inside the scope only the selected items' contributions are correct, which is all the score
-        reads; the other items' contributions are stale.  That is what makes this cheaper than
-        `remove` inside a `savepoint`, and why the scope cannot be kept: there is no `keep()`.
-        Scopes of this kind do not nest in each other, but may sit inside a `savepoint` scope.
+        reads; the other items' contributions are stale.  Leaving them stale is the saving over
+        `remove` inside a `savepoint`, and the reason there is no `keep()`.  Scopes of this kind do
+        not nest in each other, but may sit inside a `savepoint` scope.
         """
         return self._trial_removal.at(np.int32(index))
 
     def _remove_trial(self, index: np.int32) -> None:
-        """Remove `index` for scoring only: selection and constraints as `remove`, contributions selected-only."""
+        """Remove `index` for scoring only: as `remove`, except the trackers update the selected items only."""
+        # --- validation -------------------------
         if not self._selected[index]:
             raise ValueError(f"Cannot remove index that is not selected ({index}).")
+
+        # --- selection --------------------------
         self._selected[index] = False
         self._delete_selected_index(index)
         self._n_selected -= np.int32(1)
+
+        # --- diversity contributions ------------
         self._contribution_trackers.remove_trial(index, self.selected_index_array)
+
+        # --- constraints ------------------------
         if self._con_membership is not None:
             self._con_values[_np_con_membership(self._con_membership, index), :] += 1
+
+        # --- score ------------------------------
         self._score_dirty = True
 
     def _push_snapshot(self) -> None:
@@ -637,10 +646,9 @@ class Savepoint:
 class TrialRemoval:
     """Scope over a removal made for scoring only; see SolverState.trial_removal().
 
-    Same shape as `Savepoint` and for the same reason (entered several times per iteration); one
-    instance per state, re-aimed at each index by `at`.  Unlike `Savepoint` it has no `keep()`:
-    the contributions inside the scope are only correct for the selected items, so keeping them
-    would leave the state inconsistent.
+    Written like `Savepoint`, a class with `__enter__`/`__exit__`, for the same reason; one instance
+    per state, and `at` sets the index the next entry removes.  Unlike `Savepoint` it has no
+    `keep()`; `SolverState.trial_removal()` says why.
     """
 
     __slots__ = ("_index", "_state")
@@ -651,7 +659,7 @@ class TrialRemoval:
         self._index = np.int32(0)
 
     def at(self, index: np.int32) -> TrialRemoval:
-        """Aim the scope at `index` and return it, ready to enter."""
+        """Set the index the next entry removes, and return the scope."""
         self._index = index
         return self
 

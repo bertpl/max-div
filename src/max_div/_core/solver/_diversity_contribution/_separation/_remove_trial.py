@@ -2,13 +2,12 @@
 
 The score reads the separations of the selected items only, so a removal made just to score it
 needs no update of the not-selected entries; skipping them turns an O(n) sweep into a loop over
-the selection.  The not-selected entries are then stale, which is why the tracker exposes this
-only as `remove_trial`, and the solver state only inside a scope that always restores.
+the selection, and leaves the not-selected entries stale until the caller restores a snapshot.
 
 Unlike the backend modules, this loop reads distances through the layout-dispatching
-`get_distance`: it visits the selected items only, in scattered reads, so the layout branch that
-would keep a sweep over all items scalar costs nothing measurable here, and one function replaces
-one per layout.
+`get_distance`.  It visits only the selected items, in scattered reads, so the layout test inside
+the loop, which would make a sweep over all items run one item at a time, costs nothing measurable
+here, and one function serves every layout.
 """
 
 from __future__ import annotations

@@ -1,8 +1,8 @@
 """Distance-sum update for a removal that is only scored and then reverted.
 
 The score reads the selected items only, so the subtraction runs over the selection and leaves
-the not-selected sums stale; see the separation counterpart for why this is exposed only as a
-trial, and why it reads distances through the layout-dispatching `get_distance`.
+the not-selected sums stale; see the separation counterpart for why the tracker exposes this only
+as `remove_trial`, and why it reads distances through the layout-dispatching `get_distance`.
 """
 
 from __future__ import annotations

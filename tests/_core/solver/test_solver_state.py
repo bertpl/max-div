@@ -822,20 +822,16 @@ def test_trial_removal_scores_like_a_real_removal(layout: str, diversity_metric:
     score_before = state.score
     contributions_before = state.full_contribution_array.copy()
 
+    # --- act / assert -----------------
     for index in state.selected_index_array.copy():
         with state.savepoint():
             state.remove(index)
             expected = state.score.as_tuple()
-
-        # --- act ----------------------
         with state.trial_removal(index):
             actual = state.score.as_tuple()
             assert index not in state.selected_index_array
-
-        # --- assert -------------------
         assert actual == expected
         assert index in state.selected_index_array
-
     assert state.score.as_tuple() == score_before.as_tuple()
     np.testing.assert_array_equal(state.full_contribution_array, contributions_before)
 
