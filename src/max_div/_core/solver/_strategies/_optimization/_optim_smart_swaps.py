@@ -7,7 +7,8 @@ from max_div._core.solver._parameters import sampled_interval, sampled_poisson
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._strategies._sampling import (
     SamplingType,
-    select_items_to_add,
+    build_add_probabilities,
+    select_items_to_add_with_p,
     select_items_to_remove,
 )
 
@@ -212,18 +213,26 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
         best_samples: NDArray[np.int32] = np.empty(n_to_add, dtype=np.int32)
         best_score_tuple: tuple | None = None
 
+        # the state is the same at the start of every draw (each trial add below is reverted), so the
+        # sampling probabilities are built once for all nc_add draws
+        p = build_add_probabilities(
+            state=state,
+            candidates=candidate_samples,
+            selectivity_modifier=self.selectivity_modifier_add,
+            # no dataset-wide prior here: O(n²) to obtain, no measurable benefit for swap sampling
+            include_within_group_contribution=False,
+        )
+
         # a) repeat 'nc' times...
         for _i in range(self.nc_add):
             # 1) select group of 'n_to_add' samples
-            candidate_samples_to_add = select_items_to_add(
+            candidate_samples_to_add = select_items_to_add_with_p(
                 state=state,
                 candidates=candidate_samples,
+                p=p,
                 k=n_to_add,
-                selectivity_modifier=self.selectivity_modifier_add,
                 rng_state=self._rng_state,
                 sampling_type=SamplingType.GROUP,
-                # no dataset-wide prior here: O(n²) to obtain, no measurable benefit for swap sampling
-                include_within_group_contribution=False,
                 ignore_constraints=False,
             )
 
