@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python 3.11 is no longer supported; the minimum is now 3.12
 
 ### Fixed
+- Selections for a given seed change: int32 sampling now draws from the generator's upper 32 bits with Lemire's multiply-and-shift; the previous modulo of the full word read xoroshiro128+'s weakest bits
 
 ### Security
 
