@@ -6,16 +6,17 @@ boundary it exchanges its selection through its group's slot.
 - A **fixed** grouping keeps the assignment as configured for the whole solve — its scheduled
   group count is a constant, so no transition ever fires.
 - A **dynamic** grouping starts every worker in its own group and decreases the scheduled count
-  linearly to one over each worker's progress fraction.  Each decrease dissolves the group whose
-  exchange slot holds the worst score — the group whose best score is lowest so far — and
-  reassigns its workers to the strongest groups that are short a member, so they reinforce
-  searches that can still win.
+  to one over each worker's progress fraction, following `n_workers * (1 - fraction) ** rate`
+  (see `merge_fractions`).  Each decrease dissolves the group whose exchange slot holds the
+  worst score — the group whose best score is lowest so far — and reassigns its workers to the
+  strongest groups that are short a member, so they reinforce searches that can still win.
 
 The workers themselves run the schedule; no separate process does:
 
 - **`WorkerGroupState` is the shared-memory record of the grouping**: one slot per worker, an
   assignment table mapping each worker to its slot, the alive group count, and the dissolution
-  log.
+  log.  The schedule itself is a list of merge fractions computed once by the parent: the count
+  at a fraction is the starting count minus the merges at or below it.
 - **`WorkerGroupCoordinator` runs the schedule from inside the workers**: at each batch boundary
   a worker computes the scheduled group count from its own progress fraction, and whichever
   worker first sees the alive count exceed the schedule executes the dissolution itself, under a
@@ -31,6 +32,7 @@ one more batch.
 """
 
 import math
+from bisect import bisect_right
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -44,6 +46,30 @@ if TYPE_CHECKING:
 
     import numpy as np
     from numpy.typing import NDArray
+
+
+# ==================================================================================================
+#  Merge schedule
+# ==================================================================================================
+# The exponent the dynamic schedule applies to the remaining progress; 1 merges linearly, larger
+# values merge sooner.  Rate 2 gives the winning groups their reinforcements while most of the
+# budget is still ahead, where the linear schedule handed a 12-worker solve its last merge with
+# only a twelfth of the budget left.
+DEFAULT_GROUP_MERGE_RATE: float = 2.0
+# Below 1 merges slower than the linear schedule, which nothing asks for; at 10 a 12-worker solve
+# is a single group from under a quarter of the budget onward.
+GROUP_MERGE_RATE_BOUNDS: tuple[float, float] = (1.0, 10.0)
+
+
+def merge_fractions(n_workers: int, merge_rate: float) -> list[float]:
+    """Return the ascending progress fractions at which a dynamic grouping merges, one per merge.
+
+    The scheduled group count at fraction `f` is `ceil(n_workers * (1 - f) ** merge_rate)`, floored
+    at one, so the i-th merge (from `n_workers` groups down to `n_workers - i`) fires where
+    `(1 - f) ** merge_rate` drops to `(n_workers - i) / n_workers`.  At rate 1 the merges sit at
+    `i / n_workers`, so every group count holds an equal share of the budget.
+    """
+    return [1.0 - ((n_workers - i) / n_workers) ** (1.0 / merge_rate) for i in range(1, n_workers)]
 
 
 @dataclass(frozen=True)
@@ -72,7 +98,13 @@ class WorkerGroupState:
     """
 
     def __init__(
-        self, context: "BaseContext", group_sizes: list[int], k: int, score_length: int, dynamic: bool
+        self,
+        context: "BaseContext",
+        group_sizes: list[int],
+        k: int,
+        score_length: int,
+        dynamic: bool,
+        merge_rate: float = DEFAULT_GROUP_MERGE_RATE,
     ) -> None:
         """Allocate the slots, the configured assignment, and the dissolution log in shared memory.
 
@@ -85,6 +117,8 @@ class WorkerGroupState:
             score_length: number of components in the workers' score tuples.
             dynamic: whether the group count follows the dynamic schedule; a fixed grouping's
                 scheduled count is the configured group count, so it never changes.
+            merge_rate: the dynamic schedule's exponent (see `merge_fractions`); ignored by a
+                fixed grouping.  The builder validates the range; direct construction does not.
         """
         # --- configuration ----------------------
         if any(size <= 0 for size in group_sizes):
@@ -95,6 +129,8 @@ class WorkerGroupState:
         self._initial_group_count: int = len(group_sizes)
         self._dynamic: bool = dynamic
         self._score_length: int = score_length
+        # a fixed grouping never merges, so its list is empty and the count stays the configured one
+        self._merge_fractions: list[float] = merge_fractions(self._n_workers, merge_rate) if dynamic else []
 
         # --- shared grouping state --------------
         # one exchange slot per worker, so the dynamic schedule can start from groups of one
@@ -152,15 +188,13 @@ class WorkerGroupState:
     def _scheduled_count(self, progress_fraction: float) -> int:
         """Return the group count the schedule asks for at the given progress fraction.
 
-        A fixed grouping's scheduled count is the configured group count.  The dynamic count
-        decreases linearly from the worker count at fraction 0 and reaches 1 at fraction
-        `(n_workers - 1) / n_workers`, so every group count holds for an equal share of the
-        budget.
+        The count is the starting group count minus the merges scheduled at or below the
+        fraction (see `merge_fractions`); a fixed grouping schedules no merges, so its count is
+        the configured one.  The fraction is clamped to 0..1, so a not-yet-started tracker reads
+        as the start and an overspent budget as the end.
         """
-        if not self._dynamic:
-            return self._initial_group_count
         fraction = min(max(progress_fraction, 0.0), 1.0)
-        return max(1, math.ceil(self._n_workers * (1.0 - fraction)))
+        return max(1, self._initial_group_count - bisect_right(self._merge_fractions, fraction))
 
     def _dissolve_worst(self, progress_fraction: float) -> None:
         """Dissolve the worst-scoring group and reassign its workers to the strongest short groups.

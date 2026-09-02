@@ -9,10 +9,12 @@ from max_div._core.solver._builders import MaxDivSolverBuilder, ParallelMaxDivSo
 from max_div._core.solver._builders._parallel import _resolve_group_sizes
 from max_div._core.solver._duration import iterations, seconds
 from max_div._core.solver._parallel import (
+    DEFAULT_GROUP_MERGE_RATE,
     ParallelMaxDivSolution,
     WorkerConfig,
     default_group_count,
     default_worker_count,
+    merge_fractions,
 )
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
@@ -316,6 +318,33 @@ def test_with_workers_uses_dynamic_grouping_for_any_budget_kind(budget):
     assert solver._dynamic_groups
     assert solver._group_sizes == [1] * 8
     assert all(config.batch_seconds == COOPERATIVE_BATCH_SECONDS for config in solver._solver_configs)
+
+
+def test_with_workers_passes_the_group_merge_rate_to_the_solver():
+    """The merge rate reaches the solver, which hands it to the shared group state it builds."""
+    # --- act --------------------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 4, group_merge_rate=3.0).build()
+
+    # --- assert -----------------------
+    assert solver._group_merge_rate == 3.0
+    assert solver._build_group_state()._merge_fractions == pytest.approx(merge_fractions(4, 3.0))
+
+
+def test_with_workers_defaults_to_the_default_group_merge_rate():
+    """Omitting the rate uses DEFAULT_GROUP_MERGE_RATE."""
+    # --- act --------------------------
+    solver = ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 4).build()
+
+    # --- assert -----------------------
+    assert solver._group_merge_rate == DEFAULT_GROUP_MERGE_RATE
+
+
+@pytest.mark.parametrize("group_merge_rate", [0.5, 0.999, 10.001, 25.0])
+def test_with_workers_rejects_a_group_merge_rate_outside_the_bounds(group_merge_rate):
+    """A rate outside GROUP_MERGE_RATE_BOUNDS is rejected at configuration, naming the bounds."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="group_merge_rate must lie within"):
+        ParallelMaxDivSolverBuilder(_problem()).with_workers(seconds(10.0), 4, group_merge_rate=group_merge_rate)
 
 
 @pytest.mark.parametrize(
