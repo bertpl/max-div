@@ -5,7 +5,9 @@ from numpy.typing import NDArray
 from max_div._core._math.fast_log_exp import fast_exp2_f32, fast_log2_f32
 
 
-@njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
+# Every reducer here takes the same fastmath subset as the pair-distance functions in
+# `_distance/_metric/_pair.py`, for the same reason: `sep` carries +inf for "no selected neighbor yet".
+@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def min_separation(sep: NDArray[np.float32]) -> np.float32:
     """Minimum separation of all selected items."""
     n = sep.shape[0]
@@ -15,13 +17,13 @@ def min_separation(sep: NDArray[np.float32]) -> np.float32:
     return min_value
 
 
-@njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
+@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def mean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Arithmetic mean separation of all selected items."""
     return np.mean(sep)
 
 
-@njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
+@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def mean_pairwise_distance(mean_dists: NDArray[np.float32]) -> np.float32:
     """Mean pairwise distance among all selected items, from their mean-distance contribution values.
 
@@ -31,7 +33,7 @@ def mean_pairwise_distance(mean_dists: NDArray[np.float32]) -> np.float32:
     return np.mean(mean_dists)
 
 
-@njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
+@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Geometric mean separation of all selected items."""
     log_sum = np.float32(0.0)
@@ -41,7 +43,7 @@ def geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     return np.exp(log_sum / n)
 
 
-@njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
+@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def approx_geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Approximate geometric mean separation of all selected items."""
     log_sum = np.float32(0.0)
@@ -51,7 +53,7 @@ def approx_geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     return fast_exp2_f32(log_sum / n)
 
 
-@njit("float32(float32[::1])", fastmath=True, inline="always", cache=True)
+@njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def non_zero_separation_frac(sep: NDArray[np.float32]) -> np.float32:
     n = sep.shape[0]
     n_non_zero = np.int32(0)

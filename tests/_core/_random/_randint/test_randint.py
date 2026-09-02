@@ -522,3 +522,19 @@ def test_randint_non_uniform_without_replacement_probs(factor: float, sum_of_p: 
 #     # --- assert ------------------------------------------
 #     for i in i_selected:
 #         assert p[i] > 0.0, f"Selected index {i} with zero probability!"
+
+
+def test_randint_never_draws_a_zero_probability_item():
+    """A zero-probability item's key is +inf, so it is never among the k smallest while enough others remain."""
+    # --- arrange ----------------------
+    n, k = 40, 10
+    p = np.ones(n, dtype=np.float32)
+    zero_p = np.array([0, 7, 13, 21, 39])
+    p[zero_p] = 0.0
+    rng_state = new_rng_state(1234)
+
+    # --- act --------------------------
+    draws = [randint(np.int32(n), np.int32(k), False, p, rng_state) for _ in range(200)]
+
+    # --- assert -----------------------
+    assert not any(np.isin(draw, zero_p).any() for draw in draws)
