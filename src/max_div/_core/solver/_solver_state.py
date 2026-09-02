@@ -469,7 +469,7 @@ class SolverState:
     def selected_contribution_array(self) -> NDArray[np.float32]:
         """Return diversity contribution of selected items wrt the current selection (np.float32 ndarray)."""
         return self._contribution_tracker.contribution_wrt_selection(self._selected, self._n_selected)[
-            self._selected_indices[: self._n_selected]
+            self.selected_index_array
         ]
 
     @property
@@ -509,7 +509,7 @@ class SolverState:
             n_selected=self._n_selected,
             con_values=self._con_values,
             selected_contributions=self._contribution_trackers.selected_contributions(
-                self._selected, self._n_selected, self._selected_indices[: self._n_selected]
+                self._selected, self._n_selected, self.selected_index_array
             ),
         )
         self._score_dirty = False
