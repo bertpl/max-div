@@ -31,7 +31,8 @@ _S22 = np.float32(_D22)
 def fast_log2_f64(x: np.float64) -> np.float64:
     """Fast log approximation using 2nd order polynomial after range reduction.
 
-    (Max abs error ~0.0075 over entire range.)
+    (Max abs error ~0.0075 over the range of positive normal floats.)  Zero and subnormal inputs
+    give a large negative finite value, where an exact log2 gives -inf; callers must accept that.
     """
     # --- extract mantissa & exponent ------------
     # exponent
@@ -52,7 +53,8 @@ def fast_log2_f64(x: np.float64) -> np.float64:
 def fast_log2_f32(x: np.float32) -> np.float32:
     """Fast log approximation using 2nd order polynomial after range reduction.
 
-    (Max abs error ~0.0075 over entire range.)
+    (Max abs error ~0.0075 over the range of positive normal floats.)  Zero and subnormal inputs
+    give about -127, where an exact log2 gives -inf; callers must accept a finite value there.
     """
     # --- extract mantissa & exponent ------------
     # exponent
@@ -76,7 +78,7 @@ def fast_log2_f32(x: np.float32) -> np.float32:
 def fast_log_f64(x: np.float64) -> np.float64:
     """Fast log approximation using 2nd order polynomial after range reduction.
 
-    (Max abs error ~0.0052 over entire range.)
+    (Max abs error ~0.0052; input range as for `fast_log2_f64`.)
     """
     return _D_LOG_2 * fast_log2_f64(x)
 
@@ -85,7 +87,7 @@ def fast_log_f64(x: np.float64) -> np.float64:
 def fast_log_f32(x: np.float32) -> np.float32:
     """Fast log approximation using 2nd order polynomial after range reduction.
 
-    (Max abs error ~0.0052 over entire range.)
+    (Max abs error ~0.0052; input range as for `fast_log2_f32`.)
     """
     return _S_LOG_2 * fast_log2_f32(x)
 

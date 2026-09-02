@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Optimization iteration throughput improved, by 60% at n=10k and n=20k: per-iteration work that scanned all n items now touches only what one swap changes
+- Optimization iteration throughput on unconstrained problems improved, by 60% at n=10k and n=20k: per-iteration work that scanned all n items now touches only what one swap changes
 
 ### Deprecated
 

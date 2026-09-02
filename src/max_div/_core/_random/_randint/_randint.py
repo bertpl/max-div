@@ -70,8 +70,13 @@ def randint(  # noqa: C901 — case-dispatch structure is clearer un-split
 
           - given the intended use-case within max_div, it is acceptable that provided probabilities are only
             approximately taken into account.  Therefore, we use float32 representation and use a fast-approx-log
-            function in the Efraimidis-Spirakis sampling method.  Overall this can result in <1% deviation from
-            target probabilities, i.e. p[3] = 0.1 --> actual frequency in samples = [0.099 to 0.101].
+            function in the Efraimidis-Spirakis sampling method.  For probabilities of similar magnitude this
+            results in <1% deviation from target probabilities, i.e. p[3] = 0.1 --> actual frequency in samples =
+            [0.099 to 0.101].
+
+          - over a wide dynamic range the CDF paths lose the smallest values: the float32 running sum stops
+            changing for an item whose p is below about sum(p) / 2^24, so that item is never drawn.  Accepted,
+            because such an item's draw probability is below 1e-7 anyway.
 
     ALTERNATIVES CONSIDERED:
 
