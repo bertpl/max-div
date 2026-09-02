@@ -123,7 +123,6 @@ class SolverState:
         # snapshots — a stack, so provisional changes can nest ("Savepoint mechanics" in the class docstring)
         self._snapshots: list[Snapshot] = []
         self._savepoints: list[Savepoint] = []
-        self._trial_removal = TrialRemoval(self)
         self._depth: int = 0
 
         # finalize
@@ -169,39 +168,40 @@ class SolverState:
             self._savepoints.append(Savepoint(self))
         return self._savepoints[depth]
 
-    def trial_removal(self, index: int | np.int32) -> TrialRemoval:
-        """Open a scope in which `index` counts as removed, for scoring only; leaving the scope restores it.
+    def score_after_removal(self, index: int | np.int32) -> Score:
+        """Return the score the selection would have without `index`; the state itself is left as it is.
 
-            with state.trial_removal(i):
-                score_without_i = state.score
-
-        Inside the scope only the selected items' contributions are correct, which is all the score
-        reads; the other items' contributions are stale.  Leaving them stale is the saving over
-        `remove` inside a `savepoint`, and the reason there is no `keep()`.  Scopes of this kind do
-        not nest in each other, but may sit inside a `savepoint` scope.
+        Cheaper than `remove` inside a `savepoint`: only the selected items' contributions are
+        updated, since the score reads nothing else, and the snapshot taken around the update
+        restores everything.  Between the update and the restore the other items' contributions
+        are stale, which is why this is a function returning a score and not a scope: nothing can
+        observe the state in between.
         """
-        return self._trial_removal.at(np.int32(index))
-
-    def _remove_trial(self, index: np.int32) -> None:
-        """Remove `index` for scoring only: as `remove`, except the trackers update the selected items only."""
         # --- validation -------------------------
+        index = np.int32(index)
         if not self._selected[index]:
             raise ValueError(f"Cannot remove index that is not selected ({index}).")
 
-        # --- selection --------------------------
-        self._selected[index] = False
-        self._delete_selected_index(index)
-        self._n_selected -= np.int32(1)
+        self._push_snapshot()
+        try:
+            # --- selection ----------------------
+            self._selected[index] = False
+            self._delete_selected_index(index)
+            self._n_selected -= np.int32(1)
 
-        # --- diversity contributions ------------
-        self._contribution_trackers.remove_trial(index, self.selected_index_array)
+            # --- diversity contributions --------
+            self._contribution_trackers.remove_trial(index, self.selected_index_array)
 
-        # --- constraints ------------------------
-        if self._con_membership is not None:
-            self._con_values[_np_con_membership(self._con_membership, index), :] += 1
+            # --- constraints --------------------
+            if self._con_membership is not None:
+                self._con_values[_np_con_membership(self._con_membership, index), :] += 1
 
-        # --- score ------------------------------
-        self._score_dirty = True
+            # --- score --------------------------
+            self._score_dirty = True
+            score = self.score
+        finally:
+            self._pop_snapshot(restore=True)
+        return score
 
     def _push_snapshot(self) -> None:
         """Save the current state on top of the snapshot stack."""
@@ -640,37 +640,6 @@ class Savepoint:
     def __exit__(self, exc_type, exc_value, traceback) -> bool:  # noqa: ANN001 -- standard context-manager signature
         """Restore the pre-scope state unless the scope was kept; an exception always restores and always propagates."""
         self._state._pop_snapshot(restore=not self._keep or exc_type is not None)  # noqa: SLF001 -- as above
-        return False  # never swallow an exception
-
-
-class TrialRemoval:
-    """Scope over a removal made for scoring only; see SolverState.trial_removal().
-
-    Written like `Savepoint`, a class with `__enter__`/`__exit__`, for the same reason; one instance
-    per state, and `at` sets the index the next entry removes.  Unlike `Savepoint` it has no
-    `keep()`; `SolverState.trial_removal()` says why.
-    """
-
-    __slots__ = ("_index", "_state")
-
-    def __init__(self, state: SolverState) -> None:
-        """Bind the scope to its state.  Not intended to be constructed directly."""
-        self._state = state
-        self._index = np.int32(0)
-
-    def at(self, index: np.int32) -> TrialRemoval:
-        """Set the index the next entry removes, and return the scope."""
-        self._index = index
-        return self
-
-    def __enter__(self) -> None:
-        """Snapshot the state, then apply the scoring-only removal."""
-        self._state._push_snapshot()  # noqa: SLF001 -- TrialRemoval is SolverState's own scope object
-        self._state._remove_trial(self._index)  # noqa: SLF001 -- as above
-
-    def __exit__(self, exc_type, exc_value, traceback) -> bool:  # noqa: ANN001 -- standard context-manager signature
-        """Restore the pre-scope state; an exception propagates."""
-        self._state._pop_snapshot(restore=True)  # noqa: SLF001 -- as above
         return False  # never swallow an exception
 
 

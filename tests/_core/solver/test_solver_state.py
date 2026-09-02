@@ -812,8 +812,8 @@ def _state_over(vectors: np.ndarray, layout: str, diversity_metric: DiversityMet
     "diversity_metric",
     [DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION, DiversityMetric.MEAN_PAIRWISE_DISTANCE],
 )
-def test_trial_removal_scores_like_a_real_removal(layout: str, diversity_metric: DiversityMetric):
-    """Inside the scope the score equals the score after a real removal; after it the state is as before."""
+def test_score_after_removal_equals_the_score_of_a_real_removal(layout: str, diversity_metric: DiversityMetric):
+    """The returned score equals the score after a real removal, and the state is left as it was."""
     # --- arrange ----------------------
     rng = random.default_rng(20260902)
     vectors = rng.random((80, 3)).astype(np.float32)
@@ -827,62 +827,41 @@ def test_trial_removal_scores_like_a_real_removal(layout: str, diversity_metric:
         with state.savepoint():
             state.remove(index)
             expected = state.score.as_tuple()
-        with state.trial_removal(index):
-            actual = state.score.as_tuple()
-            assert index not in state.selected_index_array
-        assert actual == expected
+        assert state.score_after_removal(index).as_tuple() == expected
         assert index in state.selected_index_array
     assert state.score.as_tuple() == score_before.as_tuple()
     np.testing.assert_array_equal(state.full_contribution_array, contributions_before)
 
 
-def test_trial_removal_restores_constraint_counts(new_solver_state):
-    """Constraint bookkeeping follows the removal inside the scope and comes back after it."""
+def test_score_after_removal_accounts_for_constraints(new_solver_state):
+    """On a constrained state the returned score reflects the removal, and the constraint counts come back."""
     # --- arrange ----------------------
     state = new_solver_state
     state.add_many(np.array([0, 3, 5], dtype=np.int32))
     con_values_before = state.con_values.copy()
+    with state.savepoint():
+        state.remove(3)
+        expected = state.score.as_tuple()
 
     # --- act --------------------------
-    with state.trial_removal(3):
-        con_values_inside = state.con_values.copy()
+    actual = state.score_after_removal(3).as_tuple()
 
     # --- assert -----------------------
-    assert (con_values_inside != con_values_before).any()
+    assert actual == expected
+    assert actual != state.score.as_tuple()
     np.testing.assert_array_equal(state.con_values, con_values_before)
 
 
-def test_trial_removal_cannot_be_kept(new_solver_state_unconstrained):
-    """The scope has no keep(): its contributions are only correct for the selected items."""
+def test_score_after_removal_rejects_an_unselected_item(new_solver_state_unconstrained):
+    """Only a selected item can be scored as removed; a rejected call leaves the state untouched."""
     # --- arrange ----------------------
     state = new_solver_state_unconstrained
     state.add_many(np.array([0, 2], dtype=np.int32))
 
     # --- act / assert -----------------
-    scope = state.trial_removal(2)
-    assert not hasattr(scope, "keep")
-
-
-def test_trial_removal_restores_on_exception(new_solver_state_unconstrained):
-    """An exception inside the scope restores the state and propagates."""
-    # --- arrange ----------------------
-    state = new_solver_state_unconstrained
-    state.add_many(np.array([0, 2, 5], dtype=np.int32))
-
-    # --- act --------------------------
-    with pytest.raises(RuntimeError, match="boom"), state.trial_removal(2):
-        raise RuntimeError("boom")
-
-    # --- assert -----------------------
-    assert state.selected_index_array.tolist() == [0, 2, 5]
-
-
-def test_trial_removal_rejects_an_unselected_item(new_solver_state_unconstrained):
-    """Only a selected item can be removed for scoring."""
-    # --- arrange ----------------------
-    state = new_solver_state_unconstrained
-    state.add_many(np.array([0, 2], dtype=np.int32))
-
-    # --- act / assert -----------------
-    with pytest.raises(ValueError, match="not selected"), state.trial_removal(4):
-        pass
+    with pytest.raises(ValueError, match="not selected"):
+        state.score_after_removal(4)
+    assert state.selected_index_array.tolist() == [0, 2]
+    with state.savepoint():  # the snapshot stack is still balanced
+        state.add(4)
+    assert state.selected_index_array.tolist() == [0, 2]
