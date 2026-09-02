@@ -130,7 +130,7 @@ def test_selected_contributions_slots(store: DistanceStore):
     selected[[0, 2]] = True
 
     # --- act --------------------------
-    contributions = trackers.selected_contributions(selected, np.int32(2))
+    contributions = trackers.selected_contributions(selected, np.int32(2), np.array([0, 2], dtype=np.int32))
 
     # --- assert -----------------------
     sep_slot = selected_contributions_slot(DiversityContributionFamily.SEPARATION)
