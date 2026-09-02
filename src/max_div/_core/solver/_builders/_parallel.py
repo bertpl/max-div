@@ -64,10 +64,8 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         Args:
             target_duration: the budget each worker runs for (see `TargetDuration`).
             n_workers: how many workers solve; omitting it uses `default_worker_count()`.
-            group_merge_rate: how soon the groups merge: the group count follows
-                `n_workers * (1 - progress) ** group_merge_rate`, so 1 decreases it linearly
-                over the budget and larger values hand the winning groups their reinforcements
-                sooner.  Must lie within `GROUP_MERGE_RATE_BOUNDS`.
+            group_merge_rate: how soon the groups merge (see `merge_fractions` in
+                `_worker_groups`): 1 merges linearly over the budget, larger values sooner.
 
         Raises:
             ValueError: If `group_merge_rate` falls outside `GROUP_MERGE_RATE_BOUNDS`.

@@ -85,7 +85,7 @@ def test_the_group_count_follows_the_merge_rate_over_the_progress_fraction(n_wor
         (1, 2.0, []),
     ],
 )
-def test_merge_fractions_sit_where_the_remaining_progress_power_crosses_each_count(n_workers, merge_rate, expected):
+def test_merge_fractions_are_where_the_schedule_reaches_each_lower_count(n_workers, merge_rate, expected):
     """The i-th merge fires where (1 - f) ** rate drops to (n_workers - i) / n_workers; rate 1 spaces them evenly."""
     # --- act / assert -----------------
     assert merge_fractions(n_workers, merge_rate) == pytest.approx(expected)

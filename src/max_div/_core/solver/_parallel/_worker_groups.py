@@ -6,17 +6,16 @@ boundary it exchanges its selection through its group's slot.
 - A **fixed** grouping keeps the assignment as configured for the whole solve — its scheduled
   group count is a constant, so no transition ever fires.
 - A **dynamic** grouping starts every worker in its own group and decreases the scheduled count
-  to one over each worker's progress fraction, following `n_workers * (1 - fraction) ** rate`
-  (see `merge_fractions`).  Each decrease dissolves the group whose exchange slot holds the
-  worst score — the group whose best score is lowest so far — and reassigns its workers to the
-  strongest groups that are short a member, so they reinforce searches that can still win.
+  to one over each worker's progress fraction (see `merge_fractions`).  Each decrease dissolves
+  the group whose exchange slot holds the worst score — the group whose best score is lowest so
+  far — and reassigns its workers to the strongest groups that are short a member, so they
+  reinforce searches that can still win.
 
 The workers themselves run the schedule; no separate process does:
 
 - **`WorkerGroupState` is the shared-memory record of the grouping**: one slot per worker, an
   assignment table mapping each worker to its slot, the alive group count, and the dissolution
-  log.  The schedule itself is a list of merge fractions computed once by the parent: the count
-  at a fraction is the starting count minus the merges at or below it.
+  log.
 - **`WorkerGroupCoordinator` runs the schedule from inside the workers**: at each batch boundary
   a worker computes the scheduled group count from its own progress fraction, and whichever
   worker first sees the alive count exceed the schedule executes the dissolution itself, under a
@@ -51,10 +50,9 @@ if TYPE_CHECKING:
 # ==================================================================================================
 #  Merge schedule
 # ==================================================================================================
-# The exponent the dynamic schedule applies to the remaining progress; 1 merges linearly, larger
-# values merge sooner.  Rate 2 gives the winning groups their reinforcements while most of the
-# budget is still ahead, where the linear schedule handed a 12-worker solve its last merge with
-# only a twelfth of the budget left.
+# The dynamic schedule raises the remaining progress to this exponent; 1 merges linearly, larger
+# values sooner.  Rate 2 gives the best-scoring groups extra workers while most of the budget is
+# still ahead — at rate 1 a 12-worker solve makes its last merge with a twelfth of the budget left.
 DEFAULT_GROUP_MERGE_RATE: float = 2.0
 # Below 1 merges slower than the linear schedule, which nothing asks for; at 10 a 12-worker solve
 # is a single group from under a quarter of the budget onward.
@@ -129,7 +127,6 @@ class WorkerGroupState:
         self._initial_group_count: int = len(group_sizes)
         self._dynamic: bool = dynamic
         self._score_length: int = score_length
-        # a fixed grouping never merges, so its list is empty and the count stays the configured one
         self._merge_fractions: list[float] = merge_fractions(self._n_workers, merge_rate) if dynamic else []
 
         # --- shared grouping state --------------
