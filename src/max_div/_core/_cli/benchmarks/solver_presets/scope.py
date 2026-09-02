@@ -41,10 +41,12 @@ class BudgetSeries:
 
 
 # Each (problem, preset)-curve runs the single-worker series, one run with a fresh seed per
-# budget point, so repeat variability shows up as scatter between neighboring points.
+# budget point, so repeat variability shows up as scatter between neighboring points.  The
+# longest budget is where the curves plateau: past it the measured diversity moves by less than
+# the scatter between neighboring points, so a higher maximum costs hours and shows nothing.
 SINGLE_SERIES = BudgetSeries(
     t_min_sec=SpeedParam(slow=0.03, fast=1e-4),
-    t_max_sec=SpeedParam(slow=1800.0, fast=1e-3),
+    t_max_sec=SpeedParam(slow=900.0, fast=1e-3),
     n_points=SpeedParam(slow=50, fast=2),
 )
 # The parallel runs (SMART re-run on the machine's default worker count) get their own series.
@@ -53,7 +55,7 @@ SINGLE_SERIES = BudgetSeries(
 # points deliberately show what a caller gets when the budget barely covers start-up.
 PARALLEL_SERIES = BudgetSeries(
     t_min_sec=SpeedParam(slow=1.0, fast=2.0),
-    t_max_sec=SpeedParam(slow=1800.0, fast=2.0),
+    t_max_sec=SpeedParam(slow=900.0, fast=2.0),
     n_points=SpeedParam(slow=35, fast=1),
 )
 

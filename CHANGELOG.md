@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- The preset benchmark series (`max-div benchmark solver presets`) tops out at 900 s instead of 1800 s, where the anytime curves have reached their plateau
 
 ### Deprecated
 
