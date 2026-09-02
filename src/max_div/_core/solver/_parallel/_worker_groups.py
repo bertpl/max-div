@@ -50,9 +50,9 @@ if TYPE_CHECKING:
 # ==================================================================================================
 #  Merge schedule
 # ==================================================================================================
-# The dynamic schedule raises the remaining progress to this exponent; 1 merges linearly, larger
-# values sooner.  Rate 2 gives the best-scoring groups extra workers while most of the budget is
-# still ahead — at rate 1 a 12-worker solve makes its last merge with a twelfth of the budget left.
+# The dynamic schedule raises the remaining progress to this exponent.  Rate 2 gives the
+# best-scoring groups extra workers while most of the budget is still ahead — at rate 1 a
+# 12-worker solve makes its last merge with a twelfth of the budget left.
 DEFAULT_GROUP_MERGE_RATE: float = 2.0
 # Below 1 merges slower than the linear schedule, which nothing asks for; at 10 a 12-worker solve
 # is a single group from under a quarter of the budget onward.
@@ -62,8 +62,8 @@ GROUP_MERGE_RATE_BOUNDS: tuple[float, float] = (1.0, 10.0)
 def merge_fractions(n_workers: int, merge_rate: float) -> list[float]:
     """Return the ascending progress fractions at which a dynamic grouping merges, one per merge.
 
-    The scheduled group count at fraction `f` is `ceil(n_workers * (1 - f) ** merge_rate)`, floored
-    at one, so the i-th merge (from `n_workers` groups down to `n_workers - i`) fires where
+    The scheduled group count at fraction `f` is `ceil(n_workers * (1 - f) ** merge_rate)`, so
+    the i-th merge (from `n_workers` groups down to `n_workers - i`) fires where
     `(1 - f) ** merge_rate` drops to `(n_workers - i) / n_workers`.  At rate 1 the merges sit at
     `i / n_workers`, so every group count holds an equal share of the budget.
     """
