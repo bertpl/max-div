@@ -18,7 +18,7 @@ jobs:
       matrix:
         # ubuntu-only: pure Python + numpy/scipy/numba, no OS-specific code paths, so one
         # OS exercises everything. Strategic combos cover every axis (every supported Python,
-        # both resolution ends) rather than their full product. numba is a mandatory
+        # both resolution ends), not their full product. numba is a mandatory
         # dependency; the jit axis distinguishes compiled (representative) from
         # interpreted execution — coverage comes from the two jit-off legs, since numba
         # only yields line coverage with the JIT disabled.
