@@ -172,16 +172,10 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
             best_sample: np.int32 = np.int32(-1)
             best_score_tuple: tuple | None = None
             for i_cand in candidates_for_removal:
-                # trial removal: provisional, so leaving the scope undoes it
-                with state.savepoint():
-                    state.remove(i_cand)
-
-                    # compute new score
-                    cand_score = state.score
-                    cand_score_tuple = cand_score.as_tuple(
-                        soft=self.constraint_softness,
-                        ignore_infeasible_diversity=self.ignore_infeasible_diversity,
-                    )
+                cand_score_tuple = state.score_after_removal(i_cand).as_tuple(
+                    soft=self.constraint_softness,
+                    ignore_infeasible_diversity=self.ignore_infeasible_diversity,
+                )
 
                 # if best score so far, remember candidate
                 if (best_score_tuple is None) or (cand_score_tuple >= best_score_tuple):

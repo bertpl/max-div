@@ -440,3 +440,30 @@ def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
     # --- assert -----------------------
     assert np.all(np.isinf(tracker.contribution_wrt_selection(selected, n_selected)))
     np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched
+
+
+@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+def test_remove_trial_matches_remove_on_the_selected_entries(backend: str):
+    """The selected-only update agrees with the full update wherever the score reads; elsewhere it may be stale."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(20260902)
+    vectors = rng.random((60, 3)).astype(np.float32)
+    store = _stores_for(vectors, DistanceMetric.l2_euclidean())[backend]
+    selection = np.sort(rng.choice(60, size=12, replace=False)).astype(np.int32)
+    full, trial = SeparationTracker(store), SeparationTracker(store)
+    full.add_many(selection)
+    trial.add_many(selection)
+    removed = selection[5]
+    new_selection = selection[selection != removed]
+
+    # --- act --------------------------
+    full.remove(removed, new_selection)
+    trial.remove_trial(removed, new_selection)
+
+    # --- assert -----------------------
+    mask = np.zeros(60, dtype=bool)
+    mask[new_selection] = True
+    np.testing.assert_array_equal(
+        trial.contribution_wrt_selection(mask, np.int32(11))[new_selection],
+        full.contribution_wrt_selection(mask, np.int32(11))[new_selection],
+    )

@@ -30,7 +30,8 @@ class SolverState:
 
         Provisional changes are managed by three fields that always move together:
 
-            _depth       number of currently open scopes
+            _depth       number of snapshots on the stack: one per open scope, plus the one
+                         score_after_removal holds while it runs
             _snapshots   entries 0.._depth-1 hold the state saved at each open scope, innermost
                          last; entries at _depth and above are cleared spares kept for reuse
             _savepoints  the scope object handed out at each depth, one per depth ever reached
@@ -167,6 +168,41 @@ class SolverState:
             # first time this nesting depth is reached: allocate its scope object; later visits reuse it
             self._savepoints.append(Savepoint(self))
         return self._savepoints[depth]
+
+    def score_after_removal(self, index: int | np.int32) -> Score:
+        """Return the score the selection would have without `index`; the state itself is left as it is.
+
+        Cheaper than `remove` inside a `savepoint`: only the selected items' contributions are
+        updated, since the score reads nothing else, and the snapshot taken around the update
+        restores everything.  Between the update and the restore the other items' contributions
+        are stale, which is why `score_after_removal` returns a score and is not a scope: nothing can
+        observe the state in between.
+        """
+        # --- validation -------------------------
+        index = np.int32(index)
+        if not self._selected[index]:
+            raise ValueError(f"Cannot remove index that is not selected ({index}).")
+
+        self._push_snapshot()
+        try:
+            # --- selection ----------------------
+            self._selected[index] = False
+            self._delete_selected_index(index)
+            self._n_selected -= np.int32(1)
+
+            # --- diversity contributions --------
+            self._contribution_trackers.remove_trial(index, self.selected_index_array)
+
+            # --- constraints --------------------
+            if self._con_membership is not None:
+                self._con_values[_np_con_membership(self._con_membership, index), :] += 1
+
+            # --- score --------------------------
+            self._score_dirty = True
+            score = self.score
+        finally:
+            self._pop_snapshot(restore=True)
+        return score
 
     def _push_snapshot(self) -> None:
         """Save the current state on top of the snapshot stack."""

@@ -101,6 +101,16 @@ class DiversityContributionTracker(ABC):
         """
         raise NotImplementedError
 
+    def remove_trial(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
+        """Update the contributions of the points in `new_selection` after removing point `index`.
+
+        For a removal that is only scored and then reverted: the score reads the selected points
+        only, so the other points' contributions may be left stale; that staleness is the saving
+        over `remove`.  The caller must restore a snapshot taken before the call.  This default
+        performs the full `remove`, which is correct but not cheaper.
+        """
+        self.remove(index, new_selection)
+
     def add_many(self, indices: NDArray[np.int32], parallel: bool = False) -> None:
         """Update contributions after adding all points in `indices` to the selection.
 

@@ -788,3 +788,80 @@ def test_top_not_selected_contributions_returns_top_items(new_solver_state_uncon
 def test_distance_store_property_exposes_the_trackers_store(new_solver_state_unconstrained):
     """distance_store returns the store the main tracker reads."""
     assert new_solver_state_unconstrained.distance_store.n == new_solver_state_unconstrained.n
+
+
+# =================================================================================================
+#  Trial removal
+# =================================================================================================
+def _state_over(vectors: np.ndarray, layout: str, diversity_metric: DiversityMetric, k: int) -> SolverState:
+    """Build an unconstrained state over `vectors` with the given store layout and diversity metric."""
+    n = vectors.shape[0]
+    metric = DistanceMetric.l2_euclidean()
+    store = {
+        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, metric),
+        "condensed": DistanceStore.condensed(compute_pdist(vectors, metric), n=n),
+        "lazy": DistanceStore.lazy(vectors, metric),
+    }[layout]
+    return SolverState.new(
+        n=n, store=store, k=k, diversity_metric=diversity_metric, diversity_tie_breakers=[], constraints=[]
+    )
+
+
+@pytest.mark.parametrize("layout", ["full_matrix", "condensed", "lazy"])
+@pytest.mark.parametrize(
+    "diversity_metric",
+    [DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION, DiversityMetric.MEAN_PAIRWISE_DISTANCE],
+)
+def test_score_after_removal_equals_the_score_of_a_real_removal(layout: str, diversity_metric: DiversityMetric):
+    """The returned score equals the score after a real removal, and the state is left as it was."""
+    # --- arrange ----------------------
+    rng = random.default_rng(20260902)
+    vectors = rng.random((80, 3)).astype(np.float32)
+    state = _state_over(vectors, layout, diversity_metric, k=10)
+    state.add_many(np.sort(rng.choice(80, size=10, replace=False)).astype(np.int32))
+    score_before = state.score
+    contributions_before = state.full_contribution_array.copy()
+
+    # --- act / assert -----------------
+    for index in state.selected_index_array.copy():
+        with state.savepoint():
+            state.remove(index)
+            expected = state.score.as_tuple()
+        assert state.score_after_removal(index).as_tuple() == expected
+        assert index in state.selected_index_array
+    assert state.score.as_tuple() == score_before.as_tuple()
+    np.testing.assert_array_equal(state.full_contribution_array, contributions_before)
+
+
+def test_score_after_removal_accounts_for_constraints(new_solver_state):
+    """On a constrained state the returned score reflects the removal, and the constraint counts come back."""
+    # --- arrange ----------------------
+    state = new_solver_state
+    state.add_many(np.array([0, 3, 5], dtype=np.int32))
+    con_values_before = state.con_values.copy()
+    with state.savepoint():
+        state.remove(3)
+        expected = state.score.as_tuple()
+
+    # --- act --------------------------
+    actual = state.score_after_removal(3).as_tuple()
+
+    # --- assert -----------------------
+    assert actual == expected
+    assert actual != state.score.as_tuple()
+    np.testing.assert_array_equal(state.con_values, con_values_before)
+
+
+def test_score_after_removal_rejects_an_unselected_item(new_solver_state_unconstrained):
+    """Only a selected item can be scored as removed; a rejected call leaves the state untouched."""
+    # --- arrange ----------------------
+    state = new_solver_state_unconstrained
+    state.add_many(np.array([0, 2], dtype=np.int32))
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="not selected"):
+        state.score_after_removal(4)
+    assert state.selected_index_array.tolist() == [0, 2]
+    with state.savepoint():  # the snapshot stack is still balanced
+        state.add(4)
+    assert state.selected_index_array.tolist() == [0, 2]
