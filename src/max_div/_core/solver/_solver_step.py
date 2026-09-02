@@ -57,11 +57,10 @@ class SolverStep[S: StrategyBase](ABC):
         """Raise when this step's strategy does not support the solve's main diversity metric."""
         self._strategy.validate_diversity_metric(diversity_metric)
 
-    def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:  # noqa: B027 — deliberately concrete: ignoring the budget is the right default
-        """Take note of the solve's running end-to-end budget; only optimization steps act on one.
-
-        The solver calls this on every step when a solve starts.
-        """
+    @abstractmethod
+    def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:
+        """Take note of the solve's running end-to-end budget; the solver calls this on every step at solve start."""
+        raise NotImplementedError
 
     @abstractmethod
     def run(
@@ -98,6 +97,9 @@ class InitializationStep(SolverStep[InitializationStrategy]):
                 + "Use one of the InitializationStrategy factory methods to instantiate one..",
             )
         super().__init__(init_strategy)
+
+    def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:
+        """Ignore the end-to-end budget: initialization always runs to completion."""
 
     def run(
         self,
