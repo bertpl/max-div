@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Optimization iteration throughput improved: reads of the selected items' contributions no longer scan all n items
+- Optimization iteration throughput improved: reads of the selected items' contributions no longer scan all n items, and the probabilities used to sample items for addition are built once per iteration
 
 ### Deprecated
 
