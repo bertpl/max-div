@@ -12,7 +12,7 @@ Or with [uv](https://docs.astral.sh/uv/):
 uv add max-div
 ```
 
-Python 3.11 and newer is supported, including free-threaded builds (3.14t), which are covered by
+Python 3.12 and newer is supported, including free-threaded builds (3.14t), which are covered by
 CI. On a free-threaded interpreter, install **numba 0.65 or newer** — earlier releases ship no
 free-threaded wheels, so a lower pin will try to build numba from source. Note that
 free-threading support means the package computes correctly on such an interpreter; the solver

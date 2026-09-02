@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
+- Python 3.11 is no longer supported; the minimum is now 3.12
 
 ### Fixed
 

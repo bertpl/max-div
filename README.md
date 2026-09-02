@@ -54,7 +54,7 @@ compare max-div in depth with 10 other freely available solvers.
 pip install max-div
 ```
 
-Python 3.11+; free-threaded builds (3.14t) are supported and CI-tested (see the
+Python 3.12+; free-threaded builds (3.14t) are supported and CI-tested (see the
 [installation notes](https://max-div.readthedocs.io/en/stable/getting_started/#installation) for
 the numba version they require).
 

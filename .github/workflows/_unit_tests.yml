@@ -17,19 +17,18 @@ jobs:
       fail-fast: false
       matrix:
         # ubuntu-only: pure Python + numpy/scipy/numba, no OS-specific code paths, so one
-        # OS exercises everything. Strategic combos cover every axis (all four Pythons,
-        # both resolution ends) rather than their full product. numba is a mandatory
+        # OS exercises everything. Strategic combos cover every axis (every supported Python,
+        # both resolution ends), not their full product. numba is a mandatory
         # dependency; the jit axis distinguishes compiled (representative) from
         # interpreted execution — coverage comes from the two jit-off legs, since numba
         # only yields line coverage with the JIT disabled.
         include:
-          - { python: "3.11", resolution: highest,       jit: "on"  }
           - { python: "3.12", resolution: highest,       jit: "on"  }
           - { python: "3.13", resolution: highest,       jit: "on"  }
           - { python: "3.14", resolution: highest,       jit: "on"  }
-          - { python: "3.11", resolution: lowest-direct, jit: "on"  }
+          - { python: "3.12", resolution: lowest-direct, jit: "on"  }
           - { python: "3.14", resolution: lowest-direct, jit: "on"  }
-          - { python: "3.11", resolution: highest,       jit: "off" }  # coverage leg
+          - { python: "3.12", resolution: highest,       jit: "off" }  # coverage leg
           - { python: "3.14", resolution: highest,       jit: "off" }  # coverage leg
           # Free-threaded build. `highest` only, deliberately: the numba floor for 3.14 is 0.63,
           # which predates numba's free-threaded wheels (first shipped in 0.65), and no PEP 508

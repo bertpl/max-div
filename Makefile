@@ -11,7 +11,7 @@
 # narrowing would be cosmetic. `--no-default-groups` empties the implicit set, leaving only what
 # is named. `--only-group` narrows as well, but additionally drops the project and its runtime
 # dependencies, which leaves pytest with nothing to import.
-PY ?= 3.13
+PY ?= 3.14
 RESOLUTION ?= highest
 UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-groups --group test
 
@@ -89,7 +89,7 @@ build-capability-data:
 
 test-benchmarks:
 	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps groups)
-	uv run --group benchmarks --group benchmarks-gpl --python 3.13 pytest ./benchmarks/tests --durations=20 --disable-warnings
+	uv run --group benchmarks --group benchmarks-gpl --python 3.14 pytest ./benchmarks/tests --durations=20 --disable-warnings
 
 coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions

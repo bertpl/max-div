@@ -19,7 +19,6 @@ The following common elements are imposed / assumed:
 """
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
 
 import numpy as np
 
@@ -28,13 +27,11 @@ from max_div._core._utils import int_to_int64
 
 from .base import Floatable, ParameterValueSource
 
-S = TypeVar("S", bound=Floatable)
-
 
 # =================================================================================================
 #  Core class
 # =================================================================================================
-class AdaptiveSampler(ParameterValueSource, ABC, Generic[S]):
+class AdaptiveSampler[S: Floatable](ParameterValueSource, ABC):
     # -------------------------------------------------------------------------
     #  Constructor / Configuration
     # -------------------------------------------------------------------------

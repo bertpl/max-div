@@ -25,7 +25,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_VERSIONS_FILE = REPO_ROOT / ".python-versions"
 UNIT_TESTS_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "_unit_tests.yml"
 
-# Matrix legs quote their Python as `python: "3.11"`. The different key `python_version:` and the
+# Matrix legs quote their Python as `python: "3.12"`. The different key `python_version:` and the
 # `${{ ... }}` references carry no quoted literal, so this matches the matrix versions and nothing
 # else.
 _MATRIX_PYTHON = re.compile(r'\bpython:\s*"([^"]+)"')

@@ -1,7 +1,7 @@
 {
  "fingerprint": {
-  "python": "3.13",
-  "numba": "0.66.0"
+  "python": "3.14",
+  "numba": "0.67.0"
  },
  "cases": {
   "U1|RANDOM|42": {

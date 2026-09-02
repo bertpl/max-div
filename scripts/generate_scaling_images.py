@@ -6,7 +6,7 @@ pages include — images under the scaling docs' `images/` folder (`IMAGES_DIR`)
 `generated/`. Charts use the docs Matplotlib style sheet (`STYLE_SHEET`), shared with the
 benchmark-problem and preset-results figures.
 
-Run:  uv run --group benchmarks --python 3.13 python scripts/generate_scaling_images.py
+Run:  uv run --group benchmarks --python 3.14 python scripts/generate_scaling_images.py
 """
 
 import io
