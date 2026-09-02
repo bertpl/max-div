@@ -51,6 +51,10 @@ class PowerLawGroupMerge(GroupMergeSchedule):
         self._rate = rate
 
     def group_count(self, progress_fraction: float) -> int:
-        """Return the scheduled count, at least one; a not-yet-started tracker reads as the start and an overspent budget as the end."""
+        """Return the scheduled count, at least one.
+
+        The fraction is clamped to 0..1, so a not-yet-started tracker reads as the start and an
+        overspent budget as the end.
+        """
         fraction = min(max(progress_fraction, 0.0), 1.0)
         return max(1, math.ceil(self._n_workers * (1.0 - fraction) ** self._rate))
