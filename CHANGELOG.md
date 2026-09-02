@@ -5,21 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.17.1 (2026-09-02)
 
 ### Changed
 - Optimization iteration throughput on unconstrained problems improved, by 60% at n=10k and n=20k: per-iteration work that scanned all n items now touches only what one swap changes
 
-### Deprecated
-
 ### Removed
 - Python 3.11 is no longer supported; the minimum is now 3.12
-
-### Fixed
-
-### Security
 
 ## 0.17.0 (2026-09-01)
 
