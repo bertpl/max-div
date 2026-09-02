@@ -63,3 +63,18 @@ def test_non_finite_inputs_fall_back_to_uniform(p_in: np.ndarray):
 
     # --- assert -----------------------
     assert np.array_equal(p_out, expected_p_out)
+
+
+def test_near_maximal_selectivity_cuts_off_the_low_end():
+    """Near modifier = 1 the exponential underflows float32 to 0.0 for the low end of the range."""
+    # --- arrange ----------------------
+    p_in = np.linspace(0.0, 1.0, 101, dtype=np.float32)
+    p_out = np.empty_like(p_in)
+
+    # --- act --------------------------
+    exponential_selectivity(p_in=p_in, p_out=p_out, modifier=np.float32(0.99), reverse=False, low_value=np.float32(0.1))
+
+    # --- assert -----------------------
+    assert p_out[-1] > 0.99  # p_in = 1.0 maps to 1.0 up to the fast exponential's error
+    assert (p_out[p_in <= 0.7] == 0.0).all()  # the low end is cut off entirely
+    assert (p_out[p_in >= 0.85] > 0.0).all()  # the top of the range stays above zero

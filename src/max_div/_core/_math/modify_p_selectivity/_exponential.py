@@ -67,6 +67,10 @@ def exponential_selectivity(
     The approximate function fast_exp2(exponent * np.log2(base)) is used to compute the exponentiation efficiently,
       taking into account that np.log2(low_value) can be precomputed outside the loop.
 
+    Near modifier = 1 the exponent grows without bound and low_value**t underflows float32 to exactly 0.0 for
+    the items with the lowest p_in, so "maximally selective" is a hard cutoff of those items.  This is deliberate:
+    it is the literal meaning of maximal selectivity.
+
     Args:
         p_in: np.ndarray of shape (n,) containing the original probabilities.
         p_out: np.ndarray of shape (n,) to be populated with the transformed probabilities.

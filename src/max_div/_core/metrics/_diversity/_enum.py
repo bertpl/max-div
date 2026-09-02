@@ -29,7 +29,9 @@ class DiversityMetric(StrEnum):
         - MIN_SEPARATION:             Minimum separation of all selected items
         - MEAN_SEPARATION:            Arithmetic mean separation of all selected items
         - GEOMEAN_SEPARATION:         Geometric mean separation of all selected items
-        - APPROX_GEOMEAN_SEPARATION:  Approximate geometric mean separation of all selected items
+        - APPROX_GEOMEAN_SEPARATION:  Approximate geometric mean separation of all selected items; on coincident
+                                      items it is a large negative finite value where GEOMEAN_SEPARATION is -inf,
+                                      and both rank such a selection at the bottom
                                           (uses faster, but still smooth approximations of log(.) and exp(.))
         - NON_ZERO_SEPARATION_FRAC:   Fraction of separation values that are non-zero
         - MEAN_PAIRWISE_DISTANCE:     Mean distance over all pairs of selected items
