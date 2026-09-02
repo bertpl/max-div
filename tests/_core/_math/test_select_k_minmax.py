@@ -113,3 +113,15 @@ def test_select_k_max_masked_clamps_k_and_handles_all_excluded():
     assert set(select_k_max_masked(arr, np.int32(10), half_excluded)) == {1, 3}
     assert len(select_k_max_masked(arr, np.int32(2), np.full(4, True))) == 0
     assert len(select_k_max_masked(arr, np.int32(0), half_excluded)) == 0
+
+
+def test_select_k_min_ranks_inf_keys_last():
+    """Keys of +inf (zero-probability items in randint) never enter the k smallest while finite keys remain."""
+    # --- arrange ----------------------
+    keys = np.array([np.inf, 3.0, np.inf, 1.0, 2.0, np.inf], dtype=np.float32)
+
+    # --- act --------------------------
+    picked = select_k_min(keys, np.int32(3))
+
+    # --- assert -----------------------
+    assert sorted(picked.tolist()) == [1, 3, 4]

@@ -8,7 +8,13 @@ from numpy.typing import NDArray
 # =================================================================================================
 #  select_k_min
 # =================================================================================================
-@numba.njit(["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"], fastmath=True, inline="always", cache=True)
+# Same fastmath subset as `_distance/_metric/_pair.py`, on all three selectors: callers pass +inf sentinels.
+@numba.njit(
+    ["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"],
+    fastmath={"reassoc", "contract"},
+    inline="always",
+    cache=True,
+)
 def select_k_min(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
     """Find indices of k smallest elements in a float32 or float64 array using Numba.
 
@@ -33,7 +39,6 @@ def select_k_min(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
     ------------
     - 2-8x faster than np.argpartition for small to moderate k (k ~ 10-100)
     - Best when k << n (e.g., k=100, n=10000)
-    - Uses fastmath=True for additional SIMD optimizations
 
     `k` is clamped into [0, n]: k <= 0 returns an empty array, k >= n returns every index.
     """
@@ -136,7 +141,12 @@ def select_k_min(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
 # =================================================================================================
 #  select_k_max
 # =================================================================================================
-@numba.njit(["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"], fastmath=True, inline="always", cache=True)
+@numba.njit(
+    ["int32[:](float32[:], int32)", "int32[:](float64[:], int32)"],
+    fastmath={"reassoc", "contract"},
+    inline="always",
+    cache=True,
+)
 def select_k_max(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) -> NDArray[np.int32]:  # noqa: C901 — case-dispatch structure is clearer un-split
     """Find indices of k largest elements in a float32 or float64 array using Numba.
 
@@ -161,7 +171,6 @@ def select_k_max(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
     ------------
     - 2-8x faster than np.argpartition for small to moderate k (k ~ 10-100)
     - Best when k << n (e.g., k=100, n=10000)
-    - Uses fastmath=True for additional SIMD optimizations
 
     `k` is clamped into [0, n]: k <= 0 returns an empty array, k >= n returns every index.
     """
@@ -264,7 +273,7 @@ def select_k_max(arr: NDArray[np.float32] | NDArray[np.float64], k: np.int32) ->
 # =================================================================================================
 #  select_k_max_masked
 # =================================================================================================
-@numba.njit("int32[:](float32[:], int32, boolean[:])", fastmath=True, cache=True)
+@numba.njit("int32[:](float32[:], int32, boolean[:])", fastmath={"reassoc", "contract"}, cache=True)
 def select_k_max_masked(  # noqa: C901 — case-dispatch structure is clearer un-split
     arr: NDArray[np.float32], k: np.int32, excluded: NDArray[np.bool]
 ) -> NDArray[np.int32]:
