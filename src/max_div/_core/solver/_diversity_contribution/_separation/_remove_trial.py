@@ -5,7 +5,9 @@ needs no update of the not-selected entries; skipping them turns an O(n) sweep i
 the selection, and leaves the not-selected entries stale until the caller restores a snapshot.
 
 Unlike the backend modules, this loop reads distances through the layout-dispatching
-`get_distance`.  It visits only the selected items, in scattered reads, so the layout test inside
+`get_distance`.
+
+It visits only the selected items, in scattered reads, so the layout test inside
 the loop, which would make a sweep over all items run one item at a time, costs nothing measurable
 here, and one function serves every layout.
 """

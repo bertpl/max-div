@@ -30,7 +30,8 @@ class SolverState:
 
         Provisional changes are managed by three fields that always move together:
 
-            _depth       number of currently open scopes
+            _depth       number of snapshots on the stack: one per open scope, plus the one
+                         score_after_removal holds while it runs
             _snapshots   entries 0.._depth-1 hold the state saved at each open scope, innermost
                          last; entries at _depth and above are cleared spares kept for reuse
             _savepoints  the scope object handed out at each depth, one per depth ever reached
@@ -174,7 +175,7 @@ class SolverState:
         Cheaper than `remove` inside a `savepoint`: only the selected items' contributions are
         updated, since the score reads nothing else, and the snapshot taken around the update
         restores everything.  Between the update and the restore the other items' contributions
-        are stale, which is why this is a function returning a score and not a scope: nothing can
+        are stale, which is why `score_after_removal` returns a score and is not a scope: nothing can
         observe the state in between.
         """
         # --- validation -------------------------

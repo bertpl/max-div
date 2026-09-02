@@ -122,7 +122,7 @@ class DiversityContributionTrackers:
             tracker.remove(index, new_selection)
 
     def remove_trial(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
-        """Selected-only removal update on every tracker; see DiversityContributionTracker.remove_trial."""
+        """Apply the selected-only removal update on every tracker; see DiversityContributionTracker.remove_trial."""
         for tracker in self._trackers:
             tracker.remove_trial(index, new_selection)
 
