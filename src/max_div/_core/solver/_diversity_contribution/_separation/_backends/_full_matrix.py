@@ -40,9 +40,9 @@ def elements(sep: NDArray[np.float32], store: DistanceStore, indices: NDArray[np
 def add(sep: NDArray[np.float32], store: DistanceStore, i_added: np.int32) -> None:
     """Update separation of each item wrt selection after adding i_added.
 
-    One contiguous sweep over the added item's row: a loop split around the item's own column does
-    not vectorize.  The sweep would set the item's own entry to its zero self-distance, so that
-    entry is saved and put back; the result is bit-identical to the split loop.
+    The sweep covers the whole row, because a loop split around the item's own column does not
+    vectorize.  It would set the item's own entry to its zero self-distance, so that entry is saved
+    and put back.
     """
     row = store.matrix[i_added]
     own = sep[i_added]
