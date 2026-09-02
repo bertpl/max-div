@@ -80,3 +80,15 @@ def test_remove_many_delegates_to_remove_in_order_with_same_selection():
 
     # --- assert -----------------------
     assert tracker.calls == [("remove", 2, [0, 9]), ("remove", 5, [0, 9])]
+
+
+def test_remove_trial_defaults_to_the_full_remove():
+    """A tracker without a selected-only variant falls back to remove, which is correct but not cheaper."""
+    # --- arrange ----------------------
+    tracker = _CallRecordingTracker()
+
+    # --- act --------------------------
+    tracker.remove_trial(np.int32(4), np.array([1, 2], dtype=np.int32))
+
+    # --- assert -----------------------
+    assert tracker.calls == [("remove", 4, [1, 2])]

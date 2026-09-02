@@ -342,3 +342,34 @@ def test_reset_returns_to_empty_selection(tracker: MeanDistanceTracker):
     # --- assert -----------------------
     assert np.all(tracker.contribution_wrt_selection(selected, np.int32(0)) == 0.0)
     np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched
+
+
+@pytest.mark.parametrize("layout", ["full_matrix", "condensed", "lazy"])
+def test_remove_trial_matches_remove_on_the_selected_entries(layout: str):
+    """The selected-only subtraction agrees with the full update wherever the score reads."""
+    # --- arrange ----------------------
+    rng = random.default_rng(20260902)
+    vectors = rng.random((N, 3)).astype(np.float32)
+    metric = DistanceMetric.l2_euclidean()
+    store = {
+        "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, metric),
+        "condensed": DistanceStore.condensed(compute_pdist(vectors, metric), n=N),
+        "lazy": DistanceStore.lazy(vectors, metric),
+    }[layout]
+    indices = [1, 4, 7, 12, 18]
+    full, trial = MeanDistanceTracker(store), MeanDistanceTracker(store)
+    for i in indices:
+        full.add(np.int32(i))
+        trial.add(np.int32(i))
+    new_selection = np.array([1, 4, 12, 18], dtype=np.int32)
+
+    # --- act --------------------------
+    full.remove(np.int32(7), new_selection)
+    trial.remove_trial(np.int32(7), new_selection)
+
+    # --- assert -----------------------
+    selected, n_selected = _selection_args([1, 4, 12, 18])
+    np.testing.assert_array_equal(
+        trial.contribution_wrt_selection(selected, n_selected)[new_selection],
+        full.contribution_wrt_selection(selected, n_selected)[new_selection],
+    )

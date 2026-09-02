@@ -8,6 +8,7 @@ import numpy as np
 
 from .._base import DiversityContributionTracker
 from ._backends import backend_for
+from ._remove_trial import remove_trial
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -122,6 +123,10 @@ class SeparationTracker(DiversityContributionTracker):
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Update separations after removing point `index`, rescanning against `new_selection` where needed."""
         self._backend.remove(self._sep_selected, self._store, index, new_selection)
+
+    def remove_trial(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
+        """Update the separations of `new_selection` only after removing `index`; the base class states the contract."""
+        remove_trial(self._sep_selected, self._store, index, new_selection)
 
     def reset(self) -> None:
         """Reset separations to the empty selection (all +inf); the global cache stays valid as-is."""

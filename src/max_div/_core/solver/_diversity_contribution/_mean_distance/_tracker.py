@@ -8,6 +8,7 @@ import numpy as np
 
 from .._base import DiversityContributionTracker
 from ._backends import backend_for
+from ._remove_trial import remove_trial
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -126,6 +127,10 @@ class MeanDistanceTracker(DiversityContributionTracker):
         `new_selection` is not needed by this tracker: removal is exact subtraction.
         """
         self._backend.remove(self._dist_sums, self._store, index)
+
+    def remove_trial(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
+        """Update the distance sums of `new_selection` only after removing `index` (contract: base class)."""
+        remove_trial(self._dist_sums, self._store, index, new_selection)
 
     def reset(self) -> None:
         """Reset distance sums to the empty selection (all zero); the global cache stays valid as-is."""
