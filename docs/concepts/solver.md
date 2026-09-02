@@ -188,7 +188,13 @@ The worker total, when not given, defaults to **3/4 of the logical cores** on ei
 workers' progress through the budget:
 
 - every worker starts in its own group;
-- the group count decreases linearly, reaching one all-worker group at the end;
+- the group count decreases toward one all-worker group, following `n_workers · (1 − progress)^rate`,
+  where `rate` is the `group_merge_rate` argument of `with_workers`:
+    - the default of 2 drops the count quickly at first, giving the best-scoring groups extra
+      workers while most of the budget is still ahead;
+    - a rate of 1 spreads the merges evenly over the budget;
+    - a larger rate starts the solve with the count dropping that many times faster than under
+      a rate of 1, so the merges happen sooner;
 - each decrease dissolves the group whose shared best selection scores worst, and its workers
   join the strongest groups still short a member — reinforcing searches that can still win.
 

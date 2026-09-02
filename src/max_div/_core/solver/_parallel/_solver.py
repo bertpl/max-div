@@ -13,6 +13,7 @@ from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
 
 from ._executor import run_workers
+from ._merge_schedule import GroupMergeSchedule
 from ._result import best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._worker_config import WorkerConfig
@@ -36,7 +37,7 @@ class ParallelMaxDivSolver:
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
         group_sizes: list[int],
-        dynamic_groups: bool = False,
+        merge_schedule: GroupMergeSchedule,
     ) -> None:
         """Hold the problem, the resolved backend, and one configuration per worker.
 
@@ -47,8 +48,8 @@ class ParallelMaxDivSolver:
             solver_configs: the solver each worker assembles, in the same order.
             group_sizes: how the workers start out grouped, as consecutive run lengths over
                 the worker order; sizes must sum to the worker count.
-            dynamic_groups: whether the grouping follows the dynamic schedule (see
-                `_worker_groups`); a fixed grouping keeps `group_sizes` for the
+            merge_schedule: the group count to hold at each progress fraction (see
+                `_merge_schedule`); a fixed grouping's schedule keeps `group_sizes` for the
                 whole solve.
         """
         self._problem = problem
@@ -56,7 +57,7 @@ class ParallelMaxDivSolver:
         self._worker_configs = worker_configs
         self._solver_configs = solver_configs
         self._group_sizes = group_sizes
-        self._dynamic_groups = dynamic_groups
+        self._merge_schedule = merge_schedule
         # `last_dynamic_events` holds the most recent dynamic solve's dissolutions, for inspection
         self.last_dynamic_events: list[DissolutionEvent] = []
 
@@ -130,7 +131,7 @@ class ParallelMaxDivSolver:
             k=config.k,
             # the score length is the three fixed components plus one per tie-breaker (Score.as_tuple)
             score_length=3 + len(config.diversity_tie_breakers),
-            dynamic=self._dynamic_groups,
+            schedule=self._merge_schedule,
         )
 
 

@@ -10,6 +10,7 @@ from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._distance_storage import build_shared_distance_store
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import (
+    FixedGroupCount,
     WorkerGroupState,
     best_result,
     run_workers,
@@ -28,7 +29,7 @@ def _independent_coordinators(config, n: int):
         group_sizes=[1] * n,
         k=config.k,
         score_length=3 + len(config.diversity_tie_breakers),
-        dynamic=False,
+        schedule=FixedGroupCount(n),
     )
     return [state.coordinator_for(index) for index in range(n)]
 
@@ -119,7 +120,7 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
         group_sizes=[len(_SEEDS)],
         k=config.k,
         score_length=3 + len(config.diversity_tie_breakers),
-        dynamic=False,
+        schedule=FixedGroupCount(1),
     )
     coordinators = [group_state.coordinator_for(index) for index in range(len(_SEEDS))]
 

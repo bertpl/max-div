@@ -6,10 +6,10 @@ boundary it exchanges its selection through its group's slot.
 - A **fixed** grouping keeps the assignment as configured for the whole solve — its scheduled
   group count is a constant, so no transition ever fires.
 - A **dynamic** grouping starts every worker in its own group and decreases the scheduled count
-  linearly to one over each worker's progress fraction.  Each decrease dissolves the group whose
-  exchange slot holds the worst score — the group whose best score is lowest so far — and
-  reassigns its workers to the strongest groups that are short a member, so they reinforce
-  searches that can still win.
+  to one over each worker's progress fraction (see `PowerLawGroupMerge`).  Each decrease dissolves
+  the group whose exchange slot holds the worst score — the group whose best score is lowest so
+  far — and reassigns its workers to the strongest groups that are short a member, so they
+  reinforce searches that can still win.
 
 The workers themselves run the schedule; no separate process does:
 
@@ -38,6 +38,7 @@ from max_div._core.solver._solver_state import SolverState
 
 from ._coordinator import WorkerCoordinator
 from ._exchange_slot import GroupExchangeSlot
+from ._merge_schedule import GroupMergeSchedule
 
 if TYPE_CHECKING:
     from multiprocessing.context import BaseContext
@@ -72,7 +73,12 @@ class WorkerGroupState:
     """
 
     def __init__(
-        self, context: "BaseContext", group_sizes: list[int], k: int, score_length: int, dynamic: bool
+        self,
+        context: "BaseContext",
+        group_sizes: list[int],
+        k: int,
+        score_length: int,
+        schedule: GroupMergeSchedule,
     ) -> None:
         """Allocate the slots, the configured assignment, and the dissolution log in shared memory.
 
@@ -83,8 +89,8 @@ class WorkerGroupState:
                 a dynamic grouping starts from groups of one.
             k: maximum selection size the slots hold.
             score_length: number of components in the workers' score tuples.
-            dynamic: whether the group count follows the dynamic schedule; a fixed grouping's
-                scheduled count is the configured group count, so it never changes.
+            schedule: the group count to hold at each progress fraction; a fixed grouping's
+                schedule returns the configured count, so it never fires a transition.
         """
         # --- configuration ----------------------
         if any(size <= 0 for size in group_sizes):
@@ -93,15 +99,15 @@ class WorkerGroupState:
             raise ValueError(f"Every worker group needs at least one worker; got sizes {group_sizes}.")
         self._n_workers: int = sum(group_sizes)
         self._initial_group_count: int = len(group_sizes)
-        self._dynamic: bool = dynamic
+        self._schedule: GroupMergeSchedule = schedule
         self._score_length: int = score_length
 
         # --- shared grouping state --------------
         # one exchange slot per worker, so the dynamic schedule can start from groups of one
         self._slots = [GroupExchangeSlot(context, k=k, score_length=score_length) for _ in range(self._n_workers)]
         # the assignment table: each worker's current group (= slot index), starting as configured
-        initial_assignment = [group for group, size in enumerate(group_sizes) for _ in range(size)]
-        self._assignment = context.Array("i", initial_assignment, lock=False)
+        self._initial_assignment: list[int] = [group for group, size in enumerate(group_sizes) for _ in range(size)]
+        self._assignment = context.Array("i", self._initial_assignment, lock=False)
         # the number of groups that still have workers; read lock-free as the transition guard
         self._n_alive_groups = context.Value("i", self._initial_group_count, lock=False)
         self._transition_lock = context.Lock()
@@ -150,17 +156,8 @@ class WorkerGroupState:
         return self._slots[self._assignment[worker_index]].exchange(score, selection)
 
     def _scheduled_count(self, progress_fraction: float) -> int:
-        """Return the group count the schedule asks for at the given progress fraction.
-
-        A fixed grouping's scheduled count is the configured group count.  The dynamic count
-        decreases linearly from the worker count at fraction 0 and reaches 1 at fraction
-        `(n_workers - 1) / n_workers`, so every group count holds for an equal share of the
-        budget.
-        """
-        if not self._dynamic:
-            return self._initial_group_count
-        fraction = min(max(progress_fraction, 0.0), 1.0)
-        return max(1, math.ceil(self._n_workers * (1.0 - fraction)))
+        """Return the group count the schedule asks for at the given progress fraction."""
+        return self._schedule.group_count(progress_fraction)
 
     def _dissolve_worst(self, progress_fraction: float) -> None:
         """Dissolve the worst-scoring group and reassign its workers to the strongest short groups.
@@ -226,7 +223,7 @@ class WorkerGroupState:
     def events(self) -> list[DissolutionEvent]:
         """Return the dissolution log as `DissolutionEvent`s; call after the workers finished."""
         events = []
-        previous_assignment = self._initial_assignment()
+        previous_assignment = self._initial_assignment
         alive = set(previous_assignment)
         for index in range(self._ev_count.value):
             assignment = list(self._ev_assignment[index * self._n_workers : (index + 1) * self._n_workers])
@@ -248,16 +245,6 @@ class WorkerGroupState:
             alive.discard(self._ev_dissolved[index])
             previous_assignment = assignment
         return events
-
-    def _initial_assignment(self) -> list[int]:
-        """Return the assignment the solve started from.
-
-        A dynamic grouping starts from the identity assignment; a fixed grouping never moves a
-        worker, so its current table is still the initial one.
-        """
-        if self._dynamic:
-            return list(range(self._n_workers))
-        return list(self._assignment)
 
 
 class WorkerGroupCoordinator(WorkerCoordinator):

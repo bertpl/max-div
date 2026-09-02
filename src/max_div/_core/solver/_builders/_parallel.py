@@ -7,7 +7,12 @@ from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._duration import E2eBudget, TargetDuration
 from max_div._core.solver._parallel import (
+    DEFAULT_GROUP_MERGE_RATE,
+    GROUP_MERGE_RATE_BOUNDS,
+    FixedGroupCount,
+    GroupMergeSchedule,
     ParallelMaxDivSolver,
+    PowerLawGroupMerge,
     WorkerConfig,
     default_group_count,
     default_worker_count,
@@ -41,11 +46,17 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         self._group_sizes: list[int] = []
         self._target_duration: TargetDuration | None = None
         self._dynamic_groups: bool = False
+        self._group_merge_rate: float = DEFAULT_GROUP_MERGE_RATE
 
     # -------------------------------------------------------------------------
     #  Builder API
     # -------------------------------------------------------------------------
-    def with_workers(self, target_duration: TargetDuration, n_workers: int | None = None) -> Self:
+    def with_workers(
+        self,
+        target_duration: TargetDuration,
+        n_workers: int | None = None,
+        group_merge_rate: float = DEFAULT_GROUP_MERGE_RATE,
+    ) -> Self:
         """Set `n_workers` default workers with the **dynamic** grouping.
 
         The workers run side by side and the best result wins; their grouping consolidates from
@@ -56,12 +67,22 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         Args:
             target_duration: the budget each worker runs for (see `TargetDuration`).
             n_workers: how many workers solve; omitting it uses `default_worker_count()`.
+            group_merge_rate: how soon the groups merge (see `PowerLawGroupMerge`): 1 decreases
+                the group count linearly over the budget, and a larger rate starts the solve
+                with the count dropping that many times faster.
+
+        Raises:
+            ValueError: If `group_merge_rate` falls outside `GROUP_MERGE_RATE_BOUNDS`.
         """
+        lowest, highest = GROUP_MERGE_RATE_BOUNDS
+        if not (lowest <= group_merge_rate <= highest):
+            raise ValueError(f"group_merge_rate must lie within [{lowest}, {highest}]; got {group_merge_rate}.")
         self._target_duration = target_duration
         n = default_worker_count() if n_workers is None else n_workers
         self._worker_configs = [WorkerConfig() for _ in range(n)]
         self._group_sizes = [1] * n
         self._dynamic_groups = True
+        self._group_merge_rate = group_merge_rate
         return self
 
     def with_custom_worker_groups(
@@ -145,8 +166,14 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
                 for index, worker in enumerate(self._worker_configs)
             ],
             group_sizes=self._group_sizes,
-            dynamic_groups=self._dynamic_groups,
+            merge_schedule=self._merge_schedule(),
         )
+
+    def _merge_schedule(self) -> GroupMergeSchedule:
+        """Return the schedule the grouping follows: a power law on the dynamic path, the configured count otherwise."""
+        if self._dynamic_groups:
+            return PowerLawGroupMerge(len(self._worker_configs), self._group_merge_rate)
+        return FixedGroupCount(len(self._group_sizes))
 
     def _batch_interval_per_worker(self) -> list[float]:
         """Return each worker's batch interval: tight for workers that can share a group, coarse for lone ones.

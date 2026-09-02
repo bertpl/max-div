@@ -5,18 +5,20 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore, compute_pdist
-from max_div._core.solver._parallel import WorkerGroupState
+from max_div._core.solver._parallel import FixedGroupCount, PowerLawGroupMerge, WorkerGroupState
 from max_div._core.solver._solver_state import SolverState
 
 
 def _group_state(n_workers: int, group_sizes: list[int] | None = None, dynamic: bool = True) -> WorkerGroupState:
-    """Return a shared group state over the given worker count, with three-component score slots."""
+    """Return a shared group state over the given worker count, with three-component score slots.
+
+    A dynamic state follows the linear schedule (rate 1), so the dissolution tests below read
+    against evenly spaced merge thresholds.
+    """
+    sizes = group_sizes if group_sizes is not None else [1] * n_workers
+    schedule = PowerLawGroupMerge(n_workers, rate=1.0) if dynamic else FixedGroupCount(len(sizes))
     return WorkerGroupState(
-        multiprocessing.get_context("spawn"),
-        group_sizes=group_sizes if group_sizes is not None else [1] * n_workers,
-        k=3,
-        score_length=3,
-        dynamic=dynamic,
+        multiprocessing.get_context("spawn"), group_sizes=sizes, k=3, score_length=3, schedule=schedule
     )
 
 
@@ -43,25 +45,13 @@ def _state_with(indices: list[int]) -> SolverState:
 # =================================================================================================
 #  Schedule
 # =================================================================================================
-@pytest.mark.parametrize(
-    "n_workers,fraction,expected",
-    [
-        (12, 0.0, 12),
-        (12, 0.05, 12),
-        (12, 0.1, 11),
-        (12, 0.5, 6),
-        (12, 0.92, 1),  # just past the last transition at 11/12
-        (12, 1.0, 1),
-        (12, -0.5, 12),  # a not-yet-started tracker clamps to the start
-        (12, 1.5, 1),  # an overspent budget clamps to the end
-        (4, 0.5, 2),
-        (1, 0.3, 1),
-    ],
-)
-def test_the_group_count_decreases_linearly_over_the_progress_fraction(n_workers, fraction, expected):
-    """Each group count holds for an equal share of the budget, from n_workers down to one."""
+def test_the_scheduled_count_is_the_schedule_s_count():
+    """The state asks its schedule for the count at the given fraction, without a schedule of its own."""
+    # --- arrange ----------------------
+    group_state = _group_state(12)
+
     # --- act / assert -----------------
-    assert _group_state(n_workers)._scheduled_count(fraction) == expected
+    assert group_state._scheduled_count(0.5) == PowerLawGroupMerge(12, rate=1.0).group_count(0.5) == 6
 
 
 # =================================================================================================
@@ -250,5 +240,9 @@ def test_a_zero_sized_group_is_rejected():
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="at least one worker"):
         WorkerGroupState(
-            multiprocessing.get_context("spawn"), group_sizes=[1, 0, 1], k=5, score_length=3, dynamic=False
+            multiprocessing.get_context("spawn"),
+            group_sizes=[1, 0, 1],
+            k=5,
+            score_length=3,
+            schedule=FixedGroupCount(3),
         )

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- The merge speed of dynamic worker groups is now configurable (`group_merge_rate` on `with_workers`), defaulting to a quadratic schedule instead of a linear one, giving the winning groups more workers sooner
 
 ### Deprecated
 
