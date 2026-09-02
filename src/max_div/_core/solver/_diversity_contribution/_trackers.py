@@ -147,23 +147,29 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     #  Scoring reads
     # -------------------------------------------------------------------------
-    def selected_contributions(self, selected: NDArray[np.bool], n_selected: np.int32) -> SelectedContributions:
+    def selected_contributions(
+        self, selected: NDArray[np.bool], n_selected: np.int32, selected_indices: NDArray[np.int32]
+    ) -> SelectedContributions:
         """Return the selected items' contribution values, one SelectedContributions slot per family.
 
         Slots of families this set does not track hold a shared empty array (never read, since the
         score generator only consumes the families its metrics were bound to).
 
+        The selection is passed twice on purpose: the trackers compute contributions from the mask,
+        and the gather uses the index list, which costs O(n_selected) where a mask gather costs O(n).
+
         Args:
             selected: (n-sized bool ndarray) current selection mask.
             n_selected: (np.int32) number of True values in `selected`.
+            selected_indices: (n_selected-sized int32 ndarray) the indices where `selected` is True.
         """
         sep_tracker = self._separation_tracker
         mean_tracker = self._mean_distance_tracker
         return (
-            sep_tracker.contribution_wrt_selection(selected, n_selected)[selected]
+            sep_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
             if sep_tracker is not None
             else _EMPTY_NP_ARRAY_FLOAT32,
-            mean_tracker.contribution_wrt_selection(selected, n_selected)[selected]
+            mean_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
             if mean_tracker is not None
             else _EMPTY_NP_ARRAY_FLOAT32,
         )
