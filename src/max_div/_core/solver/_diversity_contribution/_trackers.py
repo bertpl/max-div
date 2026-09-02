@@ -156,7 +156,8 @@ class DiversityContributionTrackers:
         score generator only consumes the families its metrics were bound to).
 
         The selection is passed twice on purpose: the trackers compute contributions from the mask,
-        and the gather uses the index list, which costs O(n_selected) where a mask gather costs O(n).
+        and the values are picked out by the index list, which costs O(n_selected) where picking by
+        mask costs O(n).
 
         Args:
             selected: (n-sized bool ndarray) current selection mask.
