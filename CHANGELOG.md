@@ -5,20 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 0.17.2 (2026-09-02)
 
 ### Changed
 - The merge speed of dynamic worker groups is now configurable (`group_merge_rate` on `with_workers`), defaulting to a quadratic schedule instead of a linear one, giving the winning groups more workers sooner
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.17.1 (2026-09-02)
 
