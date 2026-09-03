@@ -5,7 +5,7 @@ solver:
   verified: 2026-08-11
   scale:
     max_n_memory: 1000000000
-    max_n_time: 500000
+    max_n_time: 1000000
     max_n_quality_50: 200000
     max_n_quality_90: 200000
   metadata:
