@@ -349,7 +349,14 @@ def test_solver_selection_is_valid_at_every_k_boundary(k: int):
 #  Savepoint release
 # =================================================================================================
 def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytest.MonkeyPatch):
-    """Every step releases its pooled savepoints, so a finished solve leaves no state behind."""
+    """A finished solve leaves no state behind, without the cyclic garbage collector.
+
+    The state and the scope objects it hands out refer to each other, so reference counting never
+    reclaims them.  Python's cyclic garbage collector would, but it is triggered by the number of
+    container objects allocated, not by their total size, so a state holding a distance matrix is
+    not collected before the process runs out of memory.  Without the release after each step,
+    several solves on large problems in one process exhaust memory.
+    """
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((200, 3)).astype(np.float32)
     problem = MaxDivProblem.new(vectors, k=10)

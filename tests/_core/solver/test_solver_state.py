@@ -908,7 +908,7 @@ def test_savepoint_release_leaves_state_reference_counted():
 
 
 def test_savepoint_without_release_needs_cyclic_collector():
-    """The pooled scope and the state hold each other, so only a cyclic collection frees the state."""
+    """The scope object and the state hold each other, so only a cyclic collection frees the state."""
     # --- arrange ----------------------
     state = _make_standalone_state()
     with state.savepoint():
@@ -930,7 +930,7 @@ def test_savepoint_without_release_needs_cyclic_collector():
 
 
 def test_savepoint_release_leaves_state_usable(new_solver_state):
-    """The pool rebuilds on demand, so a released state still scopes and restores correctly."""
+    """The scope objects rebuild on demand, so a released state still scopes and restores correctly."""
     # --- arrange ----------------------
     state = new_solver_state
     state.add(0)
@@ -942,3 +942,13 @@ def test_savepoint_release_leaves_state_usable(new_solver_state):
 
     # --- assert -----------------------
     assert state.selected_index_array.tolist() == [0]
+
+
+def test_savepoint_release_inside_an_open_scope_is_rejected(new_solver_state):
+    """Releasing under an open scope would break that scope's exit, so it is refused up front."""
+    # --- arrange ----------------------
+    state = new_solver_state
+
+    # --- act / assert -----------------
+    with state.savepoint(), pytest.raises(RuntimeError, match="scope\\(s\\) are open"):
+        state.release_savepoints()

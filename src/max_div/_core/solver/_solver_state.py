@@ -170,12 +170,17 @@ class SolverState:
         return self._savepoints[depth]
 
     def release_savepoints(self) -> None:
-        """Drop the pooled savepoints, so no pooled savepoint refers back to this state.
+        """Drop the scope objects in `_savepoints`, so none of them refers back to this state.
 
-        Call this only with no scope open: the pool is indexed by nesting depth, so a `savepoint`
-        at a still-open depth would fail.  The next `savepoint` call rebuilds what it needs, so
-        releasing is not destructive.  `Savepoint` says why the release is needed at all.
+        `Savepoint` says why that matters.  The next `savepoint` call rebuilds what it needs, so
+        releasing is not destructive.
+
+        Raises:
+            RuntimeError: If a scope is still open; `_savepoints` is indexed by nesting depth, so
+                dropping its entries under an open scope would break that scope's exit.
         """
+        if self._depth != 0:
+            raise RuntimeError(f"Cannot release savepoints while {self._depth} scope(s) are open.")
         self._savepoints.clear()
 
     def score_after_removal(self, index: int | np.int32) -> Score:
@@ -629,8 +634,8 @@ class Savepoint:
     noticeably more per entry.  One instance is reused per nesting depth, so entering a scope
     allocates nothing.
 
-    A pooled instance holds its state, so the per-depth pool and the state refer to each other;
-    `SolverState.release_savepoints` breaks that cycle.
+    The scope object reused at a depth holds its state, so `SolverState._savepoints` and the
+    state refer to each other; `SolverState.release_savepoints` breaks that cycle.
     """
 
     __slots__ = ("_keep", "_state")

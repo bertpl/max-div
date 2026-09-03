@@ -164,7 +164,8 @@ class MaxDivSolver:
             try:
                 step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
             finally:
-                # the pooled savepoints hold the state, so they are released even when a step raises
+                # the scope objects the state hands out hold the state, so they are released even
+                # when a step raises
                 state.release_savepoints()
 
         # --- Construct result -------------------
