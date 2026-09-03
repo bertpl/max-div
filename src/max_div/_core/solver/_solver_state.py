@@ -169,6 +169,15 @@ class SolverState:
             self._savepoints.append(Savepoint(self))
         return self._savepoints[depth]
 
+    def release_savepoints(self) -> None:
+        """Drop the pooled savepoints, so no pooled savepoint refers back to this state.
+
+        Call this only with no scope open: the pool is indexed by nesting depth, so a `savepoint`
+        at a still-open depth would fail.  The next `savepoint` call rebuilds what it needs, so
+        releasing is not destructive.  `Savepoint` says why the release is needed at all.
+        """
+        self._savepoints.clear()
+
     def score_after_removal(self, index: int | np.int32) -> Score:
         """Return the score the selection would have without `index`; the state itself is left as it is.
 
@@ -619,6 +628,9 @@ class Savepoint:
     enters one of these tens of times per iteration, and generator-based context managers cost
     noticeably more per entry.  One instance is reused per nesting depth, so entering a scope
     allocates nothing.
+
+    A pooled instance holds its state, so the per-depth pool and the state refer to each other;
+    `SolverState.release_savepoints` breaks that cycle.
     """
 
     __slots__ = ("_keep", "_state")

@@ -161,7 +161,11 @@ class MaxDivSolver:
         for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
             progress_reporter.solver_step_started(step_name)
             step.set_seed(step_seed)
-            step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
+            try:
+                step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
+            finally:
+                # the pooled savepoints hold the state, so they are released even when a step raises
+                state.release_savepoints()
 
         # --- Construct result -------------------
         return self._construct_final_solution(state, step_results)

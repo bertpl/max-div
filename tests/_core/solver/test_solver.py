@@ -1,3 +1,6 @@
+import gc
+import weakref
+
 import numpy as np
 import pytest
 from scipy.spatial.distance import squareform
@@ -10,6 +13,9 @@ from max_div._core.solver import DistanceStorage, MaxDivSolution, MaxDivSolverBu
 from max_div._core.solver._duration import Elapsed, iterations
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._score import Score
+from max_div._core.solver._solver_state import SolverState
+from max_div._core.solver._solver_step import OptimizationStep
+from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 
 
 # =================================================================================================
@@ -337,3 +343,43 @@ def test_solver_selection_is_valid_at_every_k_boundary(k: int):
     assert len(set(selected.tolist())) == k
     assert selected.min() >= 0
     assert selected.max() < n
+
+
+# =================================================================================================
+#  Savepoint release
+# =================================================================================================
+def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytest.MonkeyPatch):
+    """Every step releases its pooled savepoints, so a finished solve leaves no state behind."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((200, 3)).astype(np.float32)
+    problem = MaxDivProblem.new(vectors, k=10)
+    seen: list[weakref.ref] = []
+    original_new = SolverState.new.__func__
+
+    def recording_new(cls, **kwargs) -> SolverState:
+        """Build the state as usual, keeping a weak reference so its lifetime can be observed."""
+        state = original_new(cls, **kwargs)
+        seen.append(weakref.ref(state))
+        return state
+
+    monkeypatch.setattr(SolverState, "new", classmethod(recording_new))
+
+    # --- act --------------------------
+    gc.collect()
+    gc.disable()
+    try:
+        solution = (
+            MaxDivSolverBuilder(problem)
+            .set_initialization_strategy(InitializationStrategy.eager(nc=4))
+            .add_solver_step(OptimizationStep(OptimizationStrategy.random_swaps(), iterations(20)))
+            .build()
+            .solve(verbosity=Verbosity.SILENT)
+        )
+        del solution
+        still_alive = [ref for ref in seen if ref() is not None]
+    finally:
+        gc.enable()
+
+    # --- assert -----------------------
+    assert seen, "the solve should have built a state"
+    assert still_alive == []
