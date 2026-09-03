@@ -170,10 +170,11 @@ class SolverState:
         return self._savepoints[depth]
 
     def release_savepoints(self) -> None:
-        """Drop the scope objects in `_savepoints`, so none of them refers back to this state.
+        """Drop the `Savepoint` objects kept in `_savepoints`, to avoid lingering cyclic references.
 
-        `Savepoint` says why that matters.  The next `savepoint` call rebuilds what it needs, so
-        releasing is not destructive.
+        The state keeps those objects for reuse and each of them holds the state, so the two refer
+        to each other.  The next `savepoint` call rebuilds what it needs, so releasing is not
+        destructive.
 
         Raises:
             RuntimeError: If a scope is still open; `_savepoints` is indexed by nesting depth, so
@@ -634,8 +635,8 @@ class Savepoint:
     noticeably more per entry.  One instance is reused per nesting depth, so entering a scope
     allocates nothing.
 
-    The scope object reused at a depth holds its state, so `SolverState._savepoints` and the
-    state refer to each other; `SolverState.release_savepoints` breaks that cycle.
+    A `Savepoint` and its `SolverState` hold cyclic references to each other, which is why
+    `SolverState.release_savepoints` exists to clear the instances kept for reuse.
     """
 
     __slots__ = ("_keep", "_state")

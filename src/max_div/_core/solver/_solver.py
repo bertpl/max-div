@@ -164,8 +164,9 @@ class MaxDivSolver:
             try:
                 step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
             finally:
-                # the scope objects the state hands out hold the state, so they are released even
-                # when a step raises
+                # release all Savepoint objects: they hold cyclic references via the SolverState, which
+                # cause out-of-memory when left in place; in a finally, so a step that raises still
+                # releases them
                 state.release_savepoints()
 
         # --- Construct result -------------------
