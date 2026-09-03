@@ -42,8 +42,8 @@ class BudgetSeries:
 
 # Each (problem, preset)-curve runs the single-worker series, one run with a fresh seed per
 # budget point, so repeat variability shows up as scatter between neighboring points.  The
-# longest budget is where the curves plateau: past it the measured diversity moves by less than
-# the scatter between neighboring points, so a higher maximum costs hours and shows nothing.
+# longest budget is where the curves plateau: past that budget the measured diversity moves by
+# less than that scatter, so a higher maximum costs hours and shows nothing.
 SINGLE_SERIES = BudgetSeries(
     t_min_sec=SpeedParam(slow=0.03, fast=1e-4),
     t_max_sec=SpeedParam(slow=900.0, fast=1e-3),
