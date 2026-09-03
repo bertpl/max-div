@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Solving repeatedly in one process no longer accumulates memory: each solve held its distance matrix until Python's cyclic garbage collector happened to run; at large problem sizes the retained matrices could exhaust memory
 
 ### Security
 

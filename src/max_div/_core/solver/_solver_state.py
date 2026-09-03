@@ -169,6 +169,21 @@ class SolverState:
             self._savepoints.append(Savepoint(self))
         return self._savepoints[depth]
 
+    def release_savepoints(self) -> None:
+        """Drop the `Savepoint` objects kept in `_savepoints`, to avoid lingering cyclic references.
+
+        The state keeps those objects for reuse and each of them holds the state, so the two refer
+        to each other.  The next `savepoint` call rebuilds what it needs, so releasing is not
+        destructive.
+
+        Raises:
+            RuntimeError: If a scope is still open; `_savepoints` is indexed by nesting depth, so
+                dropping its entries under an open scope would break that scope's exit.
+        """
+        if self._depth != 0:
+            raise RuntimeError(f"Cannot release savepoints while {self._depth} scope(s) are open.")
+        self._savepoints.clear()
+
     def score_after_removal(self, index: int | np.int32) -> Score:
         """Return the score the selection would have without `index`; the state itself is left as it is.
 
@@ -619,6 +634,9 @@ class Savepoint:
     enters one of these tens of times per iteration, and generator-based context managers cost
     noticeably more per entry.  One instance is reused per nesting depth, so entering a scope
     allocates nothing.
+
+    A `Savepoint` and its `SolverState` hold cyclic references to each other, which is why
+    `SolverState.release_savepoints` exists to clear the instances kept for reuse.
     """
 
     __slots__ = ("_keep", "_state")

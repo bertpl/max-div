@@ -1,3 +1,6 @@
+import gc
+import weakref
+
 import numpy as np
 import pytest
 from numpy import random
@@ -865,3 +868,87 @@ def test_score_after_removal_rejects_an_unselected_item(new_solver_state_unconst
     with state.savepoint():  # the snapshot stack is still balanced
         state.add(4)
     assert state.selected_index_array.tolist() == [0, 2]
+
+
+# =================================================================================================
+#  Savepoint release
+# =================================================================================================
+def _make_standalone_state() -> SolverState:
+    """Build a state held by nothing but the caller, so its lifetime can be observed."""
+    vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
+    return SolverState.new(
+        n=vectors.shape[0],
+        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0]),
+        k=3,
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_tie_breakers=[],
+        constraints=[],
+    )
+
+
+def test_savepoint_release_leaves_state_reference_counted():
+    """A released state is freed without the cyclic collector, so its distance matrix goes with it."""
+    # --- arrange ----------------------
+    state = _make_standalone_state()
+    with state.savepoint():
+        state.add(0)
+    weak_state = weakref.ref(state)
+
+    # --- act --------------------------
+    state.release_savepoints()
+    gc.disable()
+    try:
+        del state
+        collected_without_gc = weak_state() is None
+    finally:
+        gc.enable()
+
+    # --- assert -----------------------
+    assert collected_without_gc
+
+
+def test_savepoint_without_release_needs_cyclic_collector():
+    """The scope object and the state hold each other, so only a cyclic collection frees the state."""
+    # --- arrange ----------------------
+    state = _make_standalone_state()
+    with state.savepoint():
+        state.add(0)
+    weak_state = weakref.ref(state)
+
+    # --- act --------------------------
+    gc.disable()
+    try:
+        del state
+        alive_without_gc = weak_state() is not None
+    finally:
+        gc.enable()
+    gc.collect()
+
+    # --- assert -----------------------
+    assert alive_without_gc
+    assert weak_state() is None
+
+
+def test_savepoint_release_leaves_state_usable(new_solver_state):
+    """The scope objects rebuild on demand, so a released state still scopes and restores correctly."""
+    # --- arrange ----------------------
+    state = new_solver_state
+    state.add(0)
+    state.release_savepoints()
+
+    # --- act --------------------------
+    with state.savepoint():
+        state.add(5)
+
+    # --- assert -----------------------
+    assert state.selected_index_array.tolist() == [0]
+
+
+def test_savepoint_release_inside_an_open_scope_is_rejected(new_solver_state):
+    """Releasing under an open scope would break that scope's exit, so it is refused up front."""
+    # --- arrange ----------------------
+    state = new_solver_state
+
+    # --- act / assert -----------------
+    with state.savepoint(), pytest.raises(RuntimeError, match="scope\\(s\\) are open"):
+        state.release_savepoints()
