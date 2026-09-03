@@ -1,6 +1,6 @@
 | Solver | Config | Largest n within the time budget | Sweep ended by |
 |---|---|---|---|
-| max-div | `lean` | **500,000** | time budget exceeded at n=1,000,000 (≥75 s) |
+| max-div | `lean` | **1,000,000** | time budget exceeded at n=2,000,000 (≥75 s) |
 | max-div | `optimal-eager` | **50,000** | memory cap exceeded at n=100,000 |
 | max-div | `optimal-lazy` | **200,000** | time budget exceeded at n=500,000 (≥75 s) |
 | OR-Tools CP-SAT | `feasible` | **20,000** | memory cap exceeded at n=50,000 |
