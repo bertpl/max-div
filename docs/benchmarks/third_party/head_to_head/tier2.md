@@ -48,7 +48,7 @@ n = 20000 it reaches par by ~16 s, comparable to greedy's own ~20 s run time —
 not beat it. If pure max-sum is the only goal, the greedy baseline remains the pragmatic
 choice.
 
-**Beyond the margins, max-div is differentiated by** the anytime property (near-plateau
+**max-div is further differentiated by** the anytime property (near-plateau
 quality within ~1 s at most sizes) and by constrained selection (below), where only one
 surveyed heuristic competitor exists, and it stops at n ≈ 2000.
 

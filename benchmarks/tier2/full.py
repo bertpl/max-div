@@ -103,7 +103,7 @@ def run_maxdiv_unconstrained(
     seeds: tuple[int, ...] = SEEDS,
     out_path: Path = OUTPUT_DIR / "maxdiv_unconstrained.jsonl",
 ) -> list[RunRecord]:
-    """max-div's budget series on every unconstrained cell, one series per diversity metric.
+    """Run max-div's budget series on every unconstrained cell, one series per diversity metric.
 
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
@@ -145,7 +145,7 @@ def run_maxdiv_constrained(
     seeds: tuple[int, ...] = SEEDS,
     out_path: Path = OUTPUT_DIR / "maxdiv_constrained.jsonl",
 ) -> list[RunRecord]:
-    """max-div's budget series on the constrained cells, MIN_SEPARATION only.
+    """Run max-div's budget series on the constrained cells, MIN_SEPARATION only.
 
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
