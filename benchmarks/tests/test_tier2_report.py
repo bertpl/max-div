@@ -123,5 +123,5 @@ def test_main_merges_tracked_third_party_with_fresh_maxdiv(tmp_path: Path):
     assert cells[1] == "-"  # U2: no fresh max-div records planted
     constrained_table = (docs_dir / "results" / "tier2_margins_constrained.md").read_text()
     assert "%" in constrained_table
-    assert (docs_dir / "images" / "tier2_U1_2_min_separation.svg").exists()
-    assert (docs_dir / "images" / "tier2_C1_2_min_separation.svg").exists()
+    assert (docs_dir / "images" / "tier2_U1_2_min_separation.webp").exists()
+    assert (docs_dir / "images" / "tier2_C1_2_min_separation.webp").exists()

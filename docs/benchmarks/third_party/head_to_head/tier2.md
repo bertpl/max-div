@@ -59,17 +59,17 @@ down cover all problems and metrics.
 
 ### MIN_SEPARATION
 
-![U1 size 2](./images/tier2_U1_2_min_separation.svg)
-![U1 size 10](./images/tier2_U1_10_min_separation.svg)
-![U1 size 50](./images/tier2_U1_50_min_separation.svg)
-![U1 size 200](./images/tier2_U1_200_min_separation.svg)
+![U1 size 2](./images/tier2_U1_2_min_separation.webp)
+![U1 size 10](./images/tier2_U1_10_min_separation.webp)
+![U1 size 50](./images/tier2_U1_50_min_separation.webp)
+![U1 size 200](./images/tier2_U1_200_min_separation.webp)
 
 ### GEOMEAN_SEPARATION
 
-![U1 size 2](./images/tier2_U1_2_geomean_separation.svg)
-![U1 size 10](./images/tier2_U1_10_geomean_separation.svg)
-![U1 size 50](./images/tier2_U1_50_geomean_separation.svg)
-![U1 size 200](./images/tier2_U1_200_geomean_separation.svg)
+![U1 size 2](./images/tier2_U1_2_geomean_separation.webp)
+![U1 size 10](./images/tier2_U1_10_geomean_separation.webp)
+![U1 size 50](./images/tier2_U1_50_geomean_separation.webp)
+![U1 size 200](./images/tier2_U1_200_geomean_separation.webp)
 
 ## Margin tables (all problems)
 
@@ -106,8 +106,8 @@ The comparison therefore covers C1/C2 up to n = 2000. Beyond either limit, no su
 Python heuristic produces constraint-satisfying selections; exact solvers can, at small n
 (see the [exact-reference benchmarks](tier1.md)).
 
-![C1 size 2](./images/tier2_C1_2_min_separation.svg)
-![C1 size 10](./images/tier2_C1_10_min_separation.svg)
-![C1 size 20](./images/tier2_C1_20_min_separation.svg)
+![C1 size 2](./images/tier2_C1_2_min_separation.webp)
+![C1 size 10](./images/tier2_C1_10_min_separation.webp)
+![C1 size 20](./images/tier2_C1_20_min_separation.webp)
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_constrained.md"

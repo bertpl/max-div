@@ -121,7 +121,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR) -> None:
             plot_anytime_curve(
                 records_for_figure(recs, metric_name),
                 metric_name=metric_name,
-                path=images_dir / f"tier2_{FIGURE_UNCONSTRAINED_PROBLEM}_{size}_{metric_name.lower()}.svg",
+                path=images_dir / f"tier2_{FIGURE_UNCONSTRAINED_PROBLEM}_{size}_{metric_name.lower()}.webp",
                 title=f"{FIGURE_UNCONSTRAINED_PROBLEM} (n={n}) — {metric_name}",
             )
 
@@ -136,7 +136,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR) -> None:
         plot_anytime_curve(
             records_for_figure(recs, "MIN_SEPARATION"),
             metric_name="MIN_SEPARATION",
-            path=images_dir / f"tier2_{FIGURE_CONSTRAINED_PROBLEM}_{size}_min_separation.svg",
+            path=images_dir / f"tier2_{FIGURE_CONSTRAINED_PROBLEM}_{size}_min_separation.webp",
             title=f"{FIGURE_CONSTRAINED_PROBLEM} constrained (n={n}) — MIN_SEPARATION",
         )
     table = build_margin_table(
