@@ -3,8 +3,8 @@
 The memory sweep (`memory_stage`) collects the footprints and decides when to stop; this module
 owns the fit itself. The fit minimizes the sum of absolute residuals (a median fit), so one
 footprint far off the trend does not move the fitted curve. Coefficients are bounded: `c0 >= 0`,
-`c1 >= 8`, `c2 >= 0`. The `c1 >= 8` bound is the input-array cost: every solver holds at least
-the n x d float32 vectors, 8 bytes per item at d=2. A quadratic term is kept only when
+`c1 >= _INPUT_MIN_BYTES`, `c2 >= 0`. The `c1` bound is the input-array cost: every solver holds
+at least the n x d float32 vectors, 8 bytes per item at d=2. A quadratic term is kept only when
 physically plausible (`_C2_MIN_BYTES`); otherwise the fit is linear.
 """
 
@@ -25,12 +25,13 @@ _INPUT_MIN_BYTES = 8.0  # 4 bytes x d=2: the raw float32 vectors, the linear coe
 _C2_MIN_BYTES = 0.1
 
 # The trust conditions (measurement protocol, IV.B.1). The byte threshold keeps the extrapolation
-# from the largest footprint to `MEMORY_CAP_BYTES` within a fixed factor and puts the growth term
+# from the largest footprint to `MEMORY_CAP_BYTES` within a factor
+# `MEMORY_CAP_BYTES / _TRUST_MIN_BYTES` and puts the growth term
 # well above any solver's fixed baseline; a high-R^2 fit over a few points near the baseline
 # extrapolates to the cap on too little evidence to trust.
 _TRUST_MIN_BYTES = 2 * 2**30
 _R2_MIN = 0.95
-_MIN_TRUST_SIZES = 5
+_TRUST_MIN_SIZES = 5
 
 FIT_PATH = Path(__file__).resolve().parent / "data" / "memory_fits.json"
 
@@ -64,7 +65,7 @@ def fit_series(sizes_peaks: dict[int, float]) -> MemoryFit:
 
 def trust_conditions_met(sizes_peaks: dict[int, float], fit: MemoryFit) -> bool:
     """Return whether the fitted crossing is trustworthy enough to end the memory sweep."""
-    if len(sizes_peaks) < _MIN_TRUST_SIZES or fit.r2 is None:
+    if len(sizes_peaks) < _TRUST_MIN_SIZES or fit.r2 is None:
         return False
     return max(sizes_peaks.values()) >= _TRUST_MIN_BYTES and fit.r2 >= _R2_MIN
 
@@ -78,14 +79,14 @@ def _r_squared(ns: np.ndarray, peaks: np.ndarray, coef: tuple[float, ...]) -> fl
 
 
 def _fit_quadratic(ns: np.ndarray, peaks: np.ndarray) -> tuple[float, float, float]:
-    """Median-fit `peaks = c0 + c1*n + c2*n^2` with `c0 >= 0`, `c1 >= 8`, `c2 >= 0`."""
+    """Median-fit `peaks = c0 + c1*n + c2*n^2` with `c0 >= 0`, `c1 >= _INPUT_MIN_BYTES`, `c2 >= 0`."""
     design = np.column_stack([np.ones_like(ns), ns, ns**2])
     c0, c1, c2 = _fit_median(design, peaks, (0.0, _INPUT_MIN_BYTES, 0.0))
     return c0, c1, c2
 
 
 def _fit_linear(ns: np.ndarray, peaks: np.ndarray) -> tuple[float, float]:
-    """Median-fit `peaks = c0 + c1*n` with `c0 >= 0`, `c1 >= 8`."""
+    """Median-fit `peaks = c0 + c1*n` with `c0 >= 0`, `c1 >= _INPUT_MIN_BYTES`."""
     design = np.column_stack([np.ones_like(ns), ns])
     c0, c1 = _fit_median(design, peaks, (0.0, _INPUT_MIN_BYTES))
     return c0, c1
@@ -99,6 +100,9 @@ def _fit_median(design: np.ndarray, targets: np.ndarray, lower_bounds: tuple[flo
     The design columns are scaled to unit maximum before solving, since `n^2` reaches 1e18 while
     the intercept column is 1, a spread the solver's tolerances cannot handle; the coefficients
     are scaled back afterwards.
+
+    Raises:
+        RuntimeError: If the linear program does not converge.
     """
     n_obs, n_coef = design.shape
     column_scale = np.abs(design).max(axis=0)
