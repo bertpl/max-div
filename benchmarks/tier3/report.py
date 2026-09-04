@@ -2,10 +2,9 @@
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier3.report``.
 Reads the JSONL records written by ``benchmarks.tier3.full`` and emits markdown tables
-into ``RESULTS_DIR``. Per the published-values situation (see the
-results page), Geo is reported as percentage gaps while Ran and Glover are reported as
-matched/exceeded counts — their references are integer-quantized and partly loose, so
-percentage gaps would over-read them.
+into ``RESULTS_DIR``. Geo is reported as percentage gaps; Ran and Glover
+as matched/exceeded counts, because their reference values are integer-quantized and partly
+loose, so percentage gaps would overstate small differences (the results page explains).
 """
 
 from collections import defaultdict
@@ -19,7 +18,7 @@ from benchmarks.mdplib.best_known import BestKnown, load_best_known
 RECORDS_DIR = Path("reports/benchmarks/tier3")
 RESULTS_DIR = Path("docs/benchmarks/third_party/head_to_head/results")
 
-# Ladder rungs quoted in the tables (seconds; the last exists only for n=500 pairings).
+# Budgets quoted in the tables (seconds; the last exists only for n=500 pairings).
 TABLE_BUDGETS_SEC = (0.128, 1.024, 16.384)
 
 # A best-of-seeds value within this relative tolerance of the reference counts as a match
@@ -28,7 +27,7 @@ MATCH_RTOL = 1e-4
 
 
 def best_of_seeds(records: list[RunRecord], budget_sec: float) -> float | None:
-    """Best MIN_SEPARATION over seeds at one ladder rung (None if the rung wasn't run)."""
+    """Best MIN_SEPARATION over seeds at one budget (None if that budget was not run)."""
     tag = f"time:{budget_sec}s"
     values = [r.quality["MIN_SEPARATION"] for r in records if r.budget == tag]
     return max(values) if values else None
@@ -37,9 +36,9 @@ def best_of_seeds(records: list[RunRecord], budget_sec: float) -> float | None:
 def best_overall(records: list[RunRecord]) -> float | None:
     """Best MIN_SEPARATION over all seeds and all budgets run for an instance.
 
-    The match/exceed counts use this rather than a fixed rung: instance sets run to
-    different ladder depths (n=500 gets extended budget), and quoting a single low rung
-    would hide the exceed cases that only the deeper budget surfaces.
+    The match/exceed counts use this, not a fixed budget, because instance sets run to
+    different largest budgets (n=500 gets extended budgets) and a single low budget would
+    hide the exceed cases only the deeper budget surfaces.
     """
     values = [r.quality["MIN_SEPARATION"] for r in records if r.budget.startswith("time:")]
     return max(values) if values else None

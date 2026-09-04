@@ -1,12 +1,12 @@
 # Comparison Benchmarks — vs. Exact Solvers
 
 How close does `max-div` get to *provably optimal* solutions, and what does proving
-optimality cost? This page anchors the heuristic quality numbers to exact references
+optimality cost? This page compares the heuristic quality numbers with exact references
 (CP-SAT and SCIP), on the built-in [benchmark problems](../../solver/test_problems.md).
 
 ## Protocol
 
-- **max-div** runs the same wall-clock budget ladder as the
+- **max-div** runs the same series of wall-clock budgets as the
   [heuristics comparison](tier2.md) (2× steps from 1 ms, `SMART` preset, 3 seeds).
 - **Exact max-min reference:** CP-SAT via threshold binary search over the distinct
   pairwise distances (the max-min optimum is always one of them), one worker for
@@ -24,23 +24,26 @@ optimality cost? This page anchors the heuristic quality numbers to exact refere
 
 ## Max-min: gap to the proven optimum
 
-CP-SAT certifies the max-min optimum up to n = 300 within the cap (the proof cliff sits
-around n = 400; constraints *help* — they prune the conflict graph). max-div's gap to the
+CP-SAT certifies the max-min optimum up to n = 300 within the cap; it stops certifying
+around n = 400. Constraints *help*: they prune the conflict graph. max-div's gap to the
 certified optimum, mean over 3 seeds:
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_maxmin_gap.md"
 
-Reading: max-div lands within roughly 10 % of the proven optimum in ~100 ms and ~2–9 % at
-the ladder top, occasionally hitting the optimum exactly — while the exact solver needs up
-to seconds-to-minutes to *certify*, and stops certifying entirely a factor ~2 above these
-sizes. Note max-min is the harshest gap measure: the objective is the single worst pair, so
-one suboptimal swap shows in full.
+Reading the table:
+
+- max-div lands within roughly 10 % of the proven optimum in ~100 ms and ~2–9 % at the
+  largest budget, occasionally hitting the optimum exactly.
+- The exact solver needs up to seconds-to-minutes to *certify*, and stops certifying
+  entirely a factor ~2 above these sizes.
+- Max-min is the harshest gap measure: the objective is the single worst pair, so one
+  suboptimal swap shows in full.
 
 ## Mean/geomean: why there is no gap-to-optimum
 
 The canonical exact formulation for mean/geomean-of-NN separation is the NN-assignment
 model. Its proofs stop far below the generators' smallest problem (n = 100), whichever
-backend runs it — time to certified optimality on a d=4 random family (k = n/10, geomean;
+backend runs it. Time to certified optimality on a d=4 random family (k = n/10, geomean;
 each backend stops at its first timeout):
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_scaling.md"
@@ -48,22 +51,23 @@ each backend stops at its first timeout):
 CP-SAT with 8 parallel workers is the strongest backend and still times out at n = 100
 (cap 1 h; the trend suggests ~2 h would be needed, and n = 110+ is out of reach). The
 model's closest-assignment constraints relax weakly, so cost grows ~4–5× per +10 items —
-this is a property of the formulation, not of any solver. Hence: **no certified
-mean/geomean optimum exists at any published problem size.**
+a property of the formulation, not of any solver. Hence: **no certified mean/geomean
+optimum exists at any published problem size.**
 
 ## Geomean: incumbent-at-budget comparison (uncertified)
 
 What a practitioner can still ask: *"what if I just gave a MIP/CP solver a big time budget
 and took its best solution?"* Below, CP-SAT (8 workers) runs the assignment model at a
-generous cap on two shipped problems, and its **incumbent** — best solution found, no
+generous cap on two shipped problems. Its **incumbent** — best solution found, no
 optimality certificate; the bound gap column shows how far the proof remained — is compared
-against max-div's 1-second ladder rung:
+against max-div's 1-second budget:
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_incumbent_geomean.md"
 
 On the unconstrained problem (U3), max-div reaches within ~1 % of the exact solver's 3-hour
 incumbent in one second. On the constrained problem (C4), max-div's 1-second solution
-*matches* the one the exact solver reached in 15 minutes (neither certified optimal). These
-are point comparisons on two problems, not certified gaps — but they answer the
+*matches* the one the exact solver reached in 15 minutes (neither certified optimal).
+
+These are point comparisons on two problems, not certified gaps. They answer the
 budget-parity question the certified experiment cannot reach: given comparable or far
 greater time, the exact solver does not pull ahead on these instances.

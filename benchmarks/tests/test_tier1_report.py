@@ -5,7 +5,7 @@ from benchmarks.tier1.report import build_incumbent_table, build_maxmin_gap_tabl
 
 
 def _record(problem: str, size: int, budget: str, quality: dict[str, float]) -> RunRecord:
-    """Minimal max-div ladder record with only the fields the report helpers read."""
+    """Minimal max-div budget-series record with only the fields the report helpers read."""
     return RunRecord(
         tool="max-div[SMART]",
         problem=problem,
