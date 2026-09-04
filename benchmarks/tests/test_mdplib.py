@@ -1,5 +1,6 @@
 import hashlib
 import io
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -128,13 +129,26 @@ def test_persistently_short_download_raises_naming_the_url(monkeypatch: pytest.M
 # =================================================================================================
 #  Instance loading (network-dependent)
 # =================================================================================================
+# Parallel test workers race on a cold cache: a worker that finds a half-written archive deletes it
+# and downloads again, over the file a worker already extracting is reading. A short wait lets the
+# downloads finish, after which the cached archive is intact.
+_FETCH_ATTEMPTS = 3
+_FETCH_RETRY_DELAY_SEC = 5.0
+
+
 @pytest.fixture(scope="module")
 def mdplib_available() -> None:
-    """Skip the module when the MDPLIB archive cannot be fetched (network robustness)."""
-    try:
-        list_instances("Glover")
-    except (urllib.error.URLError, OSError, MdplibFetchError) as e:  # pragma: no cover -- network-dependent
-        pytest.skip(f"MDPLIB archive not fetchable: {e}")
+    """Skip the module when the MDPLIB archive cannot be fetched after a few attempts."""
+    errors: list[str] = []
+    for attempt in range(1, _FETCH_ATTEMPTS + 1):  # pragma: no cover -- network-dependent
+        try:
+            list_instances("Glover")
+            return
+        except (urllib.error.URLError, OSError, EOFError, MdplibFetchError, zipfile.BadZipFile) as e:
+            errors.append(f"attempt {attempt}: {type(e).__name__}: {e}")
+            if attempt < _FETCH_ATTEMPTS:
+                time.sleep(_FETCH_RETRY_DELAY_SEC)
+    pytest.skip("MDPLIB archive not fetchable: " + "; ".join(errors))
 
 
 def test_families_have_expected_instance_counts(mdplib_available):
