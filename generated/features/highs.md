@@ -45,7 +45,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^highs-7] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^highs-8] |
-| solver scaling · largest n within memory | n = 2k | |
+| solver scaling · largest n within memory | n = 5k | |
 | solver scaling · largest n within the time budget | n = 2k | |
 | solver scaling · largest n closing 50% of the quality gap | n = 200 | |
 | solver scaling · largest n closing 90% of the quality gap | n = 200 | |
