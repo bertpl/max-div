@@ -2,10 +2,14 @@
 
 The memory sweep (`memory_stage`) collects the footprints and decides when to stop; this module
 owns the fit itself. The fit minimizes the sum of absolute residuals (a median fit), so one
-footprint far off the trend does not move the fitted curve. Coefficients are bounded: `c0 >= 0`,
-`c1 >= _INPUT_MIN_BYTES`, `c2 >= 0`. The `c1` bound is the input-array cost: every solver holds
-at least the n x d float32 vectors, 8 bytes per item at d=2. A quadratic term is kept only when
-physically plausible (`_C2_MIN_BYTES`); otherwise the fit is linear.
+footprint far off the trend does not move the fitted curve. Coefficients are bounded: `c0` by
+`_BASELINE_FLOOR_FRACTION` of the smallest recorded footprint, `c1 >= _INPUT_MIN_BYTES`,
+`c2 >= 0`. The `c0` bound is the process's fixed baseline: at the smallest sizes the growth term
+is negligible, so the smallest footprint is almost entirely baseline, and a median fit through
+the largest points would otherwise leave the intercept near zero. The `c1` bound is the
+input-array cost: every solver holds at least the n x d float32 vectors, 8 bytes per item at
+d=2. A quadratic term is kept only when physically plausible (`_C2_MIN_BYTES`); otherwise the fit
+is linear.
 """
 
 from dataclasses import dataclass
@@ -17,6 +21,7 @@ from scipy.optimize import linprog
 from .grid import MEMORY_CAP_BYTES, operational_bound, size_grid
 
 _INPUT_MIN_BYTES = 8.0  # 4 bytes x d=2: the raw float32 vectors, the linear coefficient's lower bound
+_BASELINE_FLOOR_FRACTION = 0.8  # of the smallest recorded footprint: the intercept's lower bound
 
 # Physical-plausibility threshold for the fitted quadratic coefficient: the smallest real
 # quadratically growing structure is one byte per k x n entry, i.e. 0.1 bytes per n^2 at k = n/10.
@@ -79,17 +84,22 @@ def _r_squared(ns: np.ndarray, peaks: np.ndarray, coef: tuple[float, ...]) -> fl
 
 
 def _fit_quadratic(ns: np.ndarray, peaks: np.ndarray) -> tuple[float, float, float]:
-    """Median-fit `peaks = c0 + c1*n + c2*n^2` with `c0 >= 0`, `c1 >= _INPUT_MIN_BYTES`, `c2 >= 0`."""
+    """Median-fit `peaks = c0 + c1*n + c2*n^2` under the module's coefficient bounds."""
     design = np.column_stack([np.ones_like(ns), ns, ns**2])
-    c0, c1, c2 = _fit_median(design, peaks, (0.0, _INPUT_MIN_BYTES, 0.0))
+    c0, c1, c2 = _fit_median(design, peaks, (_baseline_floor(peaks), _INPUT_MIN_BYTES, 0.0))
     return c0, c1, c2
 
 
 def _fit_linear(ns: np.ndarray, peaks: np.ndarray) -> tuple[float, float]:
-    """Median-fit `peaks = c0 + c1*n` with `c0 >= 0`, `c1 >= _INPUT_MIN_BYTES`."""
+    """Median-fit `peaks = c0 + c1*n` under the module's coefficient bounds."""
     design = np.column_stack([np.ones_like(ns), ns])
-    c0, c1 = _fit_median(design, peaks, (0.0, _INPUT_MIN_BYTES))
+    c0, c1 = _fit_median(design, peaks, (_baseline_floor(peaks), _INPUT_MIN_BYTES))
     return c0, c1
+
+
+def _baseline_floor(peaks: np.ndarray) -> float:
+    """Return the intercept's lower bound: `_BASELINE_FLOOR_FRACTION` of the smallest footprint."""
+    return _BASELINE_FLOOR_FRACTION * float(peaks.min())
 
 
 def _fit_median(design: np.ndarray, targets: np.ndarray, lower_bounds: tuple[float, ...]) -> tuple[float, ...]:

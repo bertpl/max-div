@@ -80,6 +80,8 @@ The extrapolating fit is only trusted once its **trust conditions** all hold:
 
 Together these mean the extrapolation extends a measured trend, not an assumption.
 
+The fit's intercept is bounded below by **80% of the smallest recorded footprint**: at the smallest sizes the growth term is negligible, so that footprint is almost entirely the process's fixed baseline, and without the bound a median fit through the largest points can leave the intercept near zero.
+
 A solver can also end its size sweep for a non-resource reason: it cannot express the instance at some size at all (a `failed` outcome — e.g. a sampler whose kernel rank is exceeded).  The failure is recorded and disclosed with its reason, and ends the sweep like a memory kill does — the previous size is the result, since nothing larger runs at all.  The one exception is a failure **before any size has succeeded**: some solvers fail the tiny smallest instance yet work above it, so a failure with no measurement yet is skipped and the sweep tries the next size.
 
 Each configuration gets one discarded warm-up run before its sweep: the first process after a fresh environment install pays a one-off import/bytecode-compilation cost that would otherwise land in its first measurement.
@@ -109,7 +111,8 @@ Each configuration gets one discarded warm-up run before its sweep: the first pr
                                                                       #  success is skipped)
                 >= 5 sizes  AND  max M(n) >= 2 GB  AND  fit R^2 >= 0.95:
                     median fit f(n) = c0 + c1*n + c2*n^2   (minimizes sum |M(n) - f(n)|;
-                                                           c0,c2 >= 0; c1 >= 4d = 8)
+                                                           c0 >= 0.8 * min M(n); c1 >= 4d = 8;
+                                                           c2 >= 0)
                     IF c2 < 0.1                   # < 1 byte per k*n entry: no real
                         refit with c2 = 0         # allocation can grow this slowly
                     RECORD largest n in N with f(n) <= M_max
