@@ -1,6 +1,6 @@
 # Solver Scaling — Quality
 
-The **largest n with normalized quality ≥ 50% / ≥ 90%** is the largest problem size up to which a configuration's median solution quality reaches that threshold at every measured size, per the [measurement protocol](protocol.md) (section IV.D).
+The **largest n with normalized quality ≥ 50% / ≥ 90%** (0% at a random selection, 100% at the best-known solution) is the largest problem size up to which a configuration's median solution quality reaches that threshold at every measured size, per the [measurement protocol](protocol.md) (section IV.D).
 
 The scoring objective (minimum separation under L2) was chosen because it is the one most benchmarked tools can pursue. Tools designed specifically for this objective are measured on the objective they were built for; tools supporting a wider range of distance and diversity metrics (see the [comparison table](../comparison.md)'s metric axes) are compared on this shared objective only.
 
@@ -8,7 +8,7 @@ The scoring objective (minimum separation under L2) was chosen because it is the
 
 ## Detailed Results
 
-Each configuration's curve is its median's **normalized solution quality** at each size, connected across sizes: 0% is the quality of a random selection, 100% the best-known solution. The gray dotted lines mark the 50%, 90% and 100% levels; a curve dipping below zero is a configuration worse than a random selection at that size.
+Each configuration's curve is its median's **normalized solution quality** at each size, connected across sizes: 0% is the quality of a random selection, 100% the best-known solution. The gray dotted lines mark the 0%, 50%, 90% and 100% levels; a curve dipping below zero is a configuration worse than a random selection at that size.
 
 ![Normalized solution quality against problem size, per solver configuration](images/scaling_normalized_quality.webp)
 

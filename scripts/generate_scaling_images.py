@@ -115,7 +115,7 @@ def _save_webp(fig: plt.Figure, path: Path) -> None:
 
 
 # One color per tool, in the order tools first appear in `CONFIGS`; a tool's configurations share
-# its color (`_series_style`). Soft, medium-saturation tones.
+# its color (`_series_style`). The tones are soft and medium-saturation.
 _TOOL_COLORS = (
     "#4E8FD9",  # blue
     "#F29E4C",  # orange
@@ -141,7 +141,7 @@ def _series_style(tool: str, config: str) -> dict:
     """Return the plot kwargs (color, line style, marker) identifying one configuration on every chart.
 
     A tool's configurations share its color; tools alternate solid and dashed lines; markers
-    cycle over all configurations. Keyed on the configuration itself, not on plot order: the
+    cycle over all configurations. The style is keyed on the configuration itself, not on plot order: the
     renderers skip series with no plottable rows, so a position-based cycle would style the
     same configuration differently between the combined charts and the per-config fit charts.
     """
@@ -285,8 +285,9 @@ def _footprint_rows(rows: list[ScalingRunRecord]) -> list[ScalingRunRecord]:
 def _draw_fit_curve(ax: plt.Axes, fit: dict, observed: list[ScalingRunRecord], style: dict) -> None:
     """Draw a configuration's fitted footprint curve, from its measured sizes up to the memory cap.
 
-    `style` is the configuration's `_series_style`; the curve takes its color and line style, so
-    the memory chart reads like the time chart.
+    Args:
+        style: The configuration's `_series_style`; the curve takes its color and line style, so
+            the memory chart reads like the time chart.
     """
     coef = fit.get("coef")
     if not coef:
@@ -421,12 +422,14 @@ def render_best_known_chart(
     The two curves are the band the normalized quality is measured against: the best-known
     curve (the highest quality any run reached at each size) on top, the random reference below.
     Each best-known point is labeled with the tool that produced it and its winning configuration.
+    Every configuration's median quality (`quality_records`) is drawn as faint context, and the
+    verdict thresholds as dotted lines between the two references.
     """
     by_size = best_known_by_size(records)
     sizes = sorted(by_size)
     fig, ax = plt.subplots(figsize=(12.0, 7.0))
-    # Every configuration's median quality, as faint context behind the references: thin, unmarked,
-    # one light gray, and drawn first so the references and their labels stay on top.
+    # Draw every configuration's median quality as faint context behind the references: thin,
+    # unmarked, one light gray, and first, so the references and their labels stay on top.
     for index, medians in enumerate(median_qualities(quality_records).values()):
         median_sizes = sorted(medians)
         ax.plot(
@@ -471,7 +474,6 @@ def render_best_known_chart(
             linewidth=1.0,
             label="scaling thresholds" if index == 0 else None,  # one legend entry for all
         )
-        # tucked in and down: closer to its dotted line than to the marker-ended curves around it
         _label_curve_end(ax, random_sizes[-1], threshold_values[-1], f"{threshold:.0%}", offset=(2, -5.5))
     _label_curve_end(ax, random_sizes[-1], q_random[random_sizes[-1]], "0%")
     _label_curve_end(ax, sizes[-1], by_size[sizes[-1]].min_separation, "100%")
@@ -484,7 +486,7 @@ def render_best_known_chart(
     ax.set_ylabel("diversity (minimum separation)")
     ax.set_title("Solver Scaling — Best-Known Quality", fontweight="bold")
     ax.grid(True, which="major")
-    # legend entries top to bottom as the chart stacks them: best-known, thresholds, context, random
+    # Order the legend entries top to bottom as the chart stacks them.
     handles, labels = ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles, strict=True))
     order = ["best-known", "scaling thresholds", "results per solver config (median)", "$Q_{\\mathrm{random}}$"]
@@ -500,7 +502,7 @@ def render_normalized_quality_chart(
 ) -> None:
     """Render each configuration's normalized solution quality against problem size (log x, linear y).
 
-    Gray dotted lines mark the 50%, 90% and 100% levels; a configuration below the random
+    Gray dotted lines mark the 0%, 50%, 90% and 100% levels; a configuration below the random
     reference plots a negative percentage, so the y-axis is left free to descend below zero.
     """
     pool = best_known_pool(quality_records, best_known_records)

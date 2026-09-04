@@ -142,7 +142,7 @@ def test_quality_limits_stops_at_the_first_failing_size() -> None:
     assert limits == {"rdkit/default": 20, "fpsample/vanilla": 100}
 
 
-def test_quality_limits_judges_each_fraction_separately() -> None:
+def test_quality_limits_judges_each_threshold_separately() -> None:
     """A configuration at 60% normalized quality passes the 0.5 threshold but not the 0.9 one."""
     # --- arrange ----------------------
     quality = [
