@@ -19,7 +19,7 @@ RECORDS_DIR = Path("reports/benchmarks/tier1")
 DATA_DIR = Path(__file__).parent / "data"
 RESULTS_DIR = Path("docs/benchmarks/third_party/head_to_head/results")
 
-# Budgets quoted in the gap table (seconds; must be budgets the series actually ran).
+# The gap table quotes these budgets (seconds); each must be a budget the series ran.
 GAP_BUDGETS_SEC = (0.016, 0.128, 1.024, 16.384)
 
 

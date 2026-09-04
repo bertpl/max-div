@@ -27,7 +27,7 @@ FIGURE_UNCONSTRAINED_METRICS = ("MIN_SEPARATION", "GEOMEAN_SEPARATION")
 FIGURE_CONSTRAINED_PROBLEM = "C1"
 TABLE_METRICS = ("MIN_SEPARATION", "MEAN_SEPARATION", "GEOMEAN_SEPARATION", "MEAN_PAIRWISE_DISTANCE")
 
-# Budgets the margin tables quote (seconds; must be budgets the series actually ran).
+# The margin tables quote these budgets (seconds); each must be a budget the series ran.
 TABLE_BUDGETS_SEC = (1.024, 16.384)
 
 

@@ -1,4 +1,4 @@
-"""A tiny end-to-end validation run that exercises the budget-series runner, adapter runner, records, and figure wiring.
+"""Run a tiny end-to-end validation that exercises the budget-series runner, adapter runner, records, and figure wiring.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.smoke``.
 Deliberately minuscule (one problem, short budget series, two seeds) — the run validates plumbing,

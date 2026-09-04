@@ -25,8 +25,8 @@ optimality cost? This page compares the heuristic quality numbers with exact ref
 ## Max-min: gap to the proven optimum
 
 CP-SAT certifies the max-min optimum up to n = 300 within the cap; it stops certifying
-around n = 400. Constraints *help*: they prune the conflict graph. max-div's gap to the
-certified optimum, mean over 3 seeds:
+around n = 400. Constraints *help*: they prune the conflict graph. The table shows max-div's
+gap to the certified optimum, mean over 3 seeds:
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_maxmin_gap.md"
 
@@ -43,8 +43,8 @@ Reading the table:
 
 The canonical exact formulation for mean/geomean-of-NN separation is the NN-assignment
 model. Its proofs stop far below the generators' smallest problem (n = 100), whichever
-backend runs it. Time to certified optimality on a d=4 random family (k = n/10, geomean;
-each backend stops at its first timeout):
+backend runs it. The table shows the time to certified optimality on a d=4 random family
+(k = n/10, geomean; each backend stops at its first timeout):
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_scaling.md"
 

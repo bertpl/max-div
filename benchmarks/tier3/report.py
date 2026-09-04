@@ -2,10 +2,8 @@
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier3.report``.
 Reads the JSONL records written by ``benchmarks.tier3.full`` and emits markdown tables
-into ``RESULTS_DIR``. Geo is reported as percentage gaps; Ran and Glover
-as matched/exceeded counts, because their reference values are integer-quantized and partly
-loose, so percentage gaps would overstate small differences (see
-docs/benchmarks/third_party/head_to_head/tier3.md).
+into ``RESULTS_DIR``. Geo is reported as percentage gaps, Ran and Glover as matched/exceeded
+counts; docs/benchmarks/third_party/head_to_head/tier3.md explains why.
 """
 
 from collections import defaultdict
@@ -19,7 +17,7 @@ from benchmarks.mdplib.best_known import BestKnown, load_best_known
 RECORDS_DIR = Path("reports/benchmarks/tier3")
 RESULTS_DIR = Path("docs/benchmarks/third_party/head_to_head/results")
 
-# Budgets quoted in the tables (seconds; the last exists only for n=500 pairings).
+# The tables quote these budgets (seconds); the last exists only for n=500 pairings.
 TABLE_BUDGETS_SEC = (0.128, 1.024, 16.384)
 
 # A best-of-seeds value within this relative tolerance of the reference counts as a match
@@ -37,9 +35,9 @@ def best_of_seeds(records: list[RunRecord], budget_sec: float) -> float | None:
 def best_overall(records: list[RunRecord]) -> float | None:
     """Best MIN_SEPARATION over all seeds and all budgets run for an instance.
 
-    The match/exceed counts use the best over all budgets, not one fixed budget, because instance sets run to
-    different largest budgets (n=500 gets extended budgets) and a single low budget would
-    hide the exceed cases only the deeper budget surfaces.
+    Instance sets run to different largest budgets (n=500 gets extended budgets), so the counts
+    take the best over every budget; a single low budget would hide the exceed cases only the
+    deeper budget reaches.
     """
     values = [r.quality["MIN_SEPARATION"] for r in records if r.budget.startswith("time:")]
     return max(values) if values else None
