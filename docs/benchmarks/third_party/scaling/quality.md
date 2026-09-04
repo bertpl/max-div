@@ -8,7 +8,7 @@ The scoring objective (minimum separation under L2) was chosen because it is the
 
 ## Detailed Results
 
-Each configuration's curve is its median's **normalized solution quality** at each size, connected across sizes: 0% is the quality of a random selection, 100% the best-known solution. The gray dotted lines mark the 0%, 50%, 90% and 100% levels; a curve dipping below zero is a configuration worse than a random selection at that size.
+Each configuration's curve is its median's **normalized solution quality** at each size, connected across sizes. The gray dotted lines mark the 0%, 50%, 90% and 100% levels; a curve dipping below zero is a configuration worse than a random selection at that size.
 
 ![Normalized solution quality against problem size, per solver configuration](images/scaling_normalized_quality.webp)
 
@@ -18,6 +18,6 @@ A high percentage there means the solver matches the best *known* solution, not 
 
 ## Best-Known Solutions
 
-The **best-known solution** per problem size is the reference the quality verdicts are judged against, and `Q_random` is the zero of the normalized quality scale. Both are the best over every measured run — the extended runs and the reference-budget quality runs of the [measurement protocol](protocol.md) (section IV.D) — and the normalized quality above is measured on the band between them.
+The **best-known solution** per problem size is the reference the quality verdicts are judged against. Both are the best over every measured run — the extended runs and the reference-budget quality runs of the [measurement protocol](protocol.md) (section IV.D) — and the normalized quality above is measured on the band between them.
 
 ![Best-known diversity and the random reference against problem size](images/scaling_best_known.webp)

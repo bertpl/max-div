@@ -115,7 +115,7 @@ def _save_webp(fig: plt.Figure, path: Path) -> None:
 
 
 # One color per tool, in the order tools first appear in `CONFIGS`; a tool's configurations share
-# its color (`_series_style`). The tones are soft and medium-saturation.
+# its color (`_series_style`).
 _TOOL_COLORS = (
     "#4E8FD9",  # blue
     "#F29E4C",  # orange
@@ -140,8 +140,7 @@ _MARKER_SHAPES = ("o", "s", "D", "^", "v", "*", "p")
 def _series_style(tool: str, config: str) -> dict:
     """Return the plot kwargs (color, line style, marker) identifying one configuration on every chart.
 
-    A tool's configurations share its color; tools alternate solid and dashed lines; markers
-    cycle over all configurations. The style is keyed on the configuration itself, not on plot order: the
+    The style is keyed on the configuration itself, not on plot order: the
     renderers skip series with no plottable rows, so a position-based cycle would style the
     same configuration differently between the combined charts and the per-config fit charts.
     """
@@ -196,7 +195,7 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
                 **_series_style(tool, config),
             )
     ax.axhline(REFERENCE_BUDGET_SEC, color="#888888", linestyle=":", linewidth=1.2)
-    # x in axes fraction, y in data coordinates, so the label hugs the line's right end
+    # x in axes fraction, y in data coordinates, so the label sits at the line's right end
     ax.text(
         0.99,
         REFERENCE_BUDGET_SEC * 1.3,
@@ -239,7 +238,7 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
         _draw_fit_curve(ax, fits.get(f"{tool}/{config}", {}), observed, style)
         legend_handles.append(Line2D([], [], label=_legend_label(tool, config, names), linewidth=_LINE_WIDTH, **style))
     ax.axhline(MEMORY_CAP_BYTES, color="#888888", linestyle=":", linewidth=1.2)
-    # x in axes fraction, y in data coordinates, so the label hugs the line's right end, just below it
+    # x in axes fraction, y in data coordinates, so the label sits at the line's right end, just below it
     ax.text(
         0.99,
         MEMORY_CAP_BYTES / 1.15,
@@ -428,8 +427,7 @@ def render_best_known_chart(
     by_size = best_known_by_size(records)
     sizes = sorted(by_size)
     fig, ax = plt.subplots(figsize=(12.0, 7.0))
-    # Draw every configuration's median quality as faint context behind the references: thin,
-    # unmarked, one light gray, and first, so the references and their labels stay on top.
+    # Drawn first, so the references and their labels stay on top.
     for index, medians in enumerate(median_qualities(quality_records).values()):
         median_sizes = sorted(medians)
         ax.plot(
@@ -462,8 +460,7 @@ def render_best_known_chart(
         markerfacecolor="none",
         markersize=7,
     )
-    # The verdict thresholds run between the two curves; each curve and threshold line ends in
-    # its normalized-quality value, so the chart reads as the scale the quality page judges on.
+    # Each curve and threshold line ends in its normalized-quality value, the scale the quality page judges on.
     for index, threshold in enumerate(NORMALIZED_QUALITY_THRESHOLDS):
         threshold_values = [(1 - threshold) * q_random[n] + threshold * by_size[n].min_separation for n in random_sizes]
         ax.plot(
@@ -502,7 +499,7 @@ def render_normalized_quality_chart(
 ) -> None:
     """Render each configuration's normalized solution quality against problem size (log x, linear y).
 
-    Gray dotted lines mark the 0%, 50%, 90% and 100% levels; a configuration below the random
+    Gray dotted lines mark the scale ends and the verdict thresholds; a configuration below the random
     reference plots a negative percentage, so the y-axis is left free to descend below zero.
     """
     pool = best_known_pool(quality_records, best_known_records)
