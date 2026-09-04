@@ -1,8 +1,6 @@
 """Define the chart styling shared by every benchmark result figure: style sheet, tool colors, markers, webp output.
 
-The solver-scaling charts and the head-to-head anytime curves plot the same tools, so one module
-owns the color a tool gets and the way a figure is written to disk; a tool then looks the same on
-every results page.
+The solver-scaling charts and the head-to-head anytime curves plot the same tools, so one module owns a tool's color and the webp writer.
 """
 
 import io
@@ -15,10 +13,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 
 # `TOOL_COLORS` gives one color per tool, keyed by the tool's key in `data/solver_registry.yaml`, or
-# by its record-label prefix for the tools the registry does not list. The order is part of the
-# contract: the solver-scaling tools come first, in the order their configurations appear in
-# `benchmarks.solver_scaling.configs.CONFIGS`, because `generate_scaling_images` takes the
-# reference-curve colors from the first positions; `test_figures_style` pins that prefix.
+# by its record-label prefix for the tools the registry does not list. The first two entries also
+# color the best-known and Q_random reference curves in `generate_scaling_images`, by position.
 TOOL_COLORS: dict[str, str] = {
     "max-div": "#4E8FD9",  # blue
     "ortools-cpsat": "#F29E4C",  # orange
@@ -61,7 +57,7 @@ def tool_key(label: str) -> str:
 
 
 def save_webp(fig: plt.Figure, path: Path) -> None:
-    """Render the figure to lossy webp via PIL (matplotlib has no native webp writer)."""
+    """Render the figure to lossy webp via PIL (matplotlib has no native webp writer) and close it."""
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png")
     plt.close(fig)

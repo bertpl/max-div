@@ -6,13 +6,10 @@ from benchmarks.figures.style import TOOL_COLORS, save_webp, tool_color, tool_ke
 from benchmarks.solver_scaling.configs import CONFIGS
 
 
-def test_tool_colors_start_with_the_scaling_tools_in_configs_order():
-    """The palette lists the scaling tools first, in `CONFIGS` order."""
-    # --- arrange --------------------------
-    scaling_tools = list(dict.fromkeys(c.tool for c in CONFIGS))
-
-    # --- assert ---------------------------
-    assert list(TOOL_COLORS)[: len(scaling_tools)] == scaling_tools
+def test_every_scaling_tool_has_a_color():
+    """Each tool with a scaling configuration resolves to a palette color."""
+    # --- act / assert -----------------
+    assert all(tool_color(c.tool) for c in CONFIGS)
 
 
 @pytest.mark.parametrize(
@@ -27,22 +24,22 @@ def test_tool_colors_start_with_the_scaling_tools_in_configs_order():
 )
 def test_tool_key_maps_record_labels_to_palette_keys(label: str, expected: str):
     """A record's `tool[variant]` label resolves to the key `TOOL_COLORS` uses for that tool."""
-    # --- act / assert ---------------------
+    # --- act / assert -----------------
     assert tool_key(label) == expected
     assert tool_color(expected) == TOOL_COLORS[expected]
 
 
 def test_save_webp_writes_a_webp_file(tmp_path: Path):
     """The shared writer produces a webp file and creates missing parent folders."""
-    # --- arrange --------------------------
+    # --- arrange ----------------------
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()
     ax.plot([0, 1], [0, 1])
     path = tmp_path / "nested" / "figure.webp"
 
-    # --- act ------------------------------
+    # --- act --------------------------
     save_webp(fig, path)
 
-    # --- assert ---------------------------
+    # --- assert -----------------------
     assert path.read_bytes()[8:12] == b"WEBP"

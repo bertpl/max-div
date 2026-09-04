@@ -111,10 +111,12 @@ def _series_style(tool: str, config: str) -> dict:
 
     A tool's configurations share its color; marker shapes cycle over the configurations in
     `CONFIGS` order, every other one drawn open, so neighboring configurations differ in shape
-    and fill both — the self-limiting ones all sit on the `T_max` line, where identical markers
-    would hide one another. The style is keyed on the configuration itself, not on plot order:
-    the renderers skip series with no plottable rows, so a position-based cycle would style the
-    same configuration differently between the combined charts and the per-config fit charts.
+    and fill both — the configurations that stop at their own budget all sit on the `T_max`
+    line, where identical markers would hide one another.
+
+    The style is keyed on the configuration itself, not on plot order: the renderers skip
+    series with no plottable rows, so a position-based cycle would style the same configuration
+    differently between the combined charts and the per-config fit charts.
     """
     tools = list(dict.fromkeys(c.tool for c in CONFIGS))
     tool_index = tools.index(tool)
