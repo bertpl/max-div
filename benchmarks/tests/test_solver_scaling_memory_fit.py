@@ -59,7 +59,7 @@ def test_conditions_require_a_2gb_footprint_model_quality_and_enough_sizes():
     assert trust_conditions_met(grown, fit_series(grown))
 
 
-def test_a_single_bump_does_not_move_the_median_fit():
+def test_one_footprint_far_off_the_trend_does_not_move_the_median_fit():
     """One footprint far off the trend leaves the fitted coefficients on the trend."""
     # --- arrange ----------------------
     sizes_peaks = {n: 1.6e8 + 40.0 * n for n in (100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000)}

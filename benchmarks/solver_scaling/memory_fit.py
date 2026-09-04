@@ -1,11 +1,11 @@
 """Memory-fit arithmetic: turn a series of recorded footprints into a memory-cap crossing.
 
 The memory sweep (`memory_stage`) collects the footprints and decides when to stop; this module
-owns the fit itself. The fit is a median fit — it minimizes the sum of absolute residuals, so a
-single run's bump does not pull the curve — under coefficient bounds (`c0 >= 0`, `c1 >= 8`,
-`c2 >= 0`): the `c1 >= 8` lower bound is the input-array cost — every solver holds at least the
-n x d float32 vectors, 8 bytes per item at d=2. A quadratic term is kept only when physically
-plausible (`_C2_MIN_BYTES`); otherwise the fit is linear.
+owns the fit itself. The fit minimizes the sum of absolute residuals (a median fit), so one
+footprint far off the trend does not move the fitted curve. Coefficients are bounded: `c0 >= 0`,
+`c1 >= 8`, `c2 >= 0`. The `c1 >= 8` bound is the input-array cost: every solver holds at least
+the n x d float32 vectors, 8 bytes per item at d=2. A quadratic term is kept only when
+physically plausible (`_C2_MIN_BYTES`); otherwise the fit is linear.
 """
 
 from dataclasses import dataclass
@@ -24,11 +24,10 @@ _INPUT_MIN_BYTES = 8.0  # 4 bytes x d=2: the raw float32 vectors, the linear coe
 # extrapolation to the cap — refit linear.
 _C2_MIN_BYTES = 0.1
 
-# The trust conditions (measurement protocol, IV.B.1): one recorded footprint must reach this
-# size, the fitted model must reach this R^2, and there must be at least this many distinct
-# sizes. The footprint threshold keeps the extrapolation to the cap within a factor 16 in memory
-# and puts the growth term well above any solver's fixed baseline; a high-R^2 fit over only a
-# few points near the baseline extrapolates to the cap on too little evidence to trust.
+# The trust conditions (measurement protocol, IV.B.1). The byte threshold keeps the extrapolation
+# from the largest footprint to `MEMORY_CAP_BYTES` within a fixed factor and puts the growth term
+# well above any solver's fixed baseline; a high-R^2 fit over a few points near the baseline
+# extrapolates to the cap on too little evidence to trust.
 _TRUST_MIN_BYTES = 2 * 2**30
 _R2_MIN = 0.95
 _MIN_TRUST_SIZES = 5
@@ -100,11 +99,6 @@ def _fit_median(design: np.ndarray, targets: np.ndarray, lower_bounds: tuple[flo
     The design columns are scaled to unit maximum before solving, since `n^2` reaches 1e18 while
     the intercept column is 1, a spread the solver's tolerances cannot handle; the coefficients
     are scaled back afterwards.
-
-    Args:
-        design: One row per observation, one column per coefficient.
-        targets: The observed values, one per row of `design`.
-        lower_bounds: One lower bound per coefficient; no upper bounds apply.
     """
     n_obs, n_coef = design.shape
     column_scale = np.abs(design).max(axis=0)

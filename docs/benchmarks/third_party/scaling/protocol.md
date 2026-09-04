@@ -74,7 +74,7 @@ We assume...
 
 The extrapolating fit is only trusted once its **trust conditions** all hold:
 
-- one recorded footprint **reaches 2 GB** — the growth term is far above every solver's fixed baseline (150 to 300 MB), and the extrapolation to `M_max` is at most a factor 16 in memory;
+- one recorded footprint **reaches 2 GB** — the growth term is far above every solver's fixed baseline, and the extrapolation to `M_max` is at most a factor 16 in memory;
 - the fitted model explains them, **R² >= 0.95**;
 - there are **at least 5 measured sizes** — a high-R² fit over only three or four points extrapolates to the cap on too little evidence.
 
