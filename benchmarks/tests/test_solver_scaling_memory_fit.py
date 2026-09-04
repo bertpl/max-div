@@ -46,14 +46,29 @@ def test_an_implausibly_small_quadratic_term_falls_back_to_linear():
     assert fit.reason == "linear fit over 5 sizes"
 
 
-def test_conditions_require_span_model_quality_and_enough_sizes():
-    """The sweep may stop only with >= 5 sizes that span 3x and a model that explains them."""
+def test_conditions_require_a_2gb_footprint_model_quality_and_enough_sizes():
+    """The sweep may stop only with >= 5 sizes, one footprint at 2 GB, and a model that explains them."""
     # --- arrange ----------------------
-    flat = {n: 1.6e8 + 8.0 * n for n in (100, 200, 500, 1000, 2000)}  # 5 sizes, but span far below 3x
-    four = {n: 1.6e8 + 40.0 * n for n in (2_000_000, 5_000_000, 10_000_000, 20_000_000)}  # spans > 3x, only 4 sizes
-    grown = {n: 1.6e8 + 40.0 * n for n in (200_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000)}  # 5 sizes, spans > 3x
+    low = {n: 1.6e8 + 40.0 * n for n in (200_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000)}  # tops out at 560 MB
+    four = {n: 1.6e8 + 40.0 * n for n in (5_000_000, 10_000_000, 20_000_000, 50_000_000)}  # reaches 2 GB, only 4 sizes
+    grown = {n: 1.6e8 + 40.0 * n for n in (2_000_000, 5_000_000, 10_000_000, 20_000_000, 50_000_000)}  # 5 sizes, 2 GB
 
     # --- act / assert -----------------
-    assert not trust_conditions_met(flat, fit_series(flat))  # span fails
+    assert not trust_conditions_met(low, fit_series(low))  # no footprint at 2 GB
     assert not trust_conditions_met(four, fit_series(four))  # only 4 sizes
     assert trust_conditions_met(grown, fit_series(grown))
+
+
+def test_a_single_bump_does_not_move_the_median_fit():
+    """One footprint far off the trend leaves the fitted coefficients on the trend."""
+    # --- arrange ----------------------
+    sizes_peaks = {n: 1.6e8 + 40.0 * n for n in (100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000)}
+    sizes_peaks[1_000_000] *= 3  # one run three times its trend value
+
+    # --- act --------------------------
+    fit = fit_series(sizes_peaks)
+
+    # --- assert -----------------------
+    assert fit.coef is not None
+    assert fit.coef[0] == pytest.approx(1.6e8, rel=1e-6)
+    assert fit.coef[1] == pytest.approx(40.0, rel=1e-6)

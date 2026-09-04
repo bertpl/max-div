@@ -74,7 +74,7 @@ We assume...
 
 The extrapolating fit is only trusted once its **trust conditions** all hold:
 
-- the recorded footprints **span a 3x range** — the growth term dominates the fixed baseline within the data;
+- one recorded footprint **reaches 2 GB** — the growth term is far above every solver's fixed baseline (150 to 300 MB), and the extrapolation to `M_max` is at most a factor 16 in memory;
 - the fitted model explains them, **R² >= 0.95**;
 - there are **at least 5 measured sizes** — a high-R² fit over only three or four points extrapolates to the cap on too little evidence.
 
@@ -107,8 +107,9 @@ Each configuration gets one discarded warm-up run before its sweep: the first pr
                                    RECORD previous n                  # measured directly; disclosed
                                                                       # (a failure before any
                                                                       #  success is skipped)
-                >= 5 sizes  AND  M(n) span >= 3x  AND  fit R^2 >= 0.95:
-                    fit f(n) = c0 + c1*n + c2*n^2   (c0,c2 >= 0; c1 >= 4d = 8)
+                >= 5 sizes  AND  max M(n) >= 2 GB  AND  fit R^2 >= 0.95:
+                    median fit f(n) = c0 + c1*n + c2*n^2   (minimizes sum |M(n) - f(n)|;
+                                                           c0,c2 >= 0; c1 >= 4d = 8)
                     IF c2 < 0.1                   # < 1 byte per k*n entry: no real
                         refit with c2 = 0         # allocation can grow this slowly
                     RECORD largest n in N with f(n) <= M_max
