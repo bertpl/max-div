@@ -16,9 +16,10 @@ def plot_anytime_curve(records: list[RunRecord], metric_name: str, path: Path, t
     """Plot quality (one diversity metric) against measured wall-clock, per tool.
 
     Tools run over a budget series are drawn as a mean-over-seeds curve with a
-    min/max band; single-shot tools as one marker at (mean time, mean quality). Every
-    tool takes its shared color; single-shot tools additionally cycle through the shared
-    marker shapes so neighbors stay apart where their dots overlap.
+    min/max band; single-shot tools as one marker at (mean time, mean quality). Colors
+    come from `style.TOOL_COLORS`, so a tool looks the same on every results page;
+    single-shot tools cycle through `style.MARKER_SHAPES` so tools whose markers land on
+    the same point stay distinguishable.
 
     Args:
         records: Run records for exactly one (problem, size) combination.

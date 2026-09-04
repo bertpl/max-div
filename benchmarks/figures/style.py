@@ -14,10 +14,11 @@ from PIL import Image
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 
-# One color per tool, keyed by the tool's key in `data/solver_registry.yaml`. The order lists the
-# solver-scaling tools first, in the order their configurations appear in
-# `benchmarks.solver_scaling.configs.CONFIGS`, then the tools only the head-to-head comparison
-# runs; `test_figures_style` pins the first part against `CONFIGS`.
+# `TOOL_COLORS` gives one color per tool, keyed by the tool's key in `data/solver_registry.yaml`, or
+# by its record-label prefix for the tools the registry does not list. The order is part of the
+# contract: the solver-scaling tools come first, in the order their configurations appear in
+# `benchmarks.solver_scaling.configs.CONFIGS`, because `generate_scaling_images` takes the
+# reference-curve colors from the first positions; `test_figures_style` pins that prefix.
 TOOL_COLORS: dict[str, str] = {
     "max-div": "#4E8FD9",  # blue
     "ortools-cpsat": "#F29E4C",  # orange
@@ -35,7 +36,7 @@ TOOL_COLORS: dict[str, str] = {
     "random": "#A6A6A6",  # gray
 }
 
-# Marker shapes to cycle over when several series share a chart.
+# `MARKER_SHAPES` is cycled over when several series share a chart.
 MARKER_SHAPES = ("o", "s", "D", "^", "v", "*", "p")
 
 # Adapter labels read `tool[variant]`; the part before the bracket, lowercased, is the registry key
@@ -49,18 +50,18 @@ def use_docs_style() -> None:
 
 
 def tool_color(tool: str) -> str:
-    """Return the color of a tool, by its registry key."""
+    """Return the color of a tool, by its `TOOL_COLORS` key."""
     return TOOL_COLORS[tool]
 
 
 def tool_key(label: str) -> str:
-    """Return the registry key of a tool from a run record's `tool[variant]` label."""
+    """Return the `TOOL_COLORS` key of a tool from a run record's `tool[variant]` label."""
     prefix = label.split("[", 1)[0]
     return _TOOL_KEY_OVERRIDES.get(prefix, prefix.lower())
 
 
 def save_webp(fig: plt.Figure, path: Path) -> None:
-    """Render the figure to quality-92 webp via PIL (matplotlib has no native webp writer)."""
+    """Render the figure to lossy webp via PIL (matplotlib has no native webp writer)."""
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png")
     plt.close(fig)
