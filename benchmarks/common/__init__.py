@@ -1,4 +1,4 @@
-"""Shared benchmark infrastructure: budget series, quality evaluation, run records, problems."""
+"""Provide the shared benchmark infrastructure: budget series, quality evaluation, run records, problems."""
 
 from .budget_series import iteration_budget_series, time_budget_series
 from .problems import build_problem

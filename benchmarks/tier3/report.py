@@ -4,7 +4,8 @@ Run with: ``uv run --group benchmarks python -m benchmarks.tier3.report``.
 Reads the JSONL records written by ``benchmarks.tier3.full`` and emits markdown tables
 into ``RESULTS_DIR``. Geo is reported as percentage gaps; Ran and Glover
 as matched/exceeded counts, because their reference values are integer-quantized and partly
-loose, so percentage gaps would overstate small differences (the results page explains).
+loose, so percentage gaps would overstate small differences (see
+docs/benchmarks/third_party/head_to_head/tier3.md).
 """
 
 from collections import defaultdict
@@ -36,7 +37,7 @@ def best_of_seeds(records: list[RunRecord], budget_sec: float) -> float | None:
 def best_overall(records: list[RunRecord]) -> float | None:
     """Best MIN_SEPARATION over all seeds and all budgets run for an instance.
 
-    The match/exceed counts use this, not a fixed budget, because instance sets run to
+    The match/exceed counts use the best over all budgets, not one fixed budget, because instance sets run to
     different largest budgets (n=500 gets extended budgets) and a single low budget would
     hide the exceed cases only the deeper budget surfaces.
     """

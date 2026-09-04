@@ -18,7 +18,7 @@ Three experiments:
    Above n ~ 300 CP-SAT no longer proves within the cap, which bounds the experiment.
 2. **Backend scaling (mean/geomean)** — how far SCIP and CP-SAT push the NN-assignment
    model before proofs stop, on a d=4 random family below the smallest generator size
-   (n = 100). This substantiates why no mean/geomean gap-to-optimum is published.
+   (n = 100). The experiment substantiates why no mean/geomean gap-to-optimum is published.
 3. **Incumbent-at-budget geomean panel** — on shipped problems no solver can certify
    (U3 and C4 at size 1), CP-SAT runs at a generous cap and its best-found solution is
    compared against max-div's budget series. Uncertified by construction.
@@ -57,7 +57,7 @@ INCUMBENT_CASES = (("U3", 100, 10_800.0), ("C4", 150, 900.0))  # C4's bound stop
 
 
 def scaling_problem(n: int) -> MaxDivProblem:
-    """The custom sub-n=100 problem family used for the backend scaling experiment."""
+    """Build the custom sub-n=100 problem family for the backend scaling experiment."""
     rng = np.random.default_rng(0)
     vectors = rng.random((n, SCALING_DIMENSIONS), dtype=np.float32)
     return MaxDivProblem.new(vectors, k=max(2, n // 10), diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)

@@ -1,14 +1,11 @@
-"""Budget series: the geometric sequences of solve budgets used for anytime measurements."""
+"""Build the geometric sequences of solve budgets used for anytime measurements."""
 
 
 def time_budget_series(t_min_sec: float = 0.001, t_max_sec: float = 1.0, factor: float = 2.0) -> list[float]:
     """Build a geometric series of wall-clock budgets, in seconds.
 
     Args:
-        t_min_sec: First budget.
-        t_max_sec: Largest budget to cover; the series ends at the first value >= this,
-            so the given value is always covered.
-        factor: Multiplicative step between consecutive budgets.
+        t_max_sec: Largest budget to cover; the series ends at the first value >= this.
 
     Returns:
         Increasing list of budgets in seconds.
@@ -25,17 +22,15 @@ def iteration_budget_series(i_min: int = 10, i_max: int = 100_000, factor: float
     """Build a geometric series of iteration-count budgets.
 
     Args:
-        i_min: First budget.
         i_max: Largest budget to cover; the series ends at the first value >= this.
-        factor: Multiplicative step between consecutive budgets.
 
     Returns:
-        Increasing list of iteration counts (deduplicated after rounding).
+        Increasing list of iteration counts (rounded; each value is forced to exceed the previous one).
     """
     if i_min <= 0 or i_max < i_min or factor <= 1.0:
         raise ValueError("A budget series requires 0 < i_min <= i_max and factor > 1.")
     budgets = [i_min]
     while budgets[-1] < i_max:
-        nxt = max(budgets[-1] + 1, round(budgets[-1] * factor))
-        budgets.append(nxt)
+        next_budget = max(budgets[-1] + 1, round(budgets[-1] * factor))
+        budgets.append(next_budget)
     return budgets

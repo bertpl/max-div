@@ -1,4 +1,4 @@
-"""Anytime-curve figure: quality vs. measured wall-clock, budget-series curves + single-shot dots."""
+"""Plot anytime curves: quality vs. measured wall-clock, budget-series curves + single-shot dots."""
 
 from collections import defaultdict
 from pathlib import Path

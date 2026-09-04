@@ -53,8 +53,7 @@ CONSTRAINED_PROBLEMS = ("C1", "C2")
 CONSTRAINED_SIZES = (200, 1000, 2000)
 CONSTRAINED_METRIC = DiversityMetric.MIN_SEPARATION
 
-# The series ends at the first budget >= 10 s (16.4 s), so the curves extend past the
-# region where the slowest competitors land.
+# 10 s: the series extends past the region where the slowest competitors land.
 TIME_BUDGETS_SEC = time_budget_series(0.001, 10.0)
 
 EVALUATED_DIVERSITY_METRICS = (

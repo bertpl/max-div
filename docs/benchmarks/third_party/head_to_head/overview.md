@@ -47,4 +47,4 @@ Across the three tiers, `max-div`:
   reachable;
 - matches or exceeds the literature's best-known values on the larger MMDP instances.
 
-Each page states where it wins and where it does not.
+Each page states where `max-div` wins and where it does not.

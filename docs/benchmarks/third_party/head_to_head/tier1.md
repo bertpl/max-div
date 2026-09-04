@@ -68,6 +68,6 @@ On the unconstrained problem (U3), max-div reaches within ~1 % of the exact solv
 incumbent in one second. On the constrained problem (C4), max-div's 1-second solution
 *matches* the one the exact solver reached in 15 minutes (neither certified optimal).
 
-These are point comparisons on two problems, not certified gaps. They answer the
+Both results are point comparisons on two problems, not certified gaps. They answer the
 budget-parity question the certified experiment cannot reach: given comparable or far
 greater time, the exact solver does not pull ahead on these instances.
