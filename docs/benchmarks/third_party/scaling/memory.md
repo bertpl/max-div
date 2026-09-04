@@ -4,7 +4,7 @@ The **largest n within memory** is the largest problem size a configuration hand
 
 ![Memory footprint against problem size, per solver configuration, with fitted growth curves](images/scaling_memory.webp)
 
-Dots are recorded footprints; dashed curves are each configuration's fitted growth, drawn up to the memory cap. A flat left end is the solver process's fixed startup cost, which the fit's intercept absorbs.
+Dots are recorded footprints; the curves are each configuration's fitted growth, drawn up to the memory cap. The fit minimizes the sum of absolute residuals, so one run far off the trend does not move it. A flat left end is the solver process's fixed startup cost, which the fit's intercept absorbs.
 
 --8<-- "generated/scaling_memory.md"
 

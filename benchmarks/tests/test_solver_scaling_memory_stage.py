@@ -26,7 +26,7 @@ def test_sweep_stops_once_the_trust_conditions_hold(monkeypatch, tmp_path):
     fit = memory_stage._sweep(resolve("rdkit", "default"), {}, tmp_path / "runs.jsonl")
 
     # --- assert -----------------------
-    # 40 B/item growth triples the ~160 MB baseline by ~n=8M; the sweep stops at the grid size
+    # 40 B/item growth reaches the 2 GB trust threshold at n=50M; the sweep stops at the grid size
     # where all trust conditions hold and publishes the fitted crossing
     assert fit.coef is not None
     assert fit.r2 is not None and fit.r2 >= 0.95

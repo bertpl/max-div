@@ -7,7 +7,7 @@ from benchmarks.solver_scaling.memory_fit import trust_conditions_met, fit_serie
 def test_quadratic_fit_recovers_a_known_crossing():
     # --- arrange ----------------------
     c0, c1, c2 = 1.0e8, 100.0, 50.0
-    sizes_peaks = {n: c0 + c1 * n + c2 * n**2 for n in (1000, 2000, 5000, 10000)}
+    sizes_peaks = {n: c0 + c1 * n + c2 * n**2 for n in (20, 50, 100, 1000, 2000, 5000, 10000)}
 
     # --- act --------------------------
     fit = fit_series(sizes_peaks)
@@ -46,14 +46,44 @@ def test_an_implausibly_small_quadratic_term_falls_back_to_linear():
     assert fit.reason == "linear fit over 5 sizes"
 
 
-def test_conditions_require_span_model_quality_and_enough_sizes():
-    """The sweep may stop only with >= 5 sizes that span 3x and a model that explains them."""
+def test_conditions_require_a_2gb_footprint_model_quality_and_enough_sizes():
+    """The sweep may stop only with >= 5 sizes, one footprint at 2 GB, and a model that explains them."""
     # --- arrange ----------------------
-    flat = {n: 1.6e8 + 8.0 * n for n in (100, 200, 500, 1000, 2000)}  # 5 sizes, but span far below 3x
-    four = {n: 1.6e8 + 40.0 * n for n in (2_000_000, 5_000_000, 10_000_000, 20_000_000)}  # spans > 3x, only 4 sizes
-    grown = {n: 1.6e8 + 40.0 * n for n in (200_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000)}  # 5 sizes, spans > 3x
+    low = {n: 1.6e8 + 40.0 * n for n in (200_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000)}  # tops out at 560 MB
+    four = {n: 1.6e8 + 40.0 * n for n in (5_000_000, 10_000_000, 20_000_000, 50_000_000)}  # reaches 2 GB, only 4 sizes
+    grown = {n: 1.6e8 + 40.0 * n for n in (2_000_000, 5_000_000, 10_000_000, 20_000_000, 50_000_000)}  # 5 sizes, 2 GB
 
     # --- act / assert -----------------
-    assert not trust_conditions_met(flat, fit_series(flat))  # span fails
+    assert not trust_conditions_met(low, fit_series(low))  # no footprint at 2 GB
     assert not trust_conditions_met(four, fit_series(four))  # only 4 sizes
     assert trust_conditions_met(grown, fit_series(grown))
+
+
+def test_one_footprint_far_off_the_trend_does_not_move_the_median_fit():
+    """One footprint far off the trend leaves the fitted coefficients on the trend."""
+    # --- arrange ----------------------
+    sizes_peaks = {n: 1.6e8 + 40.0 * n for n in (100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000)}
+    sizes_peaks[1_000_000] *= 3  # one run three times its trend value
+
+    # --- act --------------------------
+    fit = fit_series(sizes_peaks)
+
+    # --- assert -----------------------
+    assert fit.coef is not None
+    assert fit.coef[0] == pytest.approx(1.6e8, rel=1e-6)
+    assert fit.coef[1] == pytest.approx(40.0, rel=1e-6)
+
+
+def test_the_intercept_stays_near_the_smallest_footprint():
+    """A series whose large points dominate the fit keeps an intercept of at least 80% of its smallest footprint."""
+    # --- arrange ----------------------
+    # a HiGHS-like series: a 160 MB baseline, then growth so steep that a median fit through the
+    # three largest points would put the intercept near zero
+    sizes_peaks = {20: 1.6e8, 50: 1.7e8, 100: 3.0e8, 200: 7.0e8, 500: 1.7e9, 1000: 3.5e9}
+
+    # --- act --------------------------
+    fit = fit_series(sizes_peaks)
+
+    # --- assert -----------------------
+    assert fit.coef is not None
+    assert fit.coef[0] >= 0.8 * 1.6e8

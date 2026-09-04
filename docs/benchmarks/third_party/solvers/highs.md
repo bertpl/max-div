@@ -4,7 +4,7 @@ solver:
   source: https://ergo-code.github.io/HiGHS/
   verified: 2026-07-27
   scale:
-    max_n_memory: 2000
+    max_n_memory: 5000
     max_n_time: 2000
     max_n_quality_50: 200
     max_n_quality_90: 200
