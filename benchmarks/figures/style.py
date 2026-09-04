@@ -12,9 +12,9 @@ from PIL import Image
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 
-# `TOOL_COLORS` gives one color per tool, keyed by the tool's key in `data/solver_registry.yaml`, or
-# by its record-label prefix for the tools the registry does not list. The first two entries also
-# color the best-known and Q_random reference curves in `generate_scaling_images`, by position.
+# `TOOL_COLORS` gives one color per tool, keyed by the tool's solver-registry key, or by its
+# record-label prefix for the tools the registry does not list. The first two entries are reserved:
+# `generate_scaling_images` reads them by position.
 TOOL_COLORS: dict[str, str] = {
     "max-div": "#4E8FD9",  # blue
     "ortools-cpsat": "#F29E4C",  # orange
@@ -35,7 +35,7 @@ TOOL_COLORS: dict[str, str] = {
 # `MARKER_SHAPES` is cycled over when several series share a chart.
 MARKER_SHAPES = ("o", "s", "D", "^", "v", "*", "p")
 
-# Adapter labels read `tool[variant]`; the part before the bracket, lowercased, is the registry key
+# Record labels read `tool[variant]`; the part before the bracket, lowercased, is the registry key
 # for every tool but apricot, whose registry key carries the package name.
 _TOOL_KEY_OVERRIDES = {"apricot": "apricot-select"}
 

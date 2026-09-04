@@ -9,6 +9,7 @@ from benchmarks.common.records import RunRecord
 
 from .style import MARKER_SHAPES, save_webp, tool_color, tool_key, use_docs_style
 
+# Heavier than the scaling charts' lines: one curve per chart, at a smaller figure size.
 _LINE_WIDTH = 1.5
 
 
@@ -16,9 +17,7 @@ def plot_anytime_curve(records: list[RunRecord], metric_name: str, path: Path, t
     """Plot quality (one diversity metric) against measured wall-clock, per tool.
 
     Tools run over a budget series are drawn as a mean-over-seeds curve with a
-    min/max band; single-shot tools as one marker at (mean time, mean quality). Colors
-    come from `style.TOOL_COLORS`; single-shot tools cycle through `style.MARKER_SHAPES`
-    so tools whose markers land on the same point stay distinguishable.
+    min/max band; single-shot tools as one marker at (mean time, mean quality).
 
     Args:
         records: Run records for exactly one (problem, size) combination.
@@ -30,6 +29,8 @@ def plot_anytime_curve(records: list[RunRecord], metric_name: str, path: Path, t
 
     use_docs_style()
     fig, ax = plt.subplots(figsize=(8.0, 4.5))
+    # Single-shot tools cycle through the marker shapes so tools whose markers land on the same
+    # point stay distinguishable.
     marker_index = 0
     for tool, tool_records in sorted(_group_by_tool(records).items()):
         color = tool_color(tool_key(tool))
