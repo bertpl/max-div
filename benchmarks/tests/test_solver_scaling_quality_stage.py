@@ -115,7 +115,7 @@ def test_quality_limits_judges_the_median_against_the_pooled_threshold() -> None
     ]
 
     # --- act --------------------------
-    limits = quality_limits(quality, [], {20: 0.0}, gap_closure=0.9)
+    limits = quality_limits(quality, [], {20: 0.0}, threshold=0.9)
 
     # --- assert -----------------------
     assert limits == {"fpsample/vanilla": None, "rdkit/default": 20}
@@ -136,14 +136,14 @@ def test_quality_limits_stops_at_the_first_failing_size() -> None:
     ]
 
     # --- act --------------------------
-    limits = quality_limits(quality, [], {20: 0.0, 50: 0.0, 100: 0.0}, gap_closure=0.9)
+    limits = quality_limits(quality, [], {20: 0.0, 50: 0.0, 100: 0.0}, threshold=0.9)
 
     # --- assert -----------------------
     assert limits == {"rdkit/default": 20, "fpsample/vanilla": 100}
 
 
-def test_quality_limits_judges_each_fraction_separately() -> None:
-    """A configuration closing 60% of the gap passes the 0.5 fraction but not the 0.9 fraction."""
+def test_quality_limits_judges_each_threshold_separately() -> None:
+    """A configuration at 60% normalized quality passes the 0.5 threshold but not the 0.9 one."""
     # --- arrange ----------------------
     quality = [
         _record(20, min_separation=0.6),
@@ -152,8 +152,8 @@ def test_quality_limits_judges_each_fraction_separately() -> None:
     q_random = {20: 0.0}
 
     # --- act / assert -----------------
-    assert quality_limits(quality, [], q_random, gap_closure=0.5)["rdkit/default"] == 20
-    assert quality_limits(quality, [], q_random, gap_closure=0.9)["rdkit/default"] is None
+    assert quality_limits(quality, [], q_random, threshold=0.5)["rdkit/default"] == 20
+    assert quality_limits(quality, [], q_random, threshold=0.9)["rdkit/default"] is None
 
 
 def test_tool_quality_limits_judges_the_best_configuration_per_size() -> None:
@@ -175,8 +175,8 @@ def test_tool_quality_limits_judges_the_best_configuration_per_size() -> None:
     q_random = {20: 0.0, 50: 0.0, 100: 0.0}
 
     # --- act --------------------------
-    tool_limits = tool_quality_limits(quality, [], q_random, gap_closure=0.9)
-    config_limits = quality_limits(quality, [], q_random, gap_closure=0.9)
+    tool_limits = tool_quality_limits(quality, [], q_random, threshold=0.9)
+    config_limits = quality_limits(quality, [], q_random, threshold=0.9)
 
     # --- assert -----------------------
     assert tool_limits == {"rdkit": 100, "fpsample": 100}

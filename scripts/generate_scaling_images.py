@@ -18,6 +18,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
+from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter
 from PIL import Image
 
@@ -44,7 +45,7 @@ from benchmarks.solver_scaling.memory_stage import DATA_PATH as MEMORY_DATA_PATH
 from benchmarks.solver_scaling.outcome import Outcome, classify  # noqa: E402
 from benchmarks.solver_scaling.quality_stage import DATA_PATH as QUALITY_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.quality_stage import (  # noqa: E402
-    GAP_CLOSURE_FRACTIONS,
+    NORMALIZED_QUALITY_THRESHOLDS,
     Q_RANDOM_PATH,
     best_known_pool,
     median_qualities,
@@ -113,35 +114,52 @@ def _save_webp(fig: plt.Figure, path: Path) -> None:
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 
-def _series_marker(index: int) -> dict:
-    """Return per-series marker kwargs: shapes alternate and every other series is drawn open.
+# One color per tool, in the order tools first appear in `CONFIGS`; a tool's configurations share
+# its color (`_series_style`).
+_TOOL_COLORS = (
+    "#4E8FD9",  # blue
+    "#F29E4C",  # orange
+    "#5DBB7A",  # green
+    "#E8655F",  # coral
+    "#9B7BD6",  # purple
+    "#3FB8B0",  # teal
+    "#E87EB4",  # pink
+    "#B0C24E",  # lime
+    "#C69A5B",  # tan
+    "#E9C34A",  # gold
+    "#7F8FA6",  # slate
+    "#4DBEDF",  # sky
+)
 
-    Distinct shapes and open-vs-filled markers keep coinciding series tellable apart — the
-    self-limiting configurations all sit on the `T_max` line, where identical dots would
-    hide one another completely.
+# Marker shapes cycle over the configurations in `CONFIGS` order, every other one drawn open, so
+# neighboring configurations differ in shape and fill both — the self-limiting ones all sit on
+# the `T_max` line, where identical markers would hide one another.
+_MARKER_SHAPES = ("o", "s", "D", "^", "v", "*", "p")
+
+
+def _series_style(tool: str, config: str) -> dict:
+    """Return the plot kwargs (color, line style, marker) identifying one configuration on every chart.
+
+    The style is keyed on the configuration itself, not on plot order: the
+    renderers skip series with no plottable rows, so a position-based cycle would style the
+    same configuration differently between the combined charts and the per-config fit charts.
     """
-    shapes = ("o", "s", "D", "^", "v", "P", "X")
-    marker = shapes[index % len(shapes)]
-    if index % 2:
-        return {"marker": marker, "markerfacecolor": "none", "markersize": 7}
-    return {"marker": marker}
+    tools = list(dict.fromkeys(c.tool for c in CONFIGS))
+    tool_index = tools.index(tool)
+    config_index = [(c.tool, c.name) for c in CONFIGS].index((tool, config))
+    style = {
+        "color": _TOOL_COLORS[tool_index],
+        "linestyle": "-" if tool_index % 2 == 0 else "--",
+        "marker": _MARKER_SHAPES[config_index % len(_MARKER_SHAPES)],
+    }
+    if config_index % 2:
+        style.update(markerfacecolor="none", markersize=7)
+    return style
 
 
-def _series_color(index: int) -> str:
-    """Return the per-series color, keyed by the series index rather than plot order.
-
-    The renderers skip series with no plottable rows; the axes' color cycle advances only on
-    plotted series while `_series_marker` advances on the index, so one skipped series would
-    desynchronize colors from marker shapes between the combined charts and the per-config
-    fit charts.
-    """
-    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-    return colors[index % len(colors)]
-
-
-def _grid_xticks(ax: plt.Axes, n_max: int) -> None:
-    """Put ticks, labels and gridlines on every grid size up to `n_max`."""
-    ticks = size_grid(n_max)
+def _grid_xticks(ax: plt.Axes, n_max: int, extra: tuple[int, ...] = ()) -> None:
+    """Put ticks, labels and gridlines on every grid size up to `n_max`, plus any `extra` sizes."""
+    ticks = sorted({*size_grid(n_max), *extra})
     ax.set_xticks(ticks)
     ax.set_xticklabels([_format_count(n) for n in ticks], rotation=45, ha="right", fontsize=8)
     ax.set_xticks([], minor=True)
@@ -166,7 +184,7 @@ def _format_bytes(value: float, _pos=None) -> str:
 def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
     """Render end-to-end solve time against problem size, one series per configuration."""
     fig, ax = plt.subplots(figsize=(12.0, 7.0))
-    for index, ((tool, config), rows) in enumerate(grouped.items()):
+    for (tool, config), rows in grouped.items():
         completed = [r for r in rows if r.completed and r.measured_sec is not None]
         if completed:
             ax.plot(
@@ -174,17 +192,17 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
                 [r.measured_sec for r in completed],
                 label=_legend_label(tool, config, names),
                 linewidth=_LINE_WIDTH,
-                color=_series_color(index),
-                **_series_marker(index),
+                **_series_style(tool, config),
             )
-    ax.axhline(REFERENCE_BUDGET_SEC, color="#888888", linestyle="--", linewidth=1.2)
-    # x in axes fraction, y in data coordinates, so the label hugs the line's right end
+    ax.axhline(REFERENCE_BUDGET_SEC, color="#888888", linestyle=":", linewidth=1.2)
+    # x in axes fraction, y in data coordinates, so the label sits at the line's right end
     ax.text(
         0.99,
-        REFERENCE_BUDGET_SEC * 1.2,
+        REFERENCE_BUDGET_SEC * 1.3,
         "$\\mathrm{T_{max}}$ (1 min)",
         color="#555555",
         ha="right",
+        va="bottom",
         fontsize=9,
         transform=ax.get_yaxis_transform(),
         bbox={"facecolor": "white", "alpha": 0.9, "edgecolor": "none"},
@@ -204,43 +222,47 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
 def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> None:
     """Render recorded memory footprints against problem size, with each configuration's fitted curve overlaid."""
     fig, ax = plt.subplots(figsize=(12.0, 7.0))
-    for index, ((tool, config), rows) in enumerate(grouped.items()):
+    # Measurements are markers only and the fitted curve carries the line, so neither artist alone
+    # shows a configuration's full style; the legend gets one proxy per configuration with both.
+    legend_handles = []
+    for (tool, config), rows in grouped.items():
         observed = _footprint_rows(rows)
         if not observed:
             continue
+        style = _series_style(tool, config)
         ax.plot(
             [r.n for r in observed],
             [r.peak_memory_bytes for r in observed],
-            linestyle="none",
-            label=_legend_label(tool, config, names),
-            color=_series_color(index),
-            **_series_marker(index),
+            **{**style, "linestyle": "none"},
         )
-        _draw_fit_curve(ax, fits.get(f"{tool}/{config}", {}), observed, _series_color(index))
-    ax.axhline(MEMORY_CAP_BYTES, color="#888888", linestyle="--", linewidth=1.2)
-    # x in axes fraction, y in data coordinates, so the label hugs the line's right end
+        _draw_fit_curve(ax, fits.get(f"{tool}/{config}", {}), observed, style)
+        legend_handles.append(Line2D([], [], label=_legend_label(tool, config, names), linewidth=_LINE_WIDTH, **style))
+    ax.axhline(MEMORY_CAP_BYTES, color="#888888", linestyle=":", linewidth=1.2)
+    # x in axes fraction, y in data coordinates, so the label sits at the line's right end, just below it
     ax.text(
         0.99,
-        MEMORY_CAP_BYTES * 1.3,
-        "$\\mathrm{M_{max}}$ (32 GB)",
+        MEMORY_CAP_BYTES / 1.15,
+        "$\\mathrm{M_{max}}$",
         color="#555555",
         ha="right",
+        va="top",
         fontsize=9,
         transform=ax.get_yaxis_transform(),
         bbox={"facecolor": "white", "alpha": 0.9, "edgecolor": "none"},
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
-    _grid_xticks(ax, operational_bound())
+    _grid_xticks(ax, operational_bound(), extra=(GRID_MIN // 2, 5 * 10**9))  # one tick past each end of the grid
+    ax.set_xlim(left=GRID_MIN / 5, right=6 * 10**9)  # room for the legend before the first grid size
     ax.set_xlabel("problem size n")
     ax.set_ylabel("peak memory use")
-    # fixed factor-4 ticks in whole binary units; the default decade ticks label awkward values
-    ax.set_yticks([2**27, 2**29, 2**31, 2**33, 2**35])
+    # fixed factor-2 ticks in whole binary units; the default decade ticks label awkward values
+    ax.set_yticks([2**e for e in range(27, 36)])
     ax.yaxis.set_major_formatter(FuncFormatter(_format_bytes))
     ax.yaxis.set_minor_locator(plt.NullLocator())
     ax.set_title("Solver Scaling — Memory", fontweight="bold")
     ax.grid(True, which="major")
-    ax.legend(loc="upper left")
+    ax.legend(handles=legend_handles, loc="upper left")
     _save_webp(fig, IMAGES_DIR / "scaling_memory.webp")
 
 
@@ -259,8 +281,13 @@ def _footprint_rows(rows: list[ScalingRunRecord]) -> list[ScalingRunRecord]:
     ]
 
 
-def _draw_fit_curve(ax: plt.Axes, fit: dict, observed: list[ScalingRunRecord], color: str) -> None:
-    """Draw a configuration's fitted footprint curve, from its measured sizes up to the memory cap."""
+def _draw_fit_curve(ax: plt.Axes, fit: dict, observed: list[ScalingRunRecord], style: dict) -> None:
+    """Draw a configuration's fitted footprint curve, from its measured sizes up to the memory cap.
+
+    Args:
+        style: The configuration's `_series_style`; the curve takes its color and line style, so
+            the memory chart reads like the time chart.
+    """
     coef = fit.get("coef")
     if not coef:
         return
@@ -269,7 +296,14 @@ def _draw_fit_curve(ax: plt.Axes, fit: dict, observed: list[ScalingRunRecord], c
     ns = np.geomspace(n_lo, n_hi, 200)
     predicted = sum(c * ns**p for p, c in enumerate(coef))
     visible = predicted <= 2 * MEMORY_CAP_BYTES  # stop shortly above the cap; further extrapolation says nothing
-    ax.plot(ns[visible], predicted[visible], color=color, linestyle="--", linewidth=_LINE_WIDTH, alpha=0.8)
+    ax.plot(
+        ns[visible],
+        predicted[visible],
+        color=style["color"],
+        linestyle=style["linestyle"],
+        linewidth=_LINE_WIDTH,
+        alpha=0.8,
+    )
 
 
 def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
@@ -281,27 +315,24 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
     """
     thumbnails: list[str] = []
     written: set[Path] = set()
-    for index, ((tool, config), rows) in enumerate(grouped.items()):
+    for (tool, config), rows in grouped.items():
         fit = fits.get(f"{tool}/{config}", {})
         observed = _footprint_rows(rows)
         if not observed or not fit.get("coef"):
             continue
-        color = _series_color(index)
+        style = _series_style(tool, config)  # the combined chart's color and marker for this config
+        color = style["color"]
         label = _legend_label(tool, config, names)
-        # the combined chart's marker for this config, so shape and fill match its color there
-        marker_style = _series_marker(index)
         fig, ax = plt.subplots(figsize=(7.0, 4.2))
         ax.plot(
             [r.n for r in observed],
             [r.peak_memory_bytes / 2**20 for r in observed],
-            linestyle="none",
-            color=color,
-            **marker_style,
+            **{**style, "linestyle": "none"},
         )
         coef = fit["coef"]
         fit_ns = np.geomspace(GRID_MIN, observed[-1].n, 200)
         predicted = sum(c * fit_ns**p for p, c in enumerate(coef)) / 2**20
-        ax.plot(fit_ns, predicted, linestyle="--", linewidth=1.2, color=color)
+        ax.plot(fit_ns, predicted, linestyle=style["linestyle"], linewidth=1.2, color=color)
         ax.text(
             0.03,
             0.94,
@@ -372,23 +403,48 @@ def _annotate_best_known_point(ax: plt.Axes, x: float, y: float, solver: str, co
     ax.annotate(solver, (x, y), xytext=(2 + up[0], 4 + up[1]), color="#333333", fontweight="bold", **shared)
 
 
-def render_best_known_chart(records: list[ScalingRunRecord], q_random: dict[int, float], names: dict[str, str]) -> None:
+def _label_curve_end(ax: plt.Axes, x: float, y: float, text: str, offset: tuple[float, float] = (6, 0)) -> None:
+    """Write `text` right of a curve's last point, `offset` points away from it, vertically centered."""
+    ax.annotate(
+        text, (x, y), xytext=offset, textcoords="offset points", ha="left", va="center", fontsize=9, color="#555555"
+    )
+
+
+def render_best_known_chart(
+    records: list[ScalingRunRecord],
+    quality_records: list[ScalingRunRecord],
+    q_random: dict[int, float],
+    names: dict[str, str],
+) -> None:
     """Render the best-known diversity and the random reference against problem size (log--log).
 
-    The two curves are the band the gap-closure percentages normalize against: the best-known
+    The two curves are the band the normalized quality is measured against: the best-known
     curve (the highest quality any run reached at each size) on top, the random reference below.
     Each best-known point is labeled with the tool that produced it and its winning configuration.
+    Every configuration's median quality (`quality_records`) is drawn as faint context, and the
+    verdict thresholds as dotted lines between the two references.
     """
     by_size = best_known_by_size(records)
     sizes = sorted(by_size)
     fig, ax = plt.subplots(figsize=(12.0, 7.0))
+    # Drawn first, so the references and their labels stay on top.
+    for index, medians in enumerate(median_qualities(quality_records).values()):
+        median_sizes = sorted(medians)
+        ax.plot(
+            median_sizes,
+            [medians[n] for n in median_sizes],
+            color="#D8D8D8",
+            linewidth=0.5,
+            zorder=1,
+            label="results per solver config (median)" if index == 0 else None,  # one legend entry for all
+        )
     ax.plot(
         sizes,
         [by_size[n].min_separation for n in sizes],
         label="best-known",
         linewidth=_LINE_WIDTH,
-        color=_series_color(0),
-        **_series_marker(0),
+        color=_TOOL_COLORS[0],
+        marker="o",
     )
     for n in sizes:
         record = by_size[n]
@@ -399,9 +455,25 @@ def render_best_known_chart(records: list[ScalingRunRecord], q_random: dict[int,
         [q_random[n] for n in random_sizes],
         label="$Q_{\\mathrm{random}}$",
         linewidth=_LINE_WIDTH,
-        color=_series_color(1),
-        **_series_marker(1),
+        color=_TOOL_COLORS[1],
+        marker="s",
+        markerfacecolor="none",
+        markersize=7,
     )
+    # Each curve and threshold line ends in its normalized-quality value, the scale the quality page judges on.
+    for index, threshold in enumerate(NORMALIZED_QUALITY_THRESHOLDS):
+        threshold_values = [(1 - threshold) * q_random[n] + threshold * by_size[n].min_separation for n in random_sizes]
+        ax.plot(
+            random_sizes,
+            threshold_values,
+            color="#888888",
+            linestyle=":",
+            linewidth=1.0,
+            label="scaling thresholds" if index == 0 else None,  # one legend entry for all
+        )
+        _label_curve_end(ax, random_sizes[-1], threshold_values[-1], f"{threshold:.0%}", offset=(2, -5.5))
+    _label_curve_end(ax, random_sizes[-1], q_random[random_sizes[-1]], "0%")
+    _label_curve_end(ax, sizes[-1], by_size[sizes[-1]].min_separation, "100%")
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_ylim(top=ax.get_ylim()[1] * 3)  # headroom above the top curve for its rotated labels
@@ -411,27 +483,31 @@ def render_best_known_chart(records: list[ScalingRunRecord], q_random: dict[int,
     ax.set_ylabel("diversity (minimum separation)")
     ax.set_title("Solver Scaling — Best-Known Quality", fontweight="bold")
     ax.grid(True, which="major")
-    ax.legend()
+    # Order the legend entries top to bottom as the chart stacks them.
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles, strict=True))
+    order = ["best-known", "scaling thresholds", "results per solver config (median)", "$Q_{\\mathrm{random}}$"]
+    ax.legend([by_label[label] for label in order], order)
     _save_webp(fig, IMAGES_DIR / "scaling_best_known.webp")
 
 
-def render_gap_closure_chart(
+def render_normalized_quality_chart(
     quality_records: list[ScalingRunRecord],
     best_known_records: list[ScalingRunRecord],
     q_random: dict[int, float],
     names: dict[str, str],
 ) -> None:
-    """Render each configuration's gap-closure percentage against problem size (log x, linear y).
+    """Render each configuration's normalized solution quality against problem size (log x, linear y).
 
-    Gray dashed lines mark the 50%, 90% and 100% levels; a configuration below the random
+    Gray dotted lines mark the scale ends and the verdict thresholds; a configuration below the random
     reference plots a negative percentage, so the y-axis is left free to descend below zero.
     """
     pool = best_known_pool(quality_records, best_known_records)
     medians = median_qualities(quality_records)
     fig, ax = plt.subplots(figsize=(12.0, 7.0))
-    for index, ((tool, config), by_size) in enumerate(medians.items()):
+    for (tool, config), by_size in medians.items():
         points = [
-            (n, _gap_fraction(median, q_random[n], pool[n]) * 100)
+            (n, _normalized_quality(median, q_random[n], pool[n]) * 100)
             for n, median in sorted(by_size.items())
             if n in pool and n in q_random
         ]
@@ -441,30 +517,20 @@ def render_gap_closure_chart(
                 [percent for _, percent in points],
                 label=_legend_label(tool, config, names),
                 linewidth=_LINE_WIDTH,
-                color=_series_color(index),
-                **_series_marker(index),
+                **_series_style(tool, config),
             )
-    for level in (50, 90, 100):
-        ax.axhline(level, color="#888888", linestyle="--", linewidth=1.0)
-        ax.text(
-            0.99,
-            level,
-            f"{level}%",
-            color="#555555",
-            ha="right",
-            va="bottom",
-            fontsize=9,
-            transform=ax.get_yaxis_transform(),
-            bbox={"facecolor": "white", "alpha": 0.9, "edgecolor": "none"},
-        )
+    for level in (0, 50, 90, 100):
+        ax.axhline(level, color="#888888", linestyle=":", linewidth=1.0)
     ax.set_xscale("log")
     _grid_xticks(ax, max(pool))
     ax.set_xlabel("problem size n")
-    ax.set_ylabel("gap closure [%]")
-    ax.set_title("Solver Scaling — Gap Closure", fontweight="bold")
+    ax.set_ylabel("normalized solution quality")
+    ax.set_yticks(range(-10, 101, 10))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _pos: f"{value:.0f}%"))
+    ax.set_title("Solver Scaling — Normalized Quality", fontweight="bold")
     ax.grid(True, which="major", axis="x")
-    ax.legend()
-    _save_webp(fig, IMAGES_DIR / "scaling_gap_closure.webp")
+    ax.legend(loc="center right")
+    _save_webp(fig, IMAGES_DIR / "scaling_normalized_quality.webp")
 
 
 # ==================================================================================================
@@ -532,7 +598,7 @@ def write_best_known_table(records: list[ScalingRunRecord], q_random: dict[int, 
         random_quality = q_random.get(n)
         thresholds = [
             f"{(1 - b) * random_quality + b * record.min_separation:.4f}" if random_quality is not None else ""
-            for b in sorted(GAP_CLOSURE_FRACTIONS)
+            for b in sorted(NORMALIZED_QUALITY_THRESHOLDS)
         ]
         random_cell = f"{random_quality:.4f}" if random_quality is not None else ""
         lines.append(
@@ -549,36 +615,36 @@ def write_quality_table(
     q_random: dict[int, float],
     names: dict[str, str],
 ) -> None:
-    """Write the per-configuration quality-limit table, one column per gap-closure fraction."""
-    per_fraction = [
-        quality_limits(quality_records, best_known_records, q_random, gap_closure)
-        for gap_closure in GAP_CLOSURE_FRACTIONS
+    """Write the per-configuration quality-limit table, one column per normalized-quality threshold."""
+    per_threshold = [
+        quality_limits(quality_records, best_known_records, q_random, threshold)
+        for threshold in NORMALIZED_QUALITY_THRESHOLDS
     ]
     lines = [
         "| Solver | Config | "
-        + " | ".join(f"Largest n closing {gap_closure:.0%} of the gap" for gap_closure in GAP_CLOSURE_FRACTIONS)
+        + " | ".join(f"Largest n with normalized quality ≥ {t:.0%}" for t in NORMALIZED_QUALITY_THRESHOLDS)
         + " |",
-        "|---|---|" + "---|" * len(GAP_CLOSURE_FRACTIONS),
+        "|---|---|" + "---|" * len(NORMALIZED_QUALITY_THRESHOLDS),
     ]
-    for key in per_fraction[0]:
+    for key in per_threshold[0]:
         tool, config = key.split("/", 1)
-        cells = " | ".join(f"**{limits[key]:,}**" if limits[key] else "—" for limits in per_fraction)
+        cells = " | ".join(f"**{limits[key]:,}**" if limits[key] else "—" for limits in per_threshold)
         lines.append(f"| {_display_name(tool, names)} | `{config}` | {cells} |")
     _write_generated("scaling_quality.md", lines)
 
 
-def write_quality_gap_table(
+def write_normalized_quality_table(
     quality_records: list[ScalingRunRecord],
     best_known_records: list[ScalingRunRecord],
     q_random: dict[int, float],
     names: dict[str, str],
 ) -> None:
-    """Write the gap-closure table: per configuration and size, the fraction of the random-to-best gap closed.
+    """Write the normalized-quality table: per configuration and size, the median's normalized solution quality.
 
     A cell holds `(Q_median - Q_random) / (Q_best_known - Q_random)`; the verdict criterion is the
-    same fraction reaching a `GAP_CLOSURE_FRACTIONS` value: a cell whose fraction reaches the
-    strictest one is bold, one reaching only the lowest is italic. An empty cell is a size the configuration was not
-    judged at (beyond its time limit, or no completed run).
+    same value reaching a `NORMALIZED_QUALITY_THRESHOLDS` entry: a cell reaching the strictest one
+    is bold, one reaching only the lowest is italic. An empty cell is a size the configuration was
+    not judged at (beyond its time limit, or no completed run).
     """
     pool = best_known_pool(quality_records, best_known_records)
     medians = median_qualities(quality_records)
@@ -594,33 +660,33 @@ def write_quality_gap_table(
             if median is None:
                 cells.append("")
                 continue
-            cells.append(_format_gap_fraction(median, q_random[n], pool[n]))
+            cells.append(_format_normalized_quality(median, q_random[n], pool[n]))
         lines.append(f"| {_display_name(tool, names)} | `{config}` | " + " | ".join(cells) + " |")
-    _write_generated("scaling_quality_gaps.md", lines)
+    _write_generated("scaling_normalized_quality.md", lines)
 
 
-def _gap_fraction(median: float, random_quality: float, best_known: float) -> float:
-    """Return the fraction of the random-to-best-known gap a median quality closes.
+def _normalized_quality(median: float, random_quality: float, best_known: float) -> float:
+    """Return a median quality on the normalized scale: 0 at the random reference, 1 at the best-known.
 
-    A degenerate size where the best-known equals the random reference leaves no gap to close;
-    matching the best-known is then the only way to reach 1.
+    A degenerate size where the best-known equals the random reference has no scale to normalize
+    on; matching the best-known is then the only way to reach 1.
     """
-    gap = best_known - random_quality
-    return (median - random_quality) / gap if gap > 0 else (1.0 if median >= best_known else 0.0)
+    span = best_known - random_quality
+    return (median - random_quality) / span if span > 0 else (1.0 if median >= best_known else 0.0)
 
 
-def _format_gap_fraction(median: float, random_quality: float, best_known: float) -> str:
-    """Format one gap-closure cell as a percentage: bold when the fraction reaches the strictest
-    `GAP_CLOSURE_FRACTIONS` value, italic when it reaches only the lowest.
+def _format_normalized_quality(median: float, random_quality: float, best_known: float) -> str:
+    """Format one normalized-quality cell as a percentage: bold when it reaches the strictest
+    `NORMALIZED_QUALITY_THRESHOLDS` entry, italic when it reaches only the lowest.
 
-    The display rounds down to 0.1% while the marking judges the exact fraction, so a printed
-    50.0% is genuinely at or above the fraction and the marking never contradicts the number.
+    The display rounds down to 0.1% while the marking judges the exact value, so a printed
+    50.0% is genuinely at or above the threshold and the marking never contradicts the number.
     """
-    fraction = _gap_fraction(median, random_quality, best_known)
-    percent = math.floor(fraction * 1000) / 10
-    if fraction >= max(GAP_CLOSURE_FRACTIONS):
+    quality = _normalized_quality(median, random_quality, best_known)
+    percent = math.floor(quality * 1000) / 10
+    if quality >= max(NORMALIZED_QUALITY_THRESHOLDS):
         return f"**{percent:.1f}%**"
-    if fraction >= min(GAP_CLOSURE_FRACTIONS):
+    if quality >= min(NORMALIZED_QUALITY_THRESHOLDS):
         return f"*{percent:.1f}%*"
     return f"{percent:.1f}%"
 
@@ -653,11 +719,11 @@ def main() -> None:
         # The quality runs join the pool: a reference-budget run can hold a size's best solution.
         pool_records = best_known_records + quality_records
         write_best_known_table(pool_records, q_random_values, names)
-        render_best_known_chart(pool_records, q_random_values, names)
+        render_best_known_chart(pool_records, quality_records, q_random_values, names)
     if quality_records and q_random_values:
         write_quality_table(quality_records, best_known_records, q_random_values, names)
-        write_quality_gap_table(quality_records, best_known_records, q_random_values, names)
-        render_gap_closure_chart(quality_records, best_known_records, q_random_values, names)
+        write_normalized_quality_table(quality_records, best_known_records, q_random_values, names)
+        render_normalized_quality_chart(quality_records, best_known_records, q_random_values, names)
     render_time_chart(time_grouped, names)
     render_memory_chart(memory_grouped, fits, names)
     render_fit_charts(memory_grouped, fits, names)

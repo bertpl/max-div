@@ -1,4 +1,4 @@
-| Solver | Config | Largest n closing 50% of the gap | Largest n closing 90% of the gap |
+| Solver | Config | Largest n with normalized quality ≥ 50% | Largest n with normalized quality ≥ 90% |
 |---|---|---|---|
 | max-div | `lean` | — | — |
 | max-div | `optimal-eager` | **50,000** | **50,000** |
