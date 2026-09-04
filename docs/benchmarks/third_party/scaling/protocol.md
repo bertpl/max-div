@@ -44,7 +44,7 @@ These three descriptions are consciously kept qualitative in nature.  The next s
 - **time**: we define time budget as **T_max = 1min**, mostly driven by keeping the overall protocol executable.  Time is measured **end-to-end**: the clock runs from handing the raw input vectors to the solver until it returns a selection, so any distance computation or other setup work the solver performs is included in its cost.
 - **machine**: all measurements are executed on the same reference machine: an Apple M3 Max (12 performance cores, 4 efficiency cores).
 - **seeding**: every solver run uses the fixed seed `42`, except where a phase explicitly enumerates multiple seeds (the quality runs of IV.D.3).
-- **quality**: judged at two gap-closure fractions, 50% and 90%.  For a fraction `b`, the minimum solution quality (=diversity) threshold is defined as **Q_threshold(b) = (1-b) Q_random + b Q_best_known**, i.e. the solver closed at least the fraction `b` of the quality delta between a purely random selection and the best known solution.  Each fraction yields its own recorded size limit; the 90% one marks near-best quality.
+- **quality**: judged at two normalized-quality thresholds, 50% and 90%.  For a threshold `b`, the minimum solution quality (=diversity) is defined as **Q_threshold(b) = (1-b) Q_random + b Q_best_known**, i.e. the solver's normalized quality — 0 at a purely random selection, 1 at the best known solution — is at least `b`.  Each threshold yields its own recorded size limit; the 90% one marks near-best quality.
 
 ## IV. Measurement Protocol
 
@@ -145,7 +145,7 @@ A run may be allowed to finish somewhat past `T_max` instead of being killed exa
 
 ### IV.D. Quality-Bound Setting
 
-The additional criterion that comes into play here is `median(Q_observed) >= (1 - b) Q_random + b Q_best_known`, judged once per gap-closure fraction `b` (50% and 90%; the median taken over seeds, see IV.D.4).  So we need 3 elements here
+The additional criterion that comes into play here is `median(Q_observed) >= (1 - b) Q_random + b Q_best_known`, judged once per normalized-quality threshold `b` (50% and 90%; the median taken over seeds, see IV.D.4).  So we need 3 elements here
 
 - `Q_observed`: regular solver executions within `T_max` and `M_max` but now using different seeds for solver configurations whose seed can influence the result (a literal seed, or a seeded initial pick) (as opposed to memory and time usage, quality _is_ expected to be strongly influenced by random seeds)
 - `Q_random`: determined as the median quality (diversity) of 31 random selections of size `k` for each relevant `n`
@@ -210,7 +210,7 @@ The time-bound setting (IV.C) keeps its strict criterion: there, completion with
 
 #### IV.D.4. Determining the quality-bound problem size limits
 
-> The quality-bound problem size limit is recorded per `solver_config` and per gap-closure fraction.  A per-solver limit is also recorded, judging the best configuration at each size (the best-result-across-configurations rule of section III).  No solver runs are involved in this phase; it only combines the quantities recorded in IV.D.1–IV.D.3.
+> The quality-bound problem size limit is recorded per `solver_config` and per normalized-quality threshold.  A per-solver limit is also recorded, judging the best configuration at each size (the best-result-across-configurations rule of section III).  No solver runs are involved in this phase; it only combines the quantities recorded in IV.D.1–IV.D.3.
 
 !!! note "Pseudo-code"
 
@@ -221,7 +221,7 @@ The time-bound setting (IV.C) keeps its strict criterion: there, completion with
         Q_best_known(n) = max over all Q_observed(*, n, *) and all Q_extended(*, n)
                           (every configuration, every seed)
 
-    FOR EACH gap-closure fraction b IN {50%, 90%}:
+    FOR EACH normalized-quality threshold b IN {50%, 90%}:
         Q_threshold(b, n) = (1 - b) * Q_random(n) + b * Q_best_known(n)
 
         FOR EACH solver configuration:

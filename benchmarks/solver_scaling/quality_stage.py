@@ -5,12 +5,12 @@ For each configuration: run it at every grid size up to its own largest n within
 influence the result, the protocol's fixed seed otherwise.
 
 A configuration's verdict at a size compares its median quality over seeds against the threshold
-`(1 - gap_closure) * Q_random + gap_closure * Q_best_known`, once per value in
-`GAP_CLOSURE_FRACTIONS`; `gap_closure`, wherever it appears below, is the fraction of the
-random-to-best gap that must be closed.
+`(1 - t) * Q_random + t * Q_best_known`, once per `t` in `NORMALIZED_QUALITY_THRESHOLDS`. On the
+normalized quality scale, `Q_random` is 0 and `Q_best_known` is 1, so `t` is the normalized
+quality a median must reach.
 
 The best-known pool combines the extended runs (`best_known_stage`) with every per-seed quality
-run. Per fraction, the reported limit is the largest n up to which every judged size passes — a
+run. Per threshold, the reported limit is the largest n up to which every judged size passes — a
 failing size ends the range (see `quality_limits`). The measurement protocol's section IV.D
 carries the full rationale.
 
@@ -43,7 +43,7 @@ Q_RANDOM_PATH = Path(__file__).resolve().parent / "data" / "q_random.json"
 
 QUALITY_SEEDS = (1, 2, 3, 4, 5)
 N_RANDOM_DRAWS = 31  # each Q_random value is the median over this many random selections
-GAP_CLOSURE_FRACTIONS = (0.5, 0.9)  # least strict first, matching the capability columns' tightening order
+NORMALIZED_QUALITY_THRESHOLDS = (0.5, 0.9)  # least strict first, matching the capability columns' tightening order
 
 
 def seeds_for(config: ScalingConfig) -> tuple[int, ...]:
@@ -175,9 +175,9 @@ def quality_limits(
     quality_records: list[ScalingRunRecord],
     best_known_records: list[ScalingRunRecord],
     q_random: dict[int, float],
-    gap_closure: float,
+    threshold: float,
 ) -> dict[str, int | None]:
-    """Return each configuration's quality-limit size for one gap-closure fraction.
+    """Return each configuration's quality-limit size for one normalized-quality threshold.
 
     A failing size ends the passing range even when larger sizes pass again (rationale:
     protocol section IV.D.4).
@@ -189,7 +189,7 @@ def quality_limits(
     """
     pool = best_known_pool(quality_records, best_known_records)
     return {
-        f"{tool}/{config}": _largest_passing_prefix(medians, q_random, pool, gap_closure)
+        f"{tool}/{config}": _largest_passing_prefix(medians, q_random, pool, threshold)
         for (tool, config), medians in median_qualities(quality_records).items()
     }
 
@@ -198,7 +198,7 @@ def tool_quality_limits(
     quality_records: list[ScalingRunRecord],
     best_known_records: list[ScalingRunRecord],
     q_random: dict[int, float],
-    gap_closure: float,
+    threshold: float,
 ) -> dict[str, int | None]:
     """Return each tool's quality-limit size, judging its best configuration per size.
 
@@ -217,18 +217,16 @@ def tool_quality_limits(
         merged = tool_medians.setdefault(tool, {})
         for n, median in medians.items():
             merged[n] = max(median, merged.get(n, median))
-    return {
-        tool: _largest_passing_prefix(medians, q_random, pool, gap_closure) for tool, medians in tool_medians.items()
-    }
+    return {tool: _largest_passing_prefix(medians, q_random, pool, threshold) for tool, medians in tool_medians.items()}
 
 
 def _largest_passing_prefix(
-    medians: dict[int, float], q_random: dict[int, float], pool: dict[int, float], gap_closure: float
+    medians: dict[int, float], q_random: dict[int, float], pool: dict[int, float], threshold: float
 ) -> int | None:
-    """Return the largest n up to which every judged size's median meets the required gap closure."""
+    """Return the largest n up to which every judged size's median reaches the normalized-quality threshold."""
     limit: int | None = None
     for n, median in sorted(medians.items()):
-        if median < (1.0 - gap_closure) * q_random[n] + gap_closure * pool[n]:
+        if median < (1.0 - threshold) * q_random[n] + threshold * pool[n]:
             break
         limit = n
     return limit
@@ -236,14 +234,18 @@ def _largest_passing_prefix(
 
 if __name__ == "__main__":
     selected = sys.argv[1:]
-    chosen = [c for c in CONFIGS if c.tool in selected or f"{c.tool}/{c.name}" in selected] if selected else list(CONFIGS)
+    chosen = (
+        [c for c in CONFIGS if c.tool in selected or f"{c.tool}/{c.name}" in selected] if selected else list(CONFIGS)
+    )
     run_quality_stage(chosen)
     grid_sizes = size_grid(max(time_limits().values()))
     q_random_values = compute_q_random(grid_sizes)
     records = load_scaling_records(DATA_PATH)
     extended = load_scaling_records(BEST_KNOWN_DATA_PATH)
-    for gap_closure in GAP_CLOSURE_FRACTIONS:
-        for name, limit in quality_limits(records, extended, q_random_values, gap_closure).items():
-            print(f"{name}: largest n closing {gap_closure:.0%} of the gap = {limit}")
-        for tool, limit in tool_quality_limits(records, extended, q_random_values, gap_closure).items():
-            print(f"{tool} (best configuration per size): largest n closing {gap_closure:.0%} of the gap = {limit}")
+    for threshold in NORMALIZED_QUALITY_THRESHOLDS:
+        for name, limit in quality_limits(records, extended, q_random_values, threshold).items():
+            print(f"{name}: largest n with normalized quality >= {threshold:.0%} = {limit}")
+        for tool, limit in tool_quality_limits(records, extended, q_random_values, threshold).items():
+            print(
+                f"{tool} (best configuration per size): largest n with normalized quality >= {threshold:.0%} = {limit}"
+            )
