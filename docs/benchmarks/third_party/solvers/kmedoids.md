@@ -44,9 +44,9 @@ solver:
       mark: none
       note: &medoids_not_dispersion
         text: >-
-          k-medoids minimizes the total dissimilarity of every item to its nearest medoid, so the
-          medoids settle in dense regions of the data. Total dissimilarity to the nearest medoid
-          is a representativeness objective; none of the dispersion objectives is optimized.
+          k-medoids minimizes the total dissimilarity of every item to its nearest medoid, a
+          representativeness objective that places the medoids in dense regions; none of the
+          dispersion objectives is optimized.
     objective.mean_nn:
       mark: none
       note: *medoids_not_dispersion
@@ -63,7 +63,7 @@ solver:
     constraints.feasibility_proofs: {mark: none}
     budget.iterations:
       mark: partial
-      note:
+      note: &converges_then_stops
         text: >-
           The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget:
           the search stops at the first local optimum it reaches, usually after a handful of
@@ -71,10 +71,7 @@ solver:
     budget.wall_clock: {mark: none}
     budget.improves:
       mark: none
-      note:
-        text: >-
-          Swap descent converges to a local optimum of its own objective and then stops; more
-          iterations change nothing.
+      note: *converges_then_stops
     parallelism.independent: {mark: none}
     parallelism.cooperative:
       mark: none
@@ -90,10 +87,10 @@ kmedoids is a Rust implementation of k-medoids clustering with Python bindings, 
 algorithm makes the classical PAM swap descent fast enough for tens of thousands of items. The
 medoids are actual data items, so a run yields a size-$k$ selection.
 
-kmedoids is included here as a representativeness reference, not as a dispersion competitor.
-Medoids are cluster centers: they sit where the data is dense, and a set of centers is usually less
-spread out than a selection chosen for separation. Measuring a medoid set under the dispersion
-metrics shows how a representativeness selection scores when spread is what you are after.
+kmedoids is included here as a representativeness reference, not as a dispersion competitor. A
+set of cluster centers is usually less spread out than a selection chosen for separation, and
+measuring one under the dispersion metrics shows how a representativeness selection scores when
+spread is what you are after.
 
 ## Problem targeted
 

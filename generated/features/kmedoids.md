@@ -42,9 +42,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^kmedoids-4] |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^kmedoids-5] |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^kmedoids-4] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
-| multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> | [^kmedoids-6] |
+| multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> | [^kmedoids-5] |
 | solver scaling · largest n within memory | <span class="scale-pending">pending</span> | |
 | solver scaling · largest n within the time budget | <span class="scale-pending">pending</span> | |
 | solver scaling · largest n closing 50% of the quality gap | <span class="scale-pending">pending</span> | |
@@ -54,7 +54,6 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^kmedoids-1]: The core functions take a dissimilarity matrix only; the scikit-learn-style estimator accepts a metric name and forwards it to scikit-learn's pairwise distances, which needs scikit-learn installed.
 [^kmedoids-2]: A precomputed dissimilarity matrix is the primary input and the one the documentation recommends, so any dissimilarity you can compute is usable as is.
-[^kmedoids-3]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, so the medoids settle in dense regions of the data. Total dissimilarity to the nearest medoid is a representativeness objective; none of the dispersion objectives is optimized.
+[^kmedoids-3]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, a representativeness objective that places the medoids in dense regions; none of the dispersion objectives is optimized.
 [^kmedoids-4]: The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget: the search stops at the first local optimum it reaches, usually after a handful of passes, whatever cap is set.
-[^kmedoids-5]: Swap descent converges to a local optimum of its own objective and then stops; more iterations change nothing.
-[^kmedoids-6]: The swap search can evaluate candidates on several threads, which speeds up one search; it is not several workers searching the problem.
+[^kmedoids-5]: The swap search can evaluate candidates on several threads, which speeds up one search; it is not several workers searching the problem.

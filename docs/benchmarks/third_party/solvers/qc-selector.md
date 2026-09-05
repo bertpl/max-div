@@ -90,8 +90,8 @@ closest anything in this comparison comes to max-div's fairness constraints, and
 being precise about: proportional picks across labels are not the same as minimum and maximum
 counts per group, and its groups cannot overlap.
 
-Two practical notes. It is **GPL-3 licensed**, like kmedoids, and more restrictive than the rest of the
-survey and may decide the question for you. And it is young — first released in 2025 — so
+Two practical notes. It is **GPL-3 licensed** — as is kmedoids; every other tool surveyed is more permissive —
+which may decide the question for you. And it is young — first released in 2025 — so
 its API is less settled than the others'.
 
 ## Problem targeted

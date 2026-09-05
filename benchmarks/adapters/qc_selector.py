@@ -1,4 +1,8 @@
-"""Wrap qc-selector's greedy max-min and max-sum pickers, run on a precomputed distance matrix."""
+"""Wrap qc-selector's greedy max-min and max-sum pickers.
+
+Both run on the full precomputed distance matrix and are seeded through the picker's reference
+start index (`seed % n`).
+"""
 
 import numpy as np
 from numpy.typing import NDArray
@@ -18,7 +22,7 @@ class QcSelectorMaxMin(SelectionAdapter):
         return "qc-selector[MaxMin]"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
-        """Run qc-selector's MaxMin on the full distance matrix, seeding via the reference start sample."""
+        """Run qc-selector's MaxMin."""
         from selector.methods.distance import MaxMin
 
         distances = square_distances(problem)
@@ -35,7 +39,7 @@ class QcSelectorMaxSum(SelectionAdapter):
         return "qc-selector[MaxSum]"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
-        """Run qc-selector's MaxSum on the full distance matrix, seeding via the reference start sample."""
+        """Run qc-selector's MaxSum."""
         from selector.methods.distance import MaxSum
 
         distances = square_distances(problem)

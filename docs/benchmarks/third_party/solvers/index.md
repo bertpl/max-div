@@ -28,11 +28,13 @@ disjoint groups. Where their
 objective is the one you want and their scale suits you, they are the right tool and max-div is
 overkill.
 
-**Clustering and sampling tools** return a diverse-looking subset by a different contract: a
-clustering picks cluster centers, which sit where the data is dense, and a sampler draws from a
-distribution that favors spread-out subsets without maximizing anything. An empty objective row
-means that different contract, not a weakness. They are measured as references under the dispersion
-metrics.
+**Clustering and sampling tools** return a diverse-looking subset by a different contract:
+
+- a **clustering** picks cluster centers, which sit where the data is dense;
+- a **sampler** draws from a distribution that favors spread-out subsets, maximizing nothing.
+
+An empty objective row means that different contract, not a weakness. They are measured as references
+under the dispersion metrics.
 
 ## Guarantee types
 
