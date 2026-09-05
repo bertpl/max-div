@@ -294,10 +294,10 @@ def check_near_duplicate_notes(records: dict) -> list[str]:
 def render_feature_table(axes: dict, record: dict, key: str) -> str:
     """Render one tool's feature table: every axis, one row each, notes as numbered footnotes.
 
-    The notes are footnoted rather than written into the cells because they repeat: a modelling
-    solver gives the same answer for eleven capabilities, and eleven copies of the same paragraph
-    force the reader to compare them word by word to discover they are identical. Deduplicating
-    into footnotes says it once and marks the cells that share it.
+    The notes are footnoted, not written into the cells, because they repeat: a modelling solver
+    gives the same answer for most capabilities, and one copy of the same paragraph per cell forces
+    the reader to compare them word by word to discover they are identical. Deduplicating into
+    footnotes says it once and marks the cells that share it.
     """
     marks = axes["marks"]
     notes = _NoteIndex(key)

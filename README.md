@@ -46,7 +46,7 @@ diverse of `n` items, under optional fairness constraints.
 </p>
 
 The [benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/)
-compare max-div in depth with 10 other freely available solvers.
+compare max-div in depth with the other freely available solvers.
 
 ## Installation
 

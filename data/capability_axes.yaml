@@ -66,9 +66,9 @@ marks:
 # not, and repeating one note in adjacent cells says nothing the first one did not.
 #
 # `comparison: false` keeps a field off the comparison page while keeping it on the solver's own
-# page — the counterpart of `hero:` on the axes below. Only the source URL uses it: eleven upstream
-# links would dominate a table read across tools, and the comparison page reaches each tool's
-# source through the link on its name.
+# page — the counterpart of `hero:` on the axes below. Only the source URL uses it: a column of
+# upstream links would dominate a table read across tools, and the comparison page reaches each
+# tool's source through the link on its name.
 metadata:
   - key: guarantee
     label: Guarantee
