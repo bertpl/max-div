@@ -187,11 +187,10 @@ nav:
           - skmatter: benchmarks/third_party/solvers/skmatter.md
           - apricot-select: benchmarks/third_party/solvers/apricot-select.md
           - qc-selector: benchmarks/third_party/solvers/qc-selector.md
+          - code-FDM: benchmarks/third_party/solvers/code-fdm.md
         - Clustering & Sampling:
           - kmedoids: benchmarks/third_party/solvers/kmedoids.md
           - DPPy: benchmarks/third_party/solvers/dppy.md
-        - Fair Selection:
-          - code-FDM: benchmarks/third_party/solvers/code-fdm.md
     - Internal Primitives:
       - Overview: benchmarks/internal/overview.md
       - DiversityMetric: benchmarks/internal/bm_diversity_metrics.md

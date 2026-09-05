@@ -52,8 +52,7 @@ Each profile states one, defined in the [glossary](../../../concepts/glossary.md
 <div class="grid cards" markdown>
 
 - **Exact solvers** — [OR-Tools CP-SAT](ortools-cpsat.md) · [SCIP](scip.md) · [HiGHS](highs.md)
-- **One-shot pickers** — [RDKit MaxMinPicker](rdkit.md) · [fpsample](fpsample.md) · [skmatter](skmatter.md) · [apricot-select](apricot-select.md) · [qc-selector](qc-selector.md)
-- **Fair selection** — [code-FDM](code-fdm.md)
+- **One-shot pickers** — [RDKit MaxMinPicker](rdkit.md) · [fpsample](fpsample.md) · [skmatter](skmatter.md) · [apricot-select](apricot-select.md) · [qc-selector](qc-selector.md) · [code-FDM](code-fdm.md)
 - **Clustering & sampling** — [kmedoids](kmedoids.md) · [DPPy](dppy.md)
 
 </div>
