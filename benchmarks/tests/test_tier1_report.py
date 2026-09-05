@@ -1,110 +1,104 @@
+import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.common.records import RunRecord, save_records
-from benchmarks.tier1.report import build_incumbent_table, build_maxmin_gap_table, build_scaling_table, main
+from benchmarks.tier1 import report
+from max_div.metrics import DiversityMetric
 
 
-def _record(problem: str, size: int, budget: str, quality: dict[str, float]) -> RunRecord:
-    """Minimal max-div budget-series record with only the fields the report helpers read."""
+def _record(problem: str, n: int, tool: str, budget: str, quality: float, metric: str = "MIN_SEPARATION") -> RunRecord:
+    """Minimal max-div budget-series record with only the fields the report reads."""
     return RunRecord(
-        tool="max-div[SMART]",
+        tool=tool,
         problem=problem,
-        size=size,
-        n=100 * size,
-        k=10 * size,
-        diversity_metric=next(iter(quality)),
+        size=n,
+        n=n,
+        k=n // 10,
+        diversity_metric=metric,
         seed=0,
         budget=budget,
         measured_sec=1.0,
         n_iterations=None,
-        quality=quality,
+        quality={metric: quality},
     )
 
 
-def test_build_maxmin_gap_table():
+def _exact(problem: str, objective: str, solver: str, n: int, optimum: float, proven: bool = True) -> dict:
+    return {
+        "problem": problem,
+        "objective": objective,
+        "solver": solver,
+        "n": n,
+        "k": n // 10,
+        "m": 0,
+        "optimum": optimum,
+        "proven_optimal": proven,
+        "measured_sec": 2.5,
+    }
+
+
+def test_gap_table_quotes_both_series_at_both_budgets():
     # --- arrange -----------------------------------------
-    exact_rows = [
-        {"problem": "U1", "size": 1, "n": 100, "k": 10, "m": 0, "optimum": 0.1, "measured_sec": 0.31},
-    ]
-    records = [_record("U1", 1, f"time:{b}s", {"MIN_SEPARATION": 0.09}) for b in (0.016, 0.128, 1.024, 16.384)]
-
-    # --- act ---------------------------------------------
-    table = build_maxmin_gap_table(exact_rows, records)
-
-    # --- assert ------------------------------------------
-    assert "| U1 | 100 | 10 | 0 | 0.1000 | 0.31 s |" in table
-    assert table.count("10.0%") == 4  # (0.1 - 0.09) / 0.1 at every quoted budget
-    header, separator = table.splitlines()[0], table.splitlines()[1]
-    assert header.count("|") == separator.count("|")  # else it renders as text, not a table
-
-
-def test_build_scaling_table_marks_timeouts_and_gaps():
-    # --- arrange -----------------------------------------
-    rows = [
-        {"backend": "SCIP (1 thread)", "n": 40, "k": 4, "measured_sec": 39.6, "proven": True},
-        {"backend": "SCIP (1 thread)", "n": 50, "k": 5, "measured_sec": 900.0, "proven": False},
-        {"backend": "CP-SAT (8 workers)", "n": 40, "k": 4, "measured_sec": 0.8, "proven": True},
-        {"backend": "CP-SAT (8 workers)", "n": 50, "k": 5, "measured_sec": 2.1, "proven": True},
-    ]
-
-    # --- act ---------------------------------------------
-    table = build_scaling_table(rows)
-
-    # --- assert ------------------------------------------
-    assert "| 40 | 4 | 39.6 s | 0.8 s |" in table
-    assert "| 50 | 5 | **timeout** | 2.1 s |" in table
-
-
-def test_build_incumbent_table():
-    # --- arrange -----------------------------------------
-    panel_rows = [
-        {
-            "problem": "U3",
-            "size": 1,
-            "n": 100,
-            "k": 10,
-            "m": 0,
-            "cap_sec": 10800.0,
-            "objective_value": 1.0,
-            "objective_bound": 4.5,
-        }
-    ]
+    exact = [_exact("U1", "MIN_SEPARATION", "scip", 20, 1.0), _exact("U1", "MIN_SEPARATION", "highs", 20, 1.0)]
+    single, multi = "max-div[DEFAULT]", "max-div[DEFAULT, 12 workers]"
     records = [
-        _record("U3", 1, "time:1.024s", {"GEOMEAN_SEPARATION": 0.98}),
-        _record("U3", 1, "time:1.024s", {"GEOMEAN_SEPARATION": 0.99}),
+        _record("U1", 20, single, "time:1.0s", 0.9),
+        _record("U1", 20, single, "time:60.0s", 0.95),
+        _record("U1", 20, multi, "time:1.0s", 0.92),
+        _record("U1", 20, multi, "time:60.0s", 1.0),
     ]
 
     # --- act ---------------------------------------------
-    table = build_incumbent_table(panel_rows, records)
+    table = report.build_gap_table(exact, records, DiversityMetric.MIN_SEPARATION)
 
     # --- assert ------------------------------------------
-    assert "| U3 | 100 | 10 | 0 | 10800 s | 1.0000 | 350% | 0.9900 |" in table
+    row = next(line for line in table.splitlines() if line.startswith("| U1 |"))
+    assert "SCIP (PySCIPOpt) (2.5 s), HiGHS (2.5 s)" in row
+    assert row.endswith("| 10.0% | 5.0% | 8.0% | 0.0% |")
 
 
-def test_main_reads_tracked_exact_references(tmp_path: Path):
+def test_certification_table_states_where_each_column_stopped():
     # --- arrange -----------------------------------------
-    # Fresh max-div records for every cell the tracked exact references cover.
-    maxmin = [
-        _record(problem, size, f"time:{b}s", {"MIN_SEPARATION": 0.05})
-        for problem in ("U1", "C1")
-        for size in (1, 2, 3)
-        for b in (0.016, 0.128, 1.024, 16.384)
+    exact = [
+        _exact("U1", "MIN_SEPARATION", "scip", 20, 1.0),
+        _exact("U1", "MIN_SEPARATION", "scip", 50, 1.0, proven=False),
+        _exact("C1", "MEAN_SEPARATION", "ortools-cpsat", 20, 1.0),
     ]
-    incumbent = [_record(problem, 1, "time:1.024s", {"GEOMEAN_SEPARATION": 0.5}) for problem in ("U3", "C4")]
-    records_dir = tmp_path / "records"
-    results_dir = tmp_path / "results"
-    save_records(maxmin, records_dir / "maxmin_records.jsonl")
-    save_records(incumbent, records_dir / "incumbent_records.jsonl")
 
     # --- act ---------------------------------------------
-    main(records_dir=records_dir, results_dir=results_dir)
+    table = report.build_certification_table(exact)
 
     # --- assert ------------------------------------------
-    gap_table = (results_dir / "tier1_maxmin_gap.md").read_text()
-    data_rows = [line for line in gap_table.splitlines() if line.startswith(("| U1 |", "| C1 |"))]
-    assert len(data_rows) == 6  # every (problem, size) cell of the tracked exact references
-    scaling_table = (results_dir / "tier1_scaling.md").read_text()
-    assert "SCIP (1 thread)" in scaling_table
-    incumbent_table = (results_dir / "tier1_incumbent_geomean.md").read_text()
-    assert "| U3 |" in incumbent_table
-    assert "| C4 |" in incumbent_table
+    assert "| SCIP (PySCIPOpt) | U1 | MIN_SEPARATION | **20** | n=50 (2 s, not certified) |" in table
+    assert "| OR-Tools CP-SAT | C1 | MEAN_SEPARATION | **20** | grid exhausted |" in table
+
+
+def test_gap_pct_is_none_without_a_value():
+    # --- act / assert ------------------------------------
+    assert report.gap_pct(None, 1.0) is None
+    assert report.gap_pct(0.9, 1.0) == pytest.approx(10.0)
+
+
+def test_main_emits_tables_charts_and_gallery_snippets(tmp_path: Path):
+    """The report writes one chart per certified cell, a full-width list for min separation, and galleries otherwise."""
+    # --- arrange -----------------------------------------
+    data_dir, records_dir, docs_dir = tmp_path / "data", tmp_path / "records", tmp_path / "docs"
+    data_dir.mkdir()
+    (data_dir / report.EXACT_MAXMIN_FILE).write_text(json.dumps([_exact("U1", "MIN_SEPARATION", "scip", 20, 1.0)]))
+    (data_dir / report.EXACT_NN_FILE).write_text(json.dumps([_exact("U1", "GEOMEAN_SEPARATION", "ortools-cpsat", 20, 1.0)]))
+    for metric in ("MIN_SEPARATION", "GEOMEAN_SEPARATION"):
+        records = [_record("U1", 20, "max-div[DEFAULT]", f"time:{b}s", 0.9, metric) for b in (1.0, 60.0)]
+        save_records(records, records_dir / f"maxdiv_{metric.lower()}.jsonl")
+
+    # --- act ---------------------------------------------
+    report.main(records_dir=records_dir, docs_dir=docs_dir, data_dir=data_dir)
+
+    # --- assert ------------------------------------------
+    assert (docs_dir / "images" / "tier1_U1_20_min_separation.webp").exists()
+    assert (docs_dir / "images" / "tier1_U1_20_geomean_separation.webp").exists()
+    assert "![tier1_U1_20_min_separation]" in (docs_dir / "results" / "tier1_charts_min_separation.md").read_text()
+    assert 'width="32%"' in (docs_dir / "results" / "tier1_gallery_geomean_separation.md").read_text()
+    assert (docs_dir / "results" / "tier1_gallery_mean_separation.md").read_text() == "\n"
+    assert "| U1 | 20 |" in (docs_dir / "results" / "tier1_gap_min_separation.md").read_text()

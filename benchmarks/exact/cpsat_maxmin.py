@@ -33,12 +33,14 @@ class CpsatMaxMinResult:
     n_feasibility_solves: int
 
 
-def solve_maxmin_cpsat(problem: MaxDivProblem, time_limit_sec: float = 60.0) -> CpsatMaxMinResult:
+def solve_maxmin_cpsat(problem: MaxDivProblem, time_limit_sec: float = 60.0, num_workers: int = 1) -> CpsatMaxMinResult:
     """Solve max-min selection (with group constraints) to proven optimality via CP-SAT.
 
     Args:
         problem: Problem to solve; its constraints are encoded directly.
         time_limit_sec: Overall wall-clock budget across all feasibility solves.
+        num_workers: CP-SAT portfolio workers per feasibility solve; more than one is faster but
+            makes proof times vary run to run.
 
     Returns:
         The best selection found and whether optimality was certified.
@@ -60,7 +62,7 @@ def solve_maxmin_cpsat(problem: MaxDivProblem, time_limit_sec: float = 60.0) -> 
     # The lowest threshold admits any k items satisfying the group constraints; if even
     # that is infeasible (or unsolved in time), there is nothing to report.
     budget = _remaining(t_start, time_limit_sec)
-    feasible, selection = _check_threshold(problem, distances, float(thresholds[lo]), budget)
+    feasible, selection = _check_threshold(problem, distances, float(thresholds[lo]), budget, num_workers)
     n_solves = 1
     if not feasible or selection is None:
         raise RuntimeError("CP-SAT could not find any constraint-satisfying selection at the lowest threshold.")
@@ -72,7 +74,7 @@ def solve_maxmin_cpsat(problem: MaxDivProblem, time_limit_sec: float = 60.0) -> 
         if remaining <= 0:
             conclusive = False
             break
-        feasible, selection = _check_threshold(problem, distances, float(thresholds[mid]), remaining)
+        feasible, selection = _check_threshold(problem, distances, float(thresholds[mid]), remaining, num_workers)
         n_solves += 1
         if feasible is None:  # solver hit its per-step limit without an answer
             conclusive = False
@@ -96,6 +98,7 @@ def _check_threshold(
     distances: NDArray[np.float64],
     threshold: float,
     time_limit_sec: float,
+    num_workers: int,
 ) -> tuple[bool | None, NDArray[np.int64] | None]:
     """Ask CP-SAT whether k items with pairwise distance >= threshold satisfy all constraints.
 
@@ -121,7 +124,7 @@ def _check_threshold(
 
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = max(time_limit_sec, 0.01)
-    solver.parameters.num_workers = 1  # deterministic, and comparable across machines
+    solver.parameters.num_workers = num_workers
     status = solver.solve(model)
 
     if status == cp_model.FEASIBLE or status == cp_model.OPTIMAL:

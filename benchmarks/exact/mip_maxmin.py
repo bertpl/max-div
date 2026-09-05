@@ -14,6 +14,7 @@ time runs out.
 """
 
 import time
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -143,3 +144,96 @@ def solve_maxmin_highs_selection(
     if len(selected) != k:
         raise RuntimeError("HiGHS found no integral k-selection within the budget")
     return np.sort(selected).astype(np.int64)
+
+
+# ==================================================================================================
+#  Certifying solves — the exact-solver reference of the head-to-head comparison
+# ==================================================================================================
+@dataclass
+class MaxMinResult:
+    """Outcome of one certifying max-min solve: the selection, its objective, and whether it is proven optimal."""
+
+    i_selected: NDArray[np.int64]
+    min_separation: float
+    proven_optimal: bool
+    measured_sec: float
+
+
+def solve_maxmin_scip(problem: MaxDivProblem, time_limit_sec: float, seed: int = 0) -> MaxMinResult:
+    """SCIP on the big-M max-min MIP, run to proven optimality or the time limit.
+
+    Raises:
+        RuntimeError: If SCIP finds no solution within the limit.
+    """
+    from pyscipopt import Model, quicksum
+
+    t_start = time.perf_counter()
+    dist = _pairwise(problem)
+    n, k = problem.n, problem.k
+    big_m = float(dist.max())
+
+    model = Model()
+    model.hideOutput()
+    model.setParam("randomization/randomseedshift", seed)
+    x = [model.addVar(vtype="B", name=f"x{i}") for i in range(n)]
+    t = model.addVar(vtype="C", lb=0.0, ub=big_m, name="t")
+    model.addCons(quicksum(x) == k)
+    for i in range(n):
+        for j in range(i + 1, n):
+            model.addCons(t <= dist[i, j] + big_m * (2 - x[i] - x[j]))
+    model.setObjective(t, "maximize")
+    model.setParam("limits/time", max(time_limit_sec - (time.perf_counter() - t_start), 0.01))
+    model.optimize()
+    if model.getNSols() == 0:
+        raise RuntimeError("SCIP returned no solution within the time limit")
+    sol = model.getBestSol()
+    selection = np.asarray([i for i in range(n) if model.getSolVal(sol, x[i]) > 0.5], dtype=np.int64)
+    return MaxMinResult(
+        i_selected=np.sort(selection),
+        min_separation=float(model.getSolObjVal(sol)),
+        proven_optimal=model.getStatus() == "optimal",
+        measured_sec=time.perf_counter() - t_start,
+    )
+
+
+def solve_maxmin_highs(problem: MaxDivProblem, time_limit_sec: float, seed: int = 0, num_workers: int = 1) -> MaxMinResult:
+    """HiGHS on the big-M max-min MIP, run to proven optimality or the time limit.
+
+    Raises:
+        RuntimeError: If HiGHS finds no integral k-selection within the limit.
+    """
+    import highspy
+
+    t_start = time.perf_counter()
+    dist = _pairwise(problem)
+    n, k = problem.n, problem.k
+    big_m = float(dist.max())
+
+    h = highspy.Highs()
+    h.setOptionValue("output_flag", False)
+    h.setOptionValue("random_seed", seed)
+    h.setOptionValue("threads", num_workers)
+    inf = highspy.kHighsInf
+    h.addVars(n, np.zeros(n), np.ones(n))
+    h.addVar(0.0, big_m)
+    for i in range(n):
+        h.changeColIntegrality(i, highspy.HighsVarType.kInteger)
+    h.changeColCost(n, -1.0)  # HiGHS minimizes; -t makes it maximize t
+    h.addRow(k, k, n, np.arange(n, dtype=np.int32), np.ones(n))
+    for i in range(n):
+        for j in range(i + 1, n):
+            idx = np.asarray([i, j, n], dtype=np.int32)
+            coef = np.asarray([big_m, big_m, 1.0])
+            h.addRow(-inf, dist[i, j] + 2 * big_m, 3, idx, coef)
+    h.setOptionValue("time_limit", max(time_limit_sec - (time.perf_counter() - t_start), 0.01))
+    h.run()
+    values = np.asarray(h.getSolution().col_value[:n])
+    selected = np.flatnonzero(values > 0.5)
+    if len(selected) != k:
+        raise RuntimeError("HiGHS found no integral k-selection within the time limit")
+    return MaxMinResult(
+        i_selected=np.sort(selected).astype(np.int64),
+        min_separation=float(h.getSolution().col_value[n]),
+        proven_optimal=h.getModelStatus() == highspy.HighsModelStatus.kOptimal,
+        measured_sec=time.perf_counter() - t_start,
+    )

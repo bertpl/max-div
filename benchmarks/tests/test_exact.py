@@ -5,7 +5,13 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from benchmarks.common import evaluate_selection
-from benchmarks.exact import solve_maxmin_cpsat, solve_nn_assignment_cpsat, solve_nn_separation_scip
+from benchmarks.exact import (
+    solve_maxmin_cpsat,
+    solve_maxmin_highs,
+    solve_maxmin_scip,
+    solve_nn_assignment_cpsat,
+    solve_nn_separation_scip,
+)
 from max_div._core.constraints import Constraint
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
@@ -99,3 +105,23 @@ def test_cpsat_nn_assignment_rejects_unsupported_metric():
     # --- act / assert ------------------------------------
     with pytest.raises(ValueError, match="Unsupported metric"):
         solve_nn_assignment_cpsat(problem, DiversityMetric.MIN_SEPARATION)
+
+
+@pytest.mark.parametrize("solve", [solve_maxmin_scip, solve_maxmin_highs])
+def test_mip_maxmin_certifies_the_brute_force_optimum(solve):
+    """SCIP and HiGHS certify the unconstrained max-min optimum and report it with the selection."""
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(12)
+    problem = MaxDivProblem.new(vectors=rng.random((12, 2)).astype(np.float32), k=3)
+    oracle = max(
+        evaluate_selection(problem, np.asarray(s, dtype=np.int64))["MIN_SEPARATION"]
+        for s in combinations(range(problem.n), problem.k)
+    )
+
+    # --- act ---------------------------------------------
+    result = solve(problem, time_limit_sec=60)
+
+    # --- assert ------------------------------------------
+    assert result.proven_optimal
+    assert result.min_separation == pytest.approx(oracle, rel=1e-5)
+    assert evaluate_selection(problem, result.i_selected)["MIN_SEPARATION"] == pytest.approx(oracle, rel=1e-5)

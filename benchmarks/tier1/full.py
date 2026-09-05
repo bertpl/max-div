@@ -1,202 +1,218 @@
-"""The published tier-1 run: max-div vs. exact-solver references.
+"""Run the tier-1 comparison: max-div against the exact solvers' certified optima.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier1.full``.
-Emits JSON/JSONL result files into ``reports/benchmarks/tier1/``; the docs artifacts are
-generated separately by ``benchmarks.tier1.report``. Expect a ~6 h sequential run, most of
-it spent in the two long exact reference solves.
+Writes the exact solvers' results as JSON and max-div's records as JSONL into
+``reports/benchmarks/tier1/``; the docs artifacts come from ``benchmarks.tier1.report``.
 
-Each experiment's exact-solver half and max-div half write separate files, so max-div can
-be re-measured alone (``benchmarks.tier1.rerun``) while the exact references stay fixed.
-The exact outputs (``*.json``) share their names with the tracked reference copies under
-``benchmarks/tier1/data/``: promoting a fresh exact measurement means copying the files over
-by hand, so a re-run never changes the tracked references by itself.
+Two halves, so max-div can be re-measured alone (``benchmarks.tier1.rerun``) while the exact
+references stay fixed:
 
-Three experiments:
+- **Exact half.** For U1 and C1, every solver ascends the 1-2-5 size grid from 20 and runs each
+  size to proven optimality or the certification cap; a solver's column ends at its first size not
+  certified. Max-min runs on CP-SAT (threshold search), SCIP and HiGHS (big-M MIP); mean- and
+  geomean-of-NN separation run on CP-SAT's nearest-neighbor assignment model alone, the only
+  backend that certifies that model beyond the smallest sizes. The JSON outputs share their names
+  with the tracked reference copies under ``benchmarks/tier1/data/``: promoting a fresh exact
+  measurement means copying the files over by hand.
+- **max-div half.** On every (problem, objective, size) cell some solver certified, both budget
+  series (see ``benchmarks.common.protocol``), one independent solve per budget and seed.
 
-1. **Max-min gap to proven optimum** — CP-SAT (threshold binary search) proves the optimum
-   on U1 + C1 at n = 100/200/300; max-div runs its budget series on the same problems.
-   Above n ~ 300 CP-SAT no longer proves within the cap, which bounds the experiment.
-2. **Backend scaling (mean/geomean)** — how far SCIP and CP-SAT push the NN-assignment
-   model before proofs stop, on a d=4 random family below the smallest generator size
-   (n = 100). The experiment substantiates why no mean/geomean gap-to-optimum is published.
-3. **Incumbent-at-budget geomean panel** — on shipped problems no solver can certify
-   (U3 and C4 at size 1), CP-SAT runs at a generous cap and its best-found solution is
-   compared against max-div's budget series. Uncertified by construction.
+Both halves skip cells already on file, so an interrupted run resumes by rerunning.
 """
 
 import json
-import time
-from dataclasses import asdict
+from collections.abc import Callable
 from pathlib import Path
 
-import numpy as np
-
-from benchmarks.common import build_problem, save_records, time_budget_series
-from benchmarks.exact import solve_maxmin_cpsat, solve_nn_assignment_cpsat, solve_nn_separation_scip
+from benchmarks.common import build_problem, load_records, save_records
+from benchmarks.common.protocol import (
+    CERTIFICATION_CAP_SEC,
+    MULTI_WORKER_BUDGETS_SEC,
+    N_WORKERS,
+    SEEDS,
+    SINGLE_WORKER_BUDGETS_SEC,
+)
+from benchmarks.common.records import RunRecord
+from benchmarks.exact import solve_maxmin_cpsat, solve_maxmin_highs, solve_maxmin_scip, solve_nn_assignment_cpsat
 from benchmarks.runners import run_maxdiv_budget_series
+from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
+from benchmarks.solver_scaling.grid import size_grid
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
 
 OUTPUT_DIR = Path("reports/benchmarks/tier1")
+DATA_DIR = Path(__file__).parent / "data"
+EXACT_MAXMIN_FILE = "exact_maxmin.json"
+EXACT_NN_FILE = "exact_nn.json"
 
-SEEDS = (0, 1, 2)
-TIME_BUDGETS_SEC = time_budget_series(0.001, 10.0)
+PROBLEMS = ("U1", "C1")
+# The grid is walked until a solver stops certifying; this bound only guards against a solver that
+# never stops, far above where any of them certifies today.
+GRID_BOUND = 5000
+NN_OBJECTIVES = (DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
+# How many single-worker solves run side by side: the single-worker series packs across the cores
+# the multi-worker series uses one at a time.
+SINGLE_WORKER_CONCURRENCY = N_WORKERS
 
-# Experiment 1: max-min gap to proven optimum.
-MAXMIN_PROBLEMS = ("U1", "C1")
-MAXMIN_SIZES = (100, 200, 300)  # CP-SAT stops proving within the cap at n ~ 400
-MAXMIN_CAP_SEC = 120.0
-
-# Experiment 2: backend scaling over increasing n (custom d=4 family; k = n // 10).
-SCALING_NS = (40, 50, 60, 70, 80, 90, 100)
-SCALING_DIMENSIONS = 4
-SCALING_CAPS_SEC = {"SCIP (1 thread)": 900.0, "CP-SAT (1 worker)": 3600.0, "CP-SAT (8 workers)": 3600.0}
-
-# Experiment 3: incumbent-at-budget geomean panel on shipped problems.
-INCUMBENT_CASES = (("U3", 100, 10_800.0), ("C4", 150, 900.0))  # C4's bound stops improving before 900 s
+ExactSolve = Callable[[MaxDivProblem], tuple[float, bool, float]]
 
 
-def scaling_problem(n: int) -> MaxDivProblem:
-    """Build the custom sub-n=100 problem family for the backend scaling experiment."""
-    rng = np.random.default_rng(0)
-    vectors = rng.random((n, SCALING_DIMENSIONS), dtype=np.float32)
-    return MaxDivProblem.new(vectors, k=max(2, n // 10), diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+def _cpsat_maxmin(problem: MaxDivProblem) -> tuple[float, bool, float]:
+    """Certify the max-min optimum with CP-SAT's threshold search, on the protocol's worker count."""
+    result = solve_maxmin_cpsat(problem, time_limit_sec=CERTIFICATION_CAP_SEC, num_workers=N_WORKERS)
+    return result.min_separation, result.proven_optimal, result.measured_sec
 
 
-def run_maxmin_exact(out_path: Path = OUTPUT_DIR / "maxmin_exact.json") -> None:
-    """Experiment 1, exact half: prove the max-min optima with CP-SAT."""
-    exact_rows = []
-    for name in MAXMIN_PROBLEMS:
-        for size in MAXMIN_SIZES:
-            problem = build_problem(name, n=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
-            res = solve_maxmin_cpsat(problem, time_limit_sec=MAXMIN_CAP_SEC)
-            exact_rows.append(
-                {
-                    "problem": name,
-                    "size": size,
-                    "n": problem.n,
-                    "k": problem.k,
-                    "m": problem.m,
-                    "optimum": res.min_separation,
-                    "proven_optimal": res.proven_optimal,
-                    "measured_sec": res.measured_sec,
-                }
-            )
-            print(
-                f"maxmin {name} size={size}: optimum={res.min_separation:.5f} proven={res.proven_optimal}", flush=True
-            )
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(exact_rows, indent=2))
+def _scip_maxmin(problem: MaxDivProblem) -> tuple[float, bool, float]:
+    """Certify the max-min optimum with SCIP's big-M MIP (single-threaded: the PyPI build has no concurrent solve)."""
+    result = solve_maxmin_scip(problem, time_limit_sec=CERTIFICATION_CAP_SEC)
+    return result.min_separation, result.proven_optimal, result.measured_sec
 
 
-def run_maxmin_maxdiv(
-    problems: tuple[str, ...] = MAXMIN_PROBLEMS,
-    sizes: tuple[int, ...] = MAXMIN_SIZES,
-    time_budgets_sec: list[float] = TIME_BUDGETS_SEC,
-    seeds: tuple[int, ...] = SEEDS,
-    out_path: Path = OUTPUT_DIR / "maxmin_records.jsonl",
+def _highs_maxmin(problem: MaxDivProblem) -> tuple[float, bool, float]:
+    """Certify the max-min optimum with HiGHS's big-M MIP on the protocol's worker count."""
+    result = solve_maxmin_highs(problem, time_limit_sec=CERTIFICATION_CAP_SEC, num_workers=N_WORKERS)
+    return result.min_separation, result.proven_optimal, result.measured_sec
+
+
+# Max-min solvers by registry key, in the registry's order.
+MAXMIN_SOLVERS: dict[str, ExactSolve] = {"ortools-cpsat": _cpsat_maxmin, "scip": _scip_maxmin, "highs": _highs_maxmin}
+
+
+def _cpsat_nn(metric: DiversityMetric) -> ExactSolve:
+    """Build the CP-SAT nearest-neighbor assignment certifier for one NN objective."""
+
+    def solve(problem: MaxDivProblem) -> tuple[float, bool, float]:
+        result = solve_nn_assignment_cpsat(problem, metric, time_limit_sec=CERTIFICATION_CAP_SEC, num_workers=N_WORKERS)
+        return result.objective_value, result.proven_optimal, result.measured_sec
+
+    return solve
+
+
+def _load_rows(path: Path) -> list[dict]:
+    """Read the exact rows on file, or none."""
+    return json.loads(path.read_text()) if path.exists() else []
+
+
+def _ascend(
+    rows: list[dict], path: Path, problem_name: str, metric: DiversityMetric, solver_key: str, solve: ExactSolve
 ) -> None:
-    """Experiment 1, max-div half: run max-div's budget series on the proven-optimum problems.
+    """Run one solver up the grid on one (problem, objective) until its first size not certified.
 
-    Defaults are the published protocol; pass smaller values only for validation runs.
+    Every attempt is recorded, the failed one included: the results page states where each
+    solver's certification stopped. Rows already on file are skipped, and the ascent resumes
+    after them.
     """
-    records = []
-    for name in problems:
-        for size in sizes:
-            problem = build_problem(name, n=size, diversity_metric=DiversityMetric.MIN_SEPARATION)
-            records += run_maxdiv_budget_series(
-                problem, problem_name=name, size=size, time_budgets_sec=time_budgets_sec, seeds=seeds
-            )
-            print(f"maxmin max-div {name} size={size} done", flush=True)
-    save_records(records, out_path)
-
-
-def run_backend_scaling() -> None:
-    """Experiment 2: run each backend over increasing n until its first failed proof."""
-    rows = []
-    for backend, cap in SCALING_CAPS_SEC.items():
-        for n in SCALING_NS:
-            problem = scaling_problem(n)
-            t0 = time.perf_counter()
-            if backend.startswith("SCIP"):
-                try:
-                    res = solve_nn_separation_scip(problem, DiversityMetric.GEOMEAN_SEPARATION, time_limit_sec=cap)
-                    proven, measured = res.proven_optimal, res.measured_sec
-                except RuntimeError:
-                    proven, measured = False, time.perf_counter() - t0
-            else:
-                workers = 1 if "1 worker" in backend else 8
-                try:
-                    res = solve_nn_assignment_cpsat(
-                        problem, DiversityMetric.GEOMEAN_SEPARATION, time_limit_sec=cap, num_workers=workers
-                    )
-                    proven, measured = res.proven_optimal, res.measured_sec
-                except RuntimeError:
-                    proven, measured = False, time.perf_counter() - t0
-            rows.append({"backend": backend, "n": n, "k": problem.k, "measured_sec": measured, "proven": proven})
-            print(f"scaling {backend} n={n}: proven={proven} in {measured:.1f}s", flush=True)
-            if not proven:
-                break  # larger n would only time out again, at the full cap cost
-    (OUTPUT_DIR / "scaling.json").write_text(json.dumps(rows, indent=2))
-
-
-def run_incumbent_exact(out_path: Path = OUTPUT_DIR / "incumbent.json") -> None:
-    """Experiment 3, exact half: long-cap CP-SAT incumbents on the uncertifiable problems."""
-    panel_rows = []
-    for name, size, cap in INCUMBENT_CASES:
-        problem = build_problem(name, n=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
-        res = solve_nn_assignment_cpsat(problem, DiversityMetric.GEOMEAN_SEPARATION, time_limit_sec=cap)
-        panel_rows.append(
-            {
-                "problem": name,
-                "size": size,
-                "n": problem.n,
+    done = {(r["problem"], r["objective"], r["solver"], r["n"]): r for r in rows}
+    for n in size_grid(GRID_BOUND):
+        row = done.get((problem_name, metric.name, solver_key, n))
+        if row is None:
+            problem = build_problem(problem_name, n=n, diversity_metric=metric)
+            try:
+                optimum, proven, measured_sec = solve(problem)
+            except RuntimeError as error:  # no solution at all within the cap
+                optimum, proven, measured_sec = None, False, CERTIFICATION_CAP_SEC
+                print(f"  {solver_key} {problem_name} {metric.name} n={n}: no solution ({error})", flush=True)
+            row = {
+                "problem": problem_name,
+                "objective": metric.name,
+                "solver": solver_key,
+                "n": n,
                 "k": problem.k,
                 "m": problem.m,
-                "cap_sec": cap,
-                **asdict(res) | {"i_selected": res.i_selected.tolist()},
+                "optimum": optimum,
+                "proven_optimal": proven,
+                "measured_sec": measured_sec,
             }
-        )
+            rows.append(row)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(rows, indent=2))
         print(
-            f"incumbent {name} size={size}: value={res.objective_value:.5f} bound={res.objective_bound:.5f} "
-            f"proven={res.proven_optimal} in {res.measured_sec:.0f}s",
+            f"  {solver_key} {problem_name} {metric.name} n={n}: "
+            f"{'certified' if row['proven_optimal'] else 'not certified'} in {row['measured_sec']:.1f} s",
             flush=True,
         )
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(panel_rows, indent=2))
+        if not row["proven_optimal"]:
+            return
 
 
-def run_incumbent_maxdiv(
-    cases: tuple[tuple[str, int, float], ...] = INCUMBENT_CASES,
-    time_budgets_sec: list[float] = TIME_BUDGETS_SEC,
+def run_exact_maxmin(out_path: Path = OUTPUT_DIR / EXACT_MAXMIN_FILE) -> list[dict]:
+    """Exact half, max-min: every solver ascends the grid on U1 and C1 until it stops certifying."""
+    rows = _load_rows(out_path)
+    for problem_name in PROBLEMS:
+        for solver_key, solve in MAXMIN_SOLVERS.items():
+            _ascend(rows, out_path, problem_name, DiversityMetric.MIN_SEPARATION, solver_key, solve)
+    return rows
+
+
+def run_exact_nn(out_path: Path = OUTPUT_DIR / EXACT_NN_FILE) -> list[dict]:
+    """Exact half, mean/geomean of NN: CP-SAT ascends the grid on U1 and C1 until it stops certifying."""
+    rows = _load_rows(out_path)
+    for problem_name in PROBLEMS:
+        for metric in NN_OBJECTIVES:
+            _ascend(rows, out_path, problem_name, metric, "ortools-cpsat", _cpsat_nn(metric))
+    return rows
+
+
+def certified_sizes(exact_rows: list[dict]) -> dict[tuple[str, str], list[int]]:
+    """Return, per (problem, objective), the sizes at which at least one solver certified the optimum."""
+    sizes: dict[tuple[str, str], set[int]] = {}
+    for row in exact_rows:
+        if row["proven_optimal"]:
+            sizes.setdefault((row["problem"], row["objective"]), set()).add(row["n"])
+    return {key: sorted(values) for key, values in sizes.items()}
+
+
+def maxdiv_records_path(metric: DiversityMetric, records_dir: Path = OUTPUT_DIR) -> Path:
+    """Return the JSONL file holding max-div's records for one objective."""
+    return records_dir / f"maxdiv_{metric.name.lower()}.jsonl"
+
+
+def run_maxdiv(
+    exact_rows: list[dict],
     seeds: tuple[int, ...] = SEEDS,
-    out_path: Path = OUTPUT_DIR / "incumbent_records.jsonl",
+    single_budgets_sec: list[float] = SINGLE_WORKER_BUDGETS_SEC,
+    multi_budgets_sec: list[float] = MULTI_WORKER_BUDGETS_SEC,
+    n_workers: int = N_WORKERS,
+    records_dir: Path = OUTPUT_DIR,
 ) -> None:
-    """Experiment 3, max-div half: run max-div's budget series on the incumbent-panel problems.
+    """max-div half: both budget series on every certified (problem, objective, size) cell.
 
-    Defaults are the published protocol; pass smaller values only for validation runs.
+    Defaults are the published protocol; pass smaller values only for validation runs. Cells
+    whose records are already on file are skipped.
     """
-    records = []
-    for name, size, _cap in cases:
-        problem = build_problem(name, n=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
-        records += run_maxdiv_budget_series(
-            problem, problem_name=name, size=size, time_budgets_sec=time_budgets_sec, seeds=seeds
-        )
-        print(f"incumbent max-div {name} size={size} done", flush=True)
-    save_records(records, out_path)
+    for (problem_name, objective), sizes in sorted(certified_sizes(exact_rows).items()):
+        metric = DiversityMetric[objective]
+        path = maxdiv_records_path(metric, records_dir)
+        records: list[RunRecord] = load_records(path) if path.exists() else []
+        done = {(r.problem, r.n, r.tool) for r in records}
+        for n in sizes:
+            problem = build_problem(problem_name, n=n, diversity_metric=metric)
+            for budgets, workers in ((single_budgets_sec, 1), (multi_budgets_sec, n_workers)):
+                if (problem_name, n, maxdiv_tool_label(n_workers=workers)) in done:
+                    continue
+                records += run_maxdiv_budget_series(
+                    problem,
+                    problem_name=problem_name,
+                    size=n,
+                    time_budgets_sec=budgets,
+                    seeds=seeds,
+                    n_workers=workers,
+                    concurrency=SINGLE_WORKER_CONCURRENCY if workers == 1 else 1,
+                )
+                save_records(records, path)
+            print(f"max-div {problem_name} {objective} n={n} done", flush=True)
 
 
 def main() -> None:
-    """Run all three tier-1 experiments, exact and max-div halves alike."""
+    """Run both halves: the exact references, then max-div on every certified cell."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    print("tier-1 experiment 1: max-min gap to proven optimum ...", flush=True)
-    run_maxmin_exact()
-    run_maxmin_maxdiv()
-    print("tier-1 experiment 2: backend scaling ...", flush=True)
-    run_backend_scaling()
-    print("tier-1 experiment 3: incumbent-at-budget panel ...", flush=True)
-    run_incumbent_exact()
-    run_incumbent_maxdiv()
+    print("tier-1 exact half: max-min ...", flush=True)
+    maxmin_rows = run_exact_maxmin()
+    print("tier-1 exact half: mean/geomean of NN ...", flush=True)
+    nn_rows = run_exact_nn()
+    print("tier-1 max-div half ...", flush=True)
+    run_maxdiv(maxmin_rows + nn_rows)
     print("tier-1 complete", flush=True)
 
 

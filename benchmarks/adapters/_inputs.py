@@ -1,8 +1,13 @@
-"""Input-shape helpers shared by adapters: vectors and square distance matrices."""
+"""Convert a problem into the input form an adapter needs: vectors, or a square distance matrix.
+
+The conversion runs inside the adapter's timed `select`, so it counts toward the tool's measured
+time, and it uses scipy, not max-div's own distance code, so a competitor's time neither depends
+on nor benefits from the subject's implementation.
+"""
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.spatial.distance import squareform
+from scipy.spatial.distance import pdist, squareform
 
 from max_div.problem import MaxDivProblem, VectorMaxDivProblem
 
@@ -15,5 +20,11 @@ def problem_vectors(problem: MaxDivProblem) -> NDArray[np.float32]:
 
 
 def square_distances(problem: MaxDivProblem) -> NDArray[np.float64]:
-    """Return the full n x n distance matrix (O(n^2) memory; fine at benchmark sizes)."""
+    """Return the full n x n Euclidean distance matrix (O(n^2) memory; fine at benchmark sizes).
+
+    A vector problem's matrix is computed here with scipy; a distance problem already carries its
+    matrix, which is expanded from its condensed form.
+    """
+    if isinstance(problem, VectorMaxDivProblem):
+        return squareform(pdist(problem.vectors.astype(np.float64)))
     return squareform(problem.condensed_distances().astype(np.float64))

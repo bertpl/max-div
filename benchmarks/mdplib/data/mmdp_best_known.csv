@@ -1,202 +1,215 @@
-# Best-known MMDP (max-min diversity) objective values for the Glover/Geo/Ran instance sets.
-# Source: companion results workbook of Resende, Marti, Gallego & Duarte (2010),
-# 'GRASP and path relinking for the max-min diversity problem', Computers & Operations
-# Research 37(3), as distributed with the instance archive at
-# https://www.uv.es/rmarti/paper/mdp.html (best value over the six algorithms reported).
-# Later work has improved some of these bounds; see the tier-3 results page for framing.
-family,instance,n,k,best_known
-Geo,Geo 100 1.txt,100,10,89.3701
-Geo,Geo 100 10.txt,100,10,163.6756
-Geo,Geo 100 11.txt,100,30,102.1942
-Geo,Geo 100 12.txt,100,30,117.4799
-Geo,Geo 100 13.txt,100,30,29.8305
-Geo,Geo 100 14.txt,100,30,54.0835
-Geo,Geo 100 15.txt,100,30,144.4778
-Geo,Geo 100 16.txt,100,30,122.3761
-Geo,Geo 100 17.txt,100,30,130.3483
-Geo,Geo 100 18.txt,100,30,109.8691
-Geo,Geo 100 19.txt,100,30,152.2067
-Geo,Geo 100 2.txt,100,10,96.6572
-Geo,Geo 100 20.txt,100,30,140.6049
-Geo,Geo 100 3.txt,100,10,76.4527
-Geo,Geo 100 4.txt,100,10,103.0055
-Geo,Geo 100 5.txt,100,10,119.7182
-Geo,Geo 100 6.txt,100,10,36.5241
-Geo,Geo 100 7.txt,100,10,189.2091
-Geo,Geo 100 8.txt,100,10,110.0244
-Geo,Geo 100 9.txt,100,10,141.2359
-Geo,Geo 250 1.txt,250,25,171.0107
-Geo,Geo 250 10.txt,250,25,102.1916
-Geo,Geo 250 11.txt,250,75,31.3743
-Geo,Geo 250 12.txt,250,75,93.8399
-Geo,Geo 250 13.txt,250,75,145.0602
-Geo,Geo 250 14.txt,250,75,70.1153
-Geo,Geo 250 15.txt,250,75,142.4976
-Geo,Geo 250 16.txt,250,75,108.0459
-Geo,Geo 250 17.txt,250,75,124.2534
-Geo,Geo 250 18.txt,250,75,148.6276
-Geo,Geo 250 19.txt,250,75,133.8682
-Geo,Geo 250 2.txt,250,25,19.6954
-Geo,Geo 250 20.txt,250,75,147.832
-Geo,Geo 250 3.txt,250,25,137.754
-Geo,Geo 250 4.txt,250,25,171.2066
-Geo,Geo 250 5.txt,250,25,148.719
-Geo,Geo 250 6.txt,250,25,99.8039
-Geo,Geo 250 7.txt,250,25,175.7132
-Geo,Geo 250 8.txt,250,25,164.0301
-Geo,Geo 250 9.txt,250,25,179.1627
-Geo,Geo 500 1.txt,500,50,123.741
-Geo,Geo 500 10.txt,500,50,159.6776
-Geo,Geo 500 11.txt,500,150,93.4857
-Geo,Geo 500 12.txt,500,150,71.1193
-Geo,Geo 500 13.txt,500,150,133.9872
-Geo,Geo 500 14.txt,500,150,111.0441
-Geo,Geo 500 15.txt,500,150,35.7095
-Geo,Geo 500 16.txt,500,150,132.4334
-Geo,Geo 500 17.txt,500,150,129.0352
-Geo,Geo 500 18.txt,500,150,71.846
-Geo,Geo 500 19.txt,500,150,123.9455
-Geo,Geo 500 2.txt,500,50,13.396
-Geo,Geo 500 20.txt,500,150,123.1356
-Geo,Geo 500 3.txt,500,50,164.1298
-Geo,Geo 500 4.txt,500,50,131.6235
-Geo,Geo 500 5.txt,500,50,28.0699
-Geo,Geo 500 6.txt,500,50,27.7989
-Geo,Geo 500 7.txt,500,50,131.3369
-Geo,Geo 500 8.txt,500,50,112.6761
-Geo,Geo 500 9.txt,500,50,168.2425
-Glover,Glover (n 10) 1.txt,10,2,243.9725
-Glover,Glover (n 10) 1.txt,10,3,184.3583
-Glover,Glover (n 10) 1.txt,10,4,175.6319
-Glover,Glover (n 10) 1.txt,10,6,162.9963
-Glover,Glover (n 10) 1.txt,10,8,131.1515
-Glover,Glover (n 10) 2.txt,10,2,210.6504
-Glover,Glover (n 10) 2.txt,10,3,183.7861
-Glover,Glover (n 10) 2.txt,10,4,158.0694
-Glover,Glover (n 10) 2.txt,10,6,136.5785
-Glover,Glover (n 10) 2.txt,10,8,118.7514
-Glover,Glover (n 10) 3.txt,10,2,146.6154
-Glover,Glover (n 10) 3.txt,10,3,114.4287
-Glover,Glover (n 10) 3.txt,10,4,107.2229
-Glover,Glover (n 10) 3.txt,10,6,71.9203
-Glover,Glover (n 10) 3.txt,10,8,63.3087
-Glover,Glover (n 10) 4.txt,10,2,186.181
-Glover,Glover (n 10) 4.txt,10,3,167.2518
-Glover,Glover (n 10) 4.txt,10,4,137.0209
-Glover,Glover (n 10) 4.txt,10,6,120.4722
-Glover,Glover (n 10) 4.txt,10,8,92.2196
-Glover,Glover (n 10) 5.txt,10,2,209.6157
-Glover,Glover (n 10) 5.txt,10,3,189.8644
-Glover,Glover (n 10) 5.txt,10,4,179.7096
-Glover,Glover (n 10) 5.txt,10,6,159.0579
-Glover,Glover (n 10) 5.txt,10,8,140.0817
-Glover,Glover (n 15) 1.txt,15,3,100.4077
-Glover,Glover (n 15) 1.txt,15,4,83.801
-Glover,Glover (n 15) 1.txt,15,6,64.573
-Glover,Glover (n 15) 1.txt,15,9,40.3951
-Glover,Glover (n 15) 1.txt,15,12,29.3764
-Glover,Glover (n 15) 2.txt,15,3,218.1866
-Glover,Glover (n 15) 2.txt,15,4,206.5686
-Glover,Glover (n 15) 2.txt,15,6,177.9098
-Glover,Glover (n 15) 2.txt,15,9,154.424
-Glover,Glover (n 15) 2.txt,15,12,138.7754
-Glover,Glover (n 15) 3.txt,15,3,198.451
-Glover,Glover (n 15) 3.txt,15,4,181.2386
-Glover,Glover (n 15) 3.txt,15,6,162.4196
-Glover,Glover (n 15) 3.txt,15,9,152.1341
-Glover,Glover (n 15) 3.txt,15,12,126.498
-Glover,Glover (n 15) 4.txt,15,3,167.3249
-Glover,Glover (n 15) 4.txt,15,4,139.0457
-Glover,Glover (n 15) 4.txt,15,6,126.891
-Glover,Glover (n 15) 4.txt,15,9,105.526
-Glover,Glover (n 15) 4.txt,15,12,97.7132
-Glover,Glover (n 15) 5.txt,15,3,177.2224
-Glover,Glover (n 15) 5.txt,15,4,175.2038
-Glover,Glover (n 15) 5.txt,15,6,142.1991
-Glover,Glover (n 15) 5.txt,15,9,122.4055
-Glover,Glover (n 15) 5.txt,15,12,107.6557
-Glover,Glover (n 30) 1.txt,30,6,185.559
-Glover,Glover (n 30) 1.txt,30,9,165.743
-Glover,Glover (n 30) 1.txt,30,12,158.4804
-Glover,Glover (n 30) 1.txt,30,18,143.2976
-Glover,Glover (n 30) 1.txt,30,24,119.96340000000001
-Glover,Glover (n 30) 2.txt,30,6,180.3035
-Glover,Glover (n 30) 2.txt,30,9,161.1154
-Glover,Glover (n 30) 2.txt,30,12,148.6086
-Glover,Glover (n 30) 2.txt,30,18,136.8855
-Glover,Glover (n 30) 2.txt,30,24,124.1088
-Glover,Glover (n 30) 3.txt,30,6,164.015
-Glover,Glover (n 30) 3.txt,30,9,141.8909
-Glover,Glover (n 30) 3.txt,30,12,129.1717
-Glover,Glover (n 30) 3.txt,30,18,108.1425
-Glover,Glover (n 30) 3.txt,30,24,96.1811
-Glover,Glover (n 30) 4.txt,30,6,105.1667
-Glover,Glover (n 30) 4.txt,30,9,85.6445
-Glover,Glover (n 30) 4.txt,30,12,69.5277
-Glover,Glover (n 30) 4.txt,30,18,56.8842
-Glover,Glover (n 30) 4.txt,30,24,46.7369
-Glover,Glover (n 30) 5.txt,30,6,104.2433
-Glover,Glover (n 30) 5.txt,30,9,90.2746
-Glover,Glover (n 30) 5.txt,30,12,73.585
-Glover,Glover (n 30) 5.txt,30,18,61.3115
-Glover,Glover (n 30) 5.txt,30,24,40.6866
-Ran,Ran 100 1.txt,100,10,73.0
-Ran,Ran 100 10.txt,100,10,75.0
-Ran,Ran 100 11.txt,100,30,54.0
-Ran,Ran 100 12.txt,100,30,55.0
-Ran,Ran 100 13.txt,100,30,55.0
-Ran,Ran 100 14.txt,100,30,55.0
-Ran,Ran 100 15.txt,100,30,55.0
-Ran,Ran 100 16.txt,100,30,55.0
-Ran,Ran 100 17.txt,100,30,55.0
-Ran,Ran 100 18.txt,100,30,55.0
-Ran,Ran 100 19.txt,100,30,55.0
-Ran,Ran 100 2.txt,100,10,75.0
-Ran,Ran 100 20.txt,100,30,55.0
-Ran,Ran 100 3.txt,100,10,74.0
-Ran,Ran 100 4.txt,100,10,74.0
-Ran,Ran 100 5.txt,100,10,74.0
-Ran,Ran 100 6.txt,100,10,74.0
-Ran,Ran 100 7.txt,100,10,75.0
-Ran,Ran 100 8.txt,100,10,74.0
-Ran,Ran 100 9.txt,100,10,74.0
-Ran,Ran 250 1.txt,250,25,59.0
-Ran,Ran 250 10.txt,250,25,60.0
-Ran,Ran 250 11.txt,250,75,52.0
-Ran,Ran 250 12.txt,250,75,51.0
-Ran,Ran 250 13.txt,250,75,52.0
-Ran,Ran 250 14.txt,250,75,52.0
-Ran,Ran 250 15.txt,250,75,51.0
-Ran,Ran 250 16.txt,250,75,52.0
-Ran,Ran 250 17.txt,250,75,52.0
-Ran,Ran 250 18.txt,250,75,52.0
-Ran,Ran 250 19.txt,250,75,52.0
-Ran,Ran 250 2.txt,250,25,60.0
-Ran,Ran 250 20.txt,250,75,51.0
-Ran,Ran 250 3.txt,250,25,60.0
-Ran,Ran 250 4.txt,250,25,59.0
-Ran,Ran 250 5.txt,250,25,60.0
-Ran,Ran 250 6.txt,250,25,60.0
-Ran,Ran 250 7.txt,250,25,60.0
-Ran,Ran 250 8.txt,250,25,60.0
-Ran,Ran 250 9.txt,250,25,60.0
-Ran,Ran 500 1.txt,500,50,54.0
-Ran,Ran 500 10.txt,500,50,54.0
-Ran,Ran 500 11.txt,500,150,4.0
-Ran,Ran 500 12.txt,500,150,4.0
-Ran,Ran 500 13.txt,500,150,4.0
-Ran,Ran 500 14.txt,500,150,4.0
-Ran,Ran 500 15.txt,500,150,4.0
-Ran,Ran 500 16.txt,500,150,4.0
-Ran,Ran 500 17.txt,500,150,4.0
-Ran,Ran 500 18.txt,500,150,4.0
-Ran,Ran 500 19.txt,500,150,4.0
-Ran,Ran 500 2.txt,500,50,55.0
-Ran,Ran 500 20.txt,500,150,4.0
-Ran,Ran 500 3.txt,500,50,55.0
-Ran,Ran 500 4.txt,500,50,55.0
-Ran,Ran 500 5.txt,500,50,54.0
-Ran,Ran 500 6.txt,500,50,54.0
-Ran,Ran 500 7.txt,500,50,54.0
-Ran,Ran 500 8.txt,500,50,55.0
-Ran,Ran 500 9.txt,500,50,55.0
+# Best-known MMDP (max-min diversity) objective values for the Glover/Geo/Ran instance sets, with provenance.
+#
+# `best_known` is, per (instance, k) pairing, the largest value published by any of these sources:
+#   RMGD2010  Resende, Marti, Gallego & Duarte (2010), 'GRASP and path relinking for the max-min diversity
+#             problem', Computers & Operations Research 37(3); companion results workbook distributed with
+#             the instances at https://www.uv.es/rmarti/paper/mdp.html (best over its six algorithms).
+#   PHG2011   Porumbel, Hao & Glover (2011), 'A simple and effective algorithm for the MaxMin diversity
+#             problem', Annals of Operations Research 186(1), appendix tables 6-7 (author manuscript at
+#             https://cedric.cnam.fr/~porumbed/papers/paperAOR11.pdf); Ran 500 3 = 56 per the paper's text.
+#   DCGL2009  Della Croce, Grosso & Locatelli (2009), 'A heuristic approach for the max-min diversity
+#             problem based on max-clique', Computers & Operations Research 36(8); values as republished
+#             in PHG2011 table 6 and in `mmdp.cfg` of https://cedric.cnam.fr/~porumbed/papers/mmdp2.zip.
+# `source` names the earliest of these that reached `best_known` (values agreeing at two decimals count as
+# equal; the most precise printed value is kept). `best_known_2010` is the RMGD2010 value alone, kept for
+# continuity with earlier results pages.
+# `proven_optimal` is true where a published exact method certified the value: all n = 100 Geo/Ran
+# instances (Della Croce et al. 2009, as stated in PHG2011), and the n = 250/500 instances CPLEX proved in
+# Saboonchi (2013), 'Solving the p-dispersion problem ...', HEC Montreal thesis, tables 3.V and 3.VI
+# (http://biblos.hec.ca/biblio/theses/2013NO10.PDF). Glover instances carry no optimality claim here.  # codespell:ignore theses
+family,instance,n,k,best_known,best_known_2010,source,proven_optimal
+Geo,Geo 100 1.txt,100,10,89.3701,89.3701,RMGD2010,true
+Geo,Geo 100 10.txt,100,10,163.6756,163.6756,RMGD2010,true
+Geo,Geo 100 11.txt,100,30,102.1942,102.1942,RMGD2010,true
+Geo,Geo 100 12.txt,100,30,117.4799,117.4799,RMGD2010,true
+Geo,Geo 100 13.txt,100,30,29.8305,29.8305,RMGD2010,true
+Geo,Geo 100 14.txt,100,30,54.0835,54.0835,RMGD2010,true
+Geo,Geo 100 15.txt,100,30,144.4778,144.4778,RMGD2010,true
+Geo,Geo 100 16.txt,100,30,122.3761,122.3761,RMGD2010,true
+Geo,Geo 100 17.txt,100,30,130.3483,130.3483,RMGD2010,true
+Geo,Geo 100 18.txt,100,30,109.8691,109.8691,RMGD2010,true
+Geo,Geo 100 19.txt,100,30,152.2067,152.2067,RMGD2010,true
+Geo,Geo 100 2.txt,100,10,96.6572,96.6572,RMGD2010,true
+Geo,Geo 100 20.txt,100,30,140.6049,140.6049,RMGD2010,true
+Geo,Geo 100 3.txt,100,10,76.4527,76.4527,RMGD2010,true
+Geo,Geo 100 4.txt,100,10,103.0055,103.0055,RMGD2010,true
+Geo,Geo 100 5.txt,100,10,119.7182,119.7182,RMGD2010,true
+Geo,Geo 100 6.txt,100,10,36.5241,36.5241,RMGD2010,true
+Geo,Geo 100 7.txt,100,10,189.2091,189.2091,RMGD2010,true
+Geo,Geo 100 8.txt,100,10,110.0244,110.0244,RMGD2010,true
+Geo,Geo 100 9.txt,100,10,141.2359,141.2359,RMGD2010,true
+Geo,Geo 250 1.txt,250,25,171.0107,171.0107,RMGD2010,true
+Geo,Geo 250 10.txt,250,25,102.23,102.1916,PHG2011,true
+Geo,Geo 250 11.txt,250,75,31.72,31.3743,DCGL2009,true
+Geo,Geo 250 12.txt,250,75,93.9123,93.8399,PHG2011,true
+Geo,Geo 250 13.txt,250,75,145.22,145.0602,DCGL2009,true
+Geo,Geo 250 14.txt,250,75,70.7,70.1153,DCGL2009,true
+Geo,Geo 250 15.txt,250,75,142.544,142.4976,PHG2011,true
+Geo,Geo 250 16.txt,250,75,108.0459,108.0459,RMGD2010,true
+Geo,Geo 250 17.txt,250,75,124.63,124.2534,DCGL2009,true
+Geo,Geo 250 18.txt,250,75,148.762,148.6276,PHG2011,true
+Geo,Geo 250 19.txt,250,75,134.74,133.8682,PHG2011,true
+Geo,Geo 250 2.txt,250,25,20.03,19.6954,DCGL2009,true
+Geo,Geo 250 20.txt,250,75,147.832,147.832,RMGD2010,true
+Geo,Geo 250 3.txt,250,25,137.754,137.754,RMGD2010,true
+Geo,Geo 250 4.txt,250,25,171.961,171.2066,PHG2011,true
+Geo,Geo 250 5.txt,250,25,148.76,148.719,PHG2011,true
+Geo,Geo 250 6.txt,250,25,100.38,99.8039,PHG2011,true
+Geo,Geo 250 7.txt,250,25,175.7132,175.7132,RMGD2010,true
+Geo,Geo 250 8.txt,250,25,164.513,164.0301,PHG2011,true
+Geo,Geo 250 9.txt,250,25,179.18,179.1627,PHG2011,true
+Geo,Geo 500 1.txt,500,50,124.79,123.741,PHG2011,false
+Geo,Geo 500 10.txt,500,50,159.98,159.6776,PHG2011,false
+Geo,Geo 500 11.txt,500,150,93.97,93.4857,DCGL2009,true
+Geo,Geo 500 12.txt,500,150,71.46,71.1193,DCGL2009,true
+Geo,Geo 500 13.txt,500,150,134.47,133.9872,DCGL2009,true
+Geo,Geo 500 14.txt,500,150,111.63,111.0441,DCGL2009,true
+Geo,Geo 500 15.txt,500,150,36.18,35.7095,DCGL2009,true
+Geo,Geo 500 16.txt,500,150,132.58,132.4334,PHG2011,true
+Geo,Geo 500 17.txt,500,150,129.49,129.0352,DCGL2009,true
+Geo,Geo 500 18.txt,500,150,72.65,71.846,DCGL2009,true
+Geo,Geo 500 19.txt,500,150,123.99,123.9455,PHG2011,true
+Geo,Geo 500 2.txt,500,50,13.79,13.396,DCGL2009,true
+Geo,Geo 500 20.txt,500,150,123.43,123.1356,PHG2011,true
+Geo,Geo 500 3.txt,500,50,165.04,164.1298,DCGL2009,false
+Geo,Geo 500 4.txt,500,50,132.501,131.6235,PHG2011,false
+Geo,Geo 500 5.txt,500,50,28.55,28.0699,DCGL2009,true
+Geo,Geo 500 6.txt,500,50,28.6,27.7989,DCGL2009,true
+Geo,Geo 500 7.txt,500,50,132.514,131.3369,PHG2011,false
+Geo,Geo 500 8.txt,500,50,113.6,112.6761,DCGL2009,false
+Geo,Geo 500 9.txt,500,50,168.96,168.2425,PHG2011,false
+Glover,Glover (n 10) 1.txt,10,2,243.9725,243.9725,RMGD2010,false
+Glover,Glover (n 10) 1.txt,10,3,184.3583,184.3583,RMGD2010,false
+Glover,Glover (n 10) 1.txt,10,4,175.6319,175.6319,RMGD2010,false
+Glover,Glover (n 10) 1.txt,10,6,162.9963,162.9963,RMGD2010,false
+Glover,Glover (n 10) 1.txt,10,8,131.1515,131.1515,RMGD2010,false
+Glover,Glover (n 10) 2.txt,10,2,210.6504,210.6504,RMGD2010,false
+Glover,Glover (n 10) 2.txt,10,3,183.7861,183.7861,RMGD2010,false
+Glover,Glover (n 10) 2.txt,10,4,158.0694,158.0694,RMGD2010,false
+Glover,Glover (n 10) 2.txt,10,6,136.5785,136.5785,RMGD2010,false
+Glover,Glover (n 10) 2.txt,10,8,118.7514,118.7514,RMGD2010,false
+Glover,Glover (n 10) 3.txt,10,2,146.6154,146.6154,RMGD2010,false
+Glover,Glover (n 10) 3.txt,10,3,114.4287,114.4287,RMGD2010,false
+Glover,Glover (n 10) 3.txt,10,4,107.2229,107.2229,RMGD2010,false
+Glover,Glover (n 10) 3.txt,10,6,71.9203,71.9203,RMGD2010,false
+Glover,Glover (n 10) 3.txt,10,8,63.3087,63.3087,RMGD2010,false
+Glover,Glover (n 10) 4.txt,10,2,186.181,186.181,RMGD2010,false
+Glover,Glover (n 10) 4.txt,10,3,167.2518,167.2518,RMGD2010,false
+Glover,Glover (n 10) 4.txt,10,4,137.0209,137.0209,RMGD2010,false
+Glover,Glover (n 10) 4.txt,10,6,120.4722,120.4722,RMGD2010,false
+Glover,Glover (n 10) 4.txt,10,8,92.2196,92.2196,RMGD2010,false
+Glover,Glover (n 10) 5.txt,10,2,209.6157,209.6157,RMGD2010,false
+Glover,Glover (n 10) 5.txt,10,3,189.8644,189.8644,RMGD2010,false
+Glover,Glover (n 10) 5.txt,10,4,179.7096,179.7096,RMGD2010,false
+Glover,Glover (n 10) 5.txt,10,6,159.0579,159.0579,RMGD2010,false
+Glover,Glover (n 10) 5.txt,10,8,140.0817,140.0817,RMGD2010,false
+Glover,Glover (n 15) 1.txt,15,3,100.4077,100.4077,RMGD2010,false
+Glover,Glover (n 15) 1.txt,15,4,83.801,83.801,RMGD2010,false
+Glover,Glover (n 15) 1.txt,15,6,64.573,64.573,RMGD2010,false
+Glover,Glover (n 15) 1.txt,15,9,40.3951,40.3951,RMGD2010,false
+Glover,Glover (n 15) 1.txt,15,12,29.3764,29.3764,RMGD2010,false
+Glover,Glover (n 15) 2.txt,15,3,218.1866,218.1866,RMGD2010,false
+Glover,Glover (n 15) 2.txt,15,4,206.5686,206.5686,RMGD2010,false
+Glover,Glover (n 15) 2.txt,15,6,177.9098,177.9098,RMGD2010,false
+Glover,Glover (n 15) 2.txt,15,9,154.424,154.424,RMGD2010,false
+Glover,Glover (n 15) 2.txt,15,12,138.7754,138.7754,RMGD2010,false
+Glover,Glover (n 15) 3.txt,15,3,198.451,198.451,RMGD2010,false
+Glover,Glover (n 15) 3.txt,15,4,181.2386,181.2386,RMGD2010,false
+Glover,Glover (n 15) 3.txt,15,6,162.4196,162.4196,RMGD2010,false
+Glover,Glover (n 15) 3.txt,15,9,152.1341,152.1341,RMGD2010,false
+Glover,Glover (n 15) 3.txt,15,12,126.498,126.498,RMGD2010,false
+Glover,Glover (n 15) 4.txt,15,3,167.3249,167.3249,RMGD2010,false
+Glover,Glover (n 15) 4.txt,15,4,139.0457,139.0457,RMGD2010,false
+Glover,Glover (n 15) 4.txt,15,6,126.891,126.891,RMGD2010,false
+Glover,Glover (n 15) 4.txt,15,9,105.526,105.526,RMGD2010,false
+Glover,Glover (n 15) 4.txt,15,12,97.7132,97.7132,RMGD2010,false
+Glover,Glover (n 15) 5.txt,15,3,177.2224,177.2224,RMGD2010,false
+Glover,Glover (n 15) 5.txt,15,4,175.2038,175.2038,RMGD2010,false
+Glover,Glover (n 15) 5.txt,15,6,142.1991,142.1991,RMGD2010,false
+Glover,Glover (n 15) 5.txt,15,9,122.4055,122.4055,RMGD2010,false
+Glover,Glover (n 15) 5.txt,15,12,107.6557,107.6557,RMGD2010,false
+Glover,Glover (n 30) 1.txt,30,6,185.559,185.559,RMGD2010,false
+Glover,Glover (n 30) 1.txt,30,9,165.743,165.743,RMGD2010,false
+Glover,Glover (n 30) 1.txt,30,12,158.4804,158.4804,RMGD2010,false
+Glover,Glover (n 30) 1.txt,30,18,143.2976,143.2976,RMGD2010,false
+Glover,Glover (n 30) 1.txt,30,24,119.96340000000001,119.96340000000001,RMGD2010,false
+Glover,Glover (n 30) 2.txt,30,6,180.3035,180.3035,RMGD2010,false
+Glover,Glover (n 30) 2.txt,30,9,161.1154,161.1154,RMGD2010,false
+Glover,Glover (n 30) 2.txt,30,12,148.6086,148.6086,RMGD2010,false
+Glover,Glover (n 30) 2.txt,30,18,136.8855,136.8855,RMGD2010,false
+Glover,Glover (n 30) 2.txt,30,24,124.1088,124.1088,RMGD2010,false
+Glover,Glover (n 30) 3.txt,30,6,164.015,164.015,RMGD2010,false
+Glover,Glover (n 30) 3.txt,30,9,141.8909,141.8909,RMGD2010,false
+Glover,Glover (n 30) 3.txt,30,12,129.1717,129.1717,RMGD2010,false
+Glover,Glover (n 30) 3.txt,30,18,108.1425,108.1425,RMGD2010,false
+Glover,Glover (n 30) 3.txt,30,24,96.1811,96.1811,RMGD2010,false
+Glover,Glover (n 30) 4.txt,30,6,105.1667,105.1667,RMGD2010,false
+Glover,Glover (n 30) 4.txt,30,9,85.6445,85.6445,RMGD2010,false
+Glover,Glover (n 30) 4.txt,30,12,69.5277,69.5277,RMGD2010,false
+Glover,Glover (n 30) 4.txt,30,18,56.8842,56.8842,RMGD2010,false
+Glover,Glover (n 30) 4.txt,30,24,46.7369,46.7369,RMGD2010,false
+Glover,Glover (n 30) 5.txt,30,6,104.2433,104.2433,RMGD2010,false
+Glover,Glover (n 30) 5.txt,30,9,90.2746,90.2746,RMGD2010,false
+Glover,Glover (n 30) 5.txt,30,12,73.585,73.585,RMGD2010,false
+Glover,Glover (n 30) 5.txt,30,18,61.3115,61.3115,RMGD2010,false
+Glover,Glover (n 30) 5.txt,30,24,40.6866,40.6866,RMGD2010,false
+Ran,Ran 100 1.txt,100,10,73.0,73.0,RMGD2010,true
+Ran,Ran 100 10.txt,100,10,75.0,75.0,RMGD2010,true
+Ran,Ran 100 11.txt,100,30,54.0,54.0,RMGD2010,true
+Ran,Ran 100 12.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 13.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 14.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 15.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 16.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 17.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 18.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 19.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 2.txt,100,10,75.0,75.0,RMGD2010,true
+Ran,Ran 100 20.txt,100,30,55.0,55.0,RMGD2010,true
+Ran,Ran 100 3.txt,100,10,74.0,74.0,RMGD2010,true
+Ran,Ran 100 4.txt,100,10,74.0,74.0,RMGD2010,true
+Ran,Ran 100 5.txt,100,10,74.0,74.0,RMGD2010,true
+Ran,Ran 100 6.txt,100,10,74.0,74.0,RMGD2010,true
+Ran,Ran 100 7.txt,100,10,75.0,75.0,RMGD2010,true
+Ran,Ran 100 8.txt,100,10,74.0,74.0,RMGD2010,true
+Ran,Ran 100 9.txt,100,10,74.0,74.0,RMGD2010,true
+Ran,Ran 250 1.txt,250,25,61.0,59.0,PHG2011,true
+Ran,Ran 250 10.txt,250,25,61.0,60.0,PHG2011,true
+Ran,Ran 250 11.txt,250,75,52.0,52.0,RMGD2010,true
+Ran,Ran 250 12.txt,250,75,52.0,51.0,PHG2011,true
+Ran,Ran 250 13.txt,250,75,52.0,52.0,RMGD2010,true
+Ran,Ran 250 14.txt,250,75,52.0,52.0,RMGD2010,true
+Ran,Ran 250 15.txt,250,75,52.0,51.0,PHG2011,true
+Ran,Ran 250 16.txt,250,75,52.0,52.0,RMGD2010,true
+Ran,Ran 250 17.txt,250,75,52.0,52.0,RMGD2010,true
+Ran,Ran 250 18.txt,250,75,52.0,52.0,RMGD2010,true
+Ran,Ran 250 19.txt,250,75,52.0,52.0,RMGD2010,true
+Ran,Ran 250 2.txt,250,25,61.0,60.0,PHG2011,true
+Ran,Ran 250 20.txt,250,75,52.0,51.0,PHG2011,true
+Ran,Ran 250 3.txt,250,25,61.0,60.0,PHG2011,true
+Ran,Ran 250 4.txt,250,25,61.0,59.0,PHG2011,true
+Ran,Ran 250 5.txt,250,25,61.0,60.0,PHG2011,true
+Ran,Ran 250 6.txt,250,25,61.0,60.0,PHG2011,true
+Ran,Ran 250 7.txt,250,25,61.0,60.0,PHG2011,true
+Ran,Ran 250 8.txt,250,25,61.0,60.0,PHG2011,true
+Ran,Ran 250 9.txt,250,25,61.0,60.0,PHG2011,true
+Ran,Ran 500 1.txt,500,50,55.0,54.0,PHG2011,false
+Ran,Ran 500 10.txt,500,50,56.0,54.0,DCGL2009,false
+Ran,Ran 500 11.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 12.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 13.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 14.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 15.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 16.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 17.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 18.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 19.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 2.txt,500,50,56.0,55.0,DCGL2009,false
+Ran,Ran 500 20.txt,500,150,5.0,4.0,PHG2011,false
+Ran,Ran 500 3.txt,500,50,56.0,55.0,PHG2011,false
+Ran,Ran 500 4.txt,500,50,56.0,55.0,DCGL2009,false
+Ran,Ran 500 5.txt,500,50,56.0,54.0,DCGL2009,false
+Ran,Ran 500 6.txt,500,50,55.0,54.0,PHG2011,false
+Ran,Ran 500 7.txt,500,50,56.0,54.0,PHG2011,false
+Ran,Ran 500 8.txt,500,50,56.0,55.0,DCGL2009,false
+Ran,Ran 500 9.txt,500,50,56.0,55.0,DCGL2009,false

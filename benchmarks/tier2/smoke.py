@@ -1,63 +1,40 @@
-"""Run a tiny end-to-end validation that exercises the budget-series runner, adapter runner, records, and figure wiring.
+"""Run a tiny end-to-end validation of the tier-2 plumbing: runners, records, and the chart with its reference line.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.smoke``.
-Deliberately minuscule (one problem, short budget series, two seeds) — the run validates plumbing,
-not performance; real runs are configured separately.
+Deliberately minuscule (one size, two budgets, two seeds) — the run validates plumbing, not
+performance; the published protocol lives in ``benchmarks.tier2.full``.
 """
 
 from pathlib import Path
 
-from benchmarks.adapters import (
-    ApricotFacilityLocation,
-    FpsampleFPS,
-    KMedoidsFasterPAM,
-    QcSelectorMaxMin,
-    QcSelectorMaxSum,
-    RandomBaseline,
-    RdkitMaxMin,
-    SelectionAdapter,
-    SkmatterFPS,
-)
-from benchmarks.common import build_problem, save_records, time_budget_series
-from benchmarks.figures import plot_anytime_curve
+from benchmarks.common import build_problem, save_records
+from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.runners import run_adapter, run_maxdiv_budget_series
-from max_div.metrics import DiversityMetric
+from benchmarks.tier2.full import METRIC, PROBLEM, competitor_adapters
+from benchmarks.tier2.report import best_competitor
 
 OUTPUT_DIR = Path("reports/benchmarks/smoke")
 
 
 def main() -> None:
     """Run the smoke scenario and write records + one figure."""
-    problem = build_problem("U1", n=200, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
+    problem = build_problem(PROBLEM, n=200, diversity_metric=METRIC)
     seeds = (0, 1)
-
-    records = run_maxdiv_budget_series(
-        problem,
-        problem_name="U1",
-        size=200,
-        time_budgets_sec=time_budget_series(0.001, 0.064),
-        iteration_budgets=[100, 1000],
-        seeds=seeds,
+    records = run_maxdiv_budget_series(problem, problem_name=PROBLEM, size=200, time_budgets_sec=[0.01, 0.1], seeds=seeds)
+    records += run_maxdiv_budget_series(
+        problem, problem_name=PROBLEM, size=200, time_budgets_sec=[1.0], seeds=seeds, n_workers=2
     )
-    adapters: list[SelectionAdapter] = [
-        RandomBaseline(),
-        FpsampleFPS(),
-        SkmatterFPS(),
-        RdkitMaxMin(),
-        ApricotFacilityLocation(),
-        KMedoidsFasterPAM(),
-        QcSelectorMaxMin(),
-        QcSelectorMaxSum(),
-    ]
-    for adapter in adapters:
-        records += run_adapter(adapter, problem, problem_name="U1", size=200, seeds=seeds)
+    for adapter in competitor_adapters():
+        records += run_adapter(adapter, problem, problem_name=PROBLEM, size=200, seeds=seeds)
 
     save_records(records, OUTPUT_DIR / "records.jsonl")
+    best = best_competitor(records)
     plot_anytime_curve(
-        [r for r in records if not r.budget.startswith("iterations:")],
-        metric_name=DiversityMetric.GEOMEAN_SEPARATION.name,
-        path=OUTPUT_DIR / "anytime_u1_s2.webp",
+        records,
+        metric_name=METRIC.name,
+        path=OUTPUT_DIR / "anytime_u1_200.webp",
         title="smoke: U1 n=200 (validation only, not a published result)",
+        reference_lines=(ReferenceLine(best[1], f"best one-shot result ({best[0]})"),) if best else (),
     )
     print(f"smoke OK: {len(records)} records -> {OUTPUT_DIR}")
 
