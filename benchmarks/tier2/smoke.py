@@ -59,7 +59,7 @@ def main() -> None:
     plot_anytime_curve(
         [r for r in records if not r.budget.startswith("iterations:")],
         metric_name=DiversityMetric.GEOMEAN_SEPARATION.name,
-        path=OUTPUT_DIR / "anytime_u1_s2.svg",
+        path=OUTPUT_DIR / "anytime_u1_s2.webp",
         title="smoke: U1 n=200 (validation only, not a published result)",
     )
     print(f"smoke OK: {len(records)} records -> {OUTPUT_DIR}")

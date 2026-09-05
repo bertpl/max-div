@@ -3,13 +3,12 @@
 Reads the stages' run records and the memory fits, and renders the combined time and memory
 charts, one fit chart per fitted configuration, and the markdown tables and fragments the results
 pages include — images under the scaling docs' `images/` folder (`IMAGES_DIR`), markdown under
-`generated/`. Charts use the docs Matplotlib style sheet (`STYLE_SHEET`), shared with the
-benchmark-problem and preset-results figures.
+`generated/`. Style sheet, tool colors, and the webp writer come from `benchmarks.figures.style`,
+shared with the head-to-head anytime curves.
 
 Run:  uv run --group benchmarks --python 3.14 python scripts/generate_scaling_images.py
 """
 
-import io
 import json
 import math
 import sys
@@ -20,7 +19,6 @@ import numpy as np
 import yaml
 from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter
-from PIL import Image
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPTS_DIR.parent
@@ -29,6 +27,7 @@ REPO_ROOT = SCRIPTS_DIR.parent
 # repo root on the path. Running the script from the repo root does not do that by itself.
 sys.path.insert(0, str(REPO_ROOT))
 
+from benchmarks.figures.style import MARKER_SHAPES, save_webp, tool_color, use_docs_style  # noqa: E402
 from benchmarks.solver_scaling.best_known_stage import DATA_PATH as BEST_KNOWN_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.best_known_stage import best_known_by_size  # noqa: E402
 from benchmarks.solver_scaling.configs import CONFIGS  # noqa: E402
@@ -57,7 +56,6 @@ from benchmarks.solver_scaling.time_stage import passes_time  # noqa: E402
 
 IMAGES_DIR = REPO_ROOT / "docs" / "benchmarks" / "third_party" / "scaling" / "images"
 GENERATED_DIR = REPO_ROOT / "generated"
-STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 REGISTRY_FILE = REPO_ROOT / "data" / "solver_registry.yaml"
 
 # One width for every plotted line, so the time chart's series and the memory chart's fit curves
@@ -103,54 +101,30 @@ def _legend_label(tool: str, config: str, names: dict[str, str]) -> str:
 # ==================================================================================================
 #  Charts
 # ==================================================================================================
-def _save_webp(fig: plt.Figure, path: Path) -> None:
-    """Render the figure to quality-92 webp via PIL (matplotlib has no native webp writer)."""
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format="png")
-    plt.close(fig)
-    buffer.seek(0)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    Image.open(buffer).convert("RGB").save(path, format="WEBP", lossless=False, quality=92)
-    print(f"wrote {path.relative_to(REPO_ROOT)}")
-
-
-# One color per tool, in the order tools first appear in `CONFIGS`; a tool's configurations share
-# its color (`_series_style`).
-_TOOL_COLORS = (
-    "#4E8FD9",  # blue
-    "#F29E4C",  # orange
-    "#5DBB7A",  # green
-    "#E8655F",  # coral
-    "#9B7BD6",  # purple
-    "#3FB8B0",  # teal
-    "#E87EB4",  # pink
-    "#B0C24E",  # lime
-    "#C69A5B",  # tan
-    "#E9C34A",  # gold
-    "#7F8FA6",  # slate
-    "#4DBEDF",  # sky
-)
-
-# Marker shapes cycle over the configurations in `CONFIGS` order, every other one drawn open, so
-# neighboring configurations differ in shape and fill both — the self-limiting ones all sit on
-# the `T_max` line, where identical markers would hide one another.
-_MARKER_SHAPES = ("o", "s", "D", "^", "v", "*", "p")
+# The best-known and Q_random reference curves are not tools, so they carry their own colors.
+_BEST_KNOWN_COLOR = "#4E8FD9"  # blue
+_Q_RANDOM_COLOR = "#F29E4C"  # orange
 
 
 def _series_style(tool: str, config: str) -> dict:
     """Return the plot kwargs (color, line style, marker) identifying one configuration on every chart.
 
-    The style is keyed on the configuration itself, not on plot order: the
-    renderers skip series with no plottable rows, so a position-based cycle would style the
-    same configuration differently between the combined charts and the per-config fit charts.
+    A tool's configurations share its color; marker shapes cycle over the configurations in
+    `CONFIGS` order, every other one drawn open, so neighboring configurations differ in shape
+    and fill both — the configurations that stop at their own budget all sit on the `T_max`
+    line, where identical markers would hide one another.
+
+    The style is keyed on the configuration itself, not on plot order: the renderers skip
+    series with no plottable rows, so a position-based cycle would style the same configuration
+    differently between the combined charts and the per-config fit charts.
     """
     tools = list(dict.fromkeys(c.tool for c in CONFIGS))
     tool_index = tools.index(tool)
     config_index = [(c.tool, c.name) for c in CONFIGS].index((tool, config))
     style = {
-        "color": _TOOL_COLORS[tool_index],
+        "color": tool_color(tool),
         "linestyle": "-" if tool_index % 2 == 0 else "--",
-        "marker": _MARKER_SHAPES[config_index % len(_MARKER_SHAPES)],
+        "marker": MARKER_SHAPES[config_index % len(MARKER_SHAPES)],
     }
     if config_index % 2:
         style.update(markerfacecolor="none", markersize=7)
@@ -216,7 +190,7 @@ def render_time_chart(grouped: dict, names: dict[str, str]) -> None:
     ax.set_title("Solver Scaling — Time", fontweight="bold")
     ax.grid(True, which="major")
     ax.legend()
-    _save_webp(fig, IMAGES_DIR / "scaling_time.webp")
+    save_webp(fig, IMAGES_DIR / "scaling_time.webp")
 
 
 def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> None:
@@ -263,7 +237,7 @@ def render_memory_chart(grouped: dict, fits: dict, names: dict[str, str]) -> Non
     ax.set_title("Solver Scaling — Memory", fontweight="bold")
     ax.grid(True, which="major")
     ax.legend(handles=legend_handles, loc="upper left")
-    _save_webp(fig, IMAGES_DIR / "scaling_memory.webp")
+    save_webp(fig, IMAGES_DIR / "scaling_memory.webp")
 
 
 def _footprint_rows(rows: list[ScalingRunRecord]) -> list[ScalingRunRecord]:
@@ -348,7 +322,7 @@ def render_fit_charts(grouped: dict, fits: dict, names: dict[str, str]) -> None:
         ax.set_title(f"Memory fit — {label}", fontweight="bold")
         ax.grid(True, which="major")
         name = f"scaling_memory_fit_{tool}_{config}.webp"
-        _save_webp(fig, IMAGES_DIR / name)
+        save_webp(fig, IMAGES_DIR / name)
         written.add(IMAGES_DIR / name)
         # raw HTML paths are not rewritten by mkdocs (unlike markdown image syntax), so they must
         # be relative to the page's built directory URL, one level below the section
@@ -443,7 +417,7 @@ def render_best_known_chart(
         [by_size[n].min_separation for n in sizes],
         label="best-known",
         linewidth=_LINE_WIDTH,
-        color=_TOOL_COLORS[0],
+        color=_BEST_KNOWN_COLOR,
         marker="o",
     )
     for n in sizes:
@@ -455,7 +429,7 @@ def render_best_known_chart(
         [q_random[n] for n in random_sizes],
         label="$Q_{\\mathrm{random}}$",
         linewidth=_LINE_WIDTH,
-        color=_TOOL_COLORS[1],
+        color=_Q_RANDOM_COLOR,
         marker="s",
         markerfacecolor="none",
         markersize=7,
@@ -488,7 +462,7 @@ def render_best_known_chart(
     by_label = dict(zip(labels, handles, strict=True))
     order = ["best-known", "scaling thresholds", "results per solver config (median)", "$Q_{\\mathrm{random}}$"]
     ax.legend([by_label[label] for label in order], order)
-    _save_webp(fig, IMAGES_DIR / "scaling_best_known.webp")
+    save_webp(fig, IMAGES_DIR / "scaling_best_known.webp")
 
 
 def render_normalized_quality_chart(
@@ -530,7 +504,7 @@ def render_normalized_quality_chart(
     ax.set_title("Solver Scaling — Normalized Quality", fontweight="bold")
     ax.grid(True, which="major", axis="x")
     ax.legend(loc="center right")
-    _save_webp(fig, IMAGES_DIR / "scaling_normalized_quality.webp")
+    save_webp(fig, IMAGES_DIR / "scaling_normalized_quality.webp")
 
 
 # ==================================================================================================
@@ -703,7 +677,7 @@ def _write_generated(name: str, lines: list[str]) -> None:
 # ==================================================================================================
 def main() -> None:
     """Regenerate the charts and tables from the stages' tracked data files."""
-    plt.style.use(STYLE_SHEET)
+    use_docs_style()
     names = _solver_names()
     time_grouped = _records_by_config(load_scaling_records(TIME_DATA_PATH) if TIME_DATA_PATH.exists() else [])
     memory_grouped = _records_by_config(load_scaling_records(MEMORY_DATA_PATH) if MEMORY_DATA_PATH.exists() else [])
