@@ -20,7 +20,7 @@ _REFERENCE_COLOR = "#555555"
 
 @dataclass(frozen=True)
 class ReferenceLine:
-    """A dotted horizontal line at a reference value, e.g. a certified optimum or the best competitor."""
+    """Describe a dotted horizontal line at a reference value, e.g. a certified optimum or the best entrant."""
 
     value: float
     label: str
@@ -29,7 +29,7 @@ class ReferenceLine:
 
 @dataclass(frozen=True)
 class ReferenceMarker:
-    """One marked point, e.g. an exact solver's certified optimum at its proof time."""
+    """Describe one marked point, e.g. an exact solver's certified optimum at its proof time."""
 
     x_sec: float
     value: float
@@ -100,7 +100,7 @@ def plot_anytime_curve(
 
 
 def _legend_order(by_tool: dict[str, list[RunRecord]]) -> list[tuple[str, list[RunRecord]]]:
-    """Order max-div first (single worker before multi-worker), then the competitors alphabetically, then the random baseline."""
+    """Order max-div first (single worker before multi-worker), then the entrants alphabetically, then the random baseline."""
     return sorted(
         by_tool.items(),
         key=lambda item: (not item[0].startswith("max-div"), "workers" in item[0], item[0] == "random", item[0]),

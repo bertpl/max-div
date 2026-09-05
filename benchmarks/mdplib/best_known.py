@@ -1,8 +1,6 @@
 """Load the best-known MMDP objective values, vendored as tracked data with their provenance.
 
-Each row is the largest value any of the vendored publications reports for an (instance, k)
-pairing, the publication that first reached it, whether an exact method certified it, and the 2010
-value alone for continuity with earlier results pages. The data file's header names the sources.
+Each row carries the columns the data file's header defines, sources included.
 """
 
 import csv
@@ -14,7 +12,7 @@ _DATA_CSV = Path(__file__).parent / "data" / "mmdp_best_known.csv"
 
 @dataclass(frozen=True)
 class BestKnown:
-    """One published best-known value: an (instance, k) pairing, its objective value, and where it comes from."""
+    """Record one published best-known value: an (instance, k) pairing, its objective value, and where it comes from."""
 
     family: str
     instance: str

@@ -1,9 +1,9 @@
-"""Re-measure max-div for the tier-2 comparison, keeping the competitor records fixed.
+"""Re-measure max-div for the tier-2 comparison, keeping the entrant records fixed.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.rerun``.
 Runs only max-div's budget series — same sizes, budgets and seeds as ``benchmarks.tier2.full`` —
-and writes them into ``reports/benchmarks/tier2/``. The competitor side of the report comes from
-the tracked reference records in ``benchmarks/tier2/data/``.
+and writes them into `OUTPUT_DIR`. The entrant side of the report comes from the tracked
+reference records under `DATA_DIR`.
 """
 
 from benchmarks.tier2.full import OUTPUT_DIR, run_maxdiv

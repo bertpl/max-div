@@ -5,11 +5,11 @@ Merges two result sources: max-div's records as measured by ``benchmarks.tier1.f
 ``benchmarks.tier1.rerun`` (untracked, re-measured whenever the solver changes), and the exact
 solvers' certified optima from the tracked files in ``benchmarks/tier1/data/``.
 
-Per certified (problem, size, objective) cell one chart is written under ``IMAGES_DIR``: both
-max-div series, a dotted line at the certified optimum, and one marker per certifying solver at
-(proof time, optimum). The min-separation charts are listed full width in one snippet; the mean and
-geomean charts form one thumbnail gallery snippet each. The tables go to ``RESULTS_DIR`` for the
-companion tables page.
+Per certified (problem, size, objective) cell one chart is written under the docs images folder:
+both max-div series, a dotted line at the certified optimum, and one marker per certifying solver
+at (proof time, optimum). `FULL_WIDTH_OBJECTIVE`'s charts are listed full width in one snippet;
+every other objective gets one thumbnail-gallery snippet. The tables are written as snippets for
+the tier's tables page.
 """
 
 import json
@@ -22,7 +22,7 @@ from benchmarks.common.records import RunRecord, load_records
 from benchmarks.common.registry import display_name
 from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
 from benchmarks.figures.style import tool_color
-from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
+from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
 from benchmarks.tier1.full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, N_WORKERS, OUTPUT_DIR, maxdiv_records_path
 from max_div.metrics import DiversityMetric
 
@@ -32,19 +32,14 @@ OBJECTIVES = (DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION, D
 FULL_WIDTH_OBJECTIVE = DiversityMetric.MIN_SEPARATION  # the other objectives get thumbnail galleries
 
 
-def budget_tag(budget_sec: float) -> str:
-    """Return the record tag of a wall-clock budget, as the runner writes it."""
-    return f"time:{budget_sec}s"
-
-
 def median_quality(records: list[RunRecord], tool: str, metric_name: str, budget_sec: float) -> float | None:
-    """Median quality over seeds of one tool at one budget, or None when that budget was not run."""
+    """Return the median quality over seeds of one tool at one budget, or None when that budget was not run."""
     values = [r.quality[metric_name] for r in records if r.tool == tool and r.budget == budget_tag(budget_sec)]
     return statistics.median(values) if values else None
 
 
 def gap_pct(value: float | None, optimum: float) -> float | None:
-    """Gap to the certified optimum in percent (positive = below the optimum), or None without a value."""
+    """Return the gap to the certified optimum in percent (positive = below the optimum), or None without a value."""
     return None if value is None else (optimum - value) / optimum * 100.0
 
 
@@ -58,7 +53,7 @@ def certified_optima(exact_rows: list[dict]) -> dict[tuple[str, str, int], list[
 
 
 def build_gap_table(exact_rows: list[dict], records: list[RunRecord], metric: DiversityMetric) -> str:
-    """Markdown table for one objective: per certified cell, the optimum, who certified it, and max-div's gaps.
+    """Build the markdown table for one objective: per certified cell, the optimum, who certified it, and max-div's gaps.
 
     The gap columns quote the median over seeds at the protocol's quoted budgets, for the
     single-worker and the multi-worker series.
@@ -87,7 +82,7 @@ def build_gap_table(exact_rows: list[dict], records: list[RunRecord], metric: Di
 
 
 def build_certification_table(exact_rows: list[dict]) -> str:
-    """Markdown table: per solver, problem and objective, the largest certified n and where certification stopped."""
+    """Build the markdown table: per solver, problem and objective, the largest certified n and where certification stopped."""
     by_column: dict[tuple[str, str, str], list[dict]] = defaultdict(list)
     for row in exact_rows:
         by_column[(row["solver"], row["problem"], row["objective"])].append(row)
@@ -133,12 +128,12 @@ def render_charts(exact_rows: list[dict], records_by_metric: dict[str, list[RunR
 
 
 def full_width_snippet(names: list[str]) -> str:
-    """Markdown listing every chart full width, one per line."""
+    """Return markdown listing every chart full width, one per line."""
     return "\n".join(f"![{name.removesuffix('.webp')}](../images/{name})" for name in names) + "\n"
 
 
 def gallery_snippet(names: list[str], metric: DiversityMetric) -> str:
-    """HTML thumbnail gallery, three per row, each linking to its full-size chart (the page dir sits one level below `images/`)."""
+    """Return an HTML thumbnail gallery, three per row, each linking to its full-size chart (the page dir sits one level below `images/`)."""
     thumbnails = [
         f'<a href="../images/{name}"><img src="../images/{name}" alt="{metric.name} anytime chart {name}" width="32%"></a>'
         for name in names

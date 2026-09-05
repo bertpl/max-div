@@ -1,4 +1,4 @@
-"""Read the solver registry the documentation surfaces are built from, for the tools' display names."""
+"""Read the solver registry the documentation pages are built from, for the tools' display names."""
 
 from pathlib import Path
 

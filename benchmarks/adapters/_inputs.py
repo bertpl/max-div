@@ -2,7 +2,7 @@
 
 The conversion runs inside the adapter's timed `select`, so it counts toward the tool's measured
 time, and it uses scipy, not max-div's own distance code, so a competitor's time neither depends
-on nor benefits from the subject's implementation.
+on nor benefits from max-div's implementation.
 """
 
 import numpy as np
@@ -20,11 +20,7 @@ def problem_vectors(problem: MaxDivProblem) -> NDArray[np.float32]:
 
 
 def square_distances(problem: MaxDivProblem) -> NDArray[np.float64]:
-    """Return the full n x n Euclidean distance matrix (O(n^2) memory; fine at benchmark sizes).
-
-    A vector problem's matrix is computed here with scipy; a distance problem already carries its
-    matrix, which is expanded from its condensed form.
-    """
+    """Return the full n x n Euclidean distance matrix (O(n^2) memory; fine at benchmark sizes)."""
     if isinstance(problem, VectorMaxDivProblem):
         return squareform(pdist(problem.vectors.astype(np.float64)))
     return squareform(problem.condensed_distances().astype(np.float64))

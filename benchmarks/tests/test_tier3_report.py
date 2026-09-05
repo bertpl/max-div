@@ -8,7 +8,7 @@ from benchmarks.tier3 import report
 
 
 def _record(instance: str, k: int, tool: str, budget: str, min_separation: float, seed: int = 0) -> RunRecord:
-    """Minimal tier-3 record (problem = instance file name, size = k)."""
+    """Build a minimal tier-3 record (problem = instance file name, size = k)."""
     return RunRecord(
         tool=tool,
         problem=instance,
@@ -25,15 +25,16 @@ def _record(instance: str, k: int, tool: str, budget: str, min_separation: float
 
 
 def _row(instance: str, best_known: float, family: str = "Ran", n: int = 500, k: int = 50) -> BestKnown:
+    """Build one best-known row."""
     return BestKnown(family, instance, n, k, best_known, best_known, "RMGD2010", False)
 
 
 def test_load_best_known_vendored_table():
     """The table covers every published pairing, carries provenance, and improves on the 2010 values where later work did."""
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     rows = load_best_known()
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(rows) == 195  # 75 Glover pairings + 60 Geo + 60 Ran
     assert {r.family for r in rows} == {"Geo", "Glover", "Ran"}
     geo1 = next(r for r in rows if r.instance == "Geo 100 1.txt")
@@ -44,20 +45,22 @@ def test_load_best_known_vendored_table():
 
 
 def test_gap_records_re_express_quality_as_gap_percent():
-    # --- arrange -----------------------------------------
+    """Records of known pairings become gap records; others are dropped."""
+    # --- arrange ----------------------
     references = {("Ran 500 1.txt", 50): _row("Ran 500 1.txt", 50.0)}
     records = [_record("Ran 500 1.txt", 50, "max-div[DEFAULT]", "time:1.0s", 45.0), _record("other.txt", 50, "x", "s", 1.0)]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     gaps = report.gap_records(records, references)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert len(gaps) == 1
     assert gaps[0].quality == {report.GAP_METRIC: pytest.approx(10.0)}
 
 
 def test_classify_matched_exceeded_below():
-    # --- act / assert ------------------------------------
+    """Values above, at, and below the reference classify as exceeded, matched, and below."""
+    # --- act / assert -----------------
     assert report.classify(55.0, 55.0) == "matched"
     assert report.classify(56.0, 55.0) == "exceeded"
     assert report.classify(54.0, 55.0) == "below"
@@ -65,7 +68,8 @@ def test_classify_matched_exceeded_below():
 
 
 def test_count_table_uses_the_best_over_seeds_and_series_at_t_max():
-    # --- arrange -----------------------------------------
+    """The counts take the best value over seeds and both series at T_max, and nothing from other budgets."""
+    # --- arrange ----------------------
     rows = [_row("Ran 500 1.txt", 54.0), _row("Ran 500 2.txt", 55.0), _row("Ran 500 3.txt", 55.0)]
     records = [
         _record("Ran 500 1.txt", 50, "max-div[DEFAULT]", "time:60.0s", 55.0),  # exceeded
@@ -75,24 +79,26 @@ def test_count_table_uses_the_best_over_seeds_and_series_at_t_max():
         _record("Ran 500 3.txt", 50, "max-div[DEFAULT]", "time:1.0s", 56.0),  # not at T_max: ignored
     ]
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     table = report.build_count_table(records, report.group_pairings(rows))
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert "| Ran | 500 | 50 | 3 | 1 | 1 | 1 |" in table
 
 
 def test_glover_sentence_counts_reached_pairings():
-    # --- arrange -----------------------------------------
+    """The Glover sentence counts matched and exceeded pairings among those measured."""
+    # --- arrange ----------------------
     rows = [_row("Glover (n 10) 1.txt", 10.0, "Glover", 10, 2), _row("Glover (n 10) 2.txt", 10.0, "Glover", 10, 2)]
     records = [_record("Glover (n 10) 1.txt", 2, "max-div[DEFAULT]", "time:0.001s", 10.0)]
 
-    # --- act / assert ------------------------------------
+    # --- act / assert -----------------
     assert report.glover_sentence(records, rows).startswith("On the Glover set (n ≤ 30), max-div reaches the published value on 1 of the 1 measured")
 
 
 def test_main_emits_charts_and_tables(tmp_path: Path):
-    # --- arrange -----------------------------------------
+    """The report writes one chart per charted group with data, the chart lists, and every table."""
+    # --- arrange ----------------------
     data_dir, records_dir, docs_dir = tmp_path / "data", tmp_path / "records", tmp_path / "docs"
     rows = load_best_known()
     ran_500_50 = [r for r in rows if r.family == "Ran" and r.n == 500 and r.k == 50]
@@ -101,10 +107,10 @@ def test_main_emits_charts_and_tables(tmp_path: Path):
     save_records(maxdiv, records_dir / report.MAXDIV_FILE)
     save_records(entrants, data_dir / report.ENTRANT_FILE)
 
-    # --- act ---------------------------------------------
+    # --- act --------------------------
     report.main(records_dir=records_dir, docs_dir=docs_dir, data_dir=data_dir)
 
-    # --- assert ------------------------------------------
+    # --- assert -----------------------
     assert (docs_dir / "images" / "tier3_ran_500_50.webp").exists()
     assert "tier3_ran_500_50" in (docs_dir / "results" / "tier3_charts_ran.md").read_text()
     assert (docs_dir / "results" / "tier3_charts_geo.md").read_text() == "\n"

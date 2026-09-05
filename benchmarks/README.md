@@ -32,7 +32,7 @@ uv run --group benchmarks python -m benchmarks.tier2.smoke
 
 Outputs (JSONL records + figures) are written under `./reports/benchmarks/` (gitignored);
 only curated result tables/figures are ever promoted into `docs/`. The exception is
-third-party reference data: competitor and exact-solver results are tracked under
+third-party reference data: entrant and exact-solver results are tracked under
 `tier1/data/`, `tier2/data/` and `tier3/data/` (alongside `mdplib/data/`), because the
 published comparison pages keep those values fixed across re-measurements of max-div —
 republishing must not depend on files that exist only on the machine of the original
@@ -66,11 +66,11 @@ copy the fresh `third_party_*` / exact-solver outputs from `reports/benchmarks/`
 The three tiers share one protocol (`common/protocol.py`), aligned with the solver-scaling
 protocol where the two overlap:
 
-- max-div runs two **budget series** on the 1-2-5 grid, both ending at T_max = 60 s: one
-  worker from 1 ms, and 12 workers from 1 s (spawning the workers costs about a second).
+- max-div runs two **budget series** on the 1-2-5 grid, both ending at T_max: one worker from
+  the smallest budget, and `N_WORKERS` from the first budget that clears the workers' spawn.
   Every record stores the *measured* end-to-end wall-clock, never the nominal budget.
-- Single-shot competitors run once per seed; their measured runtime, conversion included,
-  is recorded the same way.
-- Three seeds per cell; the tables quote medians at 1 s and 60 s.
+- Single-shot entrants run once per seed; their measured runtime, conversion included, is
+  recorded the same way.
+- `SEEDS` per cell; the tables quote medians at `QUOTED_BUDGETS_SEC`.
 - Selection quality is always evaluated by `common/quality.py` under max-div's own
   diversity metrics, for every tool alike.

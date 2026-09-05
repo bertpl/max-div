@@ -2,8 +2,8 @@
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier1.rerun``.
 Runs only max-div's budget series — same cells, budgets and seeds as ``benchmarks.tier1.full`` —
-and writes them into ``reports/benchmarks/tier1/``. The certified optima come from the tracked
-reference files in ``benchmarks/tier1/data/``: they are properties of the problems, so
+and writes them into `OUTPUT_DIR`. The certified optima come from the tracked reference files
+under `DATA_DIR`: they are properties of the problems, so
 re-solving them would re-spend hours to reproduce known values.
 """
 

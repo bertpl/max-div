@@ -1,24 +1,18 @@
 """Run the tier-3 comparison: max-div and the one-shot tools on the MDPLIB MMDP instances.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier3.full``.
-Emits two JSONL record files into ``reports/benchmarks/tier3/`` — the entrants' records and
-max-div's — so max-div can be re-measured alone while the entrant side stays fixed. The entrant
-output shares its name with the tracked reference copy under ``benchmarks/tier3/data/``:
-promoting a fresh entrant measurement means copying the file over by hand. The docs artifacts
-come from ``benchmarks.tier3.report``.
+Emits two JSONL record files into `OUTPUT_DIR` — the entrants' records and max-div's — so max-div
+can be re-measured alone while the entrant side stays fixed. The entrant output shares its name
+with the tracked reference copy under `DATA_DIR`: promoting a fresh entrant measurement means
+copying the file over by hand. The docs artifacts come from ``benchmarks.tier3.report``.
 
-Protocol (mirrored on the results page):
-
-- Every published (instance, k) pairing of the Geo and Ran sets runs max-div's single-worker
-  budget series; the n = 500 pairings also run the multi-worker series, the smaller ones plateau
-  within milliseconds. The Glover pairings (n <= 30) run a short single-worker series only: they
-  are reported as a match count, not charted.
-- Entrants are the non-exact registry tools whose input the instance family provides: Geo carries
-  coordinates, so every tool enters; Ran carries a distance matrix, so only the tools that accept
-  one enter. One run per seed. Glover has no entrants.
-
-Instances are fetched from the MDPLIB site at run time and never redistributed. Both halves skip
-cells already on file, so an interrupted run resumes by rerunning.
+Every published (instance, k) pairing of the charted families runs max-div's single-worker budget
+series; pairings from `MULTI_WORKER_MIN_N` up also run the multi-worker series, the smaller ones
+plateau within milliseconds. The Glover pairings run the short `GLOVER_BUDGETS_SEC` series only and
+are reported as a match count. Entrants are the non-exact registry tools whose input form the
+instance family provides (`entrant_adapters`). Instances are fetched from the MDPLIB site at run
+time and never redistributed. Both halves skip cells already on file, so an interrupted run
+resumes by rerunning.
 """
 
 from pathlib import Path
@@ -36,7 +30,13 @@ from benchmarks.adapters import (
     SkmatterFPS,
 )
 from benchmarks.common import grid_budget_series, load_records, save_records
-from benchmarks.common.protocol import MULTI_WORKER_BUDGETS_SEC, N_WORKERS, SEEDS, SINGLE_WORKER_BUDGETS_SEC
+from benchmarks.common.protocol import (
+    MULTI_WORKER_BUDGETS_SEC,
+    N_WORKERS,
+    SEEDS,
+    SINGLE_WORKER_BUDGETS_SEC,
+    SINGLE_WORKER_CONCURRENCY,
+)
 from benchmarks.common.records import RunRecord
 from benchmarks.mdplib import load_instance
 from benchmarks.mdplib.best_known import BestKnown, load_best_known
@@ -53,11 +53,10 @@ METRIC = DiversityMetric.MIN_SEPARATION  # the published MMDP values are max-min
 CHARTED_FAMILIES = ("Geo", "Ran")
 MULTI_WORKER_MIN_N = 500
 GLOVER_BUDGETS_SEC = grid_budget_series(0.001, 1.0)
-SINGLE_WORKER_CONCURRENCY = N_WORKERS
 
 
 def entrant_adapters(family: str) -> list[SelectionAdapter]:
-    """The entrants of one instance family: every tool whose input form the family provides."""
+    """Return the entrants of one instance family: every tool whose input form the family provides."""
     distance_matrix_tools: list[SelectionAdapter] = [QcSelectorMaxMin(), QcSelectorMaxSum(), KMedoidsFasterPAM()]
     if family == "Ran":
         return distance_matrix_tools
@@ -80,7 +79,7 @@ def run_entrants(
     seeds: tuple[int, ...] = SEEDS,
     out_path: Path = OUTPUT_DIR / ENTRANT_FILE,
 ) -> list[RunRecord]:
-    """Entrant half: every entrant once per seed on every charted pairing."""
+    """Run the entrant half: every entrant once per seed on every charted pairing."""
     pairings = load_best_known() if pairings is None else pairings
     records: list[RunRecord] = load_records(out_path) if out_path.exists() else []
     done = {(r.problem, r.size, r.tool) for r in records}
@@ -107,7 +106,7 @@ def run_maxdiv(
     n_workers: int = N_WORKERS,
     out_path: Path = OUTPUT_DIR / MAXDIV_FILE,
 ) -> list[RunRecord]:
-    """max-div half: the single-worker series on every pairing, the multi-worker series on the largest instances.
+    """Run the max-div half: the single-worker series on every pairing, the multi-worker series on the largest instances.
 
     Defaults are the published protocol; pass smaller values only for validation runs. `size`
     carries k in every record: the instance file name plus k identifies a published pairing.

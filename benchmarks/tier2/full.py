@@ -1,20 +1,19 @@
 """Run the tier-2 comparison: max-div against the one-shot tools, on U1, min separation.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.full``.
-Emits one JSONL record file per side into ``reports/benchmarks/tier2/`` — competitor and max-div
-records are kept apart so max-div can be re-measured alone (``benchmarks.tier2.rerun``) while the
-competitor side stays fixed. Figures and tables come from ``benchmarks.tier2.report``.
+Emits one JSONL record file per side into `OUTPUT_DIR` — entrant and max-div records are kept
+apart so max-div can be re-measured alone (``benchmarks.tier2.rerun``) while the entrant side stays
+fixed. Figures and tables come from ``benchmarks.tier2.report``.
 
-The competitor output shares its name with the tracked reference copy under
-``benchmarks/tier2/data/``: promoting a fresh competitor measurement means copying the file over
-by hand.
+The entrant output shares its name with the tracked reference copy under `DATA_DIR`: promoting a
+fresh entrant measurement means copying the file over by hand.
 
 Protocol (mirrored on the results page):
 
 - One problem, U1, at the sizes in `SIZES`; one objective, min separation.
-- Entrants are the non-exact registry tools; each enters the sizes its largest n within the
-  solver-scaling time budget covers (read from the scaling time stage's tracked records). One run
-  per seed.
+- Entrants are the non-exact registry tools; each tool runs at every size up to the largest n it
+  finished within the solver-scaling time budget (read from the scaling time stage's tracked
+  records). One run per seed.
 - max-div runs both budget series (see ``benchmarks.common.protocol``), one independent solve per
   budget and seed.
 
@@ -37,7 +36,13 @@ from benchmarks.adapters import (
     SkmatterFPS,
 )
 from benchmarks.common import build_problem, load_records, save_records
-from benchmarks.common.protocol import MULTI_WORKER_BUDGETS_SEC, N_WORKERS, SEEDS, SINGLE_WORKER_BUDGETS_SEC
+from benchmarks.common.protocol import (
+    MULTI_WORKER_BUDGETS_SEC,
+    N_WORKERS,
+    SEEDS,
+    SINGLE_WORKER_BUDGETS_SEC,
+    SINGLE_WORKER_CONCURRENCY,
+)
 from benchmarks.common.records import RunRecord
 from benchmarks.figures.style import tool_key
 from benchmarks.runners import run_adapter, run_maxdiv_budget_series
@@ -47,17 +52,16 @@ from max_div.metrics import DiversityMetric
 
 OUTPUT_DIR = Path("reports/benchmarks/tier2")
 DATA_DIR = Path(__file__).parent / "data"
-COMPETITOR_FILE = "third_party_u1.jsonl"
+ENTRANT_FILE = "third_party_u1.jsonl"
 MAXDIV_FILE = "maxdiv_u1.jsonl"
 
 PROBLEM = "U1"
 SIZES = (200, 1000, 5000, 20000, 100000)
 METRIC = DiversityMetric.MIN_SEPARATION
-SINGLE_WORKER_CONCURRENCY = N_WORKERS
 
 
-def competitor_adapters() -> list[SelectionAdapter]:
-    """The tier-2 roster: every non-exact registry tool that takes vector input, plus the random baseline."""
+def entrant_adapters() -> list[SelectionAdapter]:
+    """Return the tier-2 roster: every non-exact registry tool that takes vector input, plus the random baseline."""
     return [
         RandomBaseline(),
         FpsampleFPS(),
@@ -73,10 +77,10 @@ def competitor_adapters() -> list[SelectionAdapter]:
     ]
 
 
-def enters(adapter: SelectionAdapter, n: int, limits: dict[tuple[str, str], int]) -> bool:
-    """Return whether a tool enters size n: its best configuration's scaling time limit covers n.
+def runs_at_size(adapter: SelectionAdapter, n: int, limits: dict[tuple[str, str], int]) -> bool:
+    """Return whether a tool runs at size n: its best configuration's scaling time limit covers n.
 
-    The random baseline has no scaling configuration and enters every size.
+    The random baseline has no scaling configuration and runs at every size.
     """
     key = tool_key(adapter.name)
     if key == "random":
@@ -85,26 +89,26 @@ def enters(adapter: SelectionAdapter, n: int, limits: dict[tuple[str, str], int]
     return limit >= n
 
 
-def run_competitors(
+def run_entrants(
     sizes: tuple[int, ...] = SIZES,
     seeds: tuple[int, ...] = SEEDS,
     adapters: list[SelectionAdapter] | None = None,
     limits: dict[tuple[str, str], int] | None = None,
-    out_path: Path = OUTPUT_DIR / COMPETITOR_FILE,
+    out_path: Path = OUTPUT_DIR / ENTRANT_FILE,
 ) -> list[RunRecord]:
-    """Competitor half: every entrant once per seed at every size it enters."""
-    adapters = competitor_adapters() if adapters is None else adapters
+    """Run the entrant half: every entrant once per seed at every size it runs at."""
+    adapters = entrant_adapters() if adapters is None else adapters
     limits = time_limits() if limits is None else limits
     records: list[RunRecord] = load_records(out_path) if out_path.exists() else []
     done = {(r.n, r.tool) for r in records}
     for n in sizes:
         problem = build_problem(PROBLEM, n=n, diversity_metric=METRIC)
         for adapter in adapters:
-            if (n, adapter.name) in done or not enters(adapter, n, limits):
+            if (n, adapter.name) in done or not runs_at_size(adapter, n, limits):
                 continue
             records += run_adapter(adapter, problem, problem_name=PROBLEM, size=n, seeds=seeds)
             save_records(records, out_path)
-        print(f"competitors {PROBLEM} n={n} done ({len(records)} records so far)", flush=True)
+        print(f"entrants {PROBLEM} n={n} done ({len(records)} records so far)", flush=True)
     return records
 
 
@@ -116,7 +120,7 @@ def run_maxdiv(
     n_workers: int = N_WORKERS,
     out_path: Path = OUTPUT_DIR / MAXDIV_FILE,
 ) -> list[RunRecord]:
-    """max-div half: both budget series at every size.
+    """Run the max-div half: both budget series at every size.
 
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
@@ -144,8 +148,8 @@ def run_maxdiv(
 def main() -> None:
     """Run both halves and persist all records."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    print("tier-2 competitors ...", flush=True)
-    run_competitors()
+    print("tier-2 entrants ...", flush=True)
+    run_entrants()
     print("tier-2 max-div ...", flush=True)
     run_maxdiv()
     print("tier-2 complete", flush=True)

@@ -24,11 +24,9 @@ def time_budget_series(t_min_sec: float = 0.001, t_max_sec: float = 1.0, factor:
 def grid_budget_series(t_min_sec: float, t_max_sec: float) -> list[float]:
     """Build a 1-2-5 series of wall-clock budgets from `t_min_sec`, ending exactly at `t_max_sec`.
 
-    The series walks the 1-2-5 sequence (1, 2, 5, 10, 20, 50, ... times a power of ten) from
-    `t_min_sec`, which must itself lie on that sequence, and ends at `t_max_sec` itself, which
-    stands in for the grid value it is closest to: every grid value within a factor 2 below
-    `t_max_sec` is dropped. A series to 60 s therefore ends ..., 10, 20, 60, and the largest budget
-    is the one the results are judged at.
+    The series walks the 1-2-5 sequence from `t_min_sec`, which must itself lie on it, and ends at
+    `t_max_sec` itself, so the largest budget is the one the results are judged at: every grid
+    value within a factor 2 below `t_max_sec` is dropped, and `t_max_sec` stands in for it.
 
     Raises:
         ValueError: If `t_min_sec` is not a 1-2-5 value, or `t_max_sec` <= `t_min_sec`.

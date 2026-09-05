@@ -2,13 +2,13 @@
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.report``.
 Merges two record sources: max-div's records as measured by ``benchmarks.tier2.full`` or
-``benchmarks.tier2.rerun`` (untracked, re-measured whenever the solver changes), and the
-competitor records from the tracked reference file in ``benchmarks/tier2/data/``.
+``benchmarks.tier2.rerun`` (untracked, re-measured whenever the solver changes), and the entrant
+records from the tracked reference file under `DATA_DIR`.
 
-Each chart shows both max-div series, every competitor as a dot at its own measured time and
-quality, and a dotted line at the best non-max-div result of that size; where a max-div curve
-crosses that line is the budget at which max-div overtakes. The tables go to ``RESULTS_DIR`` for
-the companion tables page.
+Each chart shows both max-div series, every entrant as a dot at its own measured time and quality,
+and a dotted line at the best non-max-div result of that size; where a max-div curve crosses that
+line is the budget at which max-div overtakes. The tables are written as snippets for the tier's
+tables page.
 """
 
 import statistics
@@ -18,23 +18,23 @@ from pathlib import Path
 from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
 from benchmarks.common.records import RunRecord, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
-from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
-from benchmarks.tier2.full import COMPETITOR_FILE, DATA_DIR, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR, PROBLEM
+from benchmarks.runners.maxdiv_runner import budget_sec, maxdiv_tool_label
+from benchmarks.tier2.full import DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR, PROBLEM
 
 RECORDS_DIR = OUTPUT_DIR
 DOCS_DIR = Path("docs/benchmarks/third_party/head_to_head")
 
 
-def is_competitor(record: RunRecord) -> bool:
-    """A competitor is any single-shot tool but the random baseline, which is the floor, not a rival."""
+def is_entrant(record: RunRecord) -> bool:
+    """Return whether a record is an entrant's: any single-shot tool except the random baseline, which marks the quality of an unoptimized selection."""
     return record.budget == "single-shot" and record.tool != "random"
 
 
-def competitor_means(records: list[RunRecord]) -> dict[str, tuple[float, float]]:
-    """Per competitor, the mean over seeds of (quality, measured time) at one size."""
+def entrant_means(records: list[RunRecord]) -> dict[str, tuple[float, float]]:
+    """Return, per entrant, the mean over seeds of (quality, measured time) at one size."""
     by_tool: dict[str, list[RunRecord]] = defaultdict(list)
     for r in records:
-        if is_competitor(r):
+        if is_entrant(r):
             by_tool[r.tool].append(r)
     return {
         tool: (statistics.mean(r.quality[METRIC.name] for r in rows), statistics.mean(r.measured_sec for r in rows))
@@ -42,9 +42,9 @@ def competitor_means(records: list[RunRecord]) -> dict[str, tuple[float, float]]
     }
 
 
-def best_competitor(records: list[RunRecord]) -> tuple[str, float, float] | None:
-    """The competitor with the highest mean quality at one size: (tool, quality, time), or None without competitors."""
-    means = competitor_means(records)
+def best_entrant(records: list[RunRecord]) -> tuple[str, float, float] | None:
+    """Return the entrant with the highest mean quality at one size as (tool, quality, time), or None without entrants."""
+    means = entrant_means(records)
     if not means:
         return None
     tool = max(means, key=lambda t: means[t][0])
@@ -52,21 +52,21 @@ def best_competitor(records: list[RunRecord]) -> tuple[str, float, float] | None
 
 
 def median_by_budget(records: list[RunRecord], tool: str) -> dict[float, float]:
-    """Median quality over seeds per wall-clock budget of one budget-series tool, keyed by budget in seconds."""
+    """Return the median quality over seeds per wall-clock budget of one budget-series tool, keyed by budget in seconds."""
     by_budget: dict[float, list[float]] = defaultdict(list)
     for r in records:
-        if r.tool == tool and r.budget.startswith("time:"):
-            by_budget[float(r.budget.removeprefix("time:").removesuffix("s"))].append(r.quality[METRIC.name])
+        if r.tool == tool and (budget := budget_sec(r.budget)) is not None:
+            by_budget[budget].append(r.quality[METRIC.name])
     return {budget: statistics.median(values) for budget, values in sorted(by_budget.items())}
 
 
 def overtake_budget(records: list[RunRecord], tool: str, target: float) -> float | None:
-    """The smallest budget at which the tool's median quality reaches `target`, or None if it never does."""
+    """Return the smallest budget at which the tool's median quality reaches `target`, or None if it never does."""
     return next((budget for budget, median in median_by_budget(records, tool).items() if median >= target), None)
 
 
 def build_summary_table(records: list[RunRecord], sizes: list[int]) -> str:
-    """Markdown table: per size, the best competitor, max-div's medians at the quoted budgets, and the overtake budgets."""
+    """Build the markdown table: per size, the best entrant, max-div's medians at the quoted budgets, and the overtake budgets."""
     lo, hi = QUOTED_BUDGETS_SEC
     single, multi = maxdiv_tool_label(), maxdiv_tool_label(n_workers=N_WORKERS)
     lines = [
@@ -76,7 +76,7 @@ def build_summary_table(records: list[RunRecord], sizes: list[int]) -> str:
     ]
     for n in sizes:
         size_records = [r for r in records if r.n == n]
-        best = best_competitor(size_records)
+        best = best_entrant(size_records)
         best_cells = f"{best[0]} | {best[1]:.4f} | {best[2]:.3g} s" if best else "— | — | —"
         medians = [median_by_budget(size_records, tool).get(budget) for tool in (single, multi) for budget in (lo, hi)]
         median_cells = " | ".join("—" if m is None else f"{m:.4f}" for m in medians)
@@ -86,11 +86,11 @@ def build_summary_table(records: list[RunRecord], sizes: list[int]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def build_competitor_table(records: list[RunRecord], sizes: list[int]) -> str:
-    """Markdown table: per size, every entrant's mean quality and mean time; a dash where a tool did not enter."""
-    tools = sorted({r.tool for r in records if is_competitor(r)})
+def build_entrant_table(records: list[RunRecord], sizes: list[int]) -> str:
+    """Build the markdown table: per size, every entrant's mean quality and mean time; a dash where a tool did not run."""
+    tools = sorted({r.tool for r in records if is_entrant(r)})
     lines = ["| tool | " + " | ".join(f"n = {n:,}" for n in sizes) + " |", "|---" * (len(sizes) + 1) + "|"]
-    means_by_size = {n: competitor_means([r for r in records if r.n == n]) for n in sizes}
+    means_by_size = {n: entrant_means([r for r in records if r.n == n]) for n in sizes}
     for tool in tools:
         cells = [
             f"{means_by_size[n][tool][0]:.4f} ({means_by_size[n][tool][1]:.3g} s)" if tool in means_by_size[n] else "—"
@@ -106,13 +106,13 @@ def chart_name(n: int) -> str:
 
 
 def render_charts(records: list[RunRecord], sizes: list[int], images_dir: Path) -> list[str]:
-    """Render one chart per size with the best-competitor line and return the written image names."""
+    """Render one chart per size with the best-entrant line and return the written image names."""
     names = []
     for n in sizes:
         size_records = [r for r in records if r.n == n]
         if not any(r.tool.startswith("max-div") for r in size_records):
             continue
-        best = best_competitor(size_records)
+        best = best_entrant(size_records)
         lines = (ReferenceLine(best[1], f"best one-shot result ({best[0]})"),) if best else ()
         name = chart_name(n)
         plot_anytime_curve(
@@ -128,13 +128,13 @@ def render_charts(records: list[RunRecord], sizes: list[int], images_dir: Path) 
 
 def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: Path = DATA_DIR) -> None:
     """Emit every tier-2 docs artifact from the merged record sources."""
-    records = load_records(data_dir / COMPETITOR_FILE) + load_records(records_dir / MAXDIV_FILE)
+    records = load_records(data_dir / ENTRANT_FILE) + load_records(records_dir / MAXDIV_FILE)
     sizes = sorted({r.n for r in records})
     results_dir = docs_dir / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     (results_dir / "tier2_summary.md").write_text(build_summary_table(records, sizes))
-    (results_dir / "tier2_competitors.md").write_text(build_competitor_table(records, sizes))
+    (results_dir / "tier2_entrants.md").write_text(build_entrant_table(records, sizes))
     names = render_charts(records, sizes, docs_dir / "images")
     (results_dir / "tier2_charts.md").write_text(
         "\n".join(f"![{name.removesuffix('.webp')}](../images/{name})" for name in names) + "\n"

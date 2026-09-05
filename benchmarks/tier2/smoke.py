@@ -10,8 +10,8 @@ from pathlib import Path
 from benchmarks.common import build_problem, save_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.runners import run_adapter, run_maxdiv_budget_series
-from benchmarks.tier2.full import METRIC, PROBLEM, competitor_adapters
-from benchmarks.tier2.report import best_competitor
+from benchmarks.tier2.full import METRIC, PROBLEM, entrant_adapters
+from benchmarks.tier2.report import best_entrant
 
 OUTPUT_DIR = Path("reports/benchmarks/smoke")
 
@@ -24,11 +24,11 @@ def main() -> None:
     records += run_maxdiv_budget_series(
         problem, problem_name=PROBLEM, size=200, time_budgets_sec=[1.0], seeds=seeds, n_workers=2
     )
-    for adapter in competitor_adapters():
+    for adapter in entrant_adapters():
         records += run_adapter(adapter, problem, problem_name=PROBLEM, size=200, seeds=seeds)
 
     save_records(records, OUTPUT_DIR / "records.jsonl")
-    best = best_competitor(records)
+    best = best_entrant(records)
     plot_anytime_curve(
         records,
         metric_name=METRIC.name,

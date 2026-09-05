@@ -1,6 +1,6 @@
 """Run the three head-to-head comparison tiers back to back, as one campaign.
 
-Run detached, so the Bash tool's or terminal's session limit cannot end it:
+Run detached, so a terminal session's limit cannot end it:
 
     nohup uv run --group benchmarks --python 3.14 python -u -m benchmarks.campaign > campaign.log 2>&1 &
 
@@ -28,7 +28,7 @@ def main() -> None:
         try:
             run()
             outcome = "completed"
-        except Exception:  # noqa: BLE001 -- one tier's failure must not cancel the night
+        except Exception:  # noqa: BLE001 -- one tier's failure must not stop the remaining tiers
             traceback.print_exc()
             outcome = "FAILED"
         elapsed_min = (time.monotonic() - t0) / 60

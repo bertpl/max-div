@@ -7,7 +7,7 @@ records (``benchmarks/tier3/data/``) and the vendored best-known table.
 Every record's quality is first turned into its gap to the instance's best-known value, in
 percent; one chart per instance group (family, n, k) then aggregates the group's instances the way
 a chart aggregates seeds — mean curve with a min/max band — with a dotted line at zero gap and each
-entrant as a dot. The tables go to ``RESULTS_DIR`` for the companion tables page.
+entrant as a dot. The tables are written as snippets for the tier's tables page.
 """
 
 import statistics
@@ -19,7 +19,7 @@ from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
 from benchmarks.common.records import RunRecord, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.mdplib.best_known import BestKnown, load_best_known
-from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
+from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
 from benchmarks.tier3.full import CHARTED_FAMILIES, DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR
 
 RECORDS_DIR = OUTPUT_DIR
@@ -31,7 +31,7 @@ MATCH_RTOL = 1e-4
 
 
 def gap_pct(value: float, reference: float) -> float:
-    """Gap to the reference in percent (positive = below the reference)."""
+    """Return the gap to the reference in percent (positive = below the reference)."""
     return (reference - value) / reference * 100.0
 
 
@@ -54,7 +54,7 @@ def group_pairings(rows: list[BestKnown]) -> dict[tuple[str, int, int], list[Bes
 
 
 def best_value(records: list[RunRecord], instance: str, k: int, budget_tag: str | None = None) -> float | None:
-    """Best min separation over seeds (and both series) for one pairing, at one budget or over all budgets."""
+    """Return the best min separation over seeds (and both series) for one pairing, at one budget or over all budgets."""
     values = [
         r.quality[METRIC.name]
         for r in records
@@ -73,7 +73,7 @@ def classify(value: float | None, reference: float) -> str | None:
 
 
 def build_gap_table(gaps: list[RunRecord], groups: dict[tuple[str, int, int], list[BestKnown]]) -> str:
-    """Markdown table: per group, max-div's mean and worst gap at the quoted budgets, for both series."""
+    """Build the markdown table: per group, max-div's mean and worst gap at the quoted budgets, for both series."""
     lo, hi = QUOTED_BUDGETS_SEC
     single, multi = maxdiv_tool_label(), maxdiv_tool_label(n_workers=N_WORKERS)
     headers = " | ".join(
@@ -88,7 +88,7 @@ def build_gap_table(gaps: list[RunRecord], groups: dict[tuple[str, int, int], li
                 values = [
                     r.quality[GAP_METRIC]
                     for r in gaps
-                    if r.problem in instances and r.size == k and r.tool == tool and r.budget == f"time:{budget}s"
+                    if r.problem in instances and r.size == k and r.tool == tool and r.budget == budget_tag(budget)
                 ]
                 cells.append("—" if not values else f"{statistics.mean(values):.1f}% / {max(values):.1f}%")
         lines.append(f"| {family} | {n} | {k} | {len(rows)} | " + " | ".join(cells) + " |")
@@ -96,13 +96,13 @@ def build_gap_table(gaps: list[RunRecord], groups: dict[tuple[str, int, int], li
 
 
 def build_count_table(records: list[RunRecord], groups: dict[tuple[str, int, int], list[BestKnown]]) -> str:
-    """Markdown table: per group, how many instances max-div exceeded, matched or fell below the best-known value at T_max."""
+    """Build the markdown table: per group, how many instances max-div exceeded, matched or fell below the best-known value at T_max."""
     hi = QUOTED_BUDGETS_SEC[1]
     lines = [f"| set | n | k | instances | exceeded | matched | below (best over seeds and series at {hi:g} s) |", "|---" * 7 + "|"]
     for (family, n, k), rows in groups.items():
         counts = {"exceeded": 0, "matched": 0, "below": 0}
         for row in rows:
-            verdict = classify(best_value(records, row.instance, row.k, f"time:{hi}s"), row.best_known)
+            verdict = classify(best_value(records, row.instance, row.k, budget_tag(hi)), row.best_known)
             if verdict:
                 counts[verdict] += 1
         lines.append(f"| {family} | {n} | {k} | {len(rows)} | {counts['exceeded']} | {counts['matched']} | {counts['below']} |")
@@ -110,7 +110,7 @@ def build_count_table(records: list[RunRecord], groups: dict[tuple[str, int, int
 
 
 def build_entrant_table(gaps: list[RunRecord], groups: dict[tuple[str, int, int], list[BestKnown]]) -> str:
-    """Markdown table: per group, each entrant's mean gap over its instances and seeds."""
+    """Build the markdown table: per group, each entrant's mean gap over its instances and seeds."""
     tools = sorted({r.tool for r in gaps if r.budget == "single-shot"})
     lines = ["| set | n | k | " + " | ".join(tools) + " |", "|---" * (len(tools) + 3) + "|"]
     for (family, n, k), rows in groups.items():
@@ -124,7 +124,7 @@ def build_entrant_table(gaps: list[RunRecord], groups: dict[tuple[str, int, int]
 
 
 def glover_sentence(records: list[RunRecord], rows: list[BestKnown]) -> str:
-    """One sentence stating on how many Glover pairings max-div reached the published value."""
+    """Return one sentence stating on how many Glover pairings max-div reached the published value."""
     glover = [row for row in rows if row.family == "Glover"]
     verdicts = [classify(best_value(records, row.instance, row.k), row.best_known) for row in glover]
     reached = sum(v in ("matched", "exceeded") for v in verdicts)
@@ -136,7 +136,7 @@ def glover_sentence(records: list[RunRecord], rows: list[BestKnown]) -> str:
 
 
 def build_best_known_table(rows: list[BestKnown]) -> str:
-    """Markdown table of the vendored best-known values with their provenance."""
+    """Build the markdown table of the vendored best-known values with their provenance."""
     lines = ["| set | instance | n | k | best-known | 2010 value | source | proven optimal |", "|---" * 8 + "|"]
     for row in rows:
         lines.append(

@@ -151,7 +151,7 @@ def solve_maxmin_highs_selection(
 # ==================================================================================================
 @dataclass
 class MaxMinResult:
-    """Outcome of one certifying max-min solve: the selection, its objective, and whether it is proven optimal."""
+    """Record the outcome of one certifying max-min solve: the selection, its objective, and whether it is proven optimal."""
 
     i_selected: NDArray[np.int64]
     min_separation: float
@@ -160,7 +160,7 @@ class MaxMinResult:
 
 
 def solve_maxmin_scip(problem: MaxDivProblem, time_limit_sec: float, seed: int = 0) -> MaxMinResult:
-    """SCIP on the big-M max-min MIP, run to proven optimality or the time limit.
+    """Solve the big-M max-min MIP with SCIP, to proven optimality or the time limit.
 
     Raises:
         RuntimeError: If SCIP finds no solution within the limit.
@@ -197,7 +197,7 @@ def solve_maxmin_scip(problem: MaxDivProblem, time_limit_sec: float, seed: int =
 
 
 def solve_maxmin_highs(problem: MaxDivProblem, time_limit_sec: float, seed: int = 0, num_workers: int = 1) -> MaxMinResult:
-    """HiGHS on the big-M max-min MIP, run to proven optimality or the time limit.
+    """Solve the big-M max-min MIP with HiGHS, to proven optimality or the time limit.
 
     Raises:
         RuntimeError: If HiGHS finds no integral k-selection within the limit.

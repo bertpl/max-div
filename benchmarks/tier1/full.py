@@ -1,19 +1,19 @@
 """Run the tier-1 comparison: max-div against the exact solvers' certified optima.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier1.full``.
-Writes the exact solvers' results as JSON and max-div's records as JSONL into
-``reports/benchmarks/tier1/``; the docs artifacts come from ``benchmarks.tier1.report``.
+Writes the exact solvers' results as JSON and max-div's records as JSONL into `OUTPUT_DIR`; the
+docs artifacts come from ``benchmarks.tier1.report``.
 
 Two halves, so max-div can be re-measured alone (``benchmarks.tier1.rerun``) while the exact
 references stay fixed:
 
 - **Exact half.** For U1 and C1, every solver ascends the 1-2-5 size grid from 20 and runs each
-  size to proven optimality or the certification cap; a solver's column ends at its first size not
+  size to proven optimality or the certification cap; a solver stops at its first size not
   certified. Max-min runs on CP-SAT (threshold search), SCIP and HiGHS (big-M MIP); mean- and
   geomean-of-NN separation run on CP-SAT's nearest-neighbor assignment model alone, the only
   backend that certifies that model beyond the smallest sizes. The JSON outputs share their names
-  with the tracked reference copies under ``benchmarks/tier1/data/``: promoting a fresh exact
-  measurement means copying the files over by hand.
+  with the tracked reference copies under `DATA_DIR`: promoting a fresh exact measurement means
+  copying the files over by hand.
 - **max-div half.** On every (problem, objective, size) cell some solver certified, both budget
   series (see ``benchmarks.common.protocol``), one independent solve per budget and seed.
 
@@ -22,6 +22,7 @@ Both halves skip cells already on file, so an interrupted run resumes by rerunni
 
 import json
 from collections.abc import Callable
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from benchmarks.common import build_problem, load_records, save_records
@@ -31,6 +32,7 @@ from benchmarks.common.protocol import (
     N_WORKERS,
     SEEDS,
     SINGLE_WORKER_BUDGETS_SEC,
+    SINGLE_WORKER_CONCURRENCY,
 )
 from benchmarks.common.records import RunRecord
 from benchmarks.exact import solve_maxmin_cpsat, solve_maxmin_highs, solve_maxmin_scip, solve_nn_assignment_cpsat
@@ -46,45 +48,51 @@ EXACT_MAXMIN_FILE = "exact_maxmin.json"
 EXACT_NN_FILE = "exact_nn.json"
 
 PROBLEMS = ("U1", "C1")
-# The grid is walked until a solver stops certifying; this bound only guards against a solver that
-# never stops, far above where any of them certifies today.
+# The grid is walked until a solver stops certifying; this bound only guards against a solver that never stops.
 GRID_BOUND = 5000
 NN_OBJECTIVES = (DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
-# How many single-worker solves run side by side: the single-worker series packs across the cores
-# the multi-worker series uses one at a time.
-SINGLE_WORKER_CONCURRENCY = N_WORKERS
-
-ExactSolve = Callable[[MaxDivProblem], tuple[float, bool, float]]
 
 
-def _cpsat_maxmin(problem: MaxDivProblem) -> tuple[float, bool, float]:
+@dataclass(frozen=True)
+class CertifiedOptimum:
+    """Record what one exact solve found: the objective value, whether it is proven optimal, and how long it took."""
+
+    optimum: float | None
+    proven_optimal: bool
+    measured_sec: float
+
+
+ExactSolve = Callable[[MaxDivProblem], CertifiedOptimum]
+
+
+def _cpsat_maxmin(problem: MaxDivProblem) -> CertifiedOptimum:
     """Certify the max-min optimum with CP-SAT's threshold search, on the protocol's worker count."""
     result = solve_maxmin_cpsat(problem, time_limit_sec=CERTIFICATION_CAP_SEC, num_workers=N_WORKERS)
-    return result.min_separation, result.proven_optimal, result.measured_sec
+    return CertifiedOptimum(result.min_separation, result.proven_optimal, result.measured_sec)
 
 
-def _scip_maxmin(problem: MaxDivProblem) -> tuple[float, bool, float]:
+def _scip_maxmin(problem: MaxDivProblem) -> CertifiedOptimum:
     """Certify the max-min optimum with SCIP's big-M MIP (single-threaded: the PyPI build has no concurrent solve)."""
     result = solve_maxmin_scip(problem, time_limit_sec=CERTIFICATION_CAP_SEC)
-    return result.min_separation, result.proven_optimal, result.measured_sec
+    return CertifiedOptimum(result.min_separation, result.proven_optimal, result.measured_sec)
 
 
-def _highs_maxmin(problem: MaxDivProblem) -> tuple[float, bool, float]:
+def _highs_maxmin(problem: MaxDivProblem) -> CertifiedOptimum:
     """Certify the max-min optimum with HiGHS's big-M MIP on the protocol's worker count."""
     result = solve_maxmin_highs(problem, time_limit_sec=CERTIFICATION_CAP_SEC, num_workers=N_WORKERS)
-    return result.min_separation, result.proven_optimal, result.measured_sec
+    return CertifiedOptimum(result.min_separation, result.proven_optimal, result.measured_sec)
 
 
-# Max-min solvers by registry key, in the registry's order.
+# Max-min solvers by registry key.
 MAXMIN_SOLVERS: dict[str, ExactSolve] = {"ortools-cpsat": _cpsat_maxmin, "scip": _scip_maxmin, "highs": _highs_maxmin}
 
 
 def _cpsat_nn(metric: DiversityMetric) -> ExactSolve:
     """Build the CP-SAT nearest-neighbor assignment certifier for one NN objective."""
 
-    def solve(problem: MaxDivProblem) -> tuple[float, bool, float]:
+    def solve(problem: MaxDivProblem) -> CertifiedOptimum:
         result = solve_nn_assignment_cpsat(problem, metric, time_limit_sec=CERTIFICATION_CAP_SEC, num_workers=N_WORKERS)
-        return result.objective_value, result.proven_optimal, result.measured_sec
+        return CertifiedOptimum(result.objective_value, result.proven_optimal, result.measured_sec)
 
     return solve
 
@@ -94,7 +102,7 @@ def _load_rows(path: Path) -> list[dict]:
     return json.loads(path.read_text()) if path.exists() else []
 
 
-def _ascend(
+def _certify_increasing_sizes(
     rows: list[dict], path: Path, problem_name: str, metric: DiversityMetric, solver_key: str, solve: ExactSolve
 ) -> None:
     """Run one solver up the grid on one (problem, objective) until its first size not certified.
@@ -109,9 +117,9 @@ def _ascend(
         if row is None:
             problem = build_problem(problem_name, n=n, diversity_metric=metric)
             try:
-                optimum, proven, measured_sec = solve(problem)
+                certified = solve(problem)
             except RuntimeError as error:  # no solution at all within the cap
-                optimum, proven, measured_sec = None, False, CERTIFICATION_CAP_SEC
+                certified = CertifiedOptimum(None, False, CERTIFICATION_CAP_SEC)
                 print(f"  {solver_key} {problem_name} {metric.name} n={n}: no solution ({error})", flush=True)
             row = {
                 "problem": problem_name,
@@ -120,9 +128,7 @@ def _ascend(
                 "n": n,
                 "k": problem.k,
                 "m": problem.m,
-                "optimum": optimum,
-                "proven_optimal": proven,
-                "measured_sec": measured_sec,
+                **asdict(certified),
             }
             rows.append(row)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -137,20 +143,20 @@ def _ascend(
 
 
 def run_exact_maxmin(out_path: Path = OUTPUT_DIR / EXACT_MAXMIN_FILE) -> list[dict]:
-    """Exact half, max-min: every solver ascends the grid on U1 and C1 until it stops certifying."""
+    """Run the exact half for max-min: every solver ascends the grid on U1 and C1 until it stops certifying."""
     rows = _load_rows(out_path)
     for problem_name in PROBLEMS:
         for solver_key, solve in MAXMIN_SOLVERS.items():
-            _ascend(rows, out_path, problem_name, DiversityMetric.MIN_SEPARATION, solver_key, solve)
+            _certify_increasing_sizes(rows, out_path, problem_name, DiversityMetric.MIN_SEPARATION, solver_key, solve)
     return rows
 
 
 def run_exact_nn(out_path: Path = OUTPUT_DIR / EXACT_NN_FILE) -> list[dict]:
-    """Exact half, mean/geomean of NN: CP-SAT ascends the grid on U1 and C1 until it stops certifying."""
+    """Run the exact half for mean/geomean of NN: CP-SAT ascends the grid on U1 and C1 until it stops certifying."""
     rows = _load_rows(out_path)
     for problem_name in PROBLEMS:
         for metric in NN_OBJECTIVES:
-            _ascend(rows, out_path, problem_name, metric, "ortools-cpsat", _cpsat_nn(metric))
+            _certify_increasing_sizes(rows, out_path, problem_name, metric, "ortools-cpsat", _cpsat_nn(metric))
     return rows
 
 
@@ -176,7 +182,7 @@ def run_maxdiv(
     n_workers: int = N_WORKERS,
     records_dir: Path = OUTPUT_DIR,
 ) -> None:
-    """max-div half: both budget series on every certified (problem, objective, size) cell.
+    """Run the max-div half: both budget series on every certified (problem, objective, size) cell.
 
     Defaults are the published protocol; pass smaller values only for validation runs. Cells
     whose records are already on file are skipped.
