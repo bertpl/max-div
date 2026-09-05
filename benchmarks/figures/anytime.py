@@ -32,7 +32,7 @@ def plot_anytime_curve(records: list[RunRecord], metric_name: str, path: Path, t
     # Single-shot tools cycle through the marker shapes so tools whose markers land on the same
     # point stay distinguishable.
     marker_index = 0
-    for tool, tool_records in sorted(_group_by_tool(records).items()):
+    for tool, tool_records in _legend_order(_group_by_tool(records)):
         color = tool_color(tool_key(tool))
         single_shot = all(r.budget == "single-shot" for r in tool_records)
         if single_shot:
@@ -54,6 +54,11 @@ def plot_anytime_curve(records: list[RunRecord], metric_name: str, path: Path, t
     ax.grid(True, which="major")
     ax.legend()
     save_webp(fig, path)
+
+
+def _legend_order(by_tool: dict[str, list[RunRecord]]) -> list[tuple[str, list[RunRecord]]]:
+    """Order tools alphabetically, with the random baseline last: it is the floor, not a competitor."""
+    return sorted(by_tool.items(), key=lambda item: (item[0] == "random", item[0]))
 
 
 def _group_by_tool(records: list[RunRecord]) -> dict[str, list[RunRecord]]:
