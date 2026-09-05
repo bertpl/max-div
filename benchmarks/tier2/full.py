@@ -1,33 +1,24 @@
-"""The published tier-2 comparison run: max-div vs. Python subset-selection heuristics.
+"""Run the tier-2 comparison: max-div against the one-shot tools, on U1, min separation.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.full``.
-Emits one JSONL record file per (origin, scenario) into ``reports/benchmarks/tier2/`` —
-competitor and max-div records are kept in separate files so max-div can be re-measured
-alone (``benchmarks.tier2.rerun``) while the competitor side stays fixed. Figures and
-tables for the docs are generated separately by ``benchmarks.tier2.report``. Expect a
-multi-hour sequential run on a quiet machine.
+Emits one JSONL record file per half into `OUTPUT_DIR` — entrant and max-div records are kept
+apart so max-div can be re-measured alone (``benchmarks.tier2.rerun``) while the entrant half stays
+fixed. Figures and tables come from ``benchmarks.tier2.report``. The tracked reference copy of the
+entrant output lives under `DATA_DIR`; `benchmarks/README.md` says how it is refreshed.
 
-The competitor outputs (``third_party_*.jsonl``) share their names with the tracked
-reference copies under ``benchmarks/tier2/data/``: promoting a fresh competitor
-measurement means copying the files over by hand, so a re-run never changes the tracked
-references by itself.
-
-Protocol (mirrored on the results page):
-
-- Unconstrained: U1-U4 at sizes 2/10/50/200 (n = 200 to 20000). max-div runs the wall-clock
-  budget series once per diversity metric (it optimizes what it is scored on); single-shot
-  competitors run once per seed and are scored under every metric alike.
-- Constrained: C1-C2 at sizes 2/10/20 (n <= 2000) with MIN_SEPARATION, against code-FDM —
-  the one surveyed heuristic that honors group constraints. It does not scale past n ~ 2000
-  (capping the sizes), and its disjoint-color fairness model cannot express the overlapping
-  constraint groups of C3/C4 (excluding those problems).
+One problem, `PROBLEM`, at the sizes in `SIZES`; one objective, `METRIC`. Entrants are the non-exact
+registry tools; each tool runs at every size up to the largest n it finished within the
+solver-scaling time budget (read from the scaling time stage's tracked records), once per seed.
+max-div runs both budget series (see ``benchmarks.common.protocol``), one independent solve per
+budget and seed.
 """
 
 from pathlib import Path
 
 from benchmarks.adapters import (
     ApricotFacilityLocation,
-    CodeFdmFairFlow,
+    CodeFdmSingleColor,
+    DppyKDpp,
     FpsampleFPS,
     KMedoidsFasterPAM,
     QcSelectorMaxMin,
@@ -37,141 +28,123 @@ from benchmarks.adapters import (
     SelectionAdapter,
     SkmatterFPS,
 )
-from benchmarks.common import build_problem, save_records, time_budget_series
+from benchmarks.common import build_problem, load_records, save_records
+from benchmarks.common.protocol import (
+    MULTI_WORKER_BUDGETS_SEC,
+    N_WORKERS,
+    SEEDS,
+    SINGLE_WORKER_BUDGETS_SEC,
+    SINGLE_WORKER_CONCURRENCY,
+)
 from benchmarks.common.records import RunRecord
+from benchmarks.figures.style import tool_key
 from benchmarks.runners import run_adapter, run_maxdiv_budget_series
+from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
+from benchmarks.solver_scaling.quality_stage import time_limits
 from max_div.metrics import DiversityMetric
 
 OUTPUT_DIR = Path("reports/benchmarks/tier2")
+DATA_DIR = Path(__file__).parent / "data"
+ENTRANT_FILE = "third_party_u1.jsonl"
+MAXDIV_FILE = "maxdiv_u1.jsonl"
 
-SEEDS = (0, 1, 2)
-UNCONSTRAINED_PROBLEMS = ("U1", "U2", "U3", "U4")
-UNCONSTRAINED_SIZES = (200, 1000, 5000, 20000)
-# C3/C4 are excluded: their overlapping constraint groups are inexpressible in code-FDM's
-# disjoint-color model (the adapter refuses them), leaving no competitor to compare against.
-CONSTRAINED_PROBLEMS = ("C1", "C2")
-CONSTRAINED_SIZES = (200, 1000, 2000)
-CONSTRAINED_METRIC = DiversityMetric.MIN_SEPARATION
-
-# The series runs to 10 s so it extends past the region where the slowest competitors land.
-TIME_BUDGETS_SEC = time_budget_series(0.001, 10.0)
-
-EVALUATED_DIVERSITY_METRICS = (
-    DiversityMetric.MIN_SEPARATION,
-    DiversityMetric.MEAN_SEPARATION,
-    DiversityMetric.GEOMEAN_SEPARATION,
-    DiversityMetric.MEAN_PAIRWISE_DISTANCE,
-)
+PROBLEM = "U1"
+SIZES = (200, 1000, 5000, 20000, 100000)
+METRIC = DiversityMetric.MIN_SEPARATION
 
 
-def unconstrained_adapters() -> list[SelectionAdapter]:
-    """Return the tier-2 competitor roster."""
+def entrant_adapters() -> list[SelectionAdapter]:
+    """Return the tier-2 roster: every non-exact registry tool that takes vector input, plus the random baseline."""
     return [
         RandomBaseline(),
         FpsampleFPS(),
+        FpsampleFPS(variant="kdline"),
         SkmatterFPS(),
         RdkitMaxMin(),
         ApricotFacilityLocation(),
-        KMedoidsFasterPAM(),
         QcSelectorMaxMin(),
         QcSelectorMaxSum(),
+        KMedoidsFasterPAM(),
+        DppyKDpp(),
+        CodeFdmSingleColor(),
     ]
 
 
-def run_competitors_unconstrained(
-    out_path: Path = OUTPUT_DIR / "third_party_unconstrained.jsonl",
+def runs_at_size(adapter: SelectionAdapter, n: int, limits: dict[tuple[str, str], int]) -> bool:
+    """Return whether a tool runs at size n: its best configuration's scaling time limit covers n.
+
+    The random baseline has no scaling configuration and runs at every size.
+    """
+    key = tool_key(adapter.name)
+    if key == "random":
+        return True
+    limit = max((n_max for (tool, _config), n_max in limits.items() if tool == key), default=0)
+    return limit >= n
+
+
+def run_entrants(
+    sizes: tuple[int, ...] = SIZES,
+    seeds: tuple[int, ...] = SEEDS,
+    adapters: list[SelectionAdapter] | None = None,
+    limits: dict[tuple[str, str], int] | None = None,
+    out_path: Path = OUTPUT_DIR / ENTRANT_FILE,
 ) -> list[RunRecord]:
-    """All unconstrained competitor single-shots, one run per seed."""
-    records: list[RunRecord] = []
-    for name in UNCONSTRAINED_PROBLEMS:
-        for size in UNCONSTRAINED_SIZES:
-            problem = build_problem(name, n=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
-            for adapter in unconstrained_adapters():
-                records += run_adapter(adapter, problem, problem_name=name, size=size, seeds=SEEDS)
-            print(f"competitors {name} size={size} done ({len(records)} records so far)", flush=True)
+    """Run the entrant half: every entrant once per seed at every size it runs at."""
+    adapters = entrant_adapters() if adapters is None else adapters
+    limits = time_limits() if limits is None else limits
+    records: list[RunRecord] = load_records(out_path) if out_path.exists() else []
+    done = {(r.n, r.tool) for r in records}
+    for n in sizes:
+        problem = build_problem(PROBLEM, n=n, diversity_metric=METRIC)
+        for adapter in adapters:
+            if (n, adapter.name) in done or not runs_at_size(adapter, n, limits):
+                continue
+            records += run_adapter(adapter, problem, problem_name=PROBLEM, size=n, seeds=seeds)
             save_records(records, out_path)
+        print(f"entrants {PROBLEM} n={n} done ({len(records)} records so far)", flush=True)
     return records
 
 
-def run_maxdiv_unconstrained(
-    problems: tuple[str, ...] = UNCONSTRAINED_PROBLEMS,
-    sizes: tuple[int, ...] = UNCONSTRAINED_SIZES,
-    time_budgets_sec: list[float] = TIME_BUDGETS_SEC,
+def run_maxdiv(
+    sizes: tuple[int, ...] = SIZES,
     seeds: tuple[int, ...] = SEEDS,
-    out_path: Path = OUTPUT_DIR / "maxdiv_unconstrained.jsonl",
+    single_budgets_sec: list[float] = SINGLE_WORKER_BUDGETS_SEC,
+    multi_budgets_sec: list[float] = MULTI_WORKER_BUDGETS_SEC,
+    n_workers: int = N_WORKERS,
+    out_path: Path = OUTPUT_DIR / MAXDIV_FILE,
 ) -> list[RunRecord]:
-    """Run max-div's budget series on every unconstrained cell, one series per diversity metric.
+    """Run the max-div half: both budget series at every size.
 
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
-    records: list[RunRecord] = []
-    for name in problems:
-        for size in sizes:
-            for metric in EVALUATED_DIVERSITY_METRICS:
-                metric_problem = build_problem(name, n=size, diversity_metric=metric)
-                records += run_maxdiv_budget_series(
-                    metric_problem,
-                    problem_name=name,
-                    size=size,
-                    time_budgets_sec=time_budgets_sec,
-                    seeds=seeds,
-                )
-            print(f"max-div {name} size={size} done ({len(records)} records so far)", flush=True)
-            save_records(records, out_path)
-    return records
-
-
-def run_competitors_constrained(
-    out_path: Path = OUTPUT_DIR / "third_party_constrained.jsonl",
-) -> list[RunRecord]:
-    """code-FDM single-shots on the constrained cells, one run per seed."""
-    records: list[RunRecord] = []
-    for name in CONSTRAINED_PROBLEMS:
-        for size in CONSTRAINED_SIZES:
-            problem = build_problem(name, n=size, diversity_metric=CONSTRAINED_METRIC)
-            records += run_adapter(CodeFdmFairFlow(), problem, problem_name=name, size=size, seeds=SEEDS)
-            print(f"competitors {name} size={size} done ({len(records)} records so far)", flush=True)
-            save_records(records, out_path)
-    return records
-
-
-def run_maxdiv_constrained(
-    problems: tuple[str, ...] = CONSTRAINED_PROBLEMS,
-    sizes: tuple[int, ...] = CONSTRAINED_SIZES,
-    time_budgets_sec: list[float] = TIME_BUDGETS_SEC,
-    seeds: tuple[int, ...] = SEEDS,
-    out_path: Path = OUTPUT_DIR / "maxdiv_constrained.jsonl",
-) -> list[RunRecord]:
-    """Run max-div's budget series on the constrained cells, MIN_SEPARATION only.
-
-    Defaults are the published protocol; pass smaller values only for validation runs.
-    """
-    records: list[RunRecord] = []
-    for name in problems:
-        for size in sizes:
-            problem = build_problem(name, n=size, diversity_metric=CONSTRAINED_METRIC)
+    records: list[RunRecord] = load_records(out_path) if out_path.exists() else []
+    done = {(r.n, r.tool) for r in records}
+    for n in sizes:
+        problem = build_problem(PROBLEM, n=n, diversity_metric=METRIC)
+        for budgets, workers in ((single_budgets_sec, 1), (multi_budgets_sec, n_workers)):
+            if (n, maxdiv_tool_label(n_workers=workers)) in done:
+                continue
             records += run_maxdiv_budget_series(
                 problem,
-                problem_name=name,
-                size=size,
-                time_budgets_sec=time_budgets_sec,
+                problem_name=PROBLEM,
+                size=n,
+                time_budgets_sec=budgets,
                 seeds=seeds,
+                n_workers=workers,
+                concurrency=SINGLE_WORKER_CONCURRENCY if workers == 1 else 1,
             )
-            print(f"max-div {name} size={size} done ({len(records)} records so far)", flush=True)
             save_records(records, out_path)
+        print(f"max-div {PROBLEM} n={n} done ({len(records)} records so far)", flush=True)
     return records
 
 
 def main() -> None:
-    """Run the full tier-2 scenario, competitors and max-div alike, and persist all records."""
-    print("tier-2 competitors unconstrained ...", flush=True)
-    run_competitors_unconstrained()
-    print("tier-2 max-div unconstrained ...", flush=True)
-    run_maxdiv_unconstrained()
-    print("tier-2 competitors constrained ...", flush=True)
-    run_competitors_constrained()
-    print("tier-2 max-div constrained ...", flush=True)
-    run_maxdiv_constrained()
+    """Run both halves and persist all records."""
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    print("tier-2 entrants ...", flush=True)
+    run_entrants()
+    print("tier-2 max-div ...", flush=True)
+    run_maxdiv()
     print("tier-2 complete", flush=True)
 
 

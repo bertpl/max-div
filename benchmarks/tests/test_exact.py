@@ -1,11 +1,18 @@
 from itertools import combinations
+from multiprocessing import get_context
 
 import numpy as np
 import pytest
 from scipy.spatial.distance import squareform
 
 from benchmarks.common import evaluate_selection
-from benchmarks.exact import solve_maxmin_cpsat, solve_nn_assignment_cpsat, solve_nn_separation_scip
+from benchmarks.exact import (
+    solve_maxmin_cpsat,
+    solve_maxmin_highs,
+    solve_maxmin_scip,
+    solve_nn_assignment_cpsat,
+    solve_nn_separation_scip,
+)
 from max_div._core.constraints import Constraint
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
@@ -99,3 +106,59 @@ def test_cpsat_nn_assignment_rejects_unsupported_metric():
     # --- act / assert ------------------------------------
     with pytest.raises(ValueError, match="Unsupported metric"):
         solve_nn_assignment_cpsat(problem, DiversityMetric.MIN_SEPARATION)
+
+
+def _mip_problem() -> MaxDivProblem:
+    """12 vectors, select 3, unconstrained — small enough to brute-force."""
+    rng = np.random.default_rng(12)
+    return MaxDivProblem.new(vectors=rng.random((12, 2)).astype(np.float32), k=3)
+
+
+def _mip_oracle(problem: MaxDivProblem) -> float:
+    """Enumerate all selections and return the true max-min optimum."""
+    return max(
+        evaluate_selection(problem, np.asarray(s, dtype=np.int64))["MIN_SEPARATION"]
+        for s in combinations(range(problem.n), problem.k)
+    )
+
+
+def _solve_highs_in_child(connection) -> None:  # noqa: ANN001 -- multiprocessing connection
+    """Child-process body: HiGHS cannot load after SCIP in one process (a shared-library clash), so it runs apart."""
+    connection.send(solve_maxmin_highs(_mip_problem(), time_limit_sec=60))
+    connection.close()
+
+
+def test_scip_maxmin_certifies_the_brute_force_optimum():
+    """SCIP certifies the unconstrained max-min optimum and reports it with the selection."""
+    # --- arrange -----------------------------------------
+    problem = _mip_problem()
+    oracle = _mip_oracle(problem)
+
+    # --- act ---------------------------------------------
+    result = solve_maxmin_scip(problem, time_limit_sec=60)
+
+    # --- assert ------------------------------------------
+    assert result.proven_optimal
+    assert result.min_separation == pytest.approx(oracle, rel=1e-5)
+    assert evaluate_selection(problem, result.i_selected)["MIN_SEPARATION"] == pytest.approx(oracle, rel=1e-5)
+
+
+def test_highs_maxmin_certifies_the_brute_force_optimum():
+    """HiGHS certifies the unconstrained max-min optimum, run in its own process as the harness does."""
+    # --- arrange -----------------------------------------
+    problem = _mip_problem()
+    oracle = _mip_oracle(problem)
+    context = get_context("spawn")
+    parent, child = context.Pipe(duplex=False)
+
+    # --- act ---------------------------------------------
+    process = context.Process(target=_solve_highs_in_child, args=(child,))
+    process.start()
+    child.close()
+    result = parent.recv()
+    process.join()
+
+    # --- assert ------------------------------------------
+    assert result.proven_optimal
+    assert result.min_separation == pytest.approx(oracle, rel=1e-5)
+    assert evaluate_selection(problem, result.i_selected)["MIN_SEPARATION"] == pytest.approx(oracle, rel=1e-5)

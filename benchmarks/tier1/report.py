@@ -1,121 +1,171 @@
-"""Tier-1 report emission: turn the recorded results into docs tables.
+"""Emit the tier-1 docs artifacts: anytime charts against certified optima, and the gap and certification tables.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier1.report``.
-Merges two result sources: max-div's budget series as measured by ``benchmarks.tier1.full`` or
-``benchmarks.tier1.rerun`` (untracked, re-measured whenever the solver changes), and the
-exact-solver references from the tracked files in ``benchmarks/tier1/data/`` (fixed across
-max-div re-measurements). Emits markdown tables into ``RESULTS_DIR``.
+Merges two result sources: max-div's records as measured by ``benchmarks.tier1.full`` or
+``benchmarks.tier1.rerun`` (untracked, re-measured whenever the solver changes), and the exact
+solvers' certified optima from the tracked files under `DATA_DIR`.
+
+Per certified (problem, size, objective) cell one chart is written under the docs images folder:
+both max-div series, a dotted line at the certified optimum, and one marker per certifying solver
+at (proof time, optimum). `FULL_WIDTH_OBJECTIVE`'s charts are listed full width in one snippet;
+every other objective gets one thumbnail-gallery snippet. The tables are written as snippets for
+the tier's tables page.
 """
 
 import json
+import statistics
 from collections import defaultdict
 from pathlib import Path
 
-import numpy as np
-
+from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
 from benchmarks.common.records import RunRecord, load_records
+from benchmarks.common.registry import display_name
+from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
+from benchmarks.figures.style import tool_color
+from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
+from .full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, N_WORKERS, OUTPUT_DIR, maxdiv_records_path
+from max_div.metrics import DiversityMetric
 
-RECORDS_DIR = Path("reports/benchmarks/tier1")
-DATA_DIR = Path(__file__).parent / "data"
-RESULTS_DIR = Path("docs/benchmarks/third_party/head_to_head/results")
-
-# The gap table quotes these budgets (seconds); each must be a budget the series ran.
-GAP_BUDGETS_SEC = (0.016, 0.128, 1.024, 16.384)
-
-
-def maxdiv_gap_pct(records: list[RunRecord], metric_name: str, budget_sec: float, optimum: float) -> float:
-    """Mean gap (%) of max-div to a proven optimum at one budget (positive = below optimum)."""
-    tag = f"time:{budget_sec}s"
-    values = [r.quality[metric_name] for r in records if r.budget == tag]
-    return (optimum - float(np.mean(values))) / optimum * 100.0
+RECORDS_DIR = OUTPUT_DIR
+DOCS_DIR = Path("docs/benchmarks/third_party/head_to_head")
+OBJECTIVES = (DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
+FULL_WIDTH_OBJECTIVE = DiversityMetric.MIN_SEPARATION  # the other objectives get thumbnail galleries
 
 
-def build_maxmin_gap_table(exact_rows: list[dict], records: list[RunRecord]) -> str:
-    """Markdown table: per problem, the proven optimum, its proof cost, and max-div's gaps."""
-    by_key: dict[tuple[str, int], list[RunRecord]] = defaultdict(list)
-    for r in records:
-        by_key[(r.problem, r.size)].append(r)
+def median_quality(records: list[RunRecord], tool: str, metric_name: str, budget_sec: float) -> float | None:
+    """Return the median quality over seeds of one tool at one budget, or None when that budget was not run."""
+    values = [r.quality[metric_name] for r in records if r.tool == tool and r.budget == budget_tag(budget_sec)]
+    return statistics.median(values) if values else None
 
-    budget_headers = " | ".join(f"gap @{b:g}s" for b in GAP_BUDGETS_SEC)
-    # 6 fixed columns (problem, n, k, m, optimum, proof time) plus one per budget.
-    lines = [
-        f"| problem | n | k | m | optimum | proof time | {budget_headers} |",
-        "|---" * (6 + len(GAP_BUDGETS_SEC)) + "|",
-    ]
+
+def gap_pct(value: float | None, optimum: float) -> float | None:
+    """Return the gap to the certified optimum in percent (positive = below the optimum), or None without a value."""
+    return None if value is None else (optimum - value) / optimum * 100.0
+
+
+def certified_optima(exact_rows: list[dict]) -> dict[tuple[str, str, int], list[dict]]:
+    """Group the certifying rows per (problem, objective, n); every row in a group agrees on the optimum."""
+    groups: dict[tuple[str, str, int], list[dict]] = defaultdict(list)
     for row in exact_rows:
-        recs = by_key[(row["problem"], row["size"])]
-        gaps = " | ".join(f"{maxdiv_gap_pct(recs, 'MIN_SEPARATION', b, row['optimum']):.1f}%" for b in GAP_BUDGETS_SEC)
-        lines.append(
-            f"| {row['problem']} | {row['n']} | {row['k']} | {row['m']} | {row['optimum']:.4f} "
-            f"| {row['measured_sec']:.2f} s | {gaps} |"
-        )
-    return "\n".join(lines) + "\n"
+        if row["proven_optimal"]:
+            groups[(row["problem"], row["objective"], row["n"])].append(row)
+    return dict(groups)
 
 
-def build_scaling_table(rows: list[dict]) -> str:
-    """Markdown table: time-to-proof per backend across increasing n ('timeout' where unproven)."""
-    backends = list(dict.fromkeys(row["backend"] for row in rows))
-    by_backend: dict[str, dict[int, dict]] = defaultdict(dict)
-    ns: list[int] = sorted({row["n"] for row in rows})
-    for row in rows:
-        by_backend[row["backend"]][row["n"]] = row
+def build_gap_table(exact_rows: list[dict], records: list[RunRecord], metric: DiversityMetric) -> str:
+    """Build the markdown table for one objective: per certified cell, the optimum, who certified it, and max-div's gaps.
 
+    The gap columns quote the median over seeds at the protocol's quoted budgets, for the
+    single-worker and the multi-worker series.
+    """
+    lo, hi = QUOTED_BUDGETS_SEC
+    single, multi = maxdiv_tool_label(), maxdiv_tool_label(n_workers=N_WORKERS)
     lines = [
-        "| n | k | " + " | ".join(backends) + " |",
-        "|---" * (2 + len(backends)) + "|",
+        f"| problem | n | k | certified optimum | certified by | gap 1 worker @{lo:g} s | gap 1 worker @{hi:g} s "
+        f"| gap {N_WORKERS} workers @{lo:g} s | gap {N_WORKERS} workers @{hi:g} s |",
+        "|---" * 9 + "|",
     ]
-    for n in ns:
-        k = next(row["k"] for row in rows if row["n"] == n)
-        cells = []
-        for backend in backends:
-            row = by_backend[backend].get(n)
-            if row is None:
-                cells.append("—")  # this backend stopped at a smaller n
-            elif row["proven"]:
-                cells.append(f"{row['measured_sec']:.1f} s")
-            else:
-                cells.append("**timeout**")
-        lines.append(f"| {n} | {k} | " + " | ".join(cells) + " |")
+    for (problem, objective, n), rows in sorted(certified_optima(exact_rows).items()):
+        if objective != metric.name:
+            continue
+        optimum = rows[0]["optimum"]
+        cell_records = [r for r in records if r.problem == problem and r.n == n]
+        certifiers = ", ".join(f"{display_name(r['solver'])} ({r['measured_sec']:.1f} s)" for r in rows)
+        gaps = [
+            gap_pct(median_quality(cell_records, tool, metric.name, budget), optimum)
+            for tool in (single, multi)
+            for budget in (lo, hi)
+        ]
+        cells = " | ".join("—" if g is None else f"{g:.1f}%" for g in gaps)
+        lines.append(f"| {problem} | {n} | {rows[0]['k']} | {optimum:.4f} | {certifiers} | {cells} |")
     return "\n".join(lines) + "\n"
 
 
-def build_incumbent_table(panel_rows: list[dict], records: list[RunRecord]) -> str:
-    """Markdown table: CP-SAT's incumbent at its cap vs. max-div's budget series (uncertified)."""
-    by_key: dict[tuple[str, int], list[RunRecord]] = defaultdict(list)
-    for r in records:
-        by_key[(r.problem, r.size)].append(r)
+def build_certification_table(exact_rows: list[dict]) -> str:
+    """Build the markdown table: per solver, problem and objective, the largest certified n and where certification stopped."""
+    by_column: dict[tuple[str, str, str], list[dict]] = defaultdict(list)
+    for row in exact_rows:
+        by_column[(row["solver"], row["problem"], row["objective"])].append(row)
+    lines = ["| solver | problem | objective | largest certified n | certification stopped at |", "|---" * 5 + "|"]
+    for (solver, problem, objective), rows in sorted(by_column.items()):
+        certified = [r["n"] for r in rows if r["proven_optimal"]]
+        failed = [r for r in rows if not r["proven_optimal"]]
+        largest = f"**{max(certified):,}**" if certified else "—"
+        stopped = f"n={failed[0]['n']:,} ({failed[0]['measured_sec']:.0f} s, not certified)" if failed else "grid exhausted"
+        lines.append(f"| {display_name(solver)} | {problem} | {objective} | {largest} | {stopped} |")
+    return "\n".join(lines) + "\n"
 
-    lines = [
-        "| problem | n | k | m | CP-SAT cap | CP-SAT incumbent | bound gap | max-div @~1 s (best seed) |",
-        "|---" * 8 + "|",
-    ]
-    for row in panel_rows:
-        recs = [r for r in by_key[(row["problem"], row["size"])] if r.budget == "time:1.024s"]
-        best_1s = max(r.quality["GEOMEAN_SEPARATION"] for r in recs)
-        bound_gap = (row["objective_bound"] - row["objective_value"]) / row["objective_value"] * 100.0
-        lines.append(
-            f"| {row['problem']} | {row['n']} | {row['k']} | {row['m']} | {row['cap_sec']:.0f} s "
-            f"| {row['objective_value']:.4f} | {bound_gap:.0f}% | {best_1s:.4f} |"
+
+def chart_name(problem: str, n: int, metric: DiversityMetric) -> str:
+    """Return the image file name of one cell's chart."""
+    return f"tier1_{problem}_{n}_{metric.name.lower()}.webp"
+
+
+def render_charts(exact_rows: list[dict], records_by_metric: dict[str, list[RunRecord]], images_dir: Path) -> dict[str, list[str]]:
+    """Render one chart per certified cell and return the written image names per objective."""
+    written: dict[str, list[str]] = defaultdict(list)
+    for (problem, objective, n), rows in sorted(certified_optima(exact_rows).items()):
+        metric = DiversityMetric[objective]
+        cell_records = [r for r in records_by_metric.get(objective, []) if r.problem == problem and r.n == n]
+        if not cell_records:
+            continue
+        optimum = rows[0]["optimum"]
+        markers = tuple(
+            ReferenceMarker(r["measured_sec"], optimum, f"{display_name(r['solver'])} proof", color=tool_color(r["solver"]))
+            for r in rows
         )
-    return "\n".join(lines) + "\n"
+        name = chart_name(problem, n, metric)
+        plot_anytime_curve(
+            cell_records,
+            metric_name=metric.name,
+            path=images_dir / name,
+            title=f"{problem} (n={n}) — {metric.name}",
+            reference_lines=(ReferenceLine(optimum, "certified optimum"),),
+            reference_markers=markers,
+        )
+        written[objective].append(name)
+    return dict(written)
 
 
-def main(records_dir: Path = RECORDS_DIR, results_dir: Path = RESULTS_DIR) -> None:
-    """Emit all tier-1 docs tables from the merged result sources."""
+def full_width_snippet(names: list[str]) -> str:
+    """Return markdown listing every chart full width, one per line."""
+    return "\n".join(f"![{name.removesuffix('.webp')}](../images/{name})" for name in names) + "\n"
+
+
+def gallery_snippet(names: list[str], metric: DiversityMetric) -> str:
+    """Return an HTML thumbnail gallery, three per row, each linking to its full-size chart (the page dir sits one level below `images/`)."""
+    thumbnails = [
+        f'<a href="../images/{name}"><img src="../images/{name}" alt="{metric.name} anytime chart {name}" width="32%"></a>'
+        for name in names
+    ]
+    return " ".join(thumbnails) + "\n"
+
+
+def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: Path = DATA_DIR) -> None:
+    """Emit every tier-1 docs artifact from the merged result sources."""
+    exact_rows = json.loads((data_dir / EXACT_MAXMIN_FILE).read_text()) + json.loads((data_dir / EXACT_NN_FILE).read_text())
+    records_by_metric = {
+        metric.name: load_records(maxdiv_records_path(metric, records_dir))
+        for metric in OBJECTIVES
+        if maxdiv_records_path(metric, records_dir).exists()
+    }
+    results_dir = docs_dir / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
+    images_dir = docs_dir / "images"
 
-    exact_rows = json.loads((DATA_DIR / "maxmin_exact.json").read_text())
-    maxmin_records = load_records(records_dir / "maxmin_records.jsonl")
-    (results_dir / "tier1_maxmin_gap.md").write_text(build_maxmin_gap_table(exact_rows, maxmin_records))
+    for metric in OBJECTIVES:
+        table = build_gap_table(exact_rows, records_by_metric.get(metric.name, []), metric)
+        (results_dir / f"tier1_gap_{metric.name.lower()}.md").write_text(table)
+    (results_dir / "tier1_certification.md").write_text(build_certification_table(exact_rows))
 
-    scaling_rows = json.loads((DATA_DIR / "scaling.json").read_text())
-    (results_dir / "tier1_scaling.md").write_text(build_scaling_table(scaling_rows))
-
-    panel_rows = json.loads((DATA_DIR / "incumbent.json").read_text())
-    incumbent_records = load_records(records_dir / "incumbent_records.jsonl")
-    (results_dir / "tier1_incumbent_geomean.md").write_text(build_incumbent_table(panel_rows, incumbent_records))
-
-    print(f"tier-1 report emitted into {results_dir}", flush=True)
+    written = render_charts(exact_rows, records_by_metric, images_dir)
+    for metric in OBJECTIVES:
+        names = written.get(metric.name, [])
+        if metric == FULL_WIDTH_OBJECTIVE:
+            (results_dir / f"tier1_charts_{metric.name.lower()}.md").write_text(full_width_snippet(names))
+        else:
+            (results_dir / f"tier1_gallery_{metric.name.lower()}.md").write_text(gallery_snippet(names, metric))
+    print(f"tier-1 report emitted into {docs_dir}", flush=True)
 
 
 if __name__ == "__main__":

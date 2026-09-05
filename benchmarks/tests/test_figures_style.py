@@ -49,3 +49,28 @@ def test_save_webp_writes_a_webp_file(tmp_path: Path):
 
     # --- assert -----------------------
     assert path.read_bytes()[8:12] == b"WEBP"
+
+
+def test_anytime_chart_draws_reference_lines_and_markers(tmp_path: Path):
+    """A chart with a reference line and a marker is written; both take a legend entry."""
+    # --- arrange ----------------------
+    from benchmarks.common.records import RunRecord
+    from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
+
+    records = [
+        RunRecord("max-div[DEFAULT]", "U1", 20, 20, 2, "MIN_SEPARATION", 0, f"time:{b}s", b, None, {"MIN_SEPARATION": q})
+        for b, q in ((0.001, 0.5), (1.0, 0.9))
+    ]
+    path = tmp_path / "chart.webp"
+
+    # --- act --------------------------
+    plot_anytime_curve(
+        records,
+        "MIN_SEPARATION",
+        path,
+        reference_lines=(ReferenceLine(1.0, "certified optimum"),),
+        reference_markers=(ReferenceMarker(0.3, 1.0, "SCIP proof"),),
+    )
+
+    # --- assert -----------------------
+    assert path.read_bytes()[8:12] == b"WEBP"
