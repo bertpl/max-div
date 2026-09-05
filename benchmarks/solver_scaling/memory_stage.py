@@ -96,7 +96,7 @@ def _sweep(config: ScalingConfig, done: dict, data_path: Path) -> MemoryFit:
 
 
 def _write_fits(fits: dict[str, MemoryFit], fit_path: Path = FIT_PATH) -> None:
-    """Persist the fits into the JSON file the results-page generator reads, keeping the other configurations' fits.
+    """Persist the fits into the results-page generator's JSON file, keeping fits for configurations absent from `fits`.
 
     A sweep over a subset of the configurations refits only those.
     """
