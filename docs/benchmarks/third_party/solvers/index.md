@@ -16,20 +16,25 @@ is the subject of the rest of this documentation.
 ## How to read these
 
 The tools fall into three groups that answer different questions, and comparing across the groups
-is usually a category error rather than a fair fight.
+is usually a category error, not a fair fight.
 
 **Exact solvers** prove optimality. They do not select diverse subsets; they solve models you
 write, and the diversity problem has to become a model first. Read them as the reference for what
 the best achievable answer *is* on small instances — not as competitors.
 
-**One-shot pickers and samplers** run a single construction pass and return an answer in
-milliseconds. None of them improves when given more time, and none supports per-group selection
-constraints. Where their objective is the one you want and their scale suits you, they are the
-right tool and max-div is overkill.
+**One-shot pickers** run a single construction pass and return an answer in milliseconds. None of
+them improves when given more time, and only code-FDM supports per-group selection constraints, over
+disjoint groups. Where their
+objective is the one you want and their scale suits you, they are the right tool and max-div is
+overkill.
 
-**Samplers** are a category of their own inside that group: they draw from a distribution that
-favors spread-out subsets rather than maximizing anything. An empty objective row means a different
-contract, not a weakness.
+**Clustering and sampling tools** return a diverse-looking subset by a different contract:
+
+- a **clustering** picks cluster centers, which sit where the data is dense;
+- a **sampler** draws from a distribution that favors spread-out subsets, maximizing nothing.
+
+An empty objective row means that different contract, not a weakness. They are measured as references
+under the dispersion metrics.
 
 ## Guarantee types
 
@@ -47,9 +52,8 @@ Each profile states one, defined in the [glossary](../../../concepts/glossary.md
 <div class="grid cards" markdown>
 
 - **Exact solvers** — [OR-Tools CP-SAT](ortools-cpsat.md) · [SCIP](scip.md) · [HiGHS](highs.md)
-- **One-shot pickers** — [RDKit MaxMinPicker](rdkit.md) · [fpsample](fpsample.md) · [skmatter](skmatter.md) · [apricot-select](apricot-select.md) · [qc-selector](qc-selector.md)
-- **Samplers** — [DPPy](dppy.md)
-- **Fair selection** — [code-FDM](code-fdm.md)
+- **One-shot pickers** — [RDKit MaxMinPicker](rdkit.md) · [fpsample](fpsample.md) · [skmatter](skmatter.md) · [apricot-select](apricot-select.md) · [qc-selector](qc-selector.md) · [code-FDM](code-fdm.md)
+- **Clustering & sampling** — [kmedoids](kmedoids.md) · [DPPy](dppy.md)
 
 </div>
 

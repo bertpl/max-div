@@ -46,7 +46,7 @@ diverse of `n` items, under optional fairness constraints.
 </p>
 
 The [benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/)
-compare max-div in depth with 10 other freely available solvers.
+compare max-div in depth with the other freely available solvers.
 
 ## Installation
 
@@ -99,7 +99,7 @@ including:
 - [Getting started](https://max-div.readthedocs.io/en/stable/getting_started/) — installation,
   distance and diversity metrics, solver presets
 - [Comparison with other tools](https://max-div.readthedocs.io/en/stable/comparison/) — how
-  max-div relates to exact solvers, greedy pickers, and samplers
+  max-div relates to exact solvers, greedy pickers, clustering and samplers
 - [Benchmarks](https://max-div.readthedocs.io/en/stable/benchmarks/comparison/overview/) — the
   measured comparison against third-party tools
 

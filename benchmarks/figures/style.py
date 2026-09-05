@@ -12,9 +12,9 @@ from PIL import Image
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 
-# `TOOL_COLORS` gives one color per tool, keyed by the tool's solver-registry key, or by its
-# record-label prefix for the tools the registry does not list. max-div, the subject of every
-# comparison, is black; the third-party tools take the colors.
+# `TOOL_COLORS` gives one color per tool, keyed by the tool's solver-registry key; the random
+# baseline, which the registry does not list, is keyed by its record label. max-div, the subject of
+# every comparison, is black; the third-party tools take the colors.
 TOOL_COLORS: dict[str, str] = {
     "max-div": "#222222",  # black
     "ortools-cpsat": "#F29E4C",  # orange
@@ -28,9 +28,12 @@ TOOL_COLORS: dict[str, str] = {
     "dppy": "#E9C34A",  # gold
     "code-fdm": "#7F8FA6",  # slate
     "kmedoids": "#4DBEDF",  # sky
-    "greedy": "#B58AA5",  # mauve
     "random": "#A6A6A6",  # gray
 }
+
+# Color for a tool absent from `TOOL_COLORS`: tracked records may name tools no longer in the roster,
+# and a chart must not fail on an unlisted name.
+UNLISTED_TOOL_COLOR = "#B58AA5"  # mauve
 
 # `MARKER_SHAPES` is cycled over when several series share a chart.
 MARKER_SHAPES = ("o", "s", "D", "^", "v", "*", "p")
@@ -46,8 +49,8 @@ def use_docs_style() -> None:
 
 
 def tool_color(tool: str) -> str:
-    """Return the color of a tool, by its `TOOL_COLORS` key."""
-    return TOOL_COLORS[tool]
+    """Return the color of a tool by its `TOOL_COLORS` key, or `UNLISTED_TOOL_COLOR` for a tool not listed."""
+    return TOOL_COLORS.get(tool, UNLISTED_TOOL_COLOR)
 
 
 def tool_key(label: str) -> str:

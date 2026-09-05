@@ -88,8 +88,8 @@ build-capability-data:
 	uv run --no-default-groups --group tooling python scripts/build_hero_table.py
 
 test-benchmarks:
-	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps groups)
-	uv run --group benchmarks --group benchmarks-gpl --python 3.14 pytest ./benchmarks/tests --durations=20 --disable-warnings
+	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps group)
+	uv run --group benchmarks --python 3.14 pytest ./benchmarks/tests --durations=20 --disable-warnings
 
 coverage:
 	# NOTE: NUMBA_DISABLE_JIT ensure coverage collects detailed line-by-line coverage info, also for numba-compiled functions

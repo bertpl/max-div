@@ -61,9 +61,6 @@ benchmarks = [
     "pyscipopt>=5.0",      # SCIP: exact mean/geomean-of-NN reference
     "highspy>=1.7",        # HiGHS: exact big-M max-min MIP reference
     "dppy>=0.3",           # k-DPP sampler: diverse-subset draws over an RBF kernel
-]
-# GPL-3 competitor kept in its own opt-in group so the default benchmarks group stays GPL-free.
-benchmarks-gpl = [
     "qc-selector>=0.1",
 ]
 # Split by activity, so what each one needs is a stated fact rather than a shared pile: the test

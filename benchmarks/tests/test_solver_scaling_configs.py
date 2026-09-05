@@ -24,6 +24,7 @@ EXPECTED_TOOLS = {
     "qc-selector",
     "dppy",
     "code-fdm",
+    "kmedoids",
 }
 
 

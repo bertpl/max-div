@@ -194,9 +194,16 @@ def _apricot() -> SelectionAdapter:
 
 def _qc_selector() -> SelectionAdapter:
     """Instantiate the qc-selector max-min adapter."""
-    from benchmarks.adapters.qc_selector_maxmin import QcSelectorMaxMin
+    from benchmarks.adapters.qc_selector import QcSelectorMaxMin
 
     return QcSelectorMaxMin()
+
+
+def _kmedoids() -> SelectionAdapter:
+    """Instantiate the kmedoids FasterPAM adapter."""
+    from benchmarks.adapters.kmedoids_fasterpam import KMedoidsFasterPAM
+
+    return KMedoidsFasterPAM()
 
 
 def _code_fdm() -> SelectionAdapter:
@@ -347,6 +354,13 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         "FairFlow with a single color spanning all items (its unconstrained reduction)",
         _adapter_select(_code_fdm),
         seed_varies_result=False,
+    ),
+    ScalingConfig(
+        "kmedoids",
+        "default",
+        "FasterPAM k-medoids on a precomputed distance matrix, random initialization",
+        _adapter_select(_kmedoids),
+        seed_varies_result=True,
     ),
 )
 
