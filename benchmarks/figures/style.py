@@ -31,8 +31,8 @@ TOOL_COLORS: dict[str, str] = {
     "random": "#A6A6A6",  # gray
 }
 
-# A tool outside `TOOL_COLORS` — a baseline that has since left the roster but still sits in tracked
-# records — is drawn in this neutral tone, so a chart never fails on a name the palette does not know.
+# Color for a tool absent from `TOOL_COLORS`: tracked records may name tools no longer in the roster,
+# and a chart must not fail on an unlisted name.
 UNLISTED_TOOL_COLOR = "#B58AA5"  # mauve
 
 # `MARKER_SHAPES` is cycled over when several series share a chart.

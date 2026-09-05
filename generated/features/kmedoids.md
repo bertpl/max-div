@@ -54,7 +54,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^kmedoids-1]: The core functions take a dissimilarity matrix only; the scikit-learn-style estimator accepts a metric name and forwards it to scikit-learn's pairwise distances, which needs scikit-learn installed.
 [^kmedoids-2]: A precomputed dissimilarity matrix is the primary input and the one the documentation recommends, so any dissimilarity you can compute is usable as is.
-[^kmedoids-3]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, so the medoids settle in dense regions of the data. That is a representativeness objective; none of the dispersion objectives is optimized, and a medoid set is typically less spread out than a dispersion picker's selection.
-[^kmedoids-4]: The iteration cap bounds the swap phase, but it is a convergence limit, not a budget: the search stops at the first local optimum it reaches, usually after a handful of passes, whatever cap is set.
-[^kmedoids-5]: Swap descent converges to a local optimum of its own objective and then stops; more iterations change nothing, and no iteration targets a dispersion objective.
+[^kmedoids-3]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, so the medoids settle in dense regions of the data. Total dissimilarity to the nearest medoid is a representativeness objective; none of the dispersion objectives is optimized.
+[^kmedoids-4]: The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget: the search stops at the first local optimum it reaches, usually after a handful of passes, whatever cap is set.
+[^kmedoids-5]: Swap descent converges to a local optimum of its own objective and then stops; more iterations change nothing.
 [^kmedoids-6]: The swap search can evaluate candidates on several threads, which speeds up one search; it is not several workers searching the problem.

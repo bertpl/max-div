@@ -45,9 +45,8 @@ solver:
       note: &medoids_not_dispersion
         text: >-
           k-medoids minimizes the total dissimilarity of every item to its nearest medoid, so the
-          medoids settle in dense regions of the data. That is a representativeness objective;
-          none of the dispersion objectives is optimized, and a medoid set is typically less
-          spread out than a dispersion picker's selection.
+          medoids settle in dense regions of the data. Total dissimilarity to the nearest medoid
+          is a representativeness objective; none of the dispersion objectives is optimized.
     objective.mean_nn:
       mark: none
       note: *medoids_not_dispersion
@@ -66,7 +65,7 @@ solver:
       mark: partial
       note:
         text: >-
-          The iteration cap bounds the swap phase, but it is a convergence limit, not a budget:
+          The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget:
           the search stops at the first local optimum it reaches, usually after a handful of
           passes, whatever cap is set.
     budget.wall_clock: {mark: none}
@@ -75,7 +74,7 @@ solver:
       note:
         text: >-
           Swap descent converges to a local optimum of its own objective and then stops; more
-          iterations change nothing, and no iteration targets a dispersion objective.
+          iterations change nothing.
     parallelism.independent: {mark: none}
     parallelism.cooperative:
       mark: none
@@ -91,14 +90,14 @@ kmedoids is a Rust implementation of k-medoids clustering with Python bindings, 
 algorithm makes the classical PAM swap descent fast enough for tens of thousands of items. The
 medoids are actual data items, so a run yields a size-$k$ selection.
 
-It is included here as a representativeness reference, not as a dispersion competitor. Medoids
-are cluster centers: they sit where the data is dense, and a set of centers is usually less spread
-out than a selection chosen for separation. Measuring it under the dispersion metrics shows how a
-coverage-style selection scores when spread is what you are after.
+kmedoids is included here as a representativeness reference, not as a dispersion competitor.
+Medoids are cluster centers: they sit where the data is dense, and a set of centers is usually less
+spread out than a selection chosen for separation. Measuring a medoid set under the dispersion
+metrics shows how a representativeness selection scores when spread is what you are after.
 
 ## Problem targeted
 
-Given $n$ items with pairwise dissimilarities $d$ and a target size $k$, it approximately solves
+Given $n$ items with pairwise dissimilarities $d$ and a target size $k$, kmedoids approximately solves
 
 $$
 \min_{|S| = k} \; \sum_{i=1}^{n} \min_{m \in S} d(i, m)
@@ -108,7 +107,7 @@ by swap descent from a random initial medoid set: any swap of a medoid for a non
 lowers the total is applied eagerly, until no swap improves it.
 
 **Guarantee: heuristic.** The descent stops at a local optimum of its own objective; no bound is
-claimed relative to the global optimum, and the objective itself is not a dispersion measure.
+claimed relative to the global optimum.
 
 ## Reference
 

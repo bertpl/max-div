@@ -65,7 +65,7 @@ EVALUATED_DIVERSITY_METRICS = (
 
 
 def unconstrained_adapters() -> list[SelectionAdapter]:
-    """The tier-2 competitor roster."""
+    """Return the tier-2 competitor roster."""
     return [
         RandomBaseline(),
         FpsampleFPS(),

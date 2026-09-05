@@ -1,4 +1,4 @@
-"""qc-selector adapters: the greedy max-min and max-sum pickers on a precomputed distance matrix."""
+"""Wrap qc-selector's greedy max-min and max-sum pickers, run on a precomputed distance matrix."""
 
 import numpy as np
 from numpy.typing import NDArray
@@ -10,7 +10,7 @@ from .base import SelectionAdapter
 
 
 class QcSelectorMaxMin(SelectionAdapter):
-    """Greedy max-min selection via qc-selector (import name ``selector``)."""
+    """Select greedily for max-min via qc-selector (import name ``selector``)."""
 
     @property
     def name(self) -> str:
@@ -27,7 +27,7 @@ class QcSelectorMaxMin(SelectionAdapter):
 
 
 class QcSelectorMaxSum(SelectionAdapter):
-    """Greedy max-sum selection via qc-selector: the classical insertion construction for max-sum diversity."""
+    """Select greedily for max-sum via qc-selector's classical insertion construction."""
 
     @property
     def name(self) -> str:

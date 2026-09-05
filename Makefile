@@ -88,7 +88,7 @@ build-capability-data:
 	uv run --no-default-groups --group tooling python scripts/build_hero_table.py
 
 test-benchmarks:
-	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps groups)
+	# comparison-benchmark harness tests - separate from the package suite (needs the benchmarks deps group)
 	uv run --group benchmarks --python 3.14 pytest ./benchmarks/tests --durations=20 --disable-warnings
 
 coverage:

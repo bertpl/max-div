@@ -15,7 +15,7 @@ is the subject of the rest of this documentation.
 
 ## How to read these
 
-The tools fall into four groups that answer different questions, and comparing across the groups
+The tools fall into three groups that answer different questions, and comparing across the groups
 is usually a category error, not a fair fight.
 
 **Exact solvers** prove optimality. They do not select diverse subsets; they solve models you
@@ -23,7 +23,8 @@ write, and the diversity problem has to become a model first. Read them as the r
 the best achievable answer *is* on small instances — not as competitors.
 
 **One-shot pickers** run a single construction pass and return an answer in milliseconds. None of
-them improves when given more time, and none supports per-group selection constraints. Where their
+them improves when given more time, and only code-FDM supports per-group selection constraints, over
+disjoint groups. Where their
 objective is the one you want and their scale suits you, they are the right tool and max-div is
 overkill.
 

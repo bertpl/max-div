@@ -18,7 +18,7 @@ reach for? This page benchmarks it against the surveyed single-shot heuristics (
   identically for all tools.
 - Labels matter: `apricot[facility-location]` optimizes coverage and `kmedoids[FasterPAM]`
   representativeness — they are included as different-objective references, not as
-  dispersion competitors. `qc-selector` (GPL) is included when installed.
+  dispersion competitors.
 - Hardware: 16" MacBook Pro with M3-class CPU, single sequential run.
 - Reproduce with `uv run --group benchmarks python -m benchmarks.tier2.full` (records),
   then `... -m benchmarks.tier2.report` (figures/tables).

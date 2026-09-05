@@ -56,9 +56,7 @@ categories:
       - key: code-fdm
         name: code-FDM
 
-  # Tools whose answer is a diverse-looking subset by a different contract: cluster centers, or a
-  # draw from a distribution. Measured as references under the dispersion metrics, never as
-  # competitors on them.
+  # Reference tools, not competitors; docs/benchmarks/third_party/solvers/index.md explains the category.
   - key: clustering-sampling
     label: Clustering & sampling
     tools:
