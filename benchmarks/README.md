@@ -17,7 +17,8 @@ dependencies live in the `benchmarks` dependency group, never in package metadat
 - `figures/` — the shared chart styling and the anytime-curve plotter (budget-series curves,
   single-shot dots, reference lines and markers).
 - `tier1/` — the comparison against the exact solvers' certified optima.
-- `tier2/` — the comparison against the one-shot tools on U1.
+- `tier2/` — the comparison against the one-shot tools on U1, the uniform unconstrained
+  benchmark problem.
 - `tier3/` — the comparison against the MDPLIB best-known values.
 - `mdplib/` — MDPLIB instance loader plus the vendored best-known-value table with provenance.
 - `solver_scaling/` — the solver-scaling measurement stages behind the scaling pages.
@@ -32,7 +33,8 @@ uv run --group benchmarks python -m benchmarks.tier2.smoke
 
 Outputs (JSONL records + figures) are written under `./reports/benchmarks/` (gitignored);
 only curated result tables/figures are ever promoted into `docs/`. The exception is
-third-party reference data: entrant and exact-solver results are tracked under
+third-party reference data: the entrants' (the compared third-party tools') and the exact
+solvers' results are tracked under
 `tier1/data/`, `tier2/data/` and `tier3/data/` (alongside `mdplib/data/`), because the
 published comparison pages keep those values fixed across re-measurements of max-div —
 republishing must not depend on files that exist only on the machine of the original
@@ -44,7 +46,8 @@ The full campaign runs detached, so no session limit can end it:
 nohup uv run --group benchmarks --python 3.14 python -u -m benchmarks.campaign > campaign.log 2>&1 &
 ```
 
-Every driver skips cells already on file, so an interrupted run resumes by rerunning. To
+Every driver skips cells (one problem at one size) already on file, so an interrupted run
+resumes by rerunning. To
 re-measure max-div alone (after solver changes), run the max-div-only drivers and then the
 reports — the third-party side comes from the tracked reference data:
 
@@ -67,7 +70,8 @@ The three tiers share one protocol (`common/protocol.py`), aligned with the solv
 protocol where the two overlap:
 
 - max-div runs two **budget series** on the 1-2-5 grid, both ending at T_max: one worker from
-  the smallest budget, and `N_WORKERS` from the first budget that clears the workers' spawn.
+  the smallest budget, and `N_WORKERS` from the first budget larger than the time spawning the
+  workers takes.
   Every record stores the *measured* end-to-end wall-clock, never the nominal budget.
 - Single-shot entrants run once per seed; their measured runtime, conversion included, is
   recorded the same way.

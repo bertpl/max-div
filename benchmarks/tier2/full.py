@@ -1,23 +1,16 @@
 """Run the tier-2 comparison: max-div against the one-shot tools, on U1, min separation.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.full``.
-Emits one JSONL record file per side into `OUTPUT_DIR` — entrant and max-div records are kept
-apart so max-div can be re-measured alone (``benchmarks.tier2.rerun``) while the entrant side stays
-fixed. Figures and tables come from ``benchmarks.tier2.report``.
+Emits one JSONL record file per half into `OUTPUT_DIR` — entrant and max-div records are kept
+apart so max-div can be re-measured alone (``benchmarks.tier2.rerun``) while the entrant half stays
+fixed. Figures and tables come from ``benchmarks.tier2.report``. The tracked reference copy of the
+entrant output lives under `DATA_DIR`; `benchmarks/README.md` says how it is refreshed.
 
-The entrant output shares its name with the tracked reference copy under `DATA_DIR`: promoting a
-fresh entrant measurement means copying the file over by hand.
-
-Protocol (mirrored on the results page):
-
-- One problem, U1, at the sizes in `SIZES`; one objective, min separation.
-- Entrants are the non-exact registry tools; each tool runs at every size up to the largest n it
-  finished within the solver-scaling time budget (read from the scaling time stage's tracked
-  records). One run per seed.
-- max-div runs both budget series (see ``benchmarks.common.protocol``), one independent solve per
-  budget and seed.
-
-Both halves skip cells already on file, so an interrupted run resumes by rerunning.
+One problem, `PROBLEM`, at the sizes in `SIZES`; one objective, `METRIC`. Entrants are the non-exact
+registry tools; each tool runs at every size up to the largest n it finished within the
+solver-scaling time budget (read from the scaling time stage's tracked records), once per seed.
+max-div runs both budget series (see ``benchmarks.common.protocol``), one independent solve per
+budget and seed.
 """
 
 from pathlib import Path

@@ -3,7 +3,7 @@
 Run with: ``uv run --group benchmarks python -m benchmarks.tier1.report``.
 Merges two result sources: max-div's records as measured by ``benchmarks.tier1.full`` or
 ``benchmarks.tier1.rerun`` (untracked, re-measured whenever the solver changes), and the exact
-solvers' certified optima from the tracked files in ``benchmarks/tier1/data/``.
+solvers' certified optima from the tracked files under `DATA_DIR`.
 
 Per certified (problem, size, objective) cell one chart is written under the docs images folder:
 both max-div series, a dotted line at the certified optimum, and one marker per certifying solver
@@ -23,7 +23,7 @@ from benchmarks.common.registry import display_name
 from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
 from benchmarks.figures.style import tool_color
 from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
-from benchmarks.tier1.full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, N_WORKERS, OUTPUT_DIR, maxdiv_records_path
+from .full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, N_WORKERS, OUTPUT_DIR, maxdiv_records_path
 from max_div.metrics import DiversityMetric
 
 RECORDS_DIR = OUTPUT_DIR

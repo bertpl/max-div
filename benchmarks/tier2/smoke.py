@@ -10,8 +10,8 @@ from pathlib import Path
 from benchmarks.common import build_problem, save_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.runners import run_adapter, run_maxdiv_budget_series
-from benchmarks.tier2.full import METRIC, PROBLEM, entrant_adapters
-from benchmarks.tier2.report import best_entrant
+from .full import METRIC, PROBLEM, entrant_adapters
+from .report import best_entrant
 
 OUTPUT_DIR = Path("reports/benchmarks/smoke")
 

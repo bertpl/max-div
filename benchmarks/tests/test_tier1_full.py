@@ -105,7 +105,7 @@ def test_certify_isolated_runs_a_real_certifier_in_a_child_process():
 def test_certify_isolated_reports_a_crashed_child_as_not_certified():
     """A child that dies leaves a failed certification with the exit code in its note, not an exception."""
     # --- act --------------------------
-    outcome = full.certify_isolated("_test_crash", "U1", "MIN_SEPARATION", 20)
+    outcome = full.certify_isolated("benchmarks.tests.crash_certifier:crash", "U1", "MIN_SEPARATION", 20)
 
     # --- assert -----------------------
     assert not outcome.proven_optimal

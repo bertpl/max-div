@@ -1,9 +1,6 @@
 """Run the three head-to-head comparison tiers back to back, as one campaign.
 
-Run detached, so a terminal session's limit cannot end it:
-
-    nohup uv run --group benchmarks --python 3.14 python -u -m benchmarks.campaign > campaign.log 2>&1 &
-
+Run detached, so a terminal session's limit cannot end it; `benchmarks/README.md` has the command.
 Each tier's driver skips cells already on file, so a campaign that stops resumes by rerunning.
 A tier that raises is reported and the next tier still runs; the log's final lines say which
 tiers completed.

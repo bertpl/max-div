@@ -26,7 +26,7 @@ def grid_budget_series(t_min_sec: float, t_max_sec: float) -> list[float]:
 
     The series walks the 1-2-5 sequence from `t_min_sec`, which must itself lie on it, and ends at
     `t_max_sec` itself, so the largest budget is the one the results are judged at: every grid
-    value within a factor 2 below `t_max_sec` is dropped, and `t_max_sec` stands in for it.
+    value within a factor 2 below `t_max_sec` is dropped, and `t_max_sec` replaces them.
 
     Raises:
         ValueError: If `t_min_sec` is not a 1-2-5 value, or `t_max_sec` <= `t_min_sec`.

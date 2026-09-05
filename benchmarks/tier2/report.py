@@ -19,7 +19,7 @@ from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
 from benchmarks.common.records import RunRecord, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.runners.maxdiv_runner import budget_sec, maxdiv_tool_label
-from benchmarks.tier2.full import DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR, PROBLEM
+from .full import DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR, PROBLEM
 
 RECORDS_DIR = OUTPUT_DIR
 DOCS_DIR = Path("docs/benchmarks/third_party/head_to_head")

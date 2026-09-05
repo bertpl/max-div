@@ -2,17 +2,15 @@
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier3.full``.
 Emits two JSONL record files into `OUTPUT_DIR` — the entrants' records and max-div's — so max-div
-can be re-measured alone while the entrant side stays fixed. The entrant output shares its name
-with the tracked reference copy under `DATA_DIR`: promoting a fresh entrant measurement means
-copying the file over by hand. The docs artifacts come from ``benchmarks.tier3.report``.
+can be re-measured alone while the entrant half stays fixed. The tracked reference copy of the
+entrant output lives under `DATA_DIR`; `benchmarks/README.md` says how it is refreshed. The docs
+artifacts come from ``benchmarks.tier3.report``.
 
 Every published (instance, k) pairing of the charted families runs max-div's single-worker budget
 series; pairings from `MULTI_WORKER_MIN_N` up also run the multi-worker series, the smaller ones
 plateau within milliseconds. The Glover pairings run the short `GLOVER_BUDGETS_SEC` series only and
 are reported as a match count. Entrants are the non-exact registry tools whose input form the
-instance family provides (`entrant_adapters`). Instances are fetched from the MDPLIB site at run
-time and never redistributed. Both halves skip cells already on file, so an interrupted run
-resumes by rerunning.
+instance family provides (`entrant_adapters`).
 """
 
 from pathlib import Path
@@ -56,7 +54,7 @@ GLOVER_BUDGETS_SEC = grid_budget_series(0.001, 1.0)
 
 
 def entrant_adapters(family: str) -> list[SelectionAdapter]:
-    """Return the entrants of one instance family: every tool whose input form the family provides."""
+    """Return the entrants of one instance family: every tool whose input form the family provides; families outside `CHARTED_FAMILIES` have none."""
     distance_matrix_tools: list[SelectionAdapter] = [QcSelectorMaxMin(), QcSelectorMaxSum(), KMedoidsFasterPAM()]
     if family == "Ran":
         return distance_matrix_tools

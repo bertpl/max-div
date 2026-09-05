@@ -1,7 +1,7 @@
 """Convert a problem into the input form an adapter needs: vectors, or a square distance matrix.
 
 The conversion runs inside the adapter's timed `select`, so it counts toward the tool's measured
-time, and it uses scipy, not max-div's own distance code, so a competitor's time neither depends
+time, and it uses scipy, not max-div's own distance code, so an entrant's time neither depends
 on nor benefits from max-div's implementation.
 """
 

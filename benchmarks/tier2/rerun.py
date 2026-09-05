@@ -6,7 +6,7 @@ and writes them into `OUTPUT_DIR`. The entrant side of the report comes from the
 reference records under `DATA_DIR`.
 """
 
-from benchmarks.tier2.full import OUTPUT_DIR, run_maxdiv
+from .full import OUTPUT_DIR, run_maxdiv
 
 
 def main() -> None:

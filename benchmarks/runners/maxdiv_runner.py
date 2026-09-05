@@ -39,7 +39,7 @@ def budget_sec(tag: str) -> float | None:
 
 @dataclass(frozen=True)
 class _SolveJob:
-    """One solve to run: the problem, its budget, its seed, and the solver setup."""
+    """A solve job holds the problem, budget, seed and solver setup of one solve."""
 
     problem: MaxDivProblem
     budget_tag: str
@@ -51,7 +51,7 @@ class _SolveJob:
 
 @dataclass(frozen=True)
 class _SolveOutcome:
-    """What one solve produced: the selection, its end-to-end wall-clock, and its iteration count."""
+    """A solve outcome holds the selection, end-to-end wall-clock and iteration count of one solve."""
 
     i_selected: NDArray[np.integer]
     measured_sec: float

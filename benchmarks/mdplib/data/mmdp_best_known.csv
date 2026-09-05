@@ -11,8 +11,8 @@
 #             problem based on max-clique', Computers & Operations Research 36(8); values as republished
 #             in PHG2011 table 6 and in `mmdp.cfg` of https://cedric.cnam.fr/~porumbed/papers/mmdp2.zip.
 # `source` names the earliest of these that reached `best_known` (values agreeing at two decimals count as
-# equal; the most precise printed value is kept). `best_known_2010` is the RMGD2010 value alone, kept for
-# continuity with earlier results pages.
+# equal; the most precise printed value is kept). `best_known_2010` is the RMGD2010 value alone, kept so
+# the RMGD2010 baseline stays available on its own.
 # `proven_optimal` is true where a published exact method certified the value: all n = 100 Geo/Ran
 # instances (Della Croce et al. 2009, as stated in PHG2011), and the n = 250/500 instances CPLEX proved in
 # Saboonchi (2013), 'Solving the p-dispersion problem ...', HEC Montreal thesis, tables 3.V and 3.VI

@@ -1,8 +1,8 @@
 """Emit the tier-3 docs artifacts: gap-to-best-known charts per instance group, and the tables.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier3.report``.
-Merges max-div's records (``reports/benchmarks/tier3/``) with the entrants' tracked reference
-records (``benchmarks/tier3/data/``) and the vendored best-known table.
+Merges max-div's records (`RECORDS_DIR`) with the entrants' tracked reference records (`DATA_DIR`)
+and the vendored best-known table.
 
 Every record's quality is first turned into its gap to the instance's best-known value, in
 percent; one chart per instance group (family, n, k) then aggregates the group's instances the way
@@ -20,7 +20,7 @@ from benchmarks.common.records import RunRecord, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.mdplib.best_known import BestKnown, load_best_known
 from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
-from benchmarks.tier3.full import CHARTED_FAMILIES, DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR
+from .full import CHARTED_FAMILIES, DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR
 
 RECORDS_DIR = OUTPUT_DIR
 DOCS_DIR = Path("docs/benchmarks/third_party/head_to_head")

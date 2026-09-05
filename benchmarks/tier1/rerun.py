@@ -9,7 +9,7 @@ re-solving them would re-spend hours to reproduce known values.
 
 import json
 
-from benchmarks.tier1.full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, OUTPUT_DIR, run_maxdiv
+from .full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, OUTPUT_DIR, run_maxdiv
 
 
 def main() -> None:

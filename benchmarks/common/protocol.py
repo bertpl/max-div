@@ -20,8 +20,8 @@ N_WORKERS = 12  # the multi-worker series' worker count: the reference machine's
 SINGLE_WORKER_BUDGETS_SEC = grid_budget_series(0.001, T_MAX_SEC)
 MULTI_WORKER_BUDGETS_SEC = grid_budget_series(1.0, T_MAX_SEC)
 
-# How many single-worker solves run side by side: the single-worker series packs across the cores
-# the multi-worker series uses one at a time.
+# How many single-worker solves run side by side: they run in parallel on the cores the multi-worker
+# series uses for one solve at a time.
 SINGLE_WORKER_CONCURRENCY = N_WORKERS
 
 # The budgets the result tables quote: the point where the two series first coincide, and T_max.
