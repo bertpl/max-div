@@ -150,5 +150,15 @@
     ],
     "reason": "linear fit over 17 sizes",
     "r2": 0.9991509224086468
+  },
+  "kmedoids/default": {
+    "max_n": 50000,
+    "coef": [
+      256131116.80634466,
+      13449.068265080497,
+      11.322436714730115
+    ],
+    "reason": "quadratic fit over 10 sizes",
+    "r2": 0.9990953948768567
   }
 }

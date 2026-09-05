@@ -239,10 +239,10 @@
 <text x="279" y="490" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="305" y="490" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="565" y="490" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
-<text x="705" y="490" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="751" y="490" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="797" y="490" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
-<text x="843" y="490" fill="#8b949e" font-size="12" font-weight="400" text-anchor="middle">…</text>
+<text x="705" y="490" fill="#e6edf3" fill-opacity="0.8" font-size="12" font-weight="400" text-anchor="middle">50k</text>
+<text x="751" y="490" fill="#e6edf3" fill-opacity="0.8" font-size="12" font-weight="400" text-anchor="middle">50k</text>
+<text x="797" y="490" fill="#e6edf3" fill-opacity="0.5" font-size="12" font-weight="400" text-anchor="middle">—</text>
+<text x="843" y="490" fill="#e6edf3" fill-opacity="0.5" font-size="12" font-weight="400" text-anchor="middle">—</text>
 <line x1="14" y1="497" x2="866" y2="497" stroke="#30363d" stroke-width="1"/>
 <text x="16" y="513" fill="#e6edf3" font-size="12.5" font-weight="400">DPPy</text>
 <text x="175" y="513" fill="#8b949e" font-size="13.5" text-anchor="middle">~</text>
@@ -259,5 +259,5 @@
 <line x1="14" y1="520" x2="866" y2="520" stroke="#30363d" stroke-width="1"/>
 <text x="14" y="533" font-size="11"><tspan fill="#3fb950" font-weight="700">✓</tspan><tspan fill="#8b949e" dx="5">built in</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">~</tspan><tspan fill="#8b949e" dx="5">reachable, but you supply the model, transform, metric or custom build</tspan></text>
 <text x="14" y="549" font-size="11"><tspan fill="#8b949e" font-weight="700">†</tspan><tspan fill="#8b949e" dx="5">largest solvable n on benchmark problem U1, per the published measurement protocol:</tspan></text>
-<text x="24" y="565" font-size="11"><tspan fill="#8b949e">memory: using ≤32GB RAM · time: + in ≤1min · quality: + closing ≥50% / ≥90% of the random→best diversity gap</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">…</tspan><tspan fill="#8b949e" dx="5">measurement pending</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">—</tspan><tspan fill="#8b949e" dx="5">no measured size meets the criterion</tspan></text>
+<text x="24" y="565" font-size="11"><tspan fill="#8b949e">memory: using ≤32GB RAM · time: + in ≤1min · quality: + closing ≥50% / ≥90% of the random→best diversity gap</tspan><tspan fill="#8b949e" dx="9">·</tspan><tspan fill="#8b949e" font-weight="700" dx="9">—</tspan><tspan fill="#8b949e" dx="5">no measured size meets the criterion</tspan></text>
 </svg>

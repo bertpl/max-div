@@ -17,3 +17,4 @@
 | qc-selector | `maxmin` | **20,000** | — |
 | DPPy | `default` | — | — |
 | code-FDM | `default` | **10,000** | **50** |
+| kmedoids | `default` | — | — |

@@ -95,17 +95,16 @@ def _sweep(config: ScalingConfig, done: dict, data_path: Path) -> MemoryFit:
     return MemoryFit(fit.max_n, fit.coef, fit.reason + "; grid exhausted before the trust conditions held", fit.r2)
 
 
-def _write_fits(fits: dict[str, MemoryFit]) -> None:
-    """Persist the fits as the JSON file the results-page generator reads."""
-    FIT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    FIT_PATH.write_text(
-        json.dumps(
-            {key: {"max_n": f.max_n, "coef": f.coef, "reason": f.reason, "r2": f.r2} for key, f in fits.items()},
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+def _write_fits(fits: dict[str, MemoryFit], fit_path: Path = FIT_PATH) -> None:
+    """Persist the fits into the JSON file the results-page generator reads, keeping the other configurations' fits.
+
+    A sweep over a subset of the configurations refits only those, so the file is merged, not
+    replaced; a full sweep rewrites every entry.
+    """
+    fit_path.parent.mkdir(parents=True, exist_ok=True)
+    stored = json.loads(fit_path.read_text(encoding="utf-8")) if fit_path.exists() else {}
+    stored.update({key: {"max_n": f.max_n, "coef": f.coef, "reason": f.reason, "r2": f.r2} for key, f in fits.items()})
+    fit_path.write_text(json.dumps(stored, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

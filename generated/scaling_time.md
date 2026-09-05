@@ -17,3 +17,4 @@
 | qc-selector | `maxmin` | **20,000** | memory cap exceeded at n=50,000 |
 | DPPy | `default` | **500** | failure at n=1,000: `ValueError: size k=100 > rank=98` |
 | code-FDM | `default` | **10,000** | time budget exceeded at n=20,000 (≥75 s) |
+| kmedoids | `default` | **50,000** | memory cap exceeded at n=100,000 |
