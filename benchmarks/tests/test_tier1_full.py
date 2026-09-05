@@ -25,16 +25,16 @@ def test_certification_stops_at_the_first_size_not_certified(tmp_path: Path, mon
     # --- arrange ----------------------
     calls = []
 
-    def fake_solve(problem):
-        calls.append(problem.n)
-        return full.CertifiedOptimum(0.5, problem.n < 100, 0.1)
+    def fake_certify(solver_key, problem_name, objective, n):
+        calls.append(n)
+        return full.CertifiedOptimum(0.5, n < 100, 0.1)
 
     monkeypatch.setattr(full, "build_problem", lambda name, n, diversity_metric: type("P", (), {"n": n, "k": n // 10, "m": 0})())
     rows: list[dict] = []
     path = tmp_path / "exact.json"
 
     # --- act --------------------------
-    full._certify_increasing_sizes(rows, path, "U1", full.DiversityMetric.MIN_SEPARATION, "scip", fake_solve)
+    full._certify_increasing_sizes(rows, path, "U1", full.DiversityMetric.MIN_SEPARATION, "scip", fake_certify)
 
     # --- assert -----------------------
     assert calls == [20, 50, 100]
@@ -46,15 +46,15 @@ def test_certification_resumes_after_the_rows_on_file(tmp_path: Path, monkeypatc
     # --- arrange ----------------------
     calls = []
 
-    def fake_solve(problem):
-        calls.append(problem.n)
+    def fake_certify(solver_key, problem_name, objective, n):
+        calls.append(n)
         return full.CertifiedOptimum(0.5, False, 0.1)
 
     monkeypatch.setattr(full, "build_problem", lambda name, n, diversity_metric: type("P", (), {"n": n, "k": n // 10, "m": 0})())
     rows = [_exact_row("U1", "MIN_SEPARATION", "scip", 20, True), _exact_row("U1", "MIN_SEPARATION", "scip", 50, True)]
 
     # --- act --------------------------
-    full._certify_increasing_sizes(rows, tmp_path / "exact.json", "U1", full.DiversityMetric.MIN_SEPARATION, "scip", fake_solve)
+    full._certify_increasing_sizes(rows, tmp_path / "exact.json", "U1", full.DiversityMetric.MIN_SEPARATION, "scip", fake_certify)
 
     # --- assert -----------------------
     assert calls == [100]
@@ -89,3 +89,25 @@ def test_run_maxdiv_writes_both_series_per_certified_cell(tmp_path: Path):
     records = load_records(tmp_path / "maxdiv_min_separation.jsonl")
     assert sorted(r.tool for r in records) == ["max-div[DEFAULT, 2 workers]", "max-div[DEFAULT]"]
     assert {r.n for r in records} == {20}
+
+
+def test_certify_isolated_runs_a_real_certifier_in_a_child_process():
+    """The isolated run returns the child's certified optimum for a tiny problem."""
+    # --- act --------------------------
+    outcome = full.certify_isolated("scip", "U1", "MIN_SEPARATION", 20)
+
+    # --- assert -----------------------
+    assert outcome.proven_optimal
+    assert outcome.optimum is not None and outcome.optimum > 0
+    assert outcome.note == ""
+
+
+def test_certify_isolated_reports_a_crashed_child_as_not_certified():
+    """A child that dies leaves a failed certification with the exit code in its note, not an exception."""
+    # --- act --------------------------
+    outcome = full.certify_isolated("_test_crash", "U1", "MIN_SEPARATION", 20)
+
+    # --- assert -----------------------
+    assert not outcome.proven_optimal
+    assert outcome.optimum is None
+    assert outcome.note == "process exited with code 3"

@@ -9,7 +9,9 @@ references stay fixed:
 
 - **Exact half.** For U1 and C1, every solver ascends the 1-2-5 size grid from 20 and runs each
   size to proven optimality or the certification cap; a solver stops at its first size not
-  certified. Max-min runs on CP-SAT (threshold search), SCIP and HiGHS (big-M MIP); mean- and
+  certified. Every solve runs in its own spawned process: two solver libraries loaded into one
+  process can crash it (CP-SAT followed by HiGHS does), and a crash then costs one cell, not the
+  campaign. Max-min runs on CP-SAT (threshold search), SCIP and HiGHS (big-M MIP); mean- and
   geomean-of-NN separation run on CP-SAT's nearest-neighbor assignment model alone, the only
   backend that certifies that model beyond the smallest sizes. The JSON outputs share their names
   with the tracked reference copies under `DATA_DIR`: promoting a fresh exact measurement means
@@ -21,8 +23,11 @@ Both halves skip cells already on file, so an interrupted run resumes by rerunni
 """
 
 import json
+import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from multiprocessing import get_context
+from multiprocessing.connection import Connection
 from pathlib import Path
 
 from benchmarks.common import build_problem, load_records, save_records
@@ -38,7 +43,7 @@ from benchmarks.common.records import RunRecord
 from benchmarks.exact import solve_maxmin_cpsat, solve_maxmin_highs, solve_maxmin_scip, solve_nn_assignment_cpsat
 from benchmarks.runners import run_maxdiv_budget_series
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
-from benchmarks.solver_scaling.grid import size_grid
+from benchmarks.solver_scaling.grid import SETUP_GRACE_SEC, size_grid
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
 
@@ -55,11 +60,12 @@ NN_OBJECTIVES = (DiversityMetric.MEAN_SEPARATION, DiversityMetric.GEOMEAN_SEPARA
 
 @dataclass(frozen=True)
 class CertifiedOptimum:
-    """Record what one exact solve found: the objective value, whether it is proven optimal, and how long it took."""
+    """Record what one exact solve found: the objective value, whether it is proven optimal, how long it took, and any failure."""
 
     optimum: float | None
     proven_optimal: bool
     measured_sec: float
+    note: str = ""
 
 
 ExactSolve = Callable[[MaxDivProblem], CertifiedOptimum]
@@ -83,18 +89,70 @@ def _highs_maxmin(problem: MaxDivProblem) -> CertifiedOptimum:
     return CertifiedOptimum(result.min_separation, result.proven_optimal, result.measured_sec)
 
 
+def _cpsat_nn(problem: MaxDivProblem) -> CertifiedOptimum:
+    """Certify a mean- or geomean-of-NN optimum with CP-SAT's nearest-neighbor assignment model, on the protocol's worker count."""
+    result = solve_nn_assignment_cpsat(
+        problem, problem.diversity_metric, time_limit_sec=CERTIFICATION_CAP_SEC, num_workers=N_WORKERS
+    )
+    return CertifiedOptimum(result.objective_value, result.proven_optimal, result.measured_sec)
+
+
 # Max-min solvers by registry key.
 MAXMIN_SOLVERS: dict[str, ExactSolve] = {"ortools-cpsat": _cpsat_maxmin, "scip": _scip_maxmin, "highs": _highs_maxmin}
 
 
-def _cpsat_nn(metric: DiversityMetric) -> ExactSolve:
-    """Build the CP-SAT nearest-neighbor assignment certifier for one NN objective."""
+def _crash_for_tests(problem: MaxDivProblem) -> CertifiedOptimum:
+    """Kill the child process outright, so the crash path of `certify_isolated` is testable without a crashing solver."""
+    import os
 
-    def solve(problem: MaxDivProblem) -> CertifiedOptimum:
-        result = solve_nn_assignment_cpsat(problem, metric, time_limit_sec=CERTIFICATION_CAP_SEC, num_workers=N_WORKERS)
-        return CertifiedOptimum(result.objective_value, result.proven_optimal, result.measured_sec)
+    os._exit(3)
 
-    return solve
+
+# Every certifier a child process can be asked to run, by (solver key, objective). The crash
+# fixture sits outside the registry keys, so it never looks like a solver.
+CERTIFIERS: dict[tuple[str, str], ExactSolve] = {
+    **{(key, DiversityMetric.MIN_SEPARATION.name): solve for key, solve in MAXMIN_SOLVERS.items()},
+    **{("ortools-cpsat", metric.name): _cpsat_nn for metric in NN_OBJECTIVES},
+    ("_test_crash", DiversityMetric.MIN_SEPARATION.name): _crash_for_tests,
+}
+
+
+def _certify_in_child(connection: Connection, solver_key: str, problem_name: str, objective: str, n: int) -> None:
+    """Child-process body: build the problem, run the certifier, and send the outcome back."""
+    problem = build_problem(problem_name, n=n, diversity_metric=DiversityMetric[objective])
+    try:
+        outcome = CERTIFIERS[(solver_key, objective)](problem)
+    except RuntimeError as error:  # no solution at all within the cap
+        outcome = CertifiedOptimum(None, False, CERTIFICATION_CAP_SEC, f"no solution: {error}")
+    connection.send(outcome)
+    connection.close()
+
+
+def certify_isolated(solver_key: str, problem_name: str, objective: str, n: int) -> CertifiedOptimum:
+    """Run one certifier in a spawned process and return its outcome; a crash or hang is a failed certification.
+
+    The child gets the certification cap plus the setup grace; past that it is killed.
+    """
+    context = get_context("spawn")
+    parent, child = context.Pipe(duplex=False)
+    process = context.Process(target=_certify_in_child, args=(child, solver_key, problem_name, objective, n))
+    t0 = time.perf_counter()
+    process.start()
+    child.close()
+    try:
+        # poll also returns once the child dies with the pipe unwritten; recv then raises EOFError
+        outcome = parent.recv() if parent.poll(CERTIFICATION_CAP_SEC + SETUP_GRACE_SEC) else None
+    except EOFError:
+        outcome = None
+    process.join(timeout=SETUP_GRACE_SEC)
+    if process.is_alive():
+        process.kill()
+        process.join()
+    if outcome is None:
+        elapsed = time.perf_counter() - t0
+        note = f"process exited with code {process.exitcode}" if process.exitcode else "killed past the cap"
+        outcome = CertifiedOptimum(None, False, elapsed, note)
+    return outcome
 
 
 def _load_rows(path: Path) -> list[dict]:
@@ -102,25 +160,31 @@ def _load_rows(path: Path) -> list[dict]:
     return json.loads(path.read_text()) if path.exists() else []
 
 
+Certify = Callable[[str, str, str, int], CertifiedOptimum]
+
+
 def _certify_increasing_sizes(
-    rows: list[dict], path: Path, problem_name: str, metric: DiversityMetric, solver_key: str, solve: ExactSolve
+    rows: list[dict],
+    path: Path,
+    problem_name: str,
+    metric: DiversityMetric,
+    solver_key: str,
+    certify: Certify = certify_isolated,
 ) -> None:
     """Run one solver up the grid on one (problem, objective) until its first size not certified.
 
     Every attempt is recorded, the failed one included: the results page states where each
     solver's certification stopped. Rows already on file are skipped, and the ascent resumes
-    after them.
+    after them. `certify` is the isolated run by default; tests pass an in-process stand-in.
     """
     done = {(r["problem"], r["objective"], r["solver"], r["n"]): r for r in rows}
     for n in size_grid(GRID_BOUND):
         row = done.get((problem_name, metric.name, solver_key, n))
         if row is None:
             problem = build_problem(problem_name, n=n, diversity_metric=metric)
-            try:
-                certified = solve(problem)
-            except RuntimeError as error:  # no solution at all within the cap
-                certified = CertifiedOptimum(None, False, CERTIFICATION_CAP_SEC)
-                print(f"  {solver_key} {problem_name} {metric.name} n={n}: no solution ({error})", flush=True)
+            certified = certify(solver_key, problem_name, metric.name, n)
+            if certified.note:
+                print(f"  {solver_key} {problem_name} {metric.name} n={n}: {certified.note}", flush=True)
             row = {
                 "problem": problem_name,
                 "objective": metric.name,
@@ -146,8 +210,8 @@ def run_exact_maxmin(out_path: Path = OUTPUT_DIR / EXACT_MAXMIN_FILE) -> list[di
     """Run the exact half for max-min: every solver ascends the grid on U1 and C1 until it stops certifying."""
     rows = _load_rows(out_path)
     for problem_name in PROBLEMS:
-        for solver_key, solve in MAXMIN_SOLVERS.items():
-            _certify_increasing_sizes(rows, out_path, problem_name, DiversityMetric.MIN_SEPARATION, solver_key, solve)
+        for solver_key in MAXMIN_SOLVERS:
+            _certify_increasing_sizes(rows, out_path, problem_name, DiversityMetric.MIN_SEPARATION, solver_key)
     return rows
 
 
@@ -156,7 +220,7 @@ def run_exact_nn(out_path: Path = OUTPUT_DIR / EXACT_NN_FILE) -> list[dict]:
     rows = _load_rows(out_path)
     for problem_name in PROBLEMS:
         for metric in NN_OBJECTIVES:
-            _certify_increasing_sizes(rows, out_path, problem_name, metric, "ortools-cpsat", _cpsat_nn(metric))
+            _certify_increasing_sizes(rows, out_path, problem_name, metric, "ortools-cpsat")
     return rows
 
 

@@ -186,7 +186,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     (results_dir / "tier3_gaps.md").write_text(build_gap_table(gaps, groups))
     (results_dir / "tier3_counts.md").write_text(build_count_table(maxdiv, groups))
     (results_dir / "tier3_entrants.md").write_text(build_entrant_table(gaps, groups))
-    (results_dir / "tier3_glover.md").write_text(glover_sentence(maxdiv, rows))
+    (results_dir / "tier3_glover_sentence.md").write_text(glover_sentence(maxdiv, rows))
     (results_dir / "tier3_best_known.md").write_text(build_best_known_table(rows))
     written = render_charts(gaps, groups, docs_dir / "images")
     for family in CHARTED_FAMILIES:
