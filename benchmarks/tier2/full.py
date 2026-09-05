@@ -29,9 +29,9 @@ from benchmarks.adapters import (
     ApricotFacilityLocation,
     CodeFdmFairFlow,
     FpsampleFPS,
-    GreedyMaxSum,
     KMedoidsFasterPAM,
     QcSelectorMaxMin,
+    QcSelectorMaxSum,
     RandomBaseline,
     RdkitMaxMin,
     SelectionAdapter,
@@ -65,7 +65,7 @@ EVALUATED_DIVERSITY_METRICS = (
 
 
 def unconstrained_adapters() -> list[SelectionAdapter]:
-    """The tier-2 competitor roster (GPL-group qc-selector included only when installed)."""
+    """The tier-2 competitor roster."""
     return [
         RandomBaseline(),
         FpsampleFPS(),
@@ -73,8 +73,8 @@ def unconstrained_adapters() -> list[SelectionAdapter]:
         RdkitMaxMin(),
         ApricotFacilityLocation(),
         KMedoidsFasterPAM(),
-        GreedyMaxSum(),
         QcSelectorMaxMin(),
+        QcSelectorMaxSum(),
     ]
 
 
@@ -87,10 +87,7 @@ def run_competitors_unconstrained(
         for size in UNCONSTRAINED_SIZES:
             problem = build_problem(name, n=size, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION)
             for adapter in unconstrained_adapters():
-                try:
-                    records += run_adapter(adapter, problem, problem_name=name, size=size, seeds=SEEDS)
-                except ImportError:
-                    print(f"  skipped (not installed): {adapter.name}", flush=True)
+                records += run_adapter(adapter, problem, problem_name=name, size=size, seeds=SEEDS)
             print(f"competitors {name} size={size} done ({len(records)} records so far)", flush=True)
             save_records(records, out_path)
     return records

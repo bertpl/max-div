@@ -2,14 +2,20 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.figures.style import TOOL_COLORS, save_webp, tool_color, tool_key
+from benchmarks.figures.style import TOOL_COLORS, UNLISTED_TOOL_COLOR, save_webp, tool_color, tool_key
 from benchmarks.solver_scaling.configs import CONFIGS
 
 
 def test_every_scaling_tool_has_a_color():
-    """Each tool with a scaling configuration resolves to a palette color."""
+    """Each tool with a scaling configuration has its own palette entry, not the fallback."""
     # --- act / assert -----------------
-    assert all(tool_color(c.tool) for c in CONFIGS)
+    assert all(c.tool in TOOL_COLORS for c in CONFIGS)
+
+
+def test_unlisted_tool_gets_the_fallback_color():
+    """A tool the palette does not list is drawn in the neutral fallback tone."""
+    # --- act / assert -----------------
+    assert tool_color("greedy") == UNLISTED_TOOL_COLOR
 
 
 @pytest.mark.parametrize(

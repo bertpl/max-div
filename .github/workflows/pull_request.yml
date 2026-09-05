@@ -78,9 +78,7 @@ jobs:
     uses: ./.github/workflows/_unit_tests.yml
 
   # Comparison-benchmark harness tests: single leg (py3.14, numba on) with the
-  # `benchmarks` dependency groups (incl. the GPL one: running GPL software in CI
-  # carries no obligations; only distributing it would) — deliberately outside the
-  # package test matrix. Network-dependent tests (MDPLIB fetch, code-FDM fetch)
+  # `benchmarks` dependency group — deliberately outside the package test matrix. Network-dependent tests (MDPLIB fetch, code-FDM fetch)
   # skip on fetch failure, so upstream availability can never block a merge.
   test-benchmarks-harness:
     needs: [preflight]

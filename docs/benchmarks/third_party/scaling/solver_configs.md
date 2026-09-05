@@ -23,6 +23,7 @@ For every configuration, the time budget is handed to the solver where it accept
 | qc-selector | 0.1.4 | `maxmin` | max-min selection on a precomputed distance matrix |
 | DPPy | 0.3.3 | `default` | one exact k-DPP sample over an RBF likelihood kernel, bandwidth set by the median-pairwise-distance heuristic |
 | code-FDM | commit `d18758a` | `default` | FairFlow with a single color spanning all items (its unconstrained reduction) |
+| kmedoids | 0.5.5 | `default` | FasterPAM k-medoids on a precomputed distance matrix, random initialization |
 
 Notes:
 

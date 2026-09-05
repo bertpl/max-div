@@ -1,16 +1,19 @@
 # Comparison with Other Tools
 
-How does max-div relate to other freely available tools that select diverse subsets? The honest
-answer starts with recognizing that the alternatives fall into **three different categories**, and
-a flat ranking across them would be misleading:
+How does max-div relate to other freely available tools that select diverse subsets? The
+alternatives fall into **four different categories**, and a flat ranking across them would be
+misleading:
 
 - **Exact solvers** (SCIP, OR-Tools CP-SAT, HiGHS) are general MIP/CP engines. Given a hand-built
   model they *prove* optimality — but only at small problem sizes, at minutes-to-hours cost. They
   are best read as the optimality reference, not as competitors.
-- **One-shot pickers & samplers** (RDKit, skmatter, fpsample, apricot, qc-selector, DPPy) run a
+- **One-shot pickers** (RDKit, skmatter, fpsample, apricot, qc-selector, code-FDM) run a
   single-shot construction: one pass, one answer, typically in milliseconds. Very fast, but the
-  answer does not improve if you can afford more time, and none of them supports general
-  per-group selection constraints.
+  answer does not improve if you can afford more time, and only code-FDM supports per-group
+  selection constraints, over disjoint groups.
+- **Clustering & sampling tools** (kmedoids, DPPy) return a diverse-looking subset by a different
+  contract: cluster centers, or a draw from a distribution that favors spread-out subsets. They
+  optimize no dispersion objective and appear as references.
 - **Anytime heuristic optimizers** — max-div's category: start from a construction, then keep
   improving the selection for as long as the time budget allows, under fairness constraints if
   given.

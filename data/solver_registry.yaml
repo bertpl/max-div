@@ -41,7 +41,7 @@ categories:
         name: HiGHS
 
   - key: oneshot
-    label: One-shot pickers & samplers
+    label: One-shot pickers
     tools:
       - key: rdkit
         name: RDKit MaxMinPicker
@@ -53,7 +53,16 @@ categories:
         name: apricot-select
       - key: qc-selector
         name: qc-selector
-      - key: dppy
-        name: DPPy
       - key: code-fdm
         name: code-FDM
+
+  # Tools whose answer is a diverse-looking subset by a different contract: cluster centers, or a
+  # draw from a distribution. Measured as references under the dispersion metrics, never as
+  # competitors on them.
+  - key: clustering-sampling
+    label: Clustering & sampling
+    tools:
+      - key: kmedoids
+        name: kmedoids
+      - key: dppy
+        name: DPPy

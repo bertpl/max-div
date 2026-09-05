@@ -10,9 +10,9 @@ from pathlib import Path
 from benchmarks.adapters import (
     ApricotFacilityLocation,
     FpsampleFPS,
-    GreedyMaxSum,
     KMedoidsFasterPAM,
     QcSelectorMaxMin,
+    QcSelectorMaxSum,
     RandomBaseline,
     RdkitMaxMin,
     SelectionAdapter,
@@ -46,14 +46,11 @@ def main() -> None:
         RdkitMaxMin(),
         ApricotFacilityLocation(),
         KMedoidsFasterPAM(),
-        GreedyMaxSum(),
-        QcSelectorMaxMin(),  # GPL opt-in group; skipped below when not installed
+        QcSelectorMaxMin(),
+        QcSelectorMaxSum(),
     ]
     for adapter in adapters:
-        try:
-            records += run_adapter(adapter, problem, problem_name="U1", size=200, seeds=seeds)
-        except ImportError:
-            print(f"skipped (not installed): {adapter.name}")
+        records += run_adapter(adapter, problem, problem_name="U1", size=200, seeds=seeds)
 
     save_records(records, OUTPUT_DIR / "records.jsonl")
     plot_anytime_curve(

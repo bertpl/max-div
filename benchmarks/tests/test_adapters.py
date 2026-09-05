@@ -7,9 +7,9 @@ from benchmarks.adapters import (
     ApricotFacilityLocation,
     CodeFdmFairFlow,
     FpsampleFPS,
-    GreedyMaxSum,
     KMedoidsFasterPAM,
     QcSelectorMaxMin,
+    QcSelectorMaxSum,
     RandomBaseline,
     RdkitMaxMin,
     SkmatterFPS,
@@ -25,7 +25,8 @@ UNCONSTRAINED_ADAPTERS = [
     RdkitMaxMin(),
     ApricotFacilityLocation(),
     KMedoidsFasterPAM(),
-    GreedyMaxSum(),
+    QcSelectorMaxMin(),
+    QcSelectorMaxSum(),
 ]
 
 
@@ -50,18 +51,6 @@ def test_adapter_is_deterministic_given_seed(small_problem, adapter):
 
     # --- assert ------------------------------------------
     assert np.array_equal(first, second)
-
-
-def test_qc_selector_adapter(small_problem):
-    # GPL opt-in dependency group; exercised only where it happens to be installed
-    # --- arrange -----------------------------------------
-    pytest.importorskip("selector")
-
-    # --- act ---------------------------------------------
-    indices, _ = QcSelectorMaxMin().timed_select(small_problem, seed=0)
-
-    # --- assert ------------------------------------------
-    assert len(np.unique(indices)) == small_problem.k
 
 
 def test_code_fdm_adapter_satisfies_constraints(small_constrained_problem):

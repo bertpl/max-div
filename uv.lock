@@ -1811,12 +1811,10 @@ benchmarks = [
     { name = "ortools" },
     { name = "psutil" },
     { name = "pyscipopt" },
+    { name = "qc-selector" },
     { name = "rdkit" },
     { name = "scikit-learn" },
     { name = "skmatter" },
-]
-benchmarks-gpl = [
-    { name = "qc-selector" },
 ]
 dev = [
     { name = "check-wheel-contents" },
@@ -1892,11 +1890,11 @@ benchmarks = [
     { name = "ortools", specifier = ">=9.10" },
     { name = "psutil", specifier = ">=5.9" },
     { name = "pyscipopt", specifier = ">=5.0" },
+    { name = "qc-selector", specifier = ">=0.1" },
     { name = "rdkit", specifier = ">=2025.3" },
     { name = "scikit-learn", specifier = ">=1.4" },
     { name = "skmatter", specifier = ">=0.3" },
 ]
-benchmarks-gpl = [{ name = "qc-selector", specifier = ">=0.1" }]
 dev = [
     { name = "check-wheel-contents", specifier = ">=0.6.2" },
     { name = "pre-commit", specifier = ">=4.0" },
