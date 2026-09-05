@@ -4,10 +4,10 @@ solver:
   source: https://github.com/kno10/python-kmedoids
   verified: 2026-09-05
   scale:
-    max_n_memory: pending
-    max_n_time: pending
-    max_n_quality_50: pending
-    max_n_quality_90: pending
+    max_n_memory: 50000
+    max_n_time: 50000
+    max_n_quality_50: none
+    max_n_quality_90: none
   metadata:
     guarantee: heuristic (local optimum of the k-medoids objective)
     license: GPL-3.0-or-later

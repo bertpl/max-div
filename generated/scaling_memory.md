@@ -17,3 +17,4 @@
 | qc-selector | `maxmin` | **20,000** | quadratic fit over 9 sizes |
 | DPPy | `default` | **500** | measurement series truncated: the solver fails at the next size (`ValueError: size k=100 > rank=98`) |
 | code-FDM | `default` | **100,000,000** | linear fit over 17 sizes |
+| kmedoids | `default` | **50,000** | quadratic fit over 10 sizes |

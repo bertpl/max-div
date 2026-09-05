@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from benchmarks.solver_scaling import memory_stage
@@ -129,3 +131,19 @@ def test_a_failure_before_any_success_is_skipped(monkeypatch, tmp_path):
     # the n=20, 50 failures were skipped; the fit rests on the >= 100 successes and reaches a crossing
     assert fit.coef is not None
     assert fit.max_n == 500_000_000
+
+
+def test_write_fits_keeps_the_other_configurations(tmp_path):
+    """Writing fits for a subset of the configurations leaves the stored fits of the rest."""
+    # --- arrange ----------------------
+    fit_path = tmp_path / "memory_fits.json"
+    fit_path.write_text('{"rdkit/default": {"max_n": 1000, "coef": [1.0], "reason": "old", "r2": 0.9}}\n')
+    fresh = memory_stage.MemoryFit(max_n=50000, coef=(2.0, 3.0), reason="quadratic fit over 10 sizes", r2=0.99)
+
+    # --- act --------------------------
+    memory_stage._write_fits({"kmedoids/default": fresh}, fit_path)
+
+    # --- assert -----------------------
+    stored = json.loads(fit_path.read_text())
+    assert stored["rdkit/default"]["max_n"] == 1000
+    assert stored["kmedoids/default"]["max_n"] == 50000
