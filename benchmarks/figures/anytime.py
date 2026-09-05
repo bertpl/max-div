@@ -57,8 +57,8 @@ def plot_anytime_curve(records: list[RunRecord], metric_name: str, path: Path, t
 
 
 def _legend_order(by_tool: dict[str, list[RunRecord]]) -> list[tuple[str, list[RunRecord]]]:
-    """Order tools alphabetically, with the random baseline last: it is the floor, not a competitor."""
-    return sorted(by_tool.items(), key=lambda item: (item[0] == "random", item[0]))
+    """Order max-div first, then the competitors alphabetically, then the random baseline: the subject, the field, the floor."""
+    return sorted(by_tool.items(), key=lambda item: (not item[0].startswith("max-div"), item[0] == "random", item[0]))
 
 
 def _group_by_tool(records: list[RunRecord]) -> dict[str, list[RunRecord]]:

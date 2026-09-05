@@ -27,7 +27,7 @@ REPO_ROOT = SCRIPTS_DIR.parent
 # repo root on the path. Running the script from the repo root does not do that by itself.
 sys.path.insert(0, str(REPO_ROOT))
 
-from benchmarks.figures.style import MARKER_SHAPES, TOOL_COLORS, save_webp, tool_color, use_docs_style  # noqa: E402
+from benchmarks.figures.style import MARKER_SHAPES, save_webp, tool_color, use_docs_style  # noqa: E402
 from benchmarks.solver_scaling.best_known_stage import DATA_PATH as BEST_KNOWN_DATA_PATH  # noqa: E402
 from benchmarks.solver_scaling.best_known_stage import best_known_by_size  # noqa: E402
 from benchmarks.solver_scaling.configs import CONFIGS  # noqa: E402
@@ -101,9 +101,9 @@ def _legend_label(tool: str, config: str, names: dict[str, str]) -> str:
 # ==================================================================================================
 #  Charts
 # ==================================================================================================
-# The best-known and Q_random reference curves take the palette's first two colors: they are
-# not tools, so they are keyed by position, not by registry key.
-_PALETTE = tuple(TOOL_COLORS.values())
+# The best-known and Q_random reference curves are not tools, so they carry their own colors.
+_BEST_KNOWN_COLOR = "#4E8FD9"  # blue
+_Q_RANDOM_COLOR = "#F29E4C"  # orange
 
 
 def _series_style(tool: str, config: str) -> dict:
@@ -417,7 +417,7 @@ def render_best_known_chart(
         [by_size[n].min_separation for n in sizes],
         label="best-known",
         linewidth=_LINE_WIDTH,
-        color=_PALETTE[0],
+        color=_BEST_KNOWN_COLOR,
         marker="o",
     )
     for n in sizes:
@@ -429,7 +429,7 @@ def render_best_known_chart(
         [q_random[n] for n in random_sizes],
         label="$Q_{\\mathrm{random}}$",
         linewidth=_LINE_WIDTH,
-        color=_PALETTE[1],
+        color=_Q_RANDOM_COLOR,
         marker="s",
         markerfacecolor="none",
         markersize=7,

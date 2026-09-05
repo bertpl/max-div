@@ -13,10 +13,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 
 # `TOOL_COLORS` gives one color per tool, keyed by the tool's solver-registry key, or by its
-# record-label prefix for the tools the registry does not list. The first two entries are reserved:
-# `generate_scaling_images` reads them by position.
+# record-label prefix for the tools the registry does not list. max-div, the subject of every
+# comparison, is black; the third-party tools take the colors.
 TOOL_COLORS: dict[str, str] = {
-    "max-div": "#4E8FD9",  # blue
+    "max-div": "#222222",  # black
     "ortools-cpsat": "#F29E4C",  # orange
     "scip": "#5DBB7A",  # green
     "highs": "#E8655F",  # coral
