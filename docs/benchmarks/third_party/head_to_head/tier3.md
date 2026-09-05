@@ -16,26 +16,29 @@ and asks that the library be cited as Martí, Duarte, Martínez-Gavara & Sánche
 
 - Objective: `MIN_SEPARATION` (the MMDP objective). All 195 published (instance, k)
   pairings: 75 Glover (n ≤ 30), 60 Geo and 60 Ran (n ∈ {100, 250, 500}).
-- max-div runs the wall-clock budget ladder (2× steps from 1 ms, `SMART` preset, 3 seeds)
-  to ~2 s per pairing, extended to ~16 s on the n = 500 instances — calibration showed
-  quality plateaus well inside 1 s on the smaller ones.
+- max-div runs the series of wall-clock budgets (2× steps from 1 ms, `SMART` preset,
+  3 seeds) to ~2 s per pairing, extended to ~16 s on the n = 500 instances — quality
+  plateaus well inside 1 s on the smaller ones.
 - Hardware: 16" MacBook Pro with M3-class CPU, single sequential run.
 - Reproduce with `uv run --group benchmarks python -m benchmarks.tier3.full` (records),
   then `... -m benchmarks.tier3.report` (tables).
 - max-div figures measured against **v0.10.1**; the reference values are the published
   2010 ones, vendored.
 
-## Reading the reference values honestly
+## How to read the reference values
 
 The published values are the best over the six algorithms of the 2010 paper. They are a
 **historical reference, not today's state of the art**: later work (e.g. Porumbel, Hao &
 Glover 2011) improved some bounds, and — as the Ran results below show — max-div itself
 exceeds the published value on parts of that set. The claim on this page is therefore
 *"gap at budget t against the published 2010 values"*, never "matches modern SOTA".
-Two of the three sets are also reported as counts rather than percentage gaps: the Ran
-distances are integers in [1, 200], so at small reference values one integer step is a
-double-digit "percentage", and the Glover instances are small enough that every published
-algorithm agrees on every value.
+
+Two of the three sets are reported as counts, not percentage gaps:
+
+- the Ran distances are integers in [1, 200], so at small reference values one integer step
+  is a double-digit "percentage";
+- the Glover instances are small enough that every published algorithm agrees on every
+  value.
 
 ## Geo — percentage gap to the published values
 
@@ -51,14 +54,13 @@ seeds and budgets), not percentage gaps. The picture splits by size:
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier3_ran.md"
 
-On the larger instances (n ≥ 250) max-div matches the reference on most — all 10 of 10 at
-n = 500, k = 150 — and **exceeds** it on a couple: where "exceeded" is non-zero it found a
-strictly better max-min value than the published one, direct evidence the 2010 values are
-not tight there. On the small, dense n = 100 instances it trails on a fair share: those
-solutions are fully converged well within budget (they plateau by ~16 ms), so the
-shortfall is a genuine quality gap, not a matter of more time. This is the honest shape of
-the result — max-div is strong on the harder, larger instances and mixed on the small
-dense ones.
+On the larger instances (n ≥ 250) max-div matches the reference on most and **exceeds** it
+on a couple. Where "exceeded" is non-zero max-div found a strictly better max-min value
+than the published one, direct evidence the 2010 values are not tight there.
+
+On the small, dense n = 100 instances max-div trails on a fair share. Those solutions are
+fully converged well within budget (they plateau by ~16 ms), so the shortfall is a genuine
+quality gap, not a matter of more time.
 
 ## Glover — matched / exceeded counts
 

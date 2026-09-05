@@ -28,18 +28,23 @@ The comparison runs in three tiers, by what `max-div` is measured against:
 
 ## Shared method
 
-Every tier uses the same measuring stick, so numbers are comparable across pages:
+Every tier uses the same method, so numbers are comparable across pages:
 
 - **All tools are scored under `max-div`'s own diversity metrics** (min / mean / geomean
   separation, mean pairwise distance), computed identically for every tool.
-- **`max-div` runs an anytime budget ladder** (2× wall-clock steps from 1 ms, `SMART`
-  preset, 3 seeds); figures plot *measured* solve time, never the nominal budget. Single-shot
-  competitors run once per seed. Per-tier budget ceilings differ and are stated on each page.
+- **`max-div` runs a series of wall-clock budgets** (2× steps from 1 ms, `SMART` preset,
+  3 seeds); figures plot *measured* solve time, never the nominal budget. Single-shot
+  competitors run once per seed. The largest budget differs per tier and is stated on each
+  page.
 - **One sequential run on one machine** — a 16" MacBook Pro with M3-class CPU.
 - Everything is reproducible from the repo-tracked harness under `benchmarks/`.
 
-The honest headline the tiers converge on: `max-div` leads the Python heuristics at small to
-moderate selection sizes, trades the lead to farthest-point pickers as the selection grows,
-lands within a few percent of proven optima in milliseconds where those optima are
-reachable, and matches or exceeds the literature's best-known values on the larger MMDP
-instances. Each page states where it wins and where it does not.
+Across the three tiers, `max-div`:
+
+- leads the Python heuristics at small to moderate selection sizes, and trails the
+  farthest-point pickers as the selection grows;
+- lands within a few percent of proven optima in milliseconds, where those optima are
+  reachable;
+- matches or exceeds the literature's best-known values on the larger MMDP instances.
+
+Each page states where `max-div` wins and where it does not.

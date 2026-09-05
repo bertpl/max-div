@@ -86,7 +86,7 @@ def test_build_margin_table_shape():
 
 
 def _fresh_maxdiv_record(problem: str, budget: str, diversity_metric: str) -> RunRecord:
-    """A max-div ladder record as a re-measurement would produce it, quality 1.0 under every metric."""
+    """A max-div budget-series record as a re-measurement would produce it, quality 1.0 under every metric."""
     return RunRecord(
         tool="max-div[DEFAULT]",
         problem=problem,

@@ -1,7 +1,7 @@
 """Tier-1 report emission: turn the recorded results into docs tables.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier1.report``.
-Merges two result sources: max-div's ladders as measured by ``benchmarks.tier1.full`` or
+Merges two result sources: max-div's budget series as measured by ``benchmarks.tier1.full`` or
 ``benchmarks.tier1.rerun`` (untracked, re-measured whenever the solver changes), and the
 exact-solver references from the tracked files in ``benchmarks/tier1/data/`` (fixed across
 max-div re-measurements). Emits markdown tables into ``RESULTS_DIR``.
@@ -19,12 +19,12 @@ RECORDS_DIR = Path("reports/benchmarks/tier1")
 DATA_DIR = Path(__file__).parent / "data"
 RESULTS_DIR = Path("docs/benchmarks/third_party/head_to_head/results")
 
-# Ladder rungs quoted in the gap table (seconds; must be actual ladder rungs).
+# The gap table quotes these budgets (seconds); each must be a budget the series ran.
 GAP_BUDGETS_SEC = (0.016, 0.128, 1.024, 16.384)
 
 
 def maxdiv_gap_pct(records: list[RunRecord], metric_name: str, budget_sec: float, optimum: float) -> float:
-    """Mean gap (%) of max-div to a proven optimum at one ladder rung (positive = below optimum)."""
+    """Mean gap (%) of max-div to a proven optimum at one budget (positive = below optimum)."""
     tag = f"time:{budget_sec}s"
     values = [r.quality[metric_name] for r in records if r.budget == tag]
     return (optimum - float(np.mean(values))) / optimum * 100.0
@@ -53,7 +53,7 @@ def build_maxmin_gap_table(exact_rows: list[dict], records: list[RunRecord]) -> 
 
 
 def build_scaling_table(rows: list[dict]) -> str:
-    """Markdown table: time-to-proof per backend across the n-ladder ('timeout' where unproven)."""
+    """Markdown table: time-to-proof per backend across increasing n ('timeout' where unproven)."""
     backends = list(dict.fromkeys(row["backend"] for row in rows))
     by_backend: dict[str, dict[int, dict]] = defaultdict(dict)
     ns: list[int] = sorted({row["n"] for row in rows})
@@ -70,7 +70,7 @@ def build_scaling_table(rows: list[dict]) -> str:
         for backend in backends:
             row = by_backend[backend].get(n)
             if row is None:
-                cells.append("—")  # ladder stopped earlier for this backend
+                cells.append("—")  # this backend stopped at a smaller n
             elif row["proven"]:
                 cells.append(f"{row['measured_sec']:.1f} s")
             else:
@@ -80,7 +80,7 @@ def build_scaling_table(rows: list[dict]) -> str:
 
 
 def build_incumbent_table(panel_rows: list[dict], records: list[RunRecord]) -> str:
-    """Markdown table: CP-SAT's incumbent at its cap vs. max-div's ladder (uncertified)."""
+    """Markdown table: CP-SAT's incumbent at its cap vs. max-div's budget series (uncertified)."""
     by_key: dict[tuple[str, int], list[RunRecord]] = defaultdict(list)
     for r in records:
         by_key[(r.problem, r.size)].append(r)

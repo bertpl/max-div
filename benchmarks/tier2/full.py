@@ -9,13 +9,13 @@ multi-hour sequential run on a quiet machine.
 
 The competitor outputs (``third_party_*.jsonl``) share their names with the tracked
 reference copies under ``benchmarks/tier2/data/``: promoting a fresh competitor
-measurement is copying the files over, a deliberate act rather than a side effect of
-re-running.
+measurement means copying the files over by hand, so a re-run never changes the tracked
+references by itself.
 
 Protocol (mirrored on the results page):
 
 - Unconstrained: U1-U4 at sizes 2/10/50/200 (n = 200 to 20000). max-div runs the wall-clock
-  budget ladder once per diversity metric (it optimizes what it is scored on); single-shot
+  budget series once per diversity metric (it optimizes what it is scored on); single-shot
   competitors run once per seed and are scored under every metric alike.
 - Constrained: C1-C2 at sizes 2/10/20 (n <= 2000) with MIN_SEPARATION, against code-FDM —
   the one surveyed heuristic that honors group constraints. It does not scale past n ~ 2000
@@ -37,9 +37,9 @@ from benchmarks.adapters import (
     SelectionAdapter,
     SkmatterFPS,
 )
-from benchmarks.common import build_problem, save_records, time_ladder
+from benchmarks.common import build_problem, save_records, time_budget_series
 from benchmarks.common.records import RunRecord
-from benchmarks.runners import run_adapter, run_maxdiv_ladder
+from benchmarks.runners import run_adapter, run_maxdiv_budget_series
 from max_div.metrics import DiversityMetric
 
 OUTPUT_DIR = Path("reports/benchmarks/tier2")
@@ -53,9 +53,8 @@ CONSTRAINED_PROBLEMS = ("C1", "C2")
 CONSTRAINED_SIZES = (200, 1000, 2000)
 CONSTRAINED_METRIC = DiversityMetric.MIN_SEPARATION
 
-# Ladder ceiling 10 s: the last rung is the first value >= the ceiling (16.4 s), so the
-# curves bracket the region where the slowest competitors land instead of stopping short.
-TIME_BUDGETS_SEC = time_ladder(0.001, 10.0)
+# The series runs to 10 s so it extends past the region where the slowest competitors land.
+TIME_BUDGETS_SEC = time_budget_series(0.001, 10.0)
 
 EVALUATED_DIVERSITY_METRICS = (
     DiversityMetric.MIN_SEPARATION,
@@ -104,7 +103,7 @@ def run_maxdiv_unconstrained(
     seeds: tuple[int, ...] = SEEDS,
     out_path: Path = OUTPUT_DIR / "maxdiv_unconstrained.jsonl",
 ) -> list[RunRecord]:
-    """max-div's budget ladder on every unconstrained cell, one ladder per diversity metric.
+    """Run max-div's budget series on every unconstrained cell, one series per diversity metric.
 
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
@@ -113,7 +112,7 @@ def run_maxdiv_unconstrained(
         for size in sizes:
             for metric in EVALUATED_DIVERSITY_METRICS:
                 metric_problem = build_problem(name, n=size, diversity_metric=metric)
-                records += run_maxdiv_ladder(
+                records += run_maxdiv_budget_series(
                     metric_problem,
                     problem_name=name,
                     size=size,
@@ -146,7 +145,7 @@ def run_maxdiv_constrained(
     seeds: tuple[int, ...] = SEEDS,
     out_path: Path = OUTPUT_DIR / "maxdiv_constrained.jsonl",
 ) -> list[RunRecord]:
-    """max-div's budget ladder on the constrained cells, MIN_SEPARATION only.
+    """Run max-div's budget series on the constrained cells, MIN_SEPARATION only.
 
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
@@ -154,7 +153,7 @@ def run_maxdiv_constrained(
     for name in problems:
         for size in sizes:
             problem = build_problem(name, n=size, diversity_metric=CONSTRAINED_METRIC)
-            records += run_maxdiv_ladder(
+            records += run_maxdiv_budget_series(
                 problem,
                 problem_name=name,
                 size=size,

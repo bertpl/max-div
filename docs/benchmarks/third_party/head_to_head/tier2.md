@@ -7,11 +7,11 @@ reach for? This page benchmarks it against the surveyed single-shot heuristics (
 
 ## Protocol
 
-- **max-div** runs a wall-clock budget ladder (2× steps from 1 ms; the last rung is the
-  first ≥ 10 s), one independent solve per budget × seed (3 seeds), `DEFAULT` preset (an
-  alias of `SMART` — figures label it `max-div[DEFAULT]`). Figures
-  plot *measured* solve time, never the nominal budget. One ladder per diversity metric —
-  max-div optimizes the metric it is scored under.
+- **max-div** runs a series of wall-clock budgets (2× steps from 1 ms; the last budget is
+  the first ≥ 10 s), one independent solve per budget × seed (3 seeds), `DEFAULT` preset
+  (an alias of `SMART` — figures label it `max-div[DEFAULT]`). Figures plot *measured*
+  solve time, never the nominal budget. One series per diversity metric: max-div optimizes
+  the metric it is scored under.
 - **Competitors** are single-shot: one run per seed, plotted as a dot at (measured time,
   quality).
 - **Every** tool's selection is scored under max-div's own diversity metrics, computed
@@ -48,10 +48,9 @@ n = 20000 it reaches par by ~16 s, comparable to greedy's own ~20 s run time —
 not beat it. If pure max-sum is the only goal, the greedy baseline remains the pragmatic
 choice.
 
-**Where max-div is differentiated:** the separation-family objectives (ahead outright
-below n ≈ 5000, ahead given its rivals' own run time above), the anytime property
-(near-plateau quality within ~1 s at most sizes), and constrained selection (below) —
-where the heuristic field thins out to a single competitor that stops at n ≈ 2000.
+**max-div is further differentiated by** the anytime property (near-plateau
+quality within ~1 s at most sizes) and by constrained selection (below), where only one
+surveyed heuristic competitor exists, and it stops at n ≈ 2000.
 
 ## Unconstrained results (U1, uniform density)
 
@@ -96,13 +95,16 @@ of budget. Positive = max-div ahead.
 ## Constrained results
 
 With fairness constraints, the only surveyed heuristic competitor is
-[code-FDM](https://github.com/yhwang1990/code-FDM) (FairFlow), and it bounds the comparison
-twice over: it scales roughly cubically (~150 s at n = 2000, impractical beyond), and its
-disjoint-color fairness model cannot even *express* overlapping constraint groups — so the
-harder constrained problems (C3/C4) have no competitor at all. The comparison therefore
-covers C1/C2 up to n = 2000; beyond either limit, no surveyed Python heuristic produces
-constraint-satisfying selections (exact solvers can, at small n — see the
-[exact-reference benchmarks](tier1.md)).
+[code-FDM](https://github.com/yhwang1990/code-FDM) (FairFlow), and it limits the comparison
+in two ways:
+
+- it scales roughly cubically (~150 s at n = 2000, impractical beyond);
+- its disjoint-color fairness model cannot *express* overlapping constraint groups, so the
+  harder constrained problems (C3/C4) have no competitor at all.
+
+The comparison therefore covers C1/C2 up to n = 2000. Beyond either limit, no surveyed
+Python heuristic produces constraint-satisfying selections; exact solvers can, at small n
+(see the [exact-reference benchmarks](tier1.md)).
 
 ![C1 size 2](./images/tier2_C1_2_min_separation.svg)
 ![C1 size 10](./images/tier2_C1_10_min_separation.svg)

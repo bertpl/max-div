@@ -57,7 +57,7 @@ def test_resolve_explicit_choice_passes_through(storage: DistanceStorage):
         (50_000, 8 * GIB, DistanceStorage.LAZY),  # even condensed over budget
     ],
 )
-def test_resolve_auto_vector_ladder(n: int, total_memory: int | None, expected: DistanceStorage):
+def test_resolve_auto_vector_fastest_layout_that_fits(n: int, total_memory: int | None, expected: DistanceStorage):
     """AUTO on vector problems: fastest layout whose bytes fit within a third of total RAM."""
 
     # --- arrange ----------------------

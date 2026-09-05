@@ -10,7 +10,7 @@ from benchmarks.tier3.report import (
 
 
 def _record(instance: str, k: int, budget: str, min_separation: float, seed: int = 0) -> RunRecord:
-    """Minimal tier-3 ladder record (problem = instance file name, size = k)."""
+    """Minimal tier-3 budget-series record (problem = instance file name, size = k)."""
     return RunRecord(
         tool="max-div[SMART]",
         problem=instance,
@@ -51,7 +51,7 @@ def test_best_of_seeds_and_gap():
 
 
 def test_best_overall_spans_seeds_and_budgets():
-    # a deeper budget on the same instance must win over a lower rung's best seed
+    # a deeper budget on the same instance must win over a lower budget's best seed
     # --- arrange -----------------------------------------
     records = [
         _record("Ran 500 1.txt", 50, "time:1.024s", 54.0, seed=0),

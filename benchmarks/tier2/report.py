@@ -1,7 +1,7 @@
 """Tier-2 report emission: turn the recorded runs into docs figures and tables.
 
 Run with: ``uv run --group benchmarks python -m benchmarks.tier2.report``.
-Merges two record sources: max-div's ladders as measured by ``benchmarks.tier2.full`` or
+Merges two record sources: max-div's budget series as measured by ``benchmarks.tier2.full`` or
 ``benchmarks.tier2.rerun`` (untracked, re-measured whenever the solver changes), and the
 competitor single-shots from the tracked reference records in ``benchmarks/tier2/data/``
 (fixed across max-div re-measurements). Emits the curated docs artifacts (anytime-curve
@@ -27,7 +27,7 @@ FIGURE_UNCONSTRAINED_METRICS = ("MIN_SEPARATION", "GEOMEAN_SEPARATION")
 FIGURE_CONSTRAINED_PROBLEM = "C1"
 TABLE_METRICS = ("MIN_SEPARATION", "MEAN_SEPARATION", "GEOMEAN_SEPARATION", "MEAN_PAIRWISE_DISTANCE")
 
-# Budget rungs the margin tables quote (seconds; matched to the nearest ladder rung).
+# The margin tables quote these budgets (seconds); each must be a budget the series ran.
 TABLE_BUDGETS_SEC = (1.024, 16.384)
 
 
@@ -37,7 +37,7 @@ def records_for_figure(records: list[RunRecord], metric_name: str) -> list[RunRe
 
 
 def maxdiv_mean_at_budget(records: list[RunRecord], metric_name: str, budget_sec: float) -> float | None:
-    """Mean quality over seeds of the max-div run optimizing the metric, at the given ladder rung."""
+    """Mean quality over seeds of the max-div run optimizing the metric, at the given budget."""
     tag = f"time:{budget_sec}s"
     values = [
         r.quality[metric_name]
