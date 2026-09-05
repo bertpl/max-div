@@ -134,7 +134,7 @@ def test_a_failure_before_any_success_is_skipped(monkeypatch, tmp_path):
 
 
 def test_write_fits_keeps_the_other_configurations(tmp_path):
-    """A sweep over a subset of the configurations refits those and leaves the stored fits of the rest."""
+    """Writing fits for a subset of the configurations leaves the stored fits of the rest."""
     # --- arrange ----------------------
     fit_path = tmp_path / "memory_fits.json"
     fit_path.write_text('{"rdkit/default": {"max_n": 1000, "coef": [1.0], "reason": "old", "r2": 0.9}}\n')
