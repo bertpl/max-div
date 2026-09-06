@@ -28,9 +28,9 @@ from max_div.solver import (
 )
 
 
-# The share of physical RAM the distance stores of the side-by-side solves may claim together. Each
-# packed solve builds its own store inside its timed call, so packing multiplies that memory; the
-# solver's own AUTO rule only sizes one store.
+# The share of physical RAM the distance stores of the solves run side by side ("packed", below) may
+# claim together. Each packed solve builds its own store inside its timed call, so packing
+# multiplies that memory; the solver's own AUTO rule only sizes one store.
 _PACKED_STORES_MEMORY_FRACTION = 0.5
 
 
@@ -39,7 +39,7 @@ def memory_bound_concurrency(problem: MaxDivProblem, requested: int, total_memor
 
     The cap keeps the distance stores of all packed solves within `_PACKED_STORES_MEMORY_FRACTION`
     of physical RAM, using the backend the solver's AUTO rule resolves for the problem. The lazy
-    backend stores no distances and never binds; an unknown RAM size leaves the request as is.
+    backend stores no distances, so it never lowers the request; an unknown RAM size leaves it as is.
 
     Args:
         total_memory_bytes: Physical RAM to size against; probed when omitted (injectable for tests).
@@ -133,7 +133,11 @@ def run_maxdiv_budget_series(
     if concurrency > 1:
         packed = memory_bound_concurrency(problem, concurrency)
         if packed < concurrency:
-            print(f"  packing {packed} single-worker solve(s) side by side, not {concurrency}: memory", flush=True)
+            print(
+                f"  packing {packed} single-worker solve(s) side by side, not {concurrency}: "
+                "their distance stores would not fit in memory together",
+                flush=True,
+            )
         concurrency = packed
     if concurrency > 1:
         # spawn, not fork: numba's threading layer is not fork-safe

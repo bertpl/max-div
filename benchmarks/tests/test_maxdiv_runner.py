@@ -48,10 +48,10 @@ def test_concurrent_single_worker_runs_return_the_same_records_shape(small_probl
         (None, 12),  # RAM unknown: the request stands
         (64 * 2**30, 12),  # 12 full-matrix stores of 30 items are nothing next to 64 GiB
         (4 * 3600 * 3, 6),  # AUTO resolves to a 3600-byte full matrix; half of 43200 bytes holds 6 of them
-        (3600 * 3, 1),  # half of 10800 bytes holds no full store at all: the floor of one solve applies
-        (5 * 900, 12),  # AUTO resolves to lazy: nothing is stored, so packing never binds
+        (3600 * 3, 1),  # half of 10800 bytes holds one full store
+        (5 * 900, 12),  # AUTO resolves to lazy: nothing is stored, so the request stands
     ],
 )
-def test_memory_bound_concurrency_caps_packed_solves_by_their_stores(small_problem, total_memory_bytes, expected):
-    """The packed-solve count follows the resolved store's bytes against half the given RAM, never below one."""
+def test_memory_bound_concurrency_caps_side_by_side_solves_by_their_stores(small_problem, total_memory_bytes, expected):
+    """The side-by-side solve count follows the resolved store's bytes against half the given RAM, never below one."""
     assert memory_bound_concurrency(small_problem, 12, total_memory_bytes) == expected

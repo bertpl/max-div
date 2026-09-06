@@ -114,9 +114,9 @@ def run_maxdiv(
 ) -> list[RunRecord]:
     """Run the max-div half: both budget series at every size, one solve at a time.
 
-    The single-worker series is not packed across processes here: from n = 20,000 the distance
-    computation of twelve side-by-side solves contends for the cores and inflates every measured
-    time by close to a second, and the whole series costs only minutes per size unpacked.
+    The single-worker series does not run side by side across processes here: at large n the
+    distance computations of concurrent solves contend for the cores and inflate the measured
+    times, and the series costs only minutes per size on its own.
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
     records: list[RunRecord] = load_records(out_path) if out_path.exists() else []
