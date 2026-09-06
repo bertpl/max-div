@@ -26,6 +26,6 @@ Each row gives, per group, each entrant's mean gap over the group's instances an
 
 ## V. Best-known values and provenance
 
-The vendored reference table lists, per pairing, the best-known value the comparison uses, the 2010 value it replaces where a later source improved it, the source of the best-known value, and whether that value is a proven optimum. Sources are named on the [comparison page](tier3.md#iib-reference-values).
+Sources are named on the [comparison page](tier3.md#iib-reference-values).
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier3_best_known.md"
