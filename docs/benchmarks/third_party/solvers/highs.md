@@ -29,10 +29,10 @@ solver:
     distance.minkowski:
       mark: partial
       note: *coeffs
-    distance.geomean:
+    distance.cosine:
       mark: partial
       note: *coeffs
-    distance.cosine:
+    distance.geomean:
       mark: partial
       note: *coeffs
     distance.custom:

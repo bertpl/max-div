@@ -34,10 +34,10 @@ solver:
     distance.minkowski:
       mark: partial
       note: *edit_source
-    distance.geomean:
+    distance.cosine:
       mark: partial
       note: *edit_source
-    distance.cosine:
+    distance.geomean:
       mark: partial
       note: *edit_source
     distance.custom:

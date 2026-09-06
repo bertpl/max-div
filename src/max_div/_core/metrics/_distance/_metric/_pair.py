@@ -137,7 +137,8 @@ def _geomean_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: in
     """Return the geometric mean of the per-dimension absolute differences of vectors i and j.
 
     Sums logarithms and exponentiates once, so the product cannot leave float64's range at any
-    dimension count; a zero difference makes the whole product zero and returns before any log.
+    dimension count; a zero difference makes the whole product zero, so the function returns zero
+    before taking any logarithm.
     """
     log_sum = np.float64(0.0)
     d = vectors.shape[1]

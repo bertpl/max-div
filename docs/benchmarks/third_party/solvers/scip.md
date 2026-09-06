@@ -36,10 +36,10 @@ solver:
     distance.minkowski:
       mark: partial
       note: *coefficients
-    distance.geomean:
+    distance.cosine:
       mark: partial
       note: *coefficients
-    distance.cosine:
+    distance.geomean:
       mark: partial
       note: *coefficients
     distance.custom:

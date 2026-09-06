@@ -16,9 +16,9 @@ _SCIPY_METRIC = {
 }
 
 
-# -------------------------------------------------------------------------
+# ==================================================================================================
 #  Compute
-# -------------------------------------------------------------------------
+# ==================================================================================================
 def test_compute_pdist_metrics(metric: DistanceMetric):
     """Check if compute_pdist implements all metrics."""
 
@@ -139,9 +139,9 @@ def test_compute_pdist_zero_for_identical_vectors(metric: DistanceMetric):
     assert result[0] == np.float32(0.0)  # distance between the two identical vectors
 
 
-# -------------------------------------------------------------------------
+# ==================================================================================================
 #  Geometric mean
-# -------------------------------------------------------------------------
+# ==================================================================================================
 def _geomean_reference(x: np.ndarray, y: np.ndarray) -> float:
     """Return the geometric mean of the absolute differences via numpy's log-mean, in float64."""
     diffs = np.abs(x.astype(np.float64) - y.astype(np.float64))
@@ -203,7 +203,7 @@ def test_compute_pdist_geometric_mean_scales_with_the_vectors():
     np.testing.assert_allclose(d_scaled, 2.5 * d, rtol=1e-6)
 
 
-def test_compute_pdist_geometric_mean_sits_between_the_smallest_gap_and_the_mean_gap():
+def test_compute_pdist_geometric_mean_lies_between_the_smallest_gap_and_the_mean_gap():
     """By the AM-GM inequality the distance lies between the smallest per-dimension gap and the L1 distance over d."""
     # --- arrange ----------------------
     rng = np.random.default_rng(3)

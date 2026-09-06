@@ -29,10 +29,10 @@ solver:
     distance.minkowski:
       mark: partial
       note: *integer_scaled
-    distance.geomean:
+    distance.cosine:
       mark: partial
       note: *integer_scaled
-    distance.cosine:
+    distance.geomean:
       mark: partial
       note: *integer_scaled
     distance.custom:

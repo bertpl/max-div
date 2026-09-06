@@ -26,8 +26,8 @@
 <text x="198" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 198 157)">L2</text>
 <text x="224" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 224 157)">L∞</text>
 <text x="250" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 250 157)">L*</text>
-<text x="276" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 276 157)">geomean</text>
-<text x="302" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 302 157)">cosine</text>
+<text x="276" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 276 157)">cosine</text>
+<text x="302" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 302 157)">geomean</text>
 <text x="328" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 328 157)">custom</text>
 <text x="354" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 354 157)">max-min</text>
 <text x="380" y="157" fill="#1f2328" font-size="12" text-anchor="start" transform="rotate(-45 380 157)">mean-of-NN</text>
@@ -176,7 +176,7 @@
 <line x1="14" y1="339" x2="892" y2="339" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="355" fill="#1f2328" font-size="12.5" font-weight="400">fpsample</text>
 <text x="201" y="355" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="355" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="355" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="357" y="355" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="731" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">1B</text>
 <text x="777" y="355" fill="#1a7f37" font-size="12" font-weight="700" text-anchor="middle">5M</text>
@@ -185,7 +185,7 @@
 <line x1="14" y1="362" x2="892" y2="362" stroke="#d8dee4" stroke-width="1"/>
 <text x="16" y="378" fill="#1f2328" font-size="12.5" font-weight="400">skmatter</text>
 <text x="201" y="378" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="305" y="378" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
+<text x="279" y="378" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="357" y="378" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="731" y="378" fill="#1f2328" font-size="12" font-weight="400" text-anchor="middle">500M</text>
 <text x="777" y="378" fill="#1f2328" fill-opacity="0.8" font-size="12" font-weight="400" text-anchor="middle">500k</text>
@@ -197,8 +197,8 @@
 <text x="201" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="227" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="253" y="401" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="279" y="401" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="305" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="279" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="401" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="331" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="435" y="401" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="731" y="401" fill="#1f2328" fill-opacity="0.8" font-size="12" font-weight="400" text-anchor="middle">20k</text>
@@ -245,8 +245,8 @@
 <text x="201" y="490" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="227" y="490" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="253" y="490" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
-<text x="279" y="490" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
-<text x="305" y="490" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="279" y="490" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
+<text x="305" y="490" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="331" y="490" fill="#1a7f37" font-size="13.5" font-weight="700" text-anchor="middle">✓</text>
 <text x="591" y="490" fill="#8c959f" font-size="13.5" text-anchor="middle">~</text>
 <text x="731" y="490" fill="#1f2328" fill-opacity="0.8" font-size="12" font-weight="400" text-anchor="middle">50k</text>

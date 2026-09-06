@@ -31,15 +31,15 @@ solver:
     distance.minkowski:
       mark: full
       note: *via_sklearn_estimator
+    distance.cosine:
+      mark: full
+      note: *via_sklearn_estimator
     distance.geomean:
       mark: partial
       note:
         text: >-
           Not among the metric names scikit-learn understands, so it is reachable only as a
           precomputed dissimilarity matrix.
-    distance.cosine:
-      mark: full
-      note: *via_sklearn_estimator
     distance.custom:
       mark: full
       note:
