@@ -45,6 +45,6 @@ Across the three tiers, `max-div`:
   farthest-point pickers as the selection grows;
 - lands within a few percent of proven optima in milliseconds, where those optima are
   reachable;
-- matches or exceeds the literature's best-known values on the larger MMDP instances.
+- reaches the literature's best-known values on most of the small MMDP instances and stays within 1–3 % of them on average on the larger ones.
 
 Each page states where `max-div` wins and where it does not.
