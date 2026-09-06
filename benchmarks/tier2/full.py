@@ -34,7 +34,6 @@ from benchmarks.common.protocol import (
     N_WORKERS,
     SEEDS,
     SINGLE_WORKER_BUDGETS_SEC,
-    SINGLE_WORKER_CONCURRENCY,
 )
 from benchmarks.common.records import RunRecord
 from benchmarks.figures.style import tool_key
@@ -49,7 +48,7 @@ ENTRANT_FILE = "third_party_u1.jsonl"
 MAXDIV_FILE = "maxdiv_u1.jsonl"
 
 PROBLEM = "U1"
-SIZES = (200, 1000, 5000, 20000, 100000)
+SIZES = (100, 1000, 10000, 100000)
 METRIC = DiversityMetric.MIN_SEPARATION
 
 
@@ -113,8 +112,11 @@ def run_maxdiv(
     n_workers: int = N_WORKERS,
     out_path: Path = OUTPUT_DIR / MAXDIV_FILE,
 ) -> list[RunRecord]:
-    """Run the max-div half: both budget series at every size.
+    """Run the max-div half: both budget series at every size, one solve at a time.
 
+    The single-worker series does not run side by side across processes here: at large n the
+    distance computations of concurrent solves contend for the cores and inflate the measured
+    times, and the series costs only minutes per size on its own.
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
     records: list[RunRecord] = load_records(out_path) if out_path.exists() else []
@@ -131,7 +133,6 @@ def run_maxdiv(
                 time_budgets_sec=budgets,
                 seeds=seeds,
                 n_workers=workers,
-                concurrency=SINGLE_WORKER_CONCURRENCY if workers == 1 else 1,
             )
             save_records(records, out_path)
         print(f"max-div {PROBLEM} n={n} done ({len(records)} records so far)", flush=True)

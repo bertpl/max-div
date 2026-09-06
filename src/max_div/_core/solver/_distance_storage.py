@@ -99,16 +99,16 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
     match resolved:
         case DistanceStorage.CONDENSED:
             if is_vector_problem:
-                _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), is_vector_problem)
+                _check_fits_physical_memory(resolved, stored_backend_bytes(resolved, n), is_vector_problem)
             return DistanceStore.condensed(problem.condensed_distances(), n)
         case DistanceStorage.FULL_MATRIX:
             if is_vector_problem:
-                _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), is_vector_problem)
+                _check_fits_physical_memory(resolved, stored_backend_bytes(resolved, n), is_vector_problem)
                 return DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric)
             as_given = problem.distance_store()
             if as_given.matrix.size:
                 return as_given  # square input: already a full matrix, zero-copy
-            _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), is_vector_problem)
+            _check_fits_physical_memory(resolved, stored_backend_bytes(resolved, n), is_vector_problem)
             return DistanceStore.full_matrix_from_condensed(as_given.pdist, n)
         case DistanceStorage.LAZY:
             if not is_vector_problem:
@@ -138,12 +138,12 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
     if isinstance(problem, VectorMaxDivProblem):
         match resolved:
             case DistanceStorage.CONDENSED:
-                _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), True)
+                _check_fits_physical_memory(resolved, stored_backend_bytes(resolved, n), True)
                 shared = SharedDistanceStore.allocate(((n * (n - 1)) // 2,), KIND_CONDENSED, n)
                 compute_pdist(problem.vectors, problem.distance_metric, out=shared.buffer)
                 return shared
             case DistanceStorage.FULL_MATRIX:
-                _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), True)
+                _check_fits_physical_memory(resolved, stored_backend_bytes(resolved, n), True)
                 shared = SharedDistanceStore.allocate((n, n), KIND_FULL_MATRIX, n)
                 compute_full_matrix(problem.vectors, problem.distance_metric, out=shared.buffer)
                 return shared
@@ -156,14 +156,14 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
         if not as_given.matrix.size:
             # condensed input, full matrix asked for: expanding into the segment makes it the one
             # n²-sized allocation on this path
-            _check_fits_physical_memory(resolved, _stored_backend_bytes(resolved, n), False)
+            _check_fits_physical_memory(resolved, stored_backend_bytes(resolved, n), False)
             shared = SharedDistanceStore.allocate((n, n), KIND_FULL_MATRIX, n)
             expand_condensed(as_given.pdist, n, out=shared.buffer)
             return shared
     return publish_distance_store(build_distance_store(problem, resolved), n)
 
 
-def _stored_backend_bytes(resolved: DistanceStorage, n: int) -> int:
+def stored_backend_bytes(resolved: DistanceStorage, n: int) -> int:
     """Return the bytes a stored backend claims for n items."""
     return 4 * n * n if resolved == DistanceStorage.FULL_MATRIX else 2 * n * n
 

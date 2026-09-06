@@ -70,7 +70,7 @@ def test_summary_table_row():
 
 
 def test_main_emits_chart_per_size_with_tables(tmp_path: Path):
-    """The report writes one chart per size, the chart list, and both tables."""
+    """The report writes one chart per size and both tables."""
     # --- arrange ----------------------
     data_dir, records_dir, docs_dir = tmp_path / "data", tmp_path / "records", tmp_path / "docs"
     save_records([_record("fpsample[FPS]", "single-shot", 1.0)], data_dir / report.ENTRANT_FILE)
@@ -83,6 +83,5 @@ def test_main_emits_chart_per_size_with_tables(tmp_path: Path):
 
     # --- assert -----------------------
     assert (docs_dir / "images" / "tier2_U1_200_min_separation.webp").exists()
-    assert "tier2_U1_200_min_separation" in (docs_dir / "results" / "tier2_charts.md").read_text()
     assert "| 200 |" in (docs_dir / "results" / "tier2_summary.md").read_text()
     assert "| fpsample[FPS] |" in (docs_dir / "results" / "tier2_entrants.md").read_text()

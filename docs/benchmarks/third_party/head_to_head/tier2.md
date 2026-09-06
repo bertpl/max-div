@@ -1,113 +1,55 @@
-# Comparison Benchmarks — vs. Python Heuristics
+# Head-to-Head — vs. Python Heuristics
 
-How does `max-div` compare to the subset-selection tools a Python user would otherwise
-reach for? This page benchmarks it against the surveyed single-shot heuristics (see the
-[Comparison](../comparison.md) page for the tool landscape) on the built-in
-[benchmark problems](../../solver/test_problems.md).
+## I. Goal and reading guide
 
-## Protocol
+The [scaling pages](../scaling/protocol.md) say how large a problem each Python subset-selection tool handles, and at what quality. This page adds what they cannot show: how `max-div`'s quality evolves with its time budget next to the fixed answer of each one-shot tool. Two questions per size:
 
-- **max-div** runs a series of wall-clock budgets (2× steps from 1 ms; the last budget is
-  the first ≥ 10 s), one independent solve per budget × seed (3 seeds), `DEFAULT` preset
-  (an alias of `SMART` — figures label it `max-div[DEFAULT]`). Figures plot *measured*
-  solve time, never the nominal budget. One series per diversity metric: max-div optimizes
-  the metric it is scored under.
-- **Competitors** are single-shot: one run per seed, plotted as a dot at (measured time,
-  quality).
-- **Every** tool's selection is scored under max-div's own diversity metrics, computed
-  identically for all tools.
-- Labels matter: `apricot[facility-location]` optimizes coverage and `kmedoids[FasterPAM]`
-  representativeness — they are included as different-objective references, not as
-  dispersion competitors.
-- Hardware: 16" MacBook Pro with M3-class CPU, single sequential run.
-- Reproduce with `uv run --group benchmarks python -m benchmarks.tier2.full` (records),
-  then `... -m benchmarks.tier2.report` (figures/tables).
-- max-div figures measured against **v0.10.1**. Competitor values are deterministic
-  single-shot runs, kept as tracked reference records.
+- at what budget does `max-div` pass the best one-shot tool?
+- how do `max-div`'s single-worker and 12-worker series compare?
 
-## Key findings
+Every chart reads the same way:
 
-Both readings matter, depending on whether the user is time-constrained:
+- the **black curves** are `max-div`: solid with one worker, dashed with 12; the band around each is the min/max over seeds, the line the mean;
+- each **dot** is one one-shot tool at its own measured time and quality (mean over seeds);
+- the **dotted horizontal line** is the best one-shot result at that size — where a black curve crosses it is the budget at which `max-div` overtakes.
 
-**At a shared ~1 s budget:** max-div is ahead of the best single-shot picker on the
-separation objectives at every size up to n = 5000. At n = 20000 (k = 2000) it trails —
-by 4–13% on most cells, and far more on the hardest (U4 min-separation): a 1 s budget
-fits only a few hundred iterations there, not even one improvement pass over the selected
-set. A user who must answer in a second at that scale is better served by a
-farthest-point picker.
+## II. Protocol
 
-**Given more time, max-div overtakes.** By ~16 s it matches or exceeds the best picker on
-every problem for every separation metric (margins +0.0…+0.2%, the one exception a −0.4%
-tie on U4 min-separation). The pickers are not free at this size either — `fpsample[FPS]`
-takes ~5 s and `RDKit[MaxMinPicker]` ~10 s of wall clock at n = 20000 — so at parity with
-their own run time max-div is within ~0.2%, and ahead beyond it.
+The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time budget, reference machine, and its [solver configurations](../scaling/solver_configs.md) for the one-shot tools. The tier runs 3 seeds per cell, not 5 ([why](../scaling/protocol.md#iii-fundamental-constants-invariants)).
 
-**On `MEAN_PAIRWISE_DISTANCE` (classical max-sum), the greedy construction is the
-benchmark.** max-div matches `greedy[max-sum]` at every size given seconds of budget — at
-n = 20000 it reaches par by ~16 s, comparable to greedy's own ~20 s run time — but it does
-not beat it. If pure max-sum is the only goal, the greedy baseline remains the pragmatic
-choice.
+- **Problem**: U1 — the scaling pages' problem, so both describe the same instances — at n = 100, 1,000, 10,000 and 100,000, k = n/10. Constrained problems are not on this page: no one-shot tool in the registry handles the constraints the harder problems carry.
+- **Objective**: minimum separation under the `L2` distance, scored identically for every tool by `max-div`'s own metric code. Tools that optimize a different objective enter as different-objective references, not as dispersion competitors ([solver configurations](../scaling/solver_configs.md)):
+    - `apricot-select` (facility location);
+    - `kmedoids` (representativeness);
+    - `DPPy` (a determinantal sample);
+    - the max-sum picker of `qc-selector`.
+- **Entrants**: every non-exact registry tool, at the sizes its scaling time limit covers; one run per seed where the tool is seeded. A tool's time includes any conversion it needs. Exact solvers are compared on the [exact-solver tier](tier1.md), not here.
+- **max-div**: `DEFAULT` preset, one independent solve per budget and seed, one solve at a time, timed end to end around the call; charts plot *measured* wall-clock, never the nominal budget. Two budget series per size:
+    - one worker, 1 ms to 60 s;
+    - 12 workers with the default dynamic grouping, 1 s to 60 s.
 
-**max-div is further differentiated by** the anytime property (near-plateau
-quality within ~1 s at most sizes) and by constrained selection (below), where only one
-surveyed heuristic competitor exists, and it stops at n ≈ 2000.
+## III. Results
 
-## Unconstrained results (U1, uniform density)
+The best one-shot tool is a farthest-point picker at every size: `RDKit` up to n = 10,000, `fpsample` at n = 100,000, where the other pickers reach the same value within 0.5 %. `max-div`'s `DEFAULT` preset starts from the same farthest-point construction, so the comparison is about what its optimization adds on top, and at what fixed cost:
 
-Anytime curves on U1 for the max-min and geomean objectives; the margin tables further
-down cover all problems and metrics.
+- **n ≤ 1,000**: `max-div` passes the best picker within 50 ms and keeps improving to 60 s — at n = 100 up to the [certified optimum](tier1.md), at n = 1,000 to 9 % (one worker) and 12 % (12 workers) above the picker.
+- **n = 10,000**: `max-div`'s first budgets sit 0.3 % below the picker line, the optimization overtakes at 0.5 s, and at 60 s the series end 8 % (one worker) and 9 % (12 workers) above it. The picker itself takes 2 ms (`fpsample[KDLine]`) to 4 s (`RDKit`) for its one answer.
+- **n = 100,000**: no measurable gain. Every series and every picker sit at the same value; `max-div`'s single-worker series costs a fixed 7 s before its first result and the 12-worker series 18 s, against 50 ms for `fpsample[KDLine]`. At this size a farthest-point picker is the better answer.
 
-### MIN_SEPARATION
+The [tables page](tier2_tables.md) holds the overtake budgets and every entrant's quality and time.
 
-![U1 size 2](./images/tier2_U1_2_min_separation.webp)
-![U1 size 10](./images/tier2_U1_10_min_separation.webp)
-![U1 size 50](./images/tier2_U1_50_min_separation.webp)
-![U1 size 200](./images/tier2_U1_200_min_separation.webp)
+### III.A. n = 100
 
-### GEOMEAN_SEPARATION
+![tier2_U1_100_min_separation](./images/tier2_U1_100_min_separation.webp)
 
-![U1 size 2](./images/tier2_U1_2_geomean_separation.webp)
-![U1 size 10](./images/tier2_U1_10_geomean_separation.webp)
-![U1 size 50](./images/tier2_U1_50_geomean_separation.webp)
-![U1 size 200](./images/tier2_U1_200_geomean_separation.webp)
+### III.B. n = 1,000
 
-## Margin tables (all problems)
+![tier2_U1_1000_min_separation](./images/tier2_U1_1000_min_separation.webp)
 
-Each cell: max-div's margin vs. the *best* competitor under that metric, at ~1 s / ~16 s
-of budget. Positive = max-div ahead.
+### III.C. n = 10,000
 
-### MIN_SEPARATION
+![tier2_U1_10000_min_separation](./images/tier2_U1_10000_min_separation.webp)
 
---8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_min_separation.md"
+### III.D. n = 100,000
 
-### MEAN_SEPARATION
-
---8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_mean_separation.md"
-
-### GEOMEAN_SEPARATION
-
---8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_geomean_separation.md"
-
-### MEAN_PAIRWISE_DISTANCE
-
---8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_mean_pairwise_distance.md"
-
-## Constrained results
-
-With fairness constraints, the only surveyed heuristic competitor is
-[code-FDM](https://github.com/yhwang1990/code-FDM) (FairFlow), and it limits the comparison
-in two ways:
-
-- it scales roughly cubically (~150 s at n = 2000, impractical beyond);
-- its disjoint-color fairness model cannot *express* overlapping constraint groups, so the
-  harder constrained problems (C3/C4) have no competitor at all.
-
-The comparison therefore covers C1/C2 up to n = 2000. Beyond either limit, no surveyed
-Python heuristic produces constraint-satisfying selections; exact solvers can, at small n
-(see the [exact-reference benchmarks](tier1.md)).
-
-![C1 size 2](./images/tier2_C1_2_min_separation.webp)
-![C1 size 10](./images/tier2_C1_10_min_separation.webp)
-![C1 size 20](./images/tier2_C1_20_min_separation.webp)
-
---8<-- "docs/benchmarks/third_party/head_to_head/results/tier2_margins_constrained.md"
+![tier2_U1_100000_min_separation](./images/tier2_U1_100000_min_separation.webp)
