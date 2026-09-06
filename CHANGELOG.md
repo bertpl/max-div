@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A guide on why geometric-mean separation is the default objective, the first page of a new Guides section
 - A geometric-mean distance metric, `DistanceMetric.geometric_mean()`: the d-th root of the product of per-coordinate differences, which spreads a selection in every coordinate projection as well as in the full space
 
 ### Changed
