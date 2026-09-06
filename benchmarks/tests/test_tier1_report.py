@@ -85,8 +85,18 @@ def test_gap_pct_is_none_without_a_value():
     assert report.gap_pct(0.9, 1.0) == pytest.approx(10.0)
 
 
+@pytest.mark.parametrize(
+    ("gap", "expected"),
+    [(None, "—"), (10.04, "10.0%"), (-0.02, "0.0%"), (0.04, "0.0%"), (-0.3, "-0.3%")],
+)
+def test_format_gap_prints_a_dash_one_decimal_and_no_sign_on_zero(gap, expected):
+    """`format_gap` prints a dash for None, one decimal otherwise, and no sign on a gap that rounds to zero."""
+    # --- act / assert -----------------
+    assert report.format_gap(gap) == expected
+
+
 def test_main_emits_tables_charts_and_gallery_snippets(tmp_path: Path):
-    """The report writes one chart per certified cell, a full-width list for min separation, and galleries otherwise."""
+    """The report writes one chart per certified cell, a full-width list per problem for min separation, and galleries otherwise."""
     # --- arrange ----------------------
     data_dir, records_dir, docs_dir = tmp_path / "data", tmp_path / "records", tmp_path / "docs"
     data_dir.mkdir()
@@ -102,7 +112,8 @@ def test_main_emits_tables_charts_and_gallery_snippets(tmp_path: Path):
     # --- assert -----------------------
     assert (docs_dir / "images" / "tier1_U1_20_min_separation.webp").exists()
     assert (docs_dir / "images" / "tier1_U1_20_geomean_separation.webp").exists()
-    assert "![tier1_U1_20_min_separation]" in (docs_dir / "results" / "tier1_charts_min_separation.md").read_text()
+    assert "![tier1_U1_20_min_separation]" in (docs_dir / "results" / "tier1_charts_min_separation_u1.md").read_text()
+    assert (docs_dir / "results" / "tier1_charts_min_separation_c1.md").read_text() == "\n"
     assert 'width="32%"' in (docs_dir / "results" / "tier1_gallery_geomean_separation.md").read_text()
     assert (docs_dir / "results" / "tier1_gallery_mean_separation.md").read_text() == "\n"
     assert "| U1 | 20 |" in (docs_dir / "results" / "tier1_gap_min_separation.md").read_text()

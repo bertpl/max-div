@@ -43,7 +43,7 @@ These three descriptions are consciously kept qualitative in nature.  The next s
     Memory used for problem construction — which happens before the solver process starts — is excluded from both.
 - **time**: we define time budget as **T_max = 1min**, mostly driven by keeping the overall protocol executable.  Time is measured **end-to-end**: the clock runs from handing the raw input vectors to the solver until it returns a selection, so any distance computation or other setup work the solver performs is included in its cost.
 - **machine**: all measurements are executed on the same reference machine: an Apple M3 Max (12 performance cores, 4 efficiency cores).
-- **seeding**: every solver run uses the fixed seed `42`, except where a phase explicitly enumerates multiple seeds (the quality runs of IV.D.3).
+- **seeding**: every solver run uses the fixed seed `42`, except where a phase explicitly enumerates multiple seeds (the quality runs of IV.D.3).  The [head-to-head comparison](../head_to_head/overview.md) reuses this protocol's constants but runs 3 seeds per cell, not 5, so that its three tiers fit one night of measurement.
 - **quality**: judged at two normalized-quality thresholds, 50% and 90%.  For a threshold `b`, the minimum solution quality (=diversity) is defined as **Q_threshold(b) = (1-b) Q_random + b Q_best_known**, i.e. the solver's normalized quality — 0 at a purely random selection, 1 at the best known solution — is at least `b`.  Each threshold yields its own recorded size limit; the 90% one marks near-best quality.
 
 ## IV. Measurement Protocol

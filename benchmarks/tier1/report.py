@@ -7,8 +7,8 @@ solvers' certified optima from the tracked files under `DATA_DIR`.
 
 Per certified (problem, size, objective) cell one chart is written under the docs images folder:
 both max-div series, a dotted line at the certified optimum, and one marker per certifying solver
-at (proof time, optimum). `FULL_WIDTH_OBJECTIVE`'s charts are listed full width in one snippet;
-every other objective gets one thumbnail-gallery snippet. The tables are written as snippets for
+at (proof time, optimum). `FULL_WIDTH_OBJECTIVE`'s charts are listed full width in one snippet per
+problem; every other objective gets one thumbnail-gallery snippet. The tables are written as snippets for
 the tier's tables page.
 """
 
@@ -23,7 +23,7 @@ from benchmarks.common.registry import display_name
 from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
 from benchmarks.figures.style import tool_color
 from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
-from .full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, N_WORKERS, OUTPUT_DIR, maxdiv_records_path
+from .full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, N_WORKERS, OUTPUT_DIR, PROBLEMS, maxdiv_records_path
 from max_div.metrics import DiversityMetric
 
 RECORDS_DIR = OUTPUT_DIR
@@ -41,6 +41,17 @@ def median_quality(records: list[RunRecord], tool: str, metric_name: str, budget
 def gap_pct(value: float | None, optimum: float) -> float | None:
     """Return the gap to the certified optimum in percent (positive = below the optimum), or None without a value."""
     return None if value is None else (optimum - value) / optimum * 100.0
+
+
+def format_gap(gap: float | None) -> str:
+    """Format a gap cell to one decimal; a gap that rounds to zero prints without a sign.
+
+    max-div's float32 arithmetic ends slightly above or below the certified optimum on the cells it
+    solves exactly, which would otherwise print as a negative zero.
+    """
+    if gap is None:
+        return "—"
+    return f"{0.0 if abs(gap) < 0.05 else gap:.1f}%"
 
 
 def certified_optima(exact_rows: list[dict]) -> dict[tuple[str, str, int], list[dict]]:
@@ -76,7 +87,7 @@ def build_gap_table(exact_rows: list[dict], records: list[RunRecord], metric: Di
             for tool in (single, multi)
             for budget in (lo, hi)
         ]
-        cells = " | ".join("—" if g is None else f"{g:.1f}%" for g in gaps)
+        cells = " | ".join(format_gap(g) for g in gaps)
         lines.append(f"| {problem} | {n} | {rows[0]['k']} | {optimum:.4f} | {certifiers} | {cells} |")
     return "\n".join(lines) + "\n"
 
@@ -101,9 +112,11 @@ def chart_name(problem: str, n: int, metric: DiversityMetric) -> str:
     return f"tier1_{problem}_{n}_{metric.name.lower()}.webp"
 
 
-def render_charts(exact_rows: list[dict], records_by_metric: dict[str, list[RunRecord]], images_dir: Path) -> dict[str, list[str]]:
-    """Render one chart per certified cell and return the written image names per objective."""
-    written: dict[str, list[str]] = defaultdict(list)
+def render_charts(
+    exact_rows: list[dict], records_by_metric: dict[str, list[RunRecord]], images_dir: Path
+) -> dict[tuple[str, str], list[str]]:
+    """Render one chart per certified cell and return the written image names per (objective, problem)."""
+    written: dict[tuple[str, str], list[str]] = defaultdict(list)
     for (problem, objective, n), rows in sorted(certified_optima(exact_rows).items()):
         metric = DiversityMetric[objective]
         cell_records = [r for r in records_by_metric.get(objective, []) if r.problem == problem and r.n == n]
@@ -123,13 +136,13 @@ def render_charts(exact_rows: list[dict], records_by_metric: dict[str, list[RunR
             reference_lines=(ReferenceLine(optimum, "certified optimum"),),
             reference_markers=markers,
         )
-        written[objective].append(name)
+        written[(objective, problem)].append(name)
     return dict(written)
 
 
 def full_width_snippet(names: list[str]) -> str:
-    """Return markdown listing every chart full width, one per line."""
-    return "\n".join(f"![{name.removesuffix('.webp')}](../images/{name})" for name in names) + "\n"
+    """Return markdown listing every chart full width, one per line (MkDocs resolves the path from the including page's source file)."""
+    return "\n".join(f"![{name.removesuffix('.webp')}](./images/{name})" for name in names) + "\n"
 
 
 def gallery_snippet(names: list[str], metric: DiversityMetric) -> str:
@@ -160,10 +173,14 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
 
     written = render_charts(exact_rows, records_by_metric, images_dir)
     for metric in OBJECTIVES:
-        names = written.get(metric.name, [])
         if metric == FULL_WIDTH_OBJECTIVE:
-            (results_dir / f"tier1_charts_{metric.name.lower()}.md").write_text(full_width_snippet(names))
+            # one snippet per problem: the page gives each problem its own section
+            for problem in PROBLEMS:
+                names = written.get((metric.name, problem), [])
+                snippet = results_dir / f"tier1_charts_{metric.name.lower()}_{problem.lower()}.md"
+                snippet.write_text(full_width_snippet(names))
         else:
+            names = [name for problem in PROBLEMS for name in written.get((metric.name, problem), [])]
             (results_dir / f"tier1_gallery_{metric.name.lower()}.md").write_text(gallery_snippet(names, metric))
     print(f"tier-1 report emitted into {docs_dir}", flush=True)
 

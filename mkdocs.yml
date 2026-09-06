@@ -36,6 +36,12 @@ hooks:
 watch:
   - generated
 
+# The head-to-head results are snippet fragments pulled into the tier pages. Built as pages of their
+# own they would land in site search, and their image links, written for the including page, would
+# not resolve.
+exclude_docs: |
+  benchmarks/third_party/head_to_head/results/
+
 plugins:
   - search
   # Old URLs of the pages folded into Benchmarks → 3rd Party Solvers keep working;

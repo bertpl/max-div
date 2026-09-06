@@ -6,6 +6,7 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from benchmarks.common import evaluate_selection
+from benchmarks.common.quality import n_constraints_satisfied
 from benchmarks.exact import (
     solve_maxmin_cpsat,
     solve_maxmin_highs,
@@ -114,24 +115,36 @@ def _mip_problem() -> MaxDivProblem:
     return MaxDivProblem.new(vectors=rng.random((12, 2)).astype(np.float32), k=3)
 
 
-def _mip_oracle(problem: MaxDivProblem) -> float:
-    """Enumerate all selections and return the true max-min optimum."""
-    return max(
-        evaluate_selection(problem, np.asarray(s, dtype=np.int64))["MIN_SEPARATION"]
-        for s in combinations(range(problem.n), problem.k)
+def _mip_constrained_problem() -> MaxDivProblem:
+    """Return `_mip_problem` with one quota constraint the unconstrained optimum breaks."""
+    rng = np.random.default_rng(12)
+    return MaxDivProblem.new(
+        vectors=rng.random((12, 2)).astype(np.float32),
+        k=3,
+        constraints=[Constraint(int_set=set(range(6)), min_count=2, max_count=2)],
     )
 
 
-def _solve_highs_in_child(connection) -> None:  # noqa: ANN001 -- multiprocessing connection
+def _mip_oracle(problem: MaxDivProblem) -> float:
+    """Enumerate all constraint-satisfying selections and return the true max-min optimum."""
+    return max(
+        evaluate_selection(problem, selection)["MIN_SEPARATION"]
+        for s in combinations(range(problem.n), problem.k)
+        if n_constraints_satisfied(problem, selection := np.asarray(s, dtype=np.int64)) == problem.m
+    )
+
+
+def _solve_highs_in_child(connection, constrained: bool) -> None:  # noqa: ANN001 -- multiprocessing connection
     """Child-process body: HiGHS cannot load after SCIP in one process (a shared-library clash), so it runs apart."""
-    connection.send(solve_maxmin_highs(_mip_problem(), time_limit_sec=60))
+    problem = _mip_constrained_problem() if constrained else _mip_problem()
+    connection.send(solve_maxmin_highs(problem, time_limit_sec=60))
     connection.close()
 
 
-def test_scip_maxmin_certifies_the_brute_force_optimum():
-    """SCIP certifies the unconstrained max-min optimum and reports it with the selection."""
+@pytest.mark.parametrize("problem", [_mip_problem(), _mip_constrained_problem()], ids=["unconstrained", "constrained"])
+def test_scip_maxmin_certifies_the_brute_force_optimum(problem):
+    """SCIP certifies the max-min optimum, fairness constraints included, and reports the optimum with the selection."""
     # --- arrange -----------------------------------------
-    problem = _mip_problem()
     oracle = _mip_oracle(problem)
 
     # --- act ---------------------------------------------
@@ -143,16 +156,17 @@ def test_scip_maxmin_certifies_the_brute_force_optimum():
     assert evaluate_selection(problem, result.i_selected)["MIN_SEPARATION"] == pytest.approx(oracle, rel=1e-5)
 
 
-def test_highs_maxmin_certifies_the_brute_force_optimum():
-    """HiGHS certifies the unconstrained max-min optimum, run in its own process as the harness does."""
+@pytest.mark.parametrize("constrained", [False, True], ids=["unconstrained", "constrained"])
+def test_highs_maxmin_certifies_the_brute_force_optimum(constrained):
+    """HiGHS certifies the max-min optimum, fairness constraints included, run in its own process as the harness does."""
     # --- arrange -----------------------------------------
-    problem = _mip_problem()
+    problem = _mip_constrained_problem() if constrained else _mip_problem()
     oracle = _mip_oracle(problem)
     context = get_context("spawn")
     parent, child = context.Pipe(duplex=False)
 
     # --- act ---------------------------------------------
-    process = context.Process(target=_solve_highs_in_child, args=(child,))
+    process = context.Process(target=_solve_highs_in_child, args=(child, constrained))
     process.start()
     child.close()
     result = parent.recv()
