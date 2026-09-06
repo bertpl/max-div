@@ -6,9 +6,9 @@ Merges two record sources: max-div's records as measured by ``benchmarks.tier2.f
 records from the tracked reference file under `DATA_DIR`.
 
 Each chart shows both max-div series, every entrant as a dot at its own measured time and quality,
-and a dotted line at the best non-max-div result of that size; where a max-div curve crosses that
-line is the budget at which max-div overtakes. The page places each chart in its own section by
-its size-derived name (`chart_name`); the tables are written as snippets for the tier's tables page.
+and a dotted line at the best non-max-div result of that size. The tier page embeds each chart by
+its size-derived name (`chart_name`), so no chart list is written; the tables are written as
+snippets for the tier's tables page.
 """
 
 import statistics

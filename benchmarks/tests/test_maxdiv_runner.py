@@ -53,5 +53,5 @@ def test_concurrent_single_worker_runs_return_the_same_records_shape(small_probl
     ],
 )
 def test_memory_bound_concurrency_caps_side_by_side_solves_by_their_stores(small_problem, total_memory_bytes, expected):
-    """The side-by-side solve count follows the resolved store's bytes against half the given RAM, never below one."""
+    """The side-by-side solve count follows the resolved store's bytes against `_PACKED_STORES_MEMORY_FRACTION` of the given RAM, never below one."""
     assert memory_bound_concurrency(small_problem, 12, total_memory_bytes) == expected

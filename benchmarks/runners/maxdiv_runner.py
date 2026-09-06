@@ -39,7 +39,8 @@ def memory_bound_concurrency(problem: MaxDivProblem, requested: int, total_memor
 
     The cap keeps the distance stores of all packed solves within `_PACKED_STORES_MEMORY_FRACTION`
     of physical RAM, using the backend the solver's AUTO rule resolves for the problem. The lazy
-    backend stores no distances, so it never lowers the request; an unknown RAM size leaves it as is.
+    backend stores no distances, so the cap never lowers the request; an unknown RAM size leaves the
+    request unchanged.
 
     Args:
         total_memory_bytes: Physical RAM to size against; probed when omitted (injectable for tests).
