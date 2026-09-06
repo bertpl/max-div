@@ -127,6 +127,8 @@ nav:
     - Diversity & Distance: concepts/diversity.md
     - Objectives & the Landscape: concepts/objectives.md
     - Glossary: concepts/glossary.md
+  - Guides:
+    - Why geometric-mean separation is the default objective: guides/geomean_separation.md
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/index.md
