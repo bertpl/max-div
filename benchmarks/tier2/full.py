@@ -48,7 +48,7 @@ ENTRANT_FILE = "third_party_u1.jsonl"
 MAXDIV_FILE = "maxdiv_u1.jsonl"
 
 PROBLEM = "U1"
-SIZES = (200, 1000, 5000, 20000, 100000)
+SIZES = (100, 1000, 10000, 100000)
 METRIC = DiversityMetric.MIN_SEPARATION
 
 
