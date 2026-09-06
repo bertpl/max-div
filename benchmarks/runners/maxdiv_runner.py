@@ -10,6 +10,12 @@ from numpy.typing import NDArray
 
 from benchmarks.common.quality import evaluate_selection, n_constraints_satisfied
 from benchmarks.common.records import RunRecord
+from max_div._core.solver._distance_storage import (
+    DistanceStorage,
+    select_distance_storage,
+    stored_backend_bytes,
+    total_physical_memory_bytes,
+)
 from max_div.problem import MaxDivProblem
 from max_div.solver import (
     MaxDivSolverBuilder,
@@ -20,6 +26,32 @@ from max_div.solver import (
     iterations,
     seconds,
 )
+
+
+# The share of physical RAM the distance stores of the side-by-side solves may claim together. Each
+# packed solve builds its own store inside its timed call, so packing multiplies that memory; the
+# solver's own AUTO rule only sizes one store.
+_PACKED_STORES_MEMORY_FRACTION = 0.5
+
+
+def memory_bound_concurrency(problem: MaxDivProblem, requested: int, total_memory_bytes: int | None = None) -> int:
+    """Return how many single-worker solves of the problem may run side by side, at most `requested`.
+
+    The cap keeps the distance stores of all packed solves within `_PACKED_STORES_MEMORY_FRACTION`
+    of physical RAM, using the backend the solver's AUTO rule resolves for the problem. The lazy
+    backend stores no distances and never binds; an unknown RAM size leaves the request as is.
+
+    Args:
+        total_memory_bytes: Physical RAM to size against; probed when omitted (injectable for tests).
+    """
+    total = total_physical_memory_bytes() if total_memory_bytes is None else total_memory_bytes
+    if total is None:
+        return requested
+    resolved = select_distance_storage(problem, DistanceStorage.AUTO, total)
+    if resolved == DistanceStorage.LAZY:
+        return requested
+    fits = int(total * _PACKED_STORES_MEMORY_FRACTION) // stored_backend_bytes(resolved, problem.n)
+    return max(1, min(requested, fits))
 
 
 def maxdiv_tool_label(preset: SolverPreset = SolverPreset.DEFAULT, n_workers: int = 1) -> str:
@@ -82,7 +114,8 @@ def run_maxdiv_budget_series(
             single-worker runs only.
         seeds: One independent solve per seed per budget.
         n_workers: Above 1, the parallel solver runs this many workers under an end-to-end budget.
-        concurrency: How many single-worker solves run side by side, in separate processes.
+        concurrency: How many single-worker solves run side by side, in separate processes; capped
+            by `memory_bound_concurrency` so their distance stores fit in memory together.
 
     Raises:
         ValueError: If a multi-worker series is combined with iteration budgets or with `concurrency` > 1,
@@ -97,6 +130,11 @@ def run_maxdiv_budget_series(
         budgets.append((f"iterations:{i}", iterations(i)))
     jobs = [_SolveJob(problem, tag, target, seed, preset, n_workers) for tag, target in budgets for seed in seeds]
 
+    if concurrency > 1:
+        packed = memory_bound_concurrency(problem, concurrency)
+        if packed < concurrency:
+            print(f"  packing {packed} single-worker solve(s) side by side, not {concurrency}: memory", flush=True)
+        concurrency = packed
     if concurrency > 1:
         # spawn, not fork: numba's threading layer is not fork-safe
         with ProcessPoolExecutor(max_workers=concurrency, mp_context=get_context("spawn")) as pool:

@@ -21,7 +21,8 @@ SINGLE_WORKER_BUDGETS_SEC = grid_budget_series(0.001, T_MAX_SEC)
 MULTI_WORKER_BUDGETS_SEC = grid_budget_series(1.0, T_MAX_SEC)
 
 # How many single-worker solves run side by side: they run in parallel on the cores the multi-worker
-# series uses for one solve at a time.
+# series uses for one solve at a time. The runner lowers it where that many distance stores would
+# not fit in memory together.
 SINGLE_WORKER_CONCURRENCY = N_WORKERS
 
 # The budgets the result tables quote: the point where the two series first coincide, and T_max.
