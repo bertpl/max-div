@@ -117,7 +117,9 @@ spread. The benchmark pages write it `geomean-of-NN`. That makes it the principl
 between
 [max-min](#max-min), where only the worst-off item counts, and a plain mean, where only
 the total counts. Every item's separation matters, one near-duplicate collapses the score, and no
-single large separation can buy that back.
+single large separation can buy that back. The guide
+[Why geometric-mean separation is the default objective](../guides/geomean_separation.md) shows
+this on four small examples.
 
 ## Guarantee type { #guarantee-type }
 
