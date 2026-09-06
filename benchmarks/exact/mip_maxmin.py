@@ -1,8 +1,9 @@
 """Max-min selection as a MIP/CP model, for the exact solvers of the scaling and head-to-head benchmarks.
 
-The model carries one binary variable per item and a per-pair constraint (big-M for the
-MIP solvers, an enforcement literal for CP-SAT), so it is quadratic in n — which is what
-bounds how large a problem an exact solver can handle in memory and in time.
+The model carries one binary variable per item, a per-pair constraint (big-M for the
+MIP solvers, an enforcement literal for CP-SAT) and one count row per fairness constraint, so
+it is quadratic in n — which is what bounds how large a problem an exact solver can handle in
+memory and in time.
 
 Two families of entry points share the model builders. The ``*_selection`` functions serve the
 scaling benchmarks: return a valid size-k selection by ``deadline``, a ``time.monotonic()``
@@ -52,6 +53,10 @@ def _scip_model(problem: MaxDivProblem, seed: int) -> tuple:
     x = [model.addVar(vtype="B", name=f"x{i}") for i in range(n)]
     t = model.addVar(vtype="C", lb=0.0, ub=big_m, name="t")
     model.addCons(quicksum(x) == k)
+    for con in problem.constraints:
+        group_sum = quicksum(x[i] for i in sorted(con.int_set))
+        model.addCons(group_sum >= con.min_count)
+        model.addCons(group_sum <= con.max_count)
     for i in range(n):
         for j in range(i + 1, n):
             model.addCons(t <= dist[i, j] + big_m * (2 - x[i] - x[j]))
@@ -92,6 +97,10 @@ def _highs_model(problem: MaxDivProblem, seed: int, num_workers: int):  # noqa: 
     h.changeColCost(n, -1.0)  # HiGHS minimizes; -t makes it maximize t
     # sum(x) == k
     h.addRow(k, k, n, np.arange(n, dtype=np.int32), np.ones(n))
+    # min_count <= sum(x_i for i in group) <= max_count, per fairness constraint
+    for con in problem.constraints:
+        members = np.asarray(sorted(con.int_set), dtype=np.int32)
+        h.addRow(con.min_count, con.max_count, len(members), members, np.ones(len(members)))
     # t <= d_ij + M(2 - x_i - x_j)  <=>  t + M*x_i + M*x_j <= d_ij + 2M
     for i in range(n):
         for j in range(i + 1, n):
