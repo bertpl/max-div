@@ -39,8 +39,8 @@ solver:
       note:
         text: >-
           The Minkowski exponent cannot express the geometric mean (the p → 0 limit of the power
-          mean, which divides the sum by d before the root — not a Minkowski form), so it is
-          reachable only as a precomputed distance matrix.
+          mean, which divides the sum by d before the root — not a Minkowski form), so the
+          geometric mean is reachable only as a precomputed distance matrix.
     distance.custom:
       mark: full
       note:

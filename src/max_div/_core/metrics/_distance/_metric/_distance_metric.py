@@ -109,8 +109,8 @@ class DistanceMetric(NamedTuple):
         The diversity concepts page explains what this distance rewards and cites the design
         literature behind it.  A shared coordinate value makes the distance zero.
 
-        Not a strict metric (distinct points can be at distance zero, and the triangle inequality
-        fails); the solver relies on neither.  Cost: one ``log`` per dimension.
+        It is not a strict metric (distinct points can be at distance zero, and the triangle
+        inequality fails); the solver relies on neither.  It costs one ``log`` per dimension.
         """
         return cls(kind=METRIC_KIND_GEOMEAN, p=None)
 

@@ -136,9 +136,9 @@ def _minkowski_pair_powered_p0125(
 def _geomean_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
     """Return the geometric mean of the per-dimension absolute differences of vectors i and j.
 
-    Sums logarithms and exponentiates once, so the product cannot leave float64's range at any
-    dimension count; a zero difference makes the whole product zero, so the function returns zero
-    before taking any logarithm.
+    The function sums logarithms and exponentiates once, so the product cannot leave float64's
+    range at any dimension count; a zero difference makes the whole product zero, so the function
+    returns zero before taking any logarithm.
     """
     log_sum = np.float64(0.0)
     d = vectors.shape[1]
@@ -174,6 +174,8 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
         return np.float32(_linf_pair(vectors, i, j))
     if metric_kind == METRIC_KIND_COS:
         return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
+    if metric_kind == METRIC_KIND_GEOMEAN:
+        return np.float32(_geomean_pair(vectors, i, j))
     if metric_kind == METRIC_KIND_MINKOWSKI:
         return np.float32(_minkowski_pair_powered(vectors, i, j, metric_p) ** (1.0 / metric_p))
     if metric_kind == METRIC_KIND_MINKOWSKI_POWERED:
@@ -194,8 +196,6 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
         squared = acc * acc
         fourth = squared * squared
         return np.float32(fourth * fourth)
-    if metric_kind == METRIC_KIND_GEOMEAN:
-        return np.float32(_geomean_pair(vectors, i, j))
     else:
         # only MINKOWSKI_P0125_POWERED remains
         return np.float32(_minkowski_pair_powered_p0125(vectors, i, j))
