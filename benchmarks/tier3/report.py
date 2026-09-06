@@ -188,12 +188,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     (results_dir / "tier3_entrants.md").write_text(build_entrant_table(gaps, groups))
     (results_dir / "tier3_glover_sentence.md").write_text(glover_sentence(maxdiv, rows))
     (results_dir / "tier3_best_known.md").write_text(build_best_known_table(rows))
-    written = render_charts(gaps, groups, docs_dir / "images")
-    for family in CHARTED_FAMILIES:
-        names = written.get(family, [])
-        (results_dir / f"tier3_charts_{family.lower()}.md").write_text(
-            "\n".join(f"![{name.removesuffix('.webp')}](./images/{name})" for name in names) + "\n"
-        )
+    render_charts(gaps, groups, docs_dir / "images")
     print(f"tier-3 report emitted into {docs_dir}", flush=True)
 
 
