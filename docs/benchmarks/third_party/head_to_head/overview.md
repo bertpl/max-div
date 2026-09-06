@@ -18,8 +18,8 @@ tool and their feature trade-offs; these pages measure how they actually *perfor
 The comparison runs in three tiers, by what `max-div` is measured against:
 
 - [**vs. Python Heuristics**](tier2.md) — the single-shot pickers a Python user would
-  otherwise reach for (FPS, RDKit, apricot, k-medoids, greedy max-sum). The largest-audience
-  comparison, across problem sizes from n = 200 to 20 000.
+  otherwise reach for (FPS, RDKit, apricot, k-medoids, qc-selector, DPPy). The largest-audience
+  comparison, across problem sizes from n = 100 to 100 000.
 - [**vs. Exact Solvers**](tier1.md) — CP-SAT, SCIP and HiGHS as an *optimality reference*: how close
   `max-div` gets to a proven optimum, and how far those solvers scale before proving becomes
   intractable.

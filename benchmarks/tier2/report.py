@@ -7,8 +7,8 @@ records from the tracked reference file under `DATA_DIR`.
 
 Each chart shows both max-div series, every entrant as a dot at its own measured time and quality,
 and a dotted line at the best non-max-div result of that size; where a max-div curve crosses that
-line is the budget at which max-div overtakes. The tables are written as snippets for the tier's
-tables page.
+line is the budget at which max-div overtakes. The page places each chart in its own section by
+its size-derived name (`chart_name`); the tables are written as snippets for the tier's tables page.
 """
 
 import statistics
@@ -135,10 +135,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
 
     (results_dir / "tier2_summary.md").write_text(build_summary_table(records, sizes))
     (results_dir / "tier2_entrants.md").write_text(build_entrant_table(records, sizes))
-    names = render_charts(records, sizes, docs_dir / "images")
-    (results_dir / "tier2_charts.md").write_text(
-        "\n".join(f"![{name.removesuffix('.webp')}](./images/{name})" for name in names) + "\n"
-    )
+    render_charts(records, sizes, docs_dir / "images")
     print(f"tier-2 report emitted into {docs_dir}", flush=True)
 
 

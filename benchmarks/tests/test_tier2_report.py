@@ -83,6 +83,5 @@ def test_main_emits_chart_per_size_with_tables(tmp_path: Path):
 
     # --- assert -----------------------
     assert (docs_dir / "images" / "tier2_U1_200_min_separation.webp").exists()
-    assert "tier2_U1_200_min_separation" in (docs_dir / "results" / "tier2_charts.md").read_text()
     assert "| 200 |" in (docs_dir / "results" / "tier2_summary.md").read_text()
     assert "| fpsample[FPS] |" in (docs_dir / "results" / "tier2_entrants.md").read_text()
