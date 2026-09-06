@@ -5,7 +5,9 @@
 
 ## I. Randomized uniform selections use case
 
-Some applications need a set of $k$ tuples that look uniformly spread over a hypercube, without being a regular grid: the inputs of a test campaign, or the starting points of an optimizer. Take the two-dimensional case, $k$ tuples $(x_i, y_i)$ in the unit square.
+Some applications need a set of $k$ tuples that look uniformly spread over a hypercube, without being a regular grid: the inputs of a test campaign, or the starting points of an optimizer. Take the two-dimensional case, $k$ tuples $(x_i, y_i)$ in the unit square:
+
+$$S = \{(x_i, y_i) \mid i = 1, \ldots, k\}, \qquad 0 \le x_i, y_i \le 1.$$
 
 Uniform spread in the square means every tuple is far from its nearest neighbor. With $k$ points sharing a unit of area, the area per point is $1/k$, so the ideal nearest-neighbor distance is about the square root of that area:
 
