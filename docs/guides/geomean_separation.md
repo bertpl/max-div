@@ -49,6 +49,8 @@ At $\alpha = 1$ the selection is uniform; below it the items crowd towards $0$, 
 
 ## II. Geometric-mean separation & constrained problems
 
+All these properties come together when dealing with constrained problems, of which the following illustration is a minimal example.
+
 Consider a selection of $k = 51$ items of which a constraint forces the first $26$ into $[-0.25, 0]$, where they sit uniformly spaced; the remaining $25$ items have the whole of $(0, 1]$ to themselves:
 
 $$\begin{aligned}
