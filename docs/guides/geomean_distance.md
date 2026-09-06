@@ -5,9 +5,7 @@
 
 ## I. Randomized uniform selections use case
 
-Some applications need a set of $k$ tuples that look uniformly spread over a hypercube, without being a regular grid: the inputs of a test campaign, or the starting points of an optimizer. Take the two-dimensional case, $k$ tuples $(x_i, y_i)$ in the unit square:
-
-$$S = \{(x_i, y_i) \mid i = 1, \ldots, k\}, \qquad 0 \le x_i, y_i \le 1.$$
+Some applications need a set of $k$ tuples that look uniformly spread over a hypercube, without being a regular grid: the inputs of a test campaign, or the starting points of an optimizer. Take the two-dimensional case, $k$ tuples $(x_i, y_i)$ in the unit square.
 
 Uniform spread in the square means every tuple is far from its nearest neighbor. With $k$ points sharing a unit of area, the area per point is $1/k$, so the ideal nearest-neighbor distance is about the square root of that area:
 
@@ -30,7 +28,7 @@ $$d(p, q) = \sqrt{|x_p - x_q| \cdot |y_p - y_q|};$$
 
 the [distance-metric table](../concepts/diversity.md#distance-metrics) gives the general form and its properties.
 
-The level curves of this distance are hyperbolas $|\Delta x| \cdot |\Delta y| = d^2$. The curve at $d = 1/\sqrt{k}$ passes through both ideals of section I at once:
+The level curves of this distance are hyperbolas $|\Delta x| \cdot |\Delta y| = d^2$. The curve at $d = 1/\sqrt{k}$ passes through both ideal nearest-neighbor distances of section I at once:
 
 - $(1/\sqrt{k}, 1/\sqrt{k})$: a neighbor at the 2D spacing in both coordinates;
 - $(1, 1/k)$: a neighbor across the whole square in one coordinate and at the marginal spacing in the other.

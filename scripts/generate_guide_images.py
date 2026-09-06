@@ -1,9 +1,9 @@
 """Generate the figures of the guide pages under `docs/guides/`.
 
-The separation-guide figures plot given selections controlled by a parameter alpha: three cases
-as dot rows, and the three separation metrics against alpha below them; no solver is involved.
-The distance-guide figures plot the metric's level curves and one solved selection; only that one
-runs the solver.
+The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
+cases as dot rows, and the three separation metrics against alpha below them; no solver is involved.
+The figures of `geomean_distance.md` plot the metric's level curves and one solved selection; only
+that one runs the solver.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py``.
 """
@@ -171,8 +171,12 @@ SELECTION_COLOR = "#ee1111"
 def render_geomean_distance_levels(name: str, k: int) -> None:
     """Plot the level curves of the geometric-mean distance from the origin, over all four quadrants.
 
-    The curve at distance 1/sqrt(k) is highlighted; the distance guide's section II explains why.
-    Two fainter curves show the family around it.
+    The curve at distance 1/sqrt(k) is highlighted; `docs/guides/geomean_distance.md`, section II,
+    explains why. Two fainter curves show the family around the highlighted curve.
+
+    Args:
+        name: Image file stem under `IMAGES_DIR`.
+        k: Sets the highlighted level, 1/sqrt(k).
     """
     use_docs_style()
     fig, ax = plt.subplots(figsize=(6.0, 6.0))
@@ -199,8 +203,8 @@ def render_geomean_distance_levels(name: str, k: int) -> None:
         ax.annotate(label, point, textcoords="offset points", xytext=offset)
     ax.set_xlim(-1.05, 1.05)
     ax.set_ylim(-1.05, 1.05)
-    ax.set_xlabel("\u0394x")  # Δx
-    ax.set_ylabel("\u0394y")  # Δy
+    ax.set_xlabel("Δx")
+    ax.set_ylabel("Δy")
     ax.set_aspect("equal")
     save_webp(fig, IMAGES_DIR / f"{name}.webp")
 
@@ -208,7 +212,9 @@ def render_geomean_distance_levels(name: str, k: int) -> None:
 def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float, n_workers: int, seed: int) -> None:
     """Render one solved selection: geomean separation with the geometric-mean distance on a uniform unit square.
 
-    The figure shows the population, the selection, and the selection's two marginals as rug marks.
+    Args:
+        name: Image file stem under `IMAGES_DIR`.
+        seed: Seeds both the population sample and the solver.
     """
     rng = np.random.default_rng(seed)
     vectors = rng.random((n, 2)).astype(np.float32)
