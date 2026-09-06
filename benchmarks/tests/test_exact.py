@@ -116,7 +116,7 @@ def _mip_problem() -> MaxDivProblem:
 
 
 def _mip_constrained_problem() -> MaxDivProblem:
-    """The same 12 vectors, select 3, with exactly two of the first six items required — a quota the unconstrained optimum breaks."""
+    """Return `_mip_problem`'s 12 vectors, select 3, with exactly two of the first six items required — a quota the unconstrained optimum breaks."""
     rng = np.random.default_rng(12)
     return MaxDivProblem.new(
         vectors=rng.random((12, 2)).astype(np.float32),

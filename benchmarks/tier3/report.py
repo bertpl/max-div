@@ -192,7 +192,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     for family in CHARTED_FAMILIES:
         names = written.get(family, [])
         (results_dir / f"tier3_charts_{family.lower()}.md").write_text(
-            "\n".join(f"![{name.removesuffix('.webp')}](../images/{name})" for name in names) + "\n"
+            "\n".join(f"![{name.removesuffix('.webp')}](./images/{name})" for name in names) + "\n"
         )
     print(f"tier-3 report emitted into {docs_dir}", flush=True)
 

@@ -89,8 +89,9 @@ def test_gap_pct_is_none_without_a_value():
     ("gap", "expected"),
     [(None, "—"), (10.04, "10.0%"), (-0.02, "0.0%"), (0.04, "0.0%"), (-0.3, "-0.3%")],
 )
-def test_format_gap_prints_a_gap_that_rounds_to_zero_without_a_sign(gap, expected):
-    """A float32 result a hair above the optimum prints as 0.0 %, never as -0.0 %."""
+def test_format_gap_prints_a_dash_one_decimal_and_no_sign_on_zero(gap, expected):
+    """`format_gap` prints a dash for None, one decimal otherwise, and no sign on a gap that rounds to zero."""
+    # --- act / assert -----------------
     assert report.format_gap(gap) == expected
 
 

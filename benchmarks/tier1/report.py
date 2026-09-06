@@ -44,10 +44,10 @@ def gap_pct(value: float | None, optimum: float) -> float | None:
 
 
 def format_gap(gap: float | None) -> str:
-    """Format a gap cell to one decimal; a gap that rounds to zero prints as 0.0 % whatever its sign.
+    """Format a gap cell to one decimal; a gap that rounds to zero prints without a sign.
 
-    max-div's float32 arithmetic lands a hair above or below the certified optimum on the cells it
-    solves exactly, which would otherwise print as -0.0 %.
+    max-div's float32 arithmetic ends slightly above or below the certified optimum on the cells it
+    solves exactly, which would otherwise print as a negative zero.
     """
     if gap is None:
         return "—"
@@ -141,8 +141,8 @@ def render_charts(
 
 
 def full_width_snippet(names: list[str]) -> str:
-    """Return markdown listing every chart full width, one per line."""
-    return "\n".join(f"![{name.removesuffix('.webp')}](../images/{name})" for name in names) + "\n"
+    """Return markdown listing every chart full width, one per line (MkDocs resolves the path from the including page's source file)."""
+    return "\n".join(f"![{name.removesuffix('.webp')}](./images/{name})" for name in names) + "\n"
 
 
 def gallery_snippet(names: list[str], metric: DiversityMetric) -> str:
