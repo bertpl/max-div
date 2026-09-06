@@ -106,9 +106,8 @@ class DistanceMetric(NamedTuple):
     def geometric_mean(cls) -> "DistanceMetric":
         """Return the geometric-mean distance metric: ``( prod_i |x_i - y_i| )^(1/d)``.
 
-        The pair distance of maximum projection designs (Joseph, Gul & Ba, 2015, Biometrika
-        102(2)); the diversity concepts page explains what it rewards.  A shared coordinate value
-        makes the distance zero.
+        The diversity concepts page explains what this distance rewards and cites the design
+        literature behind it.  A shared coordinate value makes the distance zero.
 
         Not a strict metric (distinct points can be at distance zero, and the triangle inequality
         fails); the solver relies on neither.  Cost: one ``log`` per dimension.
