@@ -1,15 +1,14 @@
 """Generate the figures of the guide pages under `docs/guides/`.
 
-Each figure shows a one-dimensional selection whose layout depends on one parameter, alpha: three
-cases (A, B, C) drawn as dots on a shared axis, and below them the three separation-based diversity
-metrics as functions of alpha, with the cases marked as dotted verticals. No solver is involved:
-the selections are given, and the figures show what each metric rewards.
+Each figure plots one selection controlled by a parameter alpha: three cases as dot rows, and the
+three separation metrics against alpha below them.
+
+No solver is involved: the selections are given, and the figures show what each metric rewards.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py``.
 """
 
 from collections.abc import Callable
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -60,12 +59,11 @@ def render_example(
     dot_size: float = 36,
     position_marks: tuple[float, ...] | None = None,
 ) -> None:
-    """Render one example: the three cases as dot rows, and the metrics against alpha below them.
+    """Render one figure: the three cases as dot rows, and the metrics against alpha below them.
 
     Args:
         name: Image file stem under `IMAGES_DIR`.
         layout: Maps alpha to the item positions of the selection.
-        case_alphas: The alpha of cases A, B and C.
         alpha_range: The alpha interval the metric curves cover.
         axis_range: The position interval every dot row shows, shared so the cases compare.
         legend: Keyword arguments placing the metric legend where the curves leave room.
@@ -88,13 +86,18 @@ def render_example(
             positions[~is_highlighted], np.full((~is_highlighted).sum(), y), s=dot_size, c="#222222", zorder=2
         )
         ax_cases.scatter(
-            positions[is_highlighted], np.full(is_highlighted.sum(), y),
-            s=60, facecolors="white", edgecolors="#222222", linewidths=1.8, zorder=3,
+            positions[is_highlighted],
+            np.full(is_highlighted.sum(), y),
+            s=60,
+            facecolors="white",
+            edgecolors="#222222",
+            linewidths=1.8,
+            zorder=3,
         )
         pad = 0.02 * (axis_range[1] - axis_range[0])
         ax_cases.text(axis_range[0] - pad, y, f"Case {label}", ha="right", va="center")
-        ax_cases.text(axis_range[1] + pad, y, f"α = {alpha:g}", ha="left", va="center")
-    # faint verticals at the whole numbers, labeled above the top row, so positions read across the rows
+        ax_cases.text(axis_range[1] + pad, y, f"\u03b1 = {alpha:g}", ha="left", va="center")  # alpha
+    # Faint labeled verticals at position_marks let a position be read across the rows.
     y_top = len(CASE_LABELS) - 0.4
     if position_marks is None:
         position_marks = tuple(np.arange(np.ceil(axis_range[0]), axis_range[1] + 1e-9) + 0.0)  # + 0.0 turns a -0 into 0
@@ -109,7 +112,7 @@ def render_example(
     for side in ("left", "right", "top", "bottom"):
         ax_cases.spines[side].set_visible(False)
 
-    # --- the metrics against alpha ---------------
+    # --- the metrics against alpha --------------
     alphas = np.linspace(*alpha_range, 400)
     curves = {metric: np.array([metrics(layout(a))[metric] for a in alphas]) for metric in METRIC_COLORS}
     for metric, color in METRIC_COLORS.items():
@@ -120,7 +123,7 @@ def render_example(
         ax_metrics.axvline(alpha, color="#555555", linestyle=":", linewidth=1.2)
         ax_metrics.text(alpha, ax_metrics.get_ylim()[1], f" {label}", ha="left", va="top", color="#555555")
     ax_metrics.set_xlim(*alpha_range)
-    ax_metrics.set_xlabel("α")
+    ax_metrics.set_xlabel("\u03b1")  # alpha
     ax_metrics.set_ylabel("diversity")
     ax_metrics.legend(**(legend or {"loc": "best"}))
 
@@ -131,24 +134,24 @@ def render_example(
 #  Examples
 # ==================================================================================================
 def layout_closest_pair_fixed(alpha: float) -> NDArray[np.float64]:
-    """Return 11 items: the first two at 0.0 and 0.1, every further item alpha after the previous."""
+    """Return items with the first two at 0.0 and 0.1 and every further item alpha after the previous."""
     return np.concatenate(([0.0, 0.1], 0.1 + alpha * np.arange(1, 10)))
 
 
 def layout_near_duplicate(alpha: float) -> NDArray[np.float64]:
-    """Return 11 items uniform over [0, 1], except the second, which sits at alpha."""
+    """Return items uniform over [0, 1], except the second, which sits at alpha."""
     positions = np.linspace(0.0, 1.0, 11)
     positions[1] = alpha
     return positions
 
 
 def layout_power_spacing(alpha: float) -> NDArray[np.float64]:
-    """Return 51 items at (i/50)^((2 - alpha)/alpha): uniform at alpha = 1, crowding toward 0 below it and toward 1 above it."""
+    """Return items power-spaced over [0, 1]: uniform at alpha = 1, crowding toward 0 below it and toward 1 above it."""
     return (np.arange(51) / 50.0) ** ((2.0 - alpha) / alpha)
 
 
 def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
-    """Return 51 items: 26 uniform over [-0.25, 0] as a constraint forces, and 25 over (0, 1] at (1 - alpha) t + alpha t^2 with t = (i - 25)/25."""
+    """Return 26 items pinned uniformly over [-0.25, 0] plus free items over (0, 1] crowding toward 0 for alpha > 0."""
     constrained = -0.25 + np.arange(26) / 100.0
     t = np.arange(26, 51) / 25.0 - 1.0
     free = (1.0 - alpha) * t + alpha * t**2
