@@ -1,9 +1,9 @@
 """Generate the figures of the guide pages under `docs/guides/`.
 
-Each figure plots one selection controlled by a parameter alpha: three cases as dot rows, and the
-three separation metrics against alpha below them.
-
-No solver is involved: the selections are given, and the figures show what each metric rewards.
+The separation-guide figures plot given selections controlled by a parameter alpha: three cases
+as dot rows, and the three separation metrics against alpha below them; no solver is involved.
+The distance-guide figures plot the metric's level curves and one solved selection; only that one
+runs the solver.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py``.
 """
@@ -169,11 +169,10 @@ SELECTION_COLOR = "#ee1111"
 
 
 def render_geomean_distance_levels(name: str, k: int) -> None:
-    """Plot the level curves of the geometric-mean distance from the origin in the unit square.
+    """Plot the level curves of the geometric-mean distance from the origin, over all four quadrants.
 
-    The curve at distance 1/sqrt(k) is the hyperbola dx * dy = 1/k: it passes through both the
-    2-D uniform spacing (1/sqrt(k), 1/sqrt(k)) and the marginal spacing (1, 1/k), which is what
-    lets one metric reward both. Two more levels, half the reference and 0.5, give the curve family its shape.
+    The curve at distance 1/sqrt(k) is highlighted; the distance guide's section II explains why.
+    Two fainter curves show the family around it.
     """
     use_docs_style()
     fig, ax = plt.subplots(figsize=(6.0, 6.0))
@@ -207,7 +206,7 @@ def render_geomean_distance_levels(name: str, k: int) -> None:
 
 
 def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float, n_workers: int, seed: int) -> None:
-    """Solve a uniform unit-square population under geomean separation and the geometric-mean distance.
+    """Render one solved selection: geomean separation with the geometric-mean distance on a uniform unit square.
 
     The figure shows the population, the selection, and the selection's two marginals as rug marks.
     """
@@ -235,7 +234,7 @@ def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float
     ax.scatter(
         vectors[selected, 0], vectors[selected, 1], s=40, color=SELECTION_COLOR, label=f"selection (k = {k})", zorder=3
     )
-    # rug marks along the bottom and left edges: the two marginal distributions of the selection
+    # Rug marks along the bottom and left edges show the selection's two marginal distributions.
     ax.plot(vectors[selected, 0], np.full(k, -0.03), "|", color=SELECTION_COLOR, markersize=10, zorder=3)
     ax.plot(np.full(k, -0.03), vectors[selected, 1], "_", color=SELECTION_COLOR, markersize=10, zorder=3)
     ax.set_xlim(-0.06, 1.02)
