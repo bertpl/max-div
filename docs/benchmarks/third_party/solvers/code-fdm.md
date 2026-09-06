@@ -34,6 +34,9 @@ solver:
     distance.minkowski:
       mark: partial
       note: *edit_source
+    distance.geomean:
+      mark: partial
+      note: *edit_source
     distance.cosine:
       mark: partial
       note: *edit_source

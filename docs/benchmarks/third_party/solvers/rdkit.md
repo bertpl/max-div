@@ -29,6 +29,9 @@ solver:
     distance.minkowski:
       mark: partial
       note: *callback
+    distance.geomean:
+      mark: partial
+      note: *callback
     distance.cosine:
       mark: partial
       note: *callback

@@ -29,6 +29,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
+| distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^code-fdm-3] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |

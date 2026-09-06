@@ -19,6 +19,7 @@ solver:
     distance.l2: {mark: full}
     distance.linf: {mark: full}
     distance.minkowski: {mark: full}
+    distance.geomean: {mark: full}
     distance.cosine: {mark: full}
     distance.custom:
       mark: full

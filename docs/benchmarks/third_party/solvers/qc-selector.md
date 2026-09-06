@@ -29,6 +29,12 @@ solver:
       note:
         text: >-
           The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
+    distance.geomean:
+      mark: partial
+      note:
+        text: >-
+          The Minkowski exponent does not reach it — the geometric mean is the normalized p → 0
+          limit, not a Minkowski form — so it is reachable only as a precomputed distance matrix.
     distance.cosine:
       mark: partial
       note:

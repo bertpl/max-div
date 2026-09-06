@@ -29,12 +29,13 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^apricot-select-2] |
+| distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^apricot-select-3] |
 | distance metrics · cosine distance | <span class="mark mark-full">✔</span> |  |
-| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^apricot-select-3] |
-| diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^apricot-select-4] |
-| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-4] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-4] |
-| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-full">✔</span> | [^apricot-select-5] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^apricot-select-4] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^apricot-select-5] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-5] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-5] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-full">✔</span> | [^apricot-select-6] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
@@ -42,8 +43,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^apricot-select-6] |
-| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^apricot-select-7] |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^apricot-select-7] |
+| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^apricot-select-8] |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
 | solver scaling · largest n within memory | n = 20k | |
 | solver scaling · largest n within the time budget | n = 50k | |
@@ -54,8 +55,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^apricot-select-1]: The PyPI release is from 2021, but the project is not abandoned: its repository was last updated in November 2025. Installing from PyPI gets you considerably older code than the repository holds. [Source](https://github.com/jmschrei/apricot)
 [^apricot-select-2]: The metric argument is a name forwarded to scikit-learn without the power parameter, so a caller-chosen p is reachable only through the precomputed-similarity input.
-[^apricot-select-3]: A precomputed similarity matrix is a first-class input, so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
-[^apricot-select-4]: Submodular coverage objectives, not dispersion ones. Nothing here maximizes a minimum separation, and no reformulation makes facility location do so.
-[^apricot-select-5]: Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
-[^apricot-select-6]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^apricot-select-7]: The optimizers accept an n_jobs argument, but it is unused: the greedy selection runs single-threaded.
+[^apricot-select-3]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed similarity matrix.
+[^apricot-select-4]: A precomputed similarity matrix is a first-class input, so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
+[^apricot-select-5]: Submodular coverage objectives, not dispersion ones. Nothing here maximizes a minimum separation, and no reformulation makes facility location do so.
+[^apricot-select-6]: Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
+[^apricot-select-7]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
+[^apricot-select-8]: The optimizers accept an n_jobs argument, but it is unused: the greedy selection runs single-threaded.

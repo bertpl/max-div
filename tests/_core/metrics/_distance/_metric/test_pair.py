@@ -41,6 +41,7 @@ def test_compute_pdist_metrics(metric: DistanceMetric):
         (DistanceMetric.l2_euclidean(), 5.0),
         (DistanceMetric.l2s_euclidean_squared(), 25.0),
         (DistanceMetric.linf_chebyshev(), 4.0),
+        (DistanceMetric.geometric_mean(), 12.0**0.5),
     ],
 )
 def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
@@ -136,3 +137,86 @@ def test_compute_pdist_zero_for_identical_vectors(metric: DistanceMetric):
 
     # --- assert -----------------------
     assert result[0] == np.float32(0.0)  # distance between the two identical vectors
+
+
+# -------------------------------------------------------------------------
+#  Geometric mean
+# -------------------------------------------------------------------------
+def _geomean_reference(x: np.ndarray, y: np.ndarray) -> float:
+    """Return the geometric mean of the absolute differences via numpy's log-mean, in float64."""
+    diffs = np.abs(x.astype(np.float64) - y.astype(np.float64))
+    return 0.0 if np.any(diffs == 0.0) else float(np.exp(np.mean(np.log(diffs))))
+
+
+@pytest.mark.parametrize(
+    "x, y, expected_value",
+    [
+        ([0.0, 0.0], [3.0, 4.0], 12.0**0.5),  # sqrt(3 * 4)
+        ([1.0, 5.0, 2.0], [1.0, 9.0, 7.0], 0.0),  # a shared coordinate zeroes the product
+        ([0.0, 0.0], [-3.0, 4.0], 12.0**0.5),  # differences enter by absolute value
+        ([7.0], [3.0], 4.0),  # one dimension: the single gap itself
+        ([1e-18] * 25, [0.0] * 25, 1e-18),  # the product 1e-450 would underflow float64
+        ([1e30] * 25, [0.0] * 25, 1e30),  # the product 1e750 would overflow float64
+        ([1.0, 1e-30], [0.0, 0.0], 1e-15),  # one tiny gap pulls the mean down, without underflow
+    ],
+)
+def test_compute_pdist_geometric_mean_values(x: list[float], y: list[float], expected_value: float):
+    """The geometric-mean distance handles zero, tiny, huge and negative gaps exactly or to float32 precision."""
+    # --- arrange ----------------------
+    vectors = np.array([x, y], dtype=np.float32)
+
+    # --- act --------------------------
+    d = compute_pdist(vectors, metric=DistanceMetric.geometric_mean())
+
+    # --- assert -----------------------
+    if expected_value == 0.0:
+        assert d[0] == np.float32(0.0)
+    else:
+        assert d[0] == pytest.approx(expected_value, rel=1e-6)
+
+
+def test_compute_pdist_geometric_mean_matches_log_mean_reference():
+    """On random vectors the metric agrees with a float64 log-mean reference to float32 precision."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(7)
+    vectors = rng.standard_normal((12, 6)).astype(np.float32)
+    expected = [_geomean_reference(vectors[i], vectors[j]) for i in range(12) for j in range(i + 1, 12)]
+
+    # --- act --------------------------
+    d = compute_pdist(vectors, metric=DistanceMetric.geometric_mean())
+
+    # --- assert -----------------------
+    np.testing.assert_allclose(d, expected, rtol=1e-6)
+
+
+def test_compute_pdist_geometric_mean_scales_with_the_vectors():
+    """Scaling every coordinate by s scales the distance by s: the metric is homogeneous of degree one."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(11)
+    vectors = rng.random((5, 4)).astype(np.float32)
+
+    # --- act --------------------------
+    d = compute_pdist(vectors, metric=DistanceMetric.geometric_mean())
+    d_scaled = compute_pdist(np.float32(2.5) * vectors, metric=DistanceMetric.geometric_mean())
+
+    # --- assert -----------------------
+    np.testing.assert_allclose(d_scaled, 2.5 * d, rtol=1e-6)
+
+
+def test_compute_pdist_geometric_mean_sits_between_the_smallest_gap_and_the_mean_gap():
+    """By the AM-GM inequality the distance lies between the smallest per-dimension gap and the L1 distance over d."""
+    # --- arrange ----------------------
+    rng = np.random.default_rng(3)
+    vectors = rng.random((6, 5)).astype(np.float32)
+    n, d_dim = vectors.shape
+    smallest_gap = np.array(
+        [np.abs(vectors[i] - vectors[j]).min() for i in range(n) for j in range(i + 1, n)], dtype=np.float64
+    )
+
+    # --- act --------------------------
+    geomean = compute_pdist(vectors, metric=DistanceMetric.geometric_mean()).astype(np.float64)
+    mean_gap = compute_pdist(vectors, metric=DistanceMetric.l1_manhattan()).astype(np.float64) / d_dim
+
+    # --- assert -----------------------
+    assert np.all(geomean >= smallest_gap * (1 - 1e-6))
+    assert np.all(geomean <= mean_gap * (1 + 1e-6))

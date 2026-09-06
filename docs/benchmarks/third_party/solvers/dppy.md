@@ -31,6 +31,9 @@ solver:
     distance.minkowski:
       mark: partial
       note: *via_kernel
+    distance.geomean:
+      mark: partial
+      note: *via_kernel
     distance.cosine:
       mark: partial
       note: *via_kernel
