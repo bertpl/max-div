@@ -59,9 +59,9 @@ def entrant_adapters(family: str) -> list[SelectionAdapter]:
     if family == "Ran":
         return distance_matrix_tools
     if family == "Geo":
+        # fpsample's KD-line variant handles at most 8 dimensions; Geo instances have 13 from n = 250 on
         vector_tools: list[SelectionAdapter] = [
             FpsampleFPS(),
-            FpsampleFPS(variant="kdline"),
             SkmatterFPS(),
             RdkitMaxMin(),
             ApricotFacilityLocation(),
@@ -89,7 +89,10 @@ def run_entrants(
             continue
         problem = load_instance(row.family, row.instance, k=row.k, diversity_metric=METRIC)
         for adapter in adapters:
-            records += run_adapter(adapter, problem, problem_name=row.instance, size=row.k, seeds=seeds)
+            try:
+                records += run_adapter(adapter, problem, problem_name=row.instance, size=row.k, seeds=seeds)
+            except Exception as error:  # noqa: BLE001 -- one entrant's failure must not end the run
+                print(f"  {adapter.name} failed on {row.instance} k={row.k}: {error}", flush=True)
         save_records(records, out_path)
         print(f"entrants {row.instance} k={row.k} done ({len(records)} records so far)", flush=True)
     return records
