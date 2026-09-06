@@ -20,6 +20,7 @@ from benchmarks.common.records import RunRecord, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.mdplib.best_known import BestKnown, load_best_known
 from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
+
 from .full import CHARTED_FAMILIES, DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR
 
 RECORDS_DIR = OUTPUT_DIR
@@ -151,9 +152,10 @@ def chart_name(family: str, n: int, k: int) -> str:
     return f"tier3_{family.lower()}_{n}_{k}.webp"
 
 
-def render_charts(gaps: list[RunRecord], groups: dict[tuple[str, int, int], list[BestKnown]], images_dir: Path) -> dict[str, list[str]]:
-    """Render one gap chart per group and return the written image names per family."""
-    written: dict[str, list[str]] = defaultdict(list)
+def render_charts(
+    gaps: list[RunRecord], groups: dict[tuple[str, int, int], list[BestKnown]], images_dir: Path
+) -> None:
+    """Render one gap chart per group that has max-div records."""
     for (family, n, k), rows in groups.items():
         instances = {row.instance for row in rows}
         group_records = [r for r in gaps if r.problem in instances and r.size == k]
@@ -168,8 +170,6 @@ def render_charts(gaps: list[RunRecord], groups: dict[tuple[str, int, int], list
             reference_lines=(ReferenceLine(0.0, "best-known value"),),
             y_label="gap to best-known [%]",
         )
-        written[family].append(name)
-    return dict(written)
 
 
 def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: Path = DATA_DIR) -> None:
@@ -188,12 +188,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     (results_dir / "tier3_entrants.md").write_text(build_entrant_table(gaps, groups))
     (results_dir / "tier3_glover_sentence.md").write_text(glover_sentence(maxdiv, rows))
     (results_dir / "tier3_best_known.md").write_text(build_best_known_table(rows))
-    written = render_charts(gaps, groups, docs_dir / "images")
-    for family in CHARTED_FAMILIES:
-        names = written.get(family, [])
-        (results_dir / f"tier3_charts_{family.lower()}.md").write_text(
-            "\n".join(f"![{name.removesuffix('.webp')}](./images/{name})" for name in names) + "\n"
-        )
+    render_charts(gaps, groups, docs_dir / "images")
     print(f"tier-3 report emitted into {docs_dir}", flush=True)
 
 

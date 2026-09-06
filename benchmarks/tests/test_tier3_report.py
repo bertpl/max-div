@@ -97,7 +97,7 @@ def test_glover_sentence_counts_reached_pairings():
 
 
 def test_main_emits_charts_and_tables(tmp_path: Path):
-    """The report writes one chart per charted group with data, the chart lists, and every table."""
+    """The report writes one chart per charted group with data, and every table."""
     # --- arrange ----------------------
     data_dir, records_dir, docs_dir = tmp_path / "data", tmp_path / "records", tmp_path / "docs"
     rows = load_best_known()
@@ -112,8 +112,7 @@ def test_main_emits_charts_and_tables(tmp_path: Path):
 
     # --- assert -----------------------
     assert (docs_dir / "images" / "tier3_ran_500_50.webp").exists()
-    assert "tier3_ran_500_50" in (docs_dir / "results" / "tier3_charts_ran.md").read_text()
-    assert (docs_dir / "results" / "tier3_charts_geo.md").read_text() == "\n"
+    assert not (docs_dir / "images" / "tier3_geo_100_10.webp").exists()  # the fixture has no Geo records, so no Geo chart is written
     assert "| Ran | 500 | 50 | 10 |" in (docs_dir / "results" / "tier3_gaps.md").read_text()
     assert "qc-selector[MaxMin]" in (docs_dir / "results" / "tier3_entrants.md").read_text()
     assert "| Ran | Ran 500 3 | 500 | 50 | 56 | 55 | PHG2011 |" in (docs_dir / "results" / "tier3_best_known.md").read_text()
