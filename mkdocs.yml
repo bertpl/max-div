@@ -129,6 +129,7 @@ nav:
     - Glossary: concepts/glossary.md
   - Guides:
     - Why geometric-mean separation is the default objective: guides/geomean_separation.md
+    - When to use the geometric-mean distance: guides/geomean_distance.md
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/index.md

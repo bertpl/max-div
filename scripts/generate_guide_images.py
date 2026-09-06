@@ -1,9 +1,9 @@
 """Generate the figures of the guide pages under `docs/guides/`.
 
-Each figure plots one selection controlled by a parameter alpha: three cases as dot rows, and the
-three separation metrics against alpha below them.
-
-No solver is involved: the selections are given, and the figures show what each metric rewards.
+The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
+cases as dot rows, and the three separation metrics against alpha below them; no solver is involved.
+The figures of `geomean_distance.md` plot the metric's level curves and one solved selection; only
+that one runs the solver.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py``.
 """
@@ -15,6 +15,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 from benchmarks.figures.style import REPO_ROOT, save_webp, use_docs_style
+from max_div.metrics import DistanceMetric, DiversityMetric
+from max_div.problem import MaxDivProblem
+from max_div.solver import ParallelMaxDivSolverBuilder, seconds
 
 IMAGES_DIR = REPO_ROOT / "docs" / "guides" / "images"
 
@@ -158,6 +161,95 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
     return np.concatenate((constrained, free))
 
 
+# ==================================================================================================
+#  Geometric-mean distance: level curves and a solved example
+# ==================================================================================================
+POPULATION_COLOR = "#b0b0b0"
+SELECTION_COLOR = "#ee1111"
+
+
+def render_geomean_distance_levels(name: str, k: int) -> None:
+    """Plot the level curves of the geometric-mean distance from the origin, over all four quadrants.
+
+    The curve at distance 1/sqrt(k) is highlighted; `docs/guides/geomean_distance.md`, section II,
+    explains why. Two fainter curves show the family around the highlighted curve.
+
+    Args:
+        name: Image file stem under `IMAGES_DIR`.
+        k: Sets the highlighted level, 1/sqrt(k).
+    """
+    use_docs_style()
+    fig, ax = plt.subplots(figsize=(6.0, 6.0))
+    fig.subplots_adjust(left=0.12, right=0.97, top=0.97, bottom=0.1)
+    grid = np.linspace(-1.0, 1.0, 1201)
+    dx, dy = np.meshgrid(grid, grid)
+    distance = np.sqrt(np.abs(dx * dy))
+    reference = 1.0 / np.sqrt(k)
+    levels = (reference / 2, reference, 0.5)
+    contours = ax.contour(
+        dx, dy, distance, levels=levels, colors=("#BBBBBB", SELECTION_COLOR, "#BBBBBB"), linewidths=(1.0, 2.0, 1.0)
+    )
+    # label each curve where it crosses Δx = 0.45 in the first quadrant, clear of the marked points
+    ax.clabel(
+        contours, fmt=lambda v: f"d = {v:g}", fontsize="small", manual=[(0.45, level**2 / 0.45) for level in levels]
+    )
+    ax.axhline(0.0, color="#D8D8D8", linewidth=0.8, zorder=0)
+    ax.axvline(0.0, color="#D8D8D8", linewidth=0.8, zorder=0)
+    for point, label, offset in (
+        ((reference, reference), "(1/\u221ak, 1/\u221ak)", (8, 8)),
+        ((1.0, 1.0 / k), "(1, 1/k)", (-30, 12)),
+    ):
+        ax.plot(*point, "o", color="#222222", markersize=6, zorder=3)
+        ax.annotate(label, point, textcoords="offset points", xytext=offset)
+    ax.set_xlim(-1.05, 1.05)
+    ax.set_ylim(-1.05, 1.05)
+    ax.set_xlabel("Δx")
+    ax.set_ylabel("Δy")
+    ax.set_aspect("equal")
+    save_webp(fig, IMAGES_DIR / f"{name}.webp")
+
+
+def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float, n_workers: int, seed: int) -> None:
+    """Render one solved selection: geomean separation with the geometric-mean distance on a uniform unit square.
+
+    Args:
+        name: Image file stem under `IMAGES_DIR`.
+        seed: Seeds both the population sample and the solver.
+    """
+    rng = np.random.default_rng(seed)
+    vectors = rng.random((n, 2)).astype(np.float32)
+    problem = MaxDivProblem.new(
+        vectors=vectors,
+        k=k,
+        distance_metric=DistanceMetric.geometric_mean(),
+        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+    )
+    solver = (
+        ParallelMaxDivSolverBuilder(problem)
+        .with_seed(seed)
+        .with_workers(seconds(budget_sec), n_workers)
+        .with_end_to_end_budget()
+        .build()
+    )
+    selected = solver.solve(verbosity=0).i_selected
+
+    use_docs_style()
+    fig, ax = plt.subplots(figsize=(6.5, 6.5))
+    fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08)
+    ax.scatter(vectors[:, 0], vectors[:, 1], s=1.5, color=POPULATION_COLOR, label=f"population (n = {n:,})", zorder=1)
+    ax.scatter(
+        vectors[selected, 0], vectors[selected, 1], s=40, color=SELECTION_COLOR, label=f"selection (k = {k})", zorder=3
+    )
+    # Rug marks along the bottom and left edges show the selection's two marginal distributions.
+    ax.plot(vectors[selected, 0], np.full(k, -0.03), "|", color=SELECTION_COLOR, markersize=10, zorder=3)
+    ax.plot(np.full(k, -0.03), vectors[selected, 1], "_", color=SELECTION_COLOR, markersize=10, zorder=3)
+    ax.set_xlim(-0.06, 1.02)
+    ax.set_ylim(-0.06, 1.12)
+    ax.set_aspect("equal")
+    ax.legend(loc="upper right", framealpha=0.9)
+    save_webp(fig, IMAGES_DIR / f"{name}.webp")
+
+
 def main() -> None:
     """Render every guide figure."""
     render_example(
@@ -198,6 +290,8 @@ def main() -> None:
         dot_size=14,
         position_marks=(-0.25, 0.0, 1.0),
     )
+    render_geomean_distance_levels("geomean_distance_levels", k=25)
+    render_geomean_distance_example("geomean_distance_example", n=50_000, k=100, budget_sec=60.0, n_workers=16, seed=42)
 
 
 if __name__ == "__main__":
