@@ -1,6 +1,6 @@
 # Head-to-Head — vs. Exact Solvers — Tables
 
-These tables back the [exact-solver comparison](tier1.md). Gaps are `max-div`'s median over seeds at the quoted budget, in percent below the certified optimum; a dash marks a budget the series did not run.
+Gaps are `max-div`'s median over seeds at the quoted budget, in percent below the certified optimum of the [exact-solver comparison](tier1.md); a dash marks a budget the series did not run.
 
 ## I. Gap to the certified optimum
 

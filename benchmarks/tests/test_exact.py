@@ -116,7 +116,7 @@ def _mip_problem() -> MaxDivProblem:
 
 
 def _mip_constrained_problem() -> MaxDivProblem:
-    """Return `_mip_problem`'s 12 vectors, select 3, with exactly two of the first six items required — a quota the unconstrained optimum breaks."""
+    """Return `_mip_problem` with one quota constraint the unconstrained optimum breaks."""
     rng = np.random.default_rng(12)
     return MaxDivProblem.new(
         vectors=rng.random((12, 2)).astype(np.float32),
@@ -143,7 +143,7 @@ def _solve_highs_in_child(connection, constrained: bool) -> None:  # noqa: ANN00
 
 @pytest.mark.parametrize("problem", [_mip_problem(), _mip_constrained_problem()], ids=["unconstrained", "constrained"])
 def test_scip_maxmin_certifies_the_brute_force_optimum(problem):
-    """SCIP certifies the max-min optimum, fairness constraints included, and reports it with the selection."""
+    """SCIP certifies the max-min optimum, fairness constraints included, and reports the optimum with the selection."""
     # --- arrange -----------------------------------------
     oracle = _mip_oracle(problem)
 
