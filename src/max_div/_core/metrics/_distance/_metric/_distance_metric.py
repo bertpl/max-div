@@ -23,6 +23,7 @@ METRIC_KIND_MINKOWSKI_P025 = 9
 METRIC_KIND_MINKOWSKI_P025_POWERED = 10
 METRIC_KIND_MINKOWSKI_P0125 = 11
 METRIC_KIND_MINKOWSKI_P0125_POWERED = 12
+METRIC_KIND_GEOMEAN = 13
 
 # `__repr__` looks up each kind's factory-method name here; the Minkowski kinds render as a
 # `minkowski(...)` call instead.
@@ -32,6 +33,7 @@ _FACTORY_NAMES = {
     METRIC_KIND_L2S: "l2s_euclidean_squared",
     METRIC_KIND_COS: "cosine",
     METRIC_KIND_LINF: "linf_chebyshev",
+    METRIC_KIND_GEOMEAN: "geometric_mean",
 }
 
 # `_IMPLIED_P` gives the p each specialized Minkowski kind implies, for `__repr__`; a metric of
@@ -99,6 +101,18 @@ class DistanceMetric(NamedTuple):
         The range is [0, 2].  Zero vectors have no defined angle and are rejected with an error.
         """
         return cls(kind=METRIC_KIND_COS, p=None)
+
+    @classmethod
+    def geometric_mean(cls) -> "DistanceMetric":
+        """Return the geometric-mean distance metric: ``( prod_i |x_i - y_i| )^(1/d)``.
+
+        The diversity concepts page explains what this distance rewards and cites the design
+        literature behind it.  A shared coordinate value makes the distance zero.
+
+        It is not a strict metric (distinct points can be at distance zero, and the triangle
+        inequality fails); the solver relies on neither.  It costs one ``log`` per dimension.
+        """
+        return cls(kind=METRIC_KIND_GEOMEAN, p=None)
 
     @classmethod
     def minkowski(cls, p: float, root: bool = True) -> "DistanceMetric":

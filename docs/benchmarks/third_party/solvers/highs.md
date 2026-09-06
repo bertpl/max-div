@@ -32,6 +32,9 @@ solver:
     distance.cosine:
       mark: partial
       note: *coeffs
+    distance.geomean:
+      mark: partial
+      note: *coeffs
     distance.custom:
       mark: full
       note:

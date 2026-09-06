@@ -37,6 +37,9 @@ solver:
     distance.cosine:
       mark: partial
       note: *edit_source
+    distance.geomean:
+      mark: partial
+      note: *edit_source
     distance.custom:
       mark: full
       note:

@@ -16,9 +16,9 @@ _SCIPY_METRIC = {
 }
 
 
-# -------------------------------------------------------------------------
+# ==================================================================================================
 #  Compute
-# -------------------------------------------------------------------------
+# ==================================================================================================
 def test_compute_pdist_metrics(metric: DistanceMetric):
     """Check if compute_pdist implements all metrics."""
 
@@ -41,6 +41,7 @@ def test_compute_pdist_metrics(metric: DistanceMetric):
         (DistanceMetric.l2_euclidean(), 5.0),
         (DistanceMetric.l2s_euclidean_squared(), 25.0),
         (DistanceMetric.linf_chebyshev(), 4.0),
+        (DistanceMetric.geometric_mean(), 12.0**0.5),
     ],
 )
 def test_compute_pdist_values(metric: DistanceMetric, expected_value: float):
@@ -136,3 +137,35 @@ def test_compute_pdist_zero_for_identical_vectors(metric: DistanceMetric):
 
     # --- assert -----------------------
     assert result[0] == np.float32(0.0)  # distance between the two identical vectors
+
+
+# ==================================================================================================
+#  Geometric mean
+# ==================================================================================================
+@pytest.mark.parametrize(
+    "x, y, expected_value",
+    [
+        ([0.0, 0.0], [3.0, 4.0], 12.0**0.5),  # sqrt(3 * 4)
+        ([1.0, 5.0, 2.0], [1.0, 9.0, 7.0], 0.0),  # a shared coordinate zeroes the product
+        ([0.0, 0.0], [-3.0, 4.0], 12.0**0.5),  # differences enter by absolute value
+        ([7.0], [3.0], 4.0),  # one dimension: the single gap itself
+        ([0.0, 0.0, 0.0], [1.0, 2.0, 4.0], 2.0),  # cube root of 8
+        ([0.5, 2.0, 8.0, 0.25, 4.0, 1.0], [0.0] * 6, 8.0 ** (1 / 6)),  # six mixed gaps whose product is 8
+        ([1e-18] * 25, [0.0] * 25, 1e-18),  # the product 1e-450 would underflow float64
+        ([1e30] * 25, [0.0] * 25, 1e30),  # the product 1e750 would overflow float64
+        ([1.0, 1e-30], [0.0, 0.0], 1e-15),  # one tiny gap pulls the mean down, without underflow
+    ],
+)
+def test_compute_pdist_geometric_mean_values(x: list[float], y: list[float], expected_value: float):
+    """The geometric-mean distance handles zero, tiny, huge and negative gaps exactly or to float32 precision."""
+    # --- arrange ----------------------
+    vectors = np.array([x, y], dtype=np.float32)
+
+    # --- act --------------------------
+    d = compute_pdist(vectors, metric=DistanceMetric.geometric_mean())
+
+    # --- assert -----------------------
+    if expected_value == 0.0:
+        assert d[0] == np.float32(0.0)
+    else:
+        assert d[0] == pytest.approx(expected_value, rel=1e-6)

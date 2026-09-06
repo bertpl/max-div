@@ -32,6 +32,9 @@ solver:
     distance.cosine:
       mark: partial
       note: *callback
+    distance.geomean:
+      mark: partial
+      note: *callback
     distance.custom:
       mark: full
       note:

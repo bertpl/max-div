@@ -11,6 +11,7 @@ _FACTORY_METRICS = (
     DistanceMetric.l2s_euclidean_squared(),
     DistanceMetric.linf_chebyshev(),
     DistanceMetric.cosine(),
+    DistanceMetric.geometric_mean(),
 )
 
 

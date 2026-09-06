@@ -34,6 +34,9 @@ solver:
     distance.cosine:
       mark: partial
       note: *via_kernel
+    distance.geomean:
+      mark: partial
+      note: *via_kernel
     distance.custom:
       mark: full
       note:

@@ -39,10 +39,15 @@ The distance metric determines how the distance between two vectors is measured.
 | `linf_chebyshev()` | $$d = \max_i \lvert x_i - y_i \rvert$$ | Chebyshev distance: set by the single largest per-dimension gap, so no dimension's difference is averaged away by the others. |
 | `cosine()` | $$d = 1 - \frac{x \cdot y}{\lVert x \rVert \, \lVert y \rVert}$$ | Angular distance in $[0, 2]$, invariant to vector magnitude -- the natural choice for embedding-style vectors. Undefined for zero vectors, which are rejected at problem construction. |
 | `minkowski(p, root=True)` | $$d = \Big( \sum_i \lvert x_i - y_i \rvert^p \Big)^{1/p}$$ | The general family behind `l1_manhattan()` ($p=1$), `l2_euclidean()` ($p=2$) and `linf_chebyshev()` ($p=\infty$); any $p > 0$ is accepted, and those special values resolve to the dedicated metrics. |
+| `geometric_mean()` | $$d = \Big( \prod_i \lvert x_i - y_i \rvert \Big)^{1/d}$$ | The geometric mean of the per-dimension gaps, the $p \to 0$ limit of the power-mean family. A shared coordinate makes the distance zero, so a selection that keeps every pair apart under this metric is spread in every coordinate projection as well as in the full space -- the pair distance behind *maximum projection designs* (Joseph, Gul & Ba, 2015). |
 
 - **Speed depends on `p`.** The values $p \in \{1, 2, \infty, 0.5, 0.25, 0.125\}$ compute with hardware arithmetic; every other $p$ pays a `pow` call per dimension, well over an order of magnitude more per term.
 - **`root=False` skips the outer $1/p$ root**, exactly as `l2s_euclidean_squared()` does for `l2_euclidean()` -- see that row above.
 - **For $0 < p < 1$ the `root=True` form violates the triangle inequality** and is not a strict metric, while the `root=False` form is one -- the solver never relies on the triangle inequality, so both are usable.
+- **`geometric_mean()` is computed through logarithms**, one per dimension with a single exponential at the end, so the product cannot underflow or overflow at any dimension count.
+- **Distinct points can be at distance zero under `geometric_mean()`**; the solver treats them as a coincident pair -- see the [scoring page](scoring.md#diversity-tie-breakers) for the tie-breaker that removes one of them.
+
+Reference for the geometric-mean distance: Joseph, V. R., Gul, E. & Ba, S. (2015). *Maximum projection designs for computer experiments*. Biometrika 102(2), 371–380. [doi:10.1093/biomet/asv002](https://doi.org/10.1093/biomet/asv002).
 
 ## Separation
 

@@ -32,6 +32,12 @@ solver:
           The metric argument is a name forwarded to scikit-learn without the power parameter, so
           a caller-chosen p is reachable only through the precomputed-similarity input.
     distance.cosine: {mark: full}
+    distance.geomean:
+      mark: partial
+      note:
+        text: >-
+          Not among the metric names scikit-learn understands, so it is reachable only as a
+          precomputed similarity matrix.
     distance.custom:
       mark: full
       note:

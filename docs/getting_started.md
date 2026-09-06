@@ -148,6 +148,7 @@ problem = MaxDivProblem.new(
 | `linf_chebyshev()` | Chebyshev distance -- the largest per-dimension difference |
 | `cosine()` | Cosine distance (1 &minus; cosine similarity) -- angular, magnitude-invariant, for embedding-style vectors; zero vectors are rejected |
 | `minkowski(p, root=True)` | Minkowski distance with caller-chosen power `p` > 0; `p` = 1, 2, inf resolve to the dedicated metrics above |
+| `geometric_mean()` | Geometric mean of the per-dimension differences -- spreads a selection in every coordinate projection as well as in the full space; a shared coordinate gives distance zero |
 
 #### Precomputed distances
 

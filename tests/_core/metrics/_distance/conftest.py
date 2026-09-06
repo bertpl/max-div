@@ -11,6 +11,7 @@ NAMED_METRICS = (
     DistanceMetric.l2s_euclidean_squared(),
     DistanceMetric.linf_chebyshev(),
     DistanceMetric.cosine(),
+    DistanceMetric.geometric_mean(),
 )
 
 # MINKOWSKI_METRICS covers each Minkowski kind once: generic and specialized, rooted and not.

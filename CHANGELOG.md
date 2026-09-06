@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A geometric-mean distance metric, `DistanceMetric.geometric_mean()`: the d-th root of the product of per-coordinate differences, which spreads a selection in every coordinate projection as well as in the full space
 
 ### Changed
 - The exact-solver comparison is re-measured against the current solver: certified optima for max-min, mean and geomean separation on the 1-2-5 size grid, with a 12-worker max-div series
