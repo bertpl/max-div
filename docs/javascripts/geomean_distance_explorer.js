@@ -1,4 +1,4 @@
-// Interaction for the example figure of the geometric-mean distance guide.
+// This script adds the interaction to the example figure of the geometric-mean distance guide.
 //
 // The figure is an inline SVG (see scripts/geomean_distance_explorer.py) whose dots and rug ticks
 // carry `data-i`, and whose dots carry the precomputed nearest neighbor under the geometric-mean
@@ -54,31 +54,34 @@ function drawLevels(layer, cx, cy, d, reference) {
 // ---- Selection state ----
 
 // Put the figure back to its idle state.
-function clear(figure) {
+function clearFigure(figure) {
   const svg = figure.querySelector("svg.gmx");
   svg.classList.remove("is-active");
   delete svg.dataset.pinned;
-  for (const element of svg.querySelectorAll(".is-selected, .is-neighbor, .is-euclid")) {
-    element.classList.remove("is-selected", "is-neighbor", "is-euclid");
+  for (const element of svg.querySelectorAll(".is-picked, .is-neighbor, .is-euclid")) {
+    element.classList.remove("is-picked", "is-neighbor", "is-euclid");
     if (element.classList.contains("gmx-dot")) element.setAttribute("r", figure.dataset.dotRadius);
   }
   svg.querySelector(".gmx-hover").replaceChildren();
   figure.querySelector(".gmx-caption").textContent = figure.dataset.hint;
 }
 
-// Select item i: mark it, its two neighbors and the rug ticks, draw the levels, write the caption.
-function select(figure, i) {
+// Pick item i:
+// - mark the item, its two neighbors and their rug ticks;
+// - draw the level curves;
+// - write the caption.
+function pickItem(figure, i) {
   const svg = figure.querySelector("svg.gmx");
   const dot = svg.querySelector(`.gmx-dot[data-i="${i}"]`);
   if (!dot) return;
-  clear(figure);
+  clearFigure(figure);
   const nn = dot.dataset.nn;
   const nne = dot.dataset.nne;
   svg.classList.add("is-active");
   for (const element of svg.querySelectorAll(`.gmx-dot[data-i="${i}"], .gmx-rug[data-i="${i}"]`)) {
-    element.classList.add("is-selected");
+    element.classList.add("is-picked");
   }
-  // The selected dot's radius is set as an attribute, since not every browser honors `r` from CSS.
+  // The picked dot's radius is set as an attribute, since not every browser honors `r` from CSS.
   dot.setAttribute("r", (1.4 * parseFloat(figure.dataset.dotRadius)).toFixed(4));
   for (const element of svg.querySelectorAll(`.gmx-dot[data-i="${nn}"], .gmx-rug[data-i="${nn}"]`)) {
     element.classList.add("is-neighbor");
@@ -105,7 +108,7 @@ function select(figure, i) {
 // - a tap or click pins; a second one on the same item, or one on empty plot area, clears;
 // - keyboard focus selects;
 // - Escape clears.
-function install(figure) {
+function installFigureListeners(figure) {
   if (figure.dataset.gmxReady) return;
   figure.dataset.gmxReady = "1";
   figure.dataset.hint = figure.querySelector(".gmx-caption").textContent;
@@ -114,26 +117,26 @@ function install(figure) {
   const itemOf = (event) => event.target.closest("[data-i]");
   svg.addEventListener("pointerover", (event) => {
     const item = itemOf(event);
-    if (item && !svg.dataset.pinned) select(figure, item.dataset.i);
+    if (item && !svg.dataset.pinned) pickItem(figure, item.dataset.i);
   });
   svg.addEventListener("click", (event) => {
     const item = itemOf(event);
     if (!item || svg.dataset.pinned === item.dataset.i) {
-      clear(figure);
+      clearFigure(figure);
       return;
     }
-    select(figure, item.dataset.i);
+    pickItem(figure, item.dataset.i);
     svg.dataset.pinned = item.dataset.i;
   });
   svg.addEventListener("focusin", (event) => {
     const item = itemOf(event);
-    if (item && !svg.dataset.pinned) select(figure, item.dataset.i);
+    if (item && !svg.dataset.pinned) pickItem(figure, item.dataset.i);
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") clear(figure);
+    if (event.key === "Escape") clearFigure(figure);
   });
 }
 
 document$.subscribe(() => {
-  for (const figure of document.querySelectorAll(".gmx-figure")) install(figure);
+  for (const figure of document.querySelectorAll(".gmx-figure")) installFigureListeners(figure);
 });

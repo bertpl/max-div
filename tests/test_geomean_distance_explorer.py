@@ -1,7 +1,6 @@
-"""These tests guard the interactive figure of the geometric-mean distance guide.
-
-The figure's numbers are precomputed in Python and carried by the fragment's `data-*` attributes; a
-wrong neighbor or a malformed fragment would only show up as a wrong hover on the built site.
+"""The interactive figure of the geometric-mean distance guide precomputes its numbers in Python and carries
+them in the fragment's `data-*` attributes; a wrong neighbor or a malformed fragment would only show up as
+a wrong hover on the built site.
 """
 
 import importlib.util
@@ -27,11 +26,11 @@ def _load_module():
 
 @pytest.fixture(scope="module")
 def explorer():
-    """The module under test, loaded once."""
+    """Return the module under test, loaded once."""
     return _load_module()
 
 
-# Four items chosen so that the two distances disagree:
+# The four items are chosen so that the two distances disagree:
 # - item 0 shares its y with item 1 and its x with item 2, so those pairs sit at distance 0 under the metric;
 # - item 3 is nearest to item 2 under the metric (gaps 0.3 and 0.3) and under the Euclidean distance alike;
 # - items 0 to 2 are Euclidean-nearest to item 3.
@@ -61,7 +60,7 @@ def test_nearest_neighbors_under_both_distances(explorer):
 # ==================================================================================================
 @pytest.fixture(scope="module")
 def fragment(explorer):
-    """The fragment of the four-item selection."""
+    """Return the fragment of the four-item selection."""
     return explorer.explorer_fragment(X, Y, n=4, k=4, population_image="../images/pop.webp", description="four items")
 
 
@@ -87,7 +86,10 @@ def test_fragment_carries_one_dot_and_two_rug_ticks_per_item(fragment):
 
 
 def test_every_dot_names_its_neighbors_and_distance(fragment):
-    """The script reads the `data-*` values on hover, so they must index existing dots and match the arithmetic."""
+    """`geomean_distance_explorer.js` reads the `data-*` values on hover.
+
+    They must index existing dots and match the arithmetic.
+    """
     # --- act --------------------------
     dots = re.findall(
         r'<circle class="gmx-dot" data-i="(\d+)" data-nn="(\d+)" data-nne="(\d+)" data-d="([\d.]+)"', fragment

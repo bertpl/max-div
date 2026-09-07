@@ -9,7 +9,7 @@ extra_css:
 
 extra_javascript:
   - javascripts/mathjax.js
-  - javascripts/geomean_explorer.js
+  - javascripts/geomean_distance_explorer.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 theme:

@@ -307,11 +307,11 @@ img.center75 {
     color: rgba(255, 255, 255, 0.55);
 }
 
-/* These rules style the interactive example figure of the geometric-mean distance guide
-   (scripts/geomean_distance_explorer.py emits it, docs/javascripts/geomean_explorer.js drives it). The
-   figure is light like the other guide figures; the colors are the script's INK, SELECTION_COLOR and
-   NEIGHBOR_COLOR. The figure is shown at its design width, as the raster figures are, and capped at
-   the column. */
+/* scripts/geomean_distance_explorer.py emits the interactive example figure of the geometric-mean
+   distance guide and docs/javascripts/geomean_distance_explorer.js drives it. The figure keeps its
+   white background under the dark color scheme, as the raster guide figures do; the colors are the
+   script's FOREGROUND_COLOR, SELECTION_COLOR and NEIGHBOR_COLOR. The figure is shown at its design
+   width, as the raster figures are, and never wider than the text column. */
 .gmx-figure {
     width: 624px;
     max-width: 100%;
@@ -347,7 +347,7 @@ img.center75 {
     transition: opacity 120ms;
 }
 .gmx-dot:focus {
-    outline: none;  /* the selected styling below is the focus indicator */
+    outline: none;  /* the picked styling below is the focus indicator */
 }
 .gmx-rug {
     stroke: #EE1111;
@@ -360,11 +360,11 @@ img.center75 {
     stroke-width: 8px;
     cursor: pointer;
 }
-.gmx.is-active .gmx-dot:not(.is-selected):not(.is-neighbor):not(.is-euclid),
-.gmx.is-active .gmx-rug:not(.is-selected):not(.is-neighbor) {
+.gmx.is-active .gmx-dot:not(.is-picked):not(.is-neighbor):not(.is-euclid),
+.gmx.is-active .gmx-rug:not(.is-picked):not(.is-neighbor) {
     opacity: 0.35;
 }
-.gmx .gmx-dot.is-selected {
+.gmx .gmx-dot.is-picked {
     stroke: #222222;
     stroke-width: 1.5px;
 }
@@ -379,7 +379,7 @@ img.center75 {
     stroke-width: 1.4px;
     stroke-dasharray: 3 2;
 }
-.gmx .gmx-rug.is-selected,
+.gmx .gmx-rug.is-picked,
 .gmx .gmx-rug.is-neighbor {
     stroke-width: 2.5px;
 }

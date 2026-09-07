@@ -62,8 +62,8 @@ def tool_key(label: str) -> str:
 def save_webp(fig: plt.Figure, path: Path, *, lossless: bool = False) -> None:
     """Render the figure to webp via PIL (matplotlib has no native webp writer) and close the figure.
 
-    Lossy by default; `lossless` suits noise-like content such as a dense scatter, which lossy
-    encoding makes larger, not smaller.
+    `lossless` suits noise-like content such as a dense scatter, which lossy encoding makes larger,
+    not smaller.
     """
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png")

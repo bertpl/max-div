@@ -224,7 +224,10 @@ def render_geomean_distance_levels(name: str, k: int) -> None:
 
 @dataclass(frozen=True)
 class ExampleSettings:
-    """The example's problem and solver settings, stored with its cached solution."""
+    """The example's problem and solver settings are stored with its cached solution.
+
+    `--reuse-solution` checks that the cache was solved with the settings it is asked to render.
+    """
 
     n: int
     k: int
@@ -245,7 +248,10 @@ def build_geomean_distance_population(n: int, seed: int) -> NDArray[np.float32]:
 
 
 def solve_geomean_distance_example(vectors: NDArray[np.float32], settings: ExampleSettings) -> NDArray[np.intp]:
-    """Return the selected indices: geometric-mean separation under the geometric-mean distance, end-to-end budget."""
+    """Return the indices selected by maximizing geometric-mean separation under the geometric-mean distance.
+
+    The solve runs within an end-to-end budget.
+    """
     problem = MaxDivProblem.new(
         vectors=vectors,
         k=settings.k,
@@ -348,7 +354,7 @@ def render_geomean_distance_example(name: str, settings: ExampleSettings, reuse_
 
 
 def main() -> None:
-    """Render every guide figure; `--reuse-solution` skips the example's solve and reads its cache."""
+    """Render every guide figure."""
     parser = argparse.ArgumentParser(description="Regenerate the guide figures.")
     parser.add_argument("--reuse-solution", action="store_true", help="read the cached example selection")
     args = parser.parse_args()

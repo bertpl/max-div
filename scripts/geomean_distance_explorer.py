@@ -1,11 +1,11 @@
 """Build the interactive example figure of `docs/guides/geomean_distance.md` as an HTML fragment.
 
 The fragment is an inline SVG of the solved selection over a raster of the population, followed by a
-caption. `docs/javascripts/geomean_explorer.js` adds the interaction. Every number the interaction
-needs is precomputed here and carried by `data-*` attributes, so the script never recomputes a
-distance. Without JavaScript the fragment renders as a static figure.
+caption. `docs/javascripts/geomean_distance_explorer.js` adds the interaction. Every number the
+interaction needs is precomputed here and carried by `data-*` attributes, so the JavaScript never
+recomputes a distance. Without JavaScript the fragment renders as a static figure.
 
-This module depends on numpy only, so its tests run in the plain test environment;
+This module depends on numpy only, so its tests run without the `benchmarks` dependency group;
 `generate_guide_images.py` renders the population raster with Matplotlib and calls `explorer_fragment`
 for the rest.
 """
@@ -15,35 +15,37 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-# data-space extent and pixel layout
 # The axes extend past the unit square: room for the rug ticks below and left of it, and for the
 # legend above it.
 X_MIN, X_MAX = -0.06, 1.02
 Y_MIN, Y_MAX = -0.06, 1.12
-VIEW_WIDTH = 624  # 6.5 inches at CSS resolution, the width the static example figure had
+VIEW_WIDTH = 624  # 6.5 inches at CSS 96 px per inch, the scale the raster guide figures are shown at
 MARGIN_LEFT, MARGIN_RIGHT, MARGIN_TOP, MARGIN_BOTTOM = 44, 8, 8, 36
 SCALE = (VIEW_WIDTH - MARGIN_LEFT - MARGIN_RIGHT) / (X_MAX - X_MIN)  # pixels per data unit
 VIEW_HEIGHT = round(MARGIN_TOP + (Y_MAX - Y_MIN) * SCALE + MARGIN_BOTTOM)
 
-# marks, in data units
+# The marks are placed and sized in data units, inside the scaled `gmx-data` group.
 DOT_RADIUS = 0.008
 RUG_NEAR, RUG_FAR = -0.018, -0.042  # a rug tick runs from RUG_NEAR to RUG_FAR beside its axis
 TICKS = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
 
-INK = "#222222"
+FOREGROUND_COLOR = "#222222"
 POPULATION_COLOR = "#B0B0B0"
 SELECTION_COLOR = "#EE1111"
 NEIGHBOR_COLOR = "#4C72B0"
 
 HINT = (
     "Hover over a red dot or one of its rug marks (tap on a touch screen) to see its nearest neighbor under the"
-    " metric and the level curve through it."
+    " metric and the metric's level curve through that neighbor."
 )
 
 
 @dataclass(frozen=True)
 class NearestNeighbors:
-    """Parallel arrays record, per item, its nearest other item under the geometric-mean and the Euclidean distance."""
+    """Parallel arrays record, per item, its nearest other item under the geometric-mean and the Euclidean distance.
+
+    `distance`, `dx` and `dy` describe the geometric-mean neighbor.
+    """
 
     index: NDArray[np.intp]
     distance: NDArray[np.float64]
@@ -56,7 +58,7 @@ def nearest_neighbors(x: NDArray[np.floating], y: NDArray[np.floating]) -> Neare
     """Return each item's nearest neighbor under the geometric-mean distance sqrt(|dx| |dy|) and the Euclidean one.
 
     Two items sharing a coordinate are at geometric-mean distance 0; that pair is then each other's
-    nearest neighbor, and `geomean_explorer.js` draws the degenerate level curve.
+    nearest neighbor, and `geomean_distance_explorer.js` draws the degenerate level curve.
     """
     x64 = np.asarray(x, dtype=np.float64)
     y64 = np.asarray(y, dtype=np.float64)
@@ -121,7 +123,7 @@ def _legend(n: int, k: int) -> list[str]:
             "nearest neighbor, geometric-mean distance",
         ),
         (
-            f'<circle cx="{x0 + 14}" cy="{{y}}" r="5.5" fill="none" stroke="{INK}" stroke-width="1.2"'
+            f'<circle cx="{x0 + 14}" cy="{{y}}" r="5.5" fill="none" stroke="{FOREGROUND_COLOR}" stroke-width="1.2"'
             ' stroke-dasharray="2 2"/>',
             "nearest neighbor, Euclidean distance",
         ),
@@ -169,7 +171,7 @@ def explorer_fragment(
     """Return the HTML fragment: a `<div>` holding the SVG and its caption, ending in a newline.
 
     Args:
-        x, y: Coordinates of the k selected items, as the solver saw them.
+        x, y: Coordinates of the k selected items, in the solver's input coordinates.
         n: Population size, for the legend.
         k: Selection size, for the legend and the 1/sqrt(k) reference level.
         population_image: URL of the population raster, relative to the page that includes the fragment.
