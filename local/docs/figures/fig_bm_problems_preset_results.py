@@ -337,9 +337,7 @@ def create_single_figure(
     fig.subplots_adjust(wspace=0.075, hspace=0.15)
 
     # --- save figure ---------------------------------
-    # the default lossless webp resolution puts these dense scatter figures over the repo's
-    # committed-file ceiling, so cap the resolution — still sharp at the page width they display at
-    save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{n}.webp", tgt_pixels=6_000_000)
+    save_fig(fig, target_fig_folder / f"preset_results_{problem_name}_{n}.webp")
 
     # --- save markdown report ------------------------
     quantiles_table.generate_tables()
