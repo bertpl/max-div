@@ -61,7 +61,7 @@ def run_maxdiv_budget_series(
     The measured time is end to end around `solve()`, distance computation, worker spawning and
     initialization included, so it compares with the adapters' timed conversions. The solves run
     one at a time, in this process: solves run side by side contend for the cores on the
-    multi-threaded distance computation and inflate the smallest budgets many times over.
+    multi-threaded distance computation and inflate the measured times at the smallest budgets several-fold.
 
     Args:
         problem_name: Generator name recorded in each record (e.g. ``"U1"``).

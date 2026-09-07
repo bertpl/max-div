@@ -121,7 +121,7 @@ def _budget_series_stats(
     """Aggregate budget-series records per budget, in budget order: mean measured time, mean/min/max quality.
 
     The curve follows the budgets, not the measured times: a small budget whose set-up ran long
-    would otherwise be drawn to the right of a larger one and fold the curve back on itself.
+    would otherwise be drawn to the right of a larger one.
     """
     by_budget: dict[str, list[RunRecord]] = defaultdict(list)
     for rec in records:

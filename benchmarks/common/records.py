@@ -50,7 +50,7 @@ def iteration_count(tag: str) -> int | None:
 
 
 def within_budget_tolerance(records: list[RunRecord], tolerance: float) -> list[RunRecord]:
-    """Return the records whose measured time is within `tolerance` (relative) of their wall-clock budget.
+    """Return the records whose measured time overshoots their wall-clock budget by at most `tolerance` (relative).
 
     A solve whose measured time misses its budget by more is not a measurement at that budget:
     its set-up took longer than the budget allowed. Records without a wall-clock budget
@@ -59,7 +59,7 @@ def within_budget_tolerance(records: list[RunRecord], tolerance: float) -> list[
     return [
         r
         for r in records
-        if (target := budget_sec(r.budget)) is None or abs(r.measured_sec / target - 1.0) <= tolerance
+        if (target := budget_sec(r.budget)) is None or r.measured_sec / target - 1.0 <= tolerance
     ]
 
 
