@@ -1,15 +1,27 @@
 // This script adds the interaction to the example figure of the geometric-mean distance guide.
 //
 // The figure is an inline SVG (see scripts/geomean_distance_explorer.py) whose dots and rug ticks
-// carry `data-i`, and whose dots carry the precomputed nearest neighbor under the geometric-mean
-// distance (`data-nn`, `data-d`, `data-dx`, `data-dy`), under the Euclidean one (`data-nne`) and along
-// each marginal (`data-nnx`, `data-nny`).
+// carry `data-i`, and whose dots carry the precomputed nearest neighbor:
+// - under the geometric-mean distance: `data-nn`, `data-d`, `data-dx`, `data-dy`;
+// - under the Euclidean distance: `data-nne`;
+// - along each marginal: `data-nnx`, `data-nny`.
 //
 // Invariants:
 // - one delegated listener set per figure, installed once: the `document$` observable fires on
 //   every page navigation;
 // - no distance is computed here beyond the level-curve geometry;
-// - the hover layer lives in the figure's data coordinates, so the curves are emitted in data units.
+// - the hover and marks layers live in the figure's data coordinates, so curves and rings are
+//   emitted in data units.
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Append an SVG element with the given attributes to a layer; strokes keep their pixel width.
+function appendElement(layer, tag, attributes) {
+  const element = document.createElementNS(SVG_NS, tag);
+  for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+  element.setAttribute("vector-effect", "non-scaling-stroke");
+  layer.appendChild(element);
+}
 
 // ---- Level curves ----
 
@@ -36,16 +48,6 @@ function hyperbolaPaths(cx, cy, d, samples = 80) {
   return paths;
 }
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-
-// Append an SVG element with the given attributes to a layer; strokes keep their pixel width.
-function appendElement(layer, tag, attributes) {
-  const element = document.createElementNS(SVG_NS, tag);
-  for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
-  element.setAttribute("vector-effect", "non-scaling-stroke");
-  layer.appendChild(element);
-}
-
 // Append the level curve through the neighbor.
 function drawLevel(layer, cx, cy, d) {
   for (const path of hyperbolaPaths(cx, cy, d)) {
@@ -56,7 +58,8 @@ function drawLevel(layer, cx, cy, d) {
 // ---- Reference neighbors ----
 
 // Draw a dashed ring around a reference neighbor's dot, with an "x", a "+" or no glyph inscribed.
-// The ring radius and the glyph reach come from the fragment, which also draws them in its legend.
+// The ring radius and the glyph's half-length come from the fragment, which draws the same ring and
+// glyph in its legend.
 function drawMark(svg, layer, dot, glyph) {
   const cx = parseFloat(dot.getAttribute("cx"));
   const cy = parseFloat(dot.getAttribute("cy"));
@@ -89,7 +92,7 @@ function clearFigure(figure) {
 
 // Pick item i:
 // - mark the item, its neighbor under the metric and both items' rug ticks;
-// - ring the three reference neighbors (Euclidean, x marginal, y marginal);
+// - ring each reference neighbor;
 // - draw the level curve through the neighbor;
 // - write the caption.
 function pickItem(figure, i) {
@@ -108,10 +111,11 @@ function pickItem(figure, i) {
     element.classList.add("is-neighbor");
   }
   const marks = svg.querySelector(".gmx-marks");
+  // Glyph per reference kind; must match the legend rows in `_legend` of scripts/geomean_distance_explorer.py.
   for (const [key, glyph] of [["nne", ""], ["nnx", "x"], ["nny", "+"]]) {
-    const reference = svg.querySelector(`.gmx-dot[data-i="${dot.dataset[key]}"]`);
-    reference.classList.add("is-marked");
-    drawMark(svg, marks, reference, glyph);
+    const referenceDot = svg.querySelector(`.gmx-dot[data-i="${dot.dataset[key]}"]`);
+    referenceDot.classList.add("is-marked");
+    drawMark(svg, marks, referenceDot, glyph);
   }
   const cx = parseFloat(dot.getAttribute("cx"));
   const cy = parseFloat(dot.getAttribute("cy"));

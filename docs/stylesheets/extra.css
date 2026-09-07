@@ -373,7 +373,7 @@ img.center75 {
     stroke: #222222;
     stroke-width: 1px;
 }
-/* The dashed ring and the inscribed glyph that mark a reference neighbor, in the legend and around a dot. */
+/* A dashed ring with an inscribed glyph marks a reference neighbor, in the legend and around a dot. */
 .gmx-mark {
     fill: none;
     stroke: #222222;

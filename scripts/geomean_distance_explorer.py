@@ -18,7 +18,7 @@ from numpy.typing import NDArray
 # The axes extend past the unit square: room for the rug ticks below and left of it, and for the
 # legend above it.
 X_MIN, X_MAX = -0.06, 1.02
-Y_MIN, Y_MAX = -0.06, 1.12
+Y_MIN, Y_MAX = -0.06, 1.2
 VIEW_WIDTH = 624  # 6.5 inches at CSS 96 px per inch, the scale the raster guide figures are shown at
 MARGIN_LEFT, MARGIN_RIGHT, MARGIN_TOP, MARGIN_BOTTOM = 44, 8, 8, 36
 SCALE = (VIEW_WIDTH - MARGIN_LEFT - MARGIN_RIGHT) / (X_MAX - X_MIN)  # pixels per data unit
@@ -30,9 +30,10 @@ RUG_NEAR, RUG_FAR = -0.018, -0.042  # a rug tick runs from RUG_NEAR to RUG_FAR b
 TICKS = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
 # A reference neighbor is marked by a dashed ring around its dot, with an "x" or "+" inscribed for
 # the marginal neighbors. The legend draws the ring in pixels; the JavaScript draws it in data units
-# around the dot, from the two factors the fragment carries.
-RING_RADIUS_FACTOR = 1.7  # ring radius over dot radius
-GLYPH_REACH = 0.7  # half-length of a glyph stroke over the ring radius, so the "x" touches the ring
+# around the dot, from `RING_RADIUS_FACTOR` and `GLYPH_REACH_FACTOR`, carried as `data-ring` and
+# `data-reach`.
+RING_RADIUS_FACTOR = 1.7  # the ring radius is this many dot radii
+GLYPH_REACH_FACTOR = 0.7  # a glyph stroke reaches this far from the center, in ring radii, so the "x" touches the ring
 LEGEND_RING_RADIUS = 5.5
 
 FOREGROUND_COLOR = "#222222"
@@ -48,10 +49,11 @@ HINT = (
 
 @dataclass(frozen=True)
 class NearestNeighbors:
-    """Parallel arrays record, per item, its nearest other item under four distances.
+    """Parallel arrays record, per item, its nearest other item under each distance the figure marks.
 
-    `index`, `distance`, `dx` and `dy` describe the neighbor under the geometric-mean distance; the
-    other three indices name the neighbor under the Euclidean distance and along each marginal.
+    - `index`, `distance`, `dx`, `dy`: the neighbor under the geometric-mean distance;
+    - `euclidean_index`: the neighbor under the Euclidean distance;
+    - `x_index`, `y_index`: the neighbor along each marginal.
     """
 
     index: NDArray[np.intp]
@@ -125,7 +127,7 @@ def _glyph_paths(x: float, y: float, ring_radius: float, glyph: str) -> str:
     """Return the two strokes of an "x" or "+" inscribed in a ring of `ring_radius` at (x, y), or nothing for `""`."""
     if glyph == "":
         return ""
-    reach = GLYPH_REACH * ring_radius
+    reach = GLYPH_REACH_FACTOR * ring_radius
     if glyph == "x":
         d = (
             f"M{x - reach:.1f},{y - reach:.1f}L{x + reach:.1f},{y + reach:.1f}"
@@ -136,17 +138,17 @@ def _glyph_paths(x: float, y: float, ring_radius: float, glyph: str) -> str:
     return f'<path class="gmx-glyph" d="{d}"/>'
 
 
-def _legend_ring(x: float, y: float, glyph: str) -> str:
+def _legend_mark(x: float, y: float, glyph: str) -> str:
     """Return a legend mark: the dashed ring drawn around a reference neighbor, with its inscribed glyph."""
     ring = f'<circle class="gmx-mark" cx="{x:.1f}" cy="{y:.1f}" r="{LEGEND_RING_RADIUS}"/>'
     return ring + _glyph_paths(x, y, LEGEND_RING_RADIUS, glyph)
 
 
 def _legend(n: int, k: int) -> list[str]:
-    """Return the two-column legend box in the top-right corner, in pixel space.
+    """Return the legend box in the top-right corner, in pixel space.
 
-    The left column names what is always drawn; the right column names the three reference neighbors
-    the interaction marks around the picked item.
+    The left column names what is always drawn; the right column names the reference neighbors the
+    interaction marks around the picked item.
     """
     column_widths, row, pad = (260, 224), 18, 8
     width = sum(column_widths) + pad
@@ -168,9 +170,9 @@ def _legend(n: int, k: int) -> list[str]:
             ),
         ),
         (
-            (lambda x, y: _legend_ring(x, y, ""), "nearest neighbor, Euclidean distance"),
-            (lambda x, y: _legend_ring(x, y, "x"), "nearest neighbor, x marginal"),
-            (lambda x, y: _legend_ring(x, y, "+"), "nearest neighbor, y marginal"),
+            (lambda x, y: _legend_mark(x, y, ""), "nearest neighbor, Euclidean distance"),
+            (lambda x, y: _legend_mark(x, y, "x"), "nearest neighbor, x marginal"),
+            (lambda x, y: _legend_mark(x, y, "+"), "nearest neighbor, y marginal"),
         ),
     )
     height = pad * 2 + row * max(len(column) for column in columns)
@@ -188,7 +190,10 @@ def _legend(n: int, k: int) -> list[str]:
 
 
 def _data_group(x: NDArray[np.floating], y: NDArray[np.floating], neighbors: NearestNeighbors) -> list[str]:
-    """Return the group in data coordinates: hover layer, rug ticks with their hit areas, dots, marks layer."""
+    """Return the group in data coordinates: the hover layer, the rug ticks and their hit areas, the dots, the marks.
+
+    Children are listed in paint order: the marks layer comes last so rings draw over the dots.
+    """
     parts = [
         f'<g class="gmx-data" transform="translate({_px(0.0):.2f},{_py(0.0):.2f}) scale({SCALE:.3f},{-SCALE:.3f})">',
         '<g class="gmx-hover" clip-path="url(#gmx-square)"></g>',
@@ -225,7 +230,7 @@ def explorer_fragment(
     Args:
         x, y: Coordinates of the k selected items, in the solver's input coordinates.
         n: Population size, for the legend.
-        k: Selection size, for the legend and the 1/sqrt(k) reference level.
+        k: Selection size, for the legend and the 1/sqrt(k) value in the caption.
         population_image: URL of the population raster, relative to the page that includes the fragment.
         description: Alternative text of the figure.
     """
@@ -234,7 +239,7 @@ def explorer_fragment(
     lines = [
         '<div class="gmx-figure">',
         f'<svg class="gmx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
-        f' data-ref="{1.0 / np.sqrt(k):.5f}" data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH}">',
+        f' data-ref="{1.0 / np.sqrt(k):.5f}" data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH_FACTOR}">',
         "<title>Selection under the geometric-mean distance</title>",
         f"<desc>{description}</desc>",
         '<defs><clipPath id="gmx-square" clipPathUnits="userSpaceOnUse">'

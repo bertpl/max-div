@@ -34,7 +34,7 @@ def explorer():
 # - item 0 shares its y with item 1 and its x with item 2, so those pairs sit at distance 0 under the metric;
 # - item 3 is nearest to item 2 under the metric (gaps 0.3 and 0.3) and under the Euclidean distance alike;
 # - items 0 to 2 are Euclidean-nearest to item 3;
-# - along x, items 0 and 2 share a value and item 3 ties between them at 0.3, so the first wins.
+# - along x, items 0 and 2 share a value and item 3 ties between them at 0.3, so `argmin` picks the lower index, item 0.
 X = np.array([0.1, 0.9, 0.1, 0.4], dtype=np.float32)
 Y = np.array([0.1, 0.1, 0.9, 0.6], dtype=np.float32)
 
@@ -42,8 +42,8 @@ Y = np.array([0.1, 0.1, 0.9, 0.6], dtype=np.float32)
 # ==================================================================================================
 #  Nearest neighbors
 # ==================================================================================================
-def test_nearest_neighbors_under_both_distances(explorer):
-    """A shared coordinate gives distance 0 under the metric while the Euclidean neighbor is another item."""
+def test_nearest_neighbors_under_each_distance(explorer):
+    """A shared coordinate gives distance 0 under the metric; the Euclidean and marginal neighbors are other items."""
     # --- act --------------------------
     neighbors = explorer.nearest_neighbors(X, Y)
 
