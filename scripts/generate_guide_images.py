@@ -19,6 +19,7 @@ from max_div.metrics import DistanceMetric, DiversityMetric
 from max_div.problem import MaxDivProblem
 from max_div.solver import ParallelMaxDivSolverBuilder, seconds
 
+GENERATED_DIR = REPO_ROOT / "generated"
 IMAGES_DIR = REPO_ROOT / "docs" / "guides" / "images"
 
 # One color per metric, shared by every figure so the reader learns them once.
@@ -27,7 +28,7 @@ CASE_LABELS = ("A", "B", "C")
 
 
 # ==================================================================================================
-#  Metrics of a one-dimensional selection
+#  Metrics of a selection
 # ==================================================================================================
 def separations(positions: NDArray[np.float64]) -> NDArray[np.float64]:
     """Return each item's distance to its nearest other item, for sorted one-dimensional positions."""
@@ -45,6 +46,14 @@ def metrics(positions: NDArray[np.float64]) -> dict[str, float]:
         "mean separation": float(sep.mean()),
         "geometric-mean separation": float(np.exp(np.mean(np.log(sep)))) if np.all(sep > 0) else 0.0,
     }
+
+
+def geomean_separation_2d(points: NDArray[np.float64]) -> float:
+    """Return the geometric mean over points of the Euclidean distance to each point's nearest other point."""
+    diff = points[:, None, :] - points[None, :, :]
+    distances = np.sqrt(np.sum(diff * diff, axis=-1))
+    np.fill_diagonal(distances, np.inf)
+    return float(np.exp(np.mean(np.log(distances.min(axis=1)))))
 
 
 # ==================================================================================================
@@ -210,14 +219,20 @@ def render_geomean_distance_levels(name: str, k: int) -> None:
 
 
 def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float, n_workers: int, seed: int) -> None:
-    """Render one solved selection: geomean separation with the geometric-mean distance on a uniform unit square.
+    """Render one solved selection and write its separations table.
+
+    The selection maximizes geometric-mean separation under the geometric-mean distance on a unit-square population.
+
+    Pairing one evenly spaced grid with a permutation of itself gives every marginal a minimum spacing
+    of 1 / (n - 1), which a random sample lacks.
 
     Args:
-        name: Image file stem under `IMAGES_DIR`.
-        seed: Seeds both the population sample and the solver.
+        name: File stem of the image under `IMAGES_DIR` and of the separations fragment under `GENERATED_DIR`.
+        seed: Seeds both the pairing and the solver.
     """
     rng = np.random.default_rng(seed)
-    vectors = rng.random((n, 2)).astype(np.float32)
+    values = np.linspace(0.0, 1.0, n, dtype=np.float32)
+    vectors = np.column_stack((values, rng.permutation(values)))
     problem = MaxDivProblem.new(
         vectors=vectors,
         k=k,
@@ -232,6 +247,7 @@ def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float
         .build()
     )
     selected = solver.solve(verbosity=0).i_selected
+    write_geomean_distance_example_separations(name, vectors[selected].astype(np.float64), k)
 
     use_docs_style()
     fig, ax = plt.subplots(figsize=(6.5, 6.5))
@@ -248,6 +264,24 @@ def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float
     ax.set_aspect("equal")
     ax.legend(loc="upper right", framealpha=0.9)
     save_webp(fig, IMAGES_DIR / f"{name}.webp")
+
+
+def write_geomean_distance_example_separations(name: str, selection: NDArray[np.float64], k: int) -> None:
+    """Write the selection's achieved separations next to the scaling targets 1/sqrt(k) and 1/k as a table fragment.
+
+    `docs/guides/geomean_distance.md` includes the fragment, so the numbers under the figure come from the
+    same solve as the figure.
+    """
+    rows = (
+        ("2D, Euclidean distance", geomean_separation_2d(selection), r"$1/\sqrt{k}$", 1.0 / np.sqrt(k)),
+        ("$x$ marginal", metrics(selection[:, 0])["geometric-mean separation"], "$1/k$", 1.0 / k),
+        ("$y$ marginal", metrics(selection[:, 1])["geometric-mean separation"], "$1/k$", 1.0 / k),
+    )
+    lines = ["| geometric-mean separation | achieved | target | target value |", "|---|---|---|---|"]
+    lines += [f"| {label} | {achieved:.4f} | {formula} | {target:.4f} |" for label, achieved, formula, target in rows]
+    path = GENERATED_DIR / f"{name}_separations.md"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 
 def main() -> None:
@@ -291,7 +325,7 @@ def main() -> None:
         position_marks=(-0.25, 0.0, 1.0),
     )
     render_geomean_distance_levels("geomean_distance_levels", k=25)
-    render_geomean_distance_example("geomean_distance_example", n=50_000, k=100, budget_sec=60.0, n_workers=16, seed=42)
+    render_geomean_distance_example("geomean_distance_example", n=10_000, k=100, budget_sec=60.0, n_workers=16, seed=42)
 
 
 if __name__ == "__main__":

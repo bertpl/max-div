@@ -22,6 +22,8 @@ $$\begin{aligned}
 
 A selection that is uniform in the square is not automatically uniform in its marginals: two points can be far apart in 2D while sharing the same $x$ value. Maximizing the usual Euclidean separation delivers the spread in the square and ignores the marginals.
 
+The values $1/\sqrt{k}$ and $1/k$ say how the 2D and the marginal separations are expected to scale with $k$, not what a selection can reach. The three separations compete for the same $k$ points, so a selection that maximizes all three at once will typically fall short of each target on its own.
+
 ## II. Geometric-mean distance metric
 
 The geometric-mean distance between two tuples is the geometric mean of their per-dimension gaps, in two dimensions
@@ -43,8 +45,12 @@ So a selection whose smallest geometric-mean distance is about $1/\sqrt{k}$ keep
 
 ## III. Example
 
-Here $k = 100$ points are selected from a population of $n = 50{,}000$ sampled uniformly and independently per coordinate in the unit square, under geometric-mean separation with the geometric-mean distance, on 16 workers with a 60 s end-to-end budget:
+Here $k = 100$ points are selected from a population of $n = 10{,}000$ in the unit square: the $n$ evenly spaced values in $[0, 1]$ as $x$, paired with a random permutation of the same values as $y$. The population is uniform in the square, and by construction no two points share a coordinate: every marginal is spaced $1/(n-1)$ apart.
 
-![Fifty thousand gray points in the unit square with the hundred selected ones in red, and the selection's x and y values as rug marks along the bottom and left edges](./images/geomean_distance_example.webp)
+The selection runs under geometric-mean separation with the geometric-mean distance, on 16 workers with a 60 s end-to-end budget:
 
-The red points spread over the square, and the rug marks along the two edges show the marginals: the hundred $x$ values and the hundred $y$ values each cover $[0, 1]$ without gaps or clusters.
+![Ten thousand gray points in the unit square with the hundred selected ones in red, and the selection's x and y values as rug marks along the bottom and left edges](./images/geomean_distance_example.webp)
+
+The red points spread over the square, and the rug marks along the two edges show the marginals: the hundred $x$ values and the hundred $y$ values each cover $[0, 1]$ without gaps or clusters. Measured under the Euclidean distance, the selection's separations sit below but close to the targets of section I, in 2D and in each marginal, as expected of three quantities optimized at once:
+
+--8<-- "generated/geomean_distance_example_separations.md"
