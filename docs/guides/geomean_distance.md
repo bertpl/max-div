@@ -43,7 +43,9 @@ So a selection whose smallest geometric-mean distance is about $1/\sqrt{k}$ keep
 
 ## III. Example
 
-Here $k = 100$ points are selected from a population of $n = 10{,}000$ in the unit square: the $n$ evenly spaced values in $[0, 1]$ as $x$, paired with a random permutation of the same values as $y$. The population is uniform in the square, and by construction no two points share a coordinate: every marginal is spaced $1/(n-1)$ apart. The selection runs under minimum separation with the geometric-mean distance, on 16 workers with a 60 s end-to-end budget:
+Here $k = 100$ points are selected from a population of $n = 10{,}000$ in the unit square: the $n$ evenly spaced values in $[0, 1]$ as $x$, paired with a random permutation of the same values as $y$. The population is uniform in the square, and by construction no two points share a coordinate: every marginal is spaced $1/(n-1)$ apart.
+
+The selection runs under minimum separation with the geometric-mean distance, on 16 workers with a 60 s end-to-end budget:
 
 ![Ten thousand gray points in the unit square with the hundred selected ones in red, and the selection's x and y values as rug marks along the bottom and left edges](./images/geomean_distance_example.webp)
 
