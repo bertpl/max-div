@@ -213,8 +213,7 @@ def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float
     """Render one solved selection: min separation with the geometric-mean distance on a unit-square population.
 
     Pairing one evenly spaced grid with a permutation of itself gives every marginal a minimum spacing
-    of 1 / (n - 1), which a random sample lacks: it would hold near-duplicate coordinates that no
-    selection could space apart.
+    of 1 / (n - 1), which a random sample lacks.
 
     Args:
         name: Image file stem under `IMAGES_DIR`.
