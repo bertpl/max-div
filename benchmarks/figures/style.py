@@ -59,12 +59,16 @@ def tool_key(label: str) -> str:
     return _TOOL_KEY_OVERRIDES.get(prefix, prefix.lower())
 
 
-def save_webp(fig: plt.Figure, path: Path) -> None:
-    """Render the figure to lossy webp via PIL (matplotlib has no native webp writer) and close it."""
+def save_webp(fig: plt.Figure, path: Path, *, lossless: bool = False) -> None:
+    """Render the figure to webp via PIL (matplotlib has no native webp writer) and close it.
+
+    Lossy at quality 92 by default; `lossless` suits noise-like content such as a dense scatter,
+    which lossy encoding makes larger, not smaller.
+    """
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png")
     plt.close(fig)
     buffer.seek(0)
     path.parent.mkdir(parents=True, exist_ok=True)
-    Image.open(buffer).convert("RGB").save(path, format="WEBP", lossless=False, quality=92)
+    Image.open(buffer).convert("RGB").save(path, format="WEBP", lossless=lossless, quality=100 if lossless else 92)
     print(f"wrote {path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path}")

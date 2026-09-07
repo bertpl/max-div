@@ -306,3 +306,100 @@ img.center75 {
 [data-md-color-scheme="slate"] .md-typeset .changelog h3 {
     color: rgba(255, 255, 255, 0.55);
 }
+
+/* The interactive example figure of the geometric-mean distance guide (scripts/geomean_distance_explorer.py
+   emits it, docs/javascripts/geomean_explorer.js drives it). The figure is light like the guide's other
+   figures; the colors are the script's INK, POPULATION_COLOR, SELECTION_COLOR and NEIGHBOR_COLOR. It is
+   shown at its design width, as the raster figures are, and capped at the column. */
+.gmx-figure {
+    width: 624px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+.gmx-figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.gmx-spine {
+    fill: none;
+    stroke: #222222;
+    stroke-width: 0.8px;
+}
+.gmx-tick {
+    stroke: #222222;
+    stroke-width: 0.8px;
+}
+.gmx-label {
+    fill: #222222;
+    font-size: 12px;
+}
+.gmx-legend {
+    fill: rgba(255, 255, 255, 0.9);
+    stroke: #DDDDDD;
+    stroke-width: 0.5px;
+}
+.gmx-dot {
+    fill: #EE1111;
+    cursor: pointer;
+    transition: opacity 120ms;
+}
+.gmx-dot:focus {
+    outline: none;  /* the selected styling below is the focus indicator */
+}
+.gmx-rug {
+    stroke: #EE1111;
+    stroke-width: 1px;
+    transition: opacity 120ms;
+}
+/* A 1 px tick cannot be hovered; each has an invisible wide twin that takes the pointer instead. */
+.gmx-hit {
+    stroke: transparent;
+    stroke-width: 8px;
+    cursor: pointer;
+}
+.gmx.is-active .gmx-dot:not(.is-selected):not(.is-neighbor):not(.is-euclid),
+.gmx.is-active .gmx-rug:not(.is-selected):not(.is-neighbor) {
+    opacity: 0.35;
+}
+.gmx .gmx-dot.is-selected {
+    stroke: #222222;
+    stroke-width: 1.5px;
+}
+.gmx .gmx-dot.is-neighbor {
+    fill: #4C72B0;
+    stroke: #222222;
+    stroke-width: 1px;
+}
+.gmx .gmx-dot.is-euclid {
+    fill: none;
+    stroke: #222222;
+    stroke-width: 1.4px;
+    stroke-dasharray: 3 2;
+}
+.gmx .gmx-rug.is-selected,
+.gmx .gmx-rug.is-neighbor {
+    stroke-width: 2.5px;
+}
+.gmx .gmx-rug.is-neighbor {
+    stroke: #4C72B0;
+}
+.gmx-level {
+    fill: none;
+}
+.gmx-level-nn {
+    stroke: #EE1111;
+    stroke-width: 2px;
+}
+.gmx-level-ref {
+    stroke: #999999;
+    stroke-width: 1px;
+    stroke-dasharray: 4 3;
+}
+.gmx-caption {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--md-default-fg-color--light);
+    margin-top: 0.4em;
+}

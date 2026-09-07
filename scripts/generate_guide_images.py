@@ -3,15 +3,20 @@
 The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
 cases as dot rows, and the three separation metrics against alpha below them; no solver is involved.
 The figures of `geomean_distance.md` plot the metric's level curves and one solved selection; only
-that one runs the solver.
+that one runs the solver. That selection is emitted as an interactive figure (an HTML fragment over a
+raster of the population) plus its separations table, and cached as JSON so that `--reuse-solution`
+re-renders it without the solve.
 
-Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py``.
+Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reuse-solution]``.
 """
 
+import argparse
+import json
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
+from geomean_distance_explorer import POPULATION_COLOR, explorer_fragment
 from numpy.typing import NDArray
 
 from benchmarks.figures.style import REPO_ROOT, save_webp, use_docs_style
@@ -21,6 +26,7 @@ from max_div.solver import ParallelMaxDivSolverBuilder, seconds
 
 GENERATED_DIR = REPO_ROOT / "generated"
 IMAGES_DIR = REPO_ROOT / "docs" / "guides" / "images"
+SOLUTION_PATH = GENERATED_DIR / "geomean_distance_example_solution.json"
 
 # One color per metric, shared by every figure so the reader learns them once.
 METRIC_COLORS = {"min separation": "#4C72B0", "mean separation": "#DD8452", "geometric-mean separation": "#55A868"}
@@ -173,7 +179,6 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
 # ==================================================================================================
 #  Geometric-mean distance: level curves and a solved example
 # ==================================================================================================
-POPULATION_COLOR = "#b0b0b0"
 SELECTION_COLOR = "#ee1111"
 
 
@@ -218,21 +223,21 @@ def render_geomean_distance_levels(name: str, k: int) -> None:
     save_webp(fig, IMAGES_DIR / f"{name}.webp")
 
 
-def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float, n_workers: int, seed: int) -> None:
-    """Render one solved selection and write its separations table.
-
-    The selection maximizes geometric-mean separation under the geometric-mean distance on a unit-square population.
+def population(n: int, seed: int) -> NDArray[np.float32]:
+    """Return the n evenly spaced values in [0, 1] as x, paired with a seeded random permutation of them as y.
 
     Pairing one evenly spaced grid with a permutation of itself gives every marginal a minimum spacing
     of 1 / (n - 1), which a random sample lacks.
-
-    Args:
-        name: File stem of the image under `IMAGES_DIR` and of the separations fragment under `GENERATED_DIR`.
-        seed: Seeds both the pairing and the solver.
     """
     rng = np.random.default_rng(seed)
     values = np.linspace(0.0, 1.0, n, dtype=np.float32)
-    vectors = np.column_stack((values, rng.permutation(values)))
+    return np.column_stack((values, rng.permutation(values)))
+
+
+def solve_geomean_distance_example(
+    vectors: NDArray[np.float32], k: int, budget_sec: float, n_workers: int, seed: int
+) -> NDArray[np.intp]:
+    """Return the selected indices: geometric-mean separation under the geometric-mean distance, end-to-end budget."""
     problem = MaxDivProblem.new(
         vectors=vectors,
         k=k,
@@ -246,24 +251,54 @@ def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float
         .with_end_to_end_budget()
         .build()
     )
-    selected = solver.solve(verbosity=0).i_selected
-    write_geomean_distance_example_separations(name, vectors[selected].astype(np.float64), k)
+    return solver.solve(verbosity=0).i_selected
 
+
+def load_or_solve(
+    n: int, k: int, budget_sec: float, n_workers: int, seed: int, reuse_solution: bool
+) -> tuple[NDArray[np.float32], NDArray[np.intp]]:
+    """Return the population and the selected indices, from the JSON cache when asked, else from a fresh solve.
+
+    A fresh solve rewrites the cache. The cache holds the selected indices only: the population is
+    rebuilt from n and the seed, so the dots and the raster always come from the same coordinates.
+    """
+    if reuse_solution:
+        cached = json.loads(SOLUTION_PATH.read_text(encoding="utf-8"))
+        settings = {"n": n, "k": k, "budget_sec": budget_sec, "n_workers": n_workers, "seed": seed}
+        if {key: cached[key] for key in settings} != settings:
+            raise ValueError(f"{SOLUTION_PATH} was solved with other settings than {settings}")
+        return population(n, seed), np.asarray(cached["i_selected"], dtype=np.intp)
+    vectors = population(n, seed)
+    selected = solve_geomean_distance_example(vectors, k, budget_sec, n_workers, seed)
+    record = {
+        "n": n,
+        "k": k,
+        "budget_sec": budget_sec,
+        "n_workers": n_workers,
+        "seed": seed,
+        "i_selected": [int(i) for i in selected],
+    }
+    SOLUTION_PATH.write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {SOLUTION_PATH.relative_to(REPO_ROOT)}")
+    return vectors, selected
+
+
+def render_geomean_distance_population(name: str, vectors: NDArray[np.float32], pixels: int = 1000) -> None:
+    """Render the population alone as a square lossless raster covering exactly the unit square.
+
+    The interactive figure lays its SVG marks over this image, so the image carries no axes or margins:
+    its edges are the square's edges.
+    """
     use_docs_style()
-    fig, ax = plt.subplots(figsize=(6.5, 6.5))
-    fig.subplots_adjust(left=0.1, right=0.97, top=0.97, bottom=0.08)
-    ax.scatter(vectors[:, 0], vectors[:, 1], s=1.5, color=POPULATION_COLOR, label=f"population (n = {n:,})", zorder=1)
-    ax.scatter(
-        vectors[selected, 0], vectors[selected, 1], s=40, color=SELECTION_COLOR, label=f"selection (k = {k})", zorder=3
-    )
-    # Rug marks along the bottom and left edges show the selection's two marginal distributions.
-    ax.plot(vectors[selected, 0], np.full(k, -0.03), "|", color=SELECTION_COLOR, markersize=10, zorder=3)
-    ax.plot(np.full(k, -0.03), vectors[selected, 1], "_", color=SELECTION_COLOR, markersize=10, zorder=3)
-    ax.set_xlim(-0.06, 1.02)
-    ax.set_ylim(-0.06, 1.12)
-    ax.set_aspect("equal")
-    ax.legend(loc="upper right", framealpha=0.9)
-    save_webp(fig, IMAGES_DIR / f"{name}.webp")
+    with plt.rc_context({"savefig.bbox": None, "savefig.pad_inches": 0.0}):
+        dpi = plt.rcParams["savefig.dpi"]
+        fig = plt.figure(figsize=(pixels / dpi, pixels / dpi))
+        ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
+        ax.set_xlim(0.0, 1.0)
+        ax.set_ylim(0.0, 1.0)
+        ax.axis("off")
+        ax.scatter(vectors[:, 0], vectors[:, 1], s=0.7, color=POPULATION_COLOR, linewidths=0)
+        save_webp(fig, IMAGES_DIR / f"{name}.webp", lossless=True)
 
 
 def write_geomean_distance_example_separations(name: str, selection: NDArray[np.float64], k: int) -> None:
@@ -284,8 +319,44 @@ def write_geomean_distance_example_separations(name: str, selection: NDArray[np.
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 
+def render_geomean_distance_example(
+    name: str, n: int, k: int, budget_sec: float, n_workers: int, seed: int, reuse_solution: bool
+) -> None:
+    """Produce the example: the population raster, the interactive figure fragment and the separations table.
+
+    The selection maximizes geometric-mean separation under the geometric-mean distance on the
+    `population` of n items.
+
+    Args:
+        name: File stem of the raster under `IMAGES_DIR` and of the fragments under `GENERATED_DIR`.
+        seed: Seeds both the pairing and the solver.
+        reuse_solution: Read the cached selection instead of solving again.
+    """
+    vectors, selected = load_or_solve(n, k, budget_sec, n_workers, seed, reuse_solution)
+    selection = vectors[selected].astype(np.float64)
+    write_geomean_distance_example_separations(name, selection, k)
+    render_geomean_distance_population(f"{name}_population", vectors)
+    fragment = explorer_fragment(
+        selection[:, 0],
+        selection[:, 1],
+        n,
+        k,
+        population_image=f"../images/{name}_population.webp",
+        description=(
+            "Ten thousand gray points in the unit square with the hundred selected ones in red, and the "
+            "selection's x and y values as rug marks along the bottom and left edges"
+        ),
+    )
+    path = GENERATED_DIR / f"{name}_figure.html"
+    path.write_text(fragment, encoding="utf-8")
+    print(f"wrote {path.relative_to(REPO_ROOT)}")
+
+
 def main() -> None:
-    """Render every guide figure."""
+    """Render every guide figure; `--reuse-solution` skips the example's solve and reads its cache."""
+    parser = argparse.ArgumentParser(description="Regenerate the guide figures.")
+    parser.add_argument("--reuse-solution", action="store_true", help="read the cached example selection")
+    args = parser.parse_args()
     render_example(
         "geomean_separation_I1",
         layout_closest_pair_fixed,
@@ -325,7 +396,15 @@ def main() -> None:
         position_marks=(-0.25, 0.0, 1.0),
     )
     render_geomean_distance_levels("geomean_distance_levels", k=25)
-    render_geomean_distance_example("geomean_distance_example", n=10_000, k=100, budget_sec=60.0, n_workers=16, seed=42)
+    render_geomean_distance_example(
+        "geomean_distance_example",
+        n=10_000,
+        k=100,
+        budget_sec=60.0,
+        n_workers=16,
+        seed=42,
+        reuse_solution=args.reuse_solution,
+    )
 
 
 if __name__ == "__main__":
