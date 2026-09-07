@@ -1,4 +1,4 @@
-"""Run records: the flat result rows every runner emits, their budget tags, and JSONL persistence."""
+"""Run records are the flat result rows every runner emits; the module also holds their budget tags and JSONL persistence."""
 
 import json
 from dataclasses import asdict, dataclass, field
@@ -39,12 +39,22 @@ def budget_sec(tag: str) -> float | None:
     return float(tag.removeprefix("time:").removesuffix("s")) if tag.startswith("time:") else None
 
 
+def iteration_tag(n_iterations: int) -> str:
+    """Return the record tag of an iteration-count budget."""
+    return f"iterations:{n_iterations}"
+
+
+def iteration_count(tag: str) -> int | None:
+    """Return the iteration count a record tag names, or None for a wall-clock or single-shot tag."""
+    return int(tag.removeprefix("iterations:")) if tag.startswith("iterations:") else None
+
+
 def within_budget_tolerance(records: list[RunRecord], tolerance: float) -> list[RunRecord]:
     """Return the records whose measured time is within `tolerance` (relative) of their wall-clock budget.
 
     A solve whose measured time misses its budget by more is not a measurement at that budget:
-    its set-up (distance computation, worker spawning, JIT loading) took longer than the budget
-    allowed. Records without a wall-clock budget (single-shot, iteration budgets) are kept.
+    its set-up took longer than the budget allowed. Records without a wall-clock budget
+    (single-shot, iteration budgets) are kept.
     """
     return [
         r

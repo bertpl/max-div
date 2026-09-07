@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from benchmarks.common.records import RunRecord, budget_sec
+from benchmarks.common.records import RunRecord, budget_sec, iteration_count
 
 from .style import MARKER_SHAPES, save_webp, tool_color, tool_key, use_docs_style
 
@@ -139,4 +139,4 @@ def _budget_series_stats(
 def _budget_order(tag: str) -> float:
     """Return the sort key of a budget tag: the wall-clock budget, or the iteration count."""
     wall_clock = budget_sec(tag)
-    return wall_clock if wall_clock is not None else float(tag.removeprefix("iterations:"))
+    return wall_clock if wall_clock is not None else float(iteration_count(tag))

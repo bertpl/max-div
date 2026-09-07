@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from benchmarks.common.quality import evaluate_selection, n_constraints_satisfied
-from benchmarks.common.records import RunRecord, budget_tag
+from benchmarks.common.records import RunRecord, budget_tag, iteration_tag
 from max_div.problem import MaxDivProblem
 from max_div.solver import (
     MaxDivSolverBuilder,
@@ -81,7 +81,7 @@ def run_maxdiv_budget_series(
     for t in time_budgets_sec or []:
         budgets.append((budget_tag(t), seconds(t)))
     for i in iteration_budgets or []:
-        budgets.append((f"iterations:{i}", iterations(i)))
+        budgets.append((iteration_tag(i), iterations(i)))
     jobs = [_SolveJob(problem, tag, target, seed, preset, n_workers) for tag, target in budgets for seed in seeds]
     outcomes = [_solve(job) for job in jobs]
 

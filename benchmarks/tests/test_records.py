@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from benchmarks.common import RunRecord, load_records, save_records
-from benchmarks.common.records import budget_sec, budget_tag, within_budget_tolerance
+from benchmarks.common.records import budget_sec, budget_tag, iteration_count, iteration_tag, within_budget_tolerance
 
 
 def test_records_round_trip(tmp_path: Path):
@@ -50,7 +50,7 @@ def test_records_round_trip(tmp_path: Path):
 
 
 def _record(budget: str, measured_sec: float) -> RunRecord:
-    """Minimal record with only the fields the tolerance filter reads."""
+    """Build a record with only the fields the tolerance filter reads."""
     return RunRecord("max-div[DEFAULT]", "U1", 20, 20, 2, "MIN_SEPARATION", 0, budget, measured_sec, None, {})
 
 
@@ -60,9 +60,19 @@ def _record(budget: str, measured_sec: float) -> RunRecord:
 )
 def test_budget_sec_reads_wall_clock_tags_only(tag: str, expected: float | None):
     """Only a wall-clock tag names a budget in seconds; `budget_tag` writes the tag `budget_sec` reads."""
+    # --- act / assert -----------------
     assert budget_sec(tag) == expected
     if expected is not None:
         assert budget_tag(expected) == tag
+
+
+@pytest.mark.parametrize(("tag", "expected"), [("iterations:1280", 1280), ("time:0.004s", None), ("single-shot", None)])
+def test_iteration_count_reads_iteration_tags_only(tag: str, expected: int | None):
+    """Only an iteration tag names a count; `iteration_tag` writes the tag `iteration_count` reads."""
+    # --- act / assert -----------------
+    assert iteration_count(tag) == expected
+    if expected is not None:
+        assert iteration_tag(expected) == tag
 
 
 def test_within_budget_tolerance_drops_solves_that_missed_their_budget():
