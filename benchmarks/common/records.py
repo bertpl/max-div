@@ -1,4 +1,4 @@
-"""Run records: the flat result rows every runner emits, with JSONL persistence."""
+"""Run records: the flat result rows every runner emits, their budget tags, and JSONL persistence."""
 
 import json
 from dataclasses import asdict, dataclass, field
@@ -27,6 +27,30 @@ class RunRecord:
     n_constraints: int = 0
     n_constraints_satisfied: int = 0
     proven_optimal: bool | None = None  # exact solvers only: optimality certified within the timeout
+
+
+def budget_tag(budget_sec: float) -> str:
+    """Return the record tag of a wall-clock budget."""
+    return f"time:{budget_sec}s"
+
+
+def budget_sec(tag: str) -> float | None:
+    """Return the wall-clock budget a record tag names, or None for an iteration or single-shot tag."""
+    return float(tag.removeprefix("time:").removesuffix("s")) if tag.startswith("time:") else None
+
+
+def within_budget_tolerance(records: list[RunRecord], tolerance: float) -> list[RunRecord]:
+    """Return the records whose measured time is within `tolerance` (relative) of their wall-clock budget.
+
+    A solve whose measured time misses its budget by more is not a measurement at that budget:
+    its set-up (distance computation, worker spawning, JIT loading) took longer than the budget
+    allowed. Records without a wall-clock budget (single-shot, iteration budgets) are kept.
+    """
+    return [
+        r
+        for r in records
+        if (target := budget_sec(r.budget)) is None or abs(r.measured_sec / target - 1.0) <= tolerance
+    ]
 
 
 def save_records(records: list[RunRecord], path: Path) -> None:

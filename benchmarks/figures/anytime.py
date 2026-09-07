@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from benchmarks.common.records import RunRecord
+from benchmarks.common.records import RunRecord, budget_sec
 
 from .style import MARKER_SHAPES, save_webp, tool_color, tool_key, use_docs_style
 
@@ -118,16 +118,25 @@ def _group_by_tool(records: list[RunRecord]) -> dict[str, list[RunRecord]]:
 def _budget_series_stats(
     records: list[RunRecord], metric_name: str
 ) -> tuple[list[float], list[float], list[float], list[float]]:
-    """Aggregate budget-series records per budget: mean measured time, mean/min/max quality."""
+    """Aggregate budget-series records per budget, in budget order: mean measured time, mean/min/max quality.
+
+    The curve follows the budgets, not the measured times: a small budget whose set-up ran long
+    would otherwise be drawn to the right of a larger one and fold the curve back on itself.
+    """
     by_budget: dict[str, list[RunRecord]] = defaultdict(list)
     for rec in records:
         by_budget[rec.budget].append(rec)
 
     stats = []
-    for budget_records in by_budget.values():
-        times = [r.measured_sec for r in budget_records]
-        values = [r.quality[metric_name] for r in budget_records]
+    for budget in sorted(by_budget, key=_budget_order):
+        times = [r.measured_sec for r in by_budget[budget]]
+        values = [r.quality[metric_name] for r in by_budget[budget]]
         stats.append((float(np.mean(times)), float(np.mean(values)), min(values), max(values)))
-    stats.sort()
     t_mean, q_mean, q_min, q_max = (list(component) for component in zip(*stats))
     return t_mean, q_mean, q_min, q_max
+
+
+def _budget_order(tag: str) -> float:
+    """Return the sort key of a budget tag: the wall-clock budget, or the iteration count."""
+    wall_clock = budget_sec(tag)
+    return wall_clock if wall_clock is not None else float(tag.removeprefix("iterations:"))

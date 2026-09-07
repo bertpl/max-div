@@ -33,7 +33,6 @@ from benchmarks.common.protocol import (
     N_WORKERS,
     SEEDS,
     SINGLE_WORKER_BUDGETS_SEC,
-    SINGLE_WORKER_CONCURRENCY,
 )
 from benchmarks.common.records import RunRecord
 from benchmarks.mdplib import load_instance
@@ -135,7 +134,6 @@ def run_maxdiv(
                 time_budgets_sec=budgets,
                 seeds=seeds,
                 n_workers=workers,
-                concurrency=SINGLE_WORKER_CONCURRENCY if workers == 1 else 1,
             )
         save_records(records, out_path)
         print(f"max-div {row.instance} k={row.k} done ({len(records)} records so far)", flush=True)

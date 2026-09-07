@@ -20,13 +20,13 @@ N_WORKERS = 12  # the multi-worker series' worker count: the reference machine's
 SINGLE_WORKER_BUDGETS_SEC = grid_budget_series(0.001, T_MAX_SEC)
 MULTI_WORKER_BUDGETS_SEC = grid_budget_series(1.0, T_MAX_SEC)
 
-# How many single-worker solves run side by side: they run in parallel on the cores the multi-worker
-# series uses for one solve at a time. The runner lowers this count where that many distance stores
-# would not fit in memory together.
-SINGLE_WORKER_CONCURRENCY = N_WORKERS
-
 # The budgets the result tables quote: the point where the two series first coincide, and T_max.
 QUOTED_BUDGETS_SEC = (1.0, T_MAX_SEC)
+
+# The reports drop a solve whose measured time misses its budget by more than this relative
+# tolerance: past it, the solve's set-up cost exceeded the budget, and the point would sit at a
+# time the budget did not ask for.
+BUDGET_TOLERANCE = 0.10
 
 # The exact solvers' certification cap: the scaling protocol's extended budget.
 CERTIFICATION_CAP_SEC = EXTENDED_BUDGET_SEC

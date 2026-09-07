@@ -17,12 +17,12 @@ import statistics
 from collections import defaultdict
 from pathlib import Path
 
-from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
-from benchmarks.common.records import RunRecord, load_records
+from benchmarks.common.protocol import BUDGET_TOLERANCE, QUOTED_BUDGETS_SEC
+from benchmarks.common.records import RunRecord, budget_tag, load_records, within_budget_tolerance
 from benchmarks.common.registry import display_name
 from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
 from benchmarks.figures.style import tool_color
-from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
+from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
 from .full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, N_WORKERS, OUTPUT_DIR, PROBLEMS, maxdiv_records_path
 from max_div.metrics import DiversityMetric
 
@@ -158,7 +158,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     """Emit every tier-1 docs artifact from the merged result sources."""
     exact_rows = json.loads((data_dir / EXACT_MAXMIN_FILE).read_text()) + json.loads((data_dir / EXACT_NN_FILE).read_text())
     records_by_metric = {
-        metric.name: load_records(maxdiv_records_path(metric, records_dir))
+        metric.name: within_budget_tolerance(load_records(maxdiv_records_path(metric, records_dir)), BUDGET_TOLERANCE)
         for metric in OBJECTIVES
         if maxdiv_records_path(metric, records_dir).exists()
     }

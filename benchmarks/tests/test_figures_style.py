@@ -74,3 +74,22 @@ def test_anytime_chart_draws_reference_lines_and_markers(tmp_path: Path):
 
     # --- assert -----------------------
     assert path.read_bytes()[8:12] == b"WEBP"
+
+
+def test_budget_series_stats_follow_the_budget_order_not_the_measured_times():
+    """A small budget whose set-up ran long stays left of the larger budgets on the curve."""
+    # --- arrange ----------------------
+    from benchmarks.common.records import RunRecord
+    from benchmarks.figures.anytime import _budget_series_stats
+
+    records = [
+        RunRecord("max-div[DEFAULT]", "U1", 20, 20, 2, "MIN_SEPARATION", 0, f"time:{b}s", t, None, {"MIN_SEPARATION": q})
+        for b, t, q in ((0.01, 0.01, 0.6), (0.001, 0.03, 0.5), (0.002, 0.03, 0.55))
+    ]
+
+    # --- act --------------------------
+    t_mean, q_mean, _q_min, _q_max = _budget_series_stats(records, "MIN_SEPARATION")
+
+    # --- assert -----------------------
+    assert q_mean == [0.5, 0.55, 0.6]
+    assert t_mean == [0.03, 0.03, 0.01]
