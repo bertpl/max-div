@@ -210,19 +210,24 @@ def render_geomean_distance_levels(name: str, k: int) -> None:
 
 
 def render_geomean_distance_example(name: str, n: int, k: int, budget_sec: float, n_workers: int, seed: int) -> None:
-    """Render one solved selection: geomean separation with the geometric-mean distance on a uniform unit square.
+    """Render one solved selection: min separation with the geometric-mean distance on a unit-square population.
+
+    The population is the n evenly spaced values in [0, 1] as x, paired with a random permutation of
+    the same values as y: uniform in the square, with every marginal spaced 1 / (n - 1) apart by
+    construction, so no two points share a coordinate.
 
     Args:
         name: Image file stem under `IMAGES_DIR`.
-        seed: Seeds both the population sample and the solver.
+        seed: Seeds both the pairing and the solver.
     """
     rng = np.random.default_rng(seed)
-    vectors = rng.random((n, 2)).astype(np.float32)
+    values = np.linspace(0.0, 1.0, n, dtype=np.float32)
+    vectors = np.column_stack((values, rng.permutation(values)))
     problem = MaxDivProblem.new(
         vectors=vectors,
         k=k,
         distance_metric=DistanceMetric.geometric_mean(),
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_metric=DiversityMetric.MIN_SEPARATION,
     )
     solver = (
         ParallelMaxDivSolverBuilder(problem)
@@ -291,7 +296,7 @@ def main() -> None:
         position_marks=(-0.25, 0.0, 1.0),
     )
     render_geomean_distance_levels("geomean_distance_levels", k=25)
-    render_geomean_distance_example("geomean_distance_example", n=50_000, k=100, budget_sec=60.0, n_workers=16, seed=42)
+    render_geomean_distance_example("geomean_distance_example", n=10_000, k=100, budget_sec=60.0, n_workers=16, seed=42)
 
 
 if __name__ == "__main__":
