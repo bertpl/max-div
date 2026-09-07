@@ -306,3 +306,100 @@ img.center75 {
 [data-md-color-scheme="slate"] .md-typeset .changelog h3 {
     color: rgba(255, 255, 255, 0.55);
 }
+
+/* scripts/geomean_distance_explorer.py emits the interactive example figure of the geometric-mean
+   distance guide and docs/javascripts/geomean_distance_explorer.js drives it. The figure keeps its
+   white background under the dark color scheme, as the raster guide figures do; the colors are the
+   script's FOREGROUND_COLOR, SELECTION_COLOR and NEIGHBOR_COLOR. The figure is shown at its design
+   width, as the raster figures are, and never wider than the text column. */
+.gmx-figure {
+    width: 624px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+.gmx-figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.gmx-spine {
+    fill: none;
+    stroke: #222222;
+    stroke-width: 0.8px;
+}
+.gmx-tick {
+    stroke: #222222;
+    stroke-width: 0.8px;
+}
+.gmx-label {
+    fill: #222222;
+    font-size: 12px;
+}
+.gmx-legend {
+    fill: rgba(255, 255, 255, 0.9);
+    stroke: #DDDDDD;
+    stroke-width: 0.5px;
+}
+.gmx-dot {
+    fill: #EE1111;
+    cursor: pointer;
+    transition: opacity 120ms;
+}
+.gmx-dot:focus {
+    outline: none;  /* the picked styling below is the focus indicator */
+}
+.gmx-rug {
+    stroke: #EE1111;
+    stroke-width: 1px;
+    transition: opacity 120ms;
+}
+/* A 1 px tick cannot be hovered; each has an invisible wider copy that takes the pointer. */
+.gmx-hit {
+    stroke: transparent;
+    stroke-width: 8px;
+    cursor: pointer;
+}
+.gmx.is-active .gmx-dot:not(.is-picked):not(.is-neighbor):not(.is-marked),
+.gmx.is-active .gmx-rug:not(.is-picked):not(.is-neighbor) {
+    opacity: 0.35;
+}
+.gmx .gmx-dot.is-picked {
+    stroke: #222222;
+    stroke-width: 1.5px;
+}
+.gmx .gmx-dot.is-neighbor {
+    fill: #4C72B0;
+    stroke: #222222;
+    stroke-width: 1px;
+}
+/* A dashed ring with an inscribed glyph marks a reference neighbor, in the legend and around a dot. */
+.gmx-mark {
+    fill: none;
+    stroke: #222222;
+    stroke-width: 1.4px;
+    stroke-dasharray: 3 2;
+}
+.gmx-glyph {
+    fill: none;
+    stroke: #222222;
+    stroke-width: 1.4px;
+}
+.gmx .gmx-rug.is-picked,
+.gmx .gmx-rug.is-neighbor {
+    stroke-width: 2.5px;
+}
+.gmx .gmx-rug.is-neighbor {
+    stroke: #4C72B0;
+}
+.gmx-level {
+    fill: none;
+    stroke: #EE1111;
+    stroke-width: 2px;
+}
+.gmx-caption {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--md-default-fg-color--light);
+    margin-top: 0.4em;
+}

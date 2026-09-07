@@ -49,7 +49,9 @@ Here $k = 100$ points are selected from a population of $n = 10{,}000$ in the un
 
 The selection runs under geometric-mean separation with the geometric-mean distance, on 16 workers with a 60 s end-to-end budget:
 
-![Ten thousand gray points in the unit square with the hundred selected ones in red, and the selection's x and y values as rug marks along the bottom and left edges](./images/geomean_distance_example.webp)
+--8<-- "generated/geomean_distance_example_figure.html"
+
+For most points the nearest neighbor is not the closest red point in the square but one that shares almost the same $x$ or $y$ value: the neighbor that sets the point's marginal spacing.
 
 The red points spread over the square, and the rug marks along the two edges show the marginals: the hundred $x$ values and the hundred $y$ values each cover $[0, 1]$ without gaps or clusters. Measured under the Euclidean distance, the selection's separations sit below but close to the targets of section I, in 2D and in each marginal, as expected of three quantities optimized at once:
 
