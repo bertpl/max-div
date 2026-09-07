@@ -2,7 +2,8 @@
 //
 // The figure is an inline SVG (see scripts/geomean_distance_explorer.py) whose dots and rug ticks
 // carry `data-i`, and whose dots carry the precomputed nearest neighbor under the geometric-mean
-// distance (`data-nn`, `data-d`, `data-dx`, `data-dy`) and under the Euclidean one (`data-nne`).
+// distance (`data-nn`, `data-d`, `data-dx`, `data-dy`), under the Euclidean one (`data-nne`) and along
+// each marginal (`data-nnx`, `data-nny`).
 //
 // Invariants:
 // - one delegated listener set per figure, installed once: the `document$` observable fires on
@@ -35,20 +36,39 @@ function hyperbolaPaths(cx, cy, d, samples = 80) {
   return paths;
 }
 
-// Append the level curves through the neighbor and at the 1/sqrt(k) reference.
-function drawLevels(layer, cx, cy, d, reference) {
-  const svgNs = "http://www.w3.org/2000/svg";
-  const draw = (level, cls) => {
-    for (const path of hyperbolaPaths(cx, cy, level)) {
-      const element = document.createElementNS(svgNs, "path");
-      element.setAttribute("d", path);
-      element.setAttribute("class", cls);
-      element.setAttribute("vector-effect", "non-scaling-stroke");
-      layer.appendChild(element);
-    }
-  };
-  draw(reference, "gmx-level gmx-level-ref");
-  draw(d, "gmx-level gmx-level-nn");
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Append an SVG element with the given attributes to a layer; strokes keep their pixel width.
+function appendElement(layer, tag, attributes) {
+  const element = document.createElementNS(SVG_NS, tag);
+  for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+  element.setAttribute("vector-effect", "non-scaling-stroke");
+  layer.appendChild(element);
+}
+
+// Append the level curve through the neighbor.
+function drawLevel(layer, cx, cy, d) {
+  for (const path of hyperbolaPaths(cx, cy, d)) {
+    appendElement(layer, "path", { d: path, class: "gmx-level" });
+  }
+}
+
+// ---- Reference neighbors ----
+
+// Draw a dashed ring around a reference neighbor's dot, with an "x", a "+" or no glyph inscribed.
+// The ring radius and the glyph reach come from the fragment, which also draws them in its legend.
+function drawMark(svg, layer, dot, glyph) {
+  const cx = parseFloat(dot.getAttribute("cx"));
+  const cy = parseFloat(dot.getAttribute("cy"));
+  const radius = parseFloat(svg.dataset.ring) * parseFloat(dot.getAttribute("r"));
+  appendElement(layer, "circle", { cx, cy, r: radius.toFixed(5), class: "gmx-mark" });
+  if (glyph === "") return;
+  const reach = parseFloat(svg.dataset.reach) * radius;
+  const d =
+    glyph === "x"
+      ? `M${cx - reach},${cy - reach}L${cx + reach},${cy + reach}M${cx - reach},${cy + reach}L${cx + reach},${cy - reach}`
+      : `M${cx - reach},${cy}L${cx + reach},${cy}M${cx},${cy - reach}L${cx},${cy + reach}`;
+  appendElement(layer, "path", { d, class: "gmx-glyph" });
 }
 
 // ---- Selection state ----
@@ -58,17 +78,19 @@ function clearFigure(figure) {
   const svg = figure.querySelector("svg.gmx");
   svg.classList.remove("is-active");
   delete svg.dataset.pinned;
-  for (const element of svg.querySelectorAll(".is-picked, .is-neighbor, .is-euclid")) {
-    element.classList.remove("is-picked", "is-neighbor", "is-euclid");
+  for (const element of svg.querySelectorAll(".is-picked, .is-neighbor, .is-marked")) {
+    element.classList.remove("is-picked", "is-neighbor", "is-marked");
     if (element.classList.contains("gmx-dot")) element.setAttribute("r", figure.dataset.dotRadius);
   }
   svg.querySelector(".gmx-hover").replaceChildren();
+  svg.querySelector(".gmx-marks").replaceChildren();
   figure.querySelector(".gmx-caption").textContent = figure.dataset.hint;
 }
 
 // Pick item i:
-// - mark the item, its two neighbors and their rug ticks;
-// - draw the level curves;
+// - mark the item, its neighbor under the metric and both items' rug ticks;
+// - ring the three reference neighbors (Euclidean, x marginal, y marginal);
+// - draw the level curve through the neighbor;
 // - write the caption.
 function pickItem(figure, i) {
   const svg = figure.querySelector("svg.gmx");
@@ -76,7 +98,6 @@ function pickItem(figure, i) {
   if (!dot) return;
   clearFigure(figure);
   const nn = dot.dataset.nn;
-  const nne = dot.dataset.nne;
   svg.classList.add("is-active");
   for (const element of svg.querySelectorAll(`.gmx-dot[data-i="${i}"], .gmx-rug[data-i="${i}"]`)) {
     element.classList.add("is-picked");
@@ -86,14 +107,17 @@ function pickItem(figure, i) {
   for (const element of svg.querySelectorAll(`.gmx-dot[data-i="${nn}"], .gmx-rug[data-i="${nn}"]`)) {
     element.classList.add("is-neighbor");
   }
-  if (nne !== nn) {
-    svg.querySelector(`.gmx-dot[data-i="${nne}"]`).classList.add("is-euclid");
+  const marks = svg.querySelector(".gmx-marks");
+  for (const [key, glyph] of [["nne", ""], ["nnx", "x"], ["nny", "+"]]) {
+    const reference = svg.querySelector(`.gmx-dot[data-i="${dot.dataset[key]}"]`);
+    reference.classList.add("is-marked");
+    drawMark(svg, marks, reference, glyph);
   }
   const cx = parseFloat(dot.getAttribute("cx"));
   const cy = parseFloat(dot.getAttribute("cy"));
   const d = parseFloat(dot.dataset.d);
   const reference = parseFloat(svg.dataset.ref);
-  drawLevels(svg.querySelector(".gmx-hover"), cx, cy, d, reference);
+  drawLevel(svg.querySelector(".gmx-hover"), cx, cy, d);
   const dx = parseFloat(dot.dataset.dx).toFixed(3);
   const dy = parseFloat(dot.dataset.dy).toFixed(3);
   figure.querySelector(".gmx-caption").textContent =

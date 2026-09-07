@@ -360,7 +360,7 @@ img.center75 {
     stroke-width: 8px;
     cursor: pointer;
 }
-.gmx.is-active .gmx-dot:not(.is-picked):not(.is-neighbor):not(.is-euclid),
+.gmx.is-active .gmx-dot:not(.is-picked):not(.is-neighbor):not(.is-marked),
 .gmx.is-active .gmx-rug:not(.is-picked):not(.is-neighbor) {
     opacity: 0.35;
 }
@@ -373,11 +373,17 @@ img.center75 {
     stroke: #222222;
     stroke-width: 1px;
 }
-.gmx .gmx-dot.is-euclid {
+/* The dashed ring and the inscribed glyph that mark a reference neighbor, in the legend and around a dot. */
+.gmx-mark {
     fill: none;
     stroke: #222222;
     stroke-width: 1.4px;
     stroke-dasharray: 3 2;
+}
+.gmx-glyph {
+    fill: none;
+    stroke: #222222;
+    stroke-width: 1.4px;
 }
 .gmx .gmx-rug.is-picked,
 .gmx .gmx-rug.is-neighbor {
@@ -388,15 +394,8 @@ img.center75 {
 }
 .gmx-level {
     fill: none;
-}
-.gmx-level-nn {
     stroke: #EE1111;
     stroke-width: 2px;
-}
-.gmx-level-ref {
-    stroke: #999999;
-    stroke-width: 1px;
-    stroke-dasharray: 4 3;
 }
 .gmx-caption {
     text-align: center;

@@ -30,10 +30,11 @@ def explorer():
     return _load_module()
 
 
-# The four items are chosen so that the two distances disagree:
+# The four items are chosen so that the distances disagree:
 # - item 0 shares its y with item 1 and its x with item 2, so those pairs sit at distance 0 under the metric;
 # - item 3 is nearest to item 2 under the metric (gaps 0.3 and 0.3) and under the Euclidean distance alike;
-# - items 0 to 2 are Euclidean-nearest to item 3.
+# - items 0 to 2 are Euclidean-nearest to item 3;
+# - along x, items 0 and 2 share a value and item 3 ties between them at 0.3, so the first wins.
 X = np.array([0.1, 0.9, 0.1, 0.4], dtype=np.float32)
 Y = np.array([0.1, 0.1, 0.9, 0.6], dtype=np.float32)
 
@@ -53,6 +54,8 @@ def test_nearest_neighbors_under_both_distances(explorer):
     assert neighbors.dx[3] == pytest.approx(0.3)
     assert neighbors.dy[3] == pytest.approx(0.3)
     assert neighbors.euclidean_index.tolist() == [3, 3, 3, 2]
+    assert neighbors.x_index.tolist() == [2, 3, 0, 0]
+    assert neighbors.y_index.tolist() == [1, 0, 3, 2]
 
 
 # ==================================================================================================
@@ -92,12 +95,14 @@ def test_every_dot_names_its_neighbors_and_distance(fragment):
     """
     # --- act --------------------------
     dots = re.findall(
-        r'<circle class="gmx-dot" data-i="(\d+)" data-nn="(\d+)" data-nne="(\d+)" data-d="([\d.]+)"', fragment
+        r'<circle class="gmx-dot" data-i="(\d+)" data-nn="(\d+)" data-nne="(\d+)" data-nnx="(\d+)" data-nny="(\d+)"'
+        r' data-d="([\d.]+)"',
+        fragment,
     )
 
     # --- assert -----------------------
     assert [d[0] for d in dots] == ["0", "1", "2", "3"]
-    assert all(0 <= int(nn) < 4 and 0 <= int(nne) < 4 for _, nn, nne, _ in dots)
-    assert dots[0][1] == "1"
-    assert float(dots[0][3]) == 0.0
-    assert float(dots[3][3]) == pytest.approx(0.3)
+    assert all(0 <= int(j) < 4 for dot in dots for j in dot[1:5])
+    assert dots[0][1:5] == ("1", "3", "2", "1")
+    assert float(dots[0][5]) == 0.0
+    assert float(dots[3][5]) == pytest.approx(0.3)

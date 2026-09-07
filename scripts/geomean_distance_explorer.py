@@ -28,6 +28,12 @@ VIEW_HEIGHT = round(MARGIN_TOP + (Y_MAX - Y_MIN) * SCALE + MARGIN_BOTTOM)
 DOT_RADIUS = 0.008
 RUG_NEAR, RUG_FAR = -0.018, -0.042  # a rug tick runs from RUG_NEAR to RUG_FAR beside its axis
 TICKS = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+# A reference neighbor is marked by a dashed ring around its dot, with an "x" or "+" inscribed for
+# the marginal neighbors. The legend draws the ring in pixels; the JavaScript draws it in data units
+# around the dot, from the two factors the fragment carries.
+RING_RADIUS_FACTOR = 1.7  # ring radius over dot radius
+GLYPH_REACH = 0.7  # half-length of a glyph stroke over the ring radius, so the "x" touches the ring
+LEGEND_RING_RADIUS = 5.5
 
 FOREGROUND_COLOR = "#222222"
 POPULATION_COLOR = "#B0B0B0"
@@ -42,9 +48,10 @@ HINT = (
 
 @dataclass(frozen=True)
 class NearestNeighbors:
-    """Parallel arrays record, per item, its nearest other item under the geometric-mean and the Euclidean distance.
+    """Parallel arrays record, per item, its nearest other item under four distances.
 
-    `distance`, `dx` and `dy` describe the geometric-mean neighbor.
+    `index`, `distance`, `dx` and `dy` describe the neighbor under the geometric-mean distance; the
+    other three indices name the neighbor under the Euclidean distance and along each marginal.
     """
 
     index: NDArray[np.intp]
@@ -52,10 +59,12 @@ class NearestNeighbors:
     dx: NDArray[np.float64]
     dy: NDArray[np.float64]
     euclidean_index: NDArray[np.intp]
+    x_index: NDArray[np.intp]
+    y_index: NDArray[np.intp]
 
 
 def nearest_neighbors(x: NDArray[np.floating], y: NDArray[np.floating]) -> NearestNeighbors:
-    """Return each item's nearest neighbor under the geometric-mean distance sqrt(|dx| |dy|) and the Euclidean one.
+    """Return each item's nearest neighbor under the geometric-mean distance, the Euclidean one, and each marginal.
 
     Two items sharing a coordinate are at geometric-mean distance 0; that pair is then each other's
     nearest neighbor, and `geomean_distance_explorer.js` draws the degenerate level curve.
@@ -66,8 +75,8 @@ def nearest_neighbors(x: NDArray[np.floating], y: NDArray[np.floating]) -> Neare
     dy = np.abs(y64[:, None] - y64[None, :])
     geomean = np.sqrt(dx * dy)
     euclidean = np.sqrt(dx * dx + dy * dy)
-    np.fill_diagonal(geomean, np.inf)
-    np.fill_diagonal(euclidean, np.inf)
+    for matrix in (geomean, euclidean, dx, dy):
+        np.fill_diagonal(matrix, np.inf)
     index = geomean.argmin(axis=1)
     rows = np.arange(len(x64))
     return NearestNeighbors(
@@ -76,6 +85,8 @@ def nearest_neighbors(x: NDArray[np.floating], y: NDArray[np.floating]) -> Neare
         dx=dx[rows, index],
         dy=dy[rows, index],
         euclidean_index=euclidean.argmin(axis=1),
+        x_index=dx.argmin(axis=1),
+        y_index=dy.argmin(axis=1),
     )
 
 
@@ -110,35 +121,74 @@ def _axes() -> list[str]:
     return parts
 
 
+def _glyph_paths(x: float, y: float, ring_radius: float, glyph: str) -> str:
+    """Return the two strokes of an "x" or "+" inscribed in a ring of `ring_radius` at (x, y), or nothing for `""`."""
+    if glyph == "":
+        return ""
+    reach = GLYPH_REACH * ring_radius
+    if glyph == "x":
+        d = (
+            f"M{x - reach:.1f},{y - reach:.1f}L{x + reach:.1f},{y + reach:.1f}"
+            f"M{x - reach:.1f},{y + reach:.1f}L{x + reach:.1f},{y - reach:.1f}"
+        )
+    else:
+        d = f"M{x - reach:.1f},{y:.1f}L{x + reach:.1f},{y:.1f}M{x:.1f},{y - reach:.1f}L{x:.1f},{y + reach:.1f}"
+    return f'<path class="gmx-glyph" d="{d}"/>'
+
+
+def _legend_ring(x: float, y: float, glyph: str) -> str:
+    """Return a legend mark: the dashed ring drawn around a reference neighbor, with its inscribed glyph."""
+    ring = f'<circle class="gmx-mark" cx="{x:.1f}" cy="{y:.1f}" r="{LEGEND_RING_RADIUS}"/>'
+    return ring + _glyph_paths(x, y, LEGEND_RING_RADIUS, glyph)
+
+
 def _legend(n: int, k: int) -> list[str]:
-    """Return the legend box in the top-right corner, in pixel space."""
-    width, row, pad = 262, 18, 8
+    """Return the two-column legend box in the top-right corner, in pixel space.
+
+    The left column names what is always drawn; the right column names the three reference neighbors
+    the interaction marks around the picked item.
+    """
+    column_widths, row, pad = (260, 224), 18, 8
+    width = sum(column_widths) + pad
     x0 = _px(X_MAX) - 6 - width
     y0 = _py(Y_MAX) + 6
-    entries = (
-        (f'<circle cx="{x0 + 14}" cy="{{y}}" r="1.5" fill="{POPULATION_COLOR}"/>', f"population (n = {n:,})"),
-        (f'<circle cx="{x0 + 14}" cy="{{y}}" r="4.5" fill="{SELECTION_COLOR}"/>', f"selection (k = {k})"),
+    columns = (
         (
-            f'<circle cx="{x0 + 14}" cy="{{y}}" r="4.5" fill="{NEIGHBOR_COLOR}"/>',
-            "nearest neighbor, geometric-mean distance",
+            (
+                lambda x, y: f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.5" fill="{POPULATION_COLOR}"/>',
+                f"population (n = {n:,})",
+            ),
+            (
+                lambda x, y: f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4.5" fill="{SELECTION_COLOR}"/>',
+                f"selection (k = {k})",
+            ),
+            (
+                lambda x, y: f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4.5" fill="{NEIGHBOR_COLOR}"/>',
+                "nearest neighbor, geometric-mean distance",
+            ),
         ),
         (
-            f'<circle cx="{x0 + 14}" cy="{{y}}" r="5.5" fill="none" stroke="{FOREGROUND_COLOR}" stroke-width="1.2"'
-            ' stroke-dasharray="2 2"/>',
-            "nearest neighbor, Euclidean distance",
+            (lambda x, y: _legend_ring(x, y, ""), "nearest neighbor, Euclidean distance"),
+            (lambda x, y: _legend_ring(x, y, "x"), "nearest neighbor, x marginal"),
+            (lambda x, y: _legend_ring(x, y, "+"), "nearest neighbor, y marginal"),
         ),
     )
-    height = pad * 2 + row * len(entries)
+    height = pad * 2 + row * max(len(column) for column in columns)
     parts = [f'<rect class="gmx-legend" x="{x0}" y="{y0}" width="{width}" height="{height}"/>']
-    for i, (mark, label) in enumerate(entries):
-        y = y0 + pad + row * i + row / 2
-        parts.append(mark.format(y=f"{y:.1f}"))
-        parts.append(f'<text class="gmx-label" x="{x0 + 26}" y="{y:.1f}" dominant-baseline="middle">{label}</text>')
+    x = x0
+    for column, column_width in zip(columns, column_widths):
+        for i, (mark, label) in enumerate(column):
+            y = y0 + pad + row * i + row / 2
+            parts.append(mark(x + 14, y))
+            parts.append(
+                f'<text class="gmx-label" x="{x + 26:.1f}" y="{y:.1f}" dominant-baseline="middle">{label}</text>'
+            )
+        x += column_width
     return parts
 
 
 def _data_group(x: NDArray[np.floating], y: NDArray[np.floating], neighbors: NearestNeighbors) -> list[str]:
-    """Return the group in data coordinates: the hover layer, the rug ticks with their hit areas, and the dots."""
+    """Return the group in data coordinates: hover layer, rug ticks with their hit areas, dots, marks layer."""
     parts = [
         f'<g class="gmx-data" transform="translate({_px(0.0):.2f},{_py(0.0):.2f}) scale({SCALE:.3f},{-SCALE:.3f})">',
         '<g class="gmx-hover" clip-path="url(#gmx-square)"></g>',
@@ -156,11 +206,13 @@ def _data_group(x: NDArray[np.floating], y: NDArray[np.floating], neighbors: Nea
     for i, (xi, yi) in enumerate(zip(x, y)):
         parts.append(
             f'<circle class="gmx-dot" data-i="{i}" data-nn="{neighbors.index[i]}"'
-            f' data-nne="{neighbors.euclidean_index[i]}"'
+            f' data-nne="{neighbors.euclidean_index[i]}" data-nnx="{neighbors.x_index[i]}"'
+            f' data-nny="{neighbors.y_index[i]}"'
             f' data-d="{neighbors.distance[i]:.5f}" data-dx="{neighbors.dx[i]:.5f}" data-dy="{neighbors.dy[i]:.5f}"'
             f' cx="{xi:.5f}" cy="{yi:.5f}" r="{DOT_RADIUS}" vector-effect="non-scaling-stroke"'
             f' tabindex="0" role="button" aria-label="item {i}"/>'
         )
+    parts.append('<g class="gmx-marks"></g>')
     parts.append("</g>")
     return parts
 
@@ -182,7 +234,7 @@ def explorer_fragment(
     lines = [
         '<div class="gmx-figure">',
         f'<svg class="gmx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
-        f' data-ref="{1.0 / np.sqrt(k):.5f}">',
+        f' data-ref="{1.0 / np.sqrt(k):.5f}" data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH}">',
         "<title>Selection under the geometric-mean distance</title>",
         f"<desc>{description}</desc>",
         '<defs><clipPath id="gmx-square" clipPathUnits="userSpaceOnUse">'
