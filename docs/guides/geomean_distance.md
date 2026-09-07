@@ -22,6 +22,8 @@ $$\begin{aligned}
 
 A selection that is uniform in the square is not automatically uniform in its marginals: two points can be far apart in 2D while sharing the same $x$ value. Maximizing the usual Euclidean separation delivers the spread in the square and ignores the marginals.
 
+The values $1/\sqrt{k}$ and $1/k$ say how the 2D and the marginal separations are expected to scale with $k$, not what a selection can reach. The three separations compete for the same $k$ points, so a selection that maximizes all three at once will typically fall short of each target on its own.
+
 ## II. Geometric-mean distance metric
 
 The geometric-mean distance between two tuples is the geometric mean of their per-dimension gaps, in two dimensions
