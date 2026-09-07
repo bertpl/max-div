@@ -18,7 +18,7 @@ from numpy.typing import NDArray
 # The axes extend past the unit square: room for the rug ticks below and left of it, and for the
 # legend above it.
 X_MIN, X_MAX = -0.06, 1.02
-Y_MIN, Y_MAX = -0.06, 1.2
+Y_MIN, Y_MAX = -0.06, 1.15
 VIEW_WIDTH = 624  # 6.5 inches at CSS 96 px per inch, the scale the raster guide figures are shown at
 MARGIN_LEFT, MARGIN_RIGHT, MARGIN_TOP, MARGIN_BOTTOM = 44, 8, 8, 36
 SCALE = (VIEW_WIDTH - MARGIN_LEFT - MARGIN_RIGHT) / (X_MAX - X_MIN)  # pixels per data unit
