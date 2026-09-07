@@ -1,10 +1,15 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 from matplotlib.pyplot import Figure
 
 
-def save_fig(fig: Figure, filepath: Path, tgt_pixels: int | None = None):
+def save_fig(fig: Figure, filepath: Path):
+    """Save a figure at the docs style sheet's `savefig.dpi`, so its pixel size follows its size in inches.
 
+    The documentation build sizes every raster image from that one dpi (see `scripts/mkdocs_hooks.py`),
+    which is why the dpi is not chosen per figure here.
+    """
     # apply styles not settable in Matplotlib style files
     for ax in fig.axes:
         leg = ax.get_legend()
@@ -12,27 +17,13 @@ def save_fig(fig: Figure, filepath: Path, tgt_pixels: int | None = None):
             leg.get_title().set_fontweight("semibold")
             leg._legend_box.align = "left"
 
-    # determine file format and default pixel target
-    file_suffix = filepath.suffix.lower()
-    if tgt_pixels is None:
-        if file_suffix == ".webp":
-            tgt_pixels = 40_000_000
-        elif file_suffix == ".png":
-            tgt_pixels = 10_000_000
-        else:
-            tgt_pixels = 10_000_000  # default fallback
-
-    # determine appropriate DPI for target # of pixels
-    w, h = fig.get_size_inches()
-    dpi = round((tgt_pixels / (w * h)) ** 0.5)
-
     # build save kwargs based on format
     save_kwargs = dict(
         bbox_inches="tight",
-        dpi=dpi,
+        dpi=plt.rcParams["savefig.dpi"],
     )
 
-    if file_suffix == ".webp":
+    if filepath.suffix.lower() == ".webp":
         save_kwargs |= dict(
             format="webp",
             pil_kwargs=dict(

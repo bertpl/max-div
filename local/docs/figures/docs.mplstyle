@@ -1,7 +1,7 @@
 ##### FIGURE & SAVING #########################################################
 figure.figsize        : 6.0, 3.7      # ~16:10, good for web/docs
 figure.dpi            : 120
-savefig.dpi           : 200
+savefig.dpi           : 300
 savefig.bbox          : tight
 savefig.pad_inches    : 0.05
 savefig.transparent   : False

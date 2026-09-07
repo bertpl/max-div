@@ -8,19 +8,21 @@ DEFAULT preset over 10,000 iterations), both at `GEOMETRY_N`, where every proble
 Run:  uv run --group benchmarks --python 3.14 python scripts/generate_problem_images.py [PROBLEM ...]
 """
 
-import io
 import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 
 from max_div.benchmark_problems import BenchmarkProblemFactory
 from max_div.metrics import DiversityMetric
 from max_div.solver import MaxDivSolverBuilder, SolverPreset, iterations
 
-IMAGES_DIR = Path(__file__).parent.parent / "docs" / "benchmarks" / "solver" / "images"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+from benchmarks.figures.style import save_webp, use_docs_style  # noqa: E402
+
+IMAGES_DIR = REPO_ROOT / "docs" / "benchmarks" / "solver" / "images"
 GEOMETRY_N = 200
 
 GRAY = "#b0b0b0"
@@ -58,16 +60,6 @@ _LEGEND_LOC = {
 # =================================================================================================
 #  Rendering helpers
 # =================================================================================================
-def _save_webp(fig: plt.Figure, path: Path) -> None:
-    """Render the figure to quality-92 webp via PIL (matplotlib has no native webp writer)."""
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format="png", dpi=200)
-    plt.close(fig)
-    buffer.seek(0)
-    Image.open(buffer).convert("RGB").save(path, format="WEBP", lossless=False, quality=92)
-    print(f"wrote {path.relative_to(IMAGES_DIR.parent.parent.parent.parent)}")
-
-
 def _titled_figure(title: str, subtitle: str) -> tuple[plt.Figure, plt.Axes]:
     """Return a square figure with the suite's bold-title + regular-subtitle header."""
     fig, ax = plt.subplots(figsize=(10.0, 10.0))
@@ -191,11 +183,12 @@ def render_geometry(name: str, with_solution: bool) -> None:
 
     ax.legend(fontsize=15, loc=_LEGEND_LOC[name], framealpha=0.9)
     suffix = "_with_solution" if with_solution else ""
-    _save_webp(fig, IMAGES_DIR / f"problem_{name}{suffix}.webp")
+    save_webp(fig, IMAGES_DIR / f"problem_{name}{suffix}.webp")
 
 
 def main() -> None:
     """Regenerate images for the problems named on the command line (default: all)."""
+    use_docs_style()
     names = sys.argv[1:] or BenchmarkProblemFactory.get_all_benchmark_names()
     for name in names:
         render_geometry(name, with_solution=False)
