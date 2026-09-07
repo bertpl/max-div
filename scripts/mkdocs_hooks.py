@@ -7,13 +7,14 @@ paths (`docs/images/...`) because that is what GitHub resolves. MkDocs serves th
 as the site root, so those paths land one directory too deep. The hook strips the `docs/` prefix and
 re-anchors what remains against the including page.
 
-**Figure display width.** Every raster figure is rendered by Matplotlib at the `savefig.dpi` of the
-Matplotlib style sheet, from a size in inches chosen per figure. Left to the browser, each image
-fills the content column whatever its design size, so the label size a reader sees depends on the
-figure's inches. The hook sets each image's `width` to its inches at CSS resolution (96 px per
-inch); the site CSS centers it and caps it at the column. Images that already carry a `width` or
-`style` attribute are hand-sized and left alone, as is the home page, whose README images are
-styled for GitHub.
+**Figure display width.** The hook sets each raster image's `width` to its size in inches — its
+design size below — at CSS resolution. Images that already carry a `width` or `style` attribute are
+hand-sized and left alone, as is the home page, whose README images are styled for GitHub.
+
+Without the attribute the browser stretches every image to the content column, so the label size a
+reader sees would depend on the figure's size in inches, which is chosen per figure. The inches are
+recovered from the pixel width and the `savefig.dpi` of the Matplotlib style sheet every figure is
+rendered with.
 
 Both run on the rendered page, not its markdown: the README is pulled in by a snippet, which is
 expanded during markdown conversion, so at `on_page_markdown` time the home page is still a
@@ -103,11 +104,11 @@ def image_pixel_width(path: Path) -> int | None:
         return struct.unpack(">I", header[16:20])[0]
     if header[:4] == b"RIFF" and header[8:12] == b"WEBP":
         chunk = header[12:16]
-        if chunk == b"VP8 ":  # a lossy chunk: 3-byte frame tag, 3-byte start code, then the 14-bit width
+        if chunk == b"VP8 ":  # a lossy chunk puts the 14-bit width after a 3-byte frame tag and a 3-byte start code
             return struct.unpack("<H", header[26:28])[0] & 0x3FFF
-        if chunk == b"VP8L":  # a lossless chunk: one-byte signature, then the 14-bit width minus one
+        if chunk == b"VP8L":  # a lossless chunk puts the 14-bit width minus one after its one-byte signature
             return (struct.unpack("<I", header[21:25])[0] & 0x3FFF) + 1
-        if chunk == b"VP8X":  # an extended chunk: four bytes of flags, then the 24-bit canvas width minus one
+        if chunk == b"VP8X":  # an extended chunk puts the 24-bit canvas width minus one after four flag bytes
             return int.from_bytes(header[24:27], "little") + 1
     return None
 

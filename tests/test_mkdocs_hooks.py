@@ -1,9 +1,7 @@
 """Guards for the documentation-site build hooks.
 
-The README's image paths are repo-root-relative so that GitHub resolves them; the docs build
-re-anchors them onto the rendered page. The raster figures of every page but the home page get a
-`width` at their design size. These tests pin both rewrites, since nothing else fails loudly when they stop
-happening — a broken or mis-sized image is invisible to the docs build.
+These tests pin the two rewrites in `scripts/mkdocs_hooks.py`, since nothing else fails loudly when
+they stop happening — a broken or mis-sized image is invisible to the docs build.
 """
 
 import importlib.util
@@ -144,7 +142,7 @@ def test_the_rendered_readme_keeps_no_docs_relative_paths(hooks):
     ],
 )
 def test_pixel_width_is_read_from_the_header(hooks, tmp_path, name, content, expected):
-    """Each container format the generators write, plus a file that is neither."""
+    """The width is read from the header of each container format the generators write; other content yields None."""
     # --- arrange ----------------------
     path = tmp_path / name
     path.write_bytes(content)
@@ -154,16 +152,13 @@ def test_pixel_width_is_read_from_the_header(hooks, tmp_path, name, content, exp
 
 
 def test_figure_dpi_comes_from_the_style_sheet(hooks):
-    """The hook and every figure generator must agree on the one dpi, so it is read from the style sheet."""
+    """`figure_dpi` returns the `savefig.dpi` currently set in the docs style sheet."""
     # --- act / assert -----------------
     assert hooks.figure_dpi() == 300.0
 
 
-def test_a_raster_figure_is_sized_and_centered(hooks, tmp_path):
-    """An 8-inch figure at 300 dpi is 2400 px wide and is shown at 8 in x 96 px/in = 768 CSS px.
-
-    Path resolution: see `_figure_path`.
-    """
+def test_a_raster_figure_is_sized_and_given_the_figure_class(hooks, tmp_path):
+    """An 8-inch figure at 300 dpi is 2400 px wide and is shown at 8 in x 96 px/in = 768 CSS px."""
     # --- arrange ----------------------
     (tmp_path / "guides" / "images").mkdir(parents=True)
     (tmp_path / "guides" / "images" / "chart.webp").write_bytes(_webp_bytes(b"VP8 ", 2400))
