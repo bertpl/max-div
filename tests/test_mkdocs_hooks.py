@@ -1,8 +1,8 @@
 """Guards for the documentation-site build hooks.
 
 The README's image paths are repo-root-relative so that GitHub resolves them; the docs build
-re-anchors them onto the rendered page. The raster figures of every other page get a `width` at
-their design size. These tests pin both rewrites, since nothing else fails loudly when they stop
+re-anchors them onto the rendered page. The raster figures of every page but the home page get a
+`width` at their design size. These tests pin both rewrites, since nothing else fails loudly when they stop
 happening — a broken or mis-sized image is invisible to the docs build.
 """
 
@@ -34,6 +34,7 @@ def hooks():
 
 
 def _render(hooks, html: str, page_url: str = "", docs_dir: Path = REPO_ROOT / "docs") -> str:
+    """Run the hook on `html` as if rendered at `page_url` from `docs_dir`."""
     return hooks.on_page_content(
         html, page=SimpleNamespace(url=page_url), config={"docs_dir": str(docs_dir)}, files=None
     )
@@ -143,6 +144,7 @@ def test_the_rendered_readme_keeps_no_docs_relative_paths(hooks):
     ],
 )
 def test_pixel_width_is_read_from_the_header(hooks, tmp_path, name, content, expected):
+    """Each container format the generators write, plus a file that is neither."""
     # --- arrange ----------------------
     path = tmp_path / name
     path.write_bytes(content)
@@ -160,8 +162,7 @@ def test_figure_dpi_comes_from_the_style_sheet(hooks):
 def test_a_raster_figure_is_sized_and_centered(hooks, tmp_path):
     """An 8-inch figure at 300 dpi is 2400 px wide and is shown at 8 in x 96 px/in = 768 CSS px.
 
-    The `src` is URL-relative (MkDocs rewrote it before the hook runs), so `../images/` from the
-    page directory `guides/page/` names `guides/images/` in the docs tree.
+    Path resolution: see `_figure_path`.
     """
     # --- arrange ----------------------
     (tmp_path / "guides" / "images").mkdir(parents=True)
@@ -176,6 +177,7 @@ def test_a_raster_figure_is_sized_and_centered(hooks, tmp_path):
 
 
 def test_an_existing_class_is_extended(hooks, tmp_path):
+    """A hand-placed class is kept next to the figure class."""
     # --- arrange ----------------------
     (tmp_path / "guides" / "page").mkdir(parents=True)
     (tmp_path / "guides" / "page" / "chart.png").write_bytes(_png_bytes(300))
@@ -199,6 +201,7 @@ def test_an_existing_class_is_extended(hooks, tmp_path):
     ],
 )
 def test_hand_sized_remote_vector_and_missing_images_are_left_alone(hooks, tmp_path, html):
+    """Only a local raster file without its own sizing gets a width."""
     # --- arrange ----------------------
     (tmp_path / "guides" / "page").mkdir(parents=True)
     (tmp_path / "guides" / "page" / "chart.webp").write_bytes(_webp_bytes(b"VP8 ", 2400))

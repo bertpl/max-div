@@ -7,8 +7,7 @@ from matplotlib.pyplot import Figure
 def save_fig(fig: Figure, filepath: Path):
     """Save a figure at the docs style sheet's `savefig.dpi`, so its pixel size follows its size in inches.
 
-    The documentation build sizes every raster image from that one dpi (see `scripts/mkdocs_hooks.py`),
-    which is why the dpi is not chosen per figure here.
+    The documentation build sizes every raster image from that one dpi (see `scripts/mkdocs_hooks.py`).
     """
     # apply styles not settable in Matplotlib style files
     for ax in fig.axes:

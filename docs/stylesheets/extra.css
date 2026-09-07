@@ -245,8 +245,8 @@ table th {
     content: ")";
 }
 
-/* Raster figures get a `width` at their design size from the docs build hook (scripts/mkdocs_hooks.py):
-   centered, and capped at the column so a wide chart or a narrow screen still fits. */
+/* Raster figures get a `width` at their design size from the docs build hook (scripts/mkdocs_hooks.py);
+   this rule centers them and caps them at the column so a wide chart or a narrow screen still fits. */
 .md-typeset img.figure {
     display: block;
     margin-left: auto;

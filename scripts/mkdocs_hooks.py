@@ -1,27 +1,23 @@
 """Build hooks for the documentation site.
 
-Two rewrites run on every rendered page:
+Two rewrites run on the rendered pages.
 
-- **README image paths.** The docs home page includes README.md, and the README addresses its
-  images with repo-root-relative paths (`docs/images/...`) because that is what GitHub resolves.
-  The other two surfaces already correct for this in their own way: PyPI's long description is
-  built by hatch-fancy-pypi-readme, which rewrites those attributes to tag-pinned absolute URLs
-  (see the substitutions in pyproject.toml). MkDocs serves the `docs/` directory *as* the site
-  root, so without a rewrite the same paths land one directory too deep and the images 404. The
-  hook strips the `docs/` prefix and re-anchors what remains against the including page.
+**README image paths.** The docs home page includes README.md, whose images use repo-root-relative
+paths (`docs/images/...`) because that is what GitHub resolves. MkDocs serves the `docs/` directory
+as the site root, so those paths land one directory too deep. The hook strips the `docs/` prefix and
+re-anchors what remains against the including page.
 
-- **Figure display width.** Every raster figure in the docs is rendered by Matplotlib at the
-  `savefig.dpi` of the shared style sheet, from a size in inches chosen per figure. Left to the
-  browser, each image fills the content column whatever its design size, so an 8-inch chart shows
-  its 10 pt labels half again as large as a 12-inch one. The hook sets each image's `width` to its
-  size in inches at CSS resolution (96 px per inch), so a figure appears at the size it was
-  designed at and a wide one is capped by the column (`max-width: 100%` in the style sheet).
-  Images that already carry a `width` or `style` attribute are hand-sized and left alone, as is
-  the home page, whose README images are styled for GitHub.
+**Figure display width.** Every raster figure is rendered by Matplotlib at the `savefig.dpi` of the
+Matplotlib style sheet, from a size in inches chosen per figure. Left to the browser, each image
+fills the content column whatever its design size, so the label size a reader sees depends on the
+figure's inches. The hook sets each image's `width` to its inches at CSS resolution (96 px per
+inch); the site CSS centers it and caps it at the column. Images that already carry a `width` or
+`style` attribute are hand-sized and left alone, as is the home page, whose README images are
+styled for GitHub.
 
-Both run on the rendered page rather than on its markdown: the README is pulled in by a snippet,
-which is expanded during markdown conversion, so at `on_page_markdown` time the home page is still
-a one-line include directive and none of the README's paths exist yet.
+Both run on the rendered page, not its markdown: the README is pulled in by a snippet, which is
+expanded during markdown conversion, so at `on_page_markdown` time the home page is still a
+one-line include directive.
 """
 
 import posixpath
@@ -44,7 +40,7 @@ HAND_SIZED_ATTR = re.compile(r'\b(width|style)="')
 CLASS_ATTR = re.compile(r'\bclass="([^"]*)"')
 RASTER_SUFFIXES = (".webp", ".png")
 
-# The class the style sheet uses to center a sized figure and cap it at the column width.
+# The site CSS centers an image with this class and caps it at the column width.
 FIGURE_CLASS = "figure"
 
 # max-div has a capability record like every compared tool, because both the hero table and the
@@ -99,19 +95,19 @@ def figure_dpi() -> float:
 def image_pixel_width(path: Path) -> int | None:
     """Return the pixel width of a webp or png file from its header, or None for any other content.
 
-    Parsed by hand: neither the docs nor the test dependency groups install an image library, and
-    the two container formats put the width within the first few dozen bytes.
+    The header is parsed by hand: neither the docs nor the test dependency groups install an image
+    library, and the two container formats put the width within the first few dozen bytes.
     """
     header = path.read_bytes()[:30]
     if header[:8] == b"\x89PNG\r\n\x1a\n":
         return struct.unpack(">I", header[16:20])[0]
     if header[:4] == b"RIFF" and header[8:12] == b"WEBP":
         chunk = header[12:16]
-        if chunk == b"VP8 ":  # lossy: 14-bit width after the 3-byte frame tag and 3-byte start code
+        if chunk == b"VP8 ":  # a lossy chunk: 3-byte frame tag, 3-byte start code, then the 14-bit width
             return struct.unpack("<H", header[26:28])[0] & 0x3FFF
-        if chunk == b"VP8L":  # lossless: 14-bit width right after the one-byte signature
+        if chunk == b"VP8L":  # a lossless chunk: one-byte signature, then the 14-bit width minus one
             return (struct.unpack("<I", header[21:25])[0] & 0x3FFF) + 1
-        if chunk == b"VP8X":  # extended: 24-bit canvas width, stored minus one
+        if chunk == b"VP8X":  # an extended chunk: four bytes of flags, then the 24-bit canvas width minus one
             return int.from_bytes(header[24:27], "little") + 1
     return None
 
