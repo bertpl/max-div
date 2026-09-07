@@ -182,8 +182,8 @@ nav:
         - Quality: benchmarks/third_party/scaling/quality.md
       - Head-to-Head:
         - Overview: benchmarks/third_party/head_to_head/overview.md
-        - vs. Python Heuristics: benchmarks/third_party/head_to_head/tier2.md
         - vs. Exact Solvers: benchmarks/third_party/head_to_head/tier1.md
+        - vs. Python Heuristics: benchmarks/third_party/head_to_head/tier2.md
         - vs. MDPLIB Best-Known: benchmarks/third_party/head_to_head/tier3.md
       - Solver Profiles:
         - Overview: benchmarks/third_party/solvers/index.md
