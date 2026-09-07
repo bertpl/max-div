@@ -51,7 +51,7 @@ The selection runs under geometric-mean separation with the geometric-mean dista
 
 --8<-- "generated/geomean_distance_example_figure.html"
 
-Hover over a red dot, or over one of its rug marks, to see its nearest neighbor under the metric and the level curve of the distance through that neighbor. For most points the nearest neighbor is not the closest red point in the square but one that shares almost the same $x$ or $y$ value: the neighbor that sets the point's marginal spacing.
+For most points the nearest neighbor is not the closest red point in the square but one that shares almost the same $x$ or $y$ value: the neighbor that sets the point's marginal spacing.
 
 The red points spread over the square, and the rug marks along the two edges show the marginals: the hundred $x$ values and the hundred $y$ values each cover $[0, 1]$ without gaps or clusters. Measured under the Euclidean distance, the selection's separations sit below but close to the targets of section I, in 2D and in each marginal, as expected of three quantities optimized at once:
 

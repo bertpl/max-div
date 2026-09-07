@@ -1,4 +1,4 @@
-"""Guards for the interactive figure of the geometric-mean distance guide.
+"""These tests guard the interactive figure of the geometric-mean distance guide.
 
 The figure's numbers are precomputed in Python and carried by the fragment's `data-*` attributes; a
 wrong neighbor or a malformed fragment would only show up as a wrong hover on the built site.
@@ -27,19 +27,21 @@ def _load_module():
 
 @pytest.fixture(scope="module")
 def explorer():
+    """The module under test, loaded once."""
     return _load_module()
 
 
-# Four items: 0 shares its y with 1 and its x with 2, so those pairs sit at distance 0 under the
-# metric; item 3 is nearest to item 2 under the metric (gaps 0.3 and 0.3) and under the Euclidean
-# distance alike, while items 0 to 2 are Euclidean-nearest to item 3.
+# Four items chosen so that the two distances disagree:
+# - item 0 shares its y with item 1 and its x with item 2, so those pairs sit at distance 0 under the metric;
+# - item 3 is nearest to item 2 under the metric (gaps 0.3 and 0.3) and under the Euclidean distance alike;
+# - items 0 to 2 are Euclidean-nearest to item 3.
 X = np.array([0.1, 0.9, 0.1, 0.4], dtype=np.float32)
 Y = np.array([0.1, 0.1, 0.9, 0.6], dtype=np.float32)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Nearest neighbors
-# =================================================================================================
+# ==================================================================================================
 def test_nearest_neighbors_under_both_distances(explorer):
     """A shared coordinate gives distance 0 under the metric while the Euclidean neighbor is another item."""
     # --- act --------------------------
@@ -54,15 +56,17 @@ def test_nearest_neighbors_under_both_distances(explorer):
     assert neighbors.euclidean_index.tolist() == [3, 3, 3, 2]
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Fragment
-# =================================================================================================
+# ==================================================================================================
 @pytest.fixture(scope="module")
 def fragment(explorer):
+    """The fragment of the four-item selection."""
     return explorer.explorer_fragment(X, Y, n=4, k=4, population_image="../images/pop.webp", description="four items")
 
 
 def test_fragment_is_a_div_ending_in_a_newline(fragment):
+    """A `<div>` root passes through Markdown untouched; the final newline keeps pre-commit from rewriting the file."""
     # --- assert -----------------------
     assert fragment.startswith('<div class="gmx-figure">\n')
     assert fragment.endswith("</div>\n")
@@ -71,6 +75,7 @@ def test_fragment_is_a_div_ending_in_a_newline(fragment):
 
 
 def test_fragment_carries_one_dot_and_two_rug_ticks_per_item(fragment):
+    """Every item has a dot, two rug ticks and two hit areas, all tagged with its index."""
     # --- act --------------------------
     dots = re.findall(r'<circle class="gmx-dot" data-i="(\d+)"', fragment)
     rugs = re.findall(r'<line class="gmx-rug gmx-rug-([xy])" data-i="(\d+)"', fragment)
@@ -82,7 +87,7 @@ def test_fragment_carries_one_dot_and_two_rug_ticks_per_item(fragment):
 
 
 def test_every_dot_names_its_neighbors_and_distance(fragment):
-    """The `data-*` values are what the script hovers on, so they must index existing dots and match the arithmetic."""
+    """The script reads the `data-*` values on hover, so they must index existing dots and match the arithmetic."""
     # --- act --------------------------
     dots = re.findall(
         r'<circle class="gmx-dot" data-i="(\d+)" data-nn="(\d+)" data-nne="(\d+)" data-d="([\d.]+)"', fragment

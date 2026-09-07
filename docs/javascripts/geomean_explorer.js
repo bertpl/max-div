@@ -3,12 +3,12 @@
 // The figure is an inline SVG (see scripts/geomean_distance_explorer.py) whose dots and rug ticks
 // carry `data-i`, and whose dots carry the precomputed nearest neighbor under the geometric-mean
 // distance (`data-nn`, `data-d`, `data-dx`, `data-dy`) and under the Euclidean one (`data-nne`).
-// Selecting an item highlights it, its neighbors and their rug ticks, draws the level curve of the
-// geometric-mean distance through the neighbor, and writes the distance arithmetic in the caption.
 //
-// Invariants: one delegated listener set per figure, installed once (the `document$` observable
-// fires on every page navigation); no distance is computed here beyond the level-curve geometry;
-// the hover layer lives in the figure's data coordinates, so the curves are emitted in data units.
+// Invariants:
+// - one delegated listener set per figure, installed once: the `document$` observable fires on
+//   every page navigation;
+// - no distance is computed here beyond the level-curve geometry;
+// - the hover layer lives in the figure's data coordinates, so the curves are emitted in data units.
 
 // ---- Level curves ----
 
@@ -35,7 +35,7 @@ function hyperbolaPaths(cx, cy, d, samples = 80) {
   return paths;
 }
 
-// Append the level curves through the neighbor (emphasized) and at the 1/sqrt(k) reference (dashed).
+// Append the level curves through the neighbor and at the 1/sqrt(k) reference.
 function drawLevels(layer, cx, cy, d, reference) {
   const svgNs = "http://www.w3.org/2000/svg";
   const draw = (level, cls) => {
@@ -78,7 +78,7 @@ function select(figure, i) {
   for (const element of svg.querySelectorAll(`.gmx-dot[data-i="${i}"], .gmx-rug[data-i="${i}"]`)) {
     element.classList.add("is-selected");
   }
-  // The selected dot grows by 1.4x; set as an attribute, since not every browser honors `r` from CSS.
+  // The selected dot's radius is set as an attribute, since not every browser honors `r` from CSS.
   dot.setAttribute("r", (1.4 * parseFloat(figure.dataset.dotRadius)).toFixed(4));
   for (const element of svg.querySelectorAll(`.gmx-dot[data-i="${nn}"], .gmx-rug[data-i="${nn}"]`)) {
     element.classList.add("is-neighbor");
@@ -100,8 +100,11 @@ function select(figure, i) {
 
 // ---- Wiring ----
 
-// Install the listeners on one figure: hover selects unless pinned, a tap or click pins (a second
-// one on the same item, or one on empty plot area, clears), keyboard focus selects, Escape clears.
+// Install the listeners on one figure:
+// - hover selects, unless an item is pinned;
+// - a tap or click pins; a second one on the same item, or one on empty plot area, clears;
+// - keyboard focus selects;
+// - Escape clears.
 function install(figure) {
   if (figure.dataset.gmxReady) return;
   figure.dataset.gmxReady = "1";

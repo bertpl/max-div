@@ -1,13 +1,13 @@
 """Build the interactive example figure of `docs/guides/geomean_distance.md` as an HTML fragment.
 
 The fragment is an inline SVG of the solved selection over a raster of the population, followed by a
-caption. `docs/javascripts/geomean_explorer.js` adds the interaction: hovering an item highlights its
-nearest neighbor under the geometric-mean distance and draws the level curve of that distance. Every
-number the interaction needs is precomputed here and carried by `data-*` attributes, so the script
-never recomputes a distance. Without JavaScript the fragment renders as a static figure.
+caption. `docs/javascripts/geomean_explorer.js` adds the interaction. Every number the interaction
+needs is precomputed here and carried by `data-*` attributes, so the script never recomputes a
+distance. Without JavaScript the fragment renders as a static figure.
 
-This module depends on numpy only, so its tests run in the plain test environment; the figure
-script under `scripts/` renders the population raster with Matplotlib and calls in here for the rest.
+This module depends on numpy only, so its tests run in the plain test environment;
+`generate_guide_images.py` renders the population raster with Matplotlib and calls `explorer_fragment`
+for the rest.
 """
 
 from dataclasses import dataclass
@@ -15,16 +15,17 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-# --- data-space extent and pixel layout -----------
-# The axes limits of the former static figure, kept so the interactive one looks the same.
+# data-space extent and pixel layout
+# The axes extend past the unit square: room for the rug ticks below and left of it, and for the
+# legend above it.
 X_MIN, X_MAX = -0.06, 1.02
 Y_MIN, Y_MAX = -0.06, 1.12
-VIEW_WIDTH = 624  # 6.5 inches at CSS resolution, the design width of the other guide figures
+VIEW_WIDTH = 624  # 6.5 inches at CSS resolution, the width the static example figure had
 MARGIN_LEFT, MARGIN_RIGHT, MARGIN_TOP, MARGIN_BOTTOM = 44, 8, 8, 36
 SCALE = (VIEW_WIDTH - MARGIN_LEFT - MARGIN_RIGHT) / (X_MAX - X_MIN)  # pixels per data unit
 VIEW_HEIGHT = round(MARGIN_TOP + (Y_MAX - Y_MIN) * SCALE + MARGIN_BOTTOM)
 
-# --- marks, in data units ------------------------
+# marks, in data units
 DOT_RADIUS = 0.008
 RUG_NEAR, RUG_FAR = -0.018, -0.042  # a rug tick runs from RUG_NEAR to RUG_FAR beside its axis
 TICKS = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
@@ -35,13 +36,14 @@ SELECTION_COLOR = "#EE1111"
 NEIGHBOR_COLOR = "#4C72B0"
 
 HINT = (
-    "Hover over a red dot or one of its rug marks (tap on a touch screen) to see its nearest neighbor under the metric."
+    "Hover over a red dot or one of its rug marks (tap on a touch screen) to see its nearest neighbor under the"
+    " metric and the level curve through it."
 )
 
 
 @dataclass(frozen=True)
 class NearestNeighbors:
-    """Per item: the nearest other item under the geometric-mean distance, and under the Euclidean one."""
+    """Parallel arrays record, per item, its nearest other item under the geometric-mean and the Euclidean distance."""
 
     index: NDArray[np.intp]
     distance: NDArray[np.float64]
@@ -54,7 +56,7 @@ def nearest_neighbors(x: NDArray[np.floating], y: NDArray[np.floating]) -> Neare
     """Return each item's nearest neighbor under the geometric-mean distance sqrt(|dx| |dy|) and the Euclidean one.
 
     Two items sharing a coordinate are at geometric-mean distance 0; that pair is then each other's
-    nearest neighbor, and the caller draws the degenerate level curve.
+    nearest neighbor, and `geomean_explorer.js` draws the degenerate level curve.
     """
     x64 = np.asarray(x, dtype=np.float64)
     y64 = np.asarray(y, dtype=np.float64)
@@ -178,7 +180,7 @@ def explorer_fragment(
     lines = [
         '<div class="gmx-figure">',
         f'<svg class="gmx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
-        f' data-k="{k}" data-ref="{1.0 / np.sqrt(k):.5f}">',
+        f' data-ref="{1.0 / np.sqrt(k):.5f}">',
         "<title>Selection under the geometric-mean distance</title>",
         f"<desc>{description}</desc>",
         '<defs><clipPath id="gmx-square" clipPathUnits="userSpaceOnUse">'

@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - A guide on why geometric-mean separation is the default objective, the first page of a new Guides section
-- The geometric-mean distance guide's example figure is interactive: hovering a selected point shows its nearest neighbor under the metric and the metric's level curve through it
 - A guide on when to use the geometric-mean distance, with a solved unit-square example
+- The geometric-mean distance guide's example figure is interactive: hovering a selected point shows its nearest neighbor under the metric and the metric's level curve through that neighbor
 - A geometric-mean distance metric, `DistanceMetric.geometric_mean()`: the d-th root of the product of per-coordinate differences, which spreads a selection in every coordinate projection as well as in the full space
 
 ### Changed
