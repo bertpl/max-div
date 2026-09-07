@@ -15,7 +15,7 @@ Every chart reads the same way:
 
 ## II. Protocol
 
-The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time budget, reference machine, and its [solver configurations](../scaling/solver_configs.md) for the one-shot tools. The tier runs 3 seeds per cell, not 5 ([why](../scaling/protocol.md#iii-fundamental-constants-invariants)).
+The tier reuses the time budget and reference machine of the [solver-scaling protocol](../scaling/protocol.md), and the [solver configurations](../scaling/solver_configs.md) measured there for the one-shot tools. The tier runs 3 seeds per cell, not 5 ([why](../scaling/protocol.md#iii-fundamental-constants-invariants)).
 
 - **Problem**: U1 — the scaling pages' problem, so both describe the same instances — at n = 100, 1,000, 10,000 and 100,000, k = n/10. Constrained problems are not on this page: no one-shot tool in the registry handles the constraints the harder problems carry.
 - **Objective**: minimum separation under the `L2` distance, scored identically for every tool by `max-div`'s own metric code. Tools that optimize a different objective enter as different-objective references, not as dispersion competitors ([solver configurations](../scaling/solver_configs.md)):

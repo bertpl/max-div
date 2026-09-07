@@ -12,7 +12,7 @@ Every chart covers one instance group (a set, a size n and a selection size k, t
 
 ## II. Protocol
 
-The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time budget, reference machine, and its [solver configurations](../scaling/solver_configs.md). The tier runs 3 seeds per cell, not 5 ([why](../scaling/protocol.md#iii-fundamental-constants-invariants)).
+The tier reuses the time budget and reference machine of the [solver-scaling protocol](../scaling/protocol.md), and the [solver configurations](../scaling/solver_configs.md) measured there. The tier runs 3 seeds per cell, not 5 ([why](../scaling/protocol.md#iii-fundamental-constants-invariants)).
 
 ### II.A. Instances, entrants and budgets
 

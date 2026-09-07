@@ -67,7 +67,7 @@ def plot_anytime_curve(
     import matplotlib.pyplot as plt  # deferred: keeps record-only workflows matplotlib-free
 
     use_docs_style()
-    fig, ax = plt.subplots(figsize=(8.0, 4.5))
+    fig, ax = plt.subplots(figsize=(10.0, 5.5))
     # Single-shot tools cycle through the marker shapes so tools whose markers land on the same
     # point stay distinguishable; budget-series tools cycle through the line styles.
     marker_index = 0
@@ -101,7 +101,9 @@ def plot_anytime_curve(
     if title:
         ax.set_title(title, fontweight="bold")
     ax.grid(True, which="major")
-    ax.legend()
+    # Longer handles than the style sheet's: the per-point dot sits mid-handle and would hide the
+    # one gap that tells the dashed multi-worker series from the solid single-worker one.
+    ax.legend(handlelength=2.5)
     save_webp(fig, path)
 
 
