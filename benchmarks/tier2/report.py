@@ -106,10 +106,14 @@ def chart_name(n: int) -> str:
 
 
 def render_charts(records: list[RunRecord], sizes: list[int], images_dir: Path) -> list[str]:
-    """Render one chart per size with the best-entrant line and return the written image names."""
+    """Render one chart per size with the best-entrant line and return the written image names.
+
+    The random baseline is left off the charts: its value sits so far below every tool that
+    the y-axis would squeeze the differences that matter.
+    """
     names = []
     for n in sizes:
-        size_records = [r for r in records if r.n == n]
+        size_records = [r for r in records if r.n == n and r.tool != "random"]
         if not any(r.tool.startswith("max-div") for r in size_records):
             continue
         best = best_entrant(size_records)

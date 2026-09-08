@@ -16,6 +16,9 @@ _LINE_WIDTH = 1.5
 # solid, the multi-worker series dashed — so two max-div curves on one chart stay apart.
 _SERIES_LINESTYLES = ("-", "--", "-.", ":")
 _REFERENCE_COLOR = "#555555"
+# The y-axis spans at least this fraction of the median plotted value: a series whose points all
+# sit within float noise of a reference line would otherwise zoom onto that noise.
+_MIN_Y_SPAN_FRACTION = 0.01
 
 
 @dataclass(frozen=True)
@@ -92,11 +95,27 @@ def plot_anytime_curve(
     ax.set_xscale("log")
     ax.set_xlabel("measured wall-clock [s]")
     ax.set_ylabel(y_label or metric_name)
+    _widen_narrow_y_axis(ax)
     if title:
         ax.set_title(title, fontweight="bold")
     ax.grid(True, which="major")
     ax.legend()
     save_webp(fig, path)
+
+
+def _widen_narrow_y_axis(ax) -> None:
+    """Widen the y-axis to `_MIN_Y_SPAN_FRACTION` of the median plotted value when it spans less, and print plain tick labels.
+
+    Plain tick labels (no offset notation) keep the axis readable where matplotlib would otherwise
+    factor a common prefix out of near-identical values.
+    """
+    plotted = np.concatenate([np.asarray(line.get_ydata(), dtype=float) for line in ax.get_lines()])
+    y_low, y_high = ax.get_ylim()
+    minimum_span = _MIN_Y_SPAN_FRACTION * abs(float(np.median(plotted)))
+    if y_high - y_low < minimum_span:
+        center = (y_low + y_high) / 2
+        ax.set_ylim(center - minimum_span / 2, center + minimum_span / 2)
+    ax.ticklabel_format(axis="y", useOffset=False)
 
 
 def _legend_order(by_tool: dict[str, list[RunRecord]]) -> list[tuple[str, list[RunRecord]]]:
