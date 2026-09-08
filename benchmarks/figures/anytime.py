@@ -17,7 +17,7 @@ _LINE_WIDTH = 1.5
 _SERIES_LINESTYLES = ("-", "--", "-.", ":")
 _REFERENCE_COLOR = "#555555"
 # The y-axis spans at least this fraction of the median plotted value: a series whose points all
-# sit within float noise of a reference line would otherwise zoom onto that noise.
+# sit within float noise of a reference line would otherwise have the axis autoscaled to that noise.
 _MIN_Y_SPAN_FRACTION = 0.01
 
 
@@ -96,6 +96,8 @@ def plot_anytime_curve(
     ax.set_xlabel("measured wall-clock [s]")
     ax.set_ylabel(y_label or metric_name)
     _widen_narrow_y_axis(ax)
+    # plain tick labels: matplotlib would otherwise factor a common prefix out of near-identical values
+    ax.ticklabel_format(axis="y", useOffset=False)
     if title:
         ax.set_title(title, fontweight="bold")
     ax.grid(True, which="major")
@@ -104,10 +106,10 @@ def plot_anytime_curve(
 
 
 def _widen_narrow_y_axis(ax) -> None:
-    """Widen the y-axis to `_MIN_Y_SPAN_FRACTION` of the median plotted value when it spans less, and print plain tick labels.
+    """Widen a y-axis narrower than `_MIN_Y_SPAN_FRACTION` of the median plotted value.
 
-    Plain tick labels (no offset notation) keep the axis readable where matplotlib would otherwise
-    factor a common prefix out of near-identical values.
+    Call it after every line is drawn: the median is taken over the lines on the axes, the
+    reference lines included.
     """
     plotted = np.concatenate([np.asarray(line.get_ydata(), dtype=float) for line in ax.get_lines()])
     y_low, y_high = ax.get_ylim()
@@ -115,7 +117,6 @@ def _widen_narrow_y_axis(ax) -> None:
     if y_high - y_low < minimum_span:
         center = (y_low + y_high) / 2
         ax.set_ylim(center - minimum_span / 2, center + minimum_span / 2)
-    ax.ticklabel_format(axis="y", useOffset=False)
 
 
 def _legend_order(by_tool: dict[str, list[RunRecord]]) -> list[tuple[str, list[RunRecord]]]:

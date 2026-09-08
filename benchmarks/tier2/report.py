@@ -109,7 +109,7 @@ def render_charts(records: list[RunRecord], sizes: list[int], images_dir: Path) 
     """Render one chart per size with the best-entrant line and return the written image names.
 
     The random baseline is left off the charts: its value sits so far below every tool that
-    the y-axis would squeeze the differences that matter.
+    the differences between the tools would occupy a small fraction of the y-axis.
     """
     names = []
     for n in sizes:

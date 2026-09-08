@@ -116,9 +116,6 @@ def test_charted_budgets_skip_budgets_below_the_previous_charted_measured_time()
 def test_widen_narrow_y_axis_spans_at_least_one_percent_of_the_median():
     """An axis whose values differ only by float noise is widened to the minimum span, centered on the values."""
     # --- arrange ----------------------
-    import matplotlib
-
-    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     from benchmarks.figures.anytime import _widen_narrow_y_axis
