@@ -85,3 +85,21 @@ def test_main_emits_chart_per_size_with_tables(tmp_path: Path):
     assert (docs_dir / "images" / "tier2_U1_200_min_separation.webp").exists()
     assert "| 200 |" in (docs_dir / "results" / "tier2_summary.md").read_text()
     assert "| fpsample[FPS] |" in (docs_dir / "results" / "tier2_entrants.md").read_text()
+
+
+def test_render_charts_leaves_the_random_baseline_off_the_chart(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """The random record never reaches the plotter, while the entrants and max-div do."""
+    # --- arrange ----------------------
+    plotted: list[list[RunRecord]] = []
+    monkeypatch.setattr(report, "plot_anytime_curve", lambda records, **kwargs: plotted.append(records))
+    records = [
+        _record("random", "single-shot", 0.01),
+        _record("fpsample[FPS]", "single-shot", 1.0),
+        _record("max-div[DEFAULT]", "time:1.0s", 1.2),
+    ]
+
+    # --- act --------------------------
+    report.render_charts(records, [200], tmp_path)
+
+    # --- assert -----------------------
+    assert [r.tool for r in plotted[0]] == ["fpsample[FPS]", "max-div[DEFAULT]"]

@@ -6,9 +6,8 @@ can be re-measured alone while the entrant half stays fixed. The tracked referen
 entrant output lives under `DATA_DIR`; `benchmarks/README.md` says how it is refreshed. The docs
 artifacts come from ``benchmarks.tier3.report``.
 
-Every published (instance, k) pairing of the charted families runs max-div's single-worker budget
-series; pairings from `MULTI_WORKER_MIN_N` up also run the multi-worker series, the smaller ones
-plateau within milliseconds. The Glover pairings run the short `GLOVER_BUDGETS_SEC` series only and
+Every published (instance, k) pairing of the charted families runs both of max-div's budget
+series. The Glover pairings run the short `GLOVER_BUDGETS_SEC` series only and
 are reported as a match count. Entrants are the non-exact registry tools whose input form the
 instance family provides (`entrant_adapters`).
 """
@@ -33,7 +32,6 @@ from benchmarks.common.protocol import (
     N_WORKERS,
     SEEDS,
     SINGLE_WORKER_BUDGETS_SEC,
-    SINGLE_WORKER_CONCURRENCY,
 )
 from benchmarks.common.records import RunRecord
 from benchmarks.mdplib import load_instance
@@ -49,7 +47,6 @@ MAXDIV_FILE = "maxdiv_mdplib.jsonl"
 
 METRIC = DiversityMetric.MIN_SEPARATION  # the published MMDP values are max-min
 CHARTED_FAMILIES = ("Geo", "Ran")
-MULTI_WORKER_MIN_N = 500
 GLOVER_BUDGETS_SEC = grid_budget_series(0.001, 1.0)
 
 
@@ -107,7 +104,7 @@ def run_maxdiv(
     n_workers: int = N_WORKERS,
     out_path: Path = OUTPUT_DIR / MAXDIV_FILE,
 ) -> list[RunRecord]:
-    """Run the max-div half: the single-worker series on every pairing, the multi-worker series on the largest instances.
+    """Run the max-div half: both budget series on every charted pairing, the short single-worker series on the Glover pairings.
 
     Defaults are the published protocol; pass smaller values only for validation runs. `size`
     carries k in every record: the instance file name plus k identifies a published pairing.
@@ -119,8 +116,7 @@ def run_maxdiv(
         series: list[tuple[list[float], int]] = []
         if row.family in CHARTED_FAMILIES:
             series.append((single_budgets_sec, 1))
-            if row.n >= MULTI_WORKER_MIN_N:
-                series.append((multi_budgets_sec, n_workers))
+            series.append((multi_budgets_sec, n_workers))
         else:
             series.append((glover_budgets_sec, 1))
         series = [(budgets, workers) for budgets, workers in series if (row.instance, row.k, maxdiv_tool_label(n_workers=workers)) not in done]
@@ -135,7 +131,6 @@ def run_maxdiv(
                 time_budgets_sec=budgets,
                 seeds=seeds,
                 n_workers=workers,
-                concurrency=SINGLE_WORKER_CONCURRENCY if workers == 1 else 1,
             )
         save_records(records, out_path)
         print(f"max-div {row.instance} k={row.k} done ({len(records)} records so far)", flush=True)

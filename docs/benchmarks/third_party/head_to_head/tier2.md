@@ -28,6 +28,8 @@ The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time
     - one worker, 1 ms to 60 s;
     - 12 workers with the default dynamic grouping, 1 s to 60 s.
 
+    A budget is charted only when it exceeds the measured time of the previous charted budget, so the small budgets that all end at the set-up cost appear once.
+
 ## III. Results
 
 The best one-shot tool is a farthest-point picker at every size: `RDKit` up to n = 10,000, `fpsample` at n = 100,000, where the other pickers reach the same value within 0.5 %. `max-div`'s `DEFAULT` preset starts from the same farthest-point construction, so the comparison is about what its optimization adds on top, and at what fixed cost:

@@ -74,3 +74,60 @@ def test_anytime_chart_draws_reference_lines_and_markers(tmp_path: Path):
 
     # --- assert -----------------------
     assert path.read_bytes()[8:12] == b"WEBP"
+
+
+def test_budget_series_stats_follow_the_budget_order():
+    """The curve is aggregated per budget in increasing budget order, whatever order the records come in."""
+    # --- arrange ----------------------
+    from benchmarks.common.records import RunRecord
+    from benchmarks.figures.anytime import _budget_series_stats
+
+    records = [
+        RunRecord("max-div[DEFAULT]", "U1", 20, 20, 2, "MIN_SEPARATION", 0, f"time:{b}s", t, None, {"MIN_SEPARATION": q})
+        for b, t, q in ((0.1, 0.1, 0.6), (0.001, 0.03, 0.5), (0.05, 0.055, 0.55))
+    ]
+
+    # --- act --------------------------
+    t_mean, q_mean, _q_min, _q_max = _budget_series_stats(records, "MIN_SEPARATION")
+
+    # --- assert -----------------------
+    assert q_mean == [0.5, 0.55, 0.6]
+    assert t_mean == [0.03, 0.055, 0.1]
+
+
+def test_charted_budgets_skip_budgets_below_the_previous_charted_measured_time():
+    """Budgets that end at the set-up cost collapse to their first member; a budget past the previous measured time is charted again."""
+    # --- arrange ----------------------
+    from benchmarks.figures.anytime import _charted_budgets
+
+    t_mean_by_budget = {
+        "time:0.001s": 0.03,
+        "time:0.002s": 0.03,
+        "time:0.02s": 0.031,
+        "time:0.05s": 0.055,
+        "time:0.1s": 0.1,
+        "iterations:10": 0.001,
+    }
+
+    # --- act / assert -----------------
+    assert _charted_budgets(t_mean_by_budget) == ["time:0.001s", "time:0.05s", "time:0.1s", "iterations:10"]
+
+
+def test_widen_narrow_y_axis_spans_at_least_one_percent_of_the_median():
+    """An axis whose values differ only by float noise is widened to the minimum span, centered on the values."""
+    # --- arrange ----------------------
+    import matplotlib.pyplot as plt
+
+    from benchmarks.figures.anytime import _widen_narrow_y_axis
+
+    fig, ax = plt.subplots()
+    ax.plot([1.0, 2.0], [2.0, 2.0 + 1e-7])
+
+    # --- act --------------------------
+    _widen_narrow_y_axis(ax)
+    y_low, y_high = ax.get_ylim()
+    plt.close(fig)
+
+    # --- assert -----------------------
+    assert y_high - y_low == pytest.approx(0.02)
+    assert (y_low + y_high) / 2 == pytest.approx(2.0, abs=1e-6)

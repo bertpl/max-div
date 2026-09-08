@@ -1,4 +1,4 @@
-"""Run records: the flat result rows every runner emits, with JSONL persistence."""
+"""Run records are the flat result rows every runner emits; the module also holds their budget tags and JSONL persistence."""
 
 import json
 from dataclasses import asdict, dataclass, field
@@ -27,6 +27,26 @@ class RunRecord:
     n_constraints: int = 0
     n_constraints_satisfied: int = 0
     proven_optimal: bool | None = None  # exact solvers only: optimality certified within the timeout
+
+
+def budget_tag(budget_sec: float) -> str:
+    """Return the record tag of a wall-clock budget."""
+    return f"time:{budget_sec}s"
+
+
+def budget_sec(tag: str) -> float | None:
+    """Return the wall-clock budget a record tag names, or None for an iteration or single-shot tag."""
+    return float(tag.removeprefix("time:").removesuffix("s")) if tag.startswith("time:") else None
+
+
+def iteration_tag(n_iterations: int) -> str:
+    """Return the record tag of an iteration-count budget."""
+    return f"iterations:{n_iterations}"
+
+
+def iteration_count(tag: str) -> int | None:
+    """Return the iteration count a record tag names, or None for a wall-clock or single-shot tag."""
+    return int(tag.removeprefix("iterations:")) if tag.startswith("iterations:") else None
 
 
 def save_records(records: list[RunRecord], path: Path) -> None:

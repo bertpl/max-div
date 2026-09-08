@@ -25,7 +25,9 @@ The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time
     - On Ran, the tools that accept a distance matrix: `qc-selector` (max-min and max-sum), `kmedoids`.
     - On Geo, additionally the tools that take vectors: `fpsample`, `skmatter`, `RDKit`, `apricot-select`, `DPPy`, `code-FDM`.
     - Exact solvers are compared on the [exact-solver tier](tier1.md), not here.
-- **max-div**: `DEFAULT` preset, the single-worker budget series from 1 ms to 60 s on every pairing; the 12-worker series from 1 s to 60 s on the n = 500 pairings only, the smaller ones plateau within milliseconds. One independent solve per budget and seed, timed end to end; charts plot measured wall-clock.
+- **max-div**: `DEFAULT` preset, the single-worker budget series from 1 ms to 60 s and the 12-worker series from 1 s to 60 s on every pairing.
+    - One independent solve per budget and seed, timed end to end; charts plot measured wall-clock.
+    - A budget is charted only when it exceeds the measured time of the previous charted budget, so the small budgets that all end at the set-up cost appear once.
 
 ### II.B. Reference values
 

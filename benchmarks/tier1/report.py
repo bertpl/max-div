@@ -18,11 +18,11 @@ from collections import defaultdict
 from pathlib import Path
 
 from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
-from benchmarks.common.records import RunRecord, load_records
+from benchmarks.common.records import RunRecord, budget_tag, load_records
 from benchmarks.common.registry import display_name
 from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
 from benchmarks.figures.style import tool_color
-from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
+from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
 from .full import DATA_DIR, EXACT_MAXMIN_FILE, EXACT_NN_FILE, N_WORKERS, OUTPUT_DIR, PROBLEMS, maxdiv_records_path
 from max_div.metrics import DiversityMetric
 

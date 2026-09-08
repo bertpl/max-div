@@ -16,10 +16,10 @@ from dataclasses import replace
 from pathlib import Path
 
 from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
-from benchmarks.common.records import RunRecord, load_records
+from benchmarks.common.records import RunRecord, budget_tag, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.mdplib.best_known import BestKnown, load_best_known
-from benchmarks.runners.maxdiv_runner import budget_tag, maxdiv_tool_label
+from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
 
 from .full import CHARTED_FAMILIES, DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR
 

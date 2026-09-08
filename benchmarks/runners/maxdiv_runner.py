@@ -1,21 +1,13 @@
 """Run max-div across a budget series, one independent solve per budget x seed, with one or several workers."""
 
 import time
-from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from multiprocessing import get_context
 
 import numpy as np
 from numpy.typing import NDArray
 
 from benchmarks.common.quality import evaluate_selection, n_constraints_satisfied
-from benchmarks.common.records import RunRecord
-from max_div._core.solver._distance_storage import (
-    DistanceStorage,
-    select_distance_storage,
-    stored_backend_bytes,
-    total_physical_memory_bytes,
-)
+from benchmarks.common.records import RunRecord, budget_tag, iteration_tag
 from max_div.problem import MaxDivProblem
 from max_div.solver import (
     MaxDivSolverBuilder,
@@ -28,46 +20,9 @@ from max_div.solver import (
 )
 
 
-# The share of physical RAM the distance stores of the solves run side by side ("packed", below) may
-# claim together. Each packed solve builds its own store inside its timed call, so packing
-# multiplies that memory; the solver's own AUTO rule only sizes one store.
-_PACKED_STORES_MEMORY_FRACTION = 0.5
-
-
-def memory_bound_concurrency(problem: MaxDivProblem, requested: int, total_memory_bytes: int | None = None) -> int:
-    """Return how many single-worker solves of the problem may run side by side, at most `requested`.
-
-    The cap keeps the distance stores of all packed solves within `_PACKED_STORES_MEMORY_FRACTION`
-    of physical RAM, using the backend the solver's AUTO rule resolves for the problem. The lazy
-    backend stores no distances, so the cap never lowers the request; an unknown RAM size leaves the
-    request unchanged.
-
-    Args:
-        total_memory_bytes: Physical RAM to size against; probed when omitted (injectable for tests).
-    """
-    total = total_physical_memory_bytes() if total_memory_bytes is None else total_memory_bytes
-    if total is None:
-        return requested
-    resolved = select_distance_storage(problem, DistanceStorage.AUTO, total)
-    if resolved == DistanceStorage.LAZY:
-        return requested
-    fits = int(total * _PACKED_STORES_MEMORY_FRACTION) // stored_backend_bytes(resolved, problem.n)
-    return max(1, min(requested, fits))
-
-
 def maxdiv_tool_label(preset: SolverPreset = SolverPreset.DEFAULT, n_workers: int = 1) -> str:
     """Return the record label of a max-div series: the preset, plus the worker count when several."""
     return f"max-div[{preset.name}]" if n_workers == 1 else f"max-div[{preset.name}, {n_workers} workers]"
-
-
-def budget_tag(budget_sec: float) -> str:
-    """Return the record tag of a wall-clock budget."""
-    return f"time:{budget_sec}s"
-
-
-def budget_sec(tag: str) -> float | None:
-    """Return the wall-clock budget a record tag names, or None for an iteration or single-shot tag."""
-    return float(tag.removeprefix("time:").removesuffix("s")) if tag.startswith("time:") else None
 
 
 @dataclass(frozen=True)
@@ -100,12 +55,13 @@ def run_maxdiv_budget_series(
     seeds: tuple[int, ...] = (0, 1, 2),
     preset: SolverPreset = SolverPreset.DEFAULT,
     n_workers: int = 1,
-    concurrency: int = 1,
 ) -> list[RunRecord]:
     """Solve the problem once per (budget, seed) and record measured time + quality.
 
     The measured time is end to end around `solve()`, distance computation, worker spawning and
-    initialization included, so it compares with the adapters' timed conversions.
+    initialization included, so it compares with the adapters' timed conversions. The solves run
+    one at a time, in this process: solves run side by side contend for the cores on the
+    multi-threaded distance computation and inflate the measured times at the smallest budgets several-fold.
 
     Args:
         problem_name: Generator name recorded in each record (e.g. ``"U1"``).
@@ -115,37 +71,19 @@ def run_maxdiv_budget_series(
             single-worker runs only.
         seeds: One independent solve per seed per budget.
         n_workers: Above 1, the parallel solver runs this many workers under an end-to-end budget.
-        concurrency: How many single-worker solves run side by side, in separate processes; capped
-            by `memory_bound_concurrency` so their distance stores fit in memory together.
 
     Raises:
-        ValueError: If a multi-worker series is combined with iteration budgets or with `concurrency` > 1,
-            since its workers already fill the cores.
+        ValueError: If a multi-worker series is combined with iteration budgets.
     """
-    if n_workers > 1 and (iteration_budgets or concurrency > 1):
-        raise ValueError("A multi-worker series takes wall-clock budgets only and runs one solve at a time.")
+    if n_workers > 1 and iteration_budgets:
+        raise ValueError("A multi-worker series takes wall-clock budgets only.")
     budgets: list[tuple[str, TargetDuration]] = []
     for t in time_budgets_sec or []:
         budgets.append((budget_tag(t), seconds(t)))
     for i in iteration_budgets or []:
-        budgets.append((f"iterations:{i}", iterations(i)))
+        budgets.append((iteration_tag(i), iterations(i)))
     jobs = [_SolveJob(problem, tag, target, seed, preset, n_workers) for tag, target in budgets for seed in seeds]
-
-    if concurrency > 1:
-        packed = memory_bound_concurrency(problem, concurrency)
-        if packed < concurrency:
-            print(
-                f"  packing {packed} single-worker solve(s) side by side, not {concurrency}: "
-                "their distance stores would not fit in memory together",
-                flush=True,
-            )
-        concurrency = packed
-    if concurrency > 1:
-        # spawn, not fork: numba's threading layer is not fork-safe
-        with ProcessPoolExecutor(max_workers=concurrency, mp_context=get_context("spawn")) as pool:
-            outcomes = list(pool.map(_solve, jobs))
-    else:
-        outcomes = [_solve(job) for job in jobs]
+    outcomes = [_solve(job) for job in jobs]
 
     label = maxdiv_tool_label(preset, n_workers)
     return [
@@ -169,7 +107,7 @@ def run_maxdiv_budget_series(
 
 
 def _solve(job: _SolveJob) -> _SolveOutcome:
-    """Run one solve, timed end to end; picklable for the process pool."""
+    """Run one solve, timed end to end."""
     if job.n_workers == 1:
         builder = MaxDivSolverBuilder(job.problem).with_preset(job.target, job.preset).with_seed(job.seed)
     else:

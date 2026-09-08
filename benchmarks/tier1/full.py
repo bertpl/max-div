@@ -35,7 +35,6 @@ from benchmarks.common.protocol import (
     N_WORKERS,
     SEEDS,
     SINGLE_WORKER_BUDGETS_SEC,
-    SINGLE_WORKER_CONCURRENCY,
 )
 from benchmarks.common.records import RunRecord
 from benchmarks.exact import solve_maxmin_cpsat, solve_maxmin_highs, solve_maxmin_scip, solve_nn_assignment_cpsat
@@ -268,7 +267,6 @@ def run_maxdiv(
                     time_budgets_sec=budgets,
                     seeds=seeds,
                     n_workers=workers,
-                    concurrency=SINGLE_WORKER_CONCURRENCY if workers == 1 else 1,
                 )
                 save_records(records, path)
             print(f"max-div {problem_name} {objective} n={n} done", flush=True)

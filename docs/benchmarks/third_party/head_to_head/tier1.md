@@ -24,7 +24,7 @@ The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time
     - one worker, budgets 1 ms → 60 s on the 1-2-5 grid (15 points);
     - 12 workers with the default dynamic grouping, budgets 1 s → 60 s (6 points) — spawning the workers costs about a second, so smaller budgets would only show start-up.
 
-Every `max-div` point is one independent solve per budget and seed, timed end to end around the call; the charts plot *measured* wall-clock, never the nominal budget.
+Every `max-div` point is one independent solve per budget and seed, timed end to end around the call; the charts plot *measured* wall-clock, never the nominal budget. A budget is charted only when it exceeds the measured time of the previous charted budget, so the small budgets that all end at the set-up cost appear once.
 
 Each exact certification runs in its own process with a cap of 900 s; a solve that does not certify within the cap ends that solver's series.
 
