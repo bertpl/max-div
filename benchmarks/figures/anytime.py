@@ -121,19 +121,38 @@ def _budget_series_stats(
     """Aggregate budget-series records per budget, in budget order: mean measured time, mean/min/max quality.
 
     The curve follows the budgets, not the measured times: a small budget whose set-up ran long
-    would otherwise be drawn to the right of a larger one.
+    would otherwise be drawn to the right of a larger one. Budgets that end at nearly the same
+    measured time as the previous charted budget are left out (`_charted_budgets`).
     """
     by_budget: dict[str, list[RunRecord]] = defaultdict(list)
     for rec in records:
         by_budget[rec.budget].append(rec)
+    t_mean_by_budget = {budget: float(np.mean([r.measured_sec for r in recs])) for budget, recs in by_budget.items()}
 
     stats = []
-    for budget in sorted(by_budget, key=_budget_order):
-        times = [r.measured_sec for r in by_budget[budget]]
+    for budget in _charted_budgets(t_mean_by_budget):
         values = [r.quality[metric_name] for r in by_budget[budget]]
-        stats.append((float(np.mean(times)), float(np.mean(values)), min(values), max(values)))
+        stats.append((t_mean_by_budget[budget], float(np.mean(values)), min(values), max(values)))
     t_mean, q_mean, q_min, q_max = (list(component) for component in zip(*stats))
     return t_mean, q_mean, q_min, q_max
+
+
+def _charted_budgets(t_mean_by_budget: dict[str, float]) -> list[str]:
+    """Return the budgets to chart, in increasing order: each wall-clock budget must exceed the measured time of the previous charted one.
+
+    A measured time is at least its budget, so the charted points have strictly increasing
+    measured times, and a run of small budgets that all end at the set-up cost collapses to its
+    first member. Iteration budgets are all charted.
+    """
+    charted: list[str] = []
+    t_previous = -np.inf
+    for budget in sorted(t_mean_by_budget, key=_budget_order):
+        wall_clock = budget_sec(budget)
+        if wall_clock is not None and wall_clock <= t_previous:
+            continue
+        charted.append(budget)
+        t_previous = t_mean_by_budget[budget]
+    return charted
 
 
 def _budget_order(tag: str) -> float:

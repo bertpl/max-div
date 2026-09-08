@@ -23,9 +23,5 @@ MULTI_WORKER_BUDGETS_SEC = grid_budget_series(1.0, T_MAX_SEC)
 # The budgets the result tables quote: the point where the two series first coincide, and T_max.
 QUOTED_BUDGETS_SEC = (1.0, T_MAX_SEC)
 
-# The reports drop a solve whose measured time misses its budget by more than this relative
-# tolerance: past it, the solve's set-up cost exceeded the budget.
-BUDGET_TOLERANCE = 0.10
-
 # The exact solvers' certification cap: the scaling protocol's extended budget.
 CERTIFICATION_CAP_SEC = EXTENDED_BUDGET_SEC

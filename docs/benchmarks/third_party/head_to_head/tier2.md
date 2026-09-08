@@ -28,7 +28,7 @@ The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time
     - one worker, 1 ms to 60 s;
     - 12 workers with the default dynamic grouping, 1 s to 60 s.
 
-    A solve whose measured time misses its budget by more than 10 % is left out: its set-up took longer than the budget allowed.
+    Where several budgets end at nearly the same measured time, only the first is charted: a point is kept when its budget exceeds the measured time of the previous charted point.
 
 ## III. Results
 

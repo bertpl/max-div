@@ -72,8 +72,8 @@ protocol where the two overlap:
 - max-div runs two **budget series** on the 1-2-5 grid, both ending at T_max: one worker from
   the smallest budget, and `N_WORKERS` from the first budget larger than the time spawning the
   workers takes.
-  Every record stores the *measured* end-to-end wall-clock, never the nominal budget; the
-  reports drop a solve that missed its budget by more than `BUDGET_TOLERANCE`.
+  Every record stores the *measured* end-to-end wall-clock, never the nominal budget; a chart
+  leaves out a budget that does not exceed the measured time of the previous charted budget.
 - Single-shot entrants run once per seed; their measured runtime, conversion included, is
   recorded the same way.
 - `SEEDS` per cell; the tables quote medians at `QUOTED_BUDGETS_SEC`.

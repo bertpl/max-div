@@ -27,7 +27,7 @@ The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time
     - Exact solvers are compared on the [exact-solver tier](tier1.md), not here.
 - **max-div**: `DEFAULT` preset, the single-worker budget series from 1 ms to 60 s on every pairing; the 12-worker series from 1 s to 60 s on the n = 500 pairings only, the smaller ones plateau within milliseconds.
     - One independent solve per budget and seed, timed end to end; charts plot measured wall-clock.
-    - A solve whose measured time misses its budget by more than 10 % is left out: its set-up took longer than the budget allowed.
+    - Where several budgets end at nearly the same measured time, only the first is charted: a point is kept when its budget exceeds the measured time of the previous charted point.
 
 ### II.B. Reference values
 

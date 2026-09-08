@@ -15,8 +15,8 @@ from collections import defaultdict
 from dataclasses import replace
 from pathlib import Path
 
-from benchmarks.common.protocol import BUDGET_TOLERANCE, QUOTED_BUDGETS_SEC
-from benchmarks.common.records import RunRecord, budget_tag, load_records, within_budget_tolerance
+from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
+from benchmarks.common.records import RunRecord, budget_tag, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.mdplib.best_known import BestKnown, load_best_known
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
@@ -177,7 +177,7 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     rows = load_best_known()
     references = {(row.instance, row.k): row for row in rows}
     entrants = load_records(data_dir / ENTRANT_FILE) if (data_dir / ENTRANT_FILE).exists() else []
-    maxdiv = within_budget_tolerance(load_records(records_dir / MAXDIV_FILE), BUDGET_TOLERANCE) if (records_dir / MAXDIV_FILE).exists() else []
+    maxdiv = load_records(records_dir / MAXDIV_FILE) if (records_dir / MAXDIV_FILE).exists() else []
     gaps = gap_records(entrants + maxdiv, references)
     groups = group_pairings(rows)
     results_dir = docs_dir / "results"

@@ -15,8 +15,8 @@ import statistics
 from collections import defaultdict
 from pathlib import Path
 
-from benchmarks.common.protocol import BUDGET_TOLERANCE, QUOTED_BUDGETS_SEC
-from benchmarks.common.records import RunRecord, budget_sec, load_records, within_budget_tolerance
+from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
+from benchmarks.common.records import RunRecord, budget_sec, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
 from .full import DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR, PROBLEM
@@ -128,8 +128,7 @@ def render_charts(records: list[RunRecord], sizes: list[int], images_dir: Path) 
 
 def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: Path = DATA_DIR) -> None:
     """Emit every tier-2 docs artifact from the merged record sources."""
-    maxdiv = within_budget_tolerance(load_records(records_dir / MAXDIV_FILE), BUDGET_TOLERANCE)
-    records = load_records(data_dir / ENTRANT_FILE) + maxdiv
+    records = load_records(data_dir / ENTRANT_FILE) + load_records(records_dir / MAXDIV_FILE)
     sizes = sorted({r.n for r in records})
     results_dir = docs_dir / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
