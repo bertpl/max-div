@@ -22,7 +22,7 @@ The tier reuses the time budget, size grid and reference machine of the [solver-
 - **SCIP** and **HiGHS** certify max-min through the big-M MIP. On the nearest-neighbor assignment model they certify less far than CP-SAT, so they are left out of the mean and geomean cells.
 - **max-div**, `DEFAULT` preset, `L2` distance, runs two budget series per cell:
     - one worker, budgets 1 ms → 60 s on the 1-2-5 grid;
-    - 12 workers with the default dynamic grouping, budgets 1 s → 60 s — spawning the workers costs about a second, so smaller budgets would only show start-up.
+    - 12 workers with the default dynamic grouping, budgets 1 s → 60 s — starting and joining the worker processes adds a fixed few tenths of a second, so smaller budgets would mostly measure that overhead.
 
 Every `max-div` point is one independent solve per budget and seed, timed end to end around the call; the charts plot *measured* wall-clock, never the nominal budget. A budget is charted only when it exceeds the measured time of the previous charted budget, so the small budgets that all end at the set-up cost appear once.
 

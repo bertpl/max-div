@@ -50,9 +50,7 @@ Ran's distances are integers in [1, 200], so on that set one integer step below 
 
 ## III. Geo
 
-No Geo value is exceeded. The best-known value is reached on every n = 100 instance at k = 10 and 8 at k = 30, on 8 and 4 of the n = 250 instances, and on one instance per group at n = 500.
-
-The remaining gap at 60 s is small: 0.4–2.4 % on average per group with one worker and 0.1–1.2 % with 12 workers; the worst instance of a group is 1.7–10.5 % short with one worker and 0.8–4.0 % with 12.
+No Geo value is exceeded. The best-known value is reached on nearly every n = 100 instance, on fewer at n = 250, and on one instance per group at n = 500; the remaining gap at 60 s is a few percent at most on average per group, and 12 workers cut it further. The per-group counts and gaps are on the [tables page](tier3_tables.md).
 
 The farthest-point pickers (`fpsample`, `skmatter`, `RDKit`, `qc-selector` max-min, `code-FDM`) sit 4–8.5 % short in a few milliseconds; `max-div` passes them within about 100 ms of budget and keeps improving. The tools with a different objective (`apricot-select`, `kmedoids`, `DPPy`, `qc-selector` max-sum) sit 31–49 % short.
 
@@ -82,7 +80,7 @@ The farthest-point pickers (`fpsample`, `skmatter`, `RDKit`, `qc-selector` max-m
 
 ## IV. Ran
 
-The Ran picture is the same, except for Ran 500 with k = 150. At n = 100 the best-known value is reached on every instance; at n = 250 on 5 instances at k = 25 and 9 at k = 75; at n = 500 on 2 and 3. No value is exceeded, and the average gap at 60 s is 1.0–3.0 % with one worker and 0.2–1.4 % with 12 workers.
+The Ran picture is the same, except for Ran 500 with k = 150: the best-known value is reached on every n = 100 instance and on fewer from n = 250 on, never exceeded, with the per-group counts and gaps on the [tables page](tier3_tables.md).
 
 On that group, every best-known value is 5, `max-div` reaches 4 on every instance with one worker — the integer distances make that one step a 20 % gap — and 12 workers reach 5 on three instances within 60 s.
 
