@@ -18,8 +18,8 @@ The tier reuses the time budget, size grid and reference machine of the [solver-
 
 ### II.A. Entrants
 
-- **CP-SAT** certifies the max-min objective through its max-min model, and the mean and geomean objectives through the nearest-neighbor assignment model.
-- **SCIP** and **HiGHS** certify max-min through the big-M MIP. On the nearest-neighbor assignment model they certify less far than CP-SAT, so they are left out of the mean and geomean cells.
+- **CP-SAT** certifies the max-min objective through its [threshold search](../solvers/ortools-cpsat.md#problem-targeted), and the mean and geomean objectives through the nearest-neighbor assignment model: binary variables assign every selected item its nearest selected neighbor, and the objective sums those distances.
+- **SCIP** and **HiGHS** certify max-min through the [big-M MIP](../solvers/highs.md#problem-targeted). The nearest-neighbor assignment model runs on CP-SAT only: the tier needs one certified optimum per cell, not a solver race, and that model, n² assignment binaries with a weak linear relaxation, is one CP-SAT attacks with its parallel portfolio at the protocol's 12 workers, while the PyPI SCIP build [solves single-threaded](../scaling/solver_configs.md).
 - **max-div**, `DEFAULT` preset, `L2` distance, runs two budget series per cell:
     - one worker, budgets 1 ms → 60 s on the 1-2-5 grid;
     - 12 workers with the default dynamic grouping, budgets 1 s → 60 s — starting and joining the worker processes adds a fixed few tenths of a second, so smaller budgets would mostly measure that overhead.
