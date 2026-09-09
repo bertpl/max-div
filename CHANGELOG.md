@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.17.4 (2026-09-09)
 
 ### Added
 - A guide on why geometric-mean separation is the default objective, the first page of a new Guides section
@@ -17,14 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The exact-solver comparison is re-measured against the current solver: certified optima for max-min, mean and geomean separation on the 1-2-5 size grid, with a 12-worker max-div series
 - The Python-heuristics comparison is re-measured on U1 at four sizes from 100 to 100,000, with the best one-shot result marked on each anytime chart
 - The MDPLIB comparison is re-measured against a best-known table updated with the values published since 2010
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 0.17.3 (2026-09-04)
 
