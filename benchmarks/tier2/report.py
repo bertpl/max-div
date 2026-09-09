@@ -7,8 +7,8 @@ records from the tracked reference file under `DATA_DIR`.
 
 Each chart shows both max-div series, every entrant as a dot at its own measured time and quality,
 and a dotted line at the best non-max-div result of that size. The tier page embeds each chart by
-its size-derived name (`chart_name`), so no chart list is written; the tables are written as
-snippets for the tier's tables page.
+its size-derived name (`chart_name`), so no chart list is written; one table per size is written as
+a snippet for the tier's tables page.
 """
 
 import statistics
@@ -19,6 +19,7 @@ from benchmarks.common.protocol import QUOTED_BUDGETS_SEC
 from benchmarks.common.records import RunRecord, budget_sec, load_records
 from benchmarks.figures import ReferenceLine, plot_anytime_curve
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
+
 from .full import DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR, PROBLEM
 
 RECORDS_DIR = OUTPUT_DIR
@@ -65,39 +66,58 @@ def overtake_budget(records: list[RunRecord], tool: str, target: float) -> float
     return next((budget for budget, median in median_by_budget(records, tool).items() if median >= target), None)
 
 
-def build_summary_table(records: list[RunRecord], sizes: list[int]) -> str:
-    """Build the markdown table: per size, the best entrant, max-div's medians at the quoted budgets, and the overtake budgets."""
-    lo, hi = QUOTED_BUDGETS_SEC
-    single, multi = maxdiv_tool_label(), maxdiv_tool_label(n_workers=N_WORKERS)
-    lines = [
-        f"| n | best one-shot tool | its quality | its time | 1 worker @{lo:g} s | 1 worker @{hi:g} s "
-        f"| {N_WORKERS} workers @{lo:g} s | {N_WORKERS} workers @{hi:g} s | overtake budget, 1 worker | overtake budget, {N_WORKERS} workers |",
-        "|---" * 10 + "|",
-    ]
-    for n in sizes:
-        size_records = [r for r in records if r.n == n]
-        best = best_entrant(size_records)
-        best_cells = f"{best[0]} | {best[1]:.4f} | {best[2]:.3g} s" if best else "— | — | —"
-        medians = [median_by_budget(size_records, tool).get(budget) for tool in (single, multi) for budget in (lo, hi)]
-        median_cells = " | ".join("—" if m is None else f"{m:.4f}" for m in medians)
-        overtakes = [overtake_budget(size_records, tool, best[1]) if best else None for tool in (single, multi)]
-        overtake_cells = " | ".join("—" if b is None else f"{b:g} s" for b in overtakes)
-        lines.append(f"| {n:,} | {best_cells} | {median_cells} | {overtake_cells} |")
-    return "\n".join(lines) + "\n"
+def series_medians(records: list[RunRecord], tool: str) -> dict[float, tuple[float, float]]:
+    """Return, per wall-clock budget of one budget-series tool, the median over seeds of (quality, measured time)."""
+    by_budget: dict[float, list[RunRecord]] = defaultdict(list)
+    for r in records:
+        if r.tool == tool and (budget := budget_sec(r.budget)) is not None:
+            by_budget[budget].append(r)
+    return {
+        budget: (
+            statistics.median(r.quality[METRIC.name] for r in rows),
+            statistics.median(r.measured_sec for r in rows),
+        )
+        for budget, rows in sorted(by_budget.items())
+    }
 
 
-def build_entrant_table(records: list[RunRecord], sizes: list[int]) -> str:
-    """Build the markdown table: per size, every entrant's mean quality and mean time; a dash where a tool did not run."""
-    tools = sorted({r.tool for r in records if is_entrant(r)})
-    lines = ["| tool | " + " | ".join(f"n = {n:,}" for n in sizes) + " |", "|---" * (len(sizes) + 1) + "|"]
-    means_by_size = {n: entrant_means([r for r in records if r.n == n]) for n in sizes}
-    for tool in tools:
-        cells = [
-            f"{means_by_size[n][tool][0]:.4f} ({means_by_size[n][tool][1]:.3g} s)" if tool in means_by_size[n] else "—"
-            for n in sizes
-        ]
-        lines.append(f"| {tool} | " + " | ".join(cells) + " |")
-    return "\n".join(lines) + "\n"
+def size_table_rows(records: list[RunRecord]) -> list[tuple[str, float, float]]:
+    """Return one size's table rows as (label, quality, time), best quality first.
+
+    max-div contributes one row per series and quoted budget, labeled with the budget; every entrant
+    contributes its mean over seeds. One ordering over all rows is what lets a reader compare
+    max-div's result at a budget with the one-shot tools directly.
+    """
+    rows: list[tuple[str, float, float]] = []
+    for tool in (maxdiv_tool_label(), maxdiv_tool_label(n_workers=N_WORKERS)):
+        medians = series_medians(records, tool)
+        for budget in QUOTED_BUDGETS_SEC:
+            if budget in medians:
+                rows.append((f"{tool} @ {budget:g} s", *medians[budget]))
+    rows += [(tool, quality, time) for tool, (quality, time) in entrant_means(records).items()]
+    return sorted(rows, key=lambda row: row[1], reverse=True)
+
+
+def overtake_sentence(records: list[RunRecord]) -> str:
+    """Return the sentence naming the budget at which each max-div series reaches the best one-shot result."""
+    best = best_entrant(records)
+    if best is None:
+        return ""
+    series = ((maxdiv_tool_label(), "one worker"), (maxdiv_tool_label(n_workers=N_WORKERS), f"{N_WORKERS} workers"))
+    parts = []
+    for tool, workers in series:
+        budget = overtake_budget(records, tool, best[1])
+        reached = f"at a budget of {budget:g} s" if budget is not None else f"not within {QUOTED_BUDGETS_SEC[1]:g} s"
+        parts.append(f"{reached} with {workers}")
+    return f"`max-div` reaches the best one-shot result ({best[0]}) {parts[0]} and {parts[1]}.\n"
+
+
+def build_size_table(records: list[RunRecord], n: int) -> str:
+    """Build one size's markdown snippet: every tool's quality and time in one ordering, then the overtake sentence."""
+    size_records = [r for r in records if r.n == n]
+    lines = ["| tool | quality (min separation) | time |", "|---|---|---|"]
+    lines += [f"| {label} | {quality:.4f} | {time:.3g} s |" for label, quality, time in size_table_rows(size_records)]
+    return "\n".join(lines) + "\n\n" + overtake_sentence(size_records)
 
 
 def chart_name(n: int) -> str:
@@ -137,8 +157,8 @@ def main(records_dir: Path = RECORDS_DIR, docs_dir: Path = DOCS_DIR, data_dir: P
     results_dir = docs_dir / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    (results_dir / "tier2_summary.md").write_text(build_summary_table(records, sizes))
-    (results_dir / "tier2_entrants.md").write_text(build_entrant_table(records, sizes))
+    for n in sizes:
+        (results_dir / f"tier2_size_{n}.md").write_text(build_size_table(records, n))
     render_charts(records, sizes, docs_dir / "images")
     print(f"tier-2 report emitted into {docs_dir}", flush=True)
 

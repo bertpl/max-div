@@ -62,4 +62,4 @@ The best one-shot tool is a farthest-point picker at every size: `RDKit` up to n
 
 ## IV. Tables
 
-The [tables page](tier2_tables.md) holds the overtake budgets and every entrant's quality and time.
+The [tables page](tier2_tables.md) holds, per size, every tool's quality and time in one ordering, with `max-div` at its quoted budgets, and the overtake budgets.

@@ -51,26 +51,33 @@ def test_overtake_budget_is_the_first_budget_whose_median_reaches_the_target():
     assert report.overtake_budget(records, "max-div[DEFAULT]", 2.0) is None
 
 
-def test_summary_table_row():
-    """One size's row carries the best entrant, both series' medians, and both overtake budgets."""
+def test_size_table_orders_every_tool_by_quality_and_names_the_overtake_budgets():
+    """max-div's quoted-budget rows and the entrants share one table, best first, then the overtake sentence."""
     # --- arrange ----------------------
     records = [
         _record("fpsample[FPS]", "single-shot", 1.0, measured_sec=0.02),
-        _record("max-div[DEFAULT]", "time:1.0s", 0.9),
-        _record("max-div[DEFAULT]", "time:60.0s", 1.2),
-        _record("max-div[DEFAULT, 12 workers]", "time:1.0s", 1.05),
-        _record("max-div[DEFAULT, 12 workers]", "time:60.0s", 1.3),
+        _record("max-div[DEFAULT]", "time:1.0s", 0.9, measured_sec=1.0),
+        _record("max-div[DEFAULT]", "time:60.0s", 1.2, measured_sec=60.0),
+        _record("max-div[DEFAULT, 12 workers]", "time:1.0s", 1.05, measured_sec=1.35),
+        _record("max-div[DEFAULT, 12 workers]", "time:60.0s", 1.3, measured_sec=60.4),
     ]
 
     # --- act --------------------------
-    table = report.build_summary_table(records, [200])
+    table = report.build_size_table(records, 200)
 
     # --- assert -----------------------
-    assert "| 200 | fpsample[FPS] | 1.0000 | 0.02 s | 0.9000 | 1.2000 | 1.0500 | 1.3000 | 60 s | 1 s |" in table
+    assert table.splitlines()[2:7] == [
+        "| max-div[DEFAULT, 12 workers] @ 60 s | 1.3000 | 60.4 s |",
+        "| max-div[DEFAULT] @ 60 s | 1.2000 | 60 s |",
+        "| max-div[DEFAULT, 12 workers] @ 1 s | 1.0500 | 1.35 s |",
+        "| fpsample[FPS] | 1.0000 | 0.02 s |",
+        "| max-div[DEFAULT] @ 1 s | 0.9000 | 1 s |",
+    ]
+    assert table.endswith("at a budget of 60 s with one worker and at a budget of 1 s with 12 workers.\n")
 
 
 def test_main_emits_chart_per_size_with_tables(tmp_path: Path):
-    """The report writes one chart per size and both tables."""
+    """The report writes one chart and one table per size."""
     # --- arrange ----------------------
     data_dir, records_dir, docs_dir = tmp_path / "data", tmp_path / "records", tmp_path / "docs"
     save_records([_record("fpsample[FPS]", "single-shot", 1.0)], data_dir / report.ENTRANT_FILE)
@@ -83,8 +90,7 @@ def test_main_emits_chart_per_size_with_tables(tmp_path: Path):
 
     # --- assert -----------------------
     assert (docs_dir / "images" / "tier2_U1_200_min_separation.webp").exists()
-    assert "| 200 |" in (docs_dir / "results" / "tier2_summary.md").read_text()
-    assert "| fpsample[FPS] |" in (docs_dir / "results" / "tier2_entrants.md").read_text()
+    assert "| fpsample[FPS] |" in (docs_dir / "results" / "tier2_size_200.md").read_text()
 
 
 def test_render_charts_leaves_the_random_baseline_off_the_chart(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
