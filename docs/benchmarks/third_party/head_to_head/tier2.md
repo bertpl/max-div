@@ -24,19 +24,25 @@ The tier reuses the time budget and reference machine of the [solver-scaling pro
     - `DPPy` (a determinantal sample);
     - the max-sum picker of `qc-selector`.
 - **Entrants**: every non-exact registry tool, at the sizes its scaling time limit covers; one run per seed where the tool is seeded. A tool's time includes any conversion it needs. Exact solvers are compared on the [exact-solver tier](tier1.md), not here.
-- **max-div**: `DEFAULT` preset, one independent solve per budget and seed, one solve at a time, timed end to end around the call; charts plot *measured* wall-clock, never the nominal budget. Two budget series per size:
+- **max-div**: `DEFAULT` preset with lazy distance storage, one independent solve per budget and seed, one solve at a time, timed end to end around the call; charts plot *measured* wall-clock, never the nominal budget. Two budget series per size:
     - one worker, 1 ms to 60 s;
     - 12 workers with the default dynamic grouping, 1 s to 60 s.
 
     A budget is charted only when it exceeds the measured time of the previous charted budget, so the small budgets that all end at the set-up cost appear once.
 
+    Lazy distance storage computes distances on demand instead of building a distance store first, and this tier runs it at every size:
+
+    - this page covers the largest problem sizes of the three tiers;
+    - at the largest sizes, building the store takes an unreasonable share of the time budget, and a knowledgeable user would choose lazy distances there;
+    - for simplicity the whole page runs on the lazy backend, although at small n it is not expected to help `max-div`'s results.
+
 ## III. Results
 
 The best one-shot tool is a farthest-point picker at every size: `RDKit` up to n = 10,000, `fpsample` at n = 100,000, where the other pickers reach the same value within 0.5 %. `max-div`'s `DEFAULT` preset starts from the same farthest-point construction, so the comparison is about what its optimization adds on top, and at what fixed cost:
 
-- **n ≤ 1,000**: `max-div` passes the best picker within 50 ms and keeps improving to 60 s — at n = 100 up to the [certified optimum](tier1.md), at n = 1,000 to 9 % (one worker) and 12 % (12 workers) above the picker.
-- **n = 10,000**: `max-div`'s first budgets sit 0.5 % below the picker line, the optimization overtakes at 0.5 s, and at 60 s the series end 8 % (one worker) and 9 % (12 workers) above it. The picker itself takes 2 ms (`fpsample[KDLine]`) to 4 s (`RDKit`) for its one answer.
-- **n = 100,000**: the single-worker series adds nothing to its farthest-point start, 0.02 % above the picker at every budget; the 12-worker series is 0.3 % above it from its first point. Both pay a fixed set-up before that first point, 7 s with one worker and 18 s with 12, spent building the distance store, against 50 ms for `fpsample[KDLine]`.
+- **n ≤ 1,000**: `max-div` passes the best picker within 50 ms and keeps improving to 60 s — at n = 100 up to the [certified optimum](tier1.md), at n = 1,000 to 9 % (one worker) and 11 % (12 workers) above the picker.
+- **n = 10,000**: `max-div`'s first budgets sit 0.5 % below the picker line, the optimization overtakes at 1 s in both series, and at 60 s the series end 8 % (one worker) and 9 % (12 workers) above it. The picker itself takes 2 ms (`fpsample[KDLine]`) to 4 s (`RDKit`) for its one answer.
+- **n = 100,000**: the single-worker series stays on its farthest-point start, 0.02 % above the picker at every budget up to 60 s; the 12-worker series starts 0.3 % above it and gains a further 0.05 % by 60 s. Both pay a set-up before their first point, 2 s with one worker and 3 s with 12, against 50 ms for `fpsample[KDLine]`.
 
 ### III.A. Problem U1 at size n = 100
 
