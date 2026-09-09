@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityContributionFamily
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import (
     MeanDistanceTracker,
     SeparationTracker,
@@ -20,7 +20,7 @@ from max_div._core.solver._diversity_contribution import (
 def test_build_diversity_contribution_tracker(family: DiversityContributionFamily, expected_type: type):
     # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [3.0]], dtype=np.float32)
-    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=3)
+    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
 
     # --- act --------------------------
     tracker = build_diversity_contribution_tracker(family, store)

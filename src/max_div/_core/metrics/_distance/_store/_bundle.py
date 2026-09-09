@@ -22,15 +22,12 @@ from max_div._core.metrics._distance._metric import (
 #  DistanceStore
 # =================================================================================================
 # Backend selector values for DistanceStore.kind.
-KIND_CONDENSED = np.int32(0)
-KIND_LAZY = np.int32(1)
-KIND_FULL_MATRIX = np.int32(2)
+KIND_LAZY = np.int32(0)
+KIND_FULL_MATRIX = np.int32(1)
 
-# Shared placeholders for the fields a backend does not use, so empty stores cost nothing.  Read-only
-# because every store of a given backend hands out the same two objects, and because it makes every
+# One shared placeholder fills the fields a backend does not use, so empty stores cost nothing.  It is
+# read-only because every store of a given backend hands out the same object, and because it makes every
 # field of DISTANCE_STORE_TYPE read-only.
-_EMPTY_1D = np.empty(0, dtype=np.float32)
-_EMPTY_1D.flags.writeable = False
 _EMPTY_2D = np.empty((0, 0), dtype=np.float32)
 _EMPTY_2D.flags.writeable = False
 
@@ -56,7 +53,6 @@ class DistanceStore(NamedTuple):
 
     kind: np.int32
     n: np.int32
-    pdist: NDArray[np.float32]  # (n*(n-1)/2,) condensed distances (scipy layout), KIND_CONDENSED
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
     vectors: NDArray[np.float32]  # (n, d) vectors distances are computed from, KIND_LAZY
     metric_kind: np.int32  # pair-function selector, KIND_LAZY only
@@ -65,24 +61,6 @@ class DistanceStore(NamedTuple):
     # --------------------------------------------------------------------------
     #  Factory methods
     # --------------------------------------------------------------------------
-    @classmethod
-    def condensed(cls, pdist: NDArray[np.float32], n: int) -> "DistanceStore":
-        """Return a DistanceStore reading from a condensed distance vector (scipy layout).
-
-        Args:
-            pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
-            n: (int) number of items.
-        """
-        return cls(
-            kind=KIND_CONDENSED,
-            n=np.int32(n),
-            pdist=_readonly(pdist),
-            matrix=_EMPTY_2D,
-            vectors=_EMPTY_2D,
-            metric_kind=np.int32(0),
-            metric_p=np.float64(np.nan),
-        )
-
     @classmethod
     def lazy(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
         """Return a DistanceStore computing distances on demand from the given vectors.
@@ -101,7 +79,6 @@ class DistanceStore(NamedTuple):
         return cls(
             kind=KIND_LAZY,
             n=np.int32(vectors.shape[0]),
-            pdist=_EMPTY_1D,
             matrix=_EMPTY_2D,
             vectors=_readonly(vectors),
             metric_kind=np.int32(metric.kind),
@@ -126,7 +103,6 @@ class DistanceStore(NamedTuple):
         return cls(
             kind=KIND_LAZY,
             n=np.int32(vectors.shape[0]),
-            pdist=_EMPTY_1D,
             matrix=_EMPTY_2D,
             vectors=_readonly(vectors),
             metric_kind=metric_kind,
@@ -148,7 +124,6 @@ class DistanceStore(NamedTuple):
         return cls(
             kind=KIND_FULL_MATRIX,
             n=np.int32(matrix.shape[0]),
-            pdist=_EMPTY_1D,
             matrix=_readonly(matrix),
             vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
@@ -159,9 +134,8 @@ class DistanceStore(NamedTuple):
     def full_matrix_from_vectors(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
         """Return a full-matrix DistanceStore computed from vectors, exactly symmetric by construction.
 
-        Each pair is computed once through the same pair kernels the condensed and lazy paths use,
-        and written to both halves — so values are bit-equal across backends and symmetry is
-        structural.
+        Each pair is computed once through the same pair arithmetic the lazy reads use, and written
+        to both halves — so values are bit-equal across backends and symmetry is structural.
 
         Args:
             vectors: (n x d ndarray) the vectors to compute distances from.
@@ -170,17 +144,17 @@ class DistanceStore(NamedTuple):
         return cls.full_matrix(compute_full_matrix(vectors, metric))
 
     @classmethod
-    def full_matrix_from_condensed(cls, pdist: NDArray[np.float32], n: int) -> "DistanceStore":
+    def full_matrix_from_condensed(cls, condensed: NDArray[np.float32], n: int) -> "DistanceStore":
         """Return a full-matrix DistanceStore expanded from a condensed distance vector (scipy layout).
 
         Each condensed value is written to both halves, so the matrix is exactly symmetric and
         bit-equal to the condensed source.
 
         Args:
-            pdist: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
+            condensed: ((n*(n-1))//2 ndarray) condensed pairwise distances, float32 C-contiguous.
             n: (int) number of items.
         """
-        return cls.full_matrix(expand_condensed(pdist, n))
+        return cls.full_matrix(expand_condensed(condensed, n))
 
 
 # The numba type of every DistanceStore instance (all stores share it: field dtypes are fixed and
@@ -190,4 +164,4 @@ class DistanceStore(NamedTuple):
 # Its arrays are typed read-only so that stores reading shared memory type-check: numba converts a
 # writable array to a read-only parameter but never the reverse, so a writable type here would
 # reject them, which would force the views into a segment several processes read to be writable.
-DISTANCE_STORE_TYPE = numba.typeof(DistanceStore.condensed(_EMPTY_1D, 0))
+DISTANCE_STORE_TYPE = numba.typeof(DistanceStore.full_matrix(_EMPTY_2D))

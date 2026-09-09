@@ -16,6 +16,7 @@ from max_div._core.solver._score import Score
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
+from tests._core.metrics._distance.helpers import condensed_distances
 
 
 # =================================================================================================
@@ -121,8 +122,8 @@ def test_solver_verbosity(example_solver, tmp_path, verbosity: int, error_expect
 def test_solver_vector_and_distance_input_bit_identical(form: str):
     """Solving via from_distances with the vector flavor's own distances gives bit-identical solutions.
 
-    Square input is retained as a full matrix, so this also exercises the full-matrix store on the
-    distance-input path.
+    Square input is adopted as the full matrix and condensed input is expanded into one, so this
+    exercises both distance-input paths.
     """
 
     # --- arrange ----------------------
@@ -130,7 +131,7 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
     vectors = rng.random((40, 4)).astype(np.float32)
     kwargs: dict = {"k": 8, "diversity_metric": DiversityMetric.GEOMEAN_SEPARATION}
     problem_vec = MaxDivProblem.new(vectors, distance_metric=DistanceMetric.l2_euclidean(), **kwargs)
-    condensed = problem_vec.condensed_distances()
+    condensed = condensed_distances(vectors, DistanceMetric.l2_euclidean())
     distances = np.ascontiguousarray(squareform(condensed)) if form == "square" else condensed
     problem_dist = MaxDivProblem.from_distances(distances, **kwargs)
 
@@ -182,10 +183,9 @@ def test_solver_repeated_solve_reproduces_the_first():
     assert first.score == second.score
 
 
-@pytest.mark.parametrize("backend", ["lazy", "full_matrix"])
 @pytest.mark.parametrize("distance_metric", [DistanceMetric.l2_euclidean(), DistanceMetric.cosine()])
-def test_solver_alternative_backend_bit_identical_selection(backend: str, distance_metric: DistanceMetric):
-    """A solve on any alternative distance backend selects exactly what the condensed solve selects."""
+def test_solver_lazy_backend_bit_identical_selection(distance_metric: DistanceMetric):
+    """A solve on the lazy backend selects exactly what the full-matrix solve selects."""
 
     # --- arrange ----------------------
     rng = np.random.default_rng(20260731)
@@ -193,29 +193,28 @@ def test_solver_alternative_backend_bit_identical_selection(backend: str, distan
     problem = MaxDivProblem.new(
         vectors, k=8, distance_metric=distance_metric, diversity_metric=DiversityMetric.GEOMEAN_SEPARATION
     )
-    other_storage = DistanceStorage.LAZY if backend == "lazy" else DistanceStorage.FULL_MATRIX
-    solver_condensed = (
+    solver_full_matrix = (
         MaxDivSolverBuilder(problem)
         .with_preset(iterations(500))
         .with_seed(7)
-        .with_distance_storage(DistanceStorage.CONDENSED)
+        .with_distance_storage(DistanceStorage.FULL_MATRIX)
         .build()
     )
-    solver_other = (
+    solver_lazy = (
         MaxDivSolverBuilder(problem)
         .with_preset(iterations(500))
         .with_seed(7)
-        .with_distance_storage(other_storage)
+        .with_distance_storage(DistanceStorage.LAZY)
         .build()
     )
 
     # --- act --------------------------
-    solution_condensed = solver_condensed.solve(verbosity=Verbosity.SILENT)
-    solution_other = solver_other.solve(verbosity=Verbosity.SILENT)
+    solution_full_matrix = solver_full_matrix.solve(verbosity=Verbosity.SILENT)
+    solution_lazy = solver_lazy.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
-    assert list(solution_other.i_selected) == list(solution_condensed.i_selected)
-    assert solution_other.score == solution_condensed.score
+    assert list(solution_lazy.i_selected) == list(solution_full_matrix.i_selected)
+    assert solution_lazy.score == solution_full_matrix.score
 
 
 # =================================================================================================

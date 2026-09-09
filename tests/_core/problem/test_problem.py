@@ -9,8 +9,7 @@ from max_div._core._warnings import DistanceInputWarning
 from max_div._core.constraints import Constraint
 from max_div._core.feasibility import FeasibilityStatus
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import compute_pdist
-from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX
+from max_div._core.metrics._distance import compute_full_matrix
 from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
 
@@ -145,12 +144,12 @@ def test_problem_new_cosine_non_zero_vectors_ok():
 # -------------------------------------------------------------------------
 @pytest.mark.parametrize("form", ["square", "condensed"])
 def test_problem_from_distances_happy_path(form: str):
-    """from_distances accepts square and condensed input, keeping each in the format provided."""
+    """from_distances accepts square and condensed input, retaining each as given."""
 
     # --- arrange ----------------------
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((10, 4)).astype(np.float32)
-    condensed = compute_pdist(vectors, DistanceMetric.l2_euclidean())
+    condensed = squareform(compute_full_matrix(vectors, DistanceMetric.l2_euclidean()), checks=False)
     distances = squareform(condensed) if form == "square" else condensed
 
     # --- act --------------------------
@@ -162,7 +161,7 @@ def test_problem_from_distances_happy_path(form: str):
     assert problem.k == 4
     assert problem.distances.dtype == np.float32
     assert problem.distances.ndim == (2 if form == "square" else 1)
-    np.testing.assert_allclose(problem.condensed_distances(), condensed, rtol=1e-6)
+    np.testing.assert_allclose(problem.full_matrix(), squareform(condensed), rtol=1e-6)
 
 
 def test_problem_from_distances_new_returns_vector_flavor():
@@ -177,20 +176,6 @@ def test_problem_from_distances_new_returns_vector_flavor():
     assert isinstance(distance_problem, DistanceMaxDivProblem)
     assert isinstance(vector_problem, MaxDivProblem)
     assert isinstance(distance_problem, MaxDivProblem)
-
-
-def test_problem_from_distances_condensed_distances_returns_input():
-    """For distance-input problems, condensed_distances returns the validated input distances."""
-
-    # --- arrange ----------------------
-    condensed = np.arange(1, 11, dtype=np.float32)  # n=5
-
-    # --- act --------------------------
-    problem = MaxDivProblem.from_distances(condensed, k=3)
-
-    # --- assert -----------------------
-    assert problem.n == 5
-    np.testing.assert_array_equal(problem.condensed_distances(), condensed)
 
 
 def _mutated_square(i: int, j: int, value: float) -> np.ndarray:
@@ -255,24 +240,38 @@ def test_problem_from_distances_zero_copy_adoption(form: str):
 
 
 @pytest.mark.parametrize("form", ["square", "condensed"])
-def test_problem_distance_store_matches_input_format(form: str):
-    """The as-given store wraps the retained input directly: square -> full matrix, 1D -> condensed."""
+def test_problem_full_matrix_from_either_input_form(form: str):
+    """A square input is returned zero-copy; a condensed input expands into the same matrix."""
 
     # --- arrange ----------------------
     distances = _reference_square() if form == "square" else np.arange(1, 11, dtype=np.float32)
     problem = MaxDivProblem.from_distances(distances, k=3)
 
     # --- act --------------------------
-    store = problem.distance_store()
+    matrix = problem.full_matrix()
 
     # --- assert -----------------------
-    if form == "square":
-        assert store.kind == KIND_FULL_MATRIX
-        assert np.shares_memory(store.matrix, problem.distances)
-    else:
-        assert store.kind == KIND_CONDENSED
-        assert np.shares_memory(store.pdist, problem.distances)
-    assert store.n == np.int32(5)
+    assert problem.has_full_matrix is (form == "square")
+    assert problem.n == 5
+    np.testing.assert_array_equal(matrix, _reference_square())
+    assert np.shares_memory(matrix, problem.distances) is (form == "square")
+
+
+@pytest.mark.parametrize("form", ["square", "condensed"])
+def test_problem_full_matrix_writes_into_the_given_buffer(form: str):
+    """With a buffer given, either input form is written into it and the buffer itself is returned."""
+
+    # --- arrange ----------------------
+    distances = _reference_square() if form == "square" else np.arange(1, 11, dtype=np.float32)
+    problem = MaxDivProblem.from_distances(distances, k=3)
+    buffer = np.full((5, 5), -1.0, dtype=np.float32)
+
+    # --- act --------------------------
+    matrix = problem.full_matrix(out=buffer)
+
+    # --- assert -----------------------
+    assert matrix is buffer
+    np.testing.assert_array_equal(buffer, _reference_square())
 
 
 def test_problem_from_distances_asymmetric_repaired_with_warning():
@@ -334,17 +333,6 @@ def test_problem_from_distances_condensed_negative_raises():
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="non-negative"):
         _ = MaxDivProblem.from_distances(distances, k=3)
-
-
-def test_problem_square_condensed_distances_extracts_upper_triangle():
-    """condensed_distances() on a retained square matrix returns the exact condensed values."""
-
-    # --- arrange ----------------------
-    condensed = np.arange(1, 11, dtype=np.float32)
-    problem = MaxDivProblem.from_distances(squareform(condensed), k=3)
-
-    # --- act / assert -----------------
-    np.testing.assert_array_equal(problem.condensed_distances(), condensed)
 
 
 # =================================================================================================

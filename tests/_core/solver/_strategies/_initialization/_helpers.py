@@ -2,7 +2,7 @@ import numpy as np
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
 
 
@@ -20,7 +20,7 @@ def new_solver_state(has_constraints: bool) -> SolverState:
 
     return SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=vectors.shape[0]),
+        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         k=50,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],
@@ -33,7 +33,7 @@ def new_solver_state_unconstrained(n: int = 300, k: int = 30) -> SolverState:
     vectors = np.random.default_rng(20260901).random((n, 3)).astype(np.float32)
     return SolverState.new(
         n=n,
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=n),
+        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         k=k,
         diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[],

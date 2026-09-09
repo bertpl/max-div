@@ -41,7 +41,7 @@ class MaxDivSolution:
     n_constraints_satisfied: int = 0
 
     # --- distance storage -----------------------
-    # resolved backend label, e.g. "full_matrix (auto)" or "condensed"; empty when unreported
+    # resolved backend label, e.g. "full_matrix (auto)" or "lazy"; empty when unreported
     distance_storage: str = ""
 
     # --- string representation ------------------

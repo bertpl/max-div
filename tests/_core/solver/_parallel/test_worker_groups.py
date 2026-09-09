@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._parallel import FixedGroupCount, PowerLawGroupMerge, WorkerGroupState
 from max_div._core.solver._solver_state import SolverState
 
@@ -32,7 +32,7 @@ def _state_with(indices: list[int]) -> SolverState:
     vectors = np.array([[0.0], [1.0], [2.0], [10.0], [20.0], [30.0]], dtype=np.float32)
     state = SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0]),
+        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_metric=DiversityMetric.MIN_SEPARATION,
         diversity_tie_breakers=[],

@@ -3,9 +3,10 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import SeparationTracker
 from max_div._core.solver._diversity_contribution._separation import backend_for
+from tests._core.metrics._distance.helpers import condensed_distances
 
 
 # =================================================================================================
@@ -14,7 +15,7 @@ from max_div._core.solver._diversity_contribution._separation import backend_for
 @pytest.fixture
 def tracker() -> SeparationTracker:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
-    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=vectors.shape[0])
+    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
     return SeparationTracker(store)
 
 
@@ -49,7 +50,7 @@ def test_construction_fresh(tracker: SeparationTracker):
 def test_construction_precomputed_arrays_skip_recompute():
     # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
-    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=3)
+    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
     sep_global = _all_separations(store)
     sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
 
@@ -181,7 +182,7 @@ def test_compute_separation_elements_partial_fill():
 
     # --- arrange ----------------------
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0]], dtype=np.float32)
-    store = DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=5)
+    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
     sep = np.full(5, np.nan, dtype=np.float32)
     requested = np.array([1, 4], dtype=np.int32)
 
@@ -198,7 +199,7 @@ def test_elements_over_every_item():
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
-    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     m = vectors.shape[0]
     d_squared = squareform(d)
 
@@ -211,7 +212,7 @@ def test_elements_over_every_item():
                     expected_separation[i] = dist
 
     # --- act --------------------------
-    separation = _all_separations(DistanceStore.condensed(d, n=m))
+    separation = _all_separations(DistanceStore.full_matrix(squareform(d)))
 
     # --- assert -----------------------
     np.testing.assert_allclose(separation, expected_separation)
@@ -222,8 +223,7 @@ def test_update_separation_add():
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
-    m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d)
 
     # initial separation, assuming vector 0 forms the initial selection
@@ -252,7 +252,7 @@ def test_update_separation_add():
     )
 
     # --- act --------------------------
-    store = DistanceStore.condensed(d, n=m)
+    store = DistanceStore.full_matrix(squareform(d))
     backend_for(store).add(separation, store, np.int32(i_added))
 
     # --- assert -----------------------
@@ -264,8 +264,7 @@ def test_update_separation_remove():
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
-    m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d)
 
     # initial separation, assuming vector 0 & 2 form the initial selection
@@ -294,7 +293,7 @@ def test_update_separation_remove():
     )
 
     # --- act --------------------------
-    store = DistanceStore.condensed(d, n=m)
+    store = DistanceStore.full_matrix(squareform(d))
     backend_for(store).remove(separation, store, np.int32(i_removed), np.array([0], dtype=np.int32))
 
     # --- assert -----------------------
@@ -304,16 +303,14 @@ def test_update_separation_remove():
 # =================================================================================================
 #  Backend equivalence
 # =================================================================================================
-# One backend module per storage layout means the same logic exists three times, so a fix applied
-# to two of them would pass review looking complete.  These are the guard against that: every
+# One backend module per storage layout means the same logic exists once per layout, so a fix
+# applied to only some of them would pass review looking complete.  These are the guard against that: every
 # backend is driven through the same operations and checked against a brute-force recompute,
-# which catches a divergent copy and also catches all three drifting together.
+# which catches a divergent copy and also catches every copy drifting together.
 def _stores_for(vectors: np.ndarray, metric: DistanceMetric) -> dict[str, DistanceStore]:
     """One store per layout over identical distances."""
-    condensed = compute_pdist(vectors, metric)
     return {
         "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, metric),
-        "condensed": DistanceStore.condensed(condensed, n=vectors.shape[0]),
         "lazy": DistanceStore.lazy(vectors, metric),
     }
 
@@ -321,7 +318,7 @@ def _stores_for(vectors: np.ndarray, metric: DistanceMetric) -> dict[str, Distan
 def _brute_force_separation(vectors: np.ndarray, metric: DistanceMetric, selection: list[int]) -> np.ndarray:
     """Separation of every item wrt `selection`, computed independently of the backends."""
     n = vectors.shape[0]
-    squared = squareform(compute_pdist(vectors, metric)).astype(np.float64)
+    squared = squareform(condensed_distances(vectors, metric)).astype(np.float64)
     expected = np.full(n, np.inf, dtype=np.float64)
     for j in range(n):
         for k in selection:
@@ -330,7 +327,7 @@ def _brute_force_separation(vectors: np.ndarray, metric: DistanceMetric, selecti
     return expected
 
 
-@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+@pytest.mark.parametrize("backend", ["full_matrix", "lazy"])
 @pytest.mark.parametrize("parallel", [False, True])
 def test_add_many_fused_matches_sequential_adds(backend: str, parallel: bool):
     """One fused add_many pass must equal the same additions applied one add at a time, exactly."""
@@ -371,7 +368,7 @@ def test_add_many_empty_batch_is_noop(tracker: SeparationTracker):
     np.testing.assert_array_equal(tracker.contribution_wrt_selection(selected, n_selected), before)
 
 
-@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+@pytest.mark.parametrize("backend", ["full_matrix", "lazy"])
 def test_backend_matches_brute_force_over_random_operations(backend: str):
     """Random add/remove sequences must match a brute-force recompute, on every layout."""
 
@@ -419,7 +416,7 @@ def test_every_backend_computes_the_same_separations():
     results = {name: _all_separations(store) for name, store in stores.items()}
 
     # --- assert -----------------------
-    reference = results.pop("condensed")
+    reference = results.pop("full_matrix")
     for name, values in results.items():
         np.testing.assert_allclose(
             values, reference, rtol=tolerance, atol=tolerance * float(np.max(reference)), err_msg=f"{name} disagrees"
@@ -442,7 +439,7 @@ def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
     np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched
 
 
-@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+@pytest.mark.parametrize("backend", ["full_matrix", "lazy"])
 def test_remove_trial_matches_remove_on_the_selected_entries(backend: str):
     """The selected-only update agrees with the full update wherever the score reads; elsewhere it may be stale."""
     # --- arrange ----------------------

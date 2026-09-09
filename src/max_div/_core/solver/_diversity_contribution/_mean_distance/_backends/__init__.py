@@ -1,7 +1,7 @@
 """One module per storage layout, and the lookup that picks the right one.
 
 Each module provides the same three calculations over the signatures in `.._signatures`, so the
-modules are interchangeable by construction and a fourth layout is a module plus an entry below.
+modules are interchangeable by construction and another layout is a module plus an entry below.
 
 Which one to use is decided here, in Python, and never inside a compiled function — see the
 separation package for why a layout test cannot live inside one of these loops.
@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple
 
-from max_div._core.metrics._distance._store import KIND_CONDENSED, KIND_FULL_MATRIX, KIND_LAZY
+from max_div._core.metrics._distance._store import KIND_FULL_MATRIX, KIND_LAZY
 
-from . import _condensed, _full_matrix, _lazy
+from . import _full_matrix, _lazy
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,7 +38,6 @@ class MeanDistanceBackend(NamedTuple):
 
 BACKEND_BY_KIND: dict[int, MeanDistanceBackend] = {
     int(KIND_FULL_MATRIX): MeanDistanceBackend(_full_matrix.elements, _full_matrix.add, _full_matrix.remove),
-    int(KIND_CONDENSED): MeanDistanceBackend(_condensed.elements, _condensed.add, _condensed.remove),
     int(KIND_LAZY): MeanDistanceBackend(_lazy.elements, _lazy.add, _lazy.remove),
 }
 

@@ -15,7 +15,6 @@ from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.spatial.distance import squareform
 
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem
@@ -58,7 +57,7 @@ def solve_nn_separation_scip(
         raise ValueError(f"Unsupported metric for the NN-assignment MILP: {metric}.")
 
     t_start = time.perf_counter()
-    distances = squareform(problem.condensed_distances().astype(np.float64))
+    distances = problem.full_matrix().astype(np.float64)
     n, k = problem.n, problem.k
     weights = np.log(np.maximum(distances, 1e-12)) if metric == DiversityMetric.GEOMEAN_SEPARATION else distances
 

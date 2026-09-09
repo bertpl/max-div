@@ -23,4 +23,4 @@ def square_distances(problem: MaxDivProblem) -> NDArray[np.float64]:
     """Return the full n x n Euclidean distance matrix (O(n^2) memory; fine at benchmark sizes)."""
     if isinstance(problem, VectorMaxDivProblem):
         return squareform(pdist(problem.vectors.astype(np.float64)))
-    return squareform(problem.condensed_distances().astype(np.float64))
+    return problem.full_matrix().astype(np.float64)

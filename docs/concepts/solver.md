@@ -90,16 +90,16 @@ solver = (
 )
 ```
 
-- **`CONDENSED`** — one entry per pair (`n·(n-1)/2` values); the most memory-lean stored layout.
-- **`FULL_MATRIX`** — a full `n x n` matrix; twice the memory of condensed, but distance reads
-  become contiguous row scans, which speeds up solving roughly 2x at large problem sizes.
+- **`FULL_MATRIX`** — a full `n x n` matrix of float32 values, so distance reads are contiguous
+  row scans. A problem built via `from_distances` from a condensed vector is expanded into this
+  layout, at twice the memory of the condensed input.
 - **`LAZY`** — no stored distances at all: each distance is computed on demand from the vectors.
   Slower per read, but removes the O(n²) memory requirement entirely, so much larger problems
   become feasible. Available only when the problem is built from vectors.
-- **`AUTO`** (default) — for vector problems, picks the fastest layout that fits comfortably in
-  memory (full matrix, else condensed, else lazy); for problems built via `from_distances`, keeps
-  the format the distances were provided in. The resolved backend is reported in the solution
-  summary, e.g. `storage=full_matrix (auto)` — pin a backend explicitly to override.
+- **`AUTO`** (default) — for vector problems, the full matrix when it fits comfortably in memory
+  and lazy otherwise; for problems built via `from_distances`, always the full matrix. The
+  resolved backend is reported in the solution summary, e.g. `storage=full_matrix (auto)` — pin a
+  backend explicitly to override.
 
 ### Reproducibility
 

@@ -4,11 +4,12 @@ from numpy import random
 from scipy.spatial.distance import squareform
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker
 from max_div._core.solver._diversity_contribution._mean_distance import (
     backend_for,
 )
+from tests._core.metrics._distance.helpers import condensed_distances
 
 # =================================================================================================
 #  Fixtures / helpers
@@ -20,12 +21,12 @@ N = 20
 def pdist() -> np.ndarray:
     rng = random.default_rng(seed=20260713)
     vectors = rng.random((N, 3)).astype(np.float32)
-    return compute_pdist(vectors, DistanceMetric.l2_euclidean())
+    return condensed_distances(vectors, DistanceMetric.l2_euclidean())
 
 
 @pytest.fixture
 def tracker(pdist: np.ndarray) -> MeanDistanceTracker:
-    return MeanDistanceTracker(DistanceStore.condensed(pdist, n=N))
+    return MeanDistanceTracker(DistanceStore.full_matrix(squareform(pdist)))
 
 
 def _selection_args(indices: list[int]) -> tuple[np.ndarray, np.int32]:
@@ -69,7 +70,9 @@ def test_construction_precomputed_arrays_skip_recompute(pdist: np.ndarray):
 
     # --- act --------------------------
     tracker = MeanDistanceTracker(
-        DistanceStore.condensed(pdist, n=N), contribution_wrt_dataset=contribution_wrt_dataset, dist_sums=dist_sums
+        DistanceStore.full_matrix(squareform(pdist)),
+        contribution_wrt_dataset=contribution_wrt_dataset,
+        dist_sums=dist_sums,
     )
 
     # --- assert -----------------------
@@ -217,13 +220,13 @@ def test_compute_mean_distance_elements_partial_fill():
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((30, 4)).astype(np.float32)
     m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     expected = (squareform(d).astype(np.float64).sum(axis=1) / (m - 1)).astype(np.float32)
     out = np.full(m, np.nan, dtype=np.float32)
     requested = np.array([0, 7, 29, 13], dtype=np.int32)
 
     # --- act --------------------------
-    store = DistanceStore.condensed(d, n=m)
+    store = DistanceStore.full_matrix(squareform(d))
     backend_for(store).elements(out, store, requested)
 
     # --- assert -----------------------
@@ -239,7 +242,7 @@ def test_update_distance_sums_add_remove():
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((20, 3)).astype(np.float32)
     m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d).astype(np.float64)
 
     dist_sums = np.zeros(m, dtype=np.float64)
@@ -251,13 +254,13 @@ def test_update_distance_sums_add_remove():
 
     # --- act / assert -----------------
     for index in [3, 17, 0, 9, 12]:
-        store = DistanceStore.condensed(d, n=m)
+        store = DistanceStore.full_matrix(squareform(d))
         backend_for(store).add(dist_sums, store, np.int32(index))
         selection.append(index)
         np.testing.assert_allclose(dist_sums, expected_sums(), rtol=1e-6)
 
     for index in [0, 3, 12]:
-        store = DistanceStore.condensed(d, n=m)
+        store = DistanceStore.full_matrix(squareform(d))
         backend_for(store).remove(dist_sums, store, np.int32(index))
         selection.remove(index)
         np.testing.assert_allclose(dist_sums, expected_sums(), rtol=1e-6)
@@ -269,11 +272,11 @@ def test_update_distance_sums_own_entry_untouched():
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
     m = vectors.shape[0]
-    d = compute_pdist(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     dist_sums = np.zeros(m, dtype=np.float64)
 
     # selection {1}: point 1's own entry stays 0 (no other selected points yet)
-    store = DistanceStore.condensed(d, n=m)
+    store = DistanceStore.full_matrix(squareform(d))
     backend_for(store).add(dist_sums, store, np.int32(1))
     assert dist_sums[1] == 0.0
 
@@ -288,20 +291,19 @@ def test_update_distance_sums_own_entry_untouched():
 # =================================================================================================
 #  Backend equivalence
 # =================================================================================================
-# One backend module per storage layout means the same logic exists three times, so a fix applied
-# to two of them would pass review looking complete.  Driving every backend through the same
+# One backend module per storage layout means the same logic exists once per layout, so a fix
+# applied to only some of them would pass review looking complete.  Driving every backend through the same
 # operations against a brute-force recompute is the guard against that.
-@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+@pytest.mark.parametrize("backend", ["full_matrix", "lazy"])
 def test_backend_matches_brute_force_over_random_operations(backend: str):
     """Random add/remove sequences must match a brute-force recompute, on every layout."""
 
     # --- arrange ----------------------
     rng = random.default_rng(20260805)
     vectors = rng.random((N, 3)).astype(np.float32)
-    condensed = compute_pdist(vectors, DistanceMetric.l2_euclidean())
+    condensed = condensed_distances(vectors, DistanceMetric.l2_euclidean())
     store = {
         "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
-        "condensed": DistanceStore.condensed(condensed, n=N),
         "lazy": DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean()),
     }[backend]
     tracker = MeanDistanceTracker(store)
@@ -344,7 +346,7 @@ def test_reset_returns_to_empty_selection(tracker: MeanDistanceTracker):
     np.testing.assert_array_equal(tracker.contribution_wrt_dataset, global_before)  # cache untouched
 
 
-@pytest.mark.parametrize("backend", ["full_matrix", "condensed", "lazy"])
+@pytest.mark.parametrize("backend", ["full_matrix", "lazy"])
 def test_remove_trial_matches_remove_on_the_selected_entries(backend: str):
     """The selected-only subtraction agrees with the full update wherever the score reads."""
     # --- arrange ----------------------
@@ -353,7 +355,6 @@ def test_remove_trial_matches_remove_on_the_selected_entries(backend: str):
     metric = DistanceMetric.l2_euclidean()
     store = {
         "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, metric),
-        "condensed": DistanceStore.condensed(compute_pdist(vectors, metric), n=N),
         "lazy": DistanceStore.lazy(vectors, metric),
     }[backend]
     indices = [1, 4, 7, 12, 18]

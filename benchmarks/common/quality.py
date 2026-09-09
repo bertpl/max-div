@@ -5,17 +5,16 @@ across tools by construction. Evaluation only ever touches the k x k distances a
 selected items — never the full n^2 pairwise matrix — so scoring stays cheap even at the
 largest benchmark sizes: vector problems compute the k x k block directly from the selected
 vectors (respecting the problem's distance metric), and precomputed-distance problems gather
-it from their stored condensed vector.
+it from the distances they hold.
 """
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.spatial.distance import squareform
 
-# The library-internal pdist kernel is used on purpose: selections must be scored under
+# The library-internal distance build is used on purpose: selections must be scored under
 # exactly the distance semantics the solver itself uses (incl. float32 behavior), and the
 # public API only exposes distances via whole problems.
-from max_div._core.metrics._distance import compute_pdist
+from max_div._core.metrics._distance import compute_full_matrix
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem, VectorMaxDivProblem
 
@@ -64,12 +63,12 @@ def n_constraints_satisfied(problem: MaxDivProblem, i_selected: NDArray[np.integ
 
 
 def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.integer]) -> NDArray[np.float64]:
-    """Build the k x k distance matrix among selected items, never materializing all n^2 distances.
+    """Build the k x k distance matrix among selected items, never computing all n^2 distances.
 
-    Vector problems compute pairwise distances over just the selected vectors (their
-    ``condensed_distances()`` would recompute the full n^2 pdist on every call — at the
-    largest benchmark sizes that costs seconds and ~1 GB per evaluation). Distance problems
-    already store the condensed vector, so gathering the k x k block from it is cheap.
+    Vector problems compute pairwise distances over just the selected vectors (their full matrix
+    would be recomputed on every call — at the largest benchmark sizes that costs seconds and
+    gigabytes per evaluation). Distance problems hold their distances already, so gathering the
+    k x k block from them is cheap.
     """
     idx = np.asarray(i_selected, dtype=np.int64)
     k = idx.shape[0]
@@ -78,16 +77,8 @@ def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.in
     if len(np.unique(idx)) != k:
         raise ValueError("Selection contains duplicate indices.")
     if isinstance(problem, VectorMaxDivProblem):
-        return squareform(compute_pdist(problem.vectors[idx], problem.distance_metric)).astype(np.float64)
-    n = problem.n
-    condensed = problem.condensed_distances()
-    ii, jj = np.meshgrid(idx, idx, indexing="ij")
-    lo, hi = np.minimum(ii, jj), np.maximum(ii, jj)
-    condensed_pos = (lo * (2 * n - lo - 1)) // 2 + (hi - lo - 1)
-    dist = np.zeros((k, k), dtype=np.float64)
-    off_diag = ~np.eye(k, dtype=bool)
-    dist[off_diag] = condensed[condensed_pos[off_diag]]
-    return dist
+        return compute_full_matrix(problem.vectors[idx], problem.distance_metric).astype(np.float64)
+    return problem.full_matrix()[np.ix_(idx, idx)].astype(np.float64)
 
 
 def min_separation_nn(vectors: NDArray[np.floating], i_selected: NDArray[np.integer]) -> float:

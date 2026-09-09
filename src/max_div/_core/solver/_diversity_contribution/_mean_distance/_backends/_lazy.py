@@ -1,8 +1,8 @@
 """Mean-distance calculations for a lazy store.
 
-One of three interchangeable modules — see this package's `__init__` for the pattern and why the backend is
-chosen once per tracker rather than tested inside these loops.  Each module defines the same
-three calculations over the same signatures, differing only in how a distance is read.
+One of the interchangeable modules in this package — see this package's `__init__` for the pattern
+and why the backend is chosen once per tracker rather than tested inside these loops.  Each module
+defines the same three calculations over the same signatures, differing only in how a distance is read.
 """
 
 from __future__ import annotations

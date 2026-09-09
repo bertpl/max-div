@@ -4,7 +4,7 @@ import pytest
 from max_div._core.constraints import Constraint
 from max_div._core.feasibility import FeasibilityStatus
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
@@ -18,7 +18,7 @@ def _state(constraints: list[Constraint], n: int = 20, k: int = 8) -> SolverStat
     vectors = np.random.default_rng(42).random((n, 3)).astype(np.float32)
     return SolverState.new(
         n=n,
-        store=DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=n),
+        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         k=k,
         diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
         diversity_tie_breakers=[],

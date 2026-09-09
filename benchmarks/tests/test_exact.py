@@ -3,7 +3,6 @@ from multiprocessing import get_context
 
 import numpy as np
 import pytest
-from scipy.spatial.distance import squareform
 
 from benchmarks.common import evaluate_selection
 from benchmarks.common.quality import n_constraints_satisfied
@@ -33,7 +32,7 @@ def _tiny_problem(metric: DiversityMetric) -> MaxDivProblem:
 def _brute_force_optimum(problem: MaxDivProblem, metric_name: str) -> float:
     """Enumerate all feasible selections and return the true optimum (the test oracle)."""
     best = -np.inf
-    dist = squareform(problem.condensed_distances().astype(np.float64))
+    dist = problem.full_matrix().astype(np.float64)
     group = problem.constraints[0].int_set
     for selection in combinations(range(problem.n), problem.k):
         if not 1 <= len(group.intersection(selection)) <= 2:

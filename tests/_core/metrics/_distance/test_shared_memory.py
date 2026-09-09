@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics._distance import (
-    KIND_CONDENSED,
     KIND_FULL_MATRIX,
     KIND_LAZY,
     DistanceMetric,
@@ -15,7 +14,6 @@ from max_div._core.metrics._distance import (
     SharedDistanceStore,
     SharedStoreSpec,
     attached_distance_store,
-    compute_pdist,
     get_distance,
     publish_distance_store,
 )
@@ -37,15 +35,9 @@ def _reference_stores() -> dict[str, DistanceStore]:
     """Return one ordinary (unshared) store per backend, as the values to reproduce."""
     vectors = _vectors()
     return {
-        "condensed": DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), n=_N),
         "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         "lazy": DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean()),
     }
-
-
-def _published(store: DistanceStore) -> SharedDistanceStore:
-    """Return a shared-memory owner holding a copy of the given store's data."""
-    return publish_distance_store(store, _N)
 
 
 def _read_pairs(store: DistanceStore) -> list[float]:
@@ -71,7 +63,7 @@ def test_spawned_process_reads_the_published_values():
     # --- arrange ----------------------
     references = _reference_stores()
     expected = {backend: _read_pairs(store) for backend, store in references.items()}
-    published = {backend: _published(store) for backend, store in references.items()}
+    published = {backend: publish_distance_store(store) for backend, store in references.items()}
     context = multiprocessing.get_context("spawn")  # never fork: numba's threading layer is fork-unsafe
     queue = context.Queue()
 
@@ -89,14 +81,14 @@ def test_spawned_process_reads_the_published_values():
     assert actual == expected
 
 
-@pytest.mark.parametrize("backend", ["condensed", "full_matrix", "lazy"])
+@pytest.mark.parametrize("backend", ["full_matrix", "lazy"])
 def test_attached_store_reads_the_published_values(backend: str):
     """Attaching in-process reproduces the unshared store's distances for every backend."""
     # --- arrange ----------------------
     reference = _reference_stores()[backend]
 
     # --- act --------------------------
-    with _published(reference) as owner, attached_distance_store(owner.spec) as attached:
+    with publish_distance_store(reference) as owner, attached_distance_store(owner.spec) as attached:
         read_attached = _read_pairs(attached)
         read_owner = _read_pairs(owner.store)
 
@@ -105,25 +97,22 @@ def test_attached_store_reads_the_published_values(backend: str):
     assert read_owner == _read_pairs(reference)
 
 
-@pytest.mark.parametrize(
-    "backend, kind",
-    [("condensed", KIND_CONDENSED), ("full_matrix", KIND_FULL_MATRIX), ("lazy", KIND_LAZY)],
-)
+@pytest.mark.parametrize("backend, kind", [("full_matrix", KIND_FULL_MATRIX), ("lazy", KIND_LAZY)])
 def test_published_spec_names_the_backend_it_holds(backend: str, kind: np.int32):
     """The spec carries the backend selector, so an attaching process rebuilds the same store."""
     # --- arrange / act ----------------
-    with _published(_reference_stores()[backend]) as owner:
+    with publish_distance_store(_reference_stores()[backend]) as owner:
         spec = owner.spec
 
     # --- assert -----------------------
     assert spec.kind == kind
-    assert spec.n == _N
+    assert spec.shape[0] == _N
 
 
 def test_spec_survives_pickling():
     """The spec is picklable, which lets it reach a spawned worker as an argument."""
     # --- arrange / act ----------------
-    with _published(_reference_stores()["condensed"]) as owner:
+    with publish_distance_store(_reference_stores()["full_matrix"]) as owner:
         restored = pickle.loads(pickle.dumps(owner.spec))  # noqa: S301 -- our own spec, not untrusted input
 
     # --- assert -----------------------
@@ -142,7 +131,7 @@ def test_attached_minkowski_store_reads_the_published_values():
     reference = DistanceStore.lazy(vectors, metric)
 
     # --- act --------------------------
-    with _published(reference) as owner, attached_distance_store(owner.spec) as attached:
+    with publish_distance_store(reference) as owner, attached_distance_store(owner.spec) as attached:
         # --- assert -------------------
         assert owner.spec.metric_p == 3.0
         assert _read_pairs(attached) == _read_pairs(reference)
@@ -151,13 +140,12 @@ def test_attached_minkowski_store_reads_the_published_values():
 # =================================================================================================
 #  Read-only enforcement
 # =================================================================================================
-@pytest.mark.parametrize("backend", ["condensed", "full_matrix", "lazy"])
+@pytest.mark.parametrize("backend", ["full_matrix", "lazy"])
 def test_attached_store_cannot_be_written_through(backend: str):
     """Nothing reachable from an attached store can write into the shared segment."""
     # --- arrange / act ----------------
-    with _published(_reference_stores()[backend]) as owner, attached_distance_store(owner.spec) as attached:
+    with publish_distance_store(_reference_stores()[backend]) as owner, attached_distance_store(owner.spec) as attached:
         # --- assert -------------------
-        assert not attached.pdist.flags.writeable
         assert not attached.matrix.flags.writeable
         assert not attached.vectors.flags.writeable
 
@@ -165,7 +153,7 @@ def test_attached_store_cannot_be_written_through(backend: str):
 def test_publishing_does_not_copy_the_segment_into_the_store():
     """The published store reads the segment itself rather than a copy of it."""
     # --- arrange / act ----------------
-    with _published(_reference_stores()["full_matrix"]) as owner:
+    with publish_distance_store(_reference_stores()["full_matrix"]) as owner:
         # --- assert -------------------
         assert np.shares_memory(owner.store.matrix, owner.buffer)
 
@@ -176,8 +164,8 @@ def test_publishing_does_not_copy_the_segment_into_the_store():
 def test_attaching_leaves_the_segment_usable():
     """Closing an attachment releases only that mapping, so the segment survives for later readers."""
     # --- arrange ----------------------
-    owner = _published(_reference_stores()["condensed"])
-    expected = _read_pairs(_reference_stores()["condensed"])
+    owner = publish_distance_store(_reference_stores()["full_matrix"])
+    expected = _read_pairs(_reference_stores()["full_matrix"])
 
     # --- act --------------------------
     with attached_distance_store(owner.spec) as first:
@@ -194,7 +182,7 @@ def test_attaching_leaves_the_segment_usable():
 def test_closing_the_owner_destroys_the_segment():
     """The owner's close unlinks the segment, so its name no longer resolves."""
     # --- arrange ----------------------
-    owner = _published(_reference_stores()["condensed"])
+    owner = publish_distance_store(_reference_stores()["full_matrix"])
     name = owner.spec.segment_name
 
     # --- act --------------------------
@@ -208,7 +196,7 @@ def test_closing_the_owner_destroys_the_segment():
 def test_attaching_without_registering_reads_and_leaves_the_owner_tracked():
     """The pre-3.13 attach path maps the segment and leaves the publisher's tracker entry intact."""
     # --- arrange ----------------------
-    owner = _published(_reference_stores()["condensed"])
+    owner = publish_distance_store(_reference_stores()["full_matrix"])
     registered = resource_tracker.register
     expected = np.array(owner.buffer)
 
@@ -226,7 +214,7 @@ def test_attaching_without_registering_reads_and_leaves_the_owner_tracked():
 def test_degenerate_shape_still_claims_a_segment():
     """A store with no distances to hold still publishes, since the OS rejects a zero-size segment."""
     # --- arrange / act ----------------
-    with SharedDistanceStore.allocate((0,), int(KIND_CONDENSED), n=1) as owner:
+    with SharedDistanceStore.allocate((0, 0), int(KIND_FULL_MATRIX)) as owner:
         # --- assert -------------------
-        assert owner.store.n == np.int32(1)
+        assert owner.store.n == np.int32(0)
         assert owner.buffer.size == 0
