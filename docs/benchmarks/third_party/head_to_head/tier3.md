@@ -82,7 +82,7 @@ The farthest-point pickers (`fpsample`, `skmatter`, `RDKit`, `qc-selector` max-m
 
 The Ran picture is the same, except for Ran 500 with k = 150: the best-known value is reached on every n = 100 instance and on fewer from n = 250 on, never exceeded, with the per-group counts and gaps on the [tables page](tier3_tables.md).
 
-On that group, every best-known value is 5, `max-div` reaches 4 on every instance with one worker — the integer distances make that one step a 20 % gap — and 12 workers reach 5 on three instances within 60 s.
+On Ran 500 with k = 150, every best-known value is 5, `max-div` reaches 4 on every instance with one worker — the integer distances make that one step a 20 % gap — and 12 workers reach 5 on three instances within 60 s.
 
 Only the distance-matrix tools enter: `qc-selector` max-min sits 2–11 % short (39 % on the k = 150 group), `kmedoids` and `qc-selector` max-sum 4–31 % (80 % on that group).
 

@@ -10,7 +10,7 @@ One problem, `PROBLEM`, at the sizes in `SIZES`; one objective, `METRIC`. Entran
 registry tools; each tool runs at every size up to the largest n it finished within the
 solver-scaling time budget (read from the scaling time stage's tracked records), once per seed.
 max-div runs both budget series (see ``benchmarks.common.protocol``), one independent solve per
-budget and seed, with lazy distance storage (`DISTANCE_STORAGE`).
+budget and seed, with the distance storage `DISTANCE_STORAGE` selects.
 """
 
 from pathlib import Path
@@ -50,9 +50,8 @@ MAXDIV_FILE = "maxdiv_u1.jsonl"
 PROBLEM = "U1"
 SIZES = (100, 1000, 10000, 100000)
 METRIC = DiversityMetric.MIN_SEPARATION
-# This tier carries the largest sizes, where the library default builds a distance store whose
-# build time is a set-up cost inside the measured time that the budget never amortizes; lazy
-# storage skips the build at equal quality.
+# At the largest sizes the default distance store takes a large share of the time budget to
+# build; lazy storage skips that build.
 DISTANCE_STORAGE = DistanceStorage.LAZY
 
 

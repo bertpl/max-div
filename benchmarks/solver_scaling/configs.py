@@ -153,7 +153,7 @@ def _highs_select(first_feasible: bool, num_workers: int) -> SelectFn:
 
 
 # ==================================================================================================
-#  select() builders — single-shot adapters
+#  single-shot adapters: config and select() builders
 # ==================================================================================================
 def _adapter_config(
     make_adapter: Callable[[], SelectionAdapter], description: str, *, seed_varies_result: bool

@@ -109,7 +109,9 @@ def overtake_sentence(records: list[RunRecord]) -> str:
     parts = []
     for tool, workers in series:
         budget = overtake_budget(records, tool, best[1])
-        reached = f"at a budget of {budget:g} s" if budget is not None else f"not within {QUOTED_BUDGETS_SEC[1]:g} s"
+        reached = (
+            f"at a budget of {budget:g} s" if budget is not None else f"at no budget up to {QUOTED_BUDGETS_SEC[1]:g} s"
+        )
         parts.append(f"{reached} with {workers}")
     return f"`max-div` reaches the best one-shot result ({best[0]}) {parts[0]} and {parts[1]}.\n"
 

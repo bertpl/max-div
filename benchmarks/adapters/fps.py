@@ -16,10 +16,10 @@ class FpsampleFPS(SelectionAdapter):
     bucket KD-line (QuickFPS) variant, tree-accelerated and well suited to low dimensions.
     """
 
+    tool_key = "fpsample"
+
     def __init__(self, variant: str = "vanilla") -> None:
         self.variant = variant
-
-    tool_key = "fpsample"
 
     @property
     def config(self) -> str:  # ty: ignore[invalid-method-override] -- a per-instance configuration
