@@ -49,7 +49,7 @@ solver:
       mark: partial
       note: &no_cp_encoding
         text: >-
-          No natural constraint-programming encoding. Expressing a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, at which point a MILP solver is the better tool.
+          No natural constraint-programming encoding: a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, so it is reachable, at a formulation far larger than the max-min one.
     objective.geomean_nn:
       mark: partial
       note: *no_cp_encoding
