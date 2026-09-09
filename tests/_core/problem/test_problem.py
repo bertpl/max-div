@@ -161,7 +161,7 @@ def test_problem_from_distances_happy_path(form: str):
     assert problem.k == 4
     assert problem.distances.dtype == np.float32
     assert problem.distances.ndim == (2 if form == "square" else 1)
-    np.testing.assert_allclose(problem.condensed_distances(), condensed, rtol=1e-6)
+    np.testing.assert_allclose(problem.full_matrix(), squareform(condensed), rtol=1e-6)
 
 
 def test_problem_from_distances_new_returns_vector_flavor():
@@ -176,20 +176,6 @@ def test_problem_from_distances_new_returns_vector_flavor():
     assert isinstance(distance_problem, DistanceMaxDivProblem)
     assert isinstance(vector_problem, MaxDivProblem)
     assert isinstance(distance_problem, MaxDivProblem)
-
-
-def test_problem_from_distances_condensed_distances_returns_input():
-    """For distance-input problems, condensed_distances returns the validated input distances."""
-
-    # --- arrange ----------------------
-    condensed = np.arange(1, 11, dtype=np.float32)  # n=5
-
-    # --- act --------------------------
-    problem = MaxDivProblem.from_distances(condensed, k=3)
-
-    # --- assert -----------------------
-    assert problem.n == 5
-    np.testing.assert_array_equal(problem.condensed_distances(), condensed)
 
 
 def _mutated_square(i: int, j: int, value: float) -> np.ndarray:
@@ -347,17 +333,6 @@ def test_problem_from_distances_condensed_negative_raises():
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="non-negative"):
         _ = MaxDivProblem.from_distances(distances, k=3)
-
-
-def test_problem_square_condensed_distances_extracts_upper_triangle():
-    """condensed_distances() on a retained square matrix returns the exact condensed values."""
-
-    # --- arrange ----------------------
-    condensed = np.arange(1, 11, dtype=np.float32)
-    problem = MaxDivProblem.from_distances(squareform(condensed), k=3)
-
-    # --- act / assert -----------------
-    np.testing.assert_array_equal(problem.condensed_distances(), condensed)
 
 
 # =================================================================================================

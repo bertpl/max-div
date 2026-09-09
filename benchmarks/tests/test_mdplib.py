@@ -175,9 +175,9 @@ def test_edge_list_instance_loads_as_distance_problem(mdplib_available):
     # --- assert ------------------------------------------
     assert isinstance(problem, DistanceMaxDivProblem)
     assert problem.n == 100
-    condensed = problem.condensed_distances()
-    assert condensed.shape == (100 * 99 // 2,)
-    assert np.all(condensed > 0)
+    matrix = problem.full_matrix()
+    assert matrix.shape == (100, 100)
+    assert np.all(matrix[~np.eye(100, dtype=bool)] > 0)
 
 
 def test_unknown_family_is_rejected():

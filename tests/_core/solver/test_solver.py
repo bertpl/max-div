@@ -16,6 +16,7 @@ from max_div._core.solver._score import Score
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
+from tests._core.metrics._distance.helpers import condensed_distances
 
 
 # =================================================================================================
@@ -130,7 +131,7 @@ def test_solver_vector_and_distance_input_bit_identical(form: str):
     vectors = rng.random((40, 4)).astype(np.float32)
     kwargs: dict = {"k": 8, "diversity_metric": DiversityMetric.GEOMEAN_SEPARATION}
     problem_vec = MaxDivProblem.new(vectors, distance_metric=DistanceMetric.l2_euclidean(), **kwargs)
-    condensed = problem_vec.condensed_distances()
+    condensed = condensed_distances(vectors, DistanceMetric.l2_euclidean())
     distances = np.ascontiguousarray(squareform(condensed)) if form == "square" else condensed
     problem_dist = MaxDivProblem.from_distances(distances, **kwargs)
 

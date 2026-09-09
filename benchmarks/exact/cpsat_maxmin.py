@@ -13,7 +13,6 @@ from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.spatial.distance import squareform
 
 from max_div.problem import MaxDivProblem
 
@@ -50,8 +49,9 @@ def solve_maxmin_cpsat(problem: MaxDivProblem, time_limit_sec: float = 60.0, num
             within the time budget (no selection to report).
     """
     t_start = time.perf_counter()
-    distances = squareform(problem.condensed_distances().astype(np.float64))
-    thresholds = np.unique(problem.condensed_distances())  # ascending candidate optima
+    matrix = problem.full_matrix()
+    distances = matrix.astype(np.float64)
+    thresholds = np.unique(matrix[np.triu_indices(problem.n, k=1)])  # ascending candidate optima
 
     # Invariant: threshold index `lo` is known-feasible (its selection is `best`),
     # everything above `hi` is known-infeasible. Optimum = highest feasible threshold.

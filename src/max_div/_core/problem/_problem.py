@@ -61,14 +61,6 @@ class MaxDivProblem(ABC):
         matrix returns it without copying.
         """
 
-    @abstractmethod
-    def condensed_distances(self) -> NDArray[np.float32]:
-        """Return the condensed pairwise-distance vector (scipy layout), computing it if needed.
-
-        Callers that want every pair once use this; the solver does not read from it.  The vector
-        flavor computes the full matrix and keeps its upper triangle.
-        """
-
     # --- computed fields ------------------------
     @property
     def m(self) -> int:
@@ -237,10 +229,6 @@ class VectorMaxDivProblem(MaxDivProblem):
     def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
         return compute_full_matrix(self.vectors, self.distance_metric, out=out)
 
-    def condensed_distances(self) -> NDArray[np.float32]:
-        i_upper, j_upper = np.triu_indices(self.n, k=1)
-        return np.ascontiguousarray(self.full_matrix()[i_upper, j_upper])
-
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class DistanceMaxDivProblem(MaxDivProblem):
@@ -270,12 +258,6 @@ class DistanceMaxDivProblem(MaxDivProblem):
             return self.distances
         out[:] = self.distances
         return out
-
-    def condensed_distances(self) -> NDArray[np.float32]:
-        if self.has_full_matrix:
-            i_upper, j_upper = np.triu_indices(self.n, k=1)
-            return np.ascontiguousarray(self.distances[i_upper, j_upper])
-        return self.distances
 
 
 # =================================================================================================

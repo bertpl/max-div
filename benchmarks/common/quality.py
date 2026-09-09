@@ -63,12 +63,12 @@ def n_constraints_satisfied(problem: MaxDivProblem, i_selected: NDArray[np.integ
 
 
 def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.integer]) -> NDArray[np.float64]:
-    """Build the k x k distance matrix among selected items, never materializing all n^2 distances.
+    """Build the k x k distance matrix among selected items, never computing all n^2 distances.
 
-    Vector problems compute pairwise distances over just the selected vectors (their
-    ``condensed_distances()`` would recompute all n^2 distances on every call — at the
-    largest benchmark sizes that costs seconds and gigabytes per evaluation). Distance problems
-    hold their distances already, so gathering the k x k block from them is cheap.
+    Vector problems compute pairwise distances over just the selected vectors (their full matrix
+    would be recomputed on every call — at the largest benchmark sizes that costs seconds and
+    gigabytes per evaluation). Distance problems hold their distances already, so gathering the
+    k x k block from them is cheap.
     """
     idx = np.asarray(i_selected, dtype=np.int64)
     k = idx.shape[0]
@@ -78,15 +78,7 @@ def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.in
         raise ValueError("Selection contains duplicate indices.")
     if isinstance(problem, VectorMaxDivProblem):
         return compute_full_matrix(problem.vectors[idx], problem.distance_metric).astype(np.float64)
-    n = problem.n
-    condensed = problem.condensed_distances()
-    ii, jj = np.meshgrid(idx, idx, indexing="ij")
-    lo, hi = np.minimum(ii, jj), np.maximum(ii, jj)
-    condensed_pos = (lo * (2 * n - lo - 1)) // 2 + (hi - lo - 1)
-    dist = np.zeros((k, k), dtype=np.float64)
-    off_diag = ~np.eye(k, dtype=bool)
-    dist[off_diag] = condensed[condensed_pos[off_diag]]
-    return dist
+    return problem.full_matrix()[np.ix_(idx, idx)].astype(np.float64)
 
 
 def min_separation_nn(vectors: NDArray[np.floating], i_selected: NDArray[np.integer]) -> float:

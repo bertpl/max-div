@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from scipy.spatial.distance import squareform
 
 from benchmarks.common import evaluate_selection, n_constraints_satisfied
 from max_div.metrics import DistanceMetric
@@ -9,10 +8,10 @@ from max_div.problem import MaxDivProblem
 
 def test_evaluate_selection_matches_squareform_oracle(small_problem):
     # every published quality number flows through evaluate_selection, so its
-    # condensed-index extraction is verified against scipy's squareform
+    # k x k block extraction is verified against a plain numpy sub-matrix
     # --- arrange -----------------------------------------
     i_selected = np.array([0, 7, 13, 21, 29], dtype=np.int64)
-    dist = squareform(small_problem.condensed_distances().astype(np.float64))
+    dist = small_problem.full_matrix().astype(np.float64)
     sub = dist[np.ix_(i_selected, i_selected)]
     k = len(i_selected)
     separations = np.where(~np.eye(k, dtype=bool), sub, np.inf).min(axis=1)
@@ -41,7 +40,7 @@ def test_evaluate_selection_respects_distance_metric(distance_metric):
         vectors=rng.random((25, 4)).astype(np.float32) + 0.1, k=5, distance_metric=distance_metric
     )
     i_selected = np.array([1, 6, 11, 19, 24], dtype=np.int64)
-    dist = squareform(problem.condensed_distances().astype(np.float64))
+    dist = problem.full_matrix().astype(np.float64)
     sub = dist[np.ix_(i_selected, i_selected)]
     expected_min = np.where(~np.eye(5, dtype=bool), sub, np.inf).min(axis=1).min()
 
@@ -57,7 +56,7 @@ def test_evaluate_selection_distance_flavor_matches_vector_flavor():
     # --- arrange -----------------------------------------
     rng = np.random.default_rng(8)
     vector_problem = MaxDivProblem.new(vectors=rng.random((30, 3)).astype(np.float32), k=5)
-    distance_problem = MaxDivProblem.from_distances(vector_problem.condensed_distances(), k=5)
+    distance_problem = MaxDivProblem.from_distances(vector_problem.full_matrix(), k=5)
     i_selected = np.array([2, 9, 14, 22, 28], dtype=np.int64)
 
     # --- act ---------------------------------------------
