@@ -35,10 +35,8 @@ class CodeFdmFairFlow(SelectionAdapter):
     items outside every constraint as one remainder group.
     """
 
-    @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "code-FDM[FairFlow]"
+    tool_key = "code-fdm"
+    config = "fairflow"
 
     @property
     def supports_constraints(self) -> bool:
@@ -64,10 +62,8 @@ class CodeFdmSingleColor(SelectionAdapter):
     unconstrained reference problem.
     """
 
-    @property
-    def name(self) -> str:
-        """Return the tool name as it appears in records and figures."""
-        return "code-FDM[single-color]"
+    tool_key = "code-fdm"
+    config = "default"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Run FairFlow with one color spanning all items.

@@ -2,6 +2,7 @@ import numpy as np
 
 from benchmarks.runners import run_maxdiv_budget_series
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
+from max_div.solver import DistanceStorage
 
 
 def test_single_worker_series_records_one_row_per_budget_and_seed(small_problem):
@@ -28,3 +29,20 @@ def test_multi_worker_series_uses_the_worker_count_in_its_label(small_problem):
     # --- assert -----------------------
     assert [r.tool for r in records] == [maxdiv_tool_label(n_workers=2)] == ["max-div[DEFAULT, 2 workers]"]
     assert records[0].measured_sec > 0.5  # end to end: spawning the workers is inside the measured time
+
+
+def test_lazy_distance_storage_solves_without_a_store(small_problem):
+    """The storage option reaches the builder: a lazy series solves and scores like a stored one."""
+    # --- act --------------------------
+    records = run_maxdiv_budget_series(
+        small_problem,
+        problem_name="U1",
+        size=30,
+        time_budgets_sec=[0.01],
+        seeds=(0,),
+        distance_storage=DistanceStorage.LAZY,
+    )
+
+    # --- assert -----------------------
+    assert len(records) == 1
+    assert records[0].quality["MIN_SEPARATION"] > 0

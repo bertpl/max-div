@@ -153,8 +153,22 @@ def _highs_select(first_feasible: bool, num_workers: int) -> SelectFn:
 
 
 # ==================================================================================================
-#  select() builders — single-shot adapters
+#  single-shot adapters: config and select() builders
 # ==================================================================================================
+def _adapter_config(
+    make_adapter: Callable[[], SelectionAdapter], description: str, *, seed_varies_result: bool
+) -> ScalingConfig:
+    """Build a single-shot adapter's configuration; the adapter owns the registry key and the configuration name."""
+    adapter = make_adapter()
+    return ScalingConfig(
+        adapter.tool_key,
+        adapter.config,
+        description,
+        _adapter_select(make_adapter),
+        seed_varies_result=seed_varies_result,
+    )
+
+
 def _adapter_select(make_adapter: Callable[[], SelectionAdapter]) -> SelectFn:
     """Build a selector around a single-shot adapter; the runner's kill enforces its budget."""
 
@@ -299,67 +313,49 @@ CONFIGS: tuple[ScalingConfig, ...] = (
         _highs_select(first_feasible=False, num_workers=_QUALITY_WORKERS),
         seed_varies_result=True,
     ),
-    ScalingConfig(
-        "rdkit",
-        "default",
+    _adapter_config(
+        _rdkit,
         "MaxMinPicker with a Euclidean distance callable (its only mode)",
-        _adapter_select(_rdkit),
         seed_varies_result=True,
     ),
-    ScalingConfig(
-        "fpsample",
-        "vanilla",
+    _adapter_config(
+        _fpsample("vanilla"),
         "plain farthest-point sampling",
-        _adapter_select(_fpsample("vanilla")),
         seed_varies_result=True,
     ),
-    ScalingConfig(
-        "fpsample",
-        "kdline",
+    _adapter_config(
+        _fpsample("kdline"),
         "bucket KD-line farthest-point sampling — the tree-accelerated variant, well suited to d=2",
-        _adapter_select(_fpsample("kdline")),
         seed_varies_result=True,
     ),
-    ScalingConfig(
-        "skmatter",
-        "default",
+    _adapter_config(
+        _skmatter,
         "FPS selector (its only mode)",
-        _adapter_select(_skmatter),
         seed_varies_result=True,
     ),
-    ScalingConfig(
-        "apricot-select",
-        "default",
+    _adapter_config(
+        _apricot,
         "facility-location selection, lazy greedy, RBF similarity matrix",
-        _adapter_select(_apricot),
         seed_varies_result=False,
     ),
-    ScalingConfig(
-        "qc-selector",
-        "maxmin",
+    _adapter_config(
+        _qc_selector,
         "max-min selection on a precomputed distance matrix",
-        _adapter_select(_qc_selector),
         seed_varies_result=True,
     ),
-    ScalingConfig(
-        "dppy",
-        "default",
+    _adapter_config(
+        _dppy,
         "one exact k-DPP sample over an RBF likelihood kernel, median-pairwise-distance bandwidth",
-        _adapter_select(_dppy),
         seed_varies_result=True,
     ),
-    ScalingConfig(
-        "code-fdm",
-        "default",
+    _adapter_config(
+        _code_fdm,
         "FairFlow with a single color spanning all items (its unconstrained reduction)",
-        _adapter_select(_code_fdm),
         seed_varies_result=False,
     ),
-    ScalingConfig(
-        "kmedoids",
-        "default",
+    _adapter_config(
+        _kmedoids,
         "FasterPAM k-medoids on a precomputed distance matrix, random initialization",
-        _adapter_select(_kmedoids),
         seed_varies_result=True,
     ),
 )

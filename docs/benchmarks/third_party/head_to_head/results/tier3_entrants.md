@@ -1,4 +1,4 @@
-| set | n | k | DPPy[k-DPP] | RDKit[MaxMinPicker] | apricot[facility-location] | code-FDM[single-color] | fpsample[FPS] | kmedoids[FasterPAM] | qc-selector[MaxMin] | qc-selector[MaxSum] | skmatter[FPS] |
+| set | n | k | DPPy[default] | RDKit MaxMinPicker[default] | apricot-select[default] | code-FDM[default] | fpsample[vanilla] | kmedoids[default] | qc-selector[maxmin] | qc-selector[maxsum] | skmatter[default] |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Geo | 100 | 10 | 43.2% | 8.5% | 48.9% | 8.5% | 8.5% | 44.1% | 8.5% | 34.5% | 8.5% |
 | Geo | 100 | 30 | 37.4% | 4.6% | 37.5% | 4.9% | 4.9% | 31.2% | 4.9% | 31.9% | 4.9% |

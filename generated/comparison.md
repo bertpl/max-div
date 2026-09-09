@@ -64,7 +64,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-6]: Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modeling choice rather than a property of the metric.
 [^cmp-7]: Any distance you can compute and round to integers is usable, which in practice means any metric at all.
 [^cmp-8]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
-[^cmp-9]: No natural constraint-programming encoding. Expressing a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, at which point a MILP solver is the better tool.
+[^cmp-9]: No natural constraint-programming encoding: a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, so it is reachable, at a formulation far larger than the max-min one.
 [^cmp-10]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
 [^cmp-11]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
 [^cmp-12]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.

@@ -10,7 +10,7 @@ One problem, `PROBLEM`, at the sizes in `SIZES`; one objective, `METRIC`. Entran
 registry tools; each tool runs at every size up to the largest n it finished within the
 solver-scaling time budget (read from the scaling time stage's tracked records), once per seed.
 max-div runs both budget series (see ``benchmarks.common.protocol``), one independent solve per
-budget and seed.
+budget and seed, with the distance storage `DISTANCE_STORAGE` selects.
 """
 
 from pathlib import Path
@@ -36,11 +36,11 @@ from benchmarks.common.protocol import (
     SINGLE_WORKER_BUDGETS_SEC,
 )
 from benchmarks.common.records import RunRecord
-from benchmarks.figures.style import tool_key
 from benchmarks.runners import run_adapter, run_maxdiv_budget_series
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
 from benchmarks.solver_scaling.quality_stage import time_limits
 from max_div.metrics import DiversityMetric
+from max_div.solver import DistanceStorage
 
 OUTPUT_DIR = Path("reports/benchmarks/tier2")
 DATA_DIR = Path(__file__).parent / "data"
@@ -50,6 +50,9 @@ MAXDIV_FILE = "maxdiv_u1.jsonl"
 PROBLEM = "U1"
 SIZES = (100, 1000, 10000, 100000)
 METRIC = DiversityMetric.MIN_SEPARATION
+# At the largest sizes the default distance store takes a large share of the time budget to
+# build; lazy storage skips that build.
+DISTANCE_STORAGE = DistanceStorage.LAZY
 
 
 def entrant_adapters() -> list[SelectionAdapter]:
@@ -74,7 +77,7 @@ def runs_at_size(adapter: SelectionAdapter, n: int, limits: dict[tuple[str, str]
 
     The random baseline has no scaling configuration and runs at every size.
     """
-    key = tool_key(adapter.name)
+    key = adapter.tool_key
     if key == "random":
         return True
     limit = max((n_max for (tool, _config), n_max in limits.items() if tool == key), default=0)
@@ -110,9 +113,10 @@ def run_maxdiv(
     single_budgets_sec: list[float] = SINGLE_WORKER_BUDGETS_SEC,
     multi_budgets_sec: list[float] = MULTI_WORKER_BUDGETS_SEC,
     n_workers: int = N_WORKERS,
+    distance_storage: DistanceStorage = DISTANCE_STORAGE,
     out_path: Path = OUTPUT_DIR / MAXDIV_FILE,
 ) -> list[RunRecord]:
-    """Run the max-div half: both budget series at every size.
+    """Run the max-div half: both budget series at every size, under the tier's distance storage.
 
     Defaults are the published protocol; pass smaller values only for validation runs.
     """
@@ -130,6 +134,7 @@ def run_maxdiv(
                 time_budgets_sec=budgets,
                 seeds=seeds,
                 n_workers=workers,
+                distance_storage=distance_storage,
             )
             save_records(records, out_path)
         print(f"max-div {PROBLEM} n={n} done ({len(records)} records so far)", flush=True)

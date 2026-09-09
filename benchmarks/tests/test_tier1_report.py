@@ -114,6 +114,6 @@ def test_main_emits_tables_charts_and_gallery_snippets(tmp_path: Path):
     assert (docs_dir / "images" / "tier1_U1_20_geomean_separation.webp").exists()
     assert "![tier1_U1_20_min_separation]" in (docs_dir / "results" / "tier1_charts_min_separation_u1.md").read_text()
     assert (docs_dir / "results" / "tier1_charts_min_separation_c1.md").read_text() == "\n"
-    assert 'width="32%"' in (docs_dir / "results" / "tier1_gallery_geomean_separation.md").read_text()
+    assert 'width="49%"' in (docs_dir / "results" / "tier1_gallery_geomean_separation.md").read_text()
     assert (docs_dir / "results" / "tier1_gallery_mean_separation.md").read_text() == "\n"
     assert "| U1 | 20 |" in (docs_dir / "results" / "tier1_gap_min_separation.md").read_text()

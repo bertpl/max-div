@@ -132,7 +132,7 @@ def glover_sentence(records: list[RunRecord], rows: list[BestKnown]) -> str:
     measured = sum(v is not None for v in verdicts)
     return (
         f"On the Glover set (n ≤ 30), max-div reaches the published value on {reached} of the {measured} measured "
-        f"pairings (best over seeds and budgets); the set is too small to discriminate and is not charted.\n"
+        f"pairings (best over seeds and budgets).\n"
     )
 
 

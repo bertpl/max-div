@@ -14,15 +14,15 @@ Every chart on this page reads the same way:
 
 ## II. Protocol
 
-The tier follows the [solver-scaling protocol](../scaling/protocol.md): its time budget, size grid, reference machine, and its [solver configurations](../scaling/solver_configs.md) for the exact solvers. The tier runs 3 seeds per cell, not 5 ([why](../scaling/protocol.md#iii-fundamental-constants-invariants)).
+The tier reuses the time budget, size grid and reference machine of the [solver-scaling protocol](../scaling/protocol.md), and the [solver configurations](../scaling/solver_configs.md) measured there for the exact solvers. The tier runs 3 seeds per cell, not 5 ([why](../scaling/protocol.md#iii-fundamental-constants-invariants)).
 
 ### II.A. Entrants
 
-- **CP-SAT** certifies the max-min objective through its max-min model, and the mean and geomean objectives through the nearest-neighbor assignment model.
-- **SCIP** and **HiGHS** certify max-min through the big-M MIP. On the nearest-neighbor assignment model they certify less far than CP-SAT, so they are left out of the mean and geomean cells.
+- **CP-SAT** certifies the max-min objective through its [threshold search](../solvers/ortools-cpsat.md#problem-targeted), and the mean and geomean objectives through the nearest-neighbor assignment model: binary variables assign every selected item its nearest selected neighbor, and the objective sums those distances.
+- **SCIP** and **HiGHS** certify max-min through the [big-M MIP](../solvers/highs.md#problem-targeted). The nearest-neighbor assignment model runs on CP-SAT only: the tier needs one certified optimum per cell, not a solver race, and that model, n² assignment binaries with a weak linear relaxation, is one CP-SAT attacks with its parallel portfolio at the protocol's 12 workers, while the PyPI SCIP build [solves single-threaded](../scaling/solver_configs.md).
 - **max-div**, `DEFAULT` preset, `L2` distance, runs two budget series per cell:
-    - one worker, budgets 1 ms → 60 s on the 1-2-5 grid (15 points);
-    - 12 workers with the default dynamic grouping, budgets 1 s → 60 s (6 points) — spawning the workers costs about a second, so smaller budgets would only show start-up.
+    - one worker, budgets 1 ms → 60 s on the 1-2-5 grid;
+    - 12 workers with the default dynamic grouping, budgets 1 s → 60 s — starting and joining the worker processes adds a fixed few tenths of a second, so smaller budgets would mostly measure that overhead.
 
 Every `max-div` point is one independent solve per budget and seed, timed end to end around the call; the charts plot *measured* wall-clock, never the nominal budget. A budget is charted only when it exceeds the measured time of the previous charted budget, so the small budgets that all end at the set-up cost appear once.
 
@@ -46,20 +46,20 @@ Near its limit, every solver's proof time climbs by at least a factor 5 per grid
 - **up to n = 100** both series reach the optimum:
     - on C1 within 20 ms;
     - on U1 at n = 100 the single worker sits 3.7 % short until 2 s, the 12-worker series is on the optimum from its first budget;
-- **from n = 200** a gap remains at 60 s: 5–11 % with one worker, 0–8 % with 12. The 12-worker series is ahead of, or level with, the single worker at every budget both run, and its lead grows with size;
+- **from n = 200** a gap remains at 60 s: 5–13 % with one worker, 0–8 % with 12. The 12-worker series is ahead of, or level with, the single worker at every budget both run;
 - the curves **improve in steps, not smoothly**: on U1 at n = 200 the single worker's median stays at 12.8 % from 20 ms to 60 s while 12 workers reach the optimum by 2 s. More workers close such a gap where more time on one worker does not.
 
-### III.A. U1
+### III.A. Benchmark Problem U1
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_charts_min_separation_u1.md"
 
-### III.B. C1
+### III.B. Benchmark Problem C1
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_charts_min_separation_c1.md"
 
 ## IV. Mean separation
 
-CP-SAT certifies the nearest-neighbor assignment model at n = 20 and n = 50 on both problems, within seconds; n = 100 is not certified within the cap. `max-div` reaches every certified mean-separation optimum within 100 ms in both series.
+CP-SAT certifies the nearest-neighbor assignment model at n = 20 and n = 50 on both problems, within seconds; n = 100 is not certified within the cap. `max-div` reaches every certified mean-separation optimum within 10 ms with one worker, and at the first budget, 1 s, with 12.
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_gallery_mean_separation.md"
 
@@ -67,7 +67,7 @@ CP-SAT certifies the nearest-neighbor assignment model at n = 20 and n = 50 on b
 
 n = 20 and n = 50 certify on both problems, and C1 at n = 100 certifies as well — in 863 s, just inside the cap — the only n = 100 cell any solver proves on the assignment model.
 
-`max-div` reaches every certified geomean optimum within 100 ms, except C1 at n = 100, where the single worker is 0.1 % short at 1 s and on the optimum from 5 s.
+`max-div` reaches every certified geomean optimum within 10 ms with one worker and at the first budget, 1 s, with 12, except C1 at n = 100, where the single worker is 0.1 % short until 2 s and on the optimum from 5 s.
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_gallery_geomean_separation.md"
 

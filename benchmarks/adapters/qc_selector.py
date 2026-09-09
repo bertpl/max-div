@@ -16,10 +16,8 @@ from .base import SelectionAdapter
 class QcSelectorMaxMin(SelectionAdapter):
     """Select greedily for max-min via qc-selector (import name ``selector``)."""
 
-    @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "qc-selector[MaxMin]"
+    tool_key = "qc-selector"
+    config = "maxmin"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Run qc-selector's MaxMin."""
@@ -33,10 +31,8 @@ class QcSelectorMaxMin(SelectionAdapter):
 class QcSelectorMaxSum(SelectionAdapter):
     """Select greedily for max-sum via qc-selector's classical insertion construction."""
 
-    @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "qc-selector[MaxSum]"
+    tool_key = "qc-selector"
+    config = "maxsum"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Run qc-selector's MaxSum."""

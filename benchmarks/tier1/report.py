@@ -146,9 +146,9 @@ def full_width_snippet(names: list[str]) -> str:
 
 
 def gallery_snippet(names: list[str], metric: DiversityMetric) -> str:
-    """Return an HTML thumbnail gallery, three per row, each linking to its full-size chart (the page dir sits one level below `images/`)."""
+    """Return an HTML thumbnail gallery, two per row, each linking to its full-size chart (the page dir sits one level below `images/`)."""
     thumbnails = [
-        f'<a href="../images/{name}"><img src="../images/{name}" alt="{metric.name} anytime chart {name}" width="32%"></a>'
+        f'<a href="../images/{name}"><img src="../images/{name}" alt="{metric.name} anytime chart {name}" width="49%"></a>'
         for name in names
     ]
     return " ".join(thumbnails) + "\n"

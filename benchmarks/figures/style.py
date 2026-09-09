@@ -9,6 +9,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from PIL import Image
 
+from benchmarks.common.registry import tool_key_of
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
 
@@ -38,10 +40,6 @@ UNLISTED_TOOL_COLOR = "#B58AA5"  # mauve
 # `MARKER_SHAPES` is cycled over when several series share a chart.
 MARKER_SHAPES = ("o", "s", "D", "^", "v", "*", "p")
 
-# Record labels read `tool[variant]`; the part before the bracket, lowercased, is the registry key
-# for every tool but apricot, whose registry key carries the package name.
-_TOOL_KEY_OVERRIDES = {"apricot": "apricot-select"}
-
 
 def use_docs_style() -> None:
     """Activate the docs Matplotlib style sheet shared by all results figures."""
@@ -54,9 +52,14 @@ def tool_color(tool: str) -> str:
 
 
 def tool_key(label: str) -> str:
-    """Return the `TOOL_COLORS` key of a tool from a run record's `tool[variant]` label."""
+    """Return the `TOOL_COLORS` key of a tool from a run record's `<display name>[<config>]` label.
+
+    A label outside the registry (the random baseline, a tool no longer in the roster) resolves to
+    its lowercased display name.
+    """
     prefix = label.split("[", 1)[0]
-    return _TOOL_KEY_OVERRIDES.get(prefix, prefix.lower())
+    key = tool_key_of(prefix)
+    return key if key != prefix else prefix.lower()
 
 
 def save_webp(fig: plt.Figure, path: Path, *, lossless: bool = False) -> None:

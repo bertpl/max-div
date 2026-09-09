@@ -16,13 +16,15 @@ class FpsampleFPS(SelectionAdapter):
     bucket KD-line (QuickFPS) variant, tree-accelerated and well suited to low dimensions.
     """
 
+    tool_key = "fpsample"
+
     def __init__(self, variant: str = "vanilla") -> None:
         self.variant = variant
 
     @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "fpsample[FPS]" if self.variant == "vanilla" else "fpsample[KDLine]"
+    def config(self) -> str:  # ty: ignore[invalid-method-override] -- a per-instance configuration
+        """The configuration name is the variant."""
+        return self.variant
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Run the chosen FPS variant, seeding via the start index."""
@@ -42,10 +44,8 @@ class FpsampleFPS(SelectionAdapter):
 class SkmatterFPS(SelectionAdapter):
     """Greedy farthest-point sampling via skmatter's FPS selector (max-min, 2-approx)."""
 
-    @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "skmatter[FPS]"
+    tool_key = "skmatter"
+    config = "default"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Run skmatter FPS, seeding via the initial point."""

@@ -48,7 +48,10 @@ def test_gap_records_re_express_quality_as_gap_percent():
     """Records of known pairings become gap records; others are dropped."""
     # --- arrange ----------------------
     references = {("Ran 500 1.txt", 50): _row("Ran 500 1.txt", 50.0)}
-    records = [_record("Ran 500 1.txt", 50, "max-div[DEFAULT]", "time:1.0s", 45.0), _record("other.txt", 50, "x", "s", 1.0)]
+    records = [
+        _record("Ran 500 1.txt", 50, "max-div[DEFAULT]", "time:1.0s", 45.0),
+        _record("other.txt", 50, "x", "s", 1.0),
+    ]
 
     # --- act --------------------------
     gaps = report.gap_records(records, references)
@@ -93,7 +96,9 @@ def test_glover_sentence_counts_reached_pairings():
     records = [_record("Glover (n 10) 1.txt", 2, "max-div[DEFAULT]", "time:0.001s", 10.0)]
 
     # --- act / assert -----------------
-    assert report.glover_sentence(records, rows).startswith("On the Glover set (n ≤ 30), max-div reaches the published value on 1 of the 1 measured")
+    assert report.glover_sentence(records, rows).startswith(
+        "On the Glover set (n ≤ 30), max-div reaches the published value on 1 of the 1 measured"
+    )
 
 
 def test_main_emits_charts_and_tables(tmp_path: Path):
@@ -102,8 +107,12 @@ def test_main_emits_charts_and_tables(tmp_path: Path):
     data_dir, records_dir, docs_dir = tmp_path / "data", tmp_path / "records", tmp_path / "docs"
     rows = load_best_known()
     ran_500_50 = [r for r in rows if r.family == "Ran" and r.n == 500 and r.k == 50]
-    maxdiv = [_record(r.instance, 50, "max-div[DEFAULT]", f"time:{b}s", r.best_known - 1) for r in ran_500_50 for b in (1.0, 60.0)]
-    entrants = [_record(r.instance, 50, "qc-selector[MaxMin]", "single-shot", r.best_known - 5) for r in ran_500_50]
+    maxdiv = [
+        _record(r.instance, 50, "max-div[DEFAULT]", f"time:{b}s", r.best_known - 1)
+        for r in ran_500_50
+        for b in (1.0, 60.0)
+    ]
+    entrants = [_record(r.instance, 50, "qc-selector[maxmin]", "single-shot", r.best_known - 5) for r in ran_500_50]
     save_records(maxdiv, records_dir / report.MAXDIV_FILE)
     save_records(entrants, data_dir / report.ENTRANT_FILE)
 
@@ -112,7 +121,12 @@ def test_main_emits_charts_and_tables(tmp_path: Path):
 
     # --- assert -----------------------
     assert (docs_dir / "images" / "tier3_ran_500_50.webp").exists()
-    assert not (docs_dir / "images" / "tier3_geo_100_10.webp").exists()  # the fixture has no Geo records, so no Geo chart is written
+    assert not (
+        docs_dir / "images" / "tier3_geo_100_10.webp"
+    ).exists()  # the fixture has no Geo records, so no Geo chart is written
     assert "| Ran | 500 | 50 | 10 |" in (docs_dir / "results" / "tier3_gaps.md").read_text()
-    assert "qc-selector[MaxMin]" in (docs_dir / "results" / "tier3_entrants.md").read_text()
-    assert "| Ran | Ran 500 3 | 500 | 50 | 56 | 55 | PHG2011 |" in (docs_dir / "results" / "tier3_best_known.md").read_text()
+    assert "qc-selector[maxmin]" in (docs_dir / "results" / "tier3_entrants.md").read_text()
+    assert (
+        "| Ran | Ran 500 3 | 500 | 50 | 56 | 55 | PHG2011 |"
+        in (docs_dir / "results" / "tier3_best_known.md").read_text()
+    )
