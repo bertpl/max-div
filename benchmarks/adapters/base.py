@@ -26,7 +26,7 @@ class SelectionAdapter(ABC):
 
     @property
     def name(self) -> str:
-        """Tool label as it appears in records and figures: the registry display name and the configuration."""
+        """Return the tool label used in records and figures: the registry display name and the configuration."""
         return f"{display_name(self.tool_key)}[{self.config}]"
 
     @property

@@ -12,11 +12,10 @@ class RandomBaseline(SelectionAdapter):
     """Select k items uniformly at random (constraint-oblivious)."""
 
     tool_key = "random"
-    config = "default"
 
     @property
     def name(self) -> str:
-        """The baseline is outside the registry and carries no configuration: a bare label."""
+        """Return the bare label: the baseline is outside the registry and carries no configuration."""
         return "random"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:

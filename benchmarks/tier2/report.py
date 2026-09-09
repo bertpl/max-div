@@ -86,9 +86,9 @@ def size_table_rows(records: list[RunRecord]) -> list[tuple[str, float, float]]:
     """Return one size's table rows as (label, quality, time), best quality first, the shorter time first on a tie.
 
     max-div contributes one row per series and quoted budget, labeled with the budget; every entrant
-    contributes its mean over seeds. One ordering over all rows is what lets a reader compare
-    max-div's result at a budget with the one-shot tools directly. A tie is judged at the precision
-    the table prints, so rows the reader sees as equal are ordered by time.
+    contributes its mean over seeds. One ordering over all rows lets a reader compare max-div's
+    result at a budget with the one-shot tools directly. A tie is judged at the precision the table
+    prints, so rows the reader sees as equal are ordered by time.
     """
     rows: list[tuple[str, float, float]] = []
     for tool in (maxdiv_tool_label(), maxdiv_tool_label(n_workers=N_WORKERS)):

@@ -64,6 +64,7 @@ def test_adapter_is_deterministic_given_seed(small_problem, adapter):
 )
 def test_adapter_label_is_the_registry_name_and_the_configuration(adapter, label):
     """A record label names the tool as the registry does and the configuration as the scaling page does."""
+    # --- act / assert -----------------
     assert adapter.name == label
 
 

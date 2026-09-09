@@ -67,14 +67,12 @@ def run_maxdiv_budget_series(
     multi-threaded distance computation and inflate the measured times at the smallest budgets several-fold.
 
     Args:
-        problem: Problem every solve runs on.
         problem_name: Generator name recorded in each record (e.g. ``"U1"``).
         size: Generator size parameter, recorded in each record.
         time_budgets_sec: Wall-clock budgets in seconds (may be combined with iteration budgets).
         iteration_budgets: Iteration-count budgets (recorded with an ``iterations:`` budget tag);
             single-worker runs only.
         seeds: One independent solve per seed per budget.
-        preset: Solver preset every solve is built from.
         n_workers: Above 1, the parallel solver runs this many workers under an end-to-end budget.
         distance_storage: The distance store layout; `AUTO` is the library default, `LAZY` skips the
             store build, which at large n is a set-up cost inside the measured time.

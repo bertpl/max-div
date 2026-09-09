@@ -52,11 +52,13 @@ def test_overtake_budget_is_the_first_budget_whose_median_reaches_the_target():
 
 
 def test_size_table_orders_every_tool_by_quality_and_names_the_overtake_budgets():
-    """One table: max-div's quoted budgets and the entrants, best first, faster first on a tie, then the overtake sentence."""
+    """One table lists max-div's quoted budgets and the entrants, best first and faster first on a tie, then the overtake sentence."""
     # --- arrange ----------------------
     records = [
         _record("fpsample[vanilla]", "single-shot", 1.0, measured_sec=0.02),
-        _record("skmatter[default]", "single-shot", 0.99996, measured_sec=0.01),  # prints as 1.0000: a tie
+        _record(
+            "skmatter[default]", "single-shot", 0.99996, measured_sec=0.01
+        ),  # prints as 1.0000, so it ties with fpsample
         _record("max-div[DEFAULT]", "time:1.0s", 0.9, measured_sec=1.0),
         _record("max-div[DEFAULT]", "time:60.0s", 1.2, measured_sec=60.0),
         _record("max-div[DEFAULT, 12 workers]", "time:1.0s", 1.05, measured_sec=1.35),

@@ -101,8 +101,8 @@ def plot_anytime_curve(
     if title:
         ax.set_title(title, fontweight="bold")
     ax.grid(True, which="major")
-    # Longer handles than the style sheet's: the per-point dot sits mid-handle and would hide the
-    # one gap that tells the dashed multi-worker series from the solid single-worker one.
+    # The handles are longer than the style sheet's because the per-point dot sits mid-handle and
+    # would hide the one gap that tells the dashed multi-worker series from the solid single-worker one.
     ax.legend(handlelength=2.5)
     save_webp(fig, path)
 

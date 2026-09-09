@@ -26,7 +26,6 @@ def test_unlisted_tool_gets_the_fallback_color():
         ("apricot-select[default]", "apricot-select"),
         ("code-FDM[fairflow]", "code-fdm"),
         ("random", "random"),
-        ("random", "random"),
     ],
 )
 def test_tool_key_maps_record_labels_to_palette_keys(label: str, expected: str):
