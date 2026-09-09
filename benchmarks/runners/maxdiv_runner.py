@@ -10,6 +10,7 @@ from benchmarks.common.quality import evaluate_selection, n_constraints_satisfie
 from benchmarks.common.records import RunRecord, budget_tag, iteration_tag
 from max_div.problem import MaxDivProblem
 from max_div.solver import (
+    DistanceStorage,
     MaxDivSolverBuilder,
     ParallelMaxDivSolverBuilder,
     SolverPreset,
@@ -35,6 +36,7 @@ class _SolveJob:
     seed: int
     preset: SolverPreset
     n_workers: int
+    distance_storage: DistanceStorage
 
 
 @dataclass(frozen=True)
@@ -55,6 +57,7 @@ def run_maxdiv_budget_series(
     seeds: tuple[int, ...] = (0, 1, 2),
     preset: SolverPreset = SolverPreset.DEFAULT,
     n_workers: int = 1,
+    distance_storage: DistanceStorage = DistanceStorage.AUTO,
 ) -> list[RunRecord]:
     """Solve the problem once per (budget, seed) and record measured time + quality.
 
@@ -64,13 +67,17 @@ def run_maxdiv_budget_series(
     multi-threaded distance computation and inflate the measured times at the smallest budgets several-fold.
 
     Args:
+        problem: Problem every solve runs on.
         problem_name: Generator name recorded in each record (e.g. ``"U1"``).
         size: Generator size parameter, recorded in each record.
         time_budgets_sec: Wall-clock budgets in seconds (may be combined with iteration budgets).
         iteration_budgets: Iteration-count budgets (recorded with an ``iterations:`` budget tag);
             single-worker runs only.
         seeds: One independent solve per seed per budget.
+        preset: Solver preset every solve is built from.
         n_workers: Above 1, the parallel solver runs this many workers under an end-to-end budget.
+        distance_storage: The distance store layout; `AUTO` is the library default, `LAZY` skips the
+            store build, which at large n is a set-up cost inside the measured time.
 
     Raises:
         ValueError: If a multi-worker series is combined with iteration budgets.
@@ -82,7 +89,11 @@ def run_maxdiv_budget_series(
         budgets.append((budget_tag(t), seconds(t)))
     for i in iteration_budgets or []:
         budgets.append((iteration_tag(i), iterations(i)))
-    jobs = [_SolveJob(problem, tag, target, seed, preset, n_workers) for tag, target in budgets for seed in seeds]
+    jobs = [
+        _SolveJob(problem, tag, target, seed, preset, n_workers, distance_storage)
+        for tag, target in budgets
+        for seed in seeds
+    ]
     outcomes = [_solve(job) for job in jobs]
 
     label = maxdiv_tool_label(preset, n_workers)
@@ -109,13 +120,19 @@ def run_maxdiv_budget_series(
 def _solve(job: _SolveJob) -> _SolveOutcome:
     """Run one solve, timed end to end."""
     if job.n_workers == 1:
-        builder = MaxDivSolverBuilder(job.problem).with_preset(job.target, job.preset).with_seed(job.seed)
+        builder = (
+            MaxDivSolverBuilder(job.problem)
+            .with_preset(job.target, job.preset)
+            .with_seed(job.seed)
+            .with_distance_storage(job.distance_storage)
+        )
     else:
         builder = (
             ParallelMaxDivSolverBuilder(job.problem)
             .with_seed(job.seed)
             .with_workers(job.target, job.n_workers)
             .with_end_to_end_budget()
+            .with_distance_storage(job.distance_storage)
         )
     t0 = time.perf_counter()
     solution = builder.build().solve(verbosity=Verbosity.SILENT)
