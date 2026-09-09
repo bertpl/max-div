@@ -5,20 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
-
-### Changed
-
-### Deprecated
+## 0.17.5 (2026-09-09)
 
 ### Removed
 - The condensed distance store, `DistanceStorage.CONDENSED` and `MaxDivProblem.condensed_distances()`: a condensed distance input is still accepted and is expanded to a full matrix, at twice the memory, and `MaxDivProblem.full_matrix()` returns that matrix; `AUTO` picks the full matrix when it fits and the lazy store otherwise
-
-### Fixed
-
-### Security
 
 ## 0.17.4 (2026-09-09)
 
