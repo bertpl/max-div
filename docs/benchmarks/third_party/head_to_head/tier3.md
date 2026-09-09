@@ -18,7 +18,7 @@ The tier reuses the time budget and reference machine of the [solver-scaling pro
 
 - **Instances**: the 120 published (instance, k) pairings of the Geo and Ran sets — n ∈ {100, 250, 500}, two k values per n, ten instances each.
     - Geo instances come with coordinates (d = 5 at n = 100, d = 13 at n = 250 and 500); Ran instances are given as a distance matrix only.
-    - The 75 Glover pairings (n ≤ 30) are measured but not charted: one sentence on the tables page states the match count.
+    - The 75 Glover pairings (n ≤ 30) run the single-worker series up to 1 s only, on `max-div` alone, and are summarized in one sentence, not charted.
     - Instances are fetched at run time and never redistributed; the maintainers' site states no license ("all rights reserved") and asks that the library be cited as Martí, Duarte, Martínez-Gavara & Sánchez-Oro (2021), *The MDPLIB 2.0 Library of Benchmark Instances for Diversity Problems*.
 - **Objective**: minimum separation, the MMDP objective, scored identically for every tool.
 - **Entrants**: the registry tools whose input form the instance provides; one run per seed where the tool is seeded, and a tool's time includes any conversion it needs.
@@ -31,7 +31,7 @@ The tier reuses the time budget and reference machine of the [solver-scaling pro
 
 ### II.B. Reference values
 
-The best-known value of a pairing is the largest value published by any of three sources; the tables page lists every value with its source.
+The best-known value of a pairing is the largest value published by any of three sources; the [tables page](tier3_tables.md#iv-best-known-values-and-provenance) lists every value with its source.
 
 - **RMGD2010** — Resende, Martí, Gallego & Duarte (2010), *GRASP and path relinking for the max–min diversity problem*, Computers & Operations Research 37(3): the values distributed with the instances, best over the paper's six algorithms.
 - **PHG2011** — Porumbel, Hao & Glover (2011), *A simple and effective algorithm for the MaxMin diversity problem*, Annals of Operations Research 186(1), appendix tables 6–7 ([author manuscript](https://cedric.cnam.fr/~porumbed/papers/paperAOR11.pdf)).
@@ -110,6 +110,10 @@ Only the distance-matrix tools enter: `qc-selector` max-min sits 2–11 % short 
 
 ![tier3_ran_500_150](./images/tier3_ran_500_150.webp)
 
-## V. Tables
+## V. The Glover set: instances at n ≤ 30
+
+--8<-- "docs/benchmarks/third_party/head_to_head/results/tier3_glover_sentence.md"
+
+## VI. Tables
 
 The [tables page](tier3_tables.md) holds the numbers behind the charts.

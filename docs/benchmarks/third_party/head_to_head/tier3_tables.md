@@ -20,11 +20,7 @@ Each row gives, per group, each entrant's mean gap over the group's instances an
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier3_entrants.md"
 
-## IV. Glover
-
---8<-- "docs/benchmarks/third_party/head_to_head/results/tier3_glover_sentence.md"
-
-## V. Best-known values and provenance
+## IV. Best-known values and provenance
 
 Sources are named on the [comparison page](tier3.md#iib-reference-values).
 

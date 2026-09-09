@@ -23,7 +23,7 @@ The tier reuses the time budget and reference machine of the [solver-scaling pro
     - `kmedoids` (representativeness);
     - `DPPy` (a determinantal sample);
     - the max-sum picker of `qc-selector`.
-- **Entrants**: every non-exact registry tool, at the sizes its scaling time limit covers; one run per seed where the tool is seeded. A tool's time includes any conversion it needs. Exact solvers are compared on the [exact-solver tier](tier1.md), not here.
+- **Entrants**: every non-exact registry tool, at the sizes its [scaling time limit](../scaling/time.md) covers; one run per seed where the tool is seeded. A tool's time includes any conversion it needs. Exact solvers are compared on the [exact-solver tier](tier1.md), not here.
 - **max-div**: `DEFAULT` preset with lazy distance storage, one independent solve per budget and seed, one solve at a time, timed end to end around the call; charts plot *measured* wall-clock, never the nominal budget. Two budget series per size:
     - one worker, 1 ms to 60 s;
     - 12 workers with the default dynamic grouping, 1 s to 60 s.

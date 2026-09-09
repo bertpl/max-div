@@ -12,7 +12,7 @@ The comparison runs in three tiers, by what `max-div` is measured against:
 
 All three tiers share these settings:
 
-- the 60 s time budget, the 1-2-5 size grid and the reference machine of the [solver-scaling protocol](../scaling/protocol.md), and the [solver configurations](../scaling/solver_configs.md) measured there;
+- the 60 s time budget and the reference machine of the [solver-scaling protocol](../scaling/protocol.md), and the [solver configurations](../scaling/solver_configs.md) measured there;
 - 3 seeds per cell;
 - `max-div` in its `DEFAULT` preset, solved once per time budget of a series of increasing budgets, once with one worker and once with 12 workers; each solve is timed end to end;
 - every tool's selection evaluated under identical criteria.
