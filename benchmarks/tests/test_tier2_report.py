@@ -52,10 +52,11 @@ def test_overtake_budget_is_the_first_budget_whose_median_reaches_the_target():
 
 
 def test_size_table_orders_every_tool_by_quality_and_names_the_overtake_budgets():
-    """max-div's quoted-budget rows and the entrants share one table, best first, then the overtake sentence."""
+    """One table: max-div's quoted budgets and the entrants, best first, faster first on a tie, then the overtake sentence."""
     # --- arrange ----------------------
     records = [
         _record("fpsample[FPS]", "single-shot", 1.0, measured_sec=0.02),
+        _record("skmatter[FPS]", "single-shot", 0.99996, measured_sec=0.01),  # prints as 1.0000: a tie
         _record("max-div[DEFAULT]", "time:1.0s", 0.9, measured_sec=1.0),
         _record("max-div[DEFAULT]", "time:60.0s", 1.2, measured_sec=60.0),
         _record("max-div[DEFAULT, 12 workers]", "time:1.0s", 1.05, measured_sec=1.35),
@@ -66,10 +67,11 @@ def test_size_table_orders_every_tool_by_quality_and_names_the_overtake_budgets(
     table = report.build_size_table(records, 200)
 
     # --- assert -----------------------
-    assert table.splitlines()[2:7] == [
+    assert table.splitlines()[2:8] == [
         "| max-div[DEFAULT, 12 workers] @ 60 s | 1.3000 | 60.4 s |",
         "| max-div[DEFAULT] @ 60 s | 1.2000 | 60 s |",
         "| max-div[DEFAULT, 12 workers] @ 1 s | 1.0500 | 1.35 s |",
+        "| skmatter[FPS] | 1.0000 | 0.01 s |",
         "| fpsample[FPS] | 1.0000 | 0.02 s |",
         "| max-div[DEFAULT] @ 1 s | 0.9000 | 1 s |",
     ]

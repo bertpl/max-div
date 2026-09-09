@@ -1,6 +1,6 @@
 # Head-to-Head — vs. Python Heuristics — Tables
 
-The tables of the [Python-heuristics comparison](tier2.md), one per size, every tool in one ordering by quality:
+The tables of the [Python-heuristics comparison](tier2.md), one per size, every tool in one ordering by quality, the shorter time first on a tie:
 
 - quality is minimum separation on U1;
 - a `max-div` row is one series at one quoted budget: the median over seeds of its quality and of its measured time;

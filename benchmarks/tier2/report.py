@@ -23,6 +23,7 @@ from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
 from .full import DATA_DIR, ENTRANT_FILE, MAXDIV_FILE, METRIC, N_WORKERS, OUTPUT_DIR, PROBLEM
 
 RECORDS_DIR = OUTPUT_DIR
+QUALITY_DECIMALS = 4  # decimals the tables print quality at; ties are judged at this precision
 DOCS_DIR = Path("docs/benchmarks/third_party/head_to_head")
 
 
@@ -82,11 +83,12 @@ def series_medians(records: list[RunRecord], tool: str) -> dict[float, tuple[flo
 
 
 def size_table_rows(records: list[RunRecord]) -> list[tuple[str, float, float]]:
-    """Return one size's table rows as (label, quality, time), best quality first.
+    """Return one size's table rows as (label, quality, time), best quality first, the shorter time first on a tie.
 
     max-div contributes one row per series and quoted budget, labeled with the budget; every entrant
     contributes its mean over seeds. One ordering over all rows is what lets a reader compare
-    max-div's result at a budget with the one-shot tools directly.
+    max-div's result at a budget with the one-shot tools directly. A tie is judged at the precision
+    the table prints, so rows the reader sees as equal are ordered by time.
     """
     rows: list[tuple[str, float, float]] = []
     for tool in (maxdiv_tool_label(), maxdiv_tool_label(n_workers=N_WORKERS)):
@@ -95,7 +97,7 @@ def size_table_rows(records: list[RunRecord]) -> list[tuple[str, float, float]]:
             if budget in medians:
                 rows.append((f"{tool} @ {budget:g} s", *medians[budget]))
     rows += [(tool, quality, time) for tool, (quality, time) in entrant_means(records).items()]
-    return sorted(rows, key=lambda row: row[1], reverse=True)
+    return sorted(rows, key=lambda row: (-round(row[1], QUALITY_DECIMALS), row[2]))
 
 
 def overtake_sentence(records: list[RunRecord]) -> str:
@@ -116,7 +118,10 @@ def build_size_table(records: list[RunRecord], n: int) -> str:
     """Build one size's markdown snippet: every tool's quality and time in one ordering, then the overtake sentence."""
     size_records = [r for r in records if r.n == n]
     lines = ["| tool | quality (min separation) | time |", "|---|---|---|"]
-    lines += [f"| {label} | {quality:.4f} | {time:.3g} s |" for label, quality, time in size_table_rows(size_records)]
+    lines += [
+        f"| {label} | {quality:.{QUALITY_DECIMALS}f} | {time:.3g} s |"
+        for label, quality, time in size_table_rows(size_records)
+    ]
     return "\n".join(lines) + "\n\n" + overtake_sentence(size_records)
 
 
