@@ -17,10 +17,8 @@ class DppyKDpp(SelectionAdapter):
     distance as its bandwidth — the usual default when no domain kernel exists.
     """
 
-    @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "DPPy[k-DPP]"
+    tool_key = "dppy"
+    config = "default"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Draw one exact k-DPP sample, seeded through numpy's RNG."""

@@ -16,10 +16,8 @@ class KMedoidsFasterPAM(SelectionAdapter):
     coverage objective behaves under dispersion metrics, not as a dispersion competitor.
     """
 
-    @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "kmedoids[FasterPAM]"
+    tool_key = "kmedoids"
+    config = "default"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Run FasterPAM on the full distance matrix and return the k medoids."""

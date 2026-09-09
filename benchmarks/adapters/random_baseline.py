@@ -11,9 +11,12 @@ from .base import SelectionAdapter
 class RandomBaseline(SelectionAdapter):
     """Select k items uniformly at random (constraint-oblivious)."""
 
+    tool_key = "random"
+    config = "default"
+
     @property
     def name(self) -> str:
-        """Tool name as it appears in records and figures."""
+        """The baseline is outside the registry and carries no configuration: a bare label."""
         return "random"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:

@@ -53,6 +53,20 @@ def test_adapter_is_deterministic_given_seed(small_problem, adapter):
     assert np.array_equal(first, second)
 
 
+@pytest.mark.parametrize(
+    ("adapter", "label"),
+    [
+        (FpsampleFPS(), "fpsample[vanilla]"),
+        (FpsampleFPS(variant="kdline"), "fpsample[kdline]"),
+        (RdkitMaxMin(), "RDKit MaxMinPicker[default]"),
+        (QcSelectorMaxSum(), "qc-selector[maxsum]"),
+    ],
+)
+def test_adapter_label_is_the_registry_name_and_the_configuration(adapter, label):
+    """A record label names the tool as the registry does and the configuration as the scaling page does."""
+    assert adapter.name == label
+
+
 def test_code_fdm_adapter_satisfies_constraints(small_constrained_problem):
     # fetched research code: robustness over blocking — network trouble skips, never fails
     # --- act ---------------------------------------------

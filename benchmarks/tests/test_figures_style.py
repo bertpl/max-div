@@ -22,9 +22,10 @@ def test_unlisted_tool_gets_the_fallback_color():
     ("label", "expected"),
     [
         ("max-div[DEFAULT]", "max-div"),
-        ("RDKit[MaxMinPicker]", "rdkit"),
-        ("apricot[facility-location]", "apricot-select"),
-        ("code-FDM[FairFlow]", "code-fdm"),
+        ("RDKit MaxMinPicker[default]", "rdkit"),
+        ("apricot-select[default]", "apricot-select"),
+        ("code-FDM[fairflow]", "code-fdm"),
+        ("random", "random"),
         ("random", "random"),
     ],
 )
@@ -58,7 +59,9 @@ def test_anytime_chart_draws_reference_lines_and_markers(tmp_path: Path):
     from benchmarks.figures import ReferenceLine, ReferenceMarker, plot_anytime_curve
 
     records = [
-        RunRecord("max-div[DEFAULT]", "U1", 20, 20, 2, "MIN_SEPARATION", 0, f"time:{b}s", b, None, {"MIN_SEPARATION": q})
+        RunRecord(
+            "max-div[DEFAULT]", "U1", 20, 20, 2, "MIN_SEPARATION", 0, f"time:{b}s", b, None, {"MIN_SEPARATION": q}
+        )
         for b, q in ((0.001, 0.5), (1.0, 0.9))
     ]
     path = tmp_path / "chart.webp"
@@ -83,7 +86,9 @@ def test_budget_series_stats_follow_the_budget_order():
     from benchmarks.figures.anytime import _budget_series_stats
 
     records = [
-        RunRecord("max-div[DEFAULT]", "U1", 20, 20, 2, "MIN_SEPARATION", 0, f"time:{b}s", t, None, {"MIN_SEPARATION": q})
+        RunRecord(
+            "max-div[DEFAULT]", "U1", 20, 20, 2, "MIN_SEPARATION", 0, f"time:{b}s", t, None, {"MIN_SEPARATION": q}
+        )
         for b, t, q in ((0.1, 0.1, 0.6), (0.001, 0.03, 0.5), (0.05, 0.055, 0.55))
     ]
 

@@ -25,7 +25,7 @@ def test_records_round_trip(tmp_path: Path):
             n_constraints_satisfied=2,
         ),
         RunRecord(
-            tool="fpsample[FPS]",
+            tool="fpsample[vanilla]",
             problem="U1",
             size=2,
             n=200,

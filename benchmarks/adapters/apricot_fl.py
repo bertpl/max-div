@@ -16,10 +16,8 @@ class ApricotFacilityLocation(SelectionAdapter):
     must label it as a different-objective reference, not a like-for-like competitor.
     """
 
-    @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "apricot[facility-location]"
+    tool_key = "apricot-select"
+    config = "default"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Run apricot's greedy facility-location selection (deterministic; seed unused)."""

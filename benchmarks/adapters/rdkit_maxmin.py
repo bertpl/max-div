@@ -17,10 +17,8 @@ class RdkitMaxMin(SelectionAdapter):
     that is the tool's designed trade-off and is measured as-is.
     """
 
-    @property
-    def name(self) -> str:
-        """Tool name as it appears in records and figures."""
-        return "RDKit[MaxMinPicker]"
+    tool_key = "rdkit"
+    config = "default"
 
     def select(self, problem: MaxDivProblem, seed: int) -> NDArray[np.int64]:
         """Run LazyPick with a euclidean-distance callback over the problem vectors."""

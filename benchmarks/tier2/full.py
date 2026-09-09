@@ -36,7 +36,6 @@ from benchmarks.common.protocol import (
     SINGLE_WORKER_BUDGETS_SEC,
 )
 from benchmarks.common.records import RunRecord
-from benchmarks.figures.style import tool_key
 from benchmarks.runners import run_adapter, run_maxdiv_budget_series
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
 from benchmarks.solver_scaling.quality_stage import time_limits
@@ -79,7 +78,7 @@ def runs_at_size(adapter: SelectionAdapter, n: int, limits: dict[tuple[str, str]
 
     The random baseline has no scaling configuration and runs at every size.
     """
-    key = tool_key(adapter.name)
+    key = adapter.tool_key
     if key == "random":
         return True
     limit = max((n_max for (tool, _config), n_max in limits.items() if tool == key), default=0)

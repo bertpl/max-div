@@ -30,7 +30,7 @@ def test_run_entrants_skips_tools_outside_their_limit_and_resumes(tmp_path: Path
         )
 
     # --- assert -----------------------
-    assert [r.tool for r in records] == ["RDKit[MaxMinPicker]"]
+    assert [r.tool for r in records] == ["RDKit MaxMinPicker[default]"]
     assert load_records(out_path) == records
 
 
@@ -38,7 +38,11 @@ def test_run_maxdiv_writes_both_series(tmp_path: Path):
     """Both max-div series run at each size, on min separation."""
     # --- act --------------------------
     records = full.run_maxdiv(
-        sizes=(200,), seeds=(0,), single_budgets_sec=[0.001], multi_budgets_sec=[0.2], n_workers=2,
+        sizes=(200,),
+        seeds=(0,),
+        single_budgets_sec=[0.001],
+        multi_budgets_sec=[0.2],
+        n_workers=2,
         out_path=tmp_path / "maxdiv.jsonl",
     )
 
