@@ -7,7 +7,7 @@ This tier is the only one run on instances `max-div` did not generate: the MMDP 
 Every chart covers one instance group (a set, a size n and a selection size k, ten instances) and reads the same way:
 
 - the **y axis** is the gap to the best-known value in percent, positive below it; the **dotted line** at zero is the best-known value itself;
-- the **black curves** are `max-div`: solid with one worker, dashed with 12 (n = 500 only); the line is the mean over the group's instances and seeds, the band the min/max;
+- the **black curves** are `max-div`: solid with one worker, dashed with 12; the line is the mean over the group's instances and seeds, the band the min/max;
 - each **dot** is one one-shot tool at its own measured time and mean gap.
 
 ## II. Protocol
@@ -50,9 +50,9 @@ Ran's distances are integers in [1, 200], so on that set one integer step below 
 
 ## III. Geo
 
-No Geo value is exceeded, and the best-known value is reached on 8 of the ten n = 100 instances at k = 10 and 6 at k = 30, but on one instance per group from n = 250 on.
+No Geo value is exceeded. The best-known value is reached on every n = 100 instance at k = 10 and 8 at k = 30, on 8 and 4 of the n = 250 instances, and on one instance per group at n = 500.
 
-The remaining gap at 60 s is small: 0.4–2.4 % on average per group with one worker, 0.5–1.2 % with 12 workers at n = 500, the worst instance of a group 1.7–10.5 % short.
+The remaining gap at 60 s is small: 0.4–2.4 % on average per group with one worker and 0.1–1.2 % with 12 workers; the worst instance of a group is 1.7–10.5 % short with one worker and 0.8–4.0 % with 12.
 
 The farthest-point pickers (`fpsample`, `skmatter`, `RDKit`, `qc-selector` max-min, `code-FDM`) sit 4–8.5 % short in a few milliseconds; `max-div` passes them within about 100 ms of budget and keeps improving. The tools with a different objective (`apricot-select`, `kmedoids`, `DPPy`, `qc-selector` max-sum) sit 31–49 % short.
 
@@ -82,7 +82,7 @@ The farthest-point pickers (`fpsample`, `skmatter`, `RDKit`, `qc-selector` max-m
 
 ## IV. Ran
 
-The Ran picture is the same, except for Ran 500 with k = 150. At n = 100 the best-known value is reached on 7 instances at k = 10 and 8 at k = 30; from n = 250 on, on 0–4 per group, never exceeded, with 1.0–3.0 % average gaps at 60 s.
+The Ran picture is the same, except for Ran 500 with k = 150. At n = 100 the best-known value is reached on every instance; at n = 250 on 5 instances at k = 25 and 9 at k = 75; at n = 500 on 2 and 3. No value is exceeded, and the average gap at 60 s is 1.0–3.0 % with one worker and 0.2–1.4 % with 12 workers.
 
 On that group, every best-known value is 5, `max-div` reaches 4 on every instance with one worker — the integer distances make that one step a 20 % gap — and 12 workers reach 5 on three instances within 60 s.
 
