@@ -25,7 +25,7 @@ from max_div._core.metrics._distance._metric import (
 KIND_LAZY = np.int32(0)
 KIND_FULL_MATRIX = np.int32(1)
 
-# Shared placeholder for the fields a backend does not use, so empty stores cost nothing.  Read-only
+# One shared placeholder fills the fields a backend does not use, so empty stores cost nothing.  Read-only
 # because every store of a given backend hands out the same object, and because it makes every
 # field of DISTANCE_STORE_TYPE read-only.
 _EMPTY_2D = np.empty((0, 0), dtype=np.float32)
@@ -134,7 +134,7 @@ class DistanceStore(NamedTuple):
     def full_matrix_from_vectors(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
         """Return a full-matrix DistanceStore computed from vectors, exactly symmetric by construction.
 
-        Each pair is computed once through the same pair kernels the lazy path uses, and written
+        Each pair is computed once through the same pair arithmetic the lazy reads use, and written
         to both halves — so values are bit-equal across backends and symmetry is structural.
 
         Args:

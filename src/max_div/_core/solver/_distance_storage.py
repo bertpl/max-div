@@ -68,7 +68,7 @@ def select_distance_storage(
     if storage != DistanceStorage.AUTO:
         return storage
     if not isinstance(problem, VectorMaxDivProblem):
-        return DistanceStorage.FULL_MATRIX  # distance-input problems: the only stored form
+        return DistanceStorage.FULL_MATRIX  # distance-input problems have no vectors, so this is their only backend
     if total_memory_bytes is None:
         return DistanceStorage.LAZY
     if full_matrix_bytes(problem.n) <= total_memory_bytes * _AUTO_MEMORY_FRACTION:
@@ -79,8 +79,8 @@ def select_distance_storage(
 def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> DistanceStore:
     """Build the distance store for an already-resolved (non-AUTO) backend choice.
 
-    Zero-copy where the problem already holds a square matrix; a condensed input is expanded here,
-    consciously, into the one n²-sized allocation on that path.
+    The store is zero-copy where the problem already holds a square matrix; a condensed input is
+    expanded here, into the one n²-sized allocation on that path.
 
     Raises:
         ValueError: For LAZY on a distance-input problem (no vectors to compute from), or when the
@@ -89,7 +89,7 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
     match resolved:
         case DistanceStorage.FULL_MATRIX:
             if not problem.has_full_matrix:
-                _check_fits_physical_memory(problem)  # the one n²-sized allocation on this path
+                _check_fits_physical_memory(problem)
             return DistanceStore.full_matrix(problem.full_matrix())
         case DistanceStorage.LAZY:
             if not isinstance(problem, VectorMaxDivProblem):

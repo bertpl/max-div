@@ -6,8 +6,7 @@ access pattern, so the two halves must be bit-equal.  Every fill also zeroes the
 computes, so a fill leaves a complete matrix whatever the buffer held beforehand.
 
 Every fill writes into a buffer the caller supplies, and each entry point allocates one only when
-none is given.  That lets a store be built straight into shared memory rather than built and then
-copied.
+none is given.  That lets a store be built straight into shared memory, with no build-then-copy.
 
 The build from vectors comes in a sequential and a parallel variant with bit-identical output — the
 parallel fill runs the same pair arithmetic under the same fastmath flags and writes each element
@@ -18,10 +17,6 @@ The parallel fill cuts the columns into fixed-width blocks and parallelizes the 
 each block: every row above a block computes exactly one block-width of pairs, so prange can
 split the work evenly across threads — parallelizing the outer row loop over the whole i<j pair
 triangle instead leaves one thread with roughly twice the work of the average.
-
-Only the entry points are re-exported.  The block width and the parallel switch stay internal to the
-package, since nothing outside it builds distances itself — anything that reaches for them, tests
-included, imports this module.
 """
 
 import os
@@ -46,7 +41,7 @@ WRITABLE_F32_2D = numba.float32[:, ::1]
 
 
 def parallel_build_enabled() -> bool:
-    """Return whether distance builds may use multiple threads (default: enabled)."""
+    """Return whether distance builds may use multiple threads."""
     return os.environ.get("MAXDIV_PARALLEL_BUILD", "1") != "0"
 
 
@@ -58,10 +53,9 @@ def compute_full_matrix(
 ) -> NDArray[np.float32]:
     """Compute the full (n, n) pair-wise distance matrix, exactly symmetric by construction.
 
-    Each pair is computed once through the same pair arithmetic the lazy reads use, and written to
-    both halves.  Computed directly in float32 — each pair accumulates in float64 across the d
-    dimensions and narrows to float32 on store — avoiding the float64 matrix scipy would otherwise
-    materialize and cast.
+    Each pair is computed once through the same pair arithmetic the lazy reads use.  The matrix is
+    computed directly in float32: each pair accumulates in float64 across the d dimensions and
+    narrows to float32 on store.
 
     Args:
         vectors: (n x d ndarray) A set of n vectors in d dimensions.

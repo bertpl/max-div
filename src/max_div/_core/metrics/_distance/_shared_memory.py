@@ -60,7 +60,7 @@ class SharedStoreSpec(NamedTuple):
 
     segment_name: str  # OS-level name of the segment, which is how another process finds it
     kind: int  # which DistanceStore backend the segment's array holds data for
-    metric_kind: int  # metric the lazy backend computes with; the stored backends ignore it
+    metric_kind: int  # metric the lazy backend computes with; the full-matrix backend ignores it
     metric_p: float  # `DistanceMetric.p`, in the njit encoding that class defines
     shape: tuple[int, ...]  # shape of the float32 array in the segment; its first axis is the item count
 

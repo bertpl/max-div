@@ -5,13 +5,13 @@ across tools by construction. Evaluation only ever touches the k x k distances a
 selected items — never the full n^2 pairwise matrix — so scoring stays cheap even at the
 largest benchmark sizes: vector problems compute the k x k block directly from the selected
 vectors (respecting the problem's distance metric), and precomputed-distance problems gather
-it from their stored condensed vector.
+it from the distances they hold.
 """
 
 import numpy as np
 from numpy.typing import NDArray
 
-# The library-internal pdist kernel is used on purpose: selections must be scored under
+# The library-internal distance build is used on purpose: selections must be scored under
 # exactly the distance semantics the solver itself uses (incl. float32 behavior), and the
 # public API only exposes distances via whole problems.
 from max_div._core.metrics._distance import compute_full_matrix

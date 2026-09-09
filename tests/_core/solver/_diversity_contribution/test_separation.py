@@ -3,14 +3,10 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import DistanceStore, compute_full_matrix
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import SeparationTracker
 from max_div._core.solver._diversity_contribution._separation import backend_for
-
-
-def _condensed(vectors: np.ndarray, metric: DistanceMetric) -> np.ndarray:
-    """Return the pairwise distances in scipy's condensed order, taken from the full-matrix build."""
-    return squareform(compute_full_matrix(vectors, metric), checks=False)
+from tests._core.metrics._distance.helpers import condensed_distances
 
 
 # =================================================================================================
@@ -203,7 +199,7 @@ def test_elements_over_every_item():
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
-    d = _condensed(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     m = vectors.shape[0]
     d_squared = squareform(d)
 
@@ -227,7 +223,7 @@ def test_update_separation_add():
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
-    d = _condensed(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d)
 
     # initial separation, assuming vector 0 forms the initial selection
@@ -268,7 +264,7 @@ def test_update_separation_remove():
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2], [1.1, 0]], dtype=np.float32)
-    d = _condensed(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d)
 
     # initial separation, assuming vector 0 & 2 form the initial selection
@@ -322,7 +318,7 @@ def _stores_for(vectors: np.ndarray, metric: DistanceMetric) -> dict[str, Distan
 def _brute_force_separation(vectors: np.ndarray, metric: DistanceMetric, selection: list[int]) -> np.ndarray:
     """Separation of every item wrt `selection`, computed independently of the backends."""
     n = vectors.shape[0]
-    squared = squareform(_condensed(vectors, metric)).astype(np.float64)
+    squared = squareform(condensed_distances(vectors, metric)).astype(np.float64)
     expected = np.full(n, np.inf, dtype=np.float64)
     for j in range(n):
         for k in selection:

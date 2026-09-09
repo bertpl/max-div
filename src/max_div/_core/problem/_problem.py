@@ -49,14 +49,14 @@ class MaxDivProblem(ABC):
     @property
     @abstractmethod
     def has_full_matrix(self) -> bool:
-        """Whether the problem already holds its distances as a full matrix, so `full_matrix` is zero-copy."""
+        """True when the problem already holds its distances as a full matrix, so `full_matrix` is zero-copy."""
 
     @abstractmethod
     def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
         """Return the full (n, n) pairwise-distance matrix the solver reads from.
 
-        Computed from the vectors, adopted as given, or expanded from a condensed input, whichever
-        the flavor holds.  With `out` given the matrix is written into that buffer, which is how a
+        The matrix is computed from the vectors, adopted as given, or expanded from a condensed
+        input, whichever the flavor holds.  With `out` given the matrix is written into that buffer, which is how a
         store is built straight into shared memory; without it, a problem that already holds a full
         matrix returns it without copying.
         """
@@ -65,8 +65,8 @@ class MaxDivProblem(ABC):
     def condensed_distances(self) -> NDArray[np.float32]:
         """Return the condensed pairwise-distance vector (scipy layout), computing it if needed.
 
-        A data format for callers that want every pair once, not what the solver reads from: the
-        vector flavor computes the full matrix and keeps its upper triangle.
+        Callers that want every pair once use this; the solver does not read from it.  The vector
+        flavor computes the full matrix and keeps its upper triangle.
         """
 
     # --- computed fields ------------------------

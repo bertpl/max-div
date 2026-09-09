@@ -1,18 +1,11 @@
 import numpy as np
 import pytest
 from scipy.spatial.distance import pdist as scipy_pdist
-from scipy.spatial.distance import squareform
 
 from max_div._core.metrics._distance import (
     DistanceMetric,
-    compute_full_matrix,
 )
-
-
-def _condensed(vectors: np.ndarray, metric: DistanceMetric) -> np.ndarray:
-    """Return the pairwise distances in scipy's condensed order, taken from the full-matrix build."""
-    return squareform(compute_full_matrix(vectors, metric), checks=False)
-
+from tests._core.metrics._distance.helpers import condensed_distances
 
 _SCIPY_METRIC = {
     DistanceMetric.l1_manhattan(): "cityblock",
@@ -34,7 +27,7 @@ def test_pair_metrics(metric: DistanceMetric):
     vectors = np.array([[2, 2], [3, 4], [1, 0], [0, 1]], dtype=np.float32)
 
     # --- act --------------------------
-    d = _condensed(vectors, metric=metric)
+    d = condensed_distances(vectors, metric=metric)
 
     # --- assert -----------------------
     assert d.shape == (6,), "Unexpected number of pairs."
@@ -58,7 +51,7 @@ def test_pair_values(metric: DistanceMetric, expected_value: float):
     vectors = np.array([[0, 0], [3, 4]], dtype=np.float32)
 
     # --- act --------------------------
-    d = _condensed(vectors, metric=metric)
+    d = condensed_distances(vectors, metric=metric)
 
     # --- assert -----------------------
     assert d[0] == pytest.approx(expected_value)
@@ -74,7 +67,7 @@ def test_pair_matches_scipy(metric: DistanceMetric):
     expected = scipy_pdist(vectors, metric=_SCIPY_METRIC[metric]).astype(np.float32)
 
     # --- act --------------------------
-    result = _condensed(vectors, metric=metric)
+    result = condensed_distances(vectors, metric=metric)
 
     # --- assert -----------------------
     assert result.dtype == np.float32
@@ -94,7 +87,7 @@ def test_pair_minkowski_matches_reference(p: float, root: bool):
     expected = expected_matrix[np.triu_indices(40, k=1)].astype(np.float32)
 
     # --- act --------------------------
-    result = _condensed(vectors, metric=DistanceMetric.minkowski(p, root=root))
+    result = condensed_distances(vectors, metric=DistanceMetric.minkowski(p, root=root))
 
     # --- assert -----------------------
     np.testing.assert_allclose(result, expected, rtol=2e-5, atol=2e-6)
@@ -116,7 +109,7 @@ def test_pair_cosine_values(x: list[float], y: list[float], expected_value: floa
     vectors = np.array([x, y], dtype=np.float32)
 
     # --- act --------------------------
-    d = _condensed(vectors, metric=DistanceMetric.cosine())
+    d = condensed_distances(vectors, metric=DistanceMetric.cosine())
 
     # --- assert -----------------------
     assert d[0] == pytest.approx(expected_value, abs=1e-6)
@@ -130,7 +123,7 @@ def test_pair_cosine_zero_vector_raises():
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match=r"zero vector.*row 1"):
-        _condensed(vectors, metric=DistanceMetric.cosine())
+        condensed_distances(vectors, metric=DistanceMetric.cosine())
 
 
 def test_pair_zero_for_identical_vectors(metric: DistanceMetric):
@@ -140,7 +133,7 @@ def test_pair_zero_for_identical_vectors(metric: DistanceMetric):
     vectors = np.array([[1.5, -2.0, 3.0], [1.5, -2.0, 3.0], [4.0, 4.0, 4.0]], dtype=np.float32)
 
     # --- act --------------------------
-    result = _condensed(vectors, metric=metric)
+    result = condensed_distances(vectors, metric=metric)
 
     # --- assert -----------------------
     assert result[0] == np.float32(0.0)  # distance between the two identical vectors
@@ -169,7 +162,7 @@ def test_pair_geometric_mean_values(x: list[float], y: list[float], expected_val
     vectors = np.array([x, y], dtype=np.float32)
 
     # --- act --------------------------
-    d = _condensed(vectors, metric=DistanceMetric.geometric_mean())
+    d = condensed_distances(vectors, metric=DistanceMetric.geometric_mean())
 
     # --- assert -----------------------
     if expected_value == 0.0:

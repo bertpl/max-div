@@ -4,11 +4,12 @@ from numpy import random
 from scipy.spatial.distance import squareform
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import DistanceStore, compute_full_matrix
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker
 from max_div._core.solver._diversity_contribution._mean_distance import (
     backend_for,
 )
+from tests._core.metrics._distance.helpers import condensed_distances
 
 # =================================================================================================
 #  Fixtures / helpers
@@ -16,16 +17,11 @@ from max_div._core.solver._diversity_contribution._mean_distance import (
 N = 20
 
 
-def _condensed(vectors: np.ndarray, metric: DistanceMetric) -> np.ndarray:
-    """Return the pairwise distances in scipy's condensed order, taken from the full-matrix build."""
-    return squareform(compute_full_matrix(vectors, metric), checks=False)
-
-
 @pytest.fixture
 def pdist() -> np.ndarray:
     rng = random.default_rng(seed=20260713)
     vectors = rng.random((N, 3)).astype(np.float32)
-    return _condensed(vectors, DistanceMetric.l2_euclidean())
+    return condensed_distances(vectors, DistanceMetric.l2_euclidean())
 
 
 @pytest.fixture
@@ -224,7 +220,7 @@ def test_compute_mean_distance_elements_partial_fill():
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((30, 4)).astype(np.float32)
     m = vectors.shape[0]
-    d = _condensed(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     expected = (squareform(d).astype(np.float64).sum(axis=1) / (m - 1)).astype(np.float32)
     out = np.full(m, np.nan, dtype=np.float32)
     requested = np.array([0, 7, 29, 13], dtype=np.int32)
@@ -246,7 +242,7 @@ def test_update_distance_sums_add_remove():
     rng = np.random.default_rng(20260713)
     vectors = rng.standard_normal((20, 3)).astype(np.float32)
     m = vectors.shape[0]
-    d = _condensed(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     d_squared = squareform(d).astype(np.float64)
 
     dist_sums = np.zeros(m, dtype=np.float64)
@@ -276,7 +272,7 @@ def test_update_distance_sums_own_entry_untouched():
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
     m = vectors.shape[0]
-    d = _condensed(vectors, metric=DistanceMetric.l2_euclidean())
+    d = condensed_distances(vectors, metric=DistanceMetric.l2_euclidean())
     dist_sums = np.zeros(m, dtype=np.float64)
 
     # selection {1}: point 1's own entry stays 0 (no other selected points yet)
@@ -305,7 +301,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
     # --- arrange ----------------------
     rng = random.default_rng(20260805)
     vectors = rng.random((N, 3)).astype(np.float32)
-    condensed = _condensed(vectors, DistanceMetric.l2_euclidean())
+    condensed = condensed_distances(vectors, DistanceMetric.l2_euclidean())
     store = {
         "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         "lazy": DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean()),

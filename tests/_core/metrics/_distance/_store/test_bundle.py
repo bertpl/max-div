@@ -5,15 +5,10 @@ from scipy.spatial.distance import pdist, squareform
 from max_div._core.metrics._distance import (
     DistanceMetric,
     DistanceStore,
-    compute_full_matrix,
     get_distance,
 )
 from max_div._core.metrics._distance._store import KIND_FULL_MATRIX, KIND_LAZY
-
-
-def _condensed(vectors: np.ndarray, metric: DistanceMetric) -> np.ndarray:
-    """Return the pairwise distances in scipy's condensed order, taken from the full-matrix build."""
-    return squareform(compute_full_matrix(vectors, metric), checks=False)
+from tests._core.metrics._distance.helpers import condensed_distances
 
 
 # -------------------------------------------------------------------------
@@ -94,7 +89,7 @@ def test_full_matrix_construction_exactly_symmetric(metric: DistanceMetric):
 
     # --- act --------------------------
     from_vectors = DistanceStore.full_matrix_from_vectors(vectors, metric)
-    from_condensed = DistanceStore.full_matrix_from_condensed(_condensed(vectors, metric), n=12)
+    from_condensed = DistanceStore.full_matrix_from_condensed(condensed_distances(vectors, metric), n=12)
 
     # --- assert -----------------------
     for store in (from_vectors, from_condensed):
@@ -114,7 +109,7 @@ def _all_backend_stores(vectors: np.ndarray, metric: DistanceMetric) -> dict[str
         "full_from_vectors": DistanceStore.full_matrix_from_vectors(vectors, metric),
         "lazy": DistanceStore.lazy(vectors, metric),
         "full_from_condensed": DistanceStore.full_matrix_from_condensed(
-            _condensed(vectors, metric), n=vectors.shape[0]
+            condensed_distances(vectors, metric), n=vectors.shape[0]
         ),
     }
 
