@@ -35,23 +35,25 @@ The tier reuses the time budget and reference machine of the [solver-scaling pro
 The best one-shot tool is a farthest-point picker at every size: `RDKit` up to n = 10,000, `fpsample` at n = 100,000, where the other pickers reach the same value within 0.5 %. `max-div`'s `DEFAULT` preset starts from the same farthest-point construction, so the comparison is about what its optimization adds on top, and at what fixed cost:
 
 - **n ≤ 1,000**: `max-div` passes the best picker within 50 ms and keeps improving to 60 s — at n = 100 up to the [certified optimum](tier1.md), at n = 1,000 to 9 % (one worker) and 12 % (12 workers) above the picker.
-- **n = 10,000**: `max-div`'s first budgets sit 0.3 % below the picker line, the optimization overtakes at 0.5 s, and at 60 s the series end 8 % (one worker) and 9 % (12 workers) above it. The picker itself takes 2 ms (`fpsample[KDLine]`) to 4 s (`RDKit`) for its one answer.
-- **n = 100,000**: no measurable gain. Every series and every picker sit at the same value; `max-div`'s single-worker series costs a fixed 7 s before its first result and the 12-worker series 18 s, against 50 ms for `fpsample[KDLine]`. At this size a farthest-point picker is the better answer.
+- **n = 10,000**: `max-div`'s first budgets sit 0.5 % below the picker line, the optimization overtakes at 0.5 s, and at 60 s the series end 8 % (one worker) and 9 % (12 workers) above it. The picker itself takes 2 ms (`fpsample[KDLine]`) to 4 s (`RDKit`) for its one answer.
+- **n = 100,000**: the single-worker series adds nothing to its farthest-point start, 0.02 % above the picker at every budget; the 12-worker series is 0.3 % above it from its first point. Both pay a fixed set-up before that first point, 7 s with one worker and 18 s with 12, spent building the distance store, against 50 ms for `fpsample[KDLine]`.
 
-The [tables page](tier2_tables.md) holds the overtake budgets and every entrant's quality and time.
-
-### III.A. n = 100
+### III.A. Problem U1 at size n = 100
 
 ![tier2_U1_100_min_separation](./images/tier2_U1_100_min_separation.webp)
 
-### III.B. n = 1,000
+### III.B. Problem U1 at size n = 1,000
 
 ![tier2_U1_1000_min_separation](./images/tier2_U1_1000_min_separation.webp)
 
-### III.C. n = 10,000
+### III.C. Problem U1 at size n = 10,000
 
 ![tier2_U1_10000_min_separation](./images/tier2_U1_10000_min_separation.webp)
 
-### III.D. n = 100,000
+### III.D. Problem U1 at size n = 100,000
 
 ![tier2_U1_100000_min_separation](./images/tier2_U1_100000_min_separation.webp)
+
+## IV. Tables
+
+The [tables page](tier2_tables.md) holds the overtake budgets and every entrant's quality and time.

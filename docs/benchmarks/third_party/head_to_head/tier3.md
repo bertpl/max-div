@@ -48,37 +48,37 @@ That is 93 pairings in all. On those, matching the reference is the most any met
 
 Ran's distances are integers in [1, 200], so on that set one integer step below a small reference value is a gap of several percent (20 % where the reference is 5), which the charts show as a staircase.
 
-## III. Geo
+## III. The Geo set: instances given as coordinates
 
 No Geo value is exceeded. The best-known value is reached on nearly every n = 100 instance, on fewer at n = 250, and on one instance per group at n = 500; the remaining gap at 60 s is a few percent at most on average per group, and 12 workers cut it further. The per-group counts and gaps are on the [tables page](tier3_tables.md).
 
-The farthest-point pickers (`fpsample`, `skmatter`, `RDKit`, `qc-selector` max-min, `code-FDM`) sit 4–8.5 % short in a few milliseconds; `max-div` passes them within about 100 ms of budget and keeps improving. The tools with a different objective (`apricot-select`, `kmedoids`, `DPPy`, `qc-selector` max-sum) sit 31–49 % short.
+The farthest-point pickers (`fpsample`, `skmatter`, `RDKit`, `qc-selector` max-min, `code-FDM`) sit 3.5–8.5 % short in a few milliseconds; `max-div` passes them within about 100 ms of budget and keeps improving. The tools with a different objective (`apricot-select`, `kmedoids`, `DPPy`, `qc-selector` max-sum) sit 31–49 % short.
 
-### III.A. n = 100, k = 10
+### III.A. Geo instances at n = 100, k = 10
 
 ![tier3_geo_100_10](./images/tier3_geo_100_10.webp)
 
-### III.B. n = 100, k = 30
+### III.B. Geo instances at n = 100, k = 30
 
 ![tier3_geo_100_30](./images/tier3_geo_100_30.webp)
 
-### III.C. n = 250, k = 25
+### III.C. Geo instances at n = 250, k = 25
 
 ![tier3_geo_250_25](./images/tier3_geo_250_25.webp)
 
-### III.D. n = 250, k = 75
+### III.D. Geo instances at n = 250, k = 75
 
 ![tier3_geo_250_75](./images/tier3_geo_250_75.webp)
 
-### III.E. n = 500, k = 50
+### III.E. Geo instances at n = 500, k = 50
 
 ![tier3_geo_500_50](./images/tier3_geo_500_50.webp)
 
-### III.F. n = 500, k = 150
+### III.F. Geo instances at n = 500, k = 150
 
 ![tier3_geo_500_150](./images/tier3_geo_500_150.webp)
 
-## IV. Ran
+## IV. The Ran set: instances given as a distance matrix
 
 The Ran picture is the same, except for Ran 500 with k = 150: the best-known value is reached on every n = 100 instance and on fewer from n = 250 on, never exceeded, with the per-group counts and gaps on the [tables page](tier3_tables.md).
 
@@ -86,27 +86,27 @@ On that group, every best-known value is 5, `max-div` reaches 4 on every instanc
 
 Only the distance-matrix tools enter: `qc-selector` max-min sits 2–11 % short (39 % on the k = 150 group), `kmedoids` and `qc-selector` max-sum 4–31 % (80 % on that group).
 
-### IV.A. n = 100, k = 10
+### IV.A. Ran instances at n = 100, k = 10
 
 ![tier3_ran_100_10](./images/tier3_ran_100_10.webp)
 
-### IV.B. n = 100, k = 30
+### IV.B. Ran instances at n = 100, k = 30
 
 ![tier3_ran_100_30](./images/tier3_ran_100_30.webp)
 
-### IV.C. n = 250, k = 25
+### IV.C. Ran instances at n = 250, k = 25
 
 ![tier3_ran_250_25](./images/tier3_ran_250_25.webp)
 
-### IV.D. n = 250, k = 75
+### IV.D. Ran instances at n = 250, k = 75
 
 ![tier3_ran_250_75](./images/tier3_ran_250_75.webp)
 
-### IV.E. n = 500, k = 50
+### IV.E. Ran instances at n = 500, k = 50
 
 ![tier3_ran_500_50](./images/tier3_ran_500_50.webp)
 
-### IV.F. n = 500, k = 150
+### IV.F. Ran instances at n = 500, k = 150
 
 ![tier3_ran_500_150](./images/tier3_ran_500_150.webp)
 

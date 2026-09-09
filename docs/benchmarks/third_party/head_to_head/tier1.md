@@ -46,7 +46,7 @@ Near its limit, every solver's proof time climbs by at least a factor 5 per grid
 - **up to n = 100** both series reach the optimum:
     - on C1 within 20 ms;
     - on U1 at n = 100 the single worker sits 3.7 % short until 2 s, the 12-worker series is on the optimum from its first budget;
-- **from n = 200** a gap remains at 60 s: 5–11 % with one worker, 0–8 % with 12. The 12-worker series is ahead of, or level with, the single worker at every budget both run, and its lead grows with size;
+- **from n = 200** a gap remains at 60 s: 5–13 % with one worker, 0–8 % with 12. The 12-worker series is ahead of, or level with, the single worker at every budget both run;
 - the curves **improve in steps, not smoothly**: on U1 at n = 200 the single worker's median stays at 12.8 % from 20 ms to 60 s while 12 workers reach the optimum by 2 s. More workers close such a gap where more time on one worker does not.
 
 ### III.A. Benchmark Problem U1
@@ -59,7 +59,7 @@ Near its limit, every solver's proof time climbs by at least a factor 5 per grid
 
 ## IV. Mean separation
 
-CP-SAT certifies the nearest-neighbor assignment model at n = 20 and n = 50 on both problems, within seconds; n = 100 is not certified within the cap. `max-div` reaches every certified mean-separation optimum within 100 ms in both series.
+CP-SAT certifies the nearest-neighbor assignment model at n = 20 and n = 50 on both problems, within seconds; n = 100 is not certified within the cap. `max-div` reaches every certified mean-separation optimum within 10 ms with one worker, and at the first budget, 1 s, with 12.
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_gallery_mean_separation.md"
 
@@ -67,7 +67,7 @@ CP-SAT certifies the nearest-neighbor assignment model at n = 20 and n = 50 on b
 
 n = 20 and n = 50 certify on both problems, and C1 at n = 100 certifies as well — in 863 s, just inside the cap — the only n = 100 cell any solver proves on the assignment model.
 
-`max-div` reaches every certified geomean optimum within 100 ms, except C1 at n = 100, where the single worker is 0.1 % short at 1 s and on the optimum from 5 s.
+`max-div` reaches every certified geomean optimum within 10 ms with one worker and at the first budget, 1 s, with 12, except C1 at n = 100, where the single worker is 0.1 % short until 2 s and on the optimum from 5 s.
 
 --8<-- "docs/benchmarks/third_party/head_to_head/results/tier1_gallery_geomean_separation.md"
 
