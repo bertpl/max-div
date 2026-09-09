@@ -49,7 +49,7 @@ class MaxDivProblem(ABC):
     @property
     @abstractmethod
     def has_full_matrix(self) -> bool:
-        """True when the problem already holds its distances as a full matrix, so `full_matrix` is zero-copy."""
+        """Return True when the problem already holds its distances as a full matrix, so `full_matrix` is zero-copy."""
 
     @abstractmethod
     def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
@@ -169,9 +169,9 @@ class MaxDivProblem(ABC):
 
         Accepts either a square symmetric ``(n, n)`` distance matrix or a condensed distance
         vector of length ``n*(n-1)/2`` (scipy layout, as produced by ``scipy.spatial.distance.pdist``).
-        Distances are converted to ``float32`` internally.  The solver reads distances from a full
-        matrix, so a square input is adopted as is and a condensed input is expanded when the
-        solver builds its store, at twice the memory of the condensed vector.
+        Distances are converted to ``float32`` internally.  The solver reads from a full matrix, so
+        a condensed input is expanded when the solver builds its store; see `DistanceStorage` for
+        the cost.
 
         Args:
             distances: Square symmetric ``(n, n)`` matrix with zero diagonal, or condensed

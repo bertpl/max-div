@@ -1,7 +1,7 @@
 """One module per storage layout, and the lookup that picks the right one.
 
 Each module provides the same three calculations over the signatures in `.._signatures`, so the
-modules are interchangeable by construction and a third layout is a module plus an entry below.
+modules are interchangeable by construction and another layout is a module plus an entry below.
 
 Which one to use is decided here, in Python, and never inside a compiled function — see the
 separation package for why a layout test cannot live inside one of these loops.

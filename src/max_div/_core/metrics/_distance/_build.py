@@ -16,7 +16,7 @@ exactly once, so thread count cannot affect results.  `MAXDIV_PARALLEL_BUILD` pi
 The parallel fill cuts the columns into fixed-width blocks and parallelizes the row loop within
 each block: every row above a block computes exactly one block-width of pairs, so prange can
 split the work evenly across threads — parallelizing the outer row loop over the whole i<j pair
-triangle instead leaves one thread with roughly twice the work of the average.
+triangle leaves one thread with roughly twice the work of the average.
 """
 
 import os

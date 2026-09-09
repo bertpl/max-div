@@ -37,10 +37,10 @@ class DistanceStorage(StrEnum):
     """How the solver stores pairwise distances during search.
 
     `AUTO` (the default) lets max-div decide: for vector problems, the full matrix when it fits in
-    memory and the lazy backend otherwise; for distance-input problems, always the full matrix.
-    The resolved backend is reported in the solution summary.  Pinning a specific backend
-    overrides the policy — `LAZY` requires vectors, so it is unavailable for distance-input
-    problems.
+    memory and the lazy backend otherwise; for distance-input problems, always the full matrix,
+    which expands a condensed input at twice its memory.  The resolved backend is reported in the
+    solution summary.  Pinning a specific backend overrides the policy — `LAZY` requires vectors,
+    so it is unavailable for distance-input problems.
     """
 
     AUTO = "auto"
@@ -79,8 +79,8 @@ def select_distance_storage(
 def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> DistanceStore:
     """Build the distance store for an already-resolved (non-AUTO) backend choice.
 
-    The store is zero-copy where the problem already holds a square matrix; a condensed input is
-    expanded here, into the one n²-sized allocation on that path.
+    The full matrix is computed for a vector problem, adopted zero-copy for a square input, and
+    expanded for a condensed input; the memory check guards the two allocating cases.
 
     Raises:
         ValueError: For LAZY on a distance-input problem (no vectors to compute from), or when the
@@ -107,7 +107,7 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
 
     A full matrix is built or expanded straight into the segment: at full-matrix sizes a
     build-then-copy would double peak resident memory for its duration.  Data the problem already
-    holds in final form is copied in instead, since the bytes have to live in the segment.
+    holds in final form is copied in, since the bytes have to live in the segment.
 
     The caller owns the returned segment and must keep it open for as long as any process reads it.
 
@@ -119,8 +119,9 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
         shared = SharedDistanceStore.allocate((problem.n, problem.n), KIND_FULL_MATRIX)
         problem.full_matrix(out=shared.buffer)
         return shared
-    # a full matrix as given, or lazy: `lazy` applies the per-metric preparation, so its output is
-    # what gets published — the segment must hold the vectors in the form the distance reads expect
+    # The remaining cases, a full matrix as given or lazy, publish a built store; `lazy` applies the
+    # per-metric preparation, so its output is what gets published — the segment must hold the
+    # vectors in the form the distance reads expect.
     return publish_distance_store(build_distance_store(problem, resolved))
 
 

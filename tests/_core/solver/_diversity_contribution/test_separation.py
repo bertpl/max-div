@@ -303,10 +303,10 @@ def test_update_separation_remove():
 # =================================================================================================
 #  Backend equivalence
 # =================================================================================================
-# One backend module per storage layout means the same logic exists twice, so a fix applied
-# to one of them would pass review looking complete.  These are the guard against that: every
+# One backend module per storage layout means the same logic exists once per layout, so a fix
+# applied to only some of them would pass review looking complete.  These are the guard against that: every
 # backend is driven through the same operations and checked against a brute-force recompute,
-# which catches a divergent copy and also catches both drifting together.
+# which catches a divergent copy and also catches every copy drifting together.
 def _stores_for(vectors: np.ndarray, metric: DistanceMetric) -> dict[str, DistanceStore]:
     """One store per layout over identical distances."""
     return {

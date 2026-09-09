@@ -291,8 +291,8 @@ def test_update_distance_sums_own_entry_untouched():
 # =================================================================================================
 #  Backend equivalence
 # =================================================================================================
-# One backend module per storage layout means the same logic exists twice, so a fix applied
-# to one of them would pass review looking complete.  Driving every backend through the same
+# One backend module per storage layout means the same logic exists once per layout, so a fix
+# applied to only some of them would pass review looking complete.  Driving every backend through the same
 # operations against a brute-force recompute is the guard against that.
 @pytest.mark.parametrize("backend", ["full_matrix", "lazy"])
 def test_backend_matches_brute_force_over_random_operations(backend: str):

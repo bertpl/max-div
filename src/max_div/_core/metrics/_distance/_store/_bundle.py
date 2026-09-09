@@ -25,8 +25,8 @@ from max_div._core.metrics._distance._metric import (
 KIND_LAZY = np.int32(0)
 KIND_FULL_MATRIX = np.int32(1)
 
-# One shared placeholder fills the fields a backend does not use, so empty stores cost nothing.  Read-only
-# because every store of a given backend hands out the same object, and because it makes every
+# One shared placeholder fills the fields a backend does not use, so empty stores cost nothing.  It is
+# read-only because every store of a given backend hands out the same object, and because it makes every
 # field of DISTANCE_STORE_TYPE read-only.
 _EMPTY_2D = np.empty((0, 0), dtype=np.float32)
 _EMPTY_2D.flags.writeable = False

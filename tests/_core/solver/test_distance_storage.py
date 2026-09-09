@@ -138,6 +138,7 @@ def test_build_distance_store_lazy_on_distance_problem_raises():
 
 
 def test_build_distance_store_unresolved_raises():
+    """AUTO is not a buildable backend; passing it unresolved is rejected."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="resolved"):
         build_distance_store(_vector_problem(), DistanceStorage.AUTO)
