@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityContributionFamily, DiversityMetric
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
+from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import (
     DiversityContributionTrackers,
     MeanDistanceTracker,
@@ -19,7 +19,7 @@ N = 6
 @pytest.fixture
 def store() -> DistanceStore:
     vectors = np.array([[0.0], [1.0], [3.0], [6.0], [10.0], [15.0]], dtype=np.float32)
-    return DistanceStore.condensed(compute_pdist(vectors, DistanceMetric.l1_manhattan()), n=N)
+    return DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
 
 
 # =================================================================================================

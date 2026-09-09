@@ -11,7 +11,7 @@ from max_div._core.feasibility import (
     find_feasible,
 )
 from max_div._core.metrics import DistanceMetric, DiversityMetric, validate_cosine_vectors
-from max_div._core.metrics._distance import DistanceStore, compute_pdist
+from max_div._core.metrics._distance import compute_full_matrix, expand_condensed
 
 from ._validate_distances import _n_from_condensed_size, validated_condensed_distances, validated_square_distances
 
@@ -46,17 +46,27 @@ class MaxDivProblem(ABC):
     def n(self) -> int:
         """Number of items in the problem."""
 
+    @property
+    @abstractmethod
+    def has_full_matrix(self) -> bool:
+        """Whether the problem already holds its distances as a full matrix, so `full_matrix` is zero-copy."""
+
+    @abstractmethod
+    def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
+        """Return the full (n, n) pairwise-distance matrix the solver reads from.
+
+        Computed from the vectors, adopted as given, or expanded from a condensed input, whichever
+        the flavor holds.  With `out` given the matrix is written into that buffer, which is how a
+        store is built straight into shared memory; without it, a problem that already holds a full
+        matrix returns it without copying.
+        """
+
     @abstractmethod
     def condensed_distances(self) -> NDArray[np.float32]:
-        """Return the condensed pairwise-distance vector (scipy layout), computing it if needed."""
+        """Return the condensed pairwise-distance vector (scipy layout), computing it if needed.
 
-    @abstractmethod
-    def distance_store(self) -> DistanceStore:
-        """Return the distance store in the problem's as-given storage format.
-
-        Distance-input problems keep the format the user provided (condensed stays condensed, a
-        square matrix stays a full matrix — zero-copy in both cases); vector problems default to
-        the condensed layout.
+        A data format for callers that want every pair once, not what the solver reads from: the
+        vector flavor computes the full matrix and keeps its upper triangle.
         """
 
     # --- computed fields ------------------------
@@ -159,7 +169,9 @@ class MaxDivProblem(ABC):
 
         Accepts either a square symmetric ``(n, n)`` distance matrix or a condensed distance
         vector of length ``n*(n-1)/2`` (scipy layout, as produced by ``scipy.spatial.distance.pdist``).
-        Distances are converted to ``float32`` internally.
+        Distances are converted to ``float32`` internally.  The solver reads distances from a full
+        matrix, so a square input is adopted as is and a condensed input is expanded when the
+        solver builds its store, at twice the memory of the condensed vector.
 
         Args:
             distances: Square symmetric ``(n, n)`` matrix with zero diagonal, or condensed
@@ -218,11 +230,16 @@ class VectorMaxDivProblem(MaxDivProblem):
     def d(self) -> int:
         return self.vectors.shape[1]
 
-    def condensed_distances(self) -> NDArray[np.float32]:
-        return compute_pdist(self.vectors, self.distance_metric)
+    @property
+    def has_full_matrix(self) -> bool:
+        return False
 
-    def distance_store(self) -> DistanceStore:
-        return DistanceStore.condensed(self.condensed_distances(), self.n)
+    def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
+        return compute_full_matrix(self.vectors, self.distance_metric, out=out)
+
+    def condensed_distances(self) -> NDArray[np.float32]:
+        i_upper, j_upper = np.triu_indices(self.n, k=1)
+        return np.ascontiguousarray(self.full_matrix()[i_upper, j_upper])
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -238,20 +255,27 @@ class DistanceMaxDivProblem(MaxDivProblem):
     # --- flavor-specific ------------------------
     @property
     def n(self) -> int:
-        if self.distances.ndim == 2:
+        if self.has_full_matrix:
             return self.distances.shape[0]
         return _n_from_condensed_size(self.distances.size)
 
+    @property
+    def has_full_matrix(self) -> bool:
+        return self.distances.ndim == 2
+
+    def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
+        if not self.has_full_matrix:
+            return expand_condensed(self.distances, self.n, out=out)
+        if out is None:
+            return self.distances
+        out[:] = self.distances
+        return out
+
     def condensed_distances(self) -> NDArray[np.float32]:
-        if self.distances.ndim == 2:
+        if self.has_full_matrix:
             i_upper, j_upper = np.triu_indices(self.n, k=1)
             return np.ascontiguousarray(self.distances[i_upper, j_upper])
         return self.distances
-
-    def distance_store(self) -> DistanceStore:
-        if self.distances.ndim == 2:
-            return DistanceStore.full_matrix(self.distances)
-        return DistanceStore.condensed(self.distances, self.n)
 
 
 # =================================================================================================

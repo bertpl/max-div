@@ -178,10 +178,10 @@ or only a partition into disjoint strata. See [Constraints](constraints.md).
 Pairwise distances supplied directly, instead of [vectors](#vector) for max-div to compute them
 from — the way to use a custom or non-Euclidean measure. Either a square *n*×*n* symmetric matrix
 or a condensed array of the *n*(*n*−1)/2 unique values (the layout
-`scipy.spatial.distance.pdist` returns) is accepted. Internally the condensed form is what the
-solver reads from throughout, which is what makes each [swap](#swap) cheap; it is also the memory
-bottleneck, growing with the square of *n*, so problem size is limited by memory long before it is
-limited by solving time.
+`scipy.spatial.distance.pdist` returns) is accepted. The solver reads from a full *n*×*n* matrix
+throughout, which is what makes each [swap](#swap) cheap, so a condensed input is expanded into one
+at twice its memory; that matrix is also the memory bottleneck, growing with the square of *n*, so
+problem size is limited by memory long before it is limited by solving time.
 
 ## Preset { #preset }
 

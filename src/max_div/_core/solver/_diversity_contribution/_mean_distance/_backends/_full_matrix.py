@@ -1,6 +1,6 @@
 """Mean-distance calculations for a full-matrix store.
 
-One of three interchangeable modules — see this package's `__init__` for the pattern and why the backend is
+One of two interchangeable modules — see this package's `__init__` for the pattern and why the backend is
 chosen once per tracker rather than tested inside these loops.  Each module defines the same
 three calculations over the same signatures, differing only in how a distance is read.
 """

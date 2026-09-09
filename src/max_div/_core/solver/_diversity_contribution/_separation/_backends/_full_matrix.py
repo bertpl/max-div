@@ -1,6 +1,6 @@
 """Separation calculations for a full-matrix store.
 
-One of three interchangeable modules — see this package's `__init__` for the pattern and why the
+One of two interchangeable modules — see this package's `__init__` for the pattern and why the
 layout is chosen once per tracker rather than tested inside these loops.  Each module defines
 the same calculations over the same signatures, differing only in how a distance is read.
 """

@@ -1,9 +1,34 @@
 import numpy as np
 import pytest
+from scipy.spatial.distance import pdist
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._build import compute_full_matrix, compute_pdist, expand_condensed
-from max_div._core.metrics._distance._build._common import BUILD_BLOCK_WIDTH
+from max_div._core.metrics._distance._build import (
+    BUILD_BLOCK_WIDTH,
+    compute_full_matrix,
+    expand_condensed,
+    parallel_build_enabled,
+)
+
+
+@pytest.mark.parametrize(
+    "env_value, expected",
+    [
+        (None, True),
+        ("1", True),
+        ("0", False),
+    ],
+)
+def test_parallel_build_enabled(monkeypatch: pytest.MonkeyPatch, env_value: str | None, expected: bool):
+    """Parallel builds are on by default and disabled only by MAXDIV_PARALLEL_BUILD=0."""
+    # --- arrange ----------------------
+    if env_value is None:
+        monkeypatch.delenv("MAXDIV_PARALLEL_BUILD", raising=False)
+    else:
+        monkeypatch.setenv("MAXDIV_PARALLEL_BUILD", env_value)
+
+    # --- act / assert -----------------
+    assert parallel_build_enabled() is expected
 
 
 @pytest.mark.parametrize(
@@ -43,17 +68,21 @@ def test_fills_leave_a_complete_matrix_in_a_dirty_buffer(monkeypatch: pytest.Mon
 
 
 def test_expanding_a_condensed_vector_into_a_dirty_buffer():
-    """Expansion also owns its diagonal, and reproduces the matrix built straight from vectors."""
+    """Expansion owns its diagonal and places every condensed value at scipy's (i, j) position."""
     # --- arrange ----------------------
     vectors = np.ascontiguousarray(np.random.default_rng(5).random((24, 4), dtype=np.float32))
+    condensed = pdist(vectors).astype(np.float32)
     dirty = np.full((24, 24), -1.0, dtype=np.float32)
 
     # --- act --------------------------
-    expanded = expand_condensed(compute_pdist(vectors, DistanceMetric.l2_euclidean()), 24, out=dirty)
+    expanded = expand_condensed(condensed, 24, out=dirty)
 
     # --- assert -----------------------
     assert expanded is dirty
-    np.testing.assert_array_equal(expanded, compute_full_matrix(vectors, DistanceMetric.l2_euclidean()))
+    i_upper, j_upper = np.triu_indices(24, k=1)
+    np.testing.assert_array_equal(expanded[i_upper, j_upper], condensed)
+    np.testing.assert_array_equal(expanded, expanded.T)
+    np.testing.assert_array_equal(np.diag(expanded), np.zeros(24, dtype=np.float32))
 
 
 def test_full_matrix_build_accepts_read_only_vectors():

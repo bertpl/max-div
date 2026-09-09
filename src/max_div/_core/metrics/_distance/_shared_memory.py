@@ -43,7 +43,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy.typing import NDArray
 
-from ._store import KIND_FULL_MATRIX, KIND_LAZY, DistanceStore
+from ._store import KIND_FULL_MATRIX, DistanceStore
 
 # Whether SharedMemory accepts `track=False`.
 _TRACK_FLAG_SUPPORTED = sys.version_info >= (3, 13)
@@ -60,10 +60,9 @@ class SharedStoreSpec(NamedTuple):
 
     segment_name: str  # OS-level name of the segment, which is how another process finds it
     kind: int  # which DistanceStore backend the segment's array holds data for
-    n: int  # number of items the store covers
     metric_kind: int  # metric the lazy backend computes with; the stored backends ignore it
     metric_p: float  # `DistanceMetric.p`, in the njit encoding that class defines
-    shape: tuple[int, ...]  # shape of the float32 array in the segment, not of the problem
+    shape: tuple[int, ...]  # shape of the float32 array in the segment; its first axis is the item count
 
 
 # =================================================================================================
@@ -84,7 +83,6 @@ class SharedDistanceStore:
         segment: SharedMemory,
         shape: tuple[int, ...],
         kind: int | np.integer,
-        n: int,
         metric_kind: int | np.integer,
         metric_p: float | np.floating,
     ) -> None:
@@ -97,7 +95,6 @@ class SharedDistanceStore:
         self._spec = SharedStoreSpec(
             segment_name=segment.name,
             kind=int(kind),
-            n=int(n),
             metric_kind=int(metric_kind),
             metric_p=float(metric_p),
             shape=shape,
@@ -108,7 +105,6 @@ class SharedDistanceStore:
         cls,
         shape: tuple[int, ...],
         kind: int | np.integer,
-        n: int,
         metric_kind: int | np.integer = 0,
         metric_p: float | np.floating = float("nan"),
     ) -> "SharedDistanceStore":
@@ -119,13 +115,12 @@ class SharedDistanceStore:
         Args:
             shape: the buffer shape to size the segment for; its product is the float32 element count.
             kind: the DistanceStore backend selector the buffer holds data for.
-            n: the number of items the distances are over.
             metric_kind: metric selector, meaningful for the lazy backend only.
             metric_p: `DistanceMetric.p`, in the njit encoding that class defines.
         """
         # a zero-size segment is rejected by the OS, so degenerate shapes still claim one byte
         size_bytes = max(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize, 1)
-        return cls(SharedMemory(create=True, size=size_bytes), shape, kind, n, metric_kind, metric_p)
+        return cls(SharedMemory(create=True, size=size_bytes), shape, kind, metric_kind, metric_p)
 
     # --------------------------------------------------------------------------
     #  Access
@@ -164,7 +159,7 @@ class SharedDistanceStore:
         self.close()
 
 
-def publish_distance_store(store: DistanceStore, n: int) -> SharedDistanceStore:
+def publish_distance_store(store: DistanceStore) -> SharedDistanceStore:
     """Copy an already-built store's data into a fresh segment and return the owner.
 
     For data that exists before a segment does — a distance matrix the caller supplied.  A store
@@ -172,7 +167,7 @@ def publish_distance_store(store: DistanceStore, n: int) -> SharedDistanceStore:
     buffer, which is the same bytes without the transient second copy.
     """
     array = _populated_array(store)
-    shared = SharedDistanceStore.allocate(array.shape, store.kind, n, store.metric_kind, store.metric_p)
+    shared = SharedDistanceStore.allocate(array.shape, store.kind, store.metric_kind, store.metric_p)
     shared.buffer[:] = array
     return shared
 
@@ -181,9 +176,7 @@ def _populated_array(store: DistanceStore) -> NDArray[np.float32]:
     """Return the one array the store's backend holds its data in."""
     if store.kind == KIND_FULL_MATRIX:
         return store.matrix
-    if store.kind == KIND_LAZY:
-        return store.vectors
-    return store.pdist
+    return store.vectors
 
 
 # =================================================================================================
@@ -235,6 +228,4 @@ def _store_over(buffer: NDArray[np.float32], spec: SharedStoreSpec) -> DistanceS
     """Return the DistanceStore that reads `buffer` as the backend named in `spec`."""
     if spec.kind == KIND_FULL_MATRIX:
         return DistanceStore.full_matrix(buffer)
-    if spec.kind == KIND_LAZY:
-        return DistanceStore.lazy_prepared(buffer, np.int32(spec.metric_kind), np.float64(spec.metric_p))
-    return DistanceStore.condensed(buffer, spec.n)
+    return DistanceStore.lazy_prepared(buffer, np.int32(spec.metric_kind), np.float64(spec.metric_p))

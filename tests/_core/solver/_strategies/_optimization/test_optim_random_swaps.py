@@ -33,7 +33,7 @@ def test_optim_random_swaps(problem_name: str, n: int):
     )
     solver_state = SolverState.new(
         n=problem.n,
-        store=DistanceStore.condensed(problem.condensed_distances(), n=problem.n),
+        store=DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric),
         k=problem.k,
         diversity_metric=problem.diversity_metric,
         diversity_tie_breakers=[],

@@ -10,12 +10,11 @@ it from their stored condensed vector.
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.spatial.distance import squareform
 
 # The library-internal pdist kernel is used on purpose: selections must be scored under
 # exactly the distance semantics the solver itself uses (incl. float32 behavior), and the
 # public API only exposes distances via whole problems.
-from max_div._core.metrics._distance import compute_pdist
+from max_div._core.metrics._distance import compute_full_matrix
 from max_div.metrics import DiversityMetric
 from max_div.problem import MaxDivProblem, VectorMaxDivProblem
 
@@ -67,9 +66,9 @@ def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.in
     """Build the k x k distance matrix among selected items, never materializing all n^2 distances.
 
     Vector problems compute pairwise distances over just the selected vectors (their
-    ``condensed_distances()`` would recompute the full n^2 pdist on every call — at the
-    largest benchmark sizes that costs seconds and ~1 GB per evaluation). Distance problems
-    already store the condensed vector, so gathering the k x k block from it is cheap.
+    ``condensed_distances()`` would recompute all n^2 distances on every call — at the
+    largest benchmark sizes that costs seconds and gigabytes per evaluation). Distance problems
+    hold their distances already, so gathering the k x k block from them is cheap.
     """
     idx = np.asarray(i_selected, dtype=np.int64)
     k = idx.shape[0]
@@ -78,7 +77,7 @@ def _selection_distance_matrix(problem: MaxDivProblem, i_selected: NDArray[np.in
     if len(np.unique(idx)) != k:
         raise ValueError("Selection contains duplicate indices.")
     if isinstance(problem, VectorMaxDivProblem):
-        return squareform(compute_pdist(problem.vectors[idx], problem.distance_metric)).astype(np.float64)
+        return compute_full_matrix(problem.vectors[idx], problem.distance_metric).astype(np.float64)
     n = problem.n
     condensed = problem.condensed_distances()
     ii, jj = np.meshgrid(idx, idx, indexing="ij")

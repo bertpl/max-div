@@ -6,26 +6,22 @@ owns how a distance is fetched from whichever layout a store holds.
 
 from ._bundle import (
     DISTANCE_STORE_TYPE,
-    KIND_CONDENSED,
     KIND_FULL_MATRIX,
     KIND_LAZY,
     DistanceStore,
 )
 from ._reads import (
     get_distance,
-    get_distance_condensed,
     get_distance_full_matrix,
     get_distance_lazy,
 )
 
 __all__ = [
     "DISTANCE_STORE_TYPE",
-    "KIND_CONDENSED",
     "KIND_FULL_MATRIX",
     "KIND_LAZY",
     "DistanceStore",
     "get_distance",
-    "get_distance_condensed",
     "get_distance_full_matrix",
     "get_distance_lazy",
 ]

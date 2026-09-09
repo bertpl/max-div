@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
+- The condensed distance store and `DistanceStorage.CONDENSED`: a condensed distance input is still accepted and is expanded to a full matrix, at twice the memory; `AUTO` picks the full matrix when it fits and the lazy store otherwise
 
 ### Fixed
 
