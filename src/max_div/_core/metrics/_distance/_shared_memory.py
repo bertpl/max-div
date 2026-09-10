@@ -43,7 +43,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy.typing import NDArray
 
-from ._metric import DistanceMetric
+from ._metric import NO_P, DistanceMetric
 from ._store import KIND_FULL_MATRIX, DistanceStore
 
 # Whether SharedMemory accepts `track=False`.
@@ -62,7 +62,7 @@ class SharedStoreSpec(NamedTuple):
     segment_name: str  # OS-level name of the segment, which is how another process finds it
     kind: int  # which DistanceStore backend the segment's array holds data for
     metric_kind: int  # metric the lazy backend computes with; the full-matrix backend ignores it
-    metric_p: float  # `DistanceMetric.p`, in the njit encoding that class defines
+    metric_p: float  # `DistanceMetric.p`; meaningful for the lazy kind only
     shape: tuple[int, ...]  # shape of the float32 array in the segment; its first axis is the item count
 
 
@@ -107,7 +107,7 @@ class SharedDistanceStore:
         shape: tuple[int, ...],
         kind: int | np.integer,
         metric_kind: int | np.integer = 0,
-        metric_p: float | np.floating = float("nan"),
+        metric_p: float | np.floating = NO_P,
     ) -> "SharedDistanceStore":
         """Create a segment sized for `shape` and return the owner reading from it.
 
@@ -117,7 +117,7 @@ class SharedDistanceStore:
             shape: the buffer shape to size the segment for; its product is the float32 element count.
             kind: the DistanceStore backend selector the buffer holds data for.
             metric_kind: metric selector, meaningful for the lazy backend only.
-            metric_p: `DistanceMetric.p`, in the njit encoding that class defines.
+            metric_p: `DistanceMetric.p`; meaningful for the lazy kind only.
         """
         # a zero-size segment is rejected by the OS, so degenerate shapes still claim one byte
         size_bytes = max(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize, 1)
@@ -229,4 +229,4 @@ def _store_over(buffer: NDArray[np.float32], spec: SharedStoreSpec) -> DistanceS
     """Return the DistanceStore that reads `buffer` as the backend named in `spec`."""
     if spec.kind == KIND_FULL_MATRIX:
         return DistanceStore.full_matrix(buffer)
-    return DistanceStore.lazy(buffer, DistanceMetric.from_njit(spec.metric_kind, spec.metric_p))
+    return DistanceStore.lazy(buffer, DistanceMetric(kind=spec.metric_kind, p=spec.metric_p))

@@ -69,9 +69,11 @@ def compute_full_matrix(
     preprocessed = preprocess_vectors(vectors, metric)
     out = _allocate_if_needed(out, preprocessed.shape[0])
     if parallel_build_enabled():
-        _fill_matrix_parallel(preprocessed, np.int32(metric.kind), metric.njit_p, np.int64(BUILD_BLOCK_WIDTH), out)
+        _fill_matrix_parallel(
+            preprocessed, np.int32(metric.kind), np.float64(metric.p), np.int64(BUILD_BLOCK_WIDTH), out
+        )
     else:
-        _fill_matrix(preprocessed, np.int32(metric.kind), metric.njit_p, out)
+        _fill_matrix(preprocessed, np.int32(metric.kind), np.float64(metric.p), out)
     return out
 
 

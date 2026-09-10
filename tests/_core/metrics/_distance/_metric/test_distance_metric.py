@@ -3,6 +3,7 @@ import math
 import pytest
 
 from max_div._core.metrics import DistanceMetric
+from max_div._core.metrics._distance._metric import NO_P
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -26,7 +27,7 @@ def test_factory_metrics_have_distinct_kinds():
 def test_factory_metrics_carry_no_p(factory_metric: DistanceMetric):
     """None of the dedicated factories uses the power parameter."""
     # --- act / assert -----------------
-    assert factory_metric.p is None
+    assert factory_metric.p == NO_P
 
 
 def test_equal_factories_compare_equal():
@@ -71,7 +72,7 @@ def test_minkowski_canonicalizes_specializable_p(p: float, root: bool):
     metric = DistanceMetric.minkowski(p, root=root)
 
     # --- assert -----------------------
-    assert metric.p is None
+    assert metric.p == NO_P
     assert metric.kind not in {m.kind for m in _FACTORY_METRICS}
     assert metric.kind != DistanceMetric.minkowski(3, root=root).kind
 
@@ -96,17 +97,17 @@ def test_minkowski_rejects_non_positive_p(p: float):
         DistanceMetric.minkowski(p)
 
 
-def test_njit_p_encodes_none_as_nan():
-    """`njit_p` encodes p=None as NaN and a set p as its float64 value."""
+def test_kinds_without_an_exponent_store_no_p():
+    """A kind without a power parameter stores NO_P, so every metric crosses the njit boundary as it is."""
     # --- act / assert -----------------
-    assert math.isnan(DistanceMetric.l2_euclidean().njit_p)
-    assert DistanceMetric.minkowski(3).njit_p == 3.0
+    assert DistanceMetric.l2_euclidean().p == NO_P
+    assert DistanceMetric.minkowski(3).p == 3.0
 
 
-def test_from_njit_inverts_the_encoding(metric: DistanceMetric):
-    """Decoding a metric's (kind, njit_p) pair gives the metric back, for every kind."""
+def test_a_metric_rebuilds_from_its_two_fields(metric: DistanceMetric):
+    """The (kind, p) pair a spec carries rebuilds the metric, for every kind."""
     # --- act / assert -----------------
-    assert DistanceMetric.from_njit(metric.kind, metric.njit_p) == metric
+    assert DistanceMetric(kind=metric.kind, p=metric.p) == metric
 
 
 def test_only_cosine_needs_preprocessed_vectors(metric: DistanceMetric):

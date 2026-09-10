@@ -116,10 +116,7 @@ def test_spec_survives_pickling():
         restored = pickle.loads(pickle.dumps(owner.spec))  # noqa: S301 -- our own spec, not untrusted input
 
     # --- assert -----------------------
-    # Compare field-wise, because the placeholder metric_p is NaN and NaN never compares equal to itself.
-    assert restored._replace(metric_p=0.0) == owner.spec._replace(metric_p=0.0)
-    assert np.isnan(restored.metric_p)
-    assert np.isnan(owner.spec.metric_p)
+    assert restored == owner.spec
 
 
 def test_attached_minkowski_store_reads_the_published_values():
