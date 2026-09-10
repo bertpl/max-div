@@ -3,7 +3,7 @@
 from typing import Self
 
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._distance_storage import DistanceStorage, build_distance_store
+from max_div._core.solver._distance_storage import DistanceStorageType, build_distance_store
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._presets import SolverPreset, get_preset_strategies
 from max_div._core.solver._solver import MaxDivSolver
@@ -111,7 +111,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         resolved, config = self.prepare_storage_and_config()
         return config.build_solver(store_provider=lambda: build_distance_store(self._problem, resolved))
 
-    def prepare_storage_and_config(self) -> tuple[DistanceStorage, SolverConfig]:
+    def prepare_storage_and_config(self) -> tuple[DistanceStorageType, SolverConfig]:
         """Return the backend this configuration selects, and the solver config over it.
 
         Keeping the backend choice and the config apart lets a caller build the distances once and

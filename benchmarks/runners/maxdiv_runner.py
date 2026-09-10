@@ -10,7 +10,7 @@ from benchmarks.common.quality import evaluate_selection, n_constraints_satisfie
 from benchmarks.common.records import RunRecord, budget_tag, iteration_tag
 from max_div.problem import MaxDivProblem
 from max_div.solver import (
-    DistanceStorage,
+    DistanceStorageType,
     MaxDivSolverBuilder,
     ParallelMaxDivSolverBuilder,
     SolverPreset,
@@ -36,7 +36,7 @@ class _SolveJob:
     seed: int
     preset: SolverPreset
     n_workers: int
-    distance_storage: DistanceStorage
+    distance_storage: DistanceStorageType
 
 
 @dataclass(frozen=True)
@@ -57,7 +57,7 @@ def run_maxdiv_budget_series(
     seeds: tuple[int, ...] = (0, 1, 2),
     preset: SolverPreset = SolverPreset.DEFAULT,
     n_workers: int = 1,
-    distance_storage: DistanceStorage = DistanceStorage.AUTO,
+    distance_storage: DistanceStorageType = DistanceStorageType.AUTO,
 ) -> list[RunRecord]:
     """Solve the problem once per (budget, seed) and record measured time + quality.
 

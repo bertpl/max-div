@@ -43,8 +43,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy.typing import NDArray
 
-from ._metric import NO_P, DistanceMetric
-from ._store import KIND_FULL_MATRIX, DistanceStore
+from max_div._core.metrics._distance import KIND_FULL_MATRIX, NO_P, DistanceMetric, DistanceStore
 
 # Whether SharedMemory accepts `track=False`.
 _TRACK_FLAG_SUPPORTED = sys.version_info >= (3, 13)

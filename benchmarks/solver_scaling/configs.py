@@ -62,7 +62,7 @@ def _maxdiv_lean() -> SelectFn:
     """Build max-div's `lean` selector: uniform random one-shot init, no optimization, lazy storage."""
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
-        from max_div.solver import DistanceStorage, InitializationStrategy, MaxDivSolverBuilder, Verbosity
+        from max_div.solver import DistanceStorageType, InitializationStrategy, MaxDivSolverBuilder, Verbosity
 
         # No with_preset: the pipeline is a single init step, so the solve returns that
         # initialization and nothing more. Uniform sampling replaces the default
@@ -72,7 +72,7 @@ def _maxdiv_lean() -> SelectFn:
         builder = (
             MaxDivSolverBuilder(problem)
             .with_seed(seed)
-            .with_distance_storage(DistanceStorage.LAZY)
+            .with_distance_storage(DistanceStorageType.LAZY)
             .set_initialization_strategy(InitializationStrategy.random_one_shot(uniform=True, parallel=True))
         )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
@@ -90,13 +90,13 @@ def _maxdiv_optimal(lazy: bool) -> SelectFn:
 
     def select(problem: VectorMaxDivProblem, seed: int, budget_sec: float) -> NDArray[np.int64]:
         from max_div.solver import (
-            DistanceStorage,
+            DistanceStorageType,
             ParallelMaxDivSolverBuilder,
             Verbosity,
             seconds,
         )
 
-        storage = DistanceStorage.LAZY if lazy else DistanceStorage.FULL_MATRIX
+        storage = DistanceStorageType.LAZY if lazy else DistanceStorageType.FULL_MATRIX
         budget = seconds(max(budget_sec - self_limit_margin_sec(budget_sec), 0.1))
         builder = (
             ParallelMaxDivSolverBuilder(problem)

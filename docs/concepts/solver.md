@@ -80,12 +80,12 @@ During search the solver reads pairwise distances constantly, and how they are s
 selectable on the builder:
 
 ```python
-from max_div.solver import DistanceStorage
+from max_div.solver import DistanceStorageType
 
 solver = (
     MaxDivSolverBuilder(problem)
     .with_preset(seconds(5))
-    .with_distance_storage(DistanceStorage.FULL_MATRIX)  # optional; AUTO is the default
+    .with_distance_storage(DistanceStorageType.FULL_MATRIX)  # optional; AUTO is the default
     .build()
 )
 ```

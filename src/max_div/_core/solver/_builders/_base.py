@@ -16,8 +16,8 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
 from max_div._core.solver._distance_storage import (
-    DistanceStorage,
-    select_distance_storage,
+    DistanceStorageType,
+    select_distance_storage_type,
     total_physical_memory_bytes,
 )
 from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
@@ -48,7 +48,7 @@ class SolverBuilderBase:
         self._default_diversity_tie_breakers: bool = True
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
-        self._distance_storage: DistanceStorage = DistanceStorage.AUTO
+        self._distance_storage_type: DistanceStorageType = DistanceStorageType.AUTO
         self._e2e_enabled: bool = False
         self._target_duration: TargetDuration | None = None
 
@@ -77,9 +77,9 @@ class SolverBuilderBase:
         self._constraint_penalty = penalty
         return self
 
-    def with_distance_storage(self, storage: DistanceStorage) -> Self:
-        """Set how pairwise distances are stored during search (default: DistanceStorage.AUTO)."""
-        self._distance_storage = storage
+    def with_distance_storage(self, storage_type: DistanceStorageType) -> Self:
+        """Set how pairwise distances are stored during search (default: DistanceStorageType.AUTO)."""
+        self._distance_storage_type = storage_type
         return self
 
     def with_end_to_end_budget(self, enabled: bool = True) -> Self:
@@ -113,10 +113,14 @@ class SolverBuilderBase:
             )
         return E2eBudget(budget_sec=self._target_duration.value())
 
-    def _select_storage(self) -> tuple[DistanceStorage, str]:
+    def _select_storage(self) -> tuple[DistanceStorageType, str]:
         """Return the backend this configuration selects, and the label reported to the user."""
-        resolved = select_distance_storage(self._problem, self._distance_storage, total_physical_memory_bytes())
-        return resolved, resolved.value + (" (auto)" if self._distance_storage == DistanceStorage.AUTO else "")
+        storage_type = select_distance_storage_type(
+            self._problem, self._distance_storage_type, total_physical_memory_bytes()
+        )
+        return storage_type, storage_type.value + (
+            " (auto)" if self._distance_storage_type == DistanceStorageType.AUTO else ""
+        )
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:
         """Return the tie-breakers to score with: the user's if set, otherwise per the main metric."""
