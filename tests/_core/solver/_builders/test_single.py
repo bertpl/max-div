@@ -150,17 +150,17 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
 def test_the_store_is_built_by_solve_not_by_build(dummy_problem, monkeypatch):
     """build() only assembles the solver; each solve() builds the store, so its cost sits in solve()."""
     # --- arrange ----------------------
-    from max_div._core.solver._builders import _single
+    from max_div._core.solver._distance_storage import DistanceStoreFactory
 
     builds = 0
-    real_build = _single.build_distance_store
+    real_create = DistanceStoreFactory.create_stores
 
-    def counting_build(*args, **kwargs):
+    def counting_create(self):
         nonlocal builds
         builds += 1
-        return real_build(*args, **kwargs)
+        return real_create(self)
 
-    monkeypatch.setattr(_single, "build_distance_store", counting_build)
+    monkeypatch.setattr(DistanceStoreFactory, "create_stores", counting_create)
 
     # --- act / assert -----------------
     solver = MaxDivSolverBuilder(dummy_problem).with_preset(iterations(5), SolverPreset.RANDOM).build()

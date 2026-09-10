@@ -21,7 +21,7 @@ from collections.abc import Sequence
 from multiprocessing.process import BaseProcess
 from multiprocessing.queues import Queue
 
-from max_div._core.solver._distance_storage import SharedStoreSpec, attached_distance_store
+from max_div._core.solver._distance_storage import DistanceStoreFactory, SharedStoreSpec
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot, SnapshotRequirements
 from max_div._core.solver._solver_config import SolverConfig
 
@@ -44,7 +44,7 @@ _JOIN_SECONDS = 30.0
 
 def run_workers(
     configs: list[SolverConfig],
-    spec: SharedStoreSpec,
+    specs: Sequence[SharedStoreSpec],
     coordinators: Sequence[WorkerCoordinator],
     progress_reporter: ProgressReporter | None = None,
 ) -> tuple[list[WorkerResult], list[WorkerFailure]]:
@@ -55,7 +55,7 @@ def run_workers(
 
     Args:
         configs: one solver configuration per worker, in worker order.
-        spec: where the published store lives; every worker attaches to it.
+        specs: where the published stores live; every worker attaches to them.
         coordinators: one coordinator per worker, in worker order; `_coordinator` documents
             the topology this list wires up.
         progress_reporter: renders the workers' combined progress from this (parent) process; a
@@ -80,7 +80,7 @@ def run_workers(
     workers = [
         context.Process(
             target=solve_in_worker,
-            args=(index, config, spec, coordinators[index], messages, requirements),
+            args=(index, config, specs, coordinators[index], messages, requirements),
             daemon=True,
         )
         for index, config in enumerate(configs)
@@ -104,7 +104,7 @@ def run_workers(
 def solve_in_worker(
     worker_index: int,
     config: SolverConfig,
-    spec: SharedStoreSpec,
+    specs: Sequence[SharedStoreSpec],
     coordinator: WorkerCoordinator,
     messages: Queue,
     requirements: SnapshotRequirements | None,
@@ -119,8 +119,8 @@ def solve_in_worker(
     else:
         reporter = ProgressReporter.silent()
     try:
-        with attached_distance_store(spec) as store:
-            solution = config.build_solver(store=store).solve(coordinator=coordinator, progress_reporter=reporter)
+        with DistanceStoreFactory.attach_stores(specs) as stores:
+            solution = config.build_solver(store=stores[0]).solve(coordinator=coordinator, progress_reporter=reporter)
             messages.put(WorkerResult(worker_index=worker_index, seed=config.seed, solution=solution))
     except Exception as exc:  # noqa: BLE001 -- report ANY failure to the parent
         # the exception is suppressed after reporting: re-raising would print the traceback to

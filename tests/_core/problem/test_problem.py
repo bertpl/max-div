@@ -257,23 +257,6 @@ def test_problem_full_matrix_from_either_input_form(form: str):
     assert np.shares_memory(matrix, problem.distances) is (form == "square")
 
 
-@pytest.mark.parametrize("form", ["square", "condensed"])
-def test_problem_full_matrix_writes_into_the_given_buffer(form: str):
-    """With a buffer given, either input form is written into it and the buffer itself is returned."""
-
-    # --- arrange ----------------------
-    distances = _reference_square() if form == "square" else np.arange(1, 11, dtype=np.float32)
-    problem = MaxDivProblem.from_distances(distances, k=3)
-    buffer = np.full((5, 5), -1.0, dtype=np.float32)
-
-    # --- act --------------------------
-    matrix = problem.full_matrix(out=buffer)
-
-    # --- assert -----------------------
-    assert matrix is buffer
-    np.testing.assert_array_equal(buffer, _reference_square())
-
-
 def test_problem_from_distances_asymmetric_repaired_with_warning():
     """Asymmetric square input is symmetrized in place by averaging, disclosed with delta figures."""
 
@@ -482,6 +465,24 @@ def test_check_feasibility_reports_where_the_violation_sits():
     assert report.violation_per_constraint.shape[0] == len(constraints)
     assert float(weights @ report.violation_per_constraint) == pytest.approx(report.violation)
     assert report.violation_floor <= report.violation + 1e-9
+
+
+def test_problem_new_vector_flavor_full_matrix_is_computed_under_its_own_metric():
+    """A vector problem holds no matrix; `full_matrix` computes one, preprocessing the vectors for the metric first."""
+
+    # --- arrange ----------------------
+    rng = np.random.default_rng(20260910)
+    vectors = rng.standard_normal((8, 3)).astype(np.float32)
+    problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.cosine())
+
+    # --- act --------------------------
+    matrix = problem.full_matrix()
+
+    # --- assert -----------------------
+    assert problem.has_full_matrix is False
+    np.testing.assert_array_equal(matrix, matrix.T)
+    unit = vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
+    np.testing.assert_allclose(matrix, 1.0 - unit @ unit.T, atol=1e-6)
 
 
 def test_problem_new_makes_the_vectors_c_contiguous():

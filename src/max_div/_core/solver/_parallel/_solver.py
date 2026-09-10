@@ -6,8 +6,7 @@ import warnings
 from dataclasses import fields
 
 from max_div._core._warnings import ParallelSolvingWarning
-from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._distance_storage import DistanceStorageType, build_shared_distance_store
+from max_div._core.solver._distance_storage import DistanceStoreFactory
 from max_div._core.solver._progress_reporting import ProgressReporter, Verbosity
 from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
@@ -32,18 +31,16 @@ class ParallelMaxDivSolver:
     # -------------------------------------------------------------------------
     def __init__(
         self,
-        problem: MaxDivProblem,
-        storage_type: DistanceStorageType,
+        store_factory: DistanceStoreFactory,
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
         group_sizes: list[int],
         merge_schedule: GroupMergeSchedule,
     ) -> None:
-        """Hold the problem, the resolved backend, and one configuration per worker.
+        """Hold the store factory and one configuration per worker.
 
         Args:
-            problem: the MaxDivProblem every worker solves.
-            storage_type: the already-resolved store type the shared store is built in.
+            store_factory: builds the store every worker shares, into shared memory.
             worker_configs: what each worker runs, reported back in the solution.
             solver_configs: the solver each worker assembles, in the same order.
             group_sizes: how the workers start out grouped, as consecutive run lengths over
@@ -52,8 +49,7 @@ class ParallelMaxDivSolver:
                 `_merge_schedule`); a fixed grouping's schedule keeps `group_sizes` for the
                 whole solve.
         """
-        self._problem = problem
-        self._storage_type = storage_type
+        self._store_factory = store_factory
         self._worker_configs = worker_configs
         self._solver_configs = solver_configs
         self._group_sizes = group_sizes
@@ -88,10 +84,10 @@ class ParallelMaxDivSolver:
             solver_configs = [config.with_e2e_budget(e2e_budget) for config in solver_configs]
         group_state = self._build_group_state()
         coordinators = [group_state.coordinator_for(index) for index in range(len(solver_configs))]
-        with build_shared_distance_store(self._problem, self._storage_type) as shared_distance_store:
+        with self._store_factory.create_shared_stores() as shared_stores:
             results, failures = run_workers(
                 solver_configs,
-                shared_distance_store.spec,
+                shared_stores.specs,
                 coordinators,
                 progress_reporter=progress_reporter,
             )

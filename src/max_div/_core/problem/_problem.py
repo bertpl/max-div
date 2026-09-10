@@ -52,13 +52,12 @@ class MaxDivProblem(ABC):
         """Return True when the problem already holds its distances as a full matrix, so `full_matrix` is zero-copy."""
 
     @abstractmethod
-    def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
-        """Return the full (n, n) pairwise-distance matrix the solver reads from.
+    def full_matrix(self) -> NDArray[np.float32]:
+        """Return the full (n, n) pairwise-distance matrix under the problem's own distance.
 
-        The matrix is computed from the vectors, adopted as given, or expanded from a condensed
-        input, whichever the flavor holds.  With `out` given the matrix is written into that buffer, which is how a
-        store is built straight into shared memory; without it, a problem that already holds a full
-        matrix returns it without copying.
+        The matrix is computed from the vectors, returned as given, or expanded from a condensed
+        input, whichever the flavor holds; a problem that already holds a full matrix returns it
+        without copying.  The solver does not read this matrix; it builds its own stores.
         """
 
     # --- computed fields ------------------------
@@ -225,8 +224,8 @@ class VectorMaxDivProblem(MaxDivProblem):
     def has_full_matrix(self) -> bool:
         return False
 
-    def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
-        return compute_full_matrix(self.vectors, self.distance_metric, out=out)
+    def full_matrix(self) -> NDArray[np.float32]:
+        return compute_full_matrix(self.vectors, self.distance_metric)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -250,13 +249,10 @@ class DistanceMaxDivProblem(MaxDivProblem):
     def has_full_matrix(self) -> bool:
         return self.distances.ndim == 2
 
-    def full_matrix(self, out: NDArray[np.float32] | None = None) -> NDArray[np.float32]:
-        if not self.has_full_matrix:
-            return expand_condensed(self.distances, self.n, out=out)
-        if out is None:
+    def full_matrix(self) -> NDArray[np.float32]:
+        if self.has_full_matrix:
             return self.distances
-        out[:] = self.distances
-        return out
+        return expand_condensed(self.distances, self.n)
 
 
 # =================================================================================================

@@ -1,7 +1,7 @@
 """A distance store can be published into shared memory, so several processes read one copy of it.
 
 A store populates exactly one of its arrays and leaves the others zero-length, so one segment holds
-whichever array the backend uses.  Readers attach by name: the processes sharing a store are spawned
+whichever array the kind uses.  Readers attach by name: the processes sharing a store are spawned
 rather than forked, and inherit nothing.
 
 A published store is not a second kind of store.  `SharedDistanceStore` owns the segment, and the
@@ -10,8 +10,8 @@ reads downstream cannot tell one from the other.
 
 The whole sequence, across two processes:
 
-  1. The publisher resolves a backend and calls `build_shared_distance_store`, which allocates a
-     segment and builds the distances straight into it.
+  1. The publisher (`DistanceStoreFactory`) allocates a segment through `SharedDistanceStore.allocate`
+     and builds the distances straight into it.
   2. The publisher wraps the segment's buffer in an ordinary `DistanceStore`, and sends `SharedDistanceStore.spec`
      — a small picklable record — to each worker it spawns.
   3. A worker opens `attached_distance_store(spec)` and gets an ordinary `DistanceStore` over the
@@ -59,8 +59,8 @@ class SharedStoreSpec(NamedTuple):
     """
 
     segment_name: str  # OS-level name of the segment, which is how another process finds it
-    kind: int  # which DistanceStore backend the segment's array holds data for
-    metric_kind: int  # metric the lazy backend computes with; the full-matrix backend ignores it
+    kind: int  # which DistanceStore kind the segment's array holds data for
+    metric_kind: int  # metric the lazy kind computes with; the full-matrix kind ignores it
     metric_p: float  # `DistanceMetric.p`; meaningful for the lazy kind only
     shape: tuple[int, ...]  # shape of the float32 array in the segment; its first axis is the item count
 
@@ -114,8 +114,8 @@ class SharedDistanceStore:
 
         Args:
             shape: the buffer shape to size the segment for; its product is the float32 element count.
-            kind: the DistanceStore backend selector the buffer holds data for.
-            metric_kind: metric selector, meaningful for the lazy backend only.
+            kind: the DistanceStore kind selector the buffer holds data for.
+            metric_kind: metric selector, meaningful for the lazy kind only.
             metric_p: `DistanceMetric.p`; meaningful for the lazy kind only.
         """
         # a zero-size segment is rejected by the OS, so degenerate shapes still claim one byte
@@ -173,7 +173,7 @@ def publish_distance_store(store: DistanceStore) -> SharedDistanceStore:
 
 
 def _populated_array(store: DistanceStore) -> NDArray[np.float32]:
-    """Return the one array the store's backend holds its data in."""
+    """Return the one array the store's kind holds its data in."""
     if store.kind == KIND_FULL_MATRIX:
         return store.matrix
     return store.preprocessed_vectors
@@ -225,7 +225,7 @@ def _attach_without_registering(segment_name: str) -> SharedMemory:
 
 
 def _store_over(buffer: NDArray[np.float32], spec: SharedStoreSpec) -> DistanceStore:
-    """Return the DistanceStore that reads `buffer` as the backend named in `spec`."""
+    """Return the DistanceStore that reads `buffer` as the kind named in `spec`."""
     if spec.kind == KIND_FULL_MATRIX:
         return DistanceStore.full_matrix(buffer)
     return DistanceStore.lazy(buffer, DistanceMetric(kind=spec.metric_kind, p=spec.metric_p))
