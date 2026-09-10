@@ -1,12 +1,12 @@
 """This module creates, attaches to, and destroys the shared-memory segments that hold one array for several processes.
 
-`multiprocessing.shared_memory` is available on every platform that the package supports.  What
-differs is how long a segment lives.  POSIX leaves that to the processes, which imposes two
-obligations on every user of this module:
+`multiprocessing.shared_memory` exists on every platform that the package supports, but POSIX
+leaves a segment's lifetime to the processes, which imposes two obligations: the first on every
+caller of this module, the second on `attach_segment` itself.
 
 - The process that created a segment must outlive every reader, because it is the process that
   destroys the segment.  A POSIX segment outlives its creator, and reading one through a closed
-  mapping crashes rather than raising.
+  mapping crashes the process; nothing is raised.
 - An attaching process must not register with CPython's resource tracker, which is shared by the
   whole process tree; `_attach_without_registering` explains why.  The creating process does
   register, and that registration releases the segment if the creating process dies holding it.
@@ -19,7 +19,7 @@ import sys
 from multiprocessing import resource_tracker
 from multiprocessing.shared_memory import SharedMemory
 
-# Whether SharedMemory accepts `track=False`.
+# `SharedMemory` accepts `track=False` from Python 3.13 on.
 _TRACK_FLAG_SUPPORTED = sys.version_info >= (3, 13)
 
 

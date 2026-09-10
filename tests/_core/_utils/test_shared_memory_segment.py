@@ -95,7 +95,7 @@ def test_attaching_without_registering_reads_and_leaves_the_owner_tracked():
     attached = _attach_without_registering(owned.name)
     values = _read_payload(attached)
     attached.close()
-    destroy_segment(owned)  # the owner still holds its own registration, so unlinking stays clean
+    destroy_segment(owned)  # the owner's tracker entry is intact, so its unlink removes an entry that exists
 
     # --- assert -----------------------
     np.testing.assert_array_equal(values, _PAYLOAD)
