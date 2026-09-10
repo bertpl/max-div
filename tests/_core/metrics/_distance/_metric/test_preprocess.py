@@ -108,7 +108,7 @@ def test_along_axis_preprocessing_keeps_the_one_coordinate():
 
 
 def test_along_axis_preprocessing_copies_a_single_column_too():
-    """With one-dimensional vectors the slice would share memory, so only an explicit copy yields a new array."""
+    """The slice is a view, so only an explicit copy yields a new array; one-dimensional vectors show it."""
     # --- arrange ----------------------
     vectors = np.ascontiguousarray(_vectors()[:, :1])
 
