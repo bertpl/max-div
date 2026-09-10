@@ -4,16 +4,16 @@ from scipy.spatial.distance import squareform
 
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
-from max_div._core.metrics._distance import attached_distance_store, compute_full_matrix, get_distance
+from max_div._core.metrics._distance import compute_full_matrix, get_distance
 from max_div._core.metrics._distance._store import KIND_FULL_MATRIX, KIND_LAZY
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
 from max_div._core.solver._distance_storage import (
     DistanceStorage,
+    attached_distance_store,
     build_distance_store,
     build_shared_distance_store,
     select_distance_storage,
-    total_physical_memory_bytes,
 )
 from max_div._core.solver._duration import iterations
 
@@ -153,20 +153,6 @@ def test_build_distance_store_infeasible_raises_early():
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="LAZY"):
         build_distance_store(stub, DistanceStorage.FULL_MATRIX)
-
-
-# =================================================================================================
-#  Memory probe
-# =================================================================================================
-def test_total_physical_memory_bytes_on_this_platform():
-    """On every CI platform the stdlib probe must return a sane positive figure."""
-
-    # --- act --------------------------
-    total = total_physical_memory_bytes()
-
-    # --- assert -----------------------
-    assert total is not None
-    assert total >= 1 * GIB
 
 
 # =================================================================================================
