@@ -35,7 +35,7 @@ def test_get_distance_full_matrix_values(i: int, j: int):
 #  DistanceStore.lazy
 # -------------------------------------------------------------------------
 def test_lazy_factory_fields():
-    """A lazy store holds the vectors and metric selector; the stored-matrix field is zero-size."""
+    """A lazy store adopts the preprocessed array as a read-only view and carries the metric selector."""
 
     # --- arrange ----------------------
     vectors = np.array([[0, 0], [3, 4], [1, 0], [0, 2]], dtype=np.float32)
@@ -47,10 +47,38 @@ def test_lazy_factory_fields():
     assert store.kind == KIND_LAZY
     assert store.n == np.int32(4)
     assert store.matrix.size == 0
-    assert store.vectors.shape == (4, 2)
+    assert np.shares_memory(store.preprocessed_vectors, vectors)  # adopted, not copied
+    assert not store.preprocessed_vectors.flags.writeable
 
 
-def test_lazy_factory_cosine_zero_vector_raises():
+def test_lazy_factory_requires_the_layout_reads_expect():
+    """`lazy` converts nothing: a float64 array is rejected, not silently copied."""
+
+    # --- arrange ----------------------
+    vectors = np.array([[0, 0], [3, 4], [1, 0]], dtype=np.float64)
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="float32"):
+        DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean())
+
+
+def test_lazy_from_vectors_preprocesses_for_the_metric():
+    """`lazy_from_vectors` hands a preprocessing metric a preprocessed copy, and any other metric the array itself."""
+
+    # --- arrange ----------------------
+    vectors = np.array([[1.0, 2.0], [3.0, 4.0], [0.5, 0.25]], dtype=np.float32)
+
+    # --- act --------------------------
+    cosine = DistanceStore.lazy_from_vectors(vectors, DistanceMetric.cosine())
+    euclidean = DistanceStore.lazy_from_vectors(vectors, DistanceMetric.l2_euclidean())
+
+    # --- assert -----------------------
+    assert not np.shares_memory(cosine.preprocessed_vectors, vectors)
+    np.testing.assert_allclose(np.linalg.norm(cosine.preprocessed_vectors, axis=1), 1.0, rtol=1e-6)
+    assert np.shares_memory(euclidean.preprocessed_vectors, vectors)
+
+
+def test_lazy_from_vectors_cosine_zero_vector_raises():
     """The cosine zero-vector guard applies to lazy stores exactly as to precomputed distances."""
 
     # --- arrange ----------------------
@@ -58,7 +86,7 @@ def test_lazy_factory_cosine_zero_vector_raises():
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="zero vector"):
-        DistanceStore.lazy(vectors, DistanceMetric.cosine())
+        DistanceStore.lazy_from_vectors(vectors, DistanceMetric.cosine())
 
 
 # -------------------------------------------------------------------------
@@ -77,7 +105,7 @@ def test_full_matrix_factory_fields():
     assert store.kind == KIND_FULL_MATRIX
     assert store.n == np.int32(4)
     assert np.shares_memory(store.matrix, matrix)  # zero-copy: a read-only view, not a copy
-    assert store.vectors.size == 0
+    assert store.preprocessed_vectors.size == 0
 
 
 def test_full_matrix_construction_exactly_symmetric(metric: DistanceMetric):
@@ -107,7 +135,7 @@ def _all_backend_stores(vectors: np.ndarray, metric: DistanceMetric) -> dict[str
     """Build one store per available backend (and construction path) over the same data."""
     return {
         "full_from_vectors": DistanceStore.full_matrix_from_vectors(vectors, metric),
-        "lazy": DistanceStore.lazy(vectors, metric),
+        "lazy": DistanceStore.lazy_from_vectors(vectors, metric),
         "full_from_condensed": DistanceStore.full_matrix_from_condensed(
             condensed_distances(vectors, metric), n=vectors.shape[0]
         ),

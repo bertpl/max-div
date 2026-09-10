@@ -6,7 +6,7 @@ Four layers, each depending only on the ones before it.  `_metric` defines the d
 """
 
 from ._build import compute_full_matrix, expand_condensed
-from ._metric import DistanceMetric, validate_cosine_vectors
+from ._metric import NO_P, DistanceMetric, preprocess_vectors, validate_cosine_distance_vectors
 from ._shared_memory import SharedDistanceStore, SharedStoreSpec, attached_distance_store, publish_distance_store
 from ._store import (
     DISTANCE_STORE_TYPE,

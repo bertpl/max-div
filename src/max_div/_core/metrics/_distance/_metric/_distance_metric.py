@@ -7,8 +7,6 @@ user-facing metric value and the compiled dispatch share a single classification
 import math
 from typing import NamedTuple
 
-import numpy as np
-
 # These selector values let njit functions branch on the metric without object-mode.
 METRIC_KIND_L1 = 0
 METRIC_KIND_L2 = 1
@@ -37,7 +35,7 @@ _FACTORY_NAMES = {
 }
 
 # `_IMPLIED_P` gives the p each specialized Minkowski kind implies, for `__repr__`; a metric of
-# these kinds stores p=None.
+# these kinds stores p=NO_P.
 _IMPLIED_P = {
     METRIC_KIND_MINKOWSKI_P05: 0.5,
     METRIC_KIND_MINKOWSKI_P05_POWERED: 0.5,
@@ -46,6 +44,9 @@ _IMPLIED_P = {
     METRIC_KIND_MINKOWSKI_P0125: 0.125,
     METRIC_KIND_MINKOWSKI_P0125_POWERED: 0.125,
 }
+
+# Kinds that need a preprocessed form of the vectors (see `_preprocess`), not the user's array.
+_PREPROCESSING_KINDS = frozenset({METRIC_KIND_COS})
 
 # These Minkowski kinds skip the outer 1/p root.
 _POWERED_KINDS = (
@@ -56,16 +57,22 @@ _POWERED_KINDS = (
 )
 
 
+# Fields are stored as the compiled functions read them, so a metric crosses the njit boundary
+# without conversion: `p` is a float, and NO_P marks a kind without a power parameter (every
+# Minkowski kind requires p > 0, so 0.0 is free to mean "none").
+NO_P = 0.0
+
+
 class DistanceMetric(NamedTuple):
     """A distance metric: a `kind` selector plus the parameters that kind needs.
 
     Create instances via the factory methods only, so metrics that compute the same distance
-    compare equal.  `p` is the metric's power parameter; it is `None` for every kind that does
-    not use one, and crosses the njit boundary as NaN in that case.
+    compare equal.  `p` is the metric's power parameter, `NO_P` for every kind that does not use
+    one.
     """
 
     kind: int
-    p: float | None
+    p: float
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -73,12 +80,12 @@ class DistanceMetric(NamedTuple):
     @classmethod
     def l1_manhattan(cls) -> "DistanceMetric":
         """Return the L1 (Manhattan) distance metric: ``sum_i |x_i - y_i|``."""
-        return cls(kind=METRIC_KIND_L1, p=None)
+        return cls(kind=METRIC_KIND_L1, p=NO_P)
 
     @classmethod
     def l2_euclidean(cls) -> "DistanceMetric":
         """Return the L2 (Euclidean) distance metric: ``sqrt( sum_i (x_i - y_i)^2 )``."""
-        return cls(kind=METRIC_KIND_L2, p=None)
+        return cls(kind=METRIC_KIND_L2, p=NO_P)
 
     @classmethod
     def l2s_euclidean_squared(cls) -> "DistanceMetric":
@@ -87,12 +94,12 @@ class DistanceMetric(NamedTuple):
         The squared form avoids the square root and produces identical solutions under the
         GEOMEAN_SEPARATION diversity metric.
         """
-        return cls(kind=METRIC_KIND_L2S, p=None)
+        return cls(kind=METRIC_KIND_L2S, p=NO_P)
 
     @classmethod
     def linf_chebyshev(cls) -> "DistanceMetric":
         """Return the Linf (Chebyshev) distance metric: ``max_i |x_i - y_i|``."""
-        return cls(kind=METRIC_KIND_LINF, p=None)
+        return cls(kind=METRIC_KIND_LINF, p=NO_P)
 
     @classmethod
     def cosine(cls) -> "DistanceMetric":
@@ -100,7 +107,7 @@ class DistanceMetric(NamedTuple):
 
         The range is [0, 2].  Zero vectors have no defined angle and are rejected with an error.
         """
-        return cls(kind=METRIC_KIND_COS, p=None)
+        return cls(kind=METRIC_KIND_COS, p=NO_P)
 
     @classmethod
     def geometric_mean(cls) -> "DistanceMetric":
@@ -112,7 +119,7 @@ class DistanceMetric(NamedTuple):
         It is not a strict metric (distinct points can be at distance zero, and the triangle
         inequality fails); the solver relies on neither.  It costs one ``log`` per dimension.
         """
-        return cls(kind=METRIC_KIND_GEOMEAN, p=None)
+        return cls(kind=METRIC_KIND_GEOMEAN, p=NO_P)
 
     @classmethod
     def minkowski(cls, p: float, root: bool = True) -> "DistanceMetric":
@@ -145,20 +152,20 @@ class DistanceMetric(NamedTuple):
         if p == 2.0:
             return cls.l2_euclidean() if root else cls.l2s_euclidean_squared()
         if p == 0.5:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P05 if root else METRIC_KIND_MINKOWSKI_P05_POWERED, p=None)
+            return cls(kind=METRIC_KIND_MINKOWSKI_P05 if root else METRIC_KIND_MINKOWSKI_P05_POWERED, p=NO_P)
         if p == 0.25:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED, p=None)
+            return cls(kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED, p=NO_P)
         if p == 0.125:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED, p=None)
+            return cls(kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED, p=NO_P)
         return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, p=p)
 
     # --------------------------------------------------------------------------
-    #  njit encoding
+    #  Properties
     # --------------------------------------------------------------------------
     @property
-    def njit_p(self) -> np.float64:
-        """Return `p` in its njit encoding: the value as float64, NaN for None."""
-        return np.float64(np.nan if self.p is None else self.p)
+    def needs_preprocessed_vectors(self) -> bool:
+        """Return whether this metric's distances read a preprocessed copy of the vectors (see `_preprocess`)."""
+        return self.kind in _PREPROCESSING_KINDS
 
     # --------------------------------------------------------------------------
     #  Representation
@@ -167,6 +174,6 @@ class DistanceMetric(NamedTuple):
         """Return the factory call that constructs this metric."""
         if self.kind in _FACTORY_NAMES:
             return f"DistanceMetric.{_FACTORY_NAMES[self.kind]}()"
-        p = self.p if self.p is not None else _IMPLIED_P[self.kind]
+        p = self.p if self.p != NO_P else _IMPLIED_P[self.kind]
         root_arg = ", root=False" if self.kind in _POWERED_KINDS else ""
         return f"DistanceMetric.minkowski(p={p}{root_arg})"
