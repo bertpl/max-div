@@ -56,7 +56,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^kmedoids-1]: The core functions take a dissimilarity matrix only; the scikit-learn-style estimator accepts a metric name and forwards it to scikit-learn's pairwise distances, which needs scikit-learn installed.
 [^kmedoids-2]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed dissimilarity matrix.
-[^kmedoids-3]: Reachable by handing the tool the one coordinate as one-dimensional input: in one dimension every Minkowski distance is the absolute difference of that coordinate.
+[^kmedoids-3]: Reachable by handing the tool that one coordinate as one-dimensional input.
 [^kmedoids-4]: A precomputed dissimilarity matrix is the primary input and the one the documentation recommends, so any dissimilarity you can compute is usable as is.
 [^kmedoids-5]: k-medoids minimizes the total dissimilarity of every item to its nearest medoid, a representativeness objective that places the medoids in dense regions; none of the dispersion objectives is optimized.
 [^kmedoids-6]: The iteration cap bounds the swap phase, but the cap is a convergence limit, not a budget: the search stops at the first local optimum it reaches, usually after a handful of passes, whatever cap is set.

@@ -39,10 +39,7 @@ solver:
       note: *via_kernel
     distance.along_axis:
       mark: partial
-      note:
-        text: >-
-          Reachable by handing the tool the one coordinate as one-dimensional input: in one
-          dimension every Minkowski distance is the absolute difference of that coordinate.
+      note: *via_kernel
     distance.custom:
       mark: full
       note:

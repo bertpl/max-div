@@ -55,6 +55,6 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^fpsample-1]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
-[^fpsample-2]: Reachable by handing the tool the one coordinate as one-dimensional input: in one dimension every Minkowski distance is the absolute difference of that coordinate.
+[^fpsample-2]: Reachable by handing the tool that one coordinate as one-dimensional input.
 [^fpsample-3]: Euclidean only. The KD-tree variants depend on it structurally, so this is not a gap waiting to be filled.
 [^fpsample-4]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.

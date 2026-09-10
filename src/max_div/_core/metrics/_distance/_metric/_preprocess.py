@@ -93,8 +93,8 @@ def _normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
 def preprocess_along_axis_vectors(vectors: NDArray[np.float32], axis: int) -> NDArray[np.float32]:
     """Return a fresh (n, 1) float32 array holding the one coordinate that the along-axis distance reads.
 
-    The slice is what lets the pair function read column 0 of a contiguous array, the same way
-    every other pair function reads its array; the axis itself never crosses the compiled boundary.
+    The slice lets the pair function read column 0 of a contiguous array, so the axis itself never
+    crosses the compiled boundary.
 
     Raises:
         ValueError: If `axis` is not a coordinate of `vectors`.

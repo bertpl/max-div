@@ -31,22 +31,22 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-1] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-1] |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-1] |
-| distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-2] |
-| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^ortools-cpsat-3] |
-| diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
-| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
-| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
+| distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-1] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^ortools-cpsat-2] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-3] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-4] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-full">✔</span> |  |
-| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-6] |
-| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-6] |
-| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-6] |
-| constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-7] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-5] |
+| constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-6] |
 | time budget · budget expressed as an iteration count | <span class="mark mark-full">✔</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-full">✔</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-8] |
-| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-full">✔</span> | [^ortools-cpsat-9] |
-| multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^ortools-cpsat-10] |
+| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^ortools-cpsat-7] |
+| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-full">✔</span> | [^ortools-cpsat-8] |
+| multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^ortools-cpsat-9] |
 | solver scaling · largest n within memory | n = 20k | |
 | solver scaling · largest n within the time budget | n = 20k | |
 | solver scaling · largest n closing 50% of the quality gap | n = 1k | |
@@ -55,12 +55,11 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^ortools-cpsat-1]: Reachable, but CP-SAT is an integer solver: distances must be scaled to integers before they enter the model, so the achievable precision is a modeling choice rather than a property of the metric.
-[^ortools-cpsat-2]: Reachable by handing the tool the one coordinate as one-dimensional input: in one dimension every Minkowski distance is the absolute difference of that coordinate.
-[^ortools-cpsat-3]: Any distance you can compute and round to integers is usable, which in practice means any metric at all.
-[^ortools-cpsat-4]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
-[^ortools-cpsat-5]: No natural constraint-programming encoding: a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, so it is reachable, at a formulation far larger than the max-min one.
-[^ortools-cpsat-6]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
-[^ortools-cpsat-7]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
-[^ortools-cpsat-8]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
-[^ortools-cpsat-9]: CP-SAT runs a portfolio of differently configured search workers on the same instance by default, set by the num_workers parameter.
-[^ortools-cpsat-10]: The portfolio workers share learned clauses, solutions and objective bounds while solving.
+[^ortools-cpsat-2]: Any distance you can compute and round to integers is usable, which in practice means any metric at all.
+[^ortools-cpsat-3]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
+[^ortools-cpsat-4]: No natural constraint-programming encoding: a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, so it is reachable, at a formulation far larger than the max-min one.
+[^ortools-cpsat-5]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
+[^ortools-cpsat-6]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
+[^ortools-cpsat-7]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
+[^ortools-cpsat-8]: CP-SAT runs a portfolio of differently configured search workers on the same instance by default, set by the num_workers parameter.
+[^ortools-cpsat-9]: The portfolio workers share learned clauses, solutions and objective bounds while solving.

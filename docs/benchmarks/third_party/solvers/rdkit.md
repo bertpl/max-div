@@ -37,10 +37,7 @@ solver:
       note: *callback
     distance.along_axis:
       mark: partial
-      note:
-        text: >-
-          Reachable by handing the tool the one coordinate as one-dimensional input: in one
-          dimension every Minkowski distance is the absolute difference of that coordinate.
+      note: *callback
     distance.custom:
       mark: full
       note:

@@ -108,7 +108,7 @@ def test_along_axis_preprocessing_keeps_the_one_coordinate():
 
 
 def test_along_axis_preprocessing_copies_a_single_column_too():
-    """With one-dimensional vectors the slice would share memory, so the copy is what keeps the contract."""
+    """With one-dimensional vectors the slice would share memory, so only an explicit copy yields a new array."""
     # --- arrange ----------------------
     vectors = np.ascontiguousarray(_vectors()[:, :1])
 

@@ -37,10 +37,7 @@ solver:
       note: *coeffs
     distance.along_axis:
       mark: partial
-      note:
-        text: >-
-          Reachable by handing the tool the one coordinate as one-dimensional input: in one
-          dimension every Minkowski distance is the absolute difference of that coordinate.
+      note: *coeffs
     distance.custom:
       mark: full
       note:

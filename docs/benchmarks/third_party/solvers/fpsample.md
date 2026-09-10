@@ -28,9 +28,7 @@ solver:
     distance.along_axis:
       mark: partial
       note:
-        text: >-
-          Reachable by handing the tool the one coordinate as one-dimensional input: in one
-          dimension every Minkowski distance is the absolute difference of that coordinate.
+        text: Reachable by handing the tool that one coordinate as one-dimensional input.
     distance.custom:
       mark: none
       note:
