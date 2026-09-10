@@ -1,10 +1,10 @@
-"""`DistanceStorage` names the user's choice of distance backend."""
+"""`DistanceStorageType` names the user's choice of distance backend."""
 
 from enum import StrEnum
 
 
-class DistanceStorage(StrEnum):
-    """A `DistanceStorage` names how the solver stores pairwise distances during search.
+class DistanceStorageType(StrEnum):
+    """A `DistanceStorageType` names how the solver stores pairwise distances during search.
 
     `AUTO` (the default) lets max-div decide; `select_distance_storage` states the policy.  The
     resolved backend is reported in the solution summary.  Pinning a backend overrides the policy —

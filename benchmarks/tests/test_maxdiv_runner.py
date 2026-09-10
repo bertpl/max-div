@@ -2,7 +2,7 @@ import numpy as np
 
 from benchmarks.runners import run_maxdiv_budget_series
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
-from max_div.solver import DistanceStorage
+from max_div.solver import DistanceStorageType
 
 
 def test_single_worker_series_records_one_row_per_budget_and_seed(small_problem):
@@ -40,7 +40,7 @@ def test_lazy_distance_storage_solves_without_a_store(small_problem):
         size=30,
         time_budgets_sec=[0.01],
         seeds=(0,),
-        distance_storage=DistanceStorage.LAZY,
+        distance_storage=DistanceStorageType.LAZY,
     )
 
     # --- assert -----------------------

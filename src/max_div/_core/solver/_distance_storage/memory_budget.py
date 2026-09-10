@@ -25,7 +25,7 @@ def check_fits_physical_memory(bytes_needed: int, lazy_available: bool) -> None:
     """
     total = total_physical_memory_bytes()
     if total is not None and bytes_needed > total:
-        lazy_hint = " or DistanceStorage.LAZY (no O(n²) memory)" if lazy_available else ""
+        lazy_hint = " or DistanceStorageType.LAZY (no O(n²) memory)" if lazy_available else ""
         raise ValueError(
             f"Distance storage 'full_matrix' needs ~{bytes_needed / 2**30:.1f} GiB, but this machine "
             f"has {total / 2**30:.1f} GiB of physical memory; choose a smaller problem{lazy_hint}."

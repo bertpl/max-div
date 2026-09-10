@@ -9,10 +9,10 @@
 from .build import build_distance_store, build_shared_distance_store, select_distance_storage
 from .memory_budget import total_physical_memory_bytes
 from .shared_memory import SharedDistanceStore, SharedStoreSpec, attached_distance_store, publish_distance_store
-from .storage import DistanceStorage
+from .storage import DistanceStorageType
 
 __all__ = [
-    "DistanceStorage",
+    "DistanceStorageType",
     "SharedDistanceStore",
     "SharedStoreSpec",
     "attached_distance_store",

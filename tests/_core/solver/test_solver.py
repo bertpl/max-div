@@ -9,7 +9,7 @@ from max_div._core._utils import stdout_to_file
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver import DistanceStorage, MaxDivSolution, MaxDivSolverBuilder, Verbosity
+from max_div._core.solver import DistanceStorageType, MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._duration import Elapsed, iterations
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._score import Score
@@ -197,14 +197,14 @@ def test_solver_lazy_backend_bit_identical_selection(distance_metric: DistanceMe
         MaxDivSolverBuilder(problem)
         .with_preset(iterations(500))
         .with_seed(7)
-        .with_distance_storage(DistanceStorage.FULL_MATRIX)
+        .with_distance_storage(DistanceStorageType.FULL_MATRIX)
         .build()
     )
     solver_lazy = (
         MaxDivSolverBuilder(problem)
         .with_preset(iterations(500))
         .with_seed(7)
-        .with_distance_storage(DistanceStorage.LAZY)
+        .with_distance_storage(DistanceStorageType.LAZY)
         .build()
     )
 

@@ -13,15 +13,15 @@ from max_div._core.problem import MaxDivProblem, VectorMaxDivProblem
 
 from .memory_budget import AUTO_MEMORY_FRACTION, check_fits_physical_memory, full_matrix_bytes
 from .shared_memory import SharedDistanceStore, publish_distance_store
-from .storage import DistanceStorage
+from .storage import DistanceStorageType
 
 
 # =================================================================================================
 #  Resolution & construction
 # =================================================================================================
 def select_distance_storage(
-    problem: MaxDivProblem, storage: DistanceStorage, total_memory_bytes: int | None
-) -> DistanceStorage:
+    problem: MaxDivProblem, storage: DistanceStorageType, total_memory_bytes: int | None
+) -> DistanceStorageType:
     """Select a concrete backend for the given problem when the choice is `AUTO`; explicit choices pass through.
 
     The memory probe is injected, so the selection is a pure function of its arguments and
@@ -33,18 +33,18 @@ def select_distance_storage(
         total_memory_bytes: total physical RAM, or None when unknown (degrades to lazy, the one
             backend that cannot page).
     """
-    if storage != DistanceStorage.AUTO:
+    if storage != DistanceStorageType.AUTO:
         return storage
     if not isinstance(problem, VectorMaxDivProblem):
-        return DistanceStorage.FULL_MATRIX  # distance-input problems have no vectors, so this is their only backend
+        return DistanceStorageType.FULL_MATRIX  # distance-input problems have no vectors, so this is their only backend
     if total_memory_bytes is None:
-        return DistanceStorage.LAZY
+        return DistanceStorageType.LAZY
     if full_matrix_bytes(problem.n) <= total_memory_bytes * AUTO_MEMORY_FRACTION:
-        return DistanceStorage.FULL_MATRIX
-    return DistanceStorage.LAZY
+        return DistanceStorageType.FULL_MATRIX
+    return DistanceStorageType.LAZY
 
 
-def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> DistanceStore:
+def build_distance_store(problem: MaxDivProblem, storage_type: DistanceStorageType) -> DistanceStore:
     """Build the distance store for an already-resolved (non-AUTO) backend choice.
 
     The memory check guards only the cases that allocate a new matrix — computing it from vectors
@@ -54,12 +54,12 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
         ValueError: For LAZY on a distance-input problem (no vectors to compute from), or when the
             full matrix cannot fit in physical memory at all.
     """
-    match resolved:
-        case DistanceStorage.FULL_MATRIX:
+    match storage_type:
+        case DistanceStorageType.FULL_MATRIX:
             if not problem.has_full_matrix:
                 _check_full_matrix_fits_memory(problem)
             return DistanceStore.full_matrix(problem.full_matrix())
-        case DistanceStorage.LAZY:
+        case DistanceStorageType.LAZY:
             if not isinstance(problem, VectorMaxDivProblem):
                 raise ValueError(
                     "Lazy distance storage computes distances from vectors, which a distance-input "
@@ -67,10 +67,10 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
                 )
             return DistanceStore.lazy_from_vectors(problem.vectors, problem.distance_metric)
         case _:
-            raise ValueError(f"Distance storage must be resolved before building a store; got {resolved}.")
+            raise ValueError(f"Distance storage must be resolved before building a store; got {storage_type}.")
 
 
-def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> SharedDistanceStore:
+def build_shared_distance_store(problem: MaxDivProblem, storage_type: DistanceStorageType) -> SharedDistanceStore:
     """Build the store for an already-resolved backend in shared memory, for several processes to read.
 
     A full matrix is built or expanded straight into the segment: at full-matrix sizes a
@@ -82,7 +82,7 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
     Raises:
         ValueError: as `build_distance_store`, for a backend the problem cannot provide.
     """
-    if resolved == DistanceStorage.FULL_MATRIX and not problem.has_full_matrix:
+    if storage_type == DistanceStorageType.FULL_MATRIX and not problem.has_full_matrix:
         _check_full_matrix_fits_memory(problem)
         shared = SharedDistanceStore.allocate((problem.n, problem.n), KIND_FULL_MATRIX)
         problem.full_matrix(out=shared.buffer)
@@ -90,7 +90,7 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
     # The remaining cases, a full matrix as given or lazy, publish a built store; a lazy store holds
     # the vectors preprocessed for the metric, so its vector array is published — the segment must
     # hold what the distance reads expect.
-    return publish_distance_store(build_distance_store(problem, resolved))
+    return publish_distance_store(build_distance_store(problem, storage_type))
 
 
 def _check_full_matrix_fits_memory(problem: MaxDivProblem) -> None:

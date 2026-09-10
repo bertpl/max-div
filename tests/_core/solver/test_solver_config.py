@@ -4,7 +4,7 @@ import pytest
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder
-from max_div._core.solver._distance_storage import DistanceStorage, build_distance_store
+from max_div._core.solver._distance_storage import DistanceStorageType, build_distance_store
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
@@ -27,7 +27,7 @@ def test_resolve_returns_the_backend_and_a_config_over_it():
     resolved, config = builder.prepare_storage_and_config()
 
     # --- assert -----------------------
-    assert resolved != DistanceStorage.AUTO  # AUTO is resolved to something concrete
+    assert resolved != DistanceStorageType.AUTO  # AUTO is resolved to something concrete
     assert config.seed == 99
     assert config.k == 4
     assert config.diversity_metric == DiversityMetric.GEOMEAN_SEPARATION  # the problem's own metric

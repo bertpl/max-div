@@ -3,7 +3,7 @@
 from ._core._warnings import ParallelSolvingWarning, SolverBudgetWarning
 from ._core.solver import (
     ConstraintPenalty,
-    DistanceStorage,
+    DistanceStorageType,
     InitializationStrategy,
     MaxDivSolver,
     MaxDivSolverBuilder,
@@ -26,7 +26,7 @@ from ._core.solver import (
 
 __all__ = [
     "ConstraintPenalty",
-    "DistanceStorage",
+    "DistanceStorageType",
     "InitializationStrategy",
     "MaxDivSolver",
     "MaxDivSolverBuilder",

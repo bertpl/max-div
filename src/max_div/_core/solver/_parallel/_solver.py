@@ -7,7 +7,7 @@ from dataclasses import fields
 
 from max_div._core._warnings import ParallelSolvingWarning
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._distance_storage import DistanceStorage, build_shared_distance_store
+from max_div._core.solver._distance_storage import DistanceStorageType, build_shared_distance_store
 from max_div._core.solver._progress_reporting import ProgressReporter, Verbosity
 from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
@@ -33,7 +33,7 @@ class ParallelMaxDivSolver:
     def __init__(
         self,
         problem: MaxDivProblem,
-        storage: DistanceStorage,
+        storage: DistanceStorageType,
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
         group_sizes: list[int],

@@ -161,7 +161,7 @@ class MaxDivProblem(ABC):
         Accepts either a square symmetric ``(n, n)`` distance matrix or a condensed distance
         vector of length ``n*(n-1)/2`` (scipy layout, as produced by ``scipy.spatial.distance.pdist``).
         Distances are converted to ``float32`` internally.  The solver reads from a full matrix, so
-        a condensed input is expanded when the solver builds its store; see `DistanceStorage` for
+        a condensed input is expanded when the solver builds its store; see `DistanceStorageType` for
         the cost.
 
         Args:

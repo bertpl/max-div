@@ -40,7 +40,7 @@ from benchmarks.runners import run_adapter, run_maxdiv_budget_series
 from benchmarks.runners.maxdiv_runner import maxdiv_tool_label
 from benchmarks.solver_scaling.quality_stage import time_limits
 from max_div.metrics import DiversityMetric
-from max_div.solver import DistanceStorage
+from max_div.solver import DistanceStorageType
 
 OUTPUT_DIR = Path("reports/benchmarks/tier2")
 DATA_DIR = Path(__file__).parent / "data"
@@ -52,7 +52,7 @@ SIZES = (100, 1000, 10000, 100000)
 METRIC = DiversityMetric.MIN_SEPARATION
 # At the largest sizes the default distance store takes a large share of the time budget to
 # build; lazy storage skips that build.
-DISTANCE_STORAGE = DistanceStorage.LAZY
+DISTANCE_STORAGE = DistanceStorageType.LAZY
 
 
 def entrant_adapters() -> list[SelectionAdapter]:
@@ -113,7 +113,7 @@ def run_maxdiv(
     single_budgets_sec: list[float] = SINGLE_WORKER_BUDGETS_SEC,
     multi_budgets_sec: list[float] = MULTI_WORKER_BUDGETS_SEC,
     n_workers: int = N_WORKERS,
-    distance_storage: DistanceStorage = DISTANCE_STORAGE,
+    distance_storage: DistanceStorageType = DISTANCE_STORAGE,
     out_path: Path = OUTPUT_DIR / MAXDIV_FILE,
 ) -> list[RunRecord]:
     """Run the max-div half: both budget series at every size, under the tier's distance storage.

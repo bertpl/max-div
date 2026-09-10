@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- `DistanceStorage` is renamed to `DistanceStorageType`; `with_distance_storage` keeps its name
 
 ### Deprecated
 
