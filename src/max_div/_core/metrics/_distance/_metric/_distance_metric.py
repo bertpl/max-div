@@ -47,7 +47,7 @@ _IMPLIED_P = {
     METRIC_KIND_MINKOWSKI_P0125_POWERED: 0.125,
 }
 
-# Kinds whose reads expect a preprocessed form of the vectors (see `_preprocess`), not the user's array.
+# Kinds that need a preprocessed form of the vectors (see `_preprocess`), not the user's array.
 _PREPROCESSING_KINDS = frozenset({METRIC_KIND_COS})
 
 # These Minkowski kinds skip the outer 1/p root.
@@ -159,7 +159,7 @@ class DistanceMetric(NamedTuple):
     #  Properties
     # --------------------------------------------------------------------------
     @property
-    def preprocesses_vectors(self) -> bool:
+    def needs_preprocessed_vectors(self) -> bool:
         """Return whether this metric's distances read a preprocessed copy of the vectors (see `_preprocess`)."""
         return self.kind in _PREPROCESSING_KINDS
 

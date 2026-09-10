@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import preprocess_vectors, validate_vector_layout
+from max_div._core.metrics._distance._metric import preprocess_vectors, validate_vector_array_layout
 
 
 def _vectors() -> np.ndarray:
@@ -22,7 +22,7 @@ def test_preprocess_follows_the_metrics_declaration(metric: DistanceMetric):
     preprocessed = preprocess_vectors(vectors, metric)
 
     # --- assert -----------------------
-    if metric.preprocesses_vectors:
+    if metric.needs_preprocessed_vectors:
         assert not np.shares_memory(preprocessed, vectors)
     else:
         assert preprocessed is vectors
@@ -47,7 +47,7 @@ def test_preprocess_returns_the_layout_reads_expect(metric: DistanceMetric):
     preprocessed = preprocess_vectors(_vectors(), metric)
 
     # --- assert -----------------------
-    validate_vector_layout(preprocessed)  # raises on violation
+    validate_vector_array_layout(preprocessed)  # raises on violation
 
 
 # =================================================================================================
@@ -84,8 +84,8 @@ def test_cosine_preprocessing_rejects_zero_rows():
     ],
     ids=["float64", "fortran", "1d"],
 )
-def test_validate_vector_layout_rejects_other_forms(vectors: np.ndarray):
+def test_validate_vector_array_layout_rejects_other_forms(vectors: np.ndarray):
     """Anything but a 2D float32 C-contiguous array is refused, not converted."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="2D float32 C-contiguous"):
-        validate_vector_layout(vectors)
+        validate_vector_array_layout(vectors)

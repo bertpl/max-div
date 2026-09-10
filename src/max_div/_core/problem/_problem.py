@@ -129,7 +129,7 @@ class MaxDivProblem(ABC):
             raise ValueError("At least 3 vectors are required to formulate a max-div problem.")
         if vectors.shape[1] == 0:
             raise ValueError("Vectors must have at least one dimension.")
-        vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance read expects
+        vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
         if distance_metric == DistanceMetric.cosine():
             validate_cosine_vectors(vectors)  # fail fast: zero vectors have no defined angle
 

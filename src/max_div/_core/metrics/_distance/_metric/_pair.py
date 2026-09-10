@@ -1,8 +1,9 @@
 """Every distance the package produces is computed by one of the pair functions here.
 
 The builds in `_build` and the on-demand reads in `_store` all go through these, which is what
-keeps stored and on-demand values bit-equal.  Every function reads the array `preprocess_vectors` returns
-for the metric: cosine's branch relies on rows normalized there.
+keeps stored and on-demand values bit-equal.  Every function reads the array that `preprocess_vectors`
+returns, which is either a preprocessed array for those distance metrics that need it, or the original
+array of vectors for those that don't.
 """
 
 import numba

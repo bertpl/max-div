@@ -58,7 +58,7 @@ def compute_full_matrix(
     accumulates in float64 across the d dimensions and narrows to float32 on store.
 
     Args:
-        vectors: (n x d ndarray) the user's vectors, in the form `validate_vector_layout` accepts.
+        vectors: (n x d ndarray) the user's vectors, in the form `validate_vector_array_layout` accepts.
         metric: (DistanceMetric) The distance metric to use.
         out: ((n, n) ndarray) buffer to fill, allocated here when not given.
 

@@ -109,7 +109,7 @@ def test_from_njit_inverts_the_encoding(metric: DistanceMetric):
     assert DistanceMetric.from_njit(metric.kind, metric.njit_p) == metric
 
 
-def test_only_cosine_preprocesses_vectors(metric: DistanceMetric):
+def test_only_cosine_needs_preprocessed_vectors(metric: DistanceMetric):
     """Cosine is the one metric whose reads expect a preprocessed copy of the vectors."""
     # --- act / assert -----------------
-    assert metric.preprocesses_vectors is (metric == DistanceMetric.cosine())
+    assert metric.needs_preprocessed_vectors is (metric == DistanceMetric.cosine())

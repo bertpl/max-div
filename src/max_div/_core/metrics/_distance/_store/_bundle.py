@@ -4,8 +4,8 @@ A namedtuple of numpy arrays and scalars, so it crosses the njit boundary withou
 fields a backend does not use hold zero-length arrays.  Which field carries the distances is what
 `kind` selects, and `_reads` is the only place that knows how to index each one.
 
-A store is bound to the metric it was built for: a lazy store's array is the form that metric's
-reads expect, so no other metric may read through that store.
+A lazy store holds the vectors as `preprocess_vectors` returns them for the metric it was built for,
+so only metrics with the same preprocessing may share it.
 """
 
 from typing import NamedTuple
@@ -15,7 +15,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.metrics._distance._build import compute_full_matrix, expand_condensed
-from max_div._core.metrics._distance._metric import DistanceMetric, preprocess_vectors, validate_vector_layout
+from max_div._core.metrics._distance._metric import DistanceMetric, preprocess_vectors, validate_vector_array_layout
 
 # =================================================================================================
 #  DistanceStore
@@ -53,7 +53,7 @@ class DistanceStore(NamedTuple):
     kind: np.int32
     n: np.int32
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
-    preprocessed_vectors: NDArray[np.float32]  # (n, d) the array the metric's reads expect, KIND_LAZY
+    preprocessed_vectors: NDArray[np.float32]  # (n, d) the vectors as preprocessed for the metric, KIND_LAZY
     metric_kind: np.int32  # pair-function selector, KIND_LAZY only
     metric_p: np.float64  # `DistanceMetric.p`, in the njit encoding that class defines
 
@@ -62,18 +62,18 @@ class DistanceStore(NamedTuple):
     # --------------------------------------------------------------------------
     @classmethod
     def lazy(cls, preprocessed_vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
-        """Return a DistanceStore computing distances on demand from an array already in preprocessed form.
+        """Return a DistanceStore computing distances on demand from vectors already preprocessed for the metric.
 
         The store adopts the array as a read-only view, without copying, so a store over a shared
         segment reads the segment's own bytes.  Preprocessing the user's vectors for the metric is the
         caller's job (`lazy_from_vectors` preprocesses, then calls `lazy`).
 
         Args:
-            preprocessed_vectors: (n x d ndarray) the array the metric's reads expect, as `preprocess_vectors`
-                returns it.
-            metric: (DistanceMetric) the distance metric the reads compute.
+            preprocessed_vectors: (n x d ndarray) the vectors as `preprocess_vectors` returns them for the
+                metric.
+            metric: (DistanceMetric) the distance metric the store computes.
         """
-        validate_vector_layout(preprocessed_vectors)
+        validate_vector_array_layout(preprocessed_vectors)
         return cls(
             kind=KIND_LAZY,
             n=np.int32(preprocessed_vectors.shape[0]),
@@ -117,7 +117,7 @@ class DistanceStore(NamedTuple):
         to both halves — so values are bit-equal across backends and symmetry is structural.
 
         Args:
-            vectors: (n x d ndarray) the user's vectors, in the form `validate_vector_layout` accepts.
+            vectors: (n x d ndarray) the user's vectors, in the form `validate_vector_array_layout` accepts.
             metric: (DistanceMetric) the distance metric to use.
         """
         return cls.full_matrix(compute_full_matrix(vectors, metric))
