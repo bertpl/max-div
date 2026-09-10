@@ -3,7 +3,7 @@
 from typing import Self
 
 from max_div._core.problem import MaxDivProblem
-from max_div._core.solver._distance_storage import DistanceStorageType, build_distance_store
+from max_div._core.solver._distance_storage import DistanceStoreFactory
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._presets import SolverPreset, get_preset_strategies
 from max_div._core.solver._solver import MaxDivSolver
@@ -108,17 +108,17 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         The store is not built here: `solve` builds it, so its cost is part of the solve and a
         large store is not held between building the solver and running it.
         """
-        resolved, config = self.prepare_storage_and_config()
-        return config.build_solver(store_provider=lambda: build_distance_store(self._problem, resolved))
+        factory, config = self.prepare_storage_and_config()
+        return config.build_solver(store_provider=lambda: factory.create_stores()[0])
 
-    def prepare_storage_and_config(self) -> tuple[DistanceStorageType, SolverConfig]:
-        """Return the backend this configuration selects, and the solver config over it.
+    def prepare_storage_and_config(self) -> tuple[DistanceStoreFactory, SolverConfig]:
+        """Return the factory building this configuration's stores, and the solver config over them.
 
-        Keeping the backend choice and the config apart lets a caller build the distances once and
+        Keeping the factory and the config apart lets a caller build the distances once and
         assemble a solver per worker over them, which is how the parallel solver shares one store.
         """
-        resolved, label = self._select_storage()
-        return resolved, SolverConfig(
+        factory, label = self._store_factory()
+        return factory, SolverConfig(
             n=self._n,
             k=self._k,
             diversity_metric=self._diversity_metric,

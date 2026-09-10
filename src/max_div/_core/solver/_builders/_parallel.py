@@ -154,12 +154,11 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
         warn_about_worker_count(len(self._worker_configs))
-        resolved, label = self._select_storage()
+        factory, label = self._store_factory()
         e2e_budget = self._resolve_e2e_budget()
         batch_intervals = self._batch_interval_per_worker()
         return ParallelMaxDivSolver(
-            problem=self._problem,
-            storage_type=resolved,
+            store_factory=factory,
             worker_configs=self._worker_configs,
             solver_configs=[
                 self._solver_config_for(index, worker, self._target_duration, label, batch_intervals[index], e2e_budget)

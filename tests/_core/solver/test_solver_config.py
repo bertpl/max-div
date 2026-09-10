@@ -4,7 +4,7 @@ import pytest
 from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder
-from max_div._core.solver._distance_storage import DistanceStorageType, build_distance_store
+from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStoreFactory
 from max_div._core.solver._duration import iterations
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import Verbosity
@@ -18,16 +18,17 @@ def _builder() -> MaxDivSolverBuilder:
     return MaxDivSolverBuilder(problem).with_preset(iterations(20), SolverPreset.SMART)
 
 
-def test_resolve_returns_the_backend_and_a_config_over_it():
-    """Resolving hands back the chosen backend and a config carrying the builder's settings."""
+def test_resolve_returns_the_factory_and_a_config_over_it():
+    """Resolving hands back the store factory and a config carrying the builder's settings."""
     # --- arrange ----------------------
     builder = _builder().with_seed(99)
 
     # --- act --------------------------
-    resolved, config = builder.prepare_storage_and_config()
+    factory, config = builder.prepare_storage_and_config()
 
     # --- assert -----------------------
-    assert resolved != DistanceStorageType.AUTO  # AUTO is resolved to something concrete
+    assert isinstance(factory, DistanceStoreFactory)
+    assert factory.determine_storage_types() != [DistanceStorageType.AUTO]  # AUTO is resolved to something concrete
     assert config.seed == 99
     assert config.k == 4
     assert config.diversity_metric == DiversityMetric.GEOMEAN_SEPARATION  # the problem's own metric
@@ -37,10 +38,10 @@ def test_a_config_builds_a_solver_over_any_store():
     """A config plus a store is a solver."""
     # --- arrange ----------------------
     builder = _builder()
-    resolved, config = builder.prepare_storage_and_config()
+    factory, config = builder.prepare_storage_and_config()
 
     # --- act --------------------------
-    solver = config.build_solver(store=build_distance_store(builder._problem, resolved))
+    solver = config.build_solver(store=factory.create_stores()[0])
 
     # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
@@ -51,13 +52,13 @@ def test_a_config_builds_a_solver_that_defers_its_store():
     """Given a provider instead of a store, the provider is called at solve time, not before."""
     # --- arrange ----------------------
     builder = _builder()
-    resolved, config = builder.prepare_storage_and_config()
+    factory, config = builder.prepare_storage_and_config()
     calls = 0
 
     def provide_store():
         nonlocal calls
         calls += 1
-        return build_distance_store(builder._problem, resolved)
+        return factory.create_stores()[0]
 
     # --- act --------------------------
     solver = config.build_solver(store_provider=provide_store)

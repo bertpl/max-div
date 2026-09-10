@@ -3,7 +3,7 @@
 import os
 from typing import ClassVar
 
-# Under AUTO the full matrix may claim this fraction of *total* physical RAM.  Total is cheap and
+# Under AUTO the full matrices together may claim this fraction of *total* physical RAM.  Total is cheap and
 # stable to probe, unlike available memory, which fluctuates and is awkward to read on some
 # platforms; the conservative fraction absorbs the machine load the probe deliberately ignores.
 # Overshooting would page — worse than the foregone speedup — while undershooting only loses the
@@ -17,11 +17,11 @@ def full_matrix_bytes(n: int) -> int:
 
 
 def check_fits_physical_memory(bytes_needed: int, lazy_available: bool) -> None:
-    """Raise early, with the remedy named, when a full matrix cannot fit in physical RAM at all.
+    """Raise early, with the remedy named, when the full matrices cannot fit in physical RAM at all.
 
     Args:
-        bytes_needed: the bytes the allocation will claim.
-        lazy_available: whether the problem has vectors, so the lazy backend can be named as the remedy.
+        bytes_needed: the bytes the allocations will claim together.
+        lazy_available: whether the problem has vectors, so the lazy storage type can be named as the remedy.
     """
     total = total_physical_memory_bytes()
     if total is not None and bytes_needed > total:
