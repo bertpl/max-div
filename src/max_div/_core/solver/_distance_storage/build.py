@@ -19,8 +19,8 @@ from .storage import DistanceStorageType
 # =================================================================================================
 #  Resolution & construction
 # =================================================================================================
-def select_distance_storage(
-    problem: MaxDivProblem, storage: DistanceStorageType, total_memory_bytes: int | None
+def select_distance_storage_type(
+    problem: MaxDivProblem, storage_type: DistanceStorageType, total_memory_bytes: int | None
 ) -> DistanceStorageType:
     """Select a concrete backend for the given problem when the choice is `AUTO`; explicit choices pass through.
 
@@ -29,12 +29,12 @@ def select_distance_storage(
 
     Args:
         problem: the problem to be solved.
-        storage: the user's choice, possibly AUTO.
+        storage_type: the user's choice, possibly AUTO.
         total_memory_bytes: total physical RAM, or None when unknown (degrades to lazy, the one
             backend that cannot page).
     """
-    if storage != DistanceStorageType.AUTO:
-        return storage
+    if storage_type != DistanceStorageType.AUTO:
+        return storage_type
     if not isinstance(problem, VectorMaxDivProblem):
         return DistanceStorageType.FULL_MATRIX  # distance-input problems have no vectors, so this is their only backend
     if total_memory_bytes is None:

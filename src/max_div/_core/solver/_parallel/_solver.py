@@ -33,7 +33,7 @@ class ParallelMaxDivSolver:
     def __init__(
         self,
         problem: MaxDivProblem,
-        storage: DistanceStorageType,
+        storage_type: DistanceStorageType,
         worker_configs: list[WorkerConfig],
         solver_configs: list[SolverConfig],
         group_sizes: list[int],
@@ -43,7 +43,7 @@ class ParallelMaxDivSolver:
 
         Args:
             problem: the MaxDivProblem every worker solves.
-            storage: the already-resolved backend the shared store is built in.
+            storage_type: the already-resolved store type the shared store is built in.
             worker_configs: what each worker runs, reported back in the solution.
             solver_configs: the solver each worker assembles, in the same order.
             group_sizes: how the workers start out grouped, as consecutive run lengths over
@@ -53,7 +53,7 @@ class ParallelMaxDivSolver:
                 whole solve.
         """
         self._problem = problem
-        self._storage = storage
+        self._storage_type = storage_type
         self._worker_configs = worker_configs
         self._solver_configs = solver_configs
         self._group_sizes = group_sizes
@@ -88,7 +88,7 @@ class ParallelMaxDivSolver:
             solver_configs = [config.with_e2e_budget(e2e_budget) for config in solver_configs]
         group_state = self._build_group_state()
         coordinators = [group_state.coordinator_for(index) for index in range(len(solver_configs))]
-        with build_shared_distance_store(self._problem, self._storage) as shared_distance_store:
+        with build_shared_distance_store(self._problem, self._storage_type) as shared_distance_store:
             results, failures = run_workers(
                 solver_configs,
                 shared_distance_store.spec,

@@ -13,7 +13,7 @@ from max_div._core.solver._distance_storage import (
     attached_distance_store,
     build_distance_store,
     build_shared_distance_store,
-    select_distance_storage,
+    select_distance_storage_type,
 )
 from max_div._core.solver._duration import iterations
 
@@ -45,7 +45,7 @@ def _all_pairs(store, n: int) -> list[float]:
 @pytest.mark.parametrize("storage", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
 def test_resolve_explicit_choice_passes_through(storage: DistanceStorageType):
     # --- act / assert -----------------
-    assert select_distance_storage(_vector_problem(), storage, 64 * GIB) == storage
+    assert select_distance_storage_type(_vector_problem(), storage, 64 * GIB) == storage
 
 
 @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ def test_resolve_auto_vector_full_matrix_when_it_fits(n: int, total_memory: int 
     problem = _vector_problem() if n == 10 else _stub_vector_problem(n)
 
     # --- act --------------------------
-    resolved = select_distance_storage(problem, DistanceStorageType.AUTO, total_memory)
+    resolved = select_distance_storage_type(problem, DistanceStorageType.AUTO, total_memory)
 
     # --- assert -----------------------
     assert resolved == expected
@@ -85,7 +85,7 @@ def test_resolve_auto_distance_problem_is_the_full_matrix(form: str):
 
     # --- act / assert -----------------
     assert (
-        select_distance_storage(_distance_problem(form), DistanceStorageType.AUTO, None)
+        select_distance_storage_type(_distance_problem(form), DistanceStorageType.AUTO, None)
         == DistanceStorageType.FULL_MATRIX
     )
 
@@ -243,7 +243,7 @@ def test_build_shared_distance_store_holds_distance_input(form: str):
     """Distance-input problems land in the segment whatever their form, since the bytes must live there."""
     # --- arrange ----------------------
     problem = _distance_problem(form)
-    resolved = select_distance_storage(problem, DistanceStorageType.AUTO, 64 * GIB)
+    resolved = select_distance_storage_type(problem, DistanceStorageType.AUTO, 64 * GIB)
     expected = build_distance_store(problem, resolved)
 
     # --- act --------------------------

@@ -159,7 +159,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         batch_intervals = self._batch_interval_per_worker()
         return ParallelMaxDivSolver(
             problem=self._problem,
-            storage=resolved,
+            storage_type=resolved,
             worker_configs=self._worker_configs,
             solver_configs=[
                 self._solver_config_for(index, worker, self._target_duration, label, batch_intervals[index], e2e_budget)
