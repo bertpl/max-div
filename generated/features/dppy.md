@@ -31,17 +31,18 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^dppy-1] |
-| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^dppy-2] |
-| diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^dppy-3] |
-| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^dppy-3] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^dppy-3] |
-| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> | [^dppy-3] |
+| distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^dppy-2] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^dppy-3] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^dppy-4] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^dppy-4] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^dppy-4] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> | [^dppy-4] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
-| time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^dppy-4] |
+| time budget · budget expressed as an iteration count | <span class="mark mark-partial">◐</span> | [^dppy-5] |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
 | time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> |  |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
@@ -54,6 +55,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^dppy-1]: Reachable only through the kernel you supply. DPPy never sees vectors or a distance function: you choose how similarity is defined when you build the kernel, and any metric you can express that way is available.
-[^dppy-2]: The kernel is entirely caller-supplied, so a custom similarity is the native case rather than a workaround. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
-[^dppy-3]: DPPy draws samples from a determinantal point process rather than maximizing anything. Diversity is a property of the distribution it samples from — subsets whose kernel submatrix has a large determinant are more likely — so no objective is optimized and no selection is claimed to be best.
-[^dppy-4]: You can ask for more samples, but a sample count is a number of independent draws, not an improvement budget — the tenth draw is no better than the first, merely different.
+[^dppy-2]: Reachable by handing the tool the one coordinate as one-dimensional input: in one dimension every Minkowski distance is the absolute difference of that coordinate.
+[^dppy-3]: The kernel is entirely caller-supplied, so a custom similarity is the native case rather than a workaround. Note the sign convention differs from a distance: the kernel encodes similarity, and diversity comes from its determinant being large.
+[^dppy-4]: DPPy draws samples from a determinantal point process rather than maximizing anything. Diversity is a property of the distribution it samples from — subsets whose kernel submatrix has a large determinant are more likely — so no objective is optimized and no selection is claimed to be best.
+[^dppy-5]: You can ask for more samples, but a sample count is a number of independent draws, not an improvement budget — the tenth draw is no better than the first, merely different.

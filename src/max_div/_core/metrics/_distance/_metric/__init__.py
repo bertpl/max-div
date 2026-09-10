@@ -5,7 +5,7 @@ through the same pair functions, which is what keeps stored and computed values 
 `_preprocess` is the one place a metric's vectors are preprocessed into the form its pair function expects.
 """
 
-from ._distance_metric import NO_P, DistanceMetric
+from ._distance_metric import NO_AXIS, NO_P, DistanceMetric
 from ._pair import (
     _l2sq_pair,
     _metric_pair,
@@ -18,6 +18,7 @@ from ._preprocess import (
 )
 
 __all__ = [
+    "NO_AXIS",
     "NO_P",
     "DistanceMetric",
     "_l2sq_pair",

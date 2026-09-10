@@ -1,9 +1,10 @@
 import math
 
+import numpy as np
 import pytest
 
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance._metric import NO_P
+from max_div._core.metrics._distance._metric import NO_AXIS, NO_P
 
 # Every metric with a dedicated factory method of its own.
 _FACTORY_METRICS = (
@@ -13,6 +14,7 @@ _FACTORY_METRICS = (
     DistanceMetric.linf_chebyshev(),
     DistanceMetric.cosine(),
     DistanceMetric.geometric_mean(),
+    DistanceMetric.along_axis(0),
 )
 
 
@@ -104,13 +106,43 @@ def test_kinds_without_an_exponent_store_no_p():
     assert DistanceMetric.minkowski(3).p == 3.0
 
 
-def test_a_metric_rebuilds_from_its_two_fields(metric: DistanceMetric):
-    """The (kind, p) pair a spec carries rebuilds the metric, for every kind."""
+def test_a_metric_rebuilds_from_its_fields(metric: DistanceMetric):
+    """The (kind, p, axis) triple a spec carries rebuilds the metric, for every kind."""
     # --- act / assert -----------------
-    assert DistanceMetric(kind=metric.kind, p=metric.p) == metric
+    assert DistanceMetric(kind=metric.kind, p=metric.p, axis=metric.axis) == metric
 
 
-def test_only_cosine_needs_preprocessed_vectors(metric: DistanceMetric):
-    """Cosine is the one metric whose reads expect a preprocessed copy of the vectors."""
+def test_only_cosine_and_along_axis_need_preprocessed_vectors(metric: DistanceMetric):
+    """Cosine and the along-axis distance are the metrics that read a preprocessed copy of the vectors."""
     # --- act / assert -----------------
-    assert metric.needs_preprocessed_vectors is (metric == DistanceMetric.cosine())
+    expected = metric == DistanceMetric.cosine() or metric.kind == DistanceMetric.along_axis(0).kind
+    assert metric.needs_preprocessed_vectors is expected
+
+
+# ==================================================================================================
+#  Along one axis
+# ==================================================================================================
+def test_along_axis_carries_the_axis_and_nothing_else_does():
+    """The along-axis kind stores its coordinate; every other kind stores NO_AXIS."""
+    # --- act / assert -----------------
+    assert DistanceMetric.along_axis(3).axis == 3
+    assert DistanceMetric.along_axis(np.int64(2)).axis == 2
+    assert all(
+        metric.axis == NO_AXIS for metric in _FACTORY_METRICS if metric.kind != DistanceMetric.along_axis(0).kind
+    )
+    assert DistanceMetric.minkowski(3).axis == NO_AXIS
+
+
+def test_along_axis_metrics_differ_by_axis():
+    """Two along-axis metrics over different coordinates are different metrics."""
+    # --- act / assert -----------------
+    assert DistanceMetric.along_axis(0) == DistanceMetric.along_axis(0)
+    assert DistanceMetric.along_axis(0) != DistanceMetric.along_axis(1)
+
+
+@pytest.mark.parametrize("axis", [-1, 1.5, "0", True, None])
+def test_along_axis_rejects_anything_but_a_non_negative_integer(axis):
+    """The factory accepts a zero-based coordinate index and nothing else."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="non-negative integer axis"):
+        DistanceMetric.along_axis(axis)

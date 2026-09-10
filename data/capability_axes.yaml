@@ -148,6 +148,14 @@ groups:
         definition: >-
           Selects under the geometric-mean distance (the d-th root of the product of the
           per-coordinate differences) computed by the tool from vector input.
+      - key: along_axis
+        hero_label: single-dimension
+        label: single-dimension distance
+        hero: true
+        definition: >-
+          Selects under the distance along one coordinate axis (the absolute difference of that
+          coordinate) computed by the tool from vector input. Reaching it by handing the tool
+          that coordinate as one-dimensional input counts as reachable, not built in.
       - key: custom
         hero_label: custom
         label: caller-supplied distances

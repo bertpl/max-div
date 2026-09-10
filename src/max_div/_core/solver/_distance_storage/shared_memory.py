@@ -38,6 +38,7 @@ class SharedStoreSpec(NamedTuple):
     kind: int  # the `DistanceStore.kind` selector of the distance store that reads the segment
     metric_kind: int  # the distance metric that a lazy distance store computes with; unused for a full matrix
     metric_p: float  # `DistanceMetric.p` of that metric; unused for a full matrix
+    metric_axis: int  # `DistanceMetric.axis` of that metric; unused for a full matrix
     shape: tuple[int, ...]  # the shape of the float32 array in the segment; its first axis is the item count
 
 
@@ -62,4 +63,4 @@ def _store_over(buffer: NDArray[np.float32], spec: SharedStoreSpec) -> DistanceS
     """Return the distance store that reads the buffer as the kind that the spec names."""
     if spec.kind == KIND_FULL_MATRIX:
         return DistanceStore.full_matrix(buffer)
-    return DistanceStore.lazy(buffer, DistanceMetric(kind=spec.metric_kind, p=spec.metric_p))
+    return DistanceStore.lazy(buffer, DistanceMetric(kind=spec.metric_kind, p=spec.metric_p, axis=spec.metric_axis))

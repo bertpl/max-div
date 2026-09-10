@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A distance metric along one coordinate axis, `DistanceMetric.along_axis(axis)`: the absolute difference of that coordinate, every other coordinate ignored
 
 ### Changed
 - `DistanceStorage` is renamed to `DistanceStorageType`; `with_distance_storage` keeps its name

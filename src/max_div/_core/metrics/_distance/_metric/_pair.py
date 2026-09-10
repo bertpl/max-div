@@ -11,6 +11,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from ._distance_metric import (
+    METRIC_KIND_ALONG_AXIS,
     METRIC_KIND_COS,
     METRIC_KIND_GEOMEAN,
     METRIC_KIND_L1,
@@ -136,6 +137,12 @@ def _geomean_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: in
     return np.exp(log_sum / d)
 
 
+@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True)
+def _along_axis_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
+    """Return the absolute difference of column 0 of vectors i and j, the coordinate that preprocessing kept."""
+    return abs(np.float64(vectors[i, 0]) - np.float64(vectors[j, 0]))
+
+
 @numba.njit(
     numba.float32(numba.float32[:, ::1], numba.int32, numba.float64, numba.int32, numba.int32),
     inline="always",
@@ -162,6 +169,8 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
         return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
     if metric_kind == METRIC_KIND_GEOMEAN:
         return np.float32(_geomean_pair(vectors, i, j))
+    if metric_kind == METRIC_KIND_ALONG_AXIS:
+        return np.float32(_along_axis_pair(vectors, i, j))  # along axis: the array holds that one coordinate
     if metric_kind == METRIC_KIND_MINKOWSKI:
         return np.float32(_minkowski_pair_powered(vectors, i, j, metric_p) ** (1.0 / metric_p))
     if metric_kind == METRIC_KIND_MINKOWSKI_POWERED:

@@ -7,6 +7,8 @@ user-facing metric value and the compiled dispatch share a single classification
 import math
 from typing import NamedTuple
 
+import numpy as np
+
 # These selector values let njit functions branch on the metric without object-mode.
 METRIC_KIND_L1 = 0
 METRIC_KIND_L2 = 1
@@ -22,9 +24,10 @@ METRIC_KIND_MINKOWSKI_P025_POWERED = 10
 METRIC_KIND_MINKOWSKI_P0125 = 11
 METRIC_KIND_MINKOWSKI_P0125_POWERED = 12
 METRIC_KIND_GEOMEAN = 13
+METRIC_KIND_ALONG_AXIS = 14
 
 # `__repr__` looks up each kind's factory-method name here; the Minkowski kinds render as a
-# `minkowski(...)` call instead.
+# `minkowski(...)` call and the along-axis kind as an `along_axis(...)` call instead.
 _FACTORY_NAMES = {
     METRIC_KIND_L1: "l1_manhattan",
     METRIC_KIND_L2: "l2_euclidean",
@@ -46,7 +49,7 @@ _IMPLIED_P = {
 }
 
 # Kinds that need a preprocessed form of the vectors (see `_preprocess`), not the user's array.
-_PREPROCESSING_KINDS = frozenset({METRIC_KIND_COS})
+_PREPROCESSING_KINDS = frozenset({METRIC_KIND_COS, METRIC_KIND_ALONG_AXIS})
 
 # These Minkowski kinds skip the outer 1/p root.
 _POWERED_KINDS = (
@@ -59,8 +62,10 @@ _POWERED_KINDS = (
 
 # Fields are stored as the compiled functions read them, so a metric crosses the njit boundary
 # without conversion: `p` is a float, and NO_P marks a kind without a power parameter (every
-# Minkowski kind requires p > 0, so 0.0 is free to mean "none").
+# Minkowski kind requires p > 0, so 0.0 is free to mean "none").  `axis` follows the same rule:
+# an int, with NO_AXIS marking every kind that does not read one coordinate.
 NO_P = 0.0
+NO_AXIS = -1
 
 
 class DistanceMetric(NamedTuple):
@@ -68,11 +73,12 @@ class DistanceMetric(NamedTuple):
 
     Create instances via the factory methods only, so metrics that compute the same distance
     compare equal.  `p` is the metric's power parameter, `NO_P` for every kind that does not use
-    one.
+    one; `axis` is the coordinate that `along_axis` reads, `NO_AXIS` for every other kind.
     """
 
     kind: int
     p: float
+    axis: int
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -80,12 +86,12 @@ class DistanceMetric(NamedTuple):
     @classmethod
     def l1_manhattan(cls) -> "DistanceMetric":
         """Return the L1 (Manhattan) distance metric: ``sum_i |x_i - y_i|``."""
-        return cls(kind=METRIC_KIND_L1, p=NO_P)
+        return cls(kind=METRIC_KIND_L1, p=NO_P, axis=NO_AXIS)
 
     @classmethod
     def l2_euclidean(cls) -> "DistanceMetric":
         """Return the L2 (Euclidean) distance metric: ``sqrt( sum_i (x_i - y_i)^2 )``."""
-        return cls(kind=METRIC_KIND_L2, p=NO_P)
+        return cls(kind=METRIC_KIND_L2, p=NO_P, axis=NO_AXIS)
 
     @classmethod
     def l2s_euclidean_squared(cls) -> "DistanceMetric":
@@ -94,12 +100,12 @@ class DistanceMetric(NamedTuple):
         The squared form avoids the square root and produces identical solutions under the
         GEOMEAN_SEPARATION diversity metric.
         """
-        return cls(kind=METRIC_KIND_L2S, p=NO_P)
+        return cls(kind=METRIC_KIND_L2S, p=NO_P, axis=NO_AXIS)
 
     @classmethod
     def linf_chebyshev(cls) -> "DistanceMetric":
         """Return the Linf (Chebyshev) distance metric: ``max_i |x_i - y_i|``."""
-        return cls(kind=METRIC_KIND_LINF, p=NO_P)
+        return cls(kind=METRIC_KIND_LINF, p=NO_P, axis=NO_AXIS)
 
     @classmethod
     def cosine(cls) -> "DistanceMetric":
@@ -107,7 +113,7 @@ class DistanceMetric(NamedTuple):
 
         The range is [0, 2].  Zero vectors have no defined angle and are rejected with an error.
         """
-        return cls(kind=METRIC_KIND_COS, p=NO_P)
+        return cls(kind=METRIC_KIND_COS, p=NO_P, axis=NO_AXIS)
 
     @classmethod
     def geometric_mean(cls) -> "DistanceMetric":
@@ -119,7 +125,23 @@ class DistanceMetric(NamedTuple):
         It is not a strict metric (distinct points can be at distance zero, and the triangle
         inequality fails); the solver relies on neither.  It costs one ``log`` per dimension.
         """
-        return cls(kind=METRIC_KIND_GEOMEAN, p=NO_P)
+        return cls(kind=METRIC_KIND_GEOMEAN, p=NO_P, axis=NO_AXIS)
+
+    @classmethod
+    def along_axis(cls, axis: int) -> "DistanceMetric":
+        """Return the distance along one coordinate axis: ``|x_axis - y_axis|``.
+
+        A legitimate distance on its own, which spreads a selection along that single coordinate
+        only, and the building block of an objective that spreads a selection in several
+        coordinate projections at once.  The vector problem checks the axis against its dimension
+        count when it is constructed.
+
+        Args:
+            axis: The zero-based index of the coordinate to read.
+        """
+        if isinstance(axis, bool) or not isinstance(axis, (int, np.integer)) or axis < 0:
+            raise ValueError(f"along_axis requires a non-negative integer axis; here: {axis!r}.")
+        return cls(kind=METRIC_KIND_ALONG_AXIS, p=NO_P, axis=int(axis))
 
     @classmethod
     def minkowski(cls, p: float, root: bool = True) -> "DistanceMetric":
@@ -152,12 +174,18 @@ class DistanceMetric(NamedTuple):
         if p == 2.0:
             return cls.l2_euclidean() if root else cls.l2s_euclidean_squared()
         if p == 0.5:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P05 if root else METRIC_KIND_MINKOWSKI_P05_POWERED, p=NO_P)
+            return cls(
+                kind=METRIC_KIND_MINKOWSKI_P05 if root else METRIC_KIND_MINKOWSKI_P05_POWERED, p=NO_P, axis=NO_AXIS
+            )
         if p == 0.25:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED, p=NO_P)
+            return cls(
+                kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED, p=NO_P, axis=NO_AXIS
+            )
         if p == 0.125:
-            return cls(kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED, p=NO_P)
-        return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, p=p)
+            return cls(
+                kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED, p=NO_P, axis=NO_AXIS
+            )
+        return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, p=p, axis=NO_AXIS)
 
     # --------------------------------------------------------------------------
     #  Properties
@@ -174,6 +202,8 @@ class DistanceMetric(NamedTuple):
         """Return the factory call that constructs this metric."""
         if self.kind in _FACTORY_NAMES:
             return f"DistanceMetric.{_FACTORY_NAMES[self.kind]}()"
+        if self.kind == METRIC_KIND_ALONG_AXIS:
+            return f"DistanceMetric.along_axis({self.axis})"
         p = self.p if self.p != NO_P else _IMPLIED_P[self.kind]
         root_arg = ", root=False" if self.kind in _POWERED_KINDS else ""
         return f"DistanceMetric.minkowski(p={p}{root_arg})"

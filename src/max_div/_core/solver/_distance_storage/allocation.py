@@ -21,7 +21,7 @@ from numpy.typing import NDArray
 
 from max_div._core._utils import create_shared_memory_segment, destroy_shared_memory_segment
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import NO_P
+from max_div._core.metrics._distance import NO_AXIS, NO_P
 
 from .shared_memory import SharedStoreSpec
 
@@ -151,5 +151,6 @@ def _spec_for(
         kind=int(kind),
         metric_kind=0 if metric is None else int(metric.kind),
         metric_p=NO_P if metric is None else float(metric.p),
+        metric_axis=NO_AXIS if metric is None else int(metric.axis),
         shape=buffer.shape,
     )

@@ -21,6 +21,7 @@ solver:
     distance.minkowski: {mark: full}
     distance.cosine: {mark: full}
     distance.geomean: {mark: full}
+    distance.along_axis: {mark: full}
     distance.custom:
       mark: full
       note:

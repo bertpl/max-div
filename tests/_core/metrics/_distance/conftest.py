@@ -4,7 +4,8 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric
 
-# NAMED_METRICS lists every metric with a factory method of its own.
+# NAMED_METRICS lists every metric with a factory method of its own; the along-axis one reads a
+# coordinate every test array has.
 NAMED_METRICS = (
     DistanceMetric.l1_manhattan(),
     DistanceMetric.l2_euclidean(),
@@ -12,6 +13,7 @@ NAMED_METRICS = (
     DistanceMetric.linf_chebyshev(),
     DistanceMetric.cosine(),
     DistanceMetric.geometric_mean(),
+    DistanceMetric.along_axis(1),
 )
 
 # MINKOWSKI_METRICS covers each Minkowski kind once: generic and specialized, rooted and not.

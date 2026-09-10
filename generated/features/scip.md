@@ -31,21 +31,22 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^scip-2] |
-| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^scip-3] |
-| diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^scip-4] |
-| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^scip-5] |
-| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^scip-5] |
-| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^scip-4] |
+| distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^scip-3] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^scip-4] |
+| diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^scip-5] |
+| diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^scip-6] |
+| diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^scip-6] |
+| diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^scip-5] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-full">✔</span> |  |
-| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^scip-6] |
-| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^scip-6] |
-| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^scip-6] |
-| constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-partial">◐</span> | [^scip-7] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^scip-7] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^scip-7] |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^scip-7] |
+| constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-partial">◐</span> | [^scip-8] |
 | time budget · budget expressed as an iteration count | <span class="mark mark-full">✔</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-full">✔</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^scip-8] |
+| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^scip-9] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
-| multi-worker · parallel workers share information mid-run | <span class="mark mark-partial">◐</span> | [^scip-9] |
+| multi-worker · parallel workers share information mid-run | <span class="mark mark-partial">◐</span> | [^scip-10] |
 | solver scaling · largest n within memory | n = 2k | |
 | solver scaling · largest n within the time budget | n = 2k | |
 | solver scaling · largest n closing 50% of the quality gap | n = 500 | |
@@ -55,10 +56,11 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^scip-1]: The two halves carry different licenses: the SCIP solver itself is Apache-2.0, while the PySCIPOpt binding installed from PyPI is MIT. [Source](https://pypi.org/project/PySCIPOpt/)
 [^scip-2]: Reachable, but you build the model: distances enter as precomputed objective coefficients, so the metric is whatever you computed before the solver ever sees it.
-[^scip-3]: Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
-[^scip-4]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
-[^scip-5]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
-[^scip-6]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
-[^scip-7]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
-[^scip-8]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
-[^scip-9]: Reachable through SCIP's concurrent solving and the FiberSCIP / UG frameworks, which share bounds and solutions between the racing solvers but need a TPI-enabled build; the default PySCIPOpt wheel does not expose it.
+[^scip-3]: Reachable by handing the tool the one coordinate as one-dimensional input: in one dimension every Minkowski distance is the absolute difference of that coordinate.
+[^scip-4]: Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
+[^scip-5]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
+[^scip-6]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
+[^scip-7]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
+[^scip-8]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
+[^scip-9]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
+[^scip-10]: Reachable through SCIP's concurrent solving and the FiberSCIP / UG frameworks, which share bounds and solutions between the racing solvers but need a TPI-enabled build; the default PySCIPOpt wheel does not expose it.

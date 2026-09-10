@@ -42,6 +42,7 @@ def test_pair_metrics(metric: DistanceMetric):
         (DistanceMetric.l2s_euclidean_squared(), 25.0),
         (DistanceMetric.linf_chebyshev(), 4.0),
         (DistanceMetric.geometric_mean(), 12.0**0.5),
+        (DistanceMetric.along_axis(1), 4.0),
     ],
 )
 def test_pair_values(metric: DistanceMetric, expected_value: float):
@@ -169,3 +170,26 @@ def test_pair_geometric_mean_values(x: list[float], y: list[float], expected_val
         assert d[0] == np.float32(0.0)
     else:
         assert d[0] == pytest.approx(expected_value, rel=1e-6)
+
+
+# ==================================================================================================
+#  Along one axis
+# ==================================================================================================
+@pytest.mark.parametrize(
+    "axis, expected_value",
+    [
+        (0, 3.0),
+        (1, 4.0),
+        (2, 0.0),  # a shared coordinate is at distance zero, however far apart the vectors are elsewhere
+    ],
+)
+def test_pair_along_axis_values(axis: int, expected_value: float):
+    """The along-axis distance is the absolute difference of that one coordinate and ignores every other."""
+    # --- arrange ----------------------
+    vectors = np.array([[0.0, 0.0, 5.0], [-3.0, 4.0, 5.0]], dtype=np.float32)
+
+    # --- act --------------------------
+    d = condensed_distances(vectors, metric=DistanceMetric.along_axis(axis))
+
+    # --- assert -----------------------
+    assert d[0] == np.float32(expected_value)

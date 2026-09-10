@@ -89,3 +89,39 @@ def test_validate_vector_array_layout_rejects_other_forms(vectors: np.ndarray):
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="2D float32 C-contiguous"):
         validate_vector_array_layout(vectors)
+
+
+# =================================================================================================
+#  Along one axis
+# =================================================================================================
+def test_along_axis_preprocessing_keeps_the_one_coordinate():
+    """The along-axis copy is an (n, 1) array holding exactly the requested coordinate."""
+    # --- arrange ----------------------
+    vectors = _vectors()
+
+    # --- act --------------------------
+    preprocessed = preprocess_vectors(vectors, DistanceMetric.along_axis(2))
+
+    # --- assert -----------------------
+    assert preprocessed.shape == (vectors.shape[0], 1)
+    np.testing.assert_array_equal(preprocessed[:, 0], vectors[:, 2])
+
+
+def test_along_axis_preprocessing_copies_a_single_column_too():
+    """With one-dimensional vectors the slice would share memory, so the copy is what keeps the contract."""
+    # --- arrange ----------------------
+    vectors = np.ascontiguousarray(_vectors()[:, :1])
+
+    # --- act --------------------------
+    preprocessed = preprocess_vectors(vectors, DistanceMetric.along_axis(0))
+
+    # --- assert -----------------------
+    assert not np.shares_memory(preprocessed, vectors)
+    np.testing.assert_array_equal(preprocessed, vectors)
+
+
+def test_along_axis_preprocessing_rejects_a_missing_coordinate():
+    """An axis at or beyond the dimension count is refused."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="do not have"):
+        preprocess_vectors(_vectors(), DistanceMetric.along_axis(3))

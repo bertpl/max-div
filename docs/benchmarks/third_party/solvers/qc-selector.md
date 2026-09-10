@@ -41,6 +41,12 @@ solver:
           The Minkowski exponent cannot express the geometric mean (the p → 0 limit of the power
           mean, which divides the sum by d before the root — not a Minkowski form), so the
           geometric mean is reachable only as a precomputed distance matrix.
+    distance.along_axis:
+      mark: partial
+      note:
+        text: >-
+          Reachable by handing the tool the one coordinate as one-dimensional input: in one
+          dimension every Minkowski distance is the absolute difference of that coordinate.
     distance.custom:
       mark: full
       note:

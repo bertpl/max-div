@@ -31,19 +31,20 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^code-fdm-2] |
-| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^code-fdm-3] |
+| distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^code-fdm-3] |
+| distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^code-fdm-4] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> |  |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
-| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^code-fdm-4] |
-| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> | [^code-fdm-5] |
-| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> | [^code-fdm-6] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^code-fdm-5] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> | [^code-fdm-6] |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-none">—</span> | [^code-fdm-7] |
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^code-fdm-7] |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^code-fdm-8] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
 | solver scaling · largest n within memory | n = 100M | |
@@ -55,8 +56,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 
 [^code-fdm-1]: Never packaged: this is a research repository, not a release. Its last commit was in July 2022 and it carries no license file, which means no permission to use it is granted — a blocker for anything beyond reading the code, regardless of how well it performs. [Source](https://github.com/yhwang1990/code-FDM)
 [^code-fdm-2]: The implementation is written around Euclidean distance; another metric means editing the source rather than passing an argument.
-[^code-fdm-3]: Since you are editing the source in any case, an arbitrary metric is no harder than a common one — a consequence of it being research code rather than a designed feature.
-[^code-fdm-4]: This is the whole point of the tool: it selects a maximally dispersed subset subject to a required count from each group, which is the fair-diversity problem max-div also targets.
-[^code-fdm-5]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.
-[^code-fdm-6]: Counts are exact requirements per group, not a minimum and a maximum, so a range cannot be expressed.
-[^code-fdm-7]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
+[^code-fdm-3]: Reachable by handing the tool the one coordinate as one-dimensional input: in one dimension every Minkowski distance is the absolute difference of that coordinate.
+[^code-fdm-4]: Since you are editing the source in any case, an arbitrary metric is no harder than a common one — a consequence of it being research code rather than a designed feature.
+[^code-fdm-5]: This is the whole point of the tool: it selects a maximally dispersed subset subject to a required count from each group, which is the fair-diversity problem max-div also targets.
+[^code-fdm-6]: Each item belongs to exactly one group. Overlapping membership — an item that is both in-region and in-category — is outside the model the algorithms are built on.
+[^code-fdm-7]: Counts are exact requirements per group, not a minimum and a maximum, so a range cannot be expressed.
+[^code-fdm-8]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.

@@ -139,6 +139,28 @@ def test_problem_new_cosine_non_zero_vectors_ok():
     assert problem.distance_metric == DistanceMetric.cosine()
 
 
+def test_problem_new_along_axis_beyond_the_dimension_count_raises():
+    """An along-axis metric that reads a coordinate the vectors do not have is rejected at construction."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((5, 3)).astype(np.float32)
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="do not have"):
+        _ = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.along_axis(3))
+
+
+def test_problem_new_along_axis_within_the_dimension_count_ok():
+    """The last coordinate is a valid axis."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((5, 3)).astype(np.float32)
+
+    # --- act --------------------------
+    problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.along_axis(2))
+
+    # --- assert -----------------------
+    assert problem.distance_metric == DistanceMetric.along_axis(2)
+
+
 # -------------------------------------------------------------------------
 #  from_distances
 # -------------------------------------------------------------------------
