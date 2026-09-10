@@ -3,6 +3,9 @@
 A namedtuple of numpy arrays and scalars, so it crosses the njit boundary without object-mode;
 fields a backend does not use hold zero-length arrays.  Which field carries the distances is what
 `kind` selects, and `_reads` is the only place that knows how to index each one.
+
+A store is bound to the metric it was built for: a lazy store's array is the form that metric's
+reads expect, so no other metric may read through that store.
 """
 
 from typing import NamedTuple
@@ -12,11 +15,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core.metrics._distance._build import compute_full_matrix, expand_condensed
-from max_div._core.metrics._distance._metric import (
-    DistanceMetric,
-    normalize_rows,
-    validate_cosine_vectors,
-)
+from max_div._core.metrics._distance._metric import DistanceMetric, preprocess_vectors, validate_vector_layout
 
 # =================================================================================================
 #  DistanceStore
@@ -54,7 +53,7 @@ class DistanceStore(NamedTuple):
     kind: np.int32
     n: np.int32
     matrix: NDArray[np.float32]  # (n, n) full distance matrix (exactly symmetric), KIND_FULL_MATRIX
-    vectors: NDArray[np.float32]  # (n, d) vectors distances are computed from, KIND_LAZY
+    preprocessed_vectors: NDArray[np.float32]  # (n, d) the array the metric's reads expect, KIND_LAZY
     metric_kind: np.int32  # pair-function selector, KIND_LAZY only
     metric_p: np.float64  # `DistanceMetric.p`, in the njit encoding that class defines
 
@@ -62,52 +61,32 @@ class DistanceStore(NamedTuple):
     #  Factory methods
     # --------------------------------------------------------------------------
     @classmethod
-    def lazy(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
-        """Return a DistanceStore computing distances on demand from the given vectors.
+    def lazy(cls, preprocessed_vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
+        """Return a DistanceStore computing distances on demand from an array already in preprocessed form.
 
-        Cosine holds the rows pre-normalized (the exact normalization the pairwise kernels use), so
-        the on-demand pair read reuses the squared-L2 accumulation.
+        The store adopts the array as a read-only view, without copying, so a store over a shared
+        segment reads the segment's own bytes.  Preprocessing the user's vectors for the metric is the
+        caller's job (`lazy_from_vectors` preprocesses, then calls `lazy`).
 
         Args:
-            vectors: (n x d ndarray) the vectors to compute distances from.
-            metric: (DistanceMetric) the distance metric to use.
+            preprocessed_vectors: (n x d ndarray) the array the metric's reads expect, as `preprocess_vectors`
+                returns it.
+            metric: (DistanceMetric) the distance metric the reads compute.
         """
-        vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-        if metric == DistanceMetric.cosine():
-            validate_cosine_vectors(vectors)
-            vectors = normalize_rows(vectors)
+        validate_vector_layout(preprocessed_vectors)
         return cls(
             kind=KIND_LAZY,
-            n=np.int32(vectors.shape[0]),
+            n=np.int32(preprocessed_vectors.shape[0]),
             matrix=_EMPTY_2D,
-            vectors=_readonly(vectors),
+            preprocessed_vectors=_readonly(preprocessed_vectors),
             metric_kind=np.int32(metric.kind),
             metric_p=metric.njit_p,
         )
 
     @classmethod
-    def lazy_prepared(
-        cls, vectors: NDArray[np.float32], metric_kind: np.int32, metric_p: np.float64
-    ) -> "DistanceStore":
-        """Return a lazy DistanceStore over vectors already in the form the distance reads expect.
-
-        `lazy` prepares its input — for cosine, normalizing the rows into a fresh array — so it
-        cannot serve a caller that must keep reading the exact array it was handed, such as a store
-        over a shared segment.
-
-        Args:
-            vectors: (n x d ndarray) vectors in final form, float32 C-contiguous.
-            metric_kind: (int32) metric selector, as `lazy` would have derived from the metric.
-            metric_p: (float64) `DistanceMetric.p`, in the njit encoding that class defines.
-        """
-        return cls(
-            kind=KIND_LAZY,
-            n=np.int32(vectors.shape[0]),
-            matrix=_EMPTY_2D,
-            vectors=_readonly(vectors),
-            metric_kind=metric_kind,
-            metric_p=metric_p,
-        )
+    def lazy_from_vectors(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
+        """Return a lazy DistanceStore over the user's vectors, preprocessed for the metric first."""
+        return cls.lazy(preprocess_vectors(vectors, metric), metric)
 
     @classmethod
     def full_matrix(cls, matrix: NDArray[np.float32]) -> "DistanceStore":
@@ -125,20 +104,20 @@ class DistanceStore(NamedTuple):
             kind=KIND_FULL_MATRIX,
             n=np.int32(matrix.shape[0]),
             matrix=_readonly(matrix),
-            vectors=_EMPTY_2D,
+            preprocessed_vectors=_EMPTY_2D,
             metric_kind=np.int32(0),
             metric_p=np.float64(np.nan),
         )
 
     @classmethod
     def full_matrix_from_vectors(cls, vectors: NDArray[np.float32], metric: DistanceMetric) -> "DistanceStore":
-        """Return a full-matrix DistanceStore computed from vectors, exactly symmetric by construction.
+        """Return a full-matrix DistanceStore computed from the user's vectors.
 
         Each pair is computed once through the same pair arithmetic the lazy reads use, and written
         to both halves — so values are bit-equal across backends and symmetry is structural.
 
         Args:
-            vectors: (n x d ndarray) the vectors to compute distances from.
+            vectors: (n x d ndarray) the user's vectors, in the form `validate_vector_layout` accepts.
             metric: (DistanceMetric) the distance metric to use.
         """
         return cls.full_matrix(compute_full_matrix(vectors, metric))

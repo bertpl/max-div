@@ -116,7 +116,7 @@ class MaxDivProblem(ABC):
 
         Args:
             vectors: 2D numpy array of shape ``(n, d)`` with at least 3 rows.
-                Converted to ``float32`` automatically if needed.
+                Converted to ``float32`` and C-contiguous layout automatically if needed.
             k: Number of items to select (must satisfy ``2 <= k <= n``).
             distance_metric: Distance metric for pairwise distances.
             diversity_metric: Diversity metric to maximize.
@@ -129,8 +129,7 @@ class MaxDivProblem(ABC):
             raise ValueError("At least 3 vectors are required to formulate a max-div problem.")
         if vectors.shape[1] == 0:
             raise ValueError("Vectors must have at least one dimension.")
-        if vectors.dtype != np.float32:
-            vectors = vectors.astype(np.float32)
+        vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance read expects
         if distance_metric == DistanceMetric.cosine():
             validate_cosine_vectors(vectors)  # fail fast: zero vectors have no defined angle
 

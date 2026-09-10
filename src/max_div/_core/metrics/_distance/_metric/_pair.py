@@ -1,7 +1,8 @@
 """Every distance the package produces is computed by one of the pair functions here.
 
 The builds in `_build` and the on-demand reads in `_store` all go through these, which is what
-keeps stored and on-demand values bit-equal.
+keeps stored and on-demand values bit-equal.  Every function reads the array `preprocess_vectors` returns
+for the metric: cosine's branch relies on rows normalized there.
 """
 
 import numba
@@ -23,20 +24,6 @@ from ._distance_metric import (
     METRIC_KIND_MINKOWSKI_P05_POWERED,
     METRIC_KIND_MINKOWSKI_POWERED,
 )
-
-
-def validate_cosine_vectors(vectors: NDArray[np.float32]) -> None:
-    """Raise ValueError if any vector is all-zero — cosine distance is undefined for zero vectors.
-
-    Args:
-        vectors: (n x d ndarray) A set of n vectors in d dimensions.
-    """
-    zero_rows = np.flatnonzero(~vectors.any(axis=1))
-    if zero_rows.size > 0:
-        raise ValueError(
-            f"Cosine distance is undefined for zero vectors; found an all-zero vector at row {zero_rows[0]}."
-        )
-
 
 # =================================================================================================
 #  Pair functions
@@ -197,24 +184,3 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
     else:
         # only MINKOWSKI_P0125_POWERED remains
         return np.float32(_minkowski_pair_powered_p0125(vectors, i, j))
-
-
-@numba.njit(numba.float32[:, ::1](numba.types.Array(numba.float32, 2, "C", readonly=True)), cache=True)
-def normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
-    """Return a fresh float32 array with each row of `vectors` scaled to unit L2 norm.
-
-    Norms accumulate in float64 and each element narrows to float32 on store, so the result is the
-    exact normalization the cosine pair functions operate on.  Rows must not be all-zero
-    (`validate_cosine_vectors` guards the public entry points).
-    """
-    n = vectors.shape[0]
-    d = vectors.shape[1]
-    normalized = np.empty((n, d), dtype=np.float32)
-    for i in range(n):
-        acc = np.float64(0.0)
-        for c in range(d):
-            acc += np.float64(vectors[i, c]) * np.float64(vectors[i, c])
-        norm = np.sqrt(acc)
-        for c in range(d):
-            normalized[i, c] = np.float32(np.float64(vectors[i, c]) / norm)
-    return normalized

@@ -25,7 +25,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from ._metric import DistanceMetric, _metric_pair, normalize_rows, validate_cosine_vectors
+from ._metric import DistanceMetric, _metric_pair, preprocess_vectors
 
 # Width in columns of the blocks the parallel fill cuts the pair space into.
 BUILD_BLOCK_WIDTH = 64
@@ -53,12 +53,12 @@ def compute_full_matrix(
 ) -> NDArray[np.float32]:
     """Compute the full (n, n) pair-wise distance matrix, exactly symmetric by construction.
 
-    Each pair is computed once through the same pair arithmetic the lazy reads use.  The matrix is
-    computed directly in float32: each pair accumulates in float64 across the d dimensions and
-    narrows to float32 on store.
+    Each pair is computed once through the same pair arithmetic the lazy reads use, over the
+    vectors preprocessed for the metric.  The matrix is computed directly in float32: each pair
+    accumulates in float64 across the d dimensions and narrows to float32 on store.
 
     Args:
-        vectors: (n x d ndarray) A set of n vectors in d dimensions.
+        vectors: (n x d ndarray) the user's vectors, in the form `validate_vector_layout` accepts.
         metric: (DistanceMetric) The distance metric to use.
         out: ((n, n) ndarray) buffer to fill, allocated here when not given.
 
@@ -66,15 +66,12 @@ def compute_full_matrix(
         ((n, n) ndarray) full pairwise-distance matrix, float32 C-contiguous — `out` itself
         whenever one was given, following numpy's convention for such a parameter.
     """
-    vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-    if metric == DistanceMetric.cosine():
-        validate_cosine_vectors(vectors)
-        vectors = normalize_rows(vectors)
-    out = _allocate_if_needed(out, vectors.shape[0])
+    preprocessed = preprocess_vectors(vectors, metric)
+    out = _allocate_if_needed(out, preprocessed.shape[0])
     if parallel_build_enabled():
-        _fill_matrix_parallel(vectors, np.int32(metric.kind), metric.njit_p, np.int64(BUILD_BLOCK_WIDTH), out)
+        _fill_matrix_parallel(preprocessed, np.int32(metric.kind), metric.njit_p, np.int64(BUILD_BLOCK_WIDTH), out)
     else:
-        _fill_matrix(vectors, np.int32(metric.kind), metric.njit_p, out)
+        _fill_matrix(preprocessed, np.int32(metric.kind), metric.njit_p, out)
     return out
 
 

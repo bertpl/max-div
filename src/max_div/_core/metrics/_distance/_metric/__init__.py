@@ -2,20 +2,22 @@
 
 The layer everything else in `_distance` is built on — the builds and the on-demand reads both go
 through the same pair functions, which is what keeps stored and computed values bit-equal.
+`_preprocess` is the one place a metric's vectors are put in the form its pair function reads.
 """
 
 from ._distance_metric import DistanceMetric
 from ._pair import (
     _l2sq_pair,
     _metric_pair,
-    normalize_rows,
-    validate_cosine_vectors,
 )
+from ._preprocess import normalize_rows, preprocess_vectors, validate_cosine_vectors, validate_vector_layout
 
 __all__ = [
     "DistanceMetric",
     "_l2sq_pair",
     "_metric_pair",
     "normalize_rows",
+    "preprocess_vectors",
     "validate_cosine_vectors",
+    "validate_vector_layout",
 ]

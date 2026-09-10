@@ -97,7 +97,7 @@ def build_distance_store(problem: MaxDivProblem, resolved: DistanceStorage) -> D
                     "Lazy distance storage computes distances from vectors, which a distance-input "
                     "problem does not have; choose FULL_MATRIX, or construct the problem from vectors."
                 )
-            return DistanceStore.lazy(problem.vectors, problem.distance_metric)
+            return DistanceStore.lazy_from_vectors(problem.vectors, problem.distance_metric)
         case _:
             raise ValueError(f"Distance storage must be resolved before building a store; got {resolved}.")
 
@@ -119,9 +119,9 @@ def build_shared_distance_store(problem: MaxDivProblem, resolved: DistanceStorag
         shared = SharedDistanceStore.allocate((problem.n, problem.n), KIND_FULL_MATRIX)
         problem.full_matrix(out=shared.buffer)
         return shared
-    # The remaining cases, a full matrix as given or lazy, publish a built store; `lazy` applies the
-    # per-metric preparation, so its output is what gets published — the segment must hold the
-    # vectors in the form the distance reads expect.
+    # The remaining cases, a full matrix as given or lazy, publish a built store; a lazy store holds
+    # the vectors preprocessed for the metric, so its array is the one published — the segment
+    # must hold what the distance reads expect.
     return publish_distance_store(build_distance_store(problem, resolved))
 
 

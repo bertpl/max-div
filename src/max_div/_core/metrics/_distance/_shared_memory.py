@@ -12,8 +12,8 @@ The whole sequence, across two processes:
 
   1. The publisher resolves a backend and calls `build_shared_distance_store`, which allocates a
      segment and builds the distances straight into it.
-  2. It reads through `SharedDistanceStore.store`, and sends `SharedDistanceStore.spec` — a small
-     picklable record — to each worker it spawns.
+  2. The publisher wraps the segment's buffer in an ordinary `DistanceStore`, and sends `SharedDistanceStore.spec`
+     — a small picklable record — to each worker it spawns.
   3. A worker opens `attached_distance_store(spec)` and gets an ordinary `DistanceStore` over the
      same bytes, for the length of that block.
   4. Workers leave their blocks, each closing only its own mapping.
@@ -43,6 +43,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy.typing import NDArray
 
+from ._metric import DistanceMetric
 from ._store import KIND_FULL_MATRIX, DistanceStore
 
 # Whether SharedMemory accepts `track=False`.
@@ -176,7 +177,7 @@ def _populated_array(store: DistanceStore) -> NDArray[np.float32]:
     """Return the one array the store's backend holds its data in."""
     if store.kind == KIND_FULL_MATRIX:
         return store.matrix
-    return store.vectors
+    return store.preprocessed_vectors
 
 
 # =================================================================================================
@@ -228,4 +229,4 @@ def _store_over(buffer: NDArray[np.float32], spec: SharedStoreSpec) -> DistanceS
     """Return the DistanceStore that reads `buffer` as the backend named in `spec`."""
     if spec.kind == KIND_FULL_MATRIX:
         return DistanceStore.full_matrix(buffer)
-    return DistanceStore.lazy_prepared(buffer, np.int32(spec.metric_kind), np.float64(spec.metric_p))
+    return DistanceStore.lazy(buffer, DistanceMetric.from_njit(spec.metric_kind, spec.metric_p))

@@ -482,3 +482,18 @@ def test_check_feasibility_reports_where_the_violation_sits():
     assert report.violation_per_constraint.shape[0] == len(constraints)
     assert float(weights @ report.violation_per_constraint) == pytest.approx(report.violation)
     assert report.violation_floor <= report.violation + 1e-9
+
+
+def test_problem_new_makes_the_vectors_c_contiguous():
+    """A Fortran-ordered input is stored in the C-contiguous float32 form every distance read expects."""
+
+    # --- arrange ----------------------
+    vectors = np.asfortranarray(np.random.default_rng(1).random((6, 2), dtype=np.float32))
+
+    # --- act --------------------------
+    problem = MaxDivProblem.new(vectors, k=2)
+
+    # --- assert -----------------------
+    assert problem.vectors.flags.c_contiguous
+    assert problem.vectors.dtype == np.float32
+    np.testing.assert_array_equal(problem.vectors, vectors)

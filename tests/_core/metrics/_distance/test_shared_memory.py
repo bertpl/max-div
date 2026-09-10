@@ -36,7 +36,7 @@ def _reference_stores() -> dict[str, DistanceStore]:
     vectors = _vectors()
     return {
         "full_matrix": DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
-        "lazy": DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean()),
+        "lazy": DistanceStore.lazy_from_vectors(vectors, DistanceMetric.l2_euclidean()),
     }
 
 
@@ -128,7 +128,7 @@ def test_attached_minkowski_store_reads_the_published_values():
     rng = np.random.default_rng(20260829)
     vectors = rng.standard_normal((12, 4)).astype(np.float32)
     metric = DistanceMetric.minkowski(3)
-    reference = DistanceStore.lazy(vectors, metric)
+    reference = DistanceStore.lazy_from_vectors(vectors, metric)
 
     # --- act --------------------------
     with publish_distance_store(reference) as owner, attached_distance_store(owner.spec) as attached:
@@ -147,7 +147,7 @@ def test_attached_store_cannot_be_written_through(backend: str):
     with publish_distance_store(_reference_stores()[backend]) as owner, attached_distance_store(owner.spec) as attached:
         # --- assert -------------------
         assert not attached.matrix.flags.writeable
-        assert not attached.vectors.flags.writeable
+        assert not attached.preprocessed_vectors.flags.writeable
 
 
 def test_publishing_does_not_copy_the_segment_into_the_store():

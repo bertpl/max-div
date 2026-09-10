@@ -101,3 +101,15 @@ def test_njit_p_encodes_none_as_nan():
     # --- act / assert -----------------
     assert math.isnan(DistanceMetric.l2_euclidean().njit_p)
     assert DistanceMetric.minkowski(3).njit_p == 3.0
+
+
+def test_from_njit_inverts_the_encoding(metric: DistanceMetric):
+    """Decoding a metric's (kind, njit_p) pair gives the metric back, for every kind."""
+    # --- act / assert -----------------
+    assert DistanceMetric.from_njit(metric.kind, metric.njit_p) == metric
+
+
+def test_only_cosine_preprocesses_vectors(metric: DistanceMetric):
+    """Cosine is the one metric whose reads expect a preprocessed copy of the vectors."""
+    # --- act / assert -----------------
+    assert metric.preprocesses_vectors is (metric == DistanceMetric.cosine())
