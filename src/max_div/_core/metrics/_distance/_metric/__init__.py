@@ -13,7 +13,7 @@ from ._pair import (
 from ._preprocess import (
     preprocess_cosine_distance_vectors,
     preprocess_vectors,
-    validate_cosine_vectors,
+    validate_cosine_distance_vectors,
     validate_vector_array_layout,
 )
 
@@ -24,6 +24,6 @@ __all__ = [
     "_metric_pair",
     "preprocess_cosine_distance_vectors",
     "preprocess_vectors",
-    "validate_cosine_vectors",
+    "validate_cosine_distance_vectors",
     "validate_vector_array_layout",
 ]

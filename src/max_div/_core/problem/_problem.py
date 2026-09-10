@@ -10,7 +10,7 @@ from max_div._core.feasibility import (
     FeasibilityResult,
     find_feasible,
 )
-from max_div._core.metrics import DistanceMetric, DiversityMetric, validate_cosine_vectors
+from max_div._core.metrics import DistanceMetric, DiversityMetric, validate_cosine_distance_vectors
 from max_div._core.metrics._distance import compute_full_matrix, expand_condensed
 
 from ._validate_distances import _n_from_condensed_size, validated_condensed_distances, validated_square_distances
@@ -131,7 +131,7 @@ class MaxDivProblem(ABC):
             raise ValueError("Vectors must have at least one dimension.")
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
         if distance_metric == DistanceMetric.cosine():
-            validate_cosine_vectors(vectors)  # fail fast: zero vectors have no defined angle
+            validate_cosine_distance_vectors(vectors)  # fail fast: zero vectors have no defined angle
 
         _validate_k(k, vectors.shape[0])
 

@@ -49,7 +49,7 @@ def preprocess_vectors(vectors: NDArray[np.float32], metric: DistanceMetric) -> 
     return preprocessed
 
 
-def validate_cosine_vectors(vectors: NDArray[np.float32]) -> None:
+def validate_cosine_distance_vectors(vectors: NDArray[np.float32]) -> None:
     """Raise ValueError if any vector is all-zero — cosine distance is undefined for zero vectors."""
     zero_rows = np.flatnonzero(~vectors.any(axis=1))
     if zero_rows.size > 0:
@@ -64,7 +64,7 @@ def preprocess_cosine_distance_vectors(vectors: NDArray[np.float32]) -> NDArray[
     Raises:
         ValueError: If any row is all-zero, since it has no direction.
     """
-    validate_cosine_vectors(vectors)
+    validate_cosine_distance_vectors(vectors)
     return _normalize_rows(vectors)
 
 
