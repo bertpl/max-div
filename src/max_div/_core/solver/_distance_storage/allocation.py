@@ -1,15 +1,20 @@
-"""An allocator decides where a store's array lives: in this process, or in a segment other processes can read.
+"""An allocator decides where the arrays of a distance store are placed in memory.
 
-The factory builds every store the same way whichever allocator it holds; only two calls differ:
+The distance store factory decides what each distance store contains.  The allocator decides only
+where the array that holds those contents lives: in this process, or in a shared-memory segment
+that worker processes can read.  There is one allocator class per case, and the factory builds
+every distance store the same way whichever allocator it is given.
 
-- `allocate` hands out a writable buffer the factory fills — a full matrix computed or expanded
-  straight into its final place, since at those sizes a build-then-copy would double peak resident
-  memory for its duration.
-- `adopt` takes an array that already exists in its final form, either as it is or copied into a
-  segment, since the bytes a worker reads have to live there.
+The factory asks an allocator for two things:
+
+- `allocate` returns an empty, writable buffer that the factory then fills, for example a full
+  distance matrix that is computed straight into its final place.
+- `adopt` takes an array that already exists in its final form, for example the user's own vectors,
+  and returns the array that the distance store will read from.
 """
 
 from abc import ABC, abstractmethod
+from multiprocessing.shared_memory import SharedMemory
 
 import numpy as np
 from numpy.typing import NDArray
@@ -17,38 +22,47 @@ from numpy.typing import NDArray
 from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import NO_P
 
-from .shared_memory import SharedDistanceStore, SharedStoreSpec
+from .shared_memory import SharedStoreSpec
 
 
 # =================================================================================================
-#  StoreAllocator
+#  DistanceStoreAllocator
 # =================================================================================================
-class StoreAllocator(ABC):
-    """The interface the factory builds stores through; the module docstring states the contract."""
+class DistanceStoreAllocator(ABC):
+    """This is the interface through which the distance store factory obtains the arrays of its distance stores."""
 
     @abstractmethod
     def allocate(self, shape: tuple[int, ...], kind: np.int32) -> NDArray[np.float32]:
-        """Return an uninitialized writable float32 buffer of `shape`, to be filled and then wrapped as `kind`."""
+        """Return an uninitialized, writable float32 buffer of the given shape.
+
+        The factory fills the buffer and then wraps it in a distance store of the given kind.
+
+        Args:
+            shape: the shape of the array to allocate.
+            kind: the `DistanceStore.kind` selector of the distance store that will read the buffer.
+        """
 
     @abstractmethod
     def adopt(self, array: NDArray[np.float32], kind: np.int32, metric: DistanceMetric | None) -> NDArray[np.float32]:
-        """Return the array the store of `kind` wraps for data that already exists in its final form.
+        """Return the array that a distance store of the given kind will read, for data that already exists.
 
         Args:
-            array: the final-form data: a full matrix, or a lazy store's preprocessed vectors.
-            kind: the `DistanceStore.kind` selector the store will carry.
-            metric: the metric a lazy store reads with; None for a full matrix.
+            array: the data in its final form: a full distance matrix, or the preprocessed vectors
+                of a lazy distance store.
+            kind: the `DistanceStore.kind` selector of the distance store that will read the array.
+            metric: the distance metric that a lazy distance store computes with; None for a full
+                distance matrix.
         """
 
 
 # =================================================================================================
-#  InProcessAllocator
+#  InProcessDistanceStoreAllocator
 # =================================================================================================
-class InProcessAllocator(StoreAllocator):
-    """Arrays live in this process: fresh buffers are plain numpy arrays, adopted arrays stay as they are."""
+class InProcessDistanceStoreAllocator(DistanceStoreAllocator):
+    """This allocator allocates arrays in this process only; nothing is shared with other processes."""
 
     def allocate(self, shape: tuple[int, ...], kind: np.int32) -> NDArray[np.float32]:
-        """Return a plain numpy array; nothing is shared."""
+        """Return a plain numpy array of the given shape."""
         return np.empty(shape, dtype=np.float32)
 
     def adopt(self, array: NDArray[np.float32], kind: np.int32, metric: DistanceMetric | None) -> NDArray[np.float32]:
@@ -57,51 +71,87 @@ class InProcessAllocator(StoreAllocator):
 
 
 # =================================================================================================
-#  SharedMemoryAllocator
+#  SharedMemoryDistanceStoreAllocator
 # =================================================================================================
-class SharedMemoryAllocator(StoreAllocator):
-    """Arrays live in segments this process owns; the specs describe them to the processes that attach.
+class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
+    """This allocator allocates arrays in shared-memory segments, so that worker processes can read the same arrays.
 
-    `close` states the segments' lifetime.
+    This process creates and owns every segment.  For each array that the factory allocates or
+    adopts, the allocator records a `SharedStoreSpec` that says which segment holds the array and
+    how to rebuild the distance store over it; a worker process attaches to the segment with that
+    spec.  The specs are recorded in the order in which the factory asked for the arrays, which is
+    the order of the distance stores.
+
+    Adopting the same array twice puts it in one segment, not two.  This is how every lazy distance
+    store whose metric reads the user's raw vectors shares a single copy of those vectors.
+
+    Closing the allocator destroys every segment that it created, which invalidates every distance
+    store that reads one of them, in this process and in every worker process that attached.  Close
+    the allocator only after every worker is done.
     """
 
     def __init__(self) -> None:
-        """Start with no segments; they are created as the factory allocates and adopts."""
-        self._owners: list[SharedDistanceStore] = []
+        """Start without any segment; segments are created as the factory allocates and adopts arrays."""
+        self._segments: list[SharedMemory] = []
         self._specs: list[SharedStoreSpec] = []
-        self._adopted: dict[int, SharedDistanceStore] = {}  # id(array) -> the segment holding its copy
+        self._segment_of_adopted: dict[int, tuple[SharedMemory, NDArray[np.float32]]] = {}  # keyed by id(array)
 
     def allocate(self, shape: tuple[int, ...], kind: np.int32) -> NDArray[np.float32]:
-        """Return the buffer of a fresh segment, recorded as one store."""
-        owner = SharedDistanceStore.allocate(shape, kind)
-        self._owners.append(owner)
-        self._specs.append(owner.spec)
-        return owner.buffer
+        """Create a segment sized for the given shape and return the writable array that views it."""
+        segment, buffer = self._create_segment(shape)
+        self._specs.append(_spec_for(segment, buffer, kind, None))
+        return buffer
 
     def adopt(self, array: NDArray[np.float32], kind: np.int32, metric: DistanceMetric | None) -> NDArray[np.float32]:
-        """Return a segment's copy of the array, reusing the segment an earlier adoption of the same array made."""
-        owner = self._adopted.get(id(array))
-        if owner is None:
-            metric_kind = np.int32(0) if metric is None else np.int32(metric.kind)
-            metric_p = np.float64(NO_P if metric is None else metric.p)
-            owner = SharedDistanceStore.allocate(array.shape, kind, metric_kind, metric_p)
-            owner.buffer[:] = array
-            self._owners.append(owner)
-            self._adopted[id(array)] = owner
-        self._specs.append(owner.spec)
-        return owner.buffer
+        """Copy the array into a segment and return the array that views the segment.
+
+        An array that was adopted before is not copied again: the array that views its existing
+        segment is returned, and a second spec that names that segment is recorded.
+        """
+        known = self._segment_of_adopted.get(id(array))
+        if known is None:
+            segment, buffer = self._create_segment(array.shape)
+            buffer[:] = array
+            self._segment_of_adopted[id(array)] = (segment, buffer)
+        else:
+            segment, buffer = known
+        self._specs.append(_spec_for(segment, buffer, kind, metric))
+        return buffer
 
     @property
     def specs(self) -> tuple[SharedStoreSpec, ...]:
-        """Return one spec per store the factory built, in that order; several may name one segment."""
+        """Return one spec per distance store that the factory built, in that order."""
         return tuple(self._specs)
 
     def close(self) -> None:
-        """Destroy every segment, invalidating every store reading one, in this process and in every attached one.
+        """Destroy every segment that this allocator created.
 
-        Close only once every reader is done.
+        Every distance store that reads one of those segments becomes invalid, in this process and
+        in every worker process that attached; call this only after every worker is done.
         """
-        for owner in self._owners:
-            owner.close()
-        self._owners.clear()
-        self._adopted.clear()
+        for segment in self._segments:
+            segment.close()
+            segment.unlink()
+        self._segments.clear()
+        self._segment_of_adopted.clear()
+
+    def _create_segment(self, shape: tuple[int, ...]) -> tuple[SharedMemory, NDArray[np.float32]]:
+        """Create a shared-memory segment for the given float32 shape and return it with the array that views it."""
+        # the operating system rejects a segment of zero bytes, so a degenerate shape still claims one byte
+        size_bytes = max(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize, 1)
+        segment = SharedMemory(create=True, size=size_bytes)
+        self._segments.append(segment)
+        return segment, np.ndarray(shape, dtype=np.float32, buffer=segment.buf)
+
+
+def _spec_for(
+    segment: SharedMemory, buffer: NDArray[np.float32], kind: np.int32, metric: DistanceMetric | None
+) -> SharedStoreSpec:
+    """Return the spec that lets a worker process rebuild a distance store of the given kind over the segment."""
+    return SharedStoreSpec(
+        segment_name=segment.name,
+        kind=int(kind),
+        metric_kind=0 if metric is None else int(metric.kind),
+        metric_p=NO_P if metric is None else float(metric.p),
+        shape=buffer.shape,
+    )

@@ -84,10 +84,10 @@ class ParallelMaxDivSolver:
             solver_configs = [config.with_e2e_budget(e2e_budget) for config in solver_configs]
         group_state = self._build_group_state()
         coordinators = [group_state.coordinator_for(index) for index in range(len(solver_configs))]
-        with self._store_factory.create_shared_stores() as shared_stores:
+        with self._store_factory.publish_distance_stores() as specs:
             results, failures = run_workers(
                 solver_configs,
-                shared_stores.specs,
+                specs,
                 coordinators,
                 progress_reporter=progress_reporter,
             )

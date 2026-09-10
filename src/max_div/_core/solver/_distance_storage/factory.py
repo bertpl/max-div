@@ -1,13 +1,16 @@
-"""The factory is the one place a problem and the distances a diversity metric reads become a set of distance stores.
+"""The distance store factory builds the distance stores for one solve.
 
-It owns three things:
+Its input is the problem and the list of distance metrics that the diversity metric uses; its
+output is one distance store per distance metric, in that order.  The factory owns three things:
 
-- the policy that picks a storage type per distance;
-- the construction of each store, in process or in shared memory;
-- the rule for which stores share one array: lazy stores over metrics that do not preprocess share the
-  user's raw vectors, one array and one segment; a preprocessing metric gets its own.
+- the policy that picks a storage type (full matrix or lazy) for each distance metric;
+- the construction of each distance store, in this process or in shared memory;
+- the rule for which distance stores share one array: every lazy distance store whose metric does
+  not preprocess the vectors reads the user's raw vectors, so those stores share one array and one
+  shared-memory segment; a metric that preprocesses gets an array of its own.
 
-Preprocessing for a lazy store happens here; `compute_full_matrix` preprocesses the vectors itself.
+Preprocessing for a lazy distance store happens here; `compute_full_matrix` preprocesses the
+vectors itself.
 """
 
 from collections.abc import Iterator, Sequence
@@ -24,13 +27,17 @@ from max_div._core.metrics._distance import (
 )
 from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
-from .allocation import InProcessAllocator, SharedMemoryAllocator, StoreAllocator
+from .allocation import (
+    DistanceStoreAllocator,
+    InProcessDistanceStoreAllocator,
+    SharedMemoryDistanceStoreAllocator,
+)
 from .memory_budget import AUTO_MEMORY_FRACTION, check_fits_physical_memory, full_matrix_bytes
 from .shared_memory import SharedStoreSpec, attached_distance_store
 from .storage import DistanceStorageType
 
-# A distance a store reads: a metric over the problem's vectors, or None for the distances a
-# distance-input problem was given.
+# The distance that a distance store holds: a distance metric over the problem's vectors, or None for
+# the distances that a distance-input problem was given.
 StoreDistance = DistanceMetric | None
 
 
@@ -38,13 +45,13 @@ StoreDistance = DistanceMetric | None
 #  DistanceStoreFactory
 # =================================================================================================
 class DistanceStoreFactory:
-    """Build the distance stores one solve reads, from the problem and the distances the diversity metric uses.
+    """The distance store factory builds the distance stores that one solve reads.
 
-    The memory probe is injected so the policy is a pure function of its arguments and testable
-    without the machine's RAM.
+    The memory probe is injected, so that the storage-type policy is a pure function of its
+    arguments and can be tested without the machine's RAM.
 
     "Storage type" names a `DistanceStorageType` value throughout; "kind" is reserved for
-    `DistanceStore.kind`, the compiled selector a store carries.
+    `DistanceStore.kind`, the compiled selector that a distance store carries.
     """
 
     # --------------------------------------------------------------------------
@@ -57,15 +64,15 @@ class DistanceStoreFactory:
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> None:
-        """Bind the factory to what it builds from.
+        """Bind the factory to the problem and the distances that it builds distance stores for.
 
         Args:
-            problem: the problem whose vectors, or given distances, the stores hold.
-            distances: one entry per store: a metric over the problem's vectors, or None for the
-                given distances.  A distance-input problem accepts None only; a vector problem
-                accepts metrics only.
-            storage_type: the user's choice, possibly AUTO.
-            total_memory_bytes: total physical RAM, or None when unknown.
+            problem: the problem whose vectors, or given distances, the distance stores hold.
+            distances: one entry per distance store: a distance metric over the problem's vectors,
+                or None for the given distances.  A distance-input problem accepts None only; a
+                vector problem accepts distance metrics only.
+            storage_type: the user's choice of storage type, possibly AUTO.
+            total_memory_bytes: the total physical RAM of the machine, or None when it is unknown.
 
         Raises:
             ValueError: If an entry does not fit the problem flavor, or the list is empty.
@@ -89,7 +96,7 @@ class DistanceStoreFactory:
     def for_problem(
         cls, problem: MaxDivProblem, storage_type: DistanceStorageType, total_memory_bytes: int | None
     ) -> "DistanceStoreFactory":
-        """Return the one-distance factory: over the vector problem's metric, or over the given distances."""
+        """Return the factory for a single distance: the vector problem's own metric, or the given distances."""
         distance = problem.distance_metric if isinstance(problem, VectorMaxDivProblem) else None
         return cls(problem, [distance], storage_type, total_memory_bytes)
 
@@ -97,16 +104,17 @@ class DistanceStoreFactory:
     #  Policy
     # --------------------------------------------------------------------------
     def determine_storage_types(self) -> list[DistanceStorageType]:
-        """Return the resolved storage type per distance; explicit choices pass through, AUTO is decided here.
+        """Return the storage type for each distance; an explicit choice passes through, AUTO is decided here.
 
-        AUTO semantics differ per problem flavor, deliberately:
+        AUTO is decided differently for the two problem flavors, deliberately:
 
-        - Vector problems: distances are an internal artifact the user never sees, so AUTO picks
-          the full matrix when every matrix together fits the memory fraction, and computes
-          distances on demand otherwise — one decision for the whole set.
-        - Distance problems: the distances exist already, so AUTO stores them as a full matrix.
+        - For a vector problem the distances are an internal artifact that the user never sees, so
+          AUTO picks the full matrix when all the matrices together fit the memory fraction, and
+          computes distances on demand otherwise.  This is one decision for all the distances.
+        - For a distance-input problem the distances exist already, so AUTO stores them as a full
+          matrix.
 
-        An unknown RAM total degrades to lazy, the one storage type that cannot page.
+        When the total RAM is unknown, AUTO picks lazy, the one storage type that cannot page.
         """
         count = len(self._distances)
         if self._storage_type != DistanceStorageType.AUTO:
@@ -123,41 +131,47 @@ class DistanceStoreFactory:
     #  Construction of the stores
     # --------------------------------------------------------------------------
     def create_stores(self) -> list[DistanceStore]:
-        """Build the stores in this process, one per distance in order.
+        """Build the distance stores in this process, one per distance, in order.
 
         Raises:
-            ValueError: For LAZY on a distance-input problem (no vectors to compute from), or when
-                the full matrices cannot fit in physical memory at all.
+            ValueError: For the LAZY storage type on a distance-input problem, which has no vectors
+                to compute distances from, or when the full matrices cannot fit in physical memory
+                at all.
         """
-        return self._build(InProcessAllocator())
+        return self._build(InProcessDistanceStoreAllocator())
 
-    def create_shared_stores(self) -> "SharedStoreSet":
-        """Build the stores in shared memory, for worker processes to attach to.
+    @contextmanager
+    def publish_distance_stores(self) -> Iterator[tuple[SharedStoreSpec, ...]]:
+        """Build the distance stores in shared memory and yield their specs, for the duration of the block.
+
+        This is a context manager.  Inside the block the shared-memory segments exist and worker
+        processes can attach to them with the yielded specs, through `attach_distance_stores`.  On
+        exit the segments are destroyed, so leave the block only after every worker is done.
 
         Raises:
             ValueError: as `create_stores`.
         """
-        allocator = SharedMemoryAllocator()
+        allocator = SharedMemoryDistanceStoreAllocator()
         try:
-            stores = self._build(allocator)
-        except BaseException:
+            self._build(allocator)
+            yield allocator.specs
+        finally:
             allocator.close()
-            raise
-        return SharedStoreSet(allocator, stores)
 
     @classmethod
     @contextmanager
-    def attach_stores(cls, specs: Sequence[SharedStoreSpec]) -> Iterator[list[DistanceStore]]:
-        """Yield the stores a `SharedStoreSet` published, read from its segments, for the duration of the block.
+    def attach_distance_stores(cls, specs: Sequence[SharedStoreSpec]) -> Iterator[list[DistanceStore]]:
+        """Yield the distance stores that the specs describe, read from their segments, for the duration of the block.
 
-        `attach_stores` inverts `create_shared_stores` in the attaching process.  Every mapping is
-        closed on exit and no segment is unlinked: they belong to the publisher.
+        This is the worker-side counterpart of `publish_distance_stores`.  On exit every mapping is
+        closed; no segment is destroyed, because the segments belong to the process that published
+        them.
         """
         with ExitStack() as stack:
             yield [stack.enter_context(attached_distance_store(spec)) for spec in specs]
 
-    def _build(self, allocator: StoreAllocator) -> list[DistanceStore]:
-        """Build every store through the given allocator, after the memory check the allocations need."""
+    def _build(self, allocator: DistanceStoreAllocator) -> list[DistanceStore]:
+        """Build every distance store through the given allocator, after the memory check the allocations need."""
         store_types = self.determine_storage_types()
         problem = self._problem
         n = problem.n
@@ -184,14 +198,14 @@ class DistanceStoreFactory:
                 stores.append(DistanceStore.full_matrix(matrix))
             else:
                 # preprocess_vectors returns problem.vectors itself for a metric that does not preprocess,
-                # so the shared-memory allocator sees one array and publishes it once
+                # so the shared-memory allocator sees one array and puts it in one segment
                 adopted = allocator.adopt(preprocess_vectors(problem.vectors, distance), KIND_LAZY, distance)
                 stores.append(DistanceStore.lazy(adopted, distance))
         return stores
 
     @staticmethod
-    def _store_over_given_distances(problem: DistanceMaxDivProblem, allocator: StoreAllocator) -> DistanceStore:
-        """Return the full-matrix store over a distance-input problem's distances, expanding a condensed input."""
+    def _store_over_given_distances(problem: DistanceMaxDivProblem, allocator: DistanceStoreAllocator) -> DistanceStore:
+        """Return the full-matrix distance store over the given distances; a condensed input is expanded."""
         n = problem.n
         if problem.has_full_matrix:
             matrix = allocator.adopt(problem.distances, KIND_FULL_MATRIX, None)
@@ -199,41 +213,3 @@ class DistanceStoreFactory:
             matrix = allocator.allocate((n, n), KIND_FULL_MATRIX)
             expand_condensed(problem.distances, n, out=matrix)
         return DistanceStore.full_matrix(matrix)
-
-
-# =================================================================================================
-#  SharedStoreSet
-# =================================================================================================
-class SharedStoreSet:
-    """A set holds the stores a factory built into shared memory, their segments, and the specs a worker attaches with.
-
-    Closing the set closes its allocator (see `SharedMemoryAllocator.close`).
-    """
-
-    def __init__(self, allocator: SharedMemoryAllocator, stores: list[DistanceStore]) -> None:
-        """Hold the allocator that owns the segments, and the stores built over them."""
-        self._allocator = allocator
-        self._stores = stores
-
-    @property
-    def stores(self) -> list[DistanceStore]:
-        """Return the stores, in the factory's distance order, reading the segments in this process."""
-        return self._stores
-
-    @property
-    def specs(self) -> tuple[SharedStoreSpec, ...]:
-        """Return what `DistanceStoreFactory.attach_stores` needs to rebuild the stores elsewhere."""
-        return self._allocator.specs
-
-    def close(self) -> None:
-        """Close the allocator (see `SharedMemoryAllocator.close`) and drop the stores."""
-        self._stores = []
-        self._allocator.close()
-
-    def __enter__(self) -> "SharedStoreSet":
-        """Return the set itself, so the segments are scoped to a `with` block."""
-        return self
-
-    def __exit__(self, *exc_info: object) -> None:
-        """Close the set."""
-        self.close()

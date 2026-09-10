@@ -119,7 +119,7 @@ def solve_in_worker(
     else:
         reporter = ProgressReporter.silent()
     try:
-        with DistanceStoreFactory.attach_stores(specs) as stores:
+        with DistanceStoreFactory.attach_distance_stores(specs) as stores:
             solution = config.build_solver(store=stores[0]).solve(coordinator=coordinator, progress_reporter=reporter)
             messages.put(WorkerResult(worker_index=worker_index, seed=config.seed, solution=solution))
     except Exception as exc:  # noqa: BLE001 -- report ANY failure to the parent

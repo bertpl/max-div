@@ -13,7 +13,7 @@ from max_div._core.metrics._distance import (
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import MaxDivSolverBuilder, SolverPreset, Verbosity
-from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStoreFactory
+from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStoreFactory, attached_distance_store
 from max_div._core.solver._duration import iterations
 
 # =================================================================================================
@@ -313,52 +313,47 @@ def test_every_storage_type_reaches_feasibility(storage: DistanceStorageType):
 # =================================================================================================
 @pytest.mark.parametrize("storage", [DistanceStorageType.FULL_MATRIX, DistanceStorageType.LAZY])
 @pytest.mark.parametrize("metric", [L2, DistanceMetric.cosine()], ids=["non-preprocessing", "preprocessing"])
-def test_shared_stores_match_the_in_process_build(storage: DistanceStorageType, metric: DistanceMetric):
-    """A store built into shared memory holds bit-identical distances to the in-process build, attached or not."""
+def test_published_stores_match_the_in_process_build(storage: DistanceStorageType, metric: DistanceMetric):
+    """A distance store that is published to shared memory holds bit-identical distances to the in-process build."""
     # --- arrange ----------------------
     problem = _vector_problem(metric=metric)
     factory = _factory(problem, storage)
     (expected,) = factory.create_stores()
 
     # --- act --------------------------
-    with factory.create_shared_stores() as shared, DistanceStoreFactory.attach_stores(shared.specs) as attached:
-        read_owner = _all_pairs(shared.stores[0], problem.n)
+    with factory.publish_distance_stores() as specs, DistanceStoreFactory.attach_distance_stores(specs) as attached:
         read_attached = _all_pairs(attached[0], problem.n)
 
     # --- assert -----------------------
-    assert read_owner == _all_pairs(expected, problem.n)
     assert read_attached == _all_pairs(expected, problem.n)
 
 
 @pytest.mark.parametrize("form", ["square", "condensed"])
-def test_shared_stores_hold_distance_input(form: str):
-    """Distance-input problems land in a segment whatever their form, since the bytes must live there."""
+def test_published_stores_hold_distance_input(form: str):
+    """A distance-input problem's distances land in a segment whatever their form, since the bytes must live there."""
     # --- arrange ----------------------
     problem = _distance_problem(form)
     factory = _factory(problem, DistanceStorageType.AUTO)
     (expected,) = factory.create_stores()
 
     # --- act --------------------------
-    with factory.create_shared_stores() as shared:
-        read = _all_pairs(shared.stores[0], problem.n)
-        copied = not np.shares_memory(shared.stores[0].matrix, problem.distances)  # ty: ignore[unresolved-attribute]
+    with factory.publish_distance_stores() as specs, DistanceStoreFactory.attach_distance_stores(specs) as attached:
+        read = _all_pairs(attached[0], problem.n)
 
     # --- assert -----------------------
     assert read == _all_pairs(expected, problem.n)
-    assert copied
 
 
-def test_shared_full_matrix_is_read_back_by_an_attached_store():
-    """The attached process reads the same full matrix the owner built."""
+def test_published_full_matrix_has_the_problem_size():
+    """The spec of a published full matrix describes an n by n array."""
     # --- arrange / act ----------------
-    factory = _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX)
-    with factory.create_shared_stores() as shared, DistanceStoreFactory.attach_stores(shared.specs) as attached:
+    with _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).publish_distance_stores() as specs:
         # --- assert -------------------
-        assert shared.specs[0].shape == (10, 10)
-        np.testing.assert_array_equal(attached[0].matrix, shared.stores[0].matrix)
+        assert len(specs) == 1
+        assert specs[0].shape == (10, 10)
 
 
-def test_shared_metrics_that_do_not_preprocess_publish_the_raw_vectors_once():
+def test_published_metrics_that_do_not_preprocess_share_one_segment():
     """Lazy stores whose metric does not preprocess share one segment of raw vectors; cosine gets its own."""
     # --- arrange ----------------------
     problem = _vector_problem()
@@ -366,27 +361,29 @@ def test_shared_metrics_that_do_not_preprocess_publish_the_raw_vectors_once():
     factory = DistanceStoreFactory(problem, metrics, DistanceStorageType.LAZY, 64 * GIB)
 
     # --- act --------------------------
-    with factory.create_shared_stores() as shared:
-        names = [spec.segment_name for spec in shared.specs]
+    with factory.publish_distance_stores() as specs:
+        names = [spec.segment_name for spec in specs]
 
     # --- assert -----------------------
     assert names[0] == names[1] != names[2]
 
 
-def test_shared_lazy_on_distance_problem_raises():
-    """LAZY has no vectors to compute from on a distance-input problem, shared or not."""
+def test_publishing_lazy_on_distance_problem_raises():
+    """LAZY has no vectors to compute distances from on a distance-input problem, published or not."""
     # --- act / assert -----------------
-    with pytest.raises(ValueError, match="computes distances from vectors"):
-        _factory(_distance_problem("condensed"), DistanceStorageType.LAZY).create_shared_stores()
+    with (
+        pytest.raises(ValueError, match="computes distances from vectors"),
+        _factory(_distance_problem("condensed"), DistanceStorageType.LAZY).publish_distance_stores(),
+    ):
+        pass
 
 
-def test_closing_the_set_releases_the_stores():
-    """After close the set holds no stores, so nothing can read a destroyed segment through it."""
+def test_leaving_the_publish_block_destroys_the_segments():
+    """After the block the segments are gone, so an attach with a stale spec fails instead of reading freed memory."""
     # --- arrange ----------------------
-    shared = _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).create_shared_stores()
+    with _factory(_vector_problem(), DistanceStorageType.FULL_MATRIX).publish_distance_stores() as specs:
+        stale = specs[0]
 
-    # --- act --------------------------
-    shared.close()
-
-    # --- assert -----------------------
-    assert shared.stores == []
+    # --- act / assert -----------------
+    with pytest.raises(FileNotFoundError), attached_distance_store(stale):
+        pass
