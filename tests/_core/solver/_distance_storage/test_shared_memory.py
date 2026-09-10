@@ -1,6 +1,5 @@
 import multiprocessing
 import pickle
-from multiprocessing import resource_tracker
 from multiprocessing.shared_memory import SharedMemory
 
 import numpy as np
@@ -9,7 +8,6 @@ import pytest
 from max_div._core.metrics._distance import KIND_FULL_MATRIX, KIND_LAZY, DistanceMetric, DistanceStore, get_distance
 from max_div._core.solver._distance_storage import SharedStoreSpec, attached_distance_store
 from max_div._core.solver._distance_storage.allocation import SharedMemoryDistanceStoreAllocator
-from max_div._core.solver._distance_storage.shared_memory import _attach_without_registering
 
 # how long a spawned child may take to boot an interpreter, import max_div and answer
 _CHILD_TIMEOUT_S = 120
@@ -197,21 +195,3 @@ def test_closing_the_allocator_destroys_the_segment():
     # --- assert -----------------------
     with pytest.raises(FileNotFoundError):
         SharedMemory(name=spec.segment_name).close()
-
-
-def test_attaching_without_registering_reads_and_leaves_the_owner_tracked():
-    """The pre-3.13 attach path maps the segment and leaves the creating process's tracker entry intact."""
-    # --- arrange ----------------------
-    allocator, spec = _publish(_reference_stores()["full_matrix"])
-    registered = resource_tracker.register
-    expected = _reference_stores()["full_matrix"].matrix
-
-    # --- act --------------------------
-    segment = _attach_without_registering(spec.segment_name)
-    values = np.ndarray(spec.shape, dtype=np.float32, buffer=segment.buf).copy()
-    segment.close()
-    allocator.close()  # the allocator still holds its own registration, so unlinking stays clean
-
-    # --- assert -----------------------
-    np.testing.assert_array_equal(values, expected)
-    assert resource_tracker.register is registered  # the suppression lasted one constructor call

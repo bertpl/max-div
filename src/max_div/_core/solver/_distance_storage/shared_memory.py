@@ -10,35 +10,19 @@ get a distance store that reads the segment's bytes.
 A distance store that reads a shared-memory segment is an ordinary `DistanceStore`: the trackers
 and the compiled functions downstream cannot tell it from one over a plain array.
 
-`multiprocessing.shared_memory` is available on every platform that the package supports.  What
-differs is how long a segment lives.  POSIX leaves that to the processes, which imposes two
-obligations:
-
-- The process that created a segment must outlive every reader, because it is the process that
-  destroys the segment.  A POSIX segment outlives its creator, and reading one through a closed
-  mapping crashes rather than raising.
-- An attaching process must not register with CPython's resource tracker, which is shared by the
-  whole process tree; `_attach_without_registering` explains why.  The creating process does
-  register, and that registration releases the segment if the creating process dies holding it.
-
-Windows has neither concern: it keeps no tracker, its `unlink` is documented as having no effect,
-and a segment goes away once the last handle to it closes.
+The segment mechanics, and the lifetime rules that every user of a segment must follow, live in
+`max_div._core._utils._shared_memory_segment`.
 """
 
-import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
-from multiprocessing import resource_tracker
-from multiprocessing.shared_memory import SharedMemory
 from typing import NamedTuple
 
 import numpy as np
 from numpy.typing import NDArray
 
+from max_div._core._utils import attach_segment
 from max_div._core.metrics._distance import KIND_FULL_MATRIX, DistanceMetric, DistanceStore
-
-# Whether SharedMemory accepts `track=False`.
-_TRACK_FLAG_SUPPORTED = sys.version_info >= (3, 13)
 
 
 # =================================================================================================
@@ -67,39 +51,11 @@ def attached_distance_store(spec: SharedStoreSpec) -> Iterator[DistanceStore]:
     On exit this closes this process's mapping of the segment and never unlinks the segment, which
     belongs to the process that created it.
     """
-    segment = _attach_untracked(spec.segment_name)
+    segment = attach_segment(spec.segment_name)
     try:
         yield _store_over(np.ndarray(spec.shape, dtype=np.float32, buffer=segment.buf), spec)
     finally:
         segment.close()
-
-
-def _attach_untracked(segment_name: str) -> SharedMemory:
-    """Attach to an existing segment without becoming responsible for destroying it."""
-    if _TRACK_FLAG_SUPPORTED:
-        return SharedMemory(name=segment_name, track=False)
-    return _attach_without_registering(segment_name)
-
-
-def _attach_without_registering(segment_name: str) -> SharedMemory:
-    """Attach with registration suppressed, which is what `track=False` does on Python 3.13 and later.
-
-    Registering and then unregistering would be shorter and is wrong: one tracker daemon serves the
-    whole process tree, so removing the entry removes the creating process's entry too, and with it
-    the cleanup that would have released the segment had the creating process died holding it.
-
-    The suppression is process-wide for the length of one constructor call, so callers must not
-    attach while another thread is creating a segment.  Windows keeps no tracker.
-    """
-    if sys.platform == "win32":
-        return SharedMemory(name=segment_name)
-    registered = resource_tracker.register
-    # ty flags the assignment; replacing the module's bound method is the suppression itself
-    resource_tracker.register = lambda *args, **kwargs: None  # ty: ignore[invalid-assignment]
-    try:
-        return SharedMemory(name=segment_name)
-    finally:
-        resource_tracker.register = registered
 
 
 def _store_over(buffer: NDArray[np.float32], spec: SharedStoreSpec) -> DistanceStore:
