@@ -1,8 +1,7 @@
 """A diversity objective is what the solver maximizes: one or more diversity terms.
 
 The solver, its config, presets and strategies read this type, never the bare `DiversityMetric`
-enum, because an objective of several terms cannot be a single enum member; the terms live here
-and each consumer reads the derived facts it needs off the objective.
+enum, because an objective of several terms cannot be a single enum member; the terms live here.
 """
 
 from dataclasses import dataclass
@@ -32,30 +31,26 @@ class DiversityObjective:
 
         Defined only for single-term objectives.
         """
-        return self.terms[0].metric
+        return self.terms[0].diversity_metric
 
     @property
-    def main_family(self) -> DiversityContributionFamily:
+    def main_contribution_family(self) -> DiversityContributionFamily:
         """Return the contribution family the single term consumes."""
         return self.main_metric.contribution_family
 
     @property
     def contribution_families(self) -> tuple[DiversityContributionFamily, ...]:
         """Return the distinct contribution families the objective's terms consume, in first-seen order."""
-        return tuple(dict.fromkeys(term.metric.contribution_family for term in self.terms))
+        return tuple(dict.fromkeys(term.diversity_metric.contribution_family for term in self.terms))
 
     @property
-    def has_single_separation_tracker(self) -> bool:
-        """Return whether one separation tracker serves the whole objective.
-
-        True for one term in the separation family — the case the batched farthest-point
-        initialization is tailored to.
-        """
-        return len(self.terms) == 1 and self.main_family == DiversityContributionFamily.SEPARATION
+    def has_single_separation_term(self) -> bool:
+        """Return whether the objective is a single term in the separation family."""
+        return len(self.terms) == 1 and self.main_contribution_family == DiversityContributionFamily.SEPARATION
 
     @property
     def default_tie_breakers(self) -> list[DiversityMetric]:
-        """Return the tie-breakers to score with when the caller sets none, chosen from the main metric.
+        """Return the tie-breakers to score with when the caller sets none, determined by the main metric.
 
         A near-degenerate main metric, where many selections share a score, gets tie-breakers that
         separate them; every other metric gets none.

@@ -16,5 +16,5 @@ class DiversityTerm:
     distance-store layer's job, not this term's.
     """
 
-    metric: DiversityMetric
-    distance: DistanceMetric | None = None
+    diversity_metric: DiversityMetric
+    distance_metric: DistanceMetric | None = None

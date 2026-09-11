@@ -4,7 +4,7 @@ from max_div._core.metrics import DistanceMetric, DiversityMetric, DiversityTerm
 def test_term_distance_defaults_to_none() -> None:
     """A term over the problem's given distance carries None."""
     # --- act / assert -----------------
-    assert DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION).distance is None
+    assert DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION).distance_metric is None
 
 
 def test_term_carries_an_explicit_distance() -> None:
@@ -13,8 +13,8 @@ def test_term_carries_an_explicit_distance() -> None:
     term = DiversityTerm(DiversityMetric.MEAN_SEPARATION, DistanceMetric.l1_manhattan())
 
     # --- assert -----------------------
-    assert term.metric == DiversityMetric.MEAN_SEPARATION
-    assert term.distance == DistanceMetric.l1_manhattan()
+    assert term.diversity_metric == DiversityMetric.MEAN_SEPARATION
+    assert term.distance_metric == DistanceMetric.l1_manhattan()
 
 
 def test_equal_terms_compare_equal() -> None:

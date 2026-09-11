@@ -51,7 +51,7 @@ class InitFarthestPointBatched(InitializationStrategy):
 
     def validate_objective(self, objective: DiversityObjective) -> None:
         """Reject objectives that the round heuristics are not tailored to."""
-        if not objective.has_single_separation_tracker:
+        if not objective.has_single_separation_term:
             raise ValueError(
                 f"InitFarthestPointBatched does not support diversity objective {objective}: "
                 "the heuristics of the algorithm are tailored to a single separation-based diversity metric. "

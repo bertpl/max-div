@@ -71,8 +71,8 @@ class MaxDivProblem(ABC):
     def diversity_terms(self) -> tuple[DiversityTerm, ...]:
         """Return the objective's terms parsed from the user's input.
 
-        The single term is the diversity metric over the problem's given distance, carried as `None`
-        and bound to a store later; `diversity_metric` keeps the raw user input.
+        The single term is the diversity metric over the problem's given distance; `diversity_metric`
+        keeps the raw user input.
         """
         return (DiversityTerm(self.diversity_metric),)
 

@@ -28,7 +28,7 @@ def test_main_metric_and_family_read_the_single_term() -> None:
 
     # --- act / assert -----------------
     assert objective.main_metric == DiversityMetric.MEAN_PAIRWISE_DISTANCE
-    assert objective.main_family == DiversityContributionFamily.MEAN_DISTANCE
+    assert objective.main_contribution_family == DiversityContributionFamily.MEAN_DISTANCE
 
 
 def test_contribution_families_are_distinct_and_first_seen_ordered() -> None:
@@ -57,17 +57,17 @@ def test_contribution_families_are_distinct_and_first_seen_ordered() -> None:
         (DiversityMetric.MEAN_PAIRWISE_DISTANCE, False),
     ],
 )
-def test_single_separation_tracker_predicate(metric: DiversityMetric, expected: bool) -> None:
-    """One separation-family term is served by a single separation tracker; a mean-distance term is not."""
+def test_single_separation_term_predicate(metric: DiversityMetric, expected: bool) -> None:
+    """One separation-family term is a single separation objective; a mean-distance term is not."""
     # --- act / assert -----------------
-    assert _objective(metric).has_single_separation_tracker is expected
+    assert _objective(metric).has_single_separation_term is expected
 
 
-def test_a_two_term_objective_is_not_a_single_separation_tracker() -> None:
-    """More than one term needs more than one tracker, whatever the families."""
+def test_a_two_term_objective_is_not_a_single_separation_term() -> None:
+    """More than one term is never a single separation objective, whatever the families."""
     # --- act / assert -----------------
     objective = _objective(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
-    assert not objective.has_single_separation_tracker
+    assert not objective.has_single_separation_term
 
 
 @pytest.mark.parametrize(
