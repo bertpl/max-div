@@ -60,7 +60,7 @@ class MaxDivProblem(ABC):
     @property
     @abstractmethod
     def default_distance_metric(self) -> DistanceMetric | None:
-        """The problem's default distance: its metric for a vector problem, otherwise None."""
+        """The problem's default distance, if the flavor defines one; None otherwise."""
 
     @abstractmethod
     def full_matrix(self) -> NDArray[np.float32]:

@@ -118,8 +118,11 @@ class SolverBuilderBase:
         factory = DistanceStoreFactory.for_objective(
             self._problem, self._objective, self._distance_storage_type, total_physical_memory_bytes()
         )
-        resolved = factory.determine_storage_types()[0]
-        return factory, resolved.value + (" (auto)" if self._distance_storage_type == DistanceStorageType.AUTO else "")
+        # one storage decision covers every store, so any entry is the label for the whole set
+        storage_label = factory.determine_storage_types()[0].value
+        if self._distance_storage_type == DistanceStorageType.AUTO:
+            storage_label += " (auto)"
+        return factory, storage_label
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:
         """Return the tie-breakers to score with: the user's if set, otherwise per the main metric."""

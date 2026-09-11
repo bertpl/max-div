@@ -101,15 +101,17 @@ class DistanceStoreFactory:
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> "DistanceStoreFactory":
-        """Return the factory for the distinct distances the objective's terms measure over.
+        """Return the factory for the distinct distances the objective's diversity terms measure over.
 
-        A term whose distance is `None` inherits the distance the problem provides. Distances that
-        repeat across terms collapse to one store, in the order the terms first use them.
+        A diversity term whose distance is `None` inherits the distance the problem provides.
+        Distances that repeat across diversity terms collapse to one store, in the order the terms
+        first use them.
         """
         problem_distance = problem.default_distance_metric
         term_distances = [
             problem_distance if term.distance_metric is None else term.distance_metric for term in objective.terms
         ]
+        # dedup preserving first-seen order, which the store order depends on; a set would not preserve it
         distinct_distances = list(dict.fromkeys(term_distances))
         return cls(problem, distinct_distances, storage_type, total_memory_bytes)
 
