@@ -125,4 +125,5 @@ class SolverBuilderBase:
         """Return the tie-breakers to score with: the user's if set, otherwise per the main metric."""
         if not self._default_diversity_tie_breakers:
             return self._diversity_tie_breakers
-        return self._objective.default_tie_breakers
+        else:
+            return self._objective.default_tie_breakers

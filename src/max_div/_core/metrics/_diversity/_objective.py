@@ -29,7 +29,8 @@ class DiversityObjective:
     def main_metric(self) -> DiversityMetric:
         """Return the single term's metric.
 
-        Defined only for single-term objectives.
+        Defined only for single-term objectives. This and `main_contribution_family` are interim
+        accessors for the single-term case; remove them once an objective can hold several terms.
         """
         return self.terms[0].diversity_metric
 
