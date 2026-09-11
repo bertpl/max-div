@@ -108,11 +108,10 @@ class DistanceStoreFactory:
         first use them.
         """
         problem_distance = problem.default_distance_metric
-        term_distances = [
-            problem_distance if term.distance_metric is None else term.distance_metric for term in objective.terms
-        ]
-        # dedup preserving first-seen order, which the store order depends on; a set would not preserve it
-        distinct_distances = list(dict.fromkeys(term_distances))
+        distinct_distances: list[StoreDistance] = []
+        for term in objective.terms:
+            if (term_distance := term.distance_metric or problem_distance) not in distinct_distances:
+                distinct_distances.append(term_distance)
         return cls(problem, distinct_distances, storage_type, total_memory_bytes)
 
     # --------------------------------------------------------------------------

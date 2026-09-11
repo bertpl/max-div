@@ -42,11 +42,6 @@ def _factory(problem: MaxDivProblem, storage: DistanceStorageType, total_memory:
     return DistanceStoreFactory(problem, [problem.default_distance_metric], storage, total_memory)
 
 
-def _objective(*terms: DiversityTerm) -> DiversityObjective:
-    """Return an objective over the given terms."""
-    return DiversityObjective(terms)
-
-
 def _stub_vector_problem(n: int):
     """Return a stand-in exposing only what the policy reads (isinstance, n, the metric), without allocations."""
     from max_div._core.problem import VectorMaxDivProblem
@@ -68,18 +63,24 @@ def _all_pairs(store: DistanceStore, n: int) -> list[float]:
 @pytest.mark.parametrize(
     "problem, objective, expected",
     [
-        (_vector_problem(), _objective(DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION)), (L2,)),
-        (_vector_problem(), _objective(DiversityTerm(DiversityMetric.MEAN_SEPARATION, L1)), (L1,)),
+        (_vector_problem(), DiversityObjective((DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),)), (L2,)),
+        (_vector_problem(), DiversityObjective((DiversityTerm(DiversityMetric.MEAN_SEPARATION, L1),)), (L1,)),
         (
             _vector_problem(),
-            _objective(
-                DiversityTerm(DiversityMetric.MEAN_SEPARATION, L1),
-                DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),  # None -> L2
-                DiversityTerm(DiversityMetric.MIN_SEPARATION, L1),  # repeat of L1
+            DiversityObjective(
+                (
+                    DiversityTerm(DiversityMetric.MEAN_SEPARATION, L1),
+                    DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),  # None -> L2
+                    DiversityTerm(DiversityMetric.MIN_SEPARATION, L1),  # repeat of L1
+                )
             ),
             (L1, L2),
         ),
-        (_distance_problem("square"), _objective(DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION)), (None,)),
+        (
+            _distance_problem("square"),
+            DiversityObjective((DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),)),
+            (None,),
+        ),
     ],
     ids=["bare-binds-to-vector-distance", "explicit-kept", "repeats-collapse-first-seen", "distance-problem-none"],
 )
