@@ -22,7 +22,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._utils import attach_shared_memory_segment
-from max_div._core.metrics._distance import KIND_FULL_MATRIX, DistanceMetric, DistanceStore
+from max_div._core.metrics._distance import KIND_FULL_MATRIX, NO_AXIS, NO_P, DistanceMetric, DistanceStore
 
 
 # =================================================================================================
@@ -36,10 +36,10 @@ class SharedStoreSpec(NamedTuple):
 
     segment_name: str  # the operating-system name of the segment, which is how another process finds it
     kind: int  # the `DistanceStore.kind` selector of the distance store that reads the segment
-    metric_kind: int  # the distance metric that a lazy distance store computes with; unused for a full matrix
-    metric_p: float  # `DistanceMetric.p` of that metric; unused for a full matrix
-    metric_axis: int  # `DistanceMetric.axis` of that metric; unused for a full matrix
     shape: tuple[int, ...]  # the shape of the float32 array in the segment; its first axis is the item count
+    metric_kind: int = 0  # the distance metric that a lazy distance store computes with; unused for a full matrix
+    metric_p: float = NO_P  # `DistanceMetric.p` of that metric; unused for a full matrix
+    metric_axis: int = NO_AXIS  # `DistanceMetric.axis` of that metric; unused for a full matrix
 
 
 # =================================================================================================

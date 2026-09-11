@@ -77,8 +77,8 @@ class DistanceMetric(NamedTuple):
     """
 
     kind: int
-    p: float
-    axis: int
+    p: float = NO_P
+    axis: int = NO_AXIS
 
     # --------------------------------------------------------------------------
     #  Factory methods
@@ -86,12 +86,12 @@ class DistanceMetric(NamedTuple):
     @classmethod
     def l1_manhattan(cls) -> "DistanceMetric":
         """Return the L1 (Manhattan) distance metric: ``sum_i |x_i - y_i|``."""
-        return cls(kind=METRIC_KIND_L1, p=NO_P, axis=NO_AXIS)
+        return cls(kind=METRIC_KIND_L1)
 
     @classmethod
     def l2_euclidean(cls) -> "DistanceMetric":
         """Return the L2 (Euclidean) distance metric: ``sqrt( sum_i (x_i - y_i)^2 )``."""
-        return cls(kind=METRIC_KIND_L2, p=NO_P, axis=NO_AXIS)
+        return cls(kind=METRIC_KIND_L2)
 
     @classmethod
     def l2s_euclidean_squared(cls) -> "DistanceMetric":
@@ -100,12 +100,12 @@ class DistanceMetric(NamedTuple):
         The squared form avoids the square root and produces identical solutions under the
         GEOMEAN_SEPARATION diversity metric.
         """
-        return cls(kind=METRIC_KIND_L2S, p=NO_P, axis=NO_AXIS)
+        return cls(kind=METRIC_KIND_L2S)
 
     @classmethod
     def linf_chebyshev(cls) -> "DistanceMetric":
         """Return the Linf (Chebyshev) distance metric: ``max_i |x_i - y_i|``."""
-        return cls(kind=METRIC_KIND_LINF, p=NO_P, axis=NO_AXIS)
+        return cls(kind=METRIC_KIND_LINF)
 
     @classmethod
     def cosine(cls) -> "DistanceMetric":
@@ -113,7 +113,7 @@ class DistanceMetric(NamedTuple):
 
         The range is [0, 2].  Zero vectors have no defined angle and are rejected with an error.
         """
-        return cls(kind=METRIC_KIND_COS, p=NO_P, axis=NO_AXIS)
+        return cls(kind=METRIC_KIND_COS)
 
     @classmethod
     def geometric_mean(cls) -> "DistanceMetric":
@@ -125,7 +125,7 @@ class DistanceMetric(NamedTuple):
         It is not a strict metric (distinct points can be at distance zero, and the triangle
         inequality fails); the solver relies on neither.  It costs one ``log`` per dimension.
         """
-        return cls(kind=METRIC_KIND_GEOMEAN, p=NO_P, axis=NO_AXIS)
+        return cls(kind=METRIC_KIND_GEOMEAN)
 
     @classmethod
     def along_axis(cls, axis: int) -> "DistanceMetric":
@@ -142,7 +142,7 @@ class DistanceMetric(NamedTuple):
         """
         if isinstance(axis, bool) or not isinstance(axis, (int, np.integer)) or axis < 0:
             raise ValueError(f"along_axis requires a non-negative integer axis; here: {axis!r}.")
-        return cls(kind=METRIC_KIND_ALONG_AXIS, p=NO_P, axis=int(axis))
+        return cls(kind=METRIC_KIND_ALONG_AXIS, axis=int(axis))
 
     @classmethod
     def minkowski(cls, p: float, root: bool = True) -> "DistanceMetric":
@@ -175,18 +175,12 @@ class DistanceMetric(NamedTuple):
         if p == 2.0:
             return cls.l2_euclidean() if root else cls.l2s_euclidean_squared()
         if p == 0.5:
-            return cls(
-                kind=METRIC_KIND_MINKOWSKI_P05 if root else METRIC_KIND_MINKOWSKI_P05_POWERED, p=NO_P, axis=NO_AXIS
-            )
+            return cls(kind=METRIC_KIND_MINKOWSKI_P05 if root else METRIC_KIND_MINKOWSKI_P05_POWERED)
         if p == 0.25:
-            return cls(
-                kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED, p=NO_P, axis=NO_AXIS
-            )
+            return cls(kind=METRIC_KIND_MINKOWSKI_P025 if root else METRIC_KIND_MINKOWSKI_P025_POWERED)
         if p == 0.125:
-            return cls(
-                kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED, p=NO_P, axis=NO_AXIS
-            )
-        return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, p=p, axis=NO_AXIS)
+            return cls(kind=METRIC_KIND_MINKOWSKI_P0125 if root else METRIC_KIND_MINKOWSKI_P0125_POWERED)
+        return cls(kind=METRIC_KIND_MINKOWSKI if root else METRIC_KIND_MINKOWSKI_POWERED, p=p)
 
     # --------------------------------------------------------------------------
     #  Properties
