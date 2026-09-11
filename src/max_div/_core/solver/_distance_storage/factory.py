@@ -16,6 +16,7 @@ vectors itself.
 from collections.abc import Iterator, Sequence
 from contextlib import ExitStack, contextmanager
 
+from max_div._core.metrics import DiversityObjective
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
     KIND_LAZY,
@@ -99,6 +100,31 @@ class DistanceStoreFactory:
         """Return the factory for a single distance: the vector problem's own metric, or the given distances."""
         distance = problem.distance_metric if isinstance(problem, VectorMaxDivProblem) else None
         return cls(problem, [distance], storage_type, total_memory_bytes)
+
+    @classmethod
+    def for_objective(
+        cls,
+        problem: MaxDivProblem,
+        objective: DiversityObjective,
+        storage_type: DistanceStorageType,
+        total_memory_bytes: int | None,
+    ) -> "DistanceStoreFactory":
+        """Return the factory for the distinct distances the objective's terms measure over.
+
+        A term's `None` distance is the problem's given distance, bound here: to a vector problem's
+        own metric, or left as None for a distance-input problem's given distances. Distances repeat
+        across terms collapse to one store, in the order the terms first use them.
+
+        Args:
+            problem: the problem whose vectors, or given distances, the distance stores hold.
+            objective: the diversity objective whose terms name the distances.
+            storage_type: the user's choice of storage type, possibly AUTO.
+            total_memory_bytes: the total physical RAM of the machine, or None when it is unknown.
+        """
+        given: StoreDistance = problem.distance_metric if isinstance(problem, VectorMaxDivProblem) else None
+        bound = [given if term.distance_metric is None else term.distance_metric for term in objective.terms]
+        distinct = list(dict.fromkeys(bound))
+        return cls(problem, distinct, storage_type, total_memory_bytes)
 
     # --------------------------------------------------------------------------
     #  Policy

@@ -115,8 +115,8 @@ class SolverBuilderBase:
 
     def _store_factory(self) -> tuple[DistanceStoreFactory, str]:
         """Return the factory building this configuration's stores, and the storage label reported to the user."""
-        factory = DistanceStoreFactory.for_problem(
-            self._problem, self._distance_storage_type, total_physical_memory_bytes()
+        factory = DistanceStoreFactory.for_objective(
+            self._problem, self._objective, self._distance_storage_type, total_physical_memory_bytes()
         )
         resolved = factory.determine_storage_types()[0]
         return factory, resolved.value + (" (auto)" if self._distance_storage_type == DistanceStorageType.AUTO else "")
