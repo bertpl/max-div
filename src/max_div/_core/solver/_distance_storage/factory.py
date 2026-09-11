@@ -93,13 +93,17 @@ class DistanceStoreFactory:
         self._storage_type = storage_type
         self._total_memory_bytes = total_memory_bytes
 
+    @staticmethod
+    def _given_distance(problem: MaxDivProblem) -> StoreDistance:
+        """Return the problem's given distance: a vector problem's own metric, or None for the given distances."""
+        return problem.distance_metric if isinstance(problem, VectorMaxDivProblem) else None
+
     @classmethod
     def for_problem(
         cls, problem: MaxDivProblem, storage_type: DistanceStorageType, total_memory_bytes: int | None
     ) -> "DistanceStoreFactory":
         """Return the factory for a single distance: the vector problem's own metric, or the given distances."""
-        distance = problem.distance_metric if isinstance(problem, VectorMaxDivProblem) else None
-        return cls(problem, [distance], storage_type, total_memory_bytes)
+        return cls(problem, [cls._given_distance(problem)], storage_type, total_memory_bytes)
 
     @classmethod
     def for_objective(
@@ -111,20 +115,16 @@ class DistanceStoreFactory:
     ) -> "DistanceStoreFactory":
         """Return the factory for the distinct distances the objective's terms measure over.
 
-        A term's `None` distance is the problem's given distance, bound here: to a vector problem's
-        own metric, or left as None for a distance-input problem's given distances. Distances repeat
-        across terms collapse to one store, in the order the terms first use them.
-
-        Args:
-            problem: the problem whose vectors, or given distances, the distance stores hold.
-            objective: the diversity objective whose terms name the distances.
-            storage_type: the user's choice of storage type, possibly AUTO.
-            total_memory_bytes: the total physical RAM of the machine, or None when it is unknown.
+        A term whose distance is `None` takes the problem's given distance. For a vector problem that
+        is the problem's own metric; for a distance-input problem it stays `None`. Distances that
+        repeat across terms collapse to one store, in the order the terms first use them.
         """
-        given: StoreDistance = problem.distance_metric if isinstance(problem, VectorMaxDivProblem) else None
-        bound = [given if term.distance_metric is None else term.distance_metric for term in objective.terms]
-        distinct = list(dict.fromkeys(bound))
-        return cls(problem, distinct, storage_type, total_memory_bytes)
+        given_distance = cls._given_distance(problem)
+        term_distances = [
+            given_distance if term.distance_metric is None else term.distance_metric for term in objective.terms
+        ]
+        distinct_distances = list(dict.fromkeys(term_distances))
+        return cls(problem, distinct_distances, storage_type, total_memory_bytes)
 
     # --------------------------------------------------------------------------
     #  Policy
