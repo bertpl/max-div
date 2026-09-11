@@ -131,9 +131,8 @@ class DistanceMetric(NamedTuple):
     def along_axis(cls, axis: int) -> "DistanceMetric":
         """Return the distance along one coordinate axis: ``|x_axis - y_axis|``.
 
-        It spreads a selection along that single coordinate only; `geometric_mean()` combines this
-        per-coordinate distance across every axis.  The vector problem checks the axis against its
-        dimension count when it is constructed.
+        It spreads a selection along that single coordinate only.  The vector problem checks the axis
+        against its dimension count when it is constructed.
 
         Args:
             axis: The zero-based index of the coordinate to read.

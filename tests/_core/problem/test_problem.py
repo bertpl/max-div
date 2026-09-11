@@ -140,7 +140,7 @@ def test_problem_new_cosine_non_zero_vectors_ok():
 
 
 def test_problem_new_along_axis_beyond_the_dimension_count_raises():
-    """An along-axis metric that reads a coordinate the vectors do not have is rejected at construction."""
+    """An along-axis metric that reads a coordinate that the vectors do not have is rejected at construction."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((5, 3)).astype(np.float32)
 

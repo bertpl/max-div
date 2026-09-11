@@ -8,7 +8,7 @@ import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from ._distance_metric import METRIC_KIND_ALONG_AXIS, METRIC_KIND_COS, DistanceMetric
+from ._distance_metric import METRIC_KIND_ALONG_AXIS, METRIC_KIND_COS, NO_AXIS, DistanceMetric
 
 
 # =================================================================================================
@@ -41,6 +41,7 @@ def preprocess_vectors(vectors: NDArray[np.float32], metric: DistanceMetric) -> 
     if metric.kind == METRIC_KIND_COS:
         preprocessed = preprocess_cosine_distance_vectors(vectors)
     elif metric.kind == METRIC_KIND_ALONG_AXIS:
+        validate_axis_within_dimensions(metric, vectors.shape[1])
         preprocessed = preprocess_along_axis_vectors(vectors, metric.axis)
     else:  # pragma: no cover -- every preprocessing kind has a branch above; a kind that lacks one lands here
         raise NotImplementedError(
@@ -90,17 +91,23 @@ def _normalize_rows(vectors: NDArray[np.float32]) -> NDArray[np.float32]:
     return normalized
 
 
+def validate_axis_within_dimensions(metric: DistanceMetric, n_dims: int) -> None:
+    """Raise ValueError if `metric` reads a coordinate that `n_dims`-dimensional vectors do not have.
+
+    A no-op for a metric without an axis, so a caller can hand it any metric.
+
+    Raises:
+        ValueError: If the metric's axis is not below `n_dims`.
+    """
+    if metric.axis != NO_AXIS and metric.axis >= n_dims:
+        raise ValueError(f"{metric!r} reads a coordinate that {n_dims}-dimensional vectors do not have.")
+
+
 def preprocess_along_axis_vectors(vectors: NDArray[np.float32], axis: int) -> NDArray[np.float32]:
     """Return a fresh (n, 1) float32 array holding the one coordinate that the along-axis distance reads.
 
     The slice lets the pair function read column 0 of a contiguous array, so the axis itself never
-    crosses the compiled boundary.
-
-    Raises:
-        ValueError: If `axis` is not a coordinate of `vectors`.
+    crosses the compiled boundary.  The axis must be a coordinate of `vectors`;
+    `validate_axis_within_dimensions` is the check.
     """
-    if axis >= vectors.shape[1]:
-        raise ValueError(
-            f"along_axis({axis}) reads a coordinate that {vectors.shape[1]}-dimensional vectors do not have."
-        )
     return vectors[:, axis : axis + 1].copy()

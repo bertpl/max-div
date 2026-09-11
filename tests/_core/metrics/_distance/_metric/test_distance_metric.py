@@ -107,7 +107,7 @@ def test_kinds_without_an_exponent_store_no_p():
 
 
 def test_a_metric_rebuilds_from_its_fields(metric: DistanceMetric):
-    """The (kind, p, axis) triple a spec carries rebuilds the metric, for every kind."""
+    """The (kind, p, axis) triple that a spec carries rebuilds the metric, for every kind."""
     # --- act / assert -----------------
     assert DistanceMetric(kind=metric.kind, p=metric.p, axis=metric.axis) == metric
 
