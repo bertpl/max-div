@@ -94,8 +94,11 @@ class DistanceStoreFactory:
         self._total_memory_bytes = total_memory_bytes
 
     @staticmethod
-    def _given_distance(problem: MaxDivProblem) -> StoreDistance:
-        """Return the problem's given distance: a vector problem's own metric, or None for the given distances."""
+    def _problem_distance(problem: MaxDivProblem) -> StoreDistance:
+        """Return the distance the problem provides for a store.
+
+        A vector problem's own metric, or None for a distance-input problem.
+        """
         return problem.distance_metric if isinstance(problem, VectorMaxDivProblem) else None
 
     @classmethod
@@ -103,7 +106,7 @@ class DistanceStoreFactory:
         cls, problem: MaxDivProblem, storage_type: DistanceStorageType, total_memory_bytes: int | None
     ) -> "DistanceStoreFactory":
         """Return the factory for a single distance: the vector problem's own metric, or the given distances."""
-        return cls(problem, [cls._given_distance(problem)], storage_type, total_memory_bytes)
+        return cls(problem, [cls._problem_distance(problem)], storage_type, total_memory_bytes)
 
     @classmethod
     def for_objective(
@@ -115,13 +118,12 @@ class DistanceStoreFactory:
     ) -> "DistanceStoreFactory":
         """Return the factory for the distinct distances the objective's terms measure over.
 
-        A term whose distance is `None` takes the problem's given distance. For a vector problem that
-        is the problem's own metric; for a distance-input problem it stays `None`. Distances that
+        A term whose distance is `None` inherits the distance the problem provides. Distances that
         repeat across terms collapse to one store, in the order the terms first use them.
         """
-        given_distance = cls._given_distance(problem)
+        problem_distance = cls._problem_distance(problem)
         term_distances = [
-            given_distance if term.distance_metric is None else term.distance_metric for term in objective.terms
+            problem_distance if term.distance_metric is None else term.distance_metric for term in objective.terms
         ]
         distinct_distances = list(dict.fromkeys(term_distances))
         return cls(problem, distinct_distances, storage_type, total_memory_bytes)

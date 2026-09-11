@@ -91,7 +91,7 @@ def test_for_problem_reads_the_problems_own_distance():
     ids=["bare-binds-to-vector-distance", "explicit-kept", "repeats-collapse-first-seen", "distance-problem-none"],
 )
 def test_for_objective_derives_the_distinct_distances(problem, objective, expected):
-    """for_objective binds a bare term to the given distance, keeps an explicit one, and collapses repeats in order."""
+    """Distinct distances: a term's own distance, or the problem's when it has none, repeats collapsed in order."""
     # --- act --------------------------
     factory = DistanceStoreFactory.for_objective(problem, objective, DistanceStorageType.AUTO, 64 * GIB)
 
