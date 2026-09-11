@@ -12,7 +12,7 @@ A subclass adds the search: which strategies run, and for how long.
 
 from typing import TYPE_CHECKING, Self
 
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityMetric, DiversityObjective
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
 from max_div._core.solver._distance_storage import (
@@ -40,7 +40,7 @@ class SolverBuilderBase:
         # --- problem properties -----------------
         self._n: int = problem.n
         self._k: int = problem.k
-        self._diversity_metric: DiversityMetric = problem.diversity_metric
+        self._objective: DiversityObjective = DiversityObjective(problem.diversity_terms)
         self._constraints: list[Constraint] = problem.constraints
 
         # --- shared configuration ---------------
@@ -125,13 +125,5 @@ class SolverBuilderBase:
         """Return the tie-breakers to score with: the user's if set, otherwise per the main metric."""
         if not self._default_diversity_tie_breakers:
             return self._diversity_tie_breakers
-        if self._diversity_metric == DiversityMetric.MIN_SEPARATION:
-            return [
-                DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-                DiversityMetric.NON_ZERO_SEPARATION_FRAC,
-            ]
-        if (self._diversity_metric == DiversityMetric.GEOMEAN_SEPARATION) or (
-            self._diversity_metric == DiversityMetric.APPROX_GEOMEAN_SEPARATION
-        ):
-            return [DiversityMetric.NON_ZERO_SEPARATION_FRAC]
-        return []
+        else:
+            return self._objective.default_tie_breakers

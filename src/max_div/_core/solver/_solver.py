@@ -6,7 +6,7 @@ import numpy as np
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
 from max_div._core.constraints.constraints import _np_con_count_satisfied
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityMetric, DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
@@ -35,7 +35,7 @@ class MaxDivSolver:
         n: int,
         store_provider: Callable[[], DistanceStore],
         k: int,
-        diversity_metric: DiversityMetric,
+        objective: DiversityObjective,
         diversity_tie_breakers: list[DiversityMetric],
         constraints: list[Constraint],
         solver_steps: list[SolverStep],
@@ -53,7 +53,7 @@ class MaxDivSolver:
                 storage to read from, so `build` stays lean and fast rather than building the
                 store up front.
             k: (int) The number of items to be selected from the input set ('universe').
-            diversity_metric: (DiversityMetric) The diversity metric to use.
+            objective: (DiversityObjective) The diversity objective to maximize.
             diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
             constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
             solver_steps: (list[SolverStep]) A list of solver steps to execute,
@@ -74,7 +74,7 @@ class MaxDivSolver:
         self._store_provider = store_provider
         self._distance_storage_label = distance_storage_label
         self._k = k
-        self._diversity_metric = diversity_metric
+        self._objective = objective
         self._constraints = constraints
 
         # --- solver config ----------------------
@@ -130,7 +130,7 @@ class MaxDivSolver:
                 n=self._n,
                 store=store,
                 k=self._k,
-                diversity_metric=self._diversity_metric,
+                diversity_metric=self._objective.main_metric,
                 diversity_tie_breakers=self._diversity_tie_breakers,
                 constraints=self._constraints,
                 penalty_quadratic=(self._constraint_penalty == ConstraintPenalty.QUADRATIC),

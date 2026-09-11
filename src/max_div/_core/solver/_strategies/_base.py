@@ -8,7 +8,7 @@ from max_div._core._utils import deterministic_hash_int64, int_to_int64
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityMetric
+    from max_div._core.metrics import DiversityObjective
 
 
 class StrategyBase:
@@ -39,12 +39,12 @@ class StrategyBase:
         """Return _seed without updating it."""
         return self._seed
 
-    def validate_diversity_metric(self, diversity_metric: "DiversityMetric") -> None:
-        """Raise when this strategy does not support the solve's main diversity metric.
+    def validate_objective(self, objective: "DiversityObjective") -> None:
+        """Raise when this strategy does not support the solve's diversity objective.
 
         Called when the solver is built, so an unsupported combination fails before any work.
-        The default accepts every metric; a strategy whose algorithm is tailored to specific
-        metric families overrides `validate_diversity_metric`.
+        The default accepts every objective; a strategy whose algorithm is tailored to specific
+        contribution families overrides `validate_objective`.
         """
 
     def set_seed(self, seed: int | np.int64) -> None:

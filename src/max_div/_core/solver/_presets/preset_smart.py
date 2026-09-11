@@ -1,4 +1,4 @@
-from max_div._core.metrics import DiversityContributionFamily, DiversityMetric
+from max_div._core.metrics import DiversityContributionFamily, DiversityObjective
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._solver_step import OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
@@ -11,21 +11,21 @@ from max_div._core.solver._strategies._initialization._init_farthest_point_batch
 # =================================================================================================
 def get_preset_strategies_smart(
     target_duration: TargetDuration,
-    diversity_metric: DiversityMetric,
+    objective: DiversityObjective,
     thorough: bool = False,
     has_constraints: bool = False,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     """Return the SMART (or THOROUGH, when `thorough`) preset's init strategy and optimization steps.
 
-    The diversity metric decides which farthest-point construction an unconstrained problem starts
-    from, since the batched one applies to the separation family only.
+    The objective's contribution family decides which farthest-point construction an unconstrained
+    problem starts from, since the batched one applies to the separation family only.
     """
     # --- initialization -------------------------
     if has_constraints:
         # Constrained: most_feasible() finds a feasible (or least-infeasible) selection faster than the
         # main solver's swaps could, freeing the optimizer to spend its whole budget on diversity.
         init_strategy = InitializationStrategy.most_feasible()
-    elif diversity_metric.contribution_family == DiversityContributionFamily.SEPARATION:
+    elif objective.main_contribution_family == DiversityContributionFamily.SEPARATION:
         # Unconstrained: the farthest-point construction reaches competitor-level quality far sooner
         # than a random start; sampling among the top_k picks keeps that quality while decorrelating seeds.
         # The batched construction offers every pick the same candidates as the per-pick one and is
