@@ -10,7 +10,7 @@ from max_div._core.metrics import (
 
 
 def _objective(*metrics: DiversityMetric) -> DiversityObjective:
-    """Return an objective over one term per given metric, each over the given distance."""
+    """Return an objective over one term per given metric."""
     return DiversityObjective(tuple(DiversityTerm(metric) for metric in metrics))
 
 
@@ -60,14 +60,14 @@ def test_contribution_families_are_distinct_and_first_seen_ordered() -> None:
 def test_single_separation_tracker_predicate(metric: DiversityMetric, expected: bool) -> None:
     """One separation-family term is served by a single separation tracker; a mean-distance term is not."""
     # --- act / assert -----------------
-    assert _objective(metric).uses_single_separation_tracker is expected
+    assert _objective(metric).has_single_separation_tracker is expected
 
 
 def test_a_two_term_objective_is_not_a_single_separation_tracker() -> None:
     """More than one term needs more than one tracker, whatever the families."""
     # --- act / assert -----------------
     objective = _objective(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
-    assert not objective.uses_single_separation_tracker
+    assert not objective.has_single_separation_tracker
 
 
 @pytest.mark.parametrize(

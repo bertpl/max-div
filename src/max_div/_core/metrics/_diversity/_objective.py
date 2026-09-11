@@ -1,9 +1,8 @@
 """A diversity objective is what the solver maximizes: one or more diversity terms.
 
 The solver, its config, presets and strategies read this type, never the bare `DiversityMetric`
-enum — a hybrid objective cannot be one enum member, so the terms live here and the derived facts
-each consumer asks for are read off the objective. The objective holds one term today; the hybrid
-adds more.
+enum, because an objective of several terms cannot be a single enum member; the terms live here
+and each consumer reads the derived facts it needs off the objective.
 """
 
 from dataclasses import dataclass
@@ -16,9 +15,8 @@ from ._term import DiversityTerm
 class DiversityObjective:
     """The diversity objective the solver maximizes, as a tuple of terms.
 
-    Built from a problem's `diversity_terms`. The accessors expose the facts consumers read: the
-    single term's metric and contribution family, the contribution families the objective needs,
-    the default tie-breakers, and whether one separation tracker serves the whole objective.
+    The objective is built from a problem's `diversity_terms`; its accessors expose the derived
+    facts each consumer reads off the terms.
     """
 
     terms: tuple[DiversityTerm, ...]
@@ -32,9 +30,7 @@ class DiversityObjective:
     def main_metric(self) -> DiversityMetric:
         """Return the single term's metric.
 
-        Defined while the objective is single-term; the multi-term hybrid replaces the consumers
-        that read it (scoring and tracking) rather than this accessor gaining a meaning for many
-        terms.
+        Defined only for single-term objectives.
         """
         return self.terms[0].metric
 
@@ -49,7 +45,7 @@ class DiversityObjective:
         return tuple(dict.fromkeys(term.metric.contribution_family for term in self.terms))
 
     @property
-    def uses_single_separation_tracker(self) -> bool:
+    def has_single_separation_tracker(self) -> bool:
         """Return whether one separation tracker serves the whole objective.
 
         True for one term in the separation family — the case the batched farthest-point
@@ -61,8 +57,8 @@ class DiversityObjective:
     def default_tie_breakers(self) -> list[DiversityMetric]:
         """Return the tie-breakers to score with when the caller sets none, chosen from the main metric.
 
-        A near-degenerate main metric (minimum or geometric-mean separation, where many selections
-        share a score) gets tie-breakers that separate them; every other metric gets none.
+        A near-degenerate main metric, where many selections share a score, gets tie-breakers that
+        separate them; every other metric gets none.
         """
         metric = self.main_metric
         if metric == DiversityMetric.MIN_SEPARATION:
