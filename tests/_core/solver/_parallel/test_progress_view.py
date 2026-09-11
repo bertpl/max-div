@@ -3,6 +3,7 @@ from dataclasses import replace
 
 import numpy as np
 
+from max_div._core.solver._distance_storage import DistanceStorageTypes
 from max_div._core.solver._duration import Elapsed, Progress
 from max_div._core.solver._parallel._progress_view import ParallelProgressView
 from max_div._core.solver._parallel._result import WorkerResult
@@ -66,7 +67,7 @@ def _result(worker_index: int) -> WorkerResult:
         step_durations={"step": Elapsed(t_elapsed_sec=1.0, n_iterations=10)},
         n_constraints=0,
         n_constraints_satisfied=0,
-        distance_storage="",
+        distance_storage=DistanceStorageTypes(),
     )
     return WorkerResult(worker_index=worker_index, seed=0, solution=solution)
 

@@ -98,7 +98,7 @@ def test_with_seed_changes_only_the_seed():
     assert reseeded.seed == 2
     assert config.seed == 1  # the original is untouched
     assert reseeded.solver_steps is config.solver_steps
-    assert reseeded.distance_storage_label == config.distance_storage_label
+    assert reseeded.distance_storage == config.distance_storage
 
 
 def test_build_produces_a_working_solver():

@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - A distance metric along one coordinate axis, `DistanceMetric.along_axis(axis)`: the absolute difference of that coordinate, every other coordinate ignored
+- `DistanceMetric.label`, a short label for a metric (e.g. `L1`, `geomean`, `axis 2`)
 
 ### Changed
 - `DistanceStorage` is renamed to `DistanceStorageType`; `with_distance_storage` keeps its name
+- `MaxDivSolution.distance_storage` reports the resolved storage type per distance store, and the solution summary lists them grouped by type (e.g. `storage=full_matrix (L1, L2), lazy (geomean)`)
 
 ### Deprecated
 

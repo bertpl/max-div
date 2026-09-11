@@ -35,7 +35,7 @@ from .allocation import (
 )
 from .memory_budget import AUTO_MEMORY_FRACTION, check_fits_physical_memory, full_matrix_bytes
 from .shared_memory import SharedStoreSpec, attached_distance_store
-from .storage import DistanceStorageType
+from .storage import DistanceStorageType, DistanceStorageTypes
 
 # The distance that a distance store holds: a distance metric over the problem's vectors, or None for
 # the distances that a distance-input problem was given.
@@ -141,6 +141,10 @@ class DistanceStoreFactory:
         if count * full_matrix_bytes(self._problem.n) <= self._total_memory_bytes * AUTO_MEMORY_FRACTION:
             return [DistanceStorageType.FULL_MATRIX] * count
         return [DistanceStorageType.LAZY] * count
+
+    def resolved_storage(self) -> DistanceStorageTypes:
+        """Return each store's distance paired with its resolved storage type, in store order."""
+        return DistanceStorageTypes(tuple(zip(self._distances, self.determine_storage_types(), strict=True)))
 
     # --------------------------------------------------------------------------
     #  Construction of the stores

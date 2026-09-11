@@ -5,6 +5,7 @@ from typing import Self, cast
 
 from max_div._core._utils import deterministic_hash_int64
 from max_div._core.problem import MaxDivProblem
+from max_div._core.solver._distance_storage import DistanceStorageTypes
 from max_div._core.solver._duration import E2eBudget, TargetDuration
 from max_div._core.solver._parallel import (
     DEFAULT_GROUP_MERGE_RATE,
@@ -154,14 +155,16 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         if self._target_duration is None or not self._worker_configs:
             raise ValueError("A parallel solver needs workers; call with_workers or with_custom_worker_groups first.")
         warn_about_worker_count(len(self._worker_configs))
-        factory, label = self._store_factory()
+        factory, distance_storage = self._store_factory()
         e2e_budget = self._resolve_e2e_budget()
         batch_intervals = self._batch_interval_per_worker()
         return ParallelMaxDivSolver(
             store_factory=factory,
             worker_configs=self._worker_configs,
             solver_configs=[
-                self._solver_config_for(index, worker, self._target_duration, label, batch_intervals[index], e2e_budget)
+                self._solver_config_for(
+                    index, worker, self._target_duration, distance_storage, batch_intervals[index], e2e_budget
+                )
                 for index, worker in enumerate(self._worker_configs)
             ],
             group_sizes=self._group_sizes,
@@ -194,7 +197,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         index: int,
         worker: WorkerConfig,
         duration: TargetDuration,
-        storage_label: str,
+        distance_storage: DistanceStorageTypes,
         batch_seconds: float,
         e2e_budget: "E2eBudget | None",
     ) -> SolverConfig:
@@ -219,7 +222,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             solver_steps=[InitializationStep(worker.init_strategy or init_strategy), *optim_steps],
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),
             constraint_penalty=self._constraint_penalty,
-            distance_storage_label=storage_label,
+            distance_storage=distance_storage,
             batch_seconds=batch_seconds,
             e2e_budget=e2e_budget,
         )

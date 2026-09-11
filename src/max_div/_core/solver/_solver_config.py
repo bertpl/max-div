@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 from max_div._core.constraints import Constraint
 from max_div._core.metrics import DiversityMetric, DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
+from max_div._core.solver._distance_storage import DistanceStorageTypes
 
 from ._constraint_penalty import ConstraintPenalty
 from ._duration import E2eBudget
@@ -30,7 +31,7 @@ class SolverConfig:
     solver_steps: list[SolverStep]
     seed: int
     constraint_penalty: ConstraintPenalty
-    distance_storage_label: str
+    distance_storage: DistanceStorageTypes
     # `batch_seconds` targets the wall-clock size of one optimization batch (set per worker by
     # the parallel builder)
     batch_seconds: float = REPORTING_BATCH_SECONDS
@@ -77,7 +78,7 @@ class SolverConfig:
             solver_steps=self.solver_steps,
             seed=self.seed,
             constraint_penalty=self.constraint_penalty,
-            distance_storage_label=self.distance_storage_label,
+            distance_storage=self.distance_storage,
             batch_seconds=self.batch_seconds,
             e2e_budget=self.e2e_budget,
         )
