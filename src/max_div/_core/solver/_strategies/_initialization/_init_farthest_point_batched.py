@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._random import P_UNIFORM, randint
-from max_div._core.metrics import DiversityContributionFamily, DiversityMetric
+from max_div._core.metrics import DiversityObjective
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 from max_div._core.solver._solver_state import SolverState
 
@@ -49,12 +49,12 @@ class InitFarthestPointBatched(InitializationStrategy):
         self._top_k = top_k
         self._batch_size = batch_size
 
-    def validate_diversity_metric(self, diversity_metric: DiversityMetric) -> None:
-        """Reject metric families the round heuristics are not tailored to."""
-        if diversity_metric.contribution_family != DiversityContributionFamily.SEPARATION:
+    def validate_objective(self, objective: DiversityObjective) -> None:
+        """Reject objectives the round heuristics are not tailored to."""
+        if not objective.uses_single_separation_tracker:
             raise ValueError(
-                f"InitFarthestPointBatched does not support diversity metric {diversity_metric}: "
-                "the heuristics of the algorithm are tailored to separation-based diversity metrics. "
+                f"InitFarthestPointBatched does not support diversity objective {objective}: "
+                "the heuristics of the algorithm are tailored to a single separation-based diversity metric. "
                 "Use InitializationStrategy.farthest_point() instead."
             )
 

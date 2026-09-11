@@ -83,7 +83,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         init_strategy, optim_steps = get_preset_strategies(
             preset=preset,
             target_duration=target_duration,
-            diversity_metric=self._diversity_metric,
+            objective=self._objective,
             has_constraints=bool(self._constraints),
         )
 
@@ -121,7 +121,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         return factory, SolverConfig(
             n=self._n,
             k=self._k,
-            diversity_metric=self._diversity_metric,
+            objective=self._objective,
             diversity_tie_breakers=self._determine_diversity_tie_breakers(),
             constraints=self._constraints,
             solver_steps=self._solver_steps,

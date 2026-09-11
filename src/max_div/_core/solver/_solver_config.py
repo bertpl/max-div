@@ -9,7 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityMetric, DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
@@ -24,7 +24,7 @@ class SolverConfig:
 
     n: int
     k: int
-    diversity_metric: DiversityMetric
+    objective: DiversityObjective
     diversity_tie_breakers: list[DiversityMetric]
     constraints: list[Constraint]
     solver_steps: list[SolverStep]
@@ -60,7 +60,7 @@ class SolverConfig:
                 diversity metric.
         """
         for step in self.solver_steps:
-            step.validate_diversity_metric(self.diversity_metric)
+            step.validate_objective(self.objective)
         if store is not None and store_provider is None:
             provider: Callable[[], DistanceStore] = lambda: store
         elif store is None and store_provider is not None:
@@ -71,7 +71,7 @@ class SolverConfig:
             n=self.n,
             store_provider=provider,
             k=self.k,
-            diversity_metric=self.diversity_metric,
+            objective=self.objective,
             diversity_tie_breakers=self.diversity_tie_breakers,
             constraints=self.constraints,
             solver_steps=self.solver_steps,

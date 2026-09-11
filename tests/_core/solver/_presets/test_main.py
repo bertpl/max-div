@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityMetric, DiversityObjective, DiversityTerm
 from max_div._core.solver import SolverPreset
 from max_div._core.solver._duration import TargetDuration, iterations, seconds
 from max_div._core.solver._presets import get_preset_strategies
@@ -11,6 +11,12 @@ from max_div._core.solver._strategies._initialization._init_farthest_point impor
 from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
+
+
+def _objective(metric: DiversityMetric) -> DiversityObjective:
+    """Return a single-term objective over the given metric."""
+    return DiversityObjective((DiversityTerm(metric),))
+
 
 # Each preset (by resolved alias, so DEFAULT follows SMART) yields this init for an unconstrained
 # problem under a separation-family diversity metric.
@@ -52,7 +58,9 @@ def test_get_preset_strategies(preset: SolverPreset, target_duration: TargetDura
     """Each preset yields its expected init strategy, at least one optim step, and the requested duration."""
 
     # --- act --------------------------
-    init_strat, optim_steps = get_preset_strategies(preset, target_duration, DiversityMetric.GEOMEAN_SEPARATION)
+    init_strat, optim_steps = get_preset_strategies(
+        preset, target_duration, _objective(DiversityMetric.GEOMEAN_SEPARATION)
+    )
 
     # --- assert -----------------------
     assert isinstance(init_strat, _EXPECTED_INIT_UNCONSTRAINED[preset.resolve_alias()])
@@ -80,7 +88,9 @@ def test_get_preset_strategies_init_follows_the_problem(
     """
 
     # --- act --------------------------
-    init_strat, _ = get_preset_strategies(preset, iterations(30), diversity_metric, has_constraints=has_constraints)
+    init_strat, _ = get_preset_strategies(
+        preset, iterations(30), _objective(diversity_metric), has_constraints=has_constraints
+    )
 
     # --- assert -----------------------
     assert isinstance(init_strat, expected_init[preset.resolve_alias()])
@@ -94,7 +104,7 @@ def test_get_preset_strategies_invalid_preset():
 
     # --- act & assert -----------------
     with pytest.raises(ValueError):
-        get_preset_strategies(invalid_preset, seconds(1), DiversityMetric.GEOMEAN_SEPARATION)
+        get_preset_strategies(invalid_preset, seconds(1), _objective(DiversityMetric.GEOMEAN_SEPARATION))
 
 
 def test_solver_preset_all_sorted():
