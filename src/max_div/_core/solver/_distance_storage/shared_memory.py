@@ -21,7 +21,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._utils import attach_segment
+from max_div._core._utils import attach_shared_memory_segment
 from max_div._core.metrics._distance import KIND_FULL_MATRIX, DistanceMetric, DistanceStore
 
 
@@ -51,7 +51,7 @@ def attached_distance_store(spec: SharedStoreSpec) -> Iterator[DistanceStore]:
     On exit this closes this process's mapping of the segment and never unlinks the segment, which
     belongs to the process that created it.
     """
-    segment = attach_segment(spec.segment_name)
+    segment = attach_shared_memory_segment(spec.segment_name)
     try:
         yield _store_over(np.ndarray(spec.shape, dtype=np.float32, buffer=segment.buf), spec)
     finally:

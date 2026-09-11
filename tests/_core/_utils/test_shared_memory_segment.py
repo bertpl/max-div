@@ -4,7 +4,11 @@ from multiprocessing.shared_memory import SharedMemory
 import numpy as np
 import pytest
 
-from max_div._core._utils import attach_segment, create_segment, destroy_segment
+from max_div._core._utils import (
+    attach_shared_memory_segment,
+    create_shared_memory_segment,
+    destroy_shared_memory_segment,
+)
 from max_div._core._utils._shared_memory_segment import _attach_without_registering
 
 _PAYLOAD = np.arange(6, dtype=np.float32)
@@ -12,7 +16,7 @@ _PAYLOAD = np.arange(6, dtype=np.float32)
 
 def _create_with_payload() -> SharedMemory:
     """Create a segment that holds the payload array."""
-    segment = create_segment(_PAYLOAD.nbytes)
+    segment = create_shared_memory_segment(_PAYLOAD.nbytes)
     np.ndarray(_PAYLOAD.shape, dtype=np.float32, buffer=segment.buf)[:] = _PAYLOAD
     return segment
 
@@ -31,10 +35,10 @@ def test_attached_segment_reads_what_the_creator_wrote():
     owned = _create_with_payload()
 
     # --- act --------------------------
-    attached = attach_segment(owned.name)
+    attached = attach_shared_memory_segment(owned.name)
     values = _read_payload(attached)
     attached.close()
-    destroy_segment(owned)
+    destroy_shared_memory_segment(owned)
 
     # --- assert -----------------------
     np.testing.assert_array_equal(values, _PAYLOAD)
@@ -46,25 +50,25 @@ def test_closing_an_attachment_leaves_the_segment_usable():
     owned = _create_with_payload()
 
     # --- act --------------------------
-    first = attach_segment(owned.name)
+    first = attach_shared_memory_segment(owned.name)
     first.close()
-    second = attach_segment(owned.name)
+    second = attach_shared_memory_segment(owned.name)
     values = _read_payload(second)
     second.close()
-    destroy_segment(owned)
+    destroy_shared_memory_segment(owned)
 
     # --- assert -----------------------
     np.testing.assert_array_equal(values, _PAYLOAD)
 
 
 def test_destroying_a_segment_makes_its_name_unresolvable():
-    """After `destroy_segment` the segment is unlinked, so attaching by its name fails."""
+    """After `destroy_shared_memory_segment` the segment is unlinked, so attaching by its name fails."""
     # --- arrange ----------------------
     owned = _create_with_payload()
     name = owned.name
 
     # --- act --------------------------
-    destroy_segment(owned)
+    destroy_shared_memory_segment(owned)
 
     # --- assert -----------------------
     with pytest.raises(FileNotFoundError):
@@ -74,9 +78,9 @@ def test_destroying_a_segment_makes_its_name_unresolvable():
 def test_zero_bytes_still_creates_a_segment():
     """The operating system rejects a zero-byte segment, so a zero-byte request still claims a segment."""
     # --- arrange / act ----------------
-    segment = create_segment(0)
+    segment = create_shared_memory_segment(0)
     size = segment.size
-    destroy_segment(segment)
+    destroy_shared_memory_segment(segment)
 
     # --- assert -----------------------
     assert size >= 1
@@ -95,7 +99,9 @@ def test_attaching_without_registering_reads_and_leaves_the_owner_tracked():
     attached = _attach_without_registering(owned.name)
     values = _read_payload(attached)
     attached.close()
-    destroy_segment(owned)  # the owner's tracker entry is intact, so its unlink removes an entry that exists
+    destroy_shared_memory_segment(
+        owned
+    )  # the owner's tracker entry is intact, so its unlink removes an entry that exists
 
     # --- assert -----------------------
     np.testing.assert_array_equal(values, _PAYLOAD)

@@ -19,7 +19,7 @@ from multiprocessing.shared_memory import SharedMemory
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._utils import create_segment, destroy_segment
+from max_div._core._utils import create_shared_memory_segment, destroy_shared_memory_segment
 from max_div._core.metrics import DistanceMetric
 from max_div._core.metrics._distance import NO_P
 
@@ -131,13 +131,13 @@ class SharedMemoryDistanceStoreAllocator(DistanceStoreAllocator):
         in every worker process that attached; call this only after every worker is done.
         """
         for segment in self._segments:
-            destroy_segment(segment)
+            destroy_shared_memory_segment(segment)
         self._segments.clear()
         self._segment_of_adopted.clear()
 
     def _create_segment(self, shape: tuple[int, ...]) -> tuple[SharedMemory, NDArray[np.float32]]:
         """Create a shared-memory segment for the given float32 shape and return it with the array that views it."""
-        segment = create_segment(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize)
+        segment = create_shared_memory_segment(int(np.prod(shape, dtype=np.int64)) * np.dtype(np.float32).itemsize)
         self._segments.append(segment)
         return segment, np.ndarray(shape, dtype=np.float32, buffer=segment.buf)
 

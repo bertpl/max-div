@@ -1,8 +1,8 @@
-"""This module creates, attaches to, and destroys the shared-memory segments that hold one array for several processes.
+"""Creates, attaches to, and destroys the shared-memory segments that hold one array for several processes.
 
 `multiprocessing.shared_memory` exists on every platform that the package supports, but POSIX
 leaves a segment's lifetime to the processes, which imposes two obligations: the first on every
-caller of this module, the second on `attach_segment` itself.
+caller of this module, the second on `attach_shared_memory_segment` itself.
 
 - The process that created a segment must outlive every reader, because it is the process that
   destroys the segment.  A POSIX segment outlives its creator, and reading one through a closed
@@ -23,13 +23,16 @@ from multiprocessing.shared_memory import SharedMemory
 _TRACK_FLAG_SUPPORTED = sys.version_info >= (3, 13)
 
 
-def create_segment(size_bytes: int) -> SharedMemory:
-    """Create a segment of at least the given size; this process owns it and must destroy it with `destroy_segment`."""
+def create_shared_memory_segment(size_bytes: int) -> SharedMemory:
+    """Create a segment of at least the given size, owned by this process.
+
+    Destroy it with `destroy_shared_memory_segment`.
+    """
     # the operating system rejects a segment of zero bytes, so a degenerate request still claims one byte
     return SharedMemory(create=True, size=max(size_bytes, 1))
 
 
-def attach_segment(segment_name: str) -> SharedMemory:
+def attach_shared_memory_segment(segment_name: str) -> SharedMemory:
     """Attach to an existing segment without becoming responsible for destroying it.
 
     The caller releases its mapping with `close()` on the returned object and never unlinks the
@@ -40,7 +43,7 @@ def attach_segment(segment_name: str) -> SharedMemory:
     return _attach_without_registering(segment_name)
 
 
-def destroy_segment(segment: SharedMemory) -> None:
+def destroy_shared_memory_segment(segment: SharedMemory) -> None:
     """Close this process's mapping of a segment that this process created, and unlink the segment.
 
     Every mapping of the segment becomes invalid, in this process and in every process that
