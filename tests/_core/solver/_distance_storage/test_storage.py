@@ -1,3 +1,5 @@
+import pytest
+
 from max_div._core.metrics import DistanceMetric
 from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStorageTypes
 
@@ -8,28 +10,23 @@ def test_storage_values_are_the_labels_users_see():
     assert [storage.value for storage in DistanceStorageType] == ["auto", "full_matrix", "lazy"]
 
 
-def test_summary_groups_metrics_by_storage_type():
-    """The summary groups distances by storage type and lists each type's metric labels."""
-    # --- arrange ----------------------
-    types = DistanceStorageTypes(
+@pytest.mark.parametrize(
+    "per_store, expected",
+    [
         (
-            (DistanceMetric.l1_manhattan(), DistanceStorageType.FULL_MATRIX),
-            (DistanceMetric.l2_euclidean(), DistanceStorageType.FULL_MATRIX),
-            (DistanceMetric.geometric_mean(), DistanceStorageType.LAZY),
-        )
-    )
-
+            (
+                (DistanceMetric.l1_manhattan(), DistanceStorageType.FULL_MATRIX),
+                (DistanceMetric.l2_euclidean(), DistanceStorageType.FULL_MATRIX),
+                (DistanceMetric.geometric_mean(), DistanceStorageType.LAZY),
+            ),
+            "full_matrix (L1, L2), lazy (geomean)",
+        ),
+        (((None, DistanceStorageType.FULL_MATRIX),), "full_matrix"),
+        ((), ""),
+    ],
+    ids=["grouped-by-type", "given-distances-omit-metric", "empty"],
+)
+def test_summary_groups_distances_by_storage_type(per_store, expected):
+    """Group distances by storage type; a distance-input store shows its type alone; empty renders nothing."""
     # --- act / assert -----------------
-    assert str(types) == "full_matrix (L1, L2), lazy (geomean)"
-
-
-def test_summary_of_a_given_distances_store_omits_the_metric():
-    """A distance-input store has no metric, so its type stands alone."""
-    # --- act / assert -----------------
-    assert str(DistanceStorageTypes(((None, DistanceStorageType.FULL_MATRIX),))) == "full_matrix"
-
-
-def test_empty_summary_is_blank():
-    """An unreported layout renders nothing."""
-    # --- act / assert -----------------
-    assert str(DistanceStorageTypes()) == ""
+    assert str(DistanceStorageTypes(per_store)) == expected

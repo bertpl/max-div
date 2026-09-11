@@ -3,9 +3,9 @@ from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.solver._distance_storage import DistanceStorageTypes
-from max_div._core.solver._duration import Elapsed
-from max_div._core.solver._score import Score
+from ._distance_storage import DistanceStorageTypes
+from ._duration import Elapsed
+from ._score import Score
 
 
 @dataclass

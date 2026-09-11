@@ -37,9 +37,9 @@ _FACTORY_NAMES = {
     METRIC_KIND_GEOMEAN: "geometric_mean",
 }
 
-# `label` looks up each simple kind's short label here; along-axis and the Minkowski kinds build
-# theirs from the axis or the exponent.  Kept apart from the docs `hero_label` on purpose: the
-# summary label is a product concern, the hero label a docs-presentation one.
+# `label` looks up each kind listed here; along-axis and the Minkowski kinds build theirs from the
+# axis or the exponent.  This label appears in the solution summary; the docs use a separate
+# `hero_label` (in data/capability_axes.yaml), kept apart so product code and docs do not couple.
 _KIND_LABELS = {
     METRIC_KIND_L1: "L1",
     METRIC_KIND_L2: "L2",

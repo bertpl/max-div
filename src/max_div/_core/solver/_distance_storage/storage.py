@@ -1,4 +1,4 @@
-"""The user's storage-type choice and the per-store types a solve resolved to."""
+"""Define the user's storage-type choice and the per-store types that a solve resolves to."""
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -22,10 +22,10 @@ class DistanceStorageType(StrEnum):
 
 @dataclass(frozen=True)
 class DistanceStorageTypes:
-    """How each of a solve's distance stores was stored: its distance paired with the resolved storage type.
+    """Record how each of a solve's distance stores was stored: its distance paired with the resolved storage type.
 
     One entry per store, in store order.  A distance-input problem's store carries `None` for its
-    distance, since it holds given distances rather than a metric.
+    distance, since it holds given distances, not a metric.
     """
 
     per_store: tuple[tuple[DistanceMetric | None, DistanceStorageType], ...] = ()

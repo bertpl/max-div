@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `DistanceStorage` is renamed to `DistanceStorageType`; `with_distance_storage` keeps its name
-- `MaxDivSolution.distance_storage` reports the resolved storage type per distance store, and the solution summary lists them grouped by type (e.g. `storage=full_matrix (L1, L2), lazy (geomean)`)
+- `MaxDivSolution.distance_storage` reports the resolved storage type per distance store, and the solution summary lists the stores grouped by type (e.g. `storage=full_matrix (L1, L2), lazy (geomean)`)
 
 ### Deprecated
 

@@ -8,9 +8,9 @@ from max_div._core.constraints import Constraint
 from max_div._core.constraints.constraints import _np_con_count_satisfied
 from max_div._core.metrics import DiversityMetric, DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
-from max_div._core.solver._distance_storage import DistanceStorageTypes
 
 from ._constraint_penalty import ConstraintPenalty
+from ._distance_storage import DistanceStorageTypes
 from ._duration import E2eBudget, Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
@@ -62,7 +62,7 @@ class MaxDivSolver:
                 while all latter ones need to be OptimizationSteps.
             seed: (int) Random seed for the solver.
             constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
-            distance_storage: (tuple) Each store's (distance, resolved storage type), reported in the solution summary.
+            distance_storage: (DistanceStorageTypes) Each store's distance and its resolved storage type.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
             e2e_budget: (E2eBudget | None) Wall-clock budget for the whole solve — distance
                 computation and initialization included; each optimization step receives whatever

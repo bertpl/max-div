@@ -50,7 +50,7 @@ def test_solution_str_without_constraints():
 
 
 def test_solution_str_reports_storage():
-    """A solution with a recorded storage layout renders its grouped summary."""
+    """A solution with recorded storage types renders its grouped summary."""
     # --- arrange ----------------------
     solution = MaxDivSolution(
         i_selected=np.array([0, 1], dtype=np.int32),
