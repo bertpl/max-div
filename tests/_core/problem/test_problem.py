@@ -161,6 +161,19 @@ def test_problem_new_along_axis_within_the_dimension_count_ok():
     assert problem.distance_metric == DistanceMetric.along_axis(2)
 
 
+def test_default_distance_metric_is_the_vector_metric_or_none():
+    """A vector problem's default distance is its own metric; a distance-input problem has none."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((5, 3)).astype(np.float32)
+    matrix = compute_full_matrix(vectors, DistanceMetric.l2_euclidean())
+
+    # --- act / assert -----------------
+    vector_problem = MaxDivProblem.new(vectors, k=3, distance_metric=DistanceMetric.l1_manhattan())
+    distance_problem = MaxDivProblem.from_distances(squareform(matrix), k=3)
+    assert vector_problem.default_distance_metric == DistanceMetric.l1_manhattan()
+    assert distance_problem.default_distance_metric is None
+
+
 # -------------------------------------------------------------------------
 #  from_distances
 # -------------------------------------------------------------------------

@@ -38,8 +38,8 @@ def _distance_problem(form: str) -> MaxDivProblem:
 
 
 def _factory(problem: MaxDivProblem, storage: DistanceStorageType, total_memory: int | None = 64 * GIB):
-    """Return the one-distance factory over the problem, with a generous RAM figure by default."""
-    return DistanceStoreFactory.for_problem(problem, storage, total_memory)
+    """Return the one-distance factory over the problem's default distance, with a generous RAM figure by default."""
+    return DistanceStoreFactory(problem, [problem.default_distance_metric], storage, total_memory)
 
 
 def _objective(*terms: DiversityTerm) -> DiversityObjective:
@@ -65,13 +65,6 @@ def _all_pairs(store: DistanceStore, n: int) -> list[float]:
 # =================================================================================================
 #  Construction
 # =================================================================================================
-def test_for_problem_reads_the_problems_own_distance():
-    """The one-distance factory names the vector problem's metric, and the given distances otherwise."""
-    # --- act / assert -----------------
-    assert _factory(_vector_problem(), DistanceStorageType.AUTO)._distances == (L2,)
-    assert _factory(_distance_problem("square"), DistanceStorageType.AUTO)._distances == (None,)
-
-
 @pytest.mark.parametrize(
     "problem, objective, expected",
     [

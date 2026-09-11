@@ -57,6 +57,11 @@ class MaxDivProblem(ABC):
     def has_full_matrix(self) -> bool:
         """Return True when the problem already holds its distances as a full matrix, so `full_matrix` is zero-copy."""
 
+    @property
+    @abstractmethod
+    def default_distance_metric(self) -> DistanceMetric | None:
+        """The problem's default distance: its metric for a vector problem, otherwise None."""
+
     @abstractmethod
     def full_matrix(self) -> NDArray[np.float32]:
         """Return the full (n, n) pairwise-distance matrix under the problem's own distance.
@@ -237,6 +242,10 @@ class VectorMaxDivProblem(MaxDivProblem):
         return self.vectors.shape[1]
 
     @property
+    def default_distance_metric(self) -> DistanceMetric | None:
+        return self.distance_metric
+
+    @property
     def has_full_matrix(self) -> bool:
         return False
 
@@ -260,6 +269,10 @@ class DistanceMaxDivProblem(MaxDivProblem):
         if self.has_full_matrix:
             return self.distances.shape[0]
         return _n_from_condensed_size(self.distances.size)
+
+    @property
+    def default_distance_metric(self) -> DistanceMetric | None:
+        return None
 
     @property
     def has_full_matrix(self) -> bool:
