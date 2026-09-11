@@ -40,6 +40,10 @@ solver:
         text: >-
           Not among the metric names scikit-learn understands, so it is reachable only as a
           precomputed dissimilarity matrix.
+    distance.along_axis:
+      mark: partial
+      note:
+        text: Reachable by handing the tool that one coordinate as one-dimensional input.
     distance.custom:
       mark: full
       note:

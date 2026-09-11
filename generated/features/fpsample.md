@@ -31,7 +31,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · Minkowski distance | <span class="mark mark-none">—</span> |  |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^fpsample-1] |
 | distance metrics · geometric-mean distance | <span class="mark mark-none">—</span> |  |
-| distance metrics · caller-supplied distances | <span class="mark mark-none">—</span> | [^fpsample-2] |
+| distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^fpsample-2] |
+| distance metrics · caller-supplied distances | <span class="mark mark-none">—</span> | [^fpsample-3] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> |  |
@@ -43,7 +44,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^fpsample-3] |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^fpsample-4] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
 | solver scaling · largest n within memory | n = 1B | |
@@ -54,5 +55,6 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^fpsample-1]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
-[^fpsample-2]: Euclidean only. The KD-tree variants depend on it structurally, so this is not a gap waiting to be filled.
-[^fpsample-3]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
+[^fpsample-2]: Reachable by handing the tool that one coordinate as one-dimensional input.
+[^fpsample-3]: Euclidean only. The KD-tree variants depend on it structurally, so this is not a gap waiting to be filled.
+[^fpsample-4]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.

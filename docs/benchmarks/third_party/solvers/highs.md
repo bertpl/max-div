@@ -35,6 +35,9 @@ solver:
     distance.geomean:
       mark: partial
       note: *coeffs
+    distance.along_axis:
+      mark: partial
+      note: *coeffs
     distance.custom:
       mark: full
       note:

@@ -40,6 +40,9 @@ solver:
     distance.geomean:
       mark: partial
       note: *edit_source
+    distance.along_axis:
+      mark: partial
+      note: *edit_source
     distance.custom:
       mark: full
       note:

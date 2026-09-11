@@ -10,9 +10,9 @@ def _vectors() -> np.ndarray:
     return np.ascontiguousarray(np.random.default_rng(7).random((6, 3), dtype=np.float32) + 0.1)
 
 
-# =================================================================================================
+# ==================================================================================================
 #  The contract
-# =================================================================================================
+# ==================================================================================================
 def test_preprocess_follows_the_metrics_declaration(metric: DistanceMetric):
     """A metric that does not preprocess gets its input back; one that does gets a new array."""
     # --- arrange ----------------------
@@ -50,9 +50,9 @@ def test_preprocess_returns_the_layout_reads_expect(metric: DistanceMetric):
     validate_vector_array_layout(preprocessed)  # raises on violation
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Cosine
-# =================================================================================================
+# ==================================================================================================
 def test_cosine_preprocessing_normalizes_rows():
     """Cosine's preprocessed copy has unit-length rows."""
     # --- act --------------------------
@@ -72,9 +72,9 @@ def test_cosine_preprocessing_rejects_zero_rows():
         preprocess_vectors(vectors, DistanceMetric.cosine())
 
 
-# =================================================================================================
+# ==================================================================================================
 #  Precondition
-# =================================================================================================
+# ==================================================================================================
 @pytest.mark.parametrize(
     "vectors",
     [
@@ -89,3 +89,39 @@ def test_validate_vector_array_layout_rejects_other_forms(vectors: np.ndarray):
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="2D float32 C-contiguous"):
         validate_vector_array_layout(vectors)
+
+
+# ==================================================================================================
+#  Along one axis
+# ==================================================================================================
+def test_along_axis_preprocessing_keeps_the_one_coordinate():
+    """The along-axis copy is an (n, 1) array holding exactly the requested coordinate."""
+    # --- arrange ----------------------
+    vectors = _vectors()
+
+    # --- act --------------------------
+    preprocessed = preprocess_vectors(vectors, DistanceMetric.along_axis(2))
+
+    # --- assert -----------------------
+    assert preprocessed.shape == (vectors.shape[0], 1)
+    np.testing.assert_array_equal(preprocessed[:, 0], vectors[:, 2])
+
+
+def test_along_axis_preprocessing_copies_a_single_column_too():
+    """Preprocessing copies the sliced coordinate, so a one-dimensional input yields a new array, not a view."""
+    # --- arrange ----------------------
+    vectors = np.ascontiguousarray(_vectors()[:, :1])
+
+    # --- act --------------------------
+    preprocessed = preprocess_vectors(vectors, DistanceMetric.along_axis(0))
+
+    # --- assert -----------------------
+    assert not np.shares_memory(preprocessed, vectors)
+    np.testing.assert_array_equal(preprocessed, vectors)
+
+
+def test_along_axis_preprocessing_rejects_a_missing_coordinate():
+    """An axis at or beyond the dimension count is refused."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="do not have"):
+        preprocess_vectors(_vectors(), DistanceMetric.along_axis(3))

@@ -21,7 +21,6 @@ from numpy.typing import NDArray
 
 from max_div._core._utils import create_shared_memory_segment, destroy_shared_memory_segment
 from max_div._core.metrics import DistanceMetric
-from max_div._core.metrics._distance import NO_P
 
 from .shared_memory import SharedStoreSpec
 
@@ -146,10 +145,13 @@ def _spec_for(
     segment: SharedMemory, buffer: NDArray[np.float32], kind: np.int32, metric: DistanceMetric | None
 ) -> SharedStoreSpec:
     """Return the spec that lets a worker process rebuild a distance store of the given kind over the segment."""
+    if metric is None:
+        return SharedStoreSpec(segment_name=segment.name, kind=int(kind), shape=buffer.shape)
     return SharedStoreSpec(
         segment_name=segment.name,
         kind=int(kind),
-        metric_kind=0 if metric is None else int(metric.kind),
-        metric_p=NO_P if metric is None else float(metric.p),
         shape=buffer.shape,
+        metric_kind=int(metric.kind),
+        metric_p=float(metric.p),
+        metric_axis=int(metric.axis),
     )

@@ -25,6 +25,10 @@ solver:
         text: >-
           Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
     distance.geomean: {mark: none}
+    distance.along_axis:
+      mark: partial
+      note:
+        text: Reachable by handing the tool that one coordinate as one-dimensional input.
     distance.custom: {mark: none}
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: none}

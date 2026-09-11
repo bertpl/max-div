@@ -35,6 +35,9 @@ solver:
     distance.geomean:
       mark: partial
       note: *integer_scaled
+    distance.along_axis:
+      mark: partial
+      note: *integer_scaled
     distance.custom:
       mark: full
       note:
