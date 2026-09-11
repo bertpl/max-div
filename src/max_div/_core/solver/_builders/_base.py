@@ -17,6 +17,7 @@ from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
 from max_div._core.solver._distance_storage import (
     DistanceStorageType,
+    DistanceStorageTypes,
     DistanceStoreFactory,
     total_physical_memory_bytes,
 )
@@ -113,13 +114,12 @@ class SolverBuilderBase:
             )
         return E2eBudget(budget_sec=self._target_duration.value())
 
-    def _store_factory(self) -> tuple[DistanceStoreFactory, str]:
-        """Return the factory building this configuration's stores, and the storage label reported to the user."""
-        factory = DistanceStoreFactory.for_problem(
-            self._problem, self._distance_storage_type, total_physical_memory_bytes()
+    def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
+        """Return the store factory and each store's resolved (distance, storage type)."""
+        factory = DistanceStoreFactory.for_objective(
+            self._problem, self._objective, self._distance_storage_type, total_physical_memory_bytes()
         )
-        resolved = factory.determine_storage_types()[0]
-        return factory, resolved.value + (" (auto)" if self._distance_storage_type == DistanceStorageType.AUTO else "")
+        return factory, factory.resolved_storage()
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:
         """Return the tie-breakers to score with: the user's if set, otherwise per the main metric."""

@@ -1,6 +1,8 @@
 import numpy as np
 
+from max_div._core.metrics import DistanceMetric
 from max_div._core.solver import MaxDivSolution
+from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStorageTypes
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score import Score
 
@@ -45,3 +47,17 @@ def test_solution_str_without_constraints():
     assert "diversity=0.5000" in result
     assert "constraints" not in result
     assert "100 iterations" in result
+
+
+def test_solution_str_reports_storage():
+    """A solution with recorded storage types renders its grouped summary."""
+    # --- arrange ----------------------
+    solution = MaxDivSolution(
+        i_selected=np.array([0, 1], dtype=np.int32),
+        score_checkpoints=[("step 0/1", Elapsed(t_elapsed_sec=0.1, n_iterations=1), Score(1.0, 1.0, 0.5, ()))],
+        step_durations={"step 0/1": Elapsed(t_elapsed_sec=0.1, n_iterations=1)},
+        distance_storage=DistanceStorageTypes(((DistanceMetric.l2_euclidean(), DistanceStorageType.FULL_MATRIX),)),
+    )
+
+    # --- act / assert -----------------
+    assert "storage=full_matrix (L2)" in str(solution)

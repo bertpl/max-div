@@ -98,8 +98,8 @@ solver = (
   become feasible. Available only when the problem is built from vectors.
 - **`AUTO`** (default) — for vector problems, the full matrix when it fits comfortably in memory
   and lazy otherwise; for problems built via `from_distances`, always the full matrix. The
-  resolved backend is reported in the solution summary, e.g. `storage=full_matrix (auto)` — pin a
-  backend explicitly to override.
+  resolved storage type per distance is reported in the solution summary, e.g. `storage=full_matrix (L2)`
+  — pin a storage type explicitly to override.
 
 ### Reproducibility
 

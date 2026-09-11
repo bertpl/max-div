@@ -37,6 +37,18 @@ _FACTORY_NAMES = {
     METRIC_KIND_GEOMEAN: "geometric_mean",
 }
 
+# `label` looks up each kind listed here; along-axis and the Minkowski kinds build theirs from the
+# axis or the exponent.  This label appears in the solution summary; the docs use a separate
+# `hero_label` (in data/capability_axes.yaml), kept apart so product code and docs do not couple.
+_KIND_LABELS = {
+    METRIC_KIND_L1: "L1",
+    METRIC_KIND_L2: "L2",
+    METRIC_KIND_L2S: "L2²",
+    METRIC_KIND_COS: "cosine",
+    METRIC_KIND_LINF: "L∞",
+    METRIC_KIND_GEOMEAN: "geomean",
+}
+
 # `_IMPLIED_P` gives the p each specialized Minkowski kind implies, for `__repr__`; a metric of
 # these kinds stores p=NO_P.
 _IMPLIED_P = {
@@ -189,6 +201,17 @@ class DistanceMetric(NamedTuple):
     def needs_preprocessed_vectors(self) -> bool:
         """Return whether this metric's distances read a preprocessed copy of the vectors (see `_preprocess`)."""
         return self.kind in _PREPROCESSING_KINDS
+
+    @property
+    def label(self) -> str:
+        """Return a short label for the metric, e.g. `L1`, `geomean`, `axis 2`, `L3-powered`."""
+        if self.kind in _KIND_LABELS:
+            return _KIND_LABELS[self.kind]
+        if self.kind == METRIC_KIND_ALONG_AXIS:
+            return f"axis {self.axis}"
+        p = self.p if self.p != NO_P else _IMPLIED_P[self.kind]
+        powered = "-powered" if self.kind in _POWERED_KINDS else ""
+        return f"L{p:g}{powered}"
 
     # --------------------------------------------------------------------------
     #  Representation

@@ -10,6 +10,7 @@ from max_div._core.metrics import DiversityMetric, DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
+from ._distance_storage import DistanceStorageTypes
 from ._duration import E2eBudget, Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
@@ -41,7 +42,7 @@ class MaxDivSolver:
         solver_steps: list[SolverStep],
         seed: int = 42,
         constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR,
-        distance_storage_label: str = "",
+        distance_storage: DistanceStorageTypes = DistanceStorageTypes(),  # noqa: B008 -- frozen, safe as a default
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         e2e_budget: E2eBudget | None = None,
     ) -> None:
@@ -61,7 +62,7 @@ class MaxDivSolver:
                 while all latter ones need to be OptimizationSteps.
             seed: (int) Random seed for the solver.
             constraint_penalty: (ConstraintPenalty) How constraint violations are penalized (default: LINEAR).
-            distance_storage_label: (str) Resolved distance-storage backend, reported in the solution summary.
+            distance_storage: (DistanceStorageTypes) Each store's distance and its resolved storage type.
             batch_seconds: (float) Targeted wall-clock size of one optimization batch.
             e2e_budget: (E2eBudget | None) Wall-clock budget for the whole solve — distance
                 computation and initialization included; each optimization step receives whatever
@@ -72,7 +73,7 @@ class MaxDivSolver:
         # --- problem description ----------------
         self._n = n
         self._store_provider = store_provider
-        self._distance_storage_label = distance_storage_label
+        self._distance_storage = distance_storage
         self._k = k
         self._objective = objective
         self._constraints = constraints
@@ -215,5 +216,5 @@ class MaxDivSolver:
             step_durations=step_durations,
             n_constraints=int(n_constraints),
             n_constraints_satisfied=n_constraints_satisfied,
-            distance_storage=self._distance_storage_label,
+            distance_storage=self._distance_storage,
         )

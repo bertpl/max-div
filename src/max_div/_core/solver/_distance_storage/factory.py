@@ -16,6 +16,7 @@ vectors itself.
 from collections.abc import Iterator, Sequence
 from contextlib import ExitStack, contextmanager
 
+from max_div._core.metrics import DiversityObjective
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
     KIND_LAZY,
@@ -34,7 +35,7 @@ from .allocation import (
 )
 from .memory_budget import AUTO_MEMORY_FRACTION, check_fits_physical_memory, full_matrix_bytes
 from .shared_memory import SharedStoreSpec, attached_distance_store
-from .storage import DistanceStorageType
+from .storage import DistanceStorageType, DistanceStorageTypes
 
 # The distance that a distance store holds: a distance metric over the problem's vectors, or None for
 # the distances that a distance-input problem was given.
@@ -93,12 +94,25 @@ class DistanceStoreFactory:
         self._total_memory_bytes = total_memory_bytes
 
     @classmethod
-    def for_problem(
-        cls, problem: MaxDivProblem, storage_type: DistanceStorageType, total_memory_bytes: int | None
+    def for_objective(
+        cls,
+        problem: MaxDivProblem,
+        objective: DiversityObjective,
+        storage_type: DistanceStorageType,
+        total_memory_bytes: int | None,
     ) -> "DistanceStoreFactory":
-        """Return the factory for a single distance: the vector problem's own metric, or the given distances."""
-        distance = problem.distance_metric if isinstance(problem, VectorMaxDivProblem) else None
-        return cls(problem, [distance], storage_type, total_memory_bytes)
+        """Return the factory for the distinct distances the objective's diversity terms measure over.
+
+        A diversity term whose distance is `None` inherits the distance the problem provides.
+        Distances that repeat across diversity terms collapse to one store, in the order the terms
+        first use them.
+        """
+        problem_distance = problem.default_distance_metric
+        distinct_distances: list[StoreDistance] = []
+        for term in objective.terms:
+            if (term_distance := term.distance_metric or problem_distance) not in distinct_distances:
+                distinct_distances.append(term_distance)
+        return cls(problem, distinct_distances, storage_type, total_memory_bytes)
 
     # --------------------------------------------------------------------------
     #  Policy
@@ -126,6 +140,10 @@ class DistanceStoreFactory:
         if count * full_matrix_bytes(self._problem.n) <= self._total_memory_bytes * AUTO_MEMORY_FRACTION:
             return [DistanceStorageType.FULL_MATRIX] * count
         return [DistanceStorageType.LAZY] * count
+
+    def resolved_storage(self) -> DistanceStorageTypes:
+        """Return each store's distance paired with its resolved storage type, in store order."""
+        return DistanceStorageTypes(tuple(zip(self._distances, self.determine_storage_types(), strict=True)))
 
     # --------------------------------------------------------------------------
     #  Construction of the stores

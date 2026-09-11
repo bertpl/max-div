@@ -117,7 +117,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         Keeping the factory and the config apart lets a caller build the distances once and
         assemble a solver per worker over them, which is how the parallel solver shares one store.
         """
-        factory, label = self._store_factory()
+        factory, distance_storage = self._store_factory()
         return factory, SolverConfig(
             n=self._n,
             k=self._k,
@@ -127,6 +127,6 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             solver_steps=self._solver_steps,
             seed=self._seed,
             constraint_penalty=self._constraint_penalty,
-            distance_storage_label=label,
+            distance_storage=distance_storage,
             e2e_budget=self._resolve_e2e_budget(),
         )

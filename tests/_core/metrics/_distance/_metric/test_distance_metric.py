@@ -112,6 +112,27 @@ def test_a_metric_rebuilds_from_its_fields(metric: DistanceMetric):
     assert DistanceMetric(kind=metric.kind, p=metric.p, axis=metric.axis) == metric
 
 
+@pytest.mark.parametrize(
+    "metric, expected",
+    [
+        (DistanceMetric.l1_manhattan(), "L1"),
+        (DistanceMetric.l2_euclidean(), "L2"),
+        (DistanceMetric.l2s_euclidean_squared(), "L2²"),
+        (DistanceMetric.linf_chebyshev(), "L∞"),
+        (DistanceMetric.cosine(), "cosine"),
+        (DistanceMetric.geometric_mean(), "geomean"),
+        (DistanceMetric.along_axis(2), "axis 2"),
+        (DistanceMetric.minkowski(3), "L3"),
+        (DistanceMetric.minkowski(3, root=False), "L3-powered"),
+        (DistanceMetric.minkowski(0.5), "L0.5"),
+    ],
+)
+def test_label_is_a_short_name_per_metric(metric: DistanceMetric, expected: str):
+    """Each metric has a concise label, reflecting the axis or exponent where it has one."""
+    # --- act / assert -----------------
+    assert metric.label == expected
+
+
 def test_only_cosine_and_along_axis_need_preprocessed_vectors(metric: DistanceMetric):
     """Cosine and the along-axis distance are the metrics that read a preprocessed copy of the vectors."""
     # --- act / assert -----------------

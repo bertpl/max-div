@@ -3,7 +3,7 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics import DistanceMetric, DiversityMetric, DiversityObjective, DiversityTerm
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
     KIND_LAZY,
@@ -21,6 +21,7 @@ from max_div._core.solver._duration import iterations
 # =================================================================================================
 GIB = 2**30
 L2 = DistanceMetric.l2_euclidean()
+L1 = DistanceMetric.l1_manhattan()
 
 
 def _vector_problem(n: int = 10, metric: DistanceMetric = L2) -> MaxDivProblem:
@@ -37,8 +38,8 @@ def _distance_problem(form: str) -> MaxDivProblem:
 
 
 def _factory(problem: MaxDivProblem, storage: DistanceStorageType, total_memory: int | None = 64 * GIB):
-    """Return the one-distance factory over the problem, with a generous RAM figure by default."""
-    return DistanceStoreFactory.for_problem(problem, storage, total_memory)
+    """Return the one-distance factory over the problem's default distance, with a generous RAM figure by default."""
+    return DistanceStoreFactory(problem, [problem.default_distance_metric], storage, total_memory)
 
 
 def _stub_vector_problem(n: int):
@@ -59,11 +60,37 @@ def _all_pairs(store: DistanceStore, n: int) -> list[float]:
 # =================================================================================================
 #  Construction
 # =================================================================================================
-def test_for_problem_reads_the_problems_own_distance():
-    """The one-distance factory names the vector problem's metric, and the given distances otherwise."""
-    # --- act / assert -----------------
-    assert _factory(_vector_problem(), DistanceStorageType.AUTO)._distances == (L2,)
-    assert _factory(_distance_problem("square"), DistanceStorageType.AUTO)._distances == (None,)
+@pytest.mark.parametrize(
+    "problem, objective, expected",
+    [
+        (_vector_problem(), DiversityObjective((DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),)), (L2,)),
+        (_vector_problem(), DiversityObjective((DiversityTerm(DiversityMetric.MEAN_SEPARATION, L1),)), (L1,)),
+        (
+            _vector_problem(),
+            DiversityObjective(
+                (
+                    DiversityTerm(DiversityMetric.MEAN_SEPARATION, L1),
+                    DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),  # None -> L2
+                    DiversityTerm(DiversityMetric.MIN_SEPARATION, L1),  # repeat of L1
+                )
+            ),
+            (L1, L2),
+        ),
+        (
+            _distance_problem("square"),
+            DiversityObjective((DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),)),
+            (None,),
+        ),
+    ],
+    ids=["bare-binds-to-vector-distance", "explicit-kept", "repeats-collapse-first-seen", "distance-problem-none"],
+)
+def test_for_objective_derives_the_distinct_distances(problem, objective, expected):
+    """Distinct distances: a term's own distance, or the problem's when it has none, repeats collapsed in order."""
+    # --- act --------------------------
+    factory = DistanceStoreFactory.for_objective(problem, objective, DistanceStorageType.AUTO, 64 * GIB)
+
+    # --- assert -----------------------
+    assert factory._distances == expected
 
 
 @pytest.mark.parametrize(

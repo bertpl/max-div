@@ -58,7 +58,7 @@ plain `verbosity=0` and `verbosity=20` are accepted too).
 ```python
 # One-line summary
 print(solution)
-# MaxDivSolution: 20 items selected | diversity=0.7792 | storage=full_matrix (auto) | 5.17s (39_008 iterations)
+# MaxDivSolution: 20 items selected | diversity=0.7792 | storage=full_matrix (L2) | 5.17s (39_008 iterations)
 
 # Indices of the selected items
 print(solution.i_selected)       # e.g. array([ 3,  7, 14, ...], dtype=int32)
@@ -106,7 +106,7 @@ solver = MaxDivSolverBuilder(problem).with_preset(seconds(5)).build()
 solution = solver.solve(verbosity=Verbosity.SILENT)
 
 print(solution)
-# MaxDivSolution: 20 items selected | diversity=0.7702 | constraints: 2/2 satisfied | storage=full_matrix (auto) | ...
+# MaxDivSolution: 20 items selected | diversity=0.7702 | constraints: 2/2 satisfied | storage=full_matrix (L2) | ...
 ```
 
 Note that the diversity is slightly lower than the unconstrained solution (0.7702 vs 0.7792) --

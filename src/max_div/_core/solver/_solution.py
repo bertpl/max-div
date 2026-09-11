@@ -1,10 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core.solver._duration import Elapsed
-from max_div._core.solver._score import Score
+from ._distance_storage import DistanceStorageTypes
+from ._duration import Elapsed
+from ._score import Score
 
 
 @dataclass
@@ -41,8 +42,8 @@ class MaxDivSolution:
     n_constraints_satisfied: int = 0
 
     # --- distance storage -----------------------
-    # resolved backend label, e.g. "full_matrix (auto)" or "lazy"; empty when unreported
-    distance_storage: str = ""
+    # how each distance store was stored; empty when unreported
+    distance_storage: DistanceStorageTypes = field(default_factory=DistanceStorageTypes)
 
     # --- string representation ------------------
     def __str__(self) -> str:
@@ -52,7 +53,7 @@ class MaxDivSolution:
         ]
         if self.n_constraints > 0:
             parts.append(f"constraints: {self.n_constraints_satisfied}/{self.n_constraints} satisfied")
-        if self.distance_storage:
+        if self.distance_storage.per_store:
             parts.append(f"storage={self.distance_storage}")
         parts.append(str(self.duration))
         return " | ".join(parts)
