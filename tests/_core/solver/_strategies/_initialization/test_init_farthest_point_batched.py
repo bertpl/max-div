@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from max_div._core._random import new_rng_state
-from max_div._core.metrics import DistanceMetric, DiversityObjective, DiversityTerm
+from max_div._core.metrics import DistanceMetric, DiversityObjectiveSimple
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._strategies import InitializationStrategy
@@ -76,10 +76,8 @@ def test_init_farthest_point_batched_rejects_mean_family_metric():
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="separation-based diversity metric"):
-        strategy.validate_objective(DiversityObjective((DiversityTerm(DiversityMetric.MEAN_PAIRWISE_DISTANCE),)))
-    strategy.validate_objective(
-        DiversityObjective((DiversityTerm(DiversityMetric.MIN_SEPARATION),))
-    )  # accepted: no raise
+        strategy.validate_objective(DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE))
+    strategy.validate_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))  # accepted: no raise
 
 
 @pytest.mark.parametrize(

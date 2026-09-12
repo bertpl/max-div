@@ -3,7 +3,12 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DistanceMetric, DiversityMetric, DiversityObjective, DiversityTerm
+from max_div._core.metrics import (
+    DistanceMetric,
+    DiversityMetric,
+    DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveSimple,
+)
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
     KIND_LAZY,
@@ -63,22 +68,22 @@ def _all_pairs(store: DistanceStore, n: int) -> list[float]:
 @pytest.mark.parametrize(
     "problem, objective, expected",
     [
-        (_vector_problem(), DiversityObjective((DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),)), (L2,)),
-        (_vector_problem(), DiversityObjective((DiversityTerm(DiversityMetric.MEAN_SEPARATION, L1),)), (L1,)),
+        (_vector_problem(), DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION), (L2,)),
+        (_vector_problem(), DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1), (L1,)),
         (
             _vector_problem(),
-            DiversityObjective(
+            DiversityObjectiveHybridGeoMean(
                 (
-                    DiversityTerm(DiversityMetric.MEAN_SEPARATION, L1),
-                    DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),  # None -> L2
-                    DiversityTerm(DiversityMetric.MIN_SEPARATION, L1),  # repeat of L1
+                    DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1),
+                    DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION),  # None -> L2
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),  # repeat of L1
                 )
             ),
             (L1, L2),
         ),
         (
             _distance_problem("square"),
-            DiversityObjective((DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION),)),
+            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION),
             (None,),
         ),
     ],

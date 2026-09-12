@@ -12,7 +12,12 @@ A subclass adds the search: which strategies run, and for how long.
 
 from typing import TYPE_CHECKING, Self
 
-from max_div._core.metrics import DiversityMetric, DiversityObjective
+from max_div._core.metrics import (
+    DiversityMetric,
+    DiversityObjective,
+    DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveSimple,
+)
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
 from max_div._core.solver._distance_storage import (
@@ -41,11 +46,14 @@ class SolverBuilderBase:
         # --- problem properties -----------------
         self._n: int = problem.n
         self._k: int = problem.k
-        self._objective: DiversityObjective = DiversityObjective(problem.diversity_terms)
+        simple_objectives = problem.diversity_objectives
+        self._objective: DiversityObjective = (
+            simple_objectives[0] if len(simple_objectives) == 1 else DiversityObjectiveHybridGeoMean(simple_objectives)
+        )
         self._constraints: list[Constraint] = problem.constraints
 
         # --- shared configuration ---------------
-        self._diversity_tie_breakers: list[DiversityMetric] = []
+        self._diversity_tie_breaker_metrics: list[DiversityMetric] = []
         self._default_diversity_tie_breakers: bool = True
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
@@ -56,15 +64,15 @@ class SolverBuilderBase:
     # -------------------------------------------------------------------------
     #  Shared builder API
     # -------------------------------------------------------------------------
-    def with_diversity_tie_breakers(self, diversity_tie_breakers: list[DiversityMetric]) -> Self:
+    def with_diversity_tie_breakers(self, diversity_tie_breaker_metrics: list[DiversityMetric]) -> Self:
         """Set custom diversity tie-breaker metrics, overriding the defaults."""
-        self._diversity_tie_breakers = diversity_tie_breakers
+        self._diversity_tie_breaker_metrics = diversity_tie_breaker_metrics
         self._default_diversity_tie_breakers = False
         return self
 
     def with_default_diversity_tie_breakers(self) -> Self:
         """Reset to automatically chosen tie-breakers based on the main diversity metric."""
-        self._diversity_tie_breakers = []
+        self._diversity_tie_breaker_metrics = []
         self._default_diversity_tie_breakers = True
         return self
 
@@ -121,9 +129,21 @@ class SolverBuilderBase:
         )
         return factory, factory.resolved_storage()
 
-    def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:
-        """Return the tie-breakers to score with: the user's if set, otherwise per the main metric."""
-        if not self._default_diversity_tie_breakers:
-            return self._diversity_tie_breakers
-        else:
-            return self._objective.default_tie_breakers
+    def _determine_diversity_tie_breakers(self) -> list[DiversityObjective]:
+        """Return the tie-breaker objectives to rank ties by: the main objective's defaults, or the user's.
+
+        Custom tie-breakers are only supported for a single-metric problem, so each is a simple
+        objective over that problem's one distance metric.
+
+        Raises:
+            ValueError: If custom tie-breakers are set on a problem whose main objective is not a
+                single `DiversityObjectiveSimple`.
+        """
+        if self._default_diversity_tie_breakers:
+            return self._objective.default_tie_breakers()
+        if not isinstance(self._objective, DiversityObjectiveSimple):
+            raise ValueError("Custom diversity tie-breakers are only supported for a single-metric problem.")
+        return [
+            DiversityObjectiveSimple(metric, self._objective.distance_metric)
+            for metric in self._diversity_tie_breaker_metrics
+        ]

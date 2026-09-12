@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from max_div._core.metrics import DiversityMetric, DiversityObjective, DiversityTerm
+from max_div._core.metrics import DiversityMetric, DiversityObjectiveSimple
 from max_div._core.solver import SolverPreset
 from max_div._core.solver._duration import TargetDuration, iterations, seconds
 from max_div._core.solver._presets import get_preset_strategies
@@ -13,9 +13,9 @@ from max_div._core.solver._strategies._initialization._init_most_feasible import
 from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
 
 
-def _objective(metric: DiversityMetric) -> DiversityObjective:
+def _objective(metric: DiversityMetric) -> DiversityObjectiveSimple:
     """Return a single-term objective over the given metric."""
-    return DiversityObjective((DiversityTerm(metric),))
+    return DiversityObjectiveSimple(metric)
 
 
 # Each preset (by resolved alias, so DEFAULT follows SMART) yields this init for an unconstrained

@@ -9,6 +9,7 @@ from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._strategies._initialization import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
+from tests._core.solver.objectives import simple_objective
 from tests.helpers import swept_benchmark_problems
 
 if TYPE_CHECKING:
@@ -35,7 +36,7 @@ def test_optim_random_swaps(problem_name: str, n: int):
         n=problem.n,
         store=DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric),
         k=problem.k,
-        diversity_metric=problem.diversity_metric,
+        diversity_objective=simple_objective(problem.diversity_metric),
         diversity_tie_breakers=[],
         constraints=problem.constraints,
     )

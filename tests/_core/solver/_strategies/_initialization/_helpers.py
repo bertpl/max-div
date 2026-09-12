@@ -4,6 +4,7 @@ from max_div._core.constraints import Constraint
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
+from tests._core.solver.objectives import simple_objective
 
 
 def new_solver_state(has_constraints: bool) -> SolverState:
@@ -22,7 +23,7 @@ def new_solver_state(has_constraints: bool) -> SolverState:
         n=vectors.shape[0],
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         k=50,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=constraints,
     )
@@ -35,7 +36,7 @@ def new_solver_state_unconstrained(n: int = 300, k: int = 30) -> SolverState:
         n=n,
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         k=k,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )

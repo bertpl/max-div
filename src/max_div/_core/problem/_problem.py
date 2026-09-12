@@ -13,7 +13,7 @@ from max_div._core.feasibility import (
 from max_div._core.metrics import (
     DistanceMetric,
     DiversityMetric,
-    DiversityTerm,
+    DiversityObjectiveSimple,
     validate_axis_within_dimensions,
     validate_cosine_distance_vectors,
 )
@@ -73,13 +73,13 @@ class MaxDivProblem(ABC):
 
     # --- computed fields ------------------------
     @property
-    def diversity_terms(self) -> tuple[DiversityTerm, ...]:
-        """Return the objective's terms parsed from the user's input.
+    def diversity_objectives(self) -> tuple[DiversityObjectiveSimple, ...]:
+        """Return the simple objectives parsed from the user's input.
 
-        The single term is the diversity metric over the problem's given distance; `diversity_metric`
-        keeps the raw user input.
+        Today there is one, the diversity metric over the problem's own distance (`distance_metric` is
+        `None`).
         """
-        return (DiversityTerm(self.diversity_metric),)
+        return (DiversityObjectiveSimple(self.diversity_metric),)
 
     @property
     def m(self) -> int:

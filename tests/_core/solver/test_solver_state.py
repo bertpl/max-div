@@ -11,6 +11,8 @@ from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import MeanDistanceTracker, SeparationTracker
 from max_div._core.solver._solver_state import Savepoint, SolverState
 
+from .objectives import simple_objective, tie_breaker_objectives
+
 
 # =================================================================================================
 #  Fixtures
@@ -22,8 +24,8 @@ def new_solver_state() -> SolverState:
         n=vectors.shape[0],
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
-        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
+        diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         constraints=[
             Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2),
             Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
@@ -38,8 +40,8 @@ def new_solver_state_unconstrained() -> SolverState:
         n=vectors.shape[0],
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
-        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
+        diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         constraints=[],
     )
 
@@ -76,7 +78,7 @@ def test_solver_state_con_weights_reach_the_state():
         n=vectors.shape[0],
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[
             Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2, weight=2.5),
@@ -359,7 +361,7 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
         n=4,
         store=store,
         k=2,
-        diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+        diversity_objective=simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -367,8 +369,8 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
         n=4,
         store=store,
         k=2,
-        diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
-        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        diversity_objective=simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
+        diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         constraints=[],
     )
 
@@ -387,7 +389,7 @@ def test_solver_state_mean_pairwise_distance_score():
         n=4,
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_metric=DiversityMetric.MEAN_PAIRWISE_DISTANCE,
+        diversity_objective=simple_objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -436,8 +438,8 @@ def _make_reference_state() -> SolverState:
         n=vectors.shape[0],
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         k=8,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
-        diversity_tie_breakers=[DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
+        diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         constraints=[
             Constraint(int_set=set(range(12)), min_count=2, max_count=5),
             Constraint(int_set=set(range(8, 22)), min_count=1, max_count=6),
@@ -579,7 +581,7 @@ def test_selected_index_list_survives_random_mutation_sequences(seed: int):
             n=n,
             store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
             k=8,
-            diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+            diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
             diversity_tie_breakers=[],
             constraints=[],
         )
@@ -639,8 +641,8 @@ def _make_adoption_state(
         n=vectors.shape[0],
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
         k=4,
-        diversity_metric=diversity_metric,
-        diversity_tie_breakers=diversity_tie_breakers,
+        diversity_objective=simple_objective(diversity_metric),
+        diversity_tie_breakers=tie_breaker_objectives(diversity_tie_breakers),
         constraints=[
             Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=3),
             Constraint(int_set={4, 5, 6, 7}, min_count=1, max_count=3),
@@ -805,7 +807,12 @@ def _state_over(vectors: np.ndarray, layout: str, diversity_metric: DiversityMet
         "lazy": DistanceStore.lazy(vectors, metric),
     }[layout]
     return SolverState.new(
-        n=n, store=store, k=k, diversity_metric=diversity_metric, diversity_tie_breakers=[], constraints=[]
+        n=n,
+        store=store,
+        k=k,
+        diversity_objective=simple_objective(diversity_metric),
+        diversity_tie_breakers=[],
+        constraints=[],
     )
 
 
@@ -879,7 +886,7 @@ def _make_standalone_state() -> SolverState:
         n=vectors.shape[0],
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )

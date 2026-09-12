@@ -2,15 +2,17 @@ import numpy as np
 import pytest
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityContributionFamily, DiversityMetric, DiversityTrackerSpec
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
 
-_NO_CONTRIBUTIONS = np.array([], dtype=np.float32)
+from .objectives import simple_objective, tie_breaker_objectives
+
+_SEPARATION_SPEC = DiversityTrackerSpec(None, DiversityContributionFamily.SEPARATION)
 
 
-def _as_contributions(separation_values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Wrap separation-family contribution values into a SelectedContributions tuple."""
-    return (separation_values, _NO_CONTRIBUTIONS)
+def _as_contributions(separation_values: np.ndarray) -> dict[DiversityTrackerSpec, np.ndarray]:
+    """Wrap separation-family contribution values as the spec -> array mapping that `compute` reads."""
+    return {_SEPARATION_SPEC: separation_values}
 
 
 # =================================================================================================
@@ -108,7 +110,7 @@ def test_score_generator_size():
     generator = ScoreGenerator(
         n=20,
         k=3,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -136,7 +138,7 @@ def test_score_generator_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -207,7 +209,7 @@ def test_constraints_score_for_violation(violation: float, expected: float):
     generator = ScoreGenerator(
         n=11,
         k=8,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=constraints,
     )
@@ -225,7 +227,7 @@ def test_constraints_score_for_violation_rejects_quadratic():
     generator = ScoreGenerator(
         n=3,
         k=3,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)],
         penalty_quadratic=True,
@@ -243,7 +245,12 @@ def test_score_generator_constraints_linear_vs_quadratic():
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
         Constraint(int_set=set(range(5, 16)), min_count=2, max_count=3),
     ]
-    kwargs = {"n": 100, "k": 8, "diversity_metric": DiversityMetric.MIN_SEPARATION, "diversity_tie_breakers": []}
+    kwargs = {
+        "n": 100,
+        "k": 8,
+        "diversity_objective": simple_objective(DiversityMetric.MIN_SEPARATION),
+        "diversity_tie_breakers": [],
+    }
     gen_linear = ScoreGenerator(constraints=constraints, **kwargs)
     gen_quad = ScoreGenerator(constraints=constraints, penalty_quadratic=True, **kwargs)
 
@@ -267,7 +274,11 @@ def test_score_generator_constraints_weighted():
         Constraint(int_set=set(range(5, 16)), min_count=2, max_count=3, weight=2.0),
     ]
     gen = ScoreGenerator(
-        n=100, k=8, diversity_metric=DiversityMetric.MIN_SEPARATION, diversity_tie_breakers=[], constraints=constraints
+        n=100,
+        k=8,
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_tie_breakers=[],
+        constraints=constraints,
     )
     sep = _as_contributions(np.ones(5, dtype=np.float32))
 
@@ -290,7 +301,7 @@ def test_score_generator_constraints_no_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -309,11 +320,10 @@ def test_score_generator_diversity_scores():
     generator = ScoreGenerator(
         n=100,
         k=5,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
-        diversity_tie_breakers=[
-            DiversityMetric.MEAN_SEPARATION,
-            DiversityMetric.NON_ZERO_SEPARATION_FRAC,
-        ],
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_tie_breakers=tie_breaker_objectives(
+            [DiversityMetric.MEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]
+        ),
         constraints=[],
     )
 
@@ -396,23 +406,26 @@ def test_score_str(score: Score, expected_str: str):
     assert result == expected_str
 
 
-def test_compute_score_binds_metrics_to_their_contribution_slot():
-    """Separation-family metrics must read the separation slot, regardless of what else is passed."""
-
+def test_compute_score_binds_each_objective_to_its_own_spec():
+    """Each objective reads only its own spec, never an unrelated spec passed alongside it."""
     # --- arrange ----------------------
     generator = ScoreGenerator(
         n=10,
-        k=4,
-        diversity_metric=DiversityMetric.MEAN_SEPARATION,
-        diversity_tie_breakers=[DiversityMetric.MIN_SEPARATION],
+        k=3,
+        diversity_objective=simple_objective(DiversityMetric.MEAN_SEPARATION),
+        diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.MIN_SEPARATION]),
         constraints=[],
     )
-    separation_values = np.array([2.0, 4.0, 6.0], dtype=np.float32)
-    decoy_values = np.array([100.0, 100.0, 100.0], dtype=np.float32)
+    contributions = {
+        _SEPARATION_SPEC: np.array([2.0, 4.0, 6.0], dtype=np.float32),
+        DiversityTrackerSpec(None, DiversityContributionFamily.MEAN_DISTANCE): np.array(
+            [100.0, 100.0, 100.0], dtype=np.float32
+        ),  # a spec neither objective reads
+    }
 
     # --- act --------------------------
-    score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), (separation_values, decoy_values))
+    score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), contributions)
 
     # --- assert -----------------------
-    assert score.diversity == pytest.approx(4.0)  # mean of the separation slot, not of the decoy
-    assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of the separation slot, not of the decoy
+    assert score.diversity == pytest.approx(4.0)  # mean of the separation spec
+    assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of the separation spec

@@ -6,7 +6,11 @@ import pytest
 from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics import (
+    DistanceMetric,
+    DiversityMetric,
+    DiversityObjectiveSimple,
+)
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import (
     ConstraintPenalty,
@@ -118,9 +122,8 @@ def test_max_div_solver_builder_tie_breaker_metrics_defaults(
     solver = builder.build()
 
     # --- assert -----------------------
-    assert solver._objective.main_metric == diversity_metric
-    for true_tie_breaker, expected_tie_breaker in zip(solver._diversity_tie_breakers, expected_tie_breakers):
-        assert true_tie_breaker == expected_tie_breaker
+    assert solver._objective.diversity_metric == diversity_metric
+    assert solver._diversity_tie_breakers == [DiversityObjectiveSimple(tb) for tb in expected_tie_breakers]
 
 
 def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
@@ -137,11 +140,13 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
     solver = builder.build()
 
     # --- assert -----------------------
-    assert solver._objective.main_metric == DiversityMetric.GEOMEAN_SEPARATION
-    assert len(solver._diversity_tie_breakers) == 3
-    assert solver._diversity_tie_breakers[0] == DiversityMetric.APPROX_GEOMEAN_SEPARATION
-    assert solver._diversity_tie_breakers[1] == DiversityMetric.NON_ZERO_SEPARATION_FRAC
-    assert solver._diversity_tie_breakers[2] == DiversityMetric.MEAN_SEPARATION
+    assert solver._objective.diversity_metric == DiversityMetric.GEOMEAN_SEPARATION
+    assert [tb.diversity_metric for tb in solver._diversity_tie_breakers] == [
+        DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+        DiversityMetric.NON_ZERO_SEPARATION_FRAC,
+        DiversityMetric.MEAN_SEPARATION,
+    ]
+    assert all(isinstance(tb, DiversityObjectiveSimple) for tb in solver._diversity_tie_breakers)
 
 
 # =================================================================================================
@@ -216,7 +221,7 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._solver_steps[0].name() == init_strategy.name
     assert solver._solver_steps[1].name() == solver_steps[0].name()
     assert solver._solver_steps[2].name() == solver_steps[1].name()
-    assert solver._objective.main_metric == DiversityMetric.MIN_SEPARATION
+    assert solver._objective.diversity_metric == DiversityMetric.MIN_SEPARATION
     assert solver._constraints == constraints
     assert solver._seed == 123
 
