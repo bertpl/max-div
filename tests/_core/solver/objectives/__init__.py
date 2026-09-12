@@ -14,5 +14,8 @@ def single_term_objective(diversity_metric: DiversityMetric) -> DiversityObjecti
 
 
 def tie_breaker_objectives(tie_breaker_metrics: list[DiversityMetric]) -> list[DiversityObjective]:
-    """Return each metric as a flattened tie-breaker over the problem's own distance, as the builder does."""
+    """Return each metric as a tie-breaker objective over the problem's own distance.
+
+    Each is the `DiversityObjectiveHybridFlattened` that `DiversityObjective.build_tie_breaker` derives.
+    """
     return [DiversityObjectiveHybridFlattened(metric, (None,)) for metric in tie_breaker_metrics]

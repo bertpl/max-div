@@ -587,7 +587,6 @@ class SolverState:
         penalty_quadratic: bool = False,
     ) -> SolverState:
         # --- diversity contributions ------------
-        # both take their slots from build_diversity_contribution_slots
         n_np = np.int32(n)
         contribution_trackers = DiversityContributionTrackers.for_objectives(
             diversity_objective, diversity_tie_breakers, store

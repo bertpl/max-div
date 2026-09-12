@@ -58,7 +58,7 @@ def test_build_diversity_contribution_slots(
     diversity_tie_breakers: list,
     expected_slots: dict,
 ):
-    """The main objective's pair is slot 0, each new pair follows once, and a pair carries its term's distance."""
+    """The main objective's pair is slot 0, each new pair follows once, and a pair keeps its own distance."""
     # --- act / assert -----------------
     assert build_diversity_contribution_slots(diversity_objective, diversity_tie_breakers) == expected_slots
 

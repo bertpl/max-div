@@ -25,7 +25,7 @@ def build_diversity_contribution_slots(
 ) -> dict[DistanceAndFamily, int]:
     """Return each (distance, family) pair's slot: its index in the tuple that `selected_contributions` returns.
 
-    A pair (`DistanceAndFamily`) joins a contribution family with the distance a term reads. The
+    A pair (`DistanceAndFamily`) joins a contribution family with a distance. The
     pairs are numbered in the order they first appear, across `diversity_objective` (the main
     objective, the one the solver maximizes) and then the tie-breakers, each pair once. Both the
     tracker set and the score generator take their slot assignments from this one function, so the
@@ -87,8 +87,7 @@ class DiversityContributionTrackers:
         """Build the tracker set that the objectives need, all reading `store`.
 
         The main objective's pair is slot 0 (see `build_diversity_contribution_slots`), and its
-        tracker is `main`. Every tracker reads the one `store`; a pair's tracker is built for the
-        pair's family.
+        tracker is `main`. A pair's tracker is built for the pair's family.
         """
         slot_by_pair = build_diversity_contribution_slots(diversity_objective, diversity_tie_breakers)
         return cls(
@@ -168,8 +167,8 @@ class DiversityContributionTrackers:
     ) -> tuple[NDArray[np.float32], ...]:
         """Return the selected items' contribution values as a tuple, one array per slot, in slot order.
 
-        The tuple is assembled without a loop, unrolled for the at most `MAX_CONTRIBUTION_SLOTS`
-        trackers that `__init__` accepts, because this runs on the solver's innermost loop, once for
+        The tuple is assembled without a loop, unrolled for the trackers `__init__` accepts, at most
+        `MAX_CONTRIBUTION_SLOTS` of them, because this runs on the solver's innermost loop, once for
         every scored selection.
 
         The selection is passed twice on purpose: the trackers compute contributions from the mask,

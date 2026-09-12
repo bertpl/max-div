@@ -167,7 +167,9 @@ class ScoreGenerator:
         self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
         slot_by_pair = build_diversity_contribution_slots(diversity_objective, diversity_tie_breakers)
-        self._main_diversity_metric, self._diversity_metric_slot = _metric_and_slot(diversity_objective, slot_by_pair)
+        self._main_diversity_metric, self._main_diversity_metric_slot = _metric_and_slot(
+            diversity_objective, slot_by_pair
+        )
         self._tie_breaker_metrics_with_slot = [
             _metric_and_slot(tie_breaker, slot_by_pair) for tie_breaker in diversity_tie_breakers
         ]
@@ -255,7 +257,7 @@ class ScoreGenerator:
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=float(self._main_diversity_metric.compute(selected_contributions[self._diversity_metric_slot])),
+            diversity=float(self._main_diversity_metric.compute(selected_contributions[self._main_diversity_metric_slot])),
             div_tie_breakers=tuple(
                 float(metric.compute(selected_contributions[slot]))
                 for metric, slot in self._tie_breaker_metrics_with_slot
@@ -282,10 +284,10 @@ def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.fl
 def _metric_and_slot(
     objective: DiversityObjective, slot_by_pair: dict[DistanceAndFamily, int]
 ) -> tuple[DiversityMetric, int]:
-    """Return the metric that scores `objective`, and the slot whose values that metric is computed over.
+    """Return the metric that scores `objective`, and the slot holding the values that metric scores.
 
     Scoring reads one slot with one metric per objective, so the objective must read a single
-    (distance, family) pair: an objective reading several pairs would need its slots joined, and a
+    (distance, family) pair: an objective reading several pairs spans several slots, and a
     geometric-mean hybrid has no single metric to bind.
 
     Raises:
