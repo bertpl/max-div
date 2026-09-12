@@ -104,7 +104,7 @@ class TermAggregationType(StrEnum):
         - GEOMEAN_OF_TERMS:  each term's metric is computed from that term's contributions, and the
                              objective is the geometric mean of the term values
         - FLATTENED_TERMS:   one metric is computed from the contributions of all terms joined into
-                             one list, so every term carries that same metric
+                             one list; every term must therefore use that same metric
     """
 
     GEOMEAN_OF_TERMS = "GEOMEAN_OF_TERMS"

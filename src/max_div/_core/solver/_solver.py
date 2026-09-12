@@ -132,8 +132,8 @@ class MaxDivSolver:
                 n=self._n,
                 store=store,
                 k=self._k,
-                # the state and its score generator read bare metrics; every objective is one term
-                # because `MaxDivProblem.diversity_terms` yields one
+                # the state and its score generator take one `DiversityMetric` per objective, not the
+                # objective itself; every objective here is single-term, as `main_diversity_metric` requires
                 diversity_metric=self._objective.main_diversity_metric,
                 diversity_tie_breakers=[tb.main_diversity_metric for tb in self._diversity_tie_breakers],
                 constraints=self._constraints,

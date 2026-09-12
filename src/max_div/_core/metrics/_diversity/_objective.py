@@ -1,11 +1,10 @@
 """A diversity objective is what the solver maximizes: one or more diversity terms.
 
 The solver maximizes one objective, the primary objective, and ranks selections that tie on it by
-tie-breaker objectives. The solver, its config, presets and strategies read this type, never the
-bare `DiversityMetric` enum, because an objective of several terms cannot be a single enum member;
-the terms live here. A tie-breaker is an objective too (see `TermAggregationType`), so the solver,
-its config and the builders carry one type for both; the solver state still reads each objective's
-bare metric.
+tie-breaker objectives; a tie-breaker is an objective with `FLATTENED_TERMS` aggregation. The
+solver, its config, builders, presets and strategies read this type, never the bare
+`DiversityMetric` enum, because an objective of several terms cannot be a single enum member; the
+terms live here.
 """
 
 from dataclasses import dataclass
@@ -16,24 +15,24 @@ from ._enum import DiversityContributionFamily, DiversityMetric, TermAggregation
 from ._term import DiversityTerm
 
 # The (contribution family, distance) pair that a term reads its per-item contributions from; the
-# distance is the term's, as `DiversityTerm` defines it.  Terms with equal keys read the same
-# contributions.
+# distance is the term's `distance_metric`, `None` meaning the problem's own distance as
+# `DiversityTerm` defines it.  Terms with equal keys read the same contributions.
 DiversityContributionKey = tuple[DiversityContributionFamily, DistanceMetric | None]
 
 
 @dataclass(frozen=True)
 class DiversityObjective:
-    """The diversity objective the solver maximizes: a tuple of terms plus the rule that combines their values.
+    """The diversity objective the solver maximizes: terms plus the aggregation type that combines their values.
 
-    The primary objective is built from a problem's `diversity_terms` and has `GEOMEAN_OF_TERMS`
-    aggregation; a tie-breaker is built by `build_tie_breaker` and has `FLATTENED_TERMS` aggregation.
+    A caller never picks the aggregation type: the default serves the primary objective, built from
+    a problem's `diversity_terms`, and `build_tie_breaker` sets a tie-breaker's.
     """
 
     terms: tuple[DiversityTerm, ...]
     aggregation_type: TermAggregationType = TermAggregationType.GEOMEAN_OF_TERMS
 
     def __post_init__(self) -> None:
-        """Reject an objective with no terms, and a flattened one whose terms carry different metrics."""
+        """Reject an objective with no terms, and a `FLATTENED_TERMS` one whose terms use different metrics."""
         if not self.terms:
             raise ValueError("A diversity objective needs at least one term.")
         metrics = {term.diversity_metric for term in self.terms}
@@ -51,7 +50,7 @@ class DiversityObjective:
         """Return the single term's diversity metric.
 
         Defined only for single-term objectives: the `main_*` accessors assume the one term that
-        `MaxDivProblem.diversity_terms` yields, and go once a problem can hold several.
+        `MaxDivProblem.diversity_terms` yields, and are removed once a problem can hold several terms.
         """
         return self.terms[0].diversity_metric
 
@@ -70,7 +69,7 @@ class DiversityObjective:
     # --------------------------------------------------------------------------
     @property
     def contribution_keys(self) -> tuple[DiversityContributionKey, ...]:
-        """Return the distinct contribution keys that the terms read, in first-seen order."""
+        """Return the distinct contribution keys of the terms, in first-seen order."""
         return tuple(
             dict.fromkeys((term.diversity_metric.contribution_family, term.distance_metric) for term in self.terms)
         )
@@ -79,10 +78,9 @@ class DiversityObjective:
     #  Tie-breakers
     # --------------------------------------------------------------------------
     def build_tie_breaker(self, tie_breaker_metric: DiversityMetric) -> "DiversityObjective":
-        """Return the flattened objective with one term per distinct distance of this objective's terms.
+        """Return a `FLATTENED_TERMS` objective of `tie_breaker_metric`, one term per distinct distance of the terms.
 
-        Every term carries `tie_breaker_metric`; the distances keep the order in which the terms
-        first use them.
+        The distances keep the order in which this objective's terms first use them.
         """
         distance_metrics = dict.fromkeys(term.distance_metric for term in self.terms)
         return DiversityObjective(

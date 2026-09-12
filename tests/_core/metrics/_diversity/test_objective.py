@@ -26,7 +26,7 @@ def test_empty_objective_is_rejected() -> None:
 
 
 def test_aggregation_type_defaults_to_the_geometric_mean_of_terms() -> None:
-    """The primary objective is built without naming its aggregation type."""
+    """`aggregation_type` defaults to `GEOMEAN_OF_TERMS`."""
     # --- act / assert -----------------
     assert _objective(DiversityMetric.MIN_SEPARATION).aggregation_type == TermAggregationType.GEOMEAN_OF_TERMS
 
@@ -82,7 +82,7 @@ def test_a_two_term_objective_is_not_a_single_separation_term() -> None:
 #  Derived facts
 # =================================================================================================
 def test_contribution_keys_are_distinct_and_first_seen_ordered() -> None:
-    """Terms sharing a family and a distance share a key; a different distance is a key of its own."""
+    """Terms sharing a family and a distance share a key; a term with a different distance gets a key of its own."""
     # --- arrange ----------------------
     objective = DiversityObjective(
         (
@@ -107,7 +107,7 @@ def test_contribution_keys_are_distinct_and_first_seen_ordered() -> None:
 @pytest.mark.parametrize(
     "terms, expected_distance_metrics",
     [
-        # one term over the problem's own distance: the tie-breaker is one term over that same distance
+        # one term with no distance of its own (None, the problem's distance): the tie-breaker is one term over it
         ((DiversityTerm(DiversityMetric.MIN_SEPARATION),), [None]),
         # several terms: one tie-breaker term per distinct distance, in first-seen order
         (
@@ -124,7 +124,7 @@ def test_contribution_keys_are_distinct_and_first_seen_ordered() -> None:
 def test_a_tie_breaker_is_flattened_over_the_distinct_distances(
     terms: tuple[DiversityTerm, ...], expected_distance_metrics: list[DistanceMetric | None]
 ) -> None:
-    """The tie-breaker carries its metric over each distinct distance of the terms, as a FLATTENED_TERMS objective."""
+    """The tie-breaker has one term per distinct distance of the source terms, each using the tie-breaker metric."""
     # --- act --------------------------
     tie_breaker = DiversityObjective(terms).build_tie_breaker(DiversityMetric.NON_ZERO_SEPARATION_FRAC)
 
