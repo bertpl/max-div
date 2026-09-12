@@ -45,7 +45,7 @@ class SolverBuilderBase:
         self._constraints: list[Constraint] = problem.constraints
 
         # --- shared configuration ---------------
-        self._diversity_tie_breakers: list[DiversityMetric] = []
+        self._diversity_tie_breaker_metrics: list[DiversityMetric] = []
         self._default_diversity_tie_breakers: bool = True
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
@@ -58,13 +58,13 @@ class SolverBuilderBase:
     # -------------------------------------------------------------------------
     def with_diversity_tie_breakers(self, diversity_tie_breakers: list[DiversityMetric]) -> Self:
         """Set custom diversity tie-breaker metrics, overriding the defaults."""
-        self._diversity_tie_breakers = diversity_tie_breakers
+        self._diversity_tie_breaker_metrics = diversity_tie_breakers
         self._default_diversity_tie_breakers = False
         return self
 
     def with_default_diversity_tie_breakers(self) -> Self:
         """Reset to automatically chosen tie-breakers based on the main diversity metric."""
-        self._diversity_tie_breakers = []
+        self._diversity_tie_breaker_metrics = []
         self._default_diversity_tie_breakers = True
         return self
 
@@ -122,8 +122,8 @@ class SolverBuilderBase:
         return factory, factory.resolved_storage()
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityObjective]:
-        """Return the tie-breakers to score with: the user's metrics as flattened objectives, else the defaults."""
+        """Return the tie-breakers to score with: the user's metrics through `build_tie_breaker`, else the defaults."""
         if not self._default_diversity_tie_breakers:
-            return [self._objective.tie_breaker(metric) for metric in self._diversity_tie_breakers]
+            return [self._objective.build_tie_breaker(metric) for metric in self._diversity_tie_breaker_metrics]
         else:
             return self._objective.default_tie_breakers

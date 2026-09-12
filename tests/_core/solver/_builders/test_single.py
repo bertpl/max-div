@@ -6,7 +6,7 @@ import pytest
 from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DistanceMetric, DiversityMetric, TermAggregation
+from max_div._core.metrics import DistanceMetric, DiversityMetric, TermAggregationType
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import (
     ConstraintPenalty,
@@ -119,8 +119,7 @@ def test_max_div_solver_builder_tie_breaker_metrics_defaults(
 
     # --- assert -----------------------
     assert solver._objective.main_diversity_metric == diversity_metric
-    # each tie-breaker is that metric as a flattened objective over the problem's distance
-    assert solver._diversity_tie_breakers == [solver._objective.tie_breaker(tb) for tb in expected_tie_breakers]
+    assert solver._diversity_tie_breakers == [solver._objective.build_tie_breaker(tb) for tb in expected_tie_breakers]
 
 
 def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
@@ -143,7 +142,7 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
         DiversityMetric.NON_ZERO_SEPARATION_FRAC,
         DiversityMetric.MEAN_SEPARATION,
     ]
-    assert all(tb.aggregation == TermAggregation.FLATTENED for tb in solver._diversity_tie_breakers)
+    assert all(tb.aggregation_type == TermAggregationType.FLATTENED_TERMS for tb in solver._diversity_tie_breakers)
 
 
 # =================================================================================================

@@ -6,7 +6,7 @@ from max_div._core.metrics import (
     DiversityMetric,
     DiversityObjective,
     DiversityTerm,
-    TermAggregation,
+    TermAggregationType,
 )
 
 
@@ -25,14 +25,14 @@ def test_empty_objective_is_rejected() -> None:
         DiversityObjective(())
 
 
-def test_an_objective_aggregates_hierarchically_unless_told_otherwise() -> None:
-    """The primary objective's construction needs no kind; hierarchical is the default."""
+def test_aggregation_type_defaults_to_the_geometric_mean_of_terms() -> None:
+    """The primary objective is built without naming its aggregation type."""
     # --- act / assert -----------------
-    assert _objective(DiversityMetric.MIN_SEPARATION).aggregation == TermAggregation.HIERARCHICAL
+    assert _objective(DiversityMetric.MIN_SEPARATION).aggregation_type == TermAggregationType.GEOMEAN_OF_TERMS
 
 
 def test_a_flattened_objective_rejects_terms_with_different_metrics() -> None:
-    """One metric reduces the concatenated rows, so every term must carry that metric."""
+    """A FLATTENED_TERMS objective is computed with one metric, so every term must use it."""
     # --- arrange ----------------------
     terms = (
         DiversityTerm(DiversityMetric.MIN_SEPARATION, DistanceMetric.l1_manhattan()),
@@ -40,15 +40,14 @@ def test_a_flattened_objective_rejects_terms_with_different_metrics() -> None:
     )
 
     # --- act / assert -----------------
-    with pytest.raises(ValueError, match="one metric"):
-        DiversityObjective(terms, aggregation=TermAggregation.FLATTENED)
-    DiversityObjective(terms)  # the same terms aggregate hierarchically without complaint
+    with pytest.raises(ValueError, match="one diversity metric"):
+        DiversityObjective(terms, aggregation_type=TermAggregationType.FLATTENED_TERMS)
 
 
 # =================================================================================================
 #  Single-term accessors
 # =================================================================================================
-def test_main_metric_and_family_read_the_single_term() -> None:
+def test_main_diversity_metric_and_family_read_the_single_term() -> None:
     """The single term's metric and its contribution family are exposed."""
     # --- arrange ----------------------
     objective = _objective(DiversityMetric.MEAN_PAIRWISE_DISTANCE)
@@ -105,38 +104,35 @@ def test_contribution_keys_are_distinct_and_first_seen_ordered() -> None:
 # =================================================================================================
 #  Tie-breakers
 # =================================================================================================
-def test_a_tie_breaker_is_flattened_over_the_objectives_distances() -> None:
-    """The tie-breaker pairs its metric with each distinct distance of the terms, in first-seen order."""
-    # --- arrange ----------------------
-    objective = DiversityObjective(
+@pytest.mark.parametrize(
+    "terms, expected_distance_metrics",
+    [
+        # one term over the problem's own distance: the tie-breaker is one term over that same distance
+        ((DiversityTerm(DiversityMetric.MIN_SEPARATION),), [None]),
+        # several terms: one tie-breaker term per distinct distance, in first-seen order
         (
-            DiversityTerm(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
-            DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION, DistanceMetric.along_axis(0)),
-            DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION, DistanceMetric.l2_euclidean()),
-        )
-    )
-
+            (
+                DiversityTerm(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
+                DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION, DistanceMetric.along_axis(0)),
+                DiversityTerm(DiversityMetric.GEOMEAN_SEPARATION, DistanceMetric.l2_euclidean()),
+            ),
+            [DistanceMetric.l2_euclidean(), DistanceMetric.along_axis(0)],
+        ),
+    ],
+    ids=["one_term", "several_terms"],
+)
+def test_a_tie_breaker_is_flattened_over_the_distinct_distances(
+    terms: tuple[DiversityTerm, ...], expected_distance_metrics: list[DistanceMetric | None]
+) -> None:
+    """The tie-breaker carries its metric over each distinct distance of the terms, as a FLATTENED_TERMS objective."""
     # --- act --------------------------
-    tie_breaker = objective.tie_breaker(DiversityMetric.NON_ZERO_SEPARATION_FRAC)
+    tie_breaker = DiversityObjective(terms).build_tie_breaker(DiversityMetric.NON_ZERO_SEPARATION_FRAC)
 
     # --- assert -----------------------
     assert tie_breaker == DiversityObjective(
-        (
-            DiversityTerm(DiversityMetric.NON_ZERO_SEPARATION_FRAC, DistanceMetric.l2_euclidean()),
-            DiversityTerm(DiversityMetric.NON_ZERO_SEPARATION_FRAC, DistanceMetric.along_axis(0)),
-        ),
-        aggregation=TermAggregation.FLATTENED,
+        tuple(DiversityTerm(DiversityMetric.NON_ZERO_SEPARATION_FRAC, d) for d in expected_distance_metrics),
+        aggregation_type=TermAggregationType.FLATTENED_TERMS,
     )
-
-
-def test_a_tie_breaker_on_a_one_term_objective_shares_its_distance() -> None:
-    """On a native problem the tie-breaker is one term over the same (given) distance as the objective."""
-    # --- act --------------------------
-    tie_breaker = _objective(DiversityMetric.MIN_SEPARATION).tie_breaker(DiversityMetric.MEAN_SEPARATION)
-
-    # --- assert -----------------------
-    assert tie_breaker.terms == (DiversityTerm(DiversityMetric.MEAN_SEPARATION, None),)
-    assert tie_breaker.aggregation == TermAggregation.FLATTENED
 
 
 @pytest.mark.parametrize(
@@ -152,10 +148,12 @@ def test_a_tie_breaker_on_a_one_term_objective_shares_its_distance() -> None:
         (DiversityMetric.MEAN_PAIRWISE_DISTANCE, []),
     ],
 )
-def test_default_tie_breakers_follow_the_main_metric(metric: DiversityMetric, expected: list[DiversityMetric]) -> None:
-    """Near-degenerate main metrics get separating tie-breakers, each a flattened objective; the rest get none."""
+def test_default_tie_breakers_follow_the_main_diversity_metric(
+    metric: DiversityMetric, expected: list[DiversityMetric]
+) -> None:
+    """Near-degenerate main metrics get separating tie-breakers built by `build_tie_breaker`; the rest get none."""
     # --- arrange ----------------------
     objective = _objective(metric)
 
     # --- act / assert -----------------
-    assert objective.default_tie_breakers == [objective.tie_breaker(tie_breaker) for tie_breaker in expected]
+    assert objective.default_tie_breakers == [objective.build_tie_breaker(tb) for tb in expected]

@@ -93,3 +93,19 @@ class DiversityMetric(StrEnum):
             # we can only meaningfully compute diversity metrics with at least 2 contribution values
             return np.float32(0.0)
         return self._f(contribution_values)
+
+
+class TermAggregationType(StrEnum):
+    """Enum for how a diversity objective combines its terms' values into one.
+
+    Members
+    -------
+
+        - GEOMEAN_OF_TERMS:  each term's metric is computed from that term's contributions, and the
+                             objective is the geometric mean of the term values
+        - FLATTENED_TERMS:   one metric is computed from the contributions of all terms joined into
+                             one list, so every term carries that same metric
+    """
+
+    GEOMEAN_OF_TERMS = "GEOMEAN_OF_TERMS"
+    FLATTENED_TERMS = "FLATTENED_TERMS"
