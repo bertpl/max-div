@@ -5,7 +5,7 @@ A `DiversityObjective` is one of three kinds, each holding only the fields that 
 - `DiversityObjectiveSimple` — one diversity metric over one distance metric.
 - `DiversityObjectiveHybridGeoMean` — the geometric mean of several simpler objectives (its terms).
 - `DiversityObjectiveHybridFlattened` — one diversity metric over several distance metrics at once,
-  read as one joined input; a tie-breaker is always a flattened objective.
+  read as one joined input; a hybrid objective's tie-breakers take this shape.
 
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
 tracks. The solver, its config, builders, presets and strategies read this type, never a bare
@@ -16,11 +16,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import cached_property
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
 from ._enum import DiversityContributionFamily, DiversityMetric
+from ._numba import geomean_separation
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -58,14 +60,17 @@ class DiversityObjective(ABC):
     def compute(self, contributions: ContributionsBySpec) -> float:
         """Return this objective's diversity score for the current selection.
 
+        Runs once per scored selection, so it and its cached inputs must stay cheap.
+
         Args:
             contributions: the selected items' per-item contribution values, one array per tracked
                 spec (see `tracker_specs`). Each of this objective's specs is a key.
         """
 
+    @property
     @abstractmethod
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """Return the distinct specs this objective reads, in first-seen order (one tracker each)."""
+        """The distinct specs this objective reads, in first-seen order (one tracker each)."""
 
     @abstractmethod
     def default_tie_breakers(self) -> list[DiversityObjective]:
@@ -73,14 +78,14 @@ class DiversityObjective(ABC):
 
     def distinct_distance_metrics(self) -> tuple[DistanceMetric | None, ...]:
         """Return the distinct distance metrics this objective reads, in first-seen order."""
-        return tuple(dict.fromkeys(spec.distance_metric for spec in self.tracker_specs()))
+        return tuple(dict.fromkeys(spec.distance_metric for spec in self.tracker_specs))
 
     def has_single_separation_tracker(self) -> bool:
         """Return whether one separation tracker serves this objective, which the batched-init fast path requires.
 
         True when the objective reads exactly one spec, of the separation family.
         """
-        specs = self.tracker_specs()
+        specs = self.tracker_specs
         return len(specs) == 1 and specs[0].contribution_family == DiversityContributionFamily.SEPARATION
 
 
@@ -96,11 +101,12 @@ class DiversityObjectiveSimple(DiversityObjective):
 
     def compute(self, contributions: ContributionsBySpec) -> float:
         """Reduce this objective's one contribution array with its diversity metric."""
-        return float(self.diversity_metric.compute(contributions[self._spec()]))
+        return float(self.diversity_metric.compute(contributions[self._spec]))
 
+    @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """Return the one spec this objective reads."""
-        return (self._spec(),)
+        """The one spec this objective reads."""
+        return (self._spec,)
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
         """Return the separating tie-breakers a near-degenerate diversity metric needs; other metrics get none.
@@ -109,12 +115,13 @@ class DiversityObjectiveSimple(DiversityObjective):
         that separate them, each over this objective's own distance metric.
         """
         return [
-            DiversityObjectiveHybridFlattened(tie_breaker_metric, (self.distance_metric,))
+            DiversityObjectiveSimple(tie_breaker_metric, self.distance_metric)
             for tie_breaker_metric in _separating_tie_breaker_metrics(self.diversity_metric)
         ]
 
+    @cached_property
     def _spec(self) -> DiversityTrackerSpec:
-        """Return this objective's (distance metric, contribution family) spec."""
+        """This objective's (distance metric, contribution family) spec."""
         return DiversityTrackerSpec(self.distance_metric, self.diversity_metric.contribution_family)
 
 
@@ -130,13 +137,14 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
             raise ValueError(f"A geometric-mean hybrid needs at least two terms; got {len(self.terms)}.")
 
     def compute(self, contributions: ContributionsBySpec) -> float:
-        """Return the geometric mean of the terms' diversity scores."""
-        term_scores = np.array([term.compute(contributions) for term in self.terms], dtype=np.float64)
-        return float(np.prod(term_scores) ** (1.0 / len(term_scores)))
+        """Return the geometric mean of the terms' diversity scores, via the tested `geomean_separation`."""
+        term_scores = np.array([term.compute(contributions) for term in self.terms], dtype=np.float32)
+        return float(geomean_separation(term_scores))
 
+    @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """Return the distinct specs of the terms, in first-seen order."""
-        return tuple(dict.fromkeys(spec for term in self.terms for spec in term.tracker_specs()))
+        """The distinct specs of the terms, in first-seen order."""
+        return tuple(dict.fromkeys(spec for term in self.terms for spec in term.tracker_specs))
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
         """Return the separating tie-breakers over the distinct distance metrics the terms read."""
@@ -149,8 +157,8 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
 class DiversityObjectiveHybridFlattened(DiversityObjective):
     """One diversity metric over several distance metrics at once: it reads their contributions as one joined input.
 
-    Holds one diversity metric by construction, so a tie-breaker cannot mix diversity metrics; a
-    distance metric is `None` for the problem's own distance.
+    A hybrid objective's tie-breakers take this shape (one metric over the hybrid's distances). Holds
+    one diversity metric by construction; a distance metric is `None` for the problem's own distance.
     """
 
     diversity_metric: DiversityMetric
@@ -158,11 +166,12 @@ class DiversityObjectiveHybridFlattened(DiversityObjective):
 
     def compute(self, contributions: ContributionsBySpec) -> float:
         """Reduce the joined contribution arrays of all this objective's specs with its diversity metric."""
-        joined = np.concatenate([contributions[spec] for spec in self.tracker_specs()])
+        joined = np.concatenate([contributions[spec] for spec in self.tracker_specs])
         return float(self.diversity_metric.compute(joined))
 
+    @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """Return one spec per distinct distance metric, all of the diversity metric's family."""
+        """One spec per distinct distance metric, all of the diversity metric's family."""
         family = self.diversity_metric.contribution_family
         return tuple(
             dict.fromkeys(DiversityTrackerSpec(distance_metric, family) for distance_metric in self.distance_metrics)
@@ -177,14 +186,13 @@ class DiversityObjectiveHybridFlattened(DiversityObjective):
 #  Helpers
 # =================================================================================================
 def _separating_tie_breaker_metrics(diversity_metric: DiversityMetric) -> tuple[DiversityMetric, ...]:
-    """Return the diversity metrics to use as tie-breakers, which separate the selections a near-degenerate metric ties.
-
-    A minimum-separation score depends only on the closest pair, so many selections share it; a
-    geometric mean is zero as soon as one pair coincides, so many selections have a score of zero.
-    Each gets tie-breakers that tell such selections apart; every other metric gets none.
-    """
+    """Return the diversity metrics to use as tie-breakers when the caller sets none, by the main diversity metric."""
     if diversity_metric == DiversityMetric.MIN_SEPARATION:
+        # min-separation reacts only to the closest pair; the approximate geomean rewards a uniform
+        # spread, which opens room around that pair so the minimum separation itself can grow.
         return (DiversityMetric.APPROX_GEOMEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC)
     if diversity_metric in (DiversityMetric.GEOMEAN_SEPARATION, DiversityMetric.APPROX_GEOMEAN_SEPARATION):
+        # once more than one pair coincides the geomean is stuck at zero; the non-zero fraction
+        # rewards cutting the count of coincident pairs, a path back toward a non-zero geomean.
         return (DiversityMetric.NON_ZERO_SEPARATION_FRAC,)
     return ()

@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING, Self
 from max_div._core.metrics import (
     DiversityMetric,
     DiversityObjective,
-    DiversityObjectiveHybridFlattened,
     DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveSimple,
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
@@ -130,16 +130,20 @@ class SolverBuilderBase:
         return factory, factory.resolved_storage()
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityObjective]:
-        """Return the tie-breaker objectives to rank ties by.
+        """Return the tie-breaker objectives to rank ties by: the main objective's defaults, or the user's.
 
-        When the user set custom tie-breaker metrics, each becomes a flattened objective over the
-        main objective's distance metrics; otherwise the main objective's own default tie-breakers
-        are used.
+        Custom tie-breakers are only supported for a single-metric problem, so each is a simple
+        objective over that problem's one distance metric.
+
+        Raises:
+            ValueError: If custom tie-breakers are set on a problem whose main objective is not a
+                single `DiversityObjectiveSimple`.
         """
         if self._default_diversity_tie_breakers:
             return self._objective.default_tie_breakers()
-        distance_metrics = self._objective.distinct_distance_metrics()
+        if not isinstance(self._objective, DiversityObjectiveSimple):
+            raise ValueError("Custom diversity tie-breakers are only supported for a single-metric problem.")
         return [
-            DiversityObjectiveHybridFlattened(metric, distance_metrics)
+            DiversityObjectiveSimple(metric, self._objective.distance_metric)
             for metric in self._diversity_tie_breaker_metrics
         ]

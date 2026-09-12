@@ -69,7 +69,7 @@ def test_a_geomean_hybrid_needs_at_least_two_terms() -> None:
 def test_tracker_specs(objective, expected_specs) -> None:
     """The distinct specs an objective reads, in first-seen order, each once."""
     # --- act / assert -----------------
-    assert objective.tracker_specs() == expected_specs
+    assert objective.tracker_specs == expected_specs
 
 
 @pytest.mark.parametrize(
@@ -149,7 +149,8 @@ def test_geomean_computes_the_geometric_mean_of_its_terms() -> None:
     }
 
     # --- act / assert -----------------
-    assert objective.compute(contributions) == pytest.approx(np.sqrt(12.0))  # geometric mean of 4 and 3
+    # geometric mean of 4 and 3, via the float32 geomean_separation
+    assert objective.compute(contributions) == pytest.approx(np.sqrt(12.0), rel=1e-5)
 
 
 # =================================================================================================
@@ -176,7 +177,7 @@ def test_a_simple_objectives_default_tie_breakers_follow_its_metric(
     tie_breakers = DiversityObjectiveSimple(diversity_metric, L2).default_tie_breakers()
 
     # --- assert -----------------------
-    assert tie_breakers == [DiversityObjectiveHybridFlattened(metric, (L2,)) for metric in expected_tie_breaker_metrics]
+    assert tie_breakers == [DiversityObjectiveSimple(metric, L2) for metric in expected_tie_breaker_metrics]
 
 
 def test_a_geomean_hybrids_default_tie_breakers_span_its_distances() -> None:

@@ -56,13 +56,13 @@ class DiversityContributionTrackers:
         first, then the tie-breakers' — and `main` is the tracker of the main objective's first spec.
         """
         specs = dict.fromkeys(
-            spec for objective in (diversity_objective, *diversity_tie_breakers) for spec in objective.tracker_specs()
+            spec for objective in (diversity_objective, *diversity_tie_breakers) for spec in objective.tracker_specs
         )
         return cls(
             trackers_by_spec={
                 spec: build_diversity_contribution_tracker(spec.contribution_family, store) for spec in specs
             },
-            main_spec=diversity_objective.tracker_specs()[0],
+            main_spec=diversity_objective.tracker_specs[0],
         )
 
     def copy(self) -> DiversityContributionTrackers:

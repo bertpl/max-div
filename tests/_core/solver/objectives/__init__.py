@@ -1,11 +1,6 @@
 """Build the objectives that solver tests hand to `SolverState.new` and `ScoreGenerator`."""
 
-from max_div._core.metrics import (
-    DiversityMetric,
-    DiversityObjective,
-    DiversityObjectiveHybridFlattened,
-    DiversityObjectiveSimple,
-)
+from max_div._core.metrics import DiversityMetric, DiversityObjective, DiversityObjectiveSimple
 
 
 def simple_objective(diversity_metric: DiversityMetric) -> DiversityObjectiveSimple:
@@ -14,8 +9,8 @@ def simple_objective(diversity_metric: DiversityMetric) -> DiversityObjectiveSim
 
 
 def tie_breaker_objectives(tie_breaker_metrics: list[DiversityMetric]) -> list[DiversityObjective]:
-    """Return each metric as a tie-breaker objective over the problem's own distance.
+    """Return each metric as a simple tie-breaker objective over the problem's own distance.
 
-    Each is a `DiversityObjectiveHybridFlattened`, as the solver builder constructs a tie-breaker.
+    A single-metric problem's tie-breakers are simple objectives, as the solver builder constructs them.
     """
-    return [DiversityObjectiveHybridFlattened(metric, (None,)) for metric in tie_breaker_metrics]
+    return [DiversityObjectiveSimple(metric) for metric in tie_breaker_metrics]

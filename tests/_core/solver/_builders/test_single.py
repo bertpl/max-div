@@ -9,7 +9,7 @@ from max_div._core.constraints import Constraint
 from max_div._core.metrics import (
     DistanceMetric,
     DiversityMetric,
-    DiversityObjectiveHybridFlattened,
+    DiversityObjectiveSimple,
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import (
@@ -123,9 +123,7 @@ def test_max_div_solver_builder_tie_breaker_metrics_defaults(
 
     # --- assert -----------------------
     assert solver._objective.diversity_metric == diversity_metric
-    assert solver._diversity_tie_breakers == [
-        DiversityObjectiveHybridFlattened(tb, (None,)) for tb in expected_tie_breakers
-    ]
+    assert solver._diversity_tie_breakers == [DiversityObjectiveSimple(tb) for tb in expected_tie_breakers]
 
 
 def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
@@ -148,7 +146,7 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
         DiversityMetric.NON_ZERO_SEPARATION_FRAC,
         DiversityMetric.MEAN_SEPARATION,
     ]
-    assert all(isinstance(tb, DiversityObjectiveHybridFlattened) for tb in solver._diversity_tie_breakers)
+    assert all(isinstance(tb, DiversityObjectiveSimple) for tb in solver._diversity_tie_breakers)
 
 
 # =================================================================================================
