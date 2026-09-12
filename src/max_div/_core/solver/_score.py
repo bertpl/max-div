@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from max_div._core.constraints.constraints import _np_con_total_violation, _np_con_total_weighted_violation
-from max_div._core.solver._diversity_contribution import selected_contributions_slot
+from max_div._core.metrics import scoring_metric
+from max_div._core.solver._diversity_contribution import build_diversity_contribution_slots
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -14,8 +15,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from max_div._core.constraints import Constraint
-    from max_div._core.metrics._diversity import DiversityMetric
-    from max_div._core.solver._diversity_contribution import SelectedContributions
+    from max_div._core.metrics import DistanceAndFamily, DiversityMetric, DiversityObjective
 
 
 # =================================================================================================
@@ -106,19 +106,6 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 # =================================================================================================
 #  ScoreGenerator
 # =================================================================================================
-def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
-    """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
-
-    The worst-case total violation is computed with the *same* aggregation used for live scoring: each
-    constraint's worst-case violation (`max_violationsᵢ`) is encoded as a pure shortfall (magnitude in
-    column 0) and run through `_np_con_total_weighted_violation`. Reusing the accelerator this way keeps
-    the normalization from ever drifting out of lockstep with the score under any weights / penalty mode.
-    """
-    worst_case_con_values = np.zeros((len(max_violations), 2), dtype=np.int32)
-    worst_case_con_values[:, 0] = max_violations
-    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
-
-
 class ScoreGenerator:
     """Utility class to generate Score objects from core metrics & data structures.
 
@@ -132,8 +119,8 @@ class ScoreGenerator:
         self,
         n: int | np.int32,
         k: int,
-        diversity_metric: DiversityMetric,
-        diversity_tie_breakers: list[DiversityMetric],
+        diversity_objective: DiversityObjective,
+        diversity_tie_breakers: list[DiversityObjective],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> None:
@@ -142,10 +129,13 @@ class ScoreGenerator:
         Args:
             n: (int | np.int32) number of items in the max-div problem.
             k: (int) The target selection size for the max-div problem.
-            diversity_metric: (DiversityMetric) The diversity metric used to compute diversity scores.
-            diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
+            diversity_objective: (DiversityObjective) The main objective, whose value is the diversity score.
+            diversity_tie_breakers: (list[DiversityObjective]) The tie-breaker objectives, scored in order.
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.
             penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
+
+        Raises:
+            ValueError: If an objective reads more than one (distance, family) pair (see `_metric_and_slot`).
         """
         # --- size score computation -------------
         self._n = n
@@ -172,13 +162,14 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers -----------
-        # each metric is bound here, once, to the SelectedContributions slot of its contribution
-        # family — compute_score then just indexes, without any per-call family lookups
-        self._diversity_metric = diversity_metric
-        self._diversity_metric_slot = selected_contributions_slot(diversity_metric.contribution_family)
+        # each objective is bound here, once, to its metric and the slot of its (distance, family)
+        # pair — compute_score then just indexes, without any per-call pair lookups
+        self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
-        self._tie_breakers_with_slot = [
-            (tb, selected_contributions_slot(tb.contribution_family)) for tb in diversity_tie_breakers
+        slot_by_pair = build_diversity_contribution_slots(diversity_objective, diversity_tie_breakers)
+        self._main_diversity_metric, self._diversity_metric_slot = _metric_and_slot(diversity_objective, slot_by_pair)
+        self._tie_breaker_metrics_with_slot = [
+            _metric_and_slot(tie_breaker, slot_by_pair) for tie_breaker in diversity_tie_breakers
         ]
 
         # --- store other params -----------------
@@ -192,7 +183,7 @@ class ScoreGenerator:
         return ScoreGenerator(
             n=self._n,
             k=self._k,
-            diversity_metric=self._diversity_metric,
+            diversity_objective=self._diversity_objective,
             diversity_tie_breakers=self._diversity_tie_breakers.copy(),
             constraints=self._constraints.copy(),
             penalty_quadratic=self._penalty_quadratic,
@@ -232,16 +223,16 @@ class ScoreGenerator:
         self,
         n_selected: int | np.int32,
         con_values: NDArray[np.int32],
-        selected_contributions: SelectedContributions,
+        selected_contributions: tuple[NDArray[np.float32], ...],
     ) -> Score:
         """Compute the multi-component Score of a selection.
 
         Args:
             n_selected: (int | np.int32) current number of selected items.
             con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
-            selected_contributions: (SelectedContributions) the selected items' per-family
-                contribution values; slots of families no configured metric
-                consumes are never read.
+            selected_contributions: (tuple of float32 ndarrays) the selected items' contribution
+                values, one array per slot of `build_diversity_contribution_slots(diversity_objective,
+                diversity_tie_breakers)`, in slot order.
         """
         # --- individual scores ------------------
         if n_selected <= self._k:
@@ -264,8 +255,46 @@ class ScoreGenerator:
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=float(self._diversity_metric.compute(selected_contributions[self._diversity_metric_slot])),
+            diversity=float(self._main_diversity_metric.compute(selected_contributions[self._diversity_metric_slot])),
             div_tie_breakers=tuple(
-                float(tb.compute(selected_contributions[slot])) for tb, slot in self._tie_breakers_with_slot
+                float(metric.compute(selected_contributions[slot]))
+                for metric, slot in self._tie_breaker_metrics_with_slot
             ),
         )
+
+
+# =================================================================================================
+#  Helpers
+# =================================================================================================
+def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
+    """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
+
+    The worst-case total violation is computed with the *same* aggregation used for live scoring: each
+    constraint's worst-case violation (`max_violationsᵢ`) is encoded as a pure shortfall (magnitude in
+    column 0) and run through `_np_con_total_weighted_violation`. Reusing the accelerator this way keeps
+    the normalization from ever drifting out of lockstep with the score under any weights / penalty mode.
+    """
+    worst_case_con_values = np.zeros((len(max_violations), 2), dtype=np.int32)
+    worst_case_con_values[:, 0] = max_violations
+    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
+
+
+def _metric_and_slot(
+    objective: DiversityObjective, slot_by_pair: dict[DistanceAndFamily, int]
+) -> tuple[DiversityMetric, int]:
+    """Return the metric that scores `objective`, and the slot whose values that metric is computed over.
+
+    Scoring reads one slot with one metric per objective, so the objective must read a single
+    (distance, family) pair: an objective reading several pairs would need its slots joined, and a
+    geometric-mean hybrid has no single metric to bind.
+
+    Raises:
+        ValueError: If `objective` reads several (distance, family) pairs, or is a geometric-mean
+            hybrid with no single scoring metric (via `scoring_metric`).
+    """
+    pairs = objective.distance_and_family_pairs()
+    if len(pairs) != 1:
+        raise ValueError(
+            f"Scoring reads one (distance, family) pair per objective; got an objective reading {len(pairs)} pairs."
+        )
+    return scoring_metric(objective), slot_by_pair[pairs[0]]

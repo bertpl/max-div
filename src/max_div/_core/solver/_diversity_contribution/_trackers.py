@@ -2,36 +2,41 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
-
-from max_div._core.metrics import DiversityContributionFamily
-
 from ._factory import build_diversity_contribution_tracker
 
 if TYPE_CHECKING:
+    import numpy as np
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityMetric
+    from max_div._core.metrics import DistanceAndFamily, DiversityObjective
     from max_div._core.metrics._distance import DistanceStore
 
     from ._base import DiversityContributionTracker
 
+# `selected_contributions` reads this many slots without a loop, so a tracker set never holds more.
+MAX_CONTRIBUTION_SLOTS = 2
+
 
 # =================================================================================================
-#  SelectedContributions
+#  Contribution slots
 # =================================================================================================
-# A selection's per-family contribution values of the *selected* items: a fixed-order tuple with
-# one slot per DiversityContributionFamily, in enum definition order (see selected_contributions_slot).
-# Families no metric consumes hold a shared empty array.  A plain tuple instead of a value object
-# keeps this hot-path payload as cheap as possible.
-SelectedContributions = tuple["NDArray[np.float32]", "NDArray[np.float32]"]
+def build_diversity_contribution_slots(
+    diversity_objective: DiversityObjective, diversity_tie_breakers: list[DiversityObjective]
+) -> dict[DistanceAndFamily, int]:
+    """Return each (distance, family) pair's slot: its index in the tuple that `selected_contributions` returns.
 
-_FAMILY_SLOTS = {family: slot for slot, family in enumerate(DiversityContributionFamily)}
-
-
-def selected_contributions_slot(family: DiversityContributionFamily) -> int:
-    """Return the SelectedContributions tuple slot holding the given family's contribution values."""
-    return _FAMILY_SLOTS[family]
+    A pair (`DistanceAndFamily`) joins a contribution family with the distance a term reads. The
+    pairs are numbered in the order they first appear, across `diversity_objective` (the main
+    objective, the one the solver maximizes) and then the tie-breakers, each pair once. Both the
+    tracker set and the score generator take their slot assignments from this one function, so the
+    tracker set returns its arrays in the same slot order that the score generator reads.
+    """
+    pairs = dict.fromkeys(
+        pair
+        for objective in (diversity_objective, *diversity_tie_breakers)
+        for pair in objective.distance_and_family_pairs()
+    )
+    return {pair: slot for slot, pair in enumerate(pairs)}
 
 
 # =================================================================================================
@@ -40,9 +45,8 @@ def selected_contributions_slot(family: DiversityContributionFamily) -> int:
 class DiversityContributionTrackers:
     """The set of diversity-contribution trackers backing a solver state.
 
-    Holds one tracker per contribution family needed by the configured metrics (families no metric
-    consumes are simply absent, so they cost nothing to maintain), knows which family is the main
-    diversity metric's, and fans every selection mutation out to all trackers.
+    Holds one tracker per (distance, family) pair that the objectives read, knows which pair is the
+    main objective's, and applies every selection mutation to all trackers.
     """
 
     # -------------------------------------------------------------------------
@@ -50,49 +54,56 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     def __init__(
         self,
-        trackers_by_family: dict[DiversityContributionFamily, DiversityContributionTracker],
-        main_family: DiversityContributionFamily,
+        trackers_by_pair: dict[DistanceAndFamily, DiversityContributionTracker],
+        main_pair: DistanceAndFamily,
     ) -> None:
-        """Initialize from an explicit family -> tracker mapping; prefer the for_metrics() factory.
+        """Initialize from an explicit pair -> tracker mapping; prefer the for_objectives() factory.
 
         Args:
-            trackers_by_family: (dict) one tracker per tracked contribution family.
-            main_family: (DiversityContributionFamily) family of the main diversity metric.
+            trackers_by_pair: (dict) one tracker per (distance, family) pair, in slot order (see
+                `build_diversity_contribution_slots`); at most `MAX_CONTRIBUTION_SLOTS` of them.
+            main_pair: (DistanceAndFamily) the (distance, family) pair of the main objective's tracker.
+
+        Raises:
+            ValueError: If the mapping holds more than `MAX_CONTRIBUTION_SLOTS` pairs.
         """
-        self._trackers_by_family = trackers_by_family  # READ-ONLY
-        self._main_family = main_family  # READ-ONLY
-        self._trackers = tuple(trackers_by_family.values())  # iteration order for mutation fan-out
-        self._main = trackers_by_family[main_family]
-        # per-family trackers for scoring reads (None = family not tracked)
-        self._separation_tracker = trackers_by_family.get(DiversityContributionFamily.SEPARATION)
-        self._mean_distance_tracker = trackers_by_family.get(DiversityContributionFamily.MEAN_DISTANCE)
+        if len(trackers_by_pair) > MAX_CONTRIBUTION_SLOTS:
+            raise ValueError(
+                f"A tracker set holds at most {MAX_CONTRIBUTION_SLOTS} (distance, family) pairs; "
+                f"got {len(trackers_by_pair)}."
+            )
+        self._trackers_by_pair = trackers_by_pair  # READ-ONLY
+        self._main_pair = main_pair  # READ-ONLY
+        self._trackers = tuple(trackers_by_pair.values())  # in slot order
+        self._main = trackers_by_pair[main_pair]
 
     @classmethod
-    def for_metrics(
+    def for_objectives(
         cls,
-        diversity_metric: DiversityMetric,
-        diversity_tie_breakers: list[DiversityMetric],
+        diversity_objective: DiversityObjective,
+        diversity_tie_breakers: list[DiversityObjective],
         store: DistanceStore,
     ) -> DiversityContributionTrackers:
-        """Build the tracker set required by the given metrics (main metric's family first).
+        """Build the tracker set that the objectives need, all reading `store`.
 
-        Args:
-            diversity_metric: (DiversityMetric) the main diversity metric.
-            diversity_tie_breakers: (list[DiversityMetric]) the configured tie-breaker metrics.
-            store: (DistanceStore) pairwise-distance storage the trackers read from.
+        The main objective's pair is slot 0 (see `build_diversity_contribution_slots`), and its
+        tracker is `main`. Every tracker reads the one `store`; a pair's tracker is built for the
+        pair's family.
         """
-        main_family = diversity_metric.contribution_family
-        families = dict.fromkeys([main_family, *(tb.contribution_family for tb in diversity_tie_breakers)])
+        slot_by_pair = build_diversity_contribution_slots(diversity_objective, diversity_tie_breakers)
         return cls(
-            trackers_by_family={family: build_diversity_contribution_tracker(family, store) for family in families},
-            main_family=main_family,
+            trackers_by_pair={
+                (distance, family): build_diversity_contribution_tracker(family, store)
+                for distance, family in slot_by_pair
+            },
+            main_pair=diversity_objective.distance_and_family_pairs()[0],
         )
 
     def copy(self) -> DiversityContributionTrackers:
         """Return a deep copy of this tracker set."""
         return DiversityContributionTrackers(
-            trackers_by_family={family: t.copy() for family, t in self._trackers_by_family.items()},
-            main_family=self._main_family,
+            trackers_by_pair={pair: tracker.copy() for pair, tracker in self._trackers_by_pair.items()},
+            main_pair=self._main_pair,
         )
 
     # -------------------------------------------------------------------------
@@ -100,7 +111,7 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     @property
     def main(self) -> DiversityContributionTracker:
-        """Return the main diversity metric's tracker (feeds the strategy-facing contribution reads)."""
+        """Return the main objective's tracker, whose contribution values the strategies read."""
         return self._main
 
     # -------------------------------------------------------------------------
@@ -154,11 +165,12 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     def selected_contributions(
         self, selected: NDArray[np.bool], n_selected: np.int32, selected_indices: NDArray[np.int32]
-    ) -> SelectedContributions:
-        """Return the selected items' contribution values, one SelectedContributions slot per family.
+    ) -> tuple[NDArray[np.float32], ...]:
+        """Return the selected items' contribution values as a tuple, one array per slot, in slot order.
 
-        Slots of families this set does not track hold a shared empty array (never read, since the
-        score generator only consumes the families its metrics were bound to).
+        The tuple is assembled without a loop, unrolled for the at most `MAX_CONTRIBUTION_SLOTS`
+        trackers that `__init__` accepts, because this runs on the solver's innermost loop, once for
+        every scored selection.
 
         The selection is passed twice on purpose: the trackers compute contributions from the mask,
         and the values are picked out by the index list, which costs O(n_selected) where picking by
@@ -169,16 +181,9 @@ class DiversityContributionTrackers:
             n_selected: (np.int32) number of True values in `selected`.
             selected_indices: (n_selected-sized int32 ndarray) the indices where `selected` is True.
         """
-        if (sep_tracker := self._separation_tracker) is None:
-            sep = _EMPTY_NP_ARRAY_FLOAT32
+        trackers = self._trackers
+        first = trackers[0].contribution_wrt_selection(selected, n_selected)[selected_indices]
+        if len(trackers) == 1:
+            return (first,)
         else:
-            sep = sep_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
-        if (mean_tracker := self._mean_distance_tracker) is None:
-            mean = _EMPTY_NP_ARRAY_FLOAT32
-        else:
-            mean = mean_tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
-        return sep, mean
-
-
-# shared placeholder for the contribution values of untracked families
-_EMPTY_NP_ARRAY_FLOAT32 = np.array([], dtype=np.float32)
+            return first, trackers[1].contribution_wrt_selection(selected, n_selected)[selected_indices]

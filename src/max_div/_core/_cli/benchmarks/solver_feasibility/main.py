@@ -10,7 +10,7 @@ from max_div._core._markdown import Report, Table
 from max_div._core._utils import stdout_to_file
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.feasibility import FeasibilityResult, FeasibilityStatus
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityMetric, DiversityObjectiveSimple
 from max_div._core.problem import VectorMaxDivProblem
 from max_div._core.solver._score import ScoreGenerator
 
@@ -55,7 +55,7 @@ def _ceiling_cell(problem: VectorMaxDivProblem, result: FeasibilityResult) -> st
     score_generator = ScoreGenerator(
         n=problem.n,
         k=problem.k,
-        diversity_metric=problem.diversity_metric,
+        diversity_objective=DiversityObjectiveSimple(problem.diversity_metric),
         diversity_tie_breakers=[],
         constraints=problem.constraints,
     )

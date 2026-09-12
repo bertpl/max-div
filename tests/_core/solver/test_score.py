@@ -2,15 +2,21 @@ import numpy as np
 import pytest
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import (
+    DistanceMetric,
+    DiversityMetric,
+    DiversityObjective,
+    DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveSimple,
+)
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
 
-_NO_CONTRIBUTIONS = np.array([], dtype=np.float32)
+from .objectives import single_term_objective, tie_breaker_objectives
 
 
-def _as_contributions(separation_values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Wrap separation-family contribution values into a SelectedContributions tuple."""
-    return (separation_values, _NO_CONTRIBUTIONS)
+def _as_contributions(separation_values: np.ndarray) -> tuple[np.ndarray, ...]:
+    """Wrap separation-family contribution values as the one-slot tuple that `selected_contributions` returns."""
+    return (separation_values,)
 
 
 # =================================================================================================
@@ -108,7 +114,7 @@ def test_score_generator_size():
     generator = ScoreGenerator(
         n=20,
         k=3,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -136,7 +142,7 @@ def test_score_generator_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -207,7 +213,7 @@ def test_constraints_score_for_violation(violation: float, expected: float):
     generator = ScoreGenerator(
         n=11,
         k=8,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_objective=single_term_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=constraints,
     )
@@ -225,7 +231,7 @@ def test_constraints_score_for_violation_rejects_quadratic():
     generator = ScoreGenerator(
         n=3,
         k=3,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_objective=single_term_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)],
         penalty_quadratic=True,
@@ -243,7 +249,12 @@ def test_score_generator_constraints_linear_vs_quadratic():
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
         Constraint(int_set=set(range(5, 16)), min_count=2, max_count=3),
     ]
-    kwargs = {"n": 100, "k": 8, "diversity_metric": DiversityMetric.MIN_SEPARATION, "diversity_tie_breakers": []}
+    kwargs = {
+        "n": 100,
+        "k": 8,
+        "diversity_objective": single_term_objective(DiversityMetric.MIN_SEPARATION),
+        "diversity_tie_breakers": [],
+    }
     gen_linear = ScoreGenerator(constraints=constraints, **kwargs)
     gen_quad = ScoreGenerator(constraints=constraints, penalty_quadratic=True, **kwargs)
 
@@ -267,7 +278,11 @@ def test_score_generator_constraints_weighted():
         Constraint(int_set=set(range(5, 16)), min_count=2, max_count=3, weight=2.0),
     ]
     gen = ScoreGenerator(
-        n=100, k=8, diversity_metric=DiversityMetric.MIN_SEPARATION, diversity_tie_breakers=[], constraints=constraints
+        n=100,
+        k=8,
+        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_tie_breakers=[],
+        constraints=constraints,
     )
     sep = _as_contributions(np.ones(5, dtype=np.float32))
 
@@ -290,7 +305,7 @@ def test_score_generator_constraints_no_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
+        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -309,11 +324,10 @@ def test_score_generator_diversity_scores():
     generator = ScoreGenerator(
         n=100,
         k=5,
-        diversity_metric=DiversityMetric.MIN_SEPARATION,
-        diversity_tie_breakers=[
-            DiversityMetric.MEAN_SEPARATION,
-            DiversityMetric.NON_ZERO_SEPARATION_FRAC,
-        ],
+        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_tie_breakers=tie_breaker_objectives(
+            [DiversityMetric.MEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+        ),
         constraints=[],
     )
 
@@ -396,23 +410,52 @@ def test_score_str(score: Score, expected_str: str):
     assert result == expected_str
 
 
-def test_compute_score_binds_metrics_to_their_contribution_slot():
-    """Separation-family metrics must read the separation slot, regardless of what else is passed."""
-
+@pytest.mark.parametrize(
+    "diversity_objective, selected_contributions",
+    [
+        pytest.param(
+            single_term_objective(DiversityMetric.MEAN_SEPARATION),
+            (np.array([2.0, 4.0, 6.0], dtype=np.float32), np.array([100.0, 100.0, 100.0], dtype=np.float32)),
+            id="problem_distance_with_a_decoy_slot",
+        ),
+        pytest.param(
+            DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, DistanceMetric.l2_euclidean()),
+            (np.array([2.0, 4.0, 6.0], dtype=np.float32),),
+            id="explicit_distance",
+        ),
+    ],
+)
+def test_compute_score_binds_each_objective_to_its_slot(
+    diversity_objective: DiversityObjective, selected_contributions: tuple[np.ndarray, ...]
+):
+    """The objective and a tie-breaker built from it read the same separation slot, never another slot."""
     # --- arrange ----------------------
     generator = ScoreGenerator(
         n=10,
-        k=4,
-        diversity_metric=DiversityMetric.MEAN_SEPARATION,
-        diversity_tie_breakers=[DiversityMetric.MIN_SEPARATION],
+        k=3,
+        diversity_objective=diversity_objective,
+        diversity_tie_breakers=[diversity_objective.build_tie_breaker(DiversityMetric.MIN_SEPARATION)],
         constraints=[],
     )
-    separation_values = np.array([2.0, 4.0, 6.0], dtype=np.float32)
-    decoy_values = np.array([100.0, 100.0, 100.0], dtype=np.float32)
 
     # --- act --------------------------
-    score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), (separation_values, decoy_values))
+    score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), selected_contributions)
 
     # --- assert -----------------------
-    assert score.diversity == pytest.approx(4.0)  # mean of the separation slot, not of the decoy
-    assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of the separation slot, not of the decoy
+    assert score.diversity == pytest.approx(4.0)  # mean of the separation slot
+    assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of the separation slot
+
+
+def test_an_objective_reading_several_pairs_is_rejected():
+    """Scoring reads one slot with one metric per objective, so an objective reading two pairs cannot be bound."""
+    # --- arrange ----------------------
+    objective = DiversityObjectiveHybridGeoMean(
+        (
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l1_manhattan()),
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
+        )
+    )
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="pair"):
+        ScoreGenerator(n=10, k=3, diversity_objective=objective, diversity_tie_breakers=[], constraints=[])

@@ -8,6 +8,7 @@ from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
+from tests._core.solver.objectives import single_term_objective
 
 
 # =================================================================================================
@@ -20,7 +21,7 @@ def _state(constraints: list[Constraint], n: int = 20, k: int = 8) -> SolverStat
         n=n,
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         k=k,
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        diversity_objective=single_term_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=constraints,
     )
