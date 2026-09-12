@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityMetric, DiversityObjectiveSimple
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStoreFactory
@@ -31,7 +31,7 @@ def test_resolve_returns_the_factory_and_a_config_over_it():
     assert factory.determine_storage_types() != [DistanceStorageType.AUTO]  # AUTO is resolved to something concrete
     assert config.seed == 99
     assert config.k == 4
-    assert config.objective.main_diversity_metric == DiversityMetric.GEOMEAN_SEPARATION  # the problem's own metric
+    assert config.objective == DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION)  # the problem's own metric
 
 
 def test_a_config_builds_a_solver_over_any_store():

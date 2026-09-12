@@ -12,7 +12,13 @@ A subclass adds the search: which strategies run, and for how long.
 
 from typing import TYPE_CHECKING, Self
 
-from max_div._core.metrics import DiversityMetric, DiversityObjective
+from max_div._core.metrics import (
+    DiversityMetric,
+    DiversityObjective,
+    DiversityObjectiveHybridGeoMean,
+    default_tie_breaker_metrics,
+    scoring_metric,
+)
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._constraint_penalty import ConstraintPenalty
 from max_div._core.solver._distance_storage import (
@@ -41,7 +47,11 @@ class SolverBuilderBase:
         # --- problem properties -----------------
         self._n: int = problem.n
         self._k: int = problem.k
-        self._objective: DiversityObjective = DiversityObjective(problem.diversity_terms)
+        # one simple objective stays simple; several compose into a geometric-mean hybrid
+        simple_objectives = problem.diversity_objectives
+        self._objective: DiversityObjective = (
+            simple_objectives[0] if len(simple_objectives) == 1 else DiversityObjectiveHybridGeoMean(simple_objectives)
+        )
         self._constraints: list[Constraint] = problem.constraints
 
         # --- shared configuration ---------------
@@ -122,8 +132,13 @@ class SolverBuilderBase:
         return factory, factory.resolved_storage()
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityObjective]:
-        """Return the tie-breakers: each user-set metric made an objective by `build_tie_breaker`, or the defaults."""
-        if not self._default_diversity_tie_breakers:
-            return [self._objective.build_tie_breaker(metric) for metric in self._diversity_tie_breaker_metrics]
-        else:
-            return self._objective.default_tie_breakers
+        """Return the tie-breaker objectives: the user's metrics if set, else the defaults for the main metric.
+
+        Either way each metric becomes a flattened tie-breaker over the objective's distances.
+        """
+        metrics = (
+            self._diversity_tie_breaker_metrics
+            if not self._default_diversity_tie_breakers
+            else default_tie_breaker_metrics(scoring_metric(self._objective))
+        )
+        return [self._objective.build_tie_breaker(metric) for metric in metrics]

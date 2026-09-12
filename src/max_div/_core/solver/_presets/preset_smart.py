@@ -1,4 +1,4 @@
-from max_div._core.metrics import DiversityContributionFamily, DiversityObjective
+from max_div._core.metrics import DiversityObjective
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._solver_step import OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
@@ -17,15 +17,15 @@ def get_preset_strategies_smart(
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     """Return the SMART (or THOROUGH, when `thorough`) preset's init strategy and optimization steps.
 
-    The objective's contribution family decides which farthest-point construction an unconstrained
-    problem starts from, since the batched one applies to the separation family only.
+    Whether the objective reads a single separation tracker decides which farthest-point construction
+    an unconstrained problem starts from, since the batched one applies to that case only.
     """
     # --- initialization -------------------------
     if has_constraints:
         # Constrained: most_feasible() finds a feasible (or least-infeasible) selection faster than the
         # main solver's swaps could, freeing the optimizer to spend its whole budget on diversity.
         init_strategy = InitializationStrategy.most_feasible()
-    elif objective.main_contribution_family == DiversityContributionFamily.SEPARATION:
+    elif objective.has_single_separation_tracker():
         # Unconstrained: the farthest-point construction reaches competitor-level quality far sooner
         # than a random start; sampling among the top_k picks keeps that quality while decorrelating seeds.
         # The batched construction offers every pick the same candidates as the per-pick one and is

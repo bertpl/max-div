@@ -1,105 +1,138 @@
-"""A diversity objective is what the solver maximizes: one or more diversity terms.
+"""Diversity objectives: what the solver maximizes, and the tie-breakers it ranks selections by.
 
-The solver maximizes one objective, the main objective, and ranks selections that tie on it by
-tie-breaker objectives; a tie-breaker is an objective with `FLATTENED_TERMS` aggregation. The
-solver, its config, builders, presets and strategies read this type, never the bare
-`DiversityMetric` enum, because an objective of several terms cannot be a single enum member; the
-terms live here.
+A `DiversityObjective` is one of three shapes, each holding only the fields its value needs:
+
+- `DiversityObjectiveSimple` — one diversity metric over one distance.
+- `DiversityObjectiveHybridGeoMean` — the geometric mean of several simpler objectives (its terms).
+- `DiversityObjectiveHybridFlattened` — one diversity metric over several distances at once, used
+  for a tie-breaker.
+
+The solver, its config, builders, presets and strategies read this type, never the bare
+`DiversityMetric` enum, because an objective of several terms cannot be a single enum member.
 """
 
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from max_div._core.metrics._distance import DistanceMetric
 
-from ._enum import DiversityContributionFamily, DiversityMetric, TermAggregationType
-from ._term import DiversityTerm
+from ._enum import DiversityContributionFamily, DiversityMetric
 
-# The (contribution family, distance) pair that a term reads its per-item contributions from; the
-# distance is the term's `distance_metric`, `None` meaning the problem's own distance as
-# `DiversityTerm` defines it.  Terms with equal keys read the same contributions.
-DiversityContributionKey = tuple[DiversityContributionFamily, DistanceMetric | None]
+# A per-item diversity signal an objective reads: a distance paired with the contribution family a
+# metric over it consumes.  The distance is `None` when it is the problem's own (given) distance.
+DistanceFamilyPair = tuple[DistanceMetric | None, DiversityContributionFamily]
+
+
+# =================================================================================================
+#  DiversityObjective
+# =================================================================================================
+class DiversityObjective(ABC):
+    """A diversity objective the solver maximizes, or a tie-breaker it ranks ties by.
+
+    A subclass holds the fields its own value needs; the base gives the facts the solver reads off
+    any objective — the distances and families it reads, and how to build a tie-breaker from it.
+    """
+
+    @abstractmethod
+    def distance_family_pairs(self) -> tuple[DistanceFamilyPair, ...]:
+        """Return the distinct (distance, contribution family) pairs this objective reads, in first-seen order.
+
+        One pair is one tracker the solver builds; a pair repeated across terms is read once.
+        """
+
+    def distinct_distance_metrics(self) -> tuple[DistanceMetric | None, ...]:
+        """Return the distinct distances this objective reads, in first-seen order."""
+        return tuple(dict.fromkeys(distance_metric for distance_metric, _ in self.distance_family_pairs()))
+
+    def has_single_separation_tracker(self) -> bool:
+        """Return whether this objective reads exactly one tracker, of the separation family.
+
+        The batched farthest-point construction is tailored to this case.
+        """
+        pairs = self.distance_family_pairs()
+        return len(pairs) == 1 and pairs[0][1] == DiversityContributionFamily.SEPARATION
+
+    def build_tie_breaker(self, tie_breaker_metric: DiversityMetric) -> DiversityObjectiveHybridFlattened:
+        """Return the flattened tie-breaker of `tie_breaker_metric` over the distances this objective reads."""
+        return DiversityObjectiveHybridFlattened(tie_breaker_metric, self.distinct_distance_metrics())
+
+
+# =================================================================================================
+#  Concrete objectives
+# =================================================================================================
+@dataclass(frozen=True)
+class DiversityObjectiveSimple(DiversityObjective):
+    """One diversity metric over one distance; `distance_metric` is `None` for the problem's own distance."""
+
+    diversity_metric: DiversityMetric
+    distance_metric: DistanceMetric | None = None
+
+    def distance_family_pairs(self) -> tuple[DistanceFamilyPair, ...]:
+        """Return the one (distance, family) pair this objective reads."""
+        return ((self.distance_metric, self.diversity_metric.contribution_family),)
 
 
 @dataclass(frozen=True)
-class DiversityObjective:
-    """The diversity objective the solver maximizes: terms plus the aggregation type that combines their values.
+class DiversityObjectiveHybridGeoMean(DiversityObjective):
+    """The geometric mean of several diversity terms, each a simpler objective over its own distance."""
 
-    A caller never picks the aggregation type: the default serves the main objective, built from
-    a problem's `diversity_terms`, and `build_tie_breaker` sets a tie-breaker's.
-    """
-
-    terms: tuple[DiversityTerm, ...]
-    aggregation_type: TermAggregationType = TermAggregationType.GEOMEAN_OF_TERMS
+    terms: tuple[DiversityObjectiveSimple, ...]
 
     def __post_init__(self) -> None:
-        """Reject an objective with no terms, and a `FLATTENED_TERMS` one whose terms use different metrics."""
-        if not self.terms:
-            raise ValueError("A diversity objective needs at least one term.")
-        metrics = {term.diversity_metric for term in self.terms}
-        if self.aggregation_type == TermAggregationType.FLATTENED_TERMS and len(metrics) > 1:
-            raise ValueError(
-                "A FLATTENED_TERMS objective is computed with one diversity metric, "
-                "so all its terms must use the same metric."
-            )
+        """Reject fewer than two terms; a one-term geometric mean is a `DiversityObjectiveSimple`."""
+        if len(self.terms) < 2:
+            raise ValueError(f"A geometric-mean hybrid needs at least two terms; got {len(self.terms)}.")
 
-    # --------------------------------------------------------------------------
-    #  Single-term accessors
-    # --------------------------------------------------------------------------
-    @property
-    def main_diversity_metric(self) -> DiversityMetric:
-        """Return the single term's diversity metric.
+    def distance_family_pairs(self) -> tuple[DistanceFamilyPair, ...]:
+        """Return the distinct pairs of the terms, concatenated in first-seen order."""
+        return tuple(dict.fromkeys(pair for term in self.terms for pair in term.distance_family_pairs()))
 
-        Defined only for single-term objectives: the `main_*` accessors assume the one term that
-        `MaxDivProblem.diversity_terms` yields, and are removed once a problem can hold several terms.
-        """
-        return self.terms[0].diversity_metric
 
-    @property
-    def main_contribution_family(self) -> DiversityContributionFamily:
-        """Return the contribution family the single term consumes."""
-        return self.main_diversity_metric.contribution_family
+@dataclass(frozen=True)
+class DiversityObjectiveHybridFlattened(DiversityObjective):
+    """One diversity metric over several distances at once: the metric reads the distances' contributions joined.
 
-    @property
-    def has_single_separation_term(self) -> bool:
-        """Return whether the objective is a single term in the separation family."""
-        return len(self.terms) == 1 and self.main_contribution_family == DiversityContributionFamily.SEPARATION
+    Holds one metric by construction, so a tie-breaker cannot mix metrics; the distances are
+    `None` for the problem's own distance.
+    """
 
-    # --------------------------------------------------------------------------
-    #  Derived facts
-    # --------------------------------------------------------------------------
-    @property
-    def contribution_keys(self) -> tuple[DiversityContributionKey, ...]:
-        """Return the distinct contribution keys of the terms, in first-seen order."""
-        return tuple(
-            dict.fromkeys((term.diversity_metric.contribution_family, term.distance_metric) for term in self.terms)
-        )
+    diversity_metric: DiversityMetric
+    distance_metrics: tuple[DistanceMetric | None, ...]
 
-    # --------------------------------------------------------------------------
-    #  Tie-breakers
-    # --------------------------------------------------------------------------
-    def build_tie_breaker(self, tie_breaker_metric: DiversityMetric) -> "DiversityObjective":
-        """Return a `FLATTENED_TERMS` objective of `tie_breaker_metric`, one term per distinct distance of the terms.
+    def distance_family_pairs(self) -> tuple[DistanceFamilyPair, ...]:
+        """Return the distinct (distance, family) pairs, one per distinct distance, all of the metric's family."""
+        family = self.diversity_metric.contribution_family
+        return tuple(dict.fromkeys((distance_metric, family) for distance_metric in self.distance_metrics))
 
-        The distances keep the order in which this objective's terms first use them.
-        """
-        distance_metrics = dict.fromkeys(term.distance_metric for term in self.terms)
-        return DiversityObjective(
-            terms=tuple(DiversityTerm(tie_breaker_metric, distance_metric) for distance_metric in distance_metrics),
-            aggregation_type=TermAggregationType.FLATTENED_TERMS,
-        )
 
-    @property
-    def default_tie_breakers(self) -> list["DiversityObjective"]:
-        """Return the tie-breakers to score with when the caller sets none, determined by the main metric.
+# =================================================================================================
+#  Helpers
+# =================================================================================================
+def scoring_metric(objective: DiversityObjective) -> DiversityMetric:
+    """Return the single diversity metric a score is computed with for `objective`.
 
-        A near-degenerate main metric, where many selections share a score, gets tie-breakers that
-        separate them; every other metric gets none.
-        """
-        metric = self.main_diversity_metric
-        if metric == DiversityMetric.MIN_SEPARATION:
-            metrics = [DiversityMetric.APPROX_GEOMEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]
-        elif metric in (DiversityMetric.GEOMEAN_SEPARATION, DiversityMetric.APPROX_GEOMEAN_SEPARATION):
-            metrics = [DiversityMetric.NON_ZERO_SEPARATION_FRAC]
-        else:
-            metrics = []
-        return [self.build_tie_breaker(tie_breaker_metric) for tie_breaker_metric in metrics]
+    Defined for the single-metric objectives (`DiversityObjectiveSimple` and
+    `DiversityObjectiveHybridFlattened`); a geometric-mean hybrid combines several metrics and is
+    scored by its own reduction, not by a single metric.
+
+    Raises:
+        ValueError: If `objective` is a geometric-mean hybrid.
+    """
+    if isinstance(objective, (DiversityObjectiveSimple, DiversityObjectiveHybridFlattened)):
+        return objective.diversity_metric
+    raise ValueError(f"A geometric-mean hybrid has no single scoring metric: {objective}.")
+
+
+def default_tie_breaker_metrics(diversity_metric: DiversityMetric) -> list[DiversityMetric]:
+    """Return the tie-breaker metrics to score with when the caller sets none, by the main diversity metric.
+
+    A near-degenerate main metric, where many selections share a score, gets tie-breakers that
+    separate them; every other metric gets none.
+    """
+    if diversity_metric == DiversityMetric.MIN_SEPARATION:
+        return [DiversityMetric.APPROX_GEOMEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]
+    if diversity_metric in (DiversityMetric.GEOMEAN_SEPARATION, DiversityMetric.APPROX_GEOMEAN_SEPARATION):
+        return [DiversityMetric.NON_ZERO_SEPARATION_FRAC]
+    return []
