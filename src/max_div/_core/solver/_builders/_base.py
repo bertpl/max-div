@@ -47,7 +47,6 @@ class SolverBuilderBase:
         # --- problem properties -----------------
         self._n: int = problem.n
         self._k: int = problem.k
-        # one simple objective stays simple; several compose into a geometric-mean hybrid
         simple_objectives = problem.diversity_objectives
         self._objective: DiversityObjective = (
             simple_objectives[0] if len(simple_objectives) == 1 else DiversityObjectiveHybridGeoMean(simple_objectives)
@@ -66,9 +65,9 @@ class SolverBuilderBase:
     # -------------------------------------------------------------------------
     #  Shared builder API
     # -------------------------------------------------------------------------
-    def with_diversity_tie_breakers(self, diversity_tie_breakers: list[DiversityMetric]) -> Self:
+    def with_diversity_tie_breakers(self, diversity_tie_breaker_metrics: list[DiversityMetric]) -> Self:
         """Set custom diversity tie-breaker metrics, overriding the defaults."""
-        self._diversity_tie_breaker_metrics = diversity_tie_breakers
+        self._diversity_tie_breaker_metrics = diversity_tie_breaker_metrics
         self._default_diversity_tie_breakers = False
         return self
 

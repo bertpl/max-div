@@ -25,7 +25,7 @@ def get_preset_strategies_smart(
         # Constrained: most_feasible() finds a feasible (or least-infeasible) selection faster than the
         # main solver's swaps could, freeing the optimizer to spend its whole budget on diversity.
         init_strategy = InitializationStrategy.most_feasible()
-    elif objective.has_single_separation_tracker():
+    elif objective.has_single_separation_pair():
         # Unconstrained: the farthest-point construction reaches competitor-level quality far sooner
         # than a random start; sampling among the top_k picks keeps that quality while decorrelating seeds.
         # The batched construction offers every pick the same candidates as the per-pick one and is

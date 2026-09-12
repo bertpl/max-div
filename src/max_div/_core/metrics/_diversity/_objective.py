@@ -1,6 +1,6 @@
-"""Diversity objectives: what the solver maximizes, and the tie-breakers it ranks selections by.
+"""A diversity objective is what the solver maximizes; a tie-breaker is a further objective the solver ranks ties by.
 
-A `DiversityObjective` is one of three shapes, each holding only the fields its value needs:
+A `DiversityObjective` is one of three kinds, each holding only the fields it needs:
 
 - `DiversityObjectiveSimple` — one diversity metric over one distance.
 - `DiversityObjectiveHybridGeoMean` — the geometric mean of several simpler objectives (its terms).
@@ -20,9 +20,9 @@ from max_div._core.metrics._distance import DistanceMetric
 
 from ._enum import DiversityContributionFamily, DiversityMetric
 
-# A per-item diversity signal an objective reads: a distance paired with the contribution family a
-# metric over it consumes.  The distance is `None` when it is the problem's own (given) distance.
-DistanceFamilyPair = tuple[DistanceMetric | None, DiversityContributionFamily]
+# A pair is one per-item diversity input an objective reads: a distance, and the contribution family
+# that a metric over that distance consumes.  The distance is `None` for the problem's own distance.
+DistanceAndFamily = tuple[DistanceMetric | None, DiversityContributionFamily]
 
 
 # =================================================================================================
@@ -31,27 +31,25 @@ DistanceFamilyPair = tuple[DistanceMetric | None, DiversityContributionFamily]
 class DiversityObjective(ABC):
     """A diversity objective the solver maximizes, or a tie-breaker it ranks ties by.
 
-    A subclass holds the fields its own value needs; the base gives the facts the solver reads off
-    any objective — the distances and families it reads, and how to build a tie-breaker from it.
+    A subclass holds the fields that kind of objective needs; the base gives the facts read off any
+    objective — the distances and families the objective reads, and how to build a tie-breaker from it.
     """
 
     @abstractmethod
-    def distance_family_pairs(self) -> tuple[DistanceFamilyPair, ...]:
+    def distance_and_family_pairs(self) -> tuple[DistanceAndFamily, ...]:
         """Return the distinct (distance, contribution family) pairs this objective reads, in first-seen order.
 
-        One pair is one tracker the solver builds; a pair repeated across terms is read once.
+        One pair becomes one contribution tracker in the solver (`DiversityContributionTrackers`); a
+        pair repeated across terms is read once.
         """
 
     def distinct_distance_metrics(self) -> tuple[DistanceMetric | None, ...]:
         """Return the distinct distances this objective reads, in first-seen order."""
-        return tuple(dict.fromkeys(distance_metric for distance_metric, _ in self.distance_family_pairs()))
+        return tuple(dict.fromkeys(distance_metric for distance_metric, _ in self.distance_and_family_pairs()))
 
-    def has_single_separation_tracker(self) -> bool:
-        """Return whether this objective reads exactly one tracker, of the separation family.
-
-        The batched farthest-point construction is tailored to this case.
-        """
-        pairs = self.distance_family_pairs()
+    def has_single_separation_pair(self) -> bool:
+        """Return whether this objective reads exactly one (distance, family) pair, of the separation family."""
+        pairs = self.distance_and_family_pairs()
         return len(pairs) == 1 and pairs[0][1] == DiversityContributionFamily.SEPARATION
 
     def build_tie_breaker(self, tie_breaker_metric: DiversityMetric) -> DiversityObjectiveHybridFlattened:
@@ -69,7 +67,7 @@ class DiversityObjectiveSimple(DiversityObjective):
     diversity_metric: DiversityMetric
     distance_metric: DistanceMetric | None = None
 
-    def distance_family_pairs(self) -> tuple[DistanceFamilyPair, ...]:
+    def distance_and_family_pairs(self) -> tuple[DistanceAndFamily, ...]:
         """Return the one (distance, family) pair this objective reads."""
         return ((self.distance_metric, self.diversity_metric.contribution_family),)
 
@@ -85,23 +83,23 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
         if len(self.terms) < 2:
             raise ValueError(f"A geometric-mean hybrid needs at least two terms; got {len(self.terms)}.")
 
-    def distance_family_pairs(self) -> tuple[DistanceFamilyPair, ...]:
+    def distance_and_family_pairs(self) -> tuple[DistanceAndFamily, ...]:
         """Return the distinct pairs of the terms, concatenated in first-seen order."""
-        return tuple(dict.fromkeys(pair for term in self.terms for pair in term.distance_family_pairs()))
+        return tuple(dict.fromkeys(pair for term in self.terms for pair in term.distance_and_family_pairs()))
 
 
 @dataclass(frozen=True)
 class DiversityObjectiveHybridFlattened(DiversityObjective):
-    """One diversity metric over several distances at once: the metric reads the distances' contributions joined.
+    """One diversity metric over several distances at once: it reads the distances' contributions as one joined input.
 
-    Holds one metric by construction, so a tie-breaker cannot mix metrics; the distances are
+    Holds one metric by construction, so a tie-breaker cannot mix metrics; a distance is
     `None` for the problem's own distance.
     """
 
     diversity_metric: DiversityMetric
     distance_metrics: tuple[DistanceMetric | None, ...]
 
-    def distance_family_pairs(self) -> tuple[DistanceFamilyPair, ...]:
+    def distance_and_family_pairs(self) -> tuple[DistanceAndFamily, ...]:
         """Return the distinct (distance, family) pairs, one per distinct distance, all of the metric's family."""
         family = self.diversity_metric.contribution_family
         return tuple(dict.fromkeys((distance_metric, family) for distance_metric in self.distance_metrics))
@@ -115,7 +113,7 @@ def scoring_metric(objective: DiversityObjective) -> DiversityMetric:
 
     Defined for the single-metric objectives (`DiversityObjectiveSimple` and
     `DiversityObjectiveHybridFlattened`); a geometric-mean hybrid combines several metrics and is
-    scored by its own reduction, not by a single metric.
+    scored by combining its terms (their geometric mean), not by a single metric.
 
     Raises:
         ValueError: If `objective` is a geometric-mean hybrid.

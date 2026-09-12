@@ -109,8 +109,8 @@ class DistanceStoreFactory:
         problem_distance = problem.default_distance_metric
         distinct_distances: list[StoreDistance] = []
         for distance_metric in objective.distinct_distance_metrics():
-            if (resolved := distance_metric or problem_distance) not in distinct_distances:
-                distinct_distances.append(resolved)
+            if (resolved_distance := distance_metric or problem_distance) not in distinct_distances:
+                distinct_distances.append(resolved_distance)
         return cls(problem, distinct_distances, storage_type, total_memory_bytes)
 
     # --------------------------------------------------------------------------

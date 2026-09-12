@@ -1,6 +1,6 @@
 from ._enum import DiversityContributionFamily, DiversityMetric
 from ._objective import (
-    DistanceFamilyPair,
+    DistanceAndFamily,
     DiversityObjective,
     DiversityObjectiveHybridFlattened,
     DiversityObjectiveHybridGeoMean,

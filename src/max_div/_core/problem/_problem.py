@@ -76,9 +76,8 @@ class MaxDivProblem(ABC):
     def diversity_objectives(self) -> tuple[DiversityObjectiveSimple, ...]:
         """Return the simple objectives parsed from the user's input.
 
-        The single one is the diversity metric over the problem's own distance (`distance_metric` is
-        `None`); the builder composes them into the objective the solver maximizes. `diversity_metric`
-        keeps the raw user input.
+        Today there is one, the diversity metric over the problem's own distance (`distance_metric` is
+        `None`).
         """
         return (DiversityObjectiveSimple(self.diversity_metric),)
 

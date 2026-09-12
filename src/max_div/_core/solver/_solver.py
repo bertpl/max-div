@@ -132,7 +132,7 @@ class MaxDivSolver:
                 n=self._n,
                 store=store,
                 k=self._k,
-                # the state and its score generator still take bare metrics; each objective here is
+                # the state and its score generator take bare metrics; each objective here is
                 # single-metric, so `scoring_metric` gives the one to score it by
                 diversity_metric=scoring_metric(self._objective),
                 diversity_tie_breakers=[scoring_metric(tb) for tb in self._diversity_tie_breakers],

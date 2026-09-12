@@ -34,7 +34,7 @@ def test_a_geomean_hybrid_needs_at_least_two_terms() -> None:
 
 
 # =================================================================================================
-#  distance_family_pairs (and the facts derived from it)
+#  distance_and_family_pairs (and the facts derived from it)
 # =================================================================================================
 @pytest.mark.parametrize(
     "objective, expected_pairs",
@@ -62,10 +62,10 @@ def test_a_geomean_hybrid_needs_at_least_two_terms() -> None:
         ),
     ],
 )
-def test_distance_family_pairs(objective, expected_pairs) -> None:
+def test_distance_and_family_pairs(objective, expected_pairs) -> None:
     """The distinct (distance, family) pairs an objective reads, in first-seen order, each once."""
     # --- act / assert -----------------
-    assert objective.distance_family_pairs() == expected_pairs
+    assert objective.distance_and_family_pairs() == expected_pairs
 
 
 @pytest.mark.parametrize(
@@ -73,13 +73,13 @@ def test_distance_family_pairs(objective, expected_pairs) -> None:
     [
         (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), True),
         (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE), False),  # mean-distance family
-        (DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2)), False),  # two trackers
+        (DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2)), False),  # two pairs
     ],
 )
-def test_has_single_separation_tracker(objective, expected) -> None:
-    """One separation tracker is the batched-init case; a second tracker or another family is not."""
+def test_has_single_separation_pair(objective, expected) -> None:
+    """One separation pair is the batched-init case; a second pair or another family is not."""
     # --- act / assert -----------------
-    assert objective.has_single_separation_tracker() is expected
+    assert objective.has_single_separation_pair() is expected
 
 
 # =================================================================================================
