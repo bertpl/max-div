@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from max_div._core.metrics import (
@@ -7,14 +8,17 @@ from max_div._core.metrics import (
     DiversityObjectiveHybridFlattened,
     DiversityObjectiveHybridGeoMean,
     DiversityObjectiveSimple,
-    default_tie_breaker_metrics,
-    scoring_metric,
+    DiversityTrackerSpec,
 )
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
 L1 = DistanceMetric.l1_manhattan()
 L2 = DistanceMetric.l2_euclidean()
+
+
+def _f32(values: list[float]) -> np.ndarray:
+    return np.array(values, dtype=np.float32)
 
 
 # =================================================================================================
@@ -34,19 +38,19 @@ def test_a_geomean_hybrid_needs_at_least_two_terms() -> None:
 
 
 # =================================================================================================
-#  distance_and_family_pairs (and the facts derived from it)
+#  tracker_specs (and the facts derived from it)
 # =================================================================================================
 @pytest.mark.parametrize(
-    "objective, expected_pairs",
+    "objective, expected_specs",
     [
         pytest.param(
             DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
-            ((None, MEAN_DISTANCE),),
+            (DiversityTrackerSpec(None, MEAN_DISTANCE),),
             id="simple",
         ),
         pytest.param(
             DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2)),
-            ((L1, SEPARATION), (L2, SEPARATION)),
+            (DiversityTrackerSpec(L1, SEPARATION), DiversityTrackerSpec(L2, SEPARATION)),
             id="flattened_one_family_two_distances",
         ),
         pytest.param(
@@ -57,15 +61,37 @@ def test_a_geomean_hybrid_needs_at_least_two_terms() -> None:
                     DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # repeat: (L1, SEPARATION)
                 )
             ),
-            ((None, MEAN_DISTANCE), (L1, SEPARATION)),
+            (DiversityTrackerSpec(None, MEAN_DISTANCE), DiversityTrackerSpec(L1, SEPARATION)),
             id="geomean_dedups_in_first_seen_order",
         ),
     ],
 )
-def test_distance_and_family_pairs(objective, expected_pairs) -> None:
-    """The distinct (distance, family) pairs an objective reads, in first-seen order, each once."""
+def test_tracker_specs(objective, expected_specs) -> None:
+    """The distinct specs an objective reads, in first-seen order, each once."""
     # --- act / assert -----------------
-    assert objective.distance_and_family_pairs() == expected_pairs
+    assert objective.tracker_specs() == expected_specs
+
+
+@pytest.mark.parametrize(
+    "objective, expected",
+    [
+        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), (None,)),
+        (DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2)), (L1, L2)),
+        (
+            DiversityObjectiveHybridGeoMean(
+                (
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+                )
+            ),
+            (L1, L2),
+        ),
+    ],
+)
+def test_distinct_distance_metrics(objective, expected) -> None:
+    """The distinct distance metrics an objective reads, in first-seen order."""
+    # --- act / assert -----------------
+    assert objective.distinct_distance_metrics() == expected
 
 
 @pytest.mark.parametrize(
@@ -73,51 +99,64 @@ def test_distance_and_family_pairs(objective, expected_pairs) -> None:
     [
         (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), True),
         (DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE), False),  # mean-distance family
-        (DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2)), False),  # two pairs
+        (DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2)), False),  # two specs
     ],
 )
-def test_has_single_separation_pair(objective, expected) -> None:
-    """One separation pair is the batched-init case; a second pair or another family is not."""
+def test_reads_single_separation_tracker(objective, expected) -> None:
+    """One separation spec is the batched-init case; a second spec or another family is not."""
     # --- act / assert -----------------
-    assert objective.has_single_separation_pair() is expected
+    assert objective.reads_single_separation_tracker() is expected
 
 
 # =================================================================================================
-#  Tie-breakers
+#  compute
 # =================================================================================================
-def test_build_tie_breaker_is_flattened_over_the_objectives_distances() -> None:
-    """The tie-breaker carries its metric over the distinct distances the source objective reads."""
+def test_simple_computes_its_metric_over_its_one_spec() -> None:
+    """A simple objective reduces its one spec's contribution array with its diversity metric."""
+    # --- arrange ----------------------
+    objective = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION)
+    contributions = {DiversityTrackerSpec(None, SEPARATION): _f32([4.0, 2.0, 6.0])}
+
+    # --- act / assert -----------------
+    assert objective.compute(contributions) == pytest.approx(2.0)  # min of the separation array
+
+
+def test_flattened_computes_its_metric_over_its_joined_specs() -> None:
+    """A flattened objective reduces the concatenation of all its specs' arrays with its diversity metric."""
+    # --- arrange ----------------------
+    objective = DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2))
+    contributions = {
+        DiversityTrackerSpec(L1, SEPARATION): _f32([5.0, 3.0]),
+        DiversityTrackerSpec(L2, SEPARATION): _f32([2.0, 4.0]),
+    }
+
+    # --- act / assert -----------------
+    assert objective.compute(contributions) == pytest.approx(2.0)  # min over [5, 3, 2, 4]
+
+
+def test_geomean_computes_the_geometric_mean_of_its_terms() -> None:
+    """A geometric-mean hybrid returns the geometric mean of its terms' diversity scores."""
     # --- arrange ----------------------
     objective = DiversityObjectiveHybridGeoMean(
         (
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
             DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, DistanceMetric.along_axis(0)),
-            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),  # repeat of L2
         )
     )
+    contributions = {
+        DiversityTrackerSpec(L1, SEPARATION): _f32([4.0, 8.0]),  # term 1 min = 4
+        DiversityTrackerSpec(L2, SEPARATION): _f32([9.0, 3.0]),  # term 2 min = 3
+    }
 
-    # --- act --------------------------
-    tie_breaker = objective.build_tie_breaker(DiversityMetric.NON_ZERO_SEPARATION_FRAC)
-
-    # --- assert -----------------------
-    assert tie_breaker == DiversityObjectiveHybridFlattened(
-        DiversityMetric.NON_ZERO_SEPARATION_FRAC, (L2, DistanceMetric.along_axis(0))
-    )
-
-
-def test_build_tie_breaker_on_a_simple_objective_shares_its_distance() -> None:
-    """A tie-breaker of a simple objective is flattened over that objective's one distance."""
-    # --- act --------------------------
-    tie_breaker = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION).build_tie_breaker(
-        DiversityMetric.MEAN_SEPARATION
-    )
-
-    # --- assert -----------------------
-    assert tie_breaker == DiversityObjectiveHybridFlattened(DiversityMetric.MEAN_SEPARATION, (None,))
+    # --- act / assert -----------------
+    assert objective.compute(contributions) == pytest.approx(np.sqrt(12.0))  # geometric mean of 4 and 3
 
 
+# =================================================================================================
+#  default_tie_breakers
+# =================================================================================================
 @pytest.mark.parametrize(
-    "metric, expected",
+    "diversity_metric, expected_tie_breaker_metrics",
     [
         (
             DiversityMetric.MIN_SEPARATION,
@@ -129,33 +168,35 @@ def test_build_tie_breaker_on_a_simple_objective_shares_its_distance() -> None:
         (DiversityMetric.MEAN_PAIRWISE_DISTANCE, []),
     ],
 )
-def test_default_tie_breaker_metrics_follow_the_main_metric(metric, expected) -> None:
-    """Near-degenerate main metrics get separating tie-breakers; the rest get none."""
-    # --- act / assert -----------------
-    assert default_tie_breaker_metrics(metric) == expected
+def test_a_simple_objectives_default_tie_breakers_follow_its_metric(
+    diversity_metric, expected_tie_breaker_metrics
+) -> None:
+    """A near-degenerate diversity metric gets separating tie-breakers over its own distance; the rest get none."""
+    # --- act --------------------------
+    tie_breakers = DiversityObjectiveSimple(diversity_metric, L2).default_tie_breakers()
+
+    # --- assert -----------------------
+    assert tie_breakers == [DiversityObjectiveHybridFlattened(metric, (L2,)) for metric in expected_tie_breaker_metrics]
 
 
-# =================================================================================================
-#  scoring_metric
-# =================================================================================================
-def test_scoring_metric_reads_a_single_metric_objective() -> None:
-    """A simple or flattened objective is scored by its one diversity metric."""
-    # --- act / assert -----------------
-    assert scoring_metric(DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION)) == DiversityMetric.MEAN_SEPARATION
-    flattened = DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2))
-    assert scoring_metric(flattened) == DiversityMetric.MIN_SEPARATION
-
-
-def test_scoring_metric_rejects_a_geomean_hybrid() -> None:
-    """A geometric-mean hybrid combines several metrics, so it has no single scoring metric."""
+def test_a_geomean_hybrids_default_tie_breakers_span_its_distances() -> None:
+    """A geometric-mean hybrid gets the separating pair, each flattened over its distinct distance metrics."""
     # --- arrange ----------------------
     objective = DiversityObjectiveHybridGeoMean(
         (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION),
-            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION),
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),
         )
     )
 
     # --- act / assert -----------------
-    with pytest.raises(ValueError, match="no single scoring metric"):
-        scoring_metric(objective)
+    assert objective.default_tie_breakers() == [
+        DiversityObjectiveHybridFlattened(DiversityMetric.APPROX_GEOMEAN_SEPARATION, (L1, L2)),
+        DiversityObjectiveHybridFlattened(DiversityMetric.NON_ZERO_SEPARATION_FRAC, (L1, L2)),
+    ]
+
+
+def test_a_flattened_objective_has_no_tie_breakers() -> None:
+    """A tie-breaker is not itself ranked by further tie-breakers."""
+    # --- act / assert -----------------
+    assert DiversityObjectiveHybridFlattened(DiversityMetric.MEAN_SEPARATION, (None,)).default_tie_breakers() == []

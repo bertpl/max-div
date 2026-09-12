@@ -6,16 +6,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from max_div._core.constraints.constraints import _np_con_total_violation, _np_con_total_weighted_violation
-from max_div._core.solver._diversity_contribution import selected_contributions_slot
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from numpy.typing import NDArray
 
     from max_div._core.constraints import Constraint
-    from max_div._core.metrics._diversity import DiversityMetric
-    from max_div._core.solver._diversity_contribution import SelectedContributions
+    from max_div._core.metrics import DiversityObjective, DiversityTrackerSpec
 
 
 # =================================================================================================
@@ -106,19 +104,6 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 # =================================================================================================
 #  ScoreGenerator
 # =================================================================================================
-def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
-    """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
-
-    The worst-case total violation is computed with the *same* aggregation used for live scoring: each
-    constraint's worst-case violation (`max_violationsᵢ`) is encoded as a pure shortfall (magnitude in
-    column 0) and run through `_np_con_total_weighted_violation`. Reusing the accelerator this way keeps
-    the normalization from ever drifting out of lockstep with the score under any weights / penalty mode.
-    """
-    worst_case_con_values = np.zeros((len(max_violations), 2), dtype=np.int32)
-    worst_case_con_values[:, 0] = max_violations
-    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))
-
-
 class ScoreGenerator:
     """Utility class to generate Score objects from core metrics & data structures.
 
@@ -132,8 +117,8 @@ class ScoreGenerator:
         self,
         n: int | np.int32,
         k: int,
-        diversity_metric: DiversityMetric,
-        diversity_tie_breakers: list[DiversityMetric],
+        diversity_objective: DiversityObjective,
+        diversity_tie_breakers: list[DiversityObjective],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> None:
@@ -142,8 +127,8 @@ class ScoreGenerator:
         Args:
             n: (int | np.int32) number of items in the max-div problem.
             k: (int) The target selection size for the max-div problem.
-            diversity_metric: (DiversityMetric) The diversity metric used to compute diversity scores.
-            diversity_tie_breakers: (list[DiversityMetric]) The list of diversity tie-breaker metrics.
+            diversity_objective: (DiversityObjective) The main objective, whose value is the diversity score.
+            diversity_tie_breakers: (list[DiversityObjective]) The tie-breaker objectives, scored in order.
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.
             penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
@@ -172,14 +157,9 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers -----------
-        # each metric is bound here, once, to the SelectedContributions slot of its contribution
-        # family — compute_score then just indexes, without any per-call family lookups
-        self._diversity_metric = diversity_metric
-        self._diversity_metric_slot = selected_contributions_slot(diversity_metric.contribution_family)
+        # each objective computes its own diversity score from the selection's contributions
+        self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
-        self._tie_breakers_with_slot = [
-            (tb, selected_contributions_slot(tb.contribution_family)) for tb in diversity_tie_breakers
-        ]
 
         # --- store other params -----------------
         self._constraints = constraints
@@ -192,7 +172,7 @@ class ScoreGenerator:
         return ScoreGenerator(
             n=self._n,
             k=self._k,
-            diversity_metric=self._diversity_metric,
+            diversity_objective=self._diversity_objective,
             diversity_tie_breakers=self._diversity_tie_breakers.copy(),
             constraints=self._constraints.copy(),
             penalty_quadratic=self._penalty_quadratic,
@@ -232,16 +212,15 @@ class ScoreGenerator:
         self,
         n_selected: int | np.int32,
         con_values: NDArray[np.int32],
-        selected_contributions: SelectedContributions,
+        selected_contributions: Mapping[DiversityTrackerSpec, NDArray[np.float32]],
     ) -> Score:
         """Compute the multi-component Score of a selection.
 
         Args:
             n_selected: (int | np.int32) current number of selected items.
             con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
-            selected_contributions: (SelectedContributions) the selected items' per-family
-                contribution values; slots of families no configured metric
-                consumes are never read.
+            selected_contributions: the selected items' per-item contribution values, one array per
+                tracked spec; each objective reads the arrays of its own specs.
         """
         # --- individual scores ------------------
         if n_selected <= self._k:
@@ -260,12 +239,28 @@ class ScoreGenerator:
             )
 
         # --- construct Score object -------------
-        # each metric reads the contribution slot it was bound to at construction
+        # each objective computes its own diversity score from its specs' contributions
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=float(self._diversity_metric.compute(selected_contributions[self._diversity_metric_slot])),
+            diversity=self._diversity_objective.compute(selected_contributions),
             div_tie_breakers=tuple(
-                float(tb.compute(selected_contributions[slot])) for tb, slot in self._tie_breakers_with_slot
+                tie_breaker.compute(selected_contributions) for tie_breaker in self._diversity_tie_breakers
             ),
         )
+
+
+# =================================================================================================
+#  Helpers
+# =================================================================================================
+def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
+    """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
+
+    The worst-case total violation is computed with the *same* aggregation used for live scoring: each
+    constraint's worst-case violation (`max_violationsᵢ`) is encoded as a pure shortfall (magnitude in
+    column 0) and run through `_np_con_total_weighted_violation`. Reusing the accelerator this way keeps
+    the normalization from ever drifting out of lockstep with the score under any weights / penalty mode.
+    """
+    worst_case_con_values = np.zeros((len(max_violations), 2), dtype=np.int32)
+    worst_case_con_values[:, 0] = max_violations
+    return 1.0 / (1.0 + float(_np_con_total_weighted_violation(worst_case_con_values, con_weights, quadratic)))

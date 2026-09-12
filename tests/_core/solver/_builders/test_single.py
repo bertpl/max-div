@@ -10,7 +10,6 @@ from max_div._core.metrics import (
     DistanceMetric,
     DiversityMetric,
     DiversityObjectiveHybridFlattened,
-    scoring_metric,
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import (
@@ -123,8 +122,10 @@ def test_max_div_solver_builder_tie_breaker_metrics_defaults(
     solver = builder.build()
 
     # --- assert -----------------------
-    assert scoring_metric(solver._objective) == diversity_metric
-    assert solver._diversity_tie_breakers == [solver._objective.build_tie_breaker(tb) for tb in expected_tie_breakers]
+    assert solver._objective.diversity_metric == diversity_metric
+    assert solver._diversity_tie_breakers == [
+        DiversityObjectiveHybridFlattened(tb, (None,)) for tb in expected_tie_breakers
+    ]
 
 
 def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
@@ -141,8 +142,8 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
     solver = builder.build()
 
     # --- assert -----------------------
-    assert scoring_metric(solver._objective) == DiversityMetric.GEOMEAN_SEPARATION
-    assert [scoring_metric(tb) for tb in solver._diversity_tie_breakers] == [
+    assert solver._objective.diversity_metric == DiversityMetric.GEOMEAN_SEPARATION
+    assert [tb.diversity_metric for tb in solver._diversity_tie_breakers] == [
         DiversityMetric.APPROX_GEOMEAN_SEPARATION,
         DiversityMetric.NON_ZERO_SEPARATION_FRAC,
         DiversityMetric.MEAN_SEPARATION,
@@ -222,7 +223,7 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._solver_steps[0].name() == init_strategy.name
     assert solver._solver_steps[1].name() == solver_steps[0].name()
     assert solver._solver_steps[2].name() == solver_steps[1].name()
-    assert scoring_metric(solver._objective) == DiversityMetric.MIN_SEPARATION
+    assert solver._objective.diversity_metric == DiversityMetric.MIN_SEPARATION
     assert solver._constraints == constraints
     assert solver._seed == 123
 

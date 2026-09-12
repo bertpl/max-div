@@ -16,7 +16,7 @@ from ._score import Score, ScoreGenerator
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityMetric
+    from max_div._core.metrics import DiversityObjective
     from max_div._core.metrics._distance import DistanceStore
 
 
@@ -581,15 +581,15 @@ class SolverState:
         n: int,
         store: DistanceStore,
         k: int,
-        diversity_metric: DiversityMetric,
-        diversity_tie_breakers: list[DiversityMetric],
+        diversity_objective: DiversityObjective,
+        diversity_tie_breakers: list[DiversityObjective],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> SolverState:
         # --- diversity contributions ------------
         n_np = np.int32(n)
-        contribution_trackers = DiversityContributionTrackers.for_metrics(
-            diversity_metric, diversity_tie_breakers, store
+        contribution_trackers = DiversityContributionTrackers.for_objectives(
+            diversity_objective, diversity_tie_breakers, store
         )
 
         # --- selection --------------------------
@@ -604,7 +604,7 @@ class SolverState:
         score_generator = ScoreGenerator(
             n=n_np,
             k=k,
-            diversity_metric=diversity_metric,
+            diversity_objective=diversity_objective,
             diversity_tie_breakers=diversity_tie_breakers,
             constraints=constraints,
             penalty_quadratic=penalty_quadratic,
