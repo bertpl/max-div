@@ -121,9 +121,9 @@ class SolverBuilderBase:
         )
         return factory, factory.resolved_storage()
 
-    def _determine_diversity_tie_breakers(self) -> list[DiversityMetric]:
-        """Return the tie-breakers to score with: the user's if set, otherwise per the main metric."""
+    def _determine_diversity_tie_breakers(self) -> list[DiversityObjective]:
+        """Return the tie-breakers to score with: the user's metrics as flattened objectives, else the defaults."""
         if not self._default_diversity_tie_breakers:
-            return self._diversity_tie_breakers
+            return [self._objective.tie_breaker(metric) for metric in self._diversity_tie_breakers]
         else:
             return self._objective.default_tie_breakers

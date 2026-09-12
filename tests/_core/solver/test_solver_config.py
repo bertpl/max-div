@@ -31,7 +31,7 @@ def test_resolve_returns_the_factory_and_a_config_over_it():
     assert factory.determine_storage_types() != [DistanceStorageType.AUTO]  # AUTO is resolved to something concrete
     assert config.seed == 99
     assert config.k == 4
-    assert config.objective.main_metric == DiversityMetric.GEOMEAN_SEPARATION  # the problem's own metric
+    assert config.objective.main_diversity_metric == DiversityMetric.GEOMEAN_SEPARATION  # the problem's own metric
 
 
 def test_a_config_builds_a_solver_over_any_store():

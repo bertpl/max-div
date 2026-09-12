@@ -1,2 +1,9 @@
 from ._distance import DistanceMetric, validate_axis_within_dimensions, validate_cosine_distance_vectors
-from ._diversity import DiversityContributionFamily, DiversityMetric, DiversityObjective, DiversityTerm
+from ._diversity import (
+    ContributionKey,
+    DiversityContributionFamily,
+    DiversityMetric,
+    DiversityObjective,
+    DiversityTerm,
+    TermAggregation,
+)

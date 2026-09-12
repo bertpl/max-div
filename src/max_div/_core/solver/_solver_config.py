@@ -9,7 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DiversityMetric, DiversityObjective
+from max_div._core.metrics import DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
@@ -26,7 +26,7 @@ class SolverConfig:
     n: int
     k: int
     objective: DiversityObjective
-    diversity_tie_breakers: list[DiversityMetric]
+    diversity_tie_breakers: list[DiversityObjective]
     constraints: list[Constraint]
     solver_steps: list[SolverStep]
     seed: int

@@ -6,7 +6,7 @@ import numpy as np
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
 from max_div._core.constraints.constraints import _np_con_count_satisfied
-from max_div._core.metrics import DiversityMetric, DiversityObjective
+from max_div._core.metrics import DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
@@ -37,7 +37,7 @@ class MaxDivSolver:
         store_provider: Callable[[], DistanceStore],
         k: int,
         objective: DiversityObjective,
-        diversity_tie_breakers: list[DiversityMetric],
+        diversity_tie_breakers: list[DiversityObjective],
         constraints: list[Constraint],
         solver_steps: list[SolverStep],
         seed: int = 42,
@@ -55,7 +55,8 @@ class MaxDivSolver:
                 store up front.
             k: (int) The number of items to be selected from the input set ('universe').
             objective: (DiversityObjective) The diversity objective to maximize.
-            diversity_tie_breakers: (list[DiversityMetric]) A list of diversity tie-breaker metrics to use.
+            diversity_tie_breakers: (list[DiversityObjective]) The tie-breaker objectives, scored in order
+                after the objective.
             constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
             solver_steps: (list[SolverStep]) A list of solver steps to execute,
                 the first of which needs to be an InitializationStep,
@@ -131,8 +132,9 @@ class MaxDivSolver:
                 n=self._n,
                 store=store,
                 k=self._k,
-                diversity_metric=self._objective.main_metric,
-                diversity_tie_breakers=self._diversity_tie_breakers,
+                # the state and its score generator read bare metrics; every objective is one term
+                diversity_metric=self._objective.main_diversity_metric,
+                diversity_tie_breakers=[tb.main_diversity_metric for tb in self._diversity_tie_breakers],
                 constraints=self._constraints,
                 penalty_quadratic=(self._constraint_penalty == ConstraintPenalty.QUADRATIC),
             )
