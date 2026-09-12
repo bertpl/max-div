@@ -5,7 +5,7 @@ from max_div._core.constraints import Constraint
 from max_div._core.metrics import DiversityContributionFamily, DiversityMetric, DiversityTrackerSpec
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
 
-from .objectives import single_term_objective, tie_breaker_objectives
+from .objectives import simple_objective, tie_breaker_objectives
 
 _SEPARATION_SPEC = DiversityTrackerSpec(None, DiversityContributionFamily.SEPARATION)
 
@@ -110,7 +110,7 @@ def test_score_generator_size():
     generator = ScoreGenerator(
         n=20,
         k=3,
-        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -138,7 +138,7 @@ def test_score_generator_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -209,7 +209,7 @@ def test_constraints_score_for_violation(violation: float, expected: float):
     generator = ScoreGenerator(
         n=11,
         k=8,
-        diversity_objective=single_term_objective(DiversityMetric.GEOMEAN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=constraints,
     )
@@ -227,7 +227,7 @@ def test_constraints_score_for_violation_rejects_quadratic():
     generator = ScoreGenerator(
         n=3,
         k=3,
-        diversity_objective=single_term_objective(DiversityMetric.GEOMEAN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)],
         penalty_quadratic=True,
@@ -248,7 +248,7 @@ def test_score_generator_constraints_linear_vs_quadratic():
     kwargs = {
         "n": 100,
         "k": 8,
-        "diversity_objective": single_term_objective(DiversityMetric.MIN_SEPARATION),
+        "diversity_objective": simple_objective(DiversityMetric.MIN_SEPARATION),
         "diversity_tie_breakers": [],
     }
     gen_linear = ScoreGenerator(constraints=constraints, **kwargs)
@@ -276,7 +276,7 @@ def test_score_generator_constraints_weighted():
     gen = ScoreGenerator(
         n=100,
         k=8,
-        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=constraints,
     )
@@ -301,7 +301,7 @@ def test_score_generator_constraints_no_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )
@@ -320,7 +320,7 @@ def test_score_generator_diversity_scores():
     generator = ScoreGenerator(
         n=100,
         k=5,
-        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=tie_breaker_objectives(
             [DiversityMetric.MEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]
         ),
@@ -412,7 +412,7 @@ def test_compute_score_binds_each_objective_to_its_own_spec():
     generator = ScoreGenerator(
         n=10,
         k=3,
-        diversity_objective=single_term_objective(DiversityMetric.MEAN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.MEAN_SEPARATION),
         diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.MIN_SEPARATION]),
         constraints=[],
     )

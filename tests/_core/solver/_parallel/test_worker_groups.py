@@ -7,7 +7,7 @@ from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._parallel import FixedGroupCount, PowerLawGroupMerge, WorkerGroupState
 from max_div._core.solver._solver_state import SolverState
-from tests._core.solver.objectives import single_term_objective
+from tests._core.solver.objectives import simple_objective
 
 
 def _group_state(n_workers: int, group_sizes: list[int] | None = None, dynamic: bool = True) -> WorkerGroupState:
@@ -35,7 +35,7 @@ def _state_with(indices: list[int]) -> SolverState:
         n=vectors.shape[0],
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
         k=3,
-        diversity_objective=single_term_objective(DiversityMetric.MIN_SEPARATION),
+        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
         constraints=[],
     )

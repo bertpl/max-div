@@ -54,7 +54,6 @@ class DiversityContributionTrackers:
 
         The set holds one tracker per distinct spec the objectives read — the main objective's specs
         first, then the tie-breakers' — and `main` is the tracker of the main objective's first spec.
-        Every tracker reads the one `store`; a spec's tracker is built for the spec's contribution family.
         """
         specs = dict.fromkeys(
             spec for objective in (diversity_objective, *diversity_tie_breakers) for spec in objective.tracker_specs()

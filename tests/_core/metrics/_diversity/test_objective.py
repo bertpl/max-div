@@ -102,10 +102,10 @@ def test_distinct_distance_metrics(objective, expected) -> None:
         (DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2)), False),  # two specs
     ],
 )
-def test_reads_single_separation_tracker(objective, expected) -> None:
+def test_has_single_separation_tracker(objective, expected) -> None:
     """One separation spec is the batched-init case; a second spec or another family is not."""
     # --- act / assert -----------------
-    assert objective.reads_single_separation_tracker() is expected
+    assert objective.has_single_separation_tracker() is expected
 
 
 # =================================================================================================
@@ -180,7 +180,7 @@ def test_a_simple_objectives_default_tie_breakers_follow_its_metric(
 
 
 def test_a_geomean_hybrids_default_tie_breakers_span_its_distances() -> None:
-    """A geometric-mean hybrid gets the separating pair, each flattened over its distinct distance metrics."""
+    """A geometric-mean hybrid gets a pair of separating tie-breakers over its distinct distance metrics."""
     # --- arrange ----------------------
     objective = DiversityObjectiveHybridGeoMean(
         (

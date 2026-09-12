@@ -11,7 +11,7 @@ from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._strategies._initialization import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
 from max_div._core.solver._strategies._optimization._optim_guided_swaps import OptimGuidedSwaps
-from tests._core.solver.objectives import single_term_objective
+from tests._core.solver.objectives import simple_objective
 from tests.helpers import swept_benchmark_problems
 
 if TYPE_CHECKING:
@@ -69,7 +69,7 @@ def test_optim_guided_swaps(
         n=problem.n,
         store=DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric),
         k=problem.k,
-        diversity_objective=single_term_objective(problem.diversity_metric),
+        diversity_objective=simple_objective(problem.diversity_metric),
         diversity_tie_breakers=[],
         constraints=problem.constraints,
     )

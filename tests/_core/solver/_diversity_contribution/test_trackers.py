@@ -8,7 +8,7 @@ from max_div._core.solver._diversity_contribution import (
     MeanDistanceTracker,
     SeparationTracker,
 )
-from tests._core.solver.objectives import single_term_objective, tie_breaker_objectives
+from tests._core.solver.objectives import simple_objective, tie_breaker_objectives
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
@@ -32,7 +32,7 @@ def test_for_objectives_single_family(store: DistanceStore):
     """Two separation-family metrics yield one SeparationTracker, which is the main one."""
     # --- act --------------------------
     trackers = DiversityContributionTrackers.for_objectives(
-        single_term_objective(DiversityMetric.GEOMEAN_SEPARATION),
+        simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         store,
     )
@@ -47,7 +47,7 @@ def test_for_objectives_repeated_family(store: DistanceStore):
     """Tie-breakers repeating the main objective's family add no tracker."""
     # --- act --------------------------
     trackers = DiversityContributionTrackers.for_objectives(
-        single_term_objective(DiversityMetric.MIN_SEPARATION),
+        simple_objective(DiversityMetric.MIN_SEPARATION),
         tie_breaker_objectives([DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION]),
         store,
     )
@@ -103,7 +103,7 @@ def test_mutations_reach_every_tracker(store: DistanceStore):
 def test_copy_is_independent(store: DistanceStore):
     # --- arrange ----------------------
     trackers = DiversityContributionTrackers.for_objectives(
-        single_term_objective(DiversityMetric.GEOMEAN_SEPARATION), [], store
+        simple_objective(DiversityMetric.GEOMEAN_SEPARATION), [], store
     )
     trackers.add(np.int32(0))
     clone = trackers.copy()
@@ -126,7 +126,7 @@ def test_selected_contributions_one_array_per_spec(store: DistanceStore):
     """A single-family set returns one spec's array, the selected vectors' separation values."""
     # --- arrange ----------------------
     trackers = DiversityContributionTrackers.for_objectives(
-        single_term_objective(DiversityMetric.GEOMEAN_SEPARATION), [], store
+        simple_objective(DiversityMetric.GEOMEAN_SEPARATION), [], store
     )
     trackers.add(np.int32(0))
     trackers.add(np.int32(2))  # selection: points 0.0 and 3.0 on a line
@@ -143,7 +143,7 @@ def test_selected_contributions_one_array_per_spec(store: DistanceStore):
 
 
 def test_selected_contributions_keys_each_array_by_its_spec():
-    """Each spec's array holds the separations computed with that spec's distance, keyed by the spec."""
+    """Each spec's array holds the separations computed with that spec's distance metric, keyed by the spec."""
     # --- arrange ----------------------
     # one family, two distances, on 2-D vectors where L1 and L2 disagree, so a swapped key is detectable
     vectors_2d = np.array([[0.0, 0.0], [3.0, 4.0], [1.0, 1.0], [10.0, 0.0]], dtype=np.float32)
