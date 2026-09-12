@@ -1,6 +1,6 @@
 """A diversity objective is what the solver maximizes: one or more diversity terms.
 
-The solver maximizes one objective, the primary objective, and ranks selections that tie on it by
+The solver maximizes one objective, the main objective, and ranks selections that tie on it by
 tie-breaker objectives; a tie-breaker is an objective with `FLATTENED_TERMS` aggregation. The
 solver, its config, builders, presets and strategies read this type, never the bare
 `DiversityMetric` enum, because an objective of several terms cannot be a single enum member; the
@@ -24,7 +24,7 @@ DiversityContributionKey = tuple[DiversityContributionFamily, DistanceMetric | N
 class DiversityObjective:
     """The diversity objective the solver maximizes: terms plus the aggregation type that combines their values.
 
-    A caller never picks the aggregation type: the default serves the primary objective, built from
+    A caller never picks the aggregation type: the default serves the main objective, built from
     a problem's `diversity_terms`, and `build_tie_breaker` sets a tie-breaker's.
     """
 
