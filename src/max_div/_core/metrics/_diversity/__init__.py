@@ -5,6 +5,4 @@ from ._objective import (
     DiversityObjectiveHybridGeoMean,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    distinct_tracker_specs_of,
-    tracker_spec_positions,
 )

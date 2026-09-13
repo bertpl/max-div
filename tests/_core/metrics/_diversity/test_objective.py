@@ -9,8 +9,6 @@ from max_div._core.metrics import (
     DiversityObjectiveHybridGeoMean,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    distinct_tracker_specs_of,
-    tracker_spec_positions,
 )
 
 SEPARATION = DiversityContributionFamily.SEPARATION
@@ -228,50 +226,3 @@ def test_a_flattened_objective_has_no_tie_breakers() -> None:
     """A tie-breaker is not itself ranked by further tie-breakers."""
     # --- act / assert -----------------
     assert DiversityObjectiveHybridFlattened(DiversityMetric.MEAN_SEPARATION, (None,)).default_tie_breakers() == []
-
-
-# =================================================================================================
-#  distinct_tracker_specs_of
-# =================================================================================================
-def test_distinct_tracker_specs_of_is_first_seen_over_objectives_then_specs() -> None:
-    """Specs are ordered by objective first, and within one objective by that objective's own spec order.
-
-    A repeated spec keeps its first position.
-    """
-    # --- arrange ----------------------
-    main = DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L2, L1))
-    tie_breaker = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1)  # repeats (L1, SEPARATION)
-    mean_distance_tie_breaker = DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1)
-
-    # --- act --------------------------
-    specs = distinct_tracker_specs_of((main, tie_breaker, mean_distance_tie_breaker))
-
-    # --- assert -----------------------
-    assert specs == (
-        DiversityTrackerSpec(L2, SEPARATION),
-        DiversityTrackerSpec(L1, SEPARATION),
-        DiversityTrackerSpec(L1, MEAN_DISTANCE),
-    )
-
-
-# =================================================================================================
-#  tracker_spec_positions
-# =================================================================================================
-def test_tracker_spec_positions_follows_the_order_of_the_specs_looked_up() -> None:
-    """Each spec's position in the tracked specs is returned in the order the specs are asked for."""
-    # --- arrange ----------------------
-    l1_sep, l2_sep, l1_mean = (
-        DiversityTrackerSpec(L1, SEPARATION),
-        DiversityTrackerSpec(L2, SEPARATION),
-        DiversityTrackerSpec(L1, MEAN_DISTANCE),
-    )
-
-    # --- act / assert -----------------
-    assert tracker_spec_positions((l1_mean, l1_sep), (l1_sep, l2_sep, l1_mean)) == (2, 0)
-
-
-def test_tracker_spec_positions_rejects_a_spec_that_is_not_tracked() -> None:
-    """A spec absent from the tracked specs has no position, so the lookup raises."""
-    # --- act / assert -----------------
-    with pytest.raises(ValueError):
-        tracker_spec_positions((DiversityTrackerSpec(L2, SEPARATION),), (DiversityTrackerSpec(L1, SEPARATION),))

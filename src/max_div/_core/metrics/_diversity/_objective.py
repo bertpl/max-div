@@ -27,7 +27,7 @@ from max_div._core._math.geomean import geomean_f32
 from ._enum import DiversityContributionFamily, DiversityMetric
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Sequence
 
     from numpy.typing import NDArray
 
@@ -158,7 +158,7 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
         """The distinct specs of the terms, in first-seen order."""
-        return distinct_tracker_specs_of(self.terms)
+        return tuple(dict.fromkeys(term.tracker_specs[0] for term in self.terms))
 
     @cached_property
     def _terms_with_positions(self) -> tuple[tuple[DiversityObjectiveSimple, int], ...]:
@@ -166,7 +166,7 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
 
         Two terms that read the same spec get the same position.
         """
-        return tuple((term, tracker_spec_positions(term.tracker_specs, self.tracker_specs)[0]) for term in self.terms)
+        return tuple((term, self.tracker_specs.index(term.tracker_specs[0])) for term in self.terms)
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
         """Return the separating tie-breakers over the distinct distance metrics the terms read."""
@@ -206,29 +206,6 @@ class DiversityObjectiveHybridFlattened(DiversityObjective):
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def distinct_tracker_specs_of(objectives: Iterable[DiversityObjective]) -> tuple[DiversityTrackerSpec, ...]:
-    """Return the distinct specs the objectives read, in the order the objectives list them.
-
-    Each objective contributes its `tracker_specs` in its own order, and a repeated spec keeps its
-    first position.
-    """
-    return tuple(dict.fromkeys(spec for objective in objectives for spec in objective.tracker_specs))
-
-
-def tracker_spec_positions(
-    tracker_specs: tuple[DiversityTrackerSpec, ...], tracked_specs: tuple[DiversityTrackerSpec, ...]
-) -> tuple[int, ...]:
-    """Return the position of each of `tracker_specs` in `tracked_specs`, in the order of `tracker_specs`.
-
-    The caller reads an objective's arrays out of arrays ordered as `tracked_specs`, so every spec
-    must be present.
-
-    Raises:
-        ValueError: If a spec of `tracker_specs` is not in `tracked_specs`.
-    """
-    return tuple(tracked_specs.index(spec) for spec in tracker_specs)
-
-
 def _separating_tie_breaker_metrics(diversity_metric: DiversityMetric) -> tuple[DiversityMetric, ...]:
     """Return the diversity metrics to use as tie-breakers when the caller sets none, by the main diversity metric."""
     if diversity_metric == DiversityMetric.MIN_SEPARATION:

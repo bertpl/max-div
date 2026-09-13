@@ -52,11 +52,13 @@ def _ceiling_cell(problem: VectorMaxDivProblem, result: FeasibilityResult) -> st
         return "1.0"
     if result.status == FeasibilityStatus.UNKNOWN:
         return "-"
+    diversity_objective = DiversityObjectiveSimple(problem.diversity_metric)
     score_generator = ScoreGenerator(
         n=problem.n,
         k=problem.k,
-        diversity_objective=DiversityObjectiveSimple(problem.diversity_metric),
+        diversity_objective=diversity_objective,
         diversity_tie_breakers=[],
+        tracker_specs=diversity_objective.tracker_specs,
         constraints=problem.constraints,
     )
     return f"{score_generator.constraints_score_for_violation(result.violation_floor):.5f}"

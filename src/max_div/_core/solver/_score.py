@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from max_div._core.constraints.constraints import _np_con_total_violation, _np_con_total_weighted_violation
-from max_div._core.metrics import distinct_tracker_specs_of, tracker_spec_positions
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -120,6 +119,7 @@ class ScoreGenerator:
         k: int,
         diversity_objective: DiversityObjective,
         diversity_tie_breakers: list[DiversityObjective],
+        tracker_specs: tuple[DiversityTrackerSpec, ...],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> None:
@@ -130,6 +130,8 @@ class ScoreGenerator:
             k: (int) The target selection size for the max-div problem.
             diversity_objective: (DiversityObjective) The main objective, whose value is the diversity score.
             diversity_tie_breakers: (list[DiversityObjective]) The tie-breaker objectives, scored in order.
+            tracker_specs: the specs of the contribution trackers, in the order `compute_score` receives
+                their arrays; must contain every spec the objectives read.
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.
             penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
@@ -158,20 +160,35 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers -----------
-        # `tracked_specs` is the order in which `DiversityContributionTrackers.selected_contributions`
-        # returns the arrays, because that method and this constructor both call
-        # `distinct_tracker_specs_of`. Each objective's scorer is built here, once, not on every
-        # `compute_score` call.
+        # each objective's scorer is built here, once, not on every `compute_score` call
         self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
-        tracked_specs = distinct_tracker_specs_of((diversity_objective, *diversity_tie_breakers))
-        self._diversity_scorer = _objective_scorer(diversity_objective, tracked_specs)
-        self._tie_breaker_scorers = tuple(
-            _objective_scorer(tie_breaker, tracked_specs) for tie_breaker in diversity_tie_breakers
-        )
+        self._tracker_specs = tracker_specs
+        self._diversity_scorer = self._scorer_for(diversity_objective)
+        self._tie_breaker_scorers = tuple(self._scorer_for(tie_breaker) for tie_breaker in diversity_tie_breakers)
 
         # --- store other params -----------------
         self._constraints = constraints
+
+    def _scorer_for(self, diversity_objective: DiversityObjective) -> Callable[[Sequence[NDArray[np.float32]]], float]:
+        """Return the function that scores `diversity_objective` from the arrays `compute_score` receives.
+
+        `compute` reads the objective's arrays in the objective's own spec order, so the scorer picks
+        them out of the received arrays by position. When the objective's specs are exactly the
+        tracker specs, in that order, as in the usual single-metric problem where every objective
+        reads the same spec, `compute` itself is the scorer: no picking, and no extra call on the
+        hot path.
+        """
+        positions = tuple(self._tracker_specs.index(spec) for spec in diversity_objective.tracker_specs)
+        compute_objective_score = diversity_objective.compute
+        if positions == tuple(range(len(self._tracker_specs))):
+            return compute_objective_score
+        else:
+
+            def score_from_picked_arrays(contributions: Sequence[NDArray[np.float32]]) -> float:
+                return compute_objective_score(tuple([contributions[position] for position in positions]))
+
+            return score_from_picked_arrays
 
     # -------------------------------------------------------------------------
     #  Copy
@@ -183,6 +200,7 @@ class ScoreGenerator:
             k=self._k,
             diversity_objective=self._diversity_objective,
             diversity_tie_breakers=self._diversity_tie_breakers.copy(),
+            tracker_specs=self._tracker_specs,
             constraints=self._constraints.copy(),
             penalty_quadratic=self._penalty_quadratic,
         )
@@ -229,8 +247,7 @@ class ScoreGenerator:
             n_selected: (int | np.int32) current number of selected items.
             con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
             selected_contributions: the selected items' per-item contribution values, one array per
-                tracked spec, in the order `DiversityContributionTrackers.selected_contributions`
-                returns them.
+                tracker, in the order of the generator's `tracker_specs`.
         """
         # --- individual scores ------------------
         if n_selected <= self._k:
@@ -262,28 +279,6 @@ class ScoreGenerator:
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def _objective_scorer(
-    diversity_objective: DiversityObjective, tracked_specs: tuple[DiversityTrackerSpec, ...]
-) -> Callable[[Sequence[NDArray[np.float32]]], float]:
-    """Return the function that scores `diversity_objective` from arrays ordered as `tracked_specs`.
-
-    `compute` reads the objective's arrays in the objective's own spec order, so the scorer picks
-    them out of the tracked arrays by position. When the objective's specs are exactly the tracked
-    specs, in that order, as in the usual single-metric problem where every objective reads the
-    same spec, `compute` itself is the scorer: no picking, and no extra call on the hot path.
-    """
-    positions = tracker_spec_positions(diversity_objective.tracker_specs, tracked_specs)
-    compute_objective_score = diversity_objective.compute
-    if positions == tuple(range(len(tracked_specs))):
-        return compute_objective_score
-    else:
-
-        def score_from_picked_arrays(contributions: Sequence[NDArray[np.float32]]) -> float:
-            return compute_objective_score(tuple([contributions[position] for position in positions]))
-
-        return score_from_picked_arrays
-
-
 def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
     """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
 

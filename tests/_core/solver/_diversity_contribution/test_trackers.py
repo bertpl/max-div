@@ -138,7 +138,7 @@ def test_selected_contributions_one_array_per_spec(store: DistanceStore):
     contributions = trackers.selected_contributions(selected, np.int32(2), selected_indices)
 
     # --- assert -----------------------
-    assert trackers.tracked_specs == (DiversityTrackerSpec(None, SEPARATION),)  # one tracked spec
+    assert trackers.tracker_specs == (DiversityTrackerSpec(None, SEPARATION),)  # one tracked spec
     assert len(contributions) == 1
     np.testing.assert_allclose(contributions[0], [3.0, 3.0])
 
@@ -169,7 +169,7 @@ def test_selected_contributions_orders_the_arrays_as_the_specs():
     contributions = trackers.selected_contributions(selected, np.int32(3), selected_indices)
 
     # --- assert -----------------------
-    assert trackers.tracked_specs == (spec_l1, spec_l2)
+    assert trackers.tracker_specs == (spec_l1, spec_l2)
     np.testing.assert_allclose(
         contributions[0], ref_l1.contribution_wrt_selection(selected, np.int32(3))[selected_indices]
     )
