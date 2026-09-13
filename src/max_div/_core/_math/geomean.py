@@ -46,3 +46,18 @@ def fast_geomean_f32(values: NDArray[np.float32]) -> np.float32:
     for i in range(n):
         log_sum += fast_log2_f32(values[i])
     return fast_exp2_f32(log_sum / n)
+
+
+@njit("void(float32[:, ::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
+def geomean_per_column_f32(values: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write into `out` the geometric mean of each column of `values`, a (J, n) array, J >= 1.
+
+    Each column is reduced as `geomean_f32` reduces a vector: a zero entry makes that column's
+    mean zero, a +inf entry makes it +inf, and both together give nan.
+    """
+    n_rows, n_cols = values.shape
+    for i in range(n_cols):
+        log_sum = np.float32(0.0)
+        for j in range(n_rows):
+            log_sum += np.log(values[j, i])
+        out[i] = np.exp(log_sum / n_rows)
