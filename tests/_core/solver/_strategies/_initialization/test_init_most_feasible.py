@@ -19,7 +19,7 @@ def _state(constraints: list[Constraint], n: int = 20, k: int = 8) -> SolverStat
     vectors = np.random.default_rng(42).random((n, 3)).astype(np.float32)
     return SolverState.new(
         n=n,
-        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
+        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean())},
         k=k,
         diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
         constraints=constraints,

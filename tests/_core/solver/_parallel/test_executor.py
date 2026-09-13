@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 import pytest
 
+from max_div._core.metrics import DiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver._builders import MaxDivSolverBuilder
 from max_div._core.solver._duration import iterations
@@ -19,6 +20,7 @@ from max_div._core.solver._parallel._progress_view import ParallelProgressView
 from max_div._core.solver._parallel._result import WorkerResult
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import ProgressReporter, SnapshotRequirements, Verbosity
+from tests._core.solver.objectives import simple_objective
 
 
 def _independent_coordinators(config, n: int):
@@ -231,8 +233,10 @@ class _FailingConfig:
     """A picklable stand-in for a SolverConfig whose solver construction raises inside the worker."""
 
     seed: int = 0
+    # one single-distance objective, so the worker keys the one attached store before build_solver runs
+    diversity_objectives = (simple_objective(DiversityMetric.MIN_SEPARATION),)
 
-    def build_solver(self, store) -> None:
+    def build_solver(self, stores_by_distance) -> None:
         raise RuntimeError("boom: deliberately failing worker")
 
 

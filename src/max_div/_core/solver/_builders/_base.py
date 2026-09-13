@@ -124,8 +124,11 @@ class SolverBuilderBase:
 
     def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
         """Return the store factory and each store's resolved (distance, storage type)."""
-        factory = DistanceStoreFactory.for_objective(
-            self._problem, self._primary_objective, self._distance_storage_type, total_physical_memory_bytes()
+        factory = DistanceStoreFactory.for_objectives(
+            self._problem,
+            self._determine_diversity_objectives(),
+            self._distance_storage_type,
+            total_physical_memory_bytes(),
         )
         return factory, factory.resolved_storage()
 

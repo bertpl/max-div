@@ -21,7 +21,12 @@ from collections.abc import Sequence
 from multiprocessing.process import BaseProcess
 from multiprocessing.queues import Queue
 
-from max_div._core.solver._distance_storage import DistanceStoreFactory, SharedStoreSpec
+from max_div._core.solver._distance_storage import (
+    DistanceStoreFactory,
+    SharedStoreSpec,
+    distinct_store_distances,
+    stores_by_distance,
+)
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot, SnapshotRequirements
 from max_div._core.solver._solver_config import SolverConfig
 
@@ -120,7 +125,12 @@ def solve_in_worker(
         reporter = ProgressReporter.silent()
     try:
         with DistanceStoreFactory.attach_distance_stores(specs) as stores:
-            solution = config.build_solver(store=stores[0]).solve(coordinator=coordinator, progress_reporter=reporter)
+            # the publish order is distinct_store_distances(objectives), so the worker rebuilds the
+            # same distance -> store mapping from its own objectives and the attached stores
+            mapping = stores_by_distance(distinct_store_distances(config.diversity_objectives), stores)
+            solution = config.build_solver(stores_by_distance=mapping).solve(
+                coordinator=coordinator, progress_reporter=reporter
+            )
             messages.put(WorkerResult(worker_index=worker_index, seed=config.seed, solution=solution))
     except Exception as exc:  # noqa: BLE001 -- report ANY failure to the parent
         # the exception is suppressed after reporting: re-raising would print the traceback to

@@ -82,8 +82,6 @@ class DistanceStoreFactory:
             raise ValueError("A factory needs at least one distance.")
         is_vector_problem = isinstance(problem, VectorMaxDivProblem)
         for distance in distances:
-            if is_vector_problem and distance is None:
-                raise ValueError("A vector problem has no given distances; every entry must be a DistanceMetric.")
             if not is_vector_problem and distance is not None:
                 raise ValueError(
                     "A distance-input problem has no vectors; every entry must be None (its given distances)."
@@ -94,24 +92,25 @@ class DistanceStoreFactory:
         self._total_memory_bytes = total_memory_bytes
 
     @classmethod
-    def for_objective(
+    def for_objectives(
         cls,
         problem: MaxDivProblem,
-        objective: DiversityObjective,
+        diversity_objectives: Sequence[DiversityObjective],
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> "DistanceStoreFactory":
-        """Return the factory for the distinct distances the objective reads.
+        """Return the factory for the distinct distances the objectives read, one store per distance.
 
-        A distance of `None` inherits the distance the problem provides. Distances that repeat
-        across the objective collapse to one store, in first-seen order.
+        The distances are kept as the objectives declare them (`None` for the problem's own distance), so a
+        store can be looked up by the distance an objective declares, without resolving it. `None`
+        is resolved to the problem's distance only when a store is actually built, and in the report.
         """
-        problem_distance = problem.default_distance_metric
-        distinct_distances: list[StoreDistance] = []
-        for distance_metric in objective.distinct_distance_metrics():
-            if (resolved_distance := distance_metric or problem_distance) not in distinct_distances:
-                distinct_distances.append(resolved_distance)
-        return cls(problem, distinct_distances, storage_type, total_memory_bytes)
+        return cls(problem, distinct_store_distances(diversity_objectives), storage_type, total_memory_bytes)
+
+    @property
+    def distances(self) -> tuple[StoreDistance, ...]:
+        """Return the distances this factory builds stores for, in store order (as the objectives declare them)."""
+        return self._distances
 
     # --------------------------------------------------------------------------
     #  Policy
@@ -141,14 +140,26 @@ class DistanceStoreFactory:
         return [DistanceStorageType.LAZY] * count
 
     def resolved_storage(self) -> DistanceStorageTypes:
-        """Return each store's distance paired with its resolved storage type, in store order."""
-        return DistanceStorageTypes(tuple(zip(self._distances, self.determine_storage_types(), strict=True)))
+        """Return each store's distance paired with its resolved storage type, in store order.
+
+        A `None` distance (the problem's own distance) is reported as the metric it resolves to, so
+        the reported distance is a metric name rather than blank.
+        """
+        return DistanceStorageTypes(tuple(zip(self._resolved_distances(), self.determine_storage_types(), strict=True)))
+
+    def _resolved_distances(self) -> tuple[StoreDistance, ...]:
+        """Return each store's distance with a vector problem's `None` (its own distance) replaced by its metric.
+
+        A distance-input problem's `None` stays `None`: its default distance is `None` (it holds given
+        distances, not a metric).
+        """
+        return tuple(distance or self._problem.default_distance_metric for distance in self._distances)
 
     # --------------------------------------------------------------------------
     #  Construction of the stores
     # --------------------------------------------------------------------------
     def create_stores(self) -> list[DistanceStore]:
-        """Build the distance stores in this process, one per distance, in order.
+        """Build the distance stores in this process, one per distance, in store order.
 
         Raises:
             ValueError: For the LAZY storage type on a distance-input problem, which has no vectors
@@ -156,6 +167,10 @@ class DistanceStoreFactory:
                 at all.
         """
         return self._build(InProcessDistanceStoreAllocator())
+
+    def create_stores_by_distance(self) -> dict[StoreDistance, DistanceStore]:
+        """Build the stores in this process, keyed by the distance each was built for (`None` = the problem's own)."""
+        return stores_by_distance(self._distances, self.create_stores())
 
     @contextmanager
     def publish_distance_stores(self) -> Iterator[tuple[SharedStoreSpec, ...]]:
@@ -207,8 +222,8 @@ class DistanceStoreFactory:
         if n_full:
             check_fits_physical_memory(n_full * full_matrix_bytes(n), lazy_available=True)
         stores = []
-        for distance, store_type in zip(self._distances, store_types, strict=True):
-            assert distance is not None  # noqa: S101 -- the constructor rejects None for a vector problem
+        for distance, store_type in zip(self._resolved_distances(), store_types, strict=True):
+            assert distance is not None  # noqa: S101 -- a vector problem always resolves to a metric
             if store_type == DistanceStorageType.FULL_MATRIX:
                 matrix = allocator.allocate((n, n), KIND_FULL_MATRIX)
                 compute_full_matrix(problem.vectors, distance, out=matrix)
@@ -230,3 +245,30 @@ class DistanceStoreFactory:
             matrix = allocator.allocate((n, n), KIND_FULL_MATRIX)
             expand_condensed(problem.distances, n, out=matrix)
         return DistanceStore.full_matrix(matrix)
+
+
+# ==================================================================================================
+#  Helpers
+# ==================================================================================================
+def distinct_store_distances(diversity_objectives: Sequence[DiversityObjective]) -> tuple[StoreDistance, ...]:
+    """Return the distinct distances the objectives read, in first-seen order (`None` for the problem's own distance).
+
+    The order is deterministic from the objectives alone, so a worker process rebuilds the same
+    one-store-per-distance mapping from its objectives and the stores it attaches.
+    """
+    return tuple(
+        dict.fromkeys(
+            distance for objective in diversity_objectives for distance in objective.distinct_distance_metrics()
+        )
+    )
+
+
+def stores_by_distance(
+    distances: Sequence[StoreDistance], stores: Sequence[DistanceStore]
+) -> dict[StoreDistance, DistanceStore]:
+    """Pair each distance with its store, in the shared build order (`distinct_store_distances`).
+
+    The publisher and a worker both call this over that one order, so the mapping a worker rebuilds
+    from its attached stores matches the one the publisher built.
+    """
+    return dict(zip(distances, stores, strict=True))

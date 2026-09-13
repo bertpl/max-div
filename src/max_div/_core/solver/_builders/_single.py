@@ -109,7 +109,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         large store is not held between building the solver and running it.
         """
         factory, config = self.prepare_storage_and_config()
-        return config.build_solver(store_provider=lambda: factory.create_stores()[0])
+        return config.build_solver(stores_by_distance_provider=factory.create_stores_by_distance)
 
     def prepare_storage_and_config(self) -> tuple[DistanceStoreFactory, SolverConfig]:
         """Return the factory building this configuration's stores, and the solver config over them.

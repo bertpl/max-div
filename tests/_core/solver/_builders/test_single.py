@@ -159,14 +159,14 @@ def test_the_store_is_built_by_solve_not_by_build(dummy_problem, monkeypatch):
     from max_div._core.solver._distance_storage import DistanceStoreFactory
 
     builds = 0
-    real_create = DistanceStoreFactory.create_stores
+    real_create = DistanceStoreFactory.create_stores_by_distance
 
     def counting_create(self):
         nonlocal builds
         builds += 1
         return real_create(self)
 
-    monkeypatch.setattr(DistanceStoreFactory, "create_stores", counting_create)
+    monkeypatch.setattr(DistanceStoreFactory, "create_stores_by_distance", counting_create)
 
     # --- act / assert -----------------
     solver = MaxDivSolverBuilder(dummy_problem).with_preset(iterations(5), SolverPreset.RANDOM).build()
@@ -215,7 +215,7 @@ def test_max_div_solver_builder_end_to_end():
     assert isinstance(solver, MaxDivSolver)
     assert solver._n == vectors.shape[0]
     # the store is built by solve(), not build(): a full-matrix store of the expected shape here
-    store = solver._store_provider()
+    ((_, store),) = solver._stores_by_distance_provider().items()
     assert store.matrix.shape == (vectors.shape[0], vectors.shape[0])  # AUTO -> full matrix at this size
     assert solver._k == k
     assert len(solver._solver_steps) == 3
@@ -359,8 +359,10 @@ def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_
         .with_end_to_end_budget()
         .build()
     )
-    store_provider = solver._store_provider
-    solver._store_provider = lambda: (fake_clock.advance(11.0), store_provider())[1]  # the build eats the budget
+    stores_provider = solver._stores_by_distance_provider
+    solver._stores_by_distance_provider = lambda: (fake_clock.advance(11.0), stores_provider())[
+        1
+    ]  # the build spends the whole budget
 
     # --- act --------------------------
     with pytest.warns(SolverBudgetWarning, match="spent before optimization started"):

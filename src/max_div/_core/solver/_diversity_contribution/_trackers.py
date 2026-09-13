@@ -5,13 +5,14 @@ from typing import TYPE_CHECKING
 from ._factory import build_diversity_contribution_tracker
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     import numpy as np
     from numpy.typing import NDArray
 
     from max_div._core.metrics import DiversityObjective, DiversityTrackerSpec
     from max_div._core.metrics._distance import DistanceStore
+    from max_div._core.solver._distance_storage import StoreDistance
 
     from ._base import DiversityContributionTracker
 
@@ -43,18 +44,24 @@ class DiversityContributionTrackers:
 
     @classmethod
     def for_objectives(
-        cls, diversity_objectives: Sequence[DiversityObjective], store: DistanceStore
+        cls,
+        diversity_objectives: Sequence[DiversityObjective],
+        stores_by_distance: Mapping[StoreDistance, DistanceStore],
     ) -> DiversityContributionTrackers:
-        """Build the tracker set that the objectives need, all reading `store`.
+        """Build the tracker set that the objectives need.
 
         The set holds one tracker per distinct spec the objectives read, in the order the objectives
         list them, each objective's specs in its own order. The primary objective comes first, so
-        `primary_tracker` is the first tracker.
+        `primary_tracker` is the first tracker. `stores_by_distance` maps a spec's distance (`None`
+        for the problem's own distance) to the store the spec's tracker reads.
         """
         specs = dict.fromkeys(spec for objective in diversity_objectives for spec in objective.tracker_specs)
         return cls(
             trackers_by_spec={
-                spec: build_diversity_contribution_tracker(spec.contribution_family, store) for spec in specs
+                spec: build_diversity_contribution_tracker(
+                    spec.contribution_family, stores_by_distance[spec.distance_metric]
+                )
+                for spec in specs
             }
         )
 
