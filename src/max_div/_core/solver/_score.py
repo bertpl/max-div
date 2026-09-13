@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-import operator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
 
 from max_div._core.constraints.constraints import _np_con_total_violation, _np_con_total_weighted_violation
-from max_div._core.metrics import distinct_tracker_specs
+from max_div._core.metrics import distinct_tracker_specs_of, objective_scorer
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Sequence
 
     from numpy.typing import NDArray
 
     from max_div._core.constraints import Constraint
-    from max_div._core.metrics import DiversityObjective, DiversityTrackerSpec
+    from max_div._core.metrics import DiversityObjective
 
 
 # =================================================================================================
@@ -159,15 +158,16 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers -----------
-        # `tracked_specs` is the order `DiversityContributionTrackers.selected_contributions` returns
-        # the arrays (both call `distinct_tracker_specs`), so each objective gets, here and once, a
-        # scorer that picks its own arrays out of that list by position.
+        # `tracked_specs` is the order in which `DiversityContributionTrackers.selected_contributions`
+        # returns the arrays, because that method and this constructor both call
+        # `distinct_tracker_specs_of`. Each objective's scorer is built here, once, not on every
+        # `compute_score` call.
         self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
-        tracked_specs = distinct_tracker_specs((diversity_objective, *diversity_tie_breakers))
-        self._diversity_scorer = _objective_scorer(diversity_objective, tracked_specs)
+        tracked_specs = distinct_tracker_specs_of((diversity_objective, *diversity_tie_breakers))
+        self._diversity_scorer = objective_scorer(diversity_objective, tracked_specs)
         self._tie_breaker_scorers = tuple(
-            _objective_scorer(tie_breaker, tracked_specs) for tie_breaker in diversity_tie_breakers
+            objective_scorer(tie_breaker, tracked_specs) for tie_breaker in diversity_tie_breakers
         )
 
         # --- store other params -----------------
@@ -262,38 +262,6 @@ class ScoreGenerator:
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def _objective_scorer(
-    diversity_objective: DiversityObjective, tracked_specs: tuple[DiversityTrackerSpec, ...]
-) -> Callable[[Sequence[NDArray[np.float32]]], float]:
-    """Return the function that scores `diversity_objective` from the tracked arrays, ordered as `tracked_specs`.
-
-    `tracked_specs` must contain every spec in `diversity_objective.tracker_specs`. The objective's
-    `compute` reads its arrays in its own spec order, so the scorer picks them out of the tracked
-    arrays by position. When every objective reads one contribution family over one distance metric,
-    the usual single-metric problem, the objective's specs are the tracked specs in that order; then
-    `compute` itself is the scorer, with no picking and no extra call on the hot path.
-    """
-    positions = tuple(tracked_specs.index(spec) for spec in diversity_objective.tracker_specs)
-    compute_objective_score = diversity_objective.compute
-    if positions == tuple(range(len(tracked_specs))):
-        return compute_objective_score
-    elif len(positions) == 1:
-        # itemgetter with one position returns the array itself, and `compute` takes a sequence
-        (position,) = positions
-
-        def score_from_one_array(arrays: Sequence[NDArray[np.float32]]) -> float:
-            return compute_objective_score((arrays[position],))
-
-        return score_from_one_array
-    else:
-        pick = operator.itemgetter(*positions)
-
-        def score_from_picked_arrays(arrays: Sequence[NDArray[np.float32]]) -> float:
-            return compute_objective_score(pick(arrays))
-
-        return score_from_picked_arrays
-
-
 def _con_norm_constant(max_violations: Sequence[int], con_weights: NDArray[np.float32], quadratic: bool) -> float:
     """Return the constraint-score normalization constant `1 / (1 + worst-case total violation)`.
 

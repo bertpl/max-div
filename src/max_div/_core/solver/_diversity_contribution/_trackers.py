@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from max_div._core.metrics import distinct_tracker_specs
+from max_div._core.metrics import distinct_tracker_specs_of
 
 from ._factory import build_diversity_contribution_tracker
 
@@ -57,7 +57,7 @@ class DiversityContributionTrackers:
         The set holds one tracker per distinct spec the objectives read — the main objective's specs
         first, then the tie-breakers' — and `main` is the tracker of the main objective's first spec.
         """
-        specs = distinct_tracker_specs((diversity_objective, *diversity_tie_breakers))
+        specs = distinct_tracker_specs_of((diversity_objective, *diversity_tie_breakers))
         return cls(
             trackers_by_spec={
                 spec: build_diversity_contribution_tracker(spec.contribution_family, store) for spec in specs
@@ -130,14 +130,14 @@ class DiversityContributionTrackers:
     #  Scoring reads
     # -------------------------------------------------------------------------
     @property
-    def specs(self) -> tuple[DiversityTrackerSpec, ...]:
+    def tracked_specs(self) -> tuple[DiversityTrackerSpec, ...]:
         """Return the tracked specs, in the order `selected_contributions` returns their arrays."""
         return tuple(self._trackers_by_spec)
 
     def selected_contributions(
         self, selected: NDArray[np.bool], n_selected: np.int32, selected_indices: NDArray[np.int32]
     ) -> list[NDArray[np.float32]]:
-        """Return the selected items' contribution values, one array per tracked spec, in the order of `specs`.
+        """Return the selected items' contribution values, one array per tracked spec, in the order of `tracked_specs`.
 
         The selection is passed twice on purpose: the trackers compute contributions from the mask,
         and the values are picked out by the index list, which costs O(n_selected) where picking by

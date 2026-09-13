@@ -9,7 +9,7 @@ from max_div._core.metrics import (
     DiversityObjectiveHybridGeoMean,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    distinct_tracker_specs,
+    distinct_tracker_specs_of,
 )
 
 SEPARATION = DiversityContributionFamily.SEPARATION
@@ -230,20 +230,20 @@ def test_a_flattened_objective_has_no_tie_breakers() -> None:
 
 
 # =================================================================================================
-#  distinct_tracker_specs
+#  distinct_tracker_specs_of
 # =================================================================================================
-def test_distinct_tracker_specs_is_first_seen_over_objectives_then_specs() -> None:
-    """Specs come in the objectives' order, then in each objective's own spec order.
+def test_distinct_tracker_specs_of_is_first_seen_over_objectives_then_specs() -> None:
+    """Specs are ordered by objective first, and within one objective by that objective's own spec order.
 
     A repeated spec keeps its first position.
     """
     # --- arrange ----------------------
     main = DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L2, L1))
     tie_breaker = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1)  # repeats (L1, SEPARATION)
-    other = DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1)
+    mean_distance_tie_breaker = DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1)
 
     # --- act --------------------------
-    specs = distinct_tracker_specs((main, tie_breaker, other))
+    specs = distinct_tracker_specs_of((main, tie_breaker, mean_distance_tie_breaker))
 
     # --- assert -----------------------
     assert specs == (

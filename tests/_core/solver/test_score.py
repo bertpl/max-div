@@ -410,53 +410,57 @@ def test_score_str(score: Score, expected_str: str):
     assert result == expected_str
 
 
-def test_compute_score_hands_each_objective_the_arrays_of_its_own_specs():
+_L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), DistanceMetric.linf_chebyshev()
+
+
+@pytest.mark.parametrize(
+    "k, diversity_objective, tie_breaker, contributions, expected_diversity, expected_tie_breaker",
+    [
+        pytest.param(
+            3,
+            simple_objective(DiversityMetric.MEAN_SEPARATION),
+            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
+            # tracked specs, in order: (None, SEPARATION) from the main objective, then (None, MEAN_DISTANCE)
+            [
+                np.array([2.0, 4.0, 6.0], dtype=np.float32),  # the separation spec
+                np.array([100.0, 100.0, 100.0], dtype=np.float32),  # the mean-distance spec
+            ],
+            4.0,  # mean of the separation array
+            100.0,  # mean pairwise distance, from the second array
+            id="one_array_per_objective",
+        ),
+        pytest.param(
+            2,
+            DiversityObjectiveHybridGeoMean(
+                tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L2, _L3))
+            ),
+            DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (_L1, _L3)),
+            # tracked specs, in order: (L1, SEPARATION), (L2, SEPARATION), (L3, SEPARATION), all from the main objective
+            [
+                np.array([5.0, 9.0], dtype=np.float32),  # L1
+                np.array(
+                    [1.0, 1.0], dtype=np.float32
+                ),  # L2: the smallest values, which the tie-breaker must not receive
+                np.array([7.0, 8.0], dtype=np.float32),  # L3
+            ],
+            (5.0 * 1.0 * 7.0) ** (1.0 / 3.0),  # geomean of the three minima
+            5.0,  # min over the L1 and L3 arrays only
+            id="subset_of_tracked_arrays",
+        ),
+    ],
+)
+def test_compute_score_hands_each_objective_the_arrays_of_its_own_specs(
+    k, diversity_objective, tie_breaker, contributions, expected_diversity, expected_tie_breaker
+):
     """Each objective reads its own specs' arrays by position; an unrelated tracked array is never passed to it."""
     # --- arrange ----------------------
-    # tracked specs, in order: (None, SEPARATION) from the main objective, then (None, MEAN_DISTANCE)
     generator = ScoreGenerator(
-        n=10,
-        k=3,
-        diversity_objective=simple_objective(DiversityMetric.MEAN_SEPARATION),
-        diversity_tie_breakers=[DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE)],
-        constraints=[],
+        n=10, k=k, diversity_objective=diversity_objective, diversity_tie_breakers=[tie_breaker], constraints=[]
     )
-    contributions = [
-        np.array([2.0, 4.0, 6.0], dtype=np.float32),  # the separation spec
-        np.array([100.0, 100.0, 100.0], dtype=np.float32),  # the mean-distance spec
-    ]
 
     # --- act --------------------------
-    score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), contributions)
+    score = generator.compute_score(k, np.empty((0, 2), dtype=np.int32), contributions)
 
     # --- assert -----------------------
-    assert score.diversity == pytest.approx(4.0)  # mean of the separation array
-    assert score.div_tie_breakers[0] == pytest.approx(100.0)  # mean pairwise distance, from the second array
-
-
-def test_compute_score_picks_a_tie_breakers_arrays_from_among_the_tracked_ones():
-    """A tie-breaker over a subset of the tracked specs gets exactly those specs' arrays, none of the others."""
-    # --- arrange ----------------------
-    l1, l2, l3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), DistanceMetric.linf_chebyshev()
-    # tracked specs, in order: (L1, SEPARATION), (L2, SEPARATION), (L3, SEPARATION), all from the main objective
-    generator = ScoreGenerator(
-        n=10,
-        k=2,
-        diversity_objective=DiversityObjectiveHybridGeoMean(
-            tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (l1, l2, l3))
-        ),
-        diversity_tie_breakers=[DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (l1, l3))],
-        constraints=[],
-    )
-    contributions = [
-        np.array([5.0, 9.0], dtype=np.float32),  # L1
-        np.array([1.0, 1.0], dtype=np.float32),  # L2: the smallest values, which the tie-breaker must not receive
-        np.array([7.0, 8.0], dtype=np.float32),  # L3
-    ]
-
-    # --- act --------------------------
-    score = generator.compute_score(2, np.empty((0, 2), dtype=np.int32), contributions)
-
-    # --- assert -----------------------
-    assert score.diversity == pytest.approx((5.0 * 1.0 * 7.0) ** (1.0 / 3.0), rel=1e-5)  # geomean of the three minima
-    assert score.div_tie_breakers[0] == pytest.approx(5.0)  # min over the L1 and L3 arrays only
+    assert score.diversity == pytest.approx(expected_diversity, rel=1e-5)
+    assert score.div_tie_breakers[0] == pytest.approx(expected_tie_breaker)

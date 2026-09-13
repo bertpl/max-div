@@ -5,5 +5,6 @@ from ._objective import (
     DiversityObjectiveHybridGeoMean,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    distinct_tracker_specs,
+    distinct_tracker_specs_of,
+    objective_scorer,
 )
