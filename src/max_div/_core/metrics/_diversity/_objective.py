@@ -21,8 +21,9 @@ from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
+from max_div._core._math.geomean import geomean_f32
+
 from ._enum import DiversityContributionFamily, DiversityMetric
-from ._numba import geomean_separation
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -137,9 +138,9 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
             raise ValueError(f"A geometric-mean hybrid needs at least two terms; got {len(self.terms)}.")
 
     def compute(self, contributions: ContributionsBySpec) -> float:
-        """Return the geometric mean of the terms' diversity scores, via the tested `geomean_separation`."""
+        """Return the geometric mean of the terms' diversity scores."""
         term_scores = np.array([term.compute(contributions) for term in self.terms], dtype=np.float32)
-        return float(geomean_separation(term_scores))
+        return float(geomean_f32(term_scores))
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
