@@ -125,8 +125,8 @@ class ParallelMaxDivSolver:
             context,
             group_sizes=self._group_sizes,
             k=config.k,
-            # the score length is the three fixed components plus one per tie-breaker (Score.as_tuple)
-            score_length=3 + len(config.diversity_tie_breakers),
+            # the score length is the two fixed components plus one per diversity objective (Score.as_tuple)
+            score_length=2 + len(config.diversity_objectives),
             schedule=self._merge_schedule,
         )
 

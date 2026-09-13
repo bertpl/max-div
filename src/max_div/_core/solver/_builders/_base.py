@@ -129,6 +129,10 @@ class SolverBuilderBase:
         )
         return factory, factory.resolved_storage()
 
+    def _determine_diversity_objectives(self) -> list[DiversityObjective]:
+        """Return the diversity objectives, the main objective first and then its tie-breakers."""
+        return [self._objective, *self._determine_diversity_tie_breakers()]
+
     def _determine_diversity_tie_breakers(self) -> list[DiversityObjective]:
         """Return the tie-breaker objectives to rank ties by: the main objective's defaults, or the user's.
 

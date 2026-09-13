@@ -29,8 +29,8 @@ def _as_contributions(separation_values: np.ndarray) -> list[np.ndarray]:
 # =================================================================================================
 def test_score_as_tuple():
     # --- arrange ----------------------
-    score_1 = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
-    score_2 = Score(size=0.1, constraints=0.2, diversity=0.3, div_tie_breakers=())
+    score_1 = Score(size=0.8, constraints=0.9, diversities=(0.95, 0.7, 0.6))
+    score_2 = Score(size=0.1, constraints=0.2, diversities=(0.3,))
 
     # --- act --------------------------
     score_tuple_1 = score_1.as_tuple()
@@ -44,7 +44,7 @@ def test_score_as_tuple():
 @pytest.mark.parametrize("soft", [0.0, 0.2, 0.66, 1.0])
 def test_score_as_tuple_soft_constraints(soft: float):
     # --- arrange ----------------------
-    score = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
+    score = Score(size=0.8, constraints=0.9, diversities=(0.95, 0.7, 0.6))
     expected_tuple = (0.8, (0.9 ** (1 - soft)) * (0.95**soft), 0.95, 0.7, 0.6)
 
     # --- act --------------------------
@@ -74,7 +74,7 @@ def test_score_as_tuple_soft_constraints_corner_cases(
     """Check if we don't bump into 0^0 issues."""
 
     # --- arrange ----------------------
-    score = Score(size=0.8, constraints=con_score, diversity=div_score, div_tie_breakers=(0.7, 0.6))
+    score = Score(size=0.8, constraints=con_score, diversities=(div_score, 0.7, 0.6))
     expected_tuple = (0.8, expected_soft_con_score, div_score, 0.7, 0.6)
 
     # --- act --------------------------
@@ -99,8 +99,8 @@ def test_score_as_tuple_ignore_infeasible_diversity(
     soft: float, ignore_infeasible_diversity: bool, expected_feas_tuple: tuple, expected_infeas_tuple: tuple
 ):
     # --- arrange ----------------------
-    score_feas = Score(size=1.0, constraints=0.8, diversity=0.2, div_tie_breakers=(0.7, 0.6))
-    score_infeas = Score(size=1.0, constraints=1.0, diversity=4.0, div_tie_breakers=(0.7, 0.6))
+    score_feas = Score(size=1.0, constraints=0.8, diversities=(0.2, 0.7, 0.6))
+    score_infeas = Score(size=1.0, constraints=1.0, diversities=(4.0, 0.7, 0.6))
 
     # --- act --------------------------
     tuple_feas = score_feas.as_tuple(soft=soft, ignore_infeasible_diversity=ignore_infeasible_diversity)
@@ -119,8 +119,7 @@ def test_score_generator_size():
     generator = ScoreGenerator(
         n=20,
         k=3,
-        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
-        diversity_tie_breakers=[],
+        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
         tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
@@ -148,8 +147,7 @@ def test_score_generator_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
-        diversity_tie_breakers=[],
+        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
         tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
@@ -220,8 +218,7 @@ def test_constraints_score_for_violation(violation: float, expected: float):
     generator = ScoreGenerator(
         n=11,
         k=8,
-        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
-        diversity_tie_breakers=[],
+        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
         tracker_specs=simple_objective(DiversityMetric.GEOMEAN_SEPARATION).tracker_specs,
         constraints=constraints,
     )
@@ -239,8 +236,7 @@ def test_constraints_score_for_violation_rejects_quadratic():
     generator = ScoreGenerator(
         n=3,
         k=3,
-        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
-        diversity_tie_breakers=[],
+        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
         tracker_specs=simple_objective(DiversityMetric.GEOMEAN_SEPARATION).tracker_specs,
         constraints=[Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)],
         penalty_quadratic=True,
@@ -261,8 +257,7 @@ def test_score_generator_constraints_linear_vs_quadratic():
     kwargs = {
         "n": 100,
         "k": 8,
-        "diversity_objective": simple_objective(DiversityMetric.MIN_SEPARATION),
-        "diversity_tie_breakers": [],
+        "diversity_objectives": [simple_objective(DiversityMetric.MIN_SEPARATION)],
         "tracker_specs": simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
     }
     gen_linear = ScoreGenerator(constraints=constraints, **kwargs)
@@ -290,8 +285,7 @@ def test_score_generator_constraints_weighted():
     gen = ScoreGenerator(
         n=100,
         k=8,
-        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
-        diversity_tie_breakers=[],
+        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
         tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=constraints,
     )
@@ -316,8 +310,7 @@ def test_score_generator_constraints_no_constraints():
     generator = ScoreGenerator(
         n=100,
         k=8,
-        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
-        diversity_tie_breakers=[],
+        diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
         tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
@@ -336,10 +329,10 @@ def test_score_generator_diversity_scores():
     generator = ScoreGenerator(
         n=100,
         k=5,
-        diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
-        diversity_tie_breakers=tie_breaker_objectives(
-            [DiversityMetric.MEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]
-        ),
+        diversity_objectives=[
+            simple_objective(DiversityMetric.MIN_SEPARATION),
+            *tie_breaker_objectives([DiversityMetric.MEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+        ],
         tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
@@ -351,19 +344,16 @@ def test_score_generator_diversity_scores():
     score = generator.compute_score(5, con_values, sep)
 
     # --- assert -----------------------
-    assert score.diversity == pytest.approx(0.0)
-    assert len(score.div_tie_breakers) == 2
-    assert score.div_tie_breakers[0] == pytest.approx(3.0)
-    assert score.div_tie_breakers[1] == pytest.approx(0.8)
+    assert score.diversities == pytest.approx((0.0, 3.0, 0.8))  # main objective first, then the tie-breakers
 
 
 def test_score_comparison_happy_path():
     # --- arrange ----------------------
-    score_1a = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
-    score_1b = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
-    score_2 = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.5))
-    score_3 = Score(size=0.8, constraints=0.9, diversity=0.90, div_tie_breakers=(0.9, 0.9))
-    score_4 = Score(size=0.7, constraints=1.0, diversity=1.0, div_tie_breakers=(1.0, 1.0))
+    score_1a = Score(size=0.8, constraints=0.9, diversities=(0.95, 0.7, 0.6))
+    score_1b = Score(size=0.8, constraints=0.9, diversities=(0.95, 0.7, 0.6))
+    score_2 = Score(size=0.8, constraints=0.9, diversities=(0.95, 0.7, 0.5))
+    score_3 = Score(size=0.8, constraints=0.9, diversities=(0.90, 0.9, 0.9))
+    score_4 = Score(size=0.7, constraints=1.0, diversities=(1.0, 1.0, 1.0))
 
     # --- act & assert -----------------
     assert score_1a == score_1b
@@ -384,7 +374,7 @@ def test_score_comparison_happy_path():
 
 def test_score_comparison_invalid_types():
     # --- arrange ----------------------
-    score = Score(size=0.8, constraints=0.9, diversity=0.95, div_tie_breakers=(0.7, 0.6))
+    score = Score(size=0.8, constraints=0.9, diversities=(0.95, 0.7, 0.6))
 
     # --- act & assert -----------------
     _ = score == object()  # == is implemented in object()
@@ -406,11 +396,18 @@ def test_score_comparison_invalid_types():
     "score, expected_str",
     [
         (
-            Score(size=1.0, constraints=1.0, diversity=0.7705, div_tie_breakers=(1.0,)),
+            Score(
+                size=1.0,
+                constraints=1.0,
+                diversities=(
+                    0.7705,
+                    1.0,
+                ),
+            ),
             "size=1.0000 | constraints=1.0000 | diversity=0.7705",
         ),
         (
-            Score(size=0.5, constraints=0.8, diversity=0.0, div_tie_breakers=()),
+            Score(size=0.5, constraints=0.8, diversities=(0.0,)),
             "size=0.5000 | constraints=0.8000 | diversity=0.0000",
         ),
     ],
@@ -470,8 +467,7 @@ def test_compute_score_hands_each_objective_the_arrays_of_its_own_specs(
     generator = ScoreGenerator(
         n=10,
         k=k,
-        diversity_objective=diversity_objective,
-        diversity_tie_breakers=[tie_breaker],
+        diversity_objectives=[diversity_objective, tie_breaker],
         tracker_specs=tracker_specs,
         constraints=[],
     )
@@ -481,4 +477,4 @@ def test_compute_score_hands_each_objective_the_arrays_of_its_own_specs(
 
     # --- assert -----------------------
     assert score.diversity == pytest.approx(expected_diversity, rel=1e-5)
-    assert score.div_tie_breakers[0] == pytest.approx(expected_tie_breaker)
+    assert score.diversities[1] == pytest.approx(expected_tie_breaker)

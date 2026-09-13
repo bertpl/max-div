@@ -10,7 +10,7 @@ from max_div._core._math import select_k_max_masked
 from max_div._core._utils import delete_sorted, insert_sorted
 from max_div._core.constraints import Constraint, ConstraintList, _np_con_membership, to_numpy_membership
 
-from ._diversity_contribution import DiversityContributionTrackers
+from ._diversity_contribution import DiversityContributionTracker, DiversityContributionTrackers
 from ._score import Score, ScoreGenerator
 
 if TYPE_CHECKING:
@@ -61,6 +61,7 @@ class SolverState:
         n: np.int32,
         k: np.int32,
         contribution_trackers: DiversityContributionTrackers,
+        strategy_tracker: DiversityContributionTracker,
         score_generator: ScoreGenerator,
         selected: NDArray[np.bool],
         con_values: NDArray[np.int32],
@@ -83,6 +84,8 @@ class SolverState:
             k: (np.int32) target number of selected items
             contribution_trackers: (DiversityContributionTrackers) the tracker set backing this state's
                 per-point diversity contributions, updated on every selection mutation.
+            strategy_tracker: the tracker of that set whose per-point contributions the strategies
+                read, the one representing the main diversity objective.
             score_generator: (ScoreGenerator) score generator to compute scores for current state
             selected: (np.ndarray[np.bool]) array indicating which of the n items are initially selected.
             con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)
@@ -99,7 +102,7 @@ class SolverState:
 
         # diversity contributions
         self._contribution_trackers = contribution_trackers
-        self._contribution_tracker = contribution_trackers.main  # strategy-facing tracker (cached hop)
+        self._contribution_tracker = strategy_tracker
 
         # scoring
         self._score_generator = score_generator  # READ-ONLY
@@ -564,16 +567,17 @@ class SolverState:
         n: int,
         store: DistanceStore,
         k: int,
-        diversity_objective: DiversityObjective,
-        diversity_tie_breakers: list[DiversityObjective],
+        diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> SolverState:
+        """Build an empty-selection state.
+
+        `diversity_objectives` lists the main objective first, then the tie-breakers.
+        """
         # --- diversity contributions ------------
         n_np = np.int32(n)
-        contribution_trackers = DiversityContributionTrackers.for_objectives(
-            diversity_objective, diversity_tie_breakers, store
-        )
+        contribution_trackers = DiversityContributionTrackers.for_objectives(diversity_objectives, store)
 
         # --- selection --------------------------
         selected = np.full(n_np, False, dtype=np.bool)
@@ -587,8 +591,7 @@ class SolverState:
         score_generator = ScoreGenerator(
             n=n_np,
             k=k,
-            diversity_objective=diversity_objective,
-            diversity_tie_breakers=diversity_tie_breakers,
+            diversity_objectives=diversity_objectives,
             tracker_specs=contribution_trackers.tracker_specs,
             constraints=constraints,
             penalty_quadratic=penalty_quadratic,
@@ -599,6 +602,7 @@ class SolverState:
             n=n_np,
             k=np.int32(k),
             contribution_trackers=contribution_trackers,
+            strategy_tracker=contribution_trackers.tracker_for(diversity_objectives[0]),
             score_generator=score_generator,
             selected=selected,
             con_values=con_values,
@@ -690,4 +694,4 @@ class Snapshot:
 # (a cleared snapshot's fields are never read — SolverState._depth delimits the live stack entries)
 _EMPTY_NP_ARRAY_BOOL = np.array([], dtype=np.bool)
 _EMPTY_NP_ARRAY_INT32 = np.array([], dtype=np.int32)
-_PLACEHOLDER_SCORE = Score(size=0.0, constraints=0.0, diversity=0.0, div_tie_breakers=())
+_PLACEHOLDER_SCORE = Score(size=0.0, constraints=0.0, diversities=(0.0,))

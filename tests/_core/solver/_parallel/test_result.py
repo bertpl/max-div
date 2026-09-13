@@ -9,7 +9,7 @@ from max_div._core.solver._solution import MaxDivSolution
 
 def _result(worker_index: int, diversity: float) -> WorkerResult:
     """Return a result carrying the given diversity, with everything else held equal."""
-    score = Score(size=1.0, constraints=1.0, diversity=diversity, div_tie_breakers=())
+    score = Score(size=1.0, constraints=1.0, diversities=(diversity,))
     solution = MaxDivSolution(
         i_selected=np.array([worker_index], dtype=np.int32),
         score_checkpoints=[("step", Elapsed(t_elapsed_sec=1.0, n_iterations=10), score)],

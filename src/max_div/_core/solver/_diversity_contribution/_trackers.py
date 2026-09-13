@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from ._factory import build_diversity_contribution_tracker
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import numpy as np
     from numpy.typing import NDArray
 
@@ -20,58 +22,56 @@ if TYPE_CHECKING:
 class DiversityContributionTrackers:
     """The set of diversity-contribution trackers backing a solver state.
 
-    Holds one tracker per spec that the objectives read, knows which spec is the main objective's,
-    and applies every selection mutation to all trackers.
+    Holds one tracker per spec that the objectives read, applies every selection mutation to all
+    trackers, and names the tracker that represents an objective to the strategies.
     """
 
     # -------------------------------------------------------------------------
     #  Construction
     # -------------------------------------------------------------------------
-    def __init__(
-        self,
-        trackers_by_spec: dict[DiversityTrackerSpec, DiversityContributionTracker],
-        main_spec: DiversityTrackerSpec,
-    ) -> None:
+    def __init__(self, trackers_by_spec: dict[DiversityTrackerSpec, DiversityContributionTracker]) -> None:
         """Initialize from an explicit spec -> tracker mapping; prefer the for_objectives() factory.
 
         Args:
             trackers_by_spec: (dict) one tracker per spec the objectives read.
-            main_spec: (DiversityTrackerSpec) the spec of the main objective's tracker.
         """
         self._trackers_by_spec = trackers_by_spec  # READ-ONLY
-        self._main_spec = main_spec  # READ-ONLY
         self._trackers = tuple(trackers_by_spec.values())  # iteration order for mutation fan-out
-        self._main = trackers_by_spec[main_spec]
 
     @classmethod
     def for_objectives(
-        cls,
-        diversity_objective: DiversityObjective,
-        diversity_tie_breakers: list[DiversityObjective],
-        store: DistanceStore,
+        cls, diversity_objectives: Sequence[DiversityObjective], store: DistanceStore
     ) -> DiversityContributionTrackers:
         """Build the tracker set that the objectives need, all reading `store`.
 
-        The set holds one tracker per distinct spec the objectives read — the main objective's specs
-        first, then the tie-breakers' — and `main` is the tracker of the main objective's first spec.
+        The set holds one tracker per distinct spec the objectives read, in the order the objectives
+        list them, each objective's specs in its own order.
         """
-        specs = dict.fromkeys(
-            spec for objective in (diversity_objective, *diversity_tie_breakers) for spec in objective.tracker_specs
-        )
+        specs = dict.fromkeys(spec for objective in diversity_objectives for spec in objective.tracker_specs)
         return cls(
             trackers_by_spec={
                 spec: build_diversity_contribution_tracker(spec.contribution_family, store) for spec in specs
-            },
-            main_spec=diversity_objective.tracker_specs[0],
+            }
         )
 
     # -------------------------------------------------------------------------
-    #  Main tracker
+    #  Representative tracker
     # -------------------------------------------------------------------------
-    @property
-    def main(self) -> DiversityContributionTracker:
-        """Return the main objective's tracker, whose contribution values the strategies read."""
-        return self._main
+    def tracker_for(self, diversity_objective: DiversityObjective) -> DiversityContributionTracker:
+        """Return the tracker whose per-point contributions represent `diversity_objective` to the strategies.
+
+        Raises:
+            ValueError: If the objective reads several trackers; no single tracker represents such an
+                objective here.
+        """
+        specs = diversity_objective.tracker_specs
+        try:
+            (spec,) = specs
+        except ValueError as exc:
+            raise ValueError(
+                f"No single tracker represents an objective over {len(specs)} trackers: {diversity_objective}."
+            ) from exc
+        return self._trackers_by_spec[spec]
 
     # -------------------------------------------------------------------------
     #  Mutation fan-out

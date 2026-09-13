@@ -136,8 +136,8 @@ def _as_record(solution: MaxDivSolution) -> dict[str, Any]:
                 "step": step_name,
                 "size": score.size,
                 "constraints": score.constraints,
-                "diversity": score.diversity,
-                "div_tie_breakers": list(score.div_tie_breakers),
+                "diversity": score.diversities[0],
+                "div_tie_breakers": list(score.diversities[1:]),
             }
             for step_name, _, score in solution.score_checkpoints
         ],

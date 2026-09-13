@@ -21,7 +21,7 @@ def _snapshot(iter_count: int = 5, t_elapsed: float = 1.0) -> ProgressSnapshot:
         ),
         t_elapsed_solver=t_elapsed,
         t_elapsed_step=t_elapsed,
-        score=Score(size=1.0, constraints=1.0, diversity=0.5, div_tie_breakers=()),
+        score=Score(size=1.0, constraints=1.0, diversities=(0.5,)),
         n_selected=np.int32(3),
         k=np.int32(5),
         m=np.int32(0),

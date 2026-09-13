@@ -27,7 +27,7 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 
     The different components have strict priorities in order of appearance:
 
-                                    size > constraints > diversity > div_non_zero > div_fgm.
+                                    size > constraints > main diversity > tie-breakers, in order.
 
     Only in case of a tie in a lower-priority component, the next higher-priority component is considered for
     comparisons.
@@ -52,8 +52,13 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
     # --- score components -----------------------
     size: float  # score indicating if target selection size is met
     constraints: float  # score indicating if constraints are satisfied
-    diversity: float  # main diversity score, as computed by the user-selected diversity metric
-    div_tie_breakers: tuple[float, ...]  # diversity tie-breakers - used in case of ties in all higher-prio metrics
+    # one entry per diversity objective, the main objective first, then the tie-breakers in order
+    diversities: tuple[float, ...]
+
+    @property
+    def diversity(self) -> float:
+        """Return the main diversity score, the first entry of `diversities`."""
+        return self.diversities[0]
 
     # --- helpers --------------------------------
     def as_tuple(self, soft: float = 0.0, ignore_infeasible_diversity: bool = False) -> tuple[float, ...]:
@@ -69,7 +74,7 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
         if ignore_infeasible_diversity and self.constraints < 1.0:
             # set scores of diversity & tie-breakers to 0.0 in case of infeasible solution
             # (also, don't perform 'soft constraint' computation, since that also takes into account diversity)
-            return self.size, self.constraints, 0.0, *[0.0 for tb in self.div_tie_breakers]
+            return self.size, self.constraints, *[0.0 for _ in self.diversities]
         if soft == 0.0:
             constraint_score = self.constraints  # 100% hard constraints (no influence from diversity)
         elif soft == 1.0:
@@ -79,7 +84,7 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
         else:
             constraint_score = self.constraints * ((self.diversity / self.constraints) ** soft)
 
-        return self.size, constraint_score, self.diversity, *self.div_tie_breakers
+        return self.size, constraint_score, *self.diversities
 
     # --- math overloads -------------------------
     def __lt__(self, other: object) -> bool:
@@ -117,8 +122,7 @@ class ScoreGenerator:
         self,
         n: int | np.int32,
         k: int,
-        diversity_objective: DiversityObjective,
-        diversity_tie_breakers: list[DiversityObjective],
+        diversity_objectives: list[DiversityObjective],
         tracker_specs: tuple[DiversityTrackerSpec, ...],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
@@ -128,8 +132,8 @@ class ScoreGenerator:
         Args:
             n: (int | np.int32) number of items in the max-div problem.
             k: (int) The target selection size for the max-div problem.
-            diversity_objective: (DiversityObjective) The main objective, whose value is the diversity score.
-            diversity_tie_breakers: (list[DiversityObjective]) The tie-breaker objectives, scored in order.
+            diversity_objectives: the diversity objectives, the main objective first and then the
+                tie-breakers, scored in that order into `Score.diversities`.
             tracker_specs: the specs of the contribution trackers, in the order `compute_score` receives
                 their arrays; must contain every spec the objectives read.
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.
@@ -159,14 +163,12 @@ class ScoreGenerator:
         # fast unweighted-linear aggregation applies only when all weights are 1 and penalization is linear
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
-        # --- diversity & tie-breakers -----------
+        # --- diversity objectives ---------------
         # each objective's scoring function is built here, once, not on every `compute_score` call
-        self._diversity_objective = diversity_objective
-        self._diversity_tie_breakers = diversity_tie_breakers
+        self._diversity_objectives = diversity_objectives
         self._tracker_specs = tracker_specs
-        self._diversity_score_fun = self._get_score_fun_for_objective(diversity_objective)
-        self._tie_breaker_score_funs = tuple(
-            self._get_score_fun_for_objective(tie_breaker) for tie_breaker in diversity_tie_breakers
+        self._diversity_score_funs = tuple(
+            self._get_score_fun_for_objective(objective) for objective in diversity_objectives
         )
 
         # --- store other params -----------------
@@ -264,10 +266,9 @@ class ScoreGenerator:
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=self._diversity_score_fun(selected_contributions),
             # a list comprehension is inlined into this frame while a generator expression is a frame
             # of its own, so the list is the cheaper one on this hot path
-            div_tie_breakers=tuple([score_fun(selected_contributions) for score_fun in self._tie_breaker_score_funs]),
+            diversities=tuple([score_fun(selected_contributions) for score_fun in self._diversity_score_funs]),
         )
 
 
