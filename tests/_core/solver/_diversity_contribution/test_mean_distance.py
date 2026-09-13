@@ -11,6 +11,8 @@ from max_div._core.solver._diversity_contribution._mean_distance import (
 )
 from tests._core.metrics._distance.helpers import condensed_distances
 
+from .helpers import selection_args
+
 # =================================================================================================
 #  Fixtures / helpers
 # =================================================================================================
@@ -29,13 +31,6 @@ def tracker(pdist: np.ndarray) -> MeanDistanceTracker:
     return MeanDistanceTracker(DistanceStore.full_matrix(squareform(pdist)))
 
 
-def _selection_args(indices: list[int]) -> tuple[np.ndarray, np.int32]:
-    """Build the (selected, n_selected) argument pair for contribution reads from a list of selected indices."""
-    selected = np.full(N, False, dtype=np.bool)
-    selected[indices] = True
-    return selected, np.int32(len(indices))
-
-
 def _brute_force_contribution(pdist: np.ndarray, indices: list[int]) -> np.ndarray:
     """Compute the mean-distance contribution from scratch: mean distance of each point to its selected neighbors."""
     d_squared = squareform(pdist).astype(np.float64)
@@ -51,7 +46,7 @@ def _brute_force_contribution(pdist: np.ndarray, indices: list[int]) -> np.ndarr
 # =================================================================================================
 def test_construction_fresh(tracker: MeanDistanceTracker, pdist: np.ndarray):
     # --- arrange ----------------------
-    selected, n_selected = _selection_args([])
+    selected, n_selected = selection_args([], N)
     expected_global = (squareform(pdist).astype(np.float64).sum(axis=1) / (N - 1)).astype(np.float32)
 
     # --- assert -----------------------
@@ -71,7 +66,7 @@ def test_contribution_matches_brute_force_incrementally(tracker: MeanDistanceTra
     for index in [3, 17, 0, 9, 12]:
         tracker.add(np.int32(index))
         selection.append(index)
-        selected, n_selected = _selection_args(selection)
+        selected, n_selected = selection_args(selection, N)
         np.testing.assert_allclose(
             tracker.contribution_wrt_selection(selected, n_selected),
             _brute_force_contribution(pdist, selection),
@@ -81,7 +76,7 @@ def test_contribution_matches_brute_force_incrementally(tracker: MeanDistanceTra
     for index in [0, 17]:
         tracker.remove(np.int32(index), new_selection=np.array([], dtype=np.int32))
         selection.remove(index)
-        selected, n_selected = _selection_args(selection)
+        selected, n_selected = selection_args(selection, N)
         np.testing.assert_allclose(
             tracker.contribution_wrt_selection(selected, n_selected),
             _brute_force_contribution(pdist, selection),
@@ -96,7 +91,7 @@ def test_membership_aware_divisor(tracker: MeanDistanceTracker, pdist: np.ndarra
     d_squared = squareform(pdist).astype(np.float64)
     tracker.add(np.int32(2))
     tracker.add(np.int32(5))
-    selected, n_selected = _selection_args([2, 5])
+    selected, n_selected = selection_args([2, 5], N)
 
     # --- act --------------------------
     contribution = tracker.contribution_wrt_selection(selected, n_selected)
@@ -138,7 +133,7 @@ def test_invariant_random_operations_match_recompute(tracker: MeanDistanceTracke
                 tracker.pop_snapshot(restore=False)
                 snapshot_selections.pop()
 
-        selected, n_selected = _selection_args(selection)
+        selected, n_selected = selection_args(selection, N)
         np.testing.assert_allclose(
             tracker.contribution_wrt_selection(selected, n_selected),
             _brute_force_contribution(pdist, selection),
@@ -275,7 +270,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
             tracker.add(np.int32(index))
             selection.append(index)
 
-        selected, n_selected = _selection_args(selection)
+        selected, n_selected = selection_args(selection, N)
         np.testing.assert_allclose(
             tracker.contribution_wrt_selection(selected, n_selected),
             _brute_force_contribution(condensed, selection),
@@ -323,7 +318,7 @@ def test_remove_trial_matches_remove_on_the_selected_entries(backend: str):
     trial.remove_trial(np.int32(7), new_selection)
 
     # --- assert -----------------------
-    selected, n_selected = _selection_args([1, 4, 12, 18])
+    selected, n_selected = selection_args([1, 4, 12, 18], N)
     np.testing.assert_array_equal(
         trial.contribution_wrt_selection(selected, n_selected)[new_selection],
         full.contribution_wrt_selection(selected, n_selected)[new_selection],

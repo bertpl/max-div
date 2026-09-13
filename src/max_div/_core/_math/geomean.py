@@ -1,6 +1,7 @@
-"""Compute the geometric mean of a float32 vector, exactly or approximately, as the exponential of the mean log.
+"""Compute the geometric mean of a float32 vector, or of each row of a matrix, as the exponential of the mean log.
 
-Both functions require at least one entry. `geomean_f32` accepts zero and +inf:
+Every function here requires at least one entry per reduced vector. `geomean_f32`, and
+`geomean_per_row_f32` which reduces each row with it, accept zero and +inf:
 
 - a zero entry makes the mean zero;
 - a +inf entry makes it +inf;
@@ -17,9 +18,10 @@ from numpy.typing import NDArray
 from .fast_log_exp import fast_exp2_f32, fast_log2_f32
 
 
-# Both functions use the same fastmath subset as the pair-distance functions in
+# Every function here uses the same fastmath subset as the pair-distance functions in
 # `_distance/_metric/_pair.py`. The subset omits the `ninf` flag, which would let the compiler assume
-# no infinities, so in `geomean_f32` a +inf entry stays +inf through the sum.
+# no infinities, so in `geomean_f32` and `geomean_per_row_f32` a +inf entry stays +inf through the sum
+# (`fast_geomean_f32` does not preserve it: its log and exp are approximations).
 @njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def geomean_f32(values: NDArray[np.float32]) -> np.float32:
     """Return the geometric mean of the entries.
@@ -46,3 +48,15 @@ def fast_geomean_f32(values: NDArray[np.float32]) -> np.float32:
     for i in range(n):
         log_sum += fast_log2_f32(values[i])
     return fast_exp2_f32(log_sum / n)
+
+
+@njit("void(float32[:, ::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
+def geomean_per_row_f32(rows: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write the geometric mean of each row of `rows` into `out`.
+
+    `rows` is a C-contiguous (n_rows, n_cols) array with n_cols at least one, and `out` has length
+    n_rows. Each row is reduced by `geomean_f32`, so its zero and +inf behavior applies per row.
+    """
+    n_rows = rows.shape[0]
+    for i in range(n_rows):
+        out[i] = geomean_f32(rows[i, :])
