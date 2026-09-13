@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -10,7 +10,7 @@ from max_div._core.metrics import DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
-from ._distance_storage import DistanceStorageTypes
+from ._distance_storage import DistanceStorageTypes, StoreDistance
 from ._duration import E2eBudget, Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
@@ -34,7 +34,7 @@ class MaxDivSolver:
     def __init__(
         self,
         n: int,
-        store_provider: Callable[[], DistanceStore],
+        stores_by_distance_provider: Callable[[], Mapping[StoreDistance, DistanceStore]],
         k: int,
         diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],
@@ -49,9 +49,9 @@ class MaxDivSolver:
 
         Args:
             n: (int) The number of items in the problem ('universe').
-            store_provider: called at the start of each `solve` to obtain the pairwise-distance
-                storage to read from, so `build` stays lean and fast rather than building the
-                store up front.
+            stores_by_distance_provider: called at the start of each `solve` to obtain the
+                distance -> store mapping to read from, so `build` stays lean and fast rather than
+                building the stores up front.
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_objectives: the primary objective first, then the tie-breakers, scored in
                 that order.
@@ -71,7 +71,7 @@ class MaxDivSolver:
         """
         # --- problem description ----------------
         self._n = n
-        self._store_provider = store_provider
+        self._stores_by_distance_provider = stores_by_distance_provider
         self._distance_storage = distance_storage
         self._k = k
         self._diversity_objectives = diversity_objectives
@@ -124,10 +124,10 @@ class MaxDivSolver:
         # --- solver state -----------------------
         with Timer() as timer:
             progress_reporter.solver_step_started(step_names[0])
-            store = self._store_provider()
+            stores_by_distance = self._stores_by_distance_provider()
             state = SolverState.new(
                 n=self._n,
-                store=store,
+                stores_by_distance=stores_by_distance,
                 k=self._k,
                 diversity_objectives=self._diversity_objectives,
                 constraints=self._constraints,

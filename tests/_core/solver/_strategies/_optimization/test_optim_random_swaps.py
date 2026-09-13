@@ -34,7 +34,7 @@ def test_optim_random_swaps(problem_name: str, n: int):
     )
     solver_state = SolverState.new(
         n=problem.n,
-        store=DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric),
+        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric)},
         k=problem.k,
         diversity_objectives=[simple_objective(problem.diversity_metric)],
         constraints=problem.constraints,

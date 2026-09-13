@@ -43,7 +43,7 @@ def test_a_config_builds_a_solver_over_any_store():
     factory, config = builder.prepare_storage_and_config()
 
     # --- act --------------------------
-    solver = config.build_solver(store=factory.create_stores()[0])
+    solver = config.build_solver(stores_by_distance=factory.create_stores_by_distance())
 
     # --- assert -----------------------
     assert isinstance(solver, MaxDivSolver)
@@ -57,13 +57,13 @@ def test_a_config_builds_a_solver_that_defers_its_store():
     factory, config = builder.prepare_storage_and_config()
     calls = 0
 
-    def provide_store():
+    def provide_stores():
         nonlocal calls
         calls += 1
-        return factory.create_stores()[0]
+        return factory.create_stores_by_distance()
 
     # --- act --------------------------
-    solver = config.build_solver(store_provider=provide_store)
+    solver = config.build_solver(stores_by_distance_provider=provide_stores)
 
     # --- assert -----------------------
     assert calls == 0  # nothing built until we solve
@@ -75,11 +75,11 @@ def test_a_config_builds_a_solver_that_defers_its_store():
     "kwargs",
     [
         {},  # neither
-        {"store": "a store", "store_provider": lambda: "a store"},  # both
+        {"stores_by_distance": {}, "stores_by_distance_provider": dict},  # both
     ],
 )
 def test_build_solver_requires_exactly_one_store_source(kwargs):
-    """Neither or both of store / store_provider is a caller error, not a silent fallback."""
+    """Neither or both of stores_by_distance / its provider is a caller error, not a silent fallback."""
     # --- arrange ----------------------
     _, config = _builder().prepare_storage_and_config()
 

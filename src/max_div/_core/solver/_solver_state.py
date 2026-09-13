@@ -14,10 +14,13 @@ from ._diversity_contribution import DiversityContributionTracker, DiversityCont
 from ._score import Score, ScoreGenerator
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from numpy.typing import NDArray
 
     from max_div._core.metrics import DiversityObjective
     from max_div._core.metrics._distance import DistanceStore
+    from max_div._core.solver._distance_storage import StoreDistance
 
 
 # =================================================================================================
@@ -565,7 +568,7 @@ class SolverState:
     def new(
         cls,
         n: int,
-        store: DistanceStore,
+        stores_by_distance: Mapping[StoreDistance, DistanceStore],
         k: int,
         diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],
@@ -577,7 +580,7 @@ class SolverState:
         """
         # --- diversity contributions ------------
         n_np = np.int32(n)
-        contribution_trackers = DiversityContributionTrackers.for_objectives(diversity_objectives, store)
+        contribution_trackers = DiversityContributionTrackers.for_objectives(diversity_objectives, stores_by_distance)
 
         # --- selection --------------------------
         selected = np.full(n_np, False, dtype=np.bool)

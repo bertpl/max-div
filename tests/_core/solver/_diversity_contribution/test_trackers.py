@@ -41,7 +41,7 @@ def test_for_objectives_single_family(store: DistanceStore):
             simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
             *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         ],
-        store,
+        {None: store},
     )
 
     # --- assert -----------------------
@@ -58,7 +58,7 @@ def test_for_objectives_repeated_family(store: DistanceStore):
             simple_objective(DiversityMetric.MIN_SEPARATION),
             *tie_breaker_objectives([DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION]),
         ],
-        store,
+        {None: store},
     )
 
     # --- assert -----------------------
@@ -114,7 +114,7 @@ def test_selected_contributions_one_array_per_spec(store: DistanceStore):
     """A single-family set returns one spec's array, the selected vectors' separation values."""
     # --- arrange ----------------------
     trackers = DiversityContributionTrackers.for_objectives(
-        [simple_objective(DiversityMetric.GEOMEAN_SEPARATION)], store
+        [simple_objective(DiversityMetric.GEOMEAN_SEPARATION)], {None: store}
     )
     trackers.add(np.int32(0))
     trackers.add(np.int32(2))  # selection: points 0.0 and 3.0 on a line
@@ -182,7 +182,7 @@ def test_primary_tracker_is_the_first_objectives_tracker():
             simple_objective(DiversityMetric.MIN_SEPARATION),
             *tie_breaker_objectives([DiversityMetric.MEAN_PAIRWISE_DISTANCE]),
         ],
-        store,
+        {None: store},
     )
 
     # --- assert -----------------------

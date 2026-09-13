@@ -21,7 +21,7 @@ def new_solver_state(has_constraints: bool) -> SolverState:
 
     return SolverState.new(
         n=vectors.shape[0],
-        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
+        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean())},
         k=50,
         diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
         constraints=constraints,
@@ -33,7 +33,7 @@ def new_solver_state_unconstrained(n: int = 300, k: int = 30) -> SolverState:
     vectors = np.random.default_rng(20260901).random((n, 3)).astype(np.float32)
     return SolverState.new(
         n=n,
-        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
+        stores_by_distance={None: DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean())},
         k=k,
         diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
         constraints=[],

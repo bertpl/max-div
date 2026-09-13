@@ -5,7 +5,7 @@ and read by several processes, while each process assembles its own solver over 
 this record — which is why the record must stay small enough to pickle.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 
 from max_div._core.constraints import Constraint
@@ -13,7 +13,7 @@ from max_div._core.metrics import DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
-from ._distance_storage import DistanceStorageTypes
+from ._distance_storage import DistanceStorageTypes, StoreDistance
 from ._duration import E2eBudget
 from ._solver import MaxDivSolver
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep
@@ -43,18 +43,18 @@ class SolverConfig:
     def build_solver(
         self,
         *,
-        store: DistanceStore | None = None,
-        store_provider: Callable[[], DistanceStore] | None = None,
+        stores_by_distance: Mapping[StoreDistance, DistanceStore] | None = None,
+        stores_by_distance_provider: Callable[[], Mapping[StoreDistance, DistanceStore]] | None = None,
     ) -> MaxDivSolver:
         """Return a solver configured as this record describes, given the distances it will read.
 
         Pass exactly one of:
 
         Args:
-            store: an already-built store to read from — the parallel solver's workers attach to
-                the shared store and hand it in.
-            store_provider: a callable that yields the store when the solve starts, so `build`
-                stays lean and the store is built inside `solve`.
+            stores_by_distance: an already-built distance -> store mapping — the parallel solver's
+                workers attach to the shared stores and hand the mapping in.
+            stores_by_distance_provider: a callable that yields the mapping when the solve starts,
+                so `build` stays lean and the stores are built inside `solve`.
 
         Raises:
             ValueError: if neither or both are given, or a step's strategy does not support the
@@ -62,15 +62,15 @@ class SolverConfig:
         """
         for step in self.solver_steps:
             step.validate_objective(self.diversity_objectives[0])
-        if store is not None and store_provider is None:
-            provider: Callable[[], DistanceStore] = lambda: store
-        elif store is None and store_provider is not None:
-            provider = store_provider
+        if stores_by_distance is not None and stores_by_distance_provider is None:
+            provider: Callable[[], Mapping[StoreDistance, DistanceStore]] = lambda: stores_by_distance
+        elif stores_by_distance is None and stores_by_distance_provider is not None:
+            provider = stores_by_distance_provider
         else:
-            raise ValueError("Pass exactly one of `store` or `store_provider`.")
+            raise ValueError("Pass exactly one of `stores_by_distance` or `stores_by_distance_provider`.")
         return MaxDivSolver(
             n=self.n,
-            store_provider=provider,
+            stores_by_distance_provider=provider,
             k=self.k,
             diversity_objectives=self.diversity_objectives,
             constraints=self.constraints,
