@@ -1,6 +1,6 @@
 from ._base import DiversityContributionTracker
 from ._factory import build_diversity_contribution_tracker
-from ._geomean_of_terms import GeoMeanOfTermsTracker
+from ._hybrid_geomean import HybridGeoMeanTracker
 from ._mean_distance import MeanDistanceTracker
 from ._separation import SeparationTracker
 from ._trackers import DiversityContributionTrackers

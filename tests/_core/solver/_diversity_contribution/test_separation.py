@@ -7,6 +7,7 @@ from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import SeparationTracker
 from max_div._core.solver._diversity_contribution._separation import backend_for
 from tests._core.metrics._distance.helpers import condensed_distances
+from tests._core.solver._diversity_contribution.helpers import selection_args
 
 
 # =================================================================================================
@@ -26,19 +27,12 @@ def _all_separations(store: DistanceStore) -> np.ndarray:
     return sep
 
 
-def _selection_args(indices: list[int], n: int) -> tuple[np.ndarray, np.int32]:
-    """Build the (selected, n_selected) argument pair for contribution reads from a list of selected indices."""
-    selected = np.full(n, False, dtype=np.bool)
-    selected[indices] = True
-    return selected, np.int32(len(indices))
-
-
 # =================================================================================================
 #  Tests
 # =================================================================================================
 def test_construction_fresh(tracker: SeparationTracker):
     # --- arrange ----------------------
-    selected, n_selected = _selection_args([], 5)
+    selected, n_selected = selection_args([], 5)
 
     # --- assert -----------------------
     # global contribution: nearest-neighbor distances of points [0, 1, 3, 6, 10] on a line
@@ -47,9 +41,28 @@ def test_construction_fresh(tracker: SeparationTracker):
     assert np.all(np.isinf(tracker.contribution_wrt_selection(selected, n_selected)))
 
 
+<<<<<<< HEAD
+=======
+def test_construction_precomputed_arrays_skip_recompute():
+    # --- arrange ----------------------
+    vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
+    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
+    sep_global = _all_separations(store)
+    sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
+
+    # --- act --------------------------
+    tracker = SeparationTracker(store, sep_global=sep_global, sep_selected=sep_selected)
+
+    # --- assert -----------------------
+    assert tracker.contribution_wrt_dataset is sep_global  # taken as-is, not recomputed
+    selected, n_selected = selection_args([0], 3)
+    assert tracker.contribution_wrt_selection(selected, n_selected) is sep_selected
+
+
+>>>>>>> b357ee0c (refactor: apply the conventions review to the hybrid geometric-mean tracker)
 def test_add_remove_updates_contribution(tracker: SeparationTracker):
     # --- arrange ----------------------
-    selected, n_selected = _selection_args([0, 2], 5)
+    selected, n_selected = selection_args([0, 2], 5)
 
     # --- act --------------------------
     tracker.add(np.int32(0))
@@ -63,7 +76,7 @@ def test_add_remove_updates_contribution(tracker: SeparationTracker):
     tracker.remove(np.int32(2), new_selection=np.array([0], dtype=np.int32))
 
     # --- assert -----------------------
-    selected, n_selected = _selection_args([0], 5)
+    selected, n_selected = selection_args([0], 5)
     np.testing.assert_allclose(tracker.contribution_wrt_selection(selected, n_selected), [np.inf, 1, 3, 6, 10])
 
 
@@ -82,13 +95,32 @@ def test_add_many_remove_many_match_singles(tracker: SeparationTracker):
     other.remove(np.int32(4), new_selection=np.array([1], dtype=np.int32))
 
     # --- assert -----------------------
-    selected, n_selected = _selection_args([1], 5)
+    selected, n_selected = selection_args([1], 5)
     np.testing.assert_array_equal(
         tracker.contribution_wrt_selection(selected, n_selected),
         other.contribution_wrt_selection(selected, n_selected),
     )
 
 
+<<<<<<< HEAD
+=======
+def test_copy_is_independent(tracker: SeparationTracker):
+    # --- arrange ----------------------
+    tracker.add(np.int32(0))
+    clone = tracker.copy()
+
+    # --- act --------------------------
+    tracker.add(np.int32(4))
+
+    # --- assert -----------------------
+    selected, n_selected = selection_args([0], 5)
+    np.testing.assert_allclose(clone.contribution_wrt_selection(selected, n_selected), [np.inf, 1, 3, 6, 10])
+    # the immutable store and global contributions are shared by contract, not duplicated
+    assert clone._store is tracker._store
+    assert clone.contribution_wrt_dataset is tracker.contribution_wrt_dataset
+
+
+>>>>>>> b357ee0c (refactor: apply the conventions review to the hybrid geometric-mean tracker)
 def test_snapshot_stack(tracker: SeparationTracker):
     # --- arrange ----------------------
     tracker.add(np.int32(0))
@@ -97,7 +129,7 @@ def test_snapshot_stack(tracker: SeparationTracker):
     # two nested snapshots: pop the inner one restoring, the outer one keeping
     tracker.push_snapshot()
     tracker.add(np.int32(3))
-    selected_inner, n_selected_inner = _selection_args([0, 3], 5)
+    selected_inner, n_selected_inner = selection_args([0, 3], 5)
     contribution_inner = tracker.contribution_wrt_selection(selected_inner, n_selected_inner).copy()
 
     tracker.push_snapshot()
@@ -302,7 +334,7 @@ def test_add_many_fused_matches_sequential_adds(backend: str, parallel: bool):
         sequential.add(index)
 
     # --- assert -----------------------
-    selected, n_selected = _selection_args(list(batch), 40)
+    selected, n_selected = selection_args(list(batch), 40)
     np.testing.assert_array_equal(
         fused.contribution_wrt_selection(selected, n_selected),
         sequential.contribution_wrt_selection(selected, n_selected),
@@ -314,7 +346,7 @@ def test_add_many_empty_batch_is_noop(tracker: SeparationTracker):
 
     # --- arrange ----------------------
     tracker.add(np.int32(2))
-    selected, n_selected = _selection_args([2], 5)
+    selected, n_selected = selection_args([2], 5)
     before = tracker.contribution_wrt_selection(selected, n_selected).copy()
 
     # --- act --------------------------
@@ -343,9 +375,9 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
             index = int(rng.choice(selection))
             selection.remove(index)
             # a removal whose item was someone's nearest is what exercises the rescan branch
-            before = tracker.contribution_wrt_selection(*_selection_args([*selection, index], 25)).copy()
+            before = tracker.contribution_wrt_selection(*selection_args([*selection, index], 25)).copy()
             tracker.remove(np.int32(index), new_selection=np.array(selection, dtype=np.int32))
-            after = tracker.contribution_wrt_selection(*_selection_args(selection, 25))
+            after = tracker.contribution_wrt_selection(*selection_args(selection, 25))
             rescans_triggered += int(np.any(before != after))
         else:
             index = int(rng.choice([i for i in range(25) if i not in selection]))
@@ -353,7 +385,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
             selection.append(index)
 
         expected = _brute_force_separation(vectors, DistanceMetric.l2_euclidean(), selection)
-        actual = tracker.contribution_wrt_selection(*_selection_args(selection, 25))
+        actual = tracker.contribution_wrt_selection(*selection_args(selection, 25))
         np.testing.assert_allclose(actual, expected, rtol=1e-5, err_msg=f"{backend} diverged")
 
     assert rescans_triggered > 0, "the rescan branch was never exercised, so this proves little"
@@ -385,7 +417,7 @@ def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))
     global_before = tracker.contribution_wrt_dataset.copy()
-    selected, n_selected = _selection_args([], 5)
+    selected, n_selected = selection_args([], 5)
 
     # --- act --------------------------
     tracker.reset()

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from max_div._core._math.geomean import fast_geomean_f32, geomean_f32, geomean_per_column_f32
+from max_div._core._math.geomean import fast_geomean_f32, geomean_f32, geomean_per_row_f32
 
 # Positive normal floats only, the domain `fast_geomean_f32` is defined on, so both functions can
 # share these cases.
@@ -55,17 +55,19 @@ def test_fast_geomean_f32(values: list[float], expected: float, tol: float) -> N
     assert result == pytest.approx(expected, rel=tol, abs=tol)
 
 
-def test_geomean_per_column_f32_matches_geomean_f32_per_column() -> None:
-    """Each output entry is the geometric mean of that column, including the zero and +inf cases."""
+def test_geomean_per_row_f32_matches_geomean_f32_per_row() -> None:
+    """Each output entry is the geometric mean of that row, including the zero and +inf cases."""
     # --- arrange ----------------------
-    values = np.array([[0.1, 2.0, 0.0, 5.0, np.inf], [0.4, 3.0, 1.0, 5.0, 2.0]], dtype=np.float32)
+    values = np.ascontiguousarray(
+        np.array([[0.1, 2.0, 0.0, 5.0, np.inf], [0.4, 3.0, 1.0, 5.0, 2.0]], dtype=np.float32).T
+    )
     out = np.empty(5, dtype=np.float32)
 
     # --- act --------------------------
-    geomean_per_column_f32(values, out)
+    geomean_per_row_f32(values, out)
 
     # --- assert -----------------------
-    expected = [geomean_f32(np.ascontiguousarray(values[:, i])) for i in range(5)]
+    expected = [geomean_f32(np.ascontiguousarray(values[i, :])) for i in range(5)]
     np.testing.assert_allclose(out, expected, rtol=1e-6)
     assert out[2] == 0.0
     assert np.isinf(out[4])

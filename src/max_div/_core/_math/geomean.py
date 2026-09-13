@@ -17,9 +17,9 @@ from numpy.typing import NDArray
 from .fast_log_exp import fast_exp2_f32, fast_log2_f32
 
 
-# Both functions use the same fastmath subset as the pair-distance functions in
+# Every function here uses the same fastmath subset as the pair-distance functions in
 # `_distance/_metric/_pair.py`. The subset omits the `ninf` flag, which would let the compiler assume
-# no infinities, so in `geomean_f32` a +inf entry stays +inf through the sum.
+# no infinities, so in the exact functions a +inf entry stays +inf through the sum.
 @njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def geomean_f32(values: NDArray[np.float32]) -> np.float32:
     """Return the geometric mean of the entries.
@@ -49,15 +49,10 @@ def fast_geomean_f32(values: NDArray[np.float32]) -> np.float32:
 
 
 @njit("void(float32[:, ::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
-def geomean_per_column_f32(values: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write into `out` the geometric mean of each column of `values`, a (J, n) array, J >= 1.
+def geomean_per_row_f32(values: NDArray[np.float32], out: NDArray[np.float32]) -> None:
+    """Write into `out` the geometric mean of each row of `values`, a C-contiguous (n, J) array, J >= 1.
 
-    Each column is reduced as `geomean_f32` reduces a vector: a zero entry makes that column's
-    mean zero, a +inf entry makes it +inf, and both together give nan.
+    Each row is reduced by `geomean_f32`, so its zero and +inf behavior applies per row.
     """
-    n_rows, n_cols = values.shape
-    for i in range(n_cols):
-        log_sum = np.float32(0.0)
-        for j in range(n_rows):
-            log_sum += np.log(values[j, i])
-        out[i] = np.exp(log_sum / n_rows)
+    for i in range(values.shape[0]):
+        out[i] = geomean_f32(values[i, :])
