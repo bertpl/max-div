@@ -5,7 +5,6 @@ from max_div._core.metrics import (
     DistanceMetric,
     DiversityContributionFamily,
     DiversityMetric,
-    DiversityObjectiveHybridFlattened,
     DiversityTrackerSpec,
 )
 from max_div._core.metrics._distance import DistanceStore
@@ -35,19 +34,20 @@ def store() -> DistanceStore:
 #  for_objectives
 # =================================================================================================
 def test_for_objectives_single_family(store: DistanceStore):
-    """Two separation-family metrics yield one SeparationTracker, which represents the main objective."""
-    # --- arrange ----------------------
-    main_objective = simple_objective(DiversityMetric.GEOMEAN_SEPARATION)
-
+    """Two separation-family metrics yield one SeparationTracker, which is the primary tracker."""
     # --- act --------------------------
     trackers = DiversityContributionTrackers.for_objectives(
-        [main_objective, *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC])], store
+        [
+            simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
+            *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+        ],
+        store,
     )
 
     # --- assert -----------------------
     assert len(trackers._trackers) == 1
-    assert type(trackers.single_tracker_for(main_objective)) is SeparationTracker
-    assert trackers.single_tracker_for(main_objective) is trackers._trackers[0]
+    assert type(trackers.primary_tracker) is SeparationTracker
+    assert trackers.primary_tracker is trackers._trackers[0]
 
 
 def test_for_objectives_repeated_family(store: DistanceStore):
@@ -167,16 +167,24 @@ def test_selected_contributions_orders_the_arrays_as_the_specs():
 
 
 # =================================================================================================
-#  single_tracker_for
+#  primary_tracker
 # =================================================================================================
-def test_single_tracker_for_refuses_an_objective_over_several_trackers(store: DistanceStore):
-    """No single tracker represents an objective that reads several specs."""
+def test_primary_tracker_is_the_first_objectives_tracker():
+    """The primary tracker is the first objective's tracker, not a tie-breaker's over another family."""
     # --- arrange ----------------------
-    flattened = DiversityObjectiveHybridFlattened(
-        DiversityMetric.MIN_SEPARATION, (DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean())
-    )
-    trackers = DiversityContributionTrackers.for_objectives([flattened], store)
+    vectors = np.array([[0.0], [1.0], [3.0], [6.0]], dtype=np.float32)
+    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
 
-    # --- act / assert -----------------
-    with pytest.raises(ValueError, match="No single tracker"):
-        trackers.single_tracker_for(flattened)
+    # --- act --------------------------
+    # primary reads the separation family; the tie-breaker reads the mean-distance family
+    trackers = DiversityContributionTrackers.for_objectives(
+        [
+            simple_objective(DiversityMetric.MIN_SEPARATION),
+            *tie_breaker_objectives([DiversityMetric.MEAN_PAIRWISE_DISTANCE]),
+        ],
+        store,
+    )
+
+    # --- assert -----------------------
+    assert type(trackers.primary_tracker) is SeparationTracker  # the primary's family, not the tie-breaker's
+    assert trackers.primary_tracker is trackers._trackers[0]

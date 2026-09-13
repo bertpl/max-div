@@ -34,7 +34,9 @@ class DiversityContributionTrackers:
         """Initialize from an explicit spec -> tracker mapping; prefer the for_objectives() factory.
 
         Args:
-            trackers_by_spec: (dict) one tracker per spec the objectives read.
+            trackers_by_spec: (dict) one tracker per spec the objectives read. The first entry is the
+                primary objective's tracker (`primary_tracker`), so the caller must pass the primary
+                objective's spec first; `for_objectives` does, listing the primary objective first.
         """
         self._trackers_by_spec = trackers_by_spec  # READ-ONLY
         self._trackers = tuple(trackers_by_spec.values())  # iteration order for mutation fan-out
@@ -46,7 +48,8 @@ class DiversityContributionTrackers:
         """Build the tracker set that the objectives need, all reading `store`.
 
         The set holds one tracker per distinct spec the objectives read, in the order the objectives
-        list them, each objective's specs in its own order.
+        list them, each objective's specs in its own order. The primary objective comes first, so
+        `primary_tracker` is the first tracker.
         """
         specs = dict.fromkeys(spec for objective in diversity_objectives for spec in objective.tracker_specs)
         return cls(
@@ -58,21 +61,14 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     #  Primary tracker
     # -------------------------------------------------------------------------
-    def single_tracker_for(self, diversity_objective: DiversityObjective) -> DiversityContributionTracker:
-        """Return the tracker whose per-point contributions represent `diversity_objective` to the strategies.
+    @property
+    def primary_tracker(self) -> DiversityContributionTracker:
+        """Return the primary objective's tracker, whose per-point contributions the strategies read.
 
-        Raises:
-            ValueError: If the objective reads several trackers; no single tracker represents such an
-                objective here.
+        It is the first tracker, by the constructor's precondition that the primary objective's spec
+        is passed first.
         """
-        specs = diversity_objective.tracker_specs
-        try:
-            (spec,) = specs
-        except ValueError as exc:
-            raise ValueError(
-                f"No single tracker represents an objective over {len(specs)} trackers: {diversity_objective}."
-            ) from exc
-        return self._trackers_by_spec[spec]
+        return self._trackers[0]
 
     # -------------------------------------------------------------------------
     #  Mutation fan-out
