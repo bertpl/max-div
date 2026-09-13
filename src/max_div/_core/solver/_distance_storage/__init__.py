@@ -7,7 +7,7 @@
 - `factory` is the one place a problem and its distances become stores.
 """
 
-from .factory import DistanceStoreFactory, StoreDistance, distinct_store_distances
+from .factory import DistanceStoreFactory, StoreDistance, distinct_store_distances, stores_by_distance
 from .memory_budget import total_physical_memory_bytes
 from .shared_memory import SharedStoreSpec, attached_distance_store
 from .storage import DistanceStorageType, DistanceStorageTypes
@@ -20,5 +20,6 @@ __all__ = [
     "StoreDistance",
     "attached_distance_store",
     "distinct_store_distances",
+    "stores_by_distance",
     "total_physical_memory_bytes",
 ]

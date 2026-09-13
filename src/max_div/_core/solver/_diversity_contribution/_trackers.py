@@ -53,7 +53,7 @@ class DiversityContributionTrackers:
         The set holds one tracker per distinct spec the objectives read, in the order the objectives
         list them, each objective's specs in its own order. The primary objective comes first, so
         `primary_tracker` is the first tracker. `stores_by_distance` maps a spec's distance (`None`
-        for the problem's own) to the store the spec's tracker reads.
+        for the problem's own distance) to the store the spec's tracker reads.
         """
         specs = dict.fromkeys(spec for objective in diversity_objectives for spec in objective.tracker_specs)
         return cls(

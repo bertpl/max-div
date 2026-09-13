@@ -90,7 +90,10 @@ def _all_pairs(store: DistanceStore, n: int) -> list[float]:
     ids=["bare-kept-as-none", "explicit-kept", "repeats-collapse-first-seen", "distance-problem-none"],
 )
 def test_for_objectives_derives_the_distinct_distances(problem, objective, expected):
-    """Distinct distances, kept as the objective declares them (`None` for the problem's own), repeats collapsed."""
+    """The distinct distances are kept as the objective declares them, repeats collapsed.
+
+    A `None` distance (the problem's own) is kept as `None`, not resolved here.
+    """
     # --- act --------------------------
     factory = DistanceStoreFactory.for_objectives(problem, [objective], DistanceStorageType.AUTO, 64 * GIB)
 

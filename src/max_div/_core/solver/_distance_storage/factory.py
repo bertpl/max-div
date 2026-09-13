@@ -95,17 +95,17 @@ class DistanceStoreFactory:
     def for_objectives(
         cls,
         problem: MaxDivProblem,
-        objectives: Sequence[DiversityObjective],
+        diversity_objectives: Sequence[DiversityObjective],
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> "DistanceStoreFactory":
         """Return the factory for the distinct distances the objectives read, one store per distance.
 
-        The distances are kept as the objectives declare them (`None` for the problem's own), so a
+        The distances are kept as the objectives declare them (`None` for the problem's own distance), so a
         store can be looked up by the distance an objective declares, without resolving it. `None`
         is resolved to the problem's distance only when a store is actually built, and in the report.
         """
-        return cls(problem, distinct_store_distances(objectives), storage_type, total_memory_bytes)
+        return cls(problem, distinct_store_distances(diversity_objectives), storage_type, total_memory_bytes)
 
     @property
     def distances(self) -> tuple[StoreDistance, ...]:
@@ -142,8 +142,8 @@ class DistanceStoreFactory:
     def resolved_storage(self) -> DistanceStorageTypes:
         """Return each store's distance paired with its resolved storage type, in store order.
 
-        A `None` distance (the problem's own) is reported as the metric it resolves to, so the
-        summary names it rather than leaving it blank.
+        A `None` distance (the problem's own distance) is reported as the metric it resolves to, so
+        the reported distance is a metric name rather than blank.
         """
         return DistanceStorageTypes(tuple(zip(self._resolved_distances(), self.determine_storage_types(), strict=True)))
 
@@ -169,8 +169,8 @@ class DistanceStoreFactory:
         return self._build(InProcessDistanceStoreAllocator())
 
     def create_stores_by_distance(self) -> dict[StoreDistance, DistanceStore]:
-        """Build the stores in this process, keyed by the distance each was built for (`None` for the problem's own)."""
-        return dict(zip(self._distances, self.create_stores(), strict=True))
+        """Build the stores in this process, keyed by the distance each was built for (`None` = the problem's own)."""
+        return stores_by_distance(self._distances, self.create_stores())
 
     @contextmanager
     def publish_distance_stores(self) -> Iterator[tuple[SharedStoreSpec, ...]]:
@@ -250,12 +250,25 @@ class DistanceStoreFactory:
 # ==================================================================================================
 #  Helpers
 # ==================================================================================================
-def distinct_store_distances(objectives: Sequence[DiversityObjective]) -> tuple[StoreDistance, ...]:
-    """Return the distinct distances the objectives read, in first-seen order (`None` for the problem's own).
+def distinct_store_distances(diversity_objectives: Sequence[DiversityObjective]) -> tuple[StoreDistance, ...]:
+    """Return the distinct distances the objectives read, in first-seen order (`None` for the problem's own distance).
 
     The order is deterministic from the objectives alone, so a worker process rebuilds the same
     one-store-per-distance mapping from its objectives and the stores it attaches.
     """
     return tuple(
-        dict.fromkeys(distance for objective in objectives for distance in objective.distinct_distance_metrics())
+        dict.fromkeys(
+            distance for objective in diversity_objectives for distance in objective.distinct_distance_metrics()
+        )
     )
+
+
+def stores_by_distance(
+    distances: Sequence[StoreDistance], stores: Sequence[DistanceStore]
+) -> dict[StoreDistance, DistanceStore]:
+    """Pair each distance with its store, in the shared build order (`distinct_store_distances`).
+
+    The publisher and a worker both call this over that one order, so the mapping a worker rebuilds
+    from its attached stores matches the one the publisher built.
+    """
+    return dict(zip(distances, stores, strict=True))

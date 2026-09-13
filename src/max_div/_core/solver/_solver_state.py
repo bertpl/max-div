@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 
     from max_div._core.metrics import DiversityObjective
     from max_div._core.metrics._distance import DistanceStore
-    from max_div._core.solver._distance_storage import StoreDistance
+
+    from ._distance_storage import StoreDistance
 
 
 # =================================================================================================

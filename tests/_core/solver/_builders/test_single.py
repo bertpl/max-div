@@ -362,7 +362,7 @@ def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_
     stores_provider = solver._stores_by_distance_provider
     solver._stores_by_distance_provider = lambda: (fake_clock.advance(11.0), stores_provider())[
         1
-    ]  # the build eats the budget
+    ]  # the build spends the whole budget
 
     # --- act --------------------------
     with pytest.warns(SolverBudgetWarning, match="spent before optimization started"):
