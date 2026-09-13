@@ -162,9 +162,10 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
 
     @cached_property
     def _terms_with_positions(self) -> tuple[tuple[DiversityObjectiveSimple, int], ...]:
-        """Pair each term with the position, among the arrays passed to `compute`, of its one array.
+        """Return a tuple of (diversity term, index) pairs.
 
-        Two terms that read the same spec get the same position.
+        The index is the index of the diversity tracker each term uses in the full list of diversity
+        trackers. Two terms that use the same diversity contribution tracker hence get the same index.
         """
         return tuple((term, self.tracker_specs.index(term.tracker_specs[0])) for term in self.terms)
 

@@ -184,10 +184,14 @@ class ScoreGenerator:
 
         Resolving the positions here, once, speeds up the repeated calls on the hot path.
         """
+        # --- prepare info ---------------------------
         positions = tuple(self._tracker_specs.index(spec) for spec in diversity_objective.tracker_specs)
         diversity_objective_compute = diversity_objective.compute
+
+        # --- construct score function ---------------
         if positions == tuple(range(len(self._tracker_specs))):
-            # the objective needs every array, in the given order: no picking, and no extra call
+            # the objective needs every array, in the given order: no subselection of arrays needs to be
+            # made at all, and no extra call
             return diversity_objective_compute
         else:
 
