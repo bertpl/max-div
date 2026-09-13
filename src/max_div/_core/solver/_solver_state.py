@@ -61,7 +61,7 @@ class SolverState:
         n: np.int32,
         k: np.int32,
         contribution_trackers: DiversityContributionTrackers,
-        strategy_tracker: DiversityContributionTracker,
+        main_objective_tracker: DiversityContributionTracker,
         score_generator: ScoreGenerator,
         selected: NDArray[np.bool],
         con_values: NDArray[np.int32],
@@ -84,8 +84,8 @@ class SolverState:
             k: (np.int32) target number of selected items
             contribution_trackers: (DiversityContributionTrackers) the tracker set backing this state's
                 per-point diversity contributions, updated on every selection mutation.
-            strategy_tracker: the tracker of that set whose per-point contributions the strategies
-                read, the one representing the main diversity objective.
+            main_objective_tracker: the tracker of that set representing the main diversity objective;
+                the strategies read its per-point contributions.
             score_generator: (ScoreGenerator) score generator to compute scores for current state
             selected: (np.ndarray[np.bool]) array indicating which of the n items are initially selected.
             con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)
@@ -102,7 +102,7 @@ class SolverState:
 
         # diversity contributions
         self._contribution_trackers = contribution_trackers
-        self._contribution_tracker = strategy_tracker
+        self._contribution_tracker = main_objective_tracker  # held directly: no per-access lookup on the hot path
 
         # scoring
         self._score_generator = score_generator  # READ-ONLY
@@ -602,7 +602,7 @@ class SolverState:
             n=n_np,
             k=np.int32(k),
             contribution_trackers=contribution_trackers,
-            strategy_tracker=contribution_trackers.tracker_for(diversity_objectives[0]),
+            main_objective_tracker=contribution_trackers.tracker_for(diversity_objectives[0]),
             score_generator=score_generator,
             selected=selected,
             con_values=con_values,

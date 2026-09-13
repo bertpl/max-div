@@ -57,7 +57,7 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 
     @property
     def diversity(self) -> float:
-        """Return the main diversity score, the first entry of `diversities`."""
+        """Return the main diversity score."""
         return self.diversities[0]
 
     # --- helpers --------------------------------

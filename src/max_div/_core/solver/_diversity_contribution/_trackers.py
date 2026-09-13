@@ -23,7 +23,8 @@ class DiversityContributionTrackers:
     """The set of diversity-contribution trackers backing a solver state.
 
     Holds one tracker per spec that the objectives read, applies every selection mutation to all
-    trackers, and names the tracker that represents an objective to the strategies.
+    trackers, and, given an objective, returns the tracker whose per-point contributions the
+    strategies read.
     """
 
     # -------------------------------------------------------------------------
