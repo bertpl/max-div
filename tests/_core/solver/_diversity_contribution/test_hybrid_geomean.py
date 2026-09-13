@@ -147,24 +147,6 @@ def test_restoring_pop_marks_the_combined_array_stale_and_plain_pop_does_not(ter
     np.testing.assert_allclose(hybrid_tracker.contribution_wrt_selection(selected_0, n_0), at_snapshot)
 
 
-def test_copy_is_independent(term_trackers):
-    """A copy combines its own copies of the term trackers, so mutating the original leaves the copy unchanged."""
-    # --- arrange ----------------------
-    hybrid_tracker = HybridGeoMeanTracker(term_trackers)
-    _add_index_to_all_trackers((*term_trackers, hybrid_tracker), 0)
-    selected_0, n_0 = selection_args([0], N)
-    copied = hybrid_tracker.copy()
-    before = copied.contribution_wrt_selection(selected_0, n_0).copy()
-
-    # --- act --------------------------
-    _add_index_to_all_trackers((*term_trackers, hybrid_tracker), 1)
-
-    # --- assert -----------------------
-    assert len(copied.term_trackers) == 2
-    assert all(c is not t for c, t in zip(copied.term_trackers, term_trackers, strict=True))
-    np.testing.assert_array_equal(copied.contribution_wrt_selection(selected_0, n_0), before)
-
-
 def test_store_is_not_defined_for_several_terms(term_trackers):
     """The terms may read different stores, so asking for one store raises."""
     # --- act / assert -----------------

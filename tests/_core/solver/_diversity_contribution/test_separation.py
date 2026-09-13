@@ -42,25 +42,6 @@ def test_construction_fresh(tracker: SeparationTracker):
     assert np.all(np.isinf(tracker.contribution_wrt_selection(selected, n_selected)))
 
 
-<<<<<<< HEAD
-=======
-def test_construction_precomputed_arrays_skip_recompute():
-    # --- arrange ----------------------
-    vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
-    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
-    sep_global = _all_separations(store)
-    sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
-
-    # --- act --------------------------
-    tracker = SeparationTracker(store, sep_global=sep_global, sep_selected=sep_selected)
-
-    # --- assert -----------------------
-    assert tracker.contribution_wrt_dataset is sep_global  # taken as-is, not recomputed
-    selected, n_selected = selection_args([0], 3)
-    assert tracker.contribution_wrt_selection(selected, n_selected) is sep_selected
-
-
->>>>>>> b357ee0c (refactor: apply the conventions review to the hybrid geometric-mean tracker)
 def test_add_remove_updates_contribution(tracker: SeparationTracker):
     # --- arrange ----------------------
     selected, n_selected = selection_args([0, 2], 5)
@@ -103,25 +84,6 @@ def test_add_many_remove_many_match_singles(tracker: SeparationTracker):
     )
 
 
-<<<<<<< HEAD
-=======
-def test_copy_is_independent(tracker: SeparationTracker):
-    # --- arrange ----------------------
-    tracker.add(np.int32(0))
-    clone = tracker.copy()
-
-    # --- act --------------------------
-    tracker.add(np.int32(4))
-
-    # --- assert -----------------------
-    selected, n_selected = selection_args([0], 5)
-    np.testing.assert_allclose(clone.contribution_wrt_selection(selected, n_selected), [np.inf, 1, 3, 6, 10])
-    # the immutable store and global contributions are shared by contract, not duplicated
-    assert clone._store is tracker._store
-    assert clone.contribution_wrt_dataset is tracker.contribution_wrt_dataset
-
-
->>>>>>> b357ee0c (refactor: apply the conventions review to the hybrid geometric-mean tracker)
 def test_snapshot_stack(tracker: SeparationTracker):
     # --- arrange ----------------------
     tracker.add(np.int32(0))

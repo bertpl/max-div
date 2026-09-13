@@ -159,38 +159,6 @@ def test_lazy_global_targeted_read_computes_only_requested(tracker: MeanDistance
     assert tracker._contribution_wrt_dataset[2] != -1.0
 
 
-<<<<<<< HEAD
-=======
-def test_lazy_global_cache_shared_across_copies(tracker: MeanDistanceTracker):
-    # --- arrange ----------------------
-    clone = tracker.copy()
-
-    # --- act --------------------------
-    clone.contribution_wrt_dataset_for(np.array([4], dtype=np.int32))
-
-    # --- assert -----------------------
-    # an element computed through the clone is visible through the original (one shared cache)
-    assert not np.isnan(tracker._contribution_wrt_dataset[4])
-
-
-def test_copy_is_independent(tracker: MeanDistanceTracker):
-    # --- arrange ----------------------
-    tracker.add(np.int32(0))
-    clone = tracker.copy()
-    selected, n_selected = selection_args([0], N)
-    contribution_before = clone.contribution_wrt_selection(selected, n_selected).copy()
-
-    # --- act --------------------------
-    tracker.add(np.int32(4))
-
-    # --- assert -----------------------
-    np.testing.assert_array_equal(clone.contribution_wrt_selection(selected, n_selected), contribution_before)
-    # the immutable store and global contributions are shared by contract, not duplicated
-    assert clone._store is tracker._store
-    assert clone.contribution_wrt_dataset is tracker.contribution_wrt_dataset
-
-
->>>>>>> b357ee0c (refactor: apply the conventions review to the hybrid geometric-mean tracker)
 # =================================================================================================
 #  Kernels
 # =================================================================================================

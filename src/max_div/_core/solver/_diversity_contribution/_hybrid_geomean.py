@@ -37,7 +37,7 @@ class HybridGeoMeanTracker(DiversityContributionTracker):
     """
 
     # -------------------------------------------------------------------------
-    #  Construction & copy
+    #  Construction
     # -------------------------------------------------------------------------
     def __init__(self, term_trackers: Sequence[DiversityContributionTracker]) -> None:
         """Initialize from the term trackers, one per term, in the order of the terms.
@@ -54,10 +54,6 @@ class HybridGeoMeanTracker(DiversityContributionTracker):
         self._term_trackers = tuple(term_trackers)  # READ-ONLY
         self._contribution_wrt_selection: NDArray[np.float32] | None = None
         self._contribution_wrt_dataset: NDArray[np.float32] | None = None
-
-    def copy(self) -> HybridGeoMeanTracker:
-        """Return a tracker built from copies of the term trackers."""
-        return HybridGeoMeanTracker([tracker.copy() for tracker in self._term_trackers])
 
     @property
     def term_trackers(self) -> tuple[DiversityContributionTracker, ...]:
