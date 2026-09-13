@@ -27,7 +27,7 @@ def _independent_coordinators(config, n: int):
         multiprocessing.get_context("spawn"),
         group_sizes=[1] * n,
         k=config.k,
-        score_length=3 + len(config.diversity_tie_breakers),
+        score_length=2 + len(config.diversity_objectives),
         schedule=FixedGroupCount(n),
     )
     return [state.coordinator_for(index) for index in range(n)]
@@ -118,7 +118,7 @@ def test_a_group_of_cooperative_workers_solves_and_exchanges():
         multiprocessing.get_context("spawn"),
         group_sizes=[len(_SEEDS)],
         k=config.k,
-        score_length=3 + len(config.diversity_tie_breakers),
+        score_length=2 + len(config.diversity_objectives),
         schedule=FixedGroupCount(1),
     )
     coordinators = [group_state.coordinator_for(index) for index in range(len(_SEEDS))]

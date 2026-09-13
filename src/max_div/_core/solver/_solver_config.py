@@ -25,8 +25,8 @@ class SolverConfig:
 
     n: int
     k: int
-    objective: DiversityObjective
-    diversity_tie_breakers: list[DiversityObjective]
+    # the primary objective first, then the tie-breakers in order
+    diversity_objectives: list[DiversityObjective]
     constraints: list[Constraint]
     solver_steps: list[SolverStep]
     seed: int
@@ -61,7 +61,7 @@ class SolverConfig:
                 diversity metric.
         """
         for step in self.solver_steps:
-            step.validate_objective(self.objective)
+            step.validate_objective(self.diversity_objectives[0])
         if store is not None and store_provider is None:
             provider: Callable[[], DistanceStore] = lambda: store
         elif store is None and store_provider is not None:
@@ -72,8 +72,7 @@ class SolverConfig:
             n=self.n,
             store_provider=provider,
             k=self.k,
-            objective=self.objective,
-            diversity_tie_breakers=self.diversity_tie_breakers,
+            diversity_objectives=self.diversity_objectives,
             constraints=self.constraints,
             solver_steps=self.solver_steps,
             seed=self.seed,

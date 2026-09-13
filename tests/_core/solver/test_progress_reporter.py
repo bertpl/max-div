@@ -22,7 +22,7 @@ from max_div._core.solver._score import Score
 def _stub_state(n_selected: int = 3, k: int = 5, m: int = 2) -> SimpleNamespace:
     """Return a stand-in for SolverState carrying just the fields snapshot building reads."""
     return SimpleNamespace(
-        score=Score(size=1.0, constraints=0.5, diversity=0.25, div_tie_breakers=()),
+        score=Score(size=1.0, constraints=0.5, diversities=(0.25,)),
         n_selected=n_selected,
         k=k,
         m=m,
@@ -272,7 +272,7 @@ def test_tabular_worker_columns_layout(capsys):
         progress=_stub_progress(),
         t_elapsed_solver=1.0,
         t_elapsed_step=1.0,
-        score=Score(size=1.0, constraints=1.0, diversity=0.5, div_tie_breakers=()),
+        score=Score(size=1.0, constraints=1.0, diversities=(0.5,)),
         n_selected=5,
         k=5,
         m=0,

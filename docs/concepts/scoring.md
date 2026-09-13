@@ -10,7 +10,7 @@ Every selection (intermediate or final) is evaluated by a `Score` with four comp
 | `size` | 0 to 1 | 1.0 when exactly `k` [items](glossary.md#item) are selected. Used internally during initialization; always 1.0 in a final solution. |
 | `constraints` | 0 to 1 | 1.0 when all fairness constraints are satisfied. Lower values indicate more constraint violations. |
 | `diversity` | 0+ | The main diversity metric value (higher is better). |
-| `div_tie_breakers` | 0+ | Secondary diversity metrics, used to break ties. |
+| tie-breakers | 0+ | Secondary diversity metrics, used to break ties. |
 
 When comparing two solutions, the solver checks components in priority order: a solution with
 higher `constraints` score always beats one with higher `diversity`, regardless of how large the

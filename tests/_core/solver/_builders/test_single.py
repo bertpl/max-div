@@ -122,8 +122,8 @@ def test_max_div_solver_builder_tie_breaker_metrics_defaults(
     solver = builder.build()
 
     # --- assert -----------------------
-    assert solver._objective.diversity_metric == diversity_metric
-    assert solver._diversity_tie_breakers == [DiversityObjectiveSimple(tb) for tb in expected_tie_breakers]
+    assert solver._diversity_objectives[0].diversity_metric == diversity_metric
+    assert solver._diversity_objectives[1:] == [DiversityObjectiveSimple(tb) for tb in expected_tie_breakers]
 
 
 def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
@@ -140,13 +140,14 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
     solver = builder.build()
 
     # --- assert -----------------------
-    assert solver._objective.diversity_metric == DiversityMetric.GEOMEAN_SEPARATION
-    assert [tb.diversity_metric for tb in solver._diversity_tie_breakers] == [
+    main_objective, *tie_breakers = solver._diversity_objectives
+    assert main_objective.diversity_metric == DiversityMetric.GEOMEAN_SEPARATION
+    assert [tb.diversity_metric for tb in tie_breakers] == [
         DiversityMetric.APPROX_GEOMEAN_SEPARATION,
         DiversityMetric.NON_ZERO_SEPARATION_FRAC,
         DiversityMetric.MEAN_SEPARATION,
     ]
-    assert all(isinstance(tb, DiversityObjectiveSimple) for tb in solver._diversity_tie_breakers)
+    assert all(isinstance(tb, DiversityObjectiveSimple) for tb in tie_breakers)
 
 
 # =================================================================================================
@@ -221,7 +222,7 @@ def test_max_div_solver_builder_end_to_end():
     assert solver._solver_steps[0].name() == init_strategy.name
     assert solver._solver_steps[1].name() == solver_steps[0].name()
     assert solver._solver_steps[2].name() == solver_steps[1].name()
-    assert solver._objective.diversity_metric == DiversityMetric.MIN_SEPARATION
+    assert solver._diversity_objectives[0].diversity_metric == DiversityMetric.MIN_SEPARATION
     assert solver._constraints == constraints
     assert solver._seed == 123
 

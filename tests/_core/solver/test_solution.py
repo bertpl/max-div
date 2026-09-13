@@ -12,7 +12,18 @@ def test_solution_str_with_constraints():
     solution = MaxDivSolution(
         i_selected=np.array([1, 3, 5, 7, 9], dtype=np.int32),
         score_checkpoints=[
-            ("step 0/1", Elapsed(t_elapsed_sec=1.23, n_iterations=456), Score(1.0, 1.0, 0.7705, (1.0,))),
+            (
+                "step 0/1",
+                Elapsed(t_elapsed_sec=1.23, n_iterations=456),
+                Score(
+                    1.0,
+                    1.0,
+                    (
+                        0.7705,
+                        1.0,
+                    ),
+                ),
+            ),
         ],
         step_durations={"step 0/1": Elapsed(t_elapsed_sec=1.23, n_iterations=456)},
         n_constraints=3,
@@ -34,7 +45,7 @@ def test_solution_str_without_constraints():
     solution = MaxDivSolution(
         i_selected=np.array([0, 2, 4], dtype=np.int32),
         score_checkpoints=[
-            ("step 0/1", Elapsed(t_elapsed_sec=0.5, n_iterations=100), Score(1.0, 1.0, 0.5, ())),
+            ("step 0/1", Elapsed(t_elapsed_sec=0.5, n_iterations=100), Score(1.0, 1.0, (0.5,))),
         ],
         step_durations={"step 0/1": Elapsed(t_elapsed_sec=0.5, n_iterations=100)},
     )
@@ -54,7 +65,7 @@ def test_solution_str_reports_storage():
     # --- arrange ----------------------
     solution = MaxDivSolution(
         i_selected=np.array([0, 1], dtype=np.int32),
-        score_checkpoints=[("step 0/1", Elapsed(t_elapsed_sec=0.1, n_iterations=1), Score(1.0, 1.0, 0.5, ()))],
+        score_checkpoints=[("step 0/1", Elapsed(t_elapsed_sec=0.1, n_iterations=1), Score(1.0, 1.0, (0.5,)))],
         step_durations={"step 0/1": Elapsed(t_elapsed_sec=0.1, n_iterations=1)},
         distance_storage=DistanceStorageTypes(((DistanceMetric.l2_euclidean(), DistanceStorageType.FULL_MATRIX),)),
     )

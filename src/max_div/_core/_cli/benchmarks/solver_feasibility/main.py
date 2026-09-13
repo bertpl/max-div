@@ -56,8 +56,7 @@ def _ceiling_cell(problem: VectorMaxDivProblem, result: FeasibilityResult) -> st
     score_generator = ScoreGenerator(
         n=problem.n,
         k=problem.k,
-        diversity_objective=diversity_objective,
-        diversity_tie_breakers=[],
+        diversity_objectives=[diversity_objective],
         tracker_specs=diversity_objective.tracker_specs,
         constraints=problem.constraints,
     )

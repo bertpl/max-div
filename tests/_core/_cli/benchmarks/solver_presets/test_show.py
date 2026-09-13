@@ -27,7 +27,7 @@ def _result(duration_sec: float, n_workers: int, diversity: float) -> SolverPres
         execution_info=SolverPresetBenchmarkExecutionInfo(pid=1, t_start=0.0, t_end=duration_sec),
         t_elapsed_sec=duration_sec,
         n_iterations=100,
-        score=Score(size=1.0, constraints=1.0, diversity=diversity, div_tie_breakers=()),
+        score=Score(size=1.0, constraints=1.0, diversities=(diversity,)),
     )
 
 

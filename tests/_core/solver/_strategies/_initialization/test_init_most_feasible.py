@@ -21,8 +21,7 @@ def _state(constraints: list[Constraint], n: int = 20, k: int = 8) -> SolverStat
         n=n,
         store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l2_euclidean()),
         k=k,
-        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
-        diversity_tie_breakers=[],
+        diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
         constraints=constraints,
     )
 

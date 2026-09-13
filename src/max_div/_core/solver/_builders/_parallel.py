@@ -211,13 +211,12 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
         seed derived the same way elsewhere.
         """
         init_strategy, optim_steps = get_preset_strategies(
-            worker.preset, duration, self._objective, has_constraints=bool(self._constraints)
+            worker.preset, duration, self._primary_objective, has_constraints=bool(self._constraints)
         )
         return SolverConfig(
             n=self._n,
             k=self._k,
-            objective=self._objective,
-            diversity_tie_breakers=self._determine_diversity_tie_breakers(),
+            diversity_objectives=self._determine_diversity_objectives(),
             constraints=self._constraints,
             solver_steps=[InitializationStep(worker.init_strategy or init_strategy), *optim_steps],
             seed=int(deterministic_hash_int64(("parallel_worker_seed", self._seed, index))),

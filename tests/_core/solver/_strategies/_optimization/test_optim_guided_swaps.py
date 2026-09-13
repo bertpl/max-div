@@ -69,8 +69,7 @@ def test_optim_guided_swaps(
         n=problem.n,
         store=DistanceStore.full_matrix_from_vectors(problem.vectors, problem.distance_metric),
         k=problem.k,
-        diversity_objective=simple_objective(problem.diversity_metric),
-        diversity_tie_breakers=[],
+        diversity_objectives=[simple_objective(problem.diversity_metric)],
         constraints=problem.constraints,
     )
 

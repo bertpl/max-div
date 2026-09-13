@@ -36,8 +36,7 @@ class MaxDivSolver:
         n: int,
         store_provider: Callable[[], DistanceStore],
         k: int,
-        objective: DiversityObjective,
-        diversity_tie_breakers: list[DiversityObjective],
+        diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],
         solver_steps: list[SolverStep],
         seed: int = 42,
@@ -54,9 +53,8 @@ class MaxDivSolver:
                 storage to read from, so `build` stays lean and fast rather than building the
                 store up front.
             k: (int) The number of items to be selected from the input set ('universe').
-            objective: (DiversityObjective) The diversity objective to maximize.
-            diversity_tie_breakers: (list[DiversityObjective]) The tie-breaker objectives, scored in order
-                after the objective.
+            diversity_objectives: the primary objective first, then the tie-breakers, scored in
+                that order.
             constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
             solver_steps: (list[SolverStep]) A list of solver steps to execute,
                 the first of which needs to be an InitializationStep,
@@ -76,11 +74,10 @@ class MaxDivSolver:
         self._store_provider = store_provider
         self._distance_storage = distance_storage
         self._k = k
-        self._objective = objective
+        self._diversity_objectives = diversity_objectives
         self._constraints = constraints
 
         # --- solver config ----------------------
-        self._diversity_tie_breakers = diversity_tie_breakers
         self._solver_steps = solver_steps
         self._seed = seed
         self._constraint_penalty = constraint_penalty
@@ -132,8 +129,7 @@ class MaxDivSolver:
                 n=self._n,
                 store=store,
                 k=self._k,
-                diversity_objective=self._objective,
-                diversity_tie_breakers=self._diversity_tie_breakers,
+                diversity_objectives=self._diversity_objectives,
                 constraints=self._constraints,
                 penalty_quadratic=(self._constraint_penalty == ConstraintPenalty.QUADRATIC),
             )

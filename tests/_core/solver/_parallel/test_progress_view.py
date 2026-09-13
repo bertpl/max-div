@@ -48,7 +48,7 @@ def _snapshot(worker_index: int, fraction: float, diversity: float, iter_count: 
         ),
         t_elapsed_solver=1.0,
         t_elapsed_step=1.0,
-        score=Score(size=1.0, constraints=1.0, diversity=diversity, div_tie_breakers=()),
+        score=Score(size=1.0, constraints=1.0, diversities=(diversity,)),
         n_selected=5,
         k=5,
         m=0,
