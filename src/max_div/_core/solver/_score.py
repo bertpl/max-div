@@ -27,7 +27,7 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 
     The different components have strict priorities in order of appearance:
 
-                                    size > constraints > main diversity > tie-breakers, in order.
+                                    size > constraints > primary diversity > tie-breakers, in order.
 
     Only in case of a tie in a lower-priority component, the next higher-priority component is considered for
     comparisons.
@@ -36,7 +36,7 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 
     RATIONALE behind diversity tie-breakers:
 
-      - these are optional additional metrics that can be added in case of ties in the main diversity score.
+      - these are optional additional metrics that can be added in case of ties in the primary diversity score.
 
          - EX 1: min-dist only depends on the smallest distance.  Hence, swapping out any other item
                  in the selection can have no effect on the diversity score, leading to many ties.
@@ -52,12 +52,12 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
     # --- score components -----------------------
     size: float  # score indicating if target selection size is met
     constraints: float  # score indicating if constraints are satisfied
-    # one entry per diversity objective, the main objective first, then the tie-breakers in order
+    # one entry per diversity objective, the primary objective first, then the tie-breakers in order
     diversities: tuple[float, ...]
 
     @property
     def diversity(self) -> float:
-        """Return the main diversity score, maximized ahead of every tie-breaker."""
+        """Return the primary diversity score, maximized ahead of every tie-breaker."""
         return self.diversities[0]
 
     @property
@@ -137,8 +137,8 @@ class ScoreGenerator:
         Args:
             n: (int | np.int32) number of items in the max-div problem.
             k: (int) The target selection size for the max-div problem.
-            diversity_objectives: the diversity objectives, the main objective first and then the
-                tie-breakers, scored in that order into `Score.diversities`.
+            diversity_objectives: the diversity objectives, the primary objective first and then
+                the tie-breakers, scored in that order into `Score.diversities`.
             tracker_specs: the specs of the contribution trackers, in the order `compute_score` receives
                 their arrays; must contain every spec the objectives read.
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.

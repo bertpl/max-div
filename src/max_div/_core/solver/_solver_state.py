@@ -61,7 +61,7 @@ class SolverState:
         n: np.int32,
         k: np.int32,
         contribution_trackers: DiversityContributionTrackers,
-        main_objective_tracker: DiversityContributionTracker,
+        primary_objective_tracker: DiversityContributionTracker,
         score_generator: ScoreGenerator,
         selected: NDArray[np.bool],
         con_values: NDArray[np.int32],
@@ -84,7 +84,7 @@ class SolverState:
             k: (np.int32) target number of selected items
             contribution_trackers: (DiversityContributionTrackers) the tracker set backing this state's
                 per-point diversity contributions, updated on every selection mutation.
-            main_objective_tracker: the tracker of that set representing the main diversity objective;
+            primary_objective_tracker: the tracker of that set representing the primary diversity objective;
                 the strategies read its per-point contributions.
             score_generator: (ScoreGenerator) score generator to compute scores for current state
             selected: (np.ndarray[np.bool]) array indicating which of the n items are initially selected.
@@ -102,7 +102,7 @@ class SolverState:
 
         # diversity contributions
         self._contribution_trackers = contribution_trackers
-        self._contribution_tracker = main_objective_tracker  # held directly: no per-access lookup on the hot path
+        self._contribution_tracker = primary_objective_tracker  # held directly: no per-access lookup on the hot path
 
         # scoring
         self._score_generator = score_generator  # READ-ONLY
@@ -573,7 +573,7 @@ class SolverState:
     ) -> SolverState:
         """Build an empty-selection state.
 
-        `diversity_objectives` lists the main objective first, then the tie-breakers.
+        `diversity_objectives` lists the primary objective first, then the tie-breakers.
         """
         # --- diversity contributions ------------
         n_np = np.int32(n)
@@ -602,7 +602,7 @@ class SolverState:
             n=n_np,
             k=np.int32(k),
             contribution_trackers=contribution_trackers,
-            main_objective_tracker=contribution_trackers.single_tracker_for(diversity_objectives[0]),
+            primary_objective_tracker=contribution_trackers.single_tracker_for(diversity_objectives[0]),
             score_generator=score_generator,
             selected=selected,
             con_values=con_values,

@@ -25,7 +25,7 @@ class SolverConfig:
 
     n: int
     k: int
-    # the main objective first, then the tie-breakers in order
+    # the primary objective first, then the tie-breakers in order
     diversity_objectives: list[DiversityObjective]
     constraints: list[Constraint]
     solver_steps: list[SolverStep]

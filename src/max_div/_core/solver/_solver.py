@@ -53,8 +53,8 @@ class MaxDivSolver:
                 storage to read from, so `build` stays lean and fast rather than building the
                 store up front.
             k: (int) The number of items to be selected from the input set ('universe').
-            diversity_objectives: the main objective first, then the tie-breakers, scored in that
-                order.
+            diversity_objectives: the primary objective first, then the tie-breakers, scored in
+                that order.
             constraints: (list[Constraint]) A list of m constraints to try to satisfy during solving.
             solver_steps: (list[SolverStep]) A list of solver steps to execute,
                 the first of which needs to be an InitializationStep,

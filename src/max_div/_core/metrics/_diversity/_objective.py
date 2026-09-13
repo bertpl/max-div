@@ -208,7 +208,7 @@ class DiversityObjectiveHybridFlattened(DiversityObjective):
 #  Helpers
 # =================================================================================================
 def _separating_tie_breaker_metrics(diversity_metric: DiversityMetric) -> tuple[DiversityMetric, ...]:
-    """Return the diversity metrics to use as tie-breakers when the caller sets none, by the main diversity metric."""
+    """Return the tie-breaker diversity metrics for a primary metric that has defaults; empty for the rest."""
     if diversity_metric == DiversityMetric.MIN_SEPARATION:
         # min-separation reacts only to the closest pair; the approximate geomean rewards a uniform
         # spread, which opens room around that pair so the minimum separation itself can grow.

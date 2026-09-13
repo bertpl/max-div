@@ -56,7 +56,7 @@ class DiversityContributionTrackers:
         )
 
     # -------------------------------------------------------------------------
-    #  Representative tracker
+    #  Primary tracker
     # -------------------------------------------------------------------------
     def single_tracker_for(self, diversity_objective: DiversityObjective) -> DiversityContributionTracker:
         """Return the tracker whose per-point contributions represent `diversity_objective` to the strategies.
