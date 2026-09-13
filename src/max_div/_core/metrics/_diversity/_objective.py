@@ -8,9 +8,9 @@ A `DiversityObjective` is one of three kinds, each holding only the fields that 
   read as one joined input; a hybrid objective's tie-breakers take this shape.
 
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
-tracks, handed to it as one array per spec it declares, in the order of `tracker_specs`. The solver,
-its config, builders, presets and strategies read this type, never a bare `DiversityMetric`, because
-an objective of several terms is not a single diversity metric.
+tracks. The solver passes the objective one array per spec in `tracker_specs`, in that order. The
+solver, its config, builders, presets and strategies read this type, never a bare `DiversityMetric`,
+because an objective of several terms is not a single diversity metric.
 """
 
 from __future__ import annotations
@@ -128,13 +128,17 @@ class DiversityObjectiveSimple(DiversityObjective):
 class DiversityObjectiveHybridGeoMean(DiversityObjective):
     """The geometric mean of several diversity terms, each a simple objective over its own distance metric.
 
-    Terms are simple objectives only, so each term reads exactly one of this objective's arrays.
+    Terms are simple objectives only, so each term reads exactly one of the contribution arrays
+    passed to `compute`.
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
 
     def __post_init__(self) -> None:
-        """Reject fewer than two terms, and any term that is not a simple objective."""
+        """Reject fewer than two terms and any term that is not a simple objective.
+
+        A one-term geometric mean is a `DiversityObjectiveSimple`.
+        """
         if len(self.terms) < 2:
             raise ValueError(f"A geometric-mean hybrid needs at least two terms; got {len(self.terms)}.")
         for term in self.terms:
@@ -146,7 +150,7 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Return the geometric mean of the terms' diversity scores."""
         term_scores = np.array(
-            [term.compute((contributions[position],)) for term, position in self._terms_with_positions],
+            [term.compute((contributions[position],)) for term, position in self._terms_with_spec_positions],
             dtype=np.float32,
         )
         return float(geomean_f32(term_scores))
@@ -154,11 +158,14 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
         """The distinct specs of the terms, in first-seen order."""
-        return tuple(dict.fromkeys(spec for term in self.terms for spec in term.tracker_specs))
+        return distinct_tracker_specs(self.terms)
 
     @cached_property
-    def _terms_with_positions(self) -> tuple[tuple[DiversityObjectiveSimple, int], ...]:
-        """Each term with the position of its one spec in `tracker_specs`; two terms over one spec share a position."""
+    def _terms_with_spec_positions(self) -> tuple[tuple[DiversityObjectiveSimple, int], ...]:
+        """Pair each term with the position of its one spec in `tracker_specs`.
+
+        Two terms over one spec share a position.
+        """
         return tuple((term, self.tracker_specs.index(term.tracker_specs[0])) for term in self.terms)
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
@@ -200,10 +207,11 @@ class DiversityObjectiveHybridFlattened(DiversityObjective):
 #  Helpers
 # =================================================================================================
 def distinct_tracker_specs(objectives: Iterable[DiversityObjective]) -> tuple[DiversityTrackerSpec, ...]:
-    """Return the distinct specs the objectives read, in first-seen order over the objectives and their specs.
+    """Return the distinct specs the objectives read, in the order the objectives list them.
 
-    This order is the one the solver tracks contributions in and hands them to the score generator
-    in, so both derive it from here.
+    Each objective contributes its `tracker_specs` in its own order, and a repeated spec keeps its
+    first position. `DiversityContributionTrackers` tracks contributions in this order and
+    `ScoreGenerator` reads them in it; both call this function, so the two orders cannot diverge.
     """
     return tuple(dict.fromkeys(spec for objective in objectives for spec in objective.tracker_specs))
 

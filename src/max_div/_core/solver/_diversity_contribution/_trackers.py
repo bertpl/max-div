@@ -131,15 +131,13 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     @property
     def specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """The tracked specs, in the order `selected_contributions` returns their arrays."""
+        """Return the tracked specs, in the order `selected_contributions` returns their arrays."""
         return tuple(self._trackers_by_spec)
 
     def selected_contributions(
         self, selected: NDArray[np.bool], n_selected: np.int32, selected_indices: NDArray[np.int32]
     ) -> list[NDArray[np.float32]]:
         """Return the selected items' contribution values, one array per tracked spec, in the order of `specs`.
-
-        The score generator picks each objective's arrays out of this list by position.
 
         The selection is passed twice on purpose: the trackers compute contributions from the mask,
         and the values are picked out by the index list, which costs O(n_selected) where picking by

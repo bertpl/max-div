@@ -411,7 +411,7 @@ def test_score_str(score: Score, expected_str: str):
 
 
 def test_compute_score_hands_each_objective_the_arrays_of_its_own_specs():
-    """Each objective reads its own specs' arrays by position, so an unrelated tracked array never reaches it."""
+    """Each objective reads its own specs' arrays by position; an unrelated tracked array is never passed to it."""
     # --- arrange ----------------------
     # tracked specs, in order: (None, SEPARATION) from the main objective, then (None, MEAN_DISTANCE)
     generator = ScoreGenerator(
@@ -450,7 +450,7 @@ def test_compute_score_picks_a_tie_breakers_arrays_from_among_the_tracked_ones()
     )
     contributions = [
         np.array([5.0, 9.0], dtype=np.float32),  # L1
-        np.array([1.0, 1.0], dtype=np.float32),  # L2: the smallest values, which the tie-breaker must not see
+        np.array([1.0, 1.0], dtype=np.float32),  # L2: the smallest values, which the tie-breaker must not receive
         np.array([7.0, 8.0], dtype=np.float32),  # L3
     ]
 

@@ -159,16 +159,15 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers -----------
-        # Each objective computes its own diversity score from the arrays of its own specs. The
-        # tracked specs are ordered as the tracker set orders them (both derive the order from
-        # `distinct_tracker_specs`), so each objective is bound here, once, to a scorer that picks
-        # its arrays out of the tracked ones by position.
+        # `tracked_specs` is the order `DiversityContributionTrackers.selected_contributions` returns
+        # the arrays (both call `distinct_tracker_specs`), so each objective gets, here and once, a
+        # scorer that picks its own arrays out of that list by position.
         self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
         tracked_specs = distinct_tracker_specs((diversity_objective, *diversity_tie_breakers))
-        self._score_diversity = _bound_scorer(diversity_objective, tracked_specs)
-        self._score_tie_breakers = tuple(
-            _bound_scorer(tie_breaker, tracked_specs) for tie_breaker in diversity_tie_breakers
+        self._diversity_scorer = _objective_scorer(diversity_objective, tracked_specs)
+        self._tie_breaker_scorers = tuple(
+            _objective_scorer(tie_breaker, tracked_specs) for tie_breaker in diversity_tie_breakers
         )
 
         # --- store other params -----------------
@@ -253,42 +252,44 @@ class ScoreGenerator:
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=self._score_diversity(selected_contributions),
-            # a list comprehension is inlined into this frame; a generator expression is a frame of its own
-            div_tie_breakers=tuple([score(selected_contributions) for score in self._score_tie_breakers]),
+            diversity=self._diversity_scorer(selected_contributions),
+            # a list comprehension is inlined into this frame while a generator expression is a frame
+            # of its own, so the list is the cheaper one on this hot path
+            div_tie_breakers=tuple([scorer(selected_contributions) for scorer in self._tie_breaker_scorers]),
         )
 
 
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def _bound_scorer(
-    objective: DiversityObjective, tracked_specs: tuple[DiversityTrackerSpec, ...]
+def _objective_scorer(
+    diversity_objective: DiversityObjective, tracked_specs: tuple[DiversityTrackerSpec, ...]
 ) -> Callable[[Sequence[NDArray[np.float32]]], float]:
-    """Return the function that scores `objective` from the tracked arrays, ordered as `tracked_specs`.
+    """Return the function that scores `diversity_objective` from the tracked arrays, ordered as `tracked_specs`.
 
-    The objective's `compute` reads its arrays in its own spec order, so the scorer picks them out
-    of the tracked arrays by position first. When the objective's specs are exactly the tracked
-    specs in that order, which is every single-metric problem, `compute` itself is the scorer: no
-    picking, and no extra call on the hot path.
+    `tracked_specs` must contain every spec in `diversity_objective.tracker_specs`. The objective's
+    `compute` reads its arrays in its own spec order, so the scorer picks them out of the tracked
+    arrays by position. When every objective reads one contribution family over one distance metric,
+    the usual single-metric problem, the objective's specs are the tracked specs in that order; then
+    `compute` itself is the scorer, with no picking and no extra call on the hot path.
     """
-    positions = tuple(tracked_specs.index(spec) for spec in objective.tracker_specs)
-    compute = objective.compute
+    positions = tuple(tracked_specs.index(spec) for spec in diversity_objective.tracker_specs)
+    compute_objective_score = diversity_objective.compute
     if positions == tuple(range(len(tracked_specs))):
-        return compute
+        return compute_objective_score
     elif len(positions) == 1:
         # itemgetter with one position returns the array itself, and `compute` takes a sequence
         (position,) = positions
 
         def score_from_one_array(arrays: Sequence[NDArray[np.float32]]) -> float:
-            return compute((arrays[position],))
+            return compute_objective_score((arrays[position],))
 
         return score_from_one_array
     else:
         pick = operator.itemgetter(*positions)
 
         def score_from_picked_arrays(arrays: Sequence[NDArray[np.float32]]) -> float:
-            return compute(pick(arrays))
+            return compute_objective_score(pick(arrays))
 
         return score_from_picked_arrays
 

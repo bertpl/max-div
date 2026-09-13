@@ -143,37 +143,40 @@ def test_flattened_computes_its_metric_over_its_joined_specs() -> None:
     assert objective.compute(contributions) == pytest.approx(2.0)  # min over [5, 3, 2, 4]
 
 
-def test_geomean_computes_the_geometric_mean_of_its_terms() -> None:
-    """A geometric-mean hybrid returns the geometric mean of its terms' diversity scores."""
+@pytest.mark.parametrize(
+    "terms, contributions, expected",
+    [
+        pytest.param(
+            (
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+            ),
+            (_f32([4.0, 8.0]), _f32([9.0, 3.0])),  # L1 array (min 4), L2 array (min 3)
+            np.sqrt(4.0 * 3.0),
+            id="two_distances",
+        ),
+        pytest.param(
+            (
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1),  # same spec as the first term
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+            ),
+            (_f32([4.0, 8.0]), _f32([9.0, 3.0])),  # L1 array (min 4, mean 6), L2 array (min 3)
+            (4.0 * 6.0 * 3.0) ** (1.0 / 3.0),
+            id="shared_spec",
+        ),
+    ],
+)
+def test_geomean_computes_the_geometric_mean_of_its_terms(terms, contributions, expected) -> None:
+    """A geometric-mean hybrid returns the geometric mean of its terms' scores.
+
+    Two terms with the same spec read the same array.
+    """
     # --- arrange ----------------------
-    objective = DiversityObjectiveHybridGeoMean(
-        (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-        )
-    )
-    contributions = (_f32([4.0, 8.0]), _f32([9.0, 3.0]))  # L1 array (term 1 min = 4), L2 array (term 2 min = 3)
+    objective = DiversityObjectiveHybridGeoMean(terms)
 
     # --- act / assert -----------------
-    # The expected value is the geometric mean of 4 and 3, computed in float32.
-    assert objective.compute(contributions) == pytest.approx(np.sqrt(12.0), rel=1e-5)
-
-
-def test_geomean_terms_over_one_spec_share_its_array() -> None:
-    """Two terms over the same distance and family read the same array, at the one position that spec has."""
-    # --- arrange ----------------------
-    objective = DiversityObjectiveHybridGeoMean(
-        (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-            DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1),  # same spec as the first term
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-        )
-    )
-    contributions = (_f32([4.0, 8.0]), _f32([9.0, 3.0]))  # L1 array (min 4, mean 6), L2 array (min 3)
-
-    # --- act / assert -----------------
-    assert len(objective.tracker_specs) == 2
-    assert objective.compute(contributions) == pytest.approx((4.0 * 6.0 * 3.0) ** (1.0 / 3.0), rel=1e-5)
+    assert objective.compute(contributions) == pytest.approx(expected, rel=1e-5)  # float32 arithmetic
 
 
 # =================================================================================================
@@ -230,7 +233,10 @@ def test_a_flattened_objective_has_no_tie_breakers() -> None:
 #  distinct_tracker_specs
 # =================================================================================================
 def test_distinct_tracker_specs_is_first_seen_over_objectives_then_specs() -> None:
-    """The order is the objectives' order, each objective's specs in its own order, repeats dropped."""
+    """Specs come in the objectives' order, then in each objective's own spec order.
+
+    A repeated spec keeps its first position.
+    """
     # --- arrange ----------------------
     main = DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L2, L1))
     tie_breaker = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1)  # repeats (L1, SEPARATION)
