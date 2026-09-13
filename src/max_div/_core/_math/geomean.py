@@ -52,9 +52,11 @@ def fast_geomean_f32(values: NDArray[np.float32]) -> np.float32:
 
 @njit("void(float32[:, ::1], float32[::1])", fastmath={"reassoc", "contract"}, cache=True)
 def geomean_per_row_f32(rows: NDArray[np.float32], out: NDArray[np.float32]) -> None:
-    """Write the geometric mean of each row of `rows`, a C-contiguous (n, J) array with J >= 1, into `out` (length n).
+    """Write the geometric mean of each row of `rows`, a C-contiguous (n_rows, n_cols) array, into `out` (length n_rows).
 
-    Each row is reduced by `geomean_f32`, so its zero and +inf behavior applies per row.
+    `n_cols` must be at least one. Each row is reduced by `geomean_f32`, so its zero and +inf
+    behavior applies per row.
     """
-    for i in range(rows.shape[0]):
+    n_rows = rows.shape[0]
+    for i in range(n_rows):
         out[i] = geomean_f32(rows[i, :])
