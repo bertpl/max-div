@@ -8,5 +8,4 @@ from ._diversity import (
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
     distinct_tracker_specs_of,
-    objective_scorer,
 )

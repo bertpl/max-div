@@ -88,6 +88,38 @@ class DiversityObjective(ABC):
         specs = self.tracker_specs
         return len(specs) == 1 and specs[0].contribution_family == DiversityContributionFamily.SEPARATION
 
+    def scorer_for_tracked_specs(
+        self, tracked_specs: tuple[DiversityTrackerSpec, ...]
+    ) -> Callable[[Sequence[NDArray[np.float32]]], float]:
+        """Return the function that scores this objective from the tracked arrays, ordered as `tracked_specs`.
+
+        `tracked_specs` must contain every spec in `tracker_specs`. `compute` reads its arrays in
+        this objective's own spec order, so the scorer picks them out of the tracked arrays by
+        position. When this objective's specs are exactly the tracked specs, in that order, as in
+        the usual single-metric problem where every objective reads the same spec, `compute` itself
+        is the scorer, with no picking and no extra call on the hot path.
+        """
+        positions = tuple(tracked_specs.index(spec) for spec in self.tracker_specs)
+        compute_objective_score = self.compute
+        if positions == tuple(range(len(tracked_specs))):
+            return compute_objective_score
+        elif len(positions) == 1:
+            # `itemgetter` is not used here: with one position it returns the array itself, and
+            # `compute` takes a sequence, so the array is wrapped in a tuple by hand
+            (position,) = positions
+
+            def score_from_one_array(contributions: Sequence[NDArray[np.float32]]) -> float:
+                return compute_objective_score((contributions[position],))
+
+            return score_from_one_array
+        else:
+            pick_objective_arrays = operator.itemgetter(*positions)
+
+            def score_from_picked_arrays(contributions: Sequence[NDArray[np.float32]]) -> float:
+                return compute_objective_score(pick_objective_arrays(contributions))
+
+            return score_from_picked_arrays
+
 
 # =================================================================================================
 #  Concrete objectives
@@ -164,7 +196,7 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
 
         Two terms that read the same spec get the same array.
         """
-        return tuple(objective_scorer(term, self.tracker_specs) for term in self.terms)
+        return tuple(term.scorer_for_tracked_specs(self.tracker_specs) for term in self.terms)
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
         """Return the separating tie-breakers over the distinct distance metrics the terms read."""
@@ -211,39 +243,6 @@ def distinct_tracker_specs_of(objectives: Iterable[DiversityObjective]) -> tuple
     first position.
     """
     return tuple(dict.fromkeys(spec for objective in objectives for spec in objective.tracker_specs))
-
-
-def objective_scorer(
-    diversity_objective: DiversityObjective, tracked_specs: tuple[DiversityTrackerSpec, ...]
-) -> Callable[[Sequence[NDArray[np.float32]]], float]:
-    """Return the function that scores `diversity_objective` from the tracked arrays, ordered as `tracked_specs`.
-
-    `tracked_specs` must contain every spec in `diversity_objective.tracker_specs`. The objective's
-    `compute` reads its arrays in its own spec order, so the scorer picks them out of the tracked
-    arrays by position. When the objective's specs are exactly the tracked specs, in that order, as
-    in the usual single-metric problem where every objective reads the same spec, `compute` itself
-    is the scorer, with no picking and no extra call on the hot path.
-    """
-    positions = tuple(tracked_specs.index(spec) for spec in diversity_objective.tracker_specs)
-    compute_objective_score = diversity_objective.compute
-    if positions == tuple(range(len(tracked_specs))):
-        return compute_objective_score
-    elif len(positions) == 1:
-        # `itemgetter` is not used here: with one position it returns the array itself, and `compute`
-        # takes a sequence, so the array is wrapped in a tuple by hand
-        (position,) = positions
-
-        def score_from_one_array(contributions: Sequence[NDArray[np.float32]]) -> float:
-            return compute_objective_score((contributions[position],))
-
-        return score_from_one_array
-    else:
-        pick_objective_arrays = operator.itemgetter(*positions)
-
-        def score_from_picked_arrays(contributions: Sequence[NDArray[np.float32]]) -> float:
-            return compute_objective_score(pick_objective_arrays(contributions))
-
-        return score_from_picked_arrays
 
 
 def _separating_tie_breaker_metrics(diversity_metric: DiversityMetric) -> tuple[DiversityMetric, ...]:

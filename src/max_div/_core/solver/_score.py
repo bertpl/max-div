@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from max_div._core.constraints.constraints import _np_con_total_violation, _np_con_total_weighted_violation
-from max_div._core.metrics import distinct_tracker_specs_of, objective_scorer
+from max_div._core.metrics import distinct_tracker_specs_of
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -165,9 +165,9 @@ class ScoreGenerator:
         self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
         tracked_specs = distinct_tracker_specs_of((diversity_objective, *diversity_tie_breakers))
-        self._diversity_scorer = objective_scorer(diversity_objective, tracked_specs)
+        self._diversity_scorer = diversity_objective.scorer_for_tracked_specs(tracked_specs)
         self._tie_breaker_scorers = tuple(
-            objective_scorer(tie_breaker, tracked_specs) for tie_breaker in diversity_tie_breakers
+            tie_breaker.scorer_for_tracked_specs(tracked_specs) for tie_breaker in diversity_tie_breakers
         )
 
         # --- store other params -----------------
