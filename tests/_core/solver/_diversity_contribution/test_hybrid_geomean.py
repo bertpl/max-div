@@ -54,10 +54,14 @@ def test_empty_selection_combines_to_inf(term_trackers):
     assert np.all(np.isinf(hybrid_tracker.contribution_wrt_selection(selected, n_selected)))
 
 
-def test_selection_contribution_is_the_geomean_over_terms(term_trackers):
-    """The combined array is the elementwise geometric mean of the term trackers' arrays."""
+@pytest.mark.parametrize("term_positions", [(0, 1), (0, 0, 1)], ids=["two_distances", "repeated_tracker"])
+def test_selection_contribution_is_the_geomean_over_terms(term_trackers, term_positions: tuple[int, ...]):
+    """The combined array is the elementwise geometric mean of the term trackers' arrays.
+
+    A repeated tracker is counted once per term that reads it.
+    """
     # --- arrange ----------------------
-    hybrid_tracker = HybridGeoMeanTracker(term_trackers)
+    hybrid_tracker = HybridGeoMeanTracker([term_trackers[position] for position in term_positions])
     _add_index_to_all_trackers((*term_trackers, hybrid_tracker), 0)
     _add_index_to_all_trackers((*term_trackers, hybrid_tracker), 3)
     selected, n_selected = selection_args([0, 3], N)
@@ -66,45 +70,29 @@ def test_selection_contribution_is_the_geomean_over_terms(term_trackers):
     result = hybrid_tracker.contribution_wrt_selection(selected, n_selected)
 
     # --- assert -----------------------
-    expected = _geomean_of([tracker.contribution_wrt_selection(selected, n_selected) for tracker in term_trackers])
-    np.testing.assert_allclose(result, expected, rtol=1e-6)
-
-
-def test_a_tracker_read_by_two_terms_counts_twice(term_trackers):
-    """Term trackers are one per term, so a repeated tracker enters the mean once per term it serves."""
-    # --- arrange ----------------------
-    l1, l2 = term_trackers
-    hybrid_tracker = HybridGeoMeanTracker([l1, l1, l2])
-    _add_index_to_all_trackers((l1, l2), 0)
-    selected, n_selected = selection_args([0], N)
-
-    # --- act --------------------------
-    result = hybrid_tracker.contribution_wrt_selection(selected, n_selected)
-
-    # --- assert -----------------------
-    a, b = l1.contribution_wrt_selection(selected, n_selected), l2.contribution_wrt_selection(selected, n_selected)
-    np.testing.assert_allclose(result, _geomean_of([a, a, b]), rtol=1e-6)
+    per_term = [term_trackers[position].contribution_wrt_selection(selected, n_selected) for position in term_positions]
+    np.testing.assert_allclose(result, _geomean_of(per_term), rtol=1e-6)
 
 
 def test_dataset_contributions_combine_the_term_trackers(term_trackers):
-    """The dataset-wide array, and the array returned for a subset of indices, are the geometric mean of the terms'."""
+    """The dataset-wide array, and the array returned for a subset of indices, combine the term trackers' arrays."""
     # --- arrange ----------------------
     hybrid_tracker = HybridGeoMeanTracker(term_trackers)
     indices = np.array([4, 1], dtype=np.int32)
 
     # --- act --------------------------
-    full = hybrid_tracker.contribution_wrt_dataset
-    subset = hybrid_tracker.contribution_wrt_dataset_for(indices)
+    full_contribution = hybrid_tracker.contribution_wrt_dataset
+    subset_contribution = hybrid_tracker.contribution_wrt_dataset_for(indices)
 
     # --- assert -----------------------
     expected = _geomean_of([tracker.contribution_wrt_dataset for tracker in term_trackers])
-    np.testing.assert_allclose(full, expected, rtol=1e-6)
-    np.testing.assert_allclose(subset, expected[indices], rtol=1e-6)
+    np.testing.assert_allclose(full_contribution, expected, rtol=1e-6)
+    np.testing.assert_allclose(subset_contribution, expected[indices], rtol=1e-6)
 
 
 @pytest.mark.parametrize("mutation", ["add", "add_many", "remove", "remove_trial", "remove_many", "reset"])
 def test_every_mutation_marks_the_combined_array_stale(term_trackers, mutation: str):
-    """After any mutation the next read recombines the term trackers, so it never returns the array from before."""
+    """After any mutation the next read recombines the term trackers, never returning the array cached before it."""
     # --- arrange ----------------------
     hybrid_tracker = HybridGeoMeanTracker(term_trackers)
     _add_index_to_all_trackers((*term_trackers, hybrid_tracker), 0)

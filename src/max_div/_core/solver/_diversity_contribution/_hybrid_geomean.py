@@ -1,9 +1,4 @@
-"""The tracker of a `DiversityObjectiveHybridGeoMean`: per point, the geometric mean of the per-term contributions.
-
-That objective is the geometric mean of several simple objectives, its terms, each read from its
-own contribution tracker. This tracker combines those per-term arrays into the one array the
-strategies read.
-"""
+"""The contribution tracker of a `DiversityObjectiveHybridGeoMean`; see `HybridGeoMeanTracker`."""
 
 from __future__ import annotations
 
@@ -29,28 +24,27 @@ if TYPE_CHECKING:
 class HybridGeoMeanTracker(DiversityContributionTracker):
     """Per-point contribution of a geometric-mean hybrid objective: the geometric mean of the per-term contributions.
 
-    The tracker holds one term tracker per term of the objective, in term order, so a tracker that
-    two terms read appears twice and enters the mean once per term it serves, which is what the
-    objective itself does with a repeated term.
+    The tracker holds one term tracker per term of the objective, in term order. Two terms may read
+    the same tracker; then that tracker appears twice in the list and enters the mean twice, as the
+    objective itself counts a repeated term twice.
 
-    It computes nothing incrementally: it reads the term trackers and combines their arrays. Its
-    mutation methods only mark the combined array stale, so they must be called after the term
-    trackers' own mutation methods, and a restoring snapshot pop marks it stale the same way.
-
-    It reads no single distance store, since its terms may read different ones, so the `store`
-    property raises.
+    It keeps no incremental state of its own: it reads the term trackers and combines their arrays.
+    Its mutation methods only mark the combined array stale and do not forward the mutation, because
+    the term trackers are also the trackers a tracker set holds by spec and updates itself, so
+    forwarding would apply every mutation twice. They must therefore be called after the term
+    trackers' own mutation methods, and `pop_snapshot(restore=True)` marks the combined array stale
+    the same way.
     """
 
     # -------------------------------------------------------------------------
     #  Construction & copy
     # -------------------------------------------------------------------------
     def __init__(self, term_trackers: Sequence[DiversityContributionTracker]) -> None:
-        """Initialize over the term trackers, one per term, in the order of the terms.
+        """Initialize from the term trackers, one per term, in the order of the terms.
 
         Args:
-            term_trackers: the tracker each term reads; at least two, and a tracker may appear more
-                than once. With a single term the objective is that term itself, so its tracker is
-                used directly and this class is never constructed.
+            term_trackers: One tracker per term, in term order; at least two. The same tracker may
+                appear more than once.
 
         Raises:
             ValueError: If fewer than two term trackers are given.
@@ -58,13 +52,11 @@ class HybridGeoMeanTracker(DiversityContributionTracker):
         if len(term_trackers) < 2:
             raise ValueError(f"A hybrid geometric mean needs at least two term trackers; got {len(term_trackers)}.")
         self._term_trackers = tuple(term_trackers)  # READ-ONLY
-        # The combined array with respect to the selection goes stale on any mutation; the one with
-        # respect to the dataset is computed once.
         self._contribution_wrt_selection: NDArray[np.float32] | None = None
         self._contribution_wrt_dataset: NDArray[np.float32] | None = None
 
     def copy(self) -> HybridGeoMeanTracker:
-        """Return a tracker over copies of the term trackers."""
+        """Return a tracker built from copies of the term trackers."""
         return HybridGeoMeanTracker([tracker.copy() for tracker in self._term_trackers])
 
     @property
@@ -121,29 +113,33 @@ class HybridGeoMeanTracker(DiversityContributionTracker):
     # -------------------------------------------------------------------------
     #  Mutations: the term trackers update themselves; here only the combined array goes stale
     # -------------------------------------------------------------------------
+    def _mark_selection_contribution_stale(self) -> None:
+        """Drop the cached combined selection contributions, so the next read recombines the term trackers."""
+        self._contribution_wrt_selection = None
+
     def add(self, index: np.int32) -> None:
         """Mark the combined selection contributions stale."""
-        self._contribution_wrt_selection = None
+        self._mark_selection_contribution_stale()
 
     def add_many(self, indices: NDArray[np.int32], parallel: bool = False) -> None:
         """Mark the combined selection contributions stale."""
-        self._contribution_wrt_selection = None
+        self._mark_selection_contribution_stale()
 
     def remove(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Mark the combined selection contributions stale."""
-        self._contribution_wrt_selection = None
+        self._mark_selection_contribution_stale()
 
     def remove_trial(self, index: np.int32, new_selection: NDArray[np.int32]) -> None:
         """Mark the combined selection contributions stale."""
-        self._contribution_wrt_selection = None
+        self._mark_selection_contribution_stale()
 
     def remove_many(self, indices: NDArray[np.int32], new_selection: NDArray[np.int32]) -> None:
         """Mark the combined selection contributions stale."""
-        self._contribution_wrt_selection = None
+        self._mark_selection_contribution_stale()
 
     def reset(self) -> None:
         """Mark the combined selection contributions stale."""
-        self._contribution_wrt_selection = None
+        self._mark_selection_contribution_stale()
 
     # -------------------------------------------------------------------------
     #  Snapshot
@@ -152,6 +148,9 @@ class HybridGeoMeanTracker(DiversityContributionTracker):
         """Do nothing: the term trackers hold the snapshots, and the combined array is recomputed from them."""
 
     def pop_snapshot(self, restore: bool) -> None:
-        """Mark the combined selection contributions stale when the term trackers restore theirs."""
+        """Mark the combined selection contributions stale when `restore` is true.
+
+        The term trackers then restore their own arrays, so the combined one no longer matches them.
+        """
         if restore:
-            self._contribution_wrt_selection = None
+            self._mark_selection_contribution_stale()

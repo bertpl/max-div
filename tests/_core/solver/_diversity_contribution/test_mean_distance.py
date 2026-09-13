@@ -10,7 +10,8 @@ from max_div._core.solver._diversity_contribution._mean_distance import (
     backend_for,
 )
 from tests._core.metrics._distance.helpers import condensed_distances
-from tests._core.solver._diversity_contribution.helpers import selection_args
+
+from .helpers import selection_args
 
 # =================================================================================================
 #  Fixtures / helpers
