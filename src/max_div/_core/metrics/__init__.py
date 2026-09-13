@@ -7,4 +7,5 @@ from ._diversity import (
     DiversityObjectiveHybridGeoMean,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
+    distinct_tracker_specs,
 )

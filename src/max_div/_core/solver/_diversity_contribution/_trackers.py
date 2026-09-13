@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from max_div._core.metrics import distinct_tracker_specs
+
 from ._factory import build_diversity_contribution_tracker
 
 if TYPE_CHECKING:
@@ -55,9 +57,7 @@ class DiversityContributionTrackers:
         The set holds one tracker per distinct spec the objectives read — the main objective's specs
         first, then the tie-breakers' — and `main` is the tracker of the main objective's first spec.
         """
-        specs = dict.fromkeys(
-            spec for objective in (diversity_objective, *diversity_tie_breakers) for spec in objective.tracker_specs
-        )
+        specs = distinct_tracker_specs((diversity_objective, *diversity_tie_breakers))
         return cls(
             trackers_by_spec={
                 spec: build_diversity_contribution_tracker(spec.contribution_family, store) for spec in specs
@@ -129,12 +129,17 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     #  Scoring reads
     # -------------------------------------------------------------------------
+    @property
+    def specs(self) -> tuple[DiversityTrackerSpec, ...]:
+        """The tracked specs, in the order `selected_contributions` returns their arrays."""
+        return tuple(self._trackers_by_spec)
+
     def selected_contributions(
         self, selected: NDArray[np.bool], n_selected: np.int32, selected_indices: NDArray[np.int32]
-    ) -> dict[DiversityTrackerSpec, NDArray[np.float32]]:
-        """Return the selected items' contribution values, one array per tracked spec, keyed by spec.
+    ) -> list[NDArray[np.float32]]:
+        """Return the selected items' contribution values, one array per tracked spec, in the order of `specs`.
 
-        Each objective's `compute` reads the arrays of its own specs from this mapping.
+        The score generator picks each objective's arrays out of this list by position.
 
         The selection is passed twice on purpose: the trackers compute contributions from the mask,
         and the values are picked out by the index list, which costs O(n_selected) where picking by
@@ -145,7 +150,6 @@ class DiversityContributionTrackers:
             n_selected: (np.int32) number of True values in `selected`.
             selected_indices: (n_selected-sized int32 ndarray) the indices where `selected` is True.
         """
-        return {
-            spec: tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
-            for spec, tracker in self._trackers_by_spec.items()
-        }
+        return [
+            tracker.contribution_wrt_selection(selected, n_selected)[selected_indices] for tracker in self._trackers
+        ]

@@ -138,14 +138,15 @@ def test_selected_contributions_one_array_per_spec(store: DistanceStore):
     contributions = trackers.selected_contributions(selected, np.int32(2), selected_indices)
 
     # --- assert -----------------------
-    assert list(contributions) == [DiversityTrackerSpec(None, SEPARATION)]  # one tracked spec
-    np.testing.assert_allclose(contributions[DiversityTrackerSpec(None, SEPARATION)], [3.0, 3.0])
+    assert trackers.specs == (DiversityTrackerSpec(None, SEPARATION),)  # one tracked spec
+    assert len(contributions) == 1
+    np.testing.assert_allclose(contributions[0], [3.0, 3.0])
 
 
-def test_selected_contributions_keys_each_array_by_its_spec():
-    """Each spec's array holds the separations computed with that spec's distance metric, keyed by the spec."""
+def test_selected_contributions_orders_the_arrays_as_the_specs():
+    """Each spec's array holds the separations computed with that spec's distance metric, at that spec's position."""
     # --- arrange ----------------------
-    # one family, two distances, on 2-D vectors where L1 and L2 disagree, so a swapped key is detectable
+    # one family, two distances, on 2-D vectors where L1 and L2 disagree, so swapped positions are detectable
     vectors_2d = np.array([[0.0, 0.0], [3.0, 4.0], [1.0, 1.0], [10.0, 0.0]], dtype=np.float32)
     store_l1 = DistanceStore.full_matrix_from_vectors(vectors_2d, DistanceMetric.l1_manhattan())
     store_l2 = DistanceStore.full_matrix_from_vectors(vectors_2d, DistanceMetric.l2_euclidean())
@@ -168,10 +169,11 @@ def test_selected_contributions_keys_each_array_by_its_spec():
     contributions = trackers.selected_contributions(selected, np.int32(3), selected_indices)
 
     # --- assert -----------------------
+    assert trackers.specs == (spec_l1, spec_l2)
     np.testing.assert_allclose(
-        contributions[spec_l1], ref_l1.contribution_wrt_selection(selected, np.int32(3))[selected_indices]
+        contributions[0], ref_l1.contribution_wrt_selection(selected, np.int32(3))[selected_indices]
     )
     np.testing.assert_allclose(
-        contributions[spec_l2], ref_l2.contribution_wrt_selection(selected, np.int32(3))[selected_indices]
+        contributions[1], ref_l2.contribution_wrt_selection(selected, np.int32(3))[selected_indices]
     )
-    assert not np.allclose(contributions[spec_l1], contributions[spec_l2])  # L1 and L2 disagree here
+    assert not np.allclose(contributions[0], contributions[1])  # L1 and L2 disagree here
