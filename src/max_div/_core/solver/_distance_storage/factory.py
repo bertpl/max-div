@@ -42,17 +42,6 @@ from .storage import DistanceStorageType, DistanceStorageTypes
 StoreDistance = DistanceMetric | None
 
 
-def distinct_store_distances(objectives: "Sequence[DiversityObjective]") -> tuple[StoreDistance, ...]:
-    """Return the distinct distances the objectives read, in first-seen order (`None` for the problem's own).
-
-    One store is built per entry. The order is deterministic from the objectives alone, so a worker
-    process rebuilds the same distance -> store mapping from its objectives and the stores it attaches.
-    """
-    return tuple(
-        dict.fromkeys(distance for objective in objectives for distance in objective.distinct_distance_metrics())
-    )
-
-
 # =================================================================================================
 #  DistanceStoreFactory
 # =================================================================================================
@@ -113,8 +102,8 @@ class DistanceStoreFactory:
         """Return the factory for the distinct distances the objectives read, one store per distance.
 
         The distances are kept as the objectives declare them (`None` for the problem's own), so a
-        store can be looked up by an objective's spec distance without resolving it. `None` is
-        resolved to the problem's distance only when a store is actually built.
+        store can be looked up by the distance an objective declares, without resolving it. `None`
+        is resolved to the problem's distance only when a store is actually built, and in the report.
         """
         return cls(problem, distinct_store_distances(objectives), storage_type, total_memory_bytes)
 
@@ -156,9 +145,15 @@ class DistanceStoreFactory:
         A `None` distance (the problem's own) is reported as the metric it resolves to, so the
         summary names it rather than leaving it blank.
         """
-        problem_distance = self._problem.default_distance_metric
-        resolved = tuple(distance or problem_distance for distance in self._distances)
-        return DistanceStorageTypes(tuple(zip(resolved, self.determine_storage_types(), strict=True)))
+        return DistanceStorageTypes(tuple(zip(self._resolved_distances(), self.determine_storage_types(), strict=True)))
+
+    def _resolved_distances(self) -> tuple[StoreDistance, ...]:
+        """Return each store's distance with a vector problem's `None` (its own distance) replaced by its metric.
+
+        A distance-input problem's `None` stays `None`: its default distance is `None` (it holds given
+        distances, not a metric).
+        """
+        return tuple(distance or self._problem.default_distance_metric for distance in self._distances)
 
     # --------------------------------------------------------------------------
     #  Construction of the stores
@@ -227,8 +222,7 @@ class DistanceStoreFactory:
         if n_full:
             check_fits_physical_memory(n_full * full_matrix_bytes(n), lazy_available=True)
         stores = []
-        for declared_distance, store_type in zip(self._distances, store_types, strict=True):
-            distance = declared_distance or problem.default_distance_metric  # None -> the problem's own distance
+        for distance, store_type in zip(self._resolved_distances(), store_types, strict=True):
             assert distance is not None  # noqa: S101 -- a vector problem always resolves to a metric
             if store_type == DistanceStorageType.FULL_MATRIX:
                 matrix = allocator.allocate((n, n), KIND_FULL_MATRIX)
@@ -251,3 +245,17 @@ class DistanceStoreFactory:
             matrix = allocator.allocate((n, n), KIND_FULL_MATRIX)
             expand_condensed(problem.distances, n, out=matrix)
         return DistanceStore.full_matrix(matrix)
+
+
+# ==================================================================================================
+#  Helpers
+# ==================================================================================================
+def distinct_store_distances(objectives: Sequence[DiversityObjective]) -> tuple[StoreDistance, ...]:
+    """Return the distinct distances the objectives read, in first-seen order (`None` for the problem's own).
+
+    The order is deterministic from the objectives alone, so a worker process rebuilds the same
+    one-store-per-distance mapping from its objectives and the stores it attaches.
+    """
+    return tuple(
+        dict.fromkeys(distance for objective in objectives for distance in objective.distinct_distance_metrics())
+    )

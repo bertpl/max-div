@@ -50,8 +50,8 @@ class MaxDivSolver:
         Args:
             n: (int) The number of items in the problem ('universe').
             stores_by_distance_provider: called at the start of each `solve` to obtain the
-                distance -> store mapping to read from, so `build` stays lean and fast rather than
-                building the stores up front.
+                distance -> store mapping to read from, so `build` stays lean and the stores are
+                built inside `solve`.
             k: (int) The number of items to be selected from the input set ('universe').
             diversity_objectives: the primary objective first, then the tie-breakers, scored in
                 that order.

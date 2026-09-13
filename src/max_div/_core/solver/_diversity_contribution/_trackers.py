@@ -48,7 +48,7 @@ class DiversityContributionTrackers:
         diversity_objectives: Sequence[DiversityObjective],
         stores_by_distance: Mapping[StoreDistance, DistanceStore],
     ) -> DiversityContributionTrackers:
-        """Build the tracker set that the objectives need, each spec's tracker over its distance's store.
+        """Build the tracker set that the objectives need.
 
         The set holds one tracker per distinct spec the objectives read, in the order the objectives
         list them, each objective's specs in its own order. The primary objective comes first, so
