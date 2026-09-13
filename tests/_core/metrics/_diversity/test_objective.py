@@ -149,7 +149,7 @@ def test_geomean_computes_the_geometric_mean_of_its_terms() -> None:
     }
 
     # --- act / assert -----------------
-    # geometric mean of 4 and 3, via the float32 geomean_separation
+    # geometric mean of 4 and 3, in float32
     assert objective.compute(contributions) == pytest.approx(np.sqrt(12.0), rel=1e-5)
 
 
