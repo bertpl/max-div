@@ -10,6 +10,7 @@ from max_div._core.metrics import (
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
     distinct_tracker_specs_of,
+    tracker_spec_positions,
 )
 
 SEPARATION = DiversityContributionFamily.SEPARATION
@@ -251,3 +252,26 @@ def test_distinct_tracker_specs_of_is_first_seen_over_objectives_then_specs() ->
         DiversityTrackerSpec(L1, SEPARATION),
         DiversityTrackerSpec(L1, MEAN_DISTANCE),
     )
+
+
+# =================================================================================================
+#  tracker_spec_positions
+# =================================================================================================
+def test_tracker_spec_positions_follows_the_order_of_the_specs_looked_up() -> None:
+    """Each spec's position in the tracked specs is returned in the order the specs are asked for."""
+    # --- arrange ----------------------
+    l1_sep, l2_sep, l1_mean = (
+        DiversityTrackerSpec(L1, SEPARATION),
+        DiversityTrackerSpec(L2, SEPARATION),
+        DiversityTrackerSpec(L1, MEAN_DISTANCE),
+    )
+
+    # --- act / assert -----------------
+    assert tracker_spec_positions((l1_mean, l1_sep), (l1_sep, l2_sep, l1_mean)) == (2, 0)
+
+
+def test_tracker_spec_positions_rejects_a_spec_that_is_not_tracked() -> None:
+    """A spec absent from the tracked specs has no position, so the lookup raises."""
+    # --- act / assert -----------------
+    with pytest.raises(ValueError):
+        tracker_spec_positions((DiversityTrackerSpec(L2, SEPARATION),), (DiversityTrackerSpec(L1, SEPARATION),))
