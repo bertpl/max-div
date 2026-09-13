@@ -160,35 +160,41 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers -----------
-        # each objective's scorer is built here, once, not on every `compute_score` call
+        # each objective's scoring function is built here, once, not on every `compute_score` call
         self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
         self._tracker_specs = tracker_specs
-        self._diversity_scorer = self._scorer_for(diversity_objective)
-        self._tie_breaker_scorers = tuple(self._scorer_for(tie_breaker) for tie_breaker in diversity_tie_breakers)
+        self._diversity_score_fun = self._get_score_fun_for_objective(diversity_objective)
+        self._tie_breaker_score_funs = tuple(
+            self._get_score_fun_for_objective(tie_breaker) for tie_breaker in diversity_tie_breakers
+        )
 
         # --- store other params -----------------
         self._constraints = constraints
 
-    def _scorer_for(self, diversity_objective: DiversityObjective) -> Callable[[Sequence[NDArray[np.float32]]], float]:
-        """Return the function that scores `diversity_objective` from the arrays `compute_score` receives.
+    def _get_score_fun_for_objective(
+        self, diversity_objective: DiversityObjective
+    ) -> Callable[[Sequence[NDArray[np.float32]]], float]:
+        """Return a scoring function `score_fun(all_contribution_arrays) -> float` for the given objective.
 
-        `compute` reads the objective's arrays in the objective's own spec order, so the scorer picks
-        them out of the received arrays by position. When the objective's specs are exactly the
-        tracker specs, in that order, as in the usual single-metric problem where every objective
-        reads the same spec, `compute` itself is the scorer: no picking, and no extra call on the
-        hot path.
+        The function is built from two things:
+
+        - the objective's own `compute(contribution_arrays_needed_by_this_objective) -> float`
+        - the positions in `all_contribution_arrays` of the arrays this objective needs
+
+        Resolving the positions here, once, speeds up the repeated calls on the hot path.
         """
         positions = tuple(self._tracker_specs.index(spec) for spec in diversity_objective.tracker_specs)
-        compute_objective_score = diversity_objective.compute
+        diversity_objective_compute = diversity_objective.compute
         if positions == tuple(range(len(self._tracker_specs))):
-            return compute_objective_score
+            # the objective needs every array, in the given order: no picking, and no extra call
+            return diversity_objective_compute
         else:
 
-            def score_from_picked_arrays(contributions: Sequence[NDArray[np.float32]]) -> float:
-                return compute_objective_score(tuple([contributions[position] for position in positions]))
+            def score_fun(all_contribution_arrays: Sequence[NDArray[np.float32]]) -> float:
+                return diversity_objective_compute(tuple([all_contribution_arrays[position] for position in positions]))
 
-            return score_from_picked_arrays
+            return score_fun
 
     # -------------------------------------------------------------------------
     #  Copy
@@ -269,10 +275,10 @@ class ScoreGenerator:
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=self._diversity_scorer(selected_contributions),
+            diversity=self._diversity_score_fun(selected_contributions),
             # a list comprehension is inlined into this frame while a generator expression is a frame
             # of its own, so the list is the cheaper one on this hot path
-            div_tie_breakers=tuple([scorer(selected_contributions) for scorer in self._tie_breaker_scorers]),
+            div_tie_breakers=tuple([score_fun(selected_contributions) for score_fun in self._tie_breaker_score_funs]),
         )
 
 
