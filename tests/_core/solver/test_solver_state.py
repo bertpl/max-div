@@ -13,37 +13,36 @@ from max_div._core.solver._solver_state import Savepoint, SolverState
 
 from .objectives import simple_objective, tie_breaker_objectives
 
-
 # =================================================================================================
 #  Fixtures
 # =================================================================================================
-@pytest.fixture
-def new_solver_state() -> SolverState:
-    vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
+_VECTORS = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
+_CONSTRAINTS = [
+    Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2),
+    Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
+]
+
+
+def _fresh_solver_state(constraints: list[Constraint]) -> SolverState:
+    """Build an empty-selection state over six points on a line, k=3, geomean separation with one tie-breaker."""
     return SolverState.new(
-        n=vectors.shape[0],
-        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
+        n=_VECTORS.shape[0],
+        store=DistanceStore.full_matrix_from_vectors(_VECTORS, DistanceMetric.l1_manhattan()),
         k=3,
         diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
-        constraints=[
-            Constraint(int_set={0, 1, 2, 3}, min_count=1, max_count=2),
-            Constraint(int_set={2, 3, 4, 5}, min_count=1, max_count=2),
-        ],
+        constraints=constraints,
     )
+
+
+@pytest.fixture
+def new_solver_state() -> SolverState:
+    return _fresh_solver_state(_CONSTRAINTS)
 
 
 @pytest.fixture
 def new_solver_state_unconstrained() -> SolverState:
-    vectors = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float32)
-    return SolverState.new(
-        n=vectors.shape[0],
-        store=DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan()),
-        k=3,
-        diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
-        diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
-        constraints=[],
-    )
+    return _fresh_solver_state([])
 
 
 # =================================================================================================
@@ -89,7 +88,6 @@ def test_solver_state_con_weights_reach_the_state():
     # --- assert -----------------------
     assert state.con_weights.dtype == np.float64
     assert np.array_equal(state.con_weights, [2.5, 1.0])
-    assert np.array_equal(state.copy().con_weights, state.con_weights)
 
 
 def test_solver_state_add_remove_validation(new_solver_state):
@@ -278,7 +276,7 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
 
     # --- arrange ----------------------
     state = new_solver_state
-    state_ref = new_solver_state.copy()  # we'll leave this untouched until the end
+    state_ref = _fresh_solver_state(_CONSTRAINTS)  # a second fresh state, left untouched until the end
     n_iters = 100
 
     # --- act --------------------------
@@ -401,12 +399,6 @@ def test_solver_state_mean_pairwise_distance_score():
     assert state.score.diversity == pytest.approx((1 + 7 + 6) / 3)
 
 
-def test_constrained_state_shares_con_membership_across_copies(new_solver_state):
-    """The packed membership array is read-only, so a copy shares it instead of duplicating it."""
-    # --- act / assert -----------------
-    assert new_solver_state.copy()._con_membership is new_solver_state._con_membership
-
-
 def test_unconstrained_state_skips_con_membership(new_solver_state_unconstrained):
     """An unconstrained state allocates no per-item membership and mutates correctly without it."""
     # --- arrange ----------------------
@@ -416,12 +408,11 @@ def test_unconstrained_state_skips_con_membership(new_solver_state_unconstrained
     assert state._con_membership is None
 
     # --- act / assert -----------------
-    # every mutation path works without the membership mapping, including through a copy
+    # every mutation path works without the membership mapping
     state.add(0)
     state.add_many(np.array([1, 2], dtype=np.int32))
     state.remove(1)
     state.remove_many(np.array([2], dtype=np.int32))
-    assert state.copy()._con_membership is None
     state.reset()
     assert state.n_selected == 0
     assert state.score.constraints == 1.0

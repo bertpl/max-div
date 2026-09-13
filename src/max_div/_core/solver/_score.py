@@ -201,21 +201,6 @@ class ScoreGenerator:
             return score_fun
 
     # -------------------------------------------------------------------------
-    #  Copy
-    # -------------------------------------------------------------------------
-    def copy(self) -> ScoreGenerator:
-        """Create a deep copy of this ScoreGenerator."""
-        return ScoreGenerator(
-            n=self._n,
-            k=self._k,
-            diversity_objective=self._diversity_objective,
-            diversity_tie_breakers=self._diversity_tie_breakers.copy(),
-            tracker_specs=self._tracker_specs,
-            constraints=self._constraints.copy(),
-            penalty_quadratic=self._penalty_quadratic,
-        )
-
-    # -------------------------------------------------------------------------
     #  Violation-to-score conversion
     # -------------------------------------------------------------------------
     def constraints_score_for_violation(self, violation: float) -> float:

@@ -58,7 +58,7 @@ def test_for_objectives_repeated_family(store: DistanceStore):
 
 
 # =================================================================================================
-#  Applying mutations, copy
+#  Applying mutations
 # =================================================================================================
 def test_mutations_reach_every_tracker(store: DistanceStore):
     # --- arrange ----------------------
@@ -98,25 +98,6 @@ def test_mutations_reach_every_tracker(store: DistanceStore):
         mean.contribution_wrt_selection(selected, np.int32(2)),
         mean_ref.contribution_wrt_selection(selected, np.int32(2)),
     )
-
-
-def test_copy_is_independent(store: DistanceStore):
-    # --- arrange ----------------------
-    trackers = DiversityContributionTrackers.for_objectives(
-        simple_objective(DiversityMetric.GEOMEAN_SEPARATION), [], store
-    )
-    trackers.add(np.int32(0))
-    clone = trackers.copy()
-    selected = np.full(N, False, dtype=np.bool)
-    selected[0] = True
-    before = clone.main.contribution_wrt_selection(selected, np.int32(1)).copy()
-
-    # --- act --------------------------
-    trackers.add(np.int32(4))
-
-    # --- assert -----------------------
-    assert clone.main is not trackers.main
-    np.testing.assert_array_equal(clone.main.contribution_wrt_selection(selected, np.int32(1)), before)
 
 
 # =================================================================================================

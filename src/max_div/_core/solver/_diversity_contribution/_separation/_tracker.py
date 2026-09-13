@@ -28,23 +28,13 @@ class SeparationTracker(DiversityContributionTracker):
     """
 
     # -------------------------------------------------------------------------
-    #  Construction & copy
+    #  Construction
     # -------------------------------------------------------------------------
-    def __init__(
-        self,
-        store: DistanceStore,
-        sep_global: NDArray[np.float32] | None = None,
-        sep_selected: NDArray[np.float32] | None = None,
-    ) -> None:
+    def __init__(self, store: DistanceStore) -> None:
         """Initialize the SeparationTracker for an empty selection.
 
         Args:
-            store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
-            sep_global: (np.ndarray[np.float32] | None) global-separation array to adopt; a fresh lazy
-                (all-NaN) array if omitted.
-            sep_selected: (np.ndarray[np.float32] | None) current separations wrt selection; fresh (all +inf,
-                i.e. empty selection) if omitted.  Together with `sep_global` this enables copies
-                without recomputation.
+            store: (DistanceStore) pairwise-distance storage; immutable.
         """
         self._store = store  # READ-ONLY
         # the layout is a property of the store, so which calculations apply is settled here
@@ -52,23 +42,11 @@ class SeparationTracker(DiversityContributionTracker):
         # compiled code
         self._backend = backend_for(store)
         # lazily filled cache: NaN marks a not-yet-computed element; elements are computed on read
-        # and never change afterwards, which is what makes sharing the array across copies safe
-        self._sep_global = sep_global if sep_global is not None else np.full(store.n, np.nan, dtype=np.float32)
-        self._sep_selected = sep_selected if sep_selected is not None else np.full(store.n, np.inf, dtype=np.float32)
+        # and never change afterwards
+        self._sep_global = np.full(store.n, np.nan, dtype=np.float32)
+        self._sep_selected = np.full(store.n, np.inf, dtype=np.float32)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_sep_selected: list[NDArray[np.float32]] = []
-
-    def copy(self) -> SeparationTracker:
-        """Return an independent copy of this tracker; store and lazily filled cache are shared.
-
-        Sharing the global-separation cache is safe because its elements are computed once and
-        never rewritten, so copies can only ever benefit from each other's computed elements.
-        """
-        return SeparationTracker(
-            store=self._store,
-            sep_global=self._sep_global,
-            sep_selected=self._sep_selected.copy(),
-        )
 
     # -------------------------------------------------------------------------
     #  Contribution reads

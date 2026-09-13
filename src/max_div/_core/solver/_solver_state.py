@@ -130,23 +130,6 @@ class SolverState:
         self._update_score()
 
     # -------------------------------------------------------------------------
-    #  Copy
-    # -------------------------------------------------------------------------
-    def copy(self) -> SolverState:
-        """Return an independent copy of the state; the read-only membership array is shared, not duplicated."""
-        return SolverState(
-            n=self._n,
-            k=self._k,
-            contribution_trackers=self._contribution_trackers.copy(),
-            score_generator=self._score_generator.copy(),
-            selected=self._selected.copy(),
-            con_values=self._con_values.copy(),
-            con_indices=self._con_indices.copy(),
-            con_weights=self._con_weights.copy(),
-            con_membership=self._con_membership,  # shared, not copied: read-only for the state's lifetime
-        )
-
-    # -------------------------------------------------------------------------
     #  Main API - used by solver strategies to modify state
     # -------------------------------------------------------------------------
     def savepoint(self) -> Savepoint:
