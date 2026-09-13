@@ -1,10 +1,11 @@
-"""Geometric mean of a float32 vector, exact and approximate, as the log-sum-exp of its entries.
+"""Geometric mean of a float32 vector, exact and approximate, as the exponential of the mean log.
 
-Both functions take at least one entry; the caller guarantees that, because an empty input divides
-by zero. The exact one accepts zero and +inf: a zero entry makes the mean zero, a +inf entry makes
-it +inf, and an input holding both gives nan, since their logs cancel to an undefined sum. The
-approximate one is defined for positive normal floats only, where the fast log is: a zero entry
-gives a value near zero, not zero, and a +inf entry gives a large finite value.
+Both functions require at least one entry, and the caller must guarantee that: the mean divides by
+the entry count, which is zero for an empty input. The exact one accepts zero and +inf: a zero entry
+makes the mean zero, a +inf entry makes it +inf, and an input holding both gives nan, since
+log 0 = -inf and log +inf = +inf sum to nan. The approximate one is defined only for positive normal
+floats, the domain of `fast_log2_f32`: a zero entry gives a value near zero, not zero, and a +inf
+entry gives a large finite value.
 """
 
 import numpy as np
@@ -14,11 +15,11 @@ from numpy.typing import NDArray
 from .fast_log_exp import fast_exp2_f32, fast_log2_f32
 
 
-# The fastmath subset matches the pair-distance functions in the distance package, so a +inf entry
-# keeps its meaning through the reduction.
+# Both functions use the same fastmath subset as the pair-distance functions in
+# `_distance/_metric/_pair.py`: it omits `ninf`, so a +inf entry stays +inf through the sum.
 @njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
-def geomean(values: NDArray[np.float32]) -> np.float32:
-    """Geometric mean of the entries."""
+def geomean_f32(values: NDArray[np.float32]) -> np.float32:
+    """Return the geometric mean of the entries; `values` must hold at least one entry."""
     log_sum = np.float32(0.0)
     n = values.shape[0]
     for i in range(n):
@@ -27,8 +28,12 @@ def geomean(values: NDArray[np.float32]) -> np.float32:
 
 
 @njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
-def approx_geomean(values: NDArray[np.float32]) -> np.float32:
-    """Approximate geometric mean of the entries, through the fast base-2 log and exp."""
+def fast_geomean_f32(values: NDArray[np.float32]) -> np.float32:
+    """Return an approximate geometric mean of the entries, computed with the fast base-2 log and exp.
+
+    `values` must hold at least one positive normal float. The result is within about one percent
+    of the exact mean; the bound follows from the errors of `fast_log2_f32` and `fast_exp2_f32`.
+    """
     log_sum = np.float32(0.0)
     n = values.shape[0]
     for i in range(n):

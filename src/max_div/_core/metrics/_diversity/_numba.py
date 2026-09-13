@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 from numpy.typing import NDArray
 
-from max_div._core._math.geomean import approx_geomean, geomean
+from max_div._core._math.geomean import fast_geomean_f32, geomean_f32
 
 
 # Every reducer here takes the same fastmath subset as the pair-distance functions in
@@ -36,13 +36,13 @@ def mean_pairwise_distance(mean_dists: NDArray[np.float32]) -> np.float32:
 @njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Geometric mean separation of all selected items."""
-    return geomean(sep)
+    return geomean_f32(sep)
 
 
 @njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)
 def approx_geomean_separation(sep: NDArray[np.float32]) -> np.float32:
     """Approximate geometric mean separation of all selected items."""
-    return approx_geomean(sep)
+    return fast_geomean_f32(sep)
 
 
 @njit("float32(float32[::1])", fastmath={"reassoc", "contract"}, inline="always", cache=True)

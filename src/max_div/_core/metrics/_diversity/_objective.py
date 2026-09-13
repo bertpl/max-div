@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
-from max_div._core._math.geomean import geomean
+from max_div._core._math.geomean import geomean_f32
 
 from ._enum import DiversityContributionFamily, DiversityMetric
 
@@ -140,7 +140,7 @@ class DiversityObjectiveHybridGeoMean(DiversityObjective):
     def compute(self, contributions: ContributionsBySpec) -> float:
         """Return the geometric mean of the terms' diversity scores."""
         term_scores = np.array([term.compute(contributions) for term in self.terms], dtype=np.float32)
-        return float(geomean(term_scores))
+        return float(geomean_f32(term_scores))
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
