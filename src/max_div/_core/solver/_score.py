@@ -8,7 +8,7 @@ import numpy as np
 from max_div._core.constraints.constraints import _np_con_total_violation, _np_con_total_weighted_violation
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Sequence
 
     from numpy.typing import NDArray
 
@@ -119,6 +119,7 @@ class ScoreGenerator:
         k: int,
         diversity_objective: DiversityObjective,
         diversity_tie_breakers: list[DiversityObjective],
+        tracker_specs: tuple[DiversityTrackerSpec, ...],
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> None:
@@ -129,6 +130,8 @@ class ScoreGenerator:
             k: (int) The target selection size for the max-div problem.
             diversity_objective: (DiversityObjective) The main objective, whose value is the diversity score.
             diversity_tie_breakers: (list[DiversityObjective]) The tie-breaker objectives, scored in order.
+            tracker_specs: the specs of the contribution trackers, in the order `compute_score` receives
+                their arrays; must contain every spec the objectives read.
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.
             penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
@@ -157,12 +160,45 @@ class ScoreGenerator:
         self._use_fast_con_path = (not penalty_quadratic) and bool(np.all(self._con_weights == 1.0))
 
         # --- diversity & tie-breakers -----------
-        # each objective computes its own diversity score from the selection's contributions
+        # each objective's scoring function is built here, once, not on every `compute_score` call
         self._diversity_objective = diversity_objective
         self._diversity_tie_breakers = diversity_tie_breakers
+        self._tracker_specs = tracker_specs
+        self._diversity_score_fun = self._get_score_fun_for_objective(diversity_objective)
+        self._tie_breaker_score_funs = tuple(
+            self._get_score_fun_for_objective(tie_breaker) for tie_breaker in diversity_tie_breakers
+        )
 
         # --- store other params -----------------
         self._constraints = constraints
+
+    def _get_score_fun_for_objective(
+        self, diversity_objective: DiversityObjective
+    ) -> Callable[[Sequence[NDArray[np.float32]]], float]:
+        """Return a scoring function `score_fun(all_contribution_arrays) -> float` for the given objective.
+
+        The function is built from two things:
+
+        - the objective's own `compute(contribution_arrays_needed_by_this_objective) -> float`
+        - the positions in `all_contribution_arrays` of the arrays this objective needs
+
+        Resolving the positions here, once, speeds up the repeated calls on the hot path.
+        """
+        # --- prepare info ---------------------------
+        positions = tuple(self._tracker_specs.index(spec) for spec in diversity_objective.tracker_specs)
+        diversity_objective_compute = diversity_objective.compute
+
+        # --- construct score function ---------------
+        if positions == tuple(range(len(self._tracker_specs))):
+            # the objective needs every array, in the given order: no subselection of arrays needs to be
+            # made at all, and no extra call
+            return diversity_objective_compute
+        else:
+
+            def score_fun(all_contribution_arrays: Sequence[NDArray[np.float32]]) -> float:
+                return diversity_objective_compute(tuple([all_contribution_arrays[position] for position in positions]))
+
+            return score_fun
 
     # -------------------------------------------------------------------------
     #  Copy
@@ -174,6 +210,7 @@ class ScoreGenerator:
             k=self._k,
             diversity_objective=self._diversity_objective,
             diversity_tie_breakers=self._diversity_tie_breakers.copy(),
+            tracker_specs=self._tracker_specs,
             constraints=self._constraints.copy(),
             penalty_quadratic=self._penalty_quadratic,
         )
@@ -212,7 +249,7 @@ class ScoreGenerator:
         self,
         n_selected: int | np.int32,
         con_values: NDArray[np.int32],
-        selected_contributions: Mapping[DiversityTrackerSpec, NDArray[np.float32]],
+        selected_contributions: Sequence[NDArray[np.float32]],
     ) -> Score:
         """Compute the multi-component Score of a selection.
 
@@ -220,7 +257,7 @@ class ScoreGenerator:
             n_selected: (int | np.int32) current number of selected items.
             con_values: (np.ndarray[np.int32]) current constraint-bound status (m x 2 array).
             selected_contributions: the selected items' per-item contribution values, one array per
-                tracked spec; each objective reads the arrays of its own specs.
+                tracker, in the order of the generator's `tracker_specs`.
         """
         # --- individual scores ------------------
         if n_selected <= self._k:
@@ -239,14 +276,13 @@ class ScoreGenerator:
             )
 
         # --- construct Score object -------------
-        # each objective computes its own diversity score from its specs' contributions
         return Score(
             size=size_score,
             constraints=con_score,
-            diversity=self._diversity_objective.compute(selected_contributions),
-            div_tie_breakers=tuple(
-                tie_breaker.compute(selected_contributions) for tie_breaker in self._diversity_tie_breakers
-            ),
+            diversity=self._diversity_score_fun(selected_contributions),
+            # a list comprehension is inlined into this frame while a generator expression is a frame
+            # of its own, so the list is the cheaper one on this hot path
+            div_tie_breakers=tuple([score_fun(selected_contributions) for score_fun in self._tie_breaker_score_funs]),
         )
 
 

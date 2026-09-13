@@ -2,17 +2,26 @@ import numpy as np
 import pytest
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DiversityContributionFamily, DiversityMetric, DiversityTrackerSpec
+from max_div._core.metrics import (
+    DistanceMetric,
+    DiversityContributionFamily,
+    DiversityMetric,
+    DiversityObjectiveHybridFlattened,
+    DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveSimple,
+    DiversityTrackerSpec,
+)
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
 
 from .objectives import simple_objective, tie_breaker_objectives
 
-_SEPARATION_SPEC = DiversityTrackerSpec(None, DiversityContributionFamily.SEPARATION)
+SEPARATION = DiversityContributionFamily.SEPARATION
+MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
 
 
-def _as_contributions(separation_values: np.ndarray) -> dict[DiversityTrackerSpec, np.ndarray]:
-    """Wrap separation-family contribution values as the spec -> array mapping that `compute` reads."""
-    return {_SEPARATION_SPEC: separation_values}
+def _as_contributions(separation_values: np.ndarray) -> list[np.ndarray]:
+    """Wrap one separation-family contribution array as the per-spec list that `compute_score` reads."""
+    return [separation_values]
 
 
 # =================================================================================================
@@ -112,6 +121,7 @@ def test_score_generator_size():
         k=3,
         diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
+        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
 
@@ -140,6 +150,7 @@ def test_score_generator_constraints():
         k=8,
         diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
+        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, min_count=2, max_count=3),
@@ -211,6 +222,7 @@ def test_constraints_score_for_violation(violation: float, expected: float):
         k=8,
         diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
+        tracker_specs=simple_objective(DiversityMetric.GEOMEAN_SEPARATION).tracker_specs,
         constraints=constraints,
     )
 
@@ -229,6 +241,7 @@ def test_constraints_score_for_violation_rejects_quadratic():
         k=3,
         diversity_objective=simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
         diversity_tie_breakers=[],
+        tracker_specs=simple_objective(DiversityMetric.GEOMEAN_SEPARATION).tracker_specs,
         constraints=[Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)],
         penalty_quadratic=True,
     )
@@ -250,6 +263,7 @@ def test_score_generator_constraints_linear_vs_quadratic():
         "k": 8,
         "diversity_objective": simple_objective(DiversityMetric.MIN_SEPARATION),
         "diversity_tie_breakers": [],
+        "tracker_specs": simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
     }
     gen_linear = ScoreGenerator(constraints=constraints, **kwargs)
     gen_quad = ScoreGenerator(constraints=constraints, penalty_quadratic=True, **kwargs)
@@ -278,6 +292,7 @@ def test_score_generator_constraints_weighted():
         k=8,
         diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
+        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=constraints,
     )
     sep = _as_contributions(np.ones(5, dtype=np.float32))
@@ -303,6 +318,7 @@ def test_score_generator_constraints_no_constraints():
         k=8,
         diversity_objective=simple_objective(DiversityMetric.MIN_SEPARATION),
         diversity_tie_breakers=[],
+        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
 
@@ -324,6 +340,7 @@ def test_score_generator_diversity_scores():
         diversity_tie_breakers=tie_breaker_objectives(
             [DiversityMetric.MEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]
         ),
+        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
 
@@ -406,26 +423,62 @@ def test_score_str(score: Score, expected_str: str):
     assert result == expected_str
 
 
-def test_compute_score_binds_each_objective_to_its_own_spec():
-    """Each objective reads only its own spec, never an unrelated spec passed alongside it."""
+_L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), DistanceMetric.linf_chebyshev()
+
+
+@pytest.mark.parametrize(
+    "k, diversity_objective, tie_breaker, tracker_specs, contributions, expected_diversity, expected_tie_breaker",
+    [
+        pytest.param(
+            3,
+            simple_objective(DiversityMetric.MEAN_SEPARATION),
+            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
+            (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE)),
+            [
+                np.array([2.0, 4.0, 6.0], dtype=np.float32),  # the separation spec
+                np.array([100.0, 100.0, 100.0], dtype=np.float32),  # the mean-distance spec
+            ],
+            4.0,  # mean of the separation array
+            100.0,  # mean pairwise distance, from the second array
+            id="one_array_per_objective",
+        ),
+        pytest.param(
+            2,
+            DiversityObjectiveHybridGeoMean(
+                tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L2, _L3))
+            ),
+            DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (_L1, _L3)),
+            tuple(DiversityTrackerSpec(metric, SEPARATION) for metric in (_L1, _L2, _L3)),
+            [
+                np.array([5.0, 9.0], dtype=np.float32),  # L1
+                np.array(
+                    [1.0, 1.0], dtype=np.float32
+                ),  # L2: the smallest values, which the tie-breaker must not receive
+                np.array([7.0, 8.0], dtype=np.float32),  # L3
+            ],
+            (5.0 * 1.0 * 7.0) ** (1.0 / 3.0),  # geomean of the three minima
+            5.0,  # min over the L1 and L3 arrays only
+            id="subset_of_tracked_arrays",
+        ),
+    ],
+)
+def test_compute_score_hands_each_objective_the_arrays_of_its_own_specs(
+    k, diversity_objective, tie_breaker, tracker_specs, contributions, expected_diversity, expected_tie_breaker
+):
+    """Each objective reads its own specs' arrays by position; an unrelated tracked array is never passed to it."""
     # --- arrange ----------------------
     generator = ScoreGenerator(
         n=10,
-        k=3,
-        diversity_objective=simple_objective(DiversityMetric.MEAN_SEPARATION),
-        diversity_tie_breakers=tie_breaker_objectives([DiversityMetric.MIN_SEPARATION]),
+        k=k,
+        diversity_objective=diversity_objective,
+        diversity_tie_breakers=[tie_breaker],
+        tracker_specs=tracker_specs,
         constraints=[],
     )
-    contributions = {
-        _SEPARATION_SPEC: np.array([2.0, 4.0, 6.0], dtype=np.float32),
-        DiversityTrackerSpec(None, DiversityContributionFamily.MEAN_DISTANCE): np.array(
-            [100.0, 100.0, 100.0], dtype=np.float32
-        ),  # a spec neither objective reads
-    }
 
     # --- act --------------------------
-    score = generator.compute_score(3, np.empty((0, 2), dtype=np.int32), contributions)
+    score = generator.compute_score(k, np.empty((0, 2), dtype=np.int32), contributions)
 
     # --- assert -----------------------
-    assert score.diversity == pytest.approx(4.0)  # mean of the separation spec
-    assert score.div_tie_breakers[0] == pytest.approx(2.0)  # min of the separation spec
+    assert score.diversity == pytest.approx(expected_diversity, rel=1e-5)
+    assert score.div_tie_breakers[0] == pytest.approx(expected_tie_breaker)

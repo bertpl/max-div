@@ -37,6 +37,17 @@ def test_a_geomean_hybrid_needs_at_least_two_terms() -> None:
         DiversityObjectiveHybridGeoMean((DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION),))
 
 
+def test_a_geomean_hybrid_rejects_a_term_that_is_not_a_simple_objective() -> None:
+    """A term must be a simple objective, so that each term reads exactly one array."""
+    # --- arrange ----------------------
+    simple = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1)
+    flattened = DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2))
+
+    # --- act / assert -----------------
+    with pytest.raises(TypeError, match="simple objectives"):
+        DiversityObjectiveHybridGeoMean((simple, flattened))  # ty: ignore[invalid-argument-type]
+
+
 # =================================================================================================
 #  tracker_specs (and the facts derived from it)
 # =================================================================================================
@@ -115,7 +126,7 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
     """A simple objective reduces its one spec's contribution array with its diversity metric."""
     # --- arrange ----------------------
     objective = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION)
-    contributions = {DiversityTrackerSpec(None, SEPARATION): _f32([4.0, 2.0, 6.0])}
+    contributions = (_f32([4.0, 2.0, 6.0]),)
 
     # --- act / assert -----------------
     assert objective.compute(contributions) == pytest.approx(2.0)  # min of the separation array
@@ -125,32 +136,46 @@ def test_flattened_computes_its_metric_over_its_joined_specs() -> None:
     """A flattened objective reduces the concatenation of all its specs' arrays with its diversity metric."""
     # --- arrange ----------------------
     objective = DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (L1, L2))
-    contributions = {
-        DiversityTrackerSpec(L1, SEPARATION): _f32([5.0, 3.0]),
-        DiversityTrackerSpec(L2, SEPARATION): _f32([2.0, 4.0]),
-    }
+    contributions = (_f32([5.0, 3.0]), _f32([2.0, 4.0]))  # L1 array, L2 array
 
     # --- act / assert -----------------
     assert objective.compute(contributions) == pytest.approx(2.0)  # min over [5, 3, 2, 4]
 
 
-def test_geomean_computes_the_geometric_mean_of_its_terms() -> None:
-    """A geometric-mean hybrid returns the geometric mean of its terms' diversity scores."""
+@pytest.mark.parametrize(
+    "terms, contributions, expected",
+    [
+        pytest.param(
+            (
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+            ),
+            (_f32([4.0, 8.0]), _f32([9.0, 3.0])),  # L1 array (min 4), L2 array (min 3)
+            np.sqrt(4.0 * 3.0),
+            id="two_distances",
+        ),
+        pytest.param(
+            (
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+                DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1),  # same spec as the first term
+                DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+            ),
+            (_f32([4.0, 8.0]), _f32([9.0, 3.0])),  # L1 array (min 4, mean 6), L2 array (min 3)
+            (4.0 * 6.0 * 3.0) ** (1.0 / 3.0),
+            id="shared_spec",
+        ),
+    ],
+)
+def test_geomean_computes_the_geometric_mean_of_its_terms(terms, contributions, expected) -> None:
+    """A geometric-mean hybrid returns the geometric mean of its terms' scores.
+
+    Two terms with the same spec read the same array.
+    """
     # --- arrange ----------------------
-    objective = DiversityObjectiveHybridGeoMean(
-        (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
-        )
-    )
-    contributions = {
-        DiversityTrackerSpec(L1, SEPARATION): _f32([4.0, 8.0]),  # term 1 min = 4
-        DiversityTrackerSpec(L2, SEPARATION): _f32([9.0, 3.0]),  # term 2 min = 3
-    }
+    objective = DiversityObjectiveHybridGeoMean(terms)
 
     # --- act / assert -----------------
-    # The expected value is the geometric mean of 4 and 3, computed in float32.
-    assert objective.compute(contributions) == pytest.approx(np.sqrt(12.0), rel=1e-5)
+    assert objective.compute(contributions) == pytest.approx(expected, rel=1e-5)  # float32 arithmetic
 
 
 # =================================================================================================

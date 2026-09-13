@@ -606,6 +606,7 @@ class SolverState:
             k=k,
             diversity_objective=diversity_objective,
             diversity_tie_breakers=diversity_tie_breakers,
+            tracker_specs=contribution_trackers.tracker_specs,
             constraints=constraints,
             penalty_quadratic=penalty_quadratic,
         )

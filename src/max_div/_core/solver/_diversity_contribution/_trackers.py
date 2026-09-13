@@ -129,12 +129,15 @@ class DiversityContributionTrackers:
     # -------------------------------------------------------------------------
     #  Scoring reads
     # -------------------------------------------------------------------------
+    @property
+    def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
+        """Return the specs of the trackers in this set, in the order `selected_contributions` returns their arrays."""
+        return tuple(self._trackers_by_spec)
+
     def selected_contributions(
         self, selected: NDArray[np.bool], n_selected: np.int32, selected_indices: NDArray[np.int32]
-    ) -> dict[DiversityTrackerSpec, NDArray[np.float32]]:
-        """Return the selected items' contribution values, one array per tracked spec, keyed by spec.
-
-        Each objective's `compute` reads the arrays of its own specs from this mapping.
+    ) -> list[NDArray[np.float32]]:
+        """Return the selected items' contribution values, one array per tracker, in the order of `tracker_specs`.
 
         The selection is passed twice on purpose: the trackers compute contributions from the mask,
         and the values are picked out by the index list, which costs O(n_selected) where picking by
@@ -145,7 +148,6 @@ class DiversityContributionTrackers:
             n_selected: (np.int32) number of True values in `selected`.
             selected_indices: (n_selected-sized int32 ndarray) the indices where `selected` is True.
         """
-        return {
-            spec: tracker.contribution_wrt_selection(selected, n_selected)[selected_indices]
-            for spec, tracker in self._trackers_by_spec.items()
-        }
+        return [
+            tracker.contribution_wrt_selection(selected, n_selected)[selected_indices] for tracker in self._trackers
+        ]
