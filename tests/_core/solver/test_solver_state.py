@@ -24,7 +24,7 @@ _CONSTRAINTS = [
 
 
 def _new_solver_state(constraints: list[Constraint]) -> SolverState:
-    """Build an empty-selection solver state, geomean-separation objective, with the given constraints."""
+    """Build an empty-selection solver state with a geomean-separation objective and the given constraints."""
     return SolverState.new(
         n=_VECTORS.shape[0],
         store=DistanceStore.full_matrix_from_vectors(_VECTORS, DistanceMetric.l1_manhattan()),
