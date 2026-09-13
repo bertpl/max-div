@@ -47,22 +47,6 @@ def test_construction_fresh(tracker: SeparationTracker):
     assert np.all(np.isinf(tracker.contribution_wrt_selection(selected, n_selected)))
 
 
-def test_construction_precomputed_arrays_skip_recompute():
-    # --- arrange ----------------------
-    vectors = np.array([[0.0], [1.0], [5.0]], dtype=np.float32)
-    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
-    sep_global = _all_separations(store)
-    sep_selected = np.array([7.0, 8.0, 9.0], dtype=np.float32)
-
-    # --- act --------------------------
-    tracker = SeparationTracker(store, sep_global=sep_global, sep_selected=sep_selected)
-
-    # --- assert -----------------------
-    assert tracker.contribution_wrt_dataset is sep_global  # taken as-is, not recomputed
-    selected, n_selected = _selection_args([0], 3)
-    assert tracker.contribution_wrt_selection(selected, n_selected) is sep_selected
-
-
 def test_add_remove_updates_contribution(tracker: SeparationTracker):
     # --- arrange ----------------------
     selected, n_selected = _selection_args([0, 2], 5)
@@ -85,7 +69,7 @@ def test_add_remove_updates_contribution(tracker: SeparationTracker):
 
 def test_add_many_remove_many_match_singles(tracker: SeparationTracker):
     # --- arrange ----------------------
-    other = tracker.copy()
+    other = SeparationTracker(tracker.store)  # a second tracker over the same store, mutated one point at a time
 
     # --- act --------------------------
     tracker.add_many(np.array([1, 3, 4], dtype=np.int32))
@@ -103,22 +87,6 @@ def test_add_many_remove_many_match_singles(tracker: SeparationTracker):
         tracker.contribution_wrt_selection(selected, n_selected),
         other.contribution_wrt_selection(selected, n_selected),
     )
-
-
-def test_copy_is_independent(tracker: SeparationTracker):
-    # --- arrange ----------------------
-    tracker.add(np.int32(0))
-    clone = tracker.copy()
-
-    # --- act --------------------------
-    tracker.add(np.int32(4))
-
-    # --- assert -----------------------
-    selected, n_selected = _selection_args([0], 5)
-    np.testing.assert_allclose(clone.contribution_wrt_selection(selected, n_selected), [np.inf, 1, 3, 6, 10])
-    # the immutable store and global contributions are shared by contract, not duplicated
-    assert clone._store is tracker._store
-    assert clone.contribution_wrt_dataset is tracker.contribution_wrt_dataset
 
 
 def test_snapshot_stack(tracker: SeparationTracker):
@@ -163,18 +131,6 @@ def test_lazy_global_targeted_read_computes_only_requested(tracker: SeparationTr
     # the returned array is a fresh copy, not a view into the cache
     values[0] = -1.0
     assert tracker._sep_global[0] != -1.0
-
-
-def test_lazy_global_cache_shared_across_copies(tracker: SeparationTracker):
-    # --- arrange ----------------------
-    clone = tracker.copy()
-
-    # --- act --------------------------
-    clone.contribution_wrt_dataset_for(np.array([2], dtype=np.int32))
-
-    # --- assert -----------------------
-    # an element computed through the clone is visible through the original (one shared cache)
-    assert not np.isnan(tracker._sep_global[2])
 
 
 def test_compute_separation_elements_partial_fill():

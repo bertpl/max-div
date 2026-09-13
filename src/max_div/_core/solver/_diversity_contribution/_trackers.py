@@ -25,7 +25,7 @@ class DiversityContributionTrackers:
     """
 
     # -------------------------------------------------------------------------
-    #  Construction & copy
+    #  Construction
     # -------------------------------------------------------------------------
     def __init__(
         self,
@@ -63,13 +63,6 @@ class DiversityContributionTrackers:
                 spec: build_diversity_contribution_tracker(spec.contribution_family, store) for spec in specs
             },
             main_spec=diversity_objective.tracker_specs[0],
-        )
-
-    def copy(self) -> DiversityContributionTrackers:
-        """Return a deep copy of this tracker set."""
-        return DiversityContributionTrackers(
-            trackers_by_spec={spec: tracker.copy() for spec, tracker in self._trackers_by_spec.items()},
-            main_spec=self._main_spec,
         )
 
     # -------------------------------------------------------------------------

@@ -143,7 +143,7 @@ class DiversityContributionTracker(ABC):
         raise NotImplementedError
 
     # -------------------------------------------------------------------------
-    #  Snapshot & copy
+    #  Snapshot
     # -------------------------------------------------------------------------
     @abstractmethod
     def push_snapshot(self) -> None:
@@ -158,9 +158,4 @@ class DiversityContributionTracker(ABC):
             restore: (bool) True to restore the snapshotted state, False to keep the
                 current state and drop the snapshot.
         """
-        raise NotImplementedError
-
-    @abstractmethod
-    def copy(self) -> DiversityContributionTracker:
-        """Return a deep copy of this tracker."""
         raise NotImplementedError

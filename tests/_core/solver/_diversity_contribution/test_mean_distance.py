@@ -63,23 +63,6 @@ def test_construction_fresh(tracker: MeanDistanceTracker, pdist: np.ndarray):
     )
 
 
-def test_construction_precomputed_arrays_skip_recompute(pdist: np.ndarray):
-    # --- arrange ----------------------
-    contribution_wrt_dataset = np.arange(N, dtype=np.float32)
-    dist_sums = np.arange(N, dtype=np.float64)
-
-    # --- act --------------------------
-    tracker = MeanDistanceTracker(
-        DistanceStore.full_matrix(squareform(pdist)),
-        contribution_wrt_dataset=contribution_wrt_dataset,
-        dist_sums=dist_sums,
-    )
-
-    # --- assert -----------------------
-    assert tracker.contribution_wrt_dataset is contribution_wrt_dataset  # taken as-is, not recomputed
-    assert tracker._dist_sums is dist_sums
-
-
 def test_contribution_matches_brute_force_incrementally(tracker: MeanDistanceTracker, pdist: np.ndarray):
     # --- arrange ----------------------
     selection: list[int] = []
@@ -179,35 +162,6 @@ def test_lazy_global_targeted_read_computes_only_requested(tracker: MeanDistance
     # the returned array is a fresh copy, not a view into the cache
     values[0] = -1.0
     assert tracker._contribution_wrt_dataset[2] != -1.0
-
-
-def test_lazy_global_cache_shared_across_copies(tracker: MeanDistanceTracker):
-    # --- arrange ----------------------
-    clone = tracker.copy()
-
-    # --- act --------------------------
-    clone.contribution_wrt_dataset_for(np.array([4], dtype=np.int32))
-
-    # --- assert -----------------------
-    # an element computed through the clone is visible through the original (one shared cache)
-    assert not np.isnan(tracker._contribution_wrt_dataset[4])
-
-
-def test_copy_is_independent(tracker: MeanDistanceTracker):
-    # --- arrange ----------------------
-    tracker.add(np.int32(0))
-    clone = tracker.copy()
-    selected, n_selected = _selection_args([0])
-    contribution_before = clone.contribution_wrt_selection(selected, n_selected).copy()
-
-    # --- act --------------------------
-    tracker.add(np.int32(4))
-
-    # --- assert -----------------------
-    np.testing.assert_array_equal(clone.contribution_wrt_selection(selected, n_selected), contribution_before)
-    # the immutable store and global contributions are shared by contract, not duplicated
-    assert clone._store is tracker._store
-    assert clone.contribution_wrt_dataset is tracker.contribution_wrt_dataset
 
 
 # =================================================================================================

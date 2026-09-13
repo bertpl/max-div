@@ -33,50 +33,25 @@ class MeanDistanceTracker(DiversityContributionTracker):
     """
 
     # -------------------------------------------------------------------------
-    #  Construction & copy
+    #  Construction
     # -------------------------------------------------------------------------
-    def __init__(
-        self,
-        store: DistanceStore,
-        contribution_wrt_dataset: NDArray[np.float32] | None = None,
-        dist_sums: NDArray[np.float64] | None = None,
-    ) -> None:
+    def __init__(self, store: DistanceStore) -> None:
         """Initialize the MeanDistanceTracker for an empty selection.
 
         Args:
-            store: (DistanceStore) pairwise-distance storage; immutable, so shareable across copies.
-            contribution_wrt_dataset: (np.ndarray[np.float32] | None) global-contribution array to adopt;
-                a fresh lazy (all-NaN) array if omitted.
-            dist_sums: (np.ndarray[np.float64] | None) current distance sums wrt selection; fresh (all 0.0,
-                i.e. empty selection) if omitted.  Together with `contribution_wrt_dataset` this
-                enables copies without recomputation.
+            store: (DistanceStore) pairwise-distance storage; immutable.
         """
         self._store = store  # READ-ONLY
         # the layout is a property of the store, so which calculations apply is settled here
         # rather than tested inside them; see `_backends` for why that test cannot live in
         # compiled code
         self._backend = backend_for(store)
-        if contribution_wrt_dataset is not None:
-            self._contribution_wrt_dataset = contribution_wrt_dataset
-        else:
-            # lazily filled cache: NaN marks a not-yet-computed element; elements are computed on
-            # read and never change afterwards, which is what makes sharing the array across copies safe
-            self._contribution_wrt_dataset = np.full(store.n, np.nan, dtype=np.float32)
-        self._dist_sums = dist_sums if dist_sums is not None else np.zeros(store.n, dtype=np.float64)
+        # lazily filled cache: NaN marks a not-yet-computed element; elements are computed on
+        # read and never change afterwards
+        self._contribution_wrt_dataset = np.full(store.n, np.nan, dtype=np.float32)
+        self._dist_sums = np.zeros(store.n, dtype=np.float64)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_dist_sums: list[NDArray[np.float64]] = []
-
-    def copy(self) -> MeanDistanceTracker:
-        """Return an independent copy of this tracker; store and lazily filled cache are shared.
-
-        Sharing the global-contribution cache is safe because its elements are computed once and
-        never rewritten, so copies can only ever benefit from each other's computed elements.
-        """
-        return MeanDistanceTracker(
-            store=self._store,
-            contribution_wrt_dataset=self._contribution_wrt_dataset,
-            dist_sums=self._dist_sums.copy(),
-        )
 
     # -------------------------------------------------------------------------
     #  Contribution reads
