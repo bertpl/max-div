@@ -57,8 +57,13 @@ class Score:  # noqa: PLW1641 — value-semantics-only hot-path object; delibera
 
     @property
     def diversity(self) -> float:
-        """Return the main diversity score."""
+        """Return the main diversity score, maximized ahead of every tie-breaker."""
         return self.diversities[0]
+
+    @property
+    def div_tie_breakers(self) -> tuple[float, ...]:
+        """Return the tie-breaker diversity scores, in the order they break ties."""
+        return self.diversities[1:]
 
     # --- helpers --------------------------------
     def as_tuple(self, soft: float = 0.0, ignore_infeasible_diversity: bool = False) -> tuple[float, ...]:

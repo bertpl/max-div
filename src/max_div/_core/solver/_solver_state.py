@@ -602,7 +602,7 @@ class SolverState:
             n=n_np,
             k=np.int32(k),
             contribution_trackers=contribution_trackers,
-            main_objective_tracker=contribution_trackers.tracker_for(diversity_objectives[0]),
+            main_objective_tracker=contribution_trackers.single_tracker_for(diversity_objectives[0]),
             score_generator=score_generator,
             selected=selected,
             con_values=con_values,

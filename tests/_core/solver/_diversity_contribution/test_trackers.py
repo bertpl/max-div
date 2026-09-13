@@ -46,8 +46,8 @@ def test_for_objectives_single_family(store: DistanceStore):
 
     # --- assert -----------------------
     assert len(trackers._trackers) == 1
-    assert type(trackers.tracker_for(main_objective)) is SeparationTracker
-    assert trackers.tracker_for(main_objective) is trackers._trackers[0]
+    assert type(trackers.single_tracker_for(main_objective)) is SeparationTracker
+    assert trackers.single_tracker_for(main_objective) is trackers._trackers[0]
 
 
 def test_for_objectives_repeated_family(store: DistanceStore):
@@ -167,9 +167,9 @@ def test_selected_contributions_orders_the_arrays_as_the_specs():
 
 
 # =================================================================================================
-#  tracker_for
+#  single_tracker_for
 # =================================================================================================
-def test_tracker_for_refuses_an_objective_over_several_trackers(store: DistanceStore):
+def test_single_tracker_for_refuses_an_objective_over_several_trackers(store: DistanceStore):
     """No single tracker represents an objective that reads several specs."""
     # --- arrange ----------------------
     flattened = DiversityObjectiveHybridFlattened(
@@ -179,4 +179,4 @@ def test_tracker_for_refuses_an_objective_over_several_trackers(store: DistanceS
 
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="No single tracker"):
-        trackers.tracker_for(flattened)
+        trackers.single_tracker_for(flattened)
