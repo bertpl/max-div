@@ -3,8 +3,8 @@ import pytest
 
 from max_div._core._math.geomean import fast_geomean_f32, geomean_f32
 
-# Both functions share these cases, positive normal floats only; each pair is the input and its
-# exact geometric mean.
+# Positive normal floats only, the domain `fast_geomean_f32` is defined on, so both functions can
+# share these cases.
 _POSITIVE_CASES = [
     ([0.1, 0.4], 0.2),
     ([2.0, 3.0, 4.0], 24.0 ** (1.0 / 3.0)),
@@ -24,7 +24,7 @@ _POSITIVE_CASES = [
     ],
 )
 def test_geomean_f32(values: list[float], expected: float) -> None:
-    """`geomean_f32` returns the exact geometric mean for each parametrized input."""
+    """`geomean_f32` returns the exact geometric mean."""
     # --- arrange ----------------------
     values = np.array(values, dtype=np.float32)
 
@@ -35,6 +35,7 @@ def test_geomean_f32(values: list[float], expected: float) -> None:
     assert result == pytest.approx(expected, rel=1e-6, abs=1e-6)
 
 
+# 0.01 is the documented one-percent bound; a zero entry gives about 2^-63, hence the tight tolerance.
 @pytest.mark.parametrize(
     "values, expected, tol",
     [
