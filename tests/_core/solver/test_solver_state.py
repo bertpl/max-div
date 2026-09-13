@@ -23,8 +23,8 @@ _CONSTRAINTS = [
 ]
 
 
-def _fresh_solver_state(constraints: list[Constraint]) -> SolverState:
-    """Build an empty-selection state over six points on a line, k=3, geomean separation with one tie-breaker."""
+def _new_solver_state(constraints: list[Constraint]) -> SolverState:
+    """Build an empty-selection solver state, geomean-separation objective, with the given constraints."""
     return SolverState.new(
         n=_VECTORS.shape[0],
         store=DistanceStore.full_matrix_from_vectors(_VECTORS, DistanceMetric.l1_manhattan()),
@@ -37,12 +37,12 @@ def _fresh_solver_state(constraints: list[Constraint]) -> SolverState:
 
 @pytest.fixture
 def new_solver_state() -> SolverState:
-    return _fresh_solver_state(_CONSTRAINTS)
+    return _new_solver_state(_CONSTRAINTS)
 
 
 @pytest.fixture
 def new_solver_state_unconstrained() -> SolverState:
-    return _fresh_solver_state([])
+    return _new_solver_state([])
 
 
 # =================================================================================================
@@ -276,7 +276,7 @@ def test_solver_state_consistency_stress_test(new_solver_state, seed: int):
 
     # --- arrange ----------------------
     state = new_solver_state
-    state_ref = _fresh_solver_state(_CONSTRAINTS)  # a second fresh state, left untouched until the end
+    state_ref = _new_solver_state(_CONSTRAINTS)  # a second new state, left untouched until the end
     n_iters = 100
 
     # --- act --------------------------
