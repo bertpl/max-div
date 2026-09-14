@@ -79,8 +79,8 @@ class MaxDivProblem(ABC):
     def diversity_objective(self) -> DiversityObjective:
         """Return the objective the solver maximizes: the diversity metric resolved to its internal form.
 
-        A `DiversityMetric` becomes a simple objective over the problem's own distance (`distance_metric`
-        is `None`); a `HybridDiversityMetric` becomes a hybrid objective over its terms.
+        A `DiversityMetric` becomes a simple objective over the problem's own distance (the objective's
+        `distance_metric` is `None`); a `HybridDiversityMetric` becomes a hybrid objective over its terms.
         """
         return _diversity_objective_of(self.diversity_metric)
 
