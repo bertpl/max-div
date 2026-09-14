@@ -1,4 +1,4 @@
-"""The bindings tie one solve's diversity objectives to what they read; see `DiversityObjectiveBindings`."""
+"""`DiversityObjectiveBindings` binds one solve's diversity objectives to the stores and trackers they read."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 # =================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveBindings:
-    """What one solve's diversity objectives are bound to: a store per distinct distance, a tracker per distinct spec.
+    """The bindings map one solve's diversity objectives to one store per distance and one tracker per spec.
 
     The score reads one contribution array per tracker, in the trackers' order; the bindings also
     record where each objective's own arrays sit in that order. They are a function of the objective

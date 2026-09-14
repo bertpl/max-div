@@ -141,9 +141,8 @@ class ScoreGenerator:
             k: (int) The target selection size for the max-div problem.
             diversity_objectives: the diversity objectives, the primary objective first and then
                 the tie-breakers, scored in that order into `Score.diversities`.
-            bindings: the objectives' bindings: `compute_score` receives one array per entry of
-                `bindings.tracker_specs`, in that order, and each objective picks its own arrays by
-                its positions.
+            bindings: `compute_score` receives one array per entry of `bindings.tracker_specs`, in that
+                order, and each objective picks its own arrays by its positions.
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.
             penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
