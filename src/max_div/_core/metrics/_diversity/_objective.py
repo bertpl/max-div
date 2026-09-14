@@ -45,13 +45,6 @@ class DiversityTrackerSpec(NamedTuple):
     contribution_family: DiversityContributionFamily
 
 
-class HybridCombinationType(StrEnum):
-    """How a hybrid objective combines its terms: by their geometric mean or by their arithmetic mean."""
-
-    GEOMETRIC_MEAN = "GEOMETRIC_MEAN"
-    ARITHMETIC_MEAN = "ARITHMETIC_MEAN"
-
-
 # =================================================================================================
 #  DiversityObjective
 # =================================================================================================
@@ -59,8 +52,7 @@ class DiversityObjective(ABC):
     """A diversity objective the solver maximizes, or a tie-breaker it ranks ties by.
 
     Each subclass holds the fields its kind needs and computes its own diversity score. From the
-    specs a subclass declares, the base derives the facts consumers read: the distinct specs, the
-    distinct distance metrics, and whether one separation tracker serves the objective.
+    specs a subclass declares, the base derives the distinct specs and the distinct distance metrics.
     """
 
     @abstractmethod
@@ -77,7 +69,7 @@ class DiversityObjective(ABC):
     @property
     @abstractmethod
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """Return the specs this objective reads, one per array `compute` takes, in that order; a spec may repeat."""
+        """Return one spec per array `compute` takes, in that order; a spec may repeat."""
 
     @abstractmethod
     def default_tie_breakers(self) -> list[DiversityObjective]:
@@ -85,20 +77,12 @@ class DiversityObjective(ABC):
 
     @cached_property
     def distinct_tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """Return the distinct specs this objective reads, in first-seen order."""
+        """Return the distinct specs of this objective, in first-seen order."""
         return tuple(dict.fromkeys(self.tracker_specs))
 
     def distinct_distance_metrics(self) -> tuple[DistanceMetric | None, ...]:
-        """Return the distinct distance metrics this objective reads, in first-seen order."""
+        """Return the distinct distance metrics of this objective's specs, in first-seen order."""
         return tuple(dict.fromkeys(spec.distance_metric for spec in self.tracker_specs))
-
-    def has_single_separation_tracker(self) -> bool:
-        """Return whether one separation tracker serves this objective, which the batched-init fast path requires.
-
-        True when the objective reads exactly one distinct spec, of the separation family.
-        """
-        specs = self.distinct_tracker_specs
-        return len(specs) == 1 and specs[0].contribution_family == DiversityContributionFamily.SEPARATION
 
 
 # =================================================================================================
@@ -117,12 +101,12 @@ class DiversityObjectiveSimple(DiversityObjective):
 
     @cached_property
     def tracker_spec(self) -> DiversityTrackerSpec:
-        """Return the one spec this objective reads: the single entry of `tracker_specs`, as a shorthand."""
+        """Return the one spec of this objective: the single entry of `tracker_specs`, as a shorthand."""
         return DiversityTrackerSpec(self.distance_metric, self.diversity_metric.contribution_family)
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """Return the one spec this objective reads."""
+        """Return the one spec of this objective."""
         return (self.tracker_spec,)
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
@@ -137,6 +121,13 @@ class DiversityObjectiveSimple(DiversityObjective):
         ]
 
 
+class HybridObjectiveType(StrEnum):
+    """How a hybrid objective combines its terms: by their geometric mean or by their arithmetic mean."""
+
+    GEOMETRIC_MEAN = "GEOMETRIC_MEAN"
+    ARITHMETIC_MEAN = "ARITHMETIC_MEAN"
+
+
 @dataclass(frozen=True)
 class DiversityObjectiveHybrid(DiversityObjective):
     """Several simple objectives (its terms) combined by their geometric or arithmetic mean.
@@ -147,7 +138,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
-    combination: HybridCombinationType = HybridCombinationType.GEOMETRIC_MEAN
+    combination: HybridObjectiveType = HybridObjectiveType.GEOMETRIC_MEAN
 
     def __post_init__(self) -> None:
         """Reject fewer than two terms and any term that is not a simple objective.
@@ -166,50 +157,48 @@ class DiversityObjectiveHybrid(DiversityObjective):
             [term.compute((contribution,)) for term, contribution in zip(self.terms, contributions, strict=True)],
             dtype=np.float32,
         )
-        if self.combination == HybridCombinationType.GEOMETRIC_MEAN:
+        if self.combination == HybridObjectiveType.GEOMETRIC_MEAN:
             return float(geomean_f32(term_scores))
         else:
             return float(np.mean(term_scores))
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """Return the terms' specs in term order, a spec repeated once per term that reads it."""
+        """Return the terms' specs in term order, a spec repeated once per term that has it."""
         return tuple(term.tracker_spec for term in self.terms)
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
-        """Return the separating tie-breakers over the distinct distance metrics the terms read.
+        """Return the separating tie-breakers over the terms' distinct distance metrics.
 
-        Only a geometric hybrid, the kind the solver maximizes, has defaults; an arithmetic one is only
-        ever a tie-breaker, and a tie-breaker is not itself ranked by further tie-breakers.
+        A geometric mean has the plateaus that need breaking: it is pulled to zero by a single zero
+        term, and above zero it can tie. An arithmetic mean has neither, since every term keeps
+        contributing and one zero term only lowers it, so an arithmetic hybrid gets no tie-breakers.
         """
-        if self.combination != HybridCombinationType.GEOMETRIC_MEAN:
+        if self.combination == HybridObjectiveType.ARITHMETIC_MEAN:
             return []
-        distances = self.distinct_distance_metrics()
-        return [
-            DiversityObjectiveHybrid(
-                tuple(DiversityObjectiveSimple(metric, distance) for distance in distances), combination
-            )
-            for metric, combination in _TIE_BREAKER_COMBINATIONS.items()
-        ]
+        else:
+            distances = self.distinct_distance_metrics()
+            return [
+                # the approximate geometric mean falls the more separations are zero, so a selection with
+                # fewer zero separations ranks higher; combined geometrically, one zero distance pulls it
+                # down without pinning the tie-breaker at zero the way an exact geometric mean would
+                DiversityObjectiveHybrid(
+                    tuple(DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, d) for d in distances),
+                    HybridObjectiveType.GEOMETRIC_MEAN,
+                ),
+                # once the approximate geometric mean has underflowed to zero, the non-zero fraction still
+                # counts the coincident pairs; combined arithmetically, a distance with no non-zero
+                # separation only lowers it, so fixing another distance still ranks higher
+                DiversityObjectiveHybrid(
+                    tuple(DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, d) for d in distances),
+                    HybridObjectiveType.ARITHMETIC_MEAN,
+                ),
+            ]
 
 
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-# The default tie-breakers of a geometric hybrid, in rank order. Each metric is paired with the
-# combination that makes the hybrid over the distinct distances score the same as that metric
-# applied to all the terms' contribution entries joined into one array: the approximate geometric
-# mean under a geometric mean, the non-zero fraction under an arithmetic mean.
-#
-# The approximate geometric mean falls toward zero the more entries are zero, so a selection with
-# fewer zero entries ranks higher; once it underflows to zero and can no longer separate selections,
-# the non-zero fraction breaks the remaining ties.
-_TIE_BREAKER_COMBINATIONS: dict[DiversityMetric, HybridCombinationType] = {
-    DiversityMetric.APPROX_GEOMEAN_SEPARATION: HybridCombinationType.GEOMETRIC_MEAN,
-    DiversityMetric.NON_ZERO_SEPARATION_FRAC: HybridCombinationType.ARITHMETIC_MEAN,
-}
-
-
 def _separating_tie_breaker_metrics(diversity_metric: DiversityMetric) -> tuple[DiversityMetric, ...]:
     """Return the tie-breaker diversity metrics for a primary metric that has defaults; empty for the rest."""
     if diversity_metric == DiversityMetric.MIN_SEPARATION:

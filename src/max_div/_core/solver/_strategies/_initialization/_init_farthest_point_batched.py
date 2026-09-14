@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._random import P_UNIFORM, randint
-from max_div._core.metrics import DiversityObjective
+from max_div._core.metrics import DiversityContributionFamily, DiversityObjective
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 from max_div._core.solver._solver_state import SolverState
 
@@ -49,9 +49,19 @@ class InitFarthestPointBatched(InitializationStrategy):
         self._top_k = top_k
         self._batch_size = batch_size
 
+    @staticmethod
+    def is_diversity_objective_supported(objective: DiversityObjective) -> bool:
+        """Return whether the round heuristics apply to `objective`: one distinct spec, of the separation family.
+
+        The stopping rule rests on contributions that only fall as items are selected, which holds for
+        one separation tracker and for nothing else.
+        """
+        specs = objective.distinct_tracker_specs
+        return len(specs) == 1 and specs[0].contribution_family == DiversityContributionFamily.SEPARATION
+
     def validate_objective(self, objective: DiversityObjective) -> None:
-        """Reject objectives that the round heuristics are not tailored to."""
-        if not objective.has_single_separation_tracker():
+        """Reject objectives that the round heuristics are not tailored to; see `is_diversity_objective_supported`."""
+        if not self.is_diversity_objective_supported(objective):
             raise ValueError(
                 f"InitFarthestPointBatched does not support diversity objective {objective}: "
                 "the heuristics of the algorithm are tailored to a single separation-based diversity metric. "
