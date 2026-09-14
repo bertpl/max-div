@@ -11,9 +11,9 @@ from max_div._core._utils import delete_sorted, insert_sorted
 from max_div._core.constraints import Constraint, ConstraintList, _np_con_membership, to_numpy_membership
 
 from ._diversity_contribution import (
-    DiversityContributionTracker,
     DiversityContributionTrackers,
     DiversityObjectiveBindings,
+    PerItemContributionSource,
 )
 from ._score import Score, ScoreGenerator
 
@@ -67,7 +67,8 @@ class SolverState:
         n: np.int32,
         k: np.int32,
         contribution_trackers: DiversityContributionTrackers,
-        primary_objective_tracker: DiversityContributionTracker,
+        per_item_contribution_source: PerItemContributionSource,
+        distance_store: DistanceStore | None,
         score_generator: ScoreGenerator,
         selected: NDArray[np.bool],
         con_values: NDArray[np.int32],
@@ -90,8 +91,12 @@ class SolverState:
             k: (np.int32) target number of selected items
             contribution_trackers: (DiversityContributionTrackers) the tracker set backing this state's
                 per-point diversity contributions, updated on every selection mutation.
-            primary_objective_tracker: the tracker of that set representing the primary diversity objective;
-                the strategies read its per-point contributions.
+            per_item_contribution_source: the source of the primary diversity objective's per-item
+                contributions (that objective's one tracker of the set, or a hybrid source over
+                several), which the strategies read.
+            distance_store: the store that the primary objective's one spec is tracked over, or None when
+                the primary objective has several specs; read only by the batched farthest-point
+                initialization.
             score_generator: (ScoreGenerator) score generator to compute scores for current state
             selected: (np.ndarray[np.bool]) array indicating which of the n items are initially selected.
             con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)
@@ -108,7 +113,8 @@ class SolverState:
 
         # diversity contributions
         self._contribution_trackers = contribution_trackers
-        self._contribution_tracker = primary_objective_tracker  # held directly: no per-access lookup on the hot path
+        self._per_item_contribution_source = per_item_contribution_source  # held directly: no per-access lookup
+        self._distance_store = distance_store
 
         # scoring
         self._score_generator = score_generator  # READ-ONLY
@@ -490,8 +496,16 @@ class SolverState:
 
     @property
     def distance_store(self) -> DistanceStore:
-        """Return the distance store backing this state's trackers (shared, immutable)."""
-        return self._contribution_tracker.store
+        """Return the store that the primary objective's one spec is tracked over (shared, immutable).
+
+        Raises:
+            ValueError: If the primary objective reads several specs, so no single store serves it.
+        """
+        if self._distance_store is None:
+            raise ValueError(
+                "The primary diversity objective reads several specs, so no single distance store serves it."
+            )
+        return self._distance_store
 
     def top_not_selected_contributions(self, m: int | np.int32) -> tuple[NDArray[np.int32], NDArray[np.float32]]:
         """Return indices and contributions of the up-to-m not-selected items with the highest contribution.
@@ -511,19 +525,21 @@ class SolverState:
     @property
     def selected_contribution_array(self) -> NDArray[np.float32]:
         """Return diversity contribution of selected items wrt the current selection (np.float32 ndarray)."""
-        return self._contribution_tracker.contribution_wrt_selection(self._selected, self._n_selected)[
+        return self._per_item_contribution_source.contribution_wrt_selection(self._selected, self._n_selected)[
             self.selected_index_array
         ]
 
     @property
     def not_selected_contribution_array(self) -> NDArray[np.float32]:
         """Return diversity contribution of not selected items wrt the current selection (np.float32 ndarray)."""
-        return self._contribution_tracker.contribution_wrt_selection(self._selected, self._n_selected)[~self._selected]
+        return self._per_item_contribution_source.contribution_wrt_selection(self._selected, self._n_selected)[
+            ~self._selected
+        ]
 
     @property
     def full_contribution_array(self) -> NDArray[np.float32]:
         """Return diversity contribution of all items wrt the current selection (np.float32 ndarray)."""
-        return self._contribution_tracker.contribution_wrt_selection(
+        return self._per_item_contribution_source.contribution_wrt_selection(
             self._selected, self._n_selected
         )  # should not be modified (!)
 
@@ -534,7 +550,7 @@ class SolverState:
         Accessing this computes any not-yet-computed entries first (the full O(n²) sweep on first
         access); callers needing only some entries use `global_contribution_for`.
         """
-        return self._contribution_tracker.contribution_wrt_dataset  # should not be modified (!)
+        return self._per_item_contribution_source.contribution_wrt_dataset  # should not be modified (!)
 
     def global_contribution_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
         """Return dataset-wide contributions for `indices`, computing missing entries first.
@@ -542,7 +558,7 @@ class SolverState:
         Returns a freshly allocated array (safe for in-place mutation by the caller); cost is
         proportional to the not-yet-computed elements among `indices` rather than to n.
         """
-        return self._contribution_tracker.contribution_wrt_dataset_for(indices)
+        return self._per_item_contribution_source.contribution_wrt_dataset_for(indices)
 
     # -------------------------------------------------------------------------
     #  Scoring
@@ -583,6 +599,7 @@ class SolverState:
         """
         # --- diversity contributions ------------
         n_np = np.int32(n)
+        primary_objective = diversity_objectives[0]
         bindings = DiversityObjectiveBindings.for_objectives(diversity_objectives)
         contribution_trackers = DiversityContributionTrackers.for_specs(bindings.tracker_specs, stores_by_distance)
 
@@ -609,7 +626,14 @@ class SolverState:
             n=n_np,
             k=np.int32(k),
             contribution_trackers=contribution_trackers,
-            primary_objective_tracker=contribution_trackers.primary_tracker,
+            per_item_contribution_source=contribution_trackers.per_item_contribution_source_for(
+                primary_objective, bindings.objective_spec_positions[0]
+            ),
+            distance_store=(
+                stores_by_distance[primary_objective.distinct_tracker_specs[0].distance_metric]
+                if len(primary_objective.distinct_tracker_specs) == 1
+                else None
+            ),
             score_generator=score_generator,
             selected=selected,
             con_values=con_values,

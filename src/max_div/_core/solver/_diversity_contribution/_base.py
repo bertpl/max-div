@@ -11,34 +11,17 @@ if TYPE_CHECKING:
 
 
 # =================================================================================================
-#  DiversityContributionTracker
+#  PerItemContributionSource
 # =================================================================================================
-class DiversityContributionTracker(ABC):
-    """Tracks each point's per-point diversity contribution wrt an incrementally changing selection.
+class PerItemContributionSource(ABC):
+    """A source provides every item's per-item diversity contribution, the value the strategies sample items by.
 
     The *diversity contribution* of a point measures how much the point contributes to the diversity
     of the selection: for a selected point, how much it contributes to the current selection's
     diversity; for a non-selected point, how much diversity it would add if selected.  Higher is
-    always more diverse.  Depending on the tracker family, the tracked value is the point's exact
-    marginal contribution to the diversity objective or a monotone proxy for it.  Each concrete
-    tracker defines the contribution of one diversity-metric family and owns the arrays + kernel
-    calls that maintain it incrementally.
-
-    Mutations mirror the solver-state mutators (`add`, `remove`, `..._many`) and must be called
-    with the same indices, in the same order.  Snapshot methods mirror the solver-state snapshot
-    life cycle, which is a *stack*: `push_snapshot` saves the current contributions on top of any
-    already saved, and `pop_snapshot` discards the top entry, restoring from it or not.  Numba
-    kernels are only ever handed bare numpy arrays, never tracker objects.
+    always more diverse.  A tracker is a source that maintains one spec's contribution itself; a
+    hybrid source derives a hybrid objective's contribution from its term trackers on every read.
     """
-
-    # -------------------------------------------------------------------------
-    #  Contribution reads
-    # -------------------------------------------------------------------------
-    @property
-    @abstractmethod
-    def store(self) -> DistanceStore:
-        """Return the distance store this tracker reads (shared, immutable)."""
-        raise NotImplementedError
 
     @abstractmethod
     def contribution_wrt_selection(self, selected: NDArray[np.bool], n_selected: np.int32) -> NDArray[np.floating]:
@@ -80,6 +63,34 @@ class DiversityContributionTracker(ABC):
 
         Returns a freshly allocated array (safe for in-place mutation by the caller).
         """
+        raise NotImplementedError
+
+
+# =================================================================================================
+#  DiversityContributionTracker
+# =================================================================================================
+class DiversityContributionTracker(PerItemContributionSource):
+    """Tracks each point's per-point diversity contribution wrt an incrementally changing selection.
+
+    Depending on the tracker family, the tracked value is the point's exact marginal contribution to
+    the diversity objective or a monotone proxy for it.  Each concrete tracker defines the
+    contribution of one diversity-metric family and owns the arrays and the numba-compiled functions
+    that maintain it incrementally.
+
+    Mutations mirror the solver-state mutators (`add`, `remove`, `..._many`) and must be called
+    with the same indices, in the same order.  Snapshot methods mirror the solver-state snapshot
+    life cycle, which is a *stack*: `push_snapshot` saves the current contributions on top of any
+    already saved, and `pop_snapshot` discards the top entry, restoring from it or not.  The
+    numba-compiled functions are only ever handed bare numpy arrays, never tracker objects.
+    """
+
+    # -------------------------------------------------------------------------
+    #  Store
+    # -------------------------------------------------------------------------
+    @property
+    @abstractmethod
+    def store(self) -> DistanceStore:
+        """Return the distance store this tracker reads (shared, immutable)."""
         raise NotImplementedError
 
     # -------------------------------------------------------------------------
