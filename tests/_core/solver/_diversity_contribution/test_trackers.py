@@ -11,8 +11,8 @@ from max_div._core.metrics import (
 )
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import (
-    CombinedPerItemContributionSource,
     DiversityContributionTrackers,
+    HybridPerItemContributionSource,
     MeanDistanceTracker,
     SeparationTracker,
 )
@@ -66,7 +66,7 @@ def test_source_for_one_spec_is_that_spec_tracker_itself(store: DistanceStore):
 
 
 def test_source_for_several_specs_combines_the_trackers_at_the_positions(store: DistanceStore):
-    """A geomean hybrid gets a combined source over the trackers at the given positions, repeats kept."""
+    """A hybrid gets a hybrid source over the trackers at the given positions, repeats kept."""
     # --- arrange ----------------------
     specs = (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE))
     trackers = DiversityContributionTrackers.for_specs(specs, {None: store})
@@ -82,7 +82,7 @@ def test_source_for_several_specs_combines_the_trackers_at_the_positions(store: 
     source = trackers.per_item_contribution_source_for(objective, (1, 0, 0))
 
     # --- assert -----------------------
-    assert isinstance(source, CombinedPerItemContributionSource)
+    assert isinstance(source, HybridPerItemContributionSource)
     assert source.term_trackers == (trackers._trackers[1], trackers._trackers[0], trackers._trackers[0])
 
 

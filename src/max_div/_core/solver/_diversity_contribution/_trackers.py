@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ._combined_source import CombinedPerItemContributionSource
+from max_div._core.metrics import DiversityObjectiveHybrid
+
 from ._factory import build_diversity_contribution_tracker
+from ._hybrid_source import HybridPerItemContributionSource
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -25,7 +27,7 @@ class DiversityContributionTrackers:
 
     Holds one tracker per spec, applies every selection mutation to all trackers, and, given the
     objective the solver maximizes, returns the source of the per-item contributions the strategies
-    read: that objective's one tracker, or a combined source over its term trackers.
+    read: that objective's one tracker, or a hybrid source over its term trackers.
     """
 
     # -------------------------------------------------------------------------
@@ -69,7 +71,7 @@ class DiversityContributionTrackers:
     def per_item_contribution_source_for(
         self, objective: DiversityObjective, spec_positions: Sequence[int]
     ) -> PerItemContributionSource:
-        """Return the source of `objective`'s per-item contribution: its one tracker, or a combined source.
+        """Return the source of `objective`'s per-item contribution: its one tracker, or a hybrid source.
 
         Args:
             objective: the objective the solver maximizes.
@@ -77,15 +79,15 @@ class DiversityContributionTrackers:
                 position of that spec's tracker in this set: that objective's entry of the bindings'
                 `objective_spec_positions`.
 
-        With one spec the tracker is returned as the source itself: a simple objective's per-item
-        contribution is that tracker's contribution array, and wrapping it in a combined source would
-        only add a function call whenever the contribution is read.
+        A simple objective gets its one tracker as the source itself: its per-item contribution is that
+        tracker's contribution array, and wrapping it in a source would only add a function call
+        whenever the contribution is read.
         """
         term_trackers = [self._trackers[position] for position in spec_positions]
-        if len(term_trackers) == 1:
-            return term_trackers[0]
+        if isinstance(objective, DiversityObjectiveHybrid):
+            return HybridPerItemContributionSource(objective, term_trackers)
         else:
-            return CombinedPerItemContributionSource(objective, term_trackers)
+            return term_trackers[0]
 
     # -------------------------------------------------------------------------
     #  Mutation fan-out

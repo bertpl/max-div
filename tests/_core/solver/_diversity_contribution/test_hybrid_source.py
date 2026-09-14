@@ -8,7 +8,7 @@ from max_div._core.metrics import (
     DiversityObjectiveSimple,
 )
 from max_div._core.metrics._distance import DistanceStore
-from max_div._core.solver._diversity_contribution import CombinedPerItemContributionSource, SeparationTracker
+from max_div._core.solver._diversity_contribution import HybridPerItemContributionSource, SeparationTracker
 
 from .helpers import selection_args
 
@@ -55,7 +55,7 @@ def test_rejects_fewer_than_two_term_trackers(term_trackers):
     """A single spec's tracker is its own source, so one term tracker is refused."""
     # --- act / assert -----------------
     with pytest.raises(ValueError, match="at least two"):
-        CombinedPerItemContributionSource(_hybrid(L1, L2), [term_trackers[0]])
+        HybridPerItemContributionSource(_hybrid(L1, L2), [term_trackers[0]])
 
 
 @pytest.mark.parametrize("term_positions", [(0, 1), (0, 0, 1)], ids=["two_distances", "repeated_tracker"])
@@ -63,7 +63,7 @@ def test_selection_contribution_is_the_objectives_combination(term_trackers, ter
     """Each read combines the trackers' current arrays by the objective's rule; a repeated tracker counts per term."""
     # --- arrange ----------------------
     trackers = [term_trackers[position] for position in term_positions]
-    source = CombinedPerItemContributionSource(_hybrid(*[(L1, L2)[position] for position in term_positions]), trackers)
+    source = HybridPerItemContributionSource(_hybrid(*[(L1, L2)[position] for position in term_positions]), trackers)
     _add_to_all(term_trackers, 0)
     _add_to_all(term_trackers, 3)
     selected, n_selected = selection_args([0, 3], N)
@@ -79,7 +79,7 @@ def test_selection_contribution_is_the_objectives_combination(term_trackers, ter
 def test_every_read_reflects_the_term_trackers_current_arrays(term_trackers):
     """The source holds no state: a read after the term trackers changed combines their new arrays."""
     # --- arrange ----------------------
-    source = CombinedPerItemContributionSource(_hybrid(L1, L2), term_trackers)
+    source = HybridPerItemContributionSource(_hybrid(L1, L2), term_trackers)
     _add_to_all(term_trackers, 0)
     before = source.contribution_wrt_selection(*selection_args([0], N)).copy()
     _add_to_all(term_trackers, 2)
@@ -97,7 +97,7 @@ def test_every_read_reflects_the_term_trackers_current_arrays(term_trackers):
 def test_dataset_contributions_combine_the_term_trackers(term_trackers):
     """The dataset-wide array, and the array returned for a subset of indices, combine the term trackers' arrays."""
     # --- arrange ----------------------
-    source = CombinedPerItemContributionSource(_hybrid(L1, L2), term_trackers)
+    source = HybridPerItemContributionSource(_hybrid(L1, L2), term_trackers)
     indices = np.array([4, 1], dtype=np.int32)
 
     # --- act --------------------------

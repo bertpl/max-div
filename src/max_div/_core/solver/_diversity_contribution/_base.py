@@ -20,7 +20,7 @@ class PerItemContributionSource(ABC):
     of the selection: for a selected point, how much it contributes to the current selection's
     diversity; for a non-selected point, how much diversity it would add if selected.  Higher is
     always more diverse.  A tracker is a source that maintains one spec's contribution itself; a
-    combined source derives an objective's contribution from several trackers on every read.
+    hybrid source derives a hybrid objective's contribution from its term trackers on every read.
     """
 
     @abstractmethod

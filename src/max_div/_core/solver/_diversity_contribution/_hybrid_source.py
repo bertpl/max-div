@@ -1,4 +1,4 @@
-"""`CombinedPerItemContributionSource` is the per-item contribution source of an objective over several specs."""
+"""`HybridPerItemContributionSource` is the per-item contribution source of a hybrid objective."""
 
 from __future__ import annotations
 
@@ -12,16 +12,16 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityObjective
+    from max_div._core.metrics import DiversityObjectiveHybrid
 
     from ._base import DiversityContributionTracker
 
 
 # =================================================================================================
-#  CombinedPerItemContributionSource
+#  HybridPerItemContributionSource
 # =================================================================================================
-class CombinedPerItemContributionSource(PerItemContributionSource):
-    """A combined source provides an objective's per-item contribution over several specs from its term trackers.
+class HybridPerItemContributionSource(PerItemContributionSource):
+    """A hybrid source provides a hybrid objective's per-item contribution from its term trackers, one per term.
 
     Every read combines the term trackers' arrays by the objective's own rule
     (`compute_per_item_contributions`). The source caches no selection contribution: the tracker set
@@ -33,20 +33,21 @@ class CombinedPerItemContributionSource(PerItemContributionSource):
     # -------------------------------------------------------------------------
     #  Construction
     # -------------------------------------------------------------------------
-    def __init__(self, objective: DiversityObjective, term_trackers: Sequence[DiversityContributionTracker]) -> None:
+    def __init__(
+        self, objective: DiversityObjectiveHybrid, term_trackers: Sequence[DiversityContributionTracker]
+    ) -> None:
         """Bind the objective's combination to its term trackers.
 
         Args:
-            objective: the objective whose per-item contribution this source provides.
+            objective: the hybrid objective whose per-item contribution this source provides.
             term_trackers: one tracker per entry of the objective's `tracker_specs`, in that order;
                 the same tracker may appear more than once.
 
         Raises:
-            ValueError: If fewer than two term trackers are given; a single spec's tracker is its own
-                source.
+            ValueError: If fewer than two term trackers are given; a hybrid has at least two terms.
         """
         if len(term_trackers) < 2:
-            raise ValueError(f"A combined source needs at least two term trackers; got {len(term_trackers)}.")
+            raise ValueError(f"A hybrid source needs at least two term trackers; got {len(term_trackers)}.")
         self._objective = objective  # READ-ONLY
         self._term_trackers = tuple(term_trackers)  # READ-ONLY
         self._contribution_wrt_dataset: NDArray[np.float32] | None = None

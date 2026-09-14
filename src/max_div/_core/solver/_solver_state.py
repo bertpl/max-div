@@ -92,7 +92,7 @@ class SolverState:
             contribution_trackers: (DiversityContributionTrackers) the tracker set backing this state's
                 per-point diversity contributions, updated on every selection mutation.
             per_item_contribution_source: the source of the primary diversity objective's per-item
-                contributions (that objective's one tracker of the set, or a combined source over
+                contributions (that objective's one tracker of the set, or a hybrid source over
                 several), which the strategies read.
             distance_store: the store that the primary objective's one spec is tracked over, or None when
                 the primary objective has several specs; read only by the batched farthest-point

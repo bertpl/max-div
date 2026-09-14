@@ -1,7 +1,7 @@
 from ._base import DiversityContributionTracker, PerItemContributionSource
 from ._bindings import DiversityObjectiveBindings
-from ._combined_source import CombinedPerItemContributionSource
 from ._factory import build_diversity_contribution_tracker
+from ._hybrid_source import HybridPerItemContributionSource
 from ._mean_distance import MeanDistanceTracker
 from ._separation import SeparationTracker
 from ._trackers import DiversityContributionTrackers
