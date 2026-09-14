@@ -9,6 +9,7 @@ from max_div._core.metrics import (
     HybridDiversityMetric,
     HybridObjectiveType,
 )
+from max_div._core.metrics._diversity._hybrid_metric import _AGGREGATION_LABELS
 
 _AXIS_0 = DistanceMetric.along_axis(0)
 
@@ -89,7 +90,7 @@ def test_a_hybrid_keeps_its_terms_as_given_and_lists_the_distinct_distance_metri
 
     # --- assert -----------------------
     assert hybrid.terms == (DiversityMetric.MIN_SEPARATION, axis_term, axis_term)
-    assert hybrid.distance_metrics == (_AXIS_0,)
+    assert hybrid.named_distance_metrics == (_AXIS_0,)
 
 
 def test_a_repeated_term_counts_once_per_repeat() -> None:
@@ -101,6 +102,10 @@ def test_a_repeated_term_counts_once_per_repeat() -> None:
 
     # --- assert -----------------------
     assert len(objective.terms) == 3
+
+
+def test_every_aggregation_type_has_a_label() -> None:
+    assert set(_AGGREGATION_LABELS) == set(HybridObjectiveType)
 
 
 def test_a_hybrid_needs_at_least_two_terms() -> None:

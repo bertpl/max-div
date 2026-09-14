@@ -142,7 +142,7 @@ class MaxDivProblem(ABC):
             k: Number of items to select (must satisfy ``2 <= k <= n``).
             distance_metric: Distance metric for pairwise distances.
             diversity_metric: Diversity metric to maximize; a `HybridDiversityMetric` term over its own
-                distance metric reads that metric instead of `distance_metric`.
+                distance metric reads that metric, not `distance_metric`.
             constraints: Optional list of fairness constraints.
         """
         # --- validate ---------------------------
@@ -210,10 +210,10 @@ class MaxDivProblem(ABC):
             raise ValueError(f"Distances must be a square (n, n) matrix or condensed 1D vector; got {distances.ndim}D.")
 
         _validate_k(k, n)
-        if isinstance(diversity_metric, HybridDiversityMetric) and diversity_metric.distance_metrics:
+        if isinstance(diversity_metric, HybridDiversityMetric) and diversity_metric.named_distance_metrics:
             raise ValueError(
                 "A problem defined by its distances has no vectors, so a hybrid term cannot read a distance "
-                f"metric of its own; got {diversity_metric.distance_metrics}."
+                f"metric of its own; got {diversity_metric.named_distance_metrics}."
             )
 
         if constraints is None:
@@ -301,12 +301,12 @@ class DistanceMaxDivProblem(MaxDivProblem):
 def _diversity_objective_of(diversity_metric: DiversityMetric | HybridDiversityMetric) -> DiversityObjective:
     """Return the objective the solver maximizes for the user's diversity metric.
 
-    The one place that tells a bare metric from a hybrid.
+    This function is the one place that tells a bare metric from a hybrid.
     """
     if isinstance(diversity_metric, DiversityMetric):
         return DiversityObjectiveSimple(diversity_metric)
     else:
-        return diversity_metric._to_objective()  # noqa: SLF001 -- the hybrid's resolver is public-API-facing, hence hidden
+        return diversity_metric._to_objective()  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
 
 
 def _distance_metrics_read(
@@ -314,7 +314,7 @@ def _distance_metrics_read(
 ) -> tuple[DistanceMetric, ...]:
     """Return every distance metric a vector problem computes: its own, plus those a hybrid's terms name."""
     if isinstance(diversity_metric, HybridDiversityMetric):
-        return (distance_metric, *diversity_metric.distance_metrics)
+        return (distance_metric, *diversity_metric.named_distance_metrics)
     else:
         return (distance_metric,)
 

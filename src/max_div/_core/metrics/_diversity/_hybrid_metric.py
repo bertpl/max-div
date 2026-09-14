@@ -40,17 +40,13 @@ class DiversityTerm:
 
     @property
     def distance_metric(self) -> DistanceMetric:
-        """Return the distance metric this term's diversity metric reads."""
+        """Return the distance metric that this term's diversity metric reads."""
         return self._distance_metric
 
     @property
     def label(self) -> str:
         """Return a short label, e.g. `MIN_SEPARATION over axis 2`."""
         return f"{self._diversity_metric.value} over {self._distance_metric.label}"
-
-    def _to_objective(self) -> DiversityObjectiveSimple:
-        """Return the objective the solver maximizes for this term."""
-        return DiversityObjectiveSimple(self._diversity_metric, self._distance_metric)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, DiversityTerm):
@@ -68,6 +64,7 @@ class DiversityTerm:
 # =================================================================================================
 #  HybridDiversityMetric
 # =================================================================================================
+# `label` and `__repr__` look each aggregation's name up here; the factory method is the label plus `_of`.
 _AGGREGATION_LABELS = {
     HybridObjectiveType.GEOMETRIC_MEAN: "geomean",
     HybridObjectiveType.ARITHMETIC_MEAN: "mean",
@@ -83,9 +80,10 @@ class HybridDiversityMetric:
     Create instances via `geomean_of` and `mean_of`.
 
     A hybrid needs at least two terms: a one-term hybrid is the bare metric, and asking for one is
-    taken as a mistake. A term may repeat, which weights it once more in the mean. The solver's
-    default tie-breakers for a hybrid follow the terms' metrics, whichever mean aggregates them, and
-    a hybrid accepts no custom tie-breakers.
+    taken as a mistake. A term may repeat, which weights it once more in the mean.
+
+    The solver's default tie-breakers for a hybrid follow the terms' metrics, whichever mean
+    aggregates them, and a hybrid accepts no custom tie-breakers.
     """
 
     __slots__ = ("_aggregation", "_terms")
@@ -138,7 +136,7 @@ class HybridDiversityMetric:
         return self._terms
 
     @property
-    def distance_metrics(self) -> tuple[DistanceMetric, ...]:
+    def named_distance_metrics(self) -> tuple[DistanceMetric, ...]:
         """Return the distinct distance metrics the terms name, in first-seen order; bare terms name none."""
         return tuple(dict.fromkeys(term.distance_metric for term in self._terms if isinstance(term, DiversityTerm)))
 
@@ -152,7 +150,9 @@ class HybridDiversityMetric:
         """Return the objective the solver maximizes for this hybrid."""
         return DiversityObjectiveHybrid(
             tuple(
-                DiversityObjectiveSimple(term) if isinstance(term, DiversityMetric) else term._to_objective()
+                DiversityObjectiveSimple(term)
+                if isinstance(term, DiversityMetric)
+                else DiversityObjectiveSimple(term.diversity_metric, term.distance_metric)
                 for term in self._terms
             ),
             self._aggregation,
@@ -171,8 +171,7 @@ class HybridDiversityMetric:
 
     def __repr__(self) -> str:
         """Return the factory call that constructs this hybrid."""
-        factory = "geomean_of" if self._aggregation == HybridObjectiveType.GEOMETRIC_MEAN else "mean_of"
         term_reprs = ", ".join(
             f"DiversityMetric.{term.name}" if isinstance(term, DiversityMetric) else repr(term) for term in self._terms
         )
-        return f"HybridDiversityMetric.{factory}({term_reprs})"
+        return f"HybridDiversityMetric.{_AGGREGATION_LABELS[self._aggregation]}_of({term_reprs})"

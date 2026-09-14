@@ -63,8 +63,8 @@ class SolverBuilderBase:
     def with_diversity_tie_breakers(self, diversity_tie_breaker_metrics: list[DiversityMetric]) -> Self:
         """Set custom diversity tie-breaker metrics, overriding the defaults.
 
-        Each tie-breaker reads the problem's own distance, which a hybrid diversity metric has several
-        of, so a problem over a hybrid keeps its default tie-breakers.
+        Each tie-breaker reads the problem's own single distance; a hybrid diversity metric has several
+        distances, so a problem over a hybrid keeps its default tie-breakers.
 
         Raises:
             ValueError: If the problem's diversity metric is a hybrid.
