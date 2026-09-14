@@ -18,7 +18,7 @@ L2 = DistanceMetric.l2_euclidean()
 
 
 @pytest.mark.parametrize(
-    "diversity_objectives, expected_store_distances, expected_tracker_specs, expected_positions",
+    "diversity_objectives, expected_distance_metrics, expected_tracker_specs, expected_positions",
     [
         pytest.param(
             [DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION)],
@@ -61,12 +61,12 @@ L2 = DistanceMetric.l2_euclidean()
         ),
     ],
 )
-def test_for_objectives(diversity_objectives, expected_store_distances, expected_tracker_specs, expected_positions):
-    """Distances and specs are distinct in first-seen order; each objective's positions follow its own spec order."""
+def test_for_objectives(diversity_objectives, expected_distance_metrics, expected_tracker_specs, expected_positions):
+    """Distance metrics and specs are distinct in first-seen order; each objective's positions follow its spec order."""
     # --- act --------------------------
     bindings = DiversityObjectiveBindings.for_objectives(diversity_objectives)
 
     # --- assert -----------------------
-    assert bindings.store_distances == expected_store_distances
+    assert bindings.distance_metrics == expected_distance_metrics
     assert bindings.tracker_specs == expected_tracker_specs
     assert bindings.objective_spec_positions == expected_positions

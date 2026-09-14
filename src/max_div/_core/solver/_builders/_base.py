@@ -128,7 +128,7 @@ class SolverBuilderBase:
         bindings = DiversityObjectiveBindings.for_objectives(self._determine_diversity_objectives())
         factory = DistanceStoreFactory(
             self._problem,
-            bindings.store_distances,
+            bindings.distance_metrics,
             self._distance_storage_type,
             total_physical_memory_bytes(),
         )

@@ -124,7 +124,7 @@ def solve_in_worker(
             # the stores were published in the bindings' store order, which the worker derives from
             # the same objectives, so it rebuilds the same distance -> store mapping
             bindings = DiversityObjectiveBindings.for_objectives(config.diversity_objectives)
-            mapping = stores_by_distance(bindings.store_distances, stores)
+            mapping = stores_by_distance(bindings.distance_metrics, stores)
             solution = config.build_solver(stores_by_distance=mapping).solve(
                 coordinator=coordinator, progress_reporter=reporter
             )

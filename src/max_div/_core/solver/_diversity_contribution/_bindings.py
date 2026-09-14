@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 # =================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveBindings:
-    """The bindings map one solve's diversity objectives to one store per distance and one tracker per spec.
+    """The bindings map one solve's diversity objectives to one store per distance metric and one tracker per spec.
 
     The score reads one contribution array per tracker, in the trackers' order; the bindings also
     record where each objective's own arrays sit in that order. They are a function of the objective
@@ -29,14 +29,15 @@ class DiversityObjectiveBindings:
     No layer derives an order of its own.
     """
 
-    # the distinct distances the objectives read, in first-seen order: one store each
-    # (`None` is the problem's own distance)
-    store_distances: tuple[DistanceMetric | None, ...]
-    # the distinct specs the objectives read, in first-seen order: one tracker each, and the order
-    # in which the score's contribution arrays are passed
+    # one entry per distance store: the distinct distance metrics that the objectives use, in
+    # first-seen order (`None` is the problem's own distance metric)
+    distance_metrics: tuple[DistanceMetric | None, ...]
+    # one entry per contribution tracker: the distinct specs (distance metric, contribution family)
+    # that the objectives' contributions are tracked under, in first-seen order; this is also the
+    # order of the score's contribution arrays
     tracker_specs: tuple[DiversityTrackerSpec, ...]
-    # per objective, in objective order: the positions in `tracker_specs` of the specs it reads, in
-    # its own spec order
+    # one entry per objective, in objective order: the positions in `tracker_specs` of the specs that
+    # the objective's score reads, in that objective's own spec order
     objective_spec_positions: tuple[tuple[int, ...], ...]
 
     @classmethod
@@ -45,9 +46,9 @@ class DiversityObjectiveBindings:
         tracker_specs = tuple(
             dict.fromkeys(spec for objective in diversity_objectives for spec in objective.tracker_specs)
         )
-        store_distances = tuple(dict.fromkeys(spec.distance_metric for spec in tracker_specs))
+        distance_metrics = tuple(dict.fromkeys(spec.distance_metric for spec in tracker_specs))
         position_of_spec = {spec: position for position, spec in enumerate(tracker_specs)}
         objective_spec_positions = tuple(
             tuple(position_of_spec[spec] for spec in objective.tracker_specs) for objective in diversity_objectives
         )
-        return cls(store_distances, tracker_specs, objective_spec_positions)
+        return cls(distance_metrics, tracker_specs, objective_spec_positions)
