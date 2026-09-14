@@ -21,12 +21,8 @@ from collections.abc import Sequence
 from multiprocessing.process import BaseProcess
 from multiprocessing.queues import Queue
 
-from max_div._core.solver._distance_storage import (
-    DistanceStoreFactory,
-    SharedStoreSpec,
-    distinct_store_distances,
-    stores_by_distance,
-)
+from max_div._core.solver._distance_storage import DistanceStoreFactory, SharedStoreSpec, stores_by_distance
+from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot, SnapshotRequirements
 from max_div._core.solver._solver_config import SolverConfig
 
@@ -125,9 +121,10 @@ def solve_in_worker(
         reporter = ProgressReporter.silent()
     try:
         with DistanceStoreFactory.attach_distance_stores(specs) as stores:
-            # the publish order is distinct_store_distances(objectives), so the worker rebuilds the
-            # same distance -> store mapping from its own objectives and the attached stores
-            mapping = stores_by_distance(distinct_store_distances(config.diversity_objectives), stores)
+            # the stores were published in the bindings' store order, which the worker derives from
+            # the same objectives, so it rebuilds the same distance -> store mapping
+            bindings = DiversityObjectiveBindings.for_objectives(config.diversity_objectives)
+            mapping = stores_by_distance(bindings.store_distances, stores)
             solution = config.build_solver(stores_by_distance=mapping).solve(
                 coordinator=coordinator, progress_reporter=reporter
             )

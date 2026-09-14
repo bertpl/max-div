@@ -3,12 +3,7 @@ import pytest
 from scipy.spatial.distance import squareform
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import (
-    DistanceMetric,
-    DiversityMetric,
-    DiversityObjectiveHybridGeoMean,
-    DiversityObjectiveSimple,
-)
+from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
     KIND_LAZY,
@@ -66,42 +61,6 @@ def _all_pairs(store: DistanceStore, n: int) -> list[float]:
 #  Construction
 # =================================================================================================
 @pytest.mark.parametrize(
-    "problem, objective, expected",
-    [
-        (_vector_problem(), DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION), (None,)),
-        (_vector_problem(), DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1), (L1,)),
-        (
-            _vector_problem(),
-            DiversityObjectiveHybridGeoMean(
-                (
-                    DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1),
-                    DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION),  # the problem's own, kept as None
-                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),  # repeat of L1
-                )
-            ),
-            (L1, None),
-        ),
-        (
-            _distance_problem("square"),
-            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION),
-            (None,),
-        ),
-    ],
-    ids=["bare-kept-as-none", "explicit-kept", "repeats-collapse-first-seen", "distance-problem-none"],
-)
-def test_for_objectives_derives_the_distinct_distances(problem, objective, expected):
-    """The distinct distances are kept as the objective declares them, repeats collapsed.
-
-    A `None` distance (the problem's own) is kept as `None`, not resolved here.
-    """
-    # --- act --------------------------
-    factory = DistanceStoreFactory.for_objectives(problem, [objective], DistanceStorageType.AUTO, 64 * GIB)
-
-    # --- assert -----------------------
-    assert factory.distances == expected
-
-
-@pytest.mark.parametrize(
     "problem, distances, message",
     [
         (_distance_problem("square"), [L2], "every entry must be None"),
@@ -120,12 +79,7 @@ def test_resolved_storage_reports_the_none_distance_as_the_problems_metric():
     """A `None` distance (the problem's own) is reported under the metric it resolves to, not left blank."""
     # --- arrange ----------------------
     problem = _vector_problem()  # its default distance is L2
-    factory = DistanceStoreFactory.for_objectives(
-        problem,
-        [DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION)],
-        DistanceStorageType.FULL_MATRIX,
-        64 * GIB,
-    )
+    factory = DistanceStoreFactory(problem, [None], DistanceStorageType.FULL_MATRIX, 64 * GIB)
 
     # --- act / assert -----------------
     assert factory.distances == (None,)  # kept unresolved internally

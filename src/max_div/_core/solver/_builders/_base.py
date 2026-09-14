@@ -26,6 +26,7 @@ from max_div._core.solver._distance_storage import (
     DistanceStoreFactory,
     total_physical_memory_bytes,
 )
+from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._duration import E2eBudget, TargetDuration, TargetTimeDuration
 
 if TYPE_CHECKING:
@@ -124,9 +125,10 @@ class SolverBuilderBase:
 
     def _store_factory(self) -> tuple[DistanceStoreFactory, DistanceStorageTypes]:
         """Return the store factory and each store's resolved (distance, storage type)."""
-        factory = DistanceStoreFactory.for_objectives(
+        bindings = DiversityObjectiveBindings.for_objectives(self._determine_diversity_objectives())
+        factory = DistanceStoreFactory(
             self._problem,
-            self._determine_diversity_objectives(),
+            bindings.store_distances,
             self._distance_storage_type,
             total_physical_memory_bytes(),
         )

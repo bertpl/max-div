@@ -16,7 +16,6 @@ vectors itself.
 from collections.abc import Iterator, Sequence
 from contextlib import ExitStack, contextmanager
 
-from max_div._core.metrics import DiversityObjective
 from max_div._core.metrics._distance import (
     KIND_FULL_MATRIX,
     KIND_LAZY,
@@ -90,22 +89,6 @@ class DistanceStoreFactory:
         self._distances = tuple(distances)
         self._storage_type = storage_type
         self._total_memory_bytes = total_memory_bytes
-
-    @classmethod
-    def for_objectives(
-        cls,
-        problem: MaxDivProblem,
-        diversity_objectives: Sequence[DiversityObjective],
-        storage_type: DistanceStorageType,
-        total_memory_bytes: int | None,
-    ) -> "DistanceStoreFactory":
-        """Return the factory for the distinct distances the objectives read, one store per distance.
-
-        The distances are kept as the objectives declare them (`None` for the problem's own distance), so a
-        store can be looked up by the distance an objective declares, without resolving it. `None`
-        is resolved to the problem's distance only when a store is actually built, and in the report.
-        """
-        return cls(problem, distinct_store_distances(diversity_objectives), storage_type, total_memory_bytes)
 
     @property
     def distances(self) -> tuple[StoreDistance, ...]:
@@ -250,25 +233,12 @@ class DistanceStoreFactory:
 # ==================================================================================================
 #  Helpers
 # ==================================================================================================
-def distinct_store_distances(diversity_objectives: Sequence[DiversityObjective]) -> tuple[StoreDistance, ...]:
-    """Return the distinct distances the objectives read, in first-seen order (`None` for the problem's own distance).
-
-    The order is deterministic from the objectives alone, so a worker process rebuilds the same
-    one-store-per-distance mapping from its objectives and the stores it attaches.
-    """
-    return tuple(
-        dict.fromkeys(
-            distance for objective in diversity_objectives for distance in objective.distinct_distance_metrics()
-        )
-    )
-
-
 def stores_by_distance(
     distances: Sequence[StoreDistance], stores: Sequence[DistanceStore]
 ) -> dict[StoreDistance, DistanceStore]:
-    """Pair each distance with its store, in the shared build order (`distinct_store_distances`).
+    """Pair each distance with its store, both in the bindings' store order.
 
-    The publisher and a worker both call this over that one order, so the mapping a worker rebuilds
-    from its attached stores matches the one the publisher built.
+    The publisher and a worker both call this over that one order (`DiversityObjectiveBindings`), so
+    the mapping a worker rebuilds from its attached stores matches the one the publisher built.
     """
     return dict(zip(distances, stores, strict=True))

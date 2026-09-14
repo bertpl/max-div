@@ -10,7 +10,11 @@ from max_div._core._math import select_k_max_masked
 from max_div._core._utils import delete_sorted, insert_sorted
 from max_div._core.constraints import Constraint, ConstraintList, _np_con_membership, to_numpy_membership
 
-from ._diversity_contribution import DiversityContributionTracker, DiversityContributionTrackers
+from ._diversity_contribution import (
+    DiversityContributionTracker,
+    DiversityContributionTrackers,
+    DiversityObjectiveBindings,
+)
 from ._score import Score, ScoreGenerator
 
 if TYPE_CHECKING:
@@ -581,7 +585,8 @@ class SolverState:
         """
         # --- diversity contributions ------------
         n_np = np.int32(n)
-        contribution_trackers = DiversityContributionTrackers.for_objectives(diversity_objectives, stores_by_distance)
+        bindings = DiversityObjectiveBindings.for_objectives(diversity_objectives)
+        contribution_trackers = DiversityContributionTrackers.for_specs(bindings.tracker_specs, stores_by_distance)
 
         # --- selection --------------------------
         selected = np.full(n_np, False, dtype=np.bool)
@@ -596,7 +601,7 @@ class SolverState:
             n=n_np,
             k=k,
             diversity_objectives=diversity_objectives,
-            tracker_specs=contribution_trackers.tracker_specs,
+            bindings=bindings,
             constraints=constraints,
             penalty_quadratic=penalty_quadratic,
         )
