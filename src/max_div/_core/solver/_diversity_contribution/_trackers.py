@@ -36,8 +36,8 @@ class DiversityContributionTrackers:
 
         Args:
             trackers_by_spec: (dict) one tracker per spec the objectives read, in the bindings' spec
-                order (`DiversityObjectiveBindings`). The positions that
-                `per_item_contribution_source_for` takes index into this order.
+                order (`DiversityObjectiveBindings`). `per_item_contribution_source_for` takes positions
+                that index into this order.
         """
         self._trackers_by_spec = trackers_by_spec  # READ-ONLY
         self._trackers = tuple(trackers_by_spec.values())  # iteration order for mutation fan-out
@@ -74,12 +74,12 @@ class DiversityContributionTrackers:
         Args:
             objective: the objective the solver maximizes.
             spec_positions: for each of `objective`'s specs, in that objective's order and with its
-                repeats, the position in this set of that spec's tracker (that objective's entry of
+                repeats, the position of that spec's tracker in this set (that objective's entry of
                 the bindings' `objective_spec_positions`).
 
         With one spec the tracker is returned as the source itself: a simple objective's per-item
-        contribution is that array, and wrapping it in a combined source would only add a function
-        call to every contribution read.
+        contribution is that tracker's contribution array, and wrapping it in a combined source would
+        only add a function call to every contribution read.
         """
         term_trackers = [self._trackers[position] for position in spec_positions]
         if len(term_trackers) == 1:

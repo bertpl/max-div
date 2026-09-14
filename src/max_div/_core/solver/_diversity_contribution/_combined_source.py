@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 #  CombinedPerItemContributionSource
 # =================================================================================================
 class CombinedPerItemContributionSource(PerItemContributionSource):
-    """The per-item contribution of an objective over several specs, combined from its term trackers' arrays.
+    """A combined source provides an objective's per-item contribution over several specs from its term trackers.
 
     Every read combines the term trackers' arrays by the objective's own rule
     (`compute_per_item_contributions`). The source caches no selection contribution: the tracker set
@@ -67,10 +67,7 @@ class CombinedPerItemContributionSource(PerItemContributionSource):
 
     @property
     def contribution_wrt_dataset(self) -> NDArray[np.float32]:
-        """Return the combination of the term trackers' dataset-wide contributions (reference; do not modify).
-
-        Combined once, on first read, since the term trackers' dataset-wide arrays never change.
-        """
+        """Return the aggregation of the term trackers' dataset-wide contributions (reference; do not modify)."""
         if self._contribution_wrt_dataset is None:
             self._contribution_wrt_dataset = self._objective.compute_per_item_contributions(
                 [tracker.contribution_wrt_dataset for tracker in self._term_trackers]
