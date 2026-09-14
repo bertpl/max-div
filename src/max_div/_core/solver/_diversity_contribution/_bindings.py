@@ -1,4 +1,4 @@
-"""The bindings tie one solve's diversity objectives to the stores and trackers they read; see `DiversityObjectiveBindings`."""
+"""The bindings tie one solve's diversity objectives to what they read; see `DiversityObjectiveBindings`."""
 
 from __future__ import annotations
 
@@ -17,11 +17,16 @@ if TYPE_CHECKING:
 # =================================================================================================
 @dataclass(frozen=True)
 class DiversityObjectiveBindings:
-    """The stores and trackers that one solve's diversity objectives read, and the positions they read them at.
+    """What one solve's diversity objectives are bound to: a store per distinct distance, a tracker per distinct spec.
 
-    The bindings are a function of the objective list alone, so every place that needs an order
-    calls `for_objectives` and gets the same one: the builder for the stores it builds, a worker for
-    the stores it attaches, the solver state for the trackers it builds and the arrays it scores.
+    The score reads one contribution array per tracker, in the trackers' order; the bindings also
+    record where each objective's own arrays sit in that order. They are a function of the objective
+    list alone, so every place that needs an order calls `for_objectives` and gets the same one:
+
+    - the builder, for the stores it builds;
+    - a worker, for the stores it attaches;
+    - the solver state, for the trackers it builds and the arrays it scores.
+
     No layer derives an order of its own.
     """
 
