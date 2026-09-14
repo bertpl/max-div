@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ._combined_source import CombinedPerItemContributionSource
 from ._factory import build_diversity_contribution_tracker
 
 if TYPE_CHECKING:
@@ -10,10 +11,10 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DistanceMetric, DiversityTrackerSpec
+    from max_div._core.metrics import DistanceMetric, DiversityObjective, DiversityTrackerSpec
     from max_div._core.metrics._distance import DistanceStore
 
-    from ._base import DiversityContributionTracker
+    from ._base import DiversityContributionTracker, PerItemContributionSource
 
 
 # =================================================================================================
@@ -22,9 +23,9 @@ if TYPE_CHECKING:
 class DiversityContributionTrackers:
     """The set of diversity-contribution trackers backing a solver state.
 
-    Holds one tracker per spec that the objectives read, applies every selection mutation to all
-    trackers, and, given an objective, returns the tracker whose per-point contributions the
-    strategies read.
+    Holds one tracker per spec, applies every selection mutation to all trackers, and, given the
+    objective the solver maximizes, returns the source of the per-point contributions the strategies
+    read: that objective's one tracker, or a combined source over its term trackers.
     """
 
     # -------------------------------------------------------------------------
@@ -34,9 +35,9 @@ class DiversityContributionTrackers:
         """Initialize from an explicit spec -> tracker mapping; prefer the for_specs() factory.
 
         Args:
-            trackers_by_spec: (dict) one tracker per spec the objectives read. The first entry is the
-                primary objective's tracker (`primary_tracker`), so the caller must pass the primary
-                objective's spec first; the bindings' spec order does (`DiversityObjectiveBindings`).
+            trackers_by_spec: (dict) one tracker per spec the objectives read, in the bindings' spec
+                order (`DiversityObjectiveBindings`). The positions that
+                `per_item_contribution_source_for` takes index into this order.
         """
         self._trackers_by_spec = trackers_by_spec  # READ-ONLY
         self._trackers = tuple(trackers_by_spec.values())  # iteration order for mutation fan-out
@@ -49,9 +50,9 @@ class DiversityContributionTrackers:
     ) -> DiversityContributionTrackers:
         """Build one tracker per spec, in the given order, each over the store of its distance.
 
-        `tracker_specs` is the bindings' spec order (see `DiversityObjectiveBindings`), which lists
-        the primary objective's spec first. `stores_by_distance` maps a spec's distance (`None` for
-        the problem's own distance) to the store the spec's tracker reads.
+        `tracker_specs` is the bindings' spec order (see `DiversityObjectiveBindings`).
+        `stores_by_distance` maps a spec's distance metric (`None` for the problem's own) to the store
+        the spec's tracker reads.
         """
         return cls(
             trackers_by_spec={
@@ -63,16 +64,28 @@ class DiversityContributionTrackers:
         )
 
     # -------------------------------------------------------------------------
-    #  Primary tracker
+    #  Per-item contribution source
     # -------------------------------------------------------------------------
-    @property
-    def primary_tracker(self) -> DiversityContributionTracker:
-        """Return the primary objective's tracker, whose per-point contributions the strategies read.
+    def per_item_contribution_source_for(
+        self, objective: DiversityObjective, spec_positions: Sequence[int]
+    ) -> PerItemContributionSource:
+        """Return the source of `objective`'s per-item contribution: its one tracker, or a combined source.
 
-        It is the first tracker, by the constructor's precondition that the primary objective's spec
-        is passed first.
+        Args:
+            objective: the objective the solver maximizes.
+            spec_positions: for each of `objective`'s specs, in that objective's order and with its
+                repeats, the position in this set of that spec's tracker (that objective's entry of
+                the bindings' `objective_spec_positions`).
+
+        With one spec the tracker is returned as the source itself: a simple objective's per-item
+        contribution is that array, and wrapping it in a combined source would only add a function
+        call to every contribution read.
         """
-        return self._trackers[0]
+        term_trackers = [self._trackers[position] for position in spec_positions]
+        if len(term_trackers) == 1:
+            return term_trackers[0]
+        else:
+            return CombinedPerItemContributionSource(objective, term_trackers)
 
     # -------------------------------------------------------------------------
     #  Mutation fan-out

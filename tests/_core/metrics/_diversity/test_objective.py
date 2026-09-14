@@ -289,3 +289,47 @@ def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
     geometric = _hybrid(*terms, aggregation=HybridObjectiveType.GEOMETRIC_MEAN).default_tie_breakers()
     arithmetic = _hybrid(*terms, aggregation=HybridObjectiveType.ARITHMETIC_MEAN).default_tie_breakers()
     assert arithmetic == geometric
+
+
+# =================================================================================================
+#  compute_per_item_contributions
+# =================================================================================================
+def test_a_simple_objectives_per_item_contribution_is_its_one_array() -> None:
+    """A simple objective returns its one spec's array itself."""
+    # --- arrange ----------------------
+    objective = DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1)
+    array = _f32([1.0, 2.0, 3.0])
+
+    # --- act / assert -----------------
+    assert objective.compute_per_item_contributions([array]) is array
+
+
+@pytest.mark.parametrize(
+    "aggregation, expected",
+    [
+        (
+            HybridObjectiveType.GEOMETRIC_MEAN,
+            np.cbrt(np.array([1.0, 4.0]) * np.array([8.0, 2.0]) * np.array([1.0, 4.0])),
+        ),
+        (HybridObjectiveType.ARITHMETIC_MEAN, (np.array([1.0, 4.0]) + np.array([8.0, 2.0]) + np.array([1.0, 4.0])) / 3),
+    ],
+    ids=["geometric", "arithmetic"],
+)
+def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise(aggregation, expected) -> None:
+    """A hybrid aggregates the terms' arrays elementwise, a repeated spec once per term, as a fresh float32 array."""
+    # --- arrange ----------------------
+    objective = _hybrid(
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+        DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L1),  # repeats the L1 spec
+        aggregation=aggregation,
+    )
+    l1 = _f32([1.0, 4.0])
+    l2 = _f32([8.0, 2.0])
+
+    # --- act --------------------------
+    aggregated = objective.compute_per_item_contributions([l1, l2, l1])
+
+    # --- assert -----------------------
+    np.testing.assert_allclose(aggregated, expected, rtol=1e-6)
+    assert aggregated.dtype == np.float32

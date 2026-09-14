@@ -7,9 +7,15 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._utils import stdout_to_file
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics import (
+    DistanceMetric,
+    DiversityMetric,
+    DiversityObjectiveHybrid,
+    DiversityObjectiveSimple,
+)
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import DistanceStorageType, MaxDivSolution, MaxDivSolverBuilder, Verbosity
+from max_div._core.solver._builders import ParallelMaxDivSolverBuilder
 from max_div._core.solver._duration import Elapsed, iterations
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._score import Score
@@ -389,3 +395,88 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
     # --- assert -----------------------
     assert seen, "the solve should have built a state"
     assert still_alive == []
+
+
+# =================================================================================================
+#  Hybrid geometric-mean objective (built directly; no public API constructs one)
+# =================================================================================================
+def _min_pairwise(values: np.ndarray) -> float:
+    """Brute-force smallest pairwise Euclidean distance among the rows of `values` (float64)."""
+    rows = values.astype(np.float64)
+    return float(min(np.linalg.norm(rows[i] - rows[j]) for i in range(len(rows)) for j in range(i + 1, len(rows))))
+
+
+def _expected_geomean_min_separation(vectors: np.ndarray, indices: np.ndarray, axis: int) -> float:
+    """Return the geometric mean of the selection's min L2 separation and its min separation along `axis`."""
+    selected = vectors[indices]
+    min_l2 = _min_pairwise(selected)
+    min_axis = _min_pairwise(selected[:, [axis]])
+    return float(np.sqrt(min_l2 * min_axis))
+
+
+def _hybrid_objective() -> DiversityObjectiveHybrid:
+    """Return a two-term hybrid: min separation over L2 and min separation along axis 0."""
+    return DiversityObjectiveHybrid(
+        (
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(0)),
+        )
+    )
+
+
+def _hybrid_problem() -> tuple[MaxDivProblem, np.ndarray]:
+    """Return a small vector problem and its vectors; random coordinates keep every axis separation non-zero."""
+    vectors = np.random.default_rng(20260913).random((50, 3)).astype(np.float32)
+    return MaxDivProblem.new(vectors, k=8), vectors
+
+
+def test_solver_hybrid_geomean_objective_solves_and_scores_end_to_end():
+    """A multi-term hybrid solves to a valid selection and reports the geometric mean of its terms' separations."""
+    # --- arrange ----------------------
+    problem, vectors = _hybrid_problem()
+    builder = MaxDivSolverBuilder(problem)
+    builder._primary_objective = _hybrid_objective()  # inject a multi-term objective; the public API does not build one
+    builder.with_preset(iterations(400)).with_seed(11)  # after the injection: the preset reads the objective
+
+    # --- act --------------------------
+    solution = builder.build().solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert len(solution.i_selected) == problem.k
+    assert len(set(solution.i_selected.tolist())) == problem.k
+    expected = _expected_geomean_min_separation(vectors, solution.i_selected, axis=0)
+    assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
+
+
+def test_solver_hybrid_geomean_objective_is_deterministic():
+    """A hybrid solve repeated from one seed selects the same items and scores the same."""
+    # --- arrange ----------------------
+    problem, _ = _hybrid_problem()
+
+    # --- act --------------------------
+    solutions = []
+    for _ in range(2):
+        builder = MaxDivSolverBuilder(problem)
+        builder._primary_objective = _hybrid_objective()
+        builder.with_preset(iterations(400)).with_seed(11)
+        solutions.append(builder.build().solve(verbosity=Verbosity.SILENT))
+
+    # --- assert -----------------------
+    assert list(solutions[0].i_selected) == list(solutions[1].i_selected)
+    assert solutions[0].score == solutions[1].score
+
+
+def test_solver_hybrid_geomean_objective_solves_in_parallel():
+    """A hybrid solves across worker processes, exercising the shared-memory stores and the tracker fan-out."""
+    # --- arrange ----------------------
+    problem, vectors = _hybrid_problem()
+    builder = ParallelMaxDivSolverBuilder(problem).with_seed(3)
+    builder._primary_objective = _hybrid_objective()
+
+    # --- act --------------------------
+    solution = builder.with_workers(iterations(300), 2).build().solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert len(solution.i_selected) == problem.k
+    expected = _expected_geomean_min_separation(vectors, solution.i_selected, axis=0)
+    assert solution.score.diversity == pytest.approx(expected, rel=1e-5)

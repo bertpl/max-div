@@ -4,10 +4,14 @@ import pytest
 from max_div._core.metrics import (
     DistanceMetric,
     DiversityContributionFamily,
+    DiversityMetric,
+    DiversityObjectiveHybrid,
+    DiversityObjectiveSimple,
     DiversityTrackerSpec,
 )
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._diversity_contribution import (
+    CombinedPerItemContributionSource,
     DiversityContributionTrackers,
     MeanDistanceTracker,
     SeparationTracker,
@@ -32,7 +36,7 @@ def store() -> DistanceStore:
 #  for_specs
 # =================================================================================================
 def test_for_specs_builds_one_tracker_per_spec_in_order(store: DistanceStore):
-    """One tracker per spec, of that spec's family, in the given order; the first one is the primary tracker."""
+    """One tracker per spec, of that spec's family, in the given order."""
     # --- arrange ----------------------
     specs = (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE))
 
@@ -42,7 +46,44 @@ def test_for_specs_builds_one_tracker_per_spec_in_order(store: DistanceStore):
     # --- assert -----------------------
     assert trackers.tracker_specs == specs
     assert [type(tracker) for tracker in trackers._trackers] == [SeparationTracker, MeanDistanceTracker]
-    assert trackers.primary_tracker is trackers._trackers[0]
+
+
+# =================================================================================================
+#  per_item_contribution_source_for
+# =================================================================================================
+def test_source_for_one_spec_is_that_spec_tracker_itself(store: DistanceStore):
+    """An objective over one spec gets the tracker of that spec as its source, with no wrapper."""
+    # --- arrange ----------------------
+    specs = (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE))
+    trackers = DiversityContributionTrackers.for_specs(specs, {None: store})
+    objective = DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE)
+
+    # --- act --------------------------
+    source = trackers.per_item_contribution_source_for(objective, (1,))
+
+    # --- assert -----------------------
+    assert source is trackers._trackers[1]
+
+
+def test_source_for_several_specs_combines_the_trackers_at_the_positions(store: DistanceStore):
+    """A geomean hybrid gets a combined source over the trackers at the given positions, repeats kept."""
+    # --- arrange ----------------------
+    specs = (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE))
+    trackers = DiversityContributionTrackers.for_specs(specs, {None: store})
+    objective = DiversityObjectiveHybrid(
+        (
+            DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE),
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION),
+            DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION),
+        )
+    )
+
+    # --- act --------------------------
+    source = trackers.per_item_contribution_source_for(objective, (1, 0, 0))
+
+    # --- assert -----------------------
+    assert isinstance(source, CombinedPerItemContributionSource)
+    assert source.term_trackers == (trackers._trackers[1], trackers._trackers[0], trackers._trackers[0])
 
 
 # =================================================================================================

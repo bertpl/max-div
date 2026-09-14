@@ -8,9 +8,11 @@ A `DiversityObjective` is one of two kinds, each holding only the fields that ki
 
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
 tracks. The solver passes `compute` one array per spec of `tracker_specs`, in that order; a hybrid
-lists one spec per term, so two terms over one spec receive the same array twice. The
-solver, its config, builders, presets and strategies read this type, never a bare `DiversityMetric`,
-because an objective of several terms is not a single diversity metric.
+lists one spec per term, so two terms over one spec receive the same array twice. Every kind also
+computes its own per-item contribution (`compute_per_item_contributions`), the value the solver
+samples items by, from the same arrays over all items. The solver, its config, builders, presets
+and strategies read this type, never a bare `DiversityMetric`, because an objective of several
+terms is not a single diversity metric.
 """
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
-from max_div._core._math.geomean import geomean_f32
+from max_div._core._math.geomean import geomean_f32, geomean_per_row_f32
 
 from ._enum import DiversityContributionFamily, DiversityMetric
 
@@ -66,6 +68,15 @@ class DiversityObjective(ABC):
                 this objective, in the order of `tracker_specs`.
         """
 
+    @abstractmethod
+    def compute_per_item_contributions(self, contributions: Sequence[NDArray[np.float32]]) -> NDArray[np.float32]:
+        """Return this objective's per-item contribution of every item: the value the solver samples items by.
+
+        Args:
+            contributions: all items' per-item contribution values, one array per spec of this
+                objective, in the order of `tracker_specs`.
+        """
+
     @property
     @abstractmethod
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
@@ -98,6 +109,10 @@ class DiversityObjectiveSimple(DiversityObjective):
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Reduce this objective's one contribution array with its diversity metric."""
         return float(self.diversity_metric.compute(contributions[0]))
+
+    def compute_per_item_contributions(self, contributions: Sequence[NDArray[np.float32]]) -> NDArray[np.float32]:
+        """Return the one array unchanged: a single spec's contribution is the objective's own."""
+        return contributions[0]
 
     @cached_property
     def tracker_spec(self) -> DiversityTrackerSpec:
@@ -161,6 +176,22 @@ class DiversityObjectiveHybrid(DiversityObjective):
             return float(geomean_f32(term_scores))
         else:
             return float(np.mean(term_scores))
+
+    def compute_per_item_contributions(self, contributions: Sequence[NDArray[np.float32]]) -> NDArray[np.float32]:
+        """Return the elementwise aggregation of the terms' arrays, as a fresh float32 array.
+
+        A spec that two terms have enters the aggregation once per term, as `compute` counts a repeated
+        term twice; for geometric-mean separation terms under the geometric aggregation, the result is
+        for each item exactly the factor by which that item contributes to the objective's score.
+        """
+        # one row per item, one column per term, so each item's values are contiguous
+        stacked = np.stack(contributions, axis=1).astype(np.float32, copy=False)
+        if self.aggregation == HybridObjectiveType.GEOMETRIC_MEAN:
+            aggregated = np.empty(stacked.shape[0], dtype=np.float32)
+            geomean_per_row_f32(stacked, aggregated)
+            return aggregated
+        else:
+            return stacked.mean(axis=1, dtype=np.float32)
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:

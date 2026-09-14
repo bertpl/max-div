@@ -127,7 +127,7 @@ def test_solver_state_end_to_end(new_solver_state):
     assert state.score.constraints < 1.0  # constraints not satisfied
     assert np.array_equal(state.con_values, state._con_values)
     assert np.array_equal(state.con_indices, state._con_indices)
-    assert np.array_equal(state.global_contribution_array, state._contribution_tracker.contribution_wrt_dataset)
+    assert np.array_equal(state.global_contribution_array, state._per_item_contribution_source.contribution_wrt_dataset)
     assert state.n_selected == 0
     assert state.n_not_selected == 6
 
@@ -346,7 +346,7 @@ def test_solver_state_tracker_set_dormancy(new_solver_state):
     # --- assert -----------------------
     assert len(trackers) == 1
     assert type(trackers[0]) is SeparationTracker
-    assert new_solver_state._contribution_tracker is trackers[0]
+    assert new_solver_state._per_item_contribution_source is trackers[0]
 
 
 def test_solver_state_tracker_set_mean_distance(new_solver_state):
@@ -376,9 +376,11 @@ def test_solver_state_tracker_set_mean_distance(new_solver_state):
 
     # --- assert -----------------------
     assert [type(t) for t in state_pure._contribution_trackers._trackers] == [MeanDistanceTracker]
-    assert type(state_pure._contribution_tracker) is MeanDistanceTracker
+    assert type(state_pure._per_item_contribution_source) is MeanDistanceTracker
     assert {type(t) for t in state_mixed._contribution_trackers._trackers} == {MeanDistanceTracker, SeparationTracker}
-    assert type(state_mixed._contribution_tracker) is MeanDistanceTracker  # main metric's tracker faces the strategies
+    assert (
+        type(state_mixed._per_item_contribution_source) is MeanDistanceTracker
+    )  # the primary objective's tracker is the source the strategies read
 
 
 def test_solver_state_mean_pairwise_distance_score():
@@ -452,7 +454,9 @@ def _assert_state_matches_fresh_rebuild(state: SolverState) -> None:
     assert state.score == fresh.score
     assert state._n_selected == fresh._n_selected
     assert np.array_equal(state._selected, fresh._selected)
-    assert np.array_equal(state._contribution_tracker._sep_selected, fresh._contribution_tracker._sep_selected)
+    assert np.array_equal(
+        state._per_item_contribution_source._sep_selected, fresh._per_item_contribution_source._sep_selected
+    )
     assert np.array_equal(state._con_values, fresh._con_values)
 
 
