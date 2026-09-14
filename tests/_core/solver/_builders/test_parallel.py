@@ -411,7 +411,7 @@ def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
 #  End-to-end budget
 # =================================================================================================
 def test_an_end_to_end_budget_requires_a_time_budget():
-    """An iteration count cannot bound the store build and worker setup, so build() rejects the combination."""
+    """An iteration count cannot bound the store build and worker setup, so build() rejects the aggregation."""
     # --- arrange / act / assert -------
     with pytest.raises(ValueError, match="requires a time budget"):
         ParallelMaxDivSolverBuilder(_problem()).with_workers(iterations(100), 2).with_end_to_end_budget().build()

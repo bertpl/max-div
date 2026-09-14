@@ -344,7 +344,7 @@ def test_with_preset_switches_init_on_constraints(
 #  MaxDivSolverBuilder - end-to-end budget
 # =================================================================================================
 def test_an_end_to_end_budget_requires_a_time_budget(dummy_problem):
-    """An iteration count cannot bound the store build and initialization, so build() rejects the combination."""
+    """An iteration count cannot bound the store build and initialization, so build() rejects the aggregation."""
     # --- arrange / act / assert -------
     with pytest.raises(ValueError, match="requires a time budget"):
         MaxDivSolverBuilder(dummy_problem).with_preset(iterations(100)).with_end_to_end_budget().build()

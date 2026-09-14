@@ -23,10 +23,10 @@ def _f32(values: list[float]) -> np.ndarray:
 
 
 def _hybrid(
-    *terms: DiversityObjectiveSimple, combination=HybridObjectiveType.GEOMETRIC_MEAN
+    *terms: DiversityObjectiveSimple, aggregation=HybridObjectiveType.GEOMETRIC_MEAN
 ) -> DiversityObjectiveHybrid:
     """Build a `DiversityObjectiveHybrid` from loose terms, geometric-mean by default."""
-    return DiversityObjectiveHybrid(terms, combination)
+    return DiversityObjectiveHybrid(terms, aggregation)
 
 
 # =================================================================================================
@@ -57,7 +57,7 @@ def test_a_hybrid_rejects_a_term_that_is_not_a_simple_objective() -> None:
 
 
 def test_a_hybrid_combines_by_the_geometric_mean_unless_told_otherwise() -> None:
-    """The geometric combination is the default: it is the one the solver maximizes."""
+    """The geometric aggregation is the default: it is the one the solver maximizes."""
     # --- act / assert -----------------
     hybrid = DiversityObjectiveHybrid(
         (
@@ -65,7 +65,7 @@ def test_a_hybrid_combines_by_the_geometric_mean_unless_told_otherwise() -> None
             DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
         )
     )
-    assert hybrid.combination == HybridObjectiveType.GEOMETRIC_MEAN
+    assert hybrid.aggregation == HybridObjectiveType.GEOMETRIC_MEAN
 
 
 # =================================================================================================
@@ -172,7 +172,7 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
 
 
 @pytest.mark.parametrize(
-    "terms, combination, contributions, expected",
+    "terms, aggregation, contributions, expected",
     [
         pytest.param(
             (
@@ -217,10 +217,10 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
         ),
     ],
 )
-def test_hybrid_computes_the_combination_of_its_terms(terms, combination, contributions, expected) -> None:
+def test_hybrid_computes_the_aggregation_of_its_terms(terms, aggregation, contributions, expected) -> None:
     """A hybrid returns the geometric or arithmetic mean of its terms' scores, one array per term."""
     # --- arrange ----------------------
-    objective = DiversityObjectiveHybrid(terms, combination)
+    objective = DiversityObjectiveHybrid(terms, aggregation)
 
     # --- act / assert -----------------
     assert objective.compute(contributions) == pytest.approx(expected, rel=1e-5)  # float32 arithmetic
@@ -267,22 +267,25 @@ def test_a_geometric_hybrids_default_tie_breakers_are_hybrids_over_its_distinct_
         _hybrid(
             DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L1),
             DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L2),
-            combination=HybridObjectiveType.GEOMETRIC_MEAN,
+            aggregation=HybridObjectiveType.GEOMETRIC_MEAN,
         ),
         _hybrid(
             DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
             DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
-            combination=HybridObjectiveType.ARITHMETIC_MEAN,
+            aggregation=HybridObjectiveType.ARITHMETIC_MEAN,
         ),
     ]
 
 
-def test_an_arithmetic_hybrid_has_no_tie_breakers() -> None:
-    """An arithmetic hybrid is only ever a tie-breaker, and a tie-breaker is not ranked by further tie-breakers."""
-    # --- act / assert -----------------
-    objective = _hybrid(
-        DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
-        DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
-        combination=HybridObjectiveType.ARITHMETIC_MEAN,
+def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
+    """The tie-breakers follow the terms' metrics, not the hybrid's aggregation, so both aggregations get the pair."""
+    # --- arrange ----------------------
+    terms = (
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
     )
-    assert objective.default_tie_breakers() == []
+
+    # --- act / assert -----------------
+    geometric = _hybrid(*terms, aggregation=HybridObjectiveType.GEOMETRIC_MEAN).default_tie_breakers()
+    arithmetic = _hybrid(*terms, aggregation=HybridObjectiveType.ARITHMETIC_MEAN).default_tie_breakers()
+    assert arithmetic == geometric

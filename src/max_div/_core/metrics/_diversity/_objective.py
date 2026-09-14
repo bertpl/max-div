@@ -3,7 +3,7 @@
 A `DiversityObjective` is one of two kinds, each holding only the fields that kind of objective needs:
 
 - `DiversityObjectiveSimple` — one diversity metric over one distance metric.
-- `DiversityObjectiveHybrid` — several simple objectives (its terms) combined by a geometric or an
+- `DiversityObjectiveHybrid` — several simple objectives (its terms) aggregated by a geometric or an
   arithmetic mean; a hybrid objective's tie-breakers are hybrids too.
 
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
@@ -122,7 +122,7 @@ class DiversityObjectiveSimple(DiversityObjective):
 
 
 class HybridObjectiveType(StrEnum):
-    """How a hybrid objective combines its terms: by their geometric mean or by their arithmetic mean."""
+    """How a hybrid objective aggregates its terms: by their geometric mean or by their arithmetic mean."""
 
     GEOMETRIC_MEAN = "GEOMETRIC_MEAN"
     ARITHMETIC_MEAN = "ARITHMETIC_MEAN"
@@ -130,15 +130,15 @@ class HybridObjectiveType(StrEnum):
 
 @dataclass(frozen=True)
 class DiversityObjectiveHybrid(DiversityObjective):
-    """Several simple objectives (its terms) combined by their geometric or arithmetic mean.
+    """Several simple objectives (its terms) aggregated by their geometric or arithmetic mean.
 
     Terms are simple objectives only, so each term reads exactly one of the arrays passed to
-    `compute`. The solver maximizes a hybrid with the geometric combination; a hybrid's default
+    `compute`. The solver maximizes a hybrid with the geometric aggregation; a hybrid's default
     tie-breakers are hybrids of one tie-breaker metric over the distinct distance metrics.
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
-    combination: HybridObjectiveType = HybridObjectiveType.GEOMETRIC_MEAN
+    aggregation: HybridObjectiveType = HybridObjectiveType.GEOMETRIC_MEAN
 
     def __post_init__(self) -> None:
         """Reject fewer than two terms and any term that is not a simple objective.
@@ -152,12 +152,12 @@ class DiversityObjectiveHybrid(DiversityObjective):
                 raise TypeError(f"A hybrid objective's terms must be simple objectives; got {type(term).__name__}.")
 
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
-        """Return the combination of the terms' diversity scores, each term reading its own array."""
+        """Return the aggregation of the terms' diversity scores, each term reading its own array."""
         term_scores = np.array(
             [term.compute((contribution,)) for term, contribution in zip(self.terms, contributions, strict=True)],
             dtype=np.float32,
         )
-        if self.combination == HybridObjectiveType.GEOMETRIC_MEAN:
+        if self.aggregation == HybridObjectiveType.GEOMETRIC_MEAN:
             return float(geomean_f32(term_scores))
         else:
             return float(np.mean(term_scores))
@@ -170,30 +170,27 @@ class DiversityObjectiveHybrid(DiversityObjective):
     def default_tie_breakers(self) -> list[DiversityObjective]:
         """Return the separating tie-breakers over the terms' distinct distance metrics.
 
-        A geometric mean has the plateaus that need breaking: it is pulled to zero by a single zero
-        term, and above zero it can tie. An arithmetic mean has neither, since every term keeps
-        contributing and one zero term only lowers it, so an arithmetic hybrid gets no tie-breakers.
+        The tie-breakers separate selections that the terms' own metrics tie on, whatever this
+        hybrid's aggregation: a min-separation term ties on every swap that leaves the closest pair
+        alone, and a geomean-separation term sits at zero once one pair coincides. So every hybrid
+        gets the same pair, over each of its distance metrics.
         """
-        if self.combination == HybridObjectiveType.ARITHMETIC_MEAN:
-            return []
-        else:
-            distances = self.distinct_distance_metrics()
-            return [
-                # the approximate geometric mean falls the more separations are zero, so a selection with
-                # fewer zero separations ranks higher; combined geometrically, one zero distance pulls it
-                # down without pinning the tie-breaker at zero the way an exact geometric mean would
-                DiversityObjectiveHybrid(
-                    tuple(DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, d) for d in distances),
-                    HybridObjectiveType.GEOMETRIC_MEAN,
-                ),
-                # once the approximate geometric mean has underflowed to zero, the non-zero fraction still
-                # counts the coincident pairs; combined arithmetically, a distance with no non-zero
-                # separation only lowers it, so fixing another distance still ranks higher
-                DiversityObjectiveHybrid(
-                    tuple(DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, d) for d in distances),
-                    HybridObjectiveType.ARITHMETIC_MEAN,
-                ),
-            ]
+        distances = self.distinct_distance_metrics()
+        return [
+            # the approximate geomean rewards a uniform spread, which opens room around the closest
+            # pair; aggregated geometrically, a zero on one distance pulls it down without pinning it
+            DiversityObjectiveHybrid(
+                tuple(DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, d) for d in distances),
+                HybridObjectiveType.GEOMETRIC_MEAN,
+            ),
+            # once the approximate geomean has underflowed to zero, the non-zero fraction still counts
+            # the coincident pairs; aggregated arithmetically, a distance with no non-zero separation
+            # only lowers it, so fixing another distance still ranks higher
+            DiversityObjectiveHybrid(
+                tuple(DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, d) for d in distances),
+                HybridObjectiveType.ARITHMETIC_MEAN,
+            ),
+        ]
 
 
 # =================================================================================================
