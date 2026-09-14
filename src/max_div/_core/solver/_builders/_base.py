@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Self
 from max_div._core.metrics import (
     DiversityMetric,
     DiversityObjective,
-    DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
 )
 from max_div._core.problem import MaxDivProblem
@@ -49,7 +49,7 @@ class SolverBuilderBase:
         self._k: int = problem.k
         simple_objectives = problem.diversity_objectives
         self._primary_objective: DiversityObjective = (
-            simple_objectives[0] if len(simple_objectives) == 1 else DiversityObjectiveHybridGeoMean(simple_objectives)
+            simple_objectives[0] if len(simple_objectives) == 1 else DiversityObjectiveHybrid(simple_objectives)
         )
         self._constraints: list[Constraint] = problem.constraints
 

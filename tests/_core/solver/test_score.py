@@ -6,10 +6,10 @@ from max_div._core.metrics import (
     DistanceMetric,
     DiversityContributionFamily,
     DiversityMetric,
-    DiversityObjectiveHybridFlattened,
-    DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
+    HybridCombination,
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
@@ -439,10 +439,13 @@ _L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), Di
         ),
         pytest.param(
             2,
-            DiversityObjectiveHybridGeoMean(
+            DiversityObjectiveHybrid(
                 tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L2, _L3))
             ),
-            DiversityObjectiveHybridFlattened(DiversityMetric.MIN_SEPARATION, (_L1, _L3)),
+            DiversityObjectiveHybrid(
+                tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L3)),
+                HybridCombination.MEAN,
+            ),
             tuple(DiversityTrackerSpec(metric, SEPARATION) for metric in (_L1, _L2, _L3)),
             [
                 np.array([5.0, 9.0], dtype=np.float32),  # L1
@@ -452,7 +455,7 @@ _L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), Di
                 np.array([7.0, 8.0], dtype=np.float32),  # L3
             ],
             (5.0 * 1.0 * 7.0) ** (1.0 / 3.0),  # geomean of the three minima
-            5.0,  # min over the L1 and L3 arrays only
+            6.0,  # mean of the L1 and L3 minima only
             id="subset_of_tracked_arrays",
         ),
     ],
