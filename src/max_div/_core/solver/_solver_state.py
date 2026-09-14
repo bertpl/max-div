@@ -91,11 +91,12 @@ class SolverState:
             k: (np.int32) target number of selected items
             contribution_trackers: (DiversityContributionTrackers) the tracker set backing this state's
                 per-point diversity contributions, updated on every selection mutation.
-            per_item_contribution_source: the source of the primary diversity objective's per-point
+            per_item_contribution_source: the source of the primary diversity objective's per-item
                 contributions (that objective's one tracker of the set, or a combined source over
                 several), which the strategies read.
-            distance_store: the store the primary objective's one spec is tracked over, or None when it
-                reads several specs; read only by the batched farthest-point initialization.
+            distance_store: the store that the primary objective's one spec is tracked over, or None when
+                the primary objective has several specs; read only by the batched farthest-point
+                initialization.
             score_generator: (ScoreGenerator) score generator to compute scores for current state
             selected: (np.ndarray[np.bool]) array indicating which of the n items are initially selected.
             con_values: (np.ndarray[np.int32] | None) upper/lower bounds per constraint (m x 2 array of float32)
@@ -495,7 +496,7 @@ class SolverState:
 
     @property
     def distance_store(self) -> DistanceStore:
-        """Return the store the primary objective's one spec is tracked over (shared, immutable).
+        """Return the store that the primary objective's one spec is tracked over (shared, immutable).
 
         Raises:
             ValueError: If the primary objective reads several specs, so no single store serves it.

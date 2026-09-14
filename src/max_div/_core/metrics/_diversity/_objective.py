@@ -9,8 +9,8 @@ A `DiversityObjective` is one of two kinds, each holding only the fields that ki
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
 tracks. The solver passes `compute` one array per spec of `tracker_specs`, in that order; a hybrid
 lists one spec per term, so two terms over one spec receive the same array twice. Every kind also
-computes its own per-item contribution of all items (`compute_per_item_contributions`), the value the
-solver samples items by, from those same per-spec arrays. The solver, its config, builders, presets
+computes, from those same per-spec arrays, its own per-item contribution for all items
+(`compute_per_item_contributions`), the value the solver samples items by. The solver, its config, builders, presets
 and strategies read this type, never a bare `DiversityMetric`, because an objective of several
 terms is not a single diversity metric.
 """
@@ -111,7 +111,7 @@ class DiversityObjectiveSimple(DiversityObjective):
         return float(self.diversity_metric.compute(contributions[0]))
 
     def compute_per_item_contributions(self, contributions: Sequence[NDArray[np.float32]]) -> NDArray[np.float32]:
-        """Return the one array unchanged: a single spec's contribution is the objective's own."""
+        """Return the one array unchanged: a single spec's contribution is the objective's own contribution."""
         return contributions[0]
 
     @cached_property
@@ -181,8 +181,8 @@ class DiversityObjectiveHybrid(DiversityObjective):
         """Return the elementwise aggregation of the terms' arrays, as a fresh float32 array.
 
         A spec that two terms have enters the aggregation once per term, as `compute` counts a repeated
-        term twice; for geometric-mean separation terms under the geometric aggregation, the result is,
-        for each item, exactly the factor by which that item contributes to the objective's score.
+        term twice; for geometric-mean separation terms under the geometric aggregation, the result gives
+        each item exactly the factor by which that item contributes to the objective's score.
         """
         # one row per item, one column per term, so each item's values are contiguous
         stacked = np.stack(contributions, axis=1).astype(np.float32, copy=False)

@@ -24,7 +24,7 @@ class DiversityContributionTrackers:
     """The set of diversity-contribution trackers backing a solver state.
 
     Holds one tracker per spec, applies every selection mutation to all trackers, and, given the
-    objective the solver maximizes, returns the source of the per-point contributions the strategies
+    objective the solver maximizes, returns the source of the per-item contributions the strategies
     read: that objective's one tracker, or a combined source over its term trackers.
     """
 
@@ -73,13 +73,13 @@ class DiversityContributionTrackers:
 
         Args:
             objective: the objective the solver maximizes.
-            spec_positions: for each of `objective`'s specs, in that objective's order and with its
-                repeats, the position of that spec's tracker in this set (that objective's entry of
-                the bindings' `objective_spec_positions`).
+            spec_positions: for each of `objective`'s specs (in that objective's order, repeats kept), the
+                position of that spec's tracker in this set: that objective's entry of the bindings'
+                `objective_spec_positions`.
 
         With one spec the tracker is returned as the source itself: a simple objective's per-item
         contribution is that tracker's contribution array, and wrapping it in a combined source would
-        only add a function call to every contribution read.
+        only add a function call whenever the contribution is read.
         """
         term_trackers = [self._trackers[position] for position in spec_positions]
         if len(term_trackers) == 1:

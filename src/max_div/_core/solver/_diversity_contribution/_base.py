@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 #  PerItemContributionSource
 # =================================================================================================
 class PerItemContributionSource(ABC):
-    """A source provides every item's per-item diversity contribution, which the strategies sample by.
+    """A source provides every item's per-item diversity contribution, the value the strategies sample items by.
 
     The *diversity contribution* of a point measures how much the point contributes to the diversity
     of the selection: for a selected point, how much it contributes to the current selection's

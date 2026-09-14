@@ -1,4 +1,4 @@
-"""The per-item contribution source of an objective over several specs; see `CombinedPerItemContributionSource`."""
+"""`CombinedPerItemContributionSource` is the per-item contribution source of an objective over several specs."""
 
 from __future__ import annotations
 
