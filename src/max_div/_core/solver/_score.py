@@ -185,13 +185,13 @@ class ScoreGenerator:
     def _get_score_fun_for_objective(
         diversity_objective: DiversityObjective, positions: tuple[int, ...], n_all_arrays: int
     ) -> Callable[[Sequence[NDArray[np.float32]]], float]:
-        """Return a scoring function `score_fun(all_contribution_all_arrays) -> float` for the given objective.
+        """Return a scoring function `score_fun(all_contribution_arrays) -> float` for the given objective.
 
         The function is built from two things:
 
-        - the objective's own `compute(contribution_all_arrays_needed_by_this_objective) -> float`
+        - the objective's own `compute(contribution_arrays_needed_by_this_objective) -> float`
         - `positions`, where the arrays this objective needs sit among the `n_all_arrays` arrays of
-          `all_contribution_all_arrays`
+          `all_contribution_arrays`
 
         Binding the positions here, once, keeps every lookup off the hot path.
         """
@@ -205,10 +205,8 @@ class ScoreGenerator:
             return diversity_objective_compute
         else:
 
-            def score_fun(all_contribution_all_arrays: Sequence[NDArray[np.float32]]) -> float:
-                return diversity_objective_compute(
-                    tuple([all_contribution_all_arrays[position] for position in positions])
-                )
+            def score_fun(all_contribution_arrays: Sequence[NDArray[np.float32]]) -> float:
+                return diversity_objective_compute(tuple([all_contribution_arrays[position] for position in positions]))
 
             return score_fun
 
