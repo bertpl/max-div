@@ -4,5 +4,5 @@ from ._objective import (
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    HybridCombination,
+    HybridCombinationType,
 )

@@ -8,7 +8,7 @@ from max_div._core.metrics import (
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    HybridCombination,
+    HybridCombinationType,
 )
 
 SEPARATION = DiversityContributionFamily.SEPARATION
@@ -21,7 +21,9 @@ def _f32(values: list[float]) -> np.ndarray:
     return np.array(values, dtype=np.float32)
 
 
-def _hybrid(*terms: DiversityObjectiveSimple, combination=HybridCombination.GEOMETRIC_MEAN) -> DiversityObjectiveHybrid:
+def _hybrid(
+    *terms: DiversityObjectiveSimple, combination=HybridCombinationType.GEOMETRIC_MEAN
+) -> DiversityObjectiveHybrid:
     """Build a `DiversityObjectiveHybrid` from loose terms, geometric-mean by default."""
     return DiversityObjectiveHybrid(terms, combination)
 
@@ -62,7 +64,7 @@ def test_a_hybrid_combines_by_the_geometric_mean_unless_told_otherwise() -> None
             DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
         )
     )
-    assert hybrid.combination == HybridCombination.GEOMETRIC_MEAN
+    assert hybrid.combination == HybridCombinationType.GEOMETRIC_MEAN
 
 
 # =================================================================================================
@@ -176,7 +178,7 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
             ),
-            HybridCombination.GEOMETRIC_MEAN,
+            HybridCombinationType.GEOMETRIC_MEAN,
             (_f32([4.0, 8.0]), _f32([9.0, 3.0])),  # L1 array (min 4), L2 array (min 3)
             np.sqrt(4.0 * 3.0),
             id="geomean_of_two_distances",
@@ -187,7 +189,7 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
                 DiversityObjectiveSimple(DiversityMetric.MEAN_SEPARATION, L1),  # same spec as the first term
                 DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
             ),
-            HybridCombination.GEOMETRIC_MEAN,
+            HybridCombinationType.GEOMETRIC_MEAN,
             (_f32([4.0, 8.0]), _f32([4.0, 8.0]), _f32([9.0, 3.0])),  # the L1 array twice (min 4, mean 6), L2 (min 3)
             (4.0 * 6.0 * 3.0) ** (1.0 / 3.0),
             id="geomean_with_a_shared_spec_receives_that_array_twice",
@@ -197,7 +199,7 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
             ),
-            HybridCombination.ARITHMETIC_MEAN,
+            HybridCombinationType.ARITHMETIC_MEAN,
             (_f32([0.0, 0.0, 1.0, 2.0]), _f32([0.0, 3.0, 1.0, 2.0])),  # fractions 2/4 and 3/4
             (0.5 + 0.75) / 2,
             id="arithmetic_mean_of_two_fractions",
@@ -207,7 +209,7 @@ def test_simple_computes_its_metric_over_its_one_spec() -> None:
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
                 DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
             ),
-            HybridCombination.ARITHMETIC_MEAN,
+            HybridCombinationType.ARITHMETIC_MEAN,
             (_f32([0.0, 0.0]), _f32([0.0, 3.0])),  # fractions 0 and 1/2: the mean is not pinned at zero
             0.25,
             id="arithmetic_mean_survives_an_all_zero_term",
@@ -264,12 +266,12 @@ def test_a_geometric_hybrids_default_tie_breakers_are_hybrids_over_its_distinct_
         _hybrid(
             DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L1),
             DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L2),
-            combination=HybridCombination.GEOMETRIC_MEAN,
+            combination=HybridCombinationType.GEOMETRIC_MEAN,
         ),
         _hybrid(
             DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
             DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
-            combination=HybridCombination.ARITHMETIC_MEAN,
+            combination=HybridCombinationType.ARITHMETIC_MEAN,
         ),
     ]
 
@@ -280,6 +282,6 @@ def test_an_arithmetic_hybrid_has_no_tie_breakers() -> None:
     objective = _hybrid(
         DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
         DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
-        combination=HybridCombination.ARITHMETIC_MEAN,
+        combination=HybridCombinationType.ARITHMETIC_MEAN,
     )
     assert objective.default_tie_breakers() == []

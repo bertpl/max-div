@@ -6,5 +6,5 @@ from ._diversity import (
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    HybridCombination,
+    HybridCombinationType,
 )

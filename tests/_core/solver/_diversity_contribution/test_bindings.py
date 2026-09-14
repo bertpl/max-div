@@ -7,7 +7,7 @@ from max_div._core.metrics import (
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    HybridCombination,
+    HybridCombinationType,
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 
@@ -52,7 +52,7 @@ L2 = DistanceMetric.l2_euclidean()
                         DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
                         DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
                     ),
-                    HybridCombination.ARITHMETIC_MEAN,
+                    HybridCombinationType.ARITHMETIC_MEAN,
                 ),
                 DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1),
             ],

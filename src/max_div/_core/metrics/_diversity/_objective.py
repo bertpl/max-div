@@ -8,7 +8,7 @@ A `DiversityObjective` is one of two kinds, each holding only the fields that ki
 
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
 tracks. The solver passes `compute` one array per spec of `tracker_specs`, in that order; a hybrid
-lists one spec per term, repeats kept, so two terms over one spec receive the same array twice. The
+lists one spec per term, so two terms over one spec receive the same array twice. The
 solver, its config, builders, presets and strategies read this type, never a bare `DiversityMetric`,
 because an objective of several terms is not a single diversity metric.
 """
@@ -45,7 +45,7 @@ class DiversityTrackerSpec(NamedTuple):
     contribution_family: DiversityContributionFamily
 
 
-class HybridCombination(StrEnum):
+class HybridCombinationType(StrEnum):
     """How a hybrid objective combines its terms: by their geometric mean or by their arithmetic mean."""
 
     GEOMETRIC_MEAN = "GEOMETRIC_MEAN"
@@ -77,7 +77,7 @@ class DiversityObjective(ABC):
     @property
     @abstractmethod
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """The specs this objective reads, one per array `compute` takes, in that order; a spec may repeat."""
+        """Return the specs this objective reads, one per array `compute` takes, in that order; a spec may repeat."""
 
     @abstractmethod
     def default_tie_breakers(self) -> list[DiversityObjective]:
@@ -85,7 +85,7 @@ class DiversityObjective(ABC):
 
     @cached_property
     def distinct_tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """The distinct specs this objective reads, in first-seen order."""
+        """Return the distinct specs this objective reads, in first-seen order."""
         return tuple(dict.fromkeys(self.tracker_specs))
 
     def distinct_distance_metrics(self) -> tuple[DistanceMetric | None, ...]:
@@ -117,12 +117,12 @@ class DiversityObjectiveSimple(DiversityObjective):
 
     @cached_property
     def tracker_spec(self) -> DiversityTrackerSpec:
-        """The one spec this objective reads: the single entry of `tracker_specs`, as a shorthand."""
+        """Return the one spec this objective reads: the single entry of `tracker_specs`, as a shorthand."""
         return DiversityTrackerSpec(self.distance_metric, self.diversity_metric.contribution_family)
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """The one spec this objective reads."""
+        """Return the one spec this objective reads."""
         return (self.tracker_spec,)
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
@@ -147,7 +147,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
-    combination: HybridCombination = HybridCombination.GEOMETRIC_MEAN
+    combination: HybridCombinationType = HybridCombinationType.GEOMETRIC_MEAN
 
     def __post_init__(self) -> None:
         """Reject fewer than two terms and any term that is not a simple objective.
@@ -163,17 +163,17 @@ class DiversityObjectiveHybrid(DiversityObjective):
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Return the combination of the terms' diversity scores, each term reading its own array."""
         term_scores = np.array(
-            [term.compute((array,)) for term, array in zip(self.terms, contributions, strict=True)],
+            [term.compute((contribution,)) for term, contribution in zip(self.terms, contributions, strict=True)],
             dtype=np.float32,
         )
-        if self.combination == HybridCombination.GEOMETRIC_MEAN:
+        if self.combination == HybridCombinationType.GEOMETRIC_MEAN:
             return float(geomean_f32(term_scores))
         else:
             return float(np.mean(term_scores))
 
     @cached_property
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
-        """The terms' specs in term order, a spec repeated once per term that reads it."""
+        """Return the terms' specs in term order, a spec repeated once per term that reads it."""
         return tuple(term.tracker_spec for term in self.terms)
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
@@ -182,7 +182,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
         Only a geometric hybrid, the kind the solver maximizes, has defaults; an arithmetic one is only
         ever a tie-breaker, and a tie-breaker is not itself ranked by further tie-breakers.
         """
-        if self.combination != HybridCombination.GEOMETRIC_MEAN:
+        if self.combination != HybridCombinationType.GEOMETRIC_MEAN:
             return []
         distances = self.distinct_distance_metrics()
         return [
@@ -196,14 +196,17 @@ class DiversityObjectiveHybrid(DiversityObjective):
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-# The tie-breakers of a hybrid, in order, each with the combination under which the hybrid over the
-# distinct distances equals the metric read over all the terms' arrays at once: the approximate
-# geometric mean falls toward zero the more cells are zero, so fewer zero cells rank higher; the
-# non-zero fraction then breaks the ties the geometric mean can no longer split, once it has
-# underflowed to zero.
-_TIE_BREAKER_COMBINATIONS: dict[DiversityMetric, HybridCombination] = {
-    DiversityMetric.APPROX_GEOMEAN_SEPARATION: HybridCombination.GEOMETRIC_MEAN,
-    DiversityMetric.NON_ZERO_SEPARATION_FRAC: HybridCombination.ARITHMETIC_MEAN,
+# The default tie-breakers of a geometric hybrid, in rank order. Each metric is paired with the
+# combination that makes the hybrid over the distinct distances score the same as that metric
+# applied to all the terms' contribution entries joined into one array: the approximate geometric
+# mean under a geometric mean, the non-zero fraction under an arithmetic mean.
+#
+# The approximate geometric mean falls toward zero the more entries are zero, so a selection with
+# fewer zero entries ranks higher; once it underflows to zero and can no longer separate selections,
+# the non-zero fraction breaks the remaining ties.
+_TIE_BREAKER_COMBINATIONS: dict[DiversityMetric, HybridCombinationType] = {
+    DiversityMetric.APPROX_GEOMEAN_SEPARATION: HybridCombinationType.GEOMETRIC_MEAN,
+    DiversityMetric.NON_ZERO_SEPARATION_FRAC: HybridCombinationType.ARITHMETIC_MEAN,
 }
 
 

@@ -9,7 +9,7 @@ from max_div._core.metrics import (
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
-    HybridCombination,
+    HybridCombinationType,
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
@@ -444,7 +444,7 @@ _L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), Di
             ),
             DiversityObjectiveHybrid(
                 tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L3)),
-                HybridCombination.ARITHMETIC_MEAN,
+                HybridCombinationType.ARITHMETIC_MEAN,
             ),
             tuple(DiversityTrackerSpec(metric, SEPARATION) for metric in (_L1, _L2, _L3)),
             [
