@@ -9,11 +9,11 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import DiversityObjective
+from max_div._core.metrics import DistanceMetric, DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
-from ._distance_storage import DistanceStorageTypes, StoreDistance
+from ._distance_storage import DistanceStorageTypes
 from ._duration import E2eBudget
 from ._solver import MaxDivSolver
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep
@@ -43,8 +43,8 @@ class SolverConfig:
     def build_solver(
         self,
         *,
-        stores_by_distance: Mapping[StoreDistance, DistanceStore] | None = None,
-        stores_by_distance_provider: Callable[[], Mapping[StoreDistance, DistanceStore]] | None = None,
+        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore] | None = None,
+        stores_by_distance_provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] | None = None,
     ) -> MaxDivSolver:
         """Return a solver configured as this record describes, given the distances it will read.
 
@@ -63,7 +63,7 @@ class SolverConfig:
         for step in self.solver_steps:
             step.validate_objective(self.diversity_objectives[0])
         if stores_by_distance is not None and stores_by_distance_provider is None:
-            provider: Callable[[], Mapping[StoreDistance, DistanceStore]] = lambda: stores_by_distance
+            provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] = lambda: stores_by_distance
         elif stores_by_distance is None and stores_by_distance_provider is not None:
             provider = stores_by_distance_provider
         else:

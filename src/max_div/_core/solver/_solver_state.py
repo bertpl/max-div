@@ -22,10 +22,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityObjective
+    from max_div._core.metrics import DistanceMetric, DiversityObjective
     from max_div._core.metrics._distance import DistanceStore
-
-    from ._distance_storage import StoreDistance
 
 
 # =================================================================================================
@@ -573,7 +571,7 @@ class SolverState:
     def new(
         cls,
         n: int,
-        stores_by_distance: Mapping[StoreDistance, DistanceStore],
+        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore],
         k: int,
         diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],

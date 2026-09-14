@@ -8,8 +8,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from max_div._core.metrics import DiversityObjective, DiversityTrackerSpec
-    from max_div._core.solver._distance_storage import StoreDistance
+    from max_div._core.metrics import DistanceMetric, DiversityObjective, DiversityTrackerSpec
 
 
 # =================================================================================================
@@ -32,7 +31,7 @@ class DiversityObjectiveBindings:
 
     # the distinct distances the objectives read, in first-seen order: one store each
     # (`None` is the problem's own distance)
-    store_distances: tuple[StoreDistance, ...]
+    store_distances: tuple[DistanceMetric | None, ...]
     # the distinct specs the objectives read, in first-seen order: one tracker each, and the order
     # in which the score's contribution arrays are passed
     tracker_specs: tuple[DiversityTrackerSpec, ...]

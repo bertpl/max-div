@@ -36,10 +36,6 @@ from .memory_budget import AUTO_MEMORY_FRACTION, check_fits_physical_memory, ful
 from .shared_memory import SharedStoreSpec, attached_distance_store
 from .storage import DistanceStorageType, DistanceStorageTypes
 
-# The distance that a distance store holds: a distance metric over the problem's vectors, or None for
-# the distances that a distance-input problem was given.
-StoreDistance = DistanceMetric | None
-
 
 # =================================================================================================
 #  DistanceStoreFactory
@@ -60,7 +56,7 @@ class DistanceStoreFactory:
     def __init__(
         self,
         problem: MaxDivProblem,
-        distances: Sequence[StoreDistance],
+        distances: Sequence[DistanceMetric | None],
         storage_type: DistanceStorageType,
         total_memory_bytes: int | None,
     ) -> None:
@@ -91,7 +87,7 @@ class DistanceStoreFactory:
         self._total_memory_bytes = total_memory_bytes
 
     @property
-    def distances(self) -> tuple[StoreDistance, ...]:
+    def distances(self) -> tuple[DistanceMetric | None, ...]:
         """Return the distances this factory builds stores for, in store order (as the objectives declare them)."""
         return self._distances
 
@@ -130,7 +126,7 @@ class DistanceStoreFactory:
         """
         return DistanceStorageTypes(tuple(zip(self._resolved_distances(), self.determine_storage_types(), strict=True)))
 
-    def _resolved_distances(self) -> tuple[StoreDistance, ...]:
+    def _resolved_distances(self) -> tuple[DistanceMetric | None, ...]:
         """Return each store's distance with a vector problem's `None` (its own distance) replaced by its metric.
 
         A distance-input problem's `None` stays `None`: its default distance is `None` (it holds given
@@ -151,7 +147,7 @@ class DistanceStoreFactory:
         """
         return self._build(InProcessDistanceStoreAllocator())
 
-    def create_stores_by_distance(self) -> dict[StoreDistance, DistanceStore]:
+    def create_stores_by_distance(self) -> dict[DistanceMetric | None, DistanceStore]:
         """Build the stores in this process, keyed by the distance each was built for (`None` = the problem's own)."""
         return stores_by_distance(self._distances, self.create_stores())
 
@@ -234,8 +230,8 @@ class DistanceStoreFactory:
 #  Helpers
 # ==================================================================================================
 def stores_by_distance(
-    distances: Sequence[StoreDistance], stores: Sequence[DistanceStore]
-) -> dict[StoreDistance, DistanceStore]:
+    distances: Sequence[DistanceMetric | None], stores: Sequence[DistanceStore]
+) -> dict[DistanceMetric | None, DistanceStore]:
     """Pair each distance with its store, both in the bindings' store order.
 
     The publisher and a worker both call this over that one order (`DiversityObjectiveBindings`), so

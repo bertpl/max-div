@@ -10,9 +10,8 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityTrackerSpec
+    from max_div._core.metrics import DistanceMetric, DiversityTrackerSpec
     from max_div._core.metrics._distance import DistanceStore
-    from max_div._core.solver._distance_storage import StoreDistance
 
     from ._base import DiversityContributionTracker
 
@@ -46,7 +45,7 @@ class DiversityContributionTrackers:
     def for_specs(
         cls,
         tracker_specs: Sequence[DiversityTrackerSpec],
-        stores_by_distance: Mapping[StoreDistance, DistanceStore],
+        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore],
     ) -> DiversityContributionTrackers:
         """Build one tracker per spec, in the given order, each over the store of its distance.
 
