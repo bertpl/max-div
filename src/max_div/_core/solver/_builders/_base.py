@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, Self
 from max_div._core.metrics import (
     DiversityMetric,
     DiversityObjective,
-    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
 )
 from max_div._core.problem import MaxDivProblem
@@ -47,15 +46,11 @@ class SolverBuilderBase:
         # --- problem properties -----------------
         self._n: int = problem.n
         self._k: int = problem.k
-        simple_objectives = problem.diversity_objectives
-        self._primary_objective: DiversityObjective = (
-            simple_objectives[0] if len(simple_objectives) == 1 else DiversityObjectiveHybrid(simple_objectives)
-        )
+        self._primary_objective: DiversityObjective = problem.diversity_objective
         self._constraints: list[Constraint] = problem.constraints
 
         # --- shared configuration ---------------
-        self._diversity_tie_breaker_metrics: list[DiversityMetric] = []
-        self._default_diversity_tie_breakers: bool = True
+        self._custom_diversity_tie_breakers: list[DiversityObjective] | None = None  # None → the defaults
         self._seed = 42
         self._constraint_penalty: ConstraintPenalty = ConstraintPenalty.LINEAR
         self._distance_storage_type: DistanceStorageType = DistanceStorageType.AUTO
@@ -66,15 +61,25 @@ class SolverBuilderBase:
     #  Shared builder API
     # -------------------------------------------------------------------------
     def with_diversity_tie_breakers(self, diversity_tie_breaker_metrics: list[DiversityMetric]) -> Self:
-        """Set custom diversity tie-breaker metrics, overriding the defaults."""
-        self._diversity_tie_breaker_metrics = diversity_tie_breaker_metrics
-        self._default_diversity_tie_breakers = False
+        """Set custom diversity tie-breaker metrics, overriding the defaults.
+
+        Each tie-breaker reads the problem's own distance, which a hybrid diversity metric has several
+        of, so a problem over a hybrid keeps its default tie-breakers.
+
+        Raises:
+            ValueError: If the problem's diversity metric is a hybrid.
+        """
+        if not isinstance(self._primary_objective, DiversityObjectiveSimple):
+            raise ValueError("Custom diversity tie-breakers are not supported for a hybrid diversity metric.")
+        self._custom_diversity_tie_breakers = [
+            DiversityObjectiveSimple(metric, self._primary_objective.distance_metric)
+            for metric in diversity_tie_breaker_metrics
+        ]
         return self
 
     def with_default_diversity_tie_breakers(self) -> Self:
         """Reset to automatically chosen tie-breakers based on the primary diversity metric."""
-        self._diversity_tie_breaker_metrics = []
-        self._default_diversity_tie_breakers = True
+        self._custom_diversity_tie_breakers = None
         return self
 
     def with_seed(self, seed: int) -> Self:
@@ -139,20 +144,8 @@ class SolverBuilderBase:
         return [self._primary_objective, *self._determine_diversity_tie_breakers()]
 
     def _determine_diversity_tie_breakers(self) -> list[DiversityObjective]:
-        """Return the tie-breaker objectives to rank ties by: the primary objective's defaults, or the user's.
-
-        Custom tie-breakers are only supported for a single-metric problem, so each is a simple
-        objective over that problem's one distance metric.
-
-        Raises:
-            ValueError: If custom tie-breakers are set on a problem whose primary objective is not a
-                single `DiversityObjectiveSimple`.
-        """
-        if self._default_diversity_tie_breakers:
+        """Return the tie-breaker objectives to rank ties by: the user's, or the primary objective's defaults."""
+        if self._custom_diversity_tie_breakers is not None:
+            return self._custom_diversity_tie_breakers
+        else:
             return self._primary_objective.default_tie_breakers()
-        if not isinstance(self._primary_objective, DiversityObjectiveSimple):
-            raise ValueError("Custom diversity tie-breakers are only supported for a single-metric problem.")
-        return [
-            DiversityObjectiveSimple(metric, self._primary_objective.distance_metric)
-            for metric in self._diversity_tie_breaker_metrics
-        ]

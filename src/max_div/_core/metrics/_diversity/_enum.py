@@ -1,9 +1,15 @@
 from collections.abc import Callable
 from enum import StrEnum
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from max_div._core.metrics._distance import DistanceMetric
+
+    from ._hybrid_metric import DiversityTerm
 
 
 class DiversityContributionFamily(StrEnum):
@@ -44,6 +50,17 @@ class DiversityMetric(StrEnum):
     APPROX_GEOMEAN_SEPARATION = "APPROX_GEOMEAN_SEPARATION"
     NON_ZERO_SEPARATION_FRAC = "NON_ZERO_SEPARATION_FRAC"
     MEAN_PAIRWISE_DISTANCE = "MEAN_PAIRWISE_DISTANCE"
+
+    def over(self, distance_metric: "DistanceMetric") -> "DiversityTerm":
+        """Return this metric as a term over `distance_metric`, for a `HybridDiversityMetric`.
+
+        A bare `DiversityMetric` given as a term reads the problem's own distance; `over` names
+        another one, such as `DistanceMetric.along_axis(0)`.
+        """
+        # Import here to avoid circular dependency
+        from ._hybrid_metric import DiversityTerm
+
+        return DiversityTerm(self, distance_metric)
 
     @cached_property
     def contribution_family(self) -> DiversityContributionFamily:

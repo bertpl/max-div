@@ -1,10 +1,12 @@
 """Public API for distance and diversity metrics."""
 
-from ._core.metrics import DistanceMetric, DiversityMetric
+from ._core.metrics import DistanceMetric, DiversityMetric, DiversityTerm, HybridDiversityMetric
 
 __all__ = [
     "DistanceMetric",
     "DiversityMetric",
+    "DiversityTerm",
+    "HybridDiversityMetric",
 ]
 
 

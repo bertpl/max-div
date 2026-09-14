@@ -7,12 +7,7 @@ from scipy.spatial.distance import squareform
 
 from max_div._core._utils import stdout_to_file
 from max_div._core.constraints import Constraint
-from max_div._core.metrics import (
-    DistanceMetric,
-    DiversityMetric,
-    DiversityObjectiveHybrid,
-    DiversityObjectiveSimple,
-)
+from max_div._core.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import DistanceStorageType, MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._builders import ParallelMaxDivSolverBuilder
@@ -398,7 +393,7 @@ def test_a_solve_frees_its_state_without_the_cyclic_collector(monkeypatch: pytes
 
 
 # =================================================================================================
-#  Hybrid geometric-mean objective (built directly; no public API constructs one)
+#  Hybrid diversity metric
 # =================================================================================================
 def _min_pairwise(values: np.ndarray) -> float:
     """Brute-force smallest pairwise Euclidean distance among the rows of `values` (float64)."""
@@ -406,37 +401,46 @@ def _min_pairwise(values: np.ndarray) -> float:
     return float(min(np.linalg.norm(rows[i] - rows[j]) for i in range(len(rows)) for j in range(i + 1, len(rows))))
 
 
-def _expected_geomean_min_separation(vectors: np.ndarray, indices: np.ndarray, axis: int) -> float:
-    """Return the geometric mean of the selection's min L2 separation and its min separation along `axis`."""
+def _min_separations(vectors: np.ndarray, indices: np.ndarray, axis: int) -> tuple[float, float]:
+    """Return the selection's min L2 separation and its min separation along `axis`."""
     selected = vectors[indices]
-    min_l2 = _min_pairwise(selected)
-    min_axis = _min_pairwise(selected[:, [axis]])
+    return _min_pairwise(selected), _min_pairwise(selected[:, [axis]])
+
+
+def _expected_geomean(vectors: np.ndarray, indices: np.ndarray, axis: int) -> float:
+    """Return the geometric mean of the selection's two min separations."""
+    min_l2, min_axis = _min_separations(vectors, indices, axis)
     return float(np.sqrt(min_l2 * min_axis))
 
 
-def _hybrid_objective() -> DiversityObjectiveHybrid:
-    """Return a two-term hybrid: min separation over L2 and min separation along axis 0."""
-    return DiversityObjectiveHybrid(
-        (
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
-            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(0)),
-        )
-    )
+def _expected_mean(vectors: np.ndarray, indices: np.ndarray, axis: int) -> float:
+    """Return the arithmetic mean of the selection's two min separations."""
+    min_l2, min_axis = _min_separations(vectors, indices, axis)
+    return (min_l2 + min_axis) / 2
 
 
-def _hybrid_problem() -> tuple[MaxDivProblem, np.ndarray]:
-    """Return a small vector problem and its vectors; random coordinates keep every axis separation non-zero."""
+_HYBRID_CASES = [
+    (HybridDiversityMetric.geomean_of, _expected_geomean),
+    (HybridDiversityMetric.mean_of, _expected_mean),
+]
+
+
+def _hybrid_problem(factory) -> tuple[MaxDivProblem, np.ndarray]:
+    """Return a small vector problem over a two-term hybrid (min separation over L2 and along axis 0) and its vectors.
+
+    Random coordinates keep every axis separation non-zero.
+    """
     vectors = np.random.default_rng(20260913).random((50, 3)).astype(np.float32)
-    return MaxDivProblem.new(vectors, k=8), vectors
+    hybrid = factory(DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)))
+    return MaxDivProblem.new(vectors, k=8, diversity_metric=hybrid), vectors
 
 
-def test_solver_hybrid_geomean_objective_solves_and_scores_end_to_end():
-    """A multi-term hybrid solves to a valid selection and reports the geometric mean of its terms' separations."""
+@pytest.mark.parametrize("factory, expected_score", _HYBRID_CASES)
+def test_solver_hybrid_metric_solves_and_scores_end_to_end(factory, expected_score):
+    """A hybrid solves to a valid selection and reports the aggregation of its terms' separations."""
     # --- arrange ----------------------
-    problem, vectors = _hybrid_problem()
-    builder = MaxDivSolverBuilder(problem)
-    builder._primary_objective = _hybrid_objective()  # inject a multi-term objective; the public API does not build one
-    builder.with_preset(iterations(400)).with_seed(11)  # after the injection: the preset reads the objective
+    problem, vectors = _hybrid_problem(factory)
+    builder = MaxDivSolverBuilder(problem).with_preset(iterations(400)).with_seed(11)
 
     # --- act --------------------------
     solution = builder.build().solve(verbosity=Verbosity.SILENT)
@@ -444,39 +448,41 @@ def test_solver_hybrid_geomean_objective_solves_and_scores_end_to_end():
     # --- assert -----------------------
     assert len(solution.i_selected) == problem.k
     assert len(set(solution.i_selected.tolist())) == problem.k
-    expected = _expected_geomean_min_separation(vectors, solution.i_selected, axis=0)
+    expected = expected_score(vectors, solution.i_selected, axis=0)
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
 
 
-def test_solver_hybrid_geomean_objective_is_deterministic():
+def test_solver_hybrid_metric_is_deterministic():
     """A hybrid solve repeated from one seed selects the same items and scores the same."""
     # --- arrange ----------------------
-    problem, _ = _hybrid_problem()
+    problem, _ = _hybrid_problem(HybridDiversityMetric.geomean_of)
 
     # --- act --------------------------
-    solutions = []
-    for _ in range(2):
-        builder = MaxDivSolverBuilder(problem)
-        builder._primary_objective = _hybrid_objective()
-        builder.with_preset(iterations(400)).with_seed(11)
-        solutions.append(builder.build().solve(verbosity=Verbosity.SILENT))
+    solutions = [
+        MaxDivSolverBuilder(problem)
+        .with_preset(iterations(400))
+        .with_seed(11)
+        .build()
+        .solve(verbosity=Verbosity.SILENT)
+        for _ in range(2)
+    ]
 
     # --- assert -----------------------
     assert list(solutions[0].i_selected) == list(solutions[1].i_selected)
     assert solutions[0].score == solutions[1].score
 
 
-def test_solver_hybrid_geomean_objective_solves_in_parallel():
+@pytest.mark.parametrize("factory, expected_score", _HYBRID_CASES)
+def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
     """A hybrid solves across worker processes, exercising the shared-memory stores and the tracker fan-out."""
     # --- arrange ----------------------
-    problem, vectors = _hybrid_problem()
+    problem, vectors = _hybrid_problem(factory)
     builder = ParallelMaxDivSolverBuilder(problem).with_seed(3)
-    builder._primary_objective = _hybrid_objective()
 
     # --- act --------------------------
     solution = builder.with_workers(iterations(300), 2).build().solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
     assert len(solution.i_selected) == problem.k
-    expected = _expected_geomean_min_separation(vectors, solution.i_selected, axis=0)
+    expected = expected_score(vectors, solution.i_selected, axis=0)
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)

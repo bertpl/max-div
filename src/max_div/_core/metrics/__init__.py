@@ -5,6 +5,8 @@ from ._diversity import (
     DiversityObjective,
     DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
+    DiversityTerm,
     DiversityTrackerSpec,
+    HybridDiversityMetric,
     HybridObjectiveType,
 )

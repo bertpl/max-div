@@ -211,6 +211,8 @@ nav:
     - Metrics:
       - DistanceMetric: reference/metrics/DistanceMetric.md
       - DiversityMetric: reference/metrics/DiversityMetric.md
+      - HybridDiversityMetric: reference/metrics/HybridDiversityMetric.md
+      - DiversityTerm: reference/metrics/DiversityTerm.md
     - Problem:
       - Constraint: reference/problem/Constraint.md
       - MaxDivProblem: reference/problem/MaxDivProblem.md

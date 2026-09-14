@@ -8,7 +8,13 @@ from scipy.spatial.distance import squareform
 from max_div._core._warnings import DistanceInputWarning
 from max_div._core.constraints import Constraint
 from max_div._core.feasibility import FeasibilityStatus
-from max_div._core.metrics import DistanceMetric, DiversityMetric
+from max_div._core.metrics import (
+    DistanceMetric,
+    DiversityMetric,
+    DiversityObjectiveHybrid,
+    DiversityObjectiveSimple,
+    HybridDiversityMetric,
+)
 from max_div._core.metrics._distance import compute_full_matrix
 from max_div._core.problem import DistanceMaxDivProblem, MaxDivProblem, VectorMaxDivProblem
 
@@ -533,3 +539,57 @@ def test_problem_new_makes_the_vectors_c_contiguous():
     assert problem.vectors.flags.c_contiguous
     assert problem.vectors.dtype == np.float32
     np.testing.assert_array_equal(problem.vectors, vectors)
+
+
+# =================================================================================================
+#  Hybrid diversity metric
+# =================================================================================================
+_HYBRID = HybridDiversityMetric.geomean_of(
+    DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1))
+)
+
+
+def test_problem_diversity_objective_is_simple_for_a_bare_metric():
+    # --- arrange ----------------------
+    problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=DiversityMetric.MIN_SEPARATION)
+
+    # --- assert -----------------------
+    assert problem.diversity_objective == DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION)
+
+
+@pytest.mark.parametrize("flavor", ["vectors", "distances"])
+def test_problem_diversity_objective_is_a_hybrid_for_a_hybrid_metric(flavor: str):
+    # --- arrange ----------------------
+    hybrid = HybridDiversityMetric.mean_of(DiversityMetric.MIN_SEPARATION, DiversityMetric.GEOMEAN_SEPARATION)
+    if flavor == "vectors":
+        problem = MaxDivProblem.new(np.ones((5, 3), dtype=np.float32), k=2, diversity_metric=hybrid)
+    else:
+        problem = MaxDivProblem.from_distances(np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=hybrid)
+
+    # --- assert -----------------------
+    assert problem.diversity_metric is hybrid
+    assert isinstance(problem.diversity_objective, DiversityObjectiveHybrid)
+    assert problem.diversity_objective == hybrid._to_objective()
+
+
+def test_problem_new_hybrid_term_along_axis_beyond_the_dimension_count_raises():
+    with pytest.raises(ValueError, match="reads a coordinate that 1-dimensional vectors do not have"):
+        MaxDivProblem.new(np.ones((5, 1), dtype=np.float32), k=2, diversity_metric=_HYBRID)
+
+
+def test_problem_new_hybrid_term_over_cosine_rejects_a_zero_vector():
+    # --- arrange ----------------------
+    vectors = np.ones((5, 3), dtype=np.float32)
+    vectors[2] = 0.0
+    hybrid = HybridDiversityMetric.geomean_of(
+        DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.cosine())
+    )
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="undefined for zero vectors"):
+        MaxDivProblem.new(vectors, k=2, diversity_metric=hybrid)
+
+
+def test_problem_from_distances_rejects_a_hybrid_term_with_its_own_distance_metric():
+    with pytest.raises(ValueError, match="has no vectors"):
+        MaxDivProblem.from_distances(np.ones((5, 5)) - np.eye(5), k=2, diversity_metric=_HYBRID)
