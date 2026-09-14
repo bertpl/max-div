@@ -12,6 +12,7 @@ from max_div._core.benchmark_problems import BenchmarkProblemFactory
 from max_div._core.feasibility import FeasibilityResult, FeasibilityStatus
 from max_div._core.metrics import DiversityMetric, DiversityObjectiveSimple
 from max_div._core.problem import VectorMaxDivProblem
+from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._score import ScoreGenerator
 
 # Verdicts are properties of the problem, not measurements, but they still depend on the search
@@ -57,7 +58,7 @@ def _ceiling_cell(problem: VectorMaxDivProblem, result: FeasibilityResult) -> st
         n=problem.n,
         k=problem.k,
         diversity_objectives=[diversity_objective],
-        tracker_specs=diversity_objective.tracker_specs,
+        bindings=DiversityObjectiveBindings.for_objectives([diversity_objective]),
         constraints=problem.constraints,
     )
     return f"{score_generator.constraints_score_for_violation(result.violation_floor):.5f}"

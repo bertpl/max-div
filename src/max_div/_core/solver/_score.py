@@ -13,7 +13,9 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from max_div._core.constraints import Constraint
-    from max_div._core.metrics import DiversityObjective, DiversityTrackerSpec
+    from max_div._core.metrics import DiversityObjective
+
+    from ._diversity_contribution import DiversityObjectiveBindings
 
 
 # =================================================================================================
@@ -128,7 +130,7 @@ class ScoreGenerator:
         n: int | np.int32,
         k: int,
         diversity_objectives: list[DiversityObjective],
-        tracker_specs: tuple[DiversityTrackerSpec, ...],
+        bindings: DiversityObjectiveBindings,
         constraints: list[Constraint],
         penalty_quadratic: bool = False,
     ) -> None:
@@ -139,8 +141,8 @@ class ScoreGenerator:
             k: (int) The target selection size for the max-div problem.
             diversity_objectives: the diversity objectives, the primary objective first and then
                 the tie-breakers, scored in that order into `Score.diversities`.
-            tracker_specs: the specs of the contribution trackers, in the order `compute_score` receives
-                their arrays; must contain every spec the objectives read.
+            bindings: `compute_score` receives one array per entry of `bindings.tracker_specs`, in that
+                order, and each objective picks its own arrays by its positions.
             constraints: (list[Constraint]) The list of constraints used in the max-div problem.
             penalty_quadratic: (bool) If True, penalize constraint violations quadratically instead of linearly.
         """
@@ -170,33 +172,34 @@ class ScoreGenerator:
 
         # --- diversity objectives ---------------
         # each objective's scoring function is built here, once, not on every `compute_score` call
-        self._diversity_objectives = diversity_objectives
-        self._tracker_specs = tracker_specs
+        n_all_arrays = len(bindings.tracker_specs)
         self._diversity_score_funs = tuple(
-            self._get_score_fun_for_objective(objective) for objective in diversity_objectives
+            self._get_score_fun_for_objective(objective, positions, n_all_arrays)
+            for objective, positions in zip(diversity_objectives, bindings.objective_spec_positions, strict=True)
         )
 
         # --- store other params -----------------
         self._constraints = constraints
 
+    @staticmethod
     def _get_score_fun_for_objective(
-        self, diversity_objective: DiversityObjective
+        diversity_objective: DiversityObjective, positions: tuple[int, ...], n_all_arrays: int
     ) -> Callable[[Sequence[NDArray[np.float32]]], float]:
         """Return a scoring function `score_fun(all_contribution_arrays) -> float` for the given objective.
 
         The function is built from two things:
 
         - the objective's own `compute(contribution_arrays_needed_by_this_objective) -> float`
-        - the positions in `all_contribution_arrays` of the arrays this objective needs
+        - `positions`, where the arrays this objective needs sit among the `n_all_arrays` arrays of
+          `all_contribution_arrays`
 
-        Resolving the positions here, once, speeds up the repeated calls on the hot path.
+        Binding the positions here, once, keeps every lookup off the hot path.
         """
         # --- prepare info ---------------------------
-        positions = tuple(self._tracker_specs.index(spec) for spec in diversity_objective.tracker_specs)
         diversity_objective_compute = diversity_objective.compute
 
         # --- construct score function ---------------
-        if positions == tuple(range(len(self._tracker_specs))):
+        if positions == tuple(range(n_all_arrays)):
             # the objective needs every array, in the given order: no subselection of arrays needs to be
             # made at all, and no extra call
             return diversity_objective_compute

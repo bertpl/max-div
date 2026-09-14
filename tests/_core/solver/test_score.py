@@ -11,6 +11,7 @@ from max_div._core.metrics import (
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
 )
+from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 from max_div._core.solver._score import Score, ScoreGenerator, _con_norm_constant
 
 from .objectives import simple_objective, tie_breaker_objectives
@@ -22,6 +23,11 @@ MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
 def _as_contributions(separation_values: np.ndarray) -> list[np.ndarray]:
     """Wrap one separation-family contribution array as the per-spec list that `compute_score` reads."""
     return [separation_values]
+
+
+def _score_generator(**kwargs) -> ScoreGenerator:
+    """Build a generator with the bindings derived from its `diversity_objectives`."""
+    return ScoreGenerator(bindings=DiversityObjectiveBindings.for_objectives(kwargs["diversity_objectives"]), **kwargs)
 
 
 # =================================================================================================
@@ -116,11 +122,10 @@ def test_score_as_tuple_ignore_infeasible_diversity(
 # =================================================================================================
 def test_score_generator_size():
     # --- arrange ----------------------
-    generator = ScoreGenerator(
+    generator = _score_generator(
         n=20,
         k=3,
         diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
-        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
 
@@ -144,11 +149,10 @@ def test_score_generator_size():
 
 def test_score_generator_constraints():
     # --- arrange ----------------------
-    generator = ScoreGenerator(
+    generator = _score_generator(
         n=100,
         k=8,
         diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
-        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[
             Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
             Constraint(int_set={5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, min_count=2, max_count=3),
@@ -215,11 +219,10 @@ def test_constraints_score_for_violation(violation: float, expected: float):
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),  # worst case 2
         Constraint(int_set=set(range(11)), min_count=2, max_count=3),  # worst case 5
     ]
-    generator = ScoreGenerator(
+    generator = _score_generator(
         n=11,
         k=8,
         diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
-        tracker_specs=simple_objective(DiversityMetric.GEOMEAN_SEPARATION).tracker_specs,
         constraints=constraints,
     )
 
@@ -233,11 +236,10 @@ def test_constraints_score_for_violation(violation: float, expected: float):
 def test_constraints_score_for_violation_rejects_quadratic():
     """A scalar violation has no quadratic-scale conversion, so a quadratic generator raises."""
     # --- arrange ----------------------
-    generator = ScoreGenerator(
+    generator = _score_generator(
         n=3,
         k=3,
         diversity_objectives=[simple_objective(DiversityMetric.GEOMEAN_SEPARATION)],
-        tracker_specs=simple_objective(DiversityMetric.GEOMEAN_SEPARATION).tracker_specs,
         constraints=[Constraint(int_set={0, 1, 2}, min_count=2, max_count=3)],
         penalty_quadratic=True,
     )
@@ -258,10 +260,9 @@ def test_score_generator_constraints_linear_vs_quadratic():
         "n": 100,
         "k": 8,
         "diversity_objectives": [simple_objective(DiversityMetric.MIN_SEPARATION)],
-        "tracker_specs": simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
     }
-    gen_linear = ScoreGenerator(constraints=constraints, **kwargs)
-    gen_quad = ScoreGenerator(constraints=constraints, penalty_quadratic=True, **kwargs)
+    gen_linear = _score_generator(constraints=constraints, **kwargs)
+    gen_quad = _score_generator(constraints=constraints, penalty_quadratic=True, **kwargs)
 
     con_values = np.array([[2, 3], [2, 3]], dtype=np.int32)  # need 2 more from each -> v = [2, 2]
     sep = _as_contributions(np.ones(5, dtype=np.float32))
@@ -282,11 +283,10 @@ def test_score_generator_constraints_weighted():
         Constraint(int_set={0, 1, 2, 3, 4}, min_count=2, max_count=3),
         Constraint(int_set=set(range(5, 16)), min_count=2, max_count=3, weight=2.0),
     ]
-    gen = ScoreGenerator(
+    gen = _score_generator(
         n=100,
         k=8,
         diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
-        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=constraints,
     )
     sep = _as_contributions(np.ones(5, dtype=np.float32))
@@ -307,11 +307,10 @@ def test_score_generator_constraints_weighted():
 
 def test_score_generator_constraints_no_constraints():
     # --- arrange ----------------------
-    generator = ScoreGenerator(
+    generator = _score_generator(
         n=100,
         k=8,
         diversity_objectives=[simple_objective(DiversityMetric.MIN_SEPARATION)],
-        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
 
@@ -326,14 +325,13 @@ def test_score_generator_constraints_no_constraints():
 
 def test_score_generator_diversity_scores():
     # --- arrange ----------------------
-    generator = ScoreGenerator(
+    generator = _score_generator(
         n=100,
         k=5,
         diversity_objectives=[
             simple_objective(DiversityMetric.MIN_SEPARATION),
             *tie_breaker_objectives([DiversityMetric.MEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         ],
-        tracker_specs=simple_objective(DiversityMetric.MIN_SEPARATION).tracker_specs,
         constraints=[],
     )
 
@@ -464,11 +462,10 @@ def test_compute_score_hands_each_objective_the_arrays_of_its_own_specs(
 ):
     """Each objective reads its own specs' arrays by position; an unrelated tracked array is never passed to it."""
     # --- arrange ----------------------
-    generator = ScoreGenerator(
+    generator = _score_generator(
         n=10,
         k=k,
         diversity_objectives=[diversity_objective, tie_breaker],
-        tracker_specs=tracker_specs,
         constraints=[],
     )
 
@@ -476,5 +473,6 @@ def test_compute_score_hands_each_objective_the_arrays_of_its_own_specs(
     score = generator.compute_score(k, np.empty((0, 2), dtype=np.int32), contributions)
 
     # --- assert -----------------------
+    assert DiversityObjectiveBindings.for_objectives([diversity_objective, tie_breaker]).tracker_specs == tracker_specs
     assert score.diversity == pytest.approx(expected_diversity, rel=1e-5)
     assert score.diversities[1] == pytest.approx(expected_tie_breaker)

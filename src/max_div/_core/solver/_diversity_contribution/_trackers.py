@@ -10,9 +10,8 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityObjective, DiversityTrackerSpec
+    from max_div._core.metrics import DistanceMetric, DiversityTrackerSpec
     from max_div._core.metrics._distance import DistanceStore
-    from max_div._core.solver._distance_storage import StoreDistance
 
     from ._base import DiversityContributionTracker
 
@@ -32,36 +31,34 @@ class DiversityContributionTrackers:
     #  Construction
     # -------------------------------------------------------------------------
     def __init__(self, trackers_by_spec: dict[DiversityTrackerSpec, DiversityContributionTracker]) -> None:
-        """Initialize from an explicit spec -> tracker mapping; prefer the for_objectives() factory.
+        """Initialize from an explicit spec -> tracker mapping; prefer the for_specs() factory.
 
         Args:
             trackers_by_spec: (dict) one tracker per spec the objectives read. The first entry is the
                 primary objective's tracker (`primary_tracker`), so the caller must pass the primary
-                objective's spec first; `for_objectives` does, listing the primary objective first.
+                objective's spec first; the bindings' spec order does (`DiversityObjectiveBindings`).
         """
         self._trackers_by_spec = trackers_by_spec  # READ-ONLY
         self._trackers = tuple(trackers_by_spec.values())  # iteration order for mutation fan-out
 
     @classmethod
-    def for_objectives(
+    def for_specs(
         cls,
-        diversity_objectives: Sequence[DiversityObjective],
-        stores_by_distance: Mapping[StoreDistance, DistanceStore],
+        tracker_specs: Sequence[DiversityTrackerSpec],
+        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore],
     ) -> DiversityContributionTrackers:
-        """Build the tracker set that the objectives need.
+        """Build one tracker per spec, in the given order, each over the store of its distance.
 
-        The set holds one tracker per distinct spec the objectives read, in the order the objectives
-        list them, each objective's specs in its own order. The primary objective comes first, so
-        `primary_tracker` is the first tracker. `stores_by_distance` maps a spec's distance (`None`
-        for the problem's own distance) to the store the spec's tracker reads.
+        `tracker_specs` is the bindings' spec order (see `DiversityObjectiveBindings`), which lists
+        the primary objective's spec first. `stores_by_distance` maps a spec's distance (`None` for
+        the problem's own distance) to the store the spec's tracker reads.
         """
-        specs = dict.fromkeys(spec for objective in diversity_objectives for spec in objective.tracker_specs)
         return cls(
             trackers_by_spec={
                 spec: build_diversity_contribution_tracker(
                     spec.contribution_family, stores_by_distance[spec.distance_metric]
                 )
-                for spec in specs
+                for spec in tracker_specs
             }
         )
 

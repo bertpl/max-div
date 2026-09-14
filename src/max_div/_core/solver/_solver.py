@@ -6,11 +6,11 @@ import numpy as np
 from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
 from max_div._core.constraints import Constraint
 from max_div._core.constraints.constraints import _np_con_count_satisfied
-from max_div._core.metrics import DiversityObjective
+from max_div._core.metrics import DistanceMetric, DiversityObjective
 from max_div._core.metrics._distance import DistanceStore
 
 from ._constraint_penalty import ConstraintPenalty
-from ._distance_storage import DistanceStorageTypes, StoreDistance
+from ._distance_storage import DistanceStorageTypes
 from ._duration import E2eBudget, Elapsed
 from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
@@ -34,7 +34,7 @@ class MaxDivSolver:
     def __init__(
         self,
         n: int,
-        stores_by_distance_provider: Callable[[], Mapping[StoreDistance, DistanceStore]],
+        stores_by_distance_provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]],
         k: int,
         diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],

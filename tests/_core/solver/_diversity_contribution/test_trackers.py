@@ -4,7 +4,6 @@ import pytest
 from max_div._core.metrics import (
     DistanceMetric,
     DiversityContributionFamily,
-    DiversityMetric,
     DiversityTrackerSpec,
 )
 from max_div._core.metrics._distance import DistanceStore
@@ -13,7 +12,6 @@ from max_div._core.solver._diversity_contribution import (
     MeanDistanceTracker,
     SeparationTracker,
 )
-from tests._core.solver.objectives import simple_objective, tie_breaker_objectives
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
@@ -31,39 +29,20 @@ def store() -> DistanceStore:
 
 
 # =================================================================================================
-#  for_objectives
+#  for_specs
 # =================================================================================================
-def test_for_objectives_single_family(store: DistanceStore):
-    """Two separation-family metrics yield one SeparationTracker, which is the primary tracker."""
+def test_for_specs_builds_one_tracker_per_spec_in_order(store: DistanceStore):
+    """One tracker per spec, of that spec's family, in the given order; the first one is the primary tracker."""
+    # --- arrange ----------------------
+    specs = (DiversityTrackerSpec(None, SEPARATION), DiversityTrackerSpec(None, MEAN_DISTANCE))
+
     # --- act --------------------------
-    trackers = DiversityContributionTrackers.for_objectives(
-        [
-            simple_objective(DiversityMetric.GEOMEAN_SEPARATION),
-            *tie_breaker_objectives([DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
-        ],
-        {None: store},
-    )
+    trackers = DiversityContributionTrackers.for_specs(specs, {None: store})
 
     # --- assert -----------------------
-    assert len(trackers._trackers) == 1
-    assert type(trackers.primary_tracker) is SeparationTracker
+    assert trackers.tracker_specs == specs
+    assert [type(tracker) for tracker in trackers._trackers] == [SeparationTracker, MeanDistanceTracker]
     assert trackers.primary_tracker is trackers._trackers[0]
-
-
-def test_for_objectives_repeated_family(store: DistanceStore):
-    """Tie-breakers repeating the main objective's family add no tracker."""
-    # --- act --------------------------
-    trackers = DiversityContributionTrackers.for_objectives(
-        [
-            simple_objective(DiversityMetric.MIN_SEPARATION),
-            *tie_breaker_objectives([DiversityMetric.MIN_SEPARATION, DiversityMetric.MEAN_SEPARATION]),
-        ],
-        {None: store},
-    )
-
-    # --- assert -----------------------
-    assert len(trackers._trackers) == 1
-    assert type(trackers._trackers[0]) is SeparationTracker
 
 
 # =================================================================================================
@@ -113,9 +92,7 @@ def test_mutations_reach_every_tracker(store: DistanceStore):
 def test_selected_contributions_one_array_per_spec(store: DistanceStore):
     """A single-family set returns one spec's array, the selected vectors' separation values."""
     # --- arrange ----------------------
-    trackers = DiversityContributionTrackers.for_objectives(
-        [simple_objective(DiversityMetric.GEOMEAN_SEPARATION)], {None: store}
-    )
+    trackers = DiversityContributionTrackers.for_specs((DiversityTrackerSpec(None, SEPARATION),), {None: store})
     trackers.add(np.int32(0))
     trackers.add(np.int32(2))  # selection: points 0.0 and 3.0 on a line
     selected = np.full(N, False, dtype=np.bool)
@@ -164,27 +141,3 @@ def test_selected_contributions_orders_the_arrays_as_the_specs():
         contributions[1], ref_l2.contribution_wrt_selection(selected, np.int32(3))[selected_indices]
     )
     assert not np.allclose(contributions[0], contributions[1])  # L1 and L2 disagree here
-
-
-# =================================================================================================
-#  primary_tracker
-# =================================================================================================
-def test_primary_tracker_is_the_first_objectives_tracker():
-    """The primary tracker is the first objective's tracker, not a tie-breaker's over another family."""
-    # --- arrange ----------------------
-    vectors = np.array([[0.0], [1.0], [3.0], [6.0]], dtype=np.float32)
-    store = DistanceStore.full_matrix_from_vectors(vectors, DistanceMetric.l1_manhattan())
-
-    # --- act --------------------------
-    # primary reads the separation family; the tie-breaker reads the mean-distance family
-    trackers = DiversityContributionTrackers.for_objectives(
-        [
-            simple_objective(DiversityMetric.MIN_SEPARATION),
-            *tie_breaker_objectives([DiversityMetric.MEAN_PAIRWISE_DISTANCE]),
-        ],
-        {None: store},
-    )
-
-    # --- assert -----------------------
-    assert type(trackers.primary_tracker) is SeparationTracker  # the primary's family, not the tie-breaker's
-    assert trackers.primary_tracker is trackers._trackers[0]

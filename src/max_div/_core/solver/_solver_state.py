@@ -10,7 +10,11 @@ from max_div._core._math import select_k_max_masked
 from max_div._core._utils import delete_sorted, insert_sorted
 from max_div._core.constraints import Constraint, ConstraintList, _np_con_membership, to_numpy_membership
 
-from ._diversity_contribution import DiversityContributionTracker, DiversityContributionTrackers
+from ._diversity_contribution import (
+    DiversityContributionTracker,
+    DiversityContributionTrackers,
+    DiversityObjectiveBindings,
+)
 from ._score import Score, ScoreGenerator
 
 if TYPE_CHECKING:
@@ -18,10 +22,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from max_div._core.metrics import DiversityObjective
+    from max_div._core.metrics import DistanceMetric, DiversityObjective
     from max_div._core.metrics._distance import DistanceStore
-
-    from ._distance_storage import StoreDistance
 
 
 # =================================================================================================
@@ -569,7 +571,7 @@ class SolverState:
     def new(
         cls,
         n: int,
-        stores_by_distance: Mapping[StoreDistance, DistanceStore],
+        stores_by_distance: Mapping[DistanceMetric | None, DistanceStore],
         k: int,
         diversity_objectives: list[DiversityObjective],
         constraints: list[Constraint],
@@ -581,7 +583,8 @@ class SolverState:
         """
         # --- diversity contributions ------------
         n_np = np.int32(n)
-        contribution_trackers = DiversityContributionTrackers.for_objectives(diversity_objectives, stores_by_distance)
+        bindings = DiversityObjectiveBindings.for_objectives(diversity_objectives)
+        contribution_trackers = DiversityContributionTrackers.for_specs(bindings.tracker_specs, stores_by_distance)
 
         # --- selection --------------------------
         selected = np.full(n_np, False, dtype=np.bool)
@@ -596,7 +599,7 @@ class SolverState:
             n=n_np,
             k=k,
             diversity_objectives=diversity_objectives,
-            tracker_specs=contribution_trackers.tracker_specs,
+            bindings=bindings,
             constraints=constraints,
             penalty_quadratic=penalty_quadratic,
         )
