@@ -19,7 +19,7 @@ class DiversityObjectiveBindings:
     """The bindings map one solve's diversity objectives to one store per distance metric and one tracker per spec.
 
     The score reads one contribution array per tracker, in the trackers' order; the bindings also
-    record where each objective's own arrays sit in that order. They are a function of the objective
+    record where each objective's own arrays sit in that order. The bindings are a function of the objective
     list alone, so every place that needs an order calls `for_objectives` and gets the same one:
 
     - the builder, for the stores it builds;

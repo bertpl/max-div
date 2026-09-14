@@ -172,9 +172,9 @@ class ScoreGenerator:
 
         # --- diversity objectives ---------------
         # each objective's scoring function is built here, once, not on every `compute_score` call
-        n_arrays = len(bindings.tracker_specs)
+        n_all_arrays = len(bindings.tracker_specs)
         self._diversity_score_funs = tuple(
-            self._get_score_fun_for_objective(objective, positions, n_arrays)
+            self._get_score_fun_for_objective(objective, positions, n_all_arrays)
             for objective, positions in zip(diversity_objectives, bindings.objective_spec_positions, strict=True)
         )
 
@@ -183,15 +183,15 @@ class ScoreGenerator:
 
     @staticmethod
     def _get_score_fun_for_objective(
-        diversity_objective: DiversityObjective, positions: tuple[int, ...], n_arrays: int
+        diversity_objective: DiversityObjective, positions: tuple[int, ...], n_all_arrays: int
     ) -> Callable[[Sequence[NDArray[np.float32]]], float]:
-        """Return a scoring function `score_fun(all_contribution_arrays) -> float` for the given objective.
+        """Return a scoring function `score_fun(all_contribution_all_arrays) -> float` for the given objective.
 
         The function is built from two things:
 
-        - the objective's own `compute(contribution_arrays_needed_by_this_objective) -> float`
-        - `positions`, where the arrays this objective needs sit among the `n_arrays` arrays of
-          `all_contribution_arrays`
+        - the objective's own `compute(contribution_all_arrays_needed_by_this_objective) -> float`
+        - `positions`, where the arrays this objective needs sit among the `n_all_arrays` arrays of
+          `all_contribution_all_arrays`
 
         Binding the positions here, once, keeps every lookup off the hot path.
         """
@@ -199,14 +199,16 @@ class ScoreGenerator:
         diversity_objective_compute = diversity_objective.compute
 
         # --- construct score function ---------------
-        if positions == tuple(range(n_arrays)):
+        if positions == tuple(range(n_all_arrays)):
             # the objective needs every array, in the given order: no subselection of arrays needs to be
             # made at all, and no extra call
             return diversity_objective_compute
         else:
 
-            def score_fun(all_contribution_arrays: Sequence[NDArray[np.float32]]) -> float:
-                return diversity_objective_compute(tuple([all_contribution_arrays[position] for position in positions]))
+            def score_fun(all_contribution_all_arrays: Sequence[NDArray[np.float32]]) -> float:
+                return diversity_objective_compute(
+                    tuple([all_contribution_all_arrays[position] for position in positions])
+                )
 
             return score_fun
 
