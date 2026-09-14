@@ -52,7 +52,7 @@ L2 = DistanceMetric.l2_euclidean()
                         DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
                         DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
                     ),
-                    HybridCombination.MEAN,
+                    HybridCombination.ARITHMETIC_MEAN,
                 ),
                 DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1),
             ],

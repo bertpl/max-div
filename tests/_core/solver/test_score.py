@@ -444,7 +444,7 @@ _L1, _L2, _L3 = DistanceMetric.l1_manhattan(), DistanceMetric.l2_euclidean(), Di
             ),
             DiversityObjectiveHybrid(
                 tuple(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, metric) for metric in (_L1, _L3)),
-                HybridCombination.MEAN,
+                HybridCombination.ARITHMETIC_MEAN,
             ),
             tuple(DiversityTrackerSpec(metric, SEPARATION) for metric in (_L1, _L2, _L3)),
             [
