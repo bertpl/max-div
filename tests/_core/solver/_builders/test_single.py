@@ -10,6 +10,7 @@ from max_div._core.metrics import (
     DistanceMetric,
     DiversityMetric,
     DiversityObjectiveSimple,
+    HybridDiversityMetric,
 )
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import (
@@ -148,6 +149,21 @@ def test_max_div_solver_builder_tie_breaker_metrics_custom(dummy_problem):
         DiversityMetric.MEAN_SEPARATION,
     ]
     assert all(isinstance(tb, DiversityObjectiveSimple) for tb in tie_breakers)
+
+
+def test_max_div_solver_builder_refuses_custom_tie_breakers_for_a_hybrid_metric():
+    # --- arrange ----------------------
+    problem = MaxDivProblem.new(
+        np.random.default_rng(0).random((20, 3)).astype(np.float32),
+        k=4,
+        diversity_metric=HybridDiversityMetric.geomean_of(
+            DiversityMetric.MIN_SEPARATION, DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0))
+        ),
+    )
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="not supported for a hybrid"):
+        MaxDivSolverBuilder(problem).with_diversity_tie_breakers([DiversityMetric.MEAN_SEPARATION])
 
 
 # =================================================================================================
