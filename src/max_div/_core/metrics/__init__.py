@@ -3,8 +3,8 @@ from ._diversity import (
     DiversityContributionFamily,
     DiversityMetric,
     DiversityObjective,
-    DiversityObjectiveHybridFlattened,
-    DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
+    HybridObjectiveType,
 )

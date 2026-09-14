@@ -17,15 +17,15 @@ def get_preset_strategies_smart(
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     """Return the SMART (or THOROUGH, when `thorough`) preset's init strategy and optimization steps.
 
-    Whether the objective reads a single separation tracker decides which farthest-point construction
-    an unconstrained problem starts from, since the batched one applies to that case only.
+    Whether the batched farthest-point construction supports the objective decides which of the two
+    constructions an unconstrained problem starts from.
     """
     # --- initialization -------------------------
     if has_constraints:
         # Constrained: most_feasible() finds a feasible (or least-infeasible) selection faster than the
         # main solver's swaps could, freeing the optimizer to spend its whole budget on diversity.
         init_strategy = InitializationStrategy.most_feasible()
-    elif objective.has_single_separation_tracker():
+    elif InitFarthestPointBatched.is_diversity_objective_supported(objective):
         # Unconstrained: the farthest-point construction reaches competitor-level quality far sooner
         # than a random start; sampling among the top_k picks keeps that quality while decorrelating seeds.
         # The batched construction offers every pick the same candidates as the per-pick one and is

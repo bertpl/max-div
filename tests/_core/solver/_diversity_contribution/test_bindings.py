@@ -4,10 +4,10 @@ from max_div._core.metrics import (
     DistanceMetric,
     DiversityContributionFamily,
     DiversityMetric,
-    DiversityObjectiveHybridFlattened,
-    DiversityObjectiveHybridGeoMean,
+    DiversityObjectiveHybrid,
     DiversityObjectiveSimple,
     DiversityTrackerSpec,
+    HybridObjectiveType,
 )
 from max_div._core.solver._diversity_contribution import DiversityObjectiveBindings
 
@@ -40,14 +40,20 @@ L2 = DistanceMetric.l2_euclidean()
         ),
         pytest.param(
             [
-                DiversityObjectiveHybridGeoMean(
+                DiversityObjectiveHybrid(
                     (
                         DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
                         DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L1),
                         DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),  # repeats the L2 spec
                     )
                 ),
-                DiversityObjectiveHybridFlattened(DiversityMetric.NON_ZERO_SEPARATION_FRAC, (L1, L2)),
+                DiversityObjectiveHybrid(
+                    (
+                        DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L1),
+                        DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
+                    ),
+                    HybridObjectiveType.ARITHMETIC_MEAN,
+                ),
                 DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, L1),
             ],
             (L2, L1),
@@ -56,8 +62,8 @@ L2 = DistanceMetric.l2_euclidean()
                 DiversityTrackerSpec(L1, SEPARATION),
                 DiversityTrackerSpec(L1, MEAN_DISTANCE),
             ),
-            ((0, 1), (1, 0), (2,)),
-            id="hybrid_over_two_distances_with_a_flattened_tie_breaker",
+            ((0, 1, 0), (1, 0), (2,)),  # the hybrid repeats the L2 spec
+            id="hybrid_over_two_distances_with_a_hybrid_tie_breaker",
         ),
     ],
 )

@@ -1,4 +1,4 @@
-"""The contribution tracker of a `DiversityObjectiveHybridGeoMean`; see `HybridGeoMeanTracker`."""
+"""The contribution tracker of a geometric-mean `DiversityObjectiveHybrid`; see `HybridGeoMeanTracker`."""
 
 from __future__ import annotations
 
