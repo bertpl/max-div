@@ -8,6 +8,7 @@ descriptions the problem turns into the objective the solver maximizes.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from ._enum import DiversityMetric
@@ -20,45 +21,24 @@ if TYPE_CHECKING:
 # =================================================================================================
 #  DiversityTerm
 # =================================================================================================
+@dataclass(frozen=True, slots=True)
 class DiversityTerm:
     """A diversity metric over one distance metric, one term of a `HybridDiversityMetric`.
 
     Obtain one through `DiversityMetric.over(distance_metric)`; a term is not constructed directly.
     """
 
-    __slots__ = ("_distance_metric", "_diversity_metric")
-
-    def __init__(self, diversity_metric: DiversityMetric, distance_metric: DistanceMetric) -> None:
-        """Pair `diversity_metric` with the `distance_metric` it reads."""
-        self._diversity_metric = diversity_metric
-        self._distance_metric = distance_metric
-
-    @property
-    def diversity_metric(self) -> DiversityMetric:
-        """Return the diversity metric of this term."""
-        return self._diversity_metric
-
-    @property
-    def distance_metric(self) -> DistanceMetric:
-        """Return the distance metric that this term's diversity metric reads."""
-        return self._distance_metric
+    diversity_metric: DiversityMetric
+    distance_metric: DistanceMetric
 
     @property
     def label(self) -> str:
         """Return a short label, e.g. `MIN_SEPARATION over axis 2`."""
-        return f"{self._diversity_metric.value} over {self._distance_metric.label}"
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, DiversityTerm):
-            return NotImplemented
-        return self._diversity_metric == other._diversity_metric and self._distance_metric == other._distance_metric
-
-    def __hash__(self) -> int:
-        return hash((self._diversity_metric, self._distance_metric))
+        return f"{self.diversity_metric.value} over {self.distance_metric.label}"
 
     def __repr__(self) -> str:
         """Return the call that constructs this term."""
-        return f"DiversityMetric.{self._diversity_metric.name}.over({self._distance_metric!r})"
+        return f"DiversityMetric.{self.diversity_metric.name}.over({self.distance_metric!r})"
 
 
 # =================================================================================================

@@ -82,7 +82,7 @@ class MaxDivProblem(ABC):
         A `DiversityMetric` becomes a simple objective over the problem's own distance (the objective's
         `distance_metric` is `None`); a `HybridDiversityMetric` becomes a hybrid objective over its terms.
         """
-        return _diversity_objective_of(self.diversity_metric)
+        return self._diversity_objective_of(self.diversity_metric)
 
     @property
     def m(self) -> int:
@@ -153,16 +153,16 @@ class MaxDivProblem(ABC):
         if vectors.shape[1] == 0:
             raise ValueError("Vectors must have at least one dimension.")
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)  # the form every distance function expects
-        for metric in _distance_metrics_read(distance_metric, diversity_metric):
+        for metric in cls._distance_metrics_read(distance_metric, diversity_metric):
             if metric == DistanceMetric.cosine():
                 validate_cosine_distance_vectors(vectors)  # fail fast: zero vectors have no defined angle
             validate_axis_within_dimensions(metric, vectors.shape[1])
 
-        _validate_k(k, vectors.shape[0])
+        cls._validate_k(k, vectors.shape[0])
 
         if constraints is None:
             constraints = []
-        _validate_constraints(constraints, vectors.shape[0])
+        cls._validate_constraints(constraints, vectors.shape[0])
 
         # --- build ------------------------------
         return VectorMaxDivProblem(
@@ -209,7 +209,7 @@ class MaxDivProblem(ABC):
         else:
             raise ValueError(f"Distances must be a square (n, n) matrix or condensed 1D vector; got {distances.ndim}D.")
 
-        _validate_k(k, n)
+        cls._validate_k(k, n)
         if isinstance(diversity_metric, HybridDiversityMetric) and diversity_metric.named_distance_metrics:
             raise ValueError(
                 "A problem defined by its distances has no vectors, so a hybrid term cannot read a distance "
@@ -218,7 +218,7 @@ class MaxDivProblem(ABC):
 
         if constraints is None:
             constraints = []
-        _validate_constraints(constraints, n)
+        cls._validate_constraints(constraints, n)
 
         # --- build ------------------------------
         return DistanceMaxDivProblem(
@@ -227,6 +227,57 @@ class MaxDivProblem(ABC):
             diversity_metric=diversity_metric,
             constraints=constraints,
         )
+
+    # --------------------------------------------------------------------------
+    #  Helpers
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def _diversity_objective_of(diversity_metric: DiversityMetric | HybridDiversityMetric) -> DiversityObjective:
+        """Return the objective the solver maximizes for the user's diversity metric.
+
+        This function is the one place that tells a bare metric from a hybrid.
+        """
+        if isinstance(diversity_metric, DiversityMetric):
+            return DiversityObjectiveSimple(diversity_metric)
+        else:
+            return diversity_metric._to_objective()  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
+
+    @staticmethod
+    def _distance_metrics_read(
+        distance_metric: DistanceMetric, diversity_metric: DiversityMetric | HybridDiversityMetric
+    ) -> tuple[DistanceMetric, ...]:
+        """Return every distance metric a vector problem computes: its own, plus those a hybrid's terms name."""
+        if isinstance(diversity_metric, HybridDiversityMetric):
+            return (distance_metric, *diversity_metric.named_distance_metrics)
+        else:
+            return (distance_metric,)
+
+    @staticmethod
+    def _validate_k(k: int, n: int) -> None:
+        """Raise ValueError unless 2 <= k <= n.
+
+        `k == n` is allowed: the selection is then forced to every item (`MaxDivSolver.solve` adopts
+        that selection directly).
+        """
+        if not (2 <= k <= n):
+            raise ValueError(f"k must be in range [2, number of items (={n})]; here: {k}.")
+
+    @staticmethod
+    def _validate_constraints(constraints: list[Constraint], n: int) -> None:
+        """Raise ValueError when a constraint references an item index outside the problem's `[0, n)`.
+
+        `Constraint.__post_init__` owns every check that needs no problem context; the index-vs-`n`
+        check is the one that does.  An out-of-range index would reach compiled code with bounds
+        checking off, where it is a memory error, not an exception.  `min_count` or `max_count`
+        above `k` stay legal: such a constraint is unsatisfiable but meaningful, and `find_feasible`
+        reports it as infeasible with its exact violation.
+        """
+        for i, con in enumerate(constraints):
+            largest = max(con.int_set)
+            if largest >= n:
+                raise ValueError(
+                    f"Constraint {i} references item index {largest}, outside the problem's [0, {n}) items."
+                )
 
 
 # =================================================================================================
@@ -293,52 +344,3 @@ class DistanceMaxDivProblem(MaxDivProblem):
         if self.has_full_matrix:
             return self.distances
         return expand_condensed(self.distances, self.n)
-
-
-# =================================================================================================
-#  Helpers
-# =================================================================================================
-def _diversity_objective_of(diversity_metric: DiversityMetric | HybridDiversityMetric) -> DiversityObjective:
-    """Return the objective the solver maximizes for the user's diversity metric.
-
-    This function is the one place that tells a bare metric from a hybrid.
-    """
-    if isinstance(diversity_metric, DiversityMetric):
-        return DiversityObjectiveSimple(diversity_metric)
-    else:
-        return diversity_metric._to_objective()  # noqa: SLF001 -- kept off the public API; the problem is its intended caller
-
-
-def _distance_metrics_read(
-    distance_metric: DistanceMetric, diversity_metric: DiversityMetric | HybridDiversityMetric
-) -> tuple[DistanceMetric, ...]:
-    """Return every distance metric a vector problem computes: its own, plus those a hybrid's terms name."""
-    if isinstance(diversity_metric, HybridDiversityMetric):
-        return (distance_metric, *diversity_metric.named_distance_metrics)
-    else:
-        return (distance_metric,)
-
-
-def _validate_k(k: int, n: int) -> None:
-    """Raise ValueError unless 2 <= k <= n.
-
-    `k == n` is allowed: the selection is then forced to every item (`MaxDivSolver.solve` adopts
-    that selection directly).
-    """
-    if not (2 <= k <= n):
-        raise ValueError(f"k must be in range [2, number of items (={n})]; here: {k}.")
-
-
-def _validate_constraints(constraints: list[Constraint], n: int) -> None:
-    """Raise ValueError when a constraint references an item index outside the problem's `[0, n)`.
-
-    `Constraint.__post_init__` owns every check that needs no problem context; the index-vs-`n`
-    check is the one that does.  An out-of-range index would reach compiled code with bounds
-    checking off, where it is a memory error, not an exception.  `min_count` or `max_count`
-    above `k` stay legal: such a constraint is unsatisfiable but meaningful, and `find_feasible`
-    reports it as infeasible with its exact violation.
-    """
-    for i, con in enumerate(constraints):
-        largest = max(con.int_set)
-        if largest >= n:
-            raise ValueError(f"Constraint {i} references item index {largest}, outside the problem's [0, {n}) items.")
