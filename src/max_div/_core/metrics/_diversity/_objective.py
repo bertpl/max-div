@@ -134,8 +134,11 @@ class DiversityObjective(ABC):
         distance_metrics = self.distinct_distance_metrics()
         tie_breakers: list[DiversityObjective] = []
         for metric, aggregation in tie_breaker_metrics:
-            terms = tuple(DiversityObjectiveSimple(metric, distance_metric) for distance_metric in distance_metrics)
-            tie_breakers.append(terms[0] if len(terms) == 1 else DiversityObjectiveHybrid(terms, aggregation))
+            if len(distance_metrics) == 1:
+                tie_breakers.append(DiversityObjectiveSimple(metric, distance_metrics[0]))
+            else:
+                terms = tuple(DiversityObjectiveSimple(metric, distance_metric) for distance_metric in distance_metrics)
+                tie_breakers.append(DiversityObjectiveHybrid(terms, aggregation))
         return tie_breakers
 
     @cached_property
