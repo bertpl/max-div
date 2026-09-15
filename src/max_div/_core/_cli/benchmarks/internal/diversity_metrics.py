@@ -13,7 +13,7 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
     """Benchmarks every separation-family `DiversityMetric` across sizes of the separation vector.
 
     The metrics come from the enum, so a new separation-family member gets its column without an edit
-    here; the sizes run from 10 to 20,000, capped by `speed`.
+    here; the separation-vector sizes tested are capped by `speed`.
 
     Args:
         speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
