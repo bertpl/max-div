@@ -5,11 +5,11 @@
 
 ## I. Pros & cons of different diversity metrics
 
-| | min separation | mean separation | geometric-mean separation |
-|---|:---:|:---:|:---:|
-| Accounts for diversity beyond the closest item pair (I.1) | ❌ | ✅ | ✅ |
-| Strongly penalizes near-duplicate items (I.2) | ✅ | ❌ | ✅ |
-| Steers towards uniform spacing, at any k (I.3) | ✅ | ❌ | ✅ |
+| | min separation | mean separation | geometric-mean separation | harmonic-mean separation |
+|---|:---:|:---:|:---:|:---:|
+| Accounts for diversity beyond the closest item pair (I.1) | ❌ | ✅ | ✅ | ✅ |
+| Strongly penalizes near-duplicate items (I.2) | ✅ | ❌ | ✅ | ✅ |
+| Steers towards uniform spacing, at any k (I.3) | ✅ | ❌ | ✅ | ✅ |
 
 ### I.1. Minimum separation only measures the closest item pair
 
@@ -19,7 +19,7 @@ $$x_1 = 0, \qquad x_2 = 0.1, \qquad x_i = 0.1 + (i - 2)\,\alpha \quad \text{for 
 
 so the first two items are always $0.1$ apart and every further item follows the previous one at distance $\alpha$. At $\alpha = 0.1$ the selection is uniformly spaced; a larger $\alpha$ spreads the last nine items out while the closest pair stays where it is.
 
-![Eleven items on a line: the first two 0.1 apart, every further item α after the previous; the three metrics against α](./images/geomean_separation_I1.webp)
+![Eleven items on a line: the first two 0.1 apart, every further item α after the previous; the four metrics against α](./images/geomean_separation_I1.webp)
 
 > The minimum separation diversity metric fails to take into account diversity beyond the closest selected item pair.
 
@@ -31,7 +31,7 @@ $$x_2 = \alpha, \qquad x_i = \frac{i - 1}{10} \quad \text{for } i \neq 2.$$
 
 At $\alpha = 0.1$ the selection is uniform; as $\alpha$ approaches $0$ the second item becomes a near-duplicate of the first.
 
-![Eleven items uniform over [0, 1] except the second at α; the three metrics against α](./images/geomean_separation_I2.webp)
+![Eleven items uniform over [0, 1] except the second at α; the four metrics against α](./images/geomean_separation_I2.webp)
 
 > The mean separation diversity only weakly penalizes near- or exactly duplicate items.
 
@@ -43,7 +43,7 @@ $$x_i = \left(\frac{i}{50}\right)^{\frac{2 - \alpha}{\alpha}} \quad \text{for } 
 
 At $\alpha = 1$ the selection is uniform; below it the items crowd towards $0$, above it towards $1$.
 
-![Fifty-one items at (i/50)^((2−α)/α); the three metrics against α](./images/geomean_separation_I3.webp)
+![Fifty-one items at (i/50)^((2−α)/α); the four metrics against α](./images/geomean_separation_I3.webp)
 
 > Mean separation is mostly influenced by the total span of items (here: 1.0), much less so by the smaller distances (only the smallest distance between items counts twice instead of once towards the average), especially for larger k.
 
@@ -60,6 +60,6 @@ x_i &= (1 - \alpha)\,t_i + \alpha\,t_i^2 \quad \text{with } t_i = \frac{i - 25}{
 
 At $\alpha = 0$ the free items are uniformly spaced; a positive $\alpha$ crowds them towards the constrained group, a negative one away from it.
 
-![Fifty-one items: 26 forced between −0.25 and 0, 25 free between 0 and 1; the three metrics against α](./images/geomean_separation_II.webp)
+![Fifty-one items: 26 forced between −0.25 and 0, 25 free between 0 and 1; the four metrics against α](./images/geomean_separation_II.webp)
 
 > In constrained problems, where constraints can create regions with different item densities, geometric-mean separation still provides an incentive to drive the solution to uniform distributions within each region, leading to natural looking solutions that align well with expectations.

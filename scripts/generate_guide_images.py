@@ -1,7 +1,7 @@
 """Generate the figures of the guide pages under `docs/guides/`.
 
 The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
-cases as dot rows, and the three separation metrics against alpha below them; no solver is involved.
+cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
 The figures of `geomean_distance.md` plot the metric's level curves and one solved selection; only
 that one runs the solver. That selection is emitted as an interactive figure (an HTML fragment over a
@@ -31,7 +31,12 @@ IMAGES_DIR = REPO_ROOT / "docs" / "guides" / "images"
 SOLUTION_PATH = GENERATED_DIR / "geomean_distance_example_solution.json"
 
 # One color per metric, shared by every figure so the reader learns them once.
-METRIC_COLORS = {"min separation": "#4C72B0", "mean separation": "#DD8452", "geometric-mean separation": "#55A868"}
+METRIC_COLORS = {
+    "min separation": "#4C72B0",
+    "mean separation": "#DD8452",
+    "geometric-mean separation": "#55A868",
+    "harmonic-mean separation": "#8172B3",
+}
 CASE_LABELS = ("A", "B", "C")
 
 
@@ -47,12 +52,13 @@ def separations(positions: NDArray[np.float64]) -> NDArray[np.float64]:
 
 
 def metrics(positions: NDArray[np.float64]) -> dict[str, float]:
-    """Return the three separation-based diversity metrics of a one-dimensional selection."""
+    """Return the separation-based diversity metrics of a one-dimensional selection."""
     sep = separations(np.sort(positions))
     return {
         "min separation": float(sep.min()),
         "mean separation": float(sep.mean()),
         "geometric-mean separation": float(np.exp(np.mean(np.log(sep)))) if np.all(sep > 0) else 0.0,
+        "harmonic-mean separation": float(sep.size / np.sum(1.0 / sep)) if np.all(sep > 0) else 0.0,
     }
 
 
