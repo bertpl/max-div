@@ -15,11 +15,10 @@ and strategies read this type, never a bare `DiversityMetric`, because an object
 terms is not a single diversity metric.
 
 The default tie-breakers follow one rule for both kinds, over the diversity metrics of the terms (a
-simple objective counting as a single term), in order of precedence:
+simple objective counting as a single term):
 
-- a min-separation term calls for the approximate geomean and the non-zero fraction;
-- a term that goes to zero when one pair coincides calls for the non-zero fraction alone;
-- any other term calls for none.
+- the approximate geomean is needed when a term is min-separation;
+- the non-zero fraction is needed when a term is min-separation or goes to zero when one pair coincides.
 
 Each tie-breaker is computed over every distinct distance metric of the objective, as a hybrid when there are several.
 """
@@ -254,14 +253,20 @@ _ZERO_PINNED_METRICS = frozenset(
 
 def _tie_breaker_specs_for(diversity_metrics: tuple[DiversityMetric, ...]) -> tuple[_TieBreakerSpec, ...]:
     """Return the tie-breaker specs that the given term metrics call for, in ranking order; empty when none does."""
-    if DiversityMetric.MIN_SEPARATION in diversity_metrics:
-        # min-separation reacts only to the closest pair, so every swap that leaves that pair alone ties
-        return (_APPROX_GEOMEAN_TIE_BREAKER_SPEC, _NON_ZERO_FRAC_TIE_BREAKER_SPEC)
-    elif any(metric in _ZERO_PINNED_METRICS for metric in diversity_metrics):
-        # once more than one pair coincides, single swaps cannot raise the metric above zero
-        return (_NON_ZERO_FRAC_TIE_BREAKER_SPEC,)
-    else:
-        return ()
+    # min-separation reacts only to the closest pair, so every swap that leaves that pair alone ties
+    needs_approx_geomean_tie_breaker = DiversityMetric.MIN_SEPARATION in diversity_metrics
+    # once more than one pair coincides, single swaps cannot raise a zero-pinned metric above zero;
+    # a min-separation objective needs the non-zero fraction too, for when the approximate geomean
+    # has underflowed to zero
+    needs_non_zero_frac_tie_breaker = needs_approx_geomean_tie_breaker or any(
+        metric in _ZERO_PINNED_METRICS for metric in diversity_metrics
+    )
+    specs = []
+    if needs_approx_geomean_tie_breaker:
+        specs.append(_APPROX_GEOMEAN_TIE_BREAKER_SPEC)
+    if needs_non_zero_frac_tie_breaker:
+        specs.append(_NON_ZERO_FRAC_TIE_BREAKER_SPEC)
+    return tuple(specs)
 
 
 def _objective_over(

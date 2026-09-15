@@ -39,11 +39,10 @@ The solver automatically selects appropriate tie-breakers based on your chosen d
 | `GEOMEAN_SEPARATION`, `APPROX_GEOMEAN_SEPARATION`, `HARMONIC_MEAN_SEPARATION` | `NON_ZERO_SEPARATION_FRAC` | These means are zero if any separation is zero. When multiple separations are zero, single swaps can't improve the score. The non-zero fraction tie-breaker guides the solver toward eliminating zero-distance items. |
 | `MEAN_SEPARATION`, `MEAN_PAIRWISE_DISTANCE` | *(none)* | These means rarely produce ties. |
 
-A [hybrid diversity metric](../reference/metrics/HybridDiversityMetric.md) follows the same rule over its terms' metrics, in order of precedence:
+A [hybrid diversity metric](../reference/metrics/HybridDiversityMetric.md) follows the same rule over its terms' metrics:
 
-- any min-separation term brings both tie-breakers;
-- otherwise, any term that is zero when any separation is zero brings the non-zero fraction;
-- otherwise, there are none.
+- the approximate geomean is needed when any term is min-separation;
+- the non-zero fraction is needed when any term is min-separation or is zero when any separation is zero.
 
 Each tie-breaker then applies to every distance that the hybrid's terms use, aggregated over those distances by its own mean:
 
