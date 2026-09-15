@@ -123,8 +123,7 @@ def render_example(
             linewidths=1.8,
             zorder=3,
         )
-        pad = axis_range[1] ** 0.06 if log_scale else 0.02 * (axis_range[1] - axis_range[0])
-        left, right = (axis_range[0] / pad, axis_range[1] * pad) if log_scale else (axis_range[0] - pad, axis_range[1] + pad)
+        left, right = _row_label_positions(axis_range, log_scale)
         ax_cases.text(left, y, f"Case {label}", ha="right", va="center")
         ax_cases.text(right, y, f"\u03b1 = {alpha:g}", ha="left", va="center")  # alpha
     # Faint labeled verticals at position_marks let a position be read across the rows.
@@ -135,10 +134,7 @@ def render_example(
         position_marks = tuple(np.arange(np.ceil(axis_range[0]), axis_range[1] + 1e-9) + 0.0)  # + 0.0 turns a -0 into 0
     for tick in position_marks:
         ax_cases.vlines(tick, -0.6, y_top, color="#D8D8D8", linewidth=0.8, linestyle="--", zorder=0)
-        if log_scale:
-            label = f"$10^{{{int(np.log10(tick))}}}$"
-        else:
-            label = f"{tick:.1f}" if float(tick).is_integer() else f"{tick:g}"
+        label = _position_mark_label(tick, log_scale)
         ax_cases.text(tick, y_top, label, ha="center", va="bottom", color="#888888", fontsize="small")
     ax_cases.set_xlim(*axis_range)
     ax_cases.set_ylim(-0.6, y_top)
@@ -168,6 +164,26 @@ def render_example(
     save_webp(fig, IMAGES_DIR / f"{name}.webp")
 
 
+def _row_label_positions(axis_range: tuple[float, float], log_scale: bool) -> tuple[float, float]:
+    """Return the x positions of a dot row's left and right labels, a small pad outside the axis range."""
+    if log_scale:
+        pad = axis_range[1] ** 0.06
+        return axis_range[0] / pad, axis_range[1] * pad
+    else:
+        pad = 0.02 * (axis_range[1] - axis_range[0])
+        return axis_range[0] - pad, axis_range[1] + pad
+
+
+def _position_mark_label(tick: float, log_scale: bool) -> str:
+    """Return a position mark's label: a power of ten on a logarithmic axis, else the number itself."""
+    if log_scale:
+        return f"$10^{{{int(np.log10(tick))}}}$"
+    elif float(tick).is_integer():
+        return f"{tick:.1f}"
+    else:
+        return f"{tick:g}"
+
+
 # ==================================================================================================
 #  Examples
 # ==================================================================================================
@@ -189,7 +205,7 @@ def layout_power_spacing(alpha: float) -> NDArray[np.float64]:
 
 
 def layout_decades(alpha: float) -> NDArray[np.float64]:
-    """Return 11 items at 1, 10, ..., 1e10; alpha > 0 grows the largest gap by 10**alpha, alpha < 0 shrinks the smallest by it."""
+    """Return 11 items a decade apart; alpha > 0 grows the largest gap 10**alpha-fold, alpha < 0 shrinks the least."""
     positions = 10.0 ** np.arange(11, dtype=np.float64)
     if alpha > 0:
         positions[-1] *= 10.0**alpha
