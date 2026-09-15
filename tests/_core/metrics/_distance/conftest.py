@@ -13,6 +13,7 @@ NAMED_METRICS = (
     DistanceMetric.linf_chebyshev(),
     DistanceMetric.cosine(),
     DistanceMetric.geometric_mean(),
+    DistanceMetric.lminusinf_min_coordinate(),
     DistanceMetric.along_axis(1),
 )
 

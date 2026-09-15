@@ -14,6 +14,7 @@ _FACTORY_METRICS = (
     DistanceMetric.linf_chebyshev(),
     DistanceMetric.cosine(),
     DistanceMetric.geometric_mean(),
+    DistanceMetric.lminusinf_min_coordinate(),
     DistanceMetric.along_axis(0),
 )
 
@@ -121,6 +122,7 @@ def test_a_metric_rebuilds_from_its_fields(metric: DistanceMetric):
         (DistanceMetric.linf_chebyshev(), "L∞"),
         (DistanceMetric.cosine(), "cosine"),
         (DistanceMetric.geometric_mean(), "geomean"),
+        (DistanceMetric.lminusinf_min_coordinate(), "L-∞"),
         (DistanceMetric.along_axis(2), "axis 2"),
         (DistanceMetric.minkowski(3), "L3"),
         (DistanceMetric.minkowski(3, root=False), "L3-powered"),

@@ -25,6 +25,7 @@ METRIC_KIND_MINKOWSKI_P0125 = 11
 METRIC_KIND_MINKOWSKI_P0125_POWERED = 12
 METRIC_KIND_GEOMEAN = 13
 METRIC_KIND_ALONG_AXIS = 14
+METRIC_KIND_LMINUSINF = 15
 
 # `__repr__` looks up each kind's factory-method name here; the Minkowski kinds render as a
 # `minkowski(...)` call and the along-axis kind as an `along_axis(...)` call instead.
@@ -35,6 +36,7 @@ _FACTORY_NAMES = {
     METRIC_KIND_COS: "cosine",
     METRIC_KIND_LINF: "linf_chebyshev",
     METRIC_KIND_GEOMEAN: "geometric_mean",
+    METRIC_KIND_LMINUSINF: "lminusinf_min_coordinate",
 }
 
 # `label` looks up each kind listed here; along-axis and the Minkowski kinds build theirs from the
@@ -47,6 +49,7 @@ _KIND_LABELS = {
     METRIC_KIND_COS: "cosine",
     METRIC_KIND_LINF: "L∞",
     METRIC_KIND_GEOMEAN: "geomean",
+    METRIC_KIND_LMINUSINF: "L-∞",
 }
 
 # `_IMPLIED_P` gives the p each specialized Minkowski kind implies, for `__repr__`; a metric of
@@ -138,6 +141,20 @@ class DistanceMetric(NamedTuple):
         inequality fails); the solver relies on neither.  It costs one ``log`` per dimension.
         """
         return cls(kind=METRIC_KIND_GEOMEAN)
+
+    @classmethod
+    def lminusinf_min_coordinate(cls) -> "DistanceMetric":
+        """Return the L-∞ distance metric: ``min_i |x_i - y_i|``, the smallest coordinate difference.
+
+        It is the p → -∞ end of the power-mean family whose p → +∞ end is `linf_chebyshev()`, and
+        the exact form that `geometric_mean()` smooths: two points are as far apart as their
+        closest coordinate projection, so a selection kept apart under it is spread in every
+        coordinate projection.  Two points that share any one coordinate are at distance zero.
+
+        It is not a metric in the mathematical sense (distinct points can be at distance zero,
+        and the triangle inequality fails); the solver relies on neither.
+        """
+        return cls(kind=METRIC_KIND_LMINUSINF)
 
     @classmethod
     def along_axis(cls, axis: int) -> "DistanceMetric":

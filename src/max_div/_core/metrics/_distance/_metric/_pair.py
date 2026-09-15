@@ -18,6 +18,7 @@ from ._distance_metric import (
     METRIC_KIND_L2,
     METRIC_KIND_L2S,
     METRIC_KIND_LINF,
+    METRIC_KIND_LMINUSINF,
     METRIC_KIND_MINKOWSKI,
     METRIC_KIND_MINKOWSKI_P0125,
     METRIC_KIND_MINKOWSKI_P025,
@@ -71,6 +72,17 @@ def _linf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int |
     for c in range(vectors.shape[1]):
         diff = abs(np.float64(vectors[i, c]) - np.float64(vectors[j, c]))
         if diff > acc:
+            acc = diff
+    return acc
+
+
+@numba.njit("float64(float32[:, ::1], int64, int64)", inline="always", cache=True, fastmath={"reassoc", "contract"})
+def _lminusinf_pair(vectors: NDArray[np.float32], i: int | np.signedinteger, j: int | np.signedinteger) -> np.float64:
+    """Return the L-∞ distance between vectors i and j: the smallest absolute coordinate difference."""
+    acc = np.float64(np.inf)
+    for c in range(vectors.shape[1]):
+        diff = abs(np.float64(vectors[i, c]) - np.float64(vectors[j, c]))
+        if diff < acc:
             acc = diff
     return acc
 
@@ -165,6 +177,8 @@ def _metric_pair(  # noqa: C901 -- flat dispatch, one arm per kind: complexity h
         return np.float32(_l2sq_pair(vectors, i, j))
     if metric_kind == METRIC_KIND_LINF:
         return np.float32(_linf_pair(vectors, i, j))
+    if metric_kind == METRIC_KIND_LMINUSINF:
+        return np.float32(_lminusinf_pair(vectors, i, j))
     if metric_kind == METRIC_KIND_COS:
         return np.float32(0.5 * _l2sq_pair(vectors, i, j))  # cosine: rows are pre-normalized
     if metric_kind == METRIC_KIND_GEOMEAN:
