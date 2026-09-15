@@ -216,9 +216,10 @@ groups:
         label: combine several diversity terms over different distances
         hero: true
         definition: >-
-          Optimizes a combination of several diversity terms at once, each term a diversity
-          objective measured under its own distance — for example one term measured under the
-          full-dimensional distance combined with terms each measured under a single coordinate.
+          Optimizes a user-configurable sum or combination of several of the tool's built-in
+          diversity objectives at once — for example a full-space objective combined with
+          per-coordinate ones. Assembling such a combination by hand, from objective terms the tool
+          does not provide built in, counts as reachable, not built in.
       - key: optimality_proofs
         hero_label: optimality proofs
         label: certified proofs that a selection is optimal

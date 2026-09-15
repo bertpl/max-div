@@ -39,7 +39,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-6] |
 | diversity objectives · maximize the harmonic-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-6] |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-full">✔</span> | [^apricot-select-7] |
-| diversity objectives · combine several diversity terms over different distances | <span class="mark mark-none">—</span> | [^apricot-select-6] |
+| diversity objectives · combine several diversity terms over different distances | <span class="mark mark-full">✔</span> | [^apricot-select-8] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
@@ -47,8 +47,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as an iteration count | <span class="mark mark-none">—</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-none">—</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^apricot-select-8] |
-| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^apricot-select-9] |
+| time budget · the answer improves when given more budget | <span class="mark mark-none">—</span> | [^apricot-select-9] |
+| multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> | [^apricot-select-10] |
 | multi-worker · parallel workers share information mid-run | <span class="mark mark-none">—</span> |  |
 | solver scaling · largest n within memory | n = 20k | |
 | solver scaling · largest n within the time budget | n = 50k | |
@@ -64,5 +64,6 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^apricot-select-5]: A precomputed similarity matrix is a first-class input, so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
 [^apricot-select-6]: Submodular coverage objectives, not dispersion ones. Nothing here maximizes a minimum separation, and no reformulation makes facility location do so.
 [^apricot-select-7]: Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
-[^apricot-select-8]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
-[^apricot-select-9]: The optimizers accept an n_jobs argument, but it is unused: the greedy selection runs single-threaded.
+[^apricot-select-8]: MixtureSelection optimizes a user-configurable weighted sum of several built-in submodular objectives, facility location over more than one precomputed matrix included.
+[^apricot-select-9]: A single construction pass, so there is no budget to spend: the answer is whatever one greedy sweep produces, and waiting longer does not change it.
+[^apricot-select-10]: The optimizers accept an n_jobs argument, but it is unused: the greedy selection runs single-threaded.

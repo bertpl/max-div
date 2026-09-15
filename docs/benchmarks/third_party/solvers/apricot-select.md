@@ -70,8 +70,11 @@ solver:
         text: >-
           Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
     objective.hybrid:
-      mark: none
-      note: *coverage_not_dispersion
+      mark: full
+      note:
+        text: >-
+          MixtureSelection optimizes a user-configurable weighted sum of several built-in
+          submodular objectives, facility location over more than one precomputed matrix included.
     objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}
