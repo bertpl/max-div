@@ -11,7 +11,7 @@
 | Strongly penalizes near-duplicate items (I.2) | ✅ | ❌ | ✅ | ✅ |
 | Steers towards uniform spacing, at any k (I.3) | ✅ | ❌ | ✅ | ✅ |
 | Reacts to separations of every order of magnitude (I.4) | ❌ | ❌ | ✅ | ❌ |
-| Cheap to compute (I.5) | ✅ | ✅ | ❌ | ✅ |
+| Cheap to compute (I.5) | ~ | ✅ | ❌ | ✅ |
 
 ### I.1. Minimum separation only measures the closest item pair
 
@@ -61,13 +61,22 @@ Each metric that is not the geometric mean is blind on one side:
 - **min separation** and **harmonic-mean separation** follow the smallest separation and do not react when the largest one grows tenfold: the harmonic mean is the count over the sum of reciprocals, and the smallest separations own that sum;
 - **geometric-mean separation** reacts on both sides, because a tenfold change of any one separation moves the mean of the logarithms by the same amount whichever separation it is.
 
-> When separations span orders of magnitude, as constraints often induce (section II), only the geometric mean keeps an incentive on every part of the selection. The harmonic mean shares the geometric mean's other strengths, but here it behaves like the minimum.
+> When separations span orders of magnitude, as constraints can induce (section II), only the geometric mean keeps an incentive on every part of the selection. The harmonic mean shares the geometric mean's other strengths, but here it behaves like the minimum.
 
 ### I.5. Computational cost
 
-The [diversity-metric timing benchmark](../benchmarks/internal/bm_diversity_metrics.md) times each metric on one separation vector. The minimum, the arithmetic mean and the harmonic mean cost about the same at every size: a comparison, an addition or a division per item. The geometric mean takes a logarithm per item, which costs about 3× as much at $k = 100$ and about 11× at $k = 1{,}000$; its approximation, `APPROX_GEOMEAN_SEPARATION`, cuts that to about 1.3× and 2.5×. The metric is evaluated once per solver iteration, so the difference matters most at large $k$.
+The [diversity-metric timing benchmark](../benchmarks/internal/bm_diversity_metrics.md) times each metric on one separation vector; the geometric mean of its timings over sizes 10 to 20,000:
 
-## II. Geometric-mean separation & constrained problems
+| metric | time per evaluation | relative | considered fast |
+|---|---|---|:---:|
+| mean separation | 0.20 µs | 1.0× | ✅ |
+| harmonic-mean separation | 0.23 µs | 1.1× | ✅ |
+| min separation | 0.58 µs | 2.9× | ~ |
+| geometric-mean separation | 1.45 µs | 7.2× | ❌ |
+
+Min separation is slower than its simplicity suggests: taking a minimum is an implicitly conditional operation, which is harder to vectorize than a sum.
+
+## II. Diversity metrics & constrained problems
 
 All these properties come together when dealing with constrained problems, of which the following illustration is a minimal example.
 
@@ -82,4 +91,4 @@ At $\alpha = 0$ the free items are uniformly spaced; a positive $\alpha$ crowds 
 
 ![Fifty-one items: 26 forced between −0.25 and 0, 25 free between 0 and 1; the four metrics against α](./images/geomean_separation_II.webp)
 
-> In constrained problems, where constraints can create regions with different item densities, geometric-mean separation still provides an incentive to drive the solution to uniform distributions within each region, leading to natural looking solutions that align well with expectations.
+> In constrained problems, where constraints can create regions with different item densities, both geometric-mean and harmonic-mean separation keep an incentive to drive the solution to uniform distributions within each region, leading to natural looking solutions that align well with expectations. Geometric-mean separation is the default because it also copes with separations of different orders of magnitude (I.4): it behaves as one would intuitively expect under a wider range of conditions.

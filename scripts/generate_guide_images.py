@@ -418,12 +418,12 @@ def main() -> None:
     render_example(
         "geomean_separation_I4",
         layout_decades,
-        case_alphas=(-1.0, 0.0, 1.0),
+        case_alphas=(-0.5, 0.0, 1.0),
         alpha_range=(-1.0, 1.0),
-        axis_range=(0.05, 2e11),
-        legend={"loc": "upper left"},
+        axis_range=(0.3, 1e12),
+        legend={"loc": "lower right"},
         highlight=(0, 10),
-        position_marks=(1.0, 1e5, 1e10),
+        position_marks=tuple(10.0**n for n in range(12)),
         log_scale=True,
     )
     render_example(
