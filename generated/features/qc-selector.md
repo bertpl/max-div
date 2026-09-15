@@ -28,10 +28,10 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-full">✔</span> | [^qc-selector-1] |
-| distance metrics · Minkowski distance | <span class="mark mark-full">✔</span> | [^qc-selector-2] |
-| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^qc-selector-3] |
-| distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^qc-selector-4] |
-| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^qc-selector-5] |
+| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^qc-selector-2] |
+| distance metrics · Minkowski distance | <span class="mark mark-full">✔</span> | [^qc-selector-3] |
+| distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^qc-selector-4] |
+| distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^qc-selector-5] |
 | distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^qc-selector-6] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^qc-selector-7] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-full">✔</span> |  |
@@ -58,10 +58,10 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^qc-selector-1]: Available through the same Minkowski-exponent parameter that provides L1: its radius-based methods forward `p` to scipy, which treats p=∞ as the Chebyshev norm; the greedy pickers accept any metric as a precomputed distance matrix or callable.
-[^qc-selector-2]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
-[^qc-selector-3]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
-[^qc-selector-4]: The Minkowski exponent cannot express the geometric mean (the p → 0 limit of the power mean, which divides the sum by d before the root — not a Minkowski form), so the geometric mean is reachable only as a precomputed distance matrix.
-[^qc-selector-5]: The Minkowski exponent is positive, so it cannot express the L−∞ distance (the p → −∞ limit of the power mean); it is reachable only as a precomputed distance matrix.
+[^qc-selector-2]: The Minkowski exponent is positive, so it cannot express the L−∞ distance (the p → −∞ limit of the power mean); it is reachable only as a precomputed distance matrix.
+[^qc-selector-3]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.
+[^qc-selector-4]: Reachable by L2-normalizing the vectors first: on the unit sphere, cosine distance is a monotone function of Euclidean distance, so a Euclidean picker returns the same ordering.
+[^qc-selector-5]: The Minkowski exponent cannot express the geometric mean (the p → 0 limit of the power mean, which divides the sum by d before the root — not a Minkowski form), so the geometric mean is reachable only as a precomputed distance matrix.
 [^qc-selector-6]: Reachable by handing the tool that one coordinate as one-dimensional input.
 [^qc-selector-7]: A precomputed distance matrix is accepted directly, so any metric you can compute is usable.
 [^qc-selector-8]: Its diversity measures are computed over the whole selection rather than over nearest-neighbor pairs, so the nearest-neighbor family is absent.

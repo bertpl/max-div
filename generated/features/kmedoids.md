@@ -28,10 +28,10 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
+| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^kmedoids-2] |
 | distance metrics · Minkowski distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · cosine distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^kmedoids-2] |
-| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^kmedoids-2] |
 | distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^kmedoids-3] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^kmedoids-4] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |

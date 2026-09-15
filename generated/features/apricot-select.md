@@ -28,10 +28,10 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-full">✔</span> |  |
-| distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^apricot-select-2] |
+| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^apricot-select-2] |
+| distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^apricot-select-3] |
 | distance metrics · cosine distance | <span class="mark mark-full">✔</span> |  |
-| distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^apricot-select-3] |
-| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^apricot-select-3] |
+| distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^apricot-select-2] |
 | distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^apricot-select-4] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^apricot-select-5] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^apricot-select-6] |
@@ -58,8 +58,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 </div>
 
 [^apricot-select-1]: The PyPI release is from 2021, but the project is not abandoned: its repository was last updated in November 2025. Installing from PyPI gets you considerably older code than the repository holds. [Source](https://github.com/jmschrei/apricot)
-[^apricot-select-2]: The metric argument is a name forwarded to scikit-learn without the power parameter, so a caller-chosen p is reachable only through the precomputed-similarity input.
-[^apricot-select-3]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed similarity matrix.
+[^apricot-select-2]: Not among the metric names scikit-learn understands, so it is reachable only as a precomputed similarity matrix.
+[^apricot-select-3]: The metric argument is a name forwarded to scikit-learn without the power parameter, so a caller-chosen p is reachable only through the precomputed-similarity input.
 [^apricot-select-4]: Reachable by handing the tool that one coordinate as one-dimensional input.
 [^apricot-select-5]: A precomputed similarity matrix is a first-class input, so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
 [^apricot-select-6]: Submodular coverage objectives, not dispersion ones. Nothing here maximizes a minimum separation, and no reformulation makes facility location do so.
