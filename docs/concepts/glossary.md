@@ -13,6 +13,7 @@ Terms used across the documentation, defined once. Each entry carries a stable a
 [Feasibility](#feasibility) ·
 [Geometric-mean separation](#geometric-mean-separation) ·
 [Guarantee type](#guarantee-type) ·
+[Harmonic-mean separation](#harmonic-mean-separation) ·
 [Item](#item) ·
 [Local search](#local-search) ·
 [Max-min](#max-min) ·
