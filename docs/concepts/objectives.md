@@ -22,6 +22,7 @@ diversity-maximizing subset-selection problems), not as a pointer to the MaxSum 
 | `MIN_SEPARATION` | **p-dispersion**, Max-Min diversity, *remote-edge* | NN-separation |
 | `MEAN_SEPARATION` | **Max-SumMin** dispersion, *remote-pseudoforest*, "p-defense-sum" | NN-separation |
 | `GEOMEAN_SEPARATION` (and its `APPROX_` variant) | no established name -- see below | NN-separation |
+| `HARMONIC_MEAN_SEPARATION` | no established name; the harmonic-mean counterpart of `GEOMEAN_SEPARATION` | NN-separation |
 | `MEAN_PAIRWISE_DISTANCE` | **MaxSum diversity / classical MDP**, *remote-clique* | all-pairs |
 
 ### `MIN_SEPARATION` -- p-dispersion (Max-Min)

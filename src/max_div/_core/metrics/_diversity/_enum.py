@@ -39,6 +39,9 @@ class DiversityMetric(StrEnum):
                                       items it is a large negative finite value where GEOMEAN_SEPARATION is -inf,
                                       and both rank such a selection at the bottom
                                           (uses faster, but still smooth approximations of log(.) and exp(.))
+        - HARMONIC_MEAN_SEPARATION:   Harmonic mean separation of all selected items; between the geometric mean
+                                      and the minimum in how hard it penalizes close pairs, zero as soon as one
+                                      separation is zero, and computed exactly (no logarithm or exponential)
         - NON_ZERO_SEPARATION_FRAC:   Fraction of separation values that are non-zero
         - MEAN_PAIRWISE_DISTANCE:     Mean distance over all pairs of selected items
                                           (the classical max-sum diversity objective)
@@ -48,6 +51,7 @@ class DiversityMetric(StrEnum):
     MEAN_SEPARATION = "MEAN_SEPARATION"
     GEOMEAN_SEPARATION = "GEOMEAN_SEPARATION"
     APPROX_GEOMEAN_SEPARATION = "APPROX_GEOMEAN_SEPARATION"
+    HARMONIC_MEAN_SEPARATION = "HARMONIC_MEAN_SEPARATION"
     NON_ZERO_SEPARATION_FRAC = "NON_ZERO_SEPARATION_FRAC"
     MEAN_PAIRWISE_DISTANCE = "MEAN_PAIRWISE_DISTANCE"
 
@@ -76,6 +80,7 @@ class DiversityMetric(StrEnum):
         from ._numba import (
             approx_geomean_separation,
             geomean_separation,
+            harmonic_mean_separation,
             mean_pairwise_distance,
             mean_separation,
             min_separation,
@@ -87,6 +92,7 @@ class DiversityMetric(StrEnum):
             DiversityMetric.MEAN_SEPARATION: mean_separation,
             DiversityMetric.GEOMEAN_SEPARATION: geomean_separation,
             DiversityMetric.APPROX_GEOMEAN_SEPARATION: approx_geomean_separation,
+            DiversityMetric.HARMONIC_MEAN_SEPARATION: harmonic_mean_separation,
             DiversityMetric.NON_ZERO_SEPARATION_FRAC: non_zero_separation_frac,
             DiversityMetric.MEAN_PAIRWISE_DISTANCE: mean_pairwise_distance,
         }

@@ -4,22 +4,16 @@ from tqdm import tqdm
 from max_div._core._cli.benchmarks._helpers.speed_scaling import SpeedParam
 from max_div._core._markdown import Report, Table, TableAggregationType, TableElement, TableTimeElapsed, h2
 from max_div._core._utils import benchmark, stdout_to_file
-from max_div._core.metrics import DiversityMetric
+from max_div._core.metrics import DiversityContributionFamily, DiversityMetric
 
 from .run_settings import N_BENCHMARK, N_WARMUP, TIME_PER_RUN_SEC
 
 
 def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file: bool = False) -> None:
-    """Benchmarks the 4 DiversityMetric flavors from `max_div.solver._diversity`.
+    """Benchmarks every separation-family `DiversityMetric` across sizes of the separation vector.
 
-    Tests all 4 metric types across different sizes of separation vectors:
-     * `min_separation`
-     * `mean_separation`
-     * `geomean_separation`
-     * `approx_geomean_separation`
-     * `non_zero_separation_frac`
-
-    Vector sizes tested: [2, 4, 8, ..., 1024, 2048, 4096]
+    The metrics come from the enum, so a new separation-family member gets its column without an edit
+    here; the separation-vector sizes tested are capped by `speed`.
 
     Args:
         speed: value in [0.0, 1.0] (default=0.0); 0.0=accurate but slow; 1.0=fast but less accurate
@@ -36,24 +30,11 @@ def benchmark_diversity_metrics(speed: float = 0.0, markdown: bool = False, file
 
     # --- create diversity metrics ---------------
     metrics = [
-        DiversityMetric.MIN_SEPARATION,
-        DiversityMetric.MEAN_SEPARATION,
-        DiversityMetric.GEOMEAN_SEPARATION,
-        DiversityMetric.APPROX_GEOMEAN_SEPARATION,
-        DiversityMetric.NON_ZERO_SEPARATION_FRAC,
+        metric for metric in DiversityMetric if metric.contribution_family == DiversityContributionFamily.SEPARATION
     ]
 
     # --- benchmark ------------------------------
-    table = Table(
-        headers=[
-            "`size`",
-            "`min_separation`",
-            "`mean_separation`",
-            "`geomean_separation`",
-            "`approx_geomean_separation`",
-            "`non_zero_separation_frac`",
-        ]
-    )
+    table = Table(headers=["`size`", *(f"`{metric.name.lower()}`" for metric in metrics)])
     sizes = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
     sizes = [size for size in sizes if size <= max_size]
 
