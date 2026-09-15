@@ -190,7 +190,7 @@ problem = MaxDivProblem.new(
 | `MIN_SEPARATION` | Minimum separation (= p-dispersion) | When the closest pair matters most |
 | `MEAN_SEPARATION` | Arithmetic mean of all separations | When total spread is the objective |
 | `APPROX_GEOMEAN_SEPARATION` | Fast approximation of `GEOMEAN_SEPARATION` | Large-scale problems where speed matters |
-| `HARMONIC_MEAN_SEPARATION` | Harmonic mean of all separations | When a close pair should weigh more than under the geomean, without the many equal scores the minimum produces |
+| `HARMONIC_MEAN_SEPARATION` | Harmonic mean of all separations | When a close pair should weigh more than under the geomean, without the many equal scores that the minimum produces |
 
 
 ## Solver Presets

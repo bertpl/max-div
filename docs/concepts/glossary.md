@@ -125,7 +125,7 @@ this on four small examples.
 
 Maximize the *harmonic mean* of the selected items' [separations](#separation): their count over
 the sum of their reciprocals. It sits between [geometric-mean separation](#geometric-mean-separation)
-and [max-min](#max-min) in how hard a close pair pulls the score down: every item still counts, as
+and [max-min](#max-min) in how much a close pair lowers the score: every item still counts, as
 under the geometric mean, but a small separation weighs more, and one zero separation makes the
 score zero.
 
