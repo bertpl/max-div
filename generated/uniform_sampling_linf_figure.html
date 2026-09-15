@@ -1,0 +1,552 @@
+<div class="usx-figure">
+<svg class="usx" viewBox="0 0 624 685" xmlns="http://www.w3.org/2000/svg" role="img" data-objective="linf" data-labels='{"linf":"L\u2212\u221e distance","l2":"L2 distance","x":"x distance","y":"y distance"}' data-ring="1.7" data-reach="0.7" data-center="0.3">
+<title>Selection maximizing diversity under the L−∞ distance</title>
+<desc>Ten thousand gray points in the unit square with the hundred selected ones in red, and the selection's x and y values as rug marks along the bottom and left edges</desc>
+<defs><clipPath id="usx-square" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="1" height="1"/></clipPath></defs>
+<rect x="0" y="0" width="624" height="685" fill="#ffffff"/>
+<image href="../images/uniform_sampling_population.webp" x="75.78" y="87.44" width="529.63" height="529.63" preserveAspectRatio="none"/>
+<path class="usx-spine" d="M44.0,8.0V648.9H616.0"/>
+<line class="usx-tick" x1="75.8" y1="648.9" x2="75.8" y2="652.9"/>
+<text class="usx-label" x="75.8" y="665.9" text-anchor="middle">0</text>
+<line class="usx-tick" x1="44.0" y1="617.1" x2="40.0" y2="617.1"/>
+<text class="usx-label" x="37.0" y="617.1" text-anchor="end" dominant-baseline="middle">0</text>
+<line class="usx-tick" x1="181.7" y1="648.9" x2="181.7" y2="652.9"/>
+<text class="usx-label" x="181.7" y="665.9" text-anchor="middle">0.2</text>
+<line class="usx-tick" x1="44.0" y1="511.1" x2="40.0" y2="511.1"/>
+<text class="usx-label" x="37.0" y="511.1" text-anchor="end" dominant-baseline="middle">0.2</text>
+<line class="usx-tick" x1="287.6" y1="648.9" x2="287.6" y2="652.9"/>
+<text class="usx-label" x="287.6" y="665.9" text-anchor="middle">0.4</text>
+<line class="usx-tick" x1="44.0" y1="405.2" x2="40.0" y2="405.2"/>
+<text class="usx-label" x="37.0" y="405.2" text-anchor="end" dominant-baseline="middle">0.4</text>
+<line class="usx-tick" x1="393.6" y1="648.9" x2="393.6" y2="652.9"/>
+<text class="usx-label" x="393.6" y="665.9" text-anchor="middle">0.6</text>
+<line class="usx-tick" x1="44.0" y1="299.3" x2="40.0" y2="299.3"/>
+<text class="usx-label" x="37.0" y="299.3" text-anchor="end" dominant-baseline="middle">0.6</text>
+<line class="usx-tick" x1="499.5" y1="648.9" x2="499.5" y2="652.9"/>
+<text class="usx-label" x="499.5" y="665.9" text-anchor="middle">0.8</text>
+<line class="usx-tick" x1="44.0" y1="193.4" x2="40.0" y2="193.4"/>
+<text class="usx-label" x="37.0" y="193.4" text-anchor="end" dominant-baseline="middle">0.8</text>
+<line class="usx-tick" x1="605.4" y1="648.9" x2="605.4" y2="652.9"/>
+<text class="usx-label" x="605.4" y="665.9" text-anchor="middle">1</text>
+<line class="usx-tick" x1="44.0" y1="87.4" x2="40.0" y2="87.4"/>
+<text class="usx-label" x="37.0" y="87.4" text-anchor="end" dominant-baseline="middle">1</text>
+<rect class="usx-legend" x="162.0" y="14.0" width="448" height="70"/>
+<circle cx="176.0" cy="31.0" r="1.5" fill="#B0B0B0"/>
+<text class="usx-label" x="188.0" y="31.0" dominant-baseline="middle">population (n = 10,000)</text>
+<circle cx="176.0" cy="49.0" r="4.5" fill="#EE1111"/>
+<text class="usx-label" x="188.0" y="49.0" dominant-baseline="middle">selection (k = 100)</text>
+<circle cx="176.0" cy="67.0" r="4.5" fill="#4C72B0"/>
+<text class="usx-label" x="188.0" y="67.0" dominant-baseline="middle">nearest neighbor, L−∞ distance</text>
+<circle class="usx-mark" cx="426.0" cy="31.0" r="5.5"/><circle class="usx-glyph-dot" cx="426.0" cy="31.0" r="1.6"/>
+<text class="usx-label" x="438.0" y="31.0" dominant-baseline="middle">nearest neighbor, L2 distance</text>
+<circle class="usx-mark" cx="426.0" cy="49.0" r="5.5"/><path class="usx-glyph" d="M426.0,45.1L426.0,52.9"/>
+<text class="usx-label" x="438.0" y="49.0" dominant-baseline="middle">nearest neighbor, x distance</text>
+<circle class="usx-mark" cx="426.0" cy="67.0" r="5.5"/><path class="usx-glyph" d="M422.1,67.0L429.9,67.0"/>
+<text class="usx-label" x="438.0" y="67.0" dominant-baseline="middle">nearest neighbor, y distance</text>
+<g class="usx-data" transform="translate(75.78,617.07) scale(529.630,-529.630)">
+<g class="usx-hover" clip-path="url(#usx-square)"></g>
+<line class="usx-rug usx-rug-x" data-i="0" x1="0.55485" y1="-0.018" x2="0.55485" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="0" x1="-0.018" y1="0.37092" x2="-0.042" y2="0.37092" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="1" x1="0.74679" y1="-0.018" x2="0.74679" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="1" x1="-0.018" y1="0.26246" x2="-0.042" y2="0.26246" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="2" x1="0.01230" y1="-0.018" x2="0.01230" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="2" x1="-0.018" y1="0.45432" x2="-0.042" y2="0.45432" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="3" x1="0.98020" y1="-0.018" x2="0.98020" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="3" x1="-0.018" y1="0.61154" x2="-0.042" y2="0.61154" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="4" x1="0.33074" y1="-0.018" x2="0.33074" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="4" x1="-0.018" y1="0.93038" x2="-0.042" y2="0.93038" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="5" x1="0.41927" y1="-0.018" x2="0.41927" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="5" x1="-0.018" y1="0.51458" x2="-0.042" y2="0.51458" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="6" x1="0.40914" y1="-0.018" x2="0.40914" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="6" x1="-0.018" y1="0.60177" x2="-0.042" y2="0.60177" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="7" x1="0.66000" y1="-0.018" x2="0.66000" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="7" x1="-0.018" y1="0.30248" x2="-0.042" y2="0.30248" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="8" x1="0.32049" y1="-0.018" x2="0.32049" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="8" x1="-0.018" y1="0.97613" x2="-0.042" y2="0.97613" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="9" x1="0.39968" y1="-0.018" x2="0.39968" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="9" x1="-0.018" y1="0.68543" x2="-0.042" y2="0.68543" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="10" x1="0.97088" y1="-0.018" x2="0.97088" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="10" x1="-0.018" y1="0.38073" x2="-0.042" y2="0.38073" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="11" x1="0.67185" y1="-0.018" x2="0.67185" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="11" x1="-0.018" y1="0.96059" x2="-0.042" y2="0.96059" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="12" x1="0.14743" y1="-0.018" x2="0.14743" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="12" x1="-0.018" y1="0.27343" x2="-0.042" y2="0.27343" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="13" x1="0.44285" y1="-0.018" x2="0.44285" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="13" x1="-0.018" y1="0.07180" x2="-0.042" y2="0.07180" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="14" x1="0.60620" y1="-0.018" x2="0.60620" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="14" x1="-0.018" y1="0.10119" x2="-0.042" y2="0.10119" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="15" x1="0.03447" y1="-0.018" x2="0.03447" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="15" x1="-0.018" y1="0.70886" x2="-0.042" y2="0.70886" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="16" x1="0.15703" y1="-0.018" x2="0.15703" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="16" x1="-0.018" y1="0.01181" x2="-0.042" y2="0.01181" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="17" x1="0.94815" y1="-0.018" x2="0.94815" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="17" x1="-0.018" y1="0.09156" x2="-0.042" y2="0.09156" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="18" x1="0.89825" y1="-0.018" x2="0.89825" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="18" x1="-0.018" y1="0.56297" x2="-0.042" y2="0.56297" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="19" x1="0.34014" y1="-0.018" x2="0.34014" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="19" x1="-0.018" y1="0.82177" x2="-0.042" y2="0.82177" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="20" x1="0.29733" y1="-0.018" x2="0.29733" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="20" x1="-0.018" y1="0.21019" x2="-0.042" y2="0.21019" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="21" x1="0.23627" y1="-0.018" x2="0.23627" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="21" x1="-0.018" y1="0.28331" x2="-0.042" y2="0.28331" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="22" x1="0.82424" y1="-0.018" x2="0.82424" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="22" x1="-0.018" y1="0.55083" x2="-0.042" y2="0.55083" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="23" x1="0.10927" y1="-0.018" x2="0.10927" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="23" x1="-0.018" y1="0.62285" x2="-0.042" y2="0.62285" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="24" x1="0.84441" y1="-0.018" x2="0.84441" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="24" x1="-0.018" y1="0.80265" x2="-0.042" y2="0.80265" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="25" x1="0.59518" y1="-0.018" x2="0.59518" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="25" x1="-0.018" y1="0.78309" x2="-0.042" y2="0.78309" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="26" x1="0.22779" y1="-0.018" x2="0.22779" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="26" x1="-0.018" y1="0.23668" x2="-0.042" y2="0.23668" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="27" x1="0.69506" y1="-0.018" x2="0.69506" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="27" x1="-0.018" y1="0.66585" x2="-0.042" y2="0.66585" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="28" x1="0.57310" y1="-0.018" x2="0.57310" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="28" x1="-0.018" y1="0.99886" x2="-0.042" y2="0.99886" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="29" x1="0.43460" y1="-0.018" x2="0.43460" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="29" x1="-0.018" y1="0.18273" x2="-0.042" y2="0.18273" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="30" x1="0.12389" y1="-0.018" x2="0.12389" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="30" x1="-0.018" y1="0.90068" x2="-0.042" y2="0.90068" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="31" x1="0.49250" y1="-0.018" x2="0.49250" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="31" x1="-0.018" y1="0.04203" x2="-0.042" y2="0.04203" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="32" x1="0.19189" y1="-0.018" x2="0.19189" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="32" x1="-0.018" y1="0.03306" x2="-0.042" y2="0.03306" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="33" x1="0.68371" y1="-0.018" x2="0.68371" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="33" x1="-0.018" y1="0.76063" x2="-0.042" y2="0.76063" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="34" x1="0.25415" y1="-0.018" x2="0.25415" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="34" x1="-0.018" y1="0.69298" x2="-0.042" y2="0.69298" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="35" x1="0.99952" y1="-0.018" x2="0.99952" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="35" x1="-0.018" y1="0.34908" x2="-0.042" y2="0.34908" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="36" x1="0.50950" y1="-0.018" x2="0.50950" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="36" x1="-0.018" y1="0.11162" x2="-0.042" y2="0.11162" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="37" x1="0.45303" y1="-0.018" x2="0.45303" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="37" x1="-0.018" y1="0.71925" x2="-0.042" y2="0.71925" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="38" x1="0.86386" y1="-0.018" x2="0.86386" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="38" x1="-0.018" y1="0.74205" x2="-0.042" y2="0.74205" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="39" x1="0.27334" y1="-0.018" x2="0.27334" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="39" x1="-0.018" y1="0.06183" x2="-0.042" y2="0.06183" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="40" x1="0.53735" y1="-0.018" x2="0.53735" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="40" x1="-0.018" y1="0.25477" x2="-0.042" y2="0.25477" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="41" x1="0.28783" y1="-0.018" x2="0.28783" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="41" x1="-0.018" y1="0.81185" x2="-0.042" y2="0.81185" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="42" x1="0.81367" y1="-0.018" x2="0.81367" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="42" x1="-0.018" y1="0.57592" x2="-0.042" y2="0.57592" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="43" x1="0.42691" y1="-0.018" x2="0.42691" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="43" x1="-0.018" y1="0.41050" x2="-0.042" y2="0.41050" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="44" x1="0.99024" y1="-0.018" x2="0.99024" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="44" x1="-0.018" y1="0.35921" x2="-0.042" y2="0.35921" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="45" x1="0.39011" y1="-0.018" x2="0.39011" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="45" x1="-0.018" y1="0.08161" x2="-0.042" y2="0.08161" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="46" x1="0.87366" y1="-0.018" x2="0.87366" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="46" x1="-0.018" y1="0.24606" x2="-0.042" y2="0.24606" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="47" x1="0.46407" y1="-0.018" x2="0.46407" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="47" x1="-0.018" y1="0.29255" x2="-0.042" y2="0.29255" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="48" x1="0.76505" y1="-0.018" x2="0.76505" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="48" x1="-0.018" y1="0.77085" x2="-0.042" y2="0.77085" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="49" x1="0.62950" y1="-0.018" x2="0.62950" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="49" x1="-0.018" y1="0.84485" x2="-0.042" y2="0.84485" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="50" x1="0.56307" y1="-0.018" x2="0.56307" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="50" x1="-0.018" y1="0.94832" x2="-0.042" y2="0.94832" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="51" x1="0.78472" y1="-0.018" x2="0.78472" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="51" x1="-0.018" y1="0.70071" x2="-0.042" y2="0.70071" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="52" x1="0.80348" y1="-0.018" x2="0.80348" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="52" x1="-0.018" y1="0.79275" x2="-0.042" y2="0.79275" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="53" x1="0.90952" y1="-0.018" x2="0.90952" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="53" x1="-0.018" y1="0.49618" x2="-0.042" y2="0.49618" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="54" x1="0.00127" y1="-0.018" x2="0.00127" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="54" x1="-0.018" y1="0.02328" x2="-0.042" y2="0.02328" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="55" x1="0.04408" y1="-0.018" x2="0.04408" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="55" x1="-0.018" y1="0.34014" x2="-0.042" y2="0.34014" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="56" x1="0.08890" y1="-0.018" x2="0.08890" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="56" x1="-0.018" y1="0.73237" x2="-0.042" y2="0.73237" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="57" x1="0.58310" y1="-0.018" x2="0.58310" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="57" x1="-0.018" y1="0.98737" x2="-0.042" y2="0.98737" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="58" x1="0.37092" y1="-0.018" x2="0.37092" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="58" x1="-0.018" y1="0.88860" x2="-0.042" y2="0.88860" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="59" x1="0.20993" y1="-0.018" x2="0.20993" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="59" x1="-0.018" y1="0.20097" x2="-0.042" y2="0.20097" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="60" x1="0.52709" y1="-0.018" x2="0.52709" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="60" x1="-0.018" y1="0.17449" x2="-0.042" y2="0.17449" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="61" x1="0.48397" y1="-0.018" x2="0.48397" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="61" x1="-0.018" y1="0.43378" x2="-0.042" y2="0.43378" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="62" x1="0.36127" y1="-0.018" x2="0.36127" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="62" x1="-0.018" y1="0.39047" x2="-0.042" y2="0.39047" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="63" x1="0.72498" y1="-0.018" x2="0.72498" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="63" x1="-0.018" y1="0.50534" x2="-0.042" y2="0.50534" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="64" x1="0.07916" y1="-0.018" x2="0.07916" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="64" x1="-0.018" y1="0.52274" x2="-0.042" y2="0.52274" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="65" x1="0.85493" y1="-0.018" x2="0.85493" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="65" x1="-0.018" y1="0.44317" x2="-0.042" y2="0.44317" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="66" x1="0.75632" y1="-0.018" x2="0.75632" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="66" x1="-0.018" y1="0.12819" x2="-0.042" y2="0.12819" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="67" x1="0.51828" y1="-0.018" x2="0.51828" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="67" x1="-0.018" y1="0.33224" x2="-0.042" y2="0.33224" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="68" x1="0.20231" y1="-0.018" x2="0.20231" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="68" x1="-0.018" y1="0.14508" x2="-0.042" y2="0.14508" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="69" x1="0.05191" y1="-0.018" x2="0.05191" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="69" x1="-0.018" y1="0.53138" x2="-0.042" y2="0.53138" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="70" x1="0.77552" y1="-0.018" x2="0.77552" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="70" x1="-0.018" y1="0.32301" x2="-0.042" y2="0.32301" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="71" x1="0.92831" y1="-0.018" x2="0.92831" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="71" x1="-0.018" y1="0.92069" x2="-0.042" y2="0.92069" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="72" x1="0.65033" y1="-0.018" x2="0.65033" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="72" x1="-0.018" y1="0.31353" x2="-0.042" y2="0.31353" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="73" x1="0.47414" y1="-0.018" x2="0.47414" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="73" x1="-0.018" y1="0.42398" x2="-0.042" y2="0.42398" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="74" x1="0.34988" y1="-0.018" x2="0.34988" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="74" x1="-0.018" y1="0.16310" x2="-0.042" y2="0.16310" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="75" x1="0.06158" y1="-0.018" x2="0.06158" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="75" x1="-0.018" y1="0.46464" x2="-0.042" y2="0.46464" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="76" x1="0.70542" y1="-0.018" x2="0.70542" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="76" x1="-0.018" y1="0.58789" x2="-0.042" y2="0.58789" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="77" x1="0.95971" y1="-0.018" x2="0.95971" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="77" x1="-0.018" y1="0.63381" x2="-0.042" y2="0.63381" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="78" x1="0.64089" y1="-0.018" x2="0.64089" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="78" x1="-0.018" y1="0.94029" x2="-0.042" y2="0.94029" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="79" x1="0.79394" y1="-0.018" x2="0.79394" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="79" x1="-0.018" y1="0.91142" x2="-0.042" y2="0.91142" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="80" x1="0.50085" y1="-0.018" x2="0.50085" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="80" x1="-0.018" y1="0.67688" x2="-0.042" y2="0.67688" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="81" x1="0.21793" y1="-0.018" x2="0.21793" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="81" x1="-0.018" y1="0.15353" x2="-0.042" y2="0.15353" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="82" x1="0.13650" y1="-0.018" x2="0.13650" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="82" x1="-0.018" y1="0.65446" x2="-0.042" y2="0.65446" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="83" x1="0.18135" y1="-0.018" x2="0.18135" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="83" x1="-0.018" y1="0.83283" x2="-0.042" y2="0.83283" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="84" x1="0.24683" y1="-0.018" x2="0.24683" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="84" x1="-0.018" y1="0.13766" x2="-0.042" y2="0.13766" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="85" x1="0.38026" y1="-0.018" x2="0.38026" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="85" x1="-0.018" y1="0.86433" x2="-0.042" y2="0.86433" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="86" x1="0.88510" y1="-0.018" x2="0.88510" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="86" x1="-0.018" y1="0.47384" x2="-0.042" y2="0.47384" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="87" x1="0.26216" y1="-0.018" x2="0.26216" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="87" x1="-0.018" y1="0.54182" x2="-0.042" y2="0.54182" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="88" x1="0.71578" y1="-0.018" x2="0.71578" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="88" x1="-0.018" y1="0.48408" x2="-0.042" y2="0.48408" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="89" x1="0.07069" y1="-0.018" x2="0.07069" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="89" x1="-0.018" y1="0.19270" x2="-0.042" y2="0.19270" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="90" x1="0.83368" y1="-0.018" x2="0.83368" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="90" x1="-0.018" y1="0.11997" x2="-0.042" y2="0.11997" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="91" x1="0.30988" y1="-0.018" x2="0.30988" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="91" x1="-0.018" y1="0.05099" x2="-0.042" y2="0.05099" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="92" x1="0.91862" y1="-0.018" x2="0.91862" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="92" x1="-0.018" y1="0.39958" x2="-0.042" y2="0.39958" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="93" x1="0.73576" y1="-0.018" x2="0.73576" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="93" x1="-0.018" y1="0.75147" x2="-0.042" y2="0.75147" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="94" x1="0.54672" y1="-0.018" x2="0.54672" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="94" x1="-0.018" y1="0.22800" x2="-0.042" y2="0.22800" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="95" x1="0.09826" y1="-0.018" x2="0.09826" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="95" x1="-0.018" y1="0.64323" x2="-0.042" y2="0.64323" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="96" x1="0.02336" y1="-0.018" x2="0.02336" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="96" x1="-0.018" y1="0.00002" x2="-0.042" y2="0.00002" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="97" x1="0.93957" y1="-0.018" x2="0.93957" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="97" x1="-0.018" y1="0.85550" x2="-0.042" y2="0.85550" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="98" x1="0.16815" y1="-0.018" x2="0.16815" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="98" x1="-0.018" y1="0.87572" x2="-0.042" y2="0.87572" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-x" data-i="99" x1="0.61660" y1="-0.018" x2="0.61660" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-rug usx-rug-y" data-i="99" x1="-0.018" y1="0.21900" x2="-0.042" y2="0.21900" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="0" x1="0.55485" y1="-0.018" x2="0.55485" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="0" x1="-0.018" y1="0.37092" x2="-0.042" y2="0.37092" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="1" x1="0.74679" y1="-0.018" x2="0.74679" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="1" x1="-0.018" y1="0.26246" x2="-0.042" y2="0.26246" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="2" x1="0.01230" y1="-0.018" x2="0.01230" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="2" x1="-0.018" y1="0.45432" x2="-0.042" y2="0.45432" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="3" x1="0.98020" y1="-0.018" x2="0.98020" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="3" x1="-0.018" y1="0.61154" x2="-0.042" y2="0.61154" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="4" x1="0.33074" y1="-0.018" x2="0.33074" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="4" x1="-0.018" y1="0.93038" x2="-0.042" y2="0.93038" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="5" x1="0.41927" y1="-0.018" x2="0.41927" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="5" x1="-0.018" y1="0.51458" x2="-0.042" y2="0.51458" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="6" x1="0.40914" y1="-0.018" x2="0.40914" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="6" x1="-0.018" y1="0.60177" x2="-0.042" y2="0.60177" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="7" x1="0.66000" y1="-0.018" x2="0.66000" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="7" x1="-0.018" y1="0.30248" x2="-0.042" y2="0.30248" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="8" x1="0.32049" y1="-0.018" x2="0.32049" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="8" x1="-0.018" y1="0.97613" x2="-0.042" y2="0.97613" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="9" x1="0.39968" y1="-0.018" x2="0.39968" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="9" x1="-0.018" y1="0.68543" x2="-0.042" y2="0.68543" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="10" x1="0.97088" y1="-0.018" x2="0.97088" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="10" x1="-0.018" y1="0.38073" x2="-0.042" y2="0.38073" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="11" x1="0.67185" y1="-0.018" x2="0.67185" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="11" x1="-0.018" y1="0.96059" x2="-0.042" y2="0.96059" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="12" x1="0.14743" y1="-0.018" x2="0.14743" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="12" x1="-0.018" y1="0.27343" x2="-0.042" y2="0.27343" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="13" x1="0.44285" y1="-0.018" x2="0.44285" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="13" x1="-0.018" y1="0.07180" x2="-0.042" y2="0.07180" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="14" x1="0.60620" y1="-0.018" x2="0.60620" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="14" x1="-0.018" y1="0.10119" x2="-0.042" y2="0.10119" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="15" x1="0.03447" y1="-0.018" x2="0.03447" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="15" x1="-0.018" y1="0.70886" x2="-0.042" y2="0.70886" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="16" x1="0.15703" y1="-0.018" x2="0.15703" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="16" x1="-0.018" y1="0.01181" x2="-0.042" y2="0.01181" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="17" x1="0.94815" y1="-0.018" x2="0.94815" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="17" x1="-0.018" y1="0.09156" x2="-0.042" y2="0.09156" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="18" x1="0.89825" y1="-0.018" x2="0.89825" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="18" x1="-0.018" y1="0.56297" x2="-0.042" y2="0.56297" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="19" x1="0.34014" y1="-0.018" x2="0.34014" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="19" x1="-0.018" y1="0.82177" x2="-0.042" y2="0.82177" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="20" x1="0.29733" y1="-0.018" x2="0.29733" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="20" x1="-0.018" y1="0.21019" x2="-0.042" y2="0.21019" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="21" x1="0.23627" y1="-0.018" x2="0.23627" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="21" x1="-0.018" y1="0.28331" x2="-0.042" y2="0.28331" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="22" x1="0.82424" y1="-0.018" x2="0.82424" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="22" x1="-0.018" y1="0.55083" x2="-0.042" y2="0.55083" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="23" x1="0.10927" y1="-0.018" x2="0.10927" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="23" x1="-0.018" y1="0.62285" x2="-0.042" y2="0.62285" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="24" x1="0.84441" y1="-0.018" x2="0.84441" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="24" x1="-0.018" y1="0.80265" x2="-0.042" y2="0.80265" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="25" x1="0.59518" y1="-0.018" x2="0.59518" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="25" x1="-0.018" y1="0.78309" x2="-0.042" y2="0.78309" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="26" x1="0.22779" y1="-0.018" x2="0.22779" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="26" x1="-0.018" y1="0.23668" x2="-0.042" y2="0.23668" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="27" x1="0.69506" y1="-0.018" x2="0.69506" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="27" x1="-0.018" y1="0.66585" x2="-0.042" y2="0.66585" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="28" x1="0.57310" y1="-0.018" x2="0.57310" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="28" x1="-0.018" y1="0.99886" x2="-0.042" y2="0.99886" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="29" x1="0.43460" y1="-0.018" x2="0.43460" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="29" x1="-0.018" y1="0.18273" x2="-0.042" y2="0.18273" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="30" x1="0.12389" y1="-0.018" x2="0.12389" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="30" x1="-0.018" y1="0.90068" x2="-0.042" y2="0.90068" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="31" x1="0.49250" y1="-0.018" x2="0.49250" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="31" x1="-0.018" y1="0.04203" x2="-0.042" y2="0.04203" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="32" x1="0.19189" y1="-0.018" x2="0.19189" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="32" x1="-0.018" y1="0.03306" x2="-0.042" y2="0.03306" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="33" x1="0.68371" y1="-0.018" x2="0.68371" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="33" x1="-0.018" y1="0.76063" x2="-0.042" y2="0.76063" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="34" x1="0.25415" y1="-0.018" x2="0.25415" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="34" x1="-0.018" y1="0.69298" x2="-0.042" y2="0.69298" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="35" x1="0.99952" y1="-0.018" x2="0.99952" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="35" x1="-0.018" y1="0.34908" x2="-0.042" y2="0.34908" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="36" x1="0.50950" y1="-0.018" x2="0.50950" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="36" x1="-0.018" y1="0.11162" x2="-0.042" y2="0.11162" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="37" x1="0.45303" y1="-0.018" x2="0.45303" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="37" x1="-0.018" y1="0.71925" x2="-0.042" y2="0.71925" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="38" x1="0.86386" y1="-0.018" x2="0.86386" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="38" x1="-0.018" y1="0.74205" x2="-0.042" y2="0.74205" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="39" x1="0.27334" y1="-0.018" x2="0.27334" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="39" x1="-0.018" y1="0.06183" x2="-0.042" y2="0.06183" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="40" x1="0.53735" y1="-0.018" x2="0.53735" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="40" x1="-0.018" y1="0.25477" x2="-0.042" y2="0.25477" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="41" x1="0.28783" y1="-0.018" x2="0.28783" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="41" x1="-0.018" y1="0.81185" x2="-0.042" y2="0.81185" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="42" x1="0.81367" y1="-0.018" x2="0.81367" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="42" x1="-0.018" y1="0.57592" x2="-0.042" y2="0.57592" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="43" x1="0.42691" y1="-0.018" x2="0.42691" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="43" x1="-0.018" y1="0.41050" x2="-0.042" y2="0.41050" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="44" x1="0.99024" y1="-0.018" x2="0.99024" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="44" x1="-0.018" y1="0.35921" x2="-0.042" y2="0.35921" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="45" x1="0.39011" y1="-0.018" x2="0.39011" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="45" x1="-0.018" y1="0.08161" x2="-0.042" y2="0.08161" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="46" x1="0.87366" y1="-0.018" x2="0.87366" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="46" x1="-0.018" y1="0.24606" x2="-0.042" y2="0.24606" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="47" x1="0.46407" y1="-0.018" x2="0.46407" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="47" x1="-0.018" y1="0.29255" x2="-0.042" y2="0.29255" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="48" x1="0.76505" y1="-0.018" x2="0.76505" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="48" x1="-0.018" y1="0.77085" x2="-0.042" y2="0.77085" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="49" x1="0.62950" y1="-0.018" x2="0.62950" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="49" x1="-0.018" y1="0.84485" x2="-0.042" y2="0.84485" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="50" x1="0.56307" y1="-0.018" x2="0.56307" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="50" x1="-0.018" y1="0.94832" x2="-0.042" y2="0.94832" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="51" x1="0.78472" y1="-0.018" x2="0.78472" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="51" x1="-0.018" y1="0.70071" x2="-0.042" y2="0.70071" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="52" x1="0.80348" y1="-0.018" x2="0.80348" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="52" x1="-0.018" y1="0.79275" x2="-0.042" y2="0.79275" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="53" x1="0.90952" y1="-0.018" x2="0.90952" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="53" x1="-0.018" y1="0.49618" x2="-0.042" y2="0.49618" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="54" x1="0.00127" y1="-0.018" x2="0.00127" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="54" x1="-0.018" y1="0.02328" x2="-0.042" y2="0.02328" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="55" x1="0.04408" y1="-0.018" x2="0.04408" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="55" x1="-0.018" y1="0.34014" x2="-0.042" y2="0.34014" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="56" x1="0.08890" y1="-0.018" x2="0.08890" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="56" x1="-0.018" y1="0.73237" x2="-0.042" y2="0.73237" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="57" x1="0.58310" y1="-0.018" x2="0.58310" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="57" x1="-0.018" y1="0.98737" x2="-0.042" y2="0.98737" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="58" x1="0.37092" y1="-0.018" x2="0.37092" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="58" x1="-0.018" y1="0.88860" x2="-0.042" y2="0.88860" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="59" x1="0.20993" y1="-0.018" x2="0.20993" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="59" x1="-0.018" y1="0.20097" x2="-0.042" y2="0.20097" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="60" x1="0.52709" y1="-0.018" x2="0.52709" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="60" x1="-0.018" y1="0.17449" x2="-0.042" y2="0.17449" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="61" x1="0.48397" y1="-0.018" x2="0.48397" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="61" x1="-0.018" y1="0.43378" x2="-0.042" y2="0.43378" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="62" x1="0.36127" y1="-0.018" x2="0.36127" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="62" x1="-0.018" y1="0.39047" x2="-0.042" y2="0.39047" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="63" x1="0.72498" y1="-0.018" x2="0.72498" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="63" x1="-0.018" y1="0.50534" x2="-0.042" y2="0.50534" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="64" x1="0.07916" y1="-0.018" x2="0.07916" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="64" x1="-0.018" y1="0.52274" x2="-0.042" y2="0.52274" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="65" x1="0.85493" y1="-0.018" x2="0.85493" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="65" x1="-0.018" y1="0.44317" x2="-0.042" y2="0.44317" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="66" x1="0.75632" y1="-0.018" x2="0.75632" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="66" x1="-0.018" y1="0.12819" x2="-0.042" y2="0.12819" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="67" x1="0.51828" y1="-0.018" x2="0.51828" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="67" x1="-0.018" y1="0.33224" x2="-0.042" y2="0.33224" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="68" x1="0.20231" y1="-0.018" x2="0.20231" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="68" x1="-0.018" y1="0.14508" x2="-0.042" y2="0.14508" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="69" x1="0.05191" y1="-0.018" x2="0.05191" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="69" x1="-0.018" y1="0.53138" x2="-0.042" y2="0.53138" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="70" x1="0.77552" y1="-0.018" x2="0.77552" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="70" x1="-0.018" y1="0.32301" x2="-0.042" y2="0.32301" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="71" x1="0.92831" y1="-0.018" x2="0.92831" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="71" x1="-0.018" y1="0.92069" x2="-0.042" y2="0.92069" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="72" x1="0.65033" y1="-0.018" x2="0.65033" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="72" x1="-0.018" y1="0.31353" x2="-0.042" y2="0.31353" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="73" x1="0.47414" y1="-0.018" x2="0.47414" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="73" x1="-0.018" y1="0.42398" x2="-0.042" y2="0.42398" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="74" x1="0.34988" y1="-0.018" x2="0.34988" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="74" x1="-0.018" y1="0.16310" x2="-0.042" y2="0.16310" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="75" x1="0.06158" y1="-0.018" x2="0.06158" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="75" x1="-0.018" y1="0.46464" x2="-0.042" y2="0.46464" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="76" x1="0.70542" y1="-0.018" x2="0.70542" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="76" x1="-0.018" y1="0.58789" x2="-0.042" y2="0.58789" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="77" x1="0.95971" y1="-0.018" x2="0.95971" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="77" x1="-0.018" y1="0.63381" x2="-0.042" y2="0.63381" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="78" x1="0.64089" y1="-0.018" x2="0.64089" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="78" x1="-0.018" y1="0.94029" x2="-0.042" y2="0.94029" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="79" x1="0.79394" y1="-0.018" x2="0.79394" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="79" x1="-0.018" y1="0.91142" x2="-0.042" y2="0.91142" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="80" x1="0.50085" y1="-0.018" x2="0.50085" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="80" x1="-0.018" y1="0.67688" x2="-0.042" y2="0.67688" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="81" x1="0.21793" y1="-0.018" x2="0.21793" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="81" x1="-0.018" y1="0.15353" x2="-0.042" y2="0.15353" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="82" x1="0.13650" y1="-0.018" x2="0.13650" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="82" x1="-0.018" y1="0.65446" x2="-0.042" y2="0.65446" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="83" x1="0.18135" y1="-0.018" x2="0.18135" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="83" x1="-0.018" y1="0.83283" x2="-0.042" y2="0.83283" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="84" x1="0.24683" y1="-0.018" x2="0.24683" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="84" x1="-0.018" y1="0.13766" x2="-0.042" y2="0.13766" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="85" x1="0.38026" y1="-0.018" x2="0.38026" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="85" x1="-0.018" y1="0.86433" x2="-0.042" y2="0.86433" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="86" x1="0.88510" y1="-0.018" x2="0.88510" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="86" x1="-0.018" y1="0.47384" x2="-0.042" y2="0.47384" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="87" x1="0.26216" y1="-0.018" x2="0.26216" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="87" x1="-0.018" y1="0.54182" x2="-0.042" y2="0.54182" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="88" x1="0.71578" y1="-0.018" x2="0.71578" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="88" x1="-0.018" y1="0.48408" x2="-0.042" y2="0.48408" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="89" x1="0.07069" y1="-0.018" x2="0.07069" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="89" x1="-0.018" y1="0.19270" x2="-0.042" y2="0.19270" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="90" x1="0.83368" y1="-0.018" x2="0.83368" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="90" x1="-0.018" y1="0.11997" x2="-0.042" y2="0.11997" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="91" x1="0.30988" y1="-0.018" x2="0.30988" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="91" x1="-0.018" y1="0.05099" x2="-0.042" y2="0.05099" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="92" x1="0.91862" y1="-0.018" x2="0.91862" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="92" x1="-0.018" y1="0.39958" x2="-0.042" y2="0.39958" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="93" x1="0.73576" y1="-0.018" x2="0.73576" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="93" x1="-0.018" y1="0.75147" x2="-0.042" y2="0.75147" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="94" x1="0.54672" y1="-0.018" x2="0.54672" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="94" x1="-0.018" y1="0.22800" x2="-0.042" y2="0.22800" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="95" x1="0.09826" y1="-0.018" x2="0.09826" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="95" x1="-0.018" y1="0.64323" x2="-0.042" y2="0.64323" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="96" x1="0.02336" y1="-0.018" x2="0.02336" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="96" x1="-0.018" y1="0.00002" x2="-0.042" y2="0.00002" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="97" x1="0.93957" y1="-0.018" x2="0.93957" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="97" x1="-0.018" y1="0.85550" x2="-0.042" y2="0.85550" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="98" x1="0.16815" y1="-0.018" x2="0.16815" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="98" x1="-0.018" y1="0.87572" x2="-0.042" y2="0.87572" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-x" data-i="99" x1="0.61660" y1="-0.018" x2="0.61660" y2="-0.042" vector-effect="non-scaling-stroke"/>
+<line class="usx-hit usx-rug-y" data-i="99" x1="-0.018" y1="0.21900" x2="-0.042" y2="0.21900" vector-effect="non-scaling-stroke"/>
+<circle class="usx-dot" data-i="0" data-nn='{"linf":[94,0.00814],"l2":[67,0.05323],"x":[94,0.00814],"y":[10,0.00981]}' cx="0.55485" cy="0.37092" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 0"/>
+<circle class="usx-dot" data-i="1" data-nn='{"linf":[40,0.00769],"l2":[70,0.06702],"x":[66,0.00953],"y":[40,0.00769]}' cx="0.74679" cy="0.26246" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 1"/>
+<circle class="usx-dot" data-i="2" data-nn='{"linf":[75,0.01032],"l2":[75,0.05034],"x":[54,0.01103],"y":[75,0.01032]}' cx="0.01230" cy="0.45432" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 2"/>
+<circle class="usx-dot" data-i="3" data-nn='{"linf":[10,0.00932],"l2":[77,0.03026],"x":[10,0.00932],"y":[6,0.00977]}' cx="0.98020" cy="0.61154" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 3"/>
+<circle class="usx-dot" data-i="4" data-nn='{"linf":[19,0.0094],"l2":[8,0.04688],"x":[19,0.0094],"y":[71,0.0097]}' cx="0.33074" cy="0.93038" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 4"/>
+<circle class="usx-dot" data-i="5" data-nn='{"linf":[43,0.00764],"l2":[6,0.08778],"x":[43,0.00764],"y":[64,0.00815]}' cx="0.41927" cy="0.51458" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 5"/>
+<circle class="usx-dot" data-i="6" data-nn='{"linf":[9,0.00946],"l2":[9,0.08419],"x":[9,0.00946],"y":[3,0.00977]}' cx="0.40914" cy="0.60177" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 6"/>
+<circle class="usx-dot" data-i="7" data-nn='{"linf":[72,0.00967],"l2":[72,0.01468],"x":[72,0.00967],"y":[47,0.00993]}' cx="0.66000" cy="0.30248" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 7"/>
+<circle class="usx-dot" data-i="8" data-nn='{"linf":[4,0.01024],"l2":[4,0.04688],"x":[4,0.01024],"y":[57,0.01124]}' cx="0.32049" cy="0.97613" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 8"/>
+<circle class="usx-dot" data-i="9" data-nn='{"linf":[34,0.00755],"l2":[37,0.06317],"x":[6,0.00946],"y":[34,0.00755]}' cx="0.39968" cy="0.68543" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 9"/>
+<circle class="usx-dot" data-i="10" data-nn='{"linf":[3,0.00932],"l2":[44,0.02894],"x":[3,0.00932],"y":[62,0.00974]}' cx="0.97088" cy="0.38073" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 10"/>
+<circle class="usx-dot" data-i="11" data-nn='{"linf":[7,0.01186],"l2":[78,0.03702],"x":[7,0.01186],"y":[50,0.01227]}' cx="0.67185" cy="0.96059" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 11"/>
+<circle class="usx-dot" data-i="12" data-nn='{"linf":[16,0.0096],"l2":[26,0.08836],"x":[16,0.0096],"y":[21,0.00988]}' cx="0.14743" cy="0.27343" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 12"/>
+<circle class="usx-dot" data-i="13" data-nn='{"linf":[29,0.00825],"l2":[45,0.05365],"x":[29,0.00825],"y":[45,0.00981]}' cx="0.44285" cy="0.07180" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 13"/>
+<circle class="usx-dot" data-i="14" data-nn='{"linf":[17,0.00963],"l2":[36,0.09726],"x":[99,0.0104],"y":[17,0.00963]}' cx="0.60620" cy="0.10119" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 14"/>
+<circle class="usx-dot" data-i="15" data-nn='{"linf":[51,0.00815],"l2":[56,0.05929],"x":[55,0.00961],"y":[51,0.00815]}' cx="0.03447" cy="0.70886" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 15"/>
+<circle class="usx-dot" data-i="16" data-nn='{"linf":[12,0.0096],"l2":[32,0.04083],"x":[12,0.0096],"y":[54,0.01147]}' cx="0.15703" cy="0.01181" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 16"/>
+<circle class="usx-dot" data-i="17" data-nn='{"linf":[97,0.00857],"l2":[90,0.11794],"x":[97,0.00857],"y":[14,0.00963]}' cx="0.94815" cy="0.09156" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 17"/>
+<circle class="usx-dot" data-i="18" data-nn='{"linf":[53,0.01127],"l2":[53,0.06773],"x":[53,0.01127],"y":[22,0.01213]}' cx="0.89825" cy="0.56297" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 18"/>
+<circle class="usx-dot" data-i="19" data-nn='{"linf":[4,0.0094],"l2":[41,0.05324],"x":[4,0.0094],"y":[41,0.00993]}' cx="0.34014" cy="0.82177" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 19"/>
+<circle class="usx-dot" data-i="20" data-nn='{"linf":[99,0.00881],"l2":[74,0.07056],"x":[41,0.0095],"y":[99,0.00881]}' cx="0.29733" cy="0.21019" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 20"/>
+<circle class="usx-dot" data-i="21" data-nn='{"linf":[26,0.00848],"l2":[26,0.04739],"x":[26,0.00848],"y":[47,0.00924]}' cx="0.23627" cy="0.28331" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 21"/>
+<circle class="usx-dot" data-i="22" data-nn='{"linf":[87,0.00901],"l2":[42,0.02722],"x":[90,0.00944],"y":[87,0.00901]}' cx="0.82424" cy="0.55083" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 22"/>
+<circle class="usx-dot" data-i="23" data-nn='{"linf":[77,0.01096],"l2":[95,0.02316],"x":[95,0.01101],"y":[77,0.01096]}' cx="0.10927" cy="0.62285" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 23"/>
+<circle class="usx-dot" data-i="24" data-nn='{"linf":[41,0.0092],"l2":[52,0.04211],"x":[65,0.01052],"y":[41,0.0092]}' cx="0.84441" cy="0.80265" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 24"/>
+<circle class="usx-dot" data-i="25" data-nn='{"linf":[52,0.00966],"l2":[49,0.07066],"x":[14,0.01102],"y":[52,0.00966]}' cx="0.59518" cy="0.78309" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 25"/>
+<circle class="usx-dot" data-i="26" data-nn='{"linf":[21,0.00848],"l2":[59,0.03993],"x":[21,0.00848],"y":[94,0.00868]}' cx="0.22779" cy="0.23668" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 26"/>
+<circle class="usx-dot" data-i="27" data-nn='{"linf":[76,0.01036],"l2":[76,0.07865],"x":[76,0.01036],"y":[80,0.01102]}' cx="0.69506" cy="0.66585" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 27"/>
+<circle class="usx-dot" data-i="28" data-nn='{"linf":[57,0.01],"l2":[57,0.01523],"x":[57,0.01],"y":[57,0.01149]}' cx="0.57310" cy="0.99886" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 28"/>
+<circle class="usx-dot" data-i="29" data-nn='{"linf":[43,0.00769],"l2":[74,0.08697],"x":[43,0.00769],"y":[60,0.00824]}' cx="0.43460" cy="0.18273" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 29"/>
+<circle class="usx-dot" data-i="30" data-nn='{"linf":[79,0.01074],"l2":[98,0.05081],"x":[82,0.01261],"y":[79,0.01074]}' cx="0.12389" cy="0.90068" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 30"/>
+<circle class="usx-dot" data-i="31" data-nn='{"linf":[80,0.00835],"l2":[13,0.05789],"x":[80,0.00835],"y":[91,0.00896]}' cx="0.49250" cy="0.04203" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 31"/>
+<circle class="usx-dot" data-i="32" data-nn='{"linf":[31,0.00897],"l2":[16,0.04083],"x":[68,0.01041],"y":[31,0.00897]}' cx="0.19189" cy="0.03306" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 32"/>
+<circle class="usx-dot" data-i="33" data-nn='{"linf":[93,0.00915],"l2":[93,0.05285],"x":[27,0.01135],"y":[93,0.00915]}' cx="0.68371" cy="0.76063" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 33"/>
+<circle class="usx-dot" data-i="34" data-nn='{"linf":[84,0.00732],"l2":[41,0.12355],"x":[84,0.00732],"y":[9,0.00755]}' cx="0.25415" cy="0.69298" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 34"/>
+<circle class="usx-dot" data-i="35" data-nn='{"linf":[55,0.00894],"l2":[44,0.01374],"x":[44,0.00928],"y":[55,0.00894]}' cx="0.99952" cy="0.34908" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 35"/>
+<circle class="usx-dot" data-i="36" data-nn='{"linf":[90,0.00835],"l2":[60,0.06529],"x":[80,0.00865],"y":[90,0.00835]}' cx="0.50950" cy="0.11162" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 36"/>
+<circle class="usx-dot" data-i="37" data-nn='{"linf":[13,0.01017],"l2":[9,0.06317],"x":[13,0.01017],"y":[15,0.01039]}' cx="0.45303" cy="0.71925" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 37"/>
+<circle class="usx-dot" data-i="38" data-nn='{"linf":[65,0.00893],"l2":[24,0.06364],"x":[65,0.00893],"y":[93,0.00942]}' cx="0.86386" cy="0.74205" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 38"/>
+<circle class="usx-dot" data-i="39" data-nn='{"linf":[13,0.00997],"l2":[91,0.03811],"x":[87,0.01118],"y":[13,0.00997]}' cx="0.27334" cy="0.06183" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 39"/>
+<circle class="usx-dot" data-i="40" data-nn='{"linf":[1,0.00769],"l2":[94,0.02836],"x":[94,0.00936],"y":[1,0.00769]}' cx="0.53735" cy="0.25477" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 40"/>
+<circle class="usx-dot" data-i="41" data-nn='{"linf":[24,0.0092],"l2":[19,0.05324],"x":[20,0.0095],"y":[24,0.0092]}' cx="0.28783" cy="0.81185" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 41"/>
+<circle class="usx-dot" data-i="42" data-nn='{"linf":[52,0.01019],"l2":[22,0.02722],"x":[52,0.01019],"y":[76,0.01197]}' cx="0.81367" cy="0.57592" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 42"/>
+<circle class="usx-dot" data-i="43" data-nn='{"linf":[5,0.00764],"l2":[73,0.04911],"x":[5,0.00764],"y":[92,0.01091]}' cx="0.42691" cy="0.41050" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 43"/>
+<circle class="usx-dot" data-i="44" data-nn='{"linf":[35,0.00928],"l2":[35,0.01374],"x":[35,0.00928],"y":[35,0.01013]}' cx="0.99024" cy="0.35921" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 44"/>
+<circle class="usx-dot" data-i="45" data-nn='{"linf":[9,0.00957],"l2":[13,0.05365],"x":[9,0.00957],"y":[13,0.00981]}' cx="0.39011" cy="0.08161" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 45"/>
+<circle class="usx-dot" data-i="46" data-nn='{"linf":[40,0.00871],"l2":[70,0.12471],"x":[38,0.0098],"y":[40,0.00871]}' cx="0.87366" cy="0.24606" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 46"/>
+<circle class="usx-dot" data-i="47" data-nn='{"linf":[21,0.00924],"l2":[67,0.06719],"x":[73,0.01007],"y":[21,0.00924]}' cx="0.46407" cy="0.29255" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 47"/>
+<circle class="usx-dot" data-i="48" data-nn='{"linf":[66,0.00873],"l2":[93,0.03512],"x":[66,0.00873],"y":[33,0.01022]}' cx="0.76505" cy="0.77085" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 48"/>
+<circle class="usx-dot" data-i="49" data-nn='{"linf":[97,0.01065],"l2":[25,0.07066],"x":[78,0.01139],"y":[97,0.01065]}' cx="0.62950" cy="0.84485" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 49"/>
+<circle class="usx-dot" data-i="50" data-nn='{"linf":[78,0.00803],"l2":[57,0.04389],"x":[0,0.00822],"y":[78,0.00803]}' cx="0.56307" cy="0.94832" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 50"/>
+<circle class="usx-dot" data-i="51" data-nn='{"linf":[34,0.00774],"l2":[93,0.07052],"x":[70,0.00919],"y":[34,0.00774]}' cx="0.78472" cy="0.70071" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 51"/>
+<circle class="usx-dot" data-i="52" data-nn='{"linf":[79,0.00955],"l2":[24,0.04211],"x":[79,0.00955],"y":[25,0.00966]}' cx="0.80348" cy="0.79275" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 52"/>
+<circle class="usx-dot" data-i="53" data-nn='{"linf":[92,0.0091],"l2":[86,0.03309],"x":[92,0.0091],"y":[63,0.00916]}' cx="0.90952" cy="0.49618" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 53"/>
+<circle class="usx-dot" data-i="54" data-nn='{"linf":[32,0.00978],"l2":[96,0.03207],"x":[2,0.01103],"y":[32,0.00978]}' cx="0.00127" cy="0.02328" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 54"/>
+<circle class="usx-dot" data-i="55" data-nn='{"linf":[69,0.00782],"l2":[2,0.11852],"x":[69,0.00782],"y":[67,0.0079]}' cx="0.04408" cy="0.34014" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 55"/>
+<circle class="usx-dot" data-i="56" data-nn='{"linf":[95,0.00936],"l2":[15,0.05929],"x":[95,0.00936],"y":[38,0.00968]}' cx="0.08890" cy="0.73237" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 56"/>
+<circle class="usx-dot" data-i="57" data-nn='{"linf":[28,0.01],"l2":[28,0.01523],"x":[28,0.01],"y":[8,0.01124]}' cx="0.58310" cy="0.98737" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 57"/>
+<circle class="usx-dot" data-i="58" data-nn='{"linf":[85,0.00934],"l2":[85,0.026],"x":[85,0.00934],"y":[30,0.01208]}' cx="0.37092" cy="0.88860" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 58"/>
+<circle class="usx-dot" data-i="59" data-nn='{"linf":[68,0.00762],"l2":[26,0.03993],"x":[68,0.00762],"y":[89,0.00827]}' cx="0.20993" cy="0.20097" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 59"/>
+<circle class="usx-dot" data-i="60" data-nn='{"linf":[29,0.00824],"l2":[94,0.057],"x":[67,0.00881],"y":[29,0.00824]}' cx="0.52709" cy="0.17449" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 60"/>
+<circle class="usx-dot" data-i="61" data-nn='{"linf":[31,0.00852],"l2":[73,0.01389],"x":[31,0.00852],"y":[65,0.00939]}' cx="0.48397" cy="0.43378" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 61"/>
+<circle class="usx-dot" data-i="62" data-nn='{"linf":[92,0.00912],"l2":[43,0.06863],"x":[58,0.00965],"y":[92,0.00912]}' cx="0.36127" cy="0.39047" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 62"/>
+<circle class="usx-dot" data-i="63" data-nn='{"linf":[53,0.00916],"l2":[88,0.02316],"x":[88,0.0092],"y":[53,0.00916]}' cx="0.72498" cy="0.50534" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 63"/>
+<circle class="usx-dot" data-i="64" data-nn='{"linf":[5,0.00815],"l2":[69,0.02859],"x":[89,0.00847],"y":[5,0.00815]}' cx="0.07916" cy="0.52274" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 64"/>
+<circle class="usx-dot" data-i="65" data-nn='{"linf":[38,0.00893],"l2":[86,0.04302],"x":[38,0.00893],"y":[61,0.00939]}' cx="0.85493" cy="0.44317" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 65"/>
+<circle class="usx-dot" data-i="66" data-nn='{"linf":[90,0.00822],"l2":[90,0.0778],"x":[48,0.00873],"y":[90,0.00822]}' cx="0.75632" cy="0.12819" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 66"/>
+<circle class="usx-dot" data-i="67" data-nn='{"linf":[55,0.0079],"l2":[0,0.05323],"x":[36,0.00878],"y":[55,0.0079]}' cx="0.51828" cy="0.33224" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 67"/>
+<circle class="usx-dot" data-i="68" data-nn='{"linf":[84,0.00742],"l2":[81,0.01776],"x":[59,0.00762],"y":[84,0.00742]}' cx="0.20231" cy="0.14508" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 68"/>
+<circle class="usx-dot" data-i="69" data-nn='{"linf":[55,0.00782],"l2":[64,0.02859],"x":[55,0.00782],"y":[64,0.00864]}' cx="0.05191" cy="0.53138" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 69"/>
+<circle class="usx-dot" data-i="70" data-nn='{"linf":[51,0.00919],"l2":[1,0.06702],"x":[51,0.00919],"y":[67,0.00924]}' cx="0.77552" cy="0.32301" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 70"/>
+<circle class="usx-dot" data-i="71" data-nn='{"linf":[79,0.00926],"l2":[97,0.06616],"x":[92,0.00968],"y":[79,0.00926]}' cx="0.92831" cy="0.92069" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 71"/>
+<circle class="usx-dot" data-i="72" data-nn='{"linf":[78,0.00943],"l2":[7,0.01468],"x":[78,0.00943],"y":[70,0.00948]}' cx="0.65033" cy="0.31353" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 72"/>
+<circle class="usx-dot" data-i="73" data-nn='{"linf":[61,0.0098],"l2":[61,0.01389],"x":[61,0.00984],"y":[61,0.0098]}' cx="0.47414" cy="0.42398" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 73"/>
+<circle class="usx-dot" data-i="74" data-nn='{"linf":[81,0.00958],"l2":[20,0.07056],"x":[19,0.00974],"y":[81,0.00958]}' cx="0.34988" cy="0.16310" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 74"/>
+<circle class="usx-dot" data-i="75" data-nn='{"linf":[89,0.00912],"l2":[2,0.05034],"x":[89,0.00912],"y":[86,0.00921]}' cx="0.06158" cy="0.46464" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 75"/>
+<circle class="usx-dot" data-i="76" data-nn='{"linf":[27,0.01036],"l2":[27,0.07865],"x":[27,0.01036],"y":[42,0.01197]}' cx="0.70542" cy="0.58789" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 76"/>
+<circle class="usx-dot" data-i="77" data-nn='{"linf":[95,0.00941],"l2":[3,0.03026],"x":[10,0.01117],"y":[95,0.00941]}' cx="0.95971" cy="0.63381" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 77"/>
+<circle class="usx-dot" data-i="78" data-nn='{"linf":[50,0.00803],"l2":[11,0.03702],"x":[72,0.00943],"y":[50,0.00803]}' cx="0.64089" cy="0.94029" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 78"/>
+<circle class="usx-dot" data-i="79" data-nn='{"linf":[51,0.00922],"l2":[52,0.11906],"x":[51,0.00922],"y":[71,0.00926]}' cx="0.79394" cy="0.91142" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 79"/>
+<circle class="usx-dot" data-i="80" data-nn='{"linf":[31,0.00835],"l2":[37,0.0639],"x":[31,0.00835],"y":[9,0.00855]}' cx="0.50085" cy="0.67688" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 80"/>
+<circle class="usx-dot" data-i="81" data-nn='{"linf":[59,0.008],"l2":[68,0.01776],"x":[59,0.008],"y":[68,0.00845]}' cx="0.21793" cy="0.15353" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 81"/>
+<circle class="usx-dot" data-i="82" data-nn='{"linf":[12,0.01092],"l2":[95,0.03986],"x":[12,0.01092],"y":[95,0.01124]}' cx="0.13650" cy="0.65446" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 82"/>
+<circle class="usx-dot" data-i="83" data-nn='{"linf":[32,0.01054],"l2":[98,0.04488],"x":[32,0.01054],"y":[19,0.01106]}' cx="0.18135" cy="0.83283" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 83"/>
+<circle class="usx-dot" data-i="84" data-nn='{"linf":[34,0.00732],"l2":[81,0.03297],"x":[34,0.00732],"y":[68,0.00742]}' cx="0.24683" cy="0.13766" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 84"/>
+<circle class="usx-dot" data-i="85" data-nn='{"linf":[97,0.00883],"l2":[58,0.026],"x":[58,0.00934],"y":[97,0.00883]}' cx="0.38026" cy="0.86433" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 85"/>
+<circle class="usx-dot" data-i="86" data-nn='{"linf":[75,0.00921],"l2":[53,0.03309],"x":[46,0.01144],"y":[75,0.00921]}' cx="0.88510" cy="0.47384" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 86"/>
+<circle class="usx-dot" data-i="87" data-nn='{"linf":[34,0.00801],"l2":[34,0.15136],"x":[34,0.00801],"y":[22,0.00901]}' cx="0.26216" cy="0.54182" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 87"/>
+<circle class="usx-dot" data-i="88" data-nn='{"linf":[63,0.0092],"l2":[63,0.02316],"x":[63,0.0092],"y":[86,0.01024]}' cx="0.71578" cy="0.48408" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 88"/>
+<circle class="usx-dot" data-i="89" data-nn='{"linf":[59,0.00827],"l2":[12,0.11138],"x":[64,0.00847],"y":[59,0.00827]}' cx="0.07069" cy="0.19270" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 89"/>
+<circle class="usx-dot" data-i="90" data-nn='{"linf":[66,0.00822],"l2":[66,0.0778],"x":[22,0.00944],"y":[66,0.00822]}' cx="0.83368" cy="0.11997" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 90"/>
+<circle class="usx-dot" data-i="91" data-nn='{"linf":[31,0.00896],"l2":[39,0.03811],"x":[8,0.01061],"y":[31,0.00896]}' cx="0.30988" cy="0.05099" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 91"/>
+<circle class="usx-dot" data-i="92" data-nn='{"linf":[53,0.0091],"l2":[10,0.05556],"x":[53,0.0091],"y":[62,0.00912]}' cx="0.91862" cy="0.39958" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 92"/>
+<circle class="usx-dot" data-i="93" data-nn='{"linf":[33,0.00915],"l2":[48,0.03512],"x":[63,0.01078],"y":[33,0.00915]}' cx="0.73576" cy="0.75147" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 93"/>
+<circle class="usx-dot" data-i="94" data-nn='{"linf":[0,0.00814],"l2":[40,0.02836],"x":[0,0.00814],"y":[26,0.00868]}' cx="0.54672" cy="0.22800" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 94"/>
+<circle class="usx-dot" data-i="95" data-nn='{"linf":[56,0.00936],"l2":[23,0.02316],"x":[56,0.00936],"y":[77,0.00941]}' cx="0.09826" cy="0.64323" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 95"/>
+<circle class="usx-dot" data-i="96" data-nn='{"linf":[2,0.01105],"l2":[54,0.03207],"x":[2,0.01105],"y":[16,0.01179]}' cx="0.02336" cy="0.00002" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 96"/>
+<circle class="usx-dot" data-i="97" data-nn='{"linf":[17,0.00857],"l2":[71,0.06616],"x":[17,0.00857],"y":[85,0.00883]}' cx="0.93957" cy="0.85550" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 97"/>
+<circle class="usx-dot" data-i="98" data-nn='{"linf":[16,0.01113],"l2":[83,0.04488],"x":[16,0.01113],"y":[85,0.01139]}' cx="0.16815" cy="0.87572" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 98"/>
+<circle class="usx-dot" data-i="99" data-nn='{"linf":[20,0.00881],"l2":[94,0.07046],"x":[14,0.0104],"y":[20,0.00881]}' cx="0.61660" cy="0.21900" r="0.008" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label="item 99"/>
+<g class="usx-marks"></g>
+</g>
+</svg>
+<p class="usx-caption">Hover over a red dot or one of its rug marks (tap on a touch screen) to see its nearest neighbors and the level curve of each objective distance through the neighbor under that distance.</p>
+</div>

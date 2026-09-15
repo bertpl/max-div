@@ -3,10 +3,10 @@
 The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
 cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
-The figures of `geomean_distance.md` plot the metric's level curves and one solved selection; only
-that one runs the solver. That selection is emitted as an interactive figure (an HTML fragment over a
-raster of the population) plus its separations table, and cached as JSON so that `--reuse-solution`
-re-renders the figure without the solve.
+The figures of `uniform_sampling.md` are six solved selections of one random population, one per
+experiment; only those run the solver. Each selection is emitted as an interactive figure (an HTML
+fragment over a raster of the population) plus its separations table, and cached as JSON so that
+`--reuse-solution` re-renders the figures without the solves; a closing table compares the six.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reuse-solution]``.
 """
@@ -18,17 +18,16 @@ from dataclasses import asdict, dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
-from geomean_distance_explorer import POPULATION_COLOR, SELECTION_COLOR, explorer_fragment
 from numpy.typing import NDArray
+from uniform_sampling_explorer import DISTANCES, POPULATION_COLOR, explorer_fragment
 
 from benchmarks.figures.style import REPO_ROOT, save_webp, use_docs_style
-from max_div.metrics import DistanceMetric, DiversityMetric
+from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
 from max_div.problem import MaxDivProblem
 from max_div.solver import ParallelMaxDivSolverBuilder, seconds
 
 GENERATED_DIR = REPO_ROOT / "generated"
 IMAGES_DIR = REPO_ROOT / "docs" / "guides" / "images"
-SOLUTION_PATH = GENERATED_DIR / "geomean_distance_example_solution.json"
 
 # One color per metric, shared by every figure so the reader learns them once.
 METRIC_COLORS = {
@@ -227,54 +226,24 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
 
 
 # ==================================================================================================
-#  Geometric-mean distance: level curves and a solved example
+#  Uniform sampling: six solved experiments
 # ==================================================================================================
-def render_geomean_distance_levels(name: str, k: int) -> None:
-    """Plot the level curves of the geometric-mean distance from the origin, over all four quadrants.
-
-    The curve at distance 1/sqrt(k) is highlighted; `docs/guides/geomean_distance.md`, section II,
-    explains why. Two fainter curves show the family around the highlighted curve.
-
-    Args:
-        name: Image file stem under `IMAGES_DIR`.
-        k: Sets the highlighted level, 1/sqrt(k).
-    """
-    use_docs_style()
-    fig, ax = plt.subplots(figsize=(6.0, 6.0))
-    fig.subplots_adjust(left=0.12, right=0.97, top=0.97, bottom=0.1)
-    grid = np.linspace(-1.0, 1.0, 1201)
-    dx, dy = np.meshgrid(grid, grid)
-    distance = np.sqrt(np.abs(dx * dy))
-    reference = 1.0 / np.sqrt(k)
-    levels = (reference / 2, reference, 0.5)
-    contours = ax.contour(
-        dx, dy, distance, levels=levels, colors=("#BBBBBB", SELECTION_COLOR, "#BBBBBB"), linewidths=(1.0, 2.0, 1.0)
-    )
-    # label each curve where it crosses Δx = 0.45 in the first quadrant, clear of the marked points
-    ax.clabel(
-        contours, fmt=lambda v: f"d = {v:g}", fontsize="small", manual=[(0.45, level**2 / 0.45) for level in levels]
-    )
-    ax.axhline(0.0, color="#D8D8D8", linewidth=0.8, zorder=0)
-    ax.axvline(0.0, color="#D8D8D8", linewidth=0.8, zorder=0)
-    for point, label, offset in (
-        ((reference, reference), "(1/\u221ak, 1/\u221ak)", (8, 8)),
-        ((1.0, 1.0 / k), "(1, 1/k)", (-30, 12)),
-    ):
-        ax.plot(*point, "o", color="#222222", markersize=6, zorder=3)
-        ax.annotate(label, point, textcoords="offset points", xytext=offset)
-    ax.set_xlim(-1.05, 1.05)
-    ax.set_ylim(-1.05, 1.05)
-    ax.set_xlabel("Δx")
-    ax.set_ylabel("Δy")
-    ax.set_aspect("equal")
-    save_webp(fig, IMAGES_DIR / f"{name}.webp")
+# The keys name the distances of `uniform_sampling_explorer.DISTANCES`.
+DISTANCE_METRICS = {
+    "l2": DistanceMetric.l2_euclidean(),
+    "x": DistanceMetric.along_axis(0),
+    "y": DistanceMetric.along_axis(1),
+    "linf": DistanceMetric.l_minus_inf(),
+    "geomean": DistanceMetric.geometric_mean(),
+}
+REFERENCE_LABELS = {"l2": "L2", "x": "$x$", "y": "$y$"}
 
 
 @dataclass(frozen=True)
-class ExampleSettings:
-    """The example's problem and solver settings are stored with its cached solution.
+class ExperimentSettings:
+    """The settings shared by every experiment, stored with each cached solution.
 
-    `--reuse-solution` checks that the cache was solved with the settings it is asked to render.
+    `--reuse-solution` checks that a cache was solved with the settings it is asked to render.
     """
 
     n: int
@@ -284,27 +253,69 @@ class ExampleSettings:
     seed: int
 
 
-def build_geomean_distance_population(n: int, seed: int) -> NDArray[np.float32]:
-    """Return the n evenly spaced values in [0, 1] as x, paired with a seeded random permutation of them as y.
+@dataclass(frozen=True)
+class Experiment:
+    """One experiment: harmonic-mean separation maximized over one distance, or a hybrid over several.
 
-    Pairing one evenly spaced grid with a permutation of itself gives every marginal a minimum spacing
-    of 1 / (n - 1), which a random sample lacks.
+    `distance_keys` holds one key for a simple objective and one per term for a hybrid, which is the
+    geometric mean of the per-distance terms.
+    """
+
+    name: str
+    distance_keys: tuple[str, ...]
+
+    def diversity_metric(self) -> DiversityMetric | HybridDiversityMetric:
+        """Return the objective the solver maximizes."""
+        if len(self.distance_keys) == 1:
+            return DiversityMetric.HARMONIC_MEAN_SEPARATION
+        else:
+            return HybridDiversityMetric.geomean_of(
+                *(DiversityMetric.HARMONIC_MEAN_SEPARATION.over(DISTANCE_METRICS[key]) for key in self.distance_keys)
+            )
+
+    def distance_metric(self) -> DistanceMetric:
+        """Return the problem's distance metric; a hybrid carries its distances in its terms."""
+        return DISTANCE_METRICS[self.distance_keys[0]]
+
+
+EXPERIMENTS = (
+    Experiment("l2", ("l2",)),
+    Experiment("x", ("x",)),
+    Experiment("y", ("y",)),
+    Experiment("linf", ("linf",)),
+    Experiment("geomean", ("geomean",)),
+    Experiment("hybrid", ("l2", "x", "y")),
+)
+
+
+def build_uniform_sampling_population(n: int, seed: int) -> NDArray[np.float32]:
+    """Return n points drawn uniformly at random from the unit square, in the solver's float32.
+
+    A coordinate value that a draw repeats is redrawn: 10,000 float32 values in [0, 1] repeat a value a
+    few times by chance, and a repeated coordinate is a pair at distance zero under the x, y, L-inf and
+    geometric-mean distances, which would turn the experiments into a study of the tie-breakers.
     """
     rng = np.random.default_rng(seed)
-    values = np.linspace(0.0, 1.0, n, dtype=np.float32)
-    return np.column_stack((values, rng.permutation(values)))
+    points = rng.random((n, 2)).astype(np.float32)
+    for axis in (0, 1):
+        while True:
+            _, first_index = np.unique(points[:, axis], return_index=True)
+            repeated = np.setdiff1d(np.arange(n), first_index)
+            if repeated.size == 0:
+                break
+            points[repeated, axis] = rng.random(repeated.size).astype(np.float32)
+    return points
 
 
-def solve_geomean_distance_example(vectors: NDArray[np.float32], settings: ExampleSettings) -> NDArray[np.intp]:
-    """Return the indices selected by maximizing geometric-mean separation under the geometric-mean distance.
-
-    The solve runs within an end-to-end budget.
-    """
+def solve_experiment(
+    vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings
+) -> NDArray[np.intp]:
+    """Return the indices the experiment selects, within an end-to-end budget."""
     problem = MaxDivProblem.new(
         vectors=vectors,
         k=settings.k,
-        distance_metric=DistanceMetric.geometric_mean(),
-        diversity_metric=DiversityMetric.GEOMEAN_SEPARATION,
+        distance_metric=experiment.distance_metric(),
+        diversity_metric=experiment.diversity_metric(),
     )
     solver = (
         ParallelMaxDivSolverBuilder(problem)
@@ -316,31 +327,31 @@ def solve_geomean_distance_example(vectors: NDArray[np.float32], settings: Examp
     return solver.solve(verbosity=0).i_selected
 
 
-def load_or_solve_geomean_distance_example(
-    settings: ExampleSettings, reuse_solution: bool
-) -> tuple[NDArray[np.float32], NDArray[np.intp]]:
-    """Return the population and the selected indices, from the JSON cache when asked, else from a fresh solve.
+def load_or_solve_experiment(
+    vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings, reuse_solution: bool
+) -> NDArray[np.intp]:
+    """Return the experiment's selected indices, from its JSON cache when asked, else from a fresh solve.
 
     A fresh solve rewrites the cache. The cache holds the selected indices only: the population is
     rebuilt from n and the seed, so the dots and the raster always come from the same coordinates.
     """
-    vectors = build_geomean_distance_population(settings.n, settings.seed)
+    path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_solution.json"
     if reuse_solution:
-        cached = json.loads(SOLUTION_PATH.read_text(encoding="utf-8"))
+        cached = json.loads(path.read_text(encoding="utf-8"))
         if {key: cached[key] for key in asdict(settings)} != asdict(settings):
-            raise ValueError(f"{SOLUTION_PATH} was solved with other settings than {settings}")
-        return vectors, np.asarray(cached["i_selected"], dtype=np.intp)
-    selected = solve_geomean_distance_example(vectors, settings)
+            raise ValueError(f"{path} was solved with other settings than {settings}")
+        return np.asarray(cached["i_selected"], dtype=np.intp)
+    selected = solve_experiment(vectors, experiment, settings)
     record = {**asdict(settings), "i_selected": [int(i) for i in selected]}
-    SOLUTION_PATH.write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
-    print(f"wrote {SOLUTION_PATH.relative_to(REPO_ROOT)}")
-    return vectors, selected
+    path.write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {path.relative_to(REPO_ROOT)}")
+    return selected
 
 
-def render_geomean_distance_population(name: str, vectors: NDArray[np.float32], pixels: int = 1000) -> None:
+def render_uniform_sampling_population(name: str, vectors: NDArray[np.float32], pixels: int = 1000) -> None:
     """Render the population alone as a square lossless raster covering exactly the unit square.
 
-    The interactive figure lays its SVG marks over this image, so the image carries no axes or margins:
+    The interactive figures lay their SVG marks over this image, so the image carries no axes or margins:
     its edges are the square's edges.
     """
     use_docs_style()
@@ -355,56 +366,102 @@ def render_geomean_distance_population(name: str, vectors: NDArray[np.float32], 
         save_webp(fig, IMAGES_DIR / f"{name}.webp", lossless=True)
 
 
-def write_geomean_distance_example_separations(name: str, selection: NDArray[np.float64], k: int) -> None:
-    """Write the selection's achieved separations next to the scaling targets 1/sqrt(k) and 1/k as a table fragment.
+def harmonic_separations(selection: NDArray[np.float64]) -> dict[str, float]:
+    """Return the selection's harmonic-mean separation under the L2, x and y distances."""
+    dx = np.abs(selection[:, 0][:, None] - selection[:, 0][None, :])
+    dy = np.abs(selection[:, 1][:, None] - selection[:, 1][None, :])
+    result = {}
+    for key in REFERENCE_LABELS:
+        distances = DISTANCES[key].pairwise(dx, dy)
+        np.fill_diagonal(distances, np.inf)
+        separations = distances.min(axis=1)
+        result[key] = float(separations.size / np.sum(1.0 / separations)) if np.all(separations > 0) else 0.0
+    return result
 
-    `docs/guides/geomean_distance.md` includes the fragment, so the numbers under the figure come from the
-    same solve as the figure.
+
+def separation_targets(k: int) -> dict[str, float]:
+    """Return the free-placement reference separation per reference distance, as `uniform_sampling.md` derives them.
+
+    Along one axis, k evenly spaced values over [0, 1] are 1 / (k - 1) apart; in the square, a
+    sqrt(k) by sqrt(k) grid is 1 / (sqrt(k) - 1) apart.
     """
-    rows = (
-        ("2D, Euclidean distance", geomean_separation_2d(selection), r"$1/\sqrt{k}$", 1.0 / np.sqrt(k)),
-        ("$x$ marginal", metrics(selection[:, 0])["geometric-mean separation"], "$1/k$", 1.0 / k),
-        ("$y$ marginal", metrics(selection[:, 1])["geometric-mean separation"], "$1/k$", 1.0 / k),
-    )
-    lines = ["| geometric-mean separation | achieved | target | target value |", "|---|---|---|---|"]
-    lines += [f"| {label} | {achieved:.4f} | {formula} | {target:.4f} |" for label, achieved, formula, target in rows]
-    path = GENERATED_DIR / f"{name}_separations.md"
+    return {"l2": 1.0 / (np.sqrt(k) - 1.0), "x": 1.0 / (k - 1), "y": 1.0 / (k - 1)}
+
+
+def write_experiment_separations(experiment: Experiment, selection: NDArray[np.float64], k: int) -> None:
+    """Write the experiment's achieved separations beside their references as a table fragment.
+
+    `docs/guides/uniform_sampling.md` includes the fragment below the experiment's figure, so the numbers
+    come from the same solve as the figure.
+    """
+    achieved, targets = harmonic_separations(selection), separation_targets(k)
+    lines = ["| harmonic-mean separation under … | achieved | reference | achieved / reference |", "|---|---|---|---|"]
+    for key, label in REFERENCE_LABELS.items():
+        lines.append(f"| {label} | {achieved[key]:.4f} | {targets[key]:.4f} | {achieved[key] / targets[key]:.0%} |")
+    path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_separations.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 
-def render_geomean_distance_example(name: str, settings: ExampleSettings, reuse_solution: bool) -> None:
-    """Produce the example: the population raster, the interactive figure fragment and the separations table.
+def write_summary(selections: dict[str, NDArray[np.float64]], k: int) -> None:
+    """Write the closing table: every experiment's achieved separations as a fraction of the references."""
+    targets = separation_targets(k)
+    labels = {
+        "l2": "L2 distance",
+        "x": "$x$ distance",
+        "y": "$y$ distance",
+        "linf": "L\u2212\u221e distance",
+        "geomean": "geometric-mean distance",
+        "hybrid": "hybrid: L2, $x$ and $y$ terms",
+    }
+    header = " | ".join(f"{label}, achieved / reference" for label in REFERENCE_LABELS.values())
+    lines = [f"| objective | {header} |", "|---|---|---|---|"]
+    for name, selection in selections.items():
+        achieved = harmonic_separations(selection)
+        cells = " | ".join(f"{achieved[key]:.4f} ({achieved[key] / targets[key]:.0%})" for key in REFERENCE_LABELS)
+        lines.append(f"| {labels[name]} | {cells} |")
+    path = GENERATED_DIR / "uniform_sampling_summary.md"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"wrote {path.relative_to(REPO_ROOT)}")
+
+
+def render_uniform_sampling_experiments(settings: ExperimentSettings, reuse_solution: bool) -> None:
+    """Produce the case study: the population raster, and per experiment its figure fragment and separations table.
 
     Args:
-        name: File stem of the raster under `IMAGES_DIR` and of the fragments under `GENERATED_DIR`.
-        settings: Its seed seeds both the pairing and the solver.
-        reuse_solution: Read the cached selection and skip the solve.
+        settings: Its seed seeds both the population and every solver run.
+        reuse_solution: Read the cached selections and skip the solves.
     """
-    vectors, selected = load_or_solve_geomean_distance_example(settings, reuse_solution)
-    selection = vectors[selected].astype(np.float64)
-    write_geomean_distance_example_separations(name, selection, settings.k)
-    render_geomean_distance_population(f"{name}_population", vectors)
-    fragment = explorer_fragment(
-        selection[:, 0],
-        selection[:, 1],
-        settings.n,
-        settings.k,
-        population_image=f"../images/{name}_population.webp",
-        description=(
-            "Ten thousand gray points in the unit square with the hundred selected ones in red, and the "
-            "selection's x and y values as rug marks along the bottom and left edges"
-        ),
-    )
-    path = GENERATED_DIR / f"{name}_figure.html"
-    path.write_text(fragment, encoding="utf-8")
-    print(f"wrote {path.relative_to(REPO_ROOT)}")
+    vectors = build_uniform_sampling_population(settings.n, settings.seed)
+    render_uniform_sampling_population("uniform_sampling_population", vectors)
+    selections = {}
+    for experiment in EXPERIMENTS:
+        selected = load_or_solve_experiment(vectors, experiment, settings, reuse_solution)
+        selection = vectors[selected].astype(np.float64)
+        selections[experiment.name] = selection
+        write_experiment_separations(experiment, selection, settings.k)
+        fragment = explorer_fragment(
+            selection[:, 0],
+            selection[:, 1],
+            settings.n,
+            settings.k,
+            objective_keys=experiment.distance_keys,
+            population_image="../images/uniform_sampling_population.webp",
+            description=(
+                "Ten thousand gray points in the unit square with the hundred selected ones in red, and the "
+                "selection's x and y values as rug marks along the bottom and left edges"
+            ),
+        )
+        path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_figure.html"
+        path.write_text(fragment, encoding="utf-8")
+        print(f"wrote {path.relative_to(REPO_ROOT)}")
+    write_summary(selections, settings.k)
 
 
 def main() -> None:
     """Render every guide figure."""
     parser = argparse.ArgumentParser(description="Regenerate the guide figures.")
-    parser.add_argument("--reuse-solution", action="store_true", help="read the cached example selection")
+    parser.add_argument("--reuse-solution", action="store_true", help="read the cached experiment selections")
     args = parser.parse_args()
     render_example(
         "geomean_separation_I1",
@@ -455,10 +512,8 @@ def main() -> None:
         dot_size=14,
         position_marks=(-0.25, 0.0, 1.0),
     )
-    render_geomean_distance_levels("geomean_distance_levels", k=25)
-    render_geomean_distance_example(
-        "geomean_distance_example",
-        ExampleSettings(n=10_000, k=100, budget_sec=60.0, n_workers=16, seed=42),
+    render_uniform_sampling_experiments(
+        ExperimentSettings(n=10_000, k=100, budget_sec=60.0, n_workers=16, seed=42),
         reuse_solution=args.reuse_solution,
     )
 
