@@ -238,6 +238,7 @@ def test_hybrid_computes_the_aggregation_of_its_terms(terms, aggregation, contri
         ),
         (DiversityMetric.GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         (DiversityMetric.APPROX_GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+        (DiversityMetric.HARMONIC_MEAN_SEPARATION, []),
         (DiversityMetric.MEAN_SEPARATION, []),
         (DiversityMetric.MEAN_PAIRWISE_DISTANCE, []),
     ],

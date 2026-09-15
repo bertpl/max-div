@@ -92,6 +92,7 @@ see [Objectives & the Diversity-Problem Landscape](objectives.md).)
 | `MIN_SEPARATION` | $$\min_{v \in S} \text{sep}(v)$$ | Only considers the worst-off item (the closest pair). Equivalent to the *p-dispersion* problem. Many swaps produce tied scores. |
 | `MEAN_SEPARATION` | $$\frac{1}{k}\sum_{v \in S} \text{sep}(v)$$ | Averages all separations. Less sensitive to individual outliers than geomean, but can be dominated by a few very high separations. |
 | `APPROX_GEOMEAN_SEPARATION` | Same as geomean but using fast log/exp approximations | Slightly less accurate but faster per iteration. Useful for large-scale problems where iteration speed matters more than per-iteration precision. |
+| `HARMONIC_MEAN_SEPARATION` | $$\frac{k}{\sum_{v \in S} 1 / \text{sep}(v)}$$ | Between the geometric mean and the minimum: every item still counts, but a close pair pulls the score down harder than under the geomean. Zero as soon as one separation is zero. Computed exactly, without logarithm or exponential. |
 | `MEAN_PAIRWISE_DISTANCE` | $$\frac{2}{k(k-1)}\sum_{\{u,v\} \subseteq S} d(u, v)$$ | Mean distance over all selected *pairs* -- the classical **max-sum diversity** objective (MaxSum MDP, also known as *remote-clique*). Maximizes total spread: selections gravitate to the outer regions of the data, and near-duplicates are tolerated if both sit far from everything else. |
 
 ### Which metric to choose?
@@ -105,6 +106,9 @@ see [Objectives & the Diversity-Problem Landscape](objectives.md).)
   other items compensate with large separations.
 - **`APPROX_GEOMEAN_SEPARATION`** is a drop-in replacement for `GEOMEAN_SEPARATION` when
   you want to trade a small amount of precision for more iterations per second.
+- **`HARMONIC_MEAN_SEPARATION`** sits between `GEOMEAN_SEPARATION` and `MIN_SEPARATION`: pick it
+  when a close pair should weigh more than the geomean gives it, without the tied scores of the
+  minimum.
 - **`MEAN_PAIRWISE_DISTANCE`** is the objective to pick when you want classical max-sum
   diversity semantics ("maximize total spread") or want results comparable with the MaxSum
   MDP literature. Unlike every separation metric it does *not* penalize near-duplicates per

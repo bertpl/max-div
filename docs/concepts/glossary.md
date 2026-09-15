@@ -121,6 +121,14 @@ single large separation can buy that back. The guide
 [Why geometric-mean separation is the default objective](../guides/geomean_separation.md) shows
 this on four small examples.
 
+## Harmonic-mean separation (`HARMONIC_MEAN_SEPARATION`) { #harmonic-mean-separation }
+
+Maximize the *harmonic mean* of the selected items' [separations](#separation): their count over
+the sum of their reciprocals. It sits between [geometric-mean separation](#geometric-mean-separation)
+and [max-min](#max-min) in how hard a close pair pulls the score down: every item still counts, as
+under the geometric mean, but a small separation weighs more, and one zero separation makes the
+score zero.
+
 ## Guarantee type { #guarantee-type }
 
 What a tool promises about the quality of its answer, which is the only fair basis for comparing
