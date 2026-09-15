@@ -42,6 +42,7 @@ def test_pair_metrics(metric: DistanceMetric):
         (DistanceMetric.l2s_euclidean_squared(), 25.0),
         (DistanceMetric.linf_chebyshev(), 4.0),
         (DistanceMetric.geometric_mean(), 12.0**0.5),
+        (DistanceMetric.l_minus_inf(), 3.0),
         (DistanceMetric.along_axis(1), 4.0),
     ],
 )
@@ -193,3 +194,28 @@ def test_pair_along_axis_values(axis: int, expected_value: float):
 
     # --- assert -----------------------
     assert d[0] == np.float32(expected_value)
+
+
+# ==================================================================================================
+#  L-∞
+# ==================================================================================================
+@pytest.mark.parametrize(
+    "x, y, expected_value",
+    [
+        ([0.0, 0.0], [3.0, 4.0], 3.0),  # the smaller gap
+        ([1.0, 5.0, 2.0], [1.0, 9.0, 7.0], 0.0),  # a shared coordinate gives distance zero
+        ([0.0, 0.0], [-3.0, 4.0], 3.0),  # differences enter by absolute value
+        ([7.0], [3.0], 4.0),  # one dimension: the single gap itself
+        ([0.0, 0.0, 0.0], [4.0, 1.0, 2.0], 1.0),  # the minimum sits in the middle
+    ],
+)
+def test_pair_lminusinf_values(x: list[float], y: list[float], expected_value: float):
+    """The L-∞ distance is the smallest absolute coordinate difference, zero on a shared coordinate."""
+    # --- arrange ----------------------
+    vectors = np.array([x, y], dtype=np.float32)
+
+    # --- act --------------------------
+    d = condensed_distances(vectors, metric=DistanceMetric.l_minus_inf())
+
+    # --- assert -----------------------
+    assert d[0] == pytest.approx(expected_value)
