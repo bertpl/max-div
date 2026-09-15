@@ -147,8 +147,8 @@ class DistanceMetric(NamedTuple):
         """Return the L-∞ distance metric: ``min_i |x_i - y_i|``, the smallest coordinate difference.
 
         It is the p → -∞ end of the power-mean family whose p → +∞ end is `linf_chebyshev()`, and
-        the exact form that `geometric_mean()` smooths: two points are as far apart as their
-        closest coordinate projection, so a selection kept apart under it is spread in every
+        the exact form that `geometric_mean()` smooths: their distance is the gap in the coordinate
+        projection where they are closest, so a selection kept apart under it is spread in every
         coordinate projection.  Two points that share any one coordinate are at distance zero.
 
         It is not a metric in the mathematical sense (distinct points can be at distance zero,
