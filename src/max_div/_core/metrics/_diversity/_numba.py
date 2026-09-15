@@ -1,4 +1,4 @@
-"""The reducers that turn a selection's per-item contribution values into one diversity value.
+"""The reducers here turn a selection's per-item contribution values into one diversity value.
 
 Every reducer here takes the same fastmath subset as the pair-distance functions in
 `_distance/_metric/_pair.py`, for the same reason: `sep` carries +inf for "no selected neighbor yet".
@@ -7,14 +7,18 @@ Every reducer here takes the same fastmath subset as the pair-distance functions
 
 The compiler vectorizes a sum but not a floating-point minimum: no fastmath flag makes it emit a
 vector minimum for a reduction loop, so a minimum over floats runs one element at a time and costs
-several times a sum of the same length.  `min_separation` therefore reads the separations' bit
-patterns as `int32` and takes an integer minimum, which the compiler does vectorize.
+several times a sum of the same length.
+
+`min_separation` therefore reads the separations' bit patterns as `int32` and takes an integer
+minimum, which the compiler does vectorize.
 
 That is exact because of how IEEE floats are laid out: for a non-negative float the sign bit is
 zero, the exponent sits above the mantissa, and +inf has every exponent bit set and a zero mantissa,
 so the bit pattern read as a signed 32-bit integer increases with the float value, +inf above every
-finite one.  The integer minimum picks the same element as the float minimum would.  Two inputs
-would break that order, and neither reaches the reducer:
+finite one.
+
+The integer minimum picks the same element as the float minimum would.  Two inputs would break
+that order, and neither reaches the reducer:
 
 - a negative separation: every pair function returns a magnitude (an absolute difference, a square
   root, a squared sum, `0.5 · |x - y|²` over normalized rows, an exponential), never a negative value;
@@ -39,7 +43,7 @@ def min_separation(sep: NDArray[np.float32]) -> np.float32:
     """Minimum separation of all selected items, as an integer minimum over the float bit patterns.
 
     Exact for non-negative floats and +inf, which is all a separation array holds; the module
-    docstring gives the argument and the reason the float form is avoided.
+    docstring proves it and gives the reason the float form is avoided.
     """
     bits = sep.view(np.int32)
     n = bits.shape[0]
