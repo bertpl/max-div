@@ -36,16 +36,13 @@ solver:
       note: *via_sklearn_estimator
     distance.geomean:
       mark: partial
-      note:
+      note: &not_a_sklearn_metric
         text: >-
           Not among the metric names scikit-learn understands, so it is reachable only as a
           precomputed dissimilarity matrix.
     distance.l_minus_inf:
       mark: partial
-      note:
-        text: >-
-          Not among the metric names scikit-learn understands, so it is reachable only as a
-          precomputed dissimilarity matrix.
+      note: *not_a_sklearn_metric
     distance.along_axis:
       mark: partial
       note:

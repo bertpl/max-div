@@ -70,7 +70,7 @@ solver:
       note:
         text: >-
           Reachable only by hand-building each term's objective and summing them into one, a
-          formulation larger still than any single term's.
+          formulation even larger than any single term's.
     objective.optimality_proofs: {mark: full}
     constraints.disjoint_groups:
       mark: partial

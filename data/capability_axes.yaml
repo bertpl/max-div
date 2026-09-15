@@ -217,8 +217,8 @@ groups:
         hero: true
         definition: >-
           Optimizes a combination of several diversity terms at once, each term a diversity
-          objective measured under its own distance — for example a full-space spread combined
-          with per-coordinate spreads.
+          objective measured under its own distance — for example one term measured under the
+          full-dimensional distance combined with terms each measured under a single coordinate.
       - key: optimality_proofs
         hero_label: optimality proofs
         label: certified proofs that a selection is optimal

@@ -65,7 +65,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-7]: Any distance you can compute and round to integers is usable, which in practice means any metric at all.
 [^cmp-8]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
 [^cmp-9]: No natural constraint-programming encoding: a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, so it is reachable, at a formulation far larger than the max-min one.
-[^cmp-10]: Reachable only by encoding each term's objective and summing them into one, a formulation larger still than any single term's.
+[^cmp-10]: Reachable only by encoding each term's objective and summing them into one, a formulation even larger than any single term's.
 [^cmp-11]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
 [^cmp-12]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
 [^cmp-13]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
@@ -75,7 +75,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-17]: Since every distance is a coefficient you supply, an arbitrary metric costs nothing extra — this is the one distance axis where a modeling solver is at no disadvantage.
 [^cmp-18]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
 [^cmp-19]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
-[^cmp-20]: Reachable only by hand-building each term's objective and summing them into one, a formulation larger still than any single term's.
+[^cmp-20]: Reachable only by hand-building each term's objective and summing them into one, a formulation even larger than any single term's.
 [^cmp-21]: Reachable through SCIP's concurrent solving and the FiberSCIP / UG frameworks, which share bounds and solutions between the racing solvers but need a TPI-enabled build; the default PySCIPOpt wheel does not expose it.
 [^cmp-22]: Distances are coefficients you supply, so an unusual metric costs no more than a common one.
 [^cmp-23]: The dual simplex, the interior-point factorization and the MIP branch-and-bound each run in parallel, controlled by the parallel and threads options — threads jointly advancing one solve rather than racing independent ones.

@@ -61,7 +61,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^highs-2]: Distances are coefficients you supply, so an unusual metric costs no more than a common one.
 [^highs-3]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
 [^highs-4]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
-[^highs-5]: Reachable only by hand-building each term's objective and summing them into one, a formulation larger still than any single term's.
+[^highs-5]: Reachable only by hand-building each term's objective and summing them into one, a formulation even larger than any single term's.
 [^highs-6]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
 [^highs-7]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
 [^highs-8]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.

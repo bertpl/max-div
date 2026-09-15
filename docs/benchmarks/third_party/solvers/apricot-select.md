@@ -34,16 +34,13 @@ solver:
     distance.cosine: {mark: full}
     distance.geomean:
       mark: partial
-      note:
+      note: &not_a_sklearn_metric
         text: >-
           Not among the metric names scikit-learn understands, so it is reachable only as a
           precomputed similarity matrix.
     distance.l_minus_inf:
       mark: partial
-      note:
-        text: >-
-          Not among the metric names scikit-learn understands, so it is reachable only as a
-          precomputed similarity matrix.
+      note: *not_a_sklearn_metric
     distance.along_axis:
       mark: partial
       note:

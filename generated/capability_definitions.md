@@ -43,7 +43,7 @@ Every capability cell carries one of the marks below. A mark composes with the c
 | geomean-of-NN | Optimizes the geometric mean, over the selected items, of each item's distance to its nearest selected neighbor. |
 | harmonic-of-NN | Optimizes the harmonic mean, over the selected items, of each item's distance to its nearest selected neighbor. |
 | max-sum | Optimizes the mean (equivalently the sum) of all pairwise distances within the selection (max-sum diversity). |
-| hybrid | Optimizes a combination of several diversity terms at once, each term a diversity objective measured under its own distance — for example a full-space spread combined with per-coordinate spreads. |
+| hybrid | Optimizes a combination of several diversity terms at once, each term a diversity objective measured under its own distance — for example one term measured under the full-dimensional distance combined with terms each measured under a single coordinate. |
 | optimality proofs | Can terminate with a proof that its selection is optimal for the modeled objective, given enough time — rather than a heuristic result of unknown distance to the optimum. |
 
 </div>

@@ -61,7 +61,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^ortools-cpsat-2]: Any distance you can compute and round to integers is usable, which in practice means any metric at all.
 [^ortools-cpsat-3]: Reachable through a threshold feasibility search: ask whether a selection exists with every pair at least t apart, then binary-search t. It is a natural fit for CP-SAT and the reason this solver appears here at all.
 [^ortools-cpsat-4]: No natural constraint-programming encoding: a nearest-neighbor mean needs the same auxiliary assignment structure a MILP would use, so it is reachable, at a formulation far larger than the max-min one.
-[^ortools-cpsat-5]: Reachable only by encoding each term's objective and summing them into one, a formulation larger still than any single term's.
+[^ortools-cpsat-5]: Reachable only by encoding each term's objective and summing them into one, a formulation even larger than any single term's.
 [^ortools-cpsat-6]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
 [^ortools-cpsat-7]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
 [^ortools-cpsat-8]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
