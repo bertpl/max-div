@@ -42,7 +42,7 @@ def test_pair_metrics(metric: DistanceMetric):
         (DistanceMetric.l2s_euclidean_squared(), 25.0),
         (DistanceMetric.linf_chebyshev(), 4.0),
         (DistanceMetric.geometric_mean(), 12.0**0.5),
-        (DistanceMetric.lminusinf_min_coordinate(), 3.0),
+        (DistanceMetric.l_minus_inf(), 3.0),
         (DistanceMetric.along_axis(1), 4.0),
     ],
 )
@@ -215,7 +215,7 @@ def test_pair_lminusinf_values(x: list[float], y: list[float], expected_value: f
     vectors = np.array([x, y], dtype=np.float32)
 
     # --- act --------------------------
-    d = condensed_distances(vectors, metric=DistanceMetric.lminusinf_min_coordinate())
+    d = condensed_distances(vectors, metric=DistanceMetric.l_minus_inf())
 
     # --- assert -----------------------
     assert d[0] == pytest.approx(expected_value)

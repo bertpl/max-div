@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DistanceMetric.label`, a short label for a metric (e.g. `L1`, `geomean`, `axis 2`)
 - A hybrid diversity metric, `HybridDiversityMetric.geomean_of(...)` or `.mean_of(...)`: the geometric or arithmetic mean of several diversity terms, each over its own distance via `DiversityMetric.over(distance)`, so one solve spreads a selection in the full space and in chosen coordinate projections at once
 - A harmonic-mean separation diversity metric, `DiversityMetric.HARMONIC_MEAN_SEPARATION`: between the geometric mean and the minimum in how hard it penalizes close pairs, computed exactly
-- An L−∞ distance metric, `DistanceMetric.lminusinf_min_coordinate()`: the smallest coordinate difference between two vectors, zero as soon as they share one coordinate
+- An L−∞ distance metric, `DistanceMetric.l_minus_inf()`: the smallest coordinate difference between two vectors, zero as soon as they share one coordinate
 
 ### Changed
 - `DistanceStorage` is renamed to `DistanceStorageType`; `with_distance_storage` keeps its name

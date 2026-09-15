@@ -36,7 +36,7 @@ _FACTORY_NAMES = {
     METRIC_KIND_COS: "cosine",
     METRIC_KIND_LINF: "linf_chebyshev",
     METRIC_KIND_GEOMEAN: "geometric_mean",
-    METRIC_KIND_LMINUSINF: "lminusinf_min_coordinate",
+    METRIC_KIND_LMINUSINF: "l_minus_inf",
 }
 
 # `label` looks up each kind listed here; along-axis and the Minkowski kinds build theirs from the
@@ -143,7 +143,7 @@ class DistanceMetric(NamedTuple):
         return cls(kind=METRIC_KIND_GEOMEAN)
 
     @classmethod
-    def lminusinf_min_coordinate(cls) -> "DistanceMetric":
+    def l_minus_inf(cls) -> "DistanceMetric":
         """Return the L-∞ distance metric: ``min_i |x_i - y_i|``, the smallest coordinate difference.
 
         It is the p → -∞ end of the power-mean family whose p → +∞ end is `linf_chebyshev()`, and
