@@ -41,6 +41,12 @@ solver:
           The Minkowski exponent cannot express the geometric mean (the p → 0 limit of the power
           mean, which divides the sum by d before the root — not a Minkowski form), so the
           geometric mean is reachable only as a precomputed distance matrix.
+    distance.l_minus_inf:
+      mark: partial
+      note:
+        text: >-
+          The Minkowski exponent is positive, so it cannot express the L−∞ distance (the
+          p → −∞ limit of the power mean); it is reachable only as a precomputed distance matrix.
     distance.along_axis:
       mark: partial
       note:
@@ -59,7 +65,11 @@ solver:
     objective.geomean_nn:
       mark: none
       note: *no_nn_family
+    objective.harmonic_nn:
+      mark: none
+      note: *no_nn_family
     objective.max_sum: {mark: full}
+    objective.hybrid: {mark: none}
     objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups:
       mark: full

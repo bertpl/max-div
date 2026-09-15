@@ -126,6 +126,13 @@ groups:
         label: L∞ (Chebyshev) distance
         hero: true
         definition: Selects under L∞ (Chebyshev) distance computed by the tool from vector input.
+      - key: l_minus_inf
+        hero_label: L−∞
+        label: L−∞ distance
+        hero: true
+        definition: >-
+          Selects under the L−∞ distance (the smallest of the per-coordinate absolute
+          differences) computed by the tool from vector input.
       - key: minkowski
         hero_label: L*
         label: Minkowski distance
@@ -190,6 +197,13 @@ groups:
         definition: >-
           Optimizes the geometric mean, over the selected items, of each item's distance to its
           nearest selected neighbor.
+      - key: harmonic_nn
+        hero_label: harmonic-of-NN
+        label: maximize the harmonic-mean nearest-neighbor separation
+        hero: true
+        definition: >-
+          Optimizes the harmonic mean, over the selected items, of each item's distance to its
+          nearest selected neighbor.
       - key: max_sum
         hero_label: max-sum
         label: maximize the mean pairwise distance
@@ -197,6 +211,15 @@ groups:
         definition: >-
           Optimizes the mean (equivalently the sum) of all pairwise distances within the selection
           (max-sum diversity).
+      - key: hybrid
+        hero_label: hybrid
+        label: combine several diversity objectives into one
+        hero: true
+        definition: >-
+          Optimizes a user-configurable combination of several of the tool's built-in diversity
+          objectives at once — for example an objective over the whole vector combined with
+          others each over a single dimension. Assembling such a combination by hand, from objective
+          terms the tool does not offer as built-ins, counts as reachable, not built in.
       - key: optimality_proofs
         hero_label: optimality proofs
         label: certified proofs that a selection is optimal

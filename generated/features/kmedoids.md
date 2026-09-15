@@ -28,6 +28,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · L1 (Manhattan) distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · L2 (Euclidean) distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · L∞ (Chebyshev) distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
+| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^kmedoids-2] |
 | distance metrics · Minkowski distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · cosine distance | <span class="mark mark-full">✔</span> | [^kmedoids-1] |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^kmedoids-2] |
@@ -36,7 +37,9 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |
+| diversity objectives · maximize the harmonic-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^kmedoids-5] |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-none">—</span> | [^kmedoids-5] |
+| diversity objectives · combine several diversity objectives into one | <span class="mark mark-none">—</span> | [^kmedoids-5] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |

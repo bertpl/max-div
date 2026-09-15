@@ -34,10 +34,13 @@ solver:
     distance.cosine: {mark: full}
     distance.geomean:
       mark: partial
-      note:
+      note: &not_a_sklearn_metric
         text: >-
           Not among the metric names scikit-learn understands, so it is reachable only as a
           precomputed similarity matrix.
+    distance.l_minus_inf:
+      mark: partial
+      note: *not_a_sklearn_metric
     distance.along_axis:
       mark: partial
       note:
@@ -58,11 +61,20 @@ solver:
     objective.geomean_nn:
       mark: none
       note: *coverage_not_dispersion
+    objective.harmonic_nn:
+      mark: none
+      note: *coverage_not_dispersion
     objective.max_sum:
       mark: full
       note:
         text: >-
           Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
+    objective.hybrid:
+      mark: full
+      note:
+        text: >-
+          MixtureSelection optimizes a user-configurable weighted sum of several built-in
+          submodular objectives, including facility location over more than one precomputed matrix.
     objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}

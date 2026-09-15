@@ -36,10 +36,13 @@ solver:
       note: *via_sklearn_estimator
     distance.geomean:
       mark: partial
-      note:
+      note: &not_a_sklearn_metric
         text: >-
           Not among the metric names scikit-learn understands, so it is reachable only as a
           precomputed dissimilarity matrix.
+    distance.l_minus_inf:
+      mark: partial
+      note: *not_a_sklearn_metric
     distance.along_axis:
       mark: partial
       note:
@@ -63,7 +66,13 @@ solver:
     objective.geomean_nn:
       mark: none
       note: *medoids_not_dispersion
+    objective.harmonic_nn:
+      mark: none
+      note: *medoids_not_dispersion
     objective.max_sum:
+      mark: none
+      note: *medoids_not_dispersion
+    objective.hybrid:
       mark: none
       note: *medoids_not_dispersion
     objective.optimality_proofs: {mark: none}

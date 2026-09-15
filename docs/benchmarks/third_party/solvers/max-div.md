@@ -21,6 +21,7 @@ solver:
     distance.minkowski: {mark: full}
     distance.cosine: {mark: full}
     distance.geomean: {mark: full}
+    distance.l_minus_inf: {mark: full}
     distance.along_axis: {mark: full}
     distance.custom:
       mark: full
@@ -31,7 +32,9 @@ solver:
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: full}
     objective.geomean_nn: {mark: full}
+    objective.harmonic_nn: {mark: full}
     objective.max_sum: {mark: full}
+    objective.hybrid: {mark: full}
     objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: full}
     constraints.overlapping_groups: {mark: full}

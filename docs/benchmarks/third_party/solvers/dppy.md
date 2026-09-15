@@ -37,6 +37,9 @@ solver:
     distance.geomean:
       mark: partial
       note: *via_kernel
+    distance.l_minus_inf:
+      mark: partial
+      note: *via_kernel
     distance.along_axis:
       mark: partial
       note: *via_kernel
@@ -61,7 +64,13 @@ solver:
     objective.geomean_nn:
       mark: none
       note: *samples_not_optimizes
+    objective.harmonic_nn:
+      mark: none
+      note: *samples_not_optimizes
     objective.max_sum:
+      mark: none
+      note: *samples_not_optimizes
+    objective.hybrid:
       mark: none
       note: *samples_not_optimizes
     objective.optimality_proofs: {mark: none}

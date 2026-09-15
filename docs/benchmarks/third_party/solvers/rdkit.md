@@ -35,6 +35,9 @@ solver:
     distance.geomean:
       mark: partial
       note: *callback
+    distance.l_minus_inf:
+      mark: partial
+      note: *callback
     distance.along_axis:
       mark: partial
       note: *callback
@@ -46,7 +49,9 @@ solver:
     objective.max_min: {mark: full}
     objective.mean_nn: {mark: none}
     objective.geomean_nn: {mark: none}
+    objective.harmonic_nn: {mark: none}
     objective.max_sum: {mark: none}
+    objective.hybrid: {mark: none}
     objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups:
       mark: none
