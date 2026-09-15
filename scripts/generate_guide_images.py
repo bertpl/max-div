@@ -84,6 +84,7 @@ def render_example(
     highlight: tuple[int, ...] = (),
     dot_size: float = 36,
     position_marks: tuple[float, ...] | None = None,
+    log_scale: bool = False,
 ) -> None:
     """Render one figure: the three cases as dot rows, and the metrics against alpha below them.
 
@@ -97,6 +98,8 @@ def render_example(
         highlight: Indices of the items alpha acts on, drawn as hollow rings.
         dot_size: Marker area of the items; smaller for selections with many items.
         position_marks: Positions marked by a labeled vertical across the rows; the whole numbers in range when omitted.
+        log_scale: Draw the positions on a logarithmic axis, and each metric relative to its value at alpha = 0 on a
+            logarithmic axis too, so that metrics of different magnitudes share one panel.
     """
     use_docs_style()
     fig, (ax_cases, ax_metrics) = plt.subplots(2, 1, figsize=(8.0, 5.6), height_ratios=(1.3, 2.0))
@@ -120,16 +123,22 @@ def render_example(
             linewidths=1.8,
             zorder=3,
         )
-        pad = 0.02 * (axis_range[1] - axis_range[0])
-        ax_cases.text(axis_range[0] - pad, y, f"Case {label}", ha="right", va="center")
-        ax_cases.text(axis_range[1] + pad, y, f"\u03b1 = {alpha:g}", ha="left", va="center")  # alpha
+        pad = axis_range[1] ** 0.06 if log_scale else 0.02 * (axis_range[1] - axis_range[0])
+        left, right = (axis_range[0] / pad, axis_range[1] * pad) if log_scale else (axis_range[0] - pad, axis_range[1] + pad)
+        ax_cases.text(left, y, f"Case {label}", ha="right", va="center")
+        ax_cases.text(right, y, f"\u03b1 = {alpha:g}", ha="left", va="center")  # alpha
     # Faint labeled verticals at position_marks let a position be read across the rows.
     y_top = len(CASE_LABELS) - 0.4
+    if log_scale:
+        ax_cases.set_xscale("log")
     if position_marks is None:
         position_marks = tuple(np.arange(np.ceil(axis_range[0]), axis_range[1] + 1e-9) + 0.0)  # + 0.0 turns a -0 into 0
     for tick in position_marks:
         ax_cases.vlines(tick, -0.6, y_top, color="#D8D8D8", linewidth=0.8, linestyle="--", zorder=0)
-        label = f"{tick:.1f}" if float(tick).is_integer() else f"{tick:g}"
+        if log_scale:
+            label = f"$10^{{{int(np.log10(tick))}}}$"
+        else:
+            label = f"{tick:.1f}" if float(tick).is_integer() else f"{tick:g}"
         ax_cases.text(tick, y_top, label, ha="center", va="bottom", color="#888888", fontsize="small")
     ax_cases.set_xlim(*axis_range)
     ax_cases.set_ylim(-0.6, y_top)
@@ -141,6 +150,9 @@ def render_example(
     # --- the metrics against alpha --------------
     alphas = np.linspace(*alpha_range, 400)
     curves = {metric: np.array([metrics(layout(a))[metric] for a in alphas]) for metric in METRIC_COLORS}
+    if log_scale:
+        curves = {metric: curve / metrics(layout(0.0))[metric] for metric, curve in curves.items()}
+        ax_metrics.set_yscale("log")
     for metric, color in METRIC_COLORS.items():
         ax_metrics.plot(alphas, curves[metric], color=color, linewidth=1.8, label=metric)
     if diversity_max is not None:
@@ -150,7 +162,7 @@ def render_example(
         ax_metrics.text(alpha, ax_metrics.get_ylim()[1], f" {label}", ha="left", va="top", color="#555555")
     ax_metrics.set_xlim(*alpha_range)
     ax_metrics.set_xlabel("\u03b1")  # alpha
-    ax_metrics.set_ylabel("diversity")
+    ax_metrics.set_ylabel("diversity relative to \u03b1 = 0" if log_scale else "diversity")
     ax_metrics.legend(**(legend or {"loc": "best"}))
 
     save_webp(fig, IMAGES_DIR / f"{name}.webp")
@@ -174,6 +186,16 @@ def layout_near_duplicate(alpha: float) -> NDArray[np.float64]:
 def layout_power_spacing(alpha: float) -> NDArray[np.float64]:
     """Return items power-spaced over [0, 1]: uniform at alpha = 1, crowding toward 0 below it and toward 1 above it."""
     return (np.arange(51) / 50.0) ** ((2.0 - alpha) / alpha)
+
+
+def layout_decades(alpha: float) -> NDArray[np.float64]:
+    """Return 11 items at 1, 10, ..., 1e10; alpha > 0 grows the largest gap by 10**alpha, alpha < 0 shrinks the smallest by it."""
+    positions = 10.0 ** np.arange(11, dtype=np.float64)
+    if alpha > 0:
+        positions[-1] *= 10.0**alpha
+    else:
+        positions[0] = positions[1] - 9.0 * 10.0**alpha
+    return positions
 
 
 def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
@@ -392,6 +414,17 @@ def main() -> None:
         legend={"loc": "upper left", "bbox_to_anchor": (0.01, 0.92)},
         diversity_max=0.022,
         dot_size=14,
+    )
+    render_example(
+        "geomean_separation_I4",
+        layout_decades,
+        case_alphas=(-1.0, 0.0, 1.0),
+        alpha_range=(-1.0, 1.0),
+        axis_range=(0.05, 2e11),
+        legend={"loc": "upper left"},
+        highlight=(0, 10),
+        position_marks=(1.0, 1e5, 1e10),
+        log_scale=True,
     )
     render_example(
         "geomean_separation_II",
