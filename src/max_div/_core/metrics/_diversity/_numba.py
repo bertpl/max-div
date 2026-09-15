@@ -12,9 +12,13 @@ several times a sum of the same length.
 `min_separation` therefore reads the separations' bit patterns as `int32` and takes an integer
 minimum, which the compiler does vectorize.
 
-That is exact because of how IEEE floats are laid out: for a non-negative float the sign bit is
-zero, the exponent sits above the mantissa, and +inf has every exponent bit set and a zero mantissa,
-so the bit pattern read as a signed 32-bit integer increases with the float value, +inf above every
+That is exact because of how IEEE floats are laid out:
+
+- for a non-negative float the sign bit is zero;
+- the exponent sits above the mantissa;
+- +inf has every exponent bit set and a zero mantissa.
+
+So the bit pattern read as a signed 32-bit integer increases with the float value, +inf above every
 finite one.
 
 The integer minimum picks the same element as the float minimum would.  Two inputs would break

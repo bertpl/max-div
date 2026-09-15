@@ -79,7 +79,7 @@ The [diversity-metric timing benchmark](../benchmarks/internal/bm_diversity_metr
 | harmonic-mean separation | 0.23 µs | 1.1× | ✅ |
 | geometric-mean separation | 1.45 µs | 7.2× | ❌ |
 
-Min separation runs as fast as a sum although the compiler does not vectorize a minimum over floats: the solver takes the minimum over the separations' bit patterns read as integers, which selects the same element for non-negative values and does vectorize.
+Min separation runs as fast as a sum although the compiler does not vectorize a minimum over floats: the solver takes the minimum over the separations' bit patterns read as integers, which selects the same element as the float minimum for non-negative values and does vectorize.
 
 ## II. Diversity metrics & constrained problems
 
