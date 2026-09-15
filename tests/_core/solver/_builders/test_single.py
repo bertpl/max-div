@@ -104,6 +104,7 @@ def test_solver_builder_add_solver_steps(dummy_problem, strategies: list, expect
         ),
         (DiversityMetric.GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         (DiversityMetric.APPROX_GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
+        (DiversityMetric.HARMONIC_MEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         (DiversityMetric.MEAN_SEPARATION, []),
     ],
 )

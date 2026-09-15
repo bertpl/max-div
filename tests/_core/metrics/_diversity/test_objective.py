@@ -238,7 +238,7 @@ def test_hybrid_computes_the_aggregation_of_its_terms(terms, aggregation, contri
         ),
         (DiversityMetric.GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         (DiversityMetric.APPROX_GEOMEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
-        (DiversityMetric.HARMONIC_MEAN_SEPARATION, []),
+        (DiversityMetric.HARMONIC_MEAN_SEPARATION, [DiversityMetric.NON_ZERO_SEPARATION_FRAC]),
         (DiversityMetric.MEAN_SEPARATION, []),
         (DiversityMetric.MEAN_PAIRWISE_DISTANCE, []),
     ],
@@ -246,7 +246,7 @@ def test_hybrid_computes_the_aggregation_of_its_terms(terms, aggregation, contri
 def test_a_simple_objectives_default_tie_breakers_follow_its_metric(
     diversity_metric, expected_tie_breaker_metrics
 ) -> None:
-    """A near-degenerate diversity metric gets separating tie-breakers over its own distance; the rest get none."""
+    """A metric whose ties hide progress, or that a coincident pair pins at zero, gets tie-breakers."""
     # --- act --------------------------
     tie_breakers = DiversityObjectiveSimple(diversity_metric, L2).default_tie_breakers()
 
@@ -290,6 +290,59 @@ def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
     geometric = _hybrid(*terms, aggregation=HybridObjectiveType.GEOMETRIC_MEAN).default_tie_breakers()
     arithmetic = _hybrid(*terms, aggregation=HybridObjectiveType.ARITHMETIC_MEAN).default_tie_breakers()
     assert arithmetic == geometric
+
+
+@pytest.mark.parametrize(
+    "term_metrics, expected_tie_breaker_metrics",
+    [
+        pytest.param(
+            (DiversityMetric.GEOMEAN_SEPARATION, DiversityMetric.HARMONIC_MEAN_SEPARATION),
+            [DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+            id="zero_pinned_terms_get_the_non_zero_fraction_only",
+        ),
+        pytest.param(
+            (DiversityMetric.MEAN_SEPARATION, DiversityMetric.HARMONIC_MEAN_SEPARATION),
+            [DiversityMetric.NON_ZERO_SEPARATION_FRAC],
+            id="one_zero_pinned_term_is_enough",
+        ),
+        pytest.param(
+            (DiversityMetric.MEAN_SEPARATION, DiversityMetric.MEAN_PAIRWISE_DISTANCE),
+            [],
+            id="terms_whose_ties_hide_no_progress_get_none",
+        ),
+    ],
+)
+def test_a_hybrids_default_tie_breakers_follow_its_terms_metrics(term_metrics, expected_tie_breaker_metrics) -> None:
+    """Without a min-separation term, a hybrid gets the non-zero fraction only if a term can be pinned at zero."""
+    # --- arrange ----------------------
+    objective = _hybrid(
+        *(DiversityObjectiveSimple(metric, distance) for metric, distance in zip(term_metrics, (L1, L2)))
+    )
+
+    # --- act / assert -----------------
+    assert objective.default_tie_breakers() == [
+        _hybrid(
+            DiversityObjectiveSimple(metric, L1),
+            DiversityObjectiveSimple(metric, L2),
+            aggregation=HybridObjectiveType.ARITHMETIC_MEAN,
+        )
+        for metric in expected_tie_breaker_metrics
+    ]
+
+
+def test_a_hybrid_over_one_distance_gets_simple_tie_breakers() -> None:
+    """Two terms over one distance leave one distinct distance, so each tie-breaker is a simple objective."""
+    # --- arrange ----------------------
+    objective = _hybrid(
+        DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, L2),
+        DiversityObjectiveSimple(DiversityMetric.GEOMEAN_SEPARATION, L2),
+    )
+
+    # --- act / assert -----------------
+    assert objective.default_tie_breakers() == [
+        DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, L2),
+        DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, L2),
+    ]
 
 
 # =================================================================================================

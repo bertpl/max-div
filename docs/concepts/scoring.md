@@ -27,19 +27,30 @@ a highly diverse selection that badly violates constraints. The strict ordering 
 
 ## Diversity Tie-Breakers
 
-Some diversity metrics produce many tied scores, which makes it hard for swap-based optimization
-to make progress. Tie-breakers are additional diversity metrics that help distinguish between
-solutions with equal primary diversity scores.
+Two selections with the same primary diversity score are tied. A tie is a problem only when the
+swaps that lead toward the optimum are among the tied ones: the solver then has no incentive to
+take them, or cannot leave a plateau at all. Tie-breakers are additional diversity metrics that
+rank tied selections, so that those swaps score higher.
 
 The solver automatically selects appropriate tie-breakers based on your chosen diversity metric:
 
 | Primary Metric | Default Tie-Breakers | Why |
 |---------------|---------------------|-----|
-| `MIN_SEPARATION` | `APPROX_GEOMEAN_SEPARATION`, `NON_ZERO_SEPARATION_FRAC` | Min-separation only depends on the closest pair. Swapping any other item doesn't change the score, causing many ties. The geomean tie-breaker guides the solver towards improving the overall spread. |
-| `GEOMEAN_SEPARATION` | `NON_ZERO_SEPARATION_FRAC` | Geomean is zero if any separation is zero. When multiple separations are zero, single swaps can't improve the score. The non-zero fraction tie-breaker guides the solver towards eliminating zero-distance items. |
-| `MEAN_SEPARATION` | *(none)* | Mean separation rarely produces ties. |
+| `MIN_SEPARATION` | `APPROX_GEOMEAN_SEPARATION`, `NON_ZERO_SEPARATION_FRAC` | The score depends on the closest pair alone, so a swap that spreads the other items leaves it unchanged. Such a swap has value, though: it frees room around the closest pair and makes a later swap that moves one of its items apart more likely. The approximate geomean rewards it; the non-zero fraction takes over once that geomean has underflowed to zero. |
+| `GEOMEAN_SEPARATION`, `APPROX_GEOMEAN_SEPARATION`, `HARMONIC_MEAN_SEPARATION` | `NON_ZERO_SEPARATION_FRAC` | These means are zero as soon as one separation is zero. Once two or more pairs coincide, no single swap moves the score off zero, so the solver would be stuck. The non-zero fraction counts the coincident pairs down until the score is non-zero again. |
+| `MEAN_SEPARATION`, `MEAN_PAIRWISE_DISTANCE` | *(none)* | Every swap that changes a separation changes the score, so a tie never hides an improvement. |
 
-You can override the defaults via `MaxDivSolverBuilder.with_diversity_tie_breakers()`.
+A [hybrid diversity metric](../reference/metrics/HybridDiversityMetric.md) follows the same rule over its terms' metrics:
+
+- the approximate geomean is needed when any term is min-separation;
+- the non-zero fraction is needed when any term is min-separation or is zero when any separation is zero.
+
+Each tie-breaker then applies to every distance that the hybrid's terms use, aggregated over those distances by its own mean:
+
+- the approximate geomean by a geometric mean;
+- the non-zero fraction by an arithmetic mean, so a distance with no non-zero separation lowers the tie-breaker without making it zero.
+
+You can override the defaults via `MaxDivSolverBuilder.with_diversity_tie_breakers()`, except for a hybrid, whose tie-breakers cannot be overridden.
 
 ## Soft Constraints (Advanced)
 
