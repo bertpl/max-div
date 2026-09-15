@@ -74,7 +74,7 @@ solver:
       note:
         text: >-
           MixtureSelection optimizes a user-configurable weighted sum of several built-in
-          submodular objectives, facility location over more than one precomputed matrix included.
+          submodular objectives, including facility location over more than one precomputed matrix.
     objective.optimality_proofs: {mark: none}
     constraints.disjoint_groups: {mark: none}
     constraints.overlapping_groups: {mark: none}

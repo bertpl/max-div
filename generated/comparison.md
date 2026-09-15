@@ -91,7 +91,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^cmp-33]: A precomputed similarity matrix is a first-class input, so any similarity you can compute is usable. Note the sign convention: apricot maximizes similarity coverage, so a distance has to be turned into a similarity first.
 [^cmp-34]: Submodular coverage objectives, not dispersion ones. Nothing here maximizes a minimum separation, and no reformulation makes facility location do so.
 [^cmp-35]: Facility location rewards how well the selection covers the remaining items, which on a distance-derived kernel is the standard submodular surrogate for a max-sum style objective — related to, but not identical with, maximizing the mean pairwise distance.
-[^cmp-36]: MixtureSelection optimizes a user-configurable weighted sum of several built-in submodular objectives, facility location over more than one precomputed matrix included.
+[^cmp-36]: MixtureSelection optimizes a user-configurable weighted sum of several built-in submodular objectives, including facility location over more than one precomputed matrix.
 [^cmp-37]: The optimizers accept an n_jobs argument, but it is unused: the greedy selection runs single-threaded.
 [^cmp-38]: Available through the same Minkowski-exponent parameter that provides L1: its radius-based methods forward `p` to scipy, which treats p=∞ as the Chebyshev norm; the greedy pickers accept any metric as a precomputed distance matrix or callable.
 [^cmp-39]: The same Minkowski-exponent parameter that provides L1 and Chebyshev takes any p.

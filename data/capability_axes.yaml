@@ -213,13 +213,13 @@ groups:
           (max-sum diversity).
       - key: hybrid
         hero_label: hybrid
-        label: combine several diversity terms over different distances
+        label: combine several diversity objectives into one
         hero: true
         definition: >-
-          Optimizes a user-configurable sum or combination of several of the tool's built-in
-          diversity objectives at once — for example a full-space objective combined with
-          per-coordinate ones. Assembling such a combination by hand, from objective terms the tool
-          does not provide built in, counts as reachable, not built in.
+          Optimizes a user-configurable combination of several of the tool's built-in diversity
+          objectives at once — for example an objective over the whole vector combined with
+          others each over a single dimension. Assembling such a combination by hand, from objective
+          terms the tool does not offer as built-ins, counts as reachable, not built in.
       - key: optimality_proofs
         hero_label: optimality proofs
         label: certified proofs that a selection is optimal

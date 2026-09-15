@@ -39,7 +39,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^scip-5] |
 | diversity objectives · maximize the harmonic-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^scip-5] |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^scip-4] |
-| diversity objectives · combine several diversity terms over different distances | <span class="mark mark-partial">◐</span> | [^scip-6] |
+| diversity objectives · combine several diversity objectives into one | <span class="mark mark-partial">◐</span> | [^scip-6] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-full">✔</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^scip-7] |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^scip-7] |

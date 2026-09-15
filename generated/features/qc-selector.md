@@ -39,7 +39,7 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^qc-selector-8] |
 | diversity objectives · maximize the harmonic-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^qc-selector-8] |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-full">✔</span> |  |
-| diversity objectives · combine several diversity terms over different distances | <span class="mark mark-none">—</span> |  |
+| diversity objectives · combine several diversity objectives into one | <span class="mark mark-none">—</span> |  |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-full">✔</span> | [^qc-selector-9] |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |
