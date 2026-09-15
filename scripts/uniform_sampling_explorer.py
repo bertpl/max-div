@@ -242,7 +242,7 @@ def explorer_fragment(
     n: int,
     k: int,
     objective_keys: tuple[str, ...],
-    population_image: str,
+    population_image_url: str,
     description: str,
 ) -> str:
     """Return the HTML fragment: a `<div>` holding the SVG and its caption, ending in a newline.
@@ -253,7 +253,7 @@ def explorer_fragment(
         k: Selection size, for the legend.
         objective_keys: Keys into `DISTANCES` of the distances the experiment's objective uses; one for a
             simple objective, one per term for a hybrid. The interaction draws one level curve per key.
-        population_image: URL of the population raster, relative to the page that includes the fragment.
+        population_image_url: URL of the population raster, relative to the page that includes the fragment.
         description: Alternative text of the figure.
     """
     keys = objective_keys + tuple(key for key in REFERENCE_KEYS if key not in objective_keys)
@@ -270,7 +270,7 @@ def explorer_fragment(
         '<defs><clipPath id="usx-square" clipPathUnits="userSpaceOnUse">'
         '<rect x="0" y="0" width="1" height="1"/></clipPath></defs>',
         f'<rect x="0" y="0" width="{VIEW_WIDTH}" height="{VIEW_HEIGHT}" fill="#ffffff"/>',
-        f'<image href="{population_image}" x="{square_x:.2f}" y="{square_y:.2f}"'
+        f'<image href="{population_image_url}" x="{square_x:.2f}" y="{square_y:.2f}"'
         f' width="{SCALE:.2f}" height="{SCALE:.2f}" preserveAspectRatio="none"/>',
         *_axes(),
         *_legend(n, k, objective_keys),

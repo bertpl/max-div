@@ -74,7 +74,13 @@ def objective_keys(request):
 def fragment(explorer, objective_keys):
     """Return the fragment of the four-item selection."""
     return explorer.explorer_fragment(
-        X, Y, n=4, k=4, objective_keys=objective_keys, population_image="../images/pop.webp", description="four items"
+        X,
+        Y,
+        n=4,
+        k=4,
+        objective_keys=objective_keys,
+        population_image_url="../images/pop.webp",
+        description="four items",
     )
 
 

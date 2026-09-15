@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
-from uniform_sampling_explorer import DISTANCES, POPULATION_COLOR, explorer_fragment
+from uniform_sampling_explorer import POPULATION_COLOR, explorer_fragment, nearest_neighbors
 
 from benchmarks.figures.style import REPO_ROOT, save_webp, use_docs_style
 from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
@@ -50,6 +50,11 @@ def separations(positions: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.minimum(left, right)
 
 
+def harmonic_mean(values: NDArray[np.float64]) -> float:
+    """Return the harmonic mean of a positive array, or 0.0 if any value is not positive."""
+    return float(values.size / np.sum(1.0 / values)) if np.all(values > 0) else 0.0
+
+
 def metrics(positions: NDArray[np.float64]) -> dict[str, float]:
     """Return the separation-based diversity metrics of a one-dimensional selection."""
     sep = separations(np.sort(positions))
@@ -58,16 +63,8 @@ def metrics(positions: NDArray[np.float64]) -> dict[str, float]:
         "min separation": float(sep.min()),
         "mean separation": float(sep.mean()),
         "geometric-mean separation": float(np.exp(np.mean(np.log(sep)))) if is_positive else 0.0,
-        "harmonic-mean separation": float(sep.size / np.sum(1.0 / sep)) if is_positive else 0.0,
+        "harmonic-mean separation": harmonic_mean(sep),
     }
-
-
-def geomean_separation_2d(points: NDArray[np.float64]) -> float:
-    """Return the geometric mean over points of the Euclidean distance to each point's nearest other point."""
-    diff = points[:, None, :] - points[None, :, :]
-    distances = np.sqrt(np.sum(diff * diff, axis=-1))
-    np.fill_diagonal(distances, np.inf)
-    return float(np.exp(np.mean(np.log(distances.min(axis=1)))))
 
 
 # ==================================================================================================
@@ -413,15 +410,8 @@ def render_uniform_sampling_population(name: str, vectors: NDArray[np.float32], 
 
 def harmonic_separations(selection: NDArray[np.float64]) -> dict[str, float]:
     """Return the selection's harmonic-mean separation under the L2, x and y distances."""
-    dx = np.abs(selection[:, 0][:, None] - selection[:, 0][None, :])
-    dy = np.abs(selection[:, 1][:, None] - selection[:, 1][None, :])
-    result = {}
-    for key in REFERENCE_LABELS:
-        distances = DISTANCES[key].pairwise(dx, dy)
-        np.fill_diagonal(distances, np.inf)
-        separations = distances.min(axis=1)
-        result[key] = float(separations.size / np.sum(1.0 / separations)) if np.all(separations > 0) else 0.0
-    return result
+    neighbors = nearest_neighbors(selection[:, 0], selection[:, 1], tuple(REFERENCE_LABELS))
+    return {key: harmonic_mean(distance) for key, (_, distance) in neighbors.items()}
 
 
 # The densest known packing of 100 equal circles in a unit square (E. Specht, Packomania,
@@ -530,7 +520,7 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
             settings.n,
             settings.k,
             objective_keys=experiment.distance_keys,
-            population_image="../images/uniform_sampling_population.webp",
+            population_image_url="../images/uniform_sampling_population.webp",
             description=(
                 "Ten thousand gray points in the unit square with the hundred selected ones in red, and the "
                 "selection's x and y values as rug marks along the bottom and left edges"

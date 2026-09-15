@@ -24,16 +24,16 @@ The three goals compete for the same $k$ points. **How to trade them off is left
 ### I.C. How the experiments run
 
 - **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results are comparable.
-- **One diversity metric for every experiment:** the [harmonic-mean separation](../concepts/diversity.md#diversity-metrics), the harmonic mean, over the selected points, of each point's distance to its nearest other point. It sits between the minimum and the geometric mean in how hard it penalizes one close pair; on a perfectly regular selection all three aggregates agree.
+- **One diversity metric for every experiment:** the [harmonic-mean separation](../concepts/diversity.md#diversity-metrics), the harmonic mean, over the selected points, of each point's distance to its nearest other point. It sits between the minimum and the geometric mean in how hard it penalizes one close pair; on a perfectly regular selection the minimum, harmonic-mean and geometric-mean separations all agree.
 - **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget.
 - **One measure for every result:** the harmonic-mean separation of the selection under the L2, $x$ and $y$ distances, one per goal.
 
 ## II. Diversity references
 
-Before optimizing, it helps to know what each goal could reach if it were the only one, with the $k$ points placed freely instead of chosen from the population.
+Before optimizing, it helps to know what each goal could reach if it were the only one, with the $k$ points placed freely, not chosen from the population.
 
 - **Along one axis.** $k$ values spread evenly over $[0, 1]$, the first at 0 and the last at 1, are $1 / (k - 1)$ apart, and no placement does better on the minimum. The reference for the $x$ and $y$ goals is $1 / (k - 1) = 1/99$.
-- **In the square.** For $k = 100$ a $10 \times 10$ grid over $[0, 1]^2$ places the points $1 / (\sqrt{k} - 1) = 1/9 \approx 0.111$ apart. The densest known arrangement does 3 % better: the best known packing of 100 equal circles in a square, hexagonal in the bulk, has radius $r = 0.051401$,[^packomania] and its centers, which lie in the inner square of side $1 - 2r$, are $2r / (1 - 2r) \approx 0.1146$ apart in the unit square. That spacing is the reference for the L2 goal.
+- **In the square.** For $k = 100$ a $10 \times 10$ grid over $[0, 1]^2$ places the points $1 / (\sqrt{k} - 1) = 1/9 \approx 0.111$ apart. The densest known arrangement does 3 % better: the best known packing of 100 equal circles in a square, hexagonal in its interior, has radius $r = 0.051401$,[^packomania] and its centers, which lie in the inner square of side $1 - 2r$, are $2r / (1 - 2r) \approx 0.1146$ apart in the unit square. That spacing is the reference for the L2 goal.
 
 [^packomania]: Specht, E. *Packomania*, the best known packings of equal circles in a square, [N = 97 to 108](https://www.packomania.com/csq/pdf/d9.pdf).
 
@@ -54,7 +54,7 @@ In every figure the red dots are the selection, with its $x$ and $y$ values as r
 
 --8<-- "generated/uniform_sampling_l2_separations.md"
 
-The selection is spread in the square, and the rug marks show the price: along either axis the values cluster and leave gaps, because the objective does not measure them. The level curve through a point's nearest neighbor is a circle, and the marginal neighbors sit far outside it.
+The selection is spread in the square, but along either axis the values cluster and leave gaps, because the objective does not measure them. The level curve through a point's nearest neighbor is a circle, and the marginal neighbors sit far outside it.
 
 ### III.B. $x$ distance
 
@@ -84,13 +84,18 @@ The [L−∞ distance](../concepts/diversity.md#distance-metrics) between two po
 
 --8<-- "generated/uniform_sampling_linf_separations.md"
 
-Both marginals come close to their references. The distance says nothing about the L2 spread: the level curve through a point's nearest neighbor is the edge of a square around the point, extended outward, and two points diagonally across the square can be at a small L−∞ distance. Nearby pairs in 2D are only kept apart as far as their coordinate gaps happen to require.
+Both marginals come close to their references. The distance says nothing about the L2 spread: the level curve through a point's nearest neighbor traces the four half-lines where one coordinate gap equals $d$ and the other is larger, a square outline whose sides extend outward past the corners, and two points diagonally across the square can be at a small L−∞ distance. Nearby pairs in 2D are only kept apart as far as their coordinate gaps happen to require.
 
 ### IV.B. Geometric-mean distance
 
 The [geometric-mean distance](../concepts/diversity.md#distance-metrics) is the square root of the product of the two coordinate gaps. It is a smoothed L−∞ distance: a small gap along one axis makes the distance small, but a large gap along the other axis compensates, in part.
 
-Its level curves are hyperbolas $|\Delta x| \cdot |\Delta y| = d^2$, and the curve at $d = 1/\sqrt{k}$ passes through a neighbor at the 2D spacing in both coordinates and through a neighbor across the whole square in one coordinate and at the marginal spacing in the other. The distance therefore covers all three goals in one number, as the maximum projection designs of Joseph, Gul & Ba (2015) do with the same product.[^maxpro]
+Its level curves are hyperbolas $|\Delta x| \cdot |\Delta y| = d^2$. The curve at $d = 1/\sqrt{k}$ passes through two kinds of neighbor at once:
+
+- one at the 2D spacing in both coordinates;
+- one across the whole square in one coordinate and at the marginal spacing in the other.
+
+The distance therefore covers all three goals in one number, as the maximum projection designs of Joseph, Gul & Ba (2015) do with the same product.[^maxpro]
 
 --8<-- "generated/uniform_sampling_geomean_figure.html"
 
