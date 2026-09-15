@@ -4,7 +4,7 @@ A `DiversityObjective` is one of two kinds, each holding only the fields that ki
 
 - `DiversityObjectiveSimple` — one diversity metric over one distance metric.
 - `DiversityObjectiveHybrid` — several simple objectives (its terms) aggregated by a geometric or an
-  arithmetic mean; a hybrid objective's tie-breakers are hybrids too.
+  arithmetic mean.
 
 Every kind computes its own diversity score (`compute`) from the per-item contributions the solver
 tracks. The solver passes `compute` one array per spec of `tracker_specs`, in that order; a hybrid
@@ -13,6 +13,12 @@ computes, from those same per-spec arrays, its own per-item contribution for all
 (`compute_per_item_contributions`), the value the solver samples items by. The solver, its config, builders, presets
 and strategies read this type, never a bare `DiversityMetric`, because an objective of several
 terms is not a single diversity metric.
+
+The default tie-breakers follow one rule for both kinds, over the diversity metrics of the terms (a
+simple objective being its own one term): a min-separation term calls for the approximate geomean
+and the non-zero fraction, a term that one coincident pair pins at zero calls for the non-zero
+fraction alone, and any other term calls for none. Each tie-breaker spans every distinct distance
+metric of the objective, as a hybrid when there are several.
 """
 
 from __future__ import annotations
@@ -82,9 +88,22 @@ class DiversityObjective(ABC):
     def tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
         """Return one spec per array `compute` takes, in that order; a spec may repeat."""
 
+    @property
     @abstractmethod
+    def diversity_metrics(self) -> tuple[DiversityMetric, ...]:
+        """Return the diversity metric of each term, in term order; a simple objective is its own one term."""
+
     def default_tie_breakers(self) -> list[DiversityObjective]:
-        """Return the tie-breaker objectives to rank ties by when the caller sets none of its own."""
+        """Return the tie-breaker objectives to rank ties by when the caller sets none of its own.
+
+        The rule in the module docstring picks the tie-breaker metrics from this objective's
+        diversity metrics; each tie-breaker spans every distinct distance metric of this objective.
+        """
+        distance_metrics = self.distinct_distance_metrics()
+        return [
+            _objective_over(tie_breaker.metric, tie_breaker.aggregation, distance_metrics)
+            for tie_breaker in _tie_breaker_metrics_for(self.diversity_metrics)
+        ]
 
     @cached_property
     def distinct_tracker_specs(self) -> tuple[DiversityTrackerSpec, ...]:
@@ -124,16 +143,10 @@ class DiversityObjectiveSimple(DiversityObjective):
         """Return the one spec of this objective."""
         return (self.tracker_spec,)
 
-    def default_tie_breakers(self) -> list[DiversityObjective]:
-        """Return the separating tie-breakers a near-degenerate diversity metric needs; other metrics get none.
-
-        A near-degenerate diversity metric, where many selections share a score, gets tie-breakers
-        that separate them, each over this objective's own distance metric.
-        """
-        return [
-            DiversityObjectiveSimple(tie_breaker_metric, self.distance_metric)
-            for tie_breaker_metric in _separating_tie_breaker_metrics(self.diversity_metric)
-        ]
+    @cached_property
+    def diversity_metrics(self) -> tuple[DiversityMetric, ...]:
+        """Return the one diversity metric of this objective."""
+        return (self.diversity_metric,)
 
 
 class HybridObjectiveType(StrEnum):
@@ -148,8 +161,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
     """Several simple objectives (its terms) aggregated by their geometric or arithmetic mean.
 
     Terms are simple objectives only, so each term reads exactly one of the arrays passed to
-    `compute`. The solver maximizes a hybrid with the geometric aggregation; a hybrid's default
-    tie-breakers are hybrids of one tie-breaker metric over the distinct distance metrics.
+    `compute`. The solver maximizes a hybrid with the geometric aggregation.
     """
 
     terms: tuple[DiversityObjectiveSimple, ...]
@@ -198,43 +210,64 @@ class DiversityObjectiveHybrid(DiversityObjective):
         """Return the terms' specs in term order, a spec repeated once per term that has it."""
         return tuple(term.tracker_spec for term in self.terms)
 
-    def default_tie_breakers(self) -> list[DiversityObjective]:
-        """Return the separating tie-breakers over the terms' distinct distance metrics.
-
-        The tie-breakers separate selections that the terms' own metrics tie on, whatever this
-        hybrid's aggregation: a min-separation term ties on every swap that leaves the closest pair
-        alone, and a geomean-separation term sits at zero once one pair coincides. So every hybrid
-        gets the same pair, over each of its distance metrics.
-        """
-        distances = self.distinct_distance_metrics()
-        return [
-            # the approximate geomean rewards a uniform spread, which opens room around the closest
-            # pair; aggregated geometrically, a zero on one distance pulls it down without pinning it
-            DiversityObjectiveHybrid(
-                tuple(DiversityObjectiveSimple(DiversityMetric.APPROX_GEOMEAN_SEPARATION, d) for d in distances),
-                HybridObjectiveType.GEOMETRIC_MEAN,
-            ),
-            # once the approximate geomean has underflowed to zero, the non-zero fraction still counts
-            # the coincident pairs; aggregated arithmetically, a distance with no non-zero separation
-            # only lowers it, so fixing another distance still ranks higher
-            DiversityObjectiveHybrid(
-                tuple(DiversityObjectiveSimple(DiversityMetric.NON_ZERO_SEPARATION_FRAC, d) for d in distances),
-                HybridObjectiveType.ARITHMETIC_MEAN,
-            ),
-        ]
+    @cached_property
+    def diversity_metrics(self) -> tuple[DiversityMetric, ...]:
+        """Return the terms' diversity metrics in term order."""
+        return tuple(term.diversity_metric for term in self.terms)
 
 
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def _separating_tie_breaker_metrics(diversity_metric: DiversityMetric) -> tuple[DiversityMetric, ...]:
-    """Return the tie-breaker diversity metrics for a primary metric that has defaults; empty for the rest."""
-    if diversity_metric == DiversityMetric.MIN_SEPARATION:
-        # min-separation reacts only to the closest pair; the approximate geomean rewards a uniform
-        # spread, which opens room around that pair so the minimum separation itself can grow.
-        return (DiversityMetric.APPROX_GEOMEAN_SEPARATION, DiversityMetric.NON_ZERO_SEPARATION_FRAC)
-    if diversity_metric in (DiversityMetric.GEOMEAN_SEPARATION, DiversityMetric.APPROX_GEOMEAN_SEPARATION):
-        # once more than one pair coincides the geomean is stuck at zero; the non-zero fraction
-        # rewards cutting the count of coincident pairs, a path back toward a non-zero geomean.
-        return (DiversityMetric.NON_ZERO_SEPARATION_FRAC,)
-    return ()
+class _TieBreakerMetric(NamedTuple):
+    """A tie-breaker diversity metric and the aggregation its hybrid form uses over several distances."""
+
+    metric: DiversityMetric
+    aggregation: HybridObjectiveType
+
+
+# the approximate geomean rewards a uniform spread, which opens room around the closest pair;
+# aggregated geometrically, a zero on one distance lowers it without pinning it
+_APPROX_GEOMEAN_TIE_BREAKER = _TieBreakerMetric(
+    DiversityMetric.APPROX_GEOMEAN_SEPARATION, HybridObjectiveType.GEOMETRIC_MEAN
+)
+# the non-zero fraction counts the coincident pairs down once the geomean sits at zero; aggregated
+# arithmetically, a distance with no non-zero separation only lowers it, so fixing another distance
+# still ranks higher
+_NON_ZERO_FRAC_TIE_BREAKER = _TieBreakerMetric(
+    DiversityMetric.NON_ZERO_SEPARATION_FRAC, HybridObjectiveType.ARITHMETIC_MEAN
+)
+
+# the separation aggregates that one coincident pair pins at zero
+_ZERO_PINNED_METRICS = frozenset(
+    {
+        DiversityMetric.GEOMEAN_SEPARATION,
+        DiversityMetric.APPROX_GEOMEAN_SEPARATION,
+        DiversityMetric.HARMONIC_MEAN_SEPARATION,
+    }
+)
+
+
+def _tie_breaker_metrics_for(diversity_metrics: tuple[DiversityMetric, ...]) -> tuple[_TieBreakerMetric, ...]:
+    """Return the tie-breaker metrics the given term metrics call for, in ranking order; empty when none ties."""
+    if DiversityMetric.MIN_SEPARATION in diversity_metrics:
+        # min-separation reacts only to the closest pair, so every swap that leaves that pair alone ties
+        return (_APPROX_GEOMEAN_TIE_BREAKER, _NON_ZERO_FRAC_TIE_BREAKER)
+    elif any(metric in _ZERO_PINNED_METRICS for metric in diversity_metrics):
+        # once more than one pair coincides, single swaps cannot lift the metric off zero
+        return (_NON_ZERO_FRAC_TIE_BREAKER,)
+    else:
+        return ()
+
+
+def _objective_over(
+    diversity_metric: DiversityMetric,
+    aggregation: HybridObjectiveType,
+    distance_metrics: tuple[DistanceMetric | None, ...],
+) -> DiversityObjective:
+    """Return `diversity_metric` over the given distance metrics: simple over one, a hybrid over several."""
+    terms = tuple(DiversityObjectiveSimple(diversity_metric, distance_metric) for distance_metric in distance_metrics)
+    if len(terms) == 1:
+        return terms[0]
+    else:
+        return DiversityObjectiveHybrid(terms, aggregation)

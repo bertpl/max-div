@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `DistanceStorage` is renamed to `DistanceStorageType`; `with_distance_storage` keeps its name
 - `MaxDivSolution.distance_storage` reports the resolved storage type per distance store, and the solution summary lists the stores grouped by type (e.g. `storage=full_matrix (L1, L2), lazy (geomean)`)
+- Default tie-breakers follow the primary objective's terms: a hybrid without a min-separation term keeps only the non-zero-separation fraction, and the harmonic-mean separation gets the same tie-breaker as the geometric mean
 
 ### Deprecated
 

@@ -36,10 +36,12 @@ The solver automatically selects appropriate tie-breakers based on your chosen d
 | Primary Metric | Default Tie-Breakers | Why |
 |---------------|---------------------|-----|
 | `MIN_SEPARATION` | `APPROX_GEOMEAN_SEPARATION`, `NON_ZERO_SEPARATION_FRAC` | Min-separation only depends on the closest pair. Swapping any other item doesn't change the score, causing many ties. The geomean tie-breaker guides the solver towards improving the overall spread. |
-| `GEOMEAN_SEPARATION` | `NON_ZERO_SEPARATION_FRAC` | Geomean is zero if any separation is zero. When multiple separations are zero, single swaps can't improve the score. The non-zero fraction tie-breaker guides the solver towards eliminating zero-distance items. |
-| `MEAN_SEPARATION` | *(none)* | Mean separation rarely produces ties. |
+| `GEOMEAN_SEPARATION`, `APPROX_GEOMEAN_SEPARATION`, `HARMONIC_MEAN_SEPARATION` | `NON_ZERO_SEPARATION_FRAC` | These means are zero if any separation is zero. When multiple separations are zero, single swaps can't improve the score. The non-zero fraction tie-breaker guides the solver towards eliminating zero-distance items. |
+| `MEAN_SEPARATION`, `MEAN_PAIRWISE_DISTANCE` | *(none)* | These means rarely produce ties. |
 
-You can override the defaults via `MaxDivSolverBuilder.with_diversity_tie_breakers()`.
+A [hybrid diversity metric](../reference/metrics/HybridDiversityMetric.md) follows the same rule over its terms' metrics: any min-separation term brings both tie-breakers, otherwise any term from the second row brings the non-zero fraction, otherwise there are none. Each tie-breaker then spans every distance the hybrid's terms use, aggregated over those distances by a geometric mean for the approximate geomean and by an arithmetic mean for the non-zero fraction, so a distance with no non-zero separation lowers the tie-breaker without pinning it.
+
+You can override the defaults via `MaxDivSolverBuilder.with_diversity_tie_breakers()`; a hybrid keeps its defaults.
 
 ## Soft Constraints (Advanced)
 
