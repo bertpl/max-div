@@ -206,7 +206,7 @@ def layout_power_spacing(alpha: float) -> NDArray[np.float64]:
 
 
 def layout_decades(alpha: float) -> NDArray[np.float64]:
-    """Return 11 items a decade apart.
+    """Return 11 items each ten times the previous one.
 
     alpha > 0 grows the largest gap 10**alpha-fold; alpha < 0 shrinks the smallest gap by the same factor.
     """
