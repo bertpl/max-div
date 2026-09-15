@@ -246,7 +246,7 @@ def test_hybrid_computes_the_aggregation_of_its_terms(terms, aggregation, contri
 def test_a_simple_objectives_default_tie_breakers_follow_its_metric(
     diversity_metric, expected_tie_breaker_metrics
 ) -> None:
-    """A metric that ties, or that a coincident pair pins at zero, gets tie-breakers over its own distance."""
+    """A metric whose ties hide progress, or that a coincident pair pins at zero, gets tie-breakers."""
     # --- act --------------------------
     tie_breakers = DiversityObjectiveSimple(diversity_metric, L2).default_tie_breakers()
 
@@ -308,7 +308,7 @@ def test_an_arithmetic_hybrid_gets_the_same_tie_breakers() -> None:
         pytest.param(
             (DiversityMetric.MEAN_SEPARATION, DiversityMetric.MEAN_PAIRWISE_DISTANCE),
             [],
-            id="terms_without_ties_get_none",
+            id="terms_whose_ties_hide_no_progress_get_none",
         ),
     ],
 )
