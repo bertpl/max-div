@@ -31,12 +31,15 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^apricot-select-2] |
 | distance metrics · cosine distance | <span class="mark mark-full">✔</span> |  |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^apricot-select-3] |
+| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^apricot-select-3] |
 | distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^apricot-select-4] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^apricot-select-5] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-none">—</span> | [^apricot-select-6] |
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-6] |
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-6] |
+| diversity objectives · maximize the harmonic-mean nearest-neighbor separation | <span class="mark mark-none">—</span> | [^apricot-select-6] |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-full">✔</span> | [^apricot-select-7] |
+| diversity objectives · combine several diversity terms over different distances | <span class="mark mark-none">—</span> | [^apricot-select-6] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-none">—</span> |  |
 | constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-none">—</span> |  |

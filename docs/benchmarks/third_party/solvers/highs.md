@@ -35,6 +35,9 @@ solver:
     distance.geomean:
       mark: partial
       note: *coeffs
+    distance.l_minus_inf:
+      mark: partial
+      note: *coeffs
     distance.along_axis:
       mark: partial
       note: *coeffs
@@ -56,9 +59,18 @@ solver:
     objective.geomean_nn:
       mark: partial
       note: *assignment
+    objective.harmonic_nn:
+      mark: partial
+      note: *assignment
     objective.max_sum:
       mark: partial
       note: *linearize
+    objective.hybrid:
+      mark: partial
+      note:
+        text: >-
+          Reachable only by hand-building each term's objective and summing them into one, a
+          formulation larger still than any single term's.
     objective.optimality_proofs: {mark: full}
     constraints.disjoint_groups:
       mark: partial

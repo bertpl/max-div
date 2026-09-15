@@ -26,6 +26,7 @@ Every capability cell carries one of the marks below. A mark composes with the c
 | L* | Selects under Minkowski distance with caller-chosen power p, computed by the tool from vector input. |
 | cosine | Selects under cosine distance computed by the tool from vector input. Reaching it through a documented transform — L2-normalize, then select under Euclidean — counts as reachable, not built in. |
 | geomean | Selects under the geometric-mean distance (the d-th root of the product of the per-coordinate differences) computed by the tool from vector input. |
+| L−∞ | Selects under the L−∞ distance (the smallest of the per-coordinate absolute differences) computed by the tool from vector input. |
 | single-dimension | Selects under the distance along one coordinate axis (the absolute difference of that coordinate) computed by the tool from vector input. Handing the tool that coordinate as one-dimensional input counts as reachable, not built in: in one dimension every Minkowski distance is the absolute difference of that coordinate. |
 | custom | Accepts distances the caller computed — a distance matrix or a distance callable — so a metric the tool does not implement is usable anyway. |
 
@@ -40,7 +41,9 @@ Every capability cell carries one of the marks below. A mark composes with the c
 | max-min | Optimizes the minimum pairwise distance within the selection (max-min diversity, also known as p-dispersion). |
 | mean-of-NN | Optimizes the mean, over the selected items, of each item's distance to its nearest selected neighbor. |
 | geomean-of-NN | Optimizes the geometric mean, over the selected items, of each item's distance to its nearest selected neighbor. |
+| harmonic-of-NN | Optimizes the harmonic mean, over the selected items, of each item's distance to its nearest selected neighbor. |
 | max-sum | Optimizes the mean (equivalently the sum) of all pairwise distances within the selection (max-sum diversity). |
+| hybrid | Optimizes a combination of several diversity terms at once, each term a diversity objective measured under its own distance — for example a full-space spread combined with per-coordinate spreads. |
 | optimality proofs | Can terminate with a proof that its selection is optimal for the modeled objective, given enough time — rather than a heuristic result of unknown distance to the optimum. |
 
 </div>

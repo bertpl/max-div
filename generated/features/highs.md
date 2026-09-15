@@ -31,22 +31,25 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 | distance metrics · Minkowski distance | <span class="mark mark-partial">◐</span> | [^highs-1] |
 | distance metrics · cosine distance | <span class="mark mark-partial">◐</span> | [^highs-1] |
 | distance metrics · geometric-mean distance | <span class="mark mark-partial">◐</span> | [^highs-1] |
+| distance metrics · L−∞ distance | <span class="mark mark-partial">◐</span> | [^highs-1] |
 | distance metrics · single-dimension distance | <span class="mark mark-partial">◐</span> | [^highs-1] |
 | distance metrics · caller-supplied distances | <span class="mark mark-full">✔</span> | [^highs-2] |
 | diversity objectives · maximize the minimum separation | <span class="mark mark-partial">◐</span> | [^highs-3] |
 | diversity objectives · maximize the mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^highs-4] |
 | diversity objectives · maximize the geometric-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^highs-4] |
+| diversity objectives · maximize the harmonic-mean nearest-neighbor separation | <span class="mark mark-partial">◐</span> | [^highs-4] |
 | diversity objectives · maximize the mean pairwise distance | <span class="mark mark-partial">◐</span> | [^highs-3] |
+| diversity objectives · combine several diversity terms over different distances | <span class="mark mark-partial">◐</span> | [^highs-5] |
 | diversity objectives · certified proofs that a selection is optimal | <span class="mark mark-full">✔</span> |  |
-| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^highs-5] |
-| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^highs-5] |
-| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^highs-5] |
-| constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-partial">◐</span> | [^highs-6] |
+| constraints beyond k · per-group counts over disjoint groups | <span class="mark mark-partial">◐</span> | [^highs-6] |
+| constraints beyond k · per-group counts over overlapping groups | <span class="mark mark-partial">◐</span> | [^highs-6] |
+| constraints beyond k · minimum and maximum counts per group | <span class="mark mark-partial">◐</span> | [^highs-6] |
+| constraints beyond k · certified verdicts on whether a constraint set is satisfiable | <span class="mark mark-partial">◐</span> | [^highs-7] |
 | time budget · budget expressed as an iteration count | <span class="mark mark-full">✔</span> |  |
 | time budget · budget expressed as wall-clock time | <span class="mark mark-full">✔</span> |  |
-| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^highs-7] |
+| time budget · the answer improves when given more budget | <span class="mark mark-partial">◐</span> | [^highs-8] |
 | multi-worker · several workers search one problem separately and the best result wins | <span class="mark mark-none">—</span> |  |
-| multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^highs-8] |
+| multi-worker · parallel workers share information mid-run | <span class="mark mark-full">✔</span> | [^highs-9] |
 | solver scaling · largest n within memory | n = 5k | |
 | solver scaling · largest n within the time budget | n = 2k | |
 | solver scaling · largest n closing 50% of the quality gap | n = 200 | |
@@ -58,7 +61,8 @@ Support: ✔ built in · ◐ reachable, but you supply the model, transform, met
 [^highs-2]: Distances are coefficients you supply, so an unusual metric costs no more than a common one.
 [^highs-3]: Reachable, but the objective must be linearized by hand — for max-min, a threshold variable bounded below every selected pair via big-M constraints.
 [^highs-4]: Reachable only through an assignment MILP that pairs each selected item with its nearest selected neighbor; the formulation is considerably larger than the max-min one and is what drives the practical size limit down.
-[^highs-5]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
-[^highs-6]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
-[^highs-7]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
-[^highs-8]: The dual simplex, the interior-point factorization and the MIP branch-and-bound each run in parallel, controlled by the parallel and threads options — threads jointly advancing one solve rather than racing independent ones.
+[^highs-5]: Reachable only by hand-building each term's objective and summing them into one, a formulation larger still than any single term's.
+[^highs-6]: Reachable as linear constraints over the selection variables, which you write yourself. Any counting constraint expressible that way is available.
+[^highs-7]: A feasibility-only solve of the hand-built constraint model returns a proven feasible-or-infeasible verdict: the solver itself produces the proof; only the model is yours to write.
+[^highs-8]: The incumbent improves as the branch-and-bound search proceeds, but that is a proof search rather than an anytime budget: progress is uneven, and time spent may go entirely into tightening the bound rather than improving the solution.
+[^highs-9]: The dual simplex, the interior-point factorization and the MIP branch-and-bound each run in parallel, controlled by the parallel and threads options — threads jointly advancing one solve rather than racing independent ones.

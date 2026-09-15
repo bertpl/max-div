@@ -35,6 +35,9 @@ solver:
     distance.geomean:
       mark: partial
       note: *integer_scaled
+    distance.l_minus_inf:
+      mark: partial
+      note: *integer_scaled
     distance.along_axis:
       mark: partial
       note: *integer_scaled
@@ -56,9 +59,18 @@ solver:
     objective.geomean_nn:
       mark: partial
       note: *no_cp_encoding
+    objective.harmonic_nn:
+      mark: partial
+      note: *no_cp_encoding
     objective.max_sum:
       mark: partial
       note: *no_cp_encoding
+    objective.hybrid:
+      mark: partial
+      note:
+        text: >-
+          Reachable only by encoding each term's objective and summing them into one, a
+          formulation larger still than any single term's.
     objective.optimality_proofs: {mark: full}
     constraints.disjoint_groups:
       mark: partial
