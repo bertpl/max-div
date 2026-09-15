@@ -1,7 +1,7 @@
 """Generate the figures of the guide pages under `docs/guides/`.
 
 The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
-cases as dot rows, and the three separation metrics against alpha below them; no solver is involved.
+cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
 The figures of `geomean_distance.md` plot the metric's level curves and one solved selection; only
 that one runs the solver. That selection is emitted as an interactive figure (an HTML fragment over a
@@ -31,7 +31,12 @@ IMAGES_DIR = REPO_ROOT / "docs" / "guides" / "images"
 SOLUTION_PATH = GENERATED_DIR / "geomean_distance_example_solution.json"
 
 # One color per metric, shared by every figure so the reader learns them once.
-METRIC_COLORS = {"min separation": "#4C72B0", "mean separation": "#DD8452", "geometric-mean separation": "#55A868"}
+METRIC_COLORS = {
+    "min separation": "#4C72B0",
+    "mean separation": "#DD8452",
+    "geometric-mean separation": "#55A868",
+    "harmonic-mean separation": "#8172B3",
+}
 CASE_LABELS = ("A", "B", "C")
 
 
@@ -47,12 +52,14 @@ def separations(positions: NDArray[np.float64]) -> NDArray[np.float64]:
 
 
 def metrics(positions: NDArray[np.float64]) -> dict[str, float]:
-    """Return the three separation-based diversity metrics of a one-dimensional selection."""
+    """Return the separation-based diversity metrics of a one-dimensional selection."""
     sep = separations(np.sort(positions))
+    is_positive = bool(np.all(sep > 0))
     return {
         "min separation": float(sep.min()),
         "mean separation": float(sep.mean()),
-        "geometric-mean separation": float(np.exp(np.mean(np.log(sep)))) if np.all(sep > 0) else 0.0,
+        "geometric-mean separation": float(np.exp(np.mean(np.log(sep)))) if is_positive else 0.0,
+        "harmonic-mean separation": float(sep.size / np.sum(1.0 / sep)) if is_positive else 0.0,
     }
 
 
@@ -78,6 +85,7 @@ def render_example(
     highlight: tuple[int, ...] = (),
     dot_size: float = 36,
     position_marks: tuple[float, ...] | None = None,
+    use_log_scale: bool = False,
 ) -> None:
     """Render one figure: the three cases as dot rows, and the metrics against alpha below them.
 
@@ -91,6 +99,8 @@ def render_example(
         highlight: Indices of the items alpha acts on, drawn as hollow rings.
         dot_size: Marker area of the items; smaller for selections with many items.
         position_marks: Positions marked by a labeled vertical across the rows; the whole numbers in range when omitted.
+        use_log_scale: Draw the positions on a logarithmic axis, and each metric relative to its value at alpha = 0 on a
+            logarithmic axis too, so that metrics of different magnitudes share one panel.
     """
     use_docs_style()
     fig, (ax_cases, ax_metrics) = plt.subplots(2, 1, figsize=(8.0, 5.6), height_ratios=(1.3, 2.0))
@@ -114,16 +124,18 @@ def render_example(
             linewidths=1.8,
             zorder=3,
         )
-        pad = 0.02 * (axis_range[1] - axis_range[0])
-        ax_cases.text(axis_range[0] - pad, y, f"Case {label}", ha="right", va="center")
-        ax_cases.text(axis_range[1] + pad, y, f"\u03b1 = {alpha:g}", ha="left", va="center")  # alpha
+        left, right = _row_label_positions(axis_range, use_log_scale)
+        ax_cases.text(left, y, f"Case {label}", ha="right", va="center")
+        ax_cases.text(right, y, f"\u03b1 = {alpha:g}", ha="left", va="center")  # alpha
     # Faint labeled verticals at position_marks let a position be read across the rows.
     y_top = len(CASE_LABELS) - 0.4
+    if use_log_scale:
+        ax_cases.set_xscale("log")
     if position_marks is None:
         position_marks = tuple(np.arange(np.ceil(axis_range[0]), axis_range[1] + 1e-9) + 0.0)  # + 0.0 turns a -0 into 0
     for tick in position_marks:
         ax_cases.vlines(tick, -0.6, y_top, color="#D8D8D8", linewidth=0.8, linestyle="--", zorder=0)
-        label = f"{tick:.1f}" if float(tick).is_integer() else f"{tick:g}"
+        label = _position_mark_label(tick, use_log_scale)
         ax_cases.text(tick, y_top, label, ha="center", va="bottom", color="#888888", fontsize="small")
     ax_cases.set_xlim(*axis_range)
     ax_cases.set_ylim(-0.6, y_top)
@@ -135,6 +147,9 @@ def render_example(
     # --- the metrics against alpha --------------
     alphas = np.linspace(*alpha_range, 400)
     curves = {metric: np.array([metrics(layout(a))[metric] for a in alphas]) for metric in METRIC_COLORS}
+    if use_log_scale:
+        curves = {metric: curve / metrics(layout(0.0))[metric] for metric, curve in curves.items()}
+        ax_metrics.set_yscale("log")
     for metric, color in METRIC_COLORS.items():
         ax_metrics.plot(alphas, curves[metric], color=color, linewidth=1.8, label=metric)
     if diversity_max is not None:
@@ -144,10 +159,30 @@ def render_example(
         ax_metrics.text(alpha, ax_metrics.get_ylim()[1], f" {label}", ha="left", va="top", color="#555555")
     ax_metrics.set_xlim(*alpha_range)
     ax_metrics.set_xlabel("\u03b1")  # alpha
-    ax_metrics.set_ylabel("diversity")
+    ax_metrics.set_ylabel("diversity relative to \u03b1 = 0" if use_log_scale else "diversity")
     ax_metrics.legend(**(legend or {"loc": "best"}))
 
     save_webp(fig, IMAGES_DIR / f"{name}.webp")
+
+
+def _row_label_positions(axis_range: tuple[float, float], use_log_scale: bool) -> tuple[float, float]:
+    """Return the x positions of a dot row's left and right labels, a small pad outside the axis range."""
+    if use_log_scale:
+        pad = axis_range[1] ** 0.06
+        return axis_range[0] / pad, axis_range[1] * pad
+    else:
+        pad = 0.02 * (axis_range[1] - axis_range[0])
+        return axis_range[0] - pad, axis_range[1] + pad
+
+
+def _position_mark_label(tick: float, use_log_scale: bool) -> str:
+    """Return a position mark's label: a power of ten on a logarithmic axis, else the number itself."""
+    if use_log_scale:
+        return f"$10^{{{int(np.log10(tick))}}}$"
+    elif float(tick).is_integer():
+        return f"{tick:.1f}"
+    else:
+        return f"{tick:g}"
 
 
 # ==================================================================================================
@@ -168,6 +203,19 @@ def layout_near_duplicate(alpha: float) -> NDArray[np.float64]:
 def layout_power_spacing(alpha: float) -> NDArray[np.float64]:
     """Return items power-spaced over [0, 1]: uniform at alpha = 1, crowding toward 0 below it and toward 1 above it."""
     return (np.arange(51) / 50.0) ** ((2.0 - alpha) / alpha)
+
+
+def layout_decades(alpha: float) -> NDArray[np.float64]:
+    """Return 11 items each ten times the previous one.
+
+    alpha > 0 grows the largest gap 10**alpha-fold; alpha < 0 shrinks the smallest gap by the same factor.
+    """
+    positions = 10.0 ** np.arange(11, dtype=np.float64)
+    if alpha > 0:
+        positions[-1] *= 10.0**alpha
+    else:
+        positions[0] = positions[1] - 9.0 * 10.0**alpha
+    return positions
 
 
 def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
@@ -386,6 +434,17 @@ def main() -> None:
         legend={"loc": "upper left", "bbox_to_anchor": (0.01, 0.92)},
         diversity_max=0.022,
         dot_size=14,
+    )
+    render_example(
+        "geomean_separation_I4",
+        layout_decades,
+        case_alphas=(-0.5, 0.0, 1.0),
+        alpha_range=(-1.0, 1.0),
+        axis_range=(0.3, 1e12),
+        legend={"loc": "lower right"},
+        highlight=(0, 10),
+        position_marks=tuple(10.0**n for n in range(12)),
+        use_log_scale=True,
     )
     render_example(
         "geomean_separation_II",
