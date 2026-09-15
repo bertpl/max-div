@@ -33,7 +33,7 @@ def explorer():
 
 # The four items are chosen so that the distances disagree:
 # - item 0 shares its y with item 1 and its x with item 2, so those pairs sit at distance 0 under the
-#   x or y distance, and hence under the L−∞ and geometric-mean distances;
+#   x or y distance, and hence under the L-inf and geometric-mean distances;
 # - item 3 is nearest to item 2 under the geometric-mean distance (gaps 0.3 and 0.3) and under L2 alike;
 # - items 0 to 2 are L2-nearest to item 3;
 # - along x, items 0 and 2 share a value and item 3 ties between them at 0.3, so `argmin` picks the lower index, item 0.
@@ -102,7 +102,9 @@ def test_fragment_carries_one_dot_and_two_rug_ticks_per_item(fragment):
 def test_every_dot_names_its_neighbors_under_the_objective_and_reference_distances(fragment, objective_keys):
     """`uniform_sampling_explorer.js` reads `data-nn` on hover: it must cover every objective and reference key."""
     # --- act --------------------------
-    records = [json.loads(nn) for nn in re.findall(r"<circle class=\"usx-dot\" data-i=\"\d+\" data-nn='(\{.*?\})'", fragment)]
+    records = [
+        json.loads(nn) for nn in re.findall(r"<circle class=\"usx-dot\" data-i=\"\d+\" data-nn='(\{.*?\})'", fragment)
+    ]
     objective = re.search(r'data-objective="([^"]*)"', fragment).group(1)
 
     # --- assert -----------------------

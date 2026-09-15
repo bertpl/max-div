@@ -75,7 +75,7 @@ DISTANCES = {
         Distance("l2", "L2 distance", lambda dx, dy: np.sqrt(dx * dx + dy * dy)),
         Distance("x", "x distance", lambda dx, dy: dx),
         Distance("y", "y distance", lambda dx, dy: dy),
-        Distance("linf", "L−∞ distance", lambda dx, dy: np.minimum(dx, dy)),
+        Distance("linf", "L\u2212\u221e distance", np.minimum),
         Distance("geomean", "geometric-mean distance", lambda dx, dy: np.sqrt(dx * dy)),
     )
 }
@@ -88,7 +88,7 @@ def nearest_neighbors(
 ) -> dict[str, tuple[NDArray[np.intp], NDArray[np.float64]]]:
     """Return, per distance key, each item's nearest other item and its distance to it.
 
-    Two items sharing a coordinate are at distance 0 under the x, y, L−∞ and geometric-mean distances;
+    Two items sharing a coordinate are at distance 0 under the x, y, L-inf and geometric-mean distances;
     that pair is then each other's nearest neighbor, and the JavaScript draws the degenerate level curve.
     """
     x64 = np.asarray(x, dtype=np.float64)
@@ -137,7 +137,7 @@ def _axes() -> list[str]:
 
 
 def _glyph(x: float, y: float, ring_radius: float, glyph: str) -> str:
-    """Return the glyph inscribed in a ring of `ring_radius` at (x, y): a central dot, a vertical or a horizontal stroke."""
+    """Return the glyph inscribed in a ring of `ring_radius` at (x, y): a central dot or an axis-parallel stroke."""
     reach = GLYPH_REACH_FACTOR * ring_radius
     if glyph == "dot":
         return f'<circle class="usx-glyph-dot" cx="{x:.1f}" cy="{y:.1f}" r="{CENTER_DOT_FACTOR * ring_radius:.1f}"/>'
@@ -263,7 +263,7 @@ def explorer_fragment(
     lines = [
         '<div class="usx-figure">',
         f'<svg class="usx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
-        f' data-objective="{" ".join(objective_keys)}" data-labels=\'{json.dumps(labels, separators=(",", ":"))}\''
+        f" data-objective=\"{' '.join(objective_keys)}\" data-labels='{json.dumps(labels, separators=(',', ':'))}'"
         f' data-ring="{RING_RADIUS_FACTOR}" data-reach="{GLYPH_REACH_FACTOR}" data-center="{CENTER_DOT_FACTOR}">',
         f"<title>Selection maximizing diversity under the {', '.join(labels[key] for key in objective_keys)}</title>",
         f"<desc>{description}</desc>",

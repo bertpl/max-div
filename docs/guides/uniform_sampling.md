@@ -22,7 +22,9 @@ Every experiment below selects $k = 100$ points from the same population of $n =
 Before optimizing, it helps to know what each goal could reach if it were the only one, with the $k$ points placed freely instead of chosen from the population.
 
 - **Along one axis.** $k$ values spread evenly over $[0, 1]$, the first at 0 and the last at 1, are $1 / (k - 1)$ apart, and no placement does better on the minimum. The reference for the $x$ and $y$ goals is $1 / (k - 1) = 1/99$.
-- **In the square.** For $k = 100$ a $10 \times 10$ grid over $[0, 1]^2$ places the points $1 / (\sqrt{k} - 1) = 1/9$ apart. The densest known packings of 100 equal circles in a square are only marginally denser, so the grid spacing is the reference for the L2 goal.
+- **In the square.** For $k = 100$ a $10 \times 10$ grid over $[0, 1]^2$ places the points $1 / (\sqrt{k} - 1) = 1/9 \approx 0.111$ apart. The densest known arrangement does 3 % better: the best known packing of 100 equal circles in a square, hexagonal in the bulk, has radius $r = 0.051401$,[^packomania] and its centers, which lie in the inner square of side $1 - 2r$, are $2r / (1 - 2r) \approx 0.1146$ apart in the unit square. That spacing is the reference for the L2 goal.
+
+[^packomania]: Specht, E. *Packomania*, the best known packings of equal circles in a square, [N = 97 to 108](https://www.packomania.com/csq/pdf/d9.pdf).
 
 The references are for free placement; a selection from $n$ random points falls short of them, more so the smaller $n$ is. In every table below the achieved separation is given as a fraction of its reference.
 
@@ -113,3 +115,7 @@ Every experiment's achieved harmonic-mean separation under the three reference d
 - **One distance serves one goal.** The L2, $x$ and $y$ distances each reach their own goal and leave at least one other near the level of a random selection.
 - **The L−∞ distance serves the two marginals**, and the geometric-mean distance serves all three at a discount on each.
 - **The hybrid objective serves all three** by naming them: it is the choice when every goal is a requirement, at the cost of tracking three distances instead of one.
+
+That cost shows in the iterations each run fits into its budget. The table gives them for the winning worker, and the objective it had reached at three elapsed marks as a fraction of its final value:
+
+--8<-- "generated/uniform_sampling_convergence.md"

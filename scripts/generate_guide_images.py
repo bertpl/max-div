@@ -237,6 +237,15 @@ DISTANCE_METRICS = {
     "geomean": DistanceMetric.geometric_mean(),
 }
 REFERENCE_LABELS = {"l2": "L2", "x": "$x$", "y": "$y$"}
+# One row label per experiment, shared by the summary and the convergence tables.
+OBJECTIVE_LABELS = {
+    "l2": "L2 distance",
+    "x": "$x$ distance",
+    "y": "$y$ distance",
+    "linf": "L\u2212\u221e distance",
+    "geomean": "geometric-mean distance",
+    "hybrid": "hybrid: L2, $x$ and $y$ terms",
+}
 
 
 @dataclass(frozen=True)
@@ -310,7 +319,7 @@ def build_uniform_sampling_population(n: int, seed: int) -> NDArray[np.float32]:
 def solve_experiment(
     vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings
 ) -> NDArray[np.intp]:
-    """Return the indices the experiment selects, within an end-to-end budget."""
+    """Return the experiment's solution, solved within an end-to-end budget."""
     problem = MaxDivProblem.new(
         vectors=vectors,
         k=settings.k,
@@ -324,28 +333,60 @@ def solve_experiment(
         .with_end_to_end_budget()
         .build()
     )
-    return solver.solve(verbosity=0).i_selected
+    return solver.solve(verbosity=0)
+
+
+@dataclass(frozen=True)
+class ExperimentRun:
+    """One experiment's cached outcome: the selected indices and the winning worker's convergence trace.
+
+    `checkpoints` lists `(elapsed seconds, iterations, primary diversity)` in the order the solver
+    recorded them; the last entry is the run's total.
+    """
+
+    i_selected: NDArray[np.intp]
+    checkpoints: list[tuple[float, int, float]]
+
+    @property
+    def n_iterations(self) -> int:
+        """Return the iterations the winning worker ran in total."""
+        return self.checkpoints[-1][1]
+
+    def diversity_at(self, t_sec: float) -> float:
+        """Return the primary diversity at the last checkpoint recorded at or before `t_sec`, 0.0 before the first."""
+        reached = [diversity for elapsed, _, diversity in self.checkpoints if elapsed <= t_sec]
+        return reached[-1] if reached else 0.0
 
 
 def load_or_solve_experiment(
     vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings, reuse_solution: bool
 ) -> NDArray[np.intp]:
-    """Return the experiment's selected indices, from its JSON cache when asked, else from a fresh solve.
+    """Return the experiment's run, from its JSON cache when asked, else from a fresh solve.
 
-    A fresh solve rewrites the cache. The cache holds the selected indices only: the population is
-    rebuilt from n and the seed, so the dots and the raster always come from the same coordinates.
+    A fresh solve rewrites the cache. The cache holds the selected indices and the convergence trace
+    only: the population is rebuilt from n and the seed, so the dots and the raster always come from
+    the same coordinates.
     """
     path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_solution.json"
     if reuse_solution:
         cached = json.loads(path.read_text(encoding="utf-8"))
         if {key: cached[key] for key in asdict(settings)} != asdict(settings):
             raise ValueError(f"{path} was solved with other settings than {settings}")
-        return np.asarray(cached["i_selected"], dtype=np.intp)
-    selected = solve_experiment(vectors, experiment, settings)
-    record = {**asdict(settings), "i_selected": [int(i) for i in selected]}
+        return ExperimentRun(
+            np.asarray(cached["i_selected"], dtype=np.intp), [tuple(row) for row in cached["checkpoints"]]
+        )
+    solution = solve_experiment(vectors, experiment, settings)
+    run = ExperimentRun(
+        np.asarray(solution.i_selected, dtype=np.intp),
+        [
+            (round(elapsed.t_elapsed_sec, 3), elapsed.n_iterations, score.diversity)
+            for _, elapsed, score in solution.score_checkpoints
+        ],
+    )
+    record = {**asdict(settings), "i_selected": [int(i) for i in run.i_selected], "checkpoints": run.checkpoints}
     path.write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
-    return selected
+    return run
 
 
 def render_uniform_sampling_population(name: str, vectors: NDArray[np.float32], pixels: int = 1000) -> None:
@@ -379,13 +420,22 @@ def harmonic_separations(selection: NDArray[np.float64]) -> dict[str, float]:
     return result
 
 
+# The densest known packing of 100 equal circles in a unit square (E. Specht, Packomania,
+# https://www.packomania.com/csq/pdf/d9.pdf) has this radius; the circle centers, which are the points,
+# then lie in the inner square of side 1 - 2r, so the point spacing in the unit square is 2r / (1 - 2r).
+PACKING_RADIUS_100 = 0.051401071774
+PACKING_SPACING_100 = 2.0 * PACKING_RADIUS_100 / (1.0 - 2.0 * PACKING_RADIUS_100)
+
+
 def separation_targets(k: int) -> dict[str, float]:
     """Return the free-placement reference separation per reference distance, as `uniform_sampling.md` derives them.
 
-    Along one axis, k evenly spaced values over [0, 1] are 1 / (k - 1) apart; in the square, a
-    sqrt(k) by sqrt(k) grid is 1 / (sqrt(k) - 1) apart.
+    Along one axis, k evenly spaced values over [0, 1] are 1 / (k - 1) apart; in the square, the
+    reference is the densest known packing of k points, tabulated for k = 100 only.
     """
-    return {"l2": 1.0 / (np.sqrt(k) - 1.0), "x": 1.0 / (k - 1), "y": 1.0 / (k - 1)}
+    if k != 100:
+        raise ValueError(f"the L2 reference is tabulated for k = 100 only, not k = {k}")
+    return {"l2": PACKING_SPACING_100, "x": 1.0 / (k - 1), "y": 1.0 / (k - 1)}
 
 
 def write_experiment_separations(experiment: Experiment, selection: NDArray[np.float64], k: int) -> None:
@@ -406,21 +456,36 @@ def write_experiment_separations(experiment: Experiment, selection: NDArray[np.f
 def write_summary(selections: dict[str, NDArray[np.float64]], k: int) -> None:
     """Write the closing table: every experiment's achieved separations as a fraction of the references."""
     targets = separation_targets(k)
-    labels = {
-        "l2": "L2 distance",
-        "x": "$x$ distance",
-        "y": "$y$ distance",
-        "linf": "L\u2212\u221e distance",
-        "geomean": "geometric-mean distance",
-        "hybrid": "hybrid: L2, $x$ and $y$ terms",
-    }
     header = " | ".join(f"{label}, achieved / reference" for label in REFERENCE_LABELS.values())
     lines = [f"| objective | {header} |", "|---|---|---|---|"]
     for name, selection in selections.items():
         achieved = harmonic_separations(selection)
         cells = " | ".join(f"{achieved[key]:.4f} ({achieved[key] / targets[key]:.0%})" for key in REFERENCE_LABELS)
-        lines.append(f"| {labels[name]} | {cells} |")
+        lines.append(f"| {OBJECTIVE_LABELS[name]} | {cells} |")
     path = GENERATED_DIR / "uniform_sampling_summary.md"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"wrote {path.relative_to(REPO_ROOT)}")
+
+
+CONVERGENCE_MARKS_SEC = (5.0, 15.0, 30.0)
+
+
+def write_convergence(runs: dict[str, ExperimentRun], budget_sec: float) -> None:
+    """Write the table of iterations run and of the objective's progress, per experiment.
+
+    The progress columns give the primary diversity at a few elapsed marks as a fraction of its final
+    value, for the winning worker; a column near 100% early on means the run had converged by then.
+    """
+    marks = " | ".join(f"at {mark:g} s" for mark in CONVERGENCE_MARKS_SEC)
+    lines = [
+        f"| objective | iterations in {budget_sec:g} s | {marks} |",
+        "|---|---|" + "---|" * len(CONVERGENCE_MARKS_SEC),
+    ]
+    for name, run in runs.items():
+        final = run.checkpoints[-1][2]
+        cells = " | ".join(f"{run.diversity_at(mark) / final:.1%}" for mark in CONVERGENCE_MARKS_SEC)
+        lines.append(f"| {OBJECTIVE_LABELS[name]} | {run.n_iterations:,} | {cells} |")
+    path = GENERATED_DIR / "uniform_sampling_convergence.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
@@ -434,10 +499,11 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, reuse_solu
     """
     vectors = build_uniform_sampling_population(settings.n, settings.seed)
     render_uniform_sampling_population("uniform_sampling_population", vectors)
-    selections = {}
+    selections, runs = {}, {}
     for experiment in EXPERIMENTS:
-        selected = load_or_solve_experiment(vectors, experiment, settings, reuse_solution)
-        selection = vectors[selected].astype(np.float64)
+        run = load_or_solve_experiment(vectors, experiment, settings, reuse_solution)
+        runs[experiment.name] = run
+        selection = vectors[run.i_selected].astype(np.float64)
         selections[experiment.name] = selection
         write_experiment_separations(experiment, selection, settings.k)
         fragment = explorer_fragment(
@@ -456,6 +522,7 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, reuse_solu
         path.write_text(fragment, encoding="utf-8")
         print(f"wrote {path.relative_to(REPO_ROOT)}")
     write_summary(selections, settings.k)
+    write_convergence(runs, settings.budget_sec)
 
 
 def main() -> None:
