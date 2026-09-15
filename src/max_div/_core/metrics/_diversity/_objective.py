@@ -15,13 +15,13 @@ and strategies read this type, never a bare `DiversityMetric`, because an object
 terms is not a single diversity metric.
 
 The default tie-breakers follow one rule for both kinds, over the diversity metrics of the terms (a
-simple objective being its own one term), in order of precedence:
+simple objective counting as a single term), in order of precedence:
 
 - a min-separation term calls for the approximate geomean and the non-zero fraction;
 - a term that goes to zero when one pair coincides calls for the non-zero fraction alone;
 - any other term calls for none.
 
-Each tie-breaker spans every distinct distance metric of the objective, as a hybrid when there are several.
+Each tie-breaker is computed over every distinct distance metric of the objective, as a hybrid when there are several.
 """
 
 from __future__ import annotations
@@ -94,7 +94,7 @@ class DiversityObjective(ABC):
     @property
     @abstractmethod
     def diversity_metrics(self) -> tuple[DiversityMetric, ...]:
-        """Return the diversity metric of each term, in term order; a simple objective is its own one term."""
+        """Return the diversity metric of each term, in term order; a simple objective is a single term."""
 
     def default_tie_breakers(self) -> list[DiversityObjective]:
         """Return the tie-breaker objectives to rank ties by when the caller sets none of its own.
@@ -223,21 +223,22 @@ class DiversityObjectiveHybrid(DiversityObjective):
 #  Helpers
 # =================================================================================================
 class _TieBreakerSpec(NamedTuple):
-    """A tie-breaker diversity metric and the aggregation its hybrid form uses over several distances."""
+    """Pairs a tie-breaker diversity metric with the aggregation its hybrid form uses over several distances."""
 
     metric: DiversityMetric
     aggregation: HybridObjectiveType
 
 
-# the approximate geomean rewards a uniform spread, which opens room around the closest pair;
-# aggregated geometrically, a zero on one distance lowers it without pinning it
-_APPROX_GEOMEAN_TIE_BREAKER = _TieBreakerSpec(
+# the approximate geomean is higher for a more uniform spread, which increases the separation of the
+# closest pair; aggregated geometrically, a zero on one distance lowers it without making the
+# tie-breaker zero
+_APPROX_GEOMEAN_TIE_BREAKER_SPEC = _TieBreakerSpec(
     DiversityMetric.APPROX_GEOMEAN_SEPARATION, HybridObjectiveType.GEOMETRIC_MEAN
 )
 # the non-zero fraction rises as the number of coincident pairs falls, even once the geomean is
 # stuck at zero; aggregated arithmetically, a distance with no non-zero separation only lowers it,
 # so fixing another distance still ranks higher
-_NON_ZERO_FRAC_TIE_BREAKER = _TieBreakerSpec(
+_NON_ZERO_FRAC_TIE_BREAKER_SPEC = _TieBreakerSpec(
     DiversityMetric.NON_ZERO_SEPARATION_FRAC, HybridObjectiveType.ARITHMETIC_MEAN
 )
 
@@ -252,13 +253,13 @@ _ZERO_PINNED_METRICS = frozenset(
 
 
 def _tie_breaker_specs_for(diversity_metrics: tuple[DiversityMetric, ...]) -> tuple[_TieBreakerSpec, ...]:
-    """Return the tie-breaker specs that the given term metrics call for, in ranking order; empty when none ties."""
+    """Return the tie-breaker specs that the given term metrics call for, in ranking order; empty when none does."""
     if DiversityMetric.MIN_SEPARATION in diversity_metrics:
         # min-separation reacts only to the closest pair, so every swap that leaves that pair alone ties
-        return (_APPROX_GEOMEAN_TIE_BREAKER, _NON_ZERO_FRAC_TIE_BREAKER)
+        return (_APPROX_GEOMEAN_TIE_BREAKER_SPEC, _NON_ZERO_FRAC_TIE_BREAKER_SPEC)
     elif any(metric in _ZERO_PINNED_METRICS for metric in diversity_metrics):
-        # once more than one pair coincides, single swaps cannot lift the metric off zero
-        return (_NON_ZERO_FRAC_TIE_BREAKER,)
+        # once more than one pair coincides, single swaps cannot raise the metric above zero
+        return (_NON_ZERO_FRAC_TIE_BREAKER_SPEC,)
     else:
         return ()
 
