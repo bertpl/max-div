@@ -363,7 +363,7 @@ class ExperimentRun:
 
 
 def load_or_solve_experiment(
-    vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings, reuse_solution: bool
+    vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings, should_reuse_solution: bool
 ) -> NDArray[np.intp]:
     """Return the experiment's run, from its JSON cache when asked, else from a fresh solve.
 
@@ -372,7 +372,7 @@ def load_or_solve_experiment(
     the same coordinates.
     """
     path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_solution.json"
-    if reuse_solution:
+    if should_reuse_solution:
         cached = json.loads(path.read_text(encoding="utf-8"))
         if {key: cached[key] for key in asdict(settings)} != asdict(settings):
             raise ValueError(f"{path} was solved with other settings than {settings}")
@@ -431,7 +431,7 @@ PACKING_RADIUS_100 = 0.051401071774
 PACKING_SPACING_100 = 2.0 * PACKING_RADIUS_100 / (1.0 - 2.0 * PACKING_RADIUS_100)
 
 
-def separation_targets(k: int) -> dict[str, float]:
+def reference_separations(k: int) -> dict[str, float]:
     """Return the free-placement reference separation per reference distance, as `uniform_sampling.md` derives them.
 
     Along one axis, k evenly spaced values over [0, 1] are 1 / (k - 1) apart; in the square, the
@@ -448,10 +448,12 @@ def write_experiment_separations(experiment: Experiment, selection: NDArray[np.f
     `docs/guides/uniform_sampling.md` includes the fragment below the experiment's figure, so the numbers
     come from the same solve as the figure.
     """
-    achieved, targets = harmonic_separations(selection), separation_targets(k)
+    achieved, references = harmonic_separations(selection), reference_separations(k)
     lines = ["| harmonic-mean separation under … | achieved | reference | achieved / reference |", "|---|---|---|---|"]
     for key, label in REFERENCE_LABELS.items():
-        lines.append(f"| {label} | {achieved[key]:.4f} | {targets[key]:.4f} | {achieved[key] / targets[key]:.0%} |")
+        lines.append(
+            f"| {label} | {achieved[key]:.4f} | {references[key]:.4f} | {achieved[key] / references[key]:.0%} |"
+        )
     path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_separations.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
@@ -470,9 +472,9 @@ def _summary_cell(value: float, fraction: float) -> str:
 
 def write_summary(selections: dict[str, NDArray[np.float64]], k: int) -> None:
     """Write the closing table: every experiment's achieved separations as a fraction of the references."""
-    targets = separation_targets(k)
+    references = reference_separations(k)
     achieved = {name: harmonic_separations(selection) for name, selection in selections.items()}
-    fractions = {name: {key: achieved[name][key] / targets[key] for key in REFERENCE_LABELS} for name in selections}
+    fractions = {name: {key: achieved[name][key] / references[key] for key in REFERENCE_LABELS} for name in selections}
     header = " | ".join(f"{label}, achieved / reference" for label in REFERENCE_LABELS.values())
     lines = [f"| experiment | {header} |", "|---|---|---|---|"]
     for name in selections:
@@ -506,18 +508,18 @@ def write_convergence(runs: dict[str, ExperimentRun], budget_sec: float) -> None
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 
-def render_uniform_sampling_experiments(settings: ExperimentSettings, reuse_solution: bool) -> None:
+def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reuse_solution: bool) -> None:
     """Produce the case study: the population raster, and per experiment its figure fragment and separations table.
 
     Args:
         settings: Its seed seeds both the population and every solver run.
-        reuse_solution: Read the cached selections and skip the solves.
+        should_reuse_solution: Read the cached selections and skip the solves.
     """
     vectors = build_uniform_sampling_population(settings.n, settings.seed)
     render_uniform_sampling_population("uniform_sampling_population", vectors)
     selections, runs = {}, {}
     for experiment in EXPERIMENTS:
-        run = load_or_solve_experiment(vectors, experiment, settings, reuse_solution)
+        run = load_or_solve_experiment(vectors, experiment, settings, should_reuse_solution)
         runs[experiment.name] = run
         selection = vectors[run.i_selected].astype(np.float64)
         selections[experiment.name] = selection
@@ -597,7 +599,7 @@ def main() -> None:
     )
     render_uniform_sampling_experiments(
         ExperimentSettings(n=10_000, k=100, budget_sec=60.0, n_workers=16, seed=42),
-        reuse_solution=args.reuse_solution,
+        should_reuse_solution=args.reuse_solution,
     )
 
 

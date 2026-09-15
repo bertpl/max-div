@@ -23,10 +23,10 @@ The three goals compete for the same $k$ points. **How to trade them off is left
 
 ### I.C. How the experiments run
 
-- **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results compare.
-- **One diversity metric for every experiment:** the [harmonic-mean separation](../concepts/diversity.md#diversity-metrics), the harmonic mean over the selection of each point's distance to its nearest other point. It sits between the minimum and the geometric mean in how hard it penalizes one close pair; on a perfectly regular selection all three aggregates agree.
+- **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results are comparable.
+- **One diversity metric for every experiment:** the [harmonic-mean separation](../concepts/diversity.md#diversity-metrics), the harmonic mean, over the selected points, of each point's distance to its nearest other point. It sits between the minimum and the geometric mean in how hard it penalizes one close pair; on a perfectly regular selection all three aggregates agree.
 - **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget.
-- **One yardstick for every result:** the harmonic-mean separation of the selection under the L2, $x$ and $y$ distances, one per goal.
+- **One measure for every result:** the harmonic-mean separation of the selection under the L2, $x$ and $y$ distances, one per goal.
 
 ## II. Diversity references
 
@@ -43,7 +43,10 @@ The references are for free placement; a selection from $n$ random points falls 
 
 Each experiment here maximizes one goal and ignores the other two: it shows how close the selection gets to the reference, and what the other two goals lose.
 
-In every figure the red dots are the selection, with its $x$ and $y$ values as rug marks along the bottom and left edges. Hover over a dot to see its nearest neighbor under the objective's distance in blue, the level curve of that distance through the neighbor, and its nearest neighbors under the three reference distances: a dashed ring with a central dot for L2, with a vertical stroke for $x$, with a horizontal stroke for $y$.
+In every figure the red dots are the selection, with its $x$ and $y$ values as rug marks along the bottom and left edges. Hover over a dot to see:
+
+- its nearest neighbor under the objective's distance in blue, and the level curve of that distance through the neighbor;
+- its nearest neighbors under the three reference distances, each drawn as a dashed ring: a central dot marks the L2 neighbor, a vertical stroke the $x$ neighbor, a horizontal stroke the $y$ neighbor.
 
 ### III.A. L2 distance
 
@@ -51,7 +54,7 @@ In every figure the red dots are the selection, with its $x$ and $y$ values as r
 
 --8<-- "generated/uniform_sampling_l2_separations.md"
 
-The selection is spread in the square, and the rug marks show the price: along either axis the values cluster and leave gaps, because nothing in the objective sees them. The level curve through a point's nearest neighbor is a circle, and the marginal neighbors sit far outside it.
+The selection is spread in the square, and the rug marks show the price: along either axis the values cluster and leave gaps, because the objective does not measure them. The level curve through a point's nearest neighbor is a circle, and the marginal neighbors sit far outside it.
 
 ### III.B. $x$ distance
 
@@ -59,7 +62,7 @@ The selection is spread in the square, and the rug marks show the price: along e
 
 --8<-- "generated/uniform_sampling_x_separations.md"
 
-The $x$ values reach almost even spacing, and the $y$ values are as random as the population. The objective sees only $x$, so every selection with the same $x$ values scores the same, and the solver has no reason to prefer one $y$ arrangement over another. The level curve is a pair of vertical lines: the objective distance between two points is the horizontal gap, whatever their vertical gap.
+The $x$ values reach almost even spacing, and the $y$ values are as random as the population. The objective measures only $x$, so every selection with the same $x$ values scores the same, and the solver has no reason to prefer one $y$ arrangement over another. The level curve is a pair of vertical lines: the objective distance between two points is the horizontal gap, whatever their vertical gap.
 
 ### III.C. $y$ distance
 
@@ -71,7 +74,7 @@ The mirror image of III.B: the $y$ values are evenly spread and the $x$ values a
 
 ## IV. One distance covering several goals
 
-A single objective can still see several goals when its distance combines them. Two distances do that.
+A single objective can still cover several goals when its distance combines them. Two distances do that.
 
 ### IV.A. L−∞ distance
 
@@ -85,13 +88,15 @@ Both marginals come close to their references. The distance says nothing about t
 
 ### IV.B. Geometric-mean distance
 
-The [geometric-mean distance](../concepts/diversity.md#distance-metrics) is the square root of the product of the two coordinate gaps. It is a smoothed L−∞ distance: a small gap along one axis makes the distance small, but a large gap along the other axis compensates, in part. Its level curves are hyperbolas $|\Delta x| \cdot |\Delta y| = d^2$, and the curve at $d = 1/\sqrt{k}$ passes through a neighbor at the 2D spacing in both coordinates and through a neighbor across the whole square in one coordinate and at the marginal spacing in the other. The distance therefore covers all three goals in one number, as the maximum projection designs of Joseph, Gul & Ba (2015) do with the same product.[^maxpro]
+The [geometric-mean distance](../concepts/diversity.md#distance-metrics) is the square root of the product of the two coordinate gaps. It is a smoothed L−∞ distance: a small gap along one axis makes the distance small, but a large gap along the other axis compensates, in part.
+
+Its level curves are hyperbolas $|\Delta x| \cdot |\Delta y| = d^2$, and the curve at $d = 1/\sqrt{k}$ passes through a neighbor at the 2D spacing in both coordinates and through a neighbor across the whole square in one coordinate and at the marginal spacing in the other. The distance therefore covers all three goals in one number, as the maximum projection designs of Joseph, Gul & Ba (2015) do with the same product.[^maxpro]
 
 --8<-- "generated/uniform_sampling_geomean_figure.html"
 
 --8<-- "generated/uniform_sampling_geomean_separations.md"
 
-The selection is spread in the square and along both axes, none of the three at its single-goal level. The nearest neighbor under this distance is often a point that shares almost the same $x$ or $y$ value, at a large gap in the other coordinate: the pair the marginal goal cares about, weighted by how far apart it is in the other direction.
+The selection is spread in the square and along both axes, none of the three at its single-goal level. The nearest neighbor under this distance is often a point that shares almost the same $x$ or $y$ value, at a large gap in the other coordinate: the pair relevant to the marginal goal, weighted by how far apart it is in the other direction.
 
 [^maxpro]: Joseph, V. R., Gul, E. & Ba, S. (2015). *Maximum projection designs for computer experiments*. Biometrika 102(2), 371–380. [doi:10.1093/biomet/asv002](https://doi.org/10.1093/biomet/asv002). Their criterion sums, over all pairs, the reciprocal of the product of the squared coordinate gaps, and places the points freely; the experiment here maximizes the nearest-neighbor separation of a selection from a fixed population.
 
