@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The guide on why geometric-mean separation is the default compares it with the harmonic mean as well, and adds how each metric reacts to separations of different orders of magnitude and what each costs to compute
 - The min-separation diversity metric evaluates as fast as the mean separation, where it previously cost about three times as much: the minimum is taken over the separations' bit patterns as integers, which vectorizes where a minimum over floats does not
 - Default tie-breakers follow the primary metric's terms: a hybrid without a min-separation term keeps only the non-zero-separation fraction, and the harmonic-mean separation gets the same tie-breaker as the geometric mean
+- A case study on maximally uniform sampling in 2D and its marginals replaces the geometric-mean distance guide: six solved experiments over one population, each with an interactive figure, and a hybrid objective that meets all three goals at once
 
 ### Deprecated
 

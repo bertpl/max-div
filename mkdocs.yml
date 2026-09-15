@@ -9,7 +9,7 @@ extra_css:
 
 extra_javascript:
   - javascripts/mathjax.js
-  - javascripts/geomean_distance_explorer.js
+  - javascripts/uniform_sampling_explorer.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 theme:
@@ -130,7 +130,7 @@ nav:
     - Glossary: concepts/glossary.md
   - Guides:
     - Why geometric-mean separation is the default objective: guides/geomean_separation.md
-    - When to use the geometric-mean distance: guides/geomean_distance.md
+    - "Case study: maximally uniform sampling in 2D and its marginals": guides/uniform_sampling.md
   - CLI: cli.md
   - Benchmarks:
     - Overview: benchmarks/index.md
