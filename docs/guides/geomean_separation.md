@@ -51,14 +51,16 @@ At $\alpha = 1$ the selection is uniform; below it the items crowd towards $0$, 
 
 ### I.4. Separations of different orders of magnitude
 
-Consider a selection of $k = 11$ items at $1, 10, 100, \ldots, 10^{10}$, so that every separation is ten times the previous one. A positive $\alpha$ moves the largest item further out, growing the largest separation by a factor $10^{\alpha}$; a negative $\alpha$ moves the smallest item toward its neighbor, shrinking the smallest separation by the same factor. The positions are drawn on a logarithmic axis, and each metric is drawn relative to its value at $\alpha = 0$, since the four differ by orders of magnitude themselves.
+Consider a selection of $k = 11$ items at $1, 10, 100, \ldots, 10^{10}$, so that every separation is ten times the previous one. A positive $\alpha$ moves the largest item further out, growing the largest separation by a factor $10^{\alpha}$; a negative $\alpha$ moves the smallest item toward its neighbor, shrinking the smallest separation by the same factor.
+
+The positions are drawn on a logarithmic axis, and each metric is drawn relative to its value at $\alpha = 0$, since the four metrics differ by orders of magnitude themselves.
 
 ![Eleven items at 1, 10, …, 1e10 on a logarithmic axis; the largest gap grows for positive α, the smallest shrinks for negative α; the four metrics relative to α = 0](./images/geomean_separation_I4.webp)
 
-Each metric that is not the geometric mean is blind on one side:
+Each metric that is not the geometric mean does not react to changes on one side:
 
 - **mean separation** follows the largest separation and does not react when the smallest one shrinks tenfold;
-- **min separation** and **harmonic-mean separation** follow the smallest separation and do not react when the largest one grows tenfold: the harmonic mean is the count over the sum of reciprocals, and the smallest separations own that sum;
+- **min separation** and **harmonic-mean separation** follow the smallest separation and do not react when the largest one grows tenfold: the harmonic mean is the count over the sum of reciprocals, and the smallest separations dominate that sum;
 - **geometric-mean separation** reacts on both sides, because a tenfold change of any one separation moves the mean of the logarithms by the same amount whichever separation it is.
 
 > When separations span orders of magnitude, as constraints can induce (section II), only the geometric mean keeps an incentive on every part of the selection. The harmonic mean shares the geometric mean's other strengths, but here it behaves like the minimum.
@@ -91,4 +93,4 @@ At $\alpha = 0$ the free items are uniformly spaced; a positive $\alpha$ crowds 
 
 ![Fifty-one items: 26 forced between −0.25 and 0, 25 free between 0 and 1; the four metrics against α](./images/geomean_separation_II.webp)
 
-> In constrained problems, where constraints can create regions with different item densities, both geometric-mean and harmonic-mean separation keep an incentive to drive the solution to uniform distributions within each region, leading to natural looking solutions that align well with expectations. Geometric-mean separation is the default because it also copes with separations of different orders of magnitude (I.4): it behaves as one would intuitively expect under a wider range of conditions.
+> In constrained problems, where constraints can create regions with different item densities, both geometric-mean and harmonic-mean separation keep an incentive to drive the solution to uniform distributions within each region, leading to natural looking solutions that align well with expectations. Geometric-mean separation is the default because it also handles separations of different orders of magnitude (I.4): it behaves as one would intuitively expect under a wider range of conditions.
