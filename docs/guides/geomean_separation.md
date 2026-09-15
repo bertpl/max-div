@@ -11,7 +11,7 @@
 | Strongly penalizes near-duplicate items (I.2) | ✅ | ❌ | ✅ | ✅ |
 | Steers towards uniform spacing, at any k (I.3) | ✅ | ❌ | ✅ | ✅ |
 | Reacts to separations of every order of magnitude (I.4) | ❌ | ❌ | ✅ | ❌ |
-| Cheap to compute (I.5) | ~ | ✅ | ❌ | ✅ |
+| Cheap to compute (I.5) | ✅ | ✅ | ❌ | ✅ |
 
 ### I.1. Minimum separation only measures the closest item pair
 
@@ -74,12 +74,12 @@ The [diversity-metric timing benchmark](../benchmarks/internal/bm_diversity_metr
 
 | metric | time per evaluation | relative | considered fast |
 |---|---|---|:---:|
+| min separation | 0.19 µs | 0.95× | ✅ |
 | mean separation | 0.20 µs | 1.0× | ✅ |
 | harmonic-mean separation | 0.23 µs | 1.1× | ✅ |
-| min separation | 0.58 µs | 2.9× | ~ |
 | geometric-mean separation | 1.45 µs | 7.2× | ❌ |
 
-Min separation is slower than its simplicity suggests: taking a minimum is an implicitly conditional operation, which is harder to vectorize than a sum.
+Min separation runs as fast as a sum although the compiler does not vectorize a minimum over floats: the solver takes the minimum over the separations' bit patterns read as integers, which selects the same element for non-negative values and does vectorize.
 
 ## II. Diversity metrics & constrained problems
 

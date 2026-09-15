@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DistanceStorage` is renamed to `DistanceStorageType`; `with_distance_storage` keeps its name
 - `MaxDivSolution.distance_storage` reports the resolved storage type per distance store, and the solution summary lists the stores grouped by type (e.g. `storage=full_matrix (L1, L2), lazy (geomean)`)
 - The guide on why geometric-mean separation is the default compares it with the harmonic mean as well, and adds how each metric reacts to separations of different orders of magnitude and what each costs to compute
+- The min-separation diversity metric evaluates as fast as the mean separation, down from about three times its cost: the minimum is taken over the separations' bit patterns as integers, which vectorizes where a minimum over floats does not
 - Default tie-breakers follow the primary metric's terms: a hybrid without a min-separation term keeps only the non-zero-separation fraction, and the harmonic-mean separation gets the same tie-breaker as the geometric mean
 
 ### Deprecated
