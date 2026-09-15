@@ -15,10 +15,13 @@ and strategies read this type, never a bare `DiversityMetric`, because an object
 terms is not a single diversity metric.
 
 The default tie-breakers follow one rule for both kinds, over the diversity metrics of the terms (a
-simple objective being its own one term): a min-separation term calls for the approximate geomean
-and the non-zero fraction, a term that one coincident pair pins at zero calls for the non-zero
-fraction alone, and any other term calls for none. Each tie-breaker spans every distinct distance
-metric of the objective, as a hybrid when there are several.
+simple objective being its own one term), in order of precedence:
+
+- a min-separation term calls for the approximate geomean and the non-zero fraction;
+- a term that goes to zero when one pair coincides calls for the non-zero fraction alone;
+- any other term calls for none.
+
+Each tie-breaker spans every distinct distance metric of the objective, as a hybrid when there are several.
 """
 
 from __future__ import annotations
@@ -97,12 +100,12 @@ class DiversityObjective(ABC):
         """Return the tie-breaker objectives to rank ties by when the caller sets none of its own.
 
         The rule in the module docstring picks the tie-breaker metrics from this objective's
-        diversity metrics; each tie-breaker spans every distinct distance metric of this objective.
+        diversity metrics.
         """
         distance_metrics = self.distinct_distance_metrics()
         return [
-            _objective_over(tie_breaker.metric, tie_breaker.aggregation, distance_metrics)
-            for tie_breaker in _tie_breaker_metrics_for(self.diversity_metrics)
+            _objective_over(spec.metric, spec.aggregation, distance_metrics)
+            for spec in _tie_breaker_specs_for(self.diversity_metrics)
         ]
 
     @cached_property
@@ -219,7 +222,7 @@ class DiversityObjectiveHybrid(DiversityObjective):
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-class _TieBreakerMetric(NamedTuple):
+class _TieBreakerSpec(NamedTuple):
     """A tie-breaker diversity metric and the aggregation its hybrid form uses over several distances."""
 
     metric: DiversityMetric
@@ -228,17 +231,17 @@ class _TieBreakerMetric(NamedTuple):
 
 # the approximate geomean rewards a uniform spread, which opens room around the closest pair;
 # aggregated geometrically, a zero on one distance lowers it without pinning it
-_APPROX_GEOMEAN_TIE_BREAKER = _TieBreakerMetric(
+_APPROX_GEOMEAN_TIE_BREAKER = _TieBreakerSpec(
     DiversityMetric.APPROX_GEOMEAN_SEPARATION, HybridObjectiveType.GEOMETRIC_MEAN
 )
-# the non-zero fraction counts the coincident pairs down once the geomean sits at zero; aggregated
-# arithmetically, a distance with no non-zero separation only lowers it, so fixing another distance
-# still ranks higher
-_NON_ZERO_FRAC_TIE_BREAKER = _TieBreakerMetric(
+# the non-zero fraction rises as the number of coincident pairs falls, even once the geomean is
+# stuck at zero; aggregated arithmetically, a distance with no non-zero separation only lowers it,
+# so fixing another distance still ranks higher
+_NON_ZERO_FRAC_TIE_BREAKER = _TieBreakerSpec(
     DiversityMetric.NON_ZERO_SEPARATION_FRAC, HybridObjectiveType.ARITHMETIC_MEAN
 )
 
-# the separation aggregates that one coincident pair pins at zero
+# one coincident pair pins each of these separation aggregates at zero
 _ZERO_PINNED_METRICS = frozenset(
     {
         DiversityMetric.GEOMEAN_SEPARATION,
@@ -248,8 +251,8 @@ _ZERO_PINNED_METRICS = frozenset(
 )
 
 
-def _tie_breaker_metrics_for(diversity_metrics: tuple[DiversityMetric, ...]) -> tuple[_TieBreakerMetric, ...]:
-    """Return the tie-breaker metrics the given term metrics call for, in ranking order; empty when none ties."""
+def _tie_breaker_specs_for(diversity_metrics: tuple[DiversityMetric, ...]) -> tuple[_TieBreakerSpec, ...]:
+    """Return the tie-breaker specs that the given term metrics call for, in ranking order; empty when none ties."""
     if DiversityMetric.MIN_SEPARATION in diversity_metrics:
         # min-separation reacts only to the closest pair, so every swap that leaves that pair alone ties
         return (_APPROX_GEOMEAN_TIE_BREAKER, _NON_ZERO_FRAC_TIE_BREAKER)
