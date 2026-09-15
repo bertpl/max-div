@@ -84,7 +84,7 @@ class TablePercentage(TableElement):
         return self.frac < other.frac
 
     @classmethod
-    def aggregate(cls, elements: list[TablePercentage], agg_type: TableAggregationType) -> TablePercentage:  # ty: ignore[invalid-method-override] -- Table.add_aggregate_row dispatches with same-type elements only
+    def aggregate(cls, elements: list[TablePercentage], agg_type: TableAggregationType) -> TablePercentage:
         frac_values = [el.frac for el in elements]
         max_decimals = max(el.decimals for el in elements)
         return TablePercentage(
@@ -130,7 +130,7 @@ class TableTimeElapsed(_QuantiledTableElement):
         return f"{s_median.strip()} ± {s_perc}"
 
     @classmethod
-    def aggregate(cls, elements: list[TableTimeElapsed], agg_type: TableAggregationType) -> TableTimeElapsed:  # ty: ignore[invalid-method-override] -- Table.add_aggregate_row dispatches with same-type elements only
+    def aggregate(cls, elements: list[TableTimeElapsed], agg_type: TableAggregationType) -> TableTimeElapsed:
         q_25_agg, q_50_agg, q_75_agg = cls._aggregate_quantiles(elements, agg_type)
         return TableTimeElapsed(t_sec_q_25=q_25_agg, t_sec_q_50=q_50_agg, t_sec_q_75=q_75_agg)
 
@@ -168,7 +168,7 @@ class TableValueWithUncertainty(_QuantiledTableElement):
         return f"{s_median} ± {s_perc}"
 
     @classmethod
-    def aggregate(  # ty: ignore[invalid-method-override] -- Table.add_aggregate_row dispatches with same-type elements only
+    def aggregate(
         cls, elements: list[TableValueWithUncertainty], agg_type: TableAggregationType
     ) -> TableValueWithUncertainty:
         q_25_agg, q_50_agg, q_75_agg = cls._aggregate_quantiles(elements, agg_type)
@@ -252,7 +252,7 @@ class TableValueRange(_QuantiledTableElement):
         return prefix
 
     @classmethod
-    def aggregate(cls, elements: list[TableValueRange], agg_type: TableAggregationType) -> TableValueRange:  # ty: ignore[invalid-method-override] -- Table.add_aggregate_row dispatches with same-type elements only
+    def aggregate(cls, elements: list[TableValueRange], agg_type: TableAggregationType) -> TableValueRange:
         q_25_agg, q_50_agg, q_75_agg = cls._aggregate_quantiles(elements, agg_type)
         max_max_decimals = max(el.max_decimals for el in elements)
         max_diff_decimals = max(el.diff_decimals for el in elements)
