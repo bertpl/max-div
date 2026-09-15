@@ -400,6 +400,15 @@ img.center75 {
     stroke: #EE1111;
     stroke-width: 2px;
 }
+/* The summary table of the case study colors a result by how close it comes to its reference. */
+.usx-low {
+    color: #C62828;
+    font-weight: bold;
+}
+.usx-high {
+    color: #2E7D32;
+    font-weight: bold;
+}
 .usx-caption {
     text-align: center;
     font-size: 0.72rem;

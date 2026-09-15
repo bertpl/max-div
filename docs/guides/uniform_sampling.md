@@ -5,17 +5,28 @@
 
 ## I. Problem statement
 
-Some applications need $k$ points that look uniformly spread over a hypercube without forming a regular grid: the inputs of a test campaign, or the starting points of an optimizer. Often the marginal distributions matter as well: when each input dimension is tested on its own, the $x$ values alone should cover $[0, 1]$ evenly, and so should the $y$ values.
+### I.A. Motivation
 
-Take the two-dimensional case. Given $n$ points drawn uniformly at random from the unit square, select $k$ of them such that
+Some applications need $k$ points that look **uniformly spread over a hypercube without forming a regular grid**: the inputs of a test campaign, or the starting points of an optimizer. Often the **marginal distributions matter as well**: when each input dimension is tested on its own, the $x$ values alone should cover $[0, 1]$ evenly, and so should the $y$ values.
 
-- the selection is spread in the square: every point is far from its nearest neighbor under the L2 distance;
-- the selection is spread along $x$: every $x$ value is far from its nearest other $x$ value;
-- the selection is spread along $y$: likewise.
+A selection that is uniform in the square is not automatically uniform in its marginals: two points can be far apart in 2D while sharing almost the same $x$ value.
 
-The three goals compete for the same $k$ points, and this page leaves open how to trade them off. A selection that is uniform in the square is not automatically uniform in its marginals: two points can be far apart in 2D while sharing almost the same $x$ value.
+### I.B. The three goals
 
-Every experiment below selects $k = 100$ points from the same population of $n = 10{,}000$, so the results compare. A goal is measured as the [harmonic-mean separation](../concepts/diversity.md#diversity-metrics) under its distance: the harmonic mean over the selection of each point's distance to its nearest other point. It sits between the minimum and the geometric mean in how hard it penalizes one close pair; on a perfectly regular selection, where every nearest-neighbor distance is the same, all three aggregates agree. Every run maximizes that harmonic-mean separation on 16 workers within a 60 s end-to-end budget, and every result table reports it under the L2, $x$ and $y$ distances.
+Take the two-dimensional case. Given $n$ points drawn uniformly at random from the unit square, **select $k$ of them** such that
+
+- **spread in the square:** every point is far from its nearest neighbor under the L2 distance;
+- **spread along $x$:** every $x$ value is far from its nearest other $x$ value;
+- **spread along $y$:** likewise.
+
+The three goals compete for the same $k$ points. **How to trade them off is left open** here; the experiments show what each objective delivers on all three.
+
+### I.C. How the experiments run
+
+- **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results compare.
+- **One diversity metric for every experiment:** the [harmonic-mean separation](../concepts/diversity.md#diversity-metrics), the harmonic mean over the selection of each point's distance to its nearest other point. It sits between the minimum and the geometric mean in how hard it penalizes one close pair; on a perfectly regular selection all three aggregates agree.
+- **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget.
+- **One yardstick for every result:** the harmonic-mean separation of the selection under the L2, $x$ and $y$ distances, one per goal.
 
 ## II. Diversity references
 
@@ -108,13 +119,13 @@ The three goals are each close to their reference, at the same time.
 
 ## VI. Summary
 
-Every experiment's achieved harmonic-mean separation under the three reference distances, each as a fraction of its free-placement reference from section II:
+Every experiment's achieved harmonic-mean separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">below 50 %</span> of its reference is marked red, one <span class="usx-high">above 70 %</span> green:
 
 --8<-- "generated/uniform_sampling_summary.md"
 
-- **One distance serves one goal.** The L2, $x$ and $y$ distances each reach their own goal and leave at least one other near the level of a random selection.
-- **The L−∞ distance serves the two marginals**, and the geometric-mean distance serves all three at a discount on each.
-- **The hybrid objective serves all three** by naming them: it is the choice when every goal is a requirement, at the cost of tracking three distances instead of one.
+- **One distance reaches one goal.** The L2, $x$ and $y$ distances each reach their own goal and leave at least one other near the level of a random selection.
+- **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
+- **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
 
 That cost shows in the iterations each run fits into its budget. The table gives them for the winning worker, and the objective it had reached at three elapsed marks as a fraction of its final value:
 

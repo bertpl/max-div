@@ -237,15 +237,19 @@ DISTANCE_METRICS = {
     "geomean": DistanceMetric.geometric_mean(),
 }
 REFERENCE_LABELS = {"l2": "L2", "x": "$x$", "y": "$y$"}
-# One row label per experiment, shared by the summary and the convergence tables.
-OBJECTIVE_LABELS = {
-    "l2": "L2 distance",
-    "x": "$x$ distance",
-    "y": "$y$ distance",
-    "linf": "L\u2212\u221e distance",
-    "geomean": "geometric-mean distance",
-    "hybrid": "hybrid: L2, $x$ and $y$ terms",
+# One row label per experiment, shared by the summary and the convergence tables; the section
+# numbers are those of `uniform_sampling.md`, so a row maps to the section that shows the experiment.
+EXPERIMENT_LABELS = {
+    "l2": "**III.A** L2 distance",
+    "x": "**III.B** $x$ distance",
+    "y": "**III.C** $y$ distance",
+    "linf": "**IV.A** L\u2212\u221e distance",
+    "geomean": "**IV.B** geometric-mean distance",
+    "hybrid": "**V** hybrid: L2, $x$ and $y$ terms",
 }
+# A summary cell is colored by its achieved / reference fraction: red below LOW, green above HIGH.
+# The classes are styled in docs/stylesheets/extra.css; `uniform_sampling.md` states the rule.
+SUMMARY_LOW, SUMMARY_HIGH = 0.5, 0.7
 
 
 @dataclass(frozen=True)
@@ -453,15 +457,27 @@ def write_experiment_separations(experiment: Experiment, selection: NDArray[np.f
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 
+def _summary_cell(value: float, fraction: float) -> str:
+    """Return a summary cell: the value and its fraction, wrapped in a colored span when the fraction is low or high."""
+    text = f"{value:.4f} ({fraction:.0%})"
+    if fraction < SUMMARY_LOW:
+        return f'<span class="usx-low">{text}</span>'
+    elif fraction > SUMMARY_HIGH:
+        return f'<span class="usx-high">{text}</span>'
+    else:
+        return text
+
+
 def write_summary(selections: dict[str, NDArray[np.float64]], k: int) -> None:
     """Write the closing table: every experiment's achieved separations as a fraction of the references."""
     targets = separation_targets(k)
+    achieved = {name: harmonic_separations(selection) for name, selection in selections.items()}
+    fractions = {name: {key: achieved[name][key] / targets[key] for key in REFERENCE_LABELS} for name in selections}
     header = " | ".join(f"{label}, achieved / reference" for label in REFERENCE_LABELS.values())
-    lines = [f"| objective | {header} |", "|---|---|---|---|"]
-    for name, selection in selections.items():
-        achieved = harmonic_separations(selection)
-        cells = " | ".join(f"{achieved[key]:.4f} ({achieved[key] / targets[key]:.0%})" for key in REFERENCE_LABELS)
-        lines.append(f"| {OBJECTIVE_LABELS[name]} | {cells} |")
+    lines = [f"| experiment | {header} |", "|---|---|---|---|"]
+    for name in selections:
+        cells = [_summary_cell(achieved[name][key], fractions[name][key]) for key in REFERENCE_LABELS]
+        lines.append(f"| {EXPERIMENT_LABELS[name]} | {' | '.join(cells)} |")
     path = GENERATED_DIR / "uniform_sampling_summary.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
@@ -478,13 +494,13 @@ def write_convergence(runs: dict[str, ExperimentRun], budget_sec: float) -> None
     """
     marks = " | ".join(f"at {mark:g} s" for mark in CONVERGENCE_MARKS_SEC)
     lines = [
-        f"| objective | iterations in {budget_sec:g} s | {marks} |",
+        f"| experiment | iterations in {budget_sec:g} s | {marks} |",
         "|---|---|" + "---|" * len(CONVERGENCE_MARKS_SEC),
     ]
     for name, run in runs.items():
         final = run.checkpoints[-1][2]
         cells = " | ".join(f"{run.diversity_at(mark) / final:.1%}" for mark in CONVERGENCE_MARKS_SEC)
-        lines.append(f"| {OBJECTIVE_LABELS[name]} | {run.n_iterations:,} | {cells} |")
+        lines.append(f"| {EXPERIMENT_LABELS[name]} | {run.n_iterations:,} | {cells} |")
     path = GENERATED_DIR / "uniform_sampling_convergence.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
