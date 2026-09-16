@@ -14,7 +14,7 @@ from max_div._core._utils import format_long_time_duration, np_int32_array_var_l
 from max_div._core._utils._progress_table import ProgressTable
 
 # Width of a rendered step name, in characters, shared by every reporter that shows one so their
-# rows and bars line up. A longer name is cropped with an ellipsis; the numbered prefix is kept.
+# rows and bars line up.
 STEP_NAME_WIDTH = 35
 
 if TYPE_CHECKING:
@@ -553,11 +553,12 @@ def _selection_hash_hex(selection: NDArray[np.int32], n: int) -> str:
     return "".join(f"{val & 0xF:x}" for val in hash_array)
 
 
-# =================================================================================================
-#  Helpers
-# =================================================================================================
 def format_step_name(step_name: str) -> str:
-    """Return the step name at `STEP_NAME_WIDTH` characters: padded on the right, or cropped with an ellipsis."""
+    """Return the step name at `STEP_NAME_WIDTH` characters.
+
+    A shorter name is padded on the right; a longer one is cropped from the right with an ellipsis,
+    so its start is kept.
+    """
     if len(step_name) > STEP_NAME_WIDTH:
         return step_name[: STEP_NAME_WIDTH - 1] + "…"
     else:
