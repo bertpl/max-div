@@ -5,6 +5,7 @@ import pytest
 
 from max_div._core.metrics import DistanceMetric, DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
+from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._parallel import FixedGroupCount, PowerLawGroupMerge, WorkerGroupState
 from max_div._core.solver._solver_state import SolverState
 from tests._core.solver.objectives import simple_objective
@@ -21,6 +22,14 @@ def _group_state(n_workers: int, group_sizes: list[int] | None = None, dynamic: 
     return WorkerGroupState(
         multiprocessing.get_context("spawn"), group_sizes=sizes, k=3, score_length=3, schedule=schedule
     )
+
+
+_ELAPSED = Elapsed(t_elapsed_sec=2.5, n_iterations=40)
+
+
+def _dissolve(group_state: WorkerGroupState, progress_fraction: float, worker: int = 0):
+    """Run the schedule as the given worker at the given fraction, and return the changes it made."""
+    return group_state.maybe_dissolve(worker, progress_fraction, _ELAPSED)
 
 
 def _publish(group_state: WorkerGroupState, worker: int, diversity: float) -> None:
@@ -66,15 +75,15 @@ def test_the_worst_slot_group_is_dissolved_and_its_worker_joins_the_best():
     _publish(group_state, 2, diversity=0.1)
 
     # --- act --------------------------
-    group_state.maybe_dissolve(progress_fraction=0.4)  # scheduled count 2, so one dissolution is due
+    (change,) = _dissolve(group_state, 0.4, worker=1)  # scheduled count 2, so one dissolution is due
 
     # --- assert -----------------------
     assert list(group_state._assignment) == [0, 1, 0]
-    (event,) = group_state.events()
-    assert event.dissolved_group == 2
-    assert event.reassignments == {2: 0}
-    assert event.slot_scores[2] == (3.0, 1.0, 0.1)
-    assert event.progress_fraction == 0.4
+    assert change.dissolved_group == 2
+    assert change.reassignments == {2: 0}
+    assert change.slot_scores[2] == (3.0, 1.0, 0.1)
+    assert change.n_alive_groups_after == 2
+    assert (change.executed_by, change.progress_fraction, change.elapsed) == (1, 0.4, _ELAPSED)
 
 
 def test_reassignment_prefers_the_smallest_groups():
@@ -83,10 +92,10 @@ def test_reassignment_prefers_the_smallest_groups():
     group_state = _group_state(4)
     for worker, diversity in enumerate([0.9, 0.7, 0.5, 0.3]):
         _publish(group_state, worker, diversity)
-    group_state.maybe_dissolve(progress_fraction=0.3)  # worker 3 joins group 0, which now has two members
+    _dissolve(group_state, 0.3)  # worker 3 joins group 0, which now has two members
 
     # --- act --------------------------
-    group_state.maybe_dissolve(progress_fraction=0.6)
+    _dissolve(group_state, 0.6)
 
     # --- assert -----------------------
     # group 2 dissolves; its worker goes to group 1 (the smallest), not to the larger group 0
@@ -100,12 +109,11 @@ def test_unwritten_slots_rank_below_written_ones():
     _publish(group_state, 1, diversity=0.5)
 
     # --- act --------------------------
-    group_state.maybe_dissolve(progress_fraction=0.4)
+    (change,) = _dissolve(group_state, 0.4)
 
     # --- assert -----------------------
-    (event,) = group_state.events()
-    assert event.dissolved_group == 0
-    assert event.slot_scores == {0: None, 1: (3.0, 1.0, 0.5), 2: None}
+    assert change.dissolved_group == 0
+    assert change.slot_scores == {0: None, 1: (3.0, 1.0, 0.5), 2: None}
     assert group_state._assignment[0] == 1  # joins the only written slot, the best of the pool
 
 
@@ -115,11 +123,11 @@ def test_a_late_fraction_dissolves_several_groups_at_once():
     group_state = _group_state(3)
 
     # --- act --------------------------
-    group_state.maybe_dissolve(progress_fraction=1.0)
+    changes = _dissolve(group_state, 1.0)
 
     # --- assert -----------------------
     assert group_state._n_alive_groups.value == 1
-    assert len(group_state.events()) == 2
+    assert [change.n_alive_groups_after for change in changes] == [2, 1]
     assert len(set(group_state._assignment)) == 1
 
 
@@ -129,25 +137,24 @@ def test_an_on_schedule_count_dissolves_nothing():
     group_state = _group_state(3)
 
     # --- act --------------------------
-    group_state.maybe_dissolve(progress_fraction=0.0)
+    changes = _dissolve(group_state, 0.0)
 
     # --- assert -----------------------
     assert group_state._n_alive_groups.value == 3
-    assert group_state.events() == []
+    assert changes == []
 
 
-def test_dead_groups_drop_out_of_later_event_scores():
-    """An event's slot scores cover only the then-alive groups: the grouping as it stood when the event fired."""
+def test_dead_groups_drop_out_of_later_change_scores():
+    """A change's slot scores cover only the then-alive groups: the grouping as it stood when the change fired."""
     # --- arrange ----------------------
     group_state = _group_state(3)
     for worker, diversity in enumerate([0.9, 0.5, 0.1]):
         _publish(group_state, worker, diversity)
 
     # --- act --------------------------
-    group_state.maybe_dissolve(progress_fraction=1.0)
+    first, second = _dissolve(group_state, 1.0)
 
     # --- assert -----------------------
-    first, second = group_state.events()
     assert sorted(first.slot_scores) == [0, 1, 2]
     assert sorted(second.slot_scores) == [0, 1]  # group 2 dissolved first, so it no longer appears
 
@@ -161,14 +168,14 @@ def test_the_coordinator_exchanges_with_whichever_slot_the_assignment_names():
     group_state = _group_state(2)
     spread_out = _state_with([0, 3, 5])  # min separation 10
     clustered = _state_with([0, 1, 2])  # min separation 1
-    group_state.coordinator_for(1).at_batch_boundary(spread_out, progress_fraction=0.0)
+    group_state.coordinator_for(1).at_batch_boundary(spread_out, 0.0, _ELAPSED)
     coordinator = group_state.coordinator_for(0)
-    coordinator.at_batch_boundary(clustered, progress_fraction=0.0)  # publishes into its own slot 0
+    coordinator.at_batch_boundary(clustered, 0.0, _ELAPSED)  # publishes into its own slot 0
     assert clustered.selected_index_array.tolist() == [0, 1, 2]
 
     # --- act --------------------------
     group_state._assignment[0] = 1
-    coordinator.at_batch_boundary(clustered, progress_fraction=0.0)
+    coordinator.at_batch_boundary(clustered, 0.0, _ELAPSED)
 
     # --- assert -----------------------
     assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted slot 1's stored selection
@@ -194,18 +201,35 @@ def test_a_boundary_past_the_threshold_regroups_and_adopts_in_one_visit():
     group_state = _group_state(2)
     spread_out = _state_with([0, 3, 5])
     clustered = _state_with([0, 1, 2])
-    group_state.coordinator_for(1).at_batch_boundary(spread_out, progress_fraction=0.1)
+    group_state.coordinator_for(1).at_batch_boundary(spread_out, 0.1, _ELAPSED)
     coordinator = group_state.coordinator_for(0)
-    coordinator.at_batch_boundary(clustered, progress_fraction=0.1)
+    coordinator.at_batch_boundary(clustered, 0.1, _ELAPSED)
 
     # --- act --------------------------
-    coordinator.at_batch_boundary(clustered, progress_fraction=0.6)  # scheduled count is now one group
+    coordinator.at_batch_boundary(clustered, 0.6, _ELAPSED)  # scheduled count is now one group
 
     # --- assert -----------------------
-    (event,) = group_state.events()
-    assert event.dissolved_group == 0  # the caller's own, lower-scoring group
-    assert event.reassignments == {0: 1}
+    (change,) = coordinator.worker_group_changes
+    assert change.dissolved_group == 0  # the caller's own, lower-scoring group
+    assert change.reassignments == {0: 1}
+    assert change.executed_by == 0
     assert clustered.selected_index_array.tolist() == [0, 3, 5]  # exchanged with the survivor's slot
+
+
+def test_a_coordinator_keeps_only_the_changes_it_executed():
+    """Each worker returns its own changes; a worker whose boundary dissolved nothing has none."""
+    # --- arrange ----------------------
+    group_state = _group_state(2)
+    executing, idle = group_state.coordinator_for(0), group_state.coordinator_for(1)
+    idle.at_batch_boundary(_state_with([0, 3, 5]), 0.1, _ELAPSED)
+
+    # --- act --------------------------
+    executing.at_batch_boundary(_state_with([0, 1, 2]), 1.0, _ELAPSED)
+    idle.at_batch_boundary(_state_with([0, 3, 5]), 1.0, _ELAPSED)  # the count already matches the schedule
+
+    # --- assert -----------------------
+    assert [change.executed_by for change in executing.worker_group_changes] == [0]
+    assert idle.worker_group_changes == []
 
 
 # =================================================================================================
@@ -218,6 +242,7 @@ def test_a_fixed_grouping_starts_from_its_configured_assignment():
 
     # --- assert -----------------------
     assert list(group_state._assignment) == [0, 0, 0, 1, 1]
+    assert group_state.initial_assignment == [0, 0, 0, 1, 1]
     assert group_state._n_alive_groups.value == 2
 
 
@@ -227,11 +252,11 @@ def test_a_fixed_grouping_never_dissolves():
     group_state = _group_state(4, group_sizes=[2, 2], dynamic=False)
 
     # --- act --------------------------
-    group_state.maybe_dissolve(progress_fraction=1.0)
+    changes = _dissolve(group_state, 1.0)
 
     # --- assert -----------------------
     assert list(group_state._assignment) == [0, 0, 1, 1]
-    assert group_state.events() == []
+    assert changes == []
 
 
 def test_a_fixed_group_exchanges_through_its_shared_slot():
@@ -240,10 +265,10 @@ def test_a_fixed_group_exchanges_through_its_shared_slot():
     group_state = _group_state(2, group_sizes=[2], dynamic=False)
     spread_out = _state_with([0, 3, 5])  # min separation 10
     clustered = _state_with([0, 1, 2])  # min separation 1
-    group_state.coordinator_for(0).at_batch_boundary(spread_out, progress_fraction=1.0)
+    group_state.coordinator_for(0).at_batch_boundary(spread_out, 1.0, _ELAPSED)
 
     # --- act --------------------------
-    group_state.coordinator_for(1).at_batch_boundary(clustered, progress_fraction=1.0)
+    group_state.coordinator_for(1).at_batch_boundary(clustered, 1.0, _ELAPSED)
 
     # --- assert -----------------------
     assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted its group mate's published best

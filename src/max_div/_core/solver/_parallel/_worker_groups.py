@@ -14,12 +14,15 @@ boundary it exchanges its selection through its group's slot.
 The workers themselves run the schedule; no separate process does:
 
 - **`WorkerGroupState` is the shared-memory record of the grouping**: one slot per worker, an
-  assignment table mapping each worker to its slot, the alive group count, and the dissolution
-  log.
+  assignment table mapping each worker to its slot, and the alive group count.
 - **`WorkerGroupCoordinator` runs the schedule from inside the workers**: at each batch boundary
   a worker computes the scheduled group count from its own progress fraction, and whichever
   worker first sees the alive count exceed the schedule executes the dissolution itself, under a
-  single transition lock.
+  single transition lock. The executing worker keeps a `WorkerGroupChange` per dissolution and
+  returns them with its result; nothing reads them during the solve.
+
+Shared memory holds only what a worker must read during the solve. Anything read only afterwards
+is returned in the worker's result, like the changes and the checkpoints.
 
 Ranking groups on their slots makes dissolution safe: a slot only ever accepts a strictly better
 selection (`GroupExchangeSlot.exchange`), so it holds its group's best score so far, and
@@ -30,15 +33,15 @@ eventual, not synchronized — a worker mid-batch keeps exchanging with its old 
 one more batch.
 """
 
-import math
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._solver_state import SolverState
 
 from ._coordinator import WorkerCoordinator
 from ._exchange_slot import GroupExchangeSlot
 from ._merge_schedule import GroupMergeSchedule
+from ._worker_group_change import WorkerGroupChange
 
 if TYPE_CHECKING:
     from multiprocessing.context import BaseContext
@@ -47,29 +50,12 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-@dataclass(frozen=True)
-class DissolutionEvent:
-    """A record of one group dissolution, kept for inspecting the mechanism after a solve.
-
-    Args:
-        progress_fraction: progress fraction of the worker that executed the dissolution.
-        dissolved_group: index of the dissolved group's slot.
-        slot_scores: every then-alive group's slot score, None for a never-written slot.
-        reassignments: target group per freed worker.
-    """
-
-    progress_fraction: float
-    dissolved_group: int
-    slot_scores: dict[int, tuple[float, ...] | None]
-    reassignments: dict[int, int]
-
-
 class WorkerGroupState:
     """The shared group state records a parallel solve's grouping and executes the transitions over it.
 
     The parent allocates the state before workers spawn; every worker's coordinator holds it
-    and any worker may execute a dissolution.  After the workers finish, `events()` returns the
-    dissolution log — empty for a fixed grouping, whose schedule never fires a transition.
+    and any worker may execute a dissolution, which `maybe_dissolve` returns as changes to the
+    executing worker. A fixed grouping's schedule never fires a transition.
     """
 
     def __init__(
@@ -80,7 +66,7 @@ class WorkerGroupState:
         score_length: int,
         schedule: GroupMergeSchedule,
     ) -> None:
-        """Allocate the slots, the configured assignment, and the dissolution log in shared memory.
+        """Allocate the slots and the configured assignment in shared memory.
 
         Args:
             context: the spawn context whose shared-memory primitives back everything here, so
@@ -112,16 +98,10 @@ class WorkerGroupState:
         self._n_alive_groups = context.Value("i", self._initial_group_count, lock=False)
         self._transition_lock = context.Lock()
 
-        # --- shared dissolution log -------------
-        # The dissolution log is preallocated: exactly n_workers - 1 dissolutions can ever
-        # happen.  The stored assignment is the post-event table; NaN marks a never-written
-        # slot's score.
-        n_events = max(self._n_workers - 1, 1)
-        self._ev_count = context.Value("i", 0, lock=False)
-        self._ev_fraction = context.Array("d", n_events, lock=False)
-        self._ev_dissolved = context.Array("i", n_events, lock=False)
-        self._ev_assignment = context.Array("i", n_events * self._n_workers, lock=False)
-        self._ev_scores = context.Array("d", n_events * self._n_workers * score_length, lock=False)
+    @property
+    def initial_assignment(self) -> list[int]:
+        """Return the configured grouping as the group index of each worker, in worker order."""
+        return list(self._initial_assignment)
 
     def coordinator_for(self, worker_index: int) -> "WorkerGroupCoordinator":
         """Return the given worker's coordinator, bound to this shared state."""
@@ -130,20 +110,27 @@ class WorkerGroupState:
     # -------------------------------------------------------------------------
     #  Worker-side operations
     # -------------------------------------------------------------------------
-    def maybe_dissolve(self, progress_fraction: float) -> None:
-        """Dissolve groups until the alive count matches the schedule at the given fraction.
+    def maybe_dissolve(self, worker_index: int, progress_fraction: float, elapsed: Elapsed) -> list[WorkerGroupChange]:
+        """Dissolve groups until the alive count matches the schedule, and return the changes made.
 
         The no-transition case — every boundary of a fixed grouping, and most boundaries of a
         dynamic one — costs a single lock-free read; the transition itself runs under the one
         transition lock, and the count re-check inside it means a concurrent caller that lost
         the race dissolves nothing.
+
+        Args:
+            worker_index: the calling worker, recorded as the executor of each change.
+            progress_fraction: the calling worker's progress through its optimization step.
+            elapsed: the calling worker's elapsed since its solve started, recorded on each change.
         """
         target = self._scheduled_count(progress_fraction)
         if self._n_alive_groups.value <= target:
-            return
+            return []
+        changes: list[WorkerGroupChange] = []
         with self._transition_lock:
             while self._n_alive_groups.value > target:
-                self._dissolve_worst(progress_fraction)
+                changes.append(self._dissolve_worst(worker_index, progress_fraction, elapsed))
+        return changes
 
     def exchange(
         self, worker_index: int, score: tuple[float, ...], selection: "NDArray[np.int32]"
@@ -163,8 +150,8 @@ class WorkerGroupState:
         """Return the group count the schedule asks for at the given progress fraction."""
         return self._schedule.group_count(progress_fraction)
 
-    def _dissolve_worst(self, progress_fraction: float) -> None:
-        """Dissolve the worst-scoring group and reassign its workers to the strongest short groups.
+    def _dissolve_worst(self, worker_index: int, progress_fraction: float, elapsed: Elapsed) -> WorkerGroupChange:
+        """Dissolve the worst-scoring group, reassign its workers to the strongest short groups, and return the change.
 
         The caller holds the transition lock; the assignment table is the single source of
         membership, so sizes are counted from it.
@@ -187,7 +174,15 @@ class WorkerGroupState:
             self._assignment[worker] = target
             reassignments[worker] = target
         self._n_alive_groups.value -= 1
-        self._record_event(progress_fraction, worst_group, score_per_group)
+        return WorkerGroupChange(
+            executed_by=worker_index,
+            elapsed=elapsed,
+            progress_fraction=progress_fraction,
+            dissolved_group=worst_group,
+            n_alive_groups_after=int(self._n_alive_groups.value),
+            slot_scores=score_per_group,
+            reassignments=reassignments,
+        )
 
     @staticmethod
     def _reassignment_target(
@@ -205,51 +200,6 @@ class WorkerGroupState:
         pool = [group for group, size in size_per_surviving_group.items() if size == smallest]
         return max(pool, key=lambda group: (score_per_group[group] or (), -group))
 
-    # -------------------------------------------------------------------------
-    #  Dissolution log
-    # -------------------------------------------------------------------------
-    def _record_event(
-        self, progress_fraction: float, dissolved: int, score_per_group: dict[int, tuple[float, ...] | None]
-    ) -> None:
-        """Append one dissolution to the shared log; the caller holds the transition lock."""
-        index = self._ev_count.value
-        self._ev_fraction[index] = progress_fraction
-        self._ev_dissolved[index] = dissolved
-        self._ev_assignment[index * self._n_workers : (index + 1) * self._n_workers] = list(self._assignment)
-        flat_scores = []
-        for group in range(self._n_workers):
-            score = score_per_group.get(group)
-            flat_scores.extend(score if score is not None else [math.nan] * self._score_length)
-        start = index * self._n_workers * self._score_length
-        self._ev_scores[start : start + len(flat_scores)] = flat_scores
-        self._ev_count.value = index + 1
-
-    def events(self) -> list[DissolutionEvent]:
-        """Return the dissolution log as `DissolutionEvent`s; call after the workers finished."""
-        events = []
-        previous_assignment = self._initial_assignment
-        alive = set(previous_assignment)
-        for index in range(self._ev_count.value):
-            assignment = list(self._ev_assignment[index * self._n_workers : (index + 1) * self._n_workers])
-            start = index * self._n_workers * self._score_length
-            slot_scores: dict[int, tuple[float, ...] | None] = {}
-            for group in sorted(alive):
-                score = tuple(self._ev_scores[start + group * self._score_length :][: self._score_length])
-                slot_scores[group] = None if math.isnan(score[0]) else score
-            events.append(
-                DissolutionEvent(
-                    progress_fraction=self._ev_fraction[index],
-                    dissolved_group=self._ev_dissolved[index],
-                    slot_scores=slot_scores,
-                    reassignments={
-                        worker: group for worker, group in enumerate(assignment) if group != previous_assignment[worker]
-                    },
-                )
-            )
-            alive.discard(self._ev_dissolved[index])
-            previous_assignment = assignment
-        return events
-
 
 class WorkerGroupCoordinator(WorkerCoordinator):
     """A parallel solve's workers run the grouping schedule and exchange through the shared state."""
@@ -258,6 +208,7 @@ class WorkerGroupCoordinator(WorkerCoordinator):
         """Bind the coordinator to the solve's shared group state and the worker's index."""
         self._group_state = group_state
         self._worker_index = worker_index
+        self._changes: list[WorkerGroupChange] = []
 
     @property
     def worker_index(self) -> int:
@@ -269,9 +220,14 @@ class WorkerGroupCoordinator(WorkerCoordinator):
         """Return the group the worker is assigned to right now."""
         return self._group_state.get_group_index_for_worker(self._worker_index)
 
-    def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
+    @property
+    def worker_group_changes(self) -> list[WorkerGroupChange]:
+        """Return the changes this worker executed so far, in the order it executed them."""
+        return list(self._changes)
+
+    def at_batch_boundary(self, state: SolverState, progress_fraction: float, elapsed: Elapsed) -> None:
         """Bring the group count down to the schedule's target, then exchange with the currently assigned slot."""
-        self._group_state.maybe_dissolve(progress_fraction)
+        self._changes.extend(self._group_state.maybe_dissolve(self._worker_index, progress_fraction, elapsed))
         incoming = self._group_state.exchange(self._worker_index, state.score.as_tuple(), state.selected_index_array)
         if incoming is not None:
             state.adopt_selection(incoming)

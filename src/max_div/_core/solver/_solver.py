@@ -171,8 +171,22 @@ class MaxDivSolver:
             step_identity = SolverStepIdentity(step_index, step.name())
             progress_reporter.solver_step_started(step_identity)
             step.set_seed(step_seed)
+            # the coordinator is told where the step starts on the solve-wide axis (the sum of every
+            # earlier step's elapsed); the step's own checkpoints are shifted the same way below
+            elapsed_before_step = sum(
+                (result.elapsed for result in step_results), Elapsed(t_elapsed_sec=0.0, n_iterations=0)
+            )
             try:
-                step_results.append(step.run(state, step_identity, progress_reporter, coordinator, self._batch_seconds))
+                step_results.append(
+                    step.run(
+                        state,
+                        step_identity,
+                        progress_reporter,
+                        coordinator,
+                        self._batch_seconds,
+                        elapsed_before_step=elapsed_before_step,
+                    )
+                )
             finally:
                 # release all Savepoint objects: they hold cyclic references via the SolverState, which
                 # cause out-of-memory when left in place; in a finally, so a step that raises still

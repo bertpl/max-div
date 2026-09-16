@@ -12,12 +12,13 @@ from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
 
 from ._executor import run_workers
+from ._group_history import worker_group_history
 from ._merge_schedule import GroupMergeSchedule
-from ._result import best_result
+from ._result import WorkerResult
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._trajectory import best_known_trajectory
 from ._worker_config import WorkerConfig
-from ._worker_groups import DissolutionEvent, WorkerGroupState
+from ._worker_groups import WorkerGroupState
 
 
 class ParallelMaxDivSolver:
@@ -55,8 +56,6 @@ class ParallelMaxDivSolver:
         self._solver_configs = solver_configs
         self._group_sizes = group_sizes
         self._merge_schedule = merge_schedule
-        # `last_dynamic_events` holds the most recent dynamic solve's dissolutions, for inspection
-        self.last_dynamic_events: list[DissolutionEvent] = []
 
     # -------------------------------------------------------------------------
     #  API
@@ -92,7 +91,6 @@ class ParallelMaxDivSolver:
                 coordinators,
                 progress_reporter=progress_reporter,
             )
-        self.last_dynamic_events = group_state.events()
         if failures and results:
             # some workers returned a result and some failed: warn about the partial failure,
             # and still return the best result that could be retrieved
@@ -103,7 +101,7 @@ class ParallelMaxDivSolver:
                 ParallelSolvingWarning,
                 stacklevel=2,
             )
-        winner = best_result(results, failures)
+        winner = WorkerResult.best(results, failures)
         summaries = [
             WorkerSummary(
                 worker_index=result.worker_index,
@@ -118,7 +116,13 @@ class ParallelMaxDivSolver:
         inherited = {field.name: getattr(winner.solution, field.name) for field in fields(MaxDivSolution)}
         # the selection is the winner's; the trace follows the best score across all workers
         inherited["score_checkpoints"] = best_known_trajectory(results)
-        return ParallelMaxDivSolution(**inherited, workers=summaries, winning_worker=winner.worker_index)
+        return ParallelMaxDivSolution(
+            **inherited,
+            workers=summaries,
+            winning_worker=winner.worker_index,
+            initial_worker_groups=group_state.initial_assignment,
+            worker_group_changes=worker_group_history(results),
+        )
 
     def _build_group_state(self) -> WorkerGroupState:
         """Return the solve's shared group state, holding the configured grouping and its schedule."""

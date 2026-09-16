@@ -12,12 +12,11 @@ from max_div._core.solver._duration import iterations
 from max_div._core.solver._parallel import (
     FixedGroupCount,
     WorkerGroupState,
-    best_result,
+    WorkerResult,
     run_workers,
 )
 from max_div._core.solver._parallel._executor import _drain, _notice_dead_workers, solve_in_worker
 from max_div._core.solver._parallel._progress_view import ParallelProgressView
-from max_div._core.solver._parallel._result import WorkerResult
 from max_div._core.solver._presets import SolverPreset
 from max_div._core.solver._progress_reporting import ProgressReporter, SnapshotRequirements, Verbosity
 from tests._core.solver.objectives import simple_objective
@@ -105,7 +104,7 @@ def test_the_best_reported_result_wins(parallel_results):
     """The winner is the best-scoring worker, not the first to report."""
     # --- arrange / act ----------------
     _, results = parallel_results
-    winner = best_result(results)
+    winner = WorkerResult.best(results)
 
     # --- assert -----------------------
     assert winner.score == max(result.score for result in results)
@@ -270,7 +269,7 @@ def test_a_failing_worker_is_reported_with_its_traceback():
 
 
 def test_all_workers_failing_raises_with_the_first_traceback():
-    """When every worker fails, best_result raises and the error carries the first failure's traceback."""
+    """When every worker fails, `WorkerResult.best` raises and the error carries the first failure's traceback."""
     # --- arrange ----------------------
     builder = _builder()
     factory, config = builder.prepare_storage_and_config()
@@ -286,5 +285,5 @@ def test_all_workers_failing_raises_with_the_first_traceback():
 
     # --- act & assert -----------------
     with pytest.raises(ValueError, match="every worker failed") as exc_info:
-        best_result(results, failures)
+        WorkerResult.best(results, failures)
     assert "boom" in str(exc_info.value)

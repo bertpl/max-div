@@ -11,7 +11,7 @@ from ._builders import MaxDivSolverBuilder, ParallelMaxDivSolverBuilder
 from ._constraint_penalty import ConstraintPenalty
 from ._distance_storage import DistanceStorageType
 from ._duration import TargetDuration, TargetIterationCount, TargetTimeDuration, hours, iterations, minutes, seconds
-from ._parallel import ParallelMaxDivSolution, ParallelMaxDivSolver, WorkerConfig, WorkerSummary
+from ._parallel import ParallelMaxDivSolution, ParallelMaxDivSolver, WorkerConfig, WorkerGroupChange, WorkerSummary
 from ._presets import SolverPreset
 from ._progress_reporting import Verbosity
 from ._score import Score

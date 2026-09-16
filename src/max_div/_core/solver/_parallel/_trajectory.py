@@ -54,7 +54,7 @@ def _merge_checkpoints(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
 
     Ties on time resolve by worker index, so the same results give the same order whatever the list order.
     """
-    t_first_start = min(result.t_start for result in results)
+    t_first_start = WorkerResult.earliest_start_time(results)
     merged_checkpoints = [
         replace(
             checkpoint,
