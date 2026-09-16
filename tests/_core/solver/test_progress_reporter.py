@@ -150,7 +150,7 @@ def test_snapshot_building():
     progress = _stub_progress(iter_count=7)
 
     # --- act --------------------------
-    reporter.solver_step_started(SolverStepIdentity(1, 2, "A"))
+    reporter.solver_step_started(SolverStepIdentity(1, "A", 2))
     reporter.update(progress, state, ignore_infeasible_diversity=True)
     reporter.solver_step_finished(None, state)
 
@@ -159,7 +159,7 @@ def test_snapshot_building():
 
     snapshot = reporter.calls[1][1]
     assert isinstance(snapshot, ProgressSnapshot)
-    assert snapshot.step_identity == SolverStepIdentity(1, 2, "A")
+    assert snapshot.step_identity == SolverStepIdentity(1, "A", 2)
     assert snapshot.progress is progress
     assert snapshot.score is state.score
     assert (snapshot.n_selected, snapshot.k, snapshot.m) == (3, 5, 2)
@@ -179,13 +179,13 @@ def test_snapshot_solver_clock_spans_steps():
     state = _stub_state()
 
     # --- act --------------------------
-    reporter.solver_step_started(SolverStepIdentity(1, 2, "A"))
-    reporter.solver_step_started(SolverStepIdentity(2, 2, "B"))
+    reporter.solver_step_started(SolverStepIdentity(1, "A", 2))
+    reporter.solver_step_started(SolverStepIdentity(2, "B", 2))
     reporter.update(_stub_progress(), state)
 
     # --- assert -----------------------
     snapshot = reporter.calls[-1][1]
-    assert snapshot.step_identity == SolverStepIdentity(2, 2, "B")
+    assert snapshot.step_identity == SolverStepIdentity(2, "B", 2)
     assert snapshot.t_elapsed_solver >= snapshot.t_elapsed_step  # solver clock was not reset by step B
 
 
@@ -196,7 +196,7 @@ def test_tabular_show_update_without_progress(capsys):
     state = _stub_state()
 
     # --- act --------------------------
-    reporter.solver_step_started(SolverStepIdentity(1, 2, "A"))
+    reporter.solver_step_started(SolverStepIdentity(1, "A", 2))
     reporter.update(None, state)  # ty: ignore[invalid-argument-type]  # deliberately exercising the None path
 
     # --- assert -----------------------
@@ -212,7 +212,7 @@ def test_tqdm_show_update_without_progress():
     # --- arrange ----------------------
     reporter = TqdmProgressReporter()
     state = _stub_state()
-    reporter.solver_step_started(SolverStepIdentity(1, 2, "A"))
+    reporter.solver_step_started(SolverStepIdentity(1, "A", 2))
     n_before = reporter._current_pbar.n
 
     # --- act --------------------------
@@ -310,7 +310,7 @@ def test_tabular_prefers_materialized_debug_info(capsys):
     # --- arrange ----------------------
     reporter = TabularProgressReporter(debug_info=True)
     state = _stub_state()
-    reporter.solver_step_started(SolverStepIdentity(1, 2, "A"))
+    reporter.solver_step_started(SolverStepIdentity(1, "A", 2))
 
     # --- act --------------------------
     snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
@@ -325,7 +325,7 @@ def test_milestone_is_a_no_op_by_default():
     # --- arrange ----------------------
     reporter = _RecordingProgressReporter()
     state = _stub_state()
-    reporter.solver_step_started(SolverStepIdentity(1, 2, "A"))
+    reporter.solver_step_started(SolverStepIdentity(1, "A", 2))
     snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
 
     # --- act --------------------------
@@ -340,7 +340,7 @@ def test_tabular_hash_column_blank_without_selection_or_hash(capsys):
     # --- arrange ----------------------
     reporter = TabularProgressReporter()
     state = _stub_state()
-    reporter.solver_step_started(SolverStepIdentity(1, 2, "A"))
+    reporter.solver_step_started(SolverStepIdentity(1, "A", 2))
     snapshot = reporter._build_snapshot(_stub_progress(), state, ignore_infeasible_diversity=False)
 
     # --- act --------------------------
@@ -354,8 +354,8 @@ def test_tabular_hash_column_blank_without_selection_or_hash(capsys):
 
 def test_step_display_name_numbers_the_step():
     """The display name reads "step i/N - name", with index 0 the solver state initialization."""
-    assert SolverStepIdentity(0, 2, "Init SolverState").display_name() == "step 0/2 - Init SolverState"
-    assert SolverStepIdentity(2, 2, "smart_swaps").display_name() == "step 2/2 - smart_swaps"
+    assert SolverStepIdentity(0, "Init SolverState", 2).display_name() == "step 0/2 - Init SolverState"
+    assert SolverStepIdentity(2, "smart_swaps", 2).display_name() == "step 2/2 - smart_swaps"
 
 
 @pytest.mark.parametrize(

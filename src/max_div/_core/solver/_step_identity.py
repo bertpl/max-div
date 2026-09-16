@@ -6,14 +6,11 @@ from dataclasses import dataclass
 # =================================================================================================
 @dataclass(frozen=True)
 class SolverStepIdentity:
-    """Which solver step this is: its index, the total step count the index runs within, and its name.
-
-    Index 0 is the solver state initialization; the actual solver steps count from 1 to `n_steps`.
-    """
+    """Which solver step this is: its index and its name, with the total step count as context for the index."""
 
     step_index: int
-    n_steps: int
     step_name: str
+    n_steps: int
 
     def display_name(self) -> str:
         """Return the numbered display name, "step i/N - name"."""
