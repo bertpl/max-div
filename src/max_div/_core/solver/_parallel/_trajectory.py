@@ -1,4 +1,4 @@
-"""The parent rebuilds, from every worker's own checkpoints, the best selection any worker held at each moment.
+"""The parent rebuilds, from every worker's own checkpoints, the best score any worker held at each moment.
 
 A worker's checkpoints trace that worker's own solve, so the winning worker's trace steps up whenever
 it adopts its group's best: progress made by another worker shows up as a jump at the adoption.

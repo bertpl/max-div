@@ -250,9 +250,10 @@ on top.
 `solve()` returns a `ParallelMaxDivSolution`: the winning worker's selection, with a `WorkerSummary`
 per worker attached. Its `score_checkpoints` trace the best score any worker held at each moment,
 each checkpoint naming the worker that held it and the group it was in, on one time axis that starts
-at the earliest worker start. A single worker's own trace would step up whenever the worker adopts
-its group's best, which reads as a discovery where it is a catch-up; the trace across workers shows
-the discovery where it happened. The number worth looking at is `n_workers_with_best_score`:
+at the earliest worker start. A single worker's own trace steps up whenever that worker adopts its
+group's best, which shows another worker's progress as a step in this worker's trace and hides which
+worker made it; the trace across workers instead attributes each step to the worker that made it.
+The number worth looking at is `n_workers_with_best_score`:
 
 - **Well below the worker count**: seeds mattered on this problem, and the parallel solve earned its
   cost.
