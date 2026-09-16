@@ -1,10 +1,10 @@
 """The parent assembles, from every worker's own changes, the history of the worker groups over a parallel solve.
 
 Each worker returns the worker group changes it executed, with `elapsed` counted from its own
-start. The parent places them on the axis the solution's checkpoints use, whose zero is the
+start. The parent places them on the axis that the solution's checkpoints use, whose zero is the
 earliest worker start (see `_trajectory`), and orders them as they happened.
 
-Every change lowers the alive group count by one, so that count orders the changes without a
+Every change lowers the alive group count by one, so the alive count orders the changes without a
 timestamp: two changes executed by different workers moments apart order correctly even when their
 workers' elapsed readings, taken before the transition lock, do not.
 """

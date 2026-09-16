@@ -33,7 +33,7 @@ class WorkerResult:
     `t_start` is the `time.monotonic()` reading the worker took just before its solve started; the
     parent uses it to place this worker's checkpoints and worker group changes next to the other
     workers' (see `_trajectory` and `_group_history`). `worker_group_changes` are the dissolutions
-    this worker executed, with `elapsed` counted from the worker's own start.
+    that this worker executed, with `elapsed` counted from the worker's own start.
     """
 
     worker_index: int

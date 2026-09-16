@@ -47,5 +47,5 @@ class WorkerCoordinator(ABC):
                 meaningful under time and iteration budgets alike, which lets
                 `WorkerGroupCoordinator` run its regrouping schedule inside the
                 workers (see `_worker_groups`).
-            elapsed: the worker's elapsed since its solve started, the axis its checkpoints use.
+            elapsed: the worker's elapsed since its solve started, the axis that its checkpoints use.
         """
