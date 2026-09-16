@@ -5,6 +5,8 @@ from max_div._core.solver import MaxDivSolution
 from max_div._core.solver._distance_storage import DistanceStorageType, DistanceStorageTypes
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score import Score
+from max_div._core.solver._score_checkpoint import ScoreCheckpoint
+from max_div._core.solver._step_identity import SolverStepIdentity
 
 
 def test_solution_str_with_constraints():
@@ -12,17 +14,10 @@ def test_solution_str_with_constraints():
     solution = MaxDivSolution(
         i_selected=np.array([1, 3, 5, 7, 9], dtype=np.int32),
         score_checkpoints=[
-            (
-                "Init SolverState",
+            ScoreCheckpoint(
+                SolverStepIdentity(0, "Init SolverState"),
                 Elapsed(t_elapsed_sec=1.23, n_iterations=456),
-                Score(
-                    1.0,
-                    1.0,
-                    (
-                        0.7705,
-                        1.0,
-                    ),
-                ),
+                Score(1.0, 1.0, (0.7705, 1.0)),
             ),
         ],
         step_durations=[Elapsed(t_elapsed_sec=1.23, n_iterations=456)],
@@ -45,7 +40,11 @@ def test_solution_str_without_constraints():
     solution = MaxDivSolution(
         i_selected=np.array([0, 2, 4], dtype=np.int32),
         score_checkpoints=[
-            ("Init SolverState", Elapsed(t_elapsed_sec=0.5, n_iterations=100), Score(1.0, 1.0, (0.5,))),
+            ScoreCheckpoint(
+                SolverStepIdentity(0, "Init SolverState"),
+                Elapsed(t_elapsed_sec=0.5, n_iterations=100),
+                Score(1.0, 1.0, (0.5,)),
+            ),
         ],
         step_durations=[Elapsed(t_elapsed_sec=0.5, n_iterations=100)],
     )
@@ -65,7 +64,13 @@ def test_solution_str_reports_storage():
     # --- arrange ----------------------
     solution = MaxDivSolution(
         i_selected=np.array([0, 1], dtype=np.int32),
-        score_checkpoints=[("Init SolverState", Elapsed(t_elapsed_sec=0.1, n_iterations=1), Score(1.0, 1.0, (0.5,)))],
+        score_checkpoints=[
+            ScoreCheckpoint(
+                SolverStepIdentity(0, "Init SolverState"),
+                Elapsed(t_elapsed_sec=0.1, n_iterations=1),
+                Score(1.0, 1.0, (0.5,)),
+            )
+        ],
         step_durations=[Elapsed(t_elapsed_sec=0.1, n_iterations=1)],
         distance_storage=DistanceStorageTypes(((DistanceMetric.l2_euclidean(), DistanceStorageType.FULL_MATRIX),)),
     )

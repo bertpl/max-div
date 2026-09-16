@@ -234,6 +234,8 @@ nav:
     - Solution:
       - MaxDivSolution: reference/solution/MaxDivSolution.md
       - Score: reference/solution/Score.md
+      - ScoreCheckpoint: reference/solution/ScoreCheckpoint.md
+      - SolverStepIdentity: reference/solution/SolverStepIdentity.md
       - Elapsed: reference/solution/Elapsed.md
     - Benchmark Problems:
       - BenchmarkProblem: reference/benchmark_problems/BenchmarkProblem.md

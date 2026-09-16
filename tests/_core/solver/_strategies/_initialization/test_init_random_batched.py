@@ -4,10 +4,14 @@ import numpy as np
 import pytest
 
 from max_div._core.solver._solver_step import InitializationStep
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._strategies._initialization._init_random_batched import InitRandomBatched
 
 from ._helpers import new_solver_state
+
+# each step records its checkpoints under this identity when run on its own in these tests
+_STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
 # =================================================================================================
@@ -31,7 +35,7 @@ def test_init_random_batched(problem_has_constraints: bool, arg_ignore_constrain
     init_step = InitializationStep(strategy)
 
     # --- act --------------------------
-    init_step.run(solver_state)
+    init_step.run(solver_state, _STEP_IDENTITY)
     score = solver_state.score
 
     # --- assert -----------------------

@@ -17,6 +17,16 @@ from max_div._core.solver._solver_state import SolverState
 class WorkerCoordinator(ABC):
     """A worker uses its coordinator to reach the other workers solving the same problem."""
 
+    @property
+    @abstractmethod
+    def worker_index(self) -> int:
+        """Return the index of the worker this coordinator belongs to."""
+
+    @property
+    @abstractmethod
+    def group_index(self) -> int:
+        """Return the group the worker belongs to at this moment; the group changes as workers are regrouped."""
+
     @abstractmethod
     def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
         """React to a worker finishing a batch, with the state the worker holds at that moment.

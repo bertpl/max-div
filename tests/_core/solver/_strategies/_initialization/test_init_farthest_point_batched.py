@@ -5,6 +5,7 @@ from max_div._core._random import new_rng_state
 from max_div._core.metrics import DistanceMetric, DiversityObjectiveSimple
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_step import InitializationStep
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._strategies._initialization._init_farthest_point_batched import (
     InitFarthestPointBatched,
@@ -13,6 +14,9 @@ from max_div._core.solver._strategies._initialization._init_farthest_point_batch
 from max_div.metrics import DiversityMetric
 
 from ._helpers import new_solver_state, new_solver_state_unconstrained
+
+# each step records its checkpoints under this identity when run on its own in these tests
+_STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
 @pytest.mark.parametrize("top_k", [1, 8])
@@ -23,7 +27,7 @@ def test_init_farthest_point_batched_completes_selection(top_k: int):
     step = InitializationStep(InitializationStrategy.farthest_point_batched(top_k=top_k))
 
     # --- act --------------------------
-    step.run(state)
+    step.run(state, _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert state.score.size == 1.0
@@ -41,7 +45,7 @@ def test_init_farthest_point_batched_is_deterministic_per_seed():
         step.set_seed(seed)
 
         # --- act ----------------------
-        step.run(state)
+        step.run(state, _STEP_IDENTITY)
         selections.append(np.sort(state.selected_index_array).copy())
 
     # --- assert -----------------------
@@ -62,7 +66,7 @@ def test_init_farthest_point_batched_quality_near_exact_sibling():
         step.set_seed(42)
 
         # --- act ----------------------
-        step.run(state)
+        step.run(state, _STEP_IDENTITY)
         results[label] = state.score.diversity
 
     # --- assert -----------------------
@@ -201,7 +205,7 @@ def test_top_k_one_reproduces_the_per_pick_construction_exactly(seed: int):
     # --- act --------------------------
     for step, state in zip(steps, states, strict=True):
         step.set_seed(seed)
-        step.run(state)
+        step.run(state, _STEP_IDENTITY)
 
     # --- assert -----------------------
     np.testing.assert_array_equal(states[0].selected_index_array, states[1].selected_index_array)

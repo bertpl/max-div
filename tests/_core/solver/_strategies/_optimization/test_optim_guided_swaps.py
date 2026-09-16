@@ -8,6 +8,7 @@ from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._parameters import ParameterSchedule, linear
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies._initialization import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
 from max_div._core.solver._strategies._optimization._optim_guided_swaps import OptimGuidedSwaps
@@ -16,6 +17,9 @@ from tests.helpers import swept_benchmark_problems
 
 if TYPE_CHECKING:
     from max_div._core.problem import MaxDivProblem
+
+# each step records its checkpoints under this identity when run on its own in these tests
+_STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
 @pytest.mark.parametrize(
@@ -75,7 +79,7 @@ def test_optim_guided_swaps(
 
     # initialize solver state
     init_step = InitializationStep(InitializationStrategy.fast())
-    init_step.run(solver_state)
+    init_step.run(solver_state, _STEP_IDENTITY)
 
     # prepare strategy
     optim_strategy = OptimizationStrategy.guided_swaps(

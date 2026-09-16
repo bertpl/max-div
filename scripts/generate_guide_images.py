@@ -380,8 +380,8 @@ def load_or_solve_experiment(
     run = ExperimentRun(
         np.asarray(solution.i_selected, dtype=np.intp),
         [
-            (round(elapsed.t_elapsed_sec, 3), elapsed.n_iterations, score.diversity)
-            for _, elapsed, score in solution.score_checkpoints
+            (round(checkpoint.elapsed.t_elapsed_sec, 3), checkpoint.elapsed.n_iterations, checkpoint.score.diversity)
+            for checkpoint in solution.score_checkpoints
         ],
     )
     record = {**asdict(settings), "i_selected": [int(i) for i in run.i_selected], "checkpoints": run.checkpoints}

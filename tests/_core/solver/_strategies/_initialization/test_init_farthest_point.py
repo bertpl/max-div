@@ -2,10 +2,14 @@ import numpy as np
 import pytest
 
 from max_div._core.solver._solver_step import InitializationStep
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 
 from ._helpers import new_solver_state
+
+# each step records its checkpoints under this identity when run on its own in these tests
+_STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
@@ -17,7 +21,7 @@ def test_init_farthest_point(problem_has_constraints: bool):
     init_step = InitializationStep(strategy)
 
     # --- act --------------------------
-    init_step.run(solver_state)
+    init_step.run(solver_state, _STEP_IDENTITY)
     score = solver_state.score
 
     # --- assert -----------------------
@@ -62,8 +66,8 @@ def test_init_farthest_point_beats_random_init():
     state_random = new_solver_state(has_constraints=False)
 
     # --- act --------------------------
-    InitializationStep(InitializationStrategy.farthest_point()).run(state_fps)
-    InitializationStep(InitializationStrategy.random_one_shot(uniform=True)).run(state_random)
+    InitializationStep(InitializationStrategy.farthest_point()).run(state_fps, _STEP_IDENTITY)
+    InitializationStep(InitializationStrategy.random_one_shot(uniform=True)).run(state_random, _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert state_fps.score.diversity > state_random.score.diversity
@@ -136,8 +140,8 @@ def test_init_farthest_point_top_k_1_full_init_matches_default():
     state_top1 = new_solver_state(has_constraints=False)
 
     # --- act --------------------------
-    InitializationStep(InitFarthestPoint()).run(state_default)
-    InitializationStep(InitFarthestPoint(top_k=1)).run(state_top1)
+    InitializationStep(InitFarthestPoint()).run(state_default, _STEP_IDENTITY)
+    InitializationStep(InitFarthestPoint(top_k=1)).run(state_top1, _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert list(state_default.selected_index_array) == list(state_top1.selected_index_array)

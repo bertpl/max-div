@@ -155,6 +155,10 @@ class WorkerGroupState:
         """
         return self._slots[self._assignment[worker_index]].exchange(score, selection)
 
+    def get_group_index_for_worker(self, worker_index: int) -> int:
+        """Return the group the worker is assigned to right now, with one lock-free shared-memory read."""
+        return int(self._assignment[worker_index])
+
     def _scheduled_count(self, progress_fraction: float) -> int:
         """Return the group count the schedule asks for at the given progress fraction."""
         return self._schedule.group_count(progress_fraction)
@@ -254,6 +258,16 @@ class WorkerGroupCoordinator(WorkerCoordinator):
         """Bind the coordinator to the solve's shared group state and the worker's index."""
         self._group_state = group_state
         self._worker_index = worker_index
+
+    @property
+    def worker_index(self) -> int:
+        """Return the index of the worker this coordinator belongs to."""
+        return self._worker_index
+
+    @property
+    def group_index(self) -> int:
+        """Return the group the worker is assigned to right now."""
+        return self._group_state.get_group_index_for_worker(self._worker_index)
 
     def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
         """Bring the group count down to the schedule's target, then exchange with the currently assigned slot."""

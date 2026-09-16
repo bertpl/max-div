@@ -56,6 +56,16 @@ def test_a_parallel_solve_returns_an_ordinary_solution():
     assert solution.duration.n_iterations > 0
 
 
+def test_the_checkpoints_name_the_winning_worker_and_its_group():
+    """A parallel solution's checkpoints are the winner's own, each tagged with that worker and its group."""
+    # --- arrange / act ----------------
+    solution = _solve_dynamic(2)
+
+    # --- assert -----------------------
+    assert {checkpoint.worker_index for checkpoint in solution.score_checkpoints} == {solution.winning_worker}
+    assert all(checkpoint.group_index is not None for checkpoint in solution.score_checkpoints)
+
+
 def test_every_worker_is_summarized():
     """Each worker reports what it ran, what it scored, and whether it reached the best score."""
     # --- arrange / act ----------------
