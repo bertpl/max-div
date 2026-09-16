@@ -32,23 +32,24 @@ def best_known_trajectory(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
         results: what each worker reported; every result's `t_start` places its checkpoints. Non-empty,
             and at least one checkpoint across all results.
     """
-    merged_checkpoints = _place_on_shared_time_axis(results)
+    merged_checkpoints = _merge_checkpoints(results)
     trajectory: list[ScoreCheckpoint] = []
     for checkpoint in merged_checkpoints:
         if (not trajectory) or (trajectory[-1].score < checkpoint.score):
             trajectory.append(checkpoint)
     # close the trace at the end of the solve: the latest checkpoint that still holds the best score
+    # (max returns the first of equal times, which is the lowest worker index in the merged order)
     best_score = trajectory[-1].score
     closing = max(
         (checkpoint for checkpoint in merged_checkpoints if checkpoint.score == best_score),
-        key=lambda checkpoint: (checkpoint.elapsed.t_elapsed_sec, -_worker_index(checkpoint)),
+        key=lambda checkpoint: checkpoint.elapsed.t_elapsed_sec,
     )
     if closing is not trajectory[-1]:
         trajectory.append(closing)
     return trajectory
 
 
-def _place_on_shared_time_axis(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
+def _merge_checkpoints(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
     """Return every worker's checkpoints with `elapsed` counted from the earliest worker start, in time order.
 
     Ties on time resolve by worker index, so the same results give the same order whatever the list order.
@@ -66,16 +67,5 @@ def _place_on_shared_time_axis(results: list[WorkerResult]) -> list[ScoreCheckpo
         for checkpoint in result.solution.score_checkpoints
     ]
     return sorted(
-        merged_checkpoints, key=lambda checkpoint: (checkpoint.elapsed.t_elapsed_sec, _worker_index(checkpoint))
+        merged_checkpoints, key=lambda checkpoint: (checkpoint.elapsed.t_elapsed_sec, checkpoint.worker_index)
     )
-
-
-def _worker_index(checkpoint: ScoreCheckpoint) -> int:
-    """Return the worker that recorded the checkpoint; a parallel worker's checkpoint always names one.
-
-    Raises:
-        ValueError: If the checkpoint carries no worker index, which only a single solve produces.
-    """
-    if checkpoint.worker_index is None:
-        raise ValueError("A parallel trajectory is built from parallel workers' checkpoints, which name their worker.")
-    return checkpoint.worker_index
