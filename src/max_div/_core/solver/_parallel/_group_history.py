@@ -13,7 +13,7 @@ from dataclasses import replace
 
 from max_div._core.solver._duration import Elapsed
 
-from ._result import WorkerResult, earliest_start_time
+from ._result import WorkerResult
 from ._worker_group_change import WorkerGroupChange
 
 
@@ -23,8 +23,8 @@ def worker_group_history(results: list[WorkerResult]) -> list[WorkerGroupChange]
     Args:
         results: what each worker reported; every result's `t_start` places its changes. Non-empty.
     """
-    t_first_start = earliest_start_time(results)
-    placed = [
+    t_first_start = WorkerResult.earliest_start_time(results)
+    merged_group_changes = [
         replace(
             change,
             elapsed=Elapsed(
@@ -35,4 +35,4 @@ def worker_group_history(results: list[WorkerResult]) -> list[WorkerGroupChange]
         for result in results
         for change in result.worker_group_changes
     ]
-    return sorted(placed, key=lambda change: -change.n_alive_groups_after)
+    return sorted(merged_group_changes, key=lambda change: -change.n_alive_groups_after)

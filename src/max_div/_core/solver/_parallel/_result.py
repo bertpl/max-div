@@ -1,4 +1,4 @@
-"""A worker sends back a result or a failure, and `best_result` picks the winner among the results.
+"""A worker sends back a result or a failure, and `WorkerResult.best` picks the winner among the results.
 
 A worker reports once, when it finishes, so the result carries its whole solution rather than a
 trimmed selection and score.  A worker whose solve raises reports a `WorkerFailure` instead, so
@@ -57,28 +57,31 @@ class WorkerResult:
         """Return the time and iterations this worker spent."""
         return self.solution.duration
 
+    # -------------------------------------------------------------------------
+    #  Over every worker's result
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def earliest_start_time(results: list["WorkerResult"]) -> float:
+        """Return the earliest worker start time: the zero of the axis that a parallel solution's checkpoints share."""
+        return min(result.t_start for result in results)
 
-def earliest_start_time(results: list[WorkerResult]) -> float:
-    """Return the earliest worker start time: the zero of the axis that a parallel solution's checkpoints share."""
-    return min(result.t_start for result in results)
+    @staticmethod
+    def best(results: list["WorkerResult"], failures: list[WorkerFailure] | None = None) -> "WorkerResult":
+        """Return the highest-scoring result, ties going to the lowest worker index.
 
+        The same seeds give the same winner every run, whichever worker reports first.
 
-def best_result(results: list[WorkerResult], failures: list[WorkerFailure] | None = None) -> WorkerResult:
-    """Return the highest-scoring result, ties going to the lowest worker index.
+        Args:
+            results: what each worker reported; workers that failed are simply absent.
+            failures: what failed workers reported, if any; when every worker failed, the first
+                failure's traceback is included in the raised error so the cause is visible.
 
-    The same seeds give the same winner every run, whichever worker reports first.
-
-    Args:
-        results: what each worker reported; workers that failed are simply absent.
-        failures: what failed workers reported, if any; when every worker failed, the first
-            failure's traceback is included in the raised error so the cause is visible.
-
-    Raises:
-        ValueError: If no results were collected, which means every worker failed.
-    """
-    if not results:
-        detail = ""
-        if failures:
-            detail = f"\n\nWorker {failures[0].worker_index}'s failure:\n{failures[0].traceback_text}"
-        raise ValueError(f"A parallel solve returned no results at all; every worker failed to report one.{detail}")
-    return max(results, key=lambda result: (result.score, -result.worker_index))
+        Raises:
+            ValueError: If no results were collected, which means every worker failed.
+        """
+        if not results:
+            detail = ""
+            if failures:
+                detail = f"\n\nWorker {failures[0].worker_index}'s failure:\n{failures[0].traceback_text}"
+            raise ValueError(f"A parallel solve returned no results at all; every worker failed to report one.{detail}")
+        return max(results, key=lambda result: (result.score, -result.worker_index))

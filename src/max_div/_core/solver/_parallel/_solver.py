@@ -14,7 +14,7 @@ from max_div._core.solver._solver_config import SolverConfig
 from ._executor import run_workers
 from ._group_history import worker_group_history
 from ._merge_schedule import GroupMergeSchedule
-from ._result import best_result
+from ._result import WorkerResult
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._trajectory import best_known_trajectory
 from ._worker_config import WorkerConfig
@@ -101,7 +101,7 @@ class ParallelMaxDivSolver:
                 ParallelSolvingWarning,
                 stacklevel=2,
             )
-        winner = best_result(results, failures)
+        winner = WorkerResult.best(results, failures)
         summaries = [
             WorkerSummary(
                 worker_index=result.worker_index,

@@ -52,7 +52,7 @@ def run_workers(
 ) -> tuple[list[WorkerResult], list[WorkerFailure]]:
     """Solve one configuration per worker over the published store, and return what each reported.
 
-    Deciding what a failure means — warn, raise — is the caller's policy; `best_result`
+    Deciding what a failure means — warn, raise — is the caller's policy; `WorkerResult.best`
     raises when no result came back at all.
 
     Args:
