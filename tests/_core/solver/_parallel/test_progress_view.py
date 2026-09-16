@@ -75,7 +75,7 @@ def _result(worker_index: int) -> WorkerResult:
         n_constraints_satisfied=0,
         distance_storage=DistanceStorageTypes(),
     )
-    return WorkerResult(worker_index=worker_index, seed=0, solution=solution)
+    return WorkerResult(worker_index=worker_index, seed=0, t_start=0.0, solution=solution)
 
 
 def test_progress_follows_the_slowest_live_worker():

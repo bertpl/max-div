@@ -15,6 +15,7 @@ from ._executor import run_workers
 from ._merge_schedule import GroupMergeSchedule
 from ._result import best_result
 from ._solution import ParallelMaxDivSolution, WorkerSummary
+from ._trajectory import best_known_trajectory
 from ._worker_config import WorkerConfig
 from ._worker_groups import DissolutionEvent, WorkerGroupState
 
@@ -115,6 +116,8 @@ class ParallelMaxDivSolver:
             for result in results
         ]
         inherited = {field.name: getattr(winner.solution, field.name) for field in fields(MaxDivSolution)}
+        # the selection is the winner's; the trace follows the best score across all workers
+        inherited["score_checkpoints"] = best_known_trajectory(results)
         return ParallelMaxDivSolution(**inherited, workers=summaries, winning_worker=winner.worker_index)
 
     def _build_group_state(self) -> WorkerGroupState:

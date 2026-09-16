@@ -339,7 +339,7 @@ def solve_experiment(
 
 @dataclass(frozen=True)
 class ExperimentRun:
-    """One experiment's cached outcome: the selected indices and the winning worker's convergence trace.
+    """One experiment's cached outcome: the selected indices and the best-known convergence trace across workers.
 
     `checkpoints` lists `(elapsed seconds, iterations, primary diversity)` in the order the solver
     recorded them; the last entry is the run's total.
@@ -350,7 +350,7 @@ class ExperimentRun:
 
     @property
     def n_iterations(self) -> int:
-        """Return the iterations the winning worker ran in total."""
+        """Return the iterations run by the worker holding the last checkpoint."""
         return self.checkpoints[-1][1]
 
     def diversity_at(self, t_sec: float) -> float:
@@ -482,7 +482,7 @@ def write_convergence(runs: dict[str, ExperimentRun], budget_sec: float) -> None
     """Write the table of iterations run and of the objective's progress, per experiment.
 
     The progress columns give the primary diversity at a few elapsed marks as a fraction of its final
-    value, for the winning worker; a column near 100% early on means the run had converged by then.
+    value, for the best selection any worker held; a column near 100% early on means the run had converged by then.
     """
     marks = " | ".join(f"at {mark:g} s" for mark in CONVERGENCE_MARKS_SEC)
     lines = [
