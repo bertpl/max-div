@@ -127,3 +127,18 @@ def test_legend_names_the_blue_neighbor_only_for_a_simple_objective(fragment, ob
     # --- assert -----------------------
     assert ("nearest neighbor, geometric-mean distance" in fragment) == (len(objective_keys) == 1)
     assert "nearest neighbor, L2 distance" in fragment
+
+
+def test_band_edges_draw_one_line_per_edge_along_each_axis(explorer):
+    """A constrained experiment shows its band edges; an unconstrained one draws no band line."""
+    # --- act --------------------------
+    banded = explorer.explorer_fragment(
+        X, Y, n=4, k=4, objective_keys=("l2",), population_image_url="p.webp", description="d", band_edges=(0.5,)
+    )
+    plain = explorer.explorer_fragment(
+        X, Y, n=4, k=4, objective_keys=("l2",), population_image_url="p.webp", description="d"
+    )
+
+    # --- assert -----------------------
+    assert len(re.findall(r'<line class="usx-band"', banded)) == 2
+    assert "usx-band" not in plain

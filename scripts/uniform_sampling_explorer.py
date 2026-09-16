@@ -236,6 +236,17 @@ def _data_group(
     return parts
 
 
+def _band_lines(band_edges: tuple[float, ...]) -> list[str]:
+    """Return a light line across the unit square at each band edge, along both axes, in pixel space."""
+    left, right, bottom, top = _px(0.0), _px(1.0), _py(0.0), _py(1.0)
+    parts = []
+    for edge in band_edges:
+        x, y = _px(edge), _py(edge)
+        parts.append(f'<line class="usx-band" x1="{x:.1f}" y1="{top:.1f}" x2="{x:.1f}" y2="{bottom:.1f}"/>')
+        parts.append(f'<line class="usx-band" x1="{left:.1f}" y1="{y:.1f}" x2="{right:.1f}" y2="{y:.1f}"/>')
+    return parts
+
+
 def explorer_fragment(
     x: NDArray[np.floating],
     y: NDArray[np.floating],
@@ -244,6 +255,7 @@ def explorer_fragment(
     objective_keys: tuple[str, ...],
     population_image_url: str,
     description: str,
+    band_edges: tuple[float, ...] = (),
 ) -> str:
     """Return the HTML fragment: a `<div>` holding the SVG and its caption, ending in a newline.
 
@@ -255,6 +267,8 @@ def explorer_fragment(
             simple objective, one per term for a hybrid. The interaction draws one level curve per key.
         population_image_url: URL of the population raster, relative to the page that includes the fragment.
         description: Alternative text of the figure.
+        band_edges: Interior edges of the bands that a constrained experiment cuts each axis into, drawn as light
+            lines across the square along both axes; empty for an unconstrained experiment.
     """
     keys = objective_keys + tuple(key for key in REFERENCE_KEYS if key not in objective_keys)
     neighbors = nearest_neighbors(x, y, keys)
@@ -272,6 +286,7 @@ def explorer_fragment(
         f'<rect x="0" y="0" width="{VIEW_WIDTH}" height="{VIEW_HEIGHT}" fill="#ffffff"/>',
         f'<image href="{population_image_url}" x="{square_x:.2f}" y="{square_y:.2f}"'
         f' width="{SCALE:.2f}" height="{SCALE:.2f}" preserveAspectRatio="none"/>',
+        *_band_lines(band_edges),
         *_axes(),
         *_legend(n, k, objective_keys),
         *_data_group(x, y, neighbors),
