@@ -1,0 +1,12 @@
+# zizmor configuration (https://docs.zizmor.sh/configuration/).
+
+rules:
+  # The self-repository audit asks for the `$/` form of in-repo references. actionlint rejects that form
+  # (rhysd/actionlint#711), so the workspace-relative `./` form stays until actionlint accepts `$/`.
+  self-repository:
+    ignore:
+      - _unit_tests.yml
+      - pull_request.yml
+      - push_to_branch.yml
+      - push_to_main.yml
+      - release_tag.yml
