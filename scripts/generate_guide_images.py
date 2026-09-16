@@ -24,7 +24,7 @@ from uniform_sampling_explorer import POPULATION_COLOR, explorer_fragment, neare
 from benchmarks.figures.style import REPO_ROOT, save_webp, use_docs_style
 from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
 from max_div.problem import MaxDivProblem
-from max_div.solver import ParallelMaxDivSolverBuilder, seconds
+from max_div.solver import ParallelMaxDivSolution, ParallelMaxDivSolverBuilder, seconds
 
 GENERATED_DIR = REPO_ROOT / "generated"
 IMAGES_DIR = REPO_ROOT / "docs" / "guides" / "images"
@@ -319,7 +319,7 @@ def build_uniform_sampling_population(n: int, seed: int) -> NDArray[np.float32]:
 
 def solve_experiment(
     vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings
-) -> NDArray[np.intp]:
+) -> ParallelMaxDivSolution:
     """Return the experiment's solution, solved within an end-to-end budget."""
     problem = MaxDivProblem.new(
         vectors=vectors,
@@ -362,7 +362,7 @@ class ExperimentRun:
 
 def load_or_solve_experiment(
     vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings, should_reuse_solution: bool
-) -> NDArray[np.intp]:
+) -> ExperimentRun:
     """Return the experiment's run, from its JSON cache when asked, else from a fresh solve.
 
     A fresh solve rewrites the cache. The cache holds the selected indices and the convergence trace

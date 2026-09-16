@@ -137,6 +137,6 @@ Every experiment's achieved harmonic-mean separation under the three reference d
 - **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
 - **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
 
-The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the winning worker completed in the 60 s budget, and the objective it had reached at three elapsed marks as a fraction of its final value:
+The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any of the 16 workers held at three elapsed marks as a fraction of the final value:
 
 --8<-- "generated/uniform_sampling_convergence.md"
