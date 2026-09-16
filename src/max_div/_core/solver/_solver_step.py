@@ -75,6 +75,7 @@ class SolverStep[S: StrategyBase](ABC):
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
+        elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
     ) -> SolverStepResult:
         """Execute the solver step by running a strategy once or repeatedly, and return its result.
 
@@ -87,6 +88,9 @@ class SolverStep[S: StrategyBase](ABC):
                 runs as a single batch ignores it.
             batch_seconds: targeted wall-clock size of one batch.  Like `coordinator`, it is
                 ignored by steps that run as a single batch.
+            elapsed_before_step: what the solve had spent before this step started, so the step
+                can tell the coordinator where it is on the solve-wide axis; its own checkpoints
+                count from the step's start, and the solver shifts them afterwards.
         """
         raise NotImplementedError
 
@@ -116,6 +120,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
+        elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
     ) -> SolverStepResult:
         # --- set up progress tracking -----------
         progress_reporter = progress_reporter or SilentProgressReporter()
@@ -200,6 +205,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
+        elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
     ) -> SolverStepResult:
         """Iteratively improve the selection until the step's effective duration is spent.
 
@@ -246,7 +252,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
             # --- batch boundary -----------------
             if coordinator is not None:
-                coordinator.at_batch_boundary(state, progress.fraction)
+                coordinator.at_batch_boundary(state, progress.fraction, elapsed_before_step + tracker.elapsed())
 
             # --- create checkpoint if needed ----
             if tracker.iter_count() >= next_checkpoint_iter_count:

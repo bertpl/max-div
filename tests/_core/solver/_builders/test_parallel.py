@@ -392,7 +392,7 @@ def test_custom_worker_groups_default_to_groups_of_about_four():
 
 @pytest.mark.parametrize("budget", [seconds(0.2), iterations(200)])
 def test_a_dynamic_solve_returns_a_valid_solution_and_records_its_dissolutions(budget):
-    """A dynamic solve produces an ordinary solution, with the schedule's dissolutions inspectable afterwards."""
+    """A dynamic solve produces an ordinary solution that carries the schedule's changes."""
     # --- arrange ----------------------
     solver = ParallelMaxDivSolverBuilder(_problem()).with_seed(5).with_workers(budget, 2).build()
 
@@ -401,8 +401,11 @@ def test_a_dynamic_solve_returns_a_valid_solution_and_records_its_dissolutions(b
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
-    assert len(solver.last_dynamic_events) == 1  # two groups consolidate into one
-    assert solver.last_dynamic_events[0].reassignments  # the freed worker was re-pointed
+    assert solution.initial_worker_groups == [0, 1]
+    (change,) = solution.worker_group_changes  # two groups consolidate into one
+    assert change.reassignments  # the freed worker was re-pointed
+    assert change.n_alive_groups_after == 1
+    assert 0.0 <= change.elapsed.t_elapsed_sec <= solution.duration.t_elapsed_sec
 
 
 def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
@@ -421,7 +424,7 @@ def test_a_budget_spent_during_setup_leaves_the_grouping_untouched():
 
     # --- assert -----------------------
     assert solution.i_selected.size == 8
-    assert solver.last_dynamic_events == []
+    assert solution.worker_group_changes == []
 
 
 # =================================================================================================

@@ -5,7 +5,7 @@ trimmed selection and score.  A worker whose solve raises reports a `WorkerFailu
 the parent can name which worker failed and why.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 from numpy.typing import NDArray
@@ -13,6 +13,8 @@ from numpy.typing import NDArray
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score import Score
 from max_div._core.solver._solution import MaxDivSolution
+
+from ._worker_group_change import WorkerGroupChange
 
 
 @dataclass(frozen=True)
@@ -26,16 +28,19 @@ class WorkerFailure:
 
 @dataclass(frozen=True)
 class WorkerResult:
-    """A result records which worker ran, with which seed, when it started, and the solution it reached.
+    """A result records which worker ran, with which seed, when it started, what it reached, and what it regrouped.
 
     `t_start` is the `time.monotonic()` reading the worker took just before its solve started; the
-    parent uses it to place this worker's checkpoints next to the other workers' (see `_trajectory`).
+    parent uses it to place this worker's checkpoints and worker group changes next to the other
+    workers' (see `_trajectory` and `_group_history`). `worker_group_changes` are the dissolutions
+    this worker executed, with `elapsed` counted from the worker's own start.
     """
 
     worker_index: int
     seed: int
     t_start: float
     solution: MaxDivSolution
+    worker_group_changes: list[WorkerGroupChange] = field(default_factory=list)
 
     @property
     def score(self) -> Score:
@@ -51,6 +56,11 @@ class WorkerResult:
     def elapsed(self) -> Elapsed:
         """Return the time and iterations this worker spent."""
         return self.solution.duration
+
+
+def earliest_start(results: list[WorkerResult]) -> float:
+    """Return the earliest worker start, the zero of the axis a parallel solution's checkpoints and changes share."""
+    return min(result.t_start for result in results)
 
 
 def best_result(results: list[WorkerResult], failures: list[WorkerFailure] | None = None) -> WorkerResult:

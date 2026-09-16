@@ -129,7 +129,15 @@ def solve_in_worker(
             solver = config.build_solver(stores_by_distance=mapping)
             t_start = time.monotonic()
             solution = solver.solve(coordinator=coordinator, progress_reporter=reporter)
-            messages.put(WorkerResult(worker_index=worker_index, seed=config.seed, t_start=t_start, solution=solution))
+            messages.put(
+                WorkerResult(
+                    worker_index=worker_index,
+                    seed=config.seed,
+                    t_start=t_start,
+                    solution=solution,
+                    worker_group_changes=coordinator.worker_group_changes,
+                )
+            )
     except Exception as exc:  # noqa: BLE001 -- report ANY failure to the parent
         # the exception is suppressed after reporting: re-raising would print the traceback to
         # this worker's own stderr, interleaving with the parent's live progress view

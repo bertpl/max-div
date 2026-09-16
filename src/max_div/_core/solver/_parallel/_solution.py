@@ -7,6 +7,7 @@ from max_div._core.solver._score import Score
 from max_div._core.solver._solution import MaxDivSolution
 
 from ._worker_config import WorkerConfig
+from ._worker_group_change import WorkerGroupChange
 
 
 @dataclass(frozen=True)
@@ -35,11 +36,18 @@ class ParallelMaxDivSolution(MaxDivSolution):
     while its iteration count is that of the worker holding the last checkpoint. `step_durations`
     stay the winning worker's.
 
+    `initial_worker_groups` gives each worker's group at the start, in worker order, and
+    `worker_group_changes` every dissolution since, in the order they happened and on the same time
+    axis as the checkpoints; replaying the changes over the initial groups gives the grouping at any
+    moment. A fixed grouping has no changes.
+
     Subclassing `MaxDivSolution` keeps code written for a single solve working.
     """
 
     workers: list[WorkerSummary] = field(default_factory=list)
     winning_worker: int = 0
+    initial_worker_groups: list[int] = field(default_factory=list)
+    worker_group_changes: list[WorkerGroupChange] = field(default_factory=list)
 
     @property
     def n_workers_with_best_score(self) -> int:

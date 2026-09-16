@@ -237,6 +237,9 @@ nav:
       - ScoreCheckpoint: reference/solution/ScoreCheckpoint.md
       - SolverStepIdentity: reference/solution/SolverStepIdentity.md
       - Elapsed: reference/solution/Elapsed.md
+      - ParallelMaxDivSolution: reference/solution/ParallelMaxDivSolution.md
+      - WorkerSummary: reference/solution/WorkerSummary.md
+      - WorkerGroupChange: reference/solution/WorkerGroupChange.md
     - Benchmark Problems:
       - BenchmarkProblem: reference/benchmark_problems/BenchmarkProblem.md
       - BenchmarkProblemFactory: reference/benchmark_problems/BenchmarkProblemFactory.md
