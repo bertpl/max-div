@@ -1,7 +1,7 @@
 """Pin `benchmark`'s control logic: adaptive `n_executions` sizing, baseline subtraction, quantile stats.
 
 `benchmark` is a feedback controller -- each run rescales `n_executions` from the previous run's
-`Timer` reading toward the per-run time target. Timing enters only through `time.perf_counter_ns`,
+`Timer` reading toward the per-run time target. Timing enters only through `time.monotonic_ns`,
 so most of these tests drive the `fake_clock` fixture, advanced only by the workload's own patched
 `sleep`; every assertion is then exact and immune to a loaded runner. One test at the bottom
 exercises the real clock, asserting only a floor, so faking cannot hide a benchmark that never times

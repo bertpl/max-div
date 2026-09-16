@@ -169,7 +169,7 @@ class ProgressTracker(ABC):
     """Class that tracks algorithm progress in iterations / time / ... and starts tracking upon construction."""
 
     def __init__(self) -> None:
-        self._t_start = time.perf_counter()
+        self._t_start = time.monotonic()
         self._iter_count = 0
 
     def report_iterations_done(self, n: int) -> None:
@@ -180,12 +180,12 @@ class ProgressTracker(ABC):
 
     def elapsed(self) -> Elapsed:
         return Elapsed(
-            t_elapsed_sec=time.perf_counter() - self._t_start,
+            t_elapsed_sec=time.monotonic() - self._t_start,
             n_iterations=self._iter_count,
         )
 
     def iters_per_second(self) -> float:
-        t_elapsed = time.perf_counter() - self._t_start
+        t_elapsed = time.monotonic() - self._t_start
         if (t_elapsed > 0.0) and (self._iter_count > 0):
             return self._iter_count / t_elapsed
         return 0.0
@@ -203,7 +203,7 @@ class _TimeTracker(ProgressTracker):
 
     def get_progress(self) -> Progress:
         est_iters_per_second = self.iters_per_second()
-        t_elapsed = time.perf_counter() - self._t_start
+        t_elapsed = time.monotonic() - self._t_start
         if t_elapsed >= self._max_seconds:
             fraction = 1.0
             est_n_iters_remaining = 0
