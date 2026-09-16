@@ -9,7 +9,9 @@ from max_div._core.solver._parallel._progress_view import ParallelProgressView
 from max_div._core.solver._parallel._result import WorkerResult
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot
 from max_div._core.solver._score import Score
+from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solution import MaxDivSolution
+from max_div._core.solver._step_identity import SolverStepIdentity
 
 
 class _RecordingReporter(ProgressReporter):
@@ -63,7 +65,11 @@ def _result(worker_index: int) -> WorkerResult:
     """Return a minimal result marking `worker_index` as finished."""
     solution = MaxDivSolution(
         i_selected=np.arange(5, dtype=np.int32),
-        score_checkpoints=[("step", Elapsed(t_elapsed_sec=1.0, n_iterations=10), _snapshot(0, 1.0, 0.0).score)],
+        score_checkpoints=[
+            ScoreCheckpoint(
+                SolverStepIdentity(1, "step"), Elapsed(t_elapsed_sec=1.0, n_iterations=10), _snapshot(0, 1.0, 0.0).score
+            )
+        ],
         step_durations=[Elapsed(t_elapsed_sec=1.0, n_iterations=10)],
         n_constraints=0,
         n_constraints_satisfied=0,

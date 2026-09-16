@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 from ._distance_storage import DistanceStorageTypes
 from ._duration import Elapsed
 from ._score import Score
+from ._score_checkpoint import ScoreCheckpoint
 
 
 @dataclass
@@ -20,14 +21,13 @@ class MaxDivSolution:
     i_selected: NDArray[np.int32]
 
     # --- score & checkpoints --------------------
-    # list of (step_name, elapsed, score) tuples
-    # where elapsed times/iterations are cumulative metrics starting at the start of the first solver step
-    score_checkpoints: list[tuple[str, Elapsed, Score]]
+    # The checkpoints are in solve order; the last one is the final state.
+    score_checkpoints: list[ScoreCheckpoint]
 
     @property
     def score(self) -> Score:
         """Return the final score of the solution."""
-        return self.score_checkpoints[-1][2]
+        return self.score_checkpoints[-1].score
 
     # --- durations ------------------------------
     # one per solver step, in step order; index 0 is the solver state initialization
@@ -36,7 +36,7 @@ class MaxDivSolution:
     @property
     def duration(self) -> Elapsed:
         """Return the total elapsed time and iterations taken to compute the solution."""
-        return self.score_checkpoints[-1][1]
+        return self.score_checkpoints[-1].elapsed
 
     # --- constraints ----------------------------
     n_constraints: int = 0

@@ -7,16 +7,20 @@ from numpy._typing import NDArray
 
 from max_div._core._utils import Timer
 from max_div._core._warnings import SolverBudgetWarning
-from max_div._core.solver._duration import E2eBudget, Elapsed, iterations, seconds
-from max_div._core.solver._score import Score
+from max_div._core.solver._duration import E2eBudget, iterations, seconds
+from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 from tests._core.conftest import FakeClock
 
 # =================================================================================================
 #  Helpers
 # =================================================================================================
+
+# the identity a step records its checkpoints under when run on its own in these tests
+_STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
 # --- Test Strategy Implementations -----------------------
@@ -82,12 +86,12 @@ class DummySolverState:
 
 
 # --- checks ----------------------------------------------
-def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[Elapsed, Score]]):
+def assert_score_checkpoints_are_sane(score_checkpoints: list[ScoreCheckpoint]):
     # --- non-empty ------------------------------
     assert len(score_checkpoints) >= 1, "score_checkpoints must contain at least one entry"
 
     # --- check iteration counts -----------------
-    iter_values = [e.n_iterations for e, _ in score_checkpoints]
+    iter_values = [checkpoint.elapsed.n_iterations for checkpoint in score_checkpoints]
     assert min(iter_values) >= 0, "score_checkpoints contains negative iteration counts"
     assert len(iter_values) == len(set(iter_values)), "score_checkpoints contains duplicate iteration counts"
     assert iter_values == sorted(iter_values), "score_checkpoints iteration counts should be strictly increasing"
@@ -106,7 +110,7 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[Elapsed, Sco
         assert i_delta_min <= i_delta <= i_delta_max, f"checkpoints should be ~10%-spaced; here: {i} -> {i_next}"
 
     # --- check elapsed times --------------------
-    t_values = [e.t_elapsed_sec for e, _ in score_checkpoints]
+    t_values = [checkpoint.elapsed.t_elapsed_sec for checkpoint in score_checkpoints]
     assert min(t_values) >= 0.0, "score_checkpoints contains negative elapsed times"
     # NOTE: duplicate time values can happen if iterations are very fast, so we don't assert uniqueness here
     assert t_values == sorted(t_values), "score_checkpoints elapsed times should be non-decreasing"
@@ -143,7 +147,7 @@ def test_initialization_step_run():
     state = DummySolverState(n=100, k=10)
 
     # --- act --------------------------
-    result = step.run(state)
+    result = step.run(state, _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert strategy._n_iterations == 1, "This initialization should take exactly 1 iteration"
@@ -183,7 +187,7 @@ def test_optimization_step_run_iterations():
     state = Mock()
 
     # --- act --------------------------
-    result = step.run(state)
+    result = step.run(state, _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert strategy._n_iterations == 123
@@ -204,7 +208,7 @@ def test_optimization_step_run_seconds(fake_clock):
 
     # --- act --------------------------
     with Timer() as t:
-        result = step.run(state)
+        result = step.run(state, _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert t.t_elapsed_sec() >= 0.1
@@ -223,7 +227,7 @@ def test_optimization_step_runs_under_the_budgets_remaining_time(fake_clock):
     fake_clock.advance(9.9)  # setup ate all but 0.1s of the budget
 
     # --- act --------------------------
-    result = step.run(Mock())
+    result = step.run(Mock(), _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert 0.1 <= result.elapsed.t_elapsed_sec < 1.0  # the remaining 0.1s, nowhere near the 100s duration
@@ -239,7 +243,7 @@ def test_optimization_step_skips_when_the_budget_is_spent(fake_clock):
 
     # --- act --------------------------
     with pytest.warns(SolverBudgetWarning, match="spent before optimization started"):
-        result = step.run(Mock())
+        result = step.run(Mock(), _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert strategy._n_iterations == 0
@@ -272,7 +276,7 @@ def test_run_batches_at_the_interval_it_is_given(monkeypatch, call_kwargs, expec
     step = OptimizationStep(OptimTest(), duration=iterations(50))
 
     # --- act --------------------------
-    step.run(Mock(), **call_kwargs)
+    step.run(Mock(), _STEP_IDENTITY, **call_kwargs)
 
     # --- assert -----------------------
     assert captured
@@ -286,8 +290,8 @@ def test_checkpoint_count_is_batch_invariant():
     step_fast = OptimizationStep(OptimTest(), duration=iterations(500))
 
     # --- act --------------------------
-    result_default = step_default.run(Mock())
-    result_fast = step_fast.run(Mock(), batch_seconds=0.001)
+    result_default = step_default.run(Mock(), _STEP_IDENTITY)
+    result_fast = step_fast.run(Mock(), _STEP_IDENTITY, batch_seconds=0.001)
 
     # --- assert -----------------------
     assert len(result_fast.score_checkpoints) == len(result_default.score_checkpoints)

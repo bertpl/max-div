@@ -1,9 +1,13 @@
 import pytest
 
 from max_div._core.solver._solver_step import InitializationStep
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
 
 from ._helpers import new_solver_state
+
+# the identity a step records its checkpoints under when run on its own in these tests
+_STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
@@ -14,7 +18,7 @@ def test_init_fast(problem_has_constraints: bool):
     init_step = InitializationStep(strategy)
 
     # --- act --------------------------
-    init_step.run(solver_state)
+    init_step.run(solver_state, _STEP_IDENTITY)
     score = solver_state.score
 
     # --- assert -----------------------

@@ -4,7 +4,9 @@ import pytest
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._parallel import WorkerResult, best_result
 from max_div._core.solver._score import Score
+from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solution import MaxDivSolution
+from max_div._core.solver._step_identity import SolverStepIdentity
 
 
 def _result(worker_index: int, diversity: float) -> WorkerResult:
@@ -12,7 +14,9 @@ def _result(worker_index: int, diversity: float) -> WorkerResult:
     score = Score(size=1.0, constraints=1.0, diversities=(diversity,))
     solution = MaxDivSolution(
         i_selected=np.array([worker_index], dtype=np.int32),
-        score_checkpoints=[("step", Elapsed(t_elapsed_sec=1.0, n_iterations=10), score)],
+        score_checkpoints=[
+            ScoreCheckpoint(SolverStepIdentity(1, "step"), Elapsed(t_elapsed_sec=1.0, n_iterations=10), score)
+        ],
         step_durations=[],
     )
     return WorkerResult(worker_index=worker_index, seed=worker_index, solution=solution)

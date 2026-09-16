@@ -7,6 +7,7 @@ from max_div._core.metrics import DiversityMetric
 from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies._initialization import InitializationStrategy
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
 from tests._core.solver.objectives import simple_objective
@@ -14,6 +15,9 @@ from tests.helpers import swept_benchmark_problems
 
 if TYPE_CHECKING:
     from max_div._core.problem import MaxDivProblem
+
+# the identity a step records its checkpoints under when run on its own in these tests
+_STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
 @pytest.mark.parametrize("n", [100, 200, 1000])
@@ -42,7 +46,7 @@ def test_optim_random_swaps(problem_name: str, n: int):
 
     # initialize solver state
     init_step = InitializationStep(InitializationStrategy.fast())
-    init_step.run(solver_state)
+    init_step.run(solver_state, _STEP_IDENTITY)
 
     # prepare strategy
     optim_strategy = OptimizationStrategy.random_swaps()

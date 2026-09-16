@@ -15,6 +15,8 @@ from ._parallel import ParallelMaxDivSolution, ParallelMaxDivSolver, WorkerConfi
 from ._presets import SolverPreset
 from ._progress_reporting import Verbosity
 from ._score import Score
+from ._score_checkpoint import ScoreCheckpoint
 from ._solution import MaxDivSolution
 from ._solver import MaxDivSolver
+from ._step_identity import SolverStepIdentity
 from ._strategies import InitializationStrategy, OptimizationStrategy
