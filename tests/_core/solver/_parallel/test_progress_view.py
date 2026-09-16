@@ -38,9 +38,7 @@ class _RecordingReporter(ProgressReporter):
 def _snapshot(worker_index: int, fraction: float, diversity: float, iter_count: int = 10) -> ProgressSnapshot:
     """Return a materialized snapshot, as a worker would forward it."""
     return ProgressSnapshot(
-        step_index=0,
-        n_steps=0,
-        step_name="",
+        step_identity=None,
         progress=Progress(
             tqdm_n_total=100,
             fraction=fraction,

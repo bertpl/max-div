@@ -16,6 +16,7 @@ from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
+from ._step_identity import SolverStepIdentity
 
 # The solver state initialization is reported and recorded as step 0 under this name.
 INIT_STEP_NAME = "Init SolverState"
@@ -126,7 +127,7 @@ class MaxDivSolver:
 
         # --- solver state -----------------------
         with Timer() as timer:
-            progress_reporter.solver_step_started(0, n_steps, INIT_STEP_NAME)
+            progress_reporter.solver_step_started(SolverStepIdentity(0, n_steps, INIT_STEP_NAME))
             stores_by_distance = self._stores_by_distance_provider()
             state = SolverState.new(
                 n=self._n,
@@ -160,7 +161,7 @@ class MaxDivSolver:
 
         # --- Main loop --------------------------
         for step_index, (step_seed, step) in enumerate(zip(step_seeds, self._solver_steps), start=1):
-            progress_reporter.solver_step_started(step_index, n_steps, step.name())
+            progress_reporter.solver_step_started(SolverStepIdentity(step_index, n_steps, step.name()))
             step.set_seed(step_seed)
             try:
                 step_results.append((step.name(), step.run(state, progress_reporter, coordinator, self._batch_seconds)))
