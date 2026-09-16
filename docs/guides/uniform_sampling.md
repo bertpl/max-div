@@ -158,7 +158,7 @@ The light gray lines are the band edges.
 
 --8<-- "generated/uniform_sampling_hybrid_banded_separations.md"
 
-Every band holds its 20 items, where the unconstrained selection of V.A holds between 17 and 22 per band. The three separations are the same as in V.A to within 1 % of their references: on this population the exact counts cost no diversity.
+Every band holds its 20 items; the unconstrained selection of V.A holds between 17 and 22 per band. The three separations are the same as in V.A to within 1 % of their references: on this population the exact counts cost no diversity.
 
 The exact counts make each iteration slower, since each candidate swap is also checked against the ten counts; the convergence table below shows the resulting lower iteration count.
 
