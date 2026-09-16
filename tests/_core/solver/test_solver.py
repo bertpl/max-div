@@ -486,3 +486,18 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
     assert len(solution.i_selected) == problem.k
     expected = expected_score(vectors, solution.i_selected, axis=0)
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
+
+
+def test_the_solver_numbers_its_steps_and_reports_them_under_those_names(example_solver):
+    """A step's name carries its number from construction on, and the solution uses the same names."""
+    # --- arrange / act ----------------
+    solution = example_solver.solve()
+    step_names = [step.name() for step in example_solver._solver_steps]
+
+    # --- assert -----------------------
+    n_steps = len(step_names)
+    assert step_names == [
+        f"step {i}/{n_steps} - {step._strategy.name}" for i, step in enumerate(example_solver._solver_steps, start=1)
+    ]
+    assert list(solution.step_durations) == [f"step 0/{n_steps} - Init SolverState", *step_names]
+    assert [checkpoint[0] for checkpoint in solution.score_checkpoints][-1] == step_names[-1]

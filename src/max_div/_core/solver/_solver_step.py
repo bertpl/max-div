@@ -46,9 +46,19 @@ class SolverStepResult:
 class SolverStep[S: StrategyBase](ABC):
     def __init__(self, strategy: S) -> None:
         self._strategy: S = strategy
+        self._name_prefix: str = ""
 
     def name(self) -> str:
-        return self._strategy.name
+        """Return the step's name: the prefix its solver assigned, followed by the strategy's name."""
+        return f"{self._name_prefix}{self._strategy.name}"
+
+    def set_name_prefix(self, prefix: str) -> None:
+        """Set the text that `name` puts before the strategy's name, so a solver can number its steps.
+
+        The solver that owns the step sets this once at its construction. A step belongs to one solver;
+        handing the same step object to a second solver is not supported.
+        """
+        self._name_prefix = prefix
 
     def set_seed(self, seed: int) -> None:
         self._strategy.set_seed(seed)

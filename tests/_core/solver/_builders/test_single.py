@@ -236,9 +236,9 @@ def test_max_div_solver_builder_end_to_end():
     assert store.matrix.shape == (vectors.shape[0], vectors.shape[0])  # AUTO -> full matrix at this size
     assert solver._k == k
     assert len(solver._solver_steps) == 3
-    assert solver._solver_steps[0].name() == init_strategy.name
-    assert solver._solver_steps[1].name() == solver_steps[0].name()
-    assert solver._solver_steps[2].name() == solver_steps[1].name()
+    assert solver._solver_steps[0].name() == f"step 1/3 - {init_strategy.name}"
+    assert solver._solver_steps[1].name() == f"step 2/3 - {solver_steps[0]._strategy.name}"
+    assert solver._solver_steps[2].name() == f"step 3/3 - {solver_steps[1]._strategy.name}"
     assert solver._diversity_objectives[0].diversity_metric == DiversityMetric.MIN_SEPARATION
     assert solver._constraints == constraints
     assert solver._seed == 123
