@@ -13,8 +13,7 @@ from tqdm.auto import tqdm
 from max_div._core._utils import format_long_time_duration, np_int32_array_var_length_hash
 from max_div._core._utils._progress_table import ProgressTable
 
-# Width of a rendered step name, in characters, shared by every reporter that shows one so their
-# rows and bars line up.
+# Reporters that show a step name pad it to this width, in characters, so their rows and bars line up.
 STEP_NAME_DISPLAY_WIDTH = 35
 
 if TYPE_CHECKING:
@@ -74,7 +73,9 @@ class ProgressSnapshot:
     construction cheap on the many updates that are throttled away without being shown.
     """
 
-    step_identity: SolverStepIdentity | None  # the solver step this snapshot was taken in; None for a composite view
+    # the solver step this snapshot was taken in; None for a combined snapshot the parallel progress view
+    # renders across several workers
+    step_identity: SolverStepIdentity | None
     progress: Progress | None  # step progress; None when the step reports none (solver-state init)
     t_elapsed_solver: float  # seconds since the first step started
     t_elapsed_step: float  # seconds since the current step started

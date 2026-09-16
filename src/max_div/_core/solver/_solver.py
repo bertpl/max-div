@@ -145,7 +145,6 @@ class MaxDivSolver:
                 state.add_many(np.arange(self._n, dtype=np.int32))
             progress_reporter.solver_step_finished(None, state)
 
-        # the solver state initialization is step 0
         step_results.append(
             (
                 INIT_STEP_NAME,

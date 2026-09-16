@@ -6,7 +6,7 @@ from dataclasses import dataclass
 # =================================================================================================
 @dataclass(frozen=True)
 class SolverStepIdentity:
-    """Which solver step this is: its index, the step count that makes the index readable, and its name.
+    """Which solver step this is: its index, the total step count the index runs within, and its name.
 
     Index 0 is the solver state initialization; the actual solver steps count from 1 to `n_steps`.
     """
