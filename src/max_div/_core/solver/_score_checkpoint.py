@@ -15,7 +15,10 @@ if TYPE_CHECKING:
 # =================================================================================================
 @dataclass(frozen=True)
 class ScoreCheckpoint:
-    """A checkpoint records the score a solve held at one moment, its step, and the parallel worker that held it.
+    """A checkpoint is a point-in-time summary of the score a solver / worker obtained so far.
+
+    It captures score, the active solver step, elapsed time/iterations and worker/group index in case of
+    a multi-worker setup.
 
     - `elapsed` is measured from the start of whatever produced the checkpoint: a single step counts
       from its own start, a whole solve from its first step.
