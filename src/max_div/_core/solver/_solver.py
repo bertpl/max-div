@@ -121,7 +121,7 @@ class MaxDivSolver:
 
         # --- solver steps -----------------------
         n_steps = len(self._solver_steps)
-        progress_reporter.set_step_count(n_steps)
+        progress_reporter.set_step_count(n_steps + 1)  # the solver state initialization is reported too, as step 0
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
         # one result per step in step order; the solver state initialization is step 0
         step_results: list[tuple[str, SolverStepResult]] = []

@@ -197,7 +197,7 @@ def test_tabular_show_update_without_progress(capsys):
     state = _stub_state()
 
     # --- act --------------------------
-    reporter.set_step_count(2)
+    reporter.set_step_count(3)
     reporter.solver_step_started(SolverStepIdentity(1, "A"))
     reporter.update(None, state)  # ty: ignore[invalid-argument-type]  # deliberately exercising the None path
 
@@ -355,17 +355,18 @@ def test_tabular_hash_column_blank_without_selection_or_hash(capsys):
 
 
 def test_step_display_name_numbers_the_step():
-    """The display name reads "step i/N - name", or "step i - name" when the reporter was given no step count."""
-    assert step_display_name(SolverStepIdentity(0, "Init SolverState"), 2) == "step 0/2 - Init SolverState"
+    """The display name reads "step i/N - name" with N the last index, or "step i - name" without a step count."""
+    assert step_display_name(SolverStepIdentity(0, "Init SolverState"), 3) == "step 0/2 - Init SolverState"
+    assert step_display_name(SolverStepIdentity(2, "smart_swaps"), 3) == "step 2/2 - smart_swaps"
     assert step_display_name(SolverStepIdentity(2, "smart_swaps"), None) == "step 2 - smart_swaps"
     assert step_display_name(None, 2) == ""
 
 
 def test_the_step_count_is_set_once_and_renders_in_every_step_name():
-    """After set_step_count, each started step is shown as "step i/N"."""
+    """After set_step_count, each started step is shown as "step i/N", N being the last reported index."""
     # --- arrange ----------------------
     reporter = _RecordingProgressReporter()
-    reporter.set_step_count(3)
+    reporter.set_step_count(4)
 
     # --- act --------------------------
     reporter.solver_step_started(SolverStepIdentity(1, "A"))
