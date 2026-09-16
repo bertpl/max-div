@@ -19,7 +19,7 @@ def _result(worker_index: int, diversity: float) -> WorkerResult:
         ],
         step_durations=[],
     )
-    return WorkerResult(worker_index=worker_index, seed=worker_index, solution=solution)
+    return WorkerResult(worker_index=worker_index, seed=worker_index, t_start=0.0, solution=solution)
 
 
 def test_best_result_picks_the_highest_score():

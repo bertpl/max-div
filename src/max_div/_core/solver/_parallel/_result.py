@@ -26,10 +26,15 @@ class WorkerFailure:
 
 @dataclass(frozen=True)
 class WorkerResult:
-    """A result records which worker ran, with which seed, and the solution it reached."""
+    """A result records which worker ran, with which seed, when it started, and the solution it reached.
+
+    `t_start` is the `time.monotonic()` reading the worker took just before its solve started; the
+    parent uses it to place this worker's checkpoints next to the other workers' (see `_trajectory`).
+    """
 
     worker_index: int
     seed: int
+    t_start: float
     solution: MaxDivSolution
 
     @property

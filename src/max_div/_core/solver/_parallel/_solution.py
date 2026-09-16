@@ -27,7 +27,13 @@ class WorkerSummary:
 
 @dataclass
 class ParallelMaxDivSolution(MaxDivSolution):
-    """A parallel solution is the winning worker's, with a summary of every worker attached.
+    """A parallel solution is the winning worker's selection, with a summary of every worker attached.
+
+    Its `score_checkpoints` do not trace the winning worker's own solve: they trace the best score any
+    worker held at each moment, each checkpoint naming that worker and its group, on one time axis
+    whose zero is the earliest worker start. `duration` therefore spans the whole parallel solve,
+    while its iteration count is that of the worker holding the last checkpoint. `step_durations`
+    stay the winning worker's.
 
     Subclassing `MaxDivSolution` keeps code written for a single solve working.
     """
