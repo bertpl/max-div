@@ -267,7 +267,7 @@ def explorer_fragment(
             simple objective, one per term for a hybrid. The interaction draws one level curve per key.
         population_image_url: URL of the population raster, relative to the page that includes the fragment.
         description: Alternative text of the figure.
-        band_edges: Interior edges of the bands a constrained experiment cuts each axis into, drawn as light
+        band_edges: Interior edges of the bands that a constrained experiment cuts each axis into, drawn as light
             lines across the square along both axes; empty for an unconstrained experiment.
     """
     keys = objective_keys + tuple(key for key in REFERENCE_KEYS if key not in objective_keys)

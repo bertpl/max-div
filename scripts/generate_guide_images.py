@@ -7,7 +7,7 @@ The figures of `uniform_sampling.md` are seven solved selections of one random p
 experiment; only those run the solver. Each selection is emitted as an interactive figure (an HTML
 fragment over a raster of the population) plus its separations table, and cached as JSON so that
 `--reuse-solution` re-renders the figures without the solves, solving only an experiment that has no
-cache yet; a closing table compares them.
+cache yet; a closing table compares all seven.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reuse-solution]``.
 """
@@ -287,17 +287,23 @@ class Experiment:
             return tuple(i / self.n_bands for i in range(1, self.n_bands))
 
     def constraints(self, vectors: NDArray[np.float32], k: int) -> list[Constraint]:
-        """Return one exact-count constraint per band along each axis, built from the population's coordinates."""
+        """Return one exact-count constraint per band along each axis, built from the population's coordinates.
+
+        Raises:
+            ValueError: If `k` is not divisible by `n_bands`, so the bands cannot hold equal counts.
+        """
         if self.n_bands is None:
             return []
         elif k % self.n_bands != 0:
             raise ValueError(f"k = {k} does not split evenly over {self.n_bands} bands")
         else:
-            count = k // self.n_bands
-            bands = np.minimum((vectors * self.n_bands).astype(np.intp), self.n_bands - 1)
+            per_band_count = k // self.n_bands
+            band_indices = np.minimum((vectors * self.n_bands).astype(np.intp), self.n_bands - 1)
             return [
                 Constraint(
-                    int_set=set(np.flatnonzero(bands[:, axis] == band).tolist()), min_count=count, max_count=count
+                    int_set=set(np.flatnonzero(band_indices[:, axis] == band).tolist()),
+                    min_count=per_band_count,
+                    max_count=per_band_count,
                 )
                 for axis in (0, 1)
                 for band in range(self.n_bands)

@@ -139,10 +139,10 @@ import numpy as np
 from max_div.problem import Constraint, MaxDivProblem
 
 n_bands, k = 5, 100
-bands = np.minimum((vectors * n_bands).astype(int), n_bands - 1)  # band index per item, per axis
+band_indices = np.minimum((vectors * n_bands).astype(int), n_bands - 1)  # per item, per axis
 constraints = [
     Constraint(
-        int_set=set(np.flatnonzero(bands[:, axis] == band)),
+        int_set=set(np.flatnonzero(band_indices[:, axis] == band)),
         min_count=k // n_bands,
         max_count=k // n_bands,
     )
@@ -158,7 +158,9 @@ The light gray lines are the band edges.
 
 --8<-- "generated/uniform_sampling_hybrid_banded_separations.md"
 
-Every band holds its 20 items, where the unconstrained selection of V.A holds between 17 and 22 per band. The three separations are the same as in V.A to within 1 % of their references: on this population the exact counts cost no diversity. They cost iterations, visible in the convergence table below, since each candidate swap is also checked against the ten counts.
+Every band holds its 20 items, where the unconstrained selection of V.A holds between 17 and 22 per band. The three separations are the same as in V.A to within 1 % of their references: on this population the exact counts cost no diversity.
+
+The exact counts make each iteration slower, since each candidate swap is also checked against the ten counts; the convergence table below shows the resulting lower iteration count.
 
 ## VI. Summary
 
@@ -171,6 +173,6 @@ Every experiment's achieved harmonic-mean separation under the three reference d
 - **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
 - **Exact counts per band come at no cost in diversity**: under them the hybrid objective reaches the same three separations.
 
-The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any of the 16 workers held at three elapsed marks as a fraction of the final value:
+The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 
 --8<-- "generated/uniform_sampling_convergence.md"
