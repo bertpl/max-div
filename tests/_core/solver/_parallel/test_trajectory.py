@@ -5,13 +5,14 @@ from max_div._core.solver._parallel import WorkerResult, best_known_trajectory
 from max_div._core.solver._score import Score
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solution import MaxDivSolution
+from max_div._core.solver._step_identity import SolverStepIdentity
 
 
 def _result(worker_index: int, t_start: float, trace: list[tuple[float, float]], group_index: int = 0) -> WorkerResult:
     """Return a worker result whose checkpoints hold the given `(elapsed seconds, diversity)` pairs."""
     checkpoints = [
         ScoreCheckpoint(
-            "step",
+            SolverStepIdentity(1, "step"),
             Elapsed(t_elapsed_sec=t, n_iterations=int(10 * t)),
             Score(size=1.0, constraints=1.0, diversities=(diversity,)),
             worker_index=worker_index,
