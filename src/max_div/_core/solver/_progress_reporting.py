@@ -15,7 +15,7 @@ from max_div._core._utils._progress_table import ProgressTable
 
 # Width of a rendered step name, in characters, shared by every reporter that shows one so their
 # rows and bars line up.
-STEP_NAME_WIDTH = 35
+STEP_NAME_DISPLAY_WIDTH = 35
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -72,6 +72,8 @@ class ProgressSnapshot:
     construction cheap on the many updates that are throttled away without being shown.
     """
 
+    step_index: int  # index of the solver step this snapshot was taken in; 0 is the solver state initialization
+    n_steps: int  # number of solver steps after the initialization, so the index reads as "step i/N"
     step_name: str  # name of the solver step this snapshot was taken in
     progress: Progress | None  # step progress; None when the step reports none (solver-state init)
     t_elapsed_solver: float  # seconds since the first step started
@@ -161,6 +163,8 @@ class ProgressReporter(ABC):
     def __init__(self) -> None:
         self._t_start_solver = -1.0
         self._t_start_step = 0.0
+        self._step_index = 0
+        self._n_steps = 0
         self._step_name = ""
 
     @property
@@ -176,13 +180,19 @@ class ProgressReporter(ABC):
     # -------------------------------------------------------------------------
     #  Main API (called by the solver and its steps)
     # -------------------------------------------------------------------------
-    def solver_step_started(self, step_name: str) -> None:
-        """Record that a new solver step with the provided name has started, and notify the renderer."""
+    def solver_step_started(self, step_index: int, n_steps: int, step_name: str) -> None:
+        """Record that solver step `step_index` of `n_steps` has started, and notify the renderer.
+
+        Index 0 is the solver state initialization; the numbered display name ("step i/N - name") is
+        composed here, so the solver never handles presentation strings.
+        """
+        self._step_index = step_index
+        self._n_steps = n_steps
         self._step_name = step_name
         self._t_start_step = time.monotonic()
         if self._t_start_solver < 0:
             self._t_start_solver = self._t_start_step
-        self.show_step_started(step_name)
+        self.show_step_started(step_display_name(step_index, n_steps, step_name))
 
     def update(
         self,
@@ -210,8 +220,8 @@ class ProgressReporter(ABC):
     #  Rendering interface (implemented by subclasses, consuming snapshots only)
     # -------------------------------------------------------------------------
     @abstractmethod
-    def show_step_started(self, step_name: str) -> None:
-        """Render the start of a new solver step."""
+    def show_step_started(self, step_display_name: str) -> None:
+        """Render the start of a new solver step, given its display name ("step i/N - name")."""
 
     @abstractmethod
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
@@ -240,6 +250,8 @@ class ProgressReporter(ABC):
         """Build a snapshot of the current progress and state, stamping the elapsed times."""
         t_now = time.monotonic()
         return ProgressSnapshot(
+            step_index=self._step_index,
+            n_steps=self._n_steps,
             step_name=self._step_name,
             progress=progress,
             t_elapsed_solver=t_now - self._t_start_solver,
@@ -316,7 +328,7 @@ class SilentProgressReporter(ProgressReporter):
         """Return None: nothing is rendered, so no snapshots need to reach this reporter."""
         return None
 
-    def show_step_started(self, step_name: str) -> None: ...  # no-op
+    def show_step_started(self, step_display_name: str) -> None: ...  # no-op
     def show_update(
         self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None
     ) -> None: ...  # no-op
@@ -339,11 +351,11 @@ class TqdmProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Rendering interface
     # -------------------------------------------------------------------------
-    def show_step_started(self, step_name: str) -> None:
-        if (step_name != self._current_step_name) or (not self._current_pbar):
+    def show_step_started(self, step_display_name: str) -> None:
+        if (step_display_name != self._current_step_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
-            self._current_pbar = tqdm(desc=f"{format_step_name(step_name)} ", total=1, file=sys.stdout)
-            self._current_step_name = step_name
+            self._current_pbar = tqdm(desc=f"{fit_step_display_name(step_display_name)} ", total=1, file=sys.stdout)
+            self._current_step_name = step_display_name
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         if (self._current_pbar is not None) and (snapshot.progress is not None):
@@ -409,7 +421,7 @@ class TabularProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Rendering interface
     # -------------------------------------------------------------------------
-    def show_step_started(self, step_name: str) -> None:
+    def show_step_started(self, step_display_name: str) -> None:
         # make sure table is initialized
         if not self._progress_table:
             self._initialize_table()
@@ -457,7 +469,7 @@ class TabularProgressReporter(ProgressReporter):
         else:
             leading_headers = [
                 "Solver t.".ljust(10),
-                "Solver step".ljust(STEP_NAME_WIDTH),
+                "Solver step".ljust(STEP_NAME_DISPLAY_WIDTH),
                 "Step %".ljust(10),
                 "Step it.".ljust(10),
                 "Step t.".ljust(10),
@@ -495,7 +507,7 @@ class TabularProgressReporter(ProgressReporter):
         else:
             leading_values = [
                 format_long_time_duration(snapshot.t_elapsed_solver, n_chars=8),
-                format_step_name(snapshot.step_name),
+                fit_step_display_name(step_display_name(snapshot.step_index, snapshot.n_steps, snapshot.step_name)),
                 f"{progress.fraction * 100:.2f}%" if progress else "",
                 f"{progress.iter_count:_}".rjust(10) if progress else "",
                 format_long_time_duration(snapshot.t_elapsed_step, n_chars=8),
@@ -553,13 +565,18 @@ def _selection_hash_hex(selection: NDArray[np.int32], n: int) -> str:
     return "".join(f"{val & 0xF:x}" for val in hash_array)
 
 
-def format_step_name(step_name: str) -> str:
-    """Return the step name at `STEP_NAME_WIDTH` characters.
+def step_display_name(step_index: int, n_steps: int, step_name: str) -> str:
+    """Return the display name of a solver step, "step i/N - name", with index 0 the solver state initialization."""
+    return f"step {step_index}/{n_steps} - {step_name}"
+
+
+def fit_step_display_name(step_display_name: str) -> str:
+    """Return the display name at `STEP_NAME_DISPLAY_WIDTH` characters.
 
     A shorter name is padded on the right; a longer one is cropped from the right with an ellipsis,
     so its start is kept.
     """
-    if len(step_name) > STEP_NAME_WIDTH:
-        return step_name[: STEP_NAME_WIDTH - 1] + "…"
+    if len(step_display_name) > STEP_NAME_DISPLAY_WIDTH:
+        return step_display_name[: STEP_NAME_DISPLAY_WIDTH - 1] + "…"
     else:
-        return step_name.ljust(STEP_NAME_WIDTH)
+        return step_display_name.ljust(STEP_NAME_DISPLAY_WIDTH)

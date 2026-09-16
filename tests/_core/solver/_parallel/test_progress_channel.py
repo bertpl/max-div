@@ -11,6 +11,8 @@ from max_div._core.solver._score import Score
 def _snapshot(iter_count: int = 5, t_elapsed: float = 1.0) -> ProgressSnapshot:
     """Return an in-process snapshot with by-reference fields set, as the base reporter builds them."""
     return ProgressSnapshot(
+        step_index=1,
+        n_steps=1,
         step_name="step 1",
         progress=Progress(
             tqdm_n_total=100,

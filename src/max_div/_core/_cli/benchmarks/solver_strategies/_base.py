@@ -69,7 +69,7 @@ class SolverBenchmarkExecutor:
                 solution = solver.solve(verbosity=Verbosity.SILENT)
 
                 # --- get results ----------------
-                t_elapsed_sec = list(solution.step_durations.values())[-1].t_elapsed_sec
+                t_elapsed_sec = solution.step_durations[-1].t_elapsed_sec
                 diversity_score = solution.score.diversity
                 constraint_score = solution.score.constraints
 

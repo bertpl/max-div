@@ -105,6 +105,8 @@ class ParallelProgressView:
 
         # --- result half: the best worker so far ---
         return ProgressSnapshot(
+            step_index=0,
+            n_steps=0,
             step_name="",
             progress=progress,
             t_elapsed_solver=t_elapsed,

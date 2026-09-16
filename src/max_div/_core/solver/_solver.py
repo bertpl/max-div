@@ -17,6 +17,9 @@ from ._solution import MaxDivSolution
 from ._solver_state import SolverState
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
 
+# The solver state initialization is reported and recorded as step 0 under this name.
+INIT_STEP_NAME = "Init SolverState"
+
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
 
@@ -79,12 +82,6 @@ class MaxDivSolver:
 
         # --- solver config ----------------------
         self._solver_steps = solver_steps
-        # --- step names -------------------------
-        # every step is numbered "step i/N", with the solver state initialization as step 0
-        n_steps = len(solver_steps)
-        for i, step in enumerate(solver_steps, start=1):
-            step.set_name_prefix(_step_name_prefix(i, n_steps))
-        self._init_step_name = f"{_step_name_prefix(0, n_steps)}Init SolverState"
         self._seed = seed
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
@@ -122,12 +119,14 @@ class MaxDivSolver:
             progress_reporter = ProgressReporter.from_verbosity(verbosity)
 
         # --- solver steps -----------------------
-        step_seeds = [deterministic_hash((self._seed, i)) for i in range(len(self._solver_steps))]
-        step_results: dict[str, SolverStepResult] = {}
+        n_steps = len(self._solver_steps)
+        step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
+        # one result per step in step order; the solver state initialization is step 0
+        step_results: list[tuple[str, SolverStepResult]] = []
 
         # --- solver state -----------------------
         with Timer() as timer:
-            progress_reporter.solver_step_started(self._init_step_name)
+            progress_reporter.solver_step_started(0, n_steps, INIT_STEP_NAME)
             stores_by_distance = self._stores_by_distance_provider()
             state = SolverState.new(
                 n=self._n,
@@ -145,14 +144,14 @@ class MaxDivSolver:
                 state.add_many(np.arange(self._n, dtype=np.int32))
             progress_reporter.solver_step_finished(None, state)
 
-        # init step results with solver state initialization as virtual step 0
-        step_results[self._init_step_name] = SolverStepResult(
-            score_checkpoints=[
-                (
-                    Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
-                    state.score,
-                )
-            ]
+        # the solver state initialization is step 0
+        step_results.append(
+            (
+                INIT_STEP_NAME,
+                SolverStepResult(
+                    score_checkpoints=[(Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0), state.score)]
+                ),
+            )
         )
 
         # --- forced full selection --------------
@@ -160,11 +159,11 @@ class MaxDivSolver:
             return self._construct_final_solution(state, step_results)
 
         # --- Main loop --------------------------
-        for step_seed, step in zip(step_seeds, self._solver_steps):
-            progress_reporter.solver_step_started(step.name())
+        for step_index, (step_seed, step) in enumerate(zip(step_seeds, self._solver_steps), start=1):
+            progress_reporter.solver_step_started(step_index, n_steps, step.name())
             step.set_seed(step_seed)
             try:
-                step_results[step.name()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
+                step_results.append((step.name(), step.run(state, progress_reporter, coordinator, self._batch_seconds)))
             finally:
                 # release all Savepoint objects: they hold cyclic references via the SolverState, which
                 # cause out-of-memory when left in place; in a finally, so a step that raises still
@@ -178,16 +177,16 @@ class MaxDivSolver:
     #  Internal
     # -------------------------------------------------------------------------
     def _construct_final_solution(
-        self, state: SolverState, step_results: dict[str, SolverStepResult]
+        self, state: SolverState, step_results: list[tuple[str, SolverStepResult]]
     ) -> MaxDivSolution:
-        """Construct the final MaxDivSolution from the current state & step results."""
+        """Construct the final MaxDivSolution from the state and the `(step name, result)` pairs in step order."""
         # --- collect step durations -------------
-        step_durations = {step_name: result.elapsed for step_name, result in step_results.items()}
+        step_durations = [result.elapsed for _, result in step_results]
 
         # --- aggregate score checkpoints --------
         score_checkpoints = []
         elapsed_from_previous_steps = Elapsed(t_elapsed_sec=0.0, n_iterations=0)
-        for step_name, result in step_results.items():
+        for step_name, result in step_results:
             for elapsed, score in result.score_checkpoints:
                 score_checkpoints.append(
                     (
@@ -213,11 +212,3 @@ class MaxDivSolver:
             n_constraints_satisfied=n_constraints_satisfied,
             distance_storage=self._distance_storage,
         )
-
-
-# =================================================================================================
-#  Helpers
-# =================================================================================================
-def _step_name_prefix(i: int, n_steps: int) -> str:
-    """Return the "step i/N - " prefix that step number `i` of `n_steps` carries in its name."""
-    return f"step {i}/{n_steps} - "
