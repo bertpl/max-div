@@ -84,8 +84,8 @@ class MaxDivSolver:
         # names are padded to one width so a reporter's step column fits every one of them
         n_steps = len(solver_steps)
         for i, step in enumerate(solver_steps, start=1):
-            step.set_name_prefix(f"step {i}/{n_steps} - ")
-        self._init_step_name = f"step 0/{n_steps} - Init SolverState"
+            step.set_name_prefix(_step_name_prefix(i, n_steps))
+        self._init_step_name = f"{_step_name_prefix(0, n_steps)}Init SolverState"
         self._step_name_width = max(
             len(name) for name in [self._init_step_name, *(step.name() for step in solver_steps)]
         )
@@ -217,3 +217,11 @@ class MaxDivSolver:
             n_constraints_satisfied=n_constraints_satisfied,
             distance_storage=self._distance_storage,
         )
+
+
+# =================================================================================================
+#  Helpers
+# =================================================================================================
+def _step_name_prefix(i: int, n_steps: int) -> str:
+    """Return the "step i/N - " prefix that step number `i` of `n_steps` carries in its name."""
+    return f"step {i}/{n_steps} - "

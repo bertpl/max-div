@@ -55,7 +55,7 @@ class SolverStep[S: StrategyBase](ABC):
     def set_name_prefix(self, prefix: str) -> None:
         """Set the text that `name` puts before the strategy's name, so a solver can number its steps.
 
-        The solver that owns the step sets this once at its construction. A step belongs to one solver;
+        The solver that owns the step sets this prefix once, at the solver's construction. A step belongs to one solver;
         handing the same step object to a second solver is not supported.
         """
         self._name_prefix = prefix
