@@ -1,4 +1,7 @@
+from dataclasses import replace
+
 import numpy as np
+import pytest
 
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._parallel import WorkerResult, best_known_trajectory
@@ -94,3 +97,15 @@ def test_group_tags_survive_the_placement():
 
     # --- assert -----------------------
     assert (trajectory[0].worker_index, trajectory[0].group_index) == (0, 3)
+
+
+def test_a_checkpoint_without_a_worker_is_rejected():
+    """A single solve's untagged checkpoint cannot be placed among workers, so the trajectory refuses it."""
+    # --- arrange ----------------------
+    result = _result(0, t_start=0.0, trace=[(0.0, 0.5)])
+    untagged = replace(result.solution.score_checkpoints[0], worker_index=None)
+    result.solution.score_checkpoints[0] = untagged
+
+    # --- act / assert -----------------
+    with pytest.raises(ValueError, match="name their worker"):
+        best_known_trajectory([result])

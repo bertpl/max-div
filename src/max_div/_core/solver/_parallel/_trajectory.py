@@ -32,40 +32,50 @@ def best_known_trajectory(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
         results: what each worker reported; every result's `t_start` places its checkpoints. Non-empty,
             and at least one checkpoint across all results.
     """
-    placed = _place_on_shared_axis(results)
+    merged_checkpoints = _place_on_shared_time_axis(results)
     trajectory: list[ScoreCheckpoint] = []
-    for _, checkpoint in placed:
+    for checkpoint in merged_checkpoints:
         if (not trajectory) or (trajectory[-1].score < checkpoint.score):
             trajectory.append(checkpoint)
     # close the trace at the end of the solve: the latest checkpoint that still holds the best score
     best_score = trajectory[-1].score
-    _, closing = max(
-        ((worker, checkpoint) for worker, checkpoint in placed if checkpoint.score == best_score),
-        key=lambda item: (item[1].elapsed.t_elapsed_sec, -item[0]),
+    closing = max(
+        (checkpoint for checkpoint in merged_checkpoints if checkpoint.score == best_score),
+        key=lambda checkpoint: (checkpoint.elapsed.t_elapsed_sec, -_worker_index(checkpoint)),
     )
     if closing is not trajectory[-1]:
         trajectory.append(closing)
     return trajectory
 
 
-def _place_on_shared_axis(results: list[WorkerResult]) -> list[tuple[int, ScoreCheckpoint]]:
-    """Return `(worker index, checkpoint)` pairs with `elapsed` counted from the earliest worker start, in time order.
+def _place_on_shared_time_axis(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
+    """Return every worker's checkpoints with `elapsed` counted from the earliest worker start, in time order.
 
     Ties on time resolve by worker index, so the same results give the same order whatever the list order.
     """
     t_first_start = min(result.t_start for result in results)
-    placed = [
-        (
-            result.worker_index,
-            replace(
-                checkpoint,
-                elapsed=Elapsed(
-                    t_elapsed_sec=(result.t_start - t_first_start) + checkpoint.elapsed.t_elapsed_sec,
-                    n_iterations=checkpoint.elapsed.n_iterations,
-                ),
+    merged_checkpoints = [
+        replace(
+            checkpoint,
+            elapsed=Elapsed(
+                t_elapsed_sec=(result.t_start - t_first_start) + checkpoint.elapsed.t_elapsed_sec,
+                n_iterations=checkpoint.elapsed.n_iterations,
             ),
         )
         for result in results
         for checkpoint in result.solution.score_checkpoints
     ]
-    return sorted(placed, key=lambda item: (item[1].elapsed.t_elapsed_sec, item[0]))
+    return sorted(
+        merged_checkpoints, key=lambda checkpoint: (checkpoint.elapsed.t_elapsed_sec, _worker_index(checkpoint))
+    )
+
+
+def _worker_index(checkpoint: ScoreCheckpoint) -> int:
+    """Return the worker that recorded the checkpoint; a parallel worker's checkpoint always names one.
+
+    Raises:
+        ValueError: If the checkpoint carries no worker index, which only a single solve produces.
+    """
+    if checkpoint.worker_index is None:
+        raise ValueError("A parallel trajectory is built from parallel workers' checkpoints, which name their worker.")
+    return checkpoint.worker_index
