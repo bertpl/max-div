@@ -22,7 +22,7 @@ The workers themselves run the schedule; no separate process does:
   returns them with its result; nothing reads them during the solve.
 
 Shared memory holds only what a worker must read during the solve. Anything read only afterwards
-travels back in the worker's result, like the changes and the checkpoints.
+is returned in the worker's result, like the changes and the checkpoints.
 
 Ranking groups on their slots makes dissolution safe: a slot only ever accepts a strictly better
 selection (`GroupExchangeSlot.exchange`), so it holds its group's best score so far, and

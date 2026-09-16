@@ -19,7 +19,7 @@ class WorkerGroupChange:
         progress_fraction: the executing worker's progress through its optimization step, 0 to 1.
         dissolved_group: index of the dissolved group's exchange slot.
         n_alive_groups_after: how many groups still had workers after the change.
-        slot_scores: every then-alive group's slot score, None for a group that never published.
+        slot_scores: every then-alive group's slot score, None for a group whose slot was never written.
         reassignments: target group per worker of the dissolved group.
     """
 

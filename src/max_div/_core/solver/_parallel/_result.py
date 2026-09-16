@@ -58,8 +58,8 @@ class WorkerResult:
         return self.solution.duration
 
 
-def earliest_start(results: list[WorkerResult]) -> float:
-    """Return the earliest worker start, the zero of the axis a parallel solution's checkpoints and changes share."""
+def earliest_start_time(results: list[WorkerResult]) -> float:
+    """Return the earliest worker start time: the zero of the axis that a parallel solution's checkpoints share."""
     return min(result.t_start for result in results)
 
 

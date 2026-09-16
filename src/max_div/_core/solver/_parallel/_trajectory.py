@@ -17,7 +17,7 @@ from dataclasses import replace
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 
-from ._result import WorkerResult, earliest_start
+from ._result import WorkerResult, earliest_start_time
 
 
 def best_known_trajectory(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
@@ -54,7 +54,7 @@ def _merge_checkpoints(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
 
     Ties on time resolve by worker index, so the same results give the same order whatever the list order.
     """
-    t_first_start = earliest_start(results)
+    t_first_start = earliest_start_time(results)
     merged_checkpoints = [
         replace(
             checkpoint,

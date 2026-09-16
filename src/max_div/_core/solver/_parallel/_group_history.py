@@ -2,17 +2,18 @@
 
 Each worker returns the worker group changes it executed, with `elapsed` counted from its own
 start. The parent places them on the axis the solution's checkpoints use, whose zero is the
-earliest worker start (see `_trajectory`), and orders them as they happened. Every change lowers
-the alive group count by one, so that count orders the changes without a clock: two changes
-executed by different workers moments apart order correctly even when their workers' elapsed
-readings, taken before the transition lock, do not.
+earliest worker start (see `_trajectory`), and orders them as they happened.
+
+Every change lowers the alive group count by one, so that count orders the changes without a
+timestamp: two changes executed by different workers moments apart order correctly even when their
+workers' elapsed readings, taken before the transition lock, do not.
 """
 
 from dataclasses import replace
 
 from max_div._core.solver._duration import Elapsed
 
-from ._result import WorkerResult, earliest_start
+from ._result import WorkerResult, earliest_start_time
 from ._worker_group_change import WorkerGroupChange
 
 
@@ -22,7 +23,7 @@ def worker_group_history(results: list[WorkerResult]) -> list[WorkerGroupChange]
     Args:
         results: what each worker reported; every result's `t_start` places its changes. Non-empty.
     """
-    t_first_start = earliest_start(results)
+    t_first_start = earliest_start_time(results)
     placed = [
         replace(
             change,

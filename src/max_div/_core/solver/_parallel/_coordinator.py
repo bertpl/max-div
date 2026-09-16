@@ -32,7 +32,7 @@ class WorkerCoordinator(ABC):
 
     @property
     def worker_group_changes(self) -> list[WorkerGroupChange]:
-        """Return the worker group changes this worker executed; a coordinator that never regroups has none."""
+        """Return the worker group changes that this worker executed; a coordinator that never regroups has none."""
         return []
 
     @abstractmethod

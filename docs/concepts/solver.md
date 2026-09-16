@@ -253,9 +253,15 @@ each checkpoint naming the worker that held it and the group it was in, on one t
 at the earliest worker start. A single worker's own trace steps up whenever that worker adopts its
 group's best, which shows another worker's progress as a step in this worker's trace and hides which
 worker made it; the trace across workers instead attributes each step to the worker that made it.
-A dynamic solve also records its regrouping: `initial_worker_groups` gives each worker's group at
-the start, and `worker_group_changes` every dissolution since, each naming the worker that executed
-it, when, which group dissolved, and where its workers went, on the same time axis as the checkpoints.
+A dynamic solve also records its regrouping. `initial_worker_groups` gives each worker's group at
+the start, and `worker_group_changes` every dissolution since, on the same time axis as the
+checkpoints. Each change names:
+
+- the worker that executed it,
+- when it happened,
+- which group dissolved,
+- and where its workers went.
+
 The number worth looking at is `n_workers_with_best_score`:
 
 - **Well below the worker count**: seeds mattered on this problem, and the parallel solve earned its
