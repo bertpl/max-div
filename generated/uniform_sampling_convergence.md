@@ -5,4 +5,5 @@
 | **III.C** $y$ distance | 115,183 | 100.0% | 100.0% | 100.0% |
 | **IV.A** L−∞ distance | 116,766 | 94.6% | 98.0% | 98.6% |
 | **IV.B** geometric-mean distance | 126,314 | 96.6% | 98.2% | 98.3% |
-| **V** hybrid: L2, $x$ and $y$ terms | 38,018 | 98.7% | 99.5% | 99.9% |
+| **V.A** hybrid: L2, $x$ and $y$ terms | 38,018 | 98.7% | 99.5% | 99.9% |
+| **V.B** hybrid, 20 items per band | 29,620 | 97.4% | 97.9% | 99.3% |

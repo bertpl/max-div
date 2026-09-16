@@ -3,10 +3,11 @@
 The figures of `geomean_separation.md` plot given selections controlled by a parameter alpha: three
 cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
-The figures of `uniform_sampling.md` are six solved selections of one random population, one per
+The figures of `uniform_sampling.md` are seven solved selections of one random population, one per
 experiment; only those run the solver. Each selection is emitted as an interactive figure (an HTML
 fragment over a raster of the population) plus its separations table, and cached as JSON so that
-`--reuse-solution` re-renders the figures without the solves; a closing table compares the six.
+`--reuse-solution` re-renders the figures without the solves, solving only an experiment that has no
+cache yet; a closing table compares them.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reuse-solution]``.
 """
@@ -23,7 +24,7 @@ from uniform_sampling_explorer import POPULATION_COLOR, explorer_fragment, neare
 
 from benchmarks.figures.style import REPO_ROOT, save_webp, use_docs_style
 from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
-from max_div.problem import MaxDivProblem
+from max_div.problem import Constraint, MaxDivProblem
 from max_div.solver import ParallelMaxDivSolution, ParallelMaxDivSolverBuilder, seconds
 
 GENERATED_DIR = REPO_ROOT / "generated"
@@ -223,7 +224,7 @@ def layout_constrained_group(alpha: float) -> NDArray[np.float64]:
 
 
 # ==================================================================================================
-#  Uniform sampling: six solved experiments
+#  Uniform sampling: seven solved experiments
 # ==================================================================================================
 # The keys name the distances of `uniform_sampling_explorer.DISTANCES`.
 DISTANCE_METRICS = {
@@ -242,7 +243,8 @@ EXPERIMENT_LABELS = {
     "y": "**III.C** $y$ distance",
     "linf": "**IV.A** L\u2212\u221e distance",
     "geomean": "**IV.B** geometric-mean distance",
-    "hybrid": "**V** hybrid: L2, $x$ and $y$ terms",
+    "hybrid": "**V.A** hybrid: L2, $x$ and $y$ terms",
+    "hybrid_banded": "**V.B** hybrid, 20 items per band",
 }
 # A summary cell is colored by its achieved / reference fraction: red below LOW, green above HIGH.
 # The classes are styled in docs/stylesheets/extra.css; `uniform_sampling.md` states the rule.
@@ -268,11 +270,38 @@ class Experiment:
     """One experiment: harmonic-mean separation maximized over one distance, or a hybrid over several.
 
     `distance_keys` holds one key for a simple objective and one per term for a hybrid, which is the
-    geometric mean of the per-distance terms.
+    geometric mean of the per-distance terms. `n_bands` cuts each axis into that many equal bands and
+    requires every band to hold the same number of selected items, k / n_bands; None leaves the
+    selection unconstrained.
     """
 
     name: str
     distance_keys: tuple[str, ...]
+    n_bands: int | None = None
+
+    def band_edges(self) -> tuple[float, ...]:
+        """Return the interior band edges along one axis, empty for an unconstrained experiment."""
+        if self.n_bands is None:
+            return ()
+        else:
+            return tuple(i / self.n_bands for i in range(1, self.n_bands))
+
+    def constraints(self, vectors: NDArray[np.float32], k: int) -> list[Constraint]:
+        """Return one exact-count constraint per band along each axis, built from the population's coordinates."""
+        if self.n_bands is None:
+            return []
+        elif k % self.n_bands != 0:
+            raise ValueError(f"k = {k} does not split evenly over {self.n_bands} bands")
+        else:
+            count = k // self.n_bands
+            bands = np.minimum((vectors * self.n_bands).astype(np.intp), self.n_bands - 1)
+            return [
+                Constraint(
+                    int_set=set(np.flatnonzero(bands[:, axis] == band).tolist()), min_count=count, max_count=count
+                )
+                for axis in (0, 1)
+                for band in range(self.n_bands)
+            ]
 
     def diversity_metric(self) -> DiversityMetric | HybridDiversityMetric:
         """Return the objective the solver maximizes."""
@@ -295,6 +324,7 @@ EXPERIMENTS = (
     Experiment("linf", ("linf",)),
     Experiment("geomean", ("geomean",)),
     Experiment("hybrid", ("l2", "x", "y")),
+    Experiment("hybrid_banded", ("l2", "x", "y"), n_bands=5),
 )
 
 
@@ -326,6 +356,7 @@ def solve_experiment(
         k=settings.k,
         distance_metric=experiment.distance_metric(),
         diversity_metric=experiment.diversity_metric(),
+        constraints=experiment.constraints(vectors, settings.k),
     )
     solver = (
         ParallelMaxDivSolverBuilder(problem)
@@ -363,14 +394,15 @@ class ExperimentRun:
 def load_or_solve_experiment(
     vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings, should_reuse_solution: bool
 ) -> ExperimentRun:
-    """Return the experiment's run, from its JSON cache when asked, else from a fresh solve.
+    """Return the experiment's run, from its JSON cache when asked and present, else from a fresh solve.
 
-    A fresh solve rewrites the cache. The cache holds the selected indices and the convergence trace
-    only: the population is rebuilt from n and the seed, so the dots and the raster always come from
-    the same coordinates.
+    A fresh solve rewrites the cache; an experiment without a cache is solved even when reuse is asked,
+    so a new experiment can be added without re-solving the others. The cache holds the selected
+    indices and the convergence trace only: the population is rebuilt from n and the seed, so the dots
+    and the raster always come from the same coordinates.
     """
     path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_solution.json"
-    if should_reuse_solution:
+    if should_reuse_solution and path.exists():
         cached = json.loads(path.read_text(encoding="utf-8"))
         if {key: cached[key] for key in asdict(settings)} != asdict(settings):
             raise ValueError(f"{path} was solved with other settings than {settings}")
@@ -504,7 +536,7 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
 
     Args:
         settings: Its seed seeds both the population and every solver run.
-        should_reuse_solution: Read the cached selections and skip the solves.
+        should_reuse_solution: Read the cached selections where they exist and skip those solves.
     """
     vectors = build_uniform_sampling_population(settings.n, settings.seed)
     render_uniform_sampling_population("uniform_sampling_population", vectors)
@@ -521,6 +553,7 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
             settings.n,
             settings.k,
             objective_keys=experiment.distance_keys,
+            band_edges=experiment.band_edges(),
             population_image_url="../images/uniform_sampling_population.webp",
             description=(
                 "Ten thousand gray points in the unit square with the hundred selected ones in red, and the "
@@ -537,7 +570,11 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
 def main() -> None:
     """Render every guide figure."""
     parser = argparse.ArgumentParser(description="Regenerate the guide figures.")
-    parser.add_argument("--reuse-solution", action="store_true", help="read the cached experiment selections")
+    parser.add_argument(
+        "--reuse-solution",
+        action="store_true",
+        help="read the cached experiment selections; solve only experiments without a cache",
+    )
     args = parser.parse_args()
     render_example(
         "geomean_separation_I1",

@@ -8,12 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- The uniform-sampling case study gains a seventh experiment: the hybrid objective under exact per-band counts, five bands per axis, each holding 20 of the 100 selected items
 
 ### Changed
 - `MaxDivSolution.step_durations` is a list in step order, index 0 being the solver state initialization, in place of a dict keyed by the displayed step name
 - A checkpoint's step name is the step's own name, without the "step i/N - " prefix that the progress reports show
 - A solution's `score_checkpoints` entries are `ScoreCheckpoint` objects (the step's identity, elapsed, score, and for a parallel solve the worker and its group) in place of plain tuples
-- The uniform-sampling case study's six experiments are re-solved with the current solver, its convergence table tracing the best selection across workers
+- The uniform-sampling case study's experiments are re-solved with the current solver, its convergence table tracing the best selection across workers
 
 ### Deprecated
 

@@ -332,6 +332,10 @@ img.center75 {
     stroke: #222222;
     stroke-width: 0.8px;
 }
+.usx-band {
+    stroke: #CCCCCC;
+    stroke-width: 0.8px;
+}
 .usx-label {
     fill: #222222;
     font-size: 12px;

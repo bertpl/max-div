@@ -5,4 +5,5 @@
 | **III.C** $y$ distance | <span class="usx-low">0.0401 (35%)</span> | <span class="usx-low">0.0020 (20%)</span> | <span class="usx-high">0.0100 (99%)</span> |
 | **IV.A** L−∞ distance | <span class="usx-low">0.0443 (39%)</span> | <span class="usx-high">0.0094 (93%)</span> | <span class="usx-high">0.0094 (93%)</span> |
 | **IV.B** geometric-mean distance | <span class="usx-high">0.0835 (73%)</span> | 0.0065 (64%) | 0.0070 (69%) |
-| **V** hybrid: L2, $x$ and $y$ terms | <span class="usx-high">0.0824 (72%)</span> | <span class="usx-high">0.0089 (88%)</span> | <span class="usx-high">0.0088 (87%)</span> |
+| **V.A** hybrid: L2, $x$ and $y$ terms | <span class="usx-high">0.0824 (72%)</span> | <span class="usx-high">0.0089 (88%)</span> | <span class="usx-high">0.0088 (87%)</span> |
+| **V.B** hybrid, 20 items per band | <span class="usx-high">0.0833 (73%)</span> | <span class="usx-high">0.0089 (88%)</span> | <span class="usx-high">0.0089 (88%)</span> |
