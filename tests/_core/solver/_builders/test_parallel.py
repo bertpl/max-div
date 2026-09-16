@@ -446,9 +446,8 @@ def test_a_budget_spent_during_setup_reaches_the_workers_as_spent():
     solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
-    optimization_steps = [name for name in solution.step_durations if "Optim" in name]
-    assert len(optimization_steps) == 1
-    assert solution.step_durations[optimization_steps[0]].n_iterations == 0
+    assert len(solution.step_durations) == 3  # initialization, initial selection, optimization
+    assert solution.step_durations[-1].n_iterations == 0  # the optimization step ran no iterations
     assert len(solution.i_selected) == 8  # the shared test problem's k
 
 

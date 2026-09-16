@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from max_div._core._utils import Timer, deterministic_hash, ljust_str_list
+from max_div._core._utils import Timer, deterministic_hash
 from max_div._core.constraints import Constraint
 from max_div._core.constraints.constraints import _np_con_count_satisfied
 from max_div._core.metrics import DistanceMetric, DiversityObjective
@@ -16,6 +16,10 @@ from ._progress_reporting import ProgressReporter, Verbosity
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
 from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
+from ._step_identity import SolverStepIdentity
+
+# The solver state initialization is reported and recorded as step 0 under this name.
+INIT_STEP_NAME = "Init SolverState"
 
 if TYPE_CHECKING:
     from ._parallel import WorkerCoordinator
@@ -117,13 +121,14 @@ class MaxDivSolver:
 
         # --- solver steps -----------------------
         n_steps = len(self._solver_steps)
-        step_names = self._get_step_names()  # includes solver state init step (hence length n_steps+1)
+        progress_reporter.set_step_count(n_steps + 1)  # the solver state initialization is reported too, as step 0
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
-        step_results: dict[str, SolverStepResult] = {}
+        # one result per step in step order; the solver state initialization is step 0
+        step_results: list[tuple[str, SolverStepResult]] = []
 
         # --- solver state -----------------------
         with Timer() as timer:
-            progress_reporter.solver_step_started(step_names[0])
+            progress_reporter.solver_step_started(SolverStepIdentity(0, INIT_STEP_NAME))
             stores_by_distance = self._stores_by_distance_provider()
             state = SolverState.new(
                 n=self._n,
@@ -141,14 +146,13 @@ class MaxDivSolver:
                 state.add_many(np.arange(self._n, dtype=np.int32))
             progress_reporter.solver_step_finished(None, state)
 
-        # init step results with solver state initialization as virtual step 0
-        step_results[step_names[0].strip()] = SolverStepResult(
-            score_checkpoints=[
-                (
-                    Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
-                    state.score,
-                )
-            ]
+        step_results.append(
+            (
+                INIT_STEP_NAME,
+                SolverStepResult(
+                    score_checkpoints=[(Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0), state.score)]
+                ),
+            )
         )
 
         # --- forced full selection --------------
@@ -156,11 +160,11 @@ class MaxDivSolver:
             return self._construct_final_solution(state, step_results)
 
         # --- Main loop --------------------------
-        for step_name, step_seed, step in zip(step_names[1:], step_seeds, self._solver_steps):
-            progress_reporter.solver_step_started(step_name)
+        for step_index, (step_seed, step) in enumerate(zip(step_seeds, self._solver_steps), start=1):
+            progress_reporter.solver_step_started(SolverStepIdentity(step_index, step.name()))
             step.set_seed(step_seed)
             try:
-                step_results[step_name.strip()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
+                step_results.append((step.name(), step.run(state, progress_reporter, coordinator, self._batch_seconds)))
             finally:
                 # release all Savepoint objects: they hold cyclic references via the SolverState, which
                 # cause out-of-memory when left in place; in a finally, so a step that raises still
@@ -173,23 +177,17 @@ class MaxDivSolver:
     # -------------------------------------------------------------------------
     #  Internal
     # -------------------------------------------------------------------------
-    def _get_step_names(self) -> list[str]:
-        """Return list of numbered step names, left aligned to be of equal length."""
-        names = ["Init SolverState"] + [s.name() for s in self._solver_steps]
-        n_steps = len(self._solver_steps)
-        return ljust_str_list([f"step {i}/{n_steps} - {name}" for i, name in enumerate(names)])
-
     def _construct_final_solution(
-        self, state: SolverState, step_results: dict[str, SolverStepResult]
+        self, state: SolverState, step_results: list[tuple[str, SolverStepResult]]
     ) -> MaxDivSolution:
-        """Construct the final MaxDivSolution from the current state & step results."""
+        """Construct the final MaxDivSolution from the state and the `(step name, result)` pairs in step order."""
         # --- collect step durations -------------
-        step_durations = {step_name: result.elapsed for step_name, result in step_results.items()}
+        step_durations = [result.elapsed for _, result in step_results]
 
         # --- aggregate score checkpoints --------
         score_checkpoints = []
         elapsed_from_previous_steps = Elapsed(t_elapsed_sec=0.0, n_iterations=0)
-        for step_name, result in step_results.items():
+        for step_name, result in step_results:
             for elapsed, score in result.score_checkpoints:
                 score_checkpoints.append(
                     (

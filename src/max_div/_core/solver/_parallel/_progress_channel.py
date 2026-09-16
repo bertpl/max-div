@@ -50,7 +50,7 @@ class ForwardingProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Rendering interface (forwards instead of rendering)
     # -------------------------------------------------------------------------
-    def show_step_started(self, step_name: str) -> None:
+    def show_step_started(self, step_display_name: str) -> None:
         self._throttle.reset()
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:

@@ -30,7 +30,8 @@ class MaxDivSolution:
         return self.score_checkpoints[-1][2]
 
     # --- durations ------------------------------
-    step_durations: dict[str, Elapsed]
+    # one per solver step, in step order; index 0 is the solver state initialization
+    step_durations: list[Elapsed]
 
     @property
     def duration(self) -> Elapsed:

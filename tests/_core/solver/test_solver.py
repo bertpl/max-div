@@ -38,11 +38,8 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[str, Elapsed
         "score_checkpoints contains duplicate non-consecutive step names"
     )
 
-    for i, step_name in enumerate(singular_step_names):
-        # e.g. if we have 4 steps reported...
-        #  - first step is step 0/3 representing SolverState initialization
-        #  - other steps are step 1/3, step 2/3, step 3/3, represent actual SolverSteps
-        assert f"{i}/{len(singular_step_names) - 1}" in step_name
+    # the first step is the solver state initialization; the others are the actual solver steps
+    assert singular_step_names[0] == "Init SolverState"
 
     # --- check iteration counts -----------------
     iter_values = [e.n_iterations for _, e, _ in score_checkpoints]
@@ -67,7 +64,7 @@ def test_solver_minimal(example_solver):
     # --- assert -----------------------
     assert isinstance(solution, MaxDivSolution)
     assert_score_checkpoints_are_sane(solution.score_checkpoints)
-    assert solution.duration == sum(list(solution.step_durations.values()))
+    assert solution.duration == sum(solution.step_durations)
     assert solution.duration == solution.score_checkpoints[-1][1]
     assert solution.score == solution.score_checkpoints[-1][2]
 
@@ -486,3 +483,15 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
     assert len(solution.i_selected) == problem.k
     expected = expected_score(vectors, solution.i_selected, axis=0)
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
+
+
+def test_step_durations_are_listed_in_step_order(example_solver):
+    """One duration per step, the solver state initialization first, and the checkpoints name the same steps."""
+    # --- arrange / act ----------------
+    solution = example_solver.solve()
+
+    # --- assert -----------------------
+    assert len(solution.step_durations) == len(example_solver._solver_steps) + 1
+    assert solution.step_durations[0].n_iterations == 0  # the initialization runs no iterations
+    assert solution.score_checkpoints[0][0] == "Init SolverState"
+    assert solution.score_checkpoints[-1][0] == example_solver._solver_steps[-1].name()

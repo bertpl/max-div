@@ -386,9 +386,8 @@ def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_
         solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
-    optimization_steps = [name for name in solution.step_durations if "OptimRandomSwaps" in name]
-    assert len(optimization_steps) == 1
-    assert solution.step_durations[optimization_steps[0]].n_iterations == 0
+    assert len(solution.step_durations) == 3  # initialization, initial selection, optimization
+    assert solution.step_durations[-1].n_iterations == 0  # the optimization step ran no iterations
     assert len(solution.i_selected) == dummy_problem.k
 
 

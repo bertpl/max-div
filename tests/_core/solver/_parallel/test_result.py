@@ -13,7 +13,7 @@ def _result(worker_index: int, diversity: float) -> WorkerResult:
     solution = MaxDivSolution(
         i_selected=np.array([worker_index], dtype=np.int32),
         score_checkpoints=[("step", Elapsed(t_elapsed_sec=1.0, n_iterations=10), score)],
-        step_durations={},
+        step_durations=[],
     )
     return WorkerResult(worker_index=worker_index, seed=worker_index, solution=solution)
 

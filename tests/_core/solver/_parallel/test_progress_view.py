@@ -38,7 +38,7 @@ class _RecordingReporter(ProgressReporter):
 def _snapshot(worker_index: int, fraction: float, diversity: float, iter_count: int = 10) -> ProgressSnapshot:
     """Return a materialized snapshot, as a worker would forward it."""
     return ProgressSnapshot(
-        step_name="",
+        step_identity=None,
         progress=Progress(
             tqdm_n_total=100,
             fraction=fraction,
@@ -64,7 +64,7 @@ def _result(worker_index: int) -> WorkerResult:
     solution = MaxDivSolution(
         i_selected=np.arange(5, dtype=np.int32),
         score_checkpoints=[("step", Elapsed(t_elapsed_sec=1.0, n_iterations=10), _snapshot(0, 1.0, 0.0).score)],
-        step_durations={"step": Elapsed(t_elapsed_sec=1.0, n_iterations=10)},
+        step_durations=[Elapsed(t_elapsed_sec=1.0, n_iterations=10)],
         n_constraints=0,
         n_constraints_satisfied=0,
         distance_storage=DistanceStorageTypes(),
