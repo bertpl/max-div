@@ -7,6 +7,7 @@ import pytest
 
 from max_div._core.solver._duration import Progress
 from max_div._core.solver._progress_reporting import (
+    STEP_NAME_WIDTH,
     ProgressReporter,
     ProgressSnapshot,
     ReportThrottle,
@@ -15,6 +16,7 @@ from max_div._core.solver._progress_reporting import (
     TabularProgressReporter,
     TqdmProgressReporter,
     Verbosity,
+    format_step_name,
 )
 from max_div._core.solver._score import Score
 
@@ -347,3 +349,16 @@ def test_tabular_hash_column_blank_without_selection_or_hash(capsys):
     row = capsys.readouterr().out.splitlines()[-1]
     assert row.rstrip().endswith("|")
     assert all(char in "| " for char in row.split("|")[-2])  # hash column is blank
+
+
+@pytest.mark.parametrize(
+    "step_name, expected",
+    [
+        ("step 1/2 - fast", "step 1/2 - fast".ljust(STEP_NAME_WIDTH)),
+        ("step 1/2 - " + "x" * 40, ("step 1/2 - " + "x" * 40)[: STEP_NAME_WIDTH - 1] + "…"),
+    ],
+)
+def test_format_step_name_pads_or_crops_to_the_shared_width(step_name: str, expected: str):
+    """A rendered step name is always STEP_NAME_WIDTH wide, cropped with an ellipsis that keeps the numbered prefix."""
+    assert format_step_name(step_name) == expected
+    assert len(format_step_name(step_name)) == STEP_NAME_WIDTH

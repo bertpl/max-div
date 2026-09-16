@@ -13,6 +13,10 @@ from tqdm.auto import tqdm
 from max_div._core._utils import format_long_time_duration, np_int32_array_var_length_hash
 from max_div._core._utils._progress_table import ProgressTable
 
+# Width of a rendered step name, in characters, shared by every reporter that shows one so their
+# rows and bars line up. A longer name is cropped with an ellipsis; the numbered prefix is kept.
+STEP_NAME_WIDTH = 35
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -338,7 +342,7 @@ class TqdmProgressReporter(ProgressReporter):
     def show_step_started(self, step_name: str) -> None:
         if (step_name != self._current_step_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
-            self._current_pbar = tqdm(desc=f"{step_name} ", total=1, file=sys.stdout)  # initialize new pbar
+            self._current_pbar = tqdm(desc=f"{format_step_name(step_name)} ", total=1, file=sys.stdout)
             self._current_step_name = step_name
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
@@ -408,7 +412,7 @@ class TabularProgressReporter(ProgressReporter):
     def show_step_started(self, step_name: str) -> None:
         # make sure table is initialized
         if not self._progress_table:
-            self._initialize_table(step_name_width=len(step_name))
+            self._initialize_table()
 
         # reset progress reporting thresholds
         self._throttle.reset()
@@ -440,7 +444,7 @@ class TabularProgressReporter(ProgressReporter):
             return snapshot.debug_info
         return get_debug_info() if (get_debug_info is not None) else ""
 
-    def _initialize_table(self, step_name_width: int) -> None:
+    def _initialize_table(self) -> None:
         """Initialize self._progress_table."""
         if self._worker_columns:
             leading_headers = [
@@ -453,7 +457,7 @@ class TabularProgressReporter(ProgressReporter):
         else:
             leading_headers = [
                 "Solver t.".ljust(10),
-                "Solver step".ljust(step_name_width),
+                "Solver step".ljust(STEP_NAME_WIDTH),
                 "Step %".ljust(10),
                 "Step it.".ljust(10),
                 "Step t.".ljust(10),
@@ -491,7 +495,7 @@ class TabularProgressReporter(ProgressReporter):
         else:
             leading_values = [
                 format_long_time_duration(snapshot.t_elapsed_solver, n_chars=8),
-                snapshot.step_name,
+                format_step_name(snapshot.step_name),
                 f"{progress.fraction * 100:.2f}%" if progress else "",
                 f"{progress.iter_count:_}".rjust(10) if progress else "",
                 format_long_time_duration(snapshot.t_elapsed_step, n_chars=8),
@@ -547,3 +551,14 @@ def _selection_hash_hex(selection: NDArray[np.int32], n: int) -> str:
     # --- generate hash --------------------------
     hash_array = np_int32_array_var_length_hash(selection, n)
     return "".join(f"{val & 0xF:x}" for val in hash_array)
+
+
+# =================================================================================================
+#  Helpers
+# =================================================================================================
+def format_step_name(step_name: str) -> str:
+    """Return the step name at `STEP_NAME_WIDTH` characters: padded on the right, or cropped with an ellipsis."""
+    if len(step_name) > STEP_NAME_WIDTH:
+        return step_name[: STEP_NAME_WIDTH - 1] + "…"
+    else:
+        return step_name.ljust(STEP_NAME_WIDTH)

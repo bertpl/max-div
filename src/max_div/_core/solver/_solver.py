@@ -80,15 +80,11 @@ class MaxDivSolver:
         # --- solver config ----------------------
         self._solver_steps = solver_steps
         # --- step names -------------------------
-        # every step is numbered "step i/N", with the solver state initialization as step 0; the
-        # names are padded to one width so a reporter's step column fits every one of them
+        # every step is numbered "step i/N", with the solver state initialization as step 0
         n_steps = len(solver_steps)
         for i, step in enumerate(solver_steps, start=1):
             step.set_name_prefix(_step_name_prefix(i, n_steps))
         self._init_step_name = f"{_step_name_prefix(0, n_steps)}Init SolverState"
-        self._step_name_width = max(
-            len(name) for name in [self._init_step_name, *(step.name() for step in solver_steps)]
-        )
         self._seed = seed
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
@@ -131,7 +127,7 @@ class MaxDivSolver:
 
         # --- solver state -----------------------
         with Timer() as timer:
-            progress_reporter.solver_step_started(self._init_step_name.ljust(self._step_name_width))
+            progress_reporter.solver_step_started(self._init_step_name)
             stores_by_distance = self._stores_by_distance_provider()
             state = SolverState.new(
                 n=self._n,
@@ -165,7 +161,7 @@ class MaxDivSolver:
 
         # --- Main loop --------------------------
         for step_seed, step in zip(step_seeds, self._solver_steps):
-            progress_reporter.solver_step_started(step.name().ljust(self._step_name_width))
+            progress_reporter.solver_step_started(step.name())
             step.set_seed(step_seed)
             try:
                 step_results[step.name()] = step.run(state, progress_reporter, coordinator, self._batch_seconds)
