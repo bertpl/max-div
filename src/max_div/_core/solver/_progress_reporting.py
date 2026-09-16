@@ -183,8 +183,8 @@ class ProgressReporter(ABC):
     def solver_step_started(self, step_index: int, n_steps: int, step_name: str) -> None:
         """Record that solver step `step_index` of `n_steps` has started, and notify the renderer.
 
-        Index 0 is the solver state initialization; the numbered display name ("step i/N - name") is
-        composed here, so the solver never handles presentation strings.
+        Index 0 is the solver state initialization; the numbered display name is composed here, so
+        the solver never handles presentation strings.
         """
         self._step_index = step_index
         self._n_steps = n_steps
@@ -221,7 +221,7 @@ class ProgressReporter(ABC):
     # -------------------------------------------------------------------------
     @abstractmethod
     def show_step_started(self, step_display_name: str) -> None:
-        """Render the start of a new solver step, given its display name ("step i/N - name")."""
+        """Render the start of a new solver step, given its display name (see `step_display_name`)."""
 
     @abstractmethod
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
@@ -345,17 +345,17 @@ class TqdmProgressReporter(ProgressReporter):
 
     def __init__(self) -> None:
         super().__init__()
-        self._current_step_name: str = ""
+        self._current_step_display_name: str = ""
         self._current_pbar: tqdm | None = None
 
     # -------------------------------------------------------------------------
     #  Rendering interface
     # -------------------------------------------------------------------------
     def show_step_started(self, step_display_name: str) -> None:
-        if (step_display_name != self._current_step_name) or (not self._current_pbar):
+        if (step_display_name != self._current_step_display_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
             self._current_pbar = tqdm(desc=f"{fit_step_display_name(step_display_name)} ", total=1, file=sys.stdout)
-            self._current_step_name = step_display_name
+            self._current_step_display_name = step_display_name
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         if (self._current_pbar is not None) and (snapshot.progress is not None):

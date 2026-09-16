@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- `MaxDivSolution.step_durations` is a list in step order (index 0 is the solver state initialization) in place of a dict keyed by the displayed step name, and checkpoint step names no longer carry a "step i/N - " prefix
+- `MaxDivSolution.step_durations` is a list in step order, index 0 being the solver state initialization, in place of a dict keyed by the displayed step name
+- A checkpoint's step name is the step's own name, without the "step i/N - " prefix the progress reports show
 
 ### Deprecated
 
