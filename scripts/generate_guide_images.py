@@ -339,8 +339,9 @@ def solve_experiment(
 
 @dataclass(frozen=True)
 class ExperimentRun:
-    """One experiment's cached outcome: the selected indices and the best-known convergence trace across workers.
+    """An `ExperimentRun` holds one experiment's cached outcome.
 
+    The outcome is the selected indices and the best-known convergence trace across workers.
     `checkpoints` lists `(elapsed seconds, iterations, primary diversity)` in the order the solver
     recorded them; the last entry is the run's total.
     """

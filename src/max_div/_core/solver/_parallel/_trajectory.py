@@ -29,7 +29,8 @@ def best_known_trajectory(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
     earliest worker start, and its iteration count stays the holding worker's own.
 
     Args:
-        results: what each worker reported; every result's `t_start` places its checkpoints.
+        results: what each worker reported; every result's `t_start` places its checkpoints. Non-empty,
+            and at least one checkpoint across all results.
     """
     placed = _place_on_shared_axis(results)
     trajectory: list[ScoreCheckpoint] = []

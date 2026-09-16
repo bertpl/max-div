@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
-- A parallel solve's `score_checkpoints` now trace the best selection any worker held at each moment, each point naming that worker, in place of the winning worker's own solve, which stepped up whenever that worker adopted its group's best
+- A parallel solve's `score_checkpoints` now trace the best score any worker held at each moment, each checkpoint naming that worker. They previously traced the winning worker's own solve, whose score stepped up whenever that worker adopted its group's best
 
 ### Security
 
