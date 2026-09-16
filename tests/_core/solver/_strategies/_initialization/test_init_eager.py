@@ -10,7 +10,7 @@ from max_div._core.solver._strategies._initialization._init_eager import InitEag
 
 from ._helpers import new_solver_state
 
-# the identity a step records its checkpoints under when run on its own in these tests
+# each step records its checkpoints under this identity when run on its own in these tests
 _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 

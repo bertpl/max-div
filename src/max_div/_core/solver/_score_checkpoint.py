@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 # =================================================================================================
 @dataclass(frozen=True)
 class ScoreCheckpoint:
-    """A checkpoint records the score a solve held at one moment, in which step, and which parallel worker held it.
+    """A checkpoint records the score a solve held at one moment, its step, and the parallel worker that held it.
 
-    `elapsed` is measured from the start of whatever produced the checkpoint: a single step counts
-    from its own start, a whole solve from its first step. `worker_index` and `group_index` name
-    the parallel worker that recorded the checkpoint and the worker group it belonged to at that
-    moment; both are `None` for a single (non-parallel) solve.
+    - `elapsed` is measured from the start of whatever produced the checkpoint: a single step counts
+      from its own start, a whole solve from its first step.
+    - `worker_index` and `group_index` name the parallel worker that recorded the checkpoint and the
+      worker group it belonged to at that moment; both are `None` for a single (non-parallel) solve.
     """
 
     step_identity: SolverStepIdentity
@@ -37,7 +37,10 @@ class ScoreCheckpoint:
         score: Score,
         coordinator: WorkerCoordinator | None,
     ) -> ScoreCheckpoint:
-        """Return a checkpoint tagged with the worker and group `coordinator` belongs to; untagged when it is `None`."""
+        """Return a checkpoint tagged with the worker and group that `coordinator` belongs to.
+
+        The checkpoint stays untagged when `coordinator` is `None`.
+        """
         if coordinator is None:
             return cls(step_identity=step_identity, elapsed=elapsed, score=score)
         else:

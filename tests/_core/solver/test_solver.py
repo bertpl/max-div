@@ -499,7 +499,7 @@ def test_step_durations_are_listed_in_step_order(example_solver):
 
 
 def test_a_single_solve_leaves_its_checkpoints_untagged(example_solver):
-    """Without a coordinator there is no worker to attribute a checkpoint to, so both tags stay None."""
+    """Without a coordinator both tags stay None, as no worker can be credited; the checkpoints stay in step order."""
     # --- arrange / act ----------------
     solution = example_solver.solve()
 

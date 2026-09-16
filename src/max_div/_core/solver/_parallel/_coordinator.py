@@ -25,7 +25,7 @@ class WorkerCoordinator(ABC):
     @property
     @abstractmethod
     def group_index(self) -> int:
-        """Return the group the worker belongs to at this moment; it changes as workers are regrouped."""
+        """Return the group the worker belongs to at this moment; the group changes as workers are regrouped."""
 
     @abstractmethod
     def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:

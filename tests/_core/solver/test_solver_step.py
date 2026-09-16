@@ -19,7 +19,7 @@ from tests._core.conftest import FakeClock
 #  Helpers
 # =================================================================================================
 
-# the identity a step records its checkpoints under when run on its own in these tests
+# each step records its checkpoints under this identity when run on its own in these tests
 _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
