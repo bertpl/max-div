@@ -12,7 +12,7 @@ from max_div._core.solver._step_identity import SolverStepIdentity
 def _snapshot(iter_count: int = 5, t_elapsed: float = 1.0) -> ProgressSnapshot:
     """Return an in-process snapshot with by-reference fields set, as the base reporter builds them."""
     return ProgressSnapshot(
-        step_identity=SolverStepIdentity(1, "step 1", 1),
+        step_identity=SolverStepIdentity(1, "step 1"),
         progress=Progress(
             tqdm_n_total=100,
             fraction=0.5,

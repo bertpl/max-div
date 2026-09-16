@@ -121,13 +121,14 @@ class MaxDivSolver:
 
         # --- solver steps -----------------------
         n_steps = len(self._solver_steps)
+        progress_reporter.set_step_count(n_steps)
         step_seeds = [deterministic_hash((self._seed, i)) for i in range(n_steps)]
         # one result per step in step order; the solver state initialization is step 0
         step_results: list[tuple[str, SolverStepResult]] = []
 
         # --- solver state -----------------------
         with Timer() as timer:
-            progress_reporter.solver_step_started(SolverStepIdentity(0, INIT_STEP_NAME, n_steps))
+            progress_reporter.solver_step_started(SolverStepIdentity(0, INIT_STEP_NAME))
             stores_by_distance = self._stores_by_distance_provider()
             state = SolverState.new(
                 n=self._n,
@@ -160,7 +161,7 @@ class MaxDivSolver:
 
         # --- Main loop --------------------------
         for step_index, (step_seed, step) in enumerate(zip(step_seeds, self._solver_steps), start=1):
-            progress_reporter.solver_step_started(SolverStepIdentity(step_index, step.name(), n_steps))
+            progress_reporter.solver_step_started(SolverStepIdentity(step_index, step.name()))
             step.set_seed(step_seed)
             try:
                 step_results.append((step.name(), step.run(state, progress_reporter, coordinator, self._batch_seconds)))
