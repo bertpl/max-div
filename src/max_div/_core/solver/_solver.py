@@ -127,7 +127,7 @@ class MaxDivSolver:
 
         # --- solver state -----------------------
         with Timer() as timer:
-            progress_reporter.solver_step_started(SolverStepIdentity(0, INIT_STEP_NAME), n_steps)
+            progress_reporter.solver_step_started(SolverStepIdentity(0, INIT_STEP_NAME, n_steps))
             stores_by_distance = self._stores_by_distance_provider()
             state = SolverState.new(
                 n=self._n,
@@ -160,7 +160,7 @@ class MaxDivSolver:
 
         # --- Main loop --------------------------
         for step_index, (step_seed, step) in enumerate(zip(step_seeds, self._solver_steps), start=1):
-            progress_reporter.solver_step_started(SolverStepIdentity(step_index, step.name()), n_steps)
+            progress_reporter.solver_step_started(SolverStepIdentity(step_index, step.name(), n_steps))
             step.set_seed(step_seed)
             try:
                 step_results.append((step.name(), step.run(state, progress_reporter, coordinator, self._batch_seconds)))
