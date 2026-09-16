@@ -48,7 +48,7 @@ class SolverStep[S: StrategyBase](ABC):
         self._strategy: S = strategy
 
     def name(self) -> str:
-        """Return the step's name, which is its strategy's name."""
+        """Return the step's name."""
         return self._strategy.name
 
     def set_seed(self, seed: int) -> None:
