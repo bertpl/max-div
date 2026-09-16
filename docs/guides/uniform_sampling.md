@@ -1,7 +1,7 @@
 # Case study: maximally uniform sampling in 2D and its marginals
 
 !!! info "In short"
-    A selection can be spread uniformly over the unit square and, at the same time, uniformly along each axis. Six experiments on one population show what each [distance metric](../concepts/glossary.md#distance-metric) delivers on those three goals, and that a [hybrid objective](../reference/metrics/HybridDiversityMetric.md) with one term per goal delivers all three at once.
+    A selection can be spread uniformly over the unit square and, at the same time, uniformly along each axis. Seven experiments on one population show what each [distance metric](../concepts/glossary.md#distance-metric) delivers on those three goals, that a [hybrid objective](../reference/metrics/HybridDiversityMetric.md) with one term per goal delivers all three at once, and what exact per-band counts cost on top of it.
 
 ## I. Problem statement
 
@@ -109,6 +109,8 @@ The selection is spread in the square and along both axes, none of the three at 
 
 A hybrid objective states the three goals directly: one term per goal, each the harmonic-mean separation under that goal's distance, combined by their geometric mean so that no term dominates by its scale.
 
+### V.A. Unconstrained
+
 ```python
 from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
 
@@ -127,6 +129,39 @@ Hover over a dot to see the three level curves, each through the point's nearest
 
 The three goals are each close to their reference, at the same time.
 
+### V.B. Exact counts per band
+
+The same objective, under [constraints](../concepts/constraints.md): the unit square is cut into five equal bands along $x$ and five along $y$, and each of the ten bands must hold exactly 20 of the 100 selected items. Each band is one constraint over the population items whose coordinate falls in it:
+
+```python
+import numpy as np
+
+from max_div.problem import Constraint, MaxDivProblem
+
+n_bands, k = 5, 100
+band_indices = np.minimum((vectors * n_bands).astype(int), n_bands - 1)  # per item, per axis
+constraints = [
+    Constraint(
+        int_set=set(np.flatnonzero(band_indices[:, axis] == band)),
+        min_count=k // n_bands,
+        max_count=k // n_bands,
+    )
+    for axis in (0, 1)
+    for band in range(n_bands)
+]
+problem = MaxDivProblem.new(vectors=vectors, k=k, diversity_metric=objective, constraints=constraints)
+```
+
+The light gray lines are the band edges.
+
+--8<-- "generated/uniform_sampling_hybrid_banded_figure.html"
+
+--8<-- "generated/uniform_sampling_hybrid_banded_separations.md"
+
+Every band holds its 20 items; the unconstrained selection of V.A holds between 17 and 22 per band. The three separations are the same as in V.A to within 1 % of their references: on this population the exact counts cost no diversity.
+
+The exact counts make each iteration slower, since each candidate swap is also checked against the ten counts; the convergence table below shows the resulting lower iteration count.
+
 ## VI. Summary
 
 Every experiment's achieved harmonic-mean separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">below 50 %</span> of its reference is marked red, one <span class="usx-high">above 70 %</span> green:
@@ -136,7 +171,8 @@ Every experiment's achieved harmonic-mean separation under the three reference d
 - **One distance reaches one goal.** The L2, $x$ and $y$ distances each reach their own goal and leave at least one other near the level of a random selection.
 - **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
 - **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
+- **Exact counts per band come at no cost in diversity**: under them the hybrid objective reaches the same three separations.
 
-The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the winning worker completed in the 60 s budget, and the objective it had reached at three elapsed marks as a fraction of its final value:
+The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 
 --8<-- "generated/uniform_sampling_convergence.md"

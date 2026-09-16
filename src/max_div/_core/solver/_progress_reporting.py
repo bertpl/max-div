@@ -13,6 +13,9 @@ from tqdm.auto import tqdm
 from max_div._core._utils import format_long_time_duration, np_int32_array_var_length_hash
 from max_div._core._utils._progress_table import ProgressTable
 
+# Reporters that show a step name pad it to this width, in characters, so their rows and bars line up.
+STEP_NAME_DISPLAY_WIDTH = 35
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -22,6 +25,8 @@ if TYPE_CHECKING:
     from max_div._core.solver._duration import Progress
     from max_div._core.solver._score import Score
     from max_div._core.solver._solver_state import SolverState
+
+    from ._step_identity import SolverStepIdentity
 
 
 # =================================================================================================
@@ -68,7 +73,9 @@ class ProgressSnapshot:
     construction cheap on the many updates that are throttled away without being shown.
     """
 
-    step_name: str  # name of the solver step this snapshot was taken in
+    # the solver step this snapshot was taken in; None for a combined snapshot the parallel progress view
+    # renders across several workers
+    step_identity: SolverStepIdentity | None
     progress: Progress | None  # step progress; None when the step reports none (solver-state init)
     t_elapsed_solver: float  # seconds since the first step started
     t_elapsed_step: float  # seconds since the current step started
@@ -157,7 +164,8 @@ class ProgressReporter(ABC):
     def __init__(self) -> None:
         self._t_start_solver = -1.0
         self._t_start_step = 0.0
-        self._step_name = ""
+        self._step_count: int | None = None
+        self._step_identity: SolverStepIdentity | None = None
 
     @property
     def snapshot_requirements(self) -> SnapshotRequirements | None:
@@ -172,13 +180,21 @@ class ProgressReporter(ABC):
     # -------------------------------------------------------------------------
     #  Main API (called by the solver and its steps)
     # -------------------------------------------------------------------------
-    def solver_step_started(self, step_name: str) -> None:
-        """Record that a new solver step with the provided name has started, and notify the renderer."""
-        self._step_name = step_name
-        self._t_start_step = time.perf_counter()
+    def set_step_count(self, step_count: int) -> None:
+        """Record how many steps the solve reports, so their indices 0, ..., step_count-1 render as "step i/N".
+
+        N is the last index, step_count-1: the solver state initialization is step 0 of N, and the
+        last actual solver step is step N of N.
+        """
+        self._step_count = step_count
+
+    def solver_step_started(self, step_identity: SolverStepIdentity) -> None:
+        """Record that the given solver step has started, and notify the renderer with its display name."""
+        self._step_identity = step_identity
+        self._t_start_step = time.monotonic()
         if self._t_start_solver < 0:
             self._t_start_solver = self._t_start_step
-        self.show_step_started(step_name)
+        self.show_step_started(step_display_name(step_identity, self._step_count))
 
     def update(
         self,
@@ -206,8 +222,8 @@ class ProgressReporter(ABC):
     #  Rendering interface (implemented by subclasses, consuming snapshots only)
     # -------------------------------------------------------------------------
     @abstractmethod
-    def show_step_started(self, step_name: str) -> None:
-        """Render the start of a new solver step."""
+    def show_step_started(self, step_display_name: str) -> None:
+        """Render the start of a new solver step, given its display name (see `step_display_name`)."""
 
     @abstractmethod
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
@@ -234,9 +250,9 @@ class ProgressReporter(ABC):
         self, progress: Progress | None, state: SolverState, ignore_infeasible_diversity: bool
     ) -> ProgressSnapshot:
         """Build a snapshot of the current progress and state, stamping the elapsed times."""
-        t_now = time.perf_counter()
+        t_now = time.monotonic()
         return ProgressSnapshot(
-            step_name=self._step_name,
+            step_identity=self._step_identity,
             progress=progress,
             t_elapsed_solver=t_now - self._t_start_solver,
             t_elapsed_step=t_now - self._t_start_step,
@@ -312,7 +328,7 @@ class SilentProgressReporter(ProgressReporter):
         """Return None: nothing is rendered, so no snapshots need to reach this reporter."""
         return None
 
-    def show_step_started(self, step_name: str) -> None: ...  # no-op
+    def show_step_started(self, step_display_name: str) -> None: ...  # no-op
     def show_update(
         self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None
     ) -> None: ...  # no-op
@@ -329,17 +345,17 @@ class TqdmProgressReporter(ProgressReporter):
 
     def __init__(self) -> None:
         super().__init__()
-        self._current_step_name: str = ""
+        self._current_step_display_name: str = ""
         self._current_pbar: tqdm | None = None
 
     # -------------------------------------------------------------------------
     #  Rendering interface
     # -------------------------------------------------------------------------
-    def show_step_started(self, step_name: str) -> None:
-        if (step_name != self._current_step_name) or (not self._current_pbar):
+    def show_step_started(self, step_display_name: str) -> None:
+        if (step_display_name != self._current_step_display_name) or (not self._current_pbar):
             self._close_current_pbar()  # close previous pbar, if present
-            self._current_pbar = tqdm(desc=f"{step_name} ", total=1, file=sys.stdout)  # initialize new pbar
-            self._current_step_name = step_name
+            self._current_pbar = tqdm(desc=f"{fit_step_display_name(step_display_name)} ", total=1, file=sys.stdout)
+            self._current_step_display_name = step_display_name
 
     def show_update(self, snapshot: ProgressSnapshot, get_debug_info: Callable[[], str] | None = None) -> None:
         if (self._current_pbar is not None) and (snapshot.progress is not None):
@@ -405,10 +421,10 @@ class TabularProgressReporter(ProgressReporter):
     # -------------------------------------------------------------------------
     #  Rendering interface
     # -------------------------------------------------------------------------
-    def show_step_started(self, step_name: str) -> None:
+    def show_step_started(self, step_display_name: str) -> None:
         # make sure table is initialized
         if not self._progress_table:
-            self._initialize_table(step_name_width=len(step_name))
+            self._initialize_table()
 
         # reset progress reporting thresholds
         self._throttle.reset()
@@ -440,7 +456,7 @@ class TabularProgressReporter(ProgressReporter):
             return snapshot.debug_info
         return get_debug_info() if (get_debug_info is not None) else ""
 
-    def _initialize_table(self, step_name_width: int) -> None:
+    def _initialize_table(self) -> None:
         """Initialize self._progress_table."""
         if self._worker_columns:
             leading_headers = [
@@ -453,7 +469,7 @@ class TabularProgressReporter(ProgressReporter):
         else:
             leading_headers = [
                 "Solver t.".ljust(10),
-                "Solver step".ljust(step_name_width),
+                "Solver step".ljust(STEP_NAME_DISPLAY_WIDTH),
                 "Step %".ljust(10),
                 "Step it.".ljust(10),
                 "Step t.".ljust(10),
@@ -491,7 +507,7 @@ class TabularProgressReporter(ProgressReporter):
         else:
             leading_values = [
                 format_long_time_duration(snapshot.t_elapsed_solver, n_chars=8),
-                snapshot.step_name,
+                fit_step_display_name(step_display_name(snapshot.step_identity, self._step_count)),
                 f"{progress.fraction * 100:.2f}%" if progress else "",
                 f"{progress.iter_count:_}".rjust(10) if progress else "",
                 format_long_time_duration(snapshot.t_elapsed_step, n_chars=8),
@@ -547,3 +563,28 @@ def _selection_hash_hex(selection: NDArray[np.int32], n: int) -> str:
     # --- generate hash --------------------------
     hash_array = np_int32_array_var_length_hash(selection, n)
     return "".join(f"{val & 0xF:x}" for val in hash_array)
+
+
+def step_display_name(step_identity: SolverStepIdentity | None, step_count: int | None) -> str:
+    """Return a step's display name: "step i/N - name" with N the last index, or "step i - name" without a step count.
+
+    A snapshot without a step identity (the parallel progress view's combined snapshot) has no name.
+    """
+    if step_identity is None:
+        return ""
+    elif step_count is None:
+        return f"step {step_identity.step_index} - {step_identity.step_name}"
+    else:
+        return f"step {step_identity.step_index}/{step_count - 1} - {step_identity.step_name}"
+
+
+def fit_step_display_name(step_display_name: str) -> str:
+    """Return the display name at `STEP_NAME_DISPLAY_WIDTH` characters.
+
+    A shorter name is padded on the right; a longer one is cropped from the right with an ellipsis,
+    so its start is kept.
+    """
+    if len(step_display_name) > STEP_NAME_DISPLAY_WIDTH:
+        return step_display_name[: STEP_NAME_DISPLAY_WIDTH - 1] + "…"
+    else:
+        return step_display_name.ljust(STEP_NAME_DISPLAY_WIDTH)

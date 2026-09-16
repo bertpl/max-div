@@ -174,6 +174,20 @@ def test_the_coordinator_exchanges_with_whichever_slot_the_assignment_names():
     assert clustered.selected_index_array.tolist() == [0, 3, 5]  # adopted slot 1's stored selection
 
 
+def test_the_coordinator_reports_its_worker_and_the_group_it_is_assigned_to():
+    """The group index follows the assignment table, so it changes when the worker is reassigned."""
+    # --- arrange ----------------------
+    group_state = _group_state(2)
+    coordinator = group_state.coordinator_for(1)
+    assert (coordinator.worker_index, coordinator.group_index) == (1, 1)
+
+    # --- act --------------------------
+    group_state._assignment[1] = 0
+
+    # --- assert -----------------------
+    assert (coordinator.worker_index, coordinator.group_index) == (1, 0)
+
+
 def test_a_boundary_past_the_threshold_regroups_and_adopts_in_one_visit():
     """A worker whose fraction crossed a threshold dissolves the worst group and lands in the survivor."""
     # --- arrange ----------------------

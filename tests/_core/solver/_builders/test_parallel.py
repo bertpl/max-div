@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from itertools import pairwise
 
 import numpy as np
 import pytest
@@ -54,6 +55,22 @@ def test_a_parallel_solve_returns_an_ordinary_solution():
     assert solution.i_selected.size == 8
     assert solution.score.diversity > 0.0
     assert solution.duration.n_iterations > 0
+
+
+def test_the_checkpoints_trace_the_best_score_across_workers():
+    """A parallel solution's checkpoints climb to the winner's score, each naming the worker and group that held it."""
+    # --- arrange / act ----------------
+    solution = _solve_dynamic(2)
+    checkpoints = solution.score_checkpoints
+
+    # --- assert -----------------------
+    assert checkpoints[-1].score == solution.workers[solution.winning_worker].score
+    assert all(earlier.score <= later.score for earlier, later in pairwise(checkpoints))
+    assert all(earlier.elapsed.t_elapsed_sec <= later.elapsed.t_elapsed_sec for earlier, later in pairwise(checkpoints))
+    assert {checkpoint.worker_index for checkpoint in checkpoints} <= {
+        worker.worker_index for worker in solution.workers
+    }
+    assert all(checkpoint.group_index is not None for checkpoint in checkpoints)
 
 
 def test_every_worker_is_summarized():
@@ -446,9 +463,8 @@ def test_a_budget_spent_during_setup_reaches_the_workers_as_spent():
     solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
-    optimization_steps = [name for name in solution.step_durations if "Optim" in name]
-    assert len(optimization_steps) == 1
-    assert solution.step_durations[optimization_steps[0]].n_iterations == 0
+    assert len(solution.step_durations) == 3  # initialization, initial selection, optimization
+    assert solution.step_durations[-1].n_iterations == 0  # the optimization step ran no iterations
     assert len(solution.i_selected) == 8  # the shared test problem's k
 
 

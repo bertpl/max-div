@@ -9,8 +9,9 @@ from max_div._core.solver._strategies import InitializationStrategy, Optimizatio
 
 from ._duration import E2eBudget, Elapsed, Progress, TargetDuration
 from ._progress_reporting import ProgressReporter, SilentProgressReporter
-from ._score import Score
+from ._score_checkpoint import ScoreCheckpoint
 from ._solver_state import SolverState
+from ._step_identity import SolverStepIdentity
 from ._strategies._base import StrategyBase
 
 if TYPE_CHECKING:
@@ -31,13 +32,16 @@ COOPERATIVE_BATCH_SECONDS = 0.05
 # =================================================================================================
 @dataclass
 class SolverStepResult:
-    # checkpoints of how score evolved during execution of the step
-    # NOTE: we should always make sure the last checkpoint represents the final state after all iterations
-    score_checkpoints: list[tuple[Elapsed, Score]]
+    """The checkpoints of how the score evolved during one step; the last one is the state after its final iteration.
+
+    A step counts `elapsed` from its own start.
+    """
+
+    score_checkpoints: list[ScoreCheckpoint]
 
     @property
     def elapsed(self) -> Elapsed:
-        return self.score_checkpoints[-1][0]
+        return self.score_checkpoints[-1].elapsed
 
 
 # =================================================================================================
@@ -48,6 +52,7 @@ class SolverStep[S: StrategyBase](ABC):
         self._strategy: S = strategy
 
     def name(self) -> str:
+        """Return the step's name."""
         return self._strategy.name
 
     def set_seed(self, seed: int) -> None:
@@ -66,6 +71,7 @@ class SolverStep[S: StrategyBase](ABC):
     def run(
         self,
         state: SolverState,
+        step_identity: SolverStepIdentity,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
@@ -74,6 +80,8 @@ class SolverStep[S: StrategyBase](ABC):
 
         Args:
             state: the mutable solver state the step reads and updates.
+            step_identity: which step of the solve this run is; every checkpoint the step records
+                carries it.
             progress_reporter: receives progress updates during the run; `None` disables reporting.
             coordinator: a `WorkerCoordinator` this step calls at each batch boundary; a step that
                 runs as a single batch ignores it.
@@ -104,6 +112,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
     def run(
         self,
         state: SolverState,
+        step_identity: SolverStepIdentity,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
@@ -137,12 +146,8 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         # --- gather results ---------------------
         return SolverStepResult(
             score_checkpoints=[
-                (
-                    Elapsed(
-                        t_elapsed_sec=t.t_elapsed_sec(),
-                        n_iterations=1,
-                    ),
-                    state.score,
+                ScoreCheckpoint.new(
+                    step_identity, Elapsed(t_elapsed_sec=t.t_elapsed_sec(), n_iterations=1), state.score, coordinator
                 )
             ],
         )
@@ -191,6 +196,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
     def run(
         self,
         state: SolverState,
+        step_identity: SolverStepIdentity,
         progress_reporter: ProgressReporter | None = None,
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
@@ -205,9 +211,15 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         duration = self._effective_duration()
         if duration is None:
             progress_reporter.solver_step_finished(None, state)
-            return SolverStepResult(score_checkpoints=[(Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)])
+            return SolverStepResult(
+                score_checkpoints=[
+                    ScoreCheckpoint.new(
+                        step_identity, Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score, coordinator
+                    )
+                ]
+            )
         tracker = duration.track()
-        score_checkpoints: list[tuple[Elapsed, Score]] = []
+        score_checkpoints: list[ScoreCheckpoint] = []
         next_checkpoint_iter_count = 1
 
         # --- main loop --------------------------
@@ -238,7 +250,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
             # --- create checkpoint if needed ----
             if tracker.iter_count() >= next_checkpoint_iter_count:
-                score_checkpoints.append((tracker.elapsed(), state.score))
+                score_checkpoints.append(
+                    ScoreCheckpoint.new(step_identity, tracker.elapsed(), state.score, coordinator)
+                )
                 next_checkpoint_iter_count = int(
                     max(
                         [
@@ -257,9 +271,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 
         # --- gather results ---------------------
         elapsed = tracker.elapsed()
-        if (len(score_checkpoints) == 0) or (elapsed.n_iterations > score_checkpoints[-1][0].n_iterations):
+        if (len(score_checkpoints) == 0) or (elapsed.n_iterations > score_checkpoints[-1].elapsed.n_iterations):
             # make sure we always have a checkpoint after the last iteration
-            score_checkpoints.append((elapsed, state.score))
+            score_checkpoints.append(ScoreCheckpoint.new(step_identity, elapsed, state.score, coordinator))
         return SolverStepResult(score_checkpoints=score_checkpoints)
 
     @staticmethod

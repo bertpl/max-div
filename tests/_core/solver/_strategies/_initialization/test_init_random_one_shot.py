@@ -4,9 +4,13 @@ import numpy as np
 import pytest
 
 from max_div._core.solver._solver_step import InitializationStep
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
 
 from ._helpers import new_solver_state
+
+# each step records its checkpoints under this identity when run on its own in these tests
+_STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
@@ -22,7 +26,7 @@ def test_init_random_one_shot(problem_has_constraints: bool, arg_ignore_constrai
     init_step = InitializationStep(strategy)
 
     # --- act --------------------------
-    init_step.run(solver_state)
+    init_step.run(solver_state, _STEP_IDENTITY)
     score = solver_state.score
 
     # --- assert -----------------------
@@ -75,7 +79,7 @@ def test_init_random_one_shot_parallel_matches_serial():
 
     # --- act --------------------------
     for step, state in zip(steps, states, strict=True):
-        step.run(state)
+        step.run(state, _STEP_IDENTITY)
 
     # --- assert -----------------------
     serial_state, parallel_state = states

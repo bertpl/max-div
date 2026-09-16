@@ -23,6 +23,7 @@ from max_div._core.solver import (
     seconds,
 )
 from max_div._core.solver._duration import Elapsed
+from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solver_step import InitializationStep, OptimizationStep, SolverStepResult
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
@@ -283,8 +284,8 @@ def test_max_div_solver_quadratic_penalty_end_to_end():
 
     # --- assert -----------------------
     assert len(result.i_selected) == problem.k
-    score_after_initialization = result.score_checkpoints[1][2]
-    score_after_optimization = result.score_checkpoints[-1][2]
+    score_after_initialization = result.score_checkpoints[1].score
+    score_after_optimization = result.score_checkpoints[-1].score
     assert score_after_optimization >= score_after_initialization
 
 
@@ -320,8 +321,8 @@ def test_max_div_solver_builder_preset(problem_name: str, n: int, preset: Solver
     result = solver.solve(verbosity=Verbosity.TABULAR_DEBUG)
 
     # --- assert -----------------------
-    score_after_initialization = result.score_checkpoints[1][2]
-    score_after_optimization = result.score_checkpoints[-1][2]
+    score_after_initialization = result.score_checkpoints[1].score
+    score_after_optimization = result.score_checkpoints[-1].score
 
     assert score_after_initialization.size == 1.0, "initialization should select k items."
     assert score_after_optimization.size == 1.0, "final solution should contain k items."
@@ -386,9 +387,8 @@ def test_a_budget_spent_during_setup_skips_the_optimization(dummy_problem, fake_
         solution = solver.solve(verbosity=Verbosity.SILENT)
 
     # --- assert -----------------------
-    optimization_steps = [name for name in solution.step_durations if "OptimRandomSwaps" in name]
-    assert len(optimization_steps) == 1
-    assert solution.step_durations[optimization_steps[0]].n_iterations == 0
+    assert len(solution.step_durations) == 3  # initialization, initial selection, optimization
+    assert solution.step_durations[-1].n_iterations == 0  # the optimization step ran no iterations
     assert len(solution.i_selected) == dummy_problem.k
 
 
@@ -414,8 +414,8 @@ def test_solve_hands_every_step_the_budget_and_its_start(dummy_problem, fake_clo
     monkeypatch.setattr(
         OptimizationStep,
         "run",
-        lambda self, state, *args, **kwargs: SolverStepResult(
-            score_checkpoints=[(Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)]
+        lambda self, state, step_identity, *args, **kwargs: SolverStepResult(
+            score_checkpoints=[ScoreCheckpoint(step_identity, Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score)]
         ),
     )
 

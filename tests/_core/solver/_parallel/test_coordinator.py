@@ -16,6 +16,14 @@ class _RecordingCoordinator(WorkerCoordinator):
         self.sizes: list[int] = []
         self.fractions: list[float] = []
 
+    @property
+    def worker_index(self) -> int:
+        return 0
+
+    @property
+    def group_index(self) -> int:
+        return 0
+
     def at_batch_boundary(self, state: SolverState, progress_fraction: float) -> None:
         """Record the selection size and progress fraction the worker held at this boundary."""
         self.sizes.append(int(state.n_selected))

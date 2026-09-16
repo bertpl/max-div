@@ -6,12 +6,13 @@ from max_div._core.solver._duration import Progress
 from max_div._core.solver._parallel._progress_channel import ForwardingProgressReporter
 from max_div._core.solver._progress_reporting import ProgressSnapshot, SnapshotRequirements
 from max_div._core.solver._score import Score
+from max_div._core.solver._step_identity import SolverStepIdentity
 
 
 def _snapshot(iter_count: int = 5, t_elapsed: float = 1.0) -> ProgressSnapshot:
     """Return an in-process snapshot with by-reference fields set, as the base reporter builds them."""
     return ProgressSnapshot(
-        step_name="step 1",
+        step_identity=SolverStepIdentity(1, "step 1"),
         progress=Progress(
             tqdm_n_total=100,
             fraction=0.5,

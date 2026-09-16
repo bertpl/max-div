@@ -24,12 +24,12 @@ def measure_end_to_end() -> Iterator[EndToEndTiming]:
     before `build()`.
 
     Yields:
-        An `EndToEndTiming` whose `t_elapsed_sec` is set (via `perf_counter`) when the
+        An `EndToEndTiming` whose `t_elapsed_sec` is set (via `time.monotonic`) when the
         context exits.
     """
     timing = EndToEndTiming()
-    t_start = time.perf_counter()
+    t_start = time.monotonic()
     try:
         yield timing
     finally:
-        timing.t_elapsed_sec = time.perf_counter() - t_start
+        timing.t_elapsed_sec = time.monotonic() - t_start

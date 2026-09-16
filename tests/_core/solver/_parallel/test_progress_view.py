@@ -9,7 +9,9 @@ from max_div._core.solver._parallel._progress_view import ParallelProgressView
 from max_div._core.solver._parallel._result import WorkerResult
 from max_div._core.solver._progress_reporting import ProgressReporter, ProgressSnapshot
 from max_div._core.solver._score import Score
+from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solution import MaxDivSolution
+from max_div._core.solver._step_identity import SolverStepIdentity
 
 
 class _RecordingReporter(ProgressReporter):
@@ -38,7 +40,7 @@ class _RecordingReporter(ProgressReporter):
 def _snapshot(worker_index: int, fraction: float, diversity: float, iter_count: int = 10) -> ProgressSnapshot:
     """Return a materialized snapshot, as a worker would forward it."""
     return ProgressSnapshot(
-        step_name="",
+        step_identity=None,
         progress=Progress(
             tqdm_n_total=100,
             fraction=fraction,
@@ -63,13 +65,17 @@ def _result(worker_index: int) -> WorkerResult:
     """Return a minimal result marking `worker_index` as finished."""
     solution = MaxDivSolution(
         i_selected=np.arange(5, dtype=np.int32),
-        score_checkpoints=[("step", Elapsed(t_elapsed_sec=1.0, n_iterations=10), _snapshot(0, 1.0, 0.0).score)],
-        step_durations={"step": Elapsed(t_elapsed_sec=1.0, n_iterations=10)},
+        score_checkpoints=[
+            ScoreCheckpoint(
+                SolverStepIdentity(1, "step"), Elapsed(t_elapsed_sec=1.0, n_iterations=10), _snapshot(0, 1.0, 0.0).score
+            )
+        ],
+        step_durations=[Elapsed(t_elapsed_sec=1.0, n_iterations=10)],
         n_constraints=0,
         n_constraints_satisfied=0,
         distance_storage=DistanceStorageTypes(),
     )
-    return WorkerResult(worker_index=worker_index, seed=0, solution=solution)
+    return WorkerResult(worker_index=worker_index, seed=0, t_start=0.0, solution=solution)
 
 
 def test_progress_follows_the_slowest_live_worker():

@@ -12,7 +12,7 @@ class Timer:
 
     # --- context manager ------------------------
     def __enter__(self) -> "Timer":
-        self._start = time.perf_counter_ns()
+        self._start = time.monotonic_ns()
         return self
 
     def __exit__(
@@ -21,7 +21,7 @@ class Timer:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        self._end = time.perf_counter_ns()
+        self._end = time.monotonic_ns()
 
     # --- extract results ------------------------
     def t_elapsed_nsec(self) -> float:
@@ -30,7 +30,7 @@ class Timer:
 
         if self._end is None:
             # timer still running
-            return time.perf_counter_ns() - self._start
+            return time.monotonic_ns() - self._start
         # timer finished
         return self._end - self._start
 

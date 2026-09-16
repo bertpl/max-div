@@ -8,7 +8,6 @@ from ._hash import (
     int_to_int64,
     np_int32_array_var_length_hash,
 )
-from ._justify_lists import ljust_str_list, rjust_str_list
 from ._micro_benchmark import BenchmarkResult, benchmark
 from ._precision import ALMOST_ONE, ALMOST_ONE_F32, EPS, EPS_F32, HALF_EPS, HALF_EPS_F32
 from ._shared_memory_segment import (

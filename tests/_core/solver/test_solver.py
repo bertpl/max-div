@@ -11,11 +11,12 @@ from max_div._core.metrics import DistanceMetric, DiversityMetric, HybridDiversi
 from max_div._core.problem import MaxDivProblem
 from max_div._core.solver import DistanceStorageType, MaxDivSolution, MaxDivSolverBuilder, Verbosity
 from max_div._core.solver._builders import ParallelMaxDivSolverBuilder
-from max_div._core.solver._duration import Elapsed, iterations
+from max_div._core.solver._duration import iterations
 from max_div._core.solver._presets import SolverPreset
-from max_div._core.solver._score import Score
+from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import OptimizationStep
+from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
 from tests._core.metrics._distance.helpers import condensed_distances
 
@@ -23,13 +24,13 @@ from tests._core.metrics._distance.helpers import condensed_distances
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[str, Elapsed, Score]]):
+def assert_score_checkpoints_are_sane(score_checkpoints: list[ScoreCheckpoint]):
     # --- non-empty ------------------------------
     assert len(score_checkpoints) >= 1, "score_checkpoints must contain at least one entry"
 
     # --- check step names -----------------------
     singular_step_names = []
-    for step_name, _, _ in score_checkpoints:
+    for step_name in (checkpoint.step_identity.step_name for checkpoint in score_checkpoints):
         if (len(singular_step_names) == 0) or (step_name != singular_step_names[-1]):
             # only deduplicate consecutive identical step names
             singular_step_names.append(step_name)
@@ -38,20 +39,17 @@ def assert_score_checkpoints_are_sane(score_checkpoints: list[tuple[str, Elapsed
         "score_checkpoints contains duplicate non-consecutive step names"
     )
 
-    for i, step_name in enumerate(singular_step_names):
-        # e.g. if we have 4 steps reported...
-        #  - first step is step 0/3 representing SolverState initialization
-        #  - other steps are step 1/3, step 2/3, step 3/3, represent actual SolverSteps
-        assert f"{i}/{len(singular_step_names) - 1}" in step_name
+    # the first step is the solver state initialization; the others are the actual solver steps
+    assert singular_step_names[0] == "Init SolverState"
 
     # --- check iteration counts -----------------
-    iter_values = [e.n_iterations for _, e, _ in score_checkpoints]
+    iter_values = [checkpoint.elapsed.n_iterations for checkpoint in score_checkpoints]
     assert min(iter_values) >= 0, "score_checkpoints contains negative iteration counts"
     assert len(iter_values) == len(set(iter_values)), "score_checkpoints contains duplicate iteration counts"
     assert iter_values == sorted(iter_values), "score_checkpoints iteration counts should be strictly increasing"
 
     # --- check elapsed times --------------------
-    t_values = [e.t_elapsed_sec for _, e, _ in score_checkpoints]
+    t_values = [checkpoint.elapsed.t_elapsed_sec for checkpoint in score_checkpoints]
     assert min(t_values) >= 0.0, "score_checkpoints contains negative elapsed times"
     # NOTE: duplicate time values can happen if iterations are very fast, so we don't assert uniqueness here
     assert t_values == sorted(t_values), "score_checkpoints elapsed times should be non-decreasing"
@@ -67,9 +65,9 @@ def test_solver_minimal(example_solver):
     # --- assert -----------------------
     assert isinstance(solution, MaxDivSolution)
     assert_score_checkpoints_are_sane(solution.score_checkpoints)
-    assert solution.duration == sum(list(solution.step_durations.values()))
-    assert solution.duration == solution.score_checkpoints[-1][1]
-    assert solution.score == solution.score_checkpoints[-1][2]
+    assert solution.duration == sum(solution.step_durations)
+    assert solution.duration == solution.score_checkpoints[-1].elapsed
+    assert solution.score == solution.score_checkpoints[-1].score
 
 
 def test_solver_solution_constraint_counts(example_solver):
@@ -486,3 +484,28 @@ def test_solver_hybrid_metric_solves_in_parallel(factory, expected_score):
     assert len(solution.i_selected) == problem.k
     expected = expected_score(vectors, solution.i_selected, axis=0)
     assert solution.score.diversity == pytest.approx(expected, rel=1e-5)
+
+
+def test_step_durations_are_listed_in_step_order(example_solver):
+    """One duration per step, the solver state initialization first, and the checkpoints name the same steps."""
+    # --- arrange / act ----------------
+    solution = example_solver.solve()
+
+    # --- assert -----------------------
+    assert len(solution.step_durations) == len(example_solver._solver_steps) + 1
+    assert solution.step_durations[0].n_iterations == 0  # the initialization runs no iterations
+    assert solution.score_checkpoints[0].step_identity == SolverStepIdentity(0, "Init SolverState")
+    assert solution.score_checkpoints[-1].step_identity.step_name == example_solver._solver_steps[-1].name()
+
+
+def test_a_single_solve_leaves_its_checkpoints_untagged(example_solver):
+    """Without a coordinator both tags stay None, as no worker can be credited; the checkpoints stay in step order."""
+    # --- arrange / act ----------------
+    solution = example_solver.solve()
+
+    # --- assert -----------------------
+    assert all(checkpoint.worker_index is None for checkpoint in solution.score_checkpoints)
+    assert all(checkpoint.group_index is None for checkpoint in solution.score_checkpoints)
+    assert [checkpoint.step_identity.step_index for checkpoint in solution.score_checkpoints] == sorted(
+        checkpoint.step_identity.step_index for checkpoint in solution.score_checkpoints
+    )

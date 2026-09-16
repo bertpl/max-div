@@ -90,6 +90,17 @@ def test_a_worker_reproduces_the_same_solve_run_alone(parallel_results):
     np.testing.assert_array_equal(np.sort(results[0].i_selected), np.sort(alone.i_selected))
 
 
+def test_every_worker_reports_when_it_started(parallel_results):
+    """Each result carries the worker's monotonic start, and the workers started within moments of each other."""
+    # --- arrange / act ----------------
+    _, results = parallel_results
+    starts = [result.t_start for result in results]
+
+    # --- assert -----------------------
+    assert max(starts) - min(starts) < 60.0
+    assert all(result.solution.score_checkpoints[-1].worker_index == result.worker_index for result in results)
+
+
 def test_the_best_reported_result_wins(parallel_results):
     """The winner is the best-scoring worker, not the first to report."""
     # --- arrange / act ----------------
