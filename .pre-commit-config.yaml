@@ -31,7 +31,7 @@ repos:
         pass_filenames: true
       - id: ty
         name: ty check
-        entry: uv run --no-default-groups --group lint ty check
+        entry: uv run --no-default-groups --group lint --all-extras ty check
         language: system
         types: [python]
         # ty is a whole-program checker: a staged-files-only run would miss

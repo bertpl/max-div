@@ -84,14 +84,12 @@ test = [
     { include-group = "tooling" },
 ]
 # The pre-commit config drives ruff and ty as local `uv run` hooks rather than pinned pre-commit
-# environments, so both tools — and the stubs ty needs to check scipy usage — belong here.
+# environments, so both tools — and the stubs ty needs to check scipy usage — belong here. The
+# extras are not listed: `make lint` and the ty hook install them with --all-extras, so ty sees the
+# code behind every extra without a second copy of its floors.
 lint = [
     "pre-commit>=4.0",
     "ruff>=0.14.0",
-    # the `plot` extra, so ty can see the plotting package; same per-Python floors as the extra
-    "matplotlib>=3.8; python_version == '3.12'",
-    "matplotlib>=3.9.2; python_version == '3.13'",
-    "matplotlib>=3.10.6; python_version >= '3.14'",
     "scipy-stubs>=1.10.0",
     "ty>=0.0.58",  # pre-1.0 type checker — floor only; uv.lock pins the version actually used
 ]

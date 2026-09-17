@@ -1909,7 +1909,6 @@ benchmarks = [
 ]
 dev = [
     { name = "check-wheel-contents" },
-    { name = "matplotlib" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1929,7 +1928,6 @@ docs = [
     { name = "ruff" },
 ]
 lint = [
-    { name = "matplotlib" },
     { name = "pre-commit" },
     { name = "ruff" },
     { name = "scipy-stubs" },
@@ -1994,9 +1992,6 @@ benchmarks = [
 ]
 dev = [
     { name = "check-wheel-contents", specifier = ">=0.6.2" },
-    { name = "matplotlib", marker = "python_full_version == '3.12.*'", specifier = ">=3.8" },
-    { name = "matplotlib", marker = "python_full_version == '3.13.*'", specifier = ">=3.9.2" },
-    { name = "matplotlib", marker = "python_full_version >= '3.14'", specifier = ">=3.10.6" },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=6.0" },
@@ -2018,9 +2013,6 @@ docs = [
     { name = "ruff", specifier = ">=0.14.0" },
 ]
 lint = [
-    { name = "matplotlib", marker = "python_full_version == '3.12.*'", specifier = ">=3.8" },
-    { name = "matplotlib", marker = "python_full_version == '3.13.*'", specifier = ">=3.9.2" },
-    { name = "matplotlib", marker = "python_full_version >= '3.14'", specifier = ">=3.10.6" },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "ruff", specifier = ">=0.14.0" },
     { name = "scipy-stubs", specifier = ">=1.10.0" },

@@ -107,7 +107,8 @@ test-and-coverage:
 	$(MAKE) coverage;
 
 lint:
-	uv run --exact --no-default-groups --group lint pre-commit run --all-files
+	# --all-extras: ty type-checks the code behind every extra, so the extras' packages must be present
+	uv run --exact --no-default-groups --group lint --all-extras pre-commit run --all-files
 
 dev-setup:
 	uv sync --all-extras
