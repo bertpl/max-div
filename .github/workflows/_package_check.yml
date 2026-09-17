@@ -80,3 +80,25 @@ jobs:
 
       - name: Smoke-test the CLI entry point
         run: blind-venv/bin/max-div --help
+
+      # The wheel alone, no extras: the package imports without matplotlib, and reaching for the
+      # plotting package names the `plot` extra. The test suite above cannot see this, since the
+      # test group installs matplotlib.
+      - name: Import the wheel without extras
+        run: |
+          uv venv no-extras-venv
+          WHEEL=(dist/*.whl)
+          uv pip install --python no-extras-venv/bin/python "max-div @ file://$PWD/${WHEEL[0]}"
+          no-extras-venv/bin/python -c "
+          import sys
+          import max_div
+          import max_div.solver
+          assert 'matplotlib' not in sys.modules, 'importing max_div loaded matplotlib'
+          try:
+              import max_div._core.plotting
+          except ImportError as e:
+              assert 'max-div[plot]' in str(e), f'guard error does not name the extra: {e}'
+              print(f'OK: {e}')
+          else:
+              raise AssertionError('the plotting package imported without matplotlib')
+          "

@@ -45,6 +45,12 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.optional-dependencies]
+# Figures drawn from solver results (`max_div._core.plotting`); the package imports without it.
+plot = [
+    "matplotlib>=3.9",
+]
+
 [dependency-groups]
 # Comparison-benchmark harness (see benchmarks/README.md); never part of the published package.
 benchmarks = [
@@ -67,6 +73,7 @@ benchmarks = [
 # matrix installs no linters, and a test reaching for a lint-only or docs-only package fails as the
 # category error it is.
 test = [
+    "matplotlib>=3.9",  # the `plot` extra, so the plotting tests run; the no-extra path is tested by blocking the import
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "pytest-xdist>=3.5.0",
@@ -77,6 +84,7 @@ test = [
 lint = [
     "pre-commit>=4.0",
     "ruff>=0.14.0",
+    "matplotlib>=3.9",  # the `plot` extra, so ty can see the plotting package
     "scipy-stubs>=1.10.0",
     "ty>=0.0.58",  # pre-1.0 type checker — floor only; uv.lock pins the version actually used
 ]
@@ -192,12 +200,19 @@ select = [
     "N",       # pep8-naming
     "PT",      # flake8-pytest-style
     "C901",    # mccabe complexity gate (threshold in [tool.ruff.lint.mccabe])
+    "TID251",  # banned imports: matplotlib only inside the plotting package (see banned-api below)
 ]
 ignore = [
     "B905",    # numba nopython mode can't take zip()'s strict= kwarg
     "E731",    # assigning a lambda to a name is fine here; a trivial thunk reads better than a def
     "RET505",  # an explicit else after an if-return chain reads as the final case of a dispatch; no-else-return is not house preference
 ]
+
+# matplotlib is the `plot` extra: only `max_div._core.plotting` may import it, so `import max_div` never
+# needs it and the friendly error for a missing extra lives in that one package. Everything outside the
+# shipped package (tests, benchmarks, scripts, docs figures) is exempt below.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"matplotlib".msg = "matplotlib is the optional `plot` extra: import it only inside max_div._core.plotting"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -210,11 +225,14 @@ raises-require-match-for = ["Exception", "BaseException"]  # only the truly broa
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty
+"tests/**" = ["SLF001", "S101", "S311", "D", "ANN", "TID251"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty; may import matplotlib
+"src/max_div/_core/plotting/**" = ["TID251"]  # the one package that may import matplotlib (its __init__ guards the extra)
+"benchmarks/**" = ["TID251"]  # harness, never part of the published package
+"local/**" = ["TID251"]  # docs figures, never part of the published package
 "benchmarks/tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # harness tests: same carve-outs as the package suite
 "tests/_core/_markdown/test_table.py" = ["E501"]  # expected-output literals: exact rendered table rows
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
-"scripts/**" = ["INP001", "S", "D", "ANN"]           # maintainer tooling, not the shipped library
+"scripts/**" = ["INP001", "S", "D", "ANN", "TID251"]  # maintainer tooling, not the shipped library
 ".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
 # benchmark closures are constructed and invoked within the same loop iteration, so late binding never bites
 "src/max_div/_core/_cli/benchmarks/internal/**" = ["B023"]

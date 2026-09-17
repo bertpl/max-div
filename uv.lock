@@ -1796,6 +1796,11 @@ dependencies = [
     { name = "tqdm" },
 ]
 
+[package.optional-dependencies]
+plot = [
+    { name = "matplotlib" },
+]
+
 [package.dev-dependencies]
 benchmarks = [
     { name = "apricot-select" },
@@ -1815,6 +1820,7 @@ benchmarks = [
 ]
 dev = [
     { name = "check-wheel-contents" },
+    { name = "matplotlib" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1834,6 +1840,7 @@ docs = [
     { name = "ruff" },
 ]
 lint = [
+    { name = "matplotlib" },
     { name = "pre-commit" },
     { name = "ruff" },
     { name = "scipy-stubs" },
@@ -1849,6 +1856,7 @@ package = [
     { name = "check-wheel-contents" },
 ]
 test = [
+    { name = "matplotlib" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
@@ -1863,6 +1871,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.2.0" },
     { name = "icc-rt", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "intel-cmplr-lib-rt", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "matplotlib", marker = "extra == 'plot'", specifier = ">=3.9" },
     { name = "numba", marker = "python_full_version == '3.12.*'", specifier = ">=0.59" },
     { name = "numba", marker = "python_full_version == '3.13.*'", specifier = ">=0.61" },
     { name = "numba", marker = "python_full_version >= '3.14'", specifier = ">=0.63" },
@@ -1874,6 +1883,7 @@ requires-dist = [
     { name = "scipy", marker = "python_full_version >= '3.14'", specifier = ">=1.16.1" },
     { name = "tqdm", specifier = ">=4.66.0" },
 ]
+provides-extras = ["plot"]
 
 [package.metadata.requires-dev]
 benchmarks = [
@@ -1894,6 +1904,7 @@ benchmarks = [
 ]
 dev = [
     { name = "check-wheel-contents", specifier = ">=0.6.2" },
+    { name = "matplotlib", specifier = ">=3.9" },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=6.0" },
@@ -1915,6 +1926,7 @@ docs = [
     { name = "ruff", specifier = ">=0.14.0" },
 ]
 lint = [
+    { name = "matplotlib", specifier = ">=3.9" },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "ruff", specifier = ">=0.14.0" },
     { name = "scipy-stubs", specifier = ">=1.10.0" },
@@ -1928,6 +1940,7 @@ notebooks = [
 ]
 package = [{ name = "check-wheel-contents", specifier = ">=0.6.2" }]
 test = [
+    { name = "matplotlib", specifier = ">=3.9" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=6.0" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },

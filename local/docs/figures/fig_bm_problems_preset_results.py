@@ -9,7 +9,8 @@ from matplotlib.lines import Line2D
 from tqdm import tqdm
 
 from local.docs.figures.utils import save_fig
-from local.docs.utils import LogTransform, PresetQuantilesTable, QuantileCurves, UpperLogTransform
+from local.docs.utils import PresetQuantilesTable, QuantileCurves
+from max_div._core.plotting.helpers import LogTransform, UpperLogTransform
 from max_div._core._cli.benchmarks.solver_presets._models import SolverPresetBenchmarkResult, results_from_json
 from max_div._core._utils import format_long_time_duration
 from max_div._core.benchmark_problems import BenchmarkProblemFactory
@@ -150,7 +151,7 @@ def create_single_figure(
 
                 # --- plot data ---
                 if use_y_transform:
-                    y_trans = y_transform.f(y)
+                    y_trans = y_transform.to_axis(y)
                     h = ax.plot(x, y_trans, label=preset_label, linestyle="None", marker="o")
                 else:
                     h = ax.plot(x, y, label=preset_label, linestyle="None", marker="o")
@@ -179,9 +180,9 @@ def create_single_figure(
                         y_axis=y_axis,
                     )
                     x_q, q10, q50, q90 = quantile_curves.get_full_curves()  # in transformed space, if y_transform
-                    q10 = y_transform.f(q10)
-                    q50 = y_transform.f(q50)
-                    q90 = y_transform.f(q90)
+                    q10 = y_transform.to_axis(q10)
+                    q50 = y_transform.to_axis(q50)
+                    q90 = y_transform.to_axis(q90)
 
                     ax.fill_between(x_q, q10, q90, color=color, alpha=0.1)
                     ax.plot(x_q, q50, color=color, linestyle="-", lw=0.8, alpha=0.8, label="q50")
@@ -201,7 +202,7 @@ def create_single_figure(
                     parallel_y.append(getattr(result.score, y_result_score_field))
                     parallel_label = result.params.column_label()
             if parallel_x:
-                parallel_y_plot = y_transform.f(parallel_y) if use_y_transform else parallel_y
+                parallel_y_plot = y_transform.to_axis(parallel_y) if use_y_transform else parallel_y
                 # hollow black circles, so the parallel series reads as distinct from the filled
                 # preset dots
                 ax.plot(
@@ -230,9 +231,9 @@ def create_single_figure(
                         y_axis=y_axis,
                     )
                     x_q, q10, q50, q90 = quantile_curves.get_full_curves()
-                    q10 = y_transform.f(q10)
-                    q50 = y_transform.f(q50)
-                    q90 = y_transform.f(q90)
+                    q10 = y_transform.to_axis(q10)
+                    q50 = y_transform.to_axis(q50)
+                    q90 = y_transform.to_axis(q90)
                     # solid q50 + thin dashed q10/q90 in black, no fill: line style alone
                     # separates the reference series from the presets' colored bands
                     ax.plot(x_q, q50, color="black", linestyle="-", lw=0.8, alpha=0.8, label="q50")
@@ -271,8 +272,8 @@ def create_single_figure(
             if col_idx == 0:
                 ax.set_ylabel(y_label)
             if use_y_transform:
-                y_ticks, y_tick_labels = y_transform.get_ticks_and_labels(n_max=15, add_missing_ticks=True)
-                y_ticks = y_transform.f(y_ticks)  # convert to [0,1] transformed scale
+                y_ticks, y_tick_labels = y_transform.ticks_and_labels(n_max=15, should_add_missing_ticks=True)
+                y_ticks = y_transform.to_axis(y_ticks)  # convert to [0,1] transformed scale
                 ax.set_yticks(y_ticks)
                 ax.set_yticklabels(y_tick_labels)
                 ax.set_ylim(-0.05, 1.05)
