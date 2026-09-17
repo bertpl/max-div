@@ -10,9 +10,10 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 from benchmarks.common.registry import tool_key_of
+from max_div._core.plotting.helpers import figure_style_path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
+STYLE_SHEET = figure_style_path()
 
 # `TOOL_COLORS` gives one color per tool, keyed by the tool's solver-registry key; the random
 # baseline, which the registry does not list, is keyed by its record label. max-div, the subject of

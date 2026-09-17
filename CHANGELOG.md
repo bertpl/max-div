@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - A parallel solution records its initial worker grouping and every worker group change (`worker_group_changes`): when it happened, which worker executed it, which group dissolved, and where its workers went
 - A parallel solution's worker summaries record when each worker started, in seconds since the earliest worker start
+- A parallel solution draws its solve as a timeline, `plot_timeline()`, behind the new `plot` extra: the worker groups as bands over time colored where the best score was held, with the diversity and constraints trajectories below
 - The uniform-sampling case study gains a seventh experiment: the hybrid objective under exact per-band counts, five bands per axis, each holding 20 of the 100 selected items
 
 ### Changed
