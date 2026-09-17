@@ -1,4 +1,4 @@
-"""The geometry of a parallel solve's timeline, built by replaying the solve's events onto one axis.
+"""The geometry of a parallel solve's timeline is built by replaying the solve's events onto one axis.
 
 `ParallelSolutionTimelinePlot` holds everything a timeline figure needs and nothing visual:
 
@@ -11,9 +11,11 @@
 
 The plot is populated by event replay, not through its constructor: the constructor fixes the initial
 grouping and where each worker's band starts, then `dissolve_group`, `record_best` and `record_score`
-advance the state in time order. `from_solution` drives that replay from a solved
-`ParallelMaxDivSolution`; the modifiers take plain values, so this module imports nothing from the
-solver package and a test can build a plot from hand-written events.
+advance the state in time order.
+
+`from_solution` drives that replay from a solved `ParallelMaxDivSolution`; the modifiers take plain
+values, so this module imports nothing from the solver package and a test can build a plot from
+hand-written events.
 """
 
 from __future__ import annotations
@@ -75,7 +77,7 @@ class ScorePoint:
 # ==================================================================================================
 @dataclass
 class ParallelSolutionTimelinePlot:
-    """The drawable geometry of a parallel solve's timeline, populated by replaying the solve's events.
+    """The drawable geometry of a parallel solve's timeline is populated by replaying the solve's events.
 
     Build it with `from_solution`, or directly for a test: the constructor takes each worker's initial
     group and where its band starts, then the modifiers replay the solve. Every timed modifier must be
@@ -184,7 +186,7 @@ class ParallelSolutionTimelinePlot:
 
     @property
     def group_blocks(self) -> list[GroupBlock]:
-        """Return the group blocks in group-id order: the units the top panel stacks top-down."""
+        """Return the group blocks in group-id order."""
         return [
             GroupBlock(group=group, t_start=self._group_start[group], t_end=self._group_end[group], height=height)
             for group, height in sorted(self._peak_height.items())
@@ -227,11 +229,11 @@ class ParallelSolutionTimelinePlot:
     def from_solution(cls, solution: ParallelMaxDivSolution) -> ParallelSolutionTimelinePlot:
         """Build the timeline geometry from a solved parallel solution.
 
-        Merges the solution's worker group changes and score checkpoints into one time-ordered replay:
+        Merge the solution's worker group changes and score checkpoints into one time-ordered replay:
         a change dissolves a group, a checkpoint records the best holder and its scores. Ties on time
         put a change before a checkpoint, so a checkpoint reads the grouping the change just produced,
-        and equal-time changes stay in the order they happened, which sorting by the descending count of
-        groups still alive after each change reproduces.
+        and equal-time changes keep the order they happened in, because sorting on the descending count
+        of groups still alive after each change reproduces that order.
         """
         start_offsets = [worker.t_start_offset_sec for worker in solution.workers]
         plot = cls(initial_groups=list(solution.initial_worker_groups), start_offsets=start_offsets)

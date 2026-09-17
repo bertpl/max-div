@@ -1,4 +1,4 @@
-"""The Matplotlib style shared by every max-div figure, packaged so the `plot` extra ships it.
+"""The Matplotlib style shared by every max-div figure is packaged so the `plot` extra ships it.
 
 The style sits next to this module as `figure_style.mplstyle`. `figure_style` applies it for the span
 of a `with` block, so a figure adopts it without touching the global rcParams; `figure_style_path`

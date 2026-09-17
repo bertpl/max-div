@@ -1,7 +1,8 @@
 """Draw a `ParallelSolutionTimelinePlot` as a stacked-panel Matplotlib figure of the parallel solve.
 
-The top panel shows the worker groups as horizontal bands over time: one block per group, stacked by
-group id, each block as many bands tall as the group's peak size. A band is colored:
+The top panel shows the worker groups as horizontal bands over time: one block per group, stacked
+with the shortest-lived groups on top and the surviving group at the bottom, each block as many bands
+tall as the group's peak size. A band is colored:
 
 - gray where no worker sits in it;
 - cornflower where a worker does;
@@ -9,11 +10,12 @@ group id, each block as many bands tall as the group's peak size. A band is colo
 - a darker green on the one worker that held the best score at the time.
 
 Below the top panel, the diversity trajectory gets its own panel, and the constraints trajectory a
-third panel when it ever drops below one. A saturating trajectory uses an upper-logarithmic y-axis
-that zooms in on where it flattens, fitted to the trajectory sampled at uniform times, not to the
-checkpoints themselves: checkpoints crowd the start of a solve, where improvements come fast, so
-fitting to them would fit the axis to the early climb, not the long plateau that fills most of the
-picture.
+third panel when it ever drops below one.
+
+A saturating trajectory uses an upper-logarithmic y-axis that zooms in on where it flattens, fitted
+to the trajectory sampled at uniform times, not to the checkpoints themselves: checkpoints crowd the
+start of a solve, where improvements come fast, so fitting to them would fit the axis to the early
+climb, not the long plateau that fills most of the picture.
 """
 
 from __future__ import annotations
@@ -58,10 +60,10 @@ _GROUP_GAP = 0.5  # blank rows between one group's block and the next
 def draw_timeline(plot: ParallelSolutionTimelinePlot) -> Figure:
     """Draw the timeline of a parallel solve and return the figure, styled like the docs figures."""
     with figure_style():
-        return _draw(plot)
+        return _draw_figure(plot)
 
 
-def _draw(plot: ParallelSolutionTimelinePlot) -> Figure:
+def _draw_figure(plot: ParallelSolutionTimelinePlot) -> Figure:
     """Lay out the panels and draw each; kept separate so the whole figure is built under the style."""
     # shorter-lived groups on top, the surviving group at the bottom
     blocks = sorted(plot.group_blocks, key=lambda block: (block.t_end, block.group))
@@ -81,14 +83,14 @@ def _draw(plot: ParallelSolutionTimelinePlot) -> Figure:
     if has_constraints_panel:
         # a constraints trajectory that reaches full satisfaction gets a plain linear axis; one that
         # never does gets the upper-log axis, which zooms in on its approach to the unreached limit
-        constraints_reach_full = max(point.constraints for point in plot.score_points) >= 1.0
+        has_full_constraints = max(point.constraints for point in plot.score_points) >= 1.0
         _draw_score(
             axes[2],
             plot,
             lambda point: point.constraints,
             _CONSTRAINTS,
             "constraints",
-            is_log=not constraints_reach_full,
+            is_log=not has_full_constraints,
         )
 
     dissolution_times = sorted({block.t_end for block in blocks if block.t_end < plot.t_end})
