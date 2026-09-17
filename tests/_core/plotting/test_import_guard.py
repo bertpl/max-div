@@ -16,12 +16,15 @@ _EXTRA = "max-div[plot]"
 
 def _run_in_fresh_interpreter(code: str) -> subprocess.CompletedProcess[str]:
     """Run `code` in a new Python process, so the suite's own imports cannot mask what it loads."""
-    return subprocess.run([sys.executable, "-c", textwrap.dedent(code)], capture_output=True, text=True, check=False)
+    # the command is this interpreter and a literal script, not untrusted input
+    return subprocess.run(  # noqa: S603
+        [sys.executable, "-c", textwrap.dedent(code)], capture_output=True, text=True, check=False
+    )
 
 
 def test_guard_names_the_extra_when_matplotlib_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     # --- arrange ----------------------
-    monkeypatch.setitem(sys.modules, "matplotlib", None)  # makes `import matplotlib` fail
+    monkeypatch.setitem(sys.modules, "matplotlib", None)  # This makes `import matplotlib` fail
 
     # --- act / assert -----------------
     with pytest.raises(ImportError, match=r"max-div\[plot\]"):

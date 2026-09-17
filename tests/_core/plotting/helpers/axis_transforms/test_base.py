@@ -15,8 +15,10 @@ def test_null_transform_returns_a_float_for_a_scalar() -> None:
     from_axis = NullTransform().from_axis(3)
 
     # --- assert -----------------------
-    assert to_axis == 3.0 and isinstance(to_axis, float)
-    assert from_axis == 3.0 and isinstance(from_axis, float)
+    assert to_axis == 3.0
+    assert isinstance(to_axis, float)
+    assert from_axis == 3.0
+    assert isinstance(from_axis, float)
 
 
 def test_null_transform_returns_an_array_for_a_list() -> None:

@@ -9,7 +9,7 @@ from max_div._core.plotting.helpers.axis_transforms.upper_logarithmic import (
     _without_trailing_zero,
 )
 
-# values approaching 0.8 from below, each ten times closer than the last
+# These values approach 0.8 from below, each ten times closer than the last
 SATURATING = [0, 0.5, 0.7, 0.79, 0.799, 0.7999, 0.79999, 0.799999, 0.7999999]
 
 
@@ -27,7 +27,8 @@ def test_to_axis_and_from_axis_follow_the_formulas() -> None:
     # --- assert -----------------------
     assert to_axis == 0.5 - 2.0 * math.log(1.0)
     assert from_axis == pytest.approx(9.0)
-    assert isinstance(to_axis, float) and isinstance(from_axis, float)
+    assert isinstance(to_axis, float)
+    assert isinstance(from_axis, float)
 
 
 def test_array_round_trip() -> None:
@@ -98,7 +99,8 @@ def test_ticks_and_labels_never_exceed_n_max(n_max: int) -> None:
 
     # --- assert -----------------------
     assert 2 <= len(ticks) <= n_max
-    assert ticks == sorted(ticks) and len(set(labels)) == len(labels)
+    assert ticks == sorted(ticks)
+    assert len(set(labels)) == len(labels)
 
 
 def test_ticks_and_labels_fill_precision_jumps_with_unlabeled_ticks() -> None:
@@ -125,7 +127,8 @@ def test_ticks_and_labels_recover_when_coarse_rounding_empties_the_grid() -> Non
     ticks, labels = transform.ticks_and_labels(n_max=5)
 
     # --- assert -----------------------
-    assert 2 <= len(ticks) <= 5 and labels[0] != ""
+    assert 2 <= len(ticks) <= 5
+    assert labels[0] != ""
 
 
 def test_ticks_and_labels_keep_the_best_fit_when_the_count_overshoots() -> None:
@@ -135,7 +138,7 @@ def test_ticks_and_labels_keep_the_best_fit_when_the_count_overshoots() -> None:
     transform = UpperLogTransform.from_values(np.random.default_rng(0).uniform(0.2, 0.9, 50))
 
     # --- act --------------------------
-    ticks, labels = transform.ticks_and_labels(n_max=8)
+    _, labels = transform.ticks_and_labels(n_max=8)
 
     # --- assert -----------------------
     assert labels == ["0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8"]
@@ -157,4 +160,5 @@ def test_add_ticks_at_precision_jumps_leaves_equal_precision_alone() -> None:
     ticks, labels = _add_ticks_at_precision_jumps([0.1, 0.2, 0.3], ["0.1", "0.2", "0.3"])
 
     # --- assert -----------------------
-    assert ticks == [0.1, 0.2, 0.3] and labels == ["0.1", "0.2", "0.3"]
+    assert ticks == [0.1, 0.2, 0.3]
+    assert labels == ["0.1", "0.2", "0.3"]

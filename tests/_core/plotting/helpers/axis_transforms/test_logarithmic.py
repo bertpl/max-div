@@ -11,8 +11,10 @@ def test_log_transform_scalar_round_trip() -> None:
     from_axis = LogTransform().from_axis(to_axis)
 
     # --- assert -----------------------
-    assert to_axis == 1.0 and isinstance(to_axis, float)
-    assert from_axis == math.e and isinstance(from_axis, float)
+    assert to_axis == 1.0
+    assert isinstance(to_axis, float)
+    assert from_axis == math.e
+    assert isinstance(from_axis, float)
 
 
 def test_log_transform_array_round_trip() -> None:

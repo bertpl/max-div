@@ -81,8 +81,8 @@ jobs:
       - name: Smoke-test the CLI entry point
         run: blind-venv/bin/max-div --help
 
-      # The wheel alone, no extras: the package imports without matplotlib, and reaching for the
-      # plotting package names the `plot` extra. The test suite above cannot see this, since the
+      # The wheel alone, no extras: the package imports without matplotlib, and importing the
+      # plotting package raises an error naming the `plot` extra. The test suite above cannot see this, since the
       # test group installs matplotlib.
       - name: Import the wheel without extras
         run: |

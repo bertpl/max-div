@@ -1,4 +1,4 @@
-"""The axis transform interface and the identity transform."""
+"""Defines the axis transform interface and the identity transform."""
 
 from abc import ABC, abstractmethod
 
@@ -10,7 +10,7 @@ from numpy.typing import ArrayLike, NDArray
 #  AxisTransform
 # ==================================================================================================
 class AxisTransform(ABC):
-    """A transform between data values and the coordinates at which they are drawn on an axis.
+    """An axis transform maps data values to the coordinates at which they are drawn on an axis, and back.
 
     `to_axis` maps a data value to its axis coordinate and `from_axis` maps back. Every transform
     accepts a scalar or an array and returns the same kind: a scalar in gives a `float` out.
@@ -19,12 +19,12 @@ class AxisTransform(ABC):
     @abstractmethod
     def to_axis(self, x: float | ArrayLike) -> float | NDArray[np.float64]:
         """Return the axis coordinate(s) of data value(s) `x`."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def from_axis(self, x_axis: float | ArrayLike) -> float | NDArray[np.float64]:
         """Return the data value(s) drawn at axis coordinate(s) `x_axis`."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 # ==================================================================================================
@@ -34,11 +34,11 @@ class NullTransform(AxisTransform):
     """The identity transform: data values are their own axis coordinates."""
 
     def to_axis(self, x: float | ArrayLike) -> float | NDArray[np.float64]:
-        """Return `x` unchanged, as a float for a scalar and an array otherwise."""
+        """Return `x` unchanged."""
         return as_float_or_array(x)
 
     def from_axis(self, x_axis: float | ArrayLike) -> float | NDArray[np.float64]:
-        """Return `x_axis` unchanged, as a float for a scalar and an array otherwise."""
+        """Return `x_axis` unchanged."""
         return as_float_or_array(x_axis)
 
 

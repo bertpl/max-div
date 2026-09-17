@@ -209,7 +209,7 @@ ignore = [
 ]
 
 # matplotlib is the `plot` extra: only `max_div._core.plotting` may import it, so `import max_div` never
-# needs it and the friendly error for a missing extra lives in that one package. Everything outside the
+# needs it and the error for a missing extra lives in that one package. Everything outside the
 # shipped package (tests, benchmarks, scripts, docs figures) is exempt below.
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "matplotlib".msg = "matplotlib is the optional `plot` extra: import it only inside max_div._core.plotting"

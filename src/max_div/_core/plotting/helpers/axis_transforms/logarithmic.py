@@ -1,4 +1,4 @@
-"""The plain logarithmic axis transform."""
+"""Defines the plain logarithmic axis transform."""
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
