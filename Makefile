@@ -13,7 +13,11 @@
 # dependencies, which leaves pytest with nothing to import.
 PY ?= 3.14
 RESOLUTION ?= highest
-UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-groups --group test
+# ALL_EXTRAS=false runs the suite as a plain install would: tests that need an extra are skipped, and
+# the tests of what the package does without one are run. CI covers both values.
+ALL_EXTRAS ?= true
+UV_RUN = uv run --exact --python $(PY) --resolution $(RESOLUTION) --no-default-groups --group test \
+         $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
 
 # Appended to the pytest invocation. Locally this silences the warning summary; CI overrides it
 # to pass coverage flags, and deliberately keeps the warnings visible.
@@ -103,7 +107,8 @@ test-and-coverage:
 	$(MAKE) coverage;
 
 lint:
-	uv run --exact --no-default-groups --group lint pre-commit run --all-files
+	# --all-extras: ty type-checks the code behind every extra, so the extras' packages must be present
+	uv run --exact --no-default-groups --group lint --all-extras pre-commit run --all-files
 
 dev-setup:
 	uv sync --all-extras

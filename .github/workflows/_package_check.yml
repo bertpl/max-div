@@ -58,6 +58,9 @@ jobs:
       # Blind environment: test deps come lockfile-pinned from the test group
       # (--only-group keeps the project and its runtime dependencies out), and
       # max_div can only come from the built wheel — never an editable/source install.
+      # The wheel is installed without extras, so the suite below is also a run of the
+      # plain install a user gets: tests that need an extra are skipped, and the tests of
+      # what the package does without one are run.
       - name: Install the built wheel into a bare environment
         run: |
           uv export --frozen --no-emit-project --only-group test -o requirements.txt

@@ -12,7 +12,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
-    # Per-Python floors: each is the earliest release shipping a wheel for that CPython,
+    # Per-Python minimum versions: each is the earliest release shipping a wheel for that CPython,
     # so `lowest-direct` CI legs install wheels instead of attempting source builds.
     "numpy>=2.0.0; python_version == '3.12'",
     "numpy>=2.1.0; python_version == '3.13'",
@@ -45,6 +45,17 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.optional-dependencies]
+# The plot extra enables the plotting features (`max_div._core.plotting`); `import max_div` works
+# without the extra, and reaching the plotting package without the extra raises an error naming the extra.
+plot = [
+    # Per-Python minimum versions, same rationale as the runtime dependencies above: each is the earliest
+    # release shipping a wheel for that CPython, so the `lowest-direct` jobs install a wheel.
+    "matplotlib>=3.8; python_version == '3.12'",
+    "matplotlib>=3.9.2; python_version == '3.13'",
+    "matplotlib>=3.10.6; python_version >= '3.14'",
+]
+
 [dependency-groups]
 # Comparison-benchmark harness (see benchmarks/README.md); never part of the published package.
 benchmarks = [
@@ -73,12 +84,14 @@ test = [
     { include-group = "tooling" },
 ]
 # The pre-commit config drives ruff and ty as local `uv run` hooks rather than pinned pre-commit
-# environments, so both tools — and the stubs ty needs to check scipy usage — belong here.
+# environments, so both tools — and the stubs ty needs to check scipy usage — belong here. The
+# extras are not listed: `make lint` and the ty hook install them with --all-extras, so ty sees the
+# code behind every extra without a second copy of its minimum versions.
 lint = [
     "pre-commit>=4.0",
     "ruff>=0.14.0",
     "scipy-stubs>=1.10.0",
-    "ty>=0.0.58",  # pre-1.0 type checker — floor only; uv.lock pins the version actually used
+    "ty>=0.0.58",  # pre-1.0 type checker — minimum version only; uv.lock pins the version actually used
 ]
 package = [
     "check-wheel-contents>=0.6.2",
@@ -87,9 +100,9 @@ package = [
 # tests import those scripts, and a group the test matrix does not install is exactly how a
 # script's dependency goes missing in CI while passing locally.
 tooling = [
-    # Per-Python floors, same rationale as the runtime dependencies above: each is the earliest
-    # release shipping a wheel for that CPython, so the `lowest-direct` legs install a wheel
-    # instead of attempting a source build. A flat `>=6.0` floor fails on 3.14, where that
+    # Per-Python minimum versions, same rationale as the runtime dependencies above: each is the
+    # earliest release shipping a wheel for that CPython, so the `lowest-direct` jobs install a wheel
+    # instead of attempting a source build. A flat `>=6.0` minimum fails on 3.14, where that
     # version has no wheel and does not build.
     "pyyaml>=6.0.1; python_version == '3.12'",
     "pyyaml>=6.0.2; python_version == '3.13'",
@@ -192,12 +205,19 @@ select = [
     "N",       # pep8-naming
     "PT",      # flake8-pytest-style
     "C901",    # mccabe complexity gate (threshold in [tool.ruff.lint.mccabe])
+    "TID251",  # banned imports: matplotlib only inside the plotting package (see banned-api below)
 ]
 ignore = [
     "B905",    # numba nopython mode can't take zip()'s strict= kwarg
     "E731",    # assigning a lambda to a name is fine here; a trivial thunk reads better than a def
     "RET505",  # an explicit else after an if-return chain reads as the final case of a dispatch; no-else-return is not house preference
 ]
+
+# matplotlib is the `plot` extra: only `max_div._core.plotting` may import it, so `import max_div` never
+# needs it and the error for a missing extra lives in that one package. Everything outside the
+# shipped package (tests, benchmarks, scripts, docs figures) is exempt in the per-file ignores.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"matplotlib".msg = "matplotlib is the optional `plot` extra: import it only inside max_div._core.plotting"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -210,11 +230,14 @@ raises-require-match-for = ["Exception", "BaseException"]  # only the truly broa
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty
+"tests/**" = ["SLF001", "S101", "S311", "D", "ANN", "TID251"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty; may import matplotlib
+"src/max_div/_core/plotting/**" = ["TID251"]  # the one package that may import matplotlib (its __init__ guards the extra)
+"benchmarks/**" = ["TID251"]  # harness, never part of the published package
+"local/**" = ["TID251"]  # docs figures, never part of the published package
 "benchmarks/tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # harness tests: same carve-outs as the package suite
 "tests/_core/_markdown/test_table.py" = ["E501"]  # expected-output literals: exact rendered table rows
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
-"scripts/**" = ["INP001", "S", "D", "ANN"]           # maintainer tooling, not the shipped library
+"scripts/**" = ["INP001", "S", "D", "ANN", "TID251"]  # maintainer tooling, not the shipped library
 ".github/scripts/**" = ["INP001", "S", "D", "ANN"]   # maintainer tooling, not held to shipped-source style
 # benchmark closures are constructed and invoked within the same loop iteration, so late binding never bites
 "src/max_div/_core/_cli/benchmarks/internal/**" = ["B023"]

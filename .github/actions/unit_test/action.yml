@@ -15,6 +15,10 @@ inputs:
         required: false
         description: "'on' (default) runs numba-compiled; 'off' sets NUMBA_DISABLE_JIT=1 (interpreted, line-coverage capable)."
         default: "on"
+    all_extras:
+        required: false
+        description: "'true' (default) installs every optional extra; 'false' installs none, the plain install a user gets."
+        default: "true"
     coverage:
         required: false
         description: "'true' runs under coverage and uploads the per-combo data file for a cross-matrix combine; 'false' (default) runs plain pytest."
@@ -28,7 +32,7 @@ runs:
         with:
           # Distinct cache key per combo (incl. Python, since wheels are cpXY-specific) so
           # parallel legs don't race to save one shared key or restore the wrong interpreter's wheels.
-          cache-suffix: py${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}
+          cache-suffix: py${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}-extras-${{ inputs.all_extras }}
 
       - name: Determine Python version
         shell: bash
@@ -55,9 +59,10 @@ runs:
           PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
           RES: ${{ inputs.dependency_resolution }}
           JIT: ${{ inputs.jit }}
+          EXTRAS: ${{ inputs.all_extras }}
           COV: ${{ inputs.coverage }}
           # distinct per-combo data file so the coverage job combines rather than overwrites
-          COVERAGE_FILE: .coverage.${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}
+          COVERAGE_FILE: .coverage.${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}-extras-${{ inputs.all_extras }}
         run: |
           # NUMBA_DISABLE_JIT: interpreted execution, required for line coverage of njit functions
           [ "$JIT" = "off" ] && export NUMBA_DISABLE_JIT=1
@@ -76,7 +81,7 @@ runs:
           # log; the outer timeout then kills the run so the job fails fast with readable logs
           # instead of hanging silently to the 6h ceiling
           timeout --kill-after=30 600 \
-            make test PY="$PY" RESOLUTION="$RES" PYTEST_ARGS="$COV_FLAG -o faulthandler_timeout=120"
+            make test PY="$PY" RESOLUTION="$RES" ALL_EXTRAS="$EXTRAS" PYTEST_ARGS="$COV_FLAG -o faulthandler_timeout=120"
 
       - name: Dump collected node-ids (for the cross-combo test-count union)
         if: inputs.coverage == 'true'
@@ -94,7 +99,7 @@ runs:
         if: inputs.coverage == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: coverage-data-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}
+          name: coverage-data-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-jit-${{ inputs.jit }}-extras-${{ inputs.all_extras }}
           path: |
             .coverage.*
             test-ids-*.txt
