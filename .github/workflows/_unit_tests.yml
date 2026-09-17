@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   core:
-    name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }}
+    name: py${{ matrix.python }} / ${{ matrix.resolution }} / jit-${{ matrix.jit }} / extras-${{ matrix.extras }}
     # ARM, which runs this suite about twice as fast as the x64 runner for the same work.
     # Standardized rather than mixed: the matrix does not set out to test architectures, and
     # picking x64 for some legs would be the old default dressed up as a decision.
@@ -20,23 +20,29 @@ jobs:
         # OS exercises everything. Strategic combos cover every axis (every supported Python,
         # both resolution ends), not their full product. numba is a mandatory
         # dependency; the jit axis distinguishes compiled (representative) from
-        # interpreted execution — coverage comes from the two jit-off legs, since numba
-        # only yields line coverage with the JIT disabled.
+        # interpreted execution — coverage comes from the jit-off jobs, since numba
+        # only yields line coverage with the JIT disabled. The extras axis distinguishes
+        # a full install from the plain install a user gets: on the extras-off jobs the
+        # tests that need an extra are skipped and the tests of what the package does
+        # without one are run, so the combined coverage exercises both branches of every
+        # extra's guard.
         include:
-          - { python: "3.12", resolution: highest,       jit: "on"  }
-          - { python: "3.13", resolution: highest,       jit: "on"  }
-          - { python: "3.14", resolution: highest,       jit: "on"  }
-          - { python: "3.12", resolution: lowest-direct, jit: "on"  }
-          - { python: "3.14", resolution: lowest-direct, jit: "on"  }
-          - { python: "3.12", resolution: highest,       jit: "off" }  # coverage leg
-          - { python: "3.14", resolution: highest,       jit: "off" }  # coverage leg
+          - { python: "3.12", resolution: highest,       jit: "on",  extras: "true"  }
+          - { python: "3.13", resolution: highest,       jit: "on",  extras: "true"  }
+          - { python: "3.14", resolution: highest,       jit: "on",  extras: "true"  }
+          - { python: "3.12", resolution: lowest-direct, jit: "on",  extras: "true"  }
+          - { python: "3.14", resolution: lowest-direct, jit: "on",  extras: "true"  }
+          - { python: "3.12", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
+          - { python: "3.14", resolution: highest,       jit: "off", extras: "true"  }  # coverage job
+          - { python: "3.12", resolution: highest,       jit: "on",  extras: "false" }  # plain install
+          - { python: "3.14", resolution: highest,       jit: "off", extras: "false" }  # plain install, coverage job
           # Free-threaded build. `highest` only, deliberately: the numba floor for 3.14 is 0.63,
           # which predates numba's free-threaded wheels (first shipped in 0.65), and no PEP 508
           # marker can raise that floor for free-threaded builds alone — so a lowest-direct leg
           # would try to source-build a numba with no usable wheel. Do not "complete the matrix"
           # by adding one. The quoted "3.14t" is what makes uv resolve the free-threaded
           # interpreter rather than the GIL one.
-          - { python: "3.14t", resolution: highest,      jit: "on"  }
+          - { python: "3.14t", resolution: highest,      jit: "on",  extras: "true"  }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -46,6 +52,7 @@ jobs:
           python_version: ${{ matrix.python }}
           dependency_resolution: ${{ matrix.resolution }}
           jit: ${{ matrix.jit }}
+          all_extras: ${{ matrix.extras }}
           # the jit-off legs upload their data; the coverage job combines + gates
           coverage: ${{ matrix.jit == 'off' && 'true' || 'false' }}
 
