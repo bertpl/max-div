@@ -65,6 +65,25 @@ class WorkerResult:
         """Return the earliest worker start time: the zero of the axis that a parallel solution's checkpoints share."""
         return min(result.t_start for result in results)
 
+    def start_offset_sec(self, t_first_start: float) -> float:
+        """Return this worker's start on the shared axis: its own start minus the earliest worker start.
+
+        `t_first_start` is `earliest_start_time` over the run's results. The offset is the stretch the
+        worker searched alone before the later workers began, and zero for the earliest worker.
+        """
+        return self.t_start - t_first_start
+
+    def place_on_shared_axis(self, elapsed: Elapsed, t_first_start: float) -> Elapsed:
+        """Place `elapsed`, counted from this worker's start, on the shared axis with zero at `t_first_start`.
+
+        Only the elapsed seconds shift, by the worker's start offset; the iteration count stays the
+        worker's own. Both the checkpoint trace and the group history place their events this way.
+        """
+        return Elapsed(
+            t_elapsed_sec=self.start_offset_sec(t_first_start) + elapsed.t_elapsed_sec,
+            n_iterations=elapsed.n_iterations,
+        )
+
     @staticmethod
     def best(results: list["WorkerResult"], failures: list[WorkerFailure] | None = None) -> "WorkerResult":
         """Return the highest-scoring result, ties going to the lowest worker index.

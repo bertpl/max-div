@@ -102,6 +102,7 @@ class ParallelMaxDivSolver:
                 stacklevel=2,
             )
         winner = WorkerResult.best(results, failures)
+        t_first_start = WorkerResult.earliest_start_time(results)
         summaries = [
             WorkerSummary(
                 worker_index=result.worker_index,
@@ -110,6 +111,7 @@ class ParallelMaxDivSolver:
                 score=result.score,
                 elapsed=result.elapsed,
                 has_best_score=result.score == winner.score,
+                t_start_offset_sec=result.start_offset_sec(t_first_start),
             )
             for result in results
         ]

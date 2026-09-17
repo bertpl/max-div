@@ -14,7 +14,6 @@ alone until the others existed.
 
 from dataclasses import replace
 
-from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 
 from ._result import WorkerResult
@@ -56,13 +55,7 @@ def _merge_checkpoints(results: list[WorkerResult]) -> list[ScoreCheckpoint]:
     """
     t_first_start = WorkerResult.earliest_start_time(results)
     merged_checkpoints = [
-        replace(
-            checkpoint,
-            elapsed=Elapsed(
-                t_elapsed_sec=(result.t_start - t_first_start) + checkpoint.elapsed.t_elapsed_sec,
-                n_iterations=checkpoint.elapsed.n_iterations,
-            ),
-        )
+        replace(checkpoint, elapsed=result.place_on_shared_axis(checkpoint.elapsed, t_first_start))
         for result in results
         for checkpoint in result.solution.score_checkpoints
     ]

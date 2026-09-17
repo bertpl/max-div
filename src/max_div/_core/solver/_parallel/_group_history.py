@@ -11,8 +11,6 @@ workers' elapsed readings, taken before the transition lock, do not.
 
 from dataclasses import replace
 
-from max_div._core.solver._duration import Elapsed
-
 from ._result import WorkerResult
 from ._worker_group_change import WorkerGroupChange
 
@@ -25,13 +23,7 @@ def worker_group_history(results: list[WorkerResult]) -> list[WorkerGroupChange]
     """
     t_first_start = WorkerResult.earliest_start_time(results)
     merged_group_changes = [
-        replace(
-            change,
-            elapsed=Elapsed(
-                t_elapsed_sec=(result.t_start - t_first_start) + change.elapsed.t_elapsed_sec,
-                n_iterations=change.elapsed.n_iterations,
-            ),
-        )
+        replace(change, elapsed=result.place_on_shared_axis(change.elapsed, t_first_start))
         for result in results
         for change in result.worker_group_changes
     ]

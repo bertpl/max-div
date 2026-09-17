@@ -12,10 +12,14 @@ from ._worker_group_change import WorkerGroupChange
 
 @dataclass(frozen=True)
 class WorkerSummary:
-    """A summary records what one worker ran, what it found, and what it cost.
+    """A summary records what one worker ran, what it found, when it started, and what it cost.
 
     The summary stores the worker's whole configuration, not just its seed, so a saved result can be
     replayed without the code that produced it: a seed alone does not say which solver to replay with.
+
+    `t_start_offset_sec` is when the worker started on the parallel solve's shared time axis: seconds
+    since the earliest worker started, and zero for that earliest worker. It is the axis the
+    solution's `score_checkpoints` and `worker_group_changes` are placed on.
     """
 
     worker_index: int
@@ -24,6 +28,7 @@ class WorkerSummary:
     score: Score
     elapsed: Elapsed
     has_best_score: bool
+    t_start_offset_sec: float = 0.0
 
 
 @dataclass
