@@ -49,8 +49,8 @@ classifiers = [
 # The plot extra enables the plotting features (`max_div._core.plotting`); `import max_div` works
 # without the extra, and reaching the plotting package without the extra raises an error naming the extra.
 plot = [
-    # Per-Python floors, same rationale as the runtime dependencies above: each is the earliest release
-    # shipping a wheel for that CPython, so the `lowest-direct` jobs install a wheel.
+    # Per-Python minimum versions, same rationale as the runtime dependencies above: each is the earliest
+    # release shipping a wheel for that CPython, so the `lowest-direct` jobs install a wheel.
     "matplotlib>=3.8; python_version == '3.12'",
     "matplotlib>=3.9.2; python_version == '3.13'",
     "matplotlib>=3.10.6; python_version >= '3.14'",
@@ -86,7 +86,7 @@ test = [
 # The pre-commit config drives ruff and ty as local `uv run` hooks rather than pinned pre-commit
 # environments, so both tools — and the stubs ty needs to check scipy usage — belong here. The
 # extras are not listed: `make lint` and the ty hook install them with --all-extras, so ty sees the
-# code behind every extra without a second copy of its floors.
+# code behind every extra without a second copy of its minimum versions.
 lint = [
     "pre-commit>=4.0",
     "ruff>=0.14.0",
