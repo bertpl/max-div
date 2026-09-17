@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib.figure import Figure
 
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._parallel import ParallelMaxDivSolution, WorkerConfig, WorkerSummary
@@ -11,6 +10,7 @@ from tests._extras import skip_module_unless_extra
 
 skip_module_unless_extra("plot")
 
+from matplotlib.figure import Figure  # noqa: E402
 from max_div._core.plotting.timeline import ParallelSolutionTimelinePlot  # noqa: E402
 
 
