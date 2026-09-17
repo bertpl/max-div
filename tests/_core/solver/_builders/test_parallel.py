@@ -84,6 +84,17 @@ def test_every_worker_is_summarized():
     assert solution.workers[solution.winning_worker].has_best_score
 
 
+def test_worker_summaries_record_when_each_worker_started():
+    """Every summary carries its worker's start on the shared axis, non-negative, with the earliest worker at zero."""
+    # --- arrange / act ----------------
+    solution = _solve_dynamic(3)
+    offsets = [worker.t_start_offset_sec for worker in solution.workers]
+
+    # --- assert -----------------------
+    assert all(offset >= 0.0 for offset in offsets)
+    assert min(offsets) == 0.0
+
+
 def test_workers_may_differ_by_initialization_alone():
     """Two workers can run one preset from different starting points, which a preset name cannot express."""
     # --- arrange ----------------------

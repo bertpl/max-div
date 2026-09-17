@@ -239,7 +239,8 @@ Which selections get adopted — and, under the dynamic grouping, which groups g
 depends on how far each worker has come when it reaches an exchange, and that timing varies from
 run to run.
 
-Each worker's `WorkerSummary` carries its derived seed next to the configuration it ran. For an
+Each worker's `WorkerSummary` carries its derived seed, the configuration it ran, and when it started
+on the shared time axis (`t_start_offset_sec`, zero for the earliest worker). For an
 independent worker that is enough to replay it on its own with `MaxDivSolverBuilder`; a
 cooperative worker's trajectory also depends on what its group mates published, so the replay
 contract is independent-only. The limits in the [Reproducibility](#reproducibility) section apply

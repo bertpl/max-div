@@ -8,7 +8,6 @@ better.
 from ._coordinator import WorkerCoordinator
 from ._exchange_slot import GroupExchangeSlot
 from ._executor import run_workers, solve_in_worker
-from ._group_history import worker_group_history
 from ._merge_schedule import (
     DEFAULT_GROUP_MERGE_RATE,
     GROUP_MERGE_RATE_BOUNDS,
@@ -17,9 +16,9 @@ from ._merge_schedule import (
     PowerLawGroupMerge,
 )
 from ._result import WorkerResult
+from ._shared_solve_timeline import SharedSolveTimeline
 from ._solution import ParallelMaxDivSolution, WorkerSummary
 from ._solver import ParallelMaxDivSolver, default_group_count, default_worker_count, warn_about_worker_count
-from ._trajectory import best_known_trajectory
 from ._worker_config import WorkerConfig
 from ._worker_group_change import WorkerGroupChange
 from ._worker_groups import WorkerGroupCoordinator, WorkerGroupState
@@ -33,6 +32,7 @@ __all__ = [
     "ParallelMaxDivSolution",
     "ParallelMaxDivSolver",
     "PowerLawGroupMerge",
+    "SharedSolveTimeline",
     "WorkerConfig",
     "WorkerCoordinator",
     "WorkerGroupChange",
@@ -40,11 +40,9 @@ __all__ = [
     "WorkerGroupState",
     "WorkerResult",
     "WorkerSummary",
-    "best_known_trajectory",
     "default_group_count",
     "default_worker_count",
     "run_workers",
     "solve_in_worker",
     "warn_about_worker_count",
-    "worker_group_history",
 ]
