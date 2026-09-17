@@ -69,7 +69,7 @@ class WorkerResult:
         """Return this worker's start on the shared axis: its own start minus the earliest worker start.
 
         `t_first_start` is `earliest_start_time` over the run's results. The offset is how long the
-        worker searched alone before the later workers began, and zero for the earliest worker.
+        earlier workers had already searched when this one began, and zero for the earliest worker.
         """
         return self.t_start - t_first_start
 
