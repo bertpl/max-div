@@ -4,7 +4,7 @@ from functools import cached_property
 
 import numpy as np
 
-from local.docs.utils.axis_transforms import AxisTransform, NullTransform
+from max_div._core.plotting.helpers import AxisTransform, NullTransform
 from local.docs.utils.regression import SplineBounds, SplineQuantileRegressor, SplineRegressor
 from local.docs.utils.regression.splines import CubicSplineQuantileRegressor
 
@@ -53,9 +53,9 @@ class QuantileCurves:
         """Return smallest x for which all quantile curves are properly defined."""
         return max(
             [
-                float(min(self._x_transform.f_inv(self._q10.knots))),
-                float(min(self._x_transform.f_inv(self._q50.knots))),
-                float(min(self._x_transform.f_inv(self._q90.knots))),
+                float(min(self._x_transform.from_axis(self._q10.knots))),
+                float(min(self._x_transform.from_axis(self._q50.knots))),
+                float(min(self._x_transform.from_axis(self._q90.knots))),
             ]
         )
 
@@ -64,9 +64,9 @@ class QuantileCurves:
         """Return largest x for which all quantile curves are properly defined."""
         return min(
             [
-                float(max(self._x_transform.f_inv(self._q10.knots))),
-                float(max(self._x_transform.f_inv(self._q50.knots))),
-                float(max(self._x_transform.f_inv(self._q90.knots))),
+                float(max(self._x_transform.from_axis(self._q10.knots))),
+                float(max(self._x_transform.from_axis(self._q50.knots))),
+                float(max(self._x_transform.from_axis(self._q90.knots))),
             ]
         )
 
@@ -75,22 +75,22 @@ class QuantileCurves:
     # -------------------------------------------------------------------------
     def get_full_curves(self, n: int = 1000) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Return (x, q10, q50, q90) curves as 4 numpy arrays, spanning entire supported x-range."""
-        x_min_trans = self._x_transform.f(self.x_min)
-        x_max_trans = self._x_transform.f(self.x_max)
+        x_min_trans = self._x_transform.to_axis(self.x_min)
+        x_max_trans = self._x_transform.to_axis(self.x_max)
         x_trans = np.linspace(x_min_trans, x_max_trans, n)
-        q10 = self._y_transform.f_inv(self._q10.predict(x_trans))
-        q50 = self._y_transform.f_inv(self._q50.predict(x_trans))
-        q90 = self._y_transform.f_inv(self._q90.predict(x_trans))
-        return self._x_transform.f_inv(x_trans), q10, q50, q90
+        q10 = self._y_transform.from_axis(self._q10.predict(x_trans))
+        q50 = self._y_transform.from_axis(self._q50.predict(x_trans))
+        q90 = self._y_transform.from_axis(self._q90.predict(x_trans))
+        return self._x_transform.from_axis(x_trans), q10, q50, q90
 
     def get_quantiles_at_x(
         self, x: float | np.ndarray
     ) -> tuple[float | np.ndarray, float | np.ndarray, float | np.ndarray]:
         """Get (q10, q50, q90) quantile values at a single x value, returned in original y-space."""
-        x_trans = self._x_transform.f(x)
-        q10 = self._y_transform.f_inv(self._q10.predict(x_trans))
-        q50 = self._y_transform.f_inv(self._q50.predict(x_trans))
-        q90 = self._y_transform.f_inv(self._q90.predict(x_trans))
+        x_trans = self._x_transform.to_axis(x)
+        q10 = self._y_transform.from_axis(self._q10.predict(x_trans))
+        q50 = self._y_transform.from_axis(self._q50.predict(x_trans))
+        q90 = self._y_transform.from_axis(self._q90.predict(x_trans))
         return q10, q50, q90
 
     # -------------------------------------------------------------------------
@@ -123,8 +123,8 @@ class QuantileCurves:
         # --- transform data ------------------------------
         x_transform = x_transform or NullTransform()
         y_transform = y_transform or NullTransform()
-        x_trans = x_transform.f(x_data)
-        y_trans = y_transform.f(y_data)
+        x_trans = x_transform.to_axis(x_data)
+        y_trans = y_transform.to_axis(y_data)
 
         # --- fit quantile splines ------------------------
 
