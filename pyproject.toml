@@ -12,7 +12,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
-    # Per-Python floors: each is the earliest release shipping a wheel for that CPython,
+    # Per-Python minimum versions: each is the earliest release shipping a wheel for that CPython,
     # so `lowest-direct` CI legs install wheels instead of attempting source builds.
     "numpy>=2.0.0; python_version == '3.12'",
     "numpy>=2.1.0; python_version == '3.13'",
@@ -91,7 +91,7 @@ lint = [
     "pre-commit>=4.0",
     "ruff>=0.14.0",
     "scipy-stubs>=1.10.0",
-    "ty>=0.0.58",  # pre-1.0 type checker — floor only; uv.lock pins the version actually used
+    "ty>=0.0.58",  # pre-1.0 type checker — minimum version only; uv.lock pins the version actually used
 ]
 package = [
     "check-wheel-contents>=0.6.2",
@@ -100,9 +100,9 @@ package = [
 # tests import those scripts, and a group the test matrix does not install is exactly how a
 # script's dependency goes missing in CI while passing locally.
 tooling = [
-    # Per-Python floors, same rationale as the runtime dependencies above: each is the earliest
-    # release shipping a wheel for that CPython, so the `lowest-direct` legs install a wheel
-    # instead of attempting a source build. A flat `>=6.0` floor fails on 3.14, where that
+    # Per-Python minimum versions, same rationale as the runtime dependencies above: each is the
+    # earliest release shipping a wheel for that CPython, so the `lowest-direct` jobs install a wheel
+    # instead of attempting a source build. A flat `>=6.0` minimum fails on 3.14, where that
     # version has no wheel and does not build.
     "pyyaml>=6.0.1; python_version == '3.12'",
     "pyyaml>=6.0.2; python_version == '3.13'",
