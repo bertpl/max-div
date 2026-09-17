@@ -15,7 +15,7 @@ def _result(
     changes: list[WorkerGroupChange] | None = None,
     group_index: int = 0,
 ) -> WorkerResult:
-    """Return a worker result whose checkpoints hold the given `(elapsed seconds, diversity)` pairs, plus its changes."""
+    """Return a worker result carrying the given `(elapsed seconds, diversity)` checkpoints and group changes."""
     checkpoints = [
         ScoreCheckpoint(
             SolverStepIdentity(1, "step"),

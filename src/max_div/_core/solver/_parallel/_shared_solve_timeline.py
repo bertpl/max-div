@@ -4,7 +4,7 @@ Each worker counts elapsed time from its own start, and the workers start at sli
 moments. Each worker reports its start as a `time.monotonic()` reading, one systemwide clock on the
 platforms max-div runs on, so the parent can place every worker's events on one axis whose zero is
 the earliest worker start. The per-worker offsets are kept: a worker that started first genuinely
-searched alone until the others existed.
+searched alone until the others started.
 
 `SharedSolveTimeline.from_worker_results` shifts every worker's events onto that axis once, so the
 consumers downstream read the aligned events without shifting: the worker start offsets, the ordered
@@ -12,7 +12,6 @@ group history, and the best-known checkpoint trace.
 """
 
 from dataclasses import dataclass, replace
-from typing import TypeVar
 
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score_checkpoint import ScoreCheckpoint
@@ -20,15 +19,13 @@ from max_div._core.solver._score_checkpoint import ScoreCheckpoint
 from ._result import WorkerResult
 from ._worker_group_change import WorkerGroupChange
 
-_Timed = TypeVar("_Timed", ScoreCheckpoint, WorkerGroupChange)
-
 
 @dataclass(frozen=True)
 class SharedSolveTimeline:
-    """Every worker's events on one time axis whose zero is the earliest worker start.
+    """A shared solve timeline holds every worker's events on one time axis whose zero is the earliest worker start.
 
-    `checkpoints` holds all workers' checkpoints, their elapsed rebased to the shared axis, in no
-    significant order; `best_known_checkpoints` derives the best-known trace from them. `group_changes`
+    `checkpoints` holds all workers' checkpoints, their `elapsed` fields rebased to the shared axis, in
+    no significant order; `best_known_checkpoints` derives the best-known trace from them. `group_changes`
     holds all workers' dissolutions, rebased and already in the order they happened, so the field is
     the group history itself. `start_offsets` maps a worker index to its start on the axis, zero for
     the earliest worker.
@@ -57,8 +54,9 @@ class SharedSolveTimeline:
             for result in results
             for change in result.worker_group_changes
         ]
-        # every dissolution lowers the alive-group count by one, so that count orders the changes as
-        # they happened across workers, without a timestamp a worker read before the transition lock
+        # every dissolution lowers the alive-group count by one, and each worker sets that count as it
+        # makes the change, so the count orders the changes as they happened across workers where a
+        # per-worker timestamp, read before the change takes effect, could not
         group_changes.sort(key=lambda change: -change.n_alive_groups_after)
         return cls(start_offsets=start_offsets, checkpoints=checkpoints, group_changes=group_changes)
 
@@ -87,9 +85,14 @@ class SharedSolveTimeline:
         return trace
 
 
-def _shifted(event: _Timed, offset_sec: float) -> _Timed:
-    """Return `event` with its elapsed moved onto the shared axis by `offset_sec`, its iteration count kept."""
+# ==================================================================================================
+#  Helpers
+# ==================================================================================================
+def _shifted[T: (ScoreCheckpoint, WorkerGroupChange)](event: T, offset_sec: float) -> T:
+    """Move `event`'s `elapsed` field onto the shared axis by `offset_sec`, keeping its iteration count."""
     return replace(
         event,
-        elapsed=Elapsed(t_elapsed_sec=offset_sec + event.elapsed.t_elapsed_sec, n_iterations=event.elapsed.n_iterations),
+        elapsed=Elapsed(
+            t_elapsed_sec=offset_sec + event.elapsed.t_elapsed_sec, n_iterations=event.elapsed.n_iterations
+        ),
     )
