@@ -6,6 +6,9 @@ module needs a guard of its own.
 
 Nothing outside this package imports matplotlib, and no other module imports this package at module
 level, so `import max_div` never pulls matplotlib in.
+
+Layout: `helpers` holds what any figure can use and nothing that belongs to one figure; each figure
+gets a sibling subpackage of its own.
 """
 
 from max_div._core.extras import require_extra
