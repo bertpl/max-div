@@ -91,7 +91,7 @@ def test_the_trace_keeps_only_improvements_and_names_their_holder():
 
 
 def test_a_later_start_shifts_a_worker_s_checkpoints_by_its_offset():
-    """Elapsed counts from the earliest worker start, so a worker that started later sits further right."""
+    """Elapsed counts from the earliest worker start, so a worker that started later has larger elapsed values."""
     # --- arrange ----------------------
     timeline = SharedSolveTimeline.from_worker_results(
         [
