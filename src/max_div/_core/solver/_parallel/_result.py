@@ -32,8 +32,8 @@ class WorkerResult:
 
     `t_start` is the `time.monotonic()` reading the worker took just before its solve started; the
     parent uses it to place this worker's checkpoints and worker group changes next to the other
-    workers' (see `_trajectory` and `_group_history`). `worker_group_changes` are the dissolutions
-    that this worker executed, with `elapsed` counted from the worker's own start.
+    workers' (see `SharedSolveTimeline`). `worker_group_changes` are the dissolutions that this
+    worker executed, with `elapsed` counted from the worker's own start.
     """
 
     worker_index: int
@@ -64,25 +64,6 @@ class WorkerResult:
     def earliest_start_time(results: list["WorkerResult"]) -> float:
         """Return the earliest worker start time: the zero of the axis that a parallel solution's checkpoints share."""
         return min(result.t_start for result in results)
-
-    def start_offset_sec(self, t_first_start: float) -> float:
-        """Return this worker's start on the shared axis: its own start minus the earliest worker start.
-
-        `t_first_start` is `earliest_start_time` over the run's results. The offset is how long the
-        earlier workers had already searched when this one began, and zero for the earliest worker.
-        """
-        return self.t_start - t_first_start
-
-    def place_on_shared_axis(self, elapsed: Elapsed, t_first_start: float) -> Elapsed:
-        """Place `elapsed`, counted from this worker's start, on the shared axis with zero at `t_first_start`.
-
-        Only the elapsed seconds shift, by the worker's start offset; the iteration count stays the
-        worker's own.
-        """
-        return Elapsed(
-            t_elapsed_sec=self.start_offset_sec(t_first_start) + elapsed.t_elapsed_sec,
-            n_iterations=elapsed.n_iterations,
-        )
 
     @staticmethod
     def best(results: list["WorkerResult"], failures: list[WorkerFailure] | None = None) -> "WorkerResult":

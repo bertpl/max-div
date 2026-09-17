@@ -12,11 +12,10 @@ from max_div._core.solver._solution import MaxDivSolution
 from max_div._core.solver._solver_config import SolverConfig
 
 from ._executor import run_workers
-from ._group_history import worker_group_history
 from ._merge_schedule import GroupMergeSchedule
 from ._result import WorkerResult
+from ._shared_solve_timeline import SharedSolveTimeline
 from ._solution import ParallelMaxDivSolution, WorkerSummary
-from ._trajectory import best_known_trajectory
 from ._worker_config import WorkerConfig
 from ._worker_groups import WorkerGroupState
 
@@ -102,7 +101,7 @@ class ParallelMaxDivSolver:
                 stacklevel=2,
             )
         winner = WorkerResult.best(results, failures)
-        t_first_start = WorkerResult.earliest_start_time(results)
+        timeline = SharedSolveTimeline.from_worker_results(results)
         summaries = [
             WorkerSummary(
                 worker_index=result.worker_index,
@@ -111,19 +110,19 @@ class ParallelMaxDivSolver:
                 score=result.score,
                 elapsed=result.elapsed,
                 has_best_score=result.score == winner.score,
-                t_start_offset_sec=result.start_offset_sec(t_first_start),
+                t_start_offset_sec=timeline.start_offsets[result.worker_index],
             )
             for result in results
         ]
         inherited = {field.name: getattr(winner.solution, field.name) for field in fields(MaxDivSolution)}
         # the selection is the winner's; the trace follows the best score across all workers
-        inherited["score_checkpoints"] = best_known_trajectory(results)
+        inherited["score_checkpoints"] = timeline.best_known_checkpoints()
         return ParallelMaxDivSolution(
             **inherited,
             workers=summaries,
             winning_worker=winner.worker_index,
             initial_worker_groups=group_state.initial_assignment,
-            worker_group_changes=worker_group_history(results),
+            worker_group_changes=timeline.group_changes,
         )
 
     def _build_group_state(self) -> WorkerGroupState:
