@@ -18,8 +18,8 @@ class WorkerSummary:
     replayed without the code that produced it: a seed alone does not say which solver to replay with.
 
     `t_start_offset_sec` is when the worker started on the parallel solve's shared time axis: seconds
-    since the earliest worker started, and zero for that earliest worker. It is the axis the
-    solution's `score_checkpoints` and `worker_group_changes` are placed on.
+    since the earliest worker started, and zero for that earliest worker. The solution's
+    `score_checkpoints` and `worker_group_changes` are placed on that same axis.
     """
 
     worker_index: int

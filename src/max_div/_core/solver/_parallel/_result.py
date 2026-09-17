@@ -68,7 +68,7 @@ class WorkerResult:
     def start_offset_sec(self, t_first_start: float) -> float:
         """Return this worker's start on the shared axis: its own start minus the earliest worker start.
 
-        `t_first_start` is `earliest_start_time` over the run's results. The offset is the stretch the
+        `t_first_start` is `earliest_start_time` over the run's results. The offset is how long the
         worker searched alone before the later workers began, and zero for the earliest worker.
         """
         return self.t_start - t_first_start
@@ -77,7 +77,7 @@ class WorkerResult:
         """Place `elapsed`, counted from this worker's start, on the shared axis with zero at `t_first_start`.
 
         Only the elapsed seconds shift, by the worker's start offset; the iteration count stays the
-        worker's own. Both the checkpoint trace and the group history place their events this way.
+        worker's own.
         """
         return Elapsed(
             t_elapsed_sec=self.start_offset_sec(t_first_start) + elapsed.t_elapsed_sec,
