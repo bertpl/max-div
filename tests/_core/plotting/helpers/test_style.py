@@ -3,6 +3,7 @@ from tests._extras import skip_module_unless_extra
 skip_module_unless_extra("plot")
 
 import matplotlib  # noqa: E402
+
 from max_div._core.plotting.helpers import figure_style, figure_style_path  # noqa: E402
 
 

@@ -11,6 +11,7 @@ from tests._extras import skip_module_unless_extra
 skip_module_unless_extra("plot")
 
 from matplotlib.figure import Figure  # noqa: E402
+
 from max_div._core.plotting.timeline import ParallelSolutionTimelinePlot  # noqa: E402
 
 
