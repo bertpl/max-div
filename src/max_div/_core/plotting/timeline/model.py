@@ -1,8 +1,13 @@
 """The geometry of a parallel solve's timeline, built by replaying the solve's events onto one axis.
 
-`ParallelSolutionTimelinePlot` holds everything a timeline figure needs and nothing visual: the group
-blocks with their height and span, per worker the bands it occupied and when, which worker held the
-best score over each interval, and the score trajectory. `draw` turns this geometry into a figure.
+`ParallelSolutionTimelinePlot` holds everything a timeline figure needs and nothing visual:
+
+- the group blocks with their height and span;
+- per worker, the bands it occupied and when;
+- which worker held the best score over each interval;
+- the score trajectory.
+
+`draw` turns this geometry into a figure.
 
 The plot is populated by event replay, not through its constructor: the constructor fixes the initial
 grouping and where each worker's band starts, then `dissolve_group`, `record_best` and `record_score`
@@ -27,7 +32,7 @@ if TYPE_CHECKING:
 # ==================================================================================================
 @dataclass(frozen=True)
 class BandSegment:
-    """One stretch a worker spent in one band of one group, from `t_from` to `t_to` on the shared axis."""
+    """A band segment is a stretch a worker spent in one band of one group, from `t_from` to `t_to`."""
 
     worker: int
     group: int
@@ -58,7 +63,7 @@ class BestInterval:
 
 @dataclass(frozen=True)
 class ScorePoint:
-    """The diversity and constraints scores of the best-known selection at time `t` on the shared axis."""
+    """A score point is the best-known selection's diversity and constraints scores at time `t`."""
 
     t: float
     diversity: float
@@ -125,12 +130,8 @@ class ParallelSolutionTimelinePlot:
         self._presets[worker] = preset
 
     def dissolve_group(self, t: float, group: int, reassignments: dict[int, int]) -> None:
-        """Dissolve `group` at time `t`, moving each of its workers to its target group in `reassignments`.
-
-        Args:
-            reassignments: target group per worker that was in the dissolved group.
-        """
-        self._check_time(t)
+        """Dissolve `group` at time `t`, sending each of its workers to its target group in `reassignments`."""
+        self._advance_time(t)
         for worker in [w for w, g in self._group_of.items() if g == group]:
             self._close_segment(worker, t)
             self._occupied_rows[group].discard(self._row_of[worker])
@@ -139,18 +140,18 @@ class ParallelSolutionTimelinePlot:
 
     def record_best(self, t: float, worker: int) -> None:
         """Record that from `t` on, `worker` held the best score; its group is read from the current grouping."""
-        self._check_time(t)
+        self._advance_time(t)
         self._close_best(t)
         self._best_open = (t, worker, self._group_of[worker])
 
     def record_score(self, t: float, diversity: float, constraints: float) -> None:
         """Append the best-known selection's scores at time `t` to the trajectory."""
-        self._check_time(t)
+        self._advance_time(t)
         self._score_points.append(ScorePoint(t=t, diversity=diversity, constraints=constraints))
 
     def finish(self, t_end: float) -> None:
         """Close every open band, group block and best interval at `t_end`, the end of the solve."""
-        self._check_time(t_end)
+        self._advance_time(t_end)
         for worker in range(self._n_workers):
             self._close_segment(worker, t_end)
         for group in self._group_of.values():
@@ -229,14 +230,17 @@ class ParallelSolutionTimelinePlot:
         Merges the solution's worker group changes and score checkpoints into one time-ordered replay:
         a change dissolves a group, a checkpoint records the best holder and its scores. Ties on time
         put a change before a checkpoint, so a checkpoint reads the grouping the change just produced,
-        and equal-time changes keep their happened order (the falling alive-group count).
+        and equal-time changes stay in the order they happened, which sorting by the descending count of
+        groups still alive after each change reproduces.
         """
         start_offsets = [worker.t_start_offset_sec for worker in solution.workers]
         plot = cls(initial_groups=list(solution.initial_worker_groups), start_offsets=start_offsets)
         for worker in solution.workers:
             plot.set_worker_preset(worker.worker_index, str(worker.config.preset.resolve_alias()).upper())
 
-        changes = [(c.elapsed.t_elapsed_sec, 0, -c.n_alive_groups_after, c, None) for c in solution.worker_group_changes]
+        changes = [
+            (c.elapsed.t_elapsed_sec, 0, -c.n_alive_groups_after, c, None) for c in solution.worker_group_changes
+        ]
         checkpoints = [(cp.elapsed.t_elapsed_sec, 1, cp.worker_index, None, cp) for cp in solution.score_checkpoints]
         for t, _kind, _tiebreak, change, checkpoint in sorted(changes + checkpoints, key=lambda e: (e[0], e[1], e[2])):
             if change is not None:
@@ -281,7 +285,7 @@ class ParallelSolutionTimelinePlot:
                 self._best_intervals.append(BestInterval(t_from=t_from, t_to=t, worker=worker, group=group))
             self._best_open = None
 
-    def _check_time(self, t: float) -> None:
+    def _advance_time(self, t: float) -> None:
         """Advance the replay clock, rejecting an event that goes back in time."""
         if t < self._last_t:
             raise ValueError(f"timeline events must not go back in time: {t} follows {self._last_t}")
@@ -289,4 +293,4 @@ class ParallelSolutionTimelinePlot:
 
 
 if TYPE_CHECKING:
-    from matplotlib.figure import Figure  # noqa: TID251 — annotation only; the render body imports it
+    from matplotlib.figure import Figure

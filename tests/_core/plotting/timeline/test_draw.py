@@ -74,7 +74,9 @@ def test_plot_timeline_on_a_solution_returns_a_figure():
     """`ParallelMaxDivSolution.plot_timeline` builds the plot from the solution and draws it."""
     # --- arrange ----------------------
     checkpoints = [
-        ScoreCheckpoint(SolverStepIdentity(1, "step"), Elapsed(t, int(10 * t)), Score(1.0, 1.0, (d,)), worker_index=0, group_index=0)
+        ScoreCheckpoint(
+            SolverStepIdentity(1, "step"), Elapsed(t, int(10 * t)), Score(1.0, 1.0, (d,)), worker_index=0, group_index=0
+        )
         for t, d in [(0.0, 0.1), (5.0, 0.5)]
     ]
     worker = WorkerSummary(

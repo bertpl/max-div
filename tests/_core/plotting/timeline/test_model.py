@@ -49,7 +49,10 @@ def test_a_group_block_spans_its_life_and_is_as_tall_as_its_peak_size():
 
     # --- assert -----------------------
     # group 0 grows to three workers and survives to the end; group 1 holds one worker until it dissolves
-    assert blocks == [GroupBlock(group=0, t_start=0.0, t_end=10.0, height=3), GroupBlock(group=1, t_start=2.0, t_end=5.0, height=1)]
+    assert blocks == [
+        GroupBlock(group=0, t_start=0.0, t_end=10.0, height=3),
+        GroupBlock(group=1, t_start=2.0, t_end=5.0, height=1),
+    ]
 
 
 def test_the_best_intervals_name_the_holder_and_its_group_over_each_span():
@@ -62,7 +65,10 @@ def test_the_best_intervals_name_the_holder_and_its_group_over_each_span():
         BestInterval(t_from=0.0, t_to=5.0, worker=0, group=0),
         BestInterval(t_from=5.0, t_to=10.0, worker=2, group=0),
     ]
-    assert plot.score_points == [ScorePoint(t=0.0, diversity=0.1, constraints=1.0), ScorePoint(t=5.0, diversity=0.5, constraints=1.0)]
+    assert plot.score_points == [
+        ScorePoint(t=0.0, diversity=0.1, constraints=1.0),
+        ScorePoint(t=5.0, diversity=0.5, constraints=1.0),
+    ]
 
 
 def test_the_worker_facts_are_read_back():
@@ -153,8 +159,14 @@ def test_from_solution_replays_the_grouping_and_resolves_the_preset_alias():
     # --- assert -----------------------
     assert plot.n_workers == 3
     assert plot.worker_presets == {0: "SMART", 1: "SMART", 2: "SMART"}
-    assert plot.group_blocks == [GroupBlock(group=0, t_start=0.0, t_end=5.0, height=3), GroupBlock(group=1, t_start=0.0, t_end=5.0, height=1)]
-    assert plot.score_points == [ScorePoint(t=0.0, diversity=0.1, constraints=1.0), ScorePoint(t=5.0, diversity=0.5, constraints=1.0)]
+    assert plot.group_blocks == [
+        GroupBlock(group=0, t_start=0.0, t_end=5.0, height=3),
+        GroupBlock(group=1, t_start=0.0, t_end=5.0, height=1),
+    ]
+    assert plot.score_points == [
+        ScorePoint(t=0.0, diversity=0.1, constraints=1.0),
+        ScorePoint(t=5.0, diversity=0.5, constraints=1.0),
+    ]
 
 
 def test_from_solution_credits_the_holder_from_the_replayed_grouping():

@@ -1,4 +1,4 @@
-"""The solve-timeline figure: the drawable model of a parallel solve and the code that draws it."""
+"""The solve-timeline package holds the drawable model of a parallel solve and the code that draws it."""
 
 from .model import ParallelSolutionTimelinePlot
 
