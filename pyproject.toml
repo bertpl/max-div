@@ -46,7 +46,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-# The plot extra draws figures from solver results (`max_div._core.plotting`); `import max_div` works
+# The plot extra enables the plotting features (`max_div._core.plotting`); `import max_div` works
 # without the extra, and reaching the plotting package without the extra raises an error naming the extra.
 plot = [
     "matplotlib>=3.9",

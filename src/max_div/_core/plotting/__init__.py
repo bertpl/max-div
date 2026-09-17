@@ -1,4 +1,4 @@
-"""This package draws figures from solver results, behind the optional `plot` extra.
+"""This package implements the plotting features, behind the optional `plot` extra.
 
 Matplotlib is imported at module level only inside this package, and this `__init__` is the one place
 that checks for the extra: every submodule of this package runs after this `__init__`, so no other

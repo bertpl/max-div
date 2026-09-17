@@ -35,7 +35,7 @@ class MissingExtraError(ImportError):
 #  Main API
 # ==================================================================================================
 def is_extra_installed(extra: str) -> bool:
-    """Return whether every distribution the extra `extra` lists is installed.
+    """Return True when every distribution that the extra installs is present in the environment.
 
     Raises:
         ValueError: If the package declares no extra by that name.
