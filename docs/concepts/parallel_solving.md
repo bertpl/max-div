@@ -8,8 +8,7 @@ processes but not N copies of that data.
 The workers form **[worker groups](glossary.md#worker-group)** — the parallel-metaheuristics
 literature calls them *islands*: within a group, every worker adopts the best selection any
 member has found so far, exchanged many times per second while solving; groups never communicate
-with each other. Groups of one worker are fully independent — a fully
-independent set of workers is the special case where every group has one member. By default the
+with each other. Groups of one worker are fully independent. By default the
 grouping is **dynamic** — it evolves during the solve (described under
 [Workers and Groups](#workers-and-groups)); `with_custom_worker_groups` keeps it fixed instead.
 
@@ -39,7 +38,7 @@ How much the variance reduction buys depends on the budget. The [published prese
 show the seed spread narrowing sharply as budgets grow — roughly tenfold over the first stretch —
 and then flattening rather than vanishing.
 
-Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
+Even at that flattened level the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
 
 The dynamic default removes the need to trade the two counts against each other.
