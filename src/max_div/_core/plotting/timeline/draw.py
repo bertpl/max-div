@@ -26,6 +26,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch, Rectangle
+from matplotlib.ticker import FuncFormatter, MultipleLocator
+from matplotlib.transforms import ScaledTranslation
 
 from max_div._core.plotting.helpers import UpperLogTransform, figure_style
 
@@ -37,8 +39,8 @@ if TYPE_CHECKING:
     from .model import GroupBlock, ParallelSolutionTimelinePlot, ScorePoint
 
 # --- colors -------------------------------------------------
-_EMPTY_BAND = "#ECEFF1"
-_EMPTY_BAND_GONE = "#F6F7F8"  # ~50% from _EMPTY_BAND toward white, for a group after it has dissolved
+_EMPTY_BAND = "#DFE4E7"
+_EMPTY_BAND_GONE = "#F6F7F8"  # much lighter grey for a group after it has dissolved, set apart from the active grey
 _WORKER = "#4C72B0"
 _BEST_GROUP = "#A9D5AC"
 _BEST_WORKER = "#2E7D32"
@@ -48,13 +50,20 @@ _DISSOLUTION_LINE = "#9E9E9E"  # faint vertical marker at each group dissolution
 
 # --- sizing (inches) ----------------------------------------
 _FIG_WIDTH = 9.5
-_BAND_INCH = 0.24
-_BAND_SHRINK_THRESHOLD = 8  # bands shrink past this many, so the panel grows with sqrt of the band count
+_LABEL_SIZE = 6  # score-panel tick labels
+_WORKER_LABEL_SIZE = 5.5  # worker labels drawn inside the bands
+_WORKER_LABEL_DROP_PT = 0.8  # nudge labels down by this, to center the caps in the descender space va="center" leaves
+_BAND_MAX_INCH = 0.24  # a band's height while there are few of them
+_BAND_MIN_INCH = 8 / 72  # floor of 8 pt, above _WORKER_LABEL_SIZE, so the in-band labels stay legible
+_BAND_SHRINK_THRESHOLD = 8  # bands keep full height up to this many, then shrink toward the floor
 _SCORE_INCH = 2.28
 _MARGIN_INCH = 0.9
-_LABEL_SIZE = 6  # worker labels and score-panel tick labels share this size
 _SCORE_TOP = 1.15  # top of the upper-log score axis, above the maximum at axis 1, so the headroom carries ticks
 _GROUP_GAP = 0.5  # blank rows between one group's block and the next
+
+# --- time axis ----------------------------------------------
+# natural tick spacings in seconds, each a clean divisor of the next unit up (60 s, 3600 s, 86400 s)
+_TICK_STEPS_SEC = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400]
 
 
 def draw_timeline(plot: ParallelSolutionTimelinePlot) -> Figure:
@@ -71,9 +80,7 @@ def _draw_figure(plot: ParallelSolutionTimelinePlot) -> Figure:
     total_extent = base_y[blocks[-1].group] + blocks[-1].height
     has_constraints_panel = any(point.constraints < 1.0 for point in plot.score_points)
 
-    top_inch = _BAND_INCH * (
-        total_extent if total_extent <= _BAND_SHRINK_THRESHOLD else (_BAND_SHRINK_THRESHOLD * total_extent) ** 0.5
-    )
+    top_inch = _top_panel_inch(total_extent)
     heights = [top_inch, _SCORE_INCH] + ([_SCORE_INCH] if has_constraints_panel else [])
     fig = Figure(figsize=(_FIG_WIDTH, sum(heights) + _MARGIN_INCH))
     axes = fig.subplots(len(heights), 1, sharex=True, gridspec_kw={"height_ratios": heights, "hspace": 0.18})
@@ -93,16 +100,55 @@ def _draw_figure(plot: ParallelSolutionTimelinePlot) -> Figure:
             is_log=not has_full_constraints,
         )
 
+    step = _time_axis_step(plot.t_end)
+    formatter = FuncFormatter(lambda x, _pos: _format_elapsed(x))
     dissolution_times = sorted({block.t_end for block in blocks if block.t_end < plot.t_end})
     for ax in axes:
+        # every panel shares the x-axis, so match their ticks; sharex shows the labels on the bottom one
+        ax.xaxis.set_major_locator(MultipleLocator(step))
+        ax.xaxis.set_major_formatter(formatter)
         for t in dissolution_times:
             ax.axvline(t, color=_DISSOLUTION_LINE, linewidth=0.6, alpha=0.5, zorder=3)
 
-    axes[-1].set_xlim(0.0, plot.t_end)
-    axes[-1].set_xlabel("elapsed seconds")
+    axes[-1].set_xlim(0.0, plot.t_end * 1.05)
+    axes[-1].set_xlabel("Elapsed time")
     axes[0].set_title("Parallel solve timeline", fontsize=13, loc="left")
     fig.align_ylabels()
     return fig
+
+
+def _top_panel_inch(total_extent: float) -> float:
+    """Return the top panel's height in inches, given the band-and-gap row count `total_extent`.
+
+    Bands start at `_BAND_MAX_INCH` and, past `_BAND_SHRINK_THRESHOLD` rows, shrink to keep the panel
+    compact. The shrink stops at `_BAND_MIN_INCH`, below which the worker labels would overlap; from
+    there the band height holds and the panel grows to fit the rows instead.
+    """
+    band_inch = min(_BAND_MAX_INCH, _BAND_MAX_INCH * (_BAND_SHRINK_THRESHOLD / total_extent) ** 0.5)
+    return max(_BAND_MIN_INCH, band_inch) * total_extent
+
+
+def _time_axis_step(t_end: float, max_intervals: int = 9) -> float:
+    """Return the elapsed-time axis tick spacing in seconds.
+
+    The spacing is the smallest natural step from `_TICK_STEPS_SEC` that keeps 0..`t_end` to at most
+    `max_intervals` intervals, so the axis carries roughly five to ten ticks that land on whole
+    seconds, minutes and hours. Spans longer than the largest step get that step, and fewer ticks.
+    """
+    for step in _TICK_STEPS_SEC:
+        if t_end / step <= max_intervals:
+            return step
+    return _TICK_STEPS_SEC[-1]
+
+
+def _format_elapsed(seconds: float) -> str:
+    """Format an elapsed-second tick in its whole hours, minutes and seconds, e.g. 1830 -> '30m30s'."""
+    s = round(float(seconds))
+    if s == 0:
+        return "0"
+    hours, rest = divmod(s, 3600)
+    minutes, secs = divmod(rest, 60)
+    return f"{hours}h" * bool(hours) + f"{minutes}m" * bool(minutes) + f"{secs}s" * bool(secs)
 
 
 # ==================================================================================================
@@ -160,7 +206,10 @@ def _draw_bands(
         fontsize=8,
     )
     ax.set_ylim(total_extent, 0)
-    ax.set_yticks([])
+    # name each group beside its top band, in the margin the in-band worker labels freed up
+    ax.set_yticks([base_y[block.group] + 0.5 for block in blocks])
+    ax.set_yticklabels([f"group {block.group}" for block in blocks], fontsize=_LABEL_SIZE)
+    ax.tick_params(axis="y", length=0)
     ax.set_ylabel("workers, grouped")
 
 
@@ -170,15 +219,29 @@ def _draw_band(ax: Axes, t_from: float, t_to: float, row: float, color: str) -> 
 
 
 def _label_bands(ax: Axes, plot: ParallelSolutionTimelinePlot, base_y: dict[int, float]) -> None:
-    """Label each worker with its index and preset, just left of the band where it starts."""
-    starts: dict[int, tuple[float, float]] = {}
-    for segment in plot.segments:
-        if (segment.worker not in starts) or (segment.t_from < starts[segment.worker][0]):
-            starts[segment.worker] = (segment.t_from, base_y[segment.group] + segment.row)
+    """Label every band segment with its worker index and preset, inside the band at the segment's start.
+
+    A worker gets a fresh label each time it is reassigned, at the start of its new band, so a worker
+    can be followed across the merges instead of only from where it began.
+    """
     presets = plot.worker_presets
-    for worker, (_t_from, row) in starts.items():
-        # anchored at the left edge, not the worker's start, so the labels line up clear of the axis
-        ax.text(0.0, row + 0.5, f"w{worker} {presets.get(worker, '')} ", ha="right", va="center", fontsize=_LABEL_SIZE)
+    # va="center" centers the font box, whose empty descender strip leaves the caps riding high; a small
+    # fixed points offset drops them back to the band's optical center, whatever the band's height
+    transform = ax.transData + ScaledTranslation(0.0, -_WORKER_LABEL_DROP_PT / 72, ax.figure.dpi_scale_trans)
+    for segment in plot.segments:
+        row = base_y[segment.group] + segment.row
+        preset = presets.get(segment.worker)
+        label = f" {segment.worker} - {preset}" if preset else f" {segment.worker}"
+        ax.text(
+            segment.t_from,
+            row + 0.5,
+            label,
+            ha="left",
+            va="center",
+            fontsize=_WORKER_LABEL_SIZE,
+            color="white",
+            transform=transform,
+        )
 
 
 def _base_rows(blocks: list[GroupBlock]) -> dict[int, float]:

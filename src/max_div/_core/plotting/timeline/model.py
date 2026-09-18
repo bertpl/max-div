@@ -28,6 +28,9 @@ if TYPE_CHECKING:
 
     from max_div._core.solver import ParallelMaxDivSolution
 
+# a band a worker held for less than this fraction of the whole solve is a merge artifact (see `segments`)
+_MIN_SEGMENT_FRACTION = 1 / 1000
+
 
 # ==================================================================================================
 #  Geometry
@@ -181,15 +184,34 @@ class ParallelSolutionTimelinePlot:
 
     @property
     def segments(self) -> list[BandSegment]:
-        """Return every band segment, one per stretch a worker spent in one band."""
-        return list(self._segments)
+        """Return every band segment a worker held for a meaningful span.
+
+        A merge that cuts the group count by more than one is recorded as a chain of dissolutions that
+        all share one timestamp, which routes a worker through an intermediate group for no time.
+        Segments shorter than `_MIN_SEGMENT_FRACTION` of the whole solve are those artifacts, dropped
+        here so they neither inflate a group's height nor draw a stray worker label.
+        """
+        min_sec = self.t_end * _MIN_SEGMENT_FRACTION
+        return [segment for segment in self._segments if segment.t_to - segment.t_from >= min_sec]
 
     @property
     def group_blocks(self) -> list[GroupBlock]:
-        """Return the group blocks in group-id order."""
+        """Return the group blocks in group-id order, each as tall as its lasting occupancy.
+
+        The height is the top band any lasting member reaches, read from `segments` (which excludes the
+        transient bands), so a merge artifact never makes a block taller than it truly was.
+        """
+        heights: dict[int, int] = {}
+        for segment in self.segments:
+            heights[segment.group] = max(heights.get(segment.group, 0), segment.row + 1)
         return [
-            GroupBlock(group=group, t_start=self._group_start[group], t_end=self._group_end[group], height=height)
-            for group, height in sorted(self._peak_height.items())
+            GroupBlock(
+                group=group,
+                t_start=self._group_start[group],
+                t_end=self._group_end[group],
+                height=heights.get(group, self._peak_height[group]),
+            )
+            for group in sorted(self._peak_height)
         ]
 
     @property

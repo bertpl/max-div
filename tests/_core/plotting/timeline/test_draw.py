@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._parallel import ParallelMaxDivSolution, WorkerConfig, WorkerSummary
@@ -13,6 +14,14 @@ skip_module_unless_extra("plot")
 from matplotlib.figure import Figure  # noqa: E402
 
 from max_div._core.plotting.timeline import ParallelSolutionTimelinePlot  # noqa: E402
+from max_div._core.plotting.timeline.draw import (  # noqa: E402
+    _BAND_MAX_INCH,
+    _BAND_MIN_INCH,
+    _BAND_SHRINK_THRESHOLD,
+    _format_elapsed,
+    _time_axis_step,
+    _top_panel_inch,
+)
 
 
 def _plot(first_constraints: float = 1.0) -> ParallelSolutionTimelinePlot:
@@ -49,13 +58,13 @@ def test_a_third_panel_appears_when_the_constraint_score_drops_below_one():
 
 
 def test_the_title_label_and_color_legend_are_set():
-    """The figure carries the title, the elapsed-seconds axis label, and the three-color legend."""
+    """The figure carries the title, the elapsed-time axis label, and the three-color legend."""
     # --- arrange / act ----------------
     fig = _plot().render()
 
     # --- assert -----------------------
     assert fig.axes[0].get_title(loc="left") == "Parallel solve timeline"
-    assert fig.axes[-1].get_xlabel() == "elapsed seconds"
+    assert fig.axes[-1].get_xlabel() == "Elapsed time"
     legend_labels = [text.get_text() for text in fig.axes[0].get_legend().get_texts()]
     assert legend_labels == ["active worker", "leading group", "leading worker"]
 
@@ -69,6 +78,28 @@ def test_each_dissolution_draws_one_marker_line_on_every_panel():
     # the band panel holds only the dissolution lines; one dissolution here, so one line per panel
     assert len(fig.axes[0].lines) == 1
     assert all(line.get_xdata()[0] == 5.0 for line in fig.axes[0].lines)
+
+
+def test_a_reassigned_worker_is_labeled_white_in_each_band_it_occupies():
+    """A worker reassigned to another group is labeled again in its new band, and every label is white."""
+    # --- arrange / act ----------------
+    fig = _plot().render()  # worker 2 starts in group 1 and moves to group 0 at t=5, so it occupies two bands
+    texts = fig.axes[0].texts
+
+    # --- assert -----------------------
+    w2_labels = [text for text in texts if text.get_text().split()[0] == "2"]
+    assert len(w2_labels) == 2
+    assert all(text.get_color() == "white" for text in texts)
+
+
+def test_each_group_block_is_named_beside_its_top_band():
+    """The top panel's y tick labels name each group block, one per block."""
+    # --- arrange / act ----------------
+    fig = _plot().render()  # groups 0 and 1, so two blocks
+
+    # --- assert -----------------------
+    labels = sorted(text.get_text() for text in fig.axes[0].get_yticklabels())
+    assert labels == ["group 0", "group 1"]
 
 
 def test_plot_timeline_on_a_solution_returns_a_figure():
@@ -105,3 +136,57 @@ def test_plot_timeline_on_a_solution_returns_a_figure():
     # --- assert -----------------------
     assert isinstance(fig, Figure)
     assert fig.axes[0].get_title(loc="left") == "Parallel solve timeline"
+
+
+@pytest.mark.parametrize(
+    "total_extent, expected_band_inch",
+    [
+        (4.0, _BAND_MAX_INCH),  # few bands: bands are at full height
+        (16.0, _BAND_MAX_INCH * (_BAND_SHRINK_THRESHOLD / 16.0) ** 0.5),  # past the threshold: shrunk, above the floor
+        (200.0, _BAND_MIN_INCH),  # many bands: band height pinned to the floor, panel grows instead
+    ],
+)
+def test_top_panel_height_clamps_the_band_height_between_its_bounds(total_extent: float, expected_band_inch: float):
+    """The panel height is the per-band height, clamped to `[_BAND_MIN_INCH, _BAND_MAX_INCH]`, times the rows."""
+    # --- act --------------------------
+    top_inch = _top_panel_inch(total_extent)
+
+    # --- assert -----------------------
+    assert top_inch == pytest.approx(expected_band_inch * total_extent)
+    assert _BAND_MIN_INCH <= top_inch / total_extent <= _BAND_MAX_INCH
+
+
+@pytest.mark.parametrize(
+    "t_end, expected_step",
+    [
+        (3600, 600),  # one hour -> 10-minute ticks
+        (300, 60),  # five minutes -> 1-minute ticks
+        (45, 5),  # under a minute -> 5-second ticks
+        (7200, 900),  # two hours -> 15-minute ticks
+    ],
+)
+def test_time_axis_step_picks_a_natural_spacing_within_the_tick_budget(t_end: float, expected_step: float):
+    """The elapsed-time axis steps on a natural unit, keeping the interval count within budget."""
+    # --- act --------------------------
+    step = _time_axis_step(t_end)
+
+    # --- assert -----------------------
+    assert step == expected_step
+    assert t_end / step <= 9
+
+
+@pytest.mark.parametrize(
+    "seconds, expected",
+    [
+        (0, "0"),
+        (10, "10s"),
+        (1800, "30m"),
+        (3600, "1h"),
+        (5400, "1h30m"),
+        (1830, "30m30s"),
+    ],
+)
+def test_format_elapsed_uses_whole_time_units(seconds: float, expected: str):
+    """An elapsed-second tick formats as its whole hours, minutes and seconds."""
+    # --- act / assert -----------------
+    assert _format_elapsed(seconds) == expected

@@ -55,6 +55,24 @@ def test_a_group_block_spans_its_life_and_is_as_tall_as_its_peak_size():
     ]
 
 
+def test_a_zero_time_interim_assignment_is_dropped_and_does_not_inflate_its_group():
+    """A worker routed through a group for no time by a same-instant multi-way merge is filtered out."""
+    # --- arrange ----------------------
+    plot = ParallelSolutionTimelinePlot(initial_groups=[0, 1, 2], start_offsets=[0.0, 0.0, 0.0])
+    plot.dissolve_group(10.0, 1, {1: 2})  # worker 1 lands in group 2 ...
+    plot.dissolve_group(10.0, 2, {2: 0, 1: 0})  # ... which itself dissolves at the same instant
+
+    # --- act --------------------------
+    plot.finish(20.0)
+    segments = plot.segments
+    group_2 = next(block for block in plot.group_blocks if block.group == 2)
+
+    # --- assert -----------------------
+    assert BandSegment(worker=1, group=2, row=1, t_from=10.0, t_to=10.0) not in segments
+    assert all(segment.t_to > segment.t_from for segment in segments)
+    assert group_2.height == 1  # only worker 2 ever really sat in group 2
+
+
 def test_the_best_intervals_name_the_holder_and_its_group_over_each_span():
     """Each best interval carries the worker that held the best score and the group it was in at the time."""
     # --- arrange / act ----------------
@@ -140,9 +158,10 @@ def _solution() -> ParallelMaxDivSolution:
         slot_scores={},
         reassignments={2: 0},
     )
+    # the solve runs on past the t=5 merge to t=10, so the merged worker holds its new band for real time
     return ParallelMaxDivSolution(
         i_selected=np.array([0], dtype=np.int32),
-        score_checkpoints=[_checkpoint(0.0, 0, 0.1), _checkpoint(5.0, 2, 0.5)],
+        score_checkpoints=[_checkpoint(0.0, 0, 0.1), _checkpoint(5.0, 2, 0.5), _checkpoint(10.0, 2, 0.6)],
         step_durations=[],
         workers=[_summary(0, 0.0), _summary(1, 0.0), _summary(2, 0.0)],
         winning_worker=2,
@@ -160,12 +179,13 @@ def test_from_solution_replays_the_grouping_and_resolves_the_preset_alias():
     assert plot.n_workers == 3
     assert plot.worker_presets == {0: "SMART", 1: "SMART", 2: "SMART"}
     assert plot.group_blocks == [
-        GroupBlock(group=0, t_start=0.0, t_end=5.0, height=3),
+        GroupBlock(group=0, t_start=0.0, t_end=10.0, height=3),
         GroupBlock(group=1, t_start=0.0, t_end=5.0, height=1),
     ]
     assert plot.score_points == [
         ScorePoint(t=0.0, diversity=0.1, constraints=1.0),
         ScorePoint(t=5.0, diversity=0.5, constraints=1.0),
+        ScorePoint(t=10.0, diversity=0.6, constraints=1.0),
     ]
 
 
