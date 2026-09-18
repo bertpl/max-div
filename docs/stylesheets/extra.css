@@ -413,6 +413,37 @@ img.center75 {
     color: #2E7D32;
     font-weight: bold;
 }
+/* scripts/uniform_sampling_replay.py emits the solve replay figure and
+   docs/javascripts/uniform_sampling_replay.js steps it, redrawing the dots and rug ticks per frame;
+   nothing in it is hoverable. */
+.usx-replay .usx-dot {
+    cursor: default;
+}
+.usx-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6em;
+    margin-top: 0.5em;
+}
+.usx-controls input[type="range"] {
+    flex: 1 1 auto;
+    max-width: 24em;
+}
+.usx-controls button {
+    font-size: 0.8rem;
+    line-height: 1;
+    padding: 0.25em 0.6em;
+    border: 1px solid var(--md-default-fg-color--lighter);
+    border-radius: 0.2em;
+    background: var(--md-default-bg-color);
+    color: var(--md-default-fg-color);
+    cursor: pointer;
+}
+.usx-controls button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
 .usx-caption {
     text-align: center;
     font-size: 0.72rem;

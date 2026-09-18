@@ -7,3 +7,4 @@
 | **IV.B** geometric-mean distance | <span class="usx-high">0.0835 (73%)</span> | 0.0065 (64%) | 0.0070 (69%) |
 | **V.A** hybrid: L2, $x$ and $y$ terms | <span class="usx-high">0.0824 (72%)</span> | <span class="usx-high">0.0089 (88%)</span> | <span class="usx-high">0.0088 (87%)</span> |
 | **V.B** hybrid, 20 items per band | <span class="usx-high">0.0833 (73%)</span> | <span class="usx-high">0.0089 (88%)</span> | <span class="usx-high">0.0089 (88%)</span> |
+| **V.C** hybrid, 20 items per band, 900 s | <span class="usx-high">0.0839 (73%)</span> | <span class="usx-high">0.0091 (90%)</span> | <span class="usx-high">0.0089 (88%)</span> |
