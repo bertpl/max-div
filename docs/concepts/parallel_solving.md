@@ -70,6 +70,25 @@ workers' progress through the budget:
 - each decrease dissolves the group whose shared best selection scores worst, and its workers
   join the strongest groups still short a member — reinforcing searches that can still win.
 
+The timeline below shows the default schedule at work: 16 workers, a 60 s budget, on the
+[banded hybrid experiment](../guides/uniform_sampling.md#vb-exact-counts-per-band) of the
+uniform-sampling case study. `ParallelMaxDivSolution.plot_timeline()` draws it from the solution's
+own records; it needs the `plot` extra.
+
+![Timeline of a 16-worker dynamic solve: the worker groups as bands over time, with the diversity and constraints trajectories below](images/parallel_solving_timeline.webp)
+
+- **Top panel**: one block per group, the shortest-lived groups on top. A worker's band is blue
+  while it searches, light green while its group holds the best selection, and dark green on the
+  worker that reported it at a checkpoint — inside a group the lead changes hands more often than
+  checkpoints are taken, so the light green is the honest resolution.
+- **What the schedule does**: every worker starts alone; a rate of 2 dissolves half the groups
+  within the first ten seconds, and one all-worker group remains from about 44 s on. The lead
+  changed groups a few times in the first seconds, then stayed with group 1, so each dissolution
+  handed that group more workers.
+- **Lower panels**: the best diversity any worker held, on an axis that stretches the plateau
+  where the late gains are, and the constraints score, drawn only because it is below one during
+  initialization.
+
 Each worker evaluates the schedule against its own progress, so the schedule works for time and
 iteration budgets alike:
 
