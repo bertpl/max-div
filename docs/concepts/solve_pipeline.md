@@ -41,7 +41,7 @@ them with new ones. The swap is kept only if it improves the score.
 | Strategy | How it works |
 |----------|-------------|
 | `random_swaps` | Randomly selects items to remove and add. Simple baseline. |
-| `guided_swaps` | Biased towards removing low-separation items and adding high-separation ones. |
+| `guided_swaps` | Biased toward removing low-separation items and adding high-separation ones. |
 | `smart_swaps` | Adaptively learns which swap sizes and candidate selection strategies work best during the run. |
 
 ## Presets vs Custom Configuration

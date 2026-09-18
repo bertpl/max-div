@@ -28,7 +28,7 @@ solver = (
 ## Reproducibility
 
 **On one machine, with the same installed versions — max-div's and numba's — and the same
-backend, a seeded solve is exactly reproducible**: run it again and you get the same selection,
+storage type, a seeded solve is exactly reproducible**: run it again and you get the same selection,
 bit for bit.
 
 **Change any of those three and you may get a different — equally diverse — selection.**
@@ -41,10 +41,10 @@ it is a different one of comparable quality.
 
 Two practical consequences:
 
-- **`AUTO` picks a backend from available memory**, so the same problem can resolve differently on
-  a machine with more or less RAM. Pin the backend explicitly if you want that variable removed —
+- **`AUTO` picks a storage type from available memory**, so the same problem can resolve differently on
+  a machine with more or less RAM. Pin the storage type explicitly if you want that variable removed —
   though on its own that does not make results portable across different machines.
 - **Comparing runs meaningfully** means comparing achieved diversity, not selected indices.
 
-(With a time budget, not an iteration budget, a faster backend also completes more
-iterations — the machine-dependence any time budget carries.)
+(With a time budget, not an iteration budget, a faster storage type also completes more
+iterations — the machine-dependence that any time budget carries.)
