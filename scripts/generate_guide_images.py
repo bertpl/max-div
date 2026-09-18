@@ -353,17 +353,22 @@ def build_uniform_sampling_population(n: int, seed: int) -> NDArray[np.float32]:
     return points
 
 
+def build_experiment_problem(vectors: NDArray[np.float32], experiment: Experiment, k: int) -> MaxDivProblem:
+    """Return the experiment's problem over the population: its objective, distance and band constraints."""
+    return MaxDivProblem.new(
+        vectors=vectors,
+        k=k,
+        distance_metric=experiment.distance_metric(),
+        diversity_metric=experiment.diversity_metric(),
+        constraints=experiment.constraints(vectors, k),
+    )
+
+
 def solve_experiment(
     vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings
 ) -> ParallelMaxDivSolution:
     """Return the experiment's solution, solved within an end-to-end budget."""
-    problem = MaxDivProblem.new(
-        vectors=vectors,
-        k=settings.k,
-        distance_metric=experiment.distance_metric(),
-        diversity_metric=experiment.diversity_metric(),
-        constraints=experiment.constraints(vectors, settings.k),
-    )
+    problem = build_experiment_problem(vectors, experiment, settings.k)
     solver = (
         ParallelMaxDivSolverBuilder(problem)
         .with_seed(settings.seed)
