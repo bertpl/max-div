@@ -128,4 +128,5 @@ class MaxDivSolverBuilder(SolverBuilderBase):
             constraint_penalty=self._constraint_penalty,
             distance_storage=distance_storage,
             e2e_budget=self._resolve_e2e_budget(),
+            records_intermediate_selections=self._records_intermediate_selections,
         )

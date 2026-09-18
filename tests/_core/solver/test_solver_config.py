@@ -111,3 +111,14 @@ def test_build_produces_a_working_solver():
     # --- assert -----------------------
     assert solution.i_selected.size == 4
     assert solution.score.diversity > 0.0
+
+
+def test_with_intermediate_selections_reaches_the_config():
+    """The builder switch lands on the config, so a worker rebuilt from it records the selections too."""
+    # --- arrange / act ----------------
+    _, config_off = _builder().prepare_storage_and_config()
+    _, config_on = _builder().with_intermediate_selections().prepare_storage_and_config()
+
+    # --- assert -----------------------
+    assert config_off.records_intermediate_selections is False
+    assert config_on.records_intermediate_selections is True

@@ -17,7 +17,7 @@ from ._progress_reporting import ProgressReporter, Verbosity
 from ._score_checkpoint import ScoreCheckpoint
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
-from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
+from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult, intermediate_selection
 from ._step_identity import SolverStepIdentity
 
 # The solver state initialization is reported and recorded as step 0 under this name.
@@ -50,6 +50,7 @@ class MaxDivSolver:
         distance_storage: DistanceStorageTypes = DistanceStorageTypes(),  # noqa: B008 -- frozen, safe as a default
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         e2e_budget: E2eBudget | None = None,
+        records_intermediate_selections: bool = False,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -74,6 +75,8 @@ class MaxDivSolver:
                 remains.
                 An unstarted budget starts counting when `solve` starts; the parallel solver
                 hands its workers a budget already counting from its own solve start.
+            records_intermediate_selections: (bool) Whether every score checkpoint also carries the
+                selection held at that moment, at k integers per checkpoint (default: False).
         """
         # --- problem description ----------------
         self._n = n
@@ -89,6 +92,7 @@ class MaxDivSolver:
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
         self._e2e_budget = e2e_budget
+        self._records_intermediate_selections = records_intermediate_selections
 
     # -------------------------------------------------------------------------
     #  API
@@ -157,6 +161,7 @@ class MaxDivSolver:
                         Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
                         state.score,
                         coordinator,
+                        i_selected=intermediate_selection(state, self._records_intermediate_selections),
                     )
                 ]
             )
@@ -185,6 +190,7 @@ class MaxDivSolver:
                         coordinator,
                         self._batch_seconds,
                         elapsed_before_step=elapsed_before_step,
+                        records_intermediate_selections=self._records_intermediate_selections,
                     )
                 )
             finally:

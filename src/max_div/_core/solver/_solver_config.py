@@ -39,6 +39,8 @@ class SolverConfig:
     # included; the parallel solver replaces it with a started copy at its own solve start, so
     # workers charge the parent's setup against the budget too
     e2e_budget: E2eBudget | None = None
+    # whether every score checkpoint also carries the selection held at that moment
+    records_intermediate_selections: bool = False
 
     def build_solver(
         self,
@@ -80,6 +82,7 @@ class SolverConfig:
             distance_storage=self.distance_storage,
             batch_seconds=self.batch_seconds,
             e2e_budget=self.e2e_budget,
+            records_intermediate_selections=self.records_intermediate_selections,
         )
 
     def with_seed(self, seed: int) -> "SolverConfig":

@@ -295,3 +295,19 @@ def test_checkpoint_count_is_batch_invariant():
 
     # --- assert -----------------------
     assert len(result_fast.score_checkpoints) == len(result_default.score_checkpoints)
+
+
+def test_a_step_records_the_selection_only_when_asked():
+    """A checkpoint holds the state's selection of that moment when the step is asked to record it, else None."""
+    # --- arrange ----------------------
+    step = InitializationStep(InitTest())
+    state = DummySolverState(n=100, k=10)
+
+    # --- act --------------------------
+    recorded = step.run(state, _STEP_IDENTITY, records_intermediate_selections=True).score_checkpoints[-1].i_selected
+    unrecorded = step.run(DummySolverState(n=100, k=10), _STEP_IDENTITY).score_checkpoints[-1].i_selected
+
+    # --- assert -----------------------
+    assert recorded is not None
+    assert np.array_equal(recorded, np.arange(10, dtype=np.int32))
+    assert unrecorded is None

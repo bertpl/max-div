@@ -169,6 +169,9 @@ each checkpoint naming the worker that held it and the group it was in, on one t
 at the earliest worker start. A single worker's own trace steps up whenever that worker adopts its
 group's best, which shows another worker's progress as a step in this worker's trace and hides which
 worker made it; the trace across workers instead attributes each step to the worker that made it.
+Built with `with_intermediate_selections()`, each checkpoint also carries the selection that worker
+held, so the checkpoints replay how the best selection evolved; the switch is off by default
+because it costs k integers per checkpoint.
 A dynamic solve also records its regrouping. `initial_worker_groups` gives each worker's group at
 the start, and `worker_group_changes` every dissolution since, on the same time axis as the
 checkpoints. Each change names:
