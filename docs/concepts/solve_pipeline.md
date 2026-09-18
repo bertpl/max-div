@@ -1,6 +1,6 @@
-# The Solve Pipeline
+# The solve pipeline
 
-## Steps
+## I. Steps { #steps }
 
 When you call `solver.solve()`, the solver executes a pipeline of **steps**:
 
@@ -17,7 +17,7 @@ flowchart LR
     init["Initialization step"] --> opt1["Optimization step 1"] --> opt2["Optimization step 2"] --> sol(["Solution"])
 ```
 
-## Initialization Strategies
+## II. Initialization strategies { #initialization-strategies }
 
 The initialization step selects the initial `k` items. Different strategies trade off
 speed vs quality of the starting point:
@@ -32,7 +32,7 @@ speed vs quality of the starting point:
 | `most_feasible` | Constructs a selection satisfying every constraint where one can be found, so optimization starts feasible instead of searching for feasibility; where the constraints provably cannot all be met, starts from a least-infeasible one; and otherwise from the least-violating one found. **Constrained problems only** — raises on a problem with no constraints. |
 | `fast` | Selects the first `k` items. Trivial deterministic baseline for testing and benchmarking. |
 
-## Optimization Strategies
+## III. Optimization strategies { #optimization-strategies }
 
 Optimization steps iteratively improve the selection through [**swap operations**](glossary.md#swap): in each
 iteration, the strategy removes one or more items from the current selection and replaces
@@ -44,7 +44,7 @@ them with new ones. The swap is kept only if it improves the score.
 | `guided_swaps` | Biased toward removing low-separation items and adding high-separation ones. |
 | `smart_swaps` | Adaptively learns which swap sizes and candidate selection strategies work best during the run. |
 
-## Presets vs Custom Configuration
+## IV. Presets vs custom configuration { #presets-vs-custom-configuration }
 
 **Presets** (configured via `with_preset`) select appropriate initialization and optimization
 strategies automatically. They are the recommended starting point for most users.

@@ -3,7 +3,7 @@
 !!! info "In short"
     This page shows how the [geometric-mean separation](../concepts/glossary.md#geometric-mean-separation) [diversity metric](../concepts/glossary.md#diversity-metric) combines the best of both worlds of [minimum](../concepts/glossary.md#max-min) and mean [separation](../concepts/glossary.md#separation) metrics, how it drives the solution towards a uniform distribution and why it is _especially_ useful for constrained diversity problems.
 
-## I. Pros & cons of different diversity metrics
+## I. Pros & cons of different diversity metrics { #i-pros-cons-of-different-diversity-metrics }
 
 | | min separation | mean separation | geometric-mean separation | harmonic-mean separation |
 |---|:---:|:---:|:---:|:---:|
@@ -13,7 +13,7 @@
 | Reacts to separations of every order of magnitude (I.4) | ❌ | ❌ | ✅ | ❌ |
 | Cheap to compute (I.5) | ✅ | ✅ | ❌ | ✅ |
 
-### I.1. Minimum separation only measures the closest item pair
+### I.A. Minimum separation only measures the closest item pair { #i1-minimum-separation-only-measures-the-closest-item-pair }
 
 Consider a selection of $k = 11$ items on a line, at positions
 
@@ -25,7 +25,7 @@ so the first two items are always $0.1$ apart and every further item follows the
 
 > The minimum separation diversity metric fails to take into account diversity beyond the closest selected item pair.
 
-### I.2. Mean separation barely penalizes near-duplicate items
+### I.B. Mean separation barely penalizes near-duplicate items { #i2-mean-separation-barely-penalizes-near-duplicate-items }
 
 Consider a selection of $k = 11$ items uniformly spaced over $[0, 1]$, except for the second item, which sits at $\alpha$:
 
@@ -37,7 +37,7 @@ At $\alpha = 0.1$ the selection is uniform; as $\alpha$ approaches $0$ the secon
 
 > The mean separation diversity only weakly penalizes near- or exactly duplicate items.
 
-### I.3. Incentives towards uniform selections
+### I.C. Incentives toward uniform selections { #i3-incentives-towards-uniform-selections }
 
 Consider a selection of $k = 51$ items on $[0, 1]$ at positions
 
@@ -49,7 +49,7 @@ At $\alpha = 1$ the selection is uniform; below it the items crowd towards $0$, 
 
 > Mean separation is mostly influenced by the total span of items (here: 1.0), much less so by the smaller distances (only the smallest distance between items counts twice instead of once towards the average), especially for larger k.
 
-### I.4. Separations of different orders of magnitude
+### I.D. Separations of different orders of magnitude { #i4-separations-of-different-orders-of-magnitude }
 
 Consider a selection of $k = 11$ items at $1, 10, 100, \ldots, 10^{10}$, so that every separation is ten times the previous one. The parameter $\alpha$ perturbs one end of the selection:
 
@@ -68,7 +68,7 @@ Each metric that is not the geometric mean does not react to changes on one side
 
 > When separations span orders of magnitude, as constraints can induce (section II), only the geometric mean keeps an incentive on every part of the selection. The harmonic mean shares the geometric mean's other strengths, but here it behaves like the minimum.
 
-### I.5. Computational cost
+### I.E. Computational cost { #i5-computational-cost }
 
 The [diversity-metric timing benchmark](../benchmarks/internal/bm_diversity_metrics.md) times each metric on one separation vector; the geometric mean of its timings over sizes 10 to 20,000:
 
@@ -79,7 +79,7 @@ The [diversity-metric timing benchmark](../benchmarks/internal/bm_diversity_metr
 | harmonic-mean separation | 0.23 µs | 1.1× | ✅ |
 | geometric-mean separation | 1.45 µs | 7.2× | ❌ |
 
-## II. Diversity metrics & constrained problems
+## II. Diversity metrics & constrained problems { #ii-diversity-metrics-constrained-problems }
 
 All these properties come together when dealing with constrained problems, of which the following illustration is a minimal example.
 

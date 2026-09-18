@@ -1,6 +1,6 @@
-# Diversity & Distance
+# Diversity & distance
 
-## From Items to Diversity
+## I. From items to diversity { #from-items-to-diversity }
 
 The solver evaluates how diverse a selection is through a three-step process:
 
@@ -28,7 +28,7 @@ Items  ──>  Pairwise Distances  ──>  Contributions  ──>  Diversity S
 3. The **diversity score** aggregates the `k` contribution values into a single scalar using the
    chosen diversity metric.
 
-## Distance Metrics
+## II. Distance metrics { #distance-metrics }
 
 The distance metric determines how the distance between two vectors is measured.
 
@@ -52,7 +52,7 @@ The distance metric determines how the distance between two vectors is measured.
 
 Reference for the geometric-mean distance: Joseph, V. R., Gul, E. & Ba, S. (2015). *Maximum projection designs for computer experiments*. Biometrika 102(2), 371–380. [doi:10.1093/biomet/asv002](https://doi.org/10.1093/biomet/asv002).
 
-## Separation
+## III. Separation { #separation }
 
 The **[separation](glossary.md#separation)** of a selected item is its minimum distance to any
 other selected item:
@@ -71,7 +71,7 @@ Separation is maintained incrementally during optimization:
 This incremental update is much cheaper than recomputing all separations from scratch after
 each swap.
 
-## Mean Distance
+## IV. Mean distance { #mean-distance }
 
 The **mean distance** of a selected item is its mean distance to the other selected items:
 
@@ -81,11 +81,11 @@ It is maintained incrementally as well, and even more cheaply than separation: a
 adds one distance to every item's running sum, and removing one subtracts it exactly -- no
 rescan of the selection is ever needed.
 
-## Diversity Metrics
+## V. Diversity metrics { #diversity-metrics }
 
 Each diversity metric aggregates the `k` separation values differently. (For how these objectives
 map onto the operations-research literature -- p-dispersion, Max-SumMin, classical MaxSum MDP --
-see [Objectives & the Diversity-Problem Landscape](objectives.md).)
+see [Objectives & the diversity-problem landscape](objectives.md).)
 
 | Metric | Formula | Characteristics |
 |--------|---------|-----------------|
@@ -96,7 +96,7 @@ see [Objectives & the Diversity-Problem Landscape](objectives.md).)
 | `HARMONIC_MEAN_SEPARATION` | $$\frac{k}{\sum_{v \in S} 1 / \text{sep}(v)}$$ | Between the geometric mean and the minimum: every item still counts, but a close pair lowers the score more than under the geomean. Zero as soon as one separation is zero. Computed exactly, without logarithm or exponential. |
 | `MEAN_PAIRWISE_DISTANCE` | $$\frac{2}{k(k-1)}\sum_{\{u,v\} \subseteq S} d(u, v)$$ | Mean distance over all selected *pairs* -- the classical **max-sum diversity** objective (MaxSum MDP, also known as *remote-clique*). Maximizes total spread: selections gravitate to the outer regions of the data, and near-duplicates are tolerated if both sit far from everything else. |
 
-### Which metric to choose?
+### V.A. Which metric to choose? { #which-metric-to-choose }
 
 - **`GEOMEAN_SEPARATION`** is the best default. It naturally penalizes any clustering in the
   selection while remaining smooth and differentiable in most of the search space.

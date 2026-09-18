@@ -1,4 +1,4 @@
-# Distance Storage
+# Distance storage
 
 During search the solver reads pairwise distances constantly, and how they are stored is
 selectable on the builder:
@@ -25,7 +25,7 @@ solver = (
   resolved storage type per distance is reported in the solution summary, e.g. `storage=full_matrix (L2)`
   — pin a storage type explicitly to override.
 
-## Reproducibility
+## I. Reproducibility { #reproducibility }
 
 **On one machine, with the same installed versions — max-div's and numba's — and the same
 storage type, a seeded solve is exactly reproducible**: run it again and you get the same selection,

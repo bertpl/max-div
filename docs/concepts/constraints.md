@@ -1,6 +1,6 @@
 # Constraints
 
-## What Are Constraints?
+## I. What are constraints? { #what-are-constraints }
 
 Constraints enforce that the selected subset includes a minimum and/or maximum number of
 [items](glossary.md#item) from specific groups. Each constraint is defined by:
@@ -17,7 +17,7 @@ from max_div import Constraint
 Constraint(int_set=set(range(50)), min_count=3, max_count=7)
 ```
 
-## Weighting Constraints
+## II. Weighting constraints { #weighting-constraints }
 
 By default every constraint counts equally toward the feasibility score. Raise a constraint's
 `weight` above `1` to make the solver prioritize satisfying it over lower-weight constraints when
@@ -34,7 +34,7 @@ A violation of a weight-3 constraint counts three times as much as an equal viol
 constraint. Weights must be strictly positive -- a zero weight would let a genuine violation go
 unpenalized and be reported as feasible.
 
-## Penalizing Large Violations
+## III. Penalizing large violations { #penalizing-large-violations }
 
 By default, a constraint's contribution to the score grows *linearly* with the size of its
 violation. Switch to *quadratic* penalization to push the solver harder away from large individual
@@ -54,7 +54,7 @@ solver = (
 
 This is a single global setting for the whole solve, independent of any per-constraint weights.
 
-## Overlapping Constraints
+## IV. Overlapping constraints { #overlapping-constraints }
 
 A single item can belong to multiple [constraint groups](glossary.md#overlapping-constraints).
 This is useful for modeling
@@ -76,7 +76,7 @@ constraints = [
 An item can be in both `group_a_indices` and `region_north`, and both constraints will
 be tracked independently.
 
-## Infeasible Constraints
+## V. Infeasible constraints { #infeasible-constraints }
 
 Constraints can be infeasible -- either individually or jointly. For example:
 
@@ -99,7 +99,7 @@ print(report)
 The answer is a proof either way -- `feasible` or `infeasible`, each carrying a checkable proof --
 or an explicit `unknown` when neither could be established.
 
-## How Constraints Are Tracked
+## VI. How constraints are tracked { #how-constraints-are-tracked }
 
 Internally, constraints are represented as numpy arrays for efficient access within
 numba-compiled solver code. For each constraint, the solver tracks how many *additional*
@@ -112,7 +112,7 @@ selections are needed (`min_remaining`) and how many more are *allowed* (`max_re
 This incremental tracking avoids recomputing constraint satisfaction from scratch after each
 swap, keeping the per-iteration cost constant regardless of constraint complexity.
 
-## Impact on Diversity
+## VII. Impact on diversity { #impact-on-diversity }
 
 Adding constraints restricts the search space, which generally reduces the achievable diversity.
 The tighter the constraints, the more diversity is sacrificed. This is expected and visible in
