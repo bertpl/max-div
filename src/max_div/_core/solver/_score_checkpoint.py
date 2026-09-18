@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from ._duration import Elapsed
     from ._parallel import WorkerCoordinator
     from ._score import Score
+    from ._solver_state import SolverState
     from ._step_identity import SolverStepIdentity
 
 
@@ -43,22 +44,23 @@ class ScoreCheckpoint:
         cls,
         step_identity: SolverStepIdentity,
         elapsed: Elapsed,
-        score: Score,
+        state: SolverState,
         coordinator: WorkerCoordinator | None,
-        i_selected: NDArray[np.int32] | None = None,
+        includes_selection: bool = False,
     ) -> ScoreCheckpoint:
-        """Return a checkpoint tagged with the worker and group that `coordinator` belongs to.
+        """Return a checkpoint of the state's score, tagged with the worker and group that `coordinator` belongs to.
 
-        The checkpoint stays untagged when `coordinator` is `None`. `i_selected` is stored as given,
-        so pass a copy of a selection that the solver keeps mutating.
+        The checkpoint stays untagged when `coordinator` is `None`. With `includes_selection` it also
+        holds a copy of the state's selection, since the solver keeps mutating the state's own array.
         """
+        i_selected = state.selected_index_array.copy() if includes_selection else None
         if coordinator is None:
-            return cls(step_identity=step_identity, elapsed=elapsed, score=score, i_selected=i_selected)
+            return cls(step_identity=step_identity, elapsed=elapsed, score=state.score, i_selected=i_selected)
         else:
             return cls(
                 step_identity=step_identity,
                 elapsed=elapsed,
-                score=score,
+                score=state.score,
                 worker_index=coordinator.worker_index,
                 group_index=coordinator.group_index,
                 i_selected=i_selected,

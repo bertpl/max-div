@@ -17,7 +17,7 @@ from ._progress_reporting import ProgressReporter, Verbosity
 from ._score_checkpoint import ScoreCheckpoint
 from ._solution import MaxDivSolution
 from ._solver_state import SolverState
-from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult, intermediate_selection
+from ._solver_step import REPORTING_BATCH_SECONDS, SolverStep, SolverStepResult
 from ._step_identity import SolverStepIdentity
 
 # The solver state initialization is reported and recorded as step 0 under this name.
@@ -159,9 +159,9 @@ class MaxDivSolver:
                     ScoreCheckpoint.new(
                         init_step_identity,
                         Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
-                        state.score,
+                        state,
                         coordinator,
-                        i_selected=intermediate_selection(state, self._intermediate_selections_enabled),
+                        includes_selection=self._intermediate_selections_enabled,
                     )
                 ]
             )

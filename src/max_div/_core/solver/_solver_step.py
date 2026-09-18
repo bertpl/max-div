@@ -3,9 +3,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import numpy as np
-from numpy.typing import NDArray
-
 from max_div._core._utils._timer import Timer
 from max_div._core._warnings import SolverBudgetWarning
 from max_div._core.solver._strategies import InitializationStrategy, OptimizationStrategy
@@ -161,9 +158,9 @@ class InitializationStep(SolverStep[InitializationStrategy]):
                 ScoreCheckpoint.new(
                     step_identity,
                     Elapsed(t_elapsed_sec=t.t_elapsed_sec(), n_iterations=1),
-                    state.score,
+                    state,
                     coordinator,
-                    i_selected=intermediate_selection(state, intermediate_selections_enabled),
+                    includes_selection=intermediate_selections_enabled,
                 )
             ],
         )
@@ -234,9 +231,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                     ScoreCheckpoint.new(
                         step_identity,
                         Elapsed(t_elapsed_sec=0.0, n_iterations=0),
-                        state.score,
+                        state,
                         coordinator,
-                        i_selected=intermediate_selection(state, intermediate_selections_enabled),
+                        includes_selection=intermediate_selections_enabled,
                     )
                 ]
             )
@@ -276,9 +273,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                     ScoreCheckpoint.new(
                         step_identity,
                         tracker.elapsed(),
-                        state.score,
+                        state,
                         coordinator,
-                        i_selected=intermediate_selection(state, intermediate_selections_enabled),
+                        includes_selection=intermediate_selections_enabled,
                     )
                 )
                 next_checkpoint_iter_count = int(
@@ -305,9 +302,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                 ScoreCheckpoint.new(
                     step_identity,
                     elapsed,
-                    state.score,
+                    state,
                     coordinator,
-                    i_selected=intermediate_selection(state, intermediate_selections_enabled),
+                    includes_selection=intermediate_selections_enabled,
                 )
             )
         return SolverStepResult(score_checkpoints=score_checkpoints)
@@ -336,14 +333,3 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                 ]
             ),
         )
-
-
-# =================================================================================================
-#  Helpers
-# =================================================================================================
-def intermediate_selection(state: SolverState, intermediate_selections_enabled: bool) -> NDArray[np.int32] | None:
-    """Return a copy of the state's current selection when checkpoints record selections, else None."""
-    if intermediate_selections_enabled:
-        return state.selected_index_array.copy()
-    else:
-        return None
