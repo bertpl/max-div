@@ -29,7 +29,7 @@ function appendElement(parent, tag, attributes) {
 // Format a frame's caption the way scripts/uniform_sampling_replay.py formats the last frame's.
 function frameCaption(index, frames) {
   const [tSec, diversity] = frames[index];
-  return `frame ${index + 1}/${frames.length} · ${tSec.toFixed(1)} s · diversity ${diversity.toFixed(4)}`;
+  return `frame ${index + 1}/${frames.length} · ${tSec.toFixed(1)} s · diversity ${diversity.toFixed(6)}`;
 }
 
 // Redraw the data group with one frame's items: per item, its two rug ticks and its dot.

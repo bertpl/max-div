@@ -45,7 +45,7 @@ class ReplayFrame:
 
 def frame_caption(index: int, n_frames: int, frame: ReplayFrame) -> str:
     """Return a frame's caption line; the JavaScript formats every other frame's the same way."""
-    return f"frame {index + 1}/{n_frames} · {frame.t_sec:.1f} s · diversity {frame.diversity:.4f}"
+    return f"frame {index + 1}/{n_frames} · {frame.t_sec:.1f} s · diversity {frame.diversity:.6f}"
 
 
 def item_svg(position: int, x: float, y: float) -> list[str]:

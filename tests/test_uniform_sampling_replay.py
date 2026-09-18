@@ -72,7 +72,7 @@ def test_only_the_last_frame_is_drawn_for_the_static_render(fragment):
     assert fragment.count('<circle class="usx-dot"') == 3
     assert fragment.count('<line class="usx-rug') == 6
     assert 'class="usx-slider" min="0" max="2" value="2"' in fragment
-    assert "frame 3/3 · 40.0 s · diversity 0.2000" in fragment
+    assert "frame 3/3 · 40.0 s · diversity 0.200000" in fragment
 
 
 def test_a_replay_needs_a_frame(replay):
