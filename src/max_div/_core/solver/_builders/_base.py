@@ -56,6 +56,7 @@ class SolverBuilderBase:
         self._distance_storage_type: DistanceStorageType = DistanceStorageType.AUTO
         self._e2e_enabled: bool = False
         self._target_duration: TargetDuration | None = None
+        self._intermediate_selections_enabled: bool = False
 
     # -------------------------------------------------------------------------
     #  Shared builder API
@@ -107,6 +108,18 @@ class SolverBuilderBase:
         `with_custom_worker_groups`; `build()` rejects the combination with an iteration budget.
         """
         self._e2e_enabled = enabled
+        return self
+
+    def with_intermediate_selections(self, enabled: bool = True) -> Self:
+        """Make every score checkpoint also carry the selection held at that moment (default: off).
+
+        A solve records about a hundred checkpoints per step, so the selections add roughly a
+        hundred times k integers per step to the solution, and a parallel worker adds the same to
+        what it sends back; that is why the switch is off by default. With it on, a solution's
+        `score_checkpoints` replay how the selection evolved, and a parallel solution's
+        `score_checkpoints` replay the best selection across its workers.
+        """
+        self._intermediate_selections_enabled = enabled
         return self
 
     # -------------------------------------------------------------------------

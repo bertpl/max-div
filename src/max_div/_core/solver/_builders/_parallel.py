@@ -224,6 +224,7 @@ class ParallelMaxDivSolverBuilder(SolverBuilderBase):
             distance_storage=distance_storage,
             batch_seconds=batch_seconds,
             e2e_budget=e2e_budget,
+            intermediate_selections_enabled=self._intermediate_selections_enabled,
         )
 
 

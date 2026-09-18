@@ -509,3 +509,35 @@ def test_a_single_solve_leaves_its_checkpoints_untagged(example_solver):
     assert [checkpoint.step_identity.step_index for checkpoint in solution.score_checkpoints] == sorted(
         checkpoint.step_identity.step_index for checkpoint in solution.score_checkpoints
     )
+
+
+@pytest.mark.parametrize("records_selections", [False, True])
+def test_checkpoints_carry_the_selection_only_when_asked(records_selections: bool):
+    """With the switch on, every checkpoint holds the ascending selection of that moment, the last one the solution's.
+
+    The selections must differ along the trajectory: a checkpoint holding a reference to the state's
+    array instead of a copy would make every checkpoint show the final selection.
+    """
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(7).random((30, 3)).astype(np.float32)
+    problem = MaxDivProblem.new(vectors, k=6)
+    solver = (
+        MaxDivSolverBuilder(problem)
+        .with_preset(iterations(200), SolverPreset.RANDOM)
+        .with_intermediate_selections(records_selections)
+        .build()
+    )
+
+    # --- act --------------------------
+    solution = solver.solve()
+
+    # --- assert -----------------------
+    selections = [checkpoint.i_selected for checkpoint in solution.score_checkpoints]
+    if records_selections:
+        assert selections[0].shape == (0,)  # the solver state starts empty
+        assert all(selection.shape == (6,) for selection in selections[1:])
+        assert all(np.all(np.diff(selection) > 0) for selection in selections)
+        assert np.array_equal(selections[-1], solution.i_selected)
+        assert len({selection.tobytes() for selection in selections}) > 1
+    else:
+        assert all(selection is None for selection in selections)

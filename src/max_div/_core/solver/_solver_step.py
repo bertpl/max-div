@@ -76,6 +76,7 @@ class SolverStep[S: StrategyBase](ABC):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
+        intermediate_selections_enabled: bool = False,
     ) -> SolverStepResult:
         """Execute the solver step by running a strategy once or repeatedly, and return its result.
 
@@ -91,6 +92,8 @@ class SolverStep[S: StrategyBase](ABC):
             elapsed_before_step: what the solve had spent before this step started, so the step
                 can tell the coordinator where it is on the solve-wide axis; its own checkpoints
                 count from the step's start, and the solver shifts them afterwards.
+            intermediate_selections_enabled: whether every checkpoint also carries a copy of the
+                selection held at that moment.
         """
         raise NotImplementedError
 
@@ -121,6 +124,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
+        intermediate_selections_enabled: bool = False,
     ) -> SolverStepResult:
         # --- set up progress tracking -----------
         progress_reporter = progress_reporter or SilentProgressReporter()
@@ -152,7 +156,11 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         return SolverStepResult(
             score_checkpoints=[
                 ScoreCheckpoint.new(
-                    step_identity, Elapsed(t_elapsed_sec=t.t_elapsed_sec(), n_iterations=1), state.score, coordinator
+                    step_identity,
+                    Elapsed(t_elapsed_sec=t.t_elapsed_sec(), n_iterations=1),
+                    state,
+                    coordinator,
+                    includes_selection=intermediate_selections_enabled,
                 )
             ],
         )
@@ -206,6 +214,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
+        intermediate_selections_enabled: bool = False,
     ) -> SolverStepResult:
         """Iteratively improve the selection until the step's effective duration is spent.
 
@@ -220,7 +229,11 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             return SolverStepResult(
                 score_checkpoints=[
                     ScoreCheckpoint.new(
-                        step_identity, Elapsed(t_elapsed_sec=0.0, n_iterations=0), state.score, coordinator
+                        step_identity,
+                        Elapsed(t_elapsed_sec=0.0, n_iterations=0),
+                        state,
+                        coordinator,
+                        includes_selection=intermediate_selections_enabled,
                     )
                 ]
             )
@@ -257,7 +270,13 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
             # --- create checkpoint if needed ----
             if tracker.iter_count() >= next_checkpoint_iter_count:
                 score_checkpoints.append(
-                    ScoreCheckpoint.new(step_identity, tracker.elapsed(), state.score, coordinator)
+                    ScoreCheckpoint.new(
+                        step_identity,
+                        tracker.elapsed(),
+                        state,
+                        coordinator,
+                        includes_selection=intermediate_selections_enabled,
+                    )
                 )
                 next_checkpoint_iter_count = int(
                     max(
@@ -279,7 +298,15 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         elapsed = tracker.elapsed()
         if (len(score_checkpoints) == 0) or (elapsed.n_iterations > score_checkpoints[-1].elapsed.n_iterations):
             # make sure we always have a checkpoint after the last iteration
-            score_checkpoints.append(ScoreCheckpoint.new(step_identity, elapsed, state.score, coordinator))
+            score_checkpoints.append(
+                ScoreCheckpoint.new(
+                    step_identity,
+                    elapsed,
+                    state,
+                    coordinator,
+                    includes_selection=intermediate_selections_enabled,
+                )
+            )
         return SolverStepResult(score_checkpoints=score_checkpoints)
 
     @staticmethod

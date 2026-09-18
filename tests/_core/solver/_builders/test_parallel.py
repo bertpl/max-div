@@ -514,3 +514,19 @@ def test_a_partially_failed_parallel_solve_warns_and_returns():
     # --- assert -----------------------
     assert solution.winning_worker == 0
     assert len(solution.workers) == 1
+
+
+def test_the_checkpoints_carry_the_best_selection_across_workers_when_asked():
+    """With the switch on, each envelope checkpoint holds the selection its worker held, ending in the winner's."""
+    # --- arrange ----------------------
+    builder = ParallelMaxDivSolverBuilder(_problem()).with_seed(5).with_intermediate_selections()
+
+    # --- act --------------------------
+    solution = builder.with_workers(_BUDGET, 2).build().solve()
+
+    # --- assert -----------------------
+    checkpoints = solution.score_checkpoints
+    assert all(checkpoint.i_selected is not None for checkpoint in checkpoints)
+    assert all(checkpoint.i_selected.shape == (8,) for checkpoint in checkpoints if checkpoint.elapsed.n_iterations > 0)
+    assert np.array_equal(checkpoints[-1].i_selected, solution.i_selected)
+    assert all(checkpoint.i_selected is None for checkpoint in _solve_dynamic(2).score_checkpoints)

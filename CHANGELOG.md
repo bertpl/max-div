@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A parallel solution's worker summaries record when each worker started, in seconds since the earliest worker start
 - A parallel solution draws its solve as a timeline, `plot_timeline()`, which requires the new `plot` extra: the worker groups as bands over time colored where the best score was held, with the diversity and constraints trajectories below
 - The uniform-sampling case study gains a seventh experiment: the hybrid objective under exact per-band counts, five bands per axis, each holding 20 of the 100 selected items
+- An opt-in builder switch, `with_intermediate_selections()`, that makes every score checkpoint also carry the selection held at that moment, for single and parallel solves alike
 
 ### Changed
 - `MaxDivSolution.step_durations` is a list in step order, index 0 being the solver state initialization, in place of a dict keyed by the displayed step name

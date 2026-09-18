@@ -50,6 +50,7 @@ class MaxDivSolver:
         distance_storage: DistanceStorageTypes = DistanceStorageTypes(),  # noqa: B008 -- frozen, safe as a default
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         e2e_budget: E2eBudget | None = None,
+        intermediate_selections_enabled: bool = False,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -74,6 +75,8 @@ class MaxDivSolver:
                 remains.
                 An unstarted budget starts counting when `solve` starts; the parallel solver
                 hands its workers a budget already counting from its own solve start.
+            intermediate_selections_enabled: (bool) Whether every score checkpoint also carries the
+                selection held at that moment, at k integers per checkpoint (default: False).
         """
         # --- problem description ----------------
         self._n = n
@@ -89,6 +92,7 @@ class MaxDivSolver:
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
         self._e2e_budget = e2e_budget
+        self._intermediate_selections_enabled = intermediate_selections_enabled
 
     # -------------------------------------------------------------------------
     #  API
@@ -155,8 +159,9 @@ class MaxDivSolver:
                     ScoreCheckpoint.new(
                         init_step_identity,
                         Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
-                        state.score,
+                        state,
                         coordinator,
+                        includes_selection=self._intermediate_selections_enabled,
                     )
                 ]
             )
@@ -185,6 +190,7 @@ class MaxDivSolver:
                         coordinator,
                         self._batch_seconds,
                         elapsed_before_step=elapsed_before_step,
+                        intermediate_selections_enabled=self._intermediate_selections_enabled,
                     )
                 )
             finally:
