@@ -123,13 +123,13 @@ nav:
   - Home: index.md
   - Getting Started: getting_started.md
   - Concepts:
-    - The Solve Pipeline: concepts/solve_pipeline.md
-    - Distance Storage: concepts/distance_storage.md
-    - Parallel Solving: concepts/parallel_solving.md
+    - The solve pipeline: concepts/solve_pipeline.md
+    - Distance storage: concepts/distance_storage.md
+    - Parallel solving: concepts/parallel_solving.md
     - Scoring: concepts/scoring.md
     - Constraints: concepts/constraints.md
-    - Diversity & Distance: concepts/diversity.md
-    - Objectives & the Landscape: concepts/objectives.md
+    - Diversity & distance: concepts/diversity.md
+    - Objectives & the landscape: concepts/objectives.md
     - Glossary: concepts/glossary.md
   - Guides:
     - Why geometric-mean separation is the default objective: guides/geomean_separation.md

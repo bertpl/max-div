@@ -1,6 +1,6 @@
-# Command-Line Interface (CLI)
+# Command-line interface (CLI)
 
-## 1. Install
+## I. Install { #1-install }
 
 Install `max-div` as a local tool, e.g:
 
@@ -10,9 +10,9 @@ uv tool install max-div
 
 This will then install the system-wide command `max-div`.
 
-## 2. Usage
+## II. Usage { #2-usage }
 
-### 2.1. Help
+### II.A. Help { #21-help }
 
 To see the available commands and options, run:
 
@@ -20,7 +20,7 @@ To see the available commands and options, run:
 max-div --help
 ```
 
-### 2.2. Benchmarking
+### II.B. Benchmarking { #22-benchmarking }
 
 There are two categories of benchmarks: `solver` and `internal`.
 
@@ -81,7 +81,7 @@ All benchmarking commands support the following shared flags & options:
 
 For results, see [here](./benchmarks/internal/overview.md).
 
-### 2.3. Numba status
+### II.C. Numba status { #23-numba-status }
 
 ```bash
 max-div numba-status

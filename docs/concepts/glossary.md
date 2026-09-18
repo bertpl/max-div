@@ -67,7 +67,7 @@ The operations-research term for the family of problems max-div solves: choose a
 objectives below come from, and using its vocabulary is what makes results comparable with
 published work. Note that "Maximum Diversity Problem" conventionally names one *specific*
 dispersion objective — the [max-sum](#max-sum) one — so max-div's name should be read in
-the broad sense. [Objectives & the Diversity-Problem Landscape](objectives.md) maps each metric to
+the broad sense. [Objectives & the diversity-problem landscape](objectives.md) maps each metric to
 its literature family.
 
 ## Distance metric { #distance-metric }
@@ -78,7 +78,7 @@ so it is moot when distances are supplied as [precomputed distances](#precompute
 instead. The choice interacts with the
 [diversity metric](#diversity-metric): squared Euclidean and plain Euclidean, for instance, yield
 identical selections under [geometric-mean separation](#geometric-mean-separation), because
-squaring preserves the ordering of distances. See [Diversity & Distance](diversity.md).
+squaring preserves the ordering of distances. See [Diversity & distance](diversity.md).
 
 ## Diversity contribution { #diversity-contribution }
 
@@ -222,7 +222,7 @@ whole dataset. High separation means the item sits well away from everything els
 separation means something else selected is close to it. Separation is the
 [diversity contribution](#diversity-contribution) that the `*_SEPARATION` metrics aggregate, and it
 is maintained incrementally as items are added and removed rather than recomputed after every
-[swap](#swap). See [Diversity & Distance](diversity.md).
+[swap](#swap). See [Diversity & distance](diversity.md).
 
 ## Solver step { #solver-step }
 
@@ -230,7 +230,7 @@ One stage of the solving pipeline, with its own strategy and its own duration. A
 **initialization step**, which builds the first [selection](#selection), followed by one or more
 **optimization steps**, which improve it by [local search](#local-search). Splitting a run into
 steps is what allows a fast, broad phase to be followed by a slower, more careful one — which is
-how the [presets](#preset) are built. See [The Solve Pipeline](solve_pipeline.md).
+how the [presets](#preset) are built. See [The solve pipeline](solve_pipeline.md).
 
 ## Swap { #swap }
 
@@ -259,4 +259,4 @@ parallel-metaheuristics literature calls this concept an *island*; the documenta
 
 By default the grouping is dynamic — it consolidates from one group per worker toward a single
 all-worker group as the solve progresses; an explicit `n_groups` keeps the groups fixed. See
-[Parallel Solving](parallel_solving.md).
+[Parallel solving](parallel_solving.md).

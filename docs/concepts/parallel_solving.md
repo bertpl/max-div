@@ -1,4 +1,4 @@
-# Parallel Solving
+# Parallel solving
 
 `ParallelMaxDivSolverBuilder` runs several workers on one problem at once — an **algorithm
 portfolio** — and keeps the best result any of them reached. The workers share one copy of the
@@ -24,7 +24,7 @@ solution = (
 )
 ```
 
-## Why Run Several
+## I. Why run several { #why-run-several }
 
 The two counts buy different things:
 
@@ -43,7 +43,7 @@ still finish below a lucky one with less.
 
 The dynamic default removes the need to trade the two counts against each other.
 
-## Workers and Groups
+## II. Workers and groups { #workers-and-groups }
 
 Two builder methods configure the workers, and each implies its grouping:
 
@@ -84,7 +84,7 @@ mid-solve. Without an explicit `n_groups`:
 - a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
   to the first groups.
 
-## What Varies per Worker
+## III. What varies per worker { #what-varies-per-worker }
 
 Each worker is configured by a `WorkerConfig`: the preset it runs, and optionally the
 initialization strategy it starts from. `init_strategy` lets two workers run the same preset from
@@ -97,7 +97,7 @@ question.
 
 Distance storage is fixed for a different reason: the workers read one shared buffer.
 
-## Seeds and Reproducibility
+## IV. Seeds and reproducibility { #seeds-and-reproducibility }
 
 The parallel solver takes one seed and derives a seed per worker from that seed, so the workers search
 differently while the whole configuration derives from a single number.
@@ -118,7 +118,7 @@ cooperative worker's trajectory also depends on what its group mates published, 
 contract is independent-only. The limits in the [Reproducibility](distance_storage.md#reproducibility) section apply
 on top.
 
-## Reading the Result
+## V. Reading the result { #reading-the-result }
 
 `solve()` returns a `ParallelMaxDivSolution`: the winning worker's selection, with a `WorkerSummary`
 per worker attached. Its `score_checkpoints` trace the best score any worker held at each moment,
@@ -149,7 +149,7 @@ The number worth looking at is `n_workers_with_best_score`:
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
 
-## Watching Progress
+## VI. Watching progress { #watching-progress }
 
 `solve(verbosity=...)` takes the same levels as a single solve (see `Verbosity`), rendered as **one
 combined live view** rather than N interleaved streams; the default is the progress table, the level
@@ -164,7 +164,7 @@ So a frozen best while progress keeps advancing simply means the leading worker 
 has beaten it yet — the `Active` column shows how many workers are still trying. Each worker prints
 one set-off row with its final state the moment it finishes.
 
-## On the Word "Portfolio"
+## VII. On the word "portfolio" { #on-the-word-portfolio }
 
 Running several configurations of one solver concurrently and keeping the best is known as an
 algorithm portfolio, an idea introduced by Huberman, Lukose and Hogg (1997) and developed by Gomes

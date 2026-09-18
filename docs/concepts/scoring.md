@@ -1,6 +1,6 @@
 # Scoring
 
-## Multi-Component Score
+## I. Multi-component score { #multi-component-score }
 
 Every selection (intermediate or final) is evaluated by a `Score` with four components, in
 **strict priority order**:
@@ -16,7 +16,7 @@ When comparing two solutions, the solver checks components in priority order: a 
 higher `constraints` score always beats one with higher `diversity`, regardless of how large the
 diversity difference is. Within the same constraint satisfaction level, higher diversity wins.
 
-## Why Priority Ordering?
+## II. Why priority ordering? { #why-priority-ordering }
 
 Consider a problem with fairness constraints. Without priority ordering, the solver might find
 a highly diverse selection that badly violates constraints. The strict ordering ensures that:
@@ -25,7 +25,7 @@ a highly diverse selection that badly violates constraints. The strict ordering 
 - Diversity is only optimized within the space of equally-feasible solutions
 - Infeasible problems gracefully degrade to the least-violated solution
 
-## Diversity Tie-Breakers
+## III. Diversity tie-breakers { #diversity-tie-breakers }
 
 Two selections with the same primary diversity score are tied. A tie is a problem only when the
 swaps that lead toward the optimum are among the tied ones: the solver then has no incentive to
@@ -52,7 +52,7 @@ Each tie-breaker then applies to every distance that the hybrid's terms use, agg
 
 You can override the defaults via `MaxDivSolverBuilder.with_diversity_tie_breakers()`, except for a hybrid, whose tie-breakers cannot be overridden.
 
-## Soft Constraints (Advanced)
+## IV. Soft constraints (advanced) { #soft-constraints-advanced }
 
 By default, constraints are **hard**: constraint score strictly outranks diversity. The solver's
 optimization strategies support a `constraint_softness` parameter (0.0 to 1.0) that blends
