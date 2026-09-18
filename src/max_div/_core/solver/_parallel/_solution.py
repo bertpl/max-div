@@ -1,6 +1,7 @@
 """A parallel solve returns the winning selection together with what every worker found."""
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from max_div._core.solver._duration import Elapsed
 from max_div._core.solver._score import Score
@@ -8,6 +9,11 @@ from max_div._core.solver._solution import MaxDivSolution
 
 from ._worker_config import WorkerConfig
 from ._worker_group_change import WorkerGroupChange
+
+if TYPE_CHECKING:
+    # annotation only; the plotting package is imported lazily inside plot_timeline, so `import
+    # max_div` never pulls matplotlib in
+    from matplotlib.figure import Figure  # noqa: TID251
 
 
 @dataclass(frozen=True)
@@ -68,3 +74,13 @@ class ParallelMaxDivSolution(MaxDivSolution):
         return (
             f"{super().__str__()} | best score reached by {self.n_workers_with_best_score}/{len(self.workers)} workers"
         )
+
+    def plot_timeline(self) -> "Figure":
+        """Draw this parallel solve as a timeline and return the Matplotlib figure.
+
+        The worker groups appear as bands over time, colored where the best score was held, with the
+        score trajectory below. Needs the `plot` extra.
+        """
+        from max_div._core.plotting.timeline import ParallelSolutionTimelinePlot
+
+        return ParallelSolutionTimelinePlot.from_solution(self).render()

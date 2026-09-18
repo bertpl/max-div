@@ -27,8 +27,12 @@ import struct
 from pathlib import Path
 from urllib.parse import unquote
 
+import max_div
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
-STYLE_SHEET = REPO_ROOT / "local" / "docs" / "figures" / "docs.mplstyle"
+# the figure style is shipped inside the package; the docs build has no matplotlib, so read the
+# file's path directly, not by importing the guarded plotting package (its figure_style_path)
+STYLE_SHEET = Path(max_div.__file__).resolve().parent / "_core" / "plotting" / "helpers" / "figure_style.mplstyle"
 CSS_PIXELS_PER_INCH = 96
 
 # `src` and `srcset` both carry paths in the README's <picture> element; a plain `src`-only
