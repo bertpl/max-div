@@ -89,16 +89,22 @@ mid-solve. Without an explicit `n_groups`:
 The timelines below are three 60 s solves of the
 [banded hybrid experiment](../guides/uniform_sampling.md#vb-exact-counts-per-band) of the
 uniform-sampling case study, twelve workers each, from the same seed. Each is drawn by
-`ParallelMaxDivSolution.plot_timeline()` from the solution's own records (the `plot` extra). In
+`ParallelMaxDivSolution.plot_timeline()` (the `plot` extra) from the solution's own records. In
 every figure:
 
-- **the top panel** shows one block per group, the shortest-lived groups on top. A worker's band
-  is blue while it searches, light green while its group holds the best selection, and dark green
-  on the worker that reported it at a checkpoint. Inside a group the lead changes hands more often
-  than checkpoints are taken, so the light green is the honest resolution;
-- **the lower panels** trace the best diversity any worker held, on an axis that stretches the
-  plateau where the late gains are, and the constraints score, drawn only because it is below one
-  during initialization.
+- **the top panel** shows one band per worker, stacked into a block per group, the shortest-lived
+  groups on top. A worker's band takes one of three colors:
+    - **blue** while it searches;
+    - **light green** while its group holds the best selection;
+    - **dark green** on the worker that reported that selection at a checkpoint, one of the
+      moments at which the solver records the best score.
+
+    Inside a group the lead changes hands more often than checkpoints are taken, so the light
+    green, not the dark green, shows the true extent of a group's lead;
+- **the lower panels** trace two scores. The first is the best diversity any worker held, on an
+  axis that is logarithmic toward its top, which expands the region where the small, late gains
+  appear. The second is the constraints score, drawn only because it is below one during
+  initialization.
 
 **Twelve independent workers** (`with_custom_worker_groups` with `n_groups=12`): nobody shares, so
 the lead simply passes to whichever worker is ahead, and the eleven others' effort never reaches

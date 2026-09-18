@@ -354,7 +354,7 @@ def build_uniform_sampling_population(n: int, seed: int) -> NDArray[np.float32]:
 
 
 def build_experiment_problem(vectors: NDArray[np.float32], experiment: Experiment, k: int) -> MaxDivProblem:
-    """Return the experiment's problem over the population: its objective, distance and band constraints."""
+    """Return the experiment's problem over the population."""
     return MaxDivProblem.new(
         vectors=vectors,
         k=k,

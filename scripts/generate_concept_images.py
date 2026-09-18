@@ -1,6 +1,6 @@
 """Generate the figures of the concept pages under `docs/concepts/`.
 
-The figures so far are the three solve timelines on `parallel_solving.md`: one parallel solve per
+The figures are the three solve timelines on `parallel_solving.md`: one parallel solve per
 grouping (twelve independent workers, four fixed groups of three, twelve dynamically grouped
 workers) of the uniform-sampling case study's banded hybrid experiment, each drawn with
 `ParallelMaxDivSolution.plot_timeline()`. The problem and population are the guide script's own,
@@ -38,7 +38,7 @@ TIMELINE_N_WORKERS = 12
 
 @dataclass(frozen=True)
 class TimelineExample:
-    """One timeline figure: a grouping of the workers, as a builder configured for it."""
+    """A timeline example bundles a grouping of the workers with the builder configured for it."""
 
     name: str
     configure_workers: Callable[[ParallelMaxDivSolverBuilder], ParallelMaxDivSolverBuilder]
