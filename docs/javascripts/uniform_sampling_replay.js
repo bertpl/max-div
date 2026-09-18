@@ -4,7 +4,7 @@
 // coordinates of every item selected in any frame, and whose `data-frames` holds a JSON list of
 // `[elapsed seconds, diversity, [item positions]]` in solve order, positions indexing `data-points`.
 // The fragment draws the last frame; showing another frame redraws the data group with that frame's
-// items, each as the two rug ticks and the dot the fragment draws, in data units. Nothing is computed
+// items, each as the two rug ticks and the dot that the fragment draws, in data units. Nothing is computed
 // here beyond that.
 //
 // Invariants:

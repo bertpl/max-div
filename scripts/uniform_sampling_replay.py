@@ -20,14 +20,13 @@ from uniform_sampling_explorer import (
     DOT_RADIUS,
     RUG_FAR,
     RUG_NEAR,
-    SCALE,
     VIEW_HEIGHT,
     VIEW_WIDTH,
     axes_svg,
     band_lines_svg,
+    data_group_open,
     legend_svg,
-    px,
-    py,
+    population_raster_svg,
 )
 
 HINT = (
@@ -44,7 +43,7 @@ class ReplayFrame:
     items: list[int]
 
 
-def caption(index: int, n_frames: int, frame: ReplayFrame) -> str:
+def frame_caption(index: int, n_frames: int, frame: ReplayFrame) -> str:
     """Return a frame's caption line; the JavaScript formats every other frame's the same way."""
     return f"frame {index + 1}/{n_frames} · {frame.t_sec:.1f} s · diversity {frame.diversity:.4f}"
 
@@ -113,7 +112,6 @@ def replay_fragment(
     ]
     last = frames[-1]
     labels = [DISTANCES[key].label for key in objective_keys]
-    square_x, square_y = px(0.0), py(1.0)
     lines = [
         '<div class="usx-figure usx-replay" tabindex="0">',
         f'<svg class="usx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
@@ -122,18 +120,16 @@ def replay_fragment(
         f' data-rug="{RUG_NEAR} {RUG_FAR}" data-r="{DOT_RADIUS}">',
         f"<title>Selections held during a solve maximizing diversity under the {', '.join(labels)}</title>",
         f"<desc>{description}</desc>",
-        f'<rect x="0" y="0" width="{VIEW_WIDTH}" height="{VIEW_HEIGHT}" fill="#ffffff"/>',
-        f'<image href="{population_image_url}" x="{square_x:.2f}" y="{square_y:.2f}"'
-        f' width="{SCALE:.2f}" height="{SCALE:.2f}" preserveAspectRatio="none"/>',
+        *population_raster_svg(population_image_url),
         *band_lines_svg(band_edges),
         *axes_svg(),
         *legend_svg(n, k, objective_keys, with_neighbor_marks=False),
-        f'<g class="usx-data" transform="translate({px(0.0):.2f},{py(0.0):.2f}) scale({SCALE:.3f},{-SCALE:.3f})">',
+        data_group_open(),
         *(line for item in last.items for line in item_svg(position[item], *points[position[item]])),
         "</g>",
         "</svg>",
         *_controls(len(frames)),
-        f'<p class="usx-caption usx-frame">{caption(len(frames) - 1, len(frames), last)}</p>',
+        f'<p class="usx-caption usx-frame">{frame_caption(len(frames) - 1, len(frames), last)}</p>',
         f'<p class="usx-caption">{HINT}</p>',
         "</div>",
     ]

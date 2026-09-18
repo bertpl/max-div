@@ -118,6 +118,21 @@ def py(y: float) -> float:
     return MARGIN_TOP + (Y_MAX - y) * SCALE
 
 
+def population_raster_svg(population_image_url: str) -> list[str]:
+    """Return the white background and the population raster over the unit square, in pixel space."""
+    square_x, square_y = px(0.0), py(1.0)
+    return [
+        f'<rect x="0" y="0" width="{VIEW_WIDTH}" height="{VIEW_HEIGHT}" fill="#ffffff"/>',
+        f'<image href="{population_image_url}" x="{square_x:.2f}" y="{square_y:.2f}"'
+        f' width="{SCALE:.2f}" height="{SCALE:.2f}" preserveAspectRatio="none"/>',
+    ]
+
+
+def data_group_open() -> str:
+    """Return the opening `<g>` of the data layer, mapping data coordinates to pixels."""
+    return f'<g class="usx-data" transform="translate({px(0.0):.2f},{py(0.0):.2f}) scale({SCALE:.3f},{-SCALE:.3f})">'
+
+
 def axes_svg() -> list[str]:
     """Return the two spines with their ticks and tick labels, in pixel space."""
     left, bottom, top, right = px(X_MIN), py(Y_MIN), py(Y_MAX), px(X_MAX)
@@ -213,7 +228,7 @@ def _data_group(
     Children are listed in paint order: the marks layer comes last so rings draw over the dots.
     """
     parts = [
-        f'<g class="usx-data" transform="translate({px(0.0):.2f},{py(0.0):.2f}) scale({SCALE:.3f},{-SCALE:.3f})">',
+        data_group_open(),
         '<g class="usx-hover" clip-path="url(#usx-square)"></g>',
     ]
     for cls in ("usx-rug", "usx-hit"):
@@ -275,7 +290,6 @@ def explorer_fragment(
     keys = objective_keys + tuple(key for key in REFERENCE_KEYS if key not in objective_keys)
     neighbors = nearest_neighbors(x, y, keys)
     labels = {key: DISTANCES[key].label for key in keys}
-    square_x, square_y = px(0.0), py(1.0)
     lines = [
         '<div class="usx-figure">',
         f'<svg class="usx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
@@ -285,9 +299,7 @@ def explorer_fragment(
         f"<desc>{description}</desc>",
         '<defs><clipPath id="usx-square" clipPathUnits="userSpaceOnUse">'
         '<rect x="0" y="0" width="1" height="1"/></clipPath></defs>',
-        f'<rect x="0" y="0" width="{VIEW_WIDTH}" height="{VIEW_HEIGHT}" fill="#ffffff"/>',
-        f'<image href="{population_image_url}" x="{square_x:.2f}" y="{square_y:.2f}"'
-        f' width="{SCALE:.2f}" height="{SCALE:.2f}" preserveAspectRatio="none"/>',
+        *population_raster_svg(population_image_url),
         *band_lines_svg(band_edges),
         *axes_svg(),
         *legend_svg(n, k, objective_keys),

@@ -373,11 +373,11 @@ def solve_experiment(
     vectors: NDArray[np.float32],
     experiment: Experiment,
     settings: ExperimentSettings,
-    intermediate_selections_enabled: bool = False,
+    should_record_intermediate_selections: bool = False,
 ) -> ParallelMaxDivSolution:
     """Return the experiment's solution, solved within an end-to-end budget.
 
-    With `intermediate_selections_enabled` every checkpoint also carries its selection, which the
+    With `should_record_intermediate_selections` every checkpoint also carries its selection, which the
     replay figure steps through.
     """
     problem = build_experiment_problem(vectors, experiment, settings.k)
@@ -386,7 +386,7 @@ def solve_experiment(
         .with_seed(settings.seed)
         .with_workers(seconds(settings.budget_sec), settings.n_workers)
         .with_end_to_end_budget()
-        .with_intermediate_selections(intermediate_selections_enabled)
+        .with_intermediate_selections(should_record_intermediate_selections)
         .build()
     )
     return solver.solve(verbosity=0)
@@ -438,13 +438,13 @@ def load_or_solve_experiment(
     settings: ExperimentSettings,
     should_reuse_solution: bool,
     cache_name: str | None = None,
-    records_frames: bool = False,
+    should_record_frames: bool = False,
 ) -> ExperimentRun:
     """Return the experiment's run, from its JSON cache when asked and present, else from a fresh solve.
 
     A fresh solve rewrites the cache; an experiment without a cache is solved even when reuse is asked,
     so a new experiment can be added without re-solving the others. The cache holds the selected
-    indices and the convergence trace, plus the selection frames when `records_frames` asks for them:
+    indices and the convergence trace, plus the selection frames when `should_record_frames` asks for them:
     the population is rebuilt from n and the seed, so the dots and the raster always come from the same
     coordinates. `cache_name` names the cache when one experiment is solved under several settings.
     """
@@ -454,19 +454,23 @@ def load_or_solve_experiment(
         if {key: cached[key] for key in asdict(settings)} != asdict(settings):
             raise ValueError(f"{path} was solved with other settings than {settings}")
         frames = (
-            [(t_sec, diversity, indices) for t_sec, diversity, indices in cached["frames"]] if records_frames else None
+            [(t_sec, diversity, indices) for t_sec, diversity, indices in cached["frames"]]
+            if should_record_frames
+            else None
         )
         return ExperimentRun(
             np.asarray(cached["i_selected"], dtype=np.intp), [tuple(row) for row in cached["checkpoints"]], frames
         )
-    solution = solve_experiment(vectors, experiment, settings, intermediate_selections_enabled=records_frames)
+    solution = solve_experiment(
+        vectors, experiment, settings, should_record_intermediate_selections=should_record_frames
+    )
     run = ExperimentRun(
         np.asarray(solution.i_selected, dtype=np.intp),
         [
             (round(checkpoint.elapsed.t_elapsed_sec, 3), checkpoint.elapsed.n_iterations, checkpoint.score.diversity)
             for checkpoint in solution.score_checkpoints
         ],
-        selection_frames(solution) if records_frames else None,
+        selection_frames(solution) if should_record_frames else None,
     )
     record = {**asdict(settings), "i_selected": [int(i) for i in run.i_selected], "checkpoints": run.checkpoints}
     if run.frames is not None:
@@ -518,7 +522,7 @@ def reference_separations(k: int) -> dict[str, float]:
     return {"l2": PACKING_SPACING_100, "x": 1.0 / (k - 1), "y": 1.0 / (k - 1)}
 
 
-def write_experiment_separations(name: str, selection: NDArray[np.float64], k: int) -> None:
+def write_experiment_separations(run_name: str, selection: NDArray[np.float64], k: int) -> None:
     """Write a run's achieved separations beside their references as a table fragment named after the run.
 
     `docs/guides/uniform_sampling.md` includes the fragment below the run's figure, so the numbers
@@ -530,7 +534,7 @@ def write_experiment_separations(name: str, selection: NDArray[np.float64], k: i
         lines.append(
             f"| {label} | {achieved[key]:.4f} | {references[key]:.4f} | {achieved[key] / references[key]:.0%} |"
         )
-    path = GENERATED_DIR / f"uniform_sampling_{name}_separations.md"
+    path = GENERATED_DIR / f"uniform_sampling_{run_name}_separations.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
@@ -636,7 +640,7 @@ def render_uniform_sampling_replay(
         replace(settings, budget_sec=LONG_BUDGET_SEC),
         should_reuse_solution,
         cache_name="hybrid_banded_long",
-        records_frames=True,
+        should_record_frames=True,
     )
     assert run.frames is not None
     selection = vectors[run.i_selected].astype(np.float64)

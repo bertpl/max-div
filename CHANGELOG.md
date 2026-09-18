@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A parallel solution draws its solve as a timeline, `plot_timeline()`, which requires the new `plot` extra: the worker groups as bands over time colored where the best score was held, with the diversity and constraints trajectories below
 - The uniform-sampling case study gains a seventh experiment: the hybrid objective under exact per-band counts, five bands per axis, each holding 20 of the 100 selected items
 - An opt-in builder switch, `with_intermediate_selections()`, that makes every score checkpoint also carry the selection held at that moment, for single and parallel solves alike
-- The uniform-sampling case study gains a section on what a longer budget buys, with an interactive replay of a 900 s solve stepping through every change of the selection
+- The uniform-sampling case study gains a section on what a longer budget improves, with an interactive replay of a 900 s solve stepping through every change of the selection
 
 ### Changed
 - `MaxDivSolution.step_durations` is a list in step order, index 0 being the solver state initialization, in place of a dict keyed by the displayed step name
