@@ -79,7 +79,7 @@ class SolverStep[S: StrategyBase](ABC):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
-        records_intermediate_selections: bool = False,
+        intermediate_selections_enabled: bool = False,
     ) -> SolverStepResult:
         """Execute the solver step by running a strategy once or repeatedly, and return its result.
 
@@ -95,7 +95,7 @@ class SolverStep[S: StrategyBase](ABC):
             elapsed_before_step: what the solve had spent before this step started, so the step
                 can tell the coordinator where it is on the solve-wide axis; its own checkpoints
                 count from the step's start, and the solver shifts them afterwards.
-            records_intermediate_selections: whether every checkpoint also carries a copy of the
+            intermediate_selections_enabled: whether every checkpoint also carries a copy of the
                 selection held at that moment.
         """
         raise NotImplementedError
@@ -127,7 +127,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
-        records_intermediate_selections: bool = False,
+        intermediate_selections_enabled: bool = False,
     ) -> SolverStepResult:
         # --- set up progress tracking -----------
         progress_reporter = progress_reporter or SilentProgressReporter()
@@ -163,7 +163,7 @@ class InitializationStep(SolverStep[InitializationStrategy]):
                     Elapsed(t_elapsed_sec=t.t_elapsed_sec(), n_iterations=1),
                     state.score,
                     coordinator,
-                    i_selected=intermediate_selection(state, records_intermediate_selections),
+                    i_selected=intermediate_selection(state, intermediate_selections_enabled),
                 )
             ],
         )
@@ -217,7 +217,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
         coordinator: "WorkerCoordinator | None" = None,
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         elapsed_before_step: Elapsed = Elapsed(t_elapsed_sec=0.0, n_iterations=0),  # noqa: B008 -- immutable value
-        records_intermediate_selections: bool = False,
+        intermediate_selections_enabled: bool = False,
     ) -> SolverStepResult:
         """Iteratively improve the selection until the step's effective duration is spent.
 
@@ -236,7 +236,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                         Elapsed(t_elapsed_sec=0.0, n_iterations=0),
                         state.score,
                         coordinator,
-                        i_selected=intermediate_selection(state, records_intermediate_selections),
+                        i_selected=intermediate_selection(state, intermediate_selections_enabled),
                     )
                 ]
             )
@@ -278,7 +278,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                         tracker.elapsed(),
                         state.score,
                         coordinator,
-                        i_selected=intermediate_selection(state, records_intermediate_selections),
+                        i_selected=intermediate_selection(state, intermediate_selections_enabled),
                     )
                 )
                 next_checkpoint_iter_count = int(
@@ -307,7 +307,7 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
                     elapsed,
                     state.score,
                     coordinator,
-                    i_selected=intermediate_selection(state, records_intermediate_selections),
+                    i_selected=intermediate_selection(state, intermediate_selections_enabled),
                 )
             )
         return SolverStepResult(score_checkpoints=score_checkpoints)
@@ -341,9 +341,9 @@ class OptimizationStep(SolverStep[OptimizationStrategy]):
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def intermediate_selection(state: SolverState, records_intermediate_selections: bool) -> NDArray[np.int32] | None:
+def intermediate_selection(state: SolverState, intermediate_selections_enabled: bool) -> NDArray[np.int32] | None:
     """Return a copy of the state's current selection when checkpoints record selections, else None."""
-    if records_intermediate_selections:
+    if intermediate_selections_enabled:
         return state.selected_index_array.copy()
     else:
         return None

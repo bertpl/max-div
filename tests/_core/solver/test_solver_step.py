@@ -304,7 +304,7 @@ def test_a_step_records_the_selection_only_when_asked():
     state = DummySolverState(n=100, k=10)
 
     # --- act --------------------------
-    recorded = step.run(state, _STEP_IDENTITY, records_intermediate_selections=True).score_checkpoints[-1].i_selected
+    recorded = step.run(state, _STEP_IDENTITY, intermediate_selections_enabled=True).score_checkpoints[-1].i_selected
     unrecorded = step.run(DummySolverState(n=100, k=10), _STEP_IDENTITY).score_checkpoints[-1].i_selected
 
     # --- assert -----------------------

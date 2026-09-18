@@ -120,5 +120,5 @@ def test_with_intermediate_selections_reaches_the_config():
     _, config_on = _builder().with_intermediate_selections().prepare_storage_and_config()
 
     # --- assert -----------------------
-    assert config_off.records_intermediate_selections is False
-    assert config_on.records_intermediate_selections is True
+    assert config_off.intermediate_selections_enabled is False
+    assert config_on.intermediate_selections_enabled is True

@@ -50,7 +50,7 @@ class MaxDivSolver:
         distance_storage: DistanceStorageTypes = DistanceStorageTypes(),  # noqa: B008 -- frozen, safe as a default
         batch_seconds: float = REPORTING_BATCH_SECONDS,
         e2e_budget: E2eBudget | None = None,
-        records_intermediate_selections: bool = False,
+        intermediate_selections_enabled: bool = False,
     ) -> None:
         """Initialize the MaxDivSolver with the given configuration.
 
@@ -75,7 +75,7 @@ class MaxDivSolver:
                 remains.
                 An unstarted budget starts counting when `solve` starts; the parallel solver
                 hands its workers a budget already counting from its own solve start.
-            records_intermediate_selections: (bool) Whether every score checkpoint also carries the
+            intermediate_selections_enabled: (bool) Whether every score checkpoint also carries the
                 selection held at that moment, at k integers per checkpoint (default: False).
         """
         # --- problem description ----------------
@@ -92,7 +92,7 @@ class MaxDivSolver:
         self._constraint_penalty = constraint_penalty
         self._batch_seconds = batch_seconds
         self._e2e_budget = e2e_budget
-        self._records_intermediate_selections = records_intermediate_selections
+        self._intermediate_selections_enabled = intermediate_selections_enabled
 
     # -------------------------------------------------------------------------
     #  API
@@ -161,7 +161,7 @@ class MaxDivSolver:
                         Elapsed(t_elapsed_sec=timer.t_elapsed_sec(), n_iterations=0),
                         state.score,
                         coordinator,
-                        i_selected=intermediate_selection(state, self._records_intermediate_selections),
+                        i_selected=intermediate_selection(state, self._intermediate_selections_enabled),
                     )
                 ]
             )
@@ -190,7 +190,7 @@ class MaxDivSolver:
                         coordinator,
                         self._batch_seconds,
                         elapsed_before_step=elapsed_before_step,
-                        records_intermediate_selections=self._records_intermediate_selections,
+                        intermediate_selections_enabled=self._intermediate_selections_enabled,
                     )
                 )
             finally:
