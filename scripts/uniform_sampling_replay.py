@@ -30,7 +30,9 @@ from uniform_sampling_explorer import (
     py,
 )
 
-HINT = "Each frame is a checkpoint at which the selection changed. Drag the slider, or use the buttons or the arrow keys."
+HINT = (
+    "Each frame is a checkpoint at which the selection changed. Drag the slider, or use the buttons or the arrow keys."
+)
 
 
 @dataclass(frozen=True)
@@ -106,7 +108,9 @@ def replay_fragment(
     items = sorted({item for frame in frames for item in frame.items})
     position = {item: index for index, item in enumerate(items)}
     points = [[round(float(vectors[item, 0]), 4), round(float(vectors[item, 1]), 4)] for item in items]
-    frame_records = [[frame.t_sec, round(frame.diversity, 6), [position[item] for item in frame.items]] for frame in frames]
+    frame_records = [
+        [frame.t_sec, round(frame.diversity, 6), [position[item] for item in frame.items]] for frame in frames
+    ]
     last = frames[-1]
     labels = [DISTANCES[key].label for key in objective_keys]
     square_x, square_y = px(0.0), py(1.0)
