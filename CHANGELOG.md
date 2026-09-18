@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.18.1 (2026-09-18)
 
 ### Added
 - A parallel solution records its initial worker grouping and every worker group change (`worker_group_changes`): when it happened, which worker executed it, which group dissolved, and where its workers went
@@ -21,14 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A solution's `score_checkpoints` entries are `ScoreCheckpoint` objects (the step's identity, elapsed, score, and for a parallel solve the worker and its group) in place of plain tuples
 - The uniform-sampling case study's experiments are re-solved with the current solver, the case study's convergence table tracing the best selection across workers
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - A parallel solve's `score_checkpoints` now trace the best score any worker held at each moment, each checkpoint naming that worker. They previously traced the winning worker's own solve, whose score stepped up whenever that worker adopted its group's best
-
-### Security
 
 ## 0.18.0 (2026-09-15)
 
