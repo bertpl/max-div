@@ -108,24 +108,39 @@ def nearest_neighbors(
 # ==================================================================================================
 #  SVG pieces
 # ==================================================================================================
-def _px(x: float) -> float:
+def px(x: float) -> float:
     """Return the pixel x of a data x."""
     return MARGIN_LEFT + (x - X_MIN) * SCALE
 
 
-def _py(y: float) -> float:
+def py(y: float) -> float:
     """Return the pixel y of a data y (pixel y grows downward)."""
     return MARGIN_TOP + (Y_MAX - y) * SCALE
 
 
-def _axes() -> list[str]:
+def population_raster_svg(population_image_url: str) -> list[str]:
+    """Return the white background and the population raster over the unit square, in pixel space."""
+    square_x, square_y = px(0.0), py(1.0)
+    return [
+        f'<rect x="0" y="0" width="{VIEW_WIDTH}" height="{VIEW_HEIGHT}" fill="#ffffff"/>',
+        f'<image href="{population_image_url}" x="{square_x:.2f}" y="{square_y:.2f}"'
+        f' width="{SCALE:.2f}" height="{SCALE:.2f}" preserveAspectRatio="none"/>',
+    ]
+
+
+def data_group_open_tag() -> str:
+    """Return the opening `<g>` of the data layer, mapping data coordinates to pixels."""
+    return f'<g class="usx-data" transform="translate({px(0.0):.2f},{py(0.0):.2f}) scale({SCALE:.3f},{-SCALE:.3f})">'
+
+
+def axes_svg() -> list[str]:
     """Return the two spines with their ticks and tick labels, in pixel space."""
-    left, bottom, top, right = _px(X_MIN), _py(Y_MIN), _py(Y_MAX), _px(X_MAX)
+    left, bottom, top, right = px(X_MIN), py(Y_MIN), py(Y_MAX), px(X_MAX)
     parts = [
         f'<path class="usx-spine" d="M{left:.1f},{top:.1f}V{bottom:.1f}H{right:.1f}"/>',
     ]
     for tick in TICKS:
-        x, y = _px(tick), _py(tick)
+        x, y = px(tick), py(tick)
         parts.append(f'<line class="usx-tick" x1="{x:.1f}" y1="{bottom:.1f}" x2="{x:.1f}" y2="{bottom + 4:.1f}"/>')
         parts.append(f'<text class="usx-label" x="{x:.1f}" y="{bottom + 17:.1f}" text-anchor="middle">{tick:g}</text>')
         parts.append(f'<line class="usx-tick" x1="{left:.1f}" y1="{y:.1f}" x2="{left - 4:.1f}" y2="{y:.1f}"/>')
@@ -153,17 +168,19 @@ def _legend_mark(x: float, y: float, glyph: str) -> str:
     return ring + _glyph(x, y, LEGEND_RING_RADIUS, glyph)
 
 
-def _legend(n: int, k: int, objective_keys: tuple[str, ...]) -> list[str]:
+def legend_svg(n: int, k: int, objective_keys: tuple[str, ...], with_neighbor_marks: bool = True) -> list[str]:
     """Return the legend box in the top-right corner, in pixel space.
 
     The left column names what is always drawn; the right column names the reference neighbors the
     interaction marks around the picked item. The blue neighbor row appears only for a single-distance
-    objective: a hybrid has one nearest neighbor per term, and those are the reference neighbors.
+    objective: a hybrid has one nearest neighbor per term, and those are the reference neighbors. A
+    figure without the neighbor interaction (`with_neighbor_marks=False`) gets the left column's first
+    two rows only.
     """
-    column_widths, row, pad = (250, 190), 18, 8
+    column_widths, row, pad = (250, 190) if with_neighbor_marks else (170,), 18, 8
     width = sum(column_widths) + pad
-    x0 = _px(X_MAX) - 6 - width
-    y0 = _py(Y_MAX) + 6
+    x0 = px(X_MAX) - 6 - width
+    y0 = py(Y_MAX) + 6
     left_column = [
         (
             lambda x, y: f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.5" fill="{POPULATION_COLOR}"/>',
@@ -174,7 +191,7 @@ def _legend(n: int, k: int, objective_keys: tuple[str, ...]) -> list[str]:
             f"selection (k = {k})",
         ),
     ]
-    if len(objective_keys) == 1:
+    if len(objective_keys) == 1 and with_neighbor_marks:
         left_column.append(
             (
                 lambda x, y: f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4.5" fill="{NEIGHBOR_COLOR}"/>',
@@ -185,7 +202,7 @@ def _legend(n: int, k: int, objective_keys: tuple[str, ...]) -> list[str]:
         (lambda x, y, g=REFERENCE_GLYPHS[key]: _legend_mark(x, y, g), f"nearest neighbor, {DISTANCES[key].label}")
         for key in REFERENCE_KEYS
     ]
-    columns = (left_column, right_column)
+    columns = (left_column, right_column) if with_neighbor_marks else (left_column,)
     height = pad * 2 + row * max(len(column) for column in columns)
     parts = [f'<rect class="usx-legend" x="{x0}" y="{y0}" width="{width}" height="{height}"/>']
     x = x0
@@ -211,7 +228,7 @@ def _data_group(
     Children are listed in paint order: the marks layer comes last so rings draw over the dots.
     """
     parts = [
-        f'<g class="usx-data" transform="translate({_px(0.0):.2f},{_py(0.0):.2f}) scale({SCALE:.3f},{-SCALE:.3f})">',
+        data_group_open_tag(),
         '<g class="usx-hover" clip-path="url(#usx-square)"></g>',
     ]
     for cls in ("usx-rug", "usx-hit"):
@@ -236,12 +253,12 @@ def _data_group(
     return parts
 
 
-def _band_lines(band_edges: tuple[float, ...]) -> list[str]:
+def band_lines_svg(band_edges: tuple[float, ...]) -> list[str]:
     """Return a light line across the unit square at each band edge, along both axes, in pixel space."""
-    left, right, bottom, top = _px(0.0), _px(1.0), _py(0.0), _py(1.0)
+    left, right, bottom, top = px(0.0), px(1.0), py(0.0), py(1.0)
     parts = []
     for edge in band_edges:
-        x, y = _px(edge), _py(edge)
+        x, y = px(edge), py(edge)
         parts.append(f'<line class="usx-band" x1="{x:.1f}" y1="{top:.1f}" x2="{x:.1f}" y2="{bottom:.1f}"/>')
         parts.append(f'<line class="usx-band" x1="{left:.1f}" y1="{y:.1f}" x2="{right:.1f}" y2="{y:.1f}"/>')
     return parts
@@ -273,7 +290,6 @@ def explorer_fragment(
     keys = objective_keys + tuple(key for key in REFERENCE_KEYS if key not in objective_keys)
     neighbors = nearest_neighbors(x, y, keys)
     labels = {key: DISTANCES[key].label for key in keys}
-    square_x, square_y = _px(0.0), _py(1.0)
     lines = [
         '<div class="usx-figure">',
         f'<svg class="usx" viewBox="0 0 {VIEW_WIDTH} {VIEW_HEIGHT}" xmlns="http://www.w3.org/2000/svg" role="img"'
@@ -283,12 +299,10 @@ def explorer_fragment(
         f"<desc>{description}</desc>",
         '<defs><clipPath id="usx-square" clipPathUnits="userSpaceOnUse">'
         '<rect x="0" y="0" width="1" height="1"/></clipPath></defs>',
-        f'<rect x="0" y="0" width="{VIEW_WIDTH}" height="{VIEW_HEIGHT}" fill="#ffffff"/>',
-        f'<image href="{population_image_url}" x="{square_x:.2f}" y="{square_y:.2f}"'
-        f' width="{SCALE:.2f}" height="{SCALE:.2f}" preserveAspectRatio="none"/>',
-        *_band_lines(band_edges),
-        *_axes(),
-        *_legend(n, k, objective_keys),
+        *population_raster_svg(population_image_url),
+        *band_lines_svg(band_edges),
+        *axes_svg(),
+        *legend_svg(n, k, objective_keys),
         *_data_group(x, y, neighbors),
         "</svg>",
         f'<p class="usx-caption">{HINT}</p>',

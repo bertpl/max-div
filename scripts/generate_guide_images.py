@@ -4,10 +4,11 @@ The figures of `geomean_separation.md` plot given selections controlled by a par
 cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
 The figures of `uniform_sampling.md` are seven solved selections of one random population, one per
-experiment; only those run the solver. Each selection is emitted as an interactive figure (an HTML
-fragment over a raster of the population) plus its separations table, and cached as JSON so that
-`--reuse-solution` re-renders the figures without the solves, solving only an experiment that has no
-cache yet; a closing table compares all seven.
+experiment, plus a longer solve of the last experiment; only those run the solver. Each selection is
+emitted as an interactive figure (an HTML fragment over a raster of the population) plus its
+separations table, and cached as JSON so that `--reuse-solution` re-renders the figures without the
+solves, solving only a run that has no cache yet; a closing table compares them all. The longer solve
+is emitted as a replay figure that steps through every change of its selection.
 
 Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reuse-solution]``.
 """
@@ -15,12 +16,13 @@ Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reus
 import argparse
 import json
 from collections.abc import Callable
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 from uniform_sampling_explorer import POPULATION_COLOR, explorer_fragment, nearest_neighbors
+from uniform_sampling_replay import ReplayFrame, replay_fragment
 
 from benchmarks.figures.style import REPO_ROOT, save_webp, use_docs_style
 from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
@@ -245,7 +247,10 @@ EXPERIMENT_LABELS = {
     "geomean": "**IV.B** geometric-mean distance",
     "hybrid": "**V.A** hybrid: L2, $x$ and $y$ terms",
     "hybrid_banded": "**V.B** hybrid, 20 items per band",
+    "hybrid_banded_long": "**V.C** hybrid, 20 items per band, 900 s",
 }
+# The replay figure of section V.C re-solves the banded hybrid experiment with this budget.
+LONG_BUDGET_SEC = 900.0
 # A summary cell is colored by its achieved / reference fraction: red below LOW, green above HIGH.
 # The classes are styled in docs/stylesheets/extra.css; `uniform_sampling.md` states the rule.
 SUMMARY_LOW, SUMMARY_HIGH = 0.5, 0.7
@@ -365,15 +370,23 @@ def build_experiment_problem(vectors: NDArray[np.float32], experiment: Experimen
 
 
 def solve_experiment(
-    vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings
+    vectors: NDArray[np.float32],
+    experiment: Experiment,
+    settings: ExperimentSettings,
+    should_record_intermediate_selections: bool = False,
 ) -> ParallelMaxDivSolution:
-    """Return the experiment's solution, solved within an end-to-end budget."""
+    """Return the experiment's solution, solved within an end-to-end budget.
+
+    With `should_record_intermediate_selections` every checkpoint also carries its selection, which the
+    replay figure steps through.
+    """
     problem = build_experiment_problem(vectors, experiment, settings.k)
     solver = (
         ParallelMaxDivSolverBuilder(problem)
         .with_seed(settings.seed)
         .with_workers(seconds(settings.budget_sec), settings.n_workers)
         .with_end_to_end_budget()
+        .with_intermediate_selections(should_record_intermediate_selections)
         .build()
     )
     return solver.solve(verbosity=0)
@@ -385,11 +398,14 @@ class ExperimentRun:
 
     The outcome is the selected indices and the best-known convergence trace across workers.
     `checkpoints` lists `(elapsed seconds, iterations, primary diversity)` in the order the solver
-    recorded them; the last entry is the run's total.
+    recorded them; the last entry is the run's total. `frames`, kept only for the run the replay
+    figure shows, lists the checkpoints at which the best-known selection changed, each as
+    `(elapsed seconds, primary diversity, selected indices)`.
     """
 
     i_selected: NDArray[np.intp]
     checkpoints: list[tuple[float, int, float]]
+    frames: list[tuple[float, float, list[int]]] | None = None
 
     @property
     def n_iterations(self) -> int:
@@ -402,33 +418,63 @@ class ExperimentRun:
         return reached[-1] if reached else 0.0
 
 
+def selection_frames(solution: ParallelMaxDivSolution) -> list[tuple[float, float, list[int]]]:
+    """Return the checkpoints at which the best-known selection changed, as `(elapsed seconds, diversity, indices)`.
+
+    A checkpoint whose selection equals the previous kept frame's is dropped, so a reader stepping
+    through the frames never looks for a change that is not there.
+    """
+    frames: list[tuple[float, float, list[int]]] = []
+    for checkpoint in solution.score_checkpoints:
+        indices = [int(i) for i in checkpoint.i_selected]
+        if not frames or indices != frames[-1][2]:
+            frames.append((round(checkpoint.elapsed.t_elapsed_sec, 3), checkpoint.score.diversity, indices))
+    return frames
+
+
 def load_or_solve_experiment(
-    vectors: NDArray[np.float32], experiment: Experiment, settings: ExperimentSettings, should_reuse_solution: bool
+    vectors: NDArray[np.float32],
+    experiment: Experiment,
+    settings: ExperimentSettings,
+    should_reuse_solution: bool,
+    cache_name: str | None = None,
+    should_record_frames: bool = False,
 ) -> ExperimentRun:
     """Return the experiment's run, from its JSON cache when asked and present, else from a fresh solve.
 
     A fresh solve rewrites the cache; an experiment without a cache is solved even when reuse is asked,
     so a new experiment can be added without re-solving the others. The cache holds the selected
-    indices and the convergence trace only: the population is rebuilt from n and the seed, so the dots
-    and the raster always come from the same coordinates.
+    indices and the convergence trace, plus the selection frames when `should_record_frames` asks for them:
+    the population is rebuilt from n and the seed, so the dots and the raster always come from the same
+    coordinates. `cache_name` names the cache when one experiment is solved under several settings.
     """
-    path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_solution.json"
+    path = GENERATED_DIR / f"uniform_sampling_{cache_name or experiment.name}_solution.json"
     if should_reuse_solution and path.exists():
         cached = json.loads(path.read_text(encoding="utf-8"))
         if {key: cached[key] for key in asdict(settings)} != asdict(settings):
             raise ValueError(f"{path} was solved with other settings than {settings}")
-        return ExperimentRun(
-            np.asarray(cached["i_selected"], dtype=np.intp), [tuple(row) for row in cached["checkpoints"]]
+        frames = (
+            [(t_sec, diversity, indices) for t_sec, diversity, indices in cached["frames"]]
+            if should_record_frames
+            else None
         )
-    solution = solve_experiment(vectors, experiment, settings)
+        return ExperimentRun(
+            np.asarray(cached["i_selected"], dtype=np.intp), [tuple(row) for row in cached["checkpoints"]], frames
+        )
+    solution = solve_experiment(
+        vectors, experiment, settings, should_record_intermediate_selections=should_record_frames
+    )
     run = ExperimentRun(
         np.asarray(solution.i_selected, dtype=np.intp),
         [
             (round(checkpoint.elapsed.t_elapsed_sec, 3), checkpoint.elapsed.n_iterations, checkpoint.score.diversity)
             for checkpoint in solution.score_checkpoints
         ],
+        selection_frames(solution) if should_record_frames else None,
     )
     record = {**asdict(settings), "i_selected": [int(i) for i in run.i_selected], "checkpoints": run.checkpoints}
+    if run.frames is not None:
+        record["frames"] = run.frames
     path.write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
     return run
@@ -476,10 +522,10 @@ def reference_separations(k: int) -> dict[str, float]:
     return {"l2": PACKING_SPACING_100, "x": 1.0 / (k - 1), "y": 1.0 / (k - 1)}
 
 
-def write_experiment_separations(experiment: Experiment, selection: NDArray[np.float64], k: int) -> None:
-    """Write the experiment's achieved separations beside their references as a table fragment.
+def write_experiment_separations(run_name: str, selection: NDArray[np.float64], k: int) -> None:
+    """Write a run's achieved separations beside their references as a table fragment named after the run.
 
-    `docs/guides/uniform_sampling.md` includes the fragment below the experiment's figure, so the numbers
+    `docs/guides/uniform_sampling.md` includes the fragment below the run's figure, so the numbers
     come from the same solve as the figure.
     """
     achieved, references = harmonic_separations(selection), reference_separations(k)
@@ -488,7 +534,7 @@ def write_experiment_separations(experiment: Experiment, selection: NDArray[np.f
         lines.append(
             f"| {label} | {achieved[key]:.4f} | {references[key]:.4f} | {achieved[key] / references[key]:.0%} |"
         )
-    path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_separations.md"
+    path = GENERATED_DIR / f"uniform_sampling_{run_name}_separations.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
 
@@ -557,7 +603,7 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
         runs[experiment.name] = run
         selection = vectors[run.i_selected].astype(np.float64)
         selections[experiment.name] = selection
-        write_experiment_separations(experiment, selection, settings.k)
+        write_experiment_separations(experiment.name, selection, settings.k)
         fragment = explorer_fragment(
             selection[:, 0],
             selection[:, 1],
@@ -574,8 +620,48 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
         path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_figure.html"
         path.write_text(fragment, encoding="utf-8")
         print(f"wrote {path.relative_to(REPO_ROOT)}")
+    selections["hybrid_banded_long"] = render_uniform_sampling_replay(vectors, settings, should_reuse_solution)
     write_summary(selections, settings.k)
     write_convergence(runs, settings.budget_sec)
+
+
+def render_uniform_sampling_replay(
+    vectors: NDArray[np.float32], settings: ExperimentSettings, should_reuse_solution: bool
+) -> NDArray[np.float64]:
+    """Produce the replay figure of the banded hybrid experiment solved for `LONG_BUDGET_SEC`, and return its selection.
+
+    The run is the last experiment's problem under a longer budget, with the selection recorded at every
+    checkpoint; the figure steps through the checkpoints at which the selection changed.
+    """
+    experiment = EXPERIMENTS[-1]
+    run = load_or_solve_experiment(
+        vectors,
+        experiment,
+        replace(settings, budget_sec=LONG_BUDGET_SEC),
+        should_reuse_solution,
+        cache_name="hybrid_banded_long",
+        should_record_frames=True,
+    )
+    assert run.frames is not None
+    selection = vectors[run.i_selected].astype(np.float64)
+    write_experiment_separations("hybrid_banded_long", selection, settings.k)
+    fragment = replay_fragment(
+        vectors,
+        [ReplayFrame(t_sec, diversity, indices) for t_sec, diversity, indices in run.frames],
+        settings.n,
+        settings.k,
+        objective_keys=experiment.distance_keys,
+        band_edges=experiment.band_edges(),
+        population_image_url="../images/uniform_sampling_population.webp",
+        description=(
+            "Ten thousand gray points in the unit square with the hundred selected ones in red, stepping "
+            "through every change of the selection during the solve"
+        ),
+    )
+    path = GENERATED_DIR / "uniform_sampling_hybrid_banded_long_replay.html"
+    path.write_text(fragment, encoding="utf-8")
+    print(f"wrote {path.relative_to(REPO_ROOT)}")
+    return selection
 
 
 def main() -> None:

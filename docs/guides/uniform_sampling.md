@@ -25,7 +25,7 @@ The three goals compete for the same $k$ points. **How to trade them off is left
 
 - **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results are comparable.
 - **One diversity metric for every experiment:** the [harmonic-mean separation](../concepts/diversity.md#diversity-metrics), the harmonic mean, over the selected points, of each point's distance to its nearest other point. It sits between the minimum and the geometric mean in how hard it penalizes one close pair; on a perfectly regular selection the minimum, harmonic-mean and geometric-mean separations all agree.
-- **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget.
+- **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget. One extra run, in section V.C, keeps everything else and lengthens the budget to 900 s.
 - **One measure for every result:** the harmonic-mean separation of the selection under the L2, $x$ and $y$ distances, one per goal.
 
 ## II. Diversity references
@@ -162,6 +162,27 @@ Every band holds its 20 items; the unconstrained selection of V.A holds between 
 
 The exact counts make each iteration slower, since each candidate swap is also checked against the ten counts; the convergence table below shows the resulting lower iteration count.
 
+### V.C. What a longer budget improves
+
+Every figure above is a 60 s solve, chosen so the whole case study regenerates in minutes. This one is the same problem as V.B, now solved for 900 s, with the solver built with `with_intermediate_selections()` so every [score checkpoint](../concepts/parallel_solving.md#reading-the-result) also carries the selection held at that moment.
+
+The figure steps through those selections: each frame is a checkpoint at which the best selection across the 16 workers changed, and the caption gives the frame's elapsed time and diversity. Move between frames three ways:
+
+- drag the slider,
+- click the buttons, or
+- press the arrow keys once the figure has focus.
+
+--8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
+
+--8<-- "generated/uniform_sampling_hybrid_banded_long_separations.md"
+
+Most frames fall in the first minute, where the selection still changes at nearly every checkpoint. After that a change is rare, and it is one of two kinds:
+
+- a swap of two or three items, or
+- a wholesale change, when another worker's selection surpasses the best held so far and becomes the new best-known selection.
+
+The later frames are where the extra budget improves the result: the diversity keeps increasing past V.B's 60 s value, so the summary table below lists this run as its own row.
+
 ## VI. Summary
 
 Every experiment's achieved harmonic-mean separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">below 50 %</span> of its reference is marked red, one <span class="usx-high">above 70 %</span> green:
@@ -172,6 +193,7 @@ Every experiment's achieved harmonic-mean separation under the three reference d
 - **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
 - **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
 - **Exact counts per band come at no cost in diversity**: under them the hybrid objective reaches the same three separations.
+- **A longer budget still improves the result**: the 900 s solve of V.C ends above its 60 s counterpart on the L2 and $x$ separations, and level on $y$.
 
 The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 

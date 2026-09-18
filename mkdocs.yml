@@ -10,6 +10,7 @@ extra_css:
 extra_javascript:
   - javascripts/mathjax.js
   - javascripts/uniform_sampling_explorer.js
+  - javascripts/uniform_sampling_replay.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 theme:
