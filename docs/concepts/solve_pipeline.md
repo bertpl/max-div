@@ -71,4 +71,3 @@ solver = (
 ```
 
 This gives you full control over which strategies run, in what order, and for how long.
-
