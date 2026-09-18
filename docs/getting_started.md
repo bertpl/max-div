@@ -263,13 +263,13 @@ solver = (
 ```
 
 Solving several times with different seeds and keeping the best result is a simple way to improve
-quality; [`ParallelMaxDivSolverBuilder`](concepts/solver.md) does exactly that, running the seeds at
+quality; [`ParallelMaxDivSolverBuilder`](concepts/parallel_solving.md) does exactly that, running the seeds at
 once over a single shared copy of the distances or vectors.
 
 
 ## Next Steps
 
-- **[Concepts](concepts/solver.md)** -- how the solver pipeline, scoring, constraints, and diversity metrics work under the hood
+- **[Concepts](concepts/solve_pipeline.md)** -- how the solver pipeline, scoring, constraints, and diversity metrics work under the hood
 - **[API Reference](reference/solver/MaxDivSolverBuilder.md)** -- full details on all configuration options
 - **[Benchmark Results](benchmarks/index.md)** -- see how different strategies and presets perform across various test problems
 - **[CLI](cli.md)** -- run benchmarks and solve problems from the command line

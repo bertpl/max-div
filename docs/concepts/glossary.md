@@ -189,7 +189,7 @@ from — the way to use a custom or non-Euclidean measure. Either a square *n*×
 or a condensed array of the *n*(*n*−1)/2 unique values (the layout
 `scipy.spatial.distance.pdist` returns) is accepted. The solver reads from a full *n*×*n* matrix
 throughout, which makes each [swap](#swap) cheap, so a condensed input is expanded into one (see
-[distance storage](solver.md#distance-storage)). That matrix is also the memory bottleneck: it grows
+[distance storage](distance_storage.md)). That matrix is also the memory bottleneck: it grows
 with the square of *n*, so problem size is limited by memory long before it is limited by solving
 time.
 
@@ -230,7 +230,7 @@ One stage of the solving pipeline, with its own strategy and its own duration. A
 **initialization step**, which builds the first [selection](#selection), followed by one or more
 **optimization steps**, which improve it by [local search](#local-search). Splitting a run into
 steps is what allows a fast, broad phase to be followed by a slower, more careful one — which is
-how the [presets](#preset) are built. See [How the Solver Works](solver.md).
+how the [presets](#preset) are built. See [The Solve Pipeline](solve_pipeline.md).
 
 ## Swap { #swap }
 
@@ -259,4 +259,4 @@ parallel-metaheuristics literature calls this concept an *island*; the documenta
 
 By default the grouping is dynamic — it consolidates from one group per worker toward a single
 all-worker group as the solve progresses; an explicit `n_groups` keeps the groups fixed. See
-[Solving in Parallel](solver.md#solving-in-parallel).
+[Parallel Solving](parallel_solving.md).

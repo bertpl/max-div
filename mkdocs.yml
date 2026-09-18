@@ -49,6 +49,7 @@ plugins:
   # the README and external sites deep-link into them.
   - redirects:
       redirect_maps:
+        concepts/solver.md: concepts/solve_pipeline.md
         comparison.md: benchmarks/third_party/comparison.md
         benchmarks/comparison/overview.md: benchmarks/third_party/head_to_head/overview.md
         benchmarks/comparison/tier1.md: benchmarks/third_party/head_to_head/tier1.md
@@ -122,7 +123,9 @@ nav:
   - Home: index.md
   - Getting Started: getting_started.md
   - Concepts:
-    - How the Solver Works: concepts/solver.md
+    - The Solve Pipeline: concepts/solve_pipeline.md
+    - Distance Storage: concepts/distance_storage.md
+    - Parallel Solving: concepts/parallel_solving.md
     - Scoring: concepts/scoring.md
     - Constraints: concepts/constraints.md
     - Diversity & Distance: concepts/diversity.md

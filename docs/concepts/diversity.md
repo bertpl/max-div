@@ -11,7 +11,7 @@ Items  ──>  Pairwise Distances  ──>  Contributions  ──>  Diversity S
 
 1. **Pairwise distances** are computed once upfront between all `n` [items](glossary.md#item) using the chosen
    distance metric. These are stored as a full distance matrix, or computed on demand when the
-   matrix would not fit in memory (see [distance storage](solver.md#distance-storage)).
+   matrix would not fit in memory (see [distance storage](distance_storage.md)).
 
 2. A **diversity contribution** is computed for each selected item -- a per-item quantity where
    higher means "contributes more diversity". Which quantity that is depends on the diversity metric's

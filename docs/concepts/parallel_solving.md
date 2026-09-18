@@ -1,131 +1,4 @@
-# How the Solver Works
-
-## The Solver Pipeline
-
-When you call `solver.solve()`, the solver executes a pipeline of **steps**:
-
-1. **Initialization step** -- builds the initial [selection](glossary.md#selection) of `k`
-   [items](glossary.md#item)
-2. **One or more optimization steps** -- iteratively improves the selection
-
-Each step runs for a configured duration (wall-clock time or iteration count) and operates
-on a shared solver state that tracks the current selection, separations, and constraint
-satisfaction.
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Initialization │ ──> │ Optimization #1 │ ──> │ Optimization #2 │ ──> Solution
-│     Step        │     │     Step        │     │     Step        │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-```
-
-## Initialization Strategies
-
-The initialization step selects the initial `k` items. Different strategies trade off
-speed vs quality of the starting point:
-
-| Strategy | How it works |
-|----------|-------------|
-| `random_one_shot` | Selects all `k` items in one batch, with probabilities biased by global separation. **Default for the RANDOM and GUIDED presets.** |
-| `random_batched` | Selects in batches of `b`, re-evaluating separations between batches. |
-| `farthest_point` | A seeded random start item, then greedily adds the item farthest from the selection (farthest-point sampling; under `MEAN_PAIRWISE_DISTANCE`, greedily maximizes mean distance to the selection). An optional `top_k` samples each pick uniformly among the `top_k` best candidates (default 1 keeps the exact greedy construction). Constraint-unaware. |
-| `farthest_point_batched` | The farthest-point construction with one pass over the dataset per batch of picks, not per pick. Every draw ranges over the same candidates `farthest_point` would offer, so quality is equal while large problems initialize several times faster. Separation-family diversity metrics only; constraint-unaware. **The SMART and THOROUGH presets initialize unconstrained problems this way** (`farthest_point` under `MEAN_PAIRWISE_DISTANCE`). |
-| `eager` | Evaluates `nc` random candidates per step, picks the best. Slower but higher quality. |
-| `most_feasible` | Constructs a selection satisfying every constraint where one can be found, so optimization starts feasible instead of searching for feasibility; where the constraints provably cannot all be met, starts from a least-infeasible one; and otherwise from the least-violating one found. **Constrained problems only** — raises on a problem with no constraints. |
-| `fast` | Selects the first `k` items. Trivial deterministic baseline for testing and benchmarking. |
-
-## Optimization Strategies
-
-Optimization steps iteratively improve the selection through [**swap operations**](glossary.md#swap): in each
-iteration, the strategy removes one or more items from the current selection and replaces
-them with new ones. The swap is kept only if it improves the score.
-
-| Strategy | How it works |
-|----------|-------------|
-| `random_swaps` | Randomly selects items to remove and add. Simple baseline. |
-| `guided_swaps` | Biased towards removing low-separation items and adding high-separation ones. |
-| `smart_swaps` | Adaptively learns which swap sizes and candidate selection strategies work best during the run. |
-
-## Presets vs Custom Configuration
-
-**Presets** (configured via `with_preset`) select appropriate initialization and optimization
-strategies automatically. They are the recommended starting point for most users.
-
-For advanced use cases, you can configure the pipeline manually:
-
-```python
-from max_div import (
-    MaxDivSolverBuilder, MaxDivProblem,
-    InitializationStrategy, OptimizationStrategy,
-    seconds, iterations,
-)
-from max_div._core.solver._solver_step import OptimizationStep
-
-solver = (
-    MaxDivSolverBuilder(problem)
-    .set_initialization_strategy(InitializationStrategy.eager(nc=50))
-    .add_solver_step(OptimizationStep(OptimizationStrategy.guided_swaps(), seconds(10)))
-    .add_solver_step(OptimizationStep(OptimizationStrategy.smart_swaps(
-        swap_size_max=4, nc_remove_max=8, nc_add_max=8,
-    ), seconds(30)))
-    .build()
-)
-```
-
-This gives you full control over which strategies run, in what order, and for how long.
-
-## Distance Storage
-
-During search the solver reads pairwise distances constantly, and how they are stored is
-selectable on the builder:
-
-```python
-from max_div.solver import DistanceStorageType
-
-solver = (
-    MaxDivSolverBuilder(problem)
-    .with_preset(seconds(5))
-    .with_distance_storage(DistanceStorageType.FULL_MATRIX)  # optional; AUTO is the default
-    .build()
-)
-```
-
-- **`FULL_MATRIX`** — a full `n x n` matrix of float32 values, so distance reads are contiguous
-  row scans. A problem built via `from_distances` from a condensed vector is expanded into this
-  layout, at twice the memory of the condensed input.
-- **`LAZY`** — no stored distances at all: each distance is computed on demand from the vectors.
-  Slower per read, but removes the O(n²) memory requirement entirely, so much larger problems
-  become feasible. Available only when the problem is built from vectors.
-- **`AUTO`** (default) — for vector problems, the full matrix when it fits comfortably in memory
-  and lazy otherwise; for problems built via `from_distances`, always the full matrix. The
-  resolved storage type per distance is reported in the solution summary, e.g. `storage=full_matrix (L2)`
-  — pin a storage type explicitly to override.
-
-### Reproducibility
-
-**On one machine, with the same installed versions — max-div's and numba's — and the same
-backend, a seeded solve is exactly reproducible**: run it again and you get the same selection,
-bit for bit.
-
-**Change any of those three and you may get a different — equally diverse — selection.**
-Distances are accumulated sums, and the compiler is allowed to reorder such a sum to vectorize it;
-how it does so depends on the processor and on the numba version that compiled the kernels, which
-is why a numba upgrade counts here as much as a max-div one. The resulting differences are in the
-last bits, but the search is a chaotic process, so one differing comparison can send it down a
-different path to an equally good answer. The difference is not a slightly different selection —
-it is a different one of comparable quality.
-
-Two practical consequences:
-
-- **`AUTO` picks a backend from available memory**, so the same problem can resolve differently on
-  a machine with more or less RAM. Pin the backend explicitly if you want that variable removed —
-  though on its own that does not make results portable across different machines.
-- **Comparing runs meaningfully** means comparing achieved diversity, not selected indices.
-
-(With a time budget rather than an iteration budget, a faster backend also completes more
-iterations — the machine-dependence any time budget carries.)
-
-## Solving in Parallel
+# Parallel Solving
 
 `ParallelMaxDivSolverBuilder` runs several workers on one problem at once — an **algorithm
 portfolio** — and keeps the best result any of them reached. The workers share one copy of the
@@ -135,8 +8,7 @@ processes but not N copies of that data.
 The workers form **[worker groups](glossary.md#worker-group)** — the parallel-metaheuristics
 literature calls them *islands*: within a group, every worker adopts the best selection any
 member has found so far, exchanged many times per second while solving; groups never communicate
-with each other. Groups of one worker are fully independent — a fully
-independent set of workers is the special case where every group has one member. By default the
+with each other. Groups of one worker are fully independent. By default the
 grouping is **dynamic** — it evolves during the solve (described under
 [Workers and Groups](#workers-and-groups)); `with_custom_worker_groups` keeps it fixed instead.
 
@@ -152,7 +24,7 @@ solution = (
 )
 ```
 
-### Why Run Several
+## Why Run Several
 
 The two counts buy different things:
 
@@ -166,12 +38,12 @@ How much the variance reduction buys depends on the budget. The [published prese
 show the seed spread narrowing sharply as budgets grow — roughly tenfold over the first stretch —
 and then flattening rather than vanishing.
 
-Even at that floor the bands of neighboring budgets overlap, so an unlucky seed with more budget can
+Even at that flattened level the bands of neighboring budgets overlap, so an unlucky seed with more budget can
 still finish below a lucky one with less.
 
 The dynamic default removes the need to trade the two counts against each other.
 
-### Workers and Groups
+## Workers and Groups
 
 Two builder methods configure the workers, and each implies its grouping:
 
@@ -212,7 +84,7 @@ mid-solve. Without an explicit `n_groups`:
 - a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
   to the first groups.
 
-### What Varies per Worker
+## What Varies per Worker
 
 Each worker is configured by a `WorkerConfig`: the preset it runs, and optionally the
 initialization strategy it starts from. `init_strategy` lets two workers run the same preset from
@@ -225,7 +97,7 @@ question.
 
 Distance storage is fixed for a different reason: the workers read one shared buffer.
 
-### Seeds and Reproducibility
+## Seeds and Reproducibility
 
 The parallel solver takes one seed and derives a seed per worker from that seed, so the workers search
 differently while the whole configuration derives from a single number.
@@ -243,10 +115,10 @@ Each worker's `WorkerSummary` carries its derived seed, the configuration it ran
 on the shared time axis (`t_start_offset_sec`, zero for the earliest worker). For an
 independent worker that is enough to replay it on its own with `MaxDivSolverBuilder`; a
 cooperative worker's trajectory also depends on what its group mates published, so the replay
-contract is independent-only. The limits in the [Reproducibility](#reproducibility) section apply
+contract is independent-only. The limits in the [Reproducibility](distance_storage.md#reproducibility) section apply
 on top.
 
-### Reading the Result
+## Reading the Result
 
 `solve()` returns a `ParallelMaxDivSolution`: the winning worker's selection, with a `WorkerSummary`
 per worker attached. Its `score_checkpoints` trace the best score any worker held at each moment,
@@ -277,7 +149,7 @@ The number worth looking at is `n_workers_with_best_score`:
 A `ParallelSolvingWarning` is raised for configurations that cannot help — a single worker, or more
 workers than the machine has cores.
 
-### Watching Progress
+## Watching Progress
 
 `solve(verbosity=...)` takes the same levels as a single solve (see `Verbosity`), rendered as **one
 combined live view** rather than N interleaved streams; the default is the progress table, the level
@@ -292,7 +164,7 @@ So a frozen best while progress keeps advancing simply means the leading worker 
 has beaten it yet — the `Active` column shows how many workers are still trying. Each worker prints
 one set-off row with its final state the moment it finishes.
 
-### On the Word "Portfolio"
+## On the Word "Portfolio"
 
 Running several configurations of one solver concurrently and keeping the best is known as an
 algorithm portfolio, an idea introduced by Huberman, Lukose and Hogg (1997) and developed by Gomes
