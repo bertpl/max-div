@@ -164,20 +164,24 @@ The exact counts make each iteration slower, since each candidate swap is also c
 
 ### V.C. What a longer budget improves
 
-Every figure above is a 60 s solve, chosen so the whole case study regenerates in minutes. This one is the same problem as V.B solved for 900 s, with the solver built with `with_intermediate_selections()` so every [score checkpoint](../concepts/parallel_solving.md#reading-the-result) also carries the selection held at that moment.
+Every figure above is a 60 s solve, chosen so the whole case study regenerates in minutes. This one is the same problem as V.B, now solved for 900 s, with the solver built with `with_intermediate_selections()` so every [score checkpoint](../concepts/parallel_solving.md#reading-the-result) also carries the selection held at that moment.
 
-The figure steps through those selections: each frame is a checkpoint at which the best selection across the 16 workers changed, and the caption gives the frame's elapsed time and diversity. Drag the slider, use the buttons, or the arrow keys once the figure has focus.
+The figure steps through those selections: each frame is a checkpoint at which the best selection across the 16 workers changed, and the caption gives the frame's elapsed time and diversity. Move between frames three ways:
+
+- drag the slider,
+- click the buttons, or
+- press the arrow keys once the figure has focus.
 
 --8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
 
 --8<-- "generated/uniform_sampling_hybrid_banded_long_separations.md"
 
-Most frames sit in the first minute, where the selection still changes at nearly every checkpoint. After that a change is rare, and it is one of two kinds:
+Most frames fall in the first minute, where the selection still changes at nearly every checkpoint. After that a change is rare, and it is one of two kinds:
 
 - a swap of two or three items, or
-- a wholesale change, when another worker's selection overtakes the best held so far and becomes the new best-known selection.
+- a wholesale change, when another worker's selection surpasses the best held so far and becomes the new best-known selection.
 
-The later frames are where the extra budget improves the result: the diversity keeps climbing past V.B's 60 s value, so the summary table below lists this run as its own row.
+The later frames are where the extra budget improves the result: the diversity keeps increasing past V.B's 60 s value, so the summary table below lists this run as its own row.
 
 ## VI. Summary
 

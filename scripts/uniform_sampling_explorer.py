@@ -128,7 +128,7 @@ def population_raster_svg(population_image_url: str) -> list[str]:
     ]
 
 
-def data_group_open() -> str:
+def data_group_open_tag() -> str:
     """Return the opening `<g>` of the data layer, mapping data coordinates to pixels."""
     return f'<g class="usx-data" transform="translate({px(0.0):.2f},{py(0.0):.2f}) scale({SCALE:.3f},{-SCALE:.3f})">'
 
@@ -228,7 +228,7 @@ def _data_group(
     Children are listed in paint order: the marks layer comes last so rings draw over the dots.
     """
     parts = [
-        data_group_open(),
+        data_group_open_tag(),
         '<g class="usx-hover" clip-path="url(#usx-square)"></g>',
     ]
     for cls in ("usx-rug", "usx-hit"):

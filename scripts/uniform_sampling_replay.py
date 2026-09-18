@@ -24,7 +24,7 @@ from uniform_sampling_explorer import (
     VIEW_WIDTH,
     axes_svg,
     band_lines_svg,
-    data_group_open,
+    data_group_open_tag,
     legend_svg,
     population_raster_svg,
 )
@@ -124,7 +124,7 @@ def replay_fragment(
         *band_lines_svg(band_edges),
         *axes_svg(),
         *legend_svg(n, k, objective_keys, with_neighbor_marks=False),
-        data_group_open(),
+        data_group_open_tag(),
         *(line for item in last.items for line in item_svg(position[item], *points[position[item]])),
         "</g>",
         "</svg>",

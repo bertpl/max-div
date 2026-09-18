@@ -205,6 +205,8 @@ function installFigureListeners(figure) {
   });
 }
 
+// The replay figure shares the figure class for its styling but has no hoverable items, so it is
+// left to uniform_sampling_replay.js.
 document$.subscribe(() => {
-  for (const figure of document.querySelectorAll(".usx-figure")) installFigureListeners(figure);
+  for (const figure of document.querySelectorAll(".usx-figure:not(.usx-replay)")) installFigureListeners(figure);
 });

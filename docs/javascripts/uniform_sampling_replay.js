@@ -62,8 +62,8 @@ function showFrame(figure, index) {
 // Install the listeners on one figure: the slider and the buttons pick a frame, and the arrow keys
 // step it while the figure has focus (the slider handles its own arrow keys).
 function installReplayListeners(figure) {
-  if (figure.dataset.usxReady) return;
-  figure.dataset.usxReady = "1";
+  if (figure.dataset.usxReplayReady) return;
+  figure.dataset.usxReplayReady = "1";
   const slider = figure.querySelector(".usx-slider");
   slider.addEventListener("input", () => showFrame(figure, Number(slider.value)));
   for (const button of figure.querySelectorAll(".usx-step")) {

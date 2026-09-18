@@ -31,7 +31,7 @@ def replay():
     return _load_module("uniform_sampling_replay")
 
 
-# Five population items, of which item 4 is never selected, so the coordinate table holds four.
+# The population has five items, of which item 4 is never selected, so the coordinate table holds four.
 VECTORS = np.array([[0.1, 0.2], [0.5, 0.5], [0.9, 0.8], [0.3, 0.7], [0.6, 0.1]], dtype=np.float32)
 
 
