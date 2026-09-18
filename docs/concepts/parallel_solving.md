@@ -58,6 +58,7 @@ The worker total, when not given, defaults to **3/4 of the logical cores** on ei
 
 **Dynamic grouping.** On the `with_workers` path, the group count follows a schedule over the
 workers' progress through the budget:
+{ #dynamic-grouping }
 
 - every worker starts in its own group;
 - the group count decreases toward one all-worker group, following `n_workers · (1 − progress)^rate`,
@@ -120,8 +121,8 @@ with it.
 ![Timeline of four fixed groups of three workers: the lead moving between three groups, one group never leading](images/parallel_solving_timeline_fixed_groups.webp)
 
 **Twelve dynamically grouped workers** (`with_workers`, the default): every worker starts alone,
-the rate-2 schedule dissolves half the groups within the first ten seconds, and one all-worker
-group remains from about 42 s on. Each dissolution moves workers into the groups still ahead,
+the [default schedule](#dynamic-grouping) of rate 2 dissolves the first group after two seconds
+and has halved the count by about 18 s, and one all-worker group remains from about 42 s on. Each dissolution moves workers into the groups still ahead,
 which is where the late gains in the diversity panel come from.
 
 ![Timeline of twelve dynamically grouped workers: groups dissolving into the leading ones until one group remains](images/parallel_solving_timeline_dynamic_groups.webp)
