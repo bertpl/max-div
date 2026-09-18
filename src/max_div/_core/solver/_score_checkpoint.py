@@ -27,7 +27,7 @@ class ScoreCheckpoint:
       from its own start, a whole solve from its first step.
     - `worker_index` and `group_index` name the parallel worker that recorded the checkpoint and the
       worker group it belonged to at that moment; both are `None` for a single (non-parallel) solve.
-    - `i_selected` is the selection held at that moment, ascending, only when the solve was built
+    - `i_selected` is the selection held at that moment as ascending indices, only when the solve was built
       with `with_intermediate_selections()`; `None` otherwise, as it costs k integers per checkpoint.
     """
 
