@@ -40,3 +40,6 @@ CLAUDE.md
 # Only working_docs/README.md is committed; everything else here stays out of git.
 working_docs/*
 !working_docs/README.md
+
+# pickled example solutions of the docs figure generators (version-bound, re-solvable)
+/generated/*.pkl
