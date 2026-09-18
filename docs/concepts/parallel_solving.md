@@ -85,16 +85,16 @@ mid-solve. Without an explicit `n_groups`:
 - a worker total that does not divide evenly over an explicit `n_groups` hands the extra workers
   to the first groups.
 
-### II.A. The three groupings on one problem { #the-three-groupings-on-one-problem }
+### II.A. The 3 groupings on one problem { #the-three-groupings-on-one-problem }
 
-The timelines below are three 60 s solves of the
+The timelines below are 3 solves of 60 s of the
 [banded hybrid experiment](../guides/uniform_sampling.md#vb-exact-counts-per-band) of the
-uniform-sampling case study, twelve workers each, from the same seed. Each is drawn by
+uniform-sampling case study, 12 workers each, from the same seed. Each is drawn by
 `ParallelMaxDivSolution.plot_timeline()` (the `plot` extra) from the solution's own records. In
 every figure:
 
 - **the top panel** shows one band per worker, stacked into a block per group, the shortest-lived
-  groups on top. A worker's band takes one of three colors:
+  groups on top. A worker's band takes one of 3 colors:
     - **blue** while it searches;
     - **light green** while its group holds the best selection;
     - **dark green** on the worker that reported that selection at a checkpoint, one of the
@@ -102,30 +102,30 @@ every figure:
 
     Inside a group the lead changes hands more often than checkpoints are taken, so the light
     green, not the dark green, shows the true extent of a group's lead;
-- **the lower panels** trace two scores. The first is the best diversity any worker held, on an
+- **the lower panels** trace 2 scores. The first is the best diversity any worker held, on an
   axis that is logarithmic in its upper range, which expands where the small, late gains appear.
   The second is the constraints score (one when all constraints are satisfied), drawn only
   because it dips below one during initialization.
 
-**Twelve independent workers** (`with_custom_worker_groups` with `n_groups=12`): nobody shares, so
-the lead simply passes to whichever worker is ahead, and the eleven others' work never contributes
+**12 independent workers** (`with_custom_worker_groups` with `n_groups=12`): nobody shares, so
+the lead simply passes to whichever worker is ahead, and the 11 others' work never contributes
 to the result.
 
-![Timeline of twelve independent workers: twelve single-band groups, the lead passing between three of them](images/parallel_solving_timeline_independent.webp)
+![Timeline of 12 independent workers: 12 single-band groups, the lead passing between 3 of them](images/parallel_solving_timeline_independent.webp)
 
-**Four fixed groups of three** (`n_groups=4`): a member that finds a better selection hands it to
-its two group mates within a fraction of a second, so the whole group turns light green and the
-three continue from the same selection. Group 2 never led, and its three workers' search stayed
+**4 fixed groups of 3** (`n_groups=4`): a member that finds a better selection hands it to
+its 2 group mates within a fraction of a second, so the whole group turns light green and the
+3 continue from the same selection. Group 2 never led, and its 3 workers' search stayed
 with it.
 
-![Timeline of four fixed groups of three workers: the lead moving between three groups, one group never leading](images/parallel_solving_timeline_fixed_groups.webp)
+![Timeline of 4 fixed groups of 3 workers: the lead moving between 3 groups, one group never leading](images/parallel_solving_timeline_fixed_groups.webp)
 
-**Twelve dynamically grouped workers** (`with_workers`, the default): every worker starts alone,
-the [default schedule](#dynamic-grouping) of rate 2 dissolves the first group after two seconds
+**12 dynamically grouped workers** (`with_workers`, the default): every worker starts alone,
+the [default schedule](#dynamic-grouping) of rate 2 dissolves the first group after 2 seconds
 and has halved the count by about 18 s, and one all-worker group remains from about 42 s on. Each dissolution moves workers into the groups still ahead,
 which is where the late gains in the diversity panel come from.
 
-![Timeline of twelve dynamically grouped workers: groups dissolving into the leading ones until one group remains](images/parallel_solving_timeline_dynamic_groups.webp)
+![Timeline of 12 dynamically grouped workers: groups dissolving into the leading ones until one group remains](images/parallel_solving_timeline_dynamic_groups.webp)
 
 ## III. What varies per worker { #what-varies-per-worker }
 

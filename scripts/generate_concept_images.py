@@ -1,10 +1,10 @@
 """Generate the figures of the concept pages under `docs/concepts/`.
 
-The figures are the three solve timelines on `parallel_solving.md`: one parallel solve per
-grouping (twelve independent workers, four fixed groups of three, twelve dynamically grouped
-workers) of the uniform-sampling case study's banded hybrid experiment, each drawn with
-`ParallelMaxDivSolution.plot_timeline()`. The problem and population are the guide script's own,
-imported from it, so the figures show the problem the case study reports on.
+The figures are the 3 solve timelines on `parallel_solving.md`: one parallel solve per grouping
+(12 independent workers, 4 fixed groups of 3, 12 dynamically grouped workers) of the uniform-sampling
+case study's banded hybrid experiment, each drawn with `ParallelMaxDivSolution.plot_timeline()`.
+The problem and population are the guide script's own, imported from it, so the figures show the
+problem the case study reports on.
 
 Every solution is pickled whole under `generated/`, gitignored, so `--reuse-solution` re-renders the
 figures without the solves; a pickle is bound to the max-div version that wrote it.
