@@ -7,11 +7,11 @@
 
 | | min separation | mean separation | geometric-mean separation | harmonic-mean separation |
 |---|:---:|:---:|:---:|:---:|
-| Accounts for diversity beyond the closest item pair (I.1) | ❌ | ✅ | ✅ | ✅ |
-| Strongly penalizes near-duplicate items (I.2) | ✅ | ❌ | ✅ | ✅ |
-| Steers towards uniform spacing, at any k (I.3) | ✅ | ❌ | ✅ | ✅ |
-| Reacts to separations of every order of magnitude (I.4) | ❌ | ❌ | ✅ | ❌ |
-| Cheap to compute (I.5) | ✅ | ✅ | ❌ | ✅ |
+| Accounts for diversity beyond the closest item pair (I.A) | ❌ | ✅ | ✅ | ✅ |
+| Strongly penalizes near-duplicate items (I.B) | ✅ | ❌ | ✅ | ✅ |
+| Steers towards uniform spacing, at any k (I.C) | ✅ | ❌ | ✅ | ✅ |
+| Reacts to separations of every order of magnitude (I.D) | ❌ | ❌ | ✅ | ❌ |
+| Cheap to compute (I.E) | ✅ | ✅ | ❌ | ✅ |
 
 ### I.A. Minimum separation only measures the closest item pair { #i1-minimum-separation-only-measures-the-closest-item-pair }
 
@@ -94,4 +94,4 @@ At $\alpha = 0$ the free items are uniformly spaced; a positive $\alpha$ crowds 
 
 ![Fifty-one items: 26 forced between −0.25 and 0, 25 free between 0 and 1; the four metrics against α](./images/geomean_separation_II.webp)
 
-> In constrained problems, where constraints can create regions with different item densities, both geometric-mean and harmonic-mean separation keep an incentive to drive the solution to uniform distributions within each region, leading to natural looking solutions that align well with expectations. Geometric-mean separation is the default because it also handles separations of different orders of magnitude (I.4): it behaves as one would intuitively expect under a wider range of conditions.
+> In constrained problems, where constraints can create regions with different item densities, both geometric-mean and harmonic-mean separation keep an incentive to drive the solution to uniform distributions within each region, leading to natural looking solutions that align well with expectations. Geometric-mean separation is the default because it also handles separations of different orders of magnitude (I.D): it behaves as one would intuitively expect under a wider range of conditions.

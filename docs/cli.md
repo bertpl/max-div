@@ -1,4 +1,4 @@
-# Command-Line Interface (CLI)
+# Command-line interface (CLI)
 
 ## I. Install { #1-install }
 
