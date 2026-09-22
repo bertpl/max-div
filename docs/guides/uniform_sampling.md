@@ -188,7 +188,7 @@ The later frames are where the extra budget improves the result: the diversity k
 
 ## VI. Summary
 
-Every experiment's achieved min separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">below 50 %</span> of its reference is marked red, one <span class="usx-high">above 70 %</span> green:
+Every experiment's achieved min separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">at or below 40 %</span> of its reference is marked red, one <span class="usx-high">at or above 60 %</span> green:
 
 --8<-- "generated/uniform_sampling_summary.md"
 

@@ -255,7 +255,7 @@ EXPERIMENT_LABELS = {
 LONG_BUDGET_SEC = 900.0
 # A summary cell is colored by its achieved / reference fraction: red below LOW, green above HIGH.
 # The classes are styled in docs/stylesheets/extra.css; `uniform_sampling.md` states the rule.
-SUMMARY_LOW, SUMMARY_HIGH = 0.5, 0.7
+SUMMARY_LOW_PERCENT, SUMMARY_HIGH_PERCENT = 40, 60
 
 
 @dataclass(frozen=True)
@@ -557,9 +557,11 @@ def write_experiment_separations(run_name: str, selection: NDArray[np.float64], 
 def _summary_cell(value: float, fraction: float) -> str:
     """Return a summary cell: the value and its fraction, wrapped in a colored span when the fraction is low or high."""
     text = f"{value:.4f} ({fraction:.0%})"
-    if fraction < SUMMARY_LOW:
+    # compare the percentage as displayed, so a cell reading 40 % is always red and one reading 60 % green
+    percent = round(fraction * 100)
+    if percent <= SUMMARY_LOW_PERCENT:
         return f'<span class="usx-low">{text}</span>'
-    elif fraction > SUMMARY_HIGH:
+    elif percent >= SUMMARY_HIGH_PERCENT:
         return f'<span class="usx-high">{text}</span>'
     else:
         return text
