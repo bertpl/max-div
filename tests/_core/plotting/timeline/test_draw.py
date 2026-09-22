@@ -216,7 +216,13 @@ def test_each_tie_breaker_gets_a_panel_under_the_diversity_panel_and_the_constra
     fig = _plot_with_tie_breakers(first_constraints=0.8).render(include_tie_breakers=True)
 
     # --- assert -----------------------
-    assert [ax.get_ylabel() for ax in fig.axes] == ["workers, grouped", "diversity", "tie-breaker 1", "tie-breaker 2", "constraints"]
+    assert [ax.get_ylabel() for ax in fig.axes] == [
+        "workers, grouped",
+        "diversity",
+        "tie-breaker 1",
+        "tie-breaker 2",
+        "constraints",
+    ]
     # the named tie-breaker shows its label inside the panel; the unnamed one shows nothing
     assert [text.get_text() for text in fig.axes[2].texts] == ["approx_geomean_separation"]
     assert len(fig.axes[3].texts) == 0
@@ -227,7 +233,11 @@ def test_plot_timeline_passes_the_tie_breaker_option_through():
     # --- arrange ----------------------
     checkpoints = [
         ScoreCheckpoint(
-            SolverStepIdentity(1, "step"), Elapsed(t, int(10 * t)), Score(1.0, 1.0, (d, 0.5)), worker_index=0, group_index=0
+            SolverStepIdentity(1, "step"),
+            Elapsed(t, int(10 * t)),
+            Score(1.0, 1.0, (d, 0.5)),
+            worker_index=0,
+            group_index=0,
         )
         for t, d in [(0.0, 0.1), (5.0, 0.5)]
     ]

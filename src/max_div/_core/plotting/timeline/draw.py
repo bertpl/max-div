@@ -83,7 +83,9 @@ def _draw_figure(plot: ParallelSolutionTimelinePlot, include_tie_breakers: bool)
     n_tie_breakers = min(len(point.tie_breakers) for point in plot.score_points) if include_tie_breakers else 0
 
     top_inch = _top_panel_inch(total_extent)
-    heights = [top_inch, _SCORE_INCH] + [_SCORE_INCH] * n_tie_breakers + ([_SCORE_INCH] if has_constraints_panel else [])
+    heights = (
+        [top_inch, _SCORE_INCH] + [_SCORE_INCH] * n_tie_breakers + ([_SCORE_INCH] if has_constraints_panel else [])
+    )
     fig = Figure(figsize=(_FIG_WIDTH, sum(heights) + _MARGIN_INCH))
     axes = fig.subplots(len(heights), 1, sharex=True, gridspec_kw={"height_ratios": heights, "hspace": 0.18})
 
@@ -93,9 +95,18 @@ def _draw_figure(plot: ParallelSolutionTimelinePlot, include_tie_breakers: bool)
     for i in range(n_tie_breakers):
         # the tie-breakers follow the diversity panel in the order they break ties; the objective's
         # label goes inside the panel, since it is too long for the y-axis
-        _draw_score(axes[2 + i], plot, lambda point, i=i: point.tie_breakers[i], _TIE_BREAKER, f"tie-breaker {i + 1}", is_log=True)
+        _draw_score(
+            axes[2 + i],
+            plot,
+            lambda point, i=i: point.tie_breakers[i],
+            _TIE_BREAKER,
+            f"tie-breaker {i + 1}",
+            is_log=True,
+        )
         if i < len(labels):
-            axes[2 + i].text(0.01, 0.95, labels[i], transform=axes[2 + i].transAxes, fontsize=_LABEL_SIZE, va="top", color="#555555")
+            axes[2 + i].text(
+                0.01, 0.95, labels[i], transform=axes[2 + i].transAxes, fontsize=_LABEL_SIZE, va="top", color="#555555"
+            )
     if has_constraints_panel:
         # a constraints trajectory that reaches full satisfaction gets a plain linear axis; one that
         # never does gets the upper-log axis, which zooms in on its approach to the unreached limit

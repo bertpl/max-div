@@ -16,9 +16,9 @@ Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reus
 import argparse
 import json
 import pickle
-from pathlib import Path
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, replace
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -689,11 +689,14 @@ def render_long_run_timeline() -> None:
     """
     pickle_path = _solution_pickle_path("hybrid_banded_long")
     if not pickle_path.exists():
-        print(f"no {pickle_path.relative_to(REPO_ROOT)}: the 900 s solve was cached before solutions were pickled; re-solve it")
+        print(f"no {pickle_path.relative_to(REPO_ROOT)}: the 900 s solve predates the pickling; re-solve it")
         return
     solution: ParallelMaxDivSolution = pickle.loads(pickle_path.read_bytes())
     use_docs_style()
-    save_webp(solution.plot_timeline(include_tie_breakers=True), IMAGES_DIR / "uniform_sampling_hybrid_banded_long_timeline.webp")
+    save_webp(
+        solution.plot_timeline(include_tie_breakers=True),
+        IMAGES_DIR / "uniform_sampling_hybrid_banded_long_timeline.webp",
+    )
 
 
 def main() -> None:

@@ -151,10 +151,14 @@ class ParallelSolutionTimelinePlot:
         self._close_best(t)
         self._best_open = (t, worker, self._group_of[worker])
 
-    def record_score(self, t: float, diversity: float, constraints: float, tie_breakers: tuple[float, ...] = ()) -> None:
+    def record_score(
+        self, t: float, diversity: float, constraints: float, tie_breakers: tuple[float, ...] = ()
+    ) -> None:
         """Append the best-known selection's scores at time `t` to the trajectory."""
         self._advance_time(t)
-        self._score_points.append(ScorePoint(t=t, diversity=diversity, constraints=constraints, tie_breakers=tie_breakers))
+        self._score_points.append(
+            ScorePoint(t=t, diversity=diversity, constraints=constraints, tie_breakers=tie_breakers)
+        )
 
     def set_tie_breaker_labels(self, labels: list[str]) -> None:
         """Name the tie-breakers, in the order they break ties; the panels read these."""

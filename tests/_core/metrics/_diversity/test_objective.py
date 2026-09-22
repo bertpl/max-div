@@ -393,7 +393,10 @@ def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise
     "objective, expected",
     [
         (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), "MIN_SEPARATION"),
-        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(0)), "MIN_SEPARATION over axis 0"),
+        (
+            DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(0)),
+            "MIN_SEPARATION over axis 0",
+        ),
         (
             DiversityObjectiveHybrid(
                 (

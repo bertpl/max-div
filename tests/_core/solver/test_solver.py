@@ -550,7 +550,9 @@ def test_a_solution_records_the_labels_of_its_diversity_objectives():
     problem = MaxDivProblem.new(vectors=vectors, k=6, diversity_metric=DiversityMetric.MIN_SEPARATION)
 
     # --- act --------------------------
-    solution = MaxDivSolverBuilder(problem).with_preset(iterations(50)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
+    solution = (
+        MaxDivSolverBuilder(problem).with_preset(iterations(50)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
+    )
 
     # --- assert -----------------------
     assert solution.diversity_objective_labels[0] == "MIN_SEPARATION"
