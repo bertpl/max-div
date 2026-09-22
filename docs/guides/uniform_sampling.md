@@ -24,7 +24,8 @@ The three goals compete for the same $k$ points. **How to trade them off is left
 ### I.C. How the experiments run
 
 - **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results are comparable.
-- **One diversity metric for every experiment:** the [min separation](../concepts/diversity.md#diversity-metrics), the smallest distance from any selected point to its nearest other selected point. It is the strictest of the separation metrics: one close pair sets the score, whatever the rest of the selection looks like. Many selections share the same closest pair, so the solver's default [tie-breakers](../concepts/scoring.md#diversity-tie-breakers) decide between them.
+- **One diversity metric for every experiment:** the [min separation](../concepts/diversity.md#diversity-metrics), the smallest distance from any selected point to its nearest other selected point. It is the strictest of the separation metrics: one close pair sets the score, whatever the rest of the selection looks like.
+- **Ties are broken by the solver's default rule:** many selections share the same closest pair, so the solver's default [tie-breakers](../concepts/scoring.md#diversity-tie-breakers) decide between them.
 - **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget. One extra run, in section V.C, keeps everything else and lengthens the budget to 900 s.
 - **One measure for every result:** the min separation of the selection under the L2, $x$ and $y$ distances, one per goal.
 
@@ -127,7 +128,7 @@ Hover over a dot to see the three level curves, each through the point's nearest
 
 --8<-- "generated/uniform_sampling_hybrid_separations.md"
 
-The two marginal goals reach about 70 % of their references and the L2 goal more than half of its, all three at the same time; no single-distance experiment gets within reach of the two goals it ignores.
+The two marginal goals reach about 70 % of their references and the L2 goal reaches more than half of its reference, all three at the same time; no single-distance experiment comes close on the two goals it ignores.
 
 ### V.B. Exact counts per band
 
@@ -158,7 +159,7 @@ The light gray lines are the band edges.
 
 --8<-- "generated/uniform_sampling_hybrid_banded_separations.md"
 
-Every band holds its 20 items; the unconstrained selection of V.A holds between 16 and 22 per band. The three separations stay within 3 % of their references from V.A: on this population the exact counts cost almost no diversity.
+Every band holds its 20 items; the unconstrained selection of V.A holds between 16 and 22 per band. The three separations stay within 3 % of V.A's separations: on this population the exact counts cost almost no diversity.
 
 The exact counts make each iteration slower, since each candidate swap is also checked against the ten counts; the convergence table below shows the resulting lower iteration count.
 

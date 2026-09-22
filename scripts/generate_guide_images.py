@@ -272,7 +272,7 @@ class ExperimentSettings:
 
 @dataclass(frozen=True)
 class Experiment:
-    """One experiment: min separation maximized over one distance, or a hybrid over several.
+    """An experiment maximizes the min separation over one distance, or over several as a hybrid.
 
     `distance_keys` holds one key for a simple objective and one per term for a hybrid, which is the
     geometric mean of the per-distance terms. `n_bands` cuts each axis into that many equal bands and
