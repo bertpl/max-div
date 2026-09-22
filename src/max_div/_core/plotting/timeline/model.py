@@ -73,7 +73,7 @@ class ScorePoint:
     t: float
     diversity: float
     constraints: float
-    # in the order they break ties, parallel to `ParallelSolutionTimelinePlot.tie_breaker_labels`
+    # The tie-breakers appear in the order they break ties, parallel to the plot's `tie_breaker_labels`.
     div_tie_breakers: tuple[float, ...] = ()
 
 
@@ -155,14 +155,14 @@ class ParallelSolutionTimelinePlot:
     def record_score(
         self, t: float, diversity: float, constraints: float, div_tie_breakers: tuple[float, ...] = ()
     ) -> None:
-        """Append the best-known selection's scores at time `t`; `div_tie_breakers` in the order they break ties."""
+        """Append the best-known selection's scores at time `t`; `div_tie_breakers` is in tie-breaking order."""
         self._advance_time(t)
         self._score_points.append(
             ScorePoint(t=t, diversity=diversity, constraints=constraints, div_tie_breakers=div_tie_breakers)
         )
 
     def set_tie_breaker_labels(self, labels: list[str]) -> None:
-        """Name the tie-breakers, in the order they break ties; the panels read these."""
+        """Name the tie-breakers, in the order they break ties."""
         self._tie_breaker_labels = list(labels)
 
     def finish(self, t_end: float) -> None:

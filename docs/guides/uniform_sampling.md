@@ -175,7 +175,7 @@ The figure steps through those selections: each frame is a checkpoint at which t
 
 --8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
 
-The [timeline of this solve](images/uniform_sampling_hybrid_banded_long_timeline.webp) shows the 16 workers, their groups merging over the 900 s, and the trajectories of the objective, its tie-breakers and the constraints score; the [parallel-solving page](../concepts/parallel_solving.md#the-three-groupings-on-one-problem) explains how to read it.
+The [timeline of this solve](images/uniform_sampling_hybrid_banded_long_timeline.webp) shows the 16 workers, their groups merging over the 900 s, and the trajectories of the objective, its [tie-breakers](../concepts/scoring.md#diversity-tie-breakers) and the constraints score; the [parallel-solving page](../concepts/parallel_solving.md#the-three-groupings-on-one-problem) explains how to read it.
 
 --8<-- "generated/uniform_sampling_hybrid_banded_long_separations.md"
 

@@ -420,4 +420,5 @@ def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise
 )
 def test_label_names_the_metric_and_its_distance(objective, expected) -> None:
     """An objective's label reads like the public metric classes' labels: metric, distance, and the aggregation."""
+    # --- act / assert -----------------
     assert objective.label == expected

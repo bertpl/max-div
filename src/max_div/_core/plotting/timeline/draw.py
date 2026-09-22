@@ -9,8 +9,11 @@ tall as the group's peak size. A band is colored:
 - light green while that worker's group holds the best score;
 - a darker green on the one worker that held the best score at the time.
 
-Below the top panel, the diversity trajectory gets its own panel, then, when asked, 1 panel per
-tie-breaker in the order they break ties, and the constraints trajectory a last panel when it ever drops below one.
+Below the top panel, each score gets its own panel:
+
+- the diversity trajectory;
+- 1 panel per tie-breaker, when asked, in the order they break ties;
+- the constraints trajectory, a last panel, when it ever drops below one.
 
 A saturating trajectory uses an upper-logarithmic y-axis that zooms in on where it flattens, fitted
 to the trajectory sampled at uniform times, not to the checkpoints themselves: checkpoints crowd the
