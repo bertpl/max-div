@@ -230,6 +230,7 @@ class MaxDivSolver:
             i_selected=state.selected_index_array.copy(),
             score_checkpoints=score_checkpoints,
             step_durations=step_durations,
+            diversity_objective_labels=[objective.label for objective in self._diversity_objectives],
             n_constraints=int(n_constraints),
             n_constraints_satisfied=n_constraints_satisfied,
             distance_storage=self._distance_storage,

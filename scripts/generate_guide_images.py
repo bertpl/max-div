@@ -15,8 +15,10 @@ Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reus
 
 import argparse
 import json
+import pickle
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, replace
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -439,6 +441,7 @@ def load_or_solve_experiment(
     should_reuse_solution: bool,
     cache_name: str | None = None,
     should_record_frames: bool = False,
+    should_pickle_solution: bool = False,
 ) -> ExperimentRun:
     """Return the experiment's run, from its JSON cache when asked and present, else from a fresh solve.
 
@@ -447,6 +450,7 @@ def load_or_solve_experiment(
     indices and the convergence trace, plus the selection frames when `should_record_frames` asks for them:
     the population is rebuilt from n and the seed, so the dots and the raster always come from the same
     coordinates. `cache_name` names the cache when one experiment is solved under several settings.
+    `should_pickle_solution` also stores the whole solution object beside the cache, gitignored.
     """
     path = GENERATED_DIR / f"uniform_sampling_{cache_name or experiment.name}_solution.json"
     if should_reuse_solution and path.exists():
@@ -464,6 +468,12 @@ def load_or_solve_experiment(
     solution = solve_experiment(
         vectors, experiment, settings, should_record_intermediate_selections=should_record_frames
     )
+    if should_pickle_solution:
+        # Pickle the whole solution, so figures that need more than the selection (the solve timeline)
+        # can be redrawn without re-solving; unlike the JSON cache, this file is gitignored.
+        pickle_path = _solution_pickle_path(cache_name or experiment.name)
+        pickle_path.write_bytes(pickle.dumps(solution))
+        print(f"wrote {pickle_path.relative_to(REPO_ROOT)}")
     run = ExperimentRun(
         np.asarray(solution.i_selected, dtype=np.intp),
         [
@@ -478,6 +488,11 @@ def load_or_solve_experiment(
     path.write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
     return run
+
+
+def _solution_pickle_path(name: str) -> Path:
+    """Return where an experiment's whole solution is pickled, beside its JSON cache."""
+    return GENERATED_DIR / f"uniform_sampling_{name}_solution.pkl"
 
 
 def render_uniform_sampling_population(name: str, vectors: NDArray[np.float32], pixels: int = 1000) -> None:
@@ -641,8 +656,10 @@ def render_uniform_sampling_replay(
         should_reuse_solution,
         cache_name="hybrid_banded_long",
         should_record_frames=True,
+        should_pickle_solution=True,
     )
     assert run.frames is not None
+    render_uniform_sampling_long_run_timeline()
     selection = vectors[run.i_selected].astype(np.float64)
     write_experiment_separations("hybrid_banded_long", selection, settings.k)
     fragment = replay_fragment(
@@ -662,6 +679,24 @@ def render_uniform_sampling_replay(
     path.write_text(fragment, encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
     return selection
+
+
+def render_uniform_sampling_long_run_timeline() -> None:
+    """Draw the 900 s solve as a timeline, tie-breaker panels included, from the pickled solution.
+
+    The image is linked from the guide, not shown inline: it is a tall figure that documents the solve
+    behind the replay, not a result of the case study.
+    """
+    pickle_path = _solution_pickle_path("hybrid_banded_long")
+    if not pickle_path.exists():
+        print(f"no {pickle_path.relative_to(REPO_ROOT)}: the 900 s solve predates the pickling; re-solve it")
+        return
+    solution: ParallelMaxDivSolution = pickle.loads(pickle_path.read_bytes())
+    use_docs_style()
+    save_webp(
+        solution.plot_timeline(include_tie_breakers=True),
+        IMAGES_DIR / "uniform_sampling_hybrid_banded_long_timeline.webp",
+    )
 
 
 def main() -> None:

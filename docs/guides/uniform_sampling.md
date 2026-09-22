@@ -175,6 +175,8 @@ The figure steps through those selections: each frame is a checkpoint at which t
 
 --8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
 
+The [timeline of this solve](images/uniform_sampling_hybrid_banded_long_timeline.webp) shows the 16 workers, their groups merging over the 900 s, and the trajectories of the objective, its [tie-breakers](../concepts/scoring.md#diversity-tie-breakers) and the constraints score; the [parallel-solving page](../concepts/parallel_solving.md#the-three-groupings-on-one-problem) explains how to read it.
+
 --8<-- "generated/uniform_sampling_hybrid_banded_long_separations.md"
 
 Most frames fall in the first minute, where the selection still changes at nearly every checkpoint. After that a change is rare, and it is one of two kinds:
@@ -194,7 +196,7 @@ Every experiment's achieved min separation under the three reference distances, 
 - **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
 - **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
 - **Exact counts per band come at no cost in diversity**: under them the hybrid objective reaches the same three separations.
-- **A longer budget still improves the result**: the 900 s solve of V.C ends above its 60 s counterpart on all three separations.
+- **A longer budget still improves the result**: the 900 s solve of V.C ends above its 60 s counterpart on the L2 and $y$ separations, and level on $x$.
 
 The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 

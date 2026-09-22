@@ -105,7 +105,7 @@ def render_parallel_solving_timelines(should_reuse_solution: bool) -> None:
     for example in TIMELINE_EXAMPLES:
         solution = load_or_solve_timeline_example(problem, example, should_reuse_solution)
         print(f"{example.name}: {solution}")
-        save_webp(solution.plot_timeline(), example.image_path)
+        save_webp(solution.plot_timeline(include_tie_breakers=True), example.image_path)
 
 
 def main() -> None:
