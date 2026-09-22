@@ -272,7 +272,7 @@ class ExperimentSettings:
 
 @dataclass(frozen=True)
 class Experiment:
-    """One experiment: harmonic-mean separation maximized over one distance, or a hybrid over several.
+    """An experiment maximizes the min separation over one distance, or over several as a hybrid.
 
     `distance_keys` holds one key for a simple objective and one per term for a hybrid, which is the
     geometric mean of the per-distance terms. `n_bands` cuts each axis into that many equal bands and
@@ -317,10 +317,10 @@ class Experiment:
     def diversity_metric(self) -> DiversityMetric | HybridDiversityMetric:
         """Return the objective the solver maximizes."""
         if len(self.distance_keys) == 1:
-            return DiversityMetric.HARMONIC_MEAN_SEPARATION
+            return DiversityMetric.MIN_SEPARATION
         else:
             return HybridDiversityMetric.geomean_of(
-                *(DiversityMetric.HARMONIC_MEAN_SEPARATION.over(DISTANCE_METRICS[key]) for key in self.distance_keys)
+                *(DiversityMetric.MIN_SEPARATION.over(DISTANCE_METRICS[key]) for key in self.distance_keys)
             )
 
     def distance_metric(self) -> DistanceMetric:
@@ -498,10 +498,10 @@ def render_uniform_sampling_population(name: str, vectors: NDArray[np.float32], 
         save_webp(fig, IMAGES_DIR / f"{name}.webp", lossless=True)
 
 
-def harmonic_separations(selection: NDArray[np.float64]) -> dict[str, float]:
-    """Return the selection's harmonic-mean separation under the L2, x and y distances."""
+def min_separations(selection: NDArray[np.float64]) -> dict[str, float]:
+    """Return the selection's min separation under the L2, x and y distances."""
     neighbors = nearest_neighbors(selection[:, 0], selection[:, 1], tuple(REFERENCE_LABELS))
-    return {key: harmonic_mean(distance) for key, (_, distance) in neighbors.items()}
+    return {key: float(np.min(distance)) for key, (_, distance) in neighbors.items()}
 
 
 # The densest known packing of 100 equal circles in a unit square (E. Specht, Packomania,
@@ -528,8 +528,8 @@ def write_experiment_separations(run_name: str, selection: NDArray[np.float64], 
     `docs/guides/uniform_sampling.md` includes the fragment below the run's figure, so the numbers
     come from the same solve as the figure.
     """
-    achieved, references = harmonic_separations(selection), reference_separations(k)
-    lines = ["| harmonic-mean separation under … | achieved | reference | achieved / reference |", "|---|---|---|---|"]
+    achieved, references = min_separations(selection), reference_separations(k)
+    lines = ["| min separation under … | achieved | reference | achieved / reference |", "|---|---|---|---|"]
     for key, label in REFERENCE_LABELS.items():
         lines.append(
             f"| {label} | {achieved[key]:.4f} | {references[key]:.4f} | {achieved[key] / references[key]:.0%} |"
@@ -553,7 +553,7 @@ def _summary_cell(value: float, fraction: float) -> str:
 def write_summary(selections: dict[str, NDArray[np.float64]], k: int) -> None:
     """Write the closing table: every experiment's achieved separations as a fraction of the references."""
     references = reference_separations(k)
-    achieved = {name: harmonic_separations(selection) for name, selection in selections.items()}
+    achieved = {name: min_separations(selection) for name, selection in selections.items()}
     fractions = {name: {key: achieved[name][key] / references[key] for key in REFERENCE_LABELS} for name in selections}
     header = " | ".join(f"{label}, achieved / reference" for label in REFERENCE_LABELS.values())
     lines = [f"| experiment | {header} |", "|---|---|---|---|"]

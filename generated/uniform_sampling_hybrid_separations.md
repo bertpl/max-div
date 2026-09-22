@@ -1,5 +1,5 @@
-| harmonic-mean separation under … | achieved | reference | achieved / reference |
+| min separation under … | achieved | reference | achieved / reference |
 |---|---|---|---|
-| L2 | 0.0824 | 0.1146 | 72% |
-| $x$ | 0.0089 | 0.0101 | 88% |
-| $y$ | 0.0088 | 0.0101 | 87% |
+| L2 | 0.0641 | 0.1146 | 56% |
+| $x$ | 0.0073 | 0.0101 | 72% |
+| $y$ | 0.0071 | 0.0101 | 70% |

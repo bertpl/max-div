@@ -24,9 +24,10 @@ The three goals compete for the same $k$ points. **How to trade them off is left
 ### I.C. How the experiments run
 
 - **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results are comparable.
-- **One diversity metric for every experiment:** the [harmonic-mean separation](../concepts/diversity.md#diversity-metrics), the harmonic mean, over the selected points, of each point's distance to its nearest other point. It sits between the minimum and the geometric mean in how hard it penalizes one close pair; on a perfectly regular selection the minimum, harmonic-mean and geometric-mean separations all agree.
+- **One diversity metric for every experiment:** the [min separation](../concepts/diversity.md#diversity-metrics), the smallest distance from any selected point to its nearest other selected point. It is the strictest of the separation metrics: one close pair sets the score, whatever the rest of the selection looks like.
+- **Ties are broken by the solver's default rule:** many selections share the same closest pair, so the solver's default [tie-breakers](../concepts/scoring.md#diversity-tie-breakers) decide between them.
 - **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget. One extra run, in section V.C, keeps everything else and lengthens the budget to 900 s.
-- **One measure for every result:** the harmonic-mean separation of the selection under the L2, $x$ and $y$ distances, one per goal.
+- **One measure for every result:** the min separation of the selection under the L2, $x$ and $y$ distances, one per goal.
 
 ## II. Diversity references
 
@@ -107,7 +108,7 @@ The selection is spread in the square and along both axes, none of the three at 
 
 ## V. Hybrid objective
 
-A hybrid objective states the three goals directly: one term per goal, each the harmonic-mean separation under that goal's distance, combined by their geometric mean so that no term dominates by its scale.
+A hybrid objective states the three goals directly: one term per goal, each the min separation under that goal's distance, combined by their geometric mean so that no term dominates by its scale.
 
 ### V.A. Unconstrained
 
@@ -115,9 +116,9 @@ A hybrid objective states the three goals directly: one term per goal, each the 
 from max_div.metrics import DistanceMetric, DiversityMetric, HybridDiversityMetric
 
 objective = HybridDiversityMetric.geomean_of(
-    DiversityMetric.HARMONIC_MEAN_SEPARATION.over(DistanceMetric.l2_euclidean()),
-    DiversityMetric.HARMONIC_MEAN_SEPARATION.over(DistanceMetric.along_axis(0)),
-    DiversityMetric.HARMONIC_MEAN_SEPARATION.over(DistanceMetric.along_axis(1)),
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.l2_euclidean()),
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(0)),
+    DiversityMetric.MIN_SEPARATION.over(DistanceMetric.along_axis(1)),
 )
 ```
 
@@ -127,7 +128,7 @@ Hover over a dot to see the three level curves, each through the point's nearest
 
 --8<-- "generated/uniform_sampling_hybrid_separations.md"
 
-The three goals are each close to their reference, at the same time.
+The two marginal goals reach about 70 % of their references and the L2 goal reaches more than half of its reference, all three at the same time; no single-distance experiment comes close on the two goals it ignores.
 
 ### V.B. Exact counts per band
 
@@ -158,7 +159,7 @@ The light gray lines are the band edges.
 
 --8<-- "generated/uniform_sampling_hybrid_banded_separations.md"
 
-Every band holds its 20 items; the unconstrained selection of V.A holds between 17 and 22 per band. The three separations are the same as in V.A to within 1 % of their references: on this population the exact counts cost no diversity.
+Every band holds its 20 items; the unconstrained selection of V.A holds between 16 and 22 per band. The three separations stay within 3 % of V.A's separations: on this population the exact counts cost almost no diversity.
 
 The exact counts make each iteration slower, since each candidate swap is also checked against the ten counts; the convergence table below shows the resulting lower iteration count.
 
@@ -185,7 +186,7 @@ The later frames are where the extra budget improves the result: the diversity k
 
 ## VI. Summary
 
-Every experiment's achieved harmonic-mean separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">below 50 %</span> of its reference is marked red, one <span class="usx-high">above 70 %</span> green:
+Every experiment's achieved min separation under the three reference distances, each as a fraction of its free-placement reference from section II. A result <span class="usx-low">below 50 %</span> of its reference is marked red, one <span class="usx-high">above 70 %</span> green:
 
 --8<-- "generated/uniform_sampling_summary.md"
 
@@ -193,7 +194,7 @@ Every experiment's achieved harmonic-mean separation under the three reference d
 - **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
 - **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
 - **Exact counts per band come at no cost in diversity**: under them the hybrid objective reaches the same three separations.
-- **A longer budget still improves the result**: the 900 s solve of V.C ends above its 60 s counterpart on the L2 and $x$ separations, and level on $y$.
+- **A longer budget still improves the result**: the 900 s solve of V.C ends above its 60 s counterpart on all three separations.
 
 The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 
