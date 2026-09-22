@@ -65,6 +65,12 @@ class DiversityObjective(ABC):
     specs a subclass declares, the base derives the distinct specs and the distinct distance metrics.
     """
 
+    @property
+    @abstractmethod
+    def label(self) -> str:
+        """Return a short label naming the metric and its distance, as the public metric classes do."""
+        raise NotImplementedError
+
     @abstractmethod
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Return this objective's diversity score for the current selection.
@@ -161,6 +167,13 @@ class DiversityObjectiveSimple(DiversityObjective):
     diversity_metric: DiversityMetric
     distance_metric: DistanceMetric | None = None
 
+    @property
+    def label(self) -> str:
+        """Return e.g. `MIN_SEPARATION over L2`, or the metric alone over the problem's own distance."""
+        if self.distance_metric is None:
+            return self.diversity_metric.value
+        return f"{self.diversity_metric.value} over {self.distance_metric.label}"
+
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Reduce this objective's one contribution array with its diversity metric."""
         return float(self.diversity_metric.compute(contributions[0]))
@@ -202,6 +215,12 @@ class DiversityObjectiveHybrid(DiversityObjective):
 
     terms: tuple[DiversityObjectiveSimple, ...]
     aggregation: HybridObjectiveType = HybridObjectiveType.GEOMETRIC_MEAN
+
+    @property
+    def label(self) -> str:
+        """Return e.g. `geomean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 0)`."""
+        aggregation = "geomean" if self.aggregation == HybridObjectiveType.GEOMETRIC_MEAN else "mean"
+        return f"{aggregation}({', '.join(term.label for term in self.terms)})"
 
     def __post_init__(self) -> None:
         """Reject fewer than two terms and any term that is not a simple objective.

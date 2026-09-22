@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `plot_timeline(include_tie_breakers=True)` draws each tie-breaker's trajectory in its own panel, and a solution records the labels of its diversity objectives (`diversity_objective_labels`)
 
 ### Changed
 

@@ -38,6 +38,11 @@ class MaxDivSolution:
         """Return the total elapsed time and iterations taken to compute the solution."""
         return self.score_checkpoints[-1].elapsed
 
+    # --- diversity objectives -------------------
+    # one label per diversity objective, the primary objective first, then the tie-breakers in
+    # the order they break ties; parallel to every score's `diversities`
+    diversity_objective_labels: list[str] = field(default_factory=list)
+
     # --- constraints ----------------------------
     n_constraints: int = 0
     n_constraints_satisfied: int = 0

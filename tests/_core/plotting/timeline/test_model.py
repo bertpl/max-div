@@ -197,3 +197,32 @@ def test_from_solution_credits_the_holder_from_the_replayed_grouping():
     # --- assert -----------------------
     # the change at t=5 runs before the t=5 checkpoint, so worker 2 is already in group 0 when it leads
     assert BestInterval(t_from=0.0, t_to=5.0, worker=0, group=0) in plot.best_intervals
+
+
+def test_from_solution_records_the_tie_breakers_and_their_labels():
+    """Every point carries the checkpoint's tie-breaker scores, and the labels are the solution's, primary excluded."""
+    # --- arrange ----------------------
+    solution = _solution()
+    solution.diversity_objective_labels = ["min_separation", "approx_geomean_separation", "non_zero_fraction"]
+    solution.score_checkpoints = [
+        ScoreCheckpoint(
+            checkpoint.step_identity,
+            checkpoint.elapsed,
+            Score(size=1.0, constraints=1.0, diversities=(checkpoint.score.diversity, 0.2, 0.9)),
+            worker_index=checkpoint.worker_index,
+            group_index=checkpoint.group_index,
+        )
+        for checkpoint in solution.score_checkpoints
+    ]
+
+    # --- act --------------------------
+    plot = ParallelSolutionTimelinePlot.from_solution(solution)
+
+    # --- assert -----------------------
+    assert [point.tie_breakers for point in plot.score_points] == [(0.2, 0.9)] * 3
+    assert plot.tie_breaker_labels == ["approx_geomean_separation", "non_zero_fraction"]
+
+
+def test_a_solution_without_labels_leaves_the_tie_breakers_unnamed():
+    """A fabricated solution records no labels, so the plot's tie-breaker labels are empty."""
+    assert ParallelSolutionTimelinePlot.from_solution(_solution()).tie_breaker_labels == []

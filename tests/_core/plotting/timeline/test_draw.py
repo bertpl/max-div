@@ -190,3 +190,69 @@ def test_format_elapsed_uses_whole_time_units(seconds: float, expected: str):
     """An elapsed-second tick formats as its whole hours, minutes and seconds."""
     # --- act / assert -----------------
     assert _format_elapsed(seconds) == expected
+
+
+def _plot_with_tie_breakers(first_constraints: float = 1.0) -> ParallelSolutionTimelinePlot:
+    """Return `_plot`'s timeline with two tie-breakers per point, one of them named."""
+    plot = ParallelSolutionTimelinePlot(initial_groups=[0, 0, 1], start_offsets=[0.0, 0.0, 0.0])
+    plot.record_best(0.0, 0)
+    plot.record_score(0.0, 0.1, first_constraints, (0.2, 0.9))
+    plot.dissolve_group(5.0, 1, {2: 0})
+    plot.record_best(5.0, 2)
+    plot.record_score(5.0, 0.5, 1.0, (0.3, 0.95))
+    plot.set_tie_breaker_labels(["approx_geomean_separation"])
+    plot.finish(10.0)
+    return plot
+
+
+def test_tie_breakers_are_left_out_unless_asked():
+    """Points that carry tie-breakers do not add panels by themselves."""
+    assert len(_plot_with_tie_breakers().render().axes) == 2
+
+
+def test_each_tie_breaker_gets_a_panel_under_the_diversity_panel_and_the_constraints_come_last():
+    """With the option on, the panels read bands, diversity, one per tie-breaker in rank order, constraints."""
+    # --- arrange / act ----------------
+    fig = _plot_with_tie_breakers(first_constraints=0.8).render(include_tie_breakers=True)
+
+    # --- assert -----------------------
+    assert [ax.get_ylabel() for ax in fig.axes] == ["workers, grouped", "diversity", "tie-breaker 1", "tie-breaker 2", "constraints"]
+    # the named tie-breaker shows its label inside the panel; the unnamed one shows nothing
+    assert [text.get_text() for text in fig.axes[2].texts] == ["approx_geomean_separation"]
+    assert len(fig.axes[3].texts) == 0
+
+
+def test_plot_timeline_passes_the_tie_breaker_option_through():
+    """`ParallelMaxDivSolution.plot_timeline(include_tie_breakers=True)` adds the panels."""
+    # --- arrange ----------------------
+    checkpoints = [
+        ScoreCheckpoint(
+            SolverStepIdentity(1, "step"), Elapsed(t, int(10 * t)), Score(1.0, 1.0, (d, 0.5)), worker_index=0, group_index=0
+        )
+        for t, d in [(0.0, 0.1), (5.0, 0.5)]
+    ]
+    worker = WorkerSummary(
+        worker_index=0,
+        config=WorkerConfig(preset=SolverPreset.SMART),
+        seed=0,
+        score=Score(1.0, 1.0, (0.5, 0.5)),
+        elapsed=Elapsed(5.0, 50),
+        has_best_score=True,
+        t_start_offset_sec=0.0,
+    )
+    solution = ParallelMaxDivSolution(
+        i_selected=np.array([0], dtype=np.int32),
+        score_checkpoints=checkpoints,
+        step_durations=[],
+        diversity_objective_labels=["min_separation", "non_zero_fraction"],
+        workers=[worker],
+        winning_worker=0,
+        initial_worker_groups=[0],
+        worker_group_changes=[],
+    )
+
+    # --- act --------------------------
+    fig = solution.plot_timeline(include_tie_breakers=True)
+
+    # --- assert -----------------------
+    assert [ax.get_ylabel() for ax in fig.axes] == ["workers, grouped", "diversity", "tie-breaker 1"]

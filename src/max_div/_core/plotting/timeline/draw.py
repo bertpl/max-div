@@ -9,8 +9,8 @@ tall as the group's peak size. A band is colored:
 - light green while that worker's group holds the best score;
 - a darker green on the one worker that held the best score at the time.
 
-Below the top panel, the diversity trajectory gets its own panel, and the constraints trajectory a
-third panel when it ever drops below one.
+Below the top panel, the diversity trajectory gets its own panel, then, when asked, one panel per
+tie-breaker in rank order, and the constraints trajectory a last panel when it ever drops below one.
 
 A saturating trajectory uses an upper-logarithmic y-axis that zooms in on where it flattens, fitted
 to the trajectory sampled at uniform times, not to the checkpoints themselves: checkpoints crowd the
@@ -46,6 +46,7 @@ _BEST_GROUP = "#A9D5AC"
 _BEST_WORKER = "#2E7D32"
 _DIVERSITY = "#4C72B0"
 _CONSTRAINTS = "#C44E52"
+_TIE_BREAKER = "#8172B3"
 _DISSOLUTION_LINE = "#9E9E9E"  # faint vertical marker at each group dissolution, across every panel
 
 # --- sizing (inches) ----------------------------------------
@@ -66,33 +67,41 @@ _GROUP_GAP = 0.5  # blank rows between one group's block and the next
 _TICK_STEPS_SEC = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400]
 
 
-def draw_timeline(plot: ParallelSolutionTimelinePlot) -> Figure:
+def draw_timeline(plot: ParallelSolutionTimelinePlot, include_tie_breakers: bool = False) -> Figure:
     """Draw the timeline of a parallel solve and return the figure, styled like the docs figures."""
     with figure_style():
-        return _draw_figure(plot)
+        return _draw_figure(plot, include_tie_breakers)
 
 
-def _draw_figure(plot: ParallelSolutionTimelinePlot) -> Figure:
+def _draw_figure(plot: ParallelSolutionTimelinePlot, include_tie_breakers: bool) -> Figure:
     """Lay out the panels and draw each; kept separate so the whole figure is built under the style."""
     # shorter-lived groups on top, the surviving group at the bottom
     blocks = sorted(plot.group_blocks, key=lambda block: (block.t_end, block.group))
     base_y = _base_rows(blocks)
     total_extent = base_y[blocks[-1].group] + blocks[-1].height
     has_constraints_panel = any(point.constraints < 1.0 for point in plot.score_points)
+    n_tie_breakers = min(len(point.tie_breakers) for point in plot.score_points) if include_tie_breakers else 0
 
     top_inch = _top_panel_inch(total_extent)
-    heights = [top_inch, _SCORE_INCH] + ([_SCORE_INCH] if has_constraints_panel else [])
+    heights = [top_inch, _SCORE_INCH] + [_SCORE_INCH] * n_tie_breakers + ([_SCORE_INCH] if has_constraints_panel else [])
     fig = Figure(figsize=(_FIG_WIDTH, sum(heights) + _MARGIN_INCH))
     axes = fig.subplots(len(heights), 1, sharex=True, gridspec_kw={"height_ratios": heights, "hspace": 0.18})
 
     _draw_bands(axes[0], plot, blocks, base_y, total_extent)
     _draw_score(axes[1], plot, lambda point: point.diversity, _DIVERSITY, "diversity", is_log=True)
+    labels = plot.tie_breaker_labels
+    for i in range(n_tie_breakers):
+        # the tie-breakers follow the diversity panel in the order they break ties; the objective's
+        # label goes inside the panel, since it is too long for the y-axis
+        _draw_score(axes[2 + i], plot, lambda point, i=i: point.tie_breakers[i], _TIE_BREAKER, f"tie-breaker {i + 1}", is_log=True)
+        if i < len(labels):
+            axes[2 + i].text(0.01, 0.95, labels[i], transform=axes[2 + i].transAxes, fontsize=_LABEL_SIZE, va="top", color="#555555")
     if has_constraints_panel:
         # a constraints trajectory that reaches full satisfaction gets a plain linear axis; one that
         # never does gets the upper-log axis, which zooms in on its approach to the unreached limit
         has_full_constraints = max(point.constraints for point in plot.score_points) >= 1.0
         _draw_score(
-            axes[2],
+            axes[-1],
             plot,
             lambda point: point.constraints,
             _CONSTRAINTS,

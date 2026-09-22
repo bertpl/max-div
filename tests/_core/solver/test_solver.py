@@ -541,3 +541,17 @@ def test_checkpoints_carry_the_selection_only_when_asked(records_selections: boo
         assert len({selection.tobytes() for selection in selections}) > 1
     else:
         assert all(selection is None for selection in selections)
+
+
+def test_a_solution_records_the_labels_of_its_diversity_objectives():
+    """The solution names the primary objective first, then the tie-breakers the builder installed."""
+    # --- arrange ----------------------
+    vectors = np.random.default_rng(0).random((60, 2)).astype(np.float32)
+    problem = MaxDivProblem.new(vectors=vectors, k=6, diversity_metric=DiversityMetric.MIN_SEPARATION)
+
+    # --- act --------------------------
+    solution = MaxDivSolverBuilder(problem).with_preset(iterations(50)).with_seed(7).build().solve(verbosity=Verbosity.SILENT)
+
+    # --- assert -----------------------
+    assert solution.diversity_objective_labels[0] == "MIN_SEPARATION"
+    assert len(solution.diversity_objective_labels) == len(solution.score.diversities) > 1

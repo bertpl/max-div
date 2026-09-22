@@ -75,12 +75,14 @@ class ParallelMaxDivSolution(MaxDivSolution):
             f"{super().__str__()} | best score reached by {self.n_workers_with_best_score}/{len(self.workers)} workers"
         )
 
-    def plot_timeline(self) -> "Figure":
+    def plot_timeline(self, include_tie_breakers: bool = False) -> "Figure":
         """Draw this parallel solve as a timeline and return the Matplotlib figure.
 
         The worker groups appear as bands over time, colored where the best score was held, with the
-        score trajectory below. Needs the `plot` extra.
+        score trajectory below. With `include_tie_breakers`, each tie-breaker's trajectory gets its
+        own panel under the diversity panel, in the order the tie-breakers break ties, named by
+        `diversity_objective_labels`. Needs the `plot` extra.
         """
         from max_div._core.plotting.timeline import ParallelSolutionTimelinePlot
 
-        return ParallelSolutionTimelinePlot.from_solution(self).render()
+        return ParallelSolutionTimelinePlot.from_solution(self).render(include_tie_breakers=include_tie_breakers)

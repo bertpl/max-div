@@ -387,3 +387,34 @@ def test_a_hybrids_per_item_contribution_aggregates_its_terms_arrays_elementwise
     # --- assert -----------------------
     np.testing.assert_allclose(aggregated, expected, rtol=1e-6)
     assert aggregated.dtype == np.float32
+
+
+@pytest.mark.parametrize(
+    "objective, expected",
+    [
+        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION), "MIN_SEPARATION"),
+        (DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(0)), "MIN_SEPARATION over axis 0"),
+        (
+            DiversityObjectiveHybrid(
+                (
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
+                    DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE, DistanceMetric.along_axis(1)),
+                )
+            ),
+            "geomean(MIN_SEPARATION over L2, MEAN_PAIRWISE_DISTANCE over axis 1)",
+        ),
+        (
+            DiversityObjectiveHybrid(
+                (
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.l2_euclidean()),
+                    DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION, DistanceMetric.along_axis(1)),
+                ),
+                HybridObjectiveType.ARITHMETIC_MEAN,
+            ),
+            "mean(MIN_SEPARATION over L2, MIN_SEPARATION over axis 1)",
+        ),
+    ],
+)
+def test_label_names_the_metric_and_its_distance(objective, expected) -> None:
+    """An objective's label reads like the public metric classes' labels: metric, distance, and the aggregation."""
+    assert objective.label == expected

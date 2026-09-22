@@ -68,11 +68,12 @@ class BestInterval:
 
 @dataclass(frozen=True)
 class ScorePoint:
-    """A score point is the best-known selection's diversity and constraints scores at time `t`."""
+    """A score point is the best-known selection's diversity, tie-breaker and constraints scores at time `t`."""
 
     t: float
     diversity: float
     constraints: float
+    tie_breakers: tuple[float, ...] = ()
 
 
 # ==================================================================================================
@@ -120,6 +121,7 @@ class ParallelSolutionTimelinePlot:
         self._segments: list[BandSegment] = []
         self._best_intervals: list[BestInterval] = []
         self._score_points: list[ScorePoint] = []
+        self._tie_breaker_labels: list[str] = []
         self._t_end: float | None = None
 
         for worker in range(self._n_workers):
@@ -149,10 +151,14 @@ class ParallelSolutionTimelinePlot:
         self._close_best(t)
         self._best_open = (t, worker, self._group_of[worker])
 
-    def record_score(self, t: float, diversity: float, constraints: float) -> None:
+    def record_score(self, t: float, diversity: float, constraints: float, tie_breakers: tuple[float, ...] = ()) -> None:
         """Append the best-known selection's scores at time `t` to the trajectory."""
         self._advance_time(t)
-        self._score_points.append(ScorePoint(t=t, diversity=diversity, constraints=constraints))
+        self._score_points.append(ScorePoint(t=t, diversity=diversity, constraints=constraints, tie_breakers=tie_breakers))
+
+    def set_tie_breaker_labels(self, labels: list[str]) -> None:
+        """Name the tie-breakers, in the order they break ties; the panels read these."""
+        self._tie_breaker_labels = list(labels)
 
     def finish(self, t_end: float) -> None:
         """Close every open band, group block and best interval at `t_end`, the end of the solve."""
@@ -238,11 +244,16 @@ class ParallelSolutionTimelinePlot:
     # --------------------------------------------------------------------------
     #  Rendering
     # --------------------------------------------------------------------------
-    def render(self) -> Figure:
-        """Draw the timeline and return the Matplotlib figure."""
+    @property
+    def tie_breaker_labels(self) -> list[str]:
+        """Return the tie-breaker labels, one per tie-breaker score of the points (empty when unnamed)."""
+        return list(self._tie_breaker_labels)
+
+    def render(self, include_tie_breakers: bool = False) -> Figure:
+        """Draw the timeline and return the Matplotlib figure; `include_tie_breakers` adds one panel per tie-breaker."""
         from .draw import draw_timeline
 
-        return draw_timeline(self)
+        return draw_timeline(self, include_tie_breakers=include_tie_breakers)
 
     # --------------------------------------------------------------------------
     #  From a solved solution
@@ -271,7 +282,10 @@ class ParallelSolutionTimelinePlot:
                 plot.dissolve_group(t, change.dissolved_group, change.reassignments)
             elif checkpoint is not None and checkpoint.worker_index is not None:
                 plot.record_best(t, checkpoint.worker_index)
-                plot.record_score(t, checkpoint.score.diversity, checkpoint.score.constraints)
+                plot.record_score(
+                    t, checkpoint.score.diversity, checkpoint.score.constraints, checkpoint.score.div_tie_breakers
+                )
+        plot.set_tie_breaker_labels(solution.diversity_objective_labels[1:])
 
         plot.finish(solution.score_checkpoints[-1].elapsed.t_elapsed_sec)
         return plot
