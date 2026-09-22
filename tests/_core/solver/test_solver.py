@@ -544,7 +544,7 @@ def test_checkpoints_carry_the_selection_only_when_asked(records_selections: boo
 
 
 def test_a_solution_records_the_labels_of_its_diversity_objectives():
-    """The solution names the primary objective first, then the tie-breakers the builder installed."""
+    """The solution names the primary objective first, then the builder's tie-breakers."""
     # --- arrange ----------------------
     vectors = np.random.default_rng(0).random((60, 2)).astype(np.float32)
     problem = MaxDivProblem.new(vectors=vectors, k=6, diversity_metric=DiversityMetric.MIN_SEPARATION)

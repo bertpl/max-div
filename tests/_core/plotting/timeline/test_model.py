@@ -219,7 +219,7 @@ def test_from_solution_records_the_tie_breakers_and_their_labels():
     plot = ParallelSolutionTimelinePlot.from_solution(solution)
 
     # --- assert -----------------------
-    assert [point.tie_breakers for point in plot.score_points] == [(0.2, 0.9)] * 3
+    assert [point.div_tie_breakers for point in plot.score_points] == [(0.2, 0.9)] * 3
     assert plot.tie_breaker_labels == ["approx_geomean_separation", "non_zero_fraction"]
 
 

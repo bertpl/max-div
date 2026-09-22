@@ -9,8 +9,8 @@ tall as the group's peak size. A band is colored:
 - light green while that worker's group holds the best score;
 - a darker green on the one worker that held the best score at the time.
 
-Below the top panel, the diversity trajectory gets its own panel, then, when asked, one panel per
-tie-breaker in rank order, and the constraints trajectory a last panel when it ever drops below one.
+Below the top panel, the diversity trajectory gets its own panel, then, when asked, 1 panel per
+tie-breaker in the order they break ties, and the constraints trajectory a last panel when it ever drops below one.
 
 A saturating trajectory uses an upper-logarithmic y-axis that zooms in on where it flattens, fitted
 to the trajectory sampled at uniform times, not to the checkpoints themselves: checkpoints crowd the
@@ -80,7 +80,7 @@ def _draw_figure(plot: ParallelSolutionTimelinePlot, include_tie_breakers: bool)
     base_y = _base_rows(blocks)
     total_extent = base_y[blocks[-1].group] + blocks[-1].height
     has_constraints_panel = any(point.constraints < 1.0 for point in plot.score_points)
-    n_tie_breakers = min(len(point.tie_breakers) for point in plot.score_points) if include_tie_breakers else 0
+    n_tie_breakers = min(len(point.div_tie_breakers) for point in plot.score_points) if include_tie_breakers else 0
 
     top_inch = _top_panel_inch(total_extent)
     heights = (
@@ -98,7 +98,7 @@ def _draw_figure(plot: ParallelSolutionTimelinePlot, include_tie_breakers: bool)
         _draw_score(
             axes[2 + i],
             plot,
-            lambda point, i=i: point.tie_breakers[i],
+            lambda point, i=i: point.div_tie_breakers[i],
             _TIE_BREAKER,
             f"tie-breaker {i + 1}",
             is_log=True,

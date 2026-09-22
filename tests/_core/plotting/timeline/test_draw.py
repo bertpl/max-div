@@ -193,7 +193,7 @@ def test_format_elapsed_uses_whole_time_units(seconds: float, expected: str):
 
 
 def _plot_with_tie_breakers(first_constraints: float = 1.0) -> ParallelSolutionTimelinePlot:
-    """Return `_plot`'s timeline with two tie-breakers per point, one of them named."""
+    """Return `_plot`'s timeline with 2 tie-breakers per point, one of them named."""
     plot = ParallelSolutionTimelinePlot(initial_groups=[0, 0, 1], start_offsets=[0.0, 0.0, 0.0])
     plot.record_best(0.0, 0)
     plot.record_score(0.0, 0.1, first_constraints, (0.2, 0.9))
@@ -211,7 +211,7 @@ def test_tie_breakers_are_left_out_unless_asked():
 
 
 def test_each_tie_breaker_gets_a_panel_under_the_diversity_panel_and_the_constraints_come_last():
-    """With the option on, the panels read bands, diversity, one per tie-breaker in rank order, constraints."""
+    """With the option on, the panels read bands, diversity, 1 per tie-breaker in the order they break ties, constraints."""
     # --- arrange / act ----------------
     fig = _plot_with_tie_breakers(first_constraints=0.8).render(include_tie_breakers=True)
 

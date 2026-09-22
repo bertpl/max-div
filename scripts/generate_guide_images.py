@@ -469,8 +469,8 @@ def load_or_solve_experiment(
         vectors, experiment, settings, should_record_intermediate_selections=should_record_frames
     )
     if should_pickle_solution:
-        # the whole solution, so figures that need more than the selection (the solve timeline)
-        # can be redrawn without re-solving; gitignored, unlike the JSON cache
+        # Pickle the whole solution, so figures that need more than the selection (the solve timeline)
+        # can be redrawn without re-solving; unlike the JSON cache, this file is gitignored.
         pickle_path = _solution_pickle_path(cache_name or experiment.name)
         pickle_path.write_bytes(pickle.dumps(solution))
         print(f"wrote {pickle_path.relative_to(REPO_ROOT)}")
@@ -659,7 +659,7 @@ def render_uniform_sampling_replay(
         should_pickle_solution=True,
     )
     assert run.frames is not None
-    render_long_run_timeline()
+    render_uniform_sampling_long_run_timeline()
     selection = vectors[run.i_selected].astype(np.float64)
     write_experiment_separations("hybrid_banded_long", selection, settings.k)
     fragment = replay_fragment(
@@ -681,7 +681,7 @@ def render_uniform_sampling_replay(
     return selection
 
 
-def render_long_run_timeline() -> None:
+def render_uniform_sampling_long_run_timeline() -> None:
     """Draw the 900 s solve as a timeline, tie-breaker panels included, from the pickled solution.
 
     The image is linked from the guide, not shown inline: it is a tall figure that documents the solve

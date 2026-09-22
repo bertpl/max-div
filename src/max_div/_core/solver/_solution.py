@@ -39,8 +39,8 @@ class MaxDivSolution:
         return self.score_checkpoints[-1].elapsed
 
     # --- diversity objectives -------------------
-    # one label per diversity objective, the primary objective first, then the tie-breakers in
-    # the order they break ties; parallel to every score's `diversities`
+    # Each diversity objective gets one label, the primary objective first, then the tie-breakers in
+    # the order they break ties; the list runs parallel to every score's `diversities`.
     diversity_objective_labels: list[str] = field(default_factory=list)
 
     # --- constraints ----------------------------

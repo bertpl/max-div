@@ -68,7 +68,7 @@ class DiversityObjective(ABC):
     @property
     @abstractmethod
     def label(self) -> str:
-        """Return a short label naming the metric and its distance, as the public metric classes do."""
+        """Return a short label naming the metric and its distance, in the form of `HybridDiversityMetric.label`."""
         raise NotImplementedError
 
     @abstractmethod
@@ -169,10 +169,11 @@ class DiversityObjectiveSimple(DiversityObjective):
 
     @property
     def label(self) -> str:
-        """Return e.g. `MIN_SEPARATION over L2`, or the metric alone over the problem's own distance."""
+        """Return e.g. `MIN_SEPARATION over L2`, or just the metric name when the objective uses the problem's own distance."""
         if self.distance_metric is None:
             return self.diversity_metric.value
-        return f"{self.diversity_metric.value} over {self.distance_metric.label}"
+        else:
+            return f"{self.diversity_metric.value} over {self.distance_metric.label}"
 
     def compute(self, contributions: Sequence[NDArray[np.float32]]) -> float:
         """Reduce this objective's one contribution array with its diversity metric."""

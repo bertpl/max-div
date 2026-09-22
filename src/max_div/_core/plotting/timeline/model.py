@@ -73,7 +73,8 @@ class ScorePoint:
     t: float
     diversity: float
     constraints: float
-    tie_breakers: tuple[float, ...] = ()
+    # in the order they break ties, parallel to `ParallelSolutionTimelinePlot.tie_breaker_labels`
+    div_tie_breakers: tuple[float, ...] = ()
 
 
 # ==================================================================================================
@@ -152,12 +153,12 @@ class ParallelSolutionTimelinePlot:
         self._best_open = (t, worker, self._group_of[worker])
 
     def record_score(
-        self, t: float, diversity: float, constraints: float, tie_breakers: tuple[float, ...] = ()
+        self, t: float, diversity: float, constraints: float, div_tie_breakers: tuple[float, ...] = ()
     ) -> None:
-        """Append the best-known selection's scores at time `t` to the trajectory."""
+        """Append the best-known selection's scores at time `t`; `div_tie_breakers` in the order they break ties."""
         self._advance_time(t)
         self._score_points.append(
-            ScorePoint(t=t, diversity=diversity, constraints=constraints, tie_breakers=tie_breakers)
+            ScorePoint(t=t, diversity=diversity, constraints=constraints, div_tie_breakers=div_tie_breakers)
         )
 
     def set_tie_breaker_labels(self, labels: list[str]) -> None:
@@ -250,11 +251,11 @@ class ParallelSolutionTimelinePlot:
     # --------------------------------------------------------------------------
     @property
     def tie_breaker_labels(self) -> list[str]:
-        """Return the tie-breaker labels, one per tie-breaker score of the points (empty when unnamed)."""
+        """Return the tie-breaker labels, 1 per tie-breaker score of the points (empty when unnamed)."""
         return list(self._tie_breaker_labels)
 
     def render(self, include_tie_breakers: bool = False) -> Figure:
-        """Draw the timeline and return the Matplotlib figure; `include_tie_breakers` adds one panel per tie-breaker."""
+        """Draw the timeline and return the Matplotlib figure; `include_tie_breakers` adds 1 panel per tie-breaker."""
         from .draw import draw_timeline
 
         return draw_timeline(self, include_tie_breakers=include_tie_breakers)

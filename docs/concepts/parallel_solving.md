@@ -102,12 +102,14 @@ every figure:
 
     Inside a group the lead changes hands more often than checkpoints are taken, so the light
     green, not the dark green, shows the true extent of a group's lead;
-- **the lower panels** trace the scores. The first is the best diversity any worker held, on an
-  axis that is logarithmic in its upper range, which expands where the small, late gains appear.
-  Then come the [tie-breakers](scoring.md#diversity-tie-breakers), one panel each in the order they
-  break ties, drawn on the same kind of axis; they are opt-in, `plot_timeline(include_tie_breakers=True)`,
-  and each panel names its objective. The last is the constraints score (one when all constraints
-  are satisfied), drawn only because it dips below one during initialization.
+- **the lower panels** trace the scores, one panel each:
+    - the best diversity any worker held, on an axis that is logarithmic in its upper range, which
+      expands where the small, late gains appear;
+    - the [tie-breakers](scoring.md#diversity-tie-breakers), opt-in via
+      `plot_timeline(include_tie_breakers=True)`, 1 panel each in the order they break ties, drawn
+      on the same kind of axis, each panel naming its objective;
+    - the constraints score (one when all constraints are satisfied), drawn only because it dips
+      below one during initialization.
 
 **12 independent workers** (`with_custom_worker_groups` with `n_groups=12`): nobody shares, so
 the lead simply passes to whichever worker is ahead, and the 11 others' work never contributes
