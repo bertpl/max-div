@@ -211,7 +211,7 @@ def test_tie_breakers_are_left_out_unless_asked():
 
 
 def test_each_tie_breaker_gets_a_panel_under_the_diversity_panel_and_the_constraints_come_last():
-    """With the option on, the panels read bands, diversity, 1 per tie-breaker in the order they break ties, constraints."""
+    """With the option on, the panels read bands, diversity, the tie-breakers in rank order, then constraints."""
     # --- arrange / act ----------------
     fig = _plot_with_tie_breakers(first_constraints=0.8).render(include_tie_breakers=True)
 

@@ -169,7 +169,7 @@ class DiversityObjectiveSimple(DiversityObjective):
 
     @property
     def label(self) -> str:
-        """Return e.g. `MIN_SEPARATION over L2`, or just the metric name when the objective uses the problem's own distance."""
+        """Return e.g. `MIN_SEPARATION over L2`, or just the metric name over the problem's own distance."""
         if self.distance_metric is None:
             return self.diversity_metric.value
         else:
