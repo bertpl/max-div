@@ -1,0 +1,8 @@
+Installed 23 packages in 165ms
+Matplotlib is building the font cache; this may take a moment.
+independent: MaxDivSolution: 100 items selected | diversity=0.0144 | constraints: 10/10 satisfied | storage=full_matrix (L2, axis 0, axis 1) | 58.98s (38_453 iterations) | best score reached by 1/12 workers
+wrote docs/concepts/images/parallel_solving_timeline_independent.webp
+fixed_groups: MaxDivSolution: 100 items selected | diversity=0.0149 | constraints: 10/10 satisfied | storage=full_matrix (L2, axis 0, axis 1) | 59.04s (37_796 iterations) | best score reached by 3/12 workers
+wrote docs/concepts/images/parallel_solving_timeline_fixed_groups.webp
+dynamic_groups: MaxDivSolution: 100 items selected | diversity=0.0150 | constraints: 10/10 satisfied | storage=full_matrix (L2, axis 0, axis 1) | 59.04s (39_527 iterations) | best score reached by 12/12 workers
+wrote docs/concepts/images/parallel_solving_timeline_dynamic_groups.webp
