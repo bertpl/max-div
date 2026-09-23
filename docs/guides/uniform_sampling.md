@@ -26,7 +26,7 @@ The three goals compete for the same $k$ points. **How to trade them off is left
 - **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results are comparable.
 - **One diversity metric for every experiment:** the [min separation](../concepts/diversity.md#diversity-metrics), the smallest distance from any selected point to its nearest other selected point. It is the strictest of the separation metrics: one close pair sets the score, whatever the rest of the selection looks like.
 - **Ties are broken by the solver's default rule:** many selections share the same closest pair, so the solver's default [tie-breakers](../concepts/scoring.md#diversity-tie-breakers) decide between them.
-- **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget. Two extra runs, in section V.C, solve the two hybrid problems again with 32 workers for 4 h.
+- **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget. 2 extra runs, in section V.C, solve the problems of V.A and V.B again with 32 workers for 4 h.
 - **One measure for every result:** the min separation of the selection under the L2, $x$ and $y$ distances, one per goal.
 
 ## II. Diversity references
@@ -165,9 +165,11 @@ The exact counts make each iteration slower, since each candidate swap is also c
 
 ### V.C. Long-budget runs
 
-Every figure above is a 60 s solve, chosen so the whole case study regenerates in minutes. This section solves the two hybrid problems of V.A and V.B again with 32 workers for 4 h, on a 16-core machine, so 2 workers share each core. The solver is built with `with_intermediate_selections()` so every [score checkpoint](../concepts/parallel_solving.md#reading-the-result) also carries the selection held at that moment.
+Every figure above is a 60 s solve, chosen so the whole case study regenerates in minutes. This section solves the 2 hybrid problems of V.A and V.B again with 32 workers for 4 h, on a 16-core machine, so 2 workers share each core.
 
-The two figures step through those selections: each frame is a checkpoint at which the best selection across the 32 workers changed, and the caption gives the frame's elapsed time and diversity. Move between frames three ways:
+The solver is built with `with_intermediate_selections()` so every [score checkpoint](../concepts/parallel_solving.md#reading-the-result) also carries the selection held at that moment.
+
+The 2 figures step through those selections: each frame is a checkpoint at which the best selection across the 32 workers changed, and the caption gives the frame's elapsed time and diversity. Move between frames three ways:
 
 - drag the slider,
 - click the buttons, or
@@ -175,24 +177,30 @@ The two figures step through those selections: each frame is a checkpoint at whi
 
 #### V.C.1. Unconstrained
 
-The unconstrained problem of V.A.
+This run solves the unconstrained problem of V.A.
 
 --8<-- "generated/uniform_sampling_hybrid_long_replay.html"
 
-The [timeline of this solve](images/uniform_sampling_hybrid_long_timeline.webp) shows the 32 workers, their groups merging over the 4 h, and the trajectories of the objective and its [tie-breakers](../concepts/scoring.md#diversity-tie-breakers); the [parallel-solving page](../concepts/parallel_solving.md#the-three-groupings-on-one-problem) explains how to read it.
+The [timeline of this solve](images/uniform_sampling_hybrid_long_timeline.webp) shows:
+
+- the 32 workers,
+- their groups merging over the 4 h, and
+- the trajectories of the objective and its [tie-breakers](../concepts/scoring.md#diversity-tie-breakers).
+
+The [parallel-solving page](../concepts/parallel_solving.md#the-three-groupings-on-one-problem) explains how to read it.
 
 --8<-- "generated/uniform_sampling_hybrid_long_separations.md"
 
 Most frames fall in the first minute, where the selection still changes at nearly every checkpoint. After that a change is rare, and it is one of two kinds:
 
-- a change of a few items, from 2 to about 20, or
+- a change of between 2 and about 20 items, or
 - a wholesale change, when another worker's selection surpasses the best held so far and becomes the new best-known selection.
 
 The later frames are where the extra budget improves the result: the diversity ends 5.5 % above V.A's 60 s value, and it was still increasing in the last hour, with its last 2 improvements after 3 h 20 m.
 
 #### V.C.2. Banded constraints
 
-The banded problem of V.B. Its [timeline](images/uniform_sampling_hybrid_banded_long_timeline.webp) also shows the constraints score.
+This run solves the banded problem of V.B. Its [timeline](images/uniform_sampling_hybrid_banded_long_timeline.webp) also shows the constraints score.
 
 --8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
 
@@ -200,7 +208,11 @@ The banded problem of V.B. Its [timeline](images/uniform_sampling_hybrid_banded_
 
 The diversity ends 7.7 % above V.B's 60 s value, with its last improvement at about 3 h 20 m.
 
-**Under this budget the banded solve ends ahead of the unconstrained one**, 0.01583 against 0.01573 of V.C.1, where at 60 s it was behind, 0.01470 against 0.01491. Every selection that meets the band counts is also a valid unconstrained selection, so the gap comes from the search, not from the problem: the unconstrained solve did not find a selection as good as the banded one. A likely reason is that the band counts shrink the set of selections the search has to explore. Each problem was solved once, with 1 seed, and a gap of 0.6 % is within what a different seed can change, so this is a hint, not an established result.
+**Under this budget the banded solve ends ahead of the unconstrained one on the hybrid objective**, 0.01583 against 0.01573, where at 60 s it was behind, 0.01470 against 0.01491.
+
+Every selection that meets the band counts is also a valid unconstrained selection, so the unconstrained problem has a selection at least as good as the banded result, and the unconstrained solve did not find it.
+
+A likely reason is that the band counts shrink the search space. Each problem was solved once, with 1 seed, and a gap of 0.6 % is within what a different seed can change, so this is a hint, not an established result.
 
 ## VI. Summary
 
