@@ -88,7 +88,7 @@ mid-solve. Without an explicit `n_groups`:
 ### II.A. The 3 groupings on one problem { #the-three-groupings-on-one-problem }
 
 The timelines below are 3 solves of 60 s of the
-[banded hybrid experiment](../guides/uniform_sampling.md#vb-exact-counts-per-band) of the
+[banded hybrid experiment](../guides/uniform_sampling.md#vb-banded-constraints) of the
 uniform-sampling case study, 12 workers each, from the same seed. Each is drawn by
 `ParallelMaxDivSolution.plot_timeline()` (the `plot` extra) from the solution's own records. In
 every figure:
