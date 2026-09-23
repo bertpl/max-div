@@ -38,7 +38,8 @@ def build_add_probabilities(
     the next draw) build the probabilities once.  The result is only valid until the selection changes.
 
     Each candidate's probability grows with its contribution to the current selection.  With nothing
-    selected yet, that contribution is undefined, so every candidate gets the same probability.
+    selected yet, no candidate has a selected item to be compared with, so every candidate gets
+    the same probability.
 
     Args:
         state: (SolverState) The current solver state containing selected items and other relevant information.

@@ -17,7 +17,8 @@ class InitRandomBatched(InitializationStrategy):
 
     Each batch is sampled with probabilities p[i] ~= (contribution of i with respect to already selected items), which
       favors items far from the selection so far.  The first batch, drawn before anything is selected, is
-      sampled uniformly.
+      sampled uniformly.  Items within one batch are drawn from the same probabilities, so nothing keeps them
+      apart from each other; a larger `b` means smaller batches and reduces this effect.
 
     As we progress through the batches, selectivity of p[i] is modified with modifier = #sampled / #to_sample.
         (see modify_p_selectivity for details)

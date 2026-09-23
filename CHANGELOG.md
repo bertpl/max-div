@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - `random_one_shot`'s `uniform` parameter: `random_one_shot` always samples uniformly at random, so the builder's default initialization is now uniform
-- Each item's contribution to the whole dataset, which the `eager` and `random_batched` initializations added to their sampling probabilities: both now sample by contribution to the current selection only, and draw their first items uniformly at random
+- The `eager` and `random_batched` initializations no longer add each item's diversity contribution with respect to the whole dataset (not only the current selection) to their sampling probabilities: they sample by diversity contribution to the current selection only, and draw their first items uniformly at random
 
 ### Fixed
 

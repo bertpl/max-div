@@ -122,7 +122,7 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def random_one_shot(cls, ignore_constraints: bool = False, parallel: bool = False) -> InitRandomOneShot:
-        """Random initialization that selects all ``k`` items in a single batch, uniformly at random.
+        """Create a random initialization that selects all ``k`` items in a single batch, uniformly at random.
 
         Args:
             ignore_constraints: If True, ignore constraints during sampling.

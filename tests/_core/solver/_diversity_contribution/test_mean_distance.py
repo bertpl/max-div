@@ -45,6 +45,7 @@ def _brute_force_contribution(pdist: np.ndarray, indices: list[int]) -> np.ndarr
 #  Tests
 # =================================================================================================
 def test_construction_fresh(tracker: MeanDistanceTracker):
+    """A fresh tracker covers every item of its store, and each item's contribution to the empty selection is 0."""
     # --- arrange ----------------------
     selected, n_selected = selection_args([], N)
 
@@ -238,7 +239,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
 
 
 def test_reset_returns_to_empty_selection(tracker: MeanDistanceTracker):
-    """Reset returns distance sums to the empty-selection zeros."""
+    """Reset sets every distance sum back to 0, the value for an empty selection."""
     # --- arrange ----------------------
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))

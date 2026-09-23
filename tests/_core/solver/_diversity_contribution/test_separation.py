@@ -25,6 +25,7 @@ def tracker() -> SeparationTracker:
 #  Tests
 # =================================================================================================
 def test_construction_fresh(tracker: SeparationTracker):
+    """Each item's contribution to the empty selection of a fresh tracker is +inf."""
     # --- arrange ----------------------
     selected, n_selected = selection_args([], 5)
 
@@ -288,7 +289,7 @@ def test_backend_matches_brute_force_over_random_operations(backend: str):
 
 
 def test_reset_returns_to_empty_selection(tracker: SeparationTracker):
-    """Reset returns separations to the empty-selection +inf values."""
+    """Reset sets every separation back to +inf, the value for an empty selection."""
     # --- arrange ----------------------
     tracker.add(np.int32(0))
     tracker.add(np.int32(2))

@@ -13,7 +13,8 @@ import numba
 import numpy as np
 
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance_lazy
-from max_div._core.solver._diversity_contribution._separation._signatures import (
+
+from ._signatures import (
     ADD_MANY_SIGNATURE,
     ADD_SIGNATURE,
     REMOVE_SIGNATURE,

@@ -26,7 +26,7 @@ class HybridPerItemContributionSource(PerItemContributionSource):
     Every read combines the term trackers' arrays by the objective's own rule
     (`compute_per_item_contributions`). The source caches no selection contribution: the tracker set
     maintains the term trackers on every selection change, and the strategies read the combined array
-    once per change, so a cache would never serve a second read.
+    once per change, so a cache would never be read a second time.
     """
 
     # -------------------------------------------------------------------------

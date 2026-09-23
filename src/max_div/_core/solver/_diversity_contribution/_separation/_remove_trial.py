@@ -21,7 +21,7 @@ import numpy as np
 
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 
-from ._signatures import REMOVE_SIGNATURE
+from ._backends._signatures import REMOVE_SIGNATURE
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray

@@ -1,6 +1,6 @@
 """One module per storage layout, and the lookup that picks the right one.
 
-Each module provides the same calculations over the signatures in `_signatures`, so the
+Each module provides the same calculations over the signatures in `._signatures`, so the
 modules are interchangeable by construction and another layout is a module plus an entry below.
 
 Which one to use is decided here, in Python, and never inside a compiled function. A layout test
@@ -27,10 +27,12 @@ class SeparationBackend(NamedTuple):
     """What the separation tracker needs from one storage layout.
 
     - `add`, `add_many` and `remove` update the separations after items join or leave the selection.
-    - `add_many` fuses a batch into one pass over all items: the same distance pairs feed the same
-      `min`, so the result is identical to sequential adds, but `sep` is read and written once.
-    - The `parallel` flag of `add_many` runs that pass over parallel threads; items are independent
-      and `min` is order-free, so results are identical there too.
+    - `add_many` handles a batch in one pass over all items: it takes the minimum over the same
+      distance pairs as sequential adds, so the result is identical, but the separation array `sep`
+      is read and written once.
+    - The `parallel` flag of `add_many` runs that pass over parallel threads; each item's separation
+      is updated independently of the others, and a minimum does not depend on the order of its
+      inputs, so results are identical there too.
     """
 
     add: Callable[..., None]
