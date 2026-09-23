@@ -18,13 +18,14 @@ if TYPE_CHECKING:
 class InitPreset(StrEnum):
     """StrEnum for all initialization presets we want to benchmark.
 
-    Tunable strategies appear at several settings, listed in `_INIT_CLASSES_AND_KWARGS`.
+    A strategy with a tunable parameter appears once per benchmarked value of that parameter;
+    `_INIT_CLASSES_AND_KWARGS` lists the values.
     `_PRESET_NOTES` records which benchmark presets match the initialization of a shipped solver preset.
     """
 
     # --- random selection -----------------------
-    RS = "rs"
-    RS_UNCON = "rs(uncon)"
+    RSEL = "rsel"
+    RSEL_UNCON = "rsel(uncon)"
 
     # --- farthest point -------------------------
     FPS_1 = "fps(1)"
@@ -49,7 +50,7 @@ class InitPreset(StrEnum):
     # -------------------------------------------------------------------------
     def is_constraint_aware(self) -> bool:
         return self not in [
-            InitPreset.RS_UNCON,
+            InitPreset.RSEL_UNCON,
             InitPreset.FPS_1,
             InitPreset.FPS_8,
             InitPreset.FPSB_8,
@@ -61,13 +62,13 @@ class InitPreset(StrEnum):
         Two reasons drop a strategy from an unconstrained problem:
 
         - `most_feasible` *raises* without constraints, so it must not run.
-        - `rs(uncon)` is *redundant* there, behaving identically to the constraint-aware `rs`.
+        - `rsel(uncon)` is *redundant* there, behaving identically to the constraint-aware `rsel`.
         """
         if problem_has_constraints:
             return True
         dropped_when_unconstrained = {
             InitPreset.MF,
-            InitPreset.RS_UNCON,
+            InitPreset.RSEL_UNCON,
         }
         return self not in dropped_when_unconstrained
 
@@ -93,8 +94,8 @@ class InitPreset(StrEnum):
 #  Classes & Arguments
 # =================================================================================================
 _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], dict[str, Any]]] = {
-    InitPreset.RS: (InitRandomSelection, {"ignore_constraints": False}),
-    InitPreset.RS_UNCON: (InitRandomSelection, {"ignore_constraints": True}),
+    InitPreset.RSEL: (InitRandomSelection, {"ignore_constraints": False}),
+    InitPreset.RSEL_UNCON: (InitRandomSelection, {"ignore_constraints": True}),
     InitPreset.FPS_1: (InitFarthestPoint, {"top_k": 1}),
     InitPreset.FPS_8: (InitFarthestPoint, {"top_k": 8}),
     InitPreset.FPSB_8: (InitFarthestPointBatched, {"top_k": 8}),
@@ -102,7 +103,7 @@ _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], d
 }
 
 _PRESET_NOTES: dict[InitPreset, str] = {
-    InitPreset.RS_UNCON: "= the RANDOM/GUIDED presets' initialization",
+    InitPreset.RSEL_UNCON: "= the RANDOM/GUIDED presets' initialization",
     InitPreset.FPSB_8: "= the SMART/THOROUGH presets' initialization (unconstrained problems)",
     InitPreset.MF: "= the SMART/THOROUGH presets' initialization (constrained problems)",
 }

@@ -59,6 +59,9 @@ def select_items_to_add_with_p(
 
     `p` is read, never written, so the same array can be passed to any number of draws from the same state.
 
+    On a constrained problem (unless `ignore_constraints` is True), the k items are drawn jointly, so that
+    together they move toward satisfying the constraints.
+
     Args:
         state: (SolverState) The current solver state containing selected items and other relevant information.
         candidates: (NDArray[np.int32]) array of candidate item indices to choose from

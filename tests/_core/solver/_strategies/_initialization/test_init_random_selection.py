@@ -15,7 +15,8 @@ _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
 @pytest.mark.parametrize("arg_ignore_constraints", [True, False])
-def test_init_random_selection_selection(problem_has_constraints: bool, arg_ignore_constraints: bool):
+def test_init_random_selection_completes_selection(problem_has_constraints: bool, arg_ignore_constraints: bool):
+    """The selection has size k and satisfies the constraints, unless they are ignored on a constrained problem."""
     # --- arrange ----------------------
     solver_state = new_solver_state(problem_has_constraints)
     strategy = InitializationStrategy.random_selection(ignore_constraints=arg_ignore_constraints)

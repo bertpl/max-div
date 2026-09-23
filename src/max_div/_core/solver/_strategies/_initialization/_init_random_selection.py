@@ -8,7 +8,7 @@ from ._base import InitializationStrategy
 
 
 class InitRandomSelection(InitializationStrategy):
-    """Initialize by taking a single uniformly random sample of k items.
+    """Initialize by taking a single random sample of k items; see `InitializationStrategy.random_selection`.
 
     This is among the fastest initialization strategies, but potentially also with the lowest quality.
 

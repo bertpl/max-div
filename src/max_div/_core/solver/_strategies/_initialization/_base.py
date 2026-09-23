@@ -109,10 +109,11 @@ class InitializationStrategy(StrategyBase, ABC):
 
     @classmethod
     def random_selection(cls, ignore_constraints: bool = False, parallel: bool = False) -> InitRandomSelection:
-        """Create a random initialization that selects all ``k`` items in a single batch, uniformly at random.
+        """Create a random initialization that selects all ``k`` items in a single draw.
 
         Args:
-            ignore_constraints: If True, ignore constraints during sampling.
+            ignore_constraints: If True, sample uniformly at random even when the problem has constraints; if
+                False, steer the draw so the selection satisfies them.
             parallel: If True, the batched tracker update runs over parallel threads; see
                 `DiversityContributionTracker.add_many` for the contract.
         """
