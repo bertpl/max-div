@@ -1,30 +1,9 @@
-from enum import StrEnum
-
 import numpy as np
 from numpy.typing import NDArray
 
 from max_div._core._math.modify_p_selectivity import DEFAULT_LOW_VALUE, exponential_selectivity
 from max_div._core._random import choice, choice_constrained
 from max_div._core.solver._solver_state import SolverState
-
-from ._helpers import remove_sample_from_candidates_and_p
-
-
-class SamplingType(StrEnum):
-    """Context in which 'k' elements are sampled for addition to the selection.
-
-    Sampling can happen in 2 different contexts:
-     - we want 'k' items to be added as a 'group' (all or nothing)             --> GROUP
-     - we want 'k' candidate items, only one of which (the best) will be added --> CANDIDATES.
-
-    In case of a constrained problem, the expected behavior of how to take constraints into account will differ:
-     - GROUP      -> we try to select the 'k' items such that, as a whole, they will satisfy the constraints
-     - CANDIDATES -> each candidate is to be seen as the first item that will help moving towards satisfying
-                         the constraints  (i.e. k=1, k_context=n-n_selected)
-    """
-
-    GROUP = "group"
-    CANDIDATES = "candidates"
 
 
 def build_add_probabilities(
@@ -74,7 +53,6 @@ def select_items_to_add_with_p(
     p: NDArray[np.float32],
     k: np.int32 | int,
     rng_state: NDArray[np.uint64],
-    sampling_type: SamplingType = SamplingType.GROUP,
     ignore_constraints: bool = False,
 ) -> NDArray[np.int32]:
     """Draw k items from `candidates` with the probabilities `p` built by `build_add_probabilities`.
@@ -88,7 +66,6 @@ def select_items_to_add_with_p(
         p: (NDArray[np.float32]) sampling probabilities, one per candidate.
         k: (int) number of items to add to the selection.
         rng_state: (NDArray[np.uint64]) The RNG state to be used (and updated in-place) for random sampling
-        sampling_type: (SamplingType) context in which the k items are being sampled (GROUP vs CANDIDATES)
         ignore_constraints: (bool) If True, constraints are ignored even if present in the SolverState.
 
     Returns:
@@ -103,9 +80,9 @@ def select_items_to_add_with_p(
             p=p,
             rng_state=rng_state,
         )
-    # CONSTRAINED
-    if sampling_type == SamplingType.GROUP:
-        # these samples are intended to be added as a GROUP, so jointly should try to satisfy constraints
+    else:
+        # CONSTRAINED: the k items are added as a group, so jointly they should move towards
+        # satisfying the constraints
         return choice_constrained(
             n=state.n,
             values=candidates,
@@ -117,27 +94,6 @@ def select_items_to_add_with_p(
             eager=False,
             k_context=state.k - state.n_selected,
         )
-    # these samples are intended to be individual CANDIDATES, from which only one will be actually added
-    samples = np.empty(k, dtype=np.int32)
-    for i in range(k):
-        # obtain new sample
-        samples[i] = choice_constrained(
-            n=state.n,
-            values=candidates,
-            k=np.int32(1),
-            p=p,
-            rng_state=rng_state,
-            con_values=state.con_values,
-            con_indices=state.con_indices,
-            eager=False,
-            k_context=state.k - state.n_selected,
-        )[0]
-
-        # remove sample from candidates & p to prevent duplicates (fresh arrays; the caller's p stays intact)
-        candidates, p = remove_sample_from_candidates_and_p(candidates, p, samples[i])
-
-    # return final array of sample candidates
-    return samples
 
 
 def select_items_to_add(
@@ -146,7 +102,6 @@ def select_items_to_add(
     k: np.int32 | int,
     selectivity_modifier: float,
     rng_state: NDArray[np.uint64],
-    sampling_type: SamplingType = SamplingType.GROUP,
     ignore_constraints: bool = False,
 ) -> NDArray[np.int32]:
     """Select k items from 'candidates' to be added to the provided SolverState.
@@ -158,4 +113,4 @@ def select_items_to_add(
         list of np.int32 indices of the items to be added to the selection (unique values, unsorted).
     """
     p = build_add_probabilities(state, candidates, selectivity_modifier)
-    return select_items_to_add_with_p(state, candidates, p, k, rng_state, sampling_type, ignore_constraints)
+    return select_items_to_add_with_p(state, candidates, p, k, rng_state, ignore_constraints)

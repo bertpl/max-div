@@ -6,7 +6,6 @@ from numpy.typing import NDArray
 from max_div._core.solver._parameters import sampled_interval, sampled_poisson
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._strategies._sampling import (
-    SamplingType,
     build_add_probabilities,
     select_items_to_add_with_p,
     select_items_to_remove,
@@ -224,7 +223,6 @@ class OptimSmartSwaps(SwapBasedOptimizationStrategy):
                 p=p,
                 k=n_to_add,
                 rng_state=self._rng_state,
-                sampling_type=SamplingType.GROUP,
                 ignore_constraints=False,
             )
 

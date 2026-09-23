@@ -9,7 +9,7 @@ from max_div._core.solver._parameters import ParameterSchedule, linear
 from max_div._core.solver._solver_state import SolverState
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._step_identity import SolverStepIdentity
-from max_div._core.solver._strategies._initialization import InitializationStrategy
+from max_div._core.solver._strategies._initialization._init_fast import InitFast
 from max_div._core.solver._strategies._optimization import OptimizationStrategy
 from max_div._core.solver._strategies._optimization._optim_guided_swaps import OptimGuidedSwaps
 from tests._core.solver.objectives import simple_objective
@@ -78,7 +78,7 @@ def test_optim_guided_swaps(
     )
 
     # initialize solver state
-    init_step = InitializationStep(InitializationStrategy.fast())
+    init_step = InitializationStep(InitFast())
     init_step.run(solver_state, _STEP_IDENTITY)
 
     # prepare strategy

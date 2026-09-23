@@ -3,7 +3,6 @@ import pytest
 
 from max_div._core._random import new_rng_state
 from max_div._core.solver._strategies._sampling import (
-    SamplingType,
     build_add_probabilities,
     select_items_to_add,
     select_items_to_add_with_p,
@@ -19,8 +18,7 @@ def _state_with_selection(has_constraints: bool):
 
 
 @pytest.mark.parametrize("has_constraints", [False, True])
-@pytest.mark.parametrize("sampling_type", [SamplingType.GROUP, SamplingType.CANDIDATES])
-def test_build_then_draw_equals_select_items_to_add(has_constraints: bool, sampling_type: SamplingType) -> None:
+def test_build_then_draw_equals_select_items_to_add(has_constraints: bool) -> None:
     """Building the probabilities and then drawing reproduces `select_items_to_add` exactly, draw for draw."""
     # --- arrange ----------------------
     state = _state_with_selection(has_constraints)
@@ -28,11 +26,9 @@ def test_build_then_draw_equals_select_items_to_add(has_constraints: bool, sampl
     rng_one_call, rng_split = new_rng_state(7), new_rng_state(7)
 
     # --- act --------------------------
-    expected = select_items_to_add(
-        state, candidates, k=5, selectivity_modifier=0.3, rng_state=rng_one_call, sampling_type=sampling_type
-    )
+    expected = select_items_to_add(state, candidates, k=5, selectivity_modifier=0.3, rng_state=rng_one_call)
     p = build_add_probabilities(state, candidates, selectivity_modifier=0.3)
-    actual = select_items_to_add_with_p(state, candidates, p, k=5, rng_state=rng_split, sampling_type=sampling_type)
+    actual = select_items_to_add_with_p(state, candidates, p, k=5, rng_state=rng_split)
 
     # --- assert -----------------------
     np.testing.assert_array_equal(actual, expected)
@@ -40,8 +36,7 @@ def test_build_then_draw_equals_select_items_to_add(has_constraints: bool, sampl
 
 
 @pytest.mark.parametrize("has_constraints", [False, True])
-@pytest.mark.parametrize("sampling_type", [SamplingType.GROUP, SamplingType.CANDIDATES])
-def test_drawing_leaves_the_probabilities_intact(has_constraints: bool, sampling_type: SamplingType) -> None:
+def test_drawing_leaves_the_probabilities_intact(has_constraints: bool) -> None:
     """A draw reads `p` and never writes it, so one array can be reused across draws."""
     # --- arrange ----------------------
     state = _state_with_selection(has_constraints)
@@ -51,7 +46,7 @@ def test_drawing_leaves_the_probabilities_intact(has_constraints: bool, sampling
 
     # --- act --------------------------
     for _ in range(3):
-        select_items_to_add_with_p(state, candidates, p, k=5, rng_state=new_rng_state(1), sampling_type=sampling_type)
+        select_items_to_add_with_p(state, candidates, p, k=5, rng_state=new_rng_state(1))
 
     # --- assert -----------------------
     np.testing.assert_array_equal(p, p_before)

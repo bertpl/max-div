@@ -12,26 +12,16 @@ from max_div._core.solver._strategies import InitializationStrategy
 @pytest.mark.parametrize(
     "factory_method",
     [
-        InitializationStrategy.fast,
         partial(InitializationStrategy.farthest_point, top_k=4),
         partial(InitializationStrategy.most_feasible),
-        partial(InitializationStrategy.random_one_shot, ignore_constraints=False),
-        partial(InitializationStrategy.random_one_shot, ignore_constraints=True),
-        partial(InitializationStrategy.random_batched, b=2, ignore_constraints=False),
-        partial(InitializationStrategy.random_batched, b=5, ignore_constraints=True),
-        partial(InitializationStrategy.eager, nc=2, ignore_constraints=False),
-        partial(InitializationStrategy.eager, nc=5, ignore_constraints=True),
+        partial(InitializationStrategy.random, ignore_constraints=False),
+        partial(InitializationStrategy.random, ignore_constraints=True),
     ],
     ids=[
-        "fast",
         "farthest_point",
         "most_feasible",
-        "random_one_shot_1",
-        "random_one_shot_2",
-        "random_batched_1",
-        "random_batched_2",
-        "eager_1",
-        "eager_2",
+        "random_1",
+        "random_2",
     ],
 )
 def test_initialization_strategy_factory(factory_method: Callable[[], InitializationStrategy]):

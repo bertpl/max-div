@@ -2,7 +2,7 @@ import pytest
 
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._step_identity import SolverStepIdentity
-from max_div._core.solver._strategies import InitializationStrategy
+from max_div._core.solver._strategies._initialization._init_fast import InitFast
 
 from ._helpers import new_solver_state
 
@@ -14,7 +14,7 @@ _STEP_IDENTITY = SolverStepIdentity(1, "test")
 def test_init_fast(problem_has_constraints: bool):
     # --- arrange ----------------------
     solver_state = new_solver_state(problem_has_constraints)
-    strategy = InitializationStrategy.fast()
+    strategy = InitFast()
     init_step = InitializationStep(strategy)
 
     # --- act --------------------------

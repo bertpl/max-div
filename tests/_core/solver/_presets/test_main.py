@@ -10,7 +10,7 @@ from max_div._core.solver._strategies._initialization import InitializationStrat
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
-from max_div._core.solver._strategies._initialization._init_random_one_shot import InitRandomOneShot
+from max_div._core.solver._strategies._initialization._init_random import InitRandom
 
 
 def _objective(metric: DiversityMetric) -> DiversityObjectiveSimple:
@@ -21,24 +21,24 @@ def _objective(metric: DiversityMetric) -> DiversityObjectiveSimple:
 # Each preset (by resolved alias, so DEFAULT follows SMART) yields this init for an unconstrained
 # problem under a separation-family diversity metric.
 _EXPECTED_INIT_UNCONSTRAINED: dict[SolverPreset, type[InitializationStrategy]] = {
-    SolverPreset.RANDOM: InitRandomOneShot,
-    SolverPreset.GUIDED: InitRandomOneShot,
+    SolverPreset.RANDOM: InitRandom,
+    SolverPreset.GUIDED: InitRandom,
     SolverPreset.SMART: InitFarthestPointBatched,
     SolverPreset.THOROUGH: InitFarthestPointBatched,
 }
 
 # Under `MEAN_PAIRWISE_DISTANCE`, SMART/THOROUGH use the per-pick farthest-point construction.
 _EXPECTED_INIT_MEAN_DISTANCE: dict[SolverPreset, type[InitializationStrategy]] = {
-    SolverPreset.RANDOM: InitRandomOneShot,
-    SolverPreset.GUIDED: InitRandomOneShot,
+    SolverPreset.RANDOM: InitRandom,
+    SolverPreset.GUIDED: InitRandom,
     SolverPreset.SMART: InitFarthestPoint,
     SolverPreset.THOROUGH: InitFarthestPoint,
 }
 
 # With constraints present, SMART/THOROUGH start from `most_feasible()`.
 _EXPECTED_INIT_CONSTRAINED: dict[SolverPreset, type[InitializationStrategy]] = {
-    SolverPreset.RANDOM: InitRandomOneShot,
-    SolverPreset.GUIDED: InitRandomOneShot,
+    SolverPreset.RANDOM: InitRandom,
+    SolverPreset.GUIDED: InitRandom,
     SolverPreset.SMART: InitMostFeasible,
     SolverPreset.THOROUGH: InitMostFeasible,
 }
