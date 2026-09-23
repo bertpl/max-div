@@ -4,13 +4,18 @@ The figures of `geomean_separation.md` plot given selections controlled by a par
 cases as dot rows, and the separation metrics against alpha below them; no solver is involved.
 
 The figures of `uniform_sampling.md` are seven solved selections of one random population, one per
-experiment, plus a longer solve of the last experiment; only those run the solver. Each selection is
-emitted as an interactive figure (an HTML fragment over a raster of the population) plus its
-separations table, and cached as JSON so that `--reuse-solution` re-renders the figures without the
-solves, solving only a run that has no cache yet; a closing table compares them all. The longer solve
-is emitted as a replay figure that steps through every change of its selection.
+experiment, plus a longer solve of each experiment that `EXPERIMENT_NAME_BY_LONG_RUN` names; only
+those run the solver.
 
-Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reuse-solution]``.
+Each selection is emitted as an interactive figure (an HTML fragment over a raster of the population)
+plus its separations table, and cached as JSON so that `--reuse-solution` re-renders the figures
+without the solves, solving only a run that has no cache yet; a closing table compares them all.
+
+Each longer solve is emitted as a replay figure that steps through every change of its selection.
+
+Run with: ``uv run --group benchmarks ./scripts/generate_guide_images.py [--reuse-solution]``. Without
+`--reuse-solution`, every run is solved again, including the longer solves, which take `LONG_BUDGET_SEC`
+each, one after the other.
 """
 
 import argparse
@@ -249,10 +254,15 @@ EXPERIMENT_LABELS = {
     "geomean": "**IV.B** geometric-mean distance",
     "hybrid": "**V.A** hybrid: L2, $x$ and $y$ terms",
     "hybrid_banded": "**V.B** hybrid, 20 items per band",
-    "hybrid_banded_long": "**V.C** hybrid, 20 items per band, 900 s",
+    "hybrid_long": "**V.C.1** hybrid, 4 h, 32 workers",
+    "hybrid_banded_long": "**V.C.2** hybrid, 20 items per band, 4 h, 32 workers",
 }
-# The replay figure of section V.C re-solves the banded hybrid experiment with this budget.
-LONG_BUDGET_SEC = 900.0
+# The replay figures of section V.C re-solve the experiments that `EXPERIMENT_NAME_BY_LONG_RUN` names, with this
+# budget and worker count.
+LONG_BUDGET_SEC = 4 * 3600.0
+LONG_N_WORKERS = 32
+# Map each longer solve's run name to the name of the experiment that it re-solves.
+EXPERIMENT_NAME_BY_LONG_RUN = {"hybrid_long": "hybrid", "hybrid_banded_long": "hybrid_banded"}
 # A summary cell is colored by its achieved / reference fraction: red below LOW, green above HIGH.
 # The classes are styled in docs/stylesheets/extra.css; `uniform_sampling.md` states the rule.
 SUMMARY_LOW_PERCENT, SUMMARY_HIGH_PERCENT = 40, 60
@@ -637,33 +647,41 @@ def render_uniform_sampling_experiments(settings: ExperimentSettings, should_reu
         path = GENERATED_DIR / f"uniform_sampling_{experiment.name}_figure.html"
         path.write_text(fragment, encoding="utf-8")
         print(f"wrote {path.relative_to(REPO_ROOT)}")
-    selections["hybrid_banded_long"] = render_uniform_sampling_replay(vectors, settings, should_reuse_solution)
+    experiments_by_name = {experiment.name: experiment for experiment in EXPERIMENTS}
+    for run_name, experiment_name in EXPERIMENT_NAME_BY_LONG_RUN.items():
+        selections[run_name] = render_uniform_sampling_replay(
+            vectors, settings, should_reuse_solution, experiments_by_name[experiment_name], run_name
+        )
     write_summary(selections, settings.k)
     write_convergence(runs, settings.budget_sec)
 
 
 def render_uniform_sampling_replay(
-    vectors: NDArray[np.float32], settings: ExperimentSettings, should_reuse_solution: bool
+    vectors: NDArray[np.float32],
+    settings: ExperimentSettings,
+    should_reuse_solution: bool,
+    experiment: Experiment,
+    run_name: str,
 ) -> NDArray[np.float64]:
-    """Produce the replay figure of the banded hybrid experiment solved for `LONG_BUDGET_SEC`, and return its selection.
+    """Produce the replay figure of an experiment solved for `LONG_BUDGET_SEC`, and return its selection.
 
-    The run is the last experiment's problem under a longer budget, with the selection recorded at every
-    checkpoint; the figure steps through the checkpoints at which the selection changed.
+    The run is the experiment's problem under a longer budget and `LONG_N_WORKERS` workers, with the
+    selection recorded at every checkpoint; the figure steps through the checkpoints at which the
+    selection changed. Every output file is named after `run_name`.
     """
-    experiment = EXPERIMENTS[-1]
     run = load_or_solve_experiment(
         vectors,
         experiment,
-        replace(settings, budget_sec=LONG_BUDGET_SEC),
+        replace(settings, budget_sec=LONG_BUDGET_SEC, n_workers=LONG_N_WORKERS),
         should_reuse_solution,
-        cache_name="hybrid_banded_long",
+        cache_name=run_name,
         should_record_frames=True,
         should_pickle_solution=True,
     )
     assert run.frames is not None
-    render_uniform_sampling_long_run_timeline()
+    render_uniform_sampling_long_run_timeline(run_name)
     selection = vectors[run.i_selected].astype(np.float64)
-    write_experiment_separations("hybrid_banded_long", selection, settings.k)
+    write_experiment_separations(run_name, selection, settings.k)
     fragment = replay_fragment(
         vectors,
         [ReplayFrame(t_sec, diversity, indices) for t_sec, diversity, indices in run.frames],
@@ -677,27 +695,27 @@ def render_uniform_sampling_replay(
             "through every change of the selection during the solve"
         ),
     )
-    path = GENERATED_DIR / "uniform_sampling_hybrid_banded_long_replay.html"
+    path = GENERATED_DIR / f"uniform_sampling_{run_name}_replay.html"
     path.write_text(fragment, encoding="utf-8")
     print(f"wrote {path.relative_to(REPO_ROOT)}")
     return selection
 
 
-def render_uniform_sampling_long_run_timeline() -> None:
-    """Draw the 900 s solve as a timeline, tie-breaker panels included, from the pickled solution.
+def render_uniform_sampling_long_run_timeline(run_name: str) -> None:
+    """Draw a longer solve as a timeline, tie-breaker panels included, from its pickled solution.
 
     The image is linked from the guide, not shown inline: it is a tall figure that documents the solve
     behind the replay, not a result of the case study.
     """
-    pickle_path = _solution_pickle_path("hybrid_banded_long")
+    pickle_path = _solution_pickle_path(run_name)
     if not pickle_path.exists():
-        print(f"no {pickle_path.relative_to(REPO_ROOT)}: the 900 s solve predates the pickling; re-solve it")
+        print(f"no {pickle_path.relative_to(REPO_ROOT)}: this solve's solution was not saved as a pickle; re-solve it")
         return
     solution: ParallelMaxDivSolution = pickle.loads(pickle_path.read_bytes())
     use_docs_style()
     save_webp(
         solution.plot_timeline(include_tie_breakers=True),
-        IMAGES_DIR / "uniform_sampling_hybrid_banded_long_timeline.webp",
+        IMAGES_DIR / f"uniform_sampling_{run_name}_timeline.webp",
     )
 
 

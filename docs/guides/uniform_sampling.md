@@ -26,7 +26,7 @@ The three goals compete for the same $k$ points. **How to trade them off is left
 - **One population for every experiment:** $n = 10{,}000$ random points, from which $k = 100$ are selected, so the results are comparable.
 - **One diversity metric for every experiment:** the [min separation](../concepts/diversity.md#diversity-metrics), the smallest distance from any selected point to its nearest other selected point. It is the strictest of the separation metrics: one close pair sets the score, whatever the rest of the selection looks like.
 - **Ties are broken by the solver's default rule:** many selections share the same closest pair, so the solver's default [tie-breakers](../concepts/scoring.md#diversity-tie-breakers) decide between them.
-- **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget. One extra run, in section V.C, keeps everything else and lengthens the budget to 900 s.
+- **One solver setting for every experiment:** 16 workers within a 60 s end-to-end budget. 2 extra runs, in section V.C, solve the problems of V.A and V.B again with 32 workers for 4 h.
 - **One measure for every result:** the min separation of the selection under the L2, $x$ and $y$ distances, one per goal.
 
 ## II. Diversity references
@@ -130,7 +130,7 @@ Hover over a dot to see the three level curves, each through the point's nearest
 
 The two marginal goals reach about 70 % of their references and the L2 goal reaches more than half of its reference, all three at the same time; no single-distance experiment comes close on the two goals it ignores.
 
-### V.B. Exact counts per band
+### V.B. Banded constraints
 
 The same objective, under [constraints](../concepts/constraints.md): the unit square is cut into five equal bands along $x$ and five along $y$, and each of the ten bands must hold exactly 20 of the 100 selected items. Each band is one constraint over the population items whose coordinate falls in it:
 
@@ -163,28 +163,54 @@ Every band holds its 20 items; the unconstrained selection of V.A holds between 
 
 The exact counts make each iteration slower, since each candidate swap is also checked against the ten counts; the convergence table below shows the resulting lower iteration count.
 
-### V.C. What a longer budget improves
+### V.C. Long-budget runs
 
-Every figure above is a 60 s solve, chosen so the whole case study regenerates in minutes. This one is the same problem as V.B, now solved for 900 s, with the solver built with `with_intermediate_selections()` so every [score checkpoint](../concepts/parallel_solving.md#reading-the-result) also carries the selection held at that moment.
+Every figure above is a 60 s solve, chosen so the whole case study regenerates in minutes. This section solves the 2 hybrid problems of V.A and V.B again with 32 workers for 4 h, on a 16-core machine, so 2 workers share each core.
 
-The figure steps through those selections: each frame is a checkpoint at which the best selection across the 16 workers changed, and the caption gives the frame's elapsed time and diversity. Move between frames three ways:
+The solver is built with `with_intermediate_selections()` so every [score checkpoint](../concepts/parallel_solving.md#reading-the-result) also carries the selection held at that moment.
+
+The 2 figures step through those selections: each frame is a checkpoint at which the best selection across the 32 workers changed, and the caption gives the frame's elapsed time and diversity. Move between frames 3 ways:
 
 - drag the slider,
 - click the buttons, or
 - press the arrow keys once the figure has focus.
 
---8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
+#### V.C.1. Unconstrained
 
-The [timeline of this solve](images/uniform_sampling_hybrid_banded_long_timeline.webp) shows the 16 workers, their groups merging over the 900 s, and the trajectories of the objective, its [tie-breakers](../concepts/scoring.md#diversity-tie-breakers) and the constraints score; the [parallel-solving page](../concepts/parallel_solving.md#the-three-groupings-on-one-problem) explains how to read it.
+--8<-- "generated/uniform_sampling_hybrid_long_replay.html"
 
---8<-- "generated/uniform_sampling_hybrid_banded_long_separations.md"
+The [timeline of this solve](images/uniform_sampling_hybrid_long_timeline.webp) shows:
+
+- the 32 workers,
+- their groups merging over the 4 h, and
+- the trajectories of the objective and its [tie-breakers](../concepts/scoring.md#diversity-tie-breakers).
+
+The [parallel-solving page](../concepts/parallel_solving.md#the-three-groupings-on-one-problem) explains how to read it.
+
+--8<-- "generated/uniform_sampling_hybrid_long_separations.md"
 
 Most frames fall in the first minute, where the selection still changes at nearly every checkpoint. After that a change is rare, and it is one of two kinds:
 
-- a swap of two or three items, or
+- a change of between 2 and about 20 items, or
 - a wholesale change, when another worker's selection surpasses the best held so far and becomes the new best-known selection.
 
-The later frames are where the extra budget improves the result: the diversity keeps increasing past V.B's 60 s value, so the summary table below lists this run as its own row.
+The later frames are where the extra budget improves the result: the diversity ends 5.5 % above V.A's 60 s value, and it was still increasing in the last hour, with its last 2 improvements after 3 h 20 m.
+
+#### V.C.2. Banded constraints
+
+The [timeline of this solve](images/uniform_sampling_hybrid_banded_long_timeline.webp) also shows the constraints score.
+
+--8<-- "generated/uniform_sampling_hybrid_banded_long_replay.html"
+
+--8<-- "generated/uniform_sampling_hybrid_banded_long_separations.md"
+
+The diversity ends 7.7 % above V.B's 60 s value, with its last improvement at about 3 h 20 m.
+
+**Under this budget the banded solve ends ahead of the unconstrained one on the hybrid objective**, 0.01583 against 0.01573, where at 60 s the banded solve was behind, 0.01470 against 0.01491.
+
+Every selection that meets the band counts is also a valid unconstrained selection, so the unconstrained problem has a selection at least as good as the banded result, and the unconstrained solve did not find it.
+
+A likely reason is that the band counts shrink the search space, so the same 4 h of swaps cover a larger share of the selections that remain. Each problem was solved once, with 1 seed, and a gap of 0.6 % is within what a different seed can change, so the banded solve's lead is a hint, not an established result.
 
 ## VI. Summary
 
@@ -196,7 +222,7 @@ Every experiment's achieved min separation under the three reference distances, 
 - **The L−∞ distance reaches the two marginals**, and the geometric-mean distance gets part of the way on all three.
 - **The hybrid objective directly optimizes all three** by explicitly formulating the three objectives, at the cost of slower iterations due to the three objectives.
 - **Exact counts per band come at no cost in diversity**: under them the hybrid objective reaches the same three separations.
-- **A longer budget still improves the result**: the 900 s solve of V.C ends above its 60 s counterpart on the L2 and $y$ separations, and level on $x$.
+- **A longer budget still improves the result**: with 32 workers for 4 h, both 4 h solves end above their 60 s counterparts on all 3 separations, and both were still improving in the last hour.
 
 The slower iterations are visible in the iteration counts. The table gives, per experiment, how many iterations the worker holding the final selection completed in the 60 s budget, and the best objective any worker held at three elapsed marks as a fraction of the final value:
 
