@@ -65,15 +65,13 @@ def _maxdiv_lean() -> SelectFn:
         from max_div.solver import DistanceStorageType, InitializationStrategy, MaxDivSolverBuilder, Verbosity
 
         # No with_preset: the pipeline is a single init step, so the solve returns that
-        # initialization and nothing more. Uniform sampling replaces the default
-        # contribution-weighted variant, whose dataset-wide distance sweep would dominate this
-        # configuration's runtime. The parallel batched tracker update is safe here: this
+        # initialization and nothing more. The parallel batched tracker update is safe here: this
         # configuration runs a single process, so no worker competes for the CPU cores.
         builder = (
             MaxDivSolverBuilder(problem)
             .with_seed(seed)
             .with_distance_storage(DistanceStorageType.LAZY)
-            .set_initialization_strategy(InitializationStrategy.random_one_shot(uniform=True, parallel=True))
+            .set_initialization_strategy(InitializationStrategy.random_one_shot(parallel=True))
         )
         return np.asarray(builder.build().solve(verbosity=Verbosity.SILENT).i_selected, dtype=np.int64)
 

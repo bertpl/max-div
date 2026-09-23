@@ -1,6 +1,6 @@
 """One module per storage layout, and the lookup that picks the right one.
 
-Each module provides the same three calculations over the signatures in `.._signatures`, so the
+Each module provides the same calculations over the signatures in `._signatures`, so the
 modules are interchangeable by construction and another layout is a module plus an entry below.
 
 Which one to use is decided here, in Python, and never inside a compiled function — see the
@@ -27,18 +27,16 @@ if TYPE_CHECKING:
 class MeanDistanceBackend(NamedTuple):
     """What the mean-distance tracker needs from one storage layout.
 
-    `elements` computes mean distances for the given items from scratch; `add` and `remove` update
-    the running sums after an item joins or leaves the selection.
+    `add` and `remove` update the running sums after an item joins or leaves the selection.
     """
 
-    elements: Callable[..., None]
     add: Callable[..., None]
     remove: Callable[..., None]
 
 
 BACKEND_BY_KIND: dict[int, MeanDistanceBackend] = {
-    int(KIND_FULL_MATRIX): MeanDistanceBackend(_full_matrix.elements, _full_matrix.add, _full_matrix.remove),
-    int(KIND_LAZY): MeanDistanceBackend(_lazy.elements, _lazy.add, _lazy.remove),
+    int(KIND_FULL_MATRIX): MeanDistanceBackend(_full_matrix.add, _full_matrix.remove),
+    int(KIND_LAZY): MeanDistanceBackend(_lazy.add, _lazy.remove),
 }
 
 

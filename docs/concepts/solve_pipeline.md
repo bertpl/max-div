@@ -24,7 +24,7 @@ speed vs quality of the starting point:
 
 | Strategy | How it works |
 |----------|-------------|
-| `random_one_shot` | Selects all `k` items in one batch, with probabilities biased by global separation. **Default for the RANDOM and GUIDED presets.** |
+| `random_one_shot` | Selects all `k` items in one batch, uniformly at random. **Default for the RANDOM and GUIDED presets.** |
 | `random_batched` | Selects in batches of `b`, re-evaluating separations between batches. |
 | `farthest_point` | A seeded random start item, then greedily adds the item farthest from the selection (farthest-point sampling; under `MEAN_PAIRWISE_DISTANCE`, greedily maximizes mean distance to the selection). An optional `top_k` samples each pick uniformly among the `top_k` best candidates (default 1 keeps the exact greedy construction). Constraint-unaware. |
 | `farthest_point_batched` | The farthest-point construction with one pass over the dataset per batch of picks, not per pick. Every draw ranges over the same candidates that `farthest_point` would offer, so quality is equal while large problems initialize several times faster. Separation-family diversity metrics only; constraint-unaware. **The SMART and THOROUGH presets initialize unconstrained problems this way** (`farthest_point` under `MEAN_PAIRWISE_DISTANCE`). |

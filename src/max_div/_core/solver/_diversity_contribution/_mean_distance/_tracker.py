@@ -29,7 +29,7 @@ class MeanDistanceTracker(DiversityContributionTracker):
 
     The number of selected neighbors is membership-aware: a selected point's own zero self-distance is
     not a neighbor, so its divisor is one less than a non-selected point's.  For points with no selected
-    neighbor the contribution is 0.  The global contribution is each point's mean distance to all other points.
+    neighbor the contribution is 0.
     """
 
     # -------------------------------------------------------------------------
@@ -46,9 +46,6 @@ class MeanDistanceTracker(DiversityContributionTracker):
         # rather than tested inside them; see `_backends` for why that test cannot live in
         # compiled code
         self._backend = backend_for(store)
-        # lazily filled cache: NaN marks a not-yet-computed element; elements are computed on
-        # read and never change afterwards
-        self._contribution_wrt_dataset = np.full(store.n, np.nan, dtype=np.float32)
         self._dist_sums = np.zeros(store.n, dtype=np.float64)
         # snapshot stack, innermost last; entries are owned copies handed back on a restoring pop
         self._snapshot_dist_sums: list[NDArray[np.float64]] = []
@@ -66,28 +63,6 @@ class MeanDistanceTracker(DiversityContributionTracker):
         # per-point divisor: number of selected neighbors — a selected point's own 0-distance is not a neighbor
         divisor = np.maximum(n_selected - selected, 1)  # bool subtraction; clip avoids 0/0 for empty neighborhoods
         return (self._dist_sums / divisor).astype(np.float32)
-
-    @property
-    def contribution_wrt_dataset(self) -> NDArray[np.float32]:
-        """Return mean distance of all points wrt all other points (reference; do not modify).
-
-        Computes every not-yet-computed element first; see the base class for the lazy contract.
-        """
-        self._ensure_global_elements(np.arange(self._store.n, dtype=np.int32))
-        return self._contribution_wrt_dataset
-
-    def contribution_wrt_dataset_for(self, indices: NDArray[np.int32]) -> NDArray[np.float32]:
-        """Return global mean-distance contributions for `indices`, computing missing elements first (fresh array)."""
-        self._ensure_global_elements(indices)
-        return self._contribution_wrt_dataset[indices]
-
-    def _ensure_global_elements(self, indices: NDArray[np.int32]) -> None:
-        """Compute any not-yet-computed global-contribution elements among `indices`."""
-        missing = indices[np.isnan(self._contribution_wrt_dataset[indices])]
-        if missing.size > 0:
-            self._backend.elements(
-                self._contribution_wrt_dataset, self._store, np.ascontiguousarray(missing, dtype=np.int32)
-            )
 
     # -------------------------------------------------------------------------
     #  Mutations
@@ -108,7 +83,7 @@ class MeanDistanceTracker(DiversityContributionTracker):
         remove_trial(self._dist_sums, self._store, index, new_selection)
 
     def reset(self) -> None:
-        """Reset distance sums to the empty selection (all zero); the global cache stays valid as-is."""
+        """Reset distance sums to the empty selection (all zero)."""
         self._dist_sums.fill(0.0)
 
     # -------------------------------------------------------------------------

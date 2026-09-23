@@ -13,27 +13,15 @@ import numba
 import numpy as np
 
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance_lazy
-from max_div._core.solver._diversity_contribution._separation._signatures import (
+
+from ._signatures import (
     ADD_MANY_SIGNATURE,
     ADD_SIGNATURE,
-    ELEMENTS_SIGNATURE,
     REMOVE_SIGNATURE,
 )
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-
-
-@numba.njit(ELEMENTS_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})
-def elements(sep: NDArray[np.float32], store: DistanceStore, indices: NDArray[np.int32]) -> None:
-    """Fill the given elements of `sep` with each item's separation wrt all others."""
-    for idx in indices:
-        row_min = np.float32(np.inf)
-        for j in range(idx):
-            row_min = min(row_min, get_distance_lazy(store, idx, j))
-        for j in range(idx + 1, store.n):
-            row_min = min(row_min, get_distance_lazy(store, idx, j))
-        sep[idx] = row_min
 
 
 @numba.njit(ADD_SIGNATURE, cache=True, fastmath={"reassoc", "contract"})

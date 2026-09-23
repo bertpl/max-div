@@ -31,12 +31,15 @@ def build_add_probabilities(
     state: SolverState,
     candidates: NDArray[np.int32],
     selectivity_modifier: float,
-    include_within_group_contribution: bool | np.bool_ = True,
 ) -> NDArray[np.float32]:
     """Return the sampling probabilities of `candidates` for addition, derived from the current state.
 
     Lets a caller that draws several times from one unchanged state (each trial add reverted before
     the next draw) build the probabilities once.  The result is only valid until the selection changes.
+
+    Each candidate's probability grows with its contribution to the current selection.  With nothing
+    selected yet, no candidate has a selected item to be compared with, so every candidate gets
+    the same probability.
 
     Args:
         state: (SolverState) The current solver state containing selected items and other relevant information.
@@ -46,31 +49,23 @@ def build_add_probabilities(
             -1: maximally un-selective --> uniform
             0: no modification to the contribution-based probabilities
             +1: maximally selective --> only the items with very lowest contribution are sampled
-        include_within_group_contribution: (bool) flag that influences how sampling probabilities are built.
-            True: start from contribution wrt already selected items + within-group contribution
-            False: start from contribution wrt already selected items only
 
     Returns:
         (NDArray[np.float32]) one probability per candidate, same order as `candidates`.
     """
     if state.n_selected == 0:
-        # the only option is to look at the global contribution (wrt all other items), as we don't have a selection yet
-        # this branch is only taken in the first iteration of initialization strategies
-        p = state.global_contribution_for(candidates)  # contribution of candidates wrt all other items
+        # only the first draw of an initialization strategy sees an empty selection
+        return np.ones(len(candidates), dtype=np.float32)
     else:
-        # standard path
         p = state.full_contribution_array[candidates]  # new array; contribution of candidates wrt selected items
-        if include_within_group_contribution:
-            p += state.global_contribution_for(candidates)  # add contribution of candidates wrt all other items
-
-    exponential_selectivity(
-        p_in=p,
-        p_out=p,  # in-place
-        modifier=np.float32(selectivity_modifier),
-        reverse=False,  # for adding, we want to have items with high diversity contribution have higher probability
-        low_value=DEFAULT_LOW_VALUE,
-    )
-    return p
+        exponential_selectivity(
+            p_in=p,
+            p_out=p,  # in-place
+            modifier=np.float32(selectivity_modifier),
+            reverse=False,  # for adding, we want to have items with high diversity contribution have higher probability
+            low_value=DEFAULT_LOW_VALUE,
+        )
+        return p
 
 
 def select_items_to_add_with_p(
@@ -152,7 +147,6 @@ def select_items_to_add(
     selectivity_modifier: float,
     rng_state: NDArray[np.uint64],
     sampling_type: SamplingType = SamplingType.GROUP,
-    include_within_group_contribution: bool | np.bool_ = True,
     ignore_constraints: bool = False,
 ) -> NDArray[np.int32]:
     """Select k items from 'candidates' to be added to the provided SolverState.
@@ -163,5 +157,5 @@ def select_items_to_add(
     Returns:
         list of np.int32 indices of the items to be added to the selection (unique values, unsorted).
     """
-    p = build_add_probabilities(state, candidates, selectivity_modifier, include_within_group_contribution)
+    p = build_add_probabilities(state, candidates, selectivity_modifier)
     return select_items_to_add_with_p(state, candidates, p, k, rng_state, sampling_type, ignore_constraints)
