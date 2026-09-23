@@ -15,10 +15,10 @@ _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 @pytest.mark.parametrize("problem_has_constraints", [True, False])
 @pytest.mark.parametrize("arg_ignore_constraints", [True, False])
-def test_init_random(problem_has_constraints: bool, arg_ignore_constraints: bool):
+def test_init_random_selection_selection(problem_has_constraints: bool, arg_ignore_constraints: bool):
     # --- arrange ----------------------
     solver_state = new_solver_state(problem_has_constraints)
-    strategy = InitializationStrategy.random(ignore_constraints=arg_ignore_constraints)
+    strategy = InitializationStrategy.random_selection(ignore_constraints=arg_ignore_constraints)
     init_step = InitializationStep(strategy)
 
     # --- act --------------------------
@@ -36,37 +36,39 @@ def test_init_random(problem_has_constraints: bool, arg_ignore_constraints: bool
 @pytest.mark.parametrize(
     "kwargs, expected_name",
     [
-        ({"ignore_constraints": False}, "InitRandom()"),
-        ({"ignore_constraints": True}, "InitRandom(uncon)"),
+        ({"ignore_constraints": False}, "InitRandomSelection()"),
+        ({"ignore_constraints": True}, "InitRandomSelection(uncon)"),
     ],
 )
-def test_init_random_name(kwargs: dict[str, Any], expected_name: str):
+def test_init_random_selection_name(kwargs: dict[str, Any], expected_name: str):
     """Test that the strategy name is generated as expected."""
 
     # --- arrange ----------------------
-    optim_strategy = InitializationStrategy.random(**kwargs)
+    strategy = InitializationStrategy.random_selection(**kwargs)
 
     # --- act & assert -----------------
-    assert optim_strategy.name == expected_name
+    assert strategy.name == expected_name
 
 
 @pytest.mark.parametrize("arg_parallel", [False, True])
-def test_init_random_parallel_flag(arg_parallel: bool):
+def test_init_random_selection_parallel_flag(arg_parallel: bool):
     """The constructor's parallel choice must surface through the batch-add property."""
 
     # --- arrange / act ----------------
-    strategy = InitializationStrategy.random(parallel=arg_parallel)
+    strategy = InitializationStrategy.random_selection(parallel=arg_parallel)
 
     # --- assert -----------------------
     assert strategy.parallel_batch_add is arg_parallel
 
 
-def test_init_random_parallel_matches_serial():
+def test_init_random_selection_parallel_matches_serial():
     """A parallel init must produce the exact same selection and separations as a serial one."""
 
     # --- arrange ----------------------
     states = [new_solver_state(has_constraints=False) for _ in range(2)]
-    steps = [InitializationStep(InitializationStrategy.random(parallel=parallel)) for parallel in (False, True)]
+    steps = [
+        InitializationStep(InitializationStrategy.random_selection(parallel=parallel)) for parallel in (False, True)
+    ]
 
     # --- act --------------------------
     for step, state in zip(steps, states, strict=True):

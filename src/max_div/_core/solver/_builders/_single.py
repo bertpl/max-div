@@ -29,7 +29,7 @@ class MaxDivSolverBuilder(SolverBuilderBase):
         """Initialize the builder for `problem` with a default initialization strategy."""
         super().__init__(problem)
         self._solver_steps: list[SolverStep] = [
-            InitializationStep(InitializationStrategy.random()),  # Default initialization strategy
+            InitializationStep(InitializationStrategy.random_selection()),
         ]
 
     # -------------------------------------------------------------------------

@@ -81,7 +81,7 @@ def select_items_to_add_with_p(
             rng_state=rng_state,
         )
     else:
-        # CONSTRAINED: the k items are added as a group, so jointly they should move towards
+        # CONSTRAINED: the k items are added as a group, so jointly they should move toward
         # satisfying the constraints
         return choice_constrained(
             n=state.n,

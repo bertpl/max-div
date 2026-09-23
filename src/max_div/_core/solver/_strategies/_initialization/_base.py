@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from ._init_farthest_point import InitFarthestPoint
     from ._init_farthest_point_batched import InitFarthestPointBatched
     from ._init_most_feasible import InitMostFeasible
-    from ._init_random import InitRandom
+    from ._init_random_selection import InitRandomSelection
 
 
 # =================================================================================================
@@ -108,7 +108,7 @@ class InitializationStrategy(StrategyBase, ABC):
         return InitMostFeasible(max_iter=max_iter)
 
     @classmethod
-    def random(cls, ignore_constraints: bool = False, parallel: bool = False) -> InitRandom:
+    def random_selection(cls, ignore_constraints: bool = False, parallel: bool = False) -> InitRandomSelection:
         """Create a random initialization that selects all ``k`` items in a single batch, uniformly at random.
 
         Args:
@@ -116,6 +116,6 @@ class InitializationStrategy(StrategyBase, ABC):
             parallel: If True, the batched tracker update runs over parallel threads; see
                 `DiversityContributionTracker.add_many` for the contract.
         """
-        from ._init_random import InitRandom
+        from ._init_random_selection import InitRandomSelection
 
-        return InitRandom(ignore_constraints=ignore_constraints, parallel=parallel)
+        return InitRandomSelection(ignore_constraints=ignore_constraints, parallel=parallel)

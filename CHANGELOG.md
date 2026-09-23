@@ -11,12 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `plot_timeline(include_tie_breakers=True)` draws each tie-breaker's trajectory in its own panel, and a solution records the labels of its diversity objectives (`diversity_objective_labels`)
 
 ### Changed
-- `InitializationStrategy.random_one_shot` is renamed to `InitializationStrategy.random`, and loses its `uniform` parameter: it always samples uniformly at random, so the builder's default initialization is now uniform
+- `InitializationStrategy.random_one_shot` is renamed to `InitializationStrategy.random_selection`, and loses its `uniform` parameter: the strategy always samples uniformly at random. The builder's default initialization used to weight each item by its diversity contribution to the whole dataset, and is now uniform
 
 ### Deprecated
 
 ### Removed
-- The `eager` and `random_batched` initializations, which `farthest_point` beats on both speed and quality, and `InitializationStrategy.fast()`
+- The `eager` and `random_batched` initializations, which `farthest_point` beats on diversity and speed: use `farthest_point` instead
+- `InitializationStrategy.fast()`: use `random_selection()` for a cheap starting selection
 
 ### Fixed
 

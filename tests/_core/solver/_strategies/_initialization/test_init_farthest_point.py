@@ -67,7 +67,7 @@ def test_init_farthest_point_beats_random_init():
 
     # --- act --------------------------
     InitializationStep(InitializationStrategy.farthest_point()).run(state_fps, _STEP_IDENTITY)
-    InitializationStep(InitializationStrategy.random()).run(state_random, _STEP_IDENTITY)
+    InitializationStep(InitializationStrategy.random_selection()).run(state_random, _STEP_IDENTITY)
 
     # --- assert -----------------------
     assert state_fps.score.diversity > state_random.score.diversity

@@ -7,7 +7,7 @@ from max_div._core.solver._solver_state import SolverState
 from ._base import InitializationStrategy
 
 
-class InitRandom(InitializationStrategy):
+class InitRandomSelection(InitializationStrategy):
     """Initialize by taking a single uniformly random sample of k items.
 
     This is among the fastest initialization strategies, but potentially also with the lowest quality.
@@ -26,7 +26,7 @@ class InitRandom(InitializationStrategy):
     """
 
     def __init__(self, ignore_constraints: bool = False, parallel: bool = False) -> None:
-        name = "InitRandom" + ("(uncon)" if ignore_constraints else "()")
+        name = "InitRandomSelection" + ("(uncon)" if ignore_constraints else "()")
         super().__init__(name, parallel_batch_add=parallel)
         self.ignore_constraints = ignore_constraints
 

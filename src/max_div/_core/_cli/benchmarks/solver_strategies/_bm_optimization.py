@@ -36,6 +36,7 @@ class BenchmarkSolverConstructor_Optimization(BenchmarkSolverConstructor):
         preset = self._presets[strat_name]
         return (
             MaxDivSolverBuilder(problem)
+            # start from the first k items, so that only the optimization step is measured
             .set_initialization_strategy(InitFast())
             .add_solver_step(
                 OptimizationStep(
