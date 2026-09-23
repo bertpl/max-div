@@ -4,7 +4,6 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
-from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
 from max_div._core.solver._strategies._initialization._init_most_feasible import InitMostFeasible
 from max_div._core.solver._strategies._initialization._init_random_selection import InitRandomSelection
 
@@ -30,9 +29,7 @@ class InitPreset(StrEnum):
     # --- farthest point -------------------------
     FPS_1 = "fps(1)"
     FPS_8 = "fps(8)"
-
-    # --- farthest point, batched ----------------
-    FPSB_8 = "fpsb(8)"
+    FPS_8_PLAIN = "fps(8,plain)"
 
     # --- most feasible --------------------------
     MF = "mf"
@@ -53,7 +50,7 @@ class InitPreset(StrEnum):
             InitPreset.RSEL_UNCON,
             InitPreset.FPS_1,
             InitPreset.FPS_8,
-            InitPreset.FPSB_8,
+            InitPreset.FPS_8_PLAIN,
         ]
 
     def is_relevant_for_problem(self, problem_has_constraints: bool) -> bool:
@@ -98,12 +95,12 @@ _INIT_CLASSES_AND_KWARGS: dict[InitPreset, tuple[type[InitializationStrategy], d
     InitPreset.RSEL_UNCON: (InitRandomSelection, {"ignore_constraints": True}),
     InitPreset.FPS_1: (InitFarthestPoint, {"top_k": 1}),
     InitPreset.FPS_8: (InitFarthestPoint, {"top_k": 8}),
-    InitPreset.FPSB_8: (InitFarthestPointBatched, {"top_k": 8}),
+    InitPreset.FPS_8_PLAIN: (InitFarthestPoint, {"top_k": 8, "batch_size": None}),
     InitPreset.MF: (InitMostFeasible, {}),
 }
 
 _PRESET_NOTES: dict[InitPreset, str] = {
     InitPreset.RSEL_UNCON: "= the RANDOM/GUIDED presets' initialization",
-    InitPreset.FPSB_8: "= the SMART/THOROUGH presets' initialization (unconstrained problems)",
+    InitPreset.FPS_8: "= the SMART/THOROUGH presets' initialization (unconstrained problems)",
     InitPreset.MF: "= the SMART/THOROUGH presets' initialization (constrained problems)",
 }

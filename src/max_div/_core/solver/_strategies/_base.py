@@ -39,12 +39,12 @@ class StrategyBase:
         """Return _seed without updating it."""
         return self._seed
 
-    def validate_objective(self, objective: "DiversityObjective") -> None:
-        """Raise when this strategy does not support the solve's diversity objective.
+    def bind_objective(self, objective: "DiversityObjective") -> None:
+        """Receive the solve's primary diversity objective, before any work.
 
-        Called when the solver is built, so an unsupported combination fails before any work.
-        The default accepts every objective; a strategy whose algorithm is tailored to specific
-        contribution families overrides `validate_objective`.
+        Called when the solver is built, in every process that builds one. A strategy whose
+        algorithm depends on the objective overrides it, to adapt to the objective or to raise
+        when it does not support it; the default accepts every objective and does nothing.
         """
 
     def set_seed(self, seed: int | np.int64) -> None:

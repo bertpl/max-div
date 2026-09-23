@@ -1094,7 +1094,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.2979287060114541,
@@ -1360,7 +1360,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.3349031956714231,
@@ -1626,7 +1626,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.2979287060114541,
@@ -1892,7 +1892,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.3349031956714231,
@@ -3222,7 +3222,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.08546540969643565,
@@ -3488,7 +3488,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.09093614641405279,
@@ -3754,7 +3754,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.08546540969643565,
@@ -4020,7 +4020,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.09093614641405279,
@@ -5350,7 +5350,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.4402277211074701,
@@ -5616,7 +5616,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.33702375254288625,
@@ -5882,7 +5882,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.4402277211074701,
@@ -6148,7 +6148,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.33702375254288625,
@@ -7478,7 +7478,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.09103187239755824,
@@ -7744,7 +7744,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.09345524984356665,
@@ -8010,7 +8010,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.09103187239755824,
@@ -8276,7 +8276,7 @@
     },
     {
      "step_index": 1,
-     "step": "InitFarthestPointBatched",
+     "step": "InitFarthestPoint",
      "size": 1.0,
      "constraints": 1.0,
      "diversity": 0.09345524984356665,

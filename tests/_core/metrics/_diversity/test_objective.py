@@ -10,7 +10,7 @@ from max_div._core.metrics import (
     DiversityTrackerSpec,
     HybridObjectiveType,
 )
-from max_div._core.solver._strategies._initialization._init_farthest_point_batched import InitFarthestPointBatched
+from max_div._core.solver._strategies._initialization._farthest_point_rounds import are_rounds_supported
 
 SEPARATION = DiversityContributionFamily.SEPARATION
 MEAN_DISTANCE = DiversityContributionFamily.MEAN_DISTANCE
@@ -152,10 +152,10 @@ def test_distinct_distance_metrics(objective, expected) -> None:
         ),
     ],
 )
-def test_is_diversity_objective_supported_by_the_batched_farthest_point_init(objective, expected) -> None:
-    """One distinct separation spec is the batched-init case; a second spec or another family is not."""
+def test_are_farthest_point_rounds_supported(objective, expected) -> None:
+    """One distinct separation spec supports farthest-point rounds; a second spec or another family does not."""
     # --- act / assert -----------------
-    assert InitFarthestPointBatched.is_diversity_objective_supported(objective) is expected
+    assert are_rounds_supported(objective) is expected
 
 
 # =================================================================================================

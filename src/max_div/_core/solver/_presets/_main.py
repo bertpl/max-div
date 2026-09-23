@@ -1,4 +1,3 @@
-from max_div._core.metrics import DiversityObjective
 from max_div._core.solver._duration import TargetDuration
 from max_div._core.solver._solver_step import OptimizationStep
 from max_div._core.solver._strategies import InitializationStrategy
@@ -15,13 +14,11 @@ from .preset_smart import get_preset_strategies_smart
 def get_preset_strategies(
     preset: SolverPreset,
     target_duration: TargetDuration,
-    objective: DiversityObjective,
     has_constraints: bool = False,
 ) -> tuple[InitializationStrategy, list[OptimizationStep]]:
     """Return the initialization strategy and optimization steps a preset resolves to.
 
-    `objective` and `has_constraints` describe the problem; SMART and THOROUGH pick their
-    initialization from those two values (see `get_preset_strategies_smart`).
+    SMART and THOROUGH pick their initialization from `has_constraints` (see `get_preset_strategies_smart`).
     """
     match preset.resolve_alias():
         case SolverPreset.RANDOM:
@@ -29,12 +26,8 @@ def get_preset_strategies(
         case SolverPreset.GUIDED:
             return get_preset_strategies_guided(target_duration)
         case SolverPreset.SMART:
-            return get_preset_strategies_smart(
-                target_duration, objective, thorough=False, has_constraints=has_constraints
-            )
+            return get_preset_strategies_smart(target_duration, thorough=False, has_constraints=has_constraints)
         case SolverPreset.THOROUGH:
-            return get_preset_strategies_smart(
-                target_duration, objective, thorough=True, has_constraints=has_constraints
-            )
+            return get_preset_strategies_smart(target_duration, thorough=True, has_constraints=has_constraints)
         case _:
             raise ValueError(f"Unsupported preset: {preset}")

@@ -13,7 +13,7 @@ def test_init_preset_count():
 def test_init_preset_notes():
     """The strategies matching a shipped preset's initialization exactly carry a note."""
     noted = {preset for preset in InitPreset if preset.preset_note()}
-    assert noted == {InitPreset.RSEL_UNCON, InitPreset.FPSB_8, InitPreset.MF}
+    assert noted == {InitPreset.RSEL_UNCON, InitPreset.FPS_8, InitPreset.MF}
 
 
 def test_most_feasible_relevant_only_on_constrained_problems():

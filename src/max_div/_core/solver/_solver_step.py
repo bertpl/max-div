@@ -58,9 +58,9 @@ class SolverStep[S: StrategyBase](ABC):
     def set_seed(self, seed: int) -> None:
         self._strategy.set_seed(seed)
 
-    def validate_objective(self, objective: "DiversityObjective") -> None:
-        """Raise when this step's strategy does not support the solve's diversity objective."""
-        self._strategy.validate_objective(objective)
+    def bind_objective(self, objective: "DiversityObjective") -> None:
+        """Hand the solve's primary diversity objective to this step's strategy; see `StrategyBase.bind_objective`."""
+        self._strategy.bind_objective(objective)
 
     @abstractmethod
     def set_e2e_budget(self, e2e_budget: E2eBudget | None) -> None:

@@ -43,10 +43,10 @@ def test_init_farthest_point_first_pick_is_seeded():
 
 
 def test_init_farthest_point_picks_are_greedy():
-    """Every pick after the first is the argmax of contribution wrt the current selection."""
+    """With top_k=1, every pick after the first is the argmax of contribution wrt the current selection."""
     # --- arrange ----------------------
     solver_state = new_solver_state(has_constraints=False)
-    strategy = InitializationStrategy.farthest_point()
+    strategy = InitializationStrategy.farthest_point(top_k=1)
     solver_state.add(np.int32(0))
 
     # --- act --------------------------
@@ -117,34 +117,21 @@ def test_farthest_point_factory_rejects_top_k_below_one(top_k: int):
         InitializationStrategy.farthest_point(top_k=top_k)
 
 
-def test_init_farthest_point_top_k_1_is_the_argmax_pick():
-    """top_k=1 takes the plain argmax pick, identical to the default strategy."""
+def test_init_farthest_point_default_pick_varies_by_seed():
+    """The default top_k samples among several top candidates, so the pick after the start item varies by seed."""
     # --- arrange ----------------------
     solver_state = new_solver_state(has_constraints=False)
     solver_state.add(np.int32(0))
-    contributions = solver_state.not_selected_contribution_array
-    expected = int(solver_state.not_selected_index_array[np.argmax(contributions)])
 
     # --- act --------------------------
-    default_pick = int(InitFarthestPoint().get_next_samples(solver_state, solver_state.k)[0])
-    top1_pick = int(InitFarthestPoint(top_k=1).get_next_samples(solver_state, solver_state.k)[0])
+    picks = set()
+    for seed in range(20):
+        strategy = InitializationStrategy.farthest_point()
+        strategy.set_seed(seed)
+        picks.add(int(strategy.get_next_samples(solver_state, solver_state.k)[0]))
 
     # --- assert -----------------------
-    assert top1_pick == default_pick == expected
-
-
-def test_init_farthest_point_top_k_1_full_init_matches_default():
-    """A full init with top_k=1 reproduces the default farthest-point selection bit-for-bit."""
-    # --- arrange ----------------------
-    state_default = new_solver_state(has_constraints=False)
-    state_top1 = new_solver_state(has_constraints=False)
-
-    # --- act --------------------------
-    InitializationStep(InitFarthestPoint()).run(state_default, _STEP_IDENTITY)
-    InitializationStep(InitFarthestPoint(top_k=1)).run(state_top1, _STEP_IDENTITY)
-
-    # --- assert -----------------------
-    assert list(state_default.selected_index_array) == list(state_top1.selected_index_array)
+    assert len(picks) > 1
 
 
 def test_init_farthest_point_top_k_draws_from_the_top_set():

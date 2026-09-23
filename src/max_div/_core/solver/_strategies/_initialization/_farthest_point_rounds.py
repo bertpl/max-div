@@ -1,110 +1,73 @@
+"""Farthest-point sampling in rounds: many items drawn per pass over the dataset.
+
+A round collects the `batch_size` highest-contribution not-selected items into a pool with one
+pass over the dataset, then draws from that pool without touching the dataset again, ending once
+the pool can no longer be shown to hold the dataset's best candidates (see `_draw_round`). Every
+draw ranges over the same candidates as the one-item-at-a-time construction, so selections are of
+the same quality but not the same, and rounds are several times faster at large n.
+
+Separation-family objectives with one spec only: their contributions only fall as items are
+selected, which the stopping rule rests on. `InitFarthestPoint` decides when rounds apply.
+"""
+
 import numba
 import numpy as np
 from numpy.typing import NDArray
 
-from max_div._core._random import P_UNIFORM, randint
+from max_div._core._random import randint
 from max_div._core.metrics import DiversityContributionFamily, DiversityObjective
 from max_div._core.metrics._distance import DISTANCE_STORE_TYPE, DistanceStore, get_distance
 from max_div._core.solver._solver_state import SolverState
 
-from ._base import InitializationStrategy
 
+# =================================================================================================
+#  Rounds
+# =================================================================================================
+def are_rounds_supported(objective: DiversityObjective) -> bool:
+    """Return whether rounds apply to `objective`: one distinct spec, of the separation family.
 
-class InitFarthestPointBatched(InitializationStrategy):
-    """Initialize by farthest-point sampling in rounds, drawing many items per pass over the dataset.
-
-    A round collects the `batch_size` highest-contribution not-selected items into a pool with one
-    pass over the dataset, then draws from that pool without touching the dataset again, ending
-    once the pool can no longer be shown to hold the dataset's best candidates (see `_draw_round`).
-    The solver applies the whole batch in one tracker update. Every draw ranges over the same
-    candidates `InitFarthestPoint` would offer, so selections are of the same quality but not the
-    same, and the batched strategy is several times faster at large n.
-
-    Separation-family diversity metrics only — their contributions only fall as items are selected,
-    which the stopping rule rests on; other families are rejected when the solver is built.
-    Constraints are ignored by design, like `InitFarthestPoint`.
-
-    Parameters:
-    - top_k (int): every draw samples uniformly among the `top_k` best remaining candidates — the
-                   meaning it has on `InitFarthestPoint`; 1 keeps the exact greedy pick. (default: 8)
-    - batch_size (int): how many candidates a round collects, which bounds how many items it can
-                        draw. A deeper pool needs fewer passes over the dataset but refreshes more
-                        candidates per draw; above a few hundred the extra refreshing costs more
-                        than the saved passes. `batch_size` cannot affect the selection's quality,
-                        only the time spent. (default: 256)
+    The stopping rule rests on contributions that only fall as items are selected, which holds for
+    one separation tracker and for nothing else.
     """
+    specs = objective.distinct_tracker_specs
+    return len(specs) == 1 and specs[0].contribution_family == DiversityContributionFamily.SEPARATION
 
-    def __init__(self, top_k: int = 8, batch_size: int = 256) -> None:
-        """Create the strategy.
 
-        Raises:
-            ValueError: If `top_k` is below 1, or `batch_size` is below `top_k` (a round could then
-                not offer a full draw).
-        """
-        super().__init__()
-        if top_k < 1:
-            raise ValueError(f"top_k must be >= 1, got {top_k}")
-        if batch_size < top_k:
-            raise ValueError(f"batch_size must be >= top_k ({top_k}), got {batch_size}")
-        self._top_k = top_k
-        self._batch_size = batch_size
+def draw_round(
+    state: SolverState, top_k: int, batch_size: int, k_remaining: int | np.int32, rng_state: NDArray[np.uint64]
+) -> NDArray[np.int32]:
+    """Run one round on a non-empty selection: collect a candidate pool and draw a batch from it.
 
-    @staticmethod
-    def is_diversity_objective_supported(objective: DiversityObjective) -> bool:
-        """Return whether the round heuristics apply to `objective`: one distinct spec, of the separation family.
+    The batch holds as many items as the round could draw before the pool could no longer be shown
+    to hold the best candidates — at least one; the solver applies it in a single tracker update.
+    Every draw samples uniformly among the `top_k` best remaining pool candidates.
+    """
+    # --- candidate pool ---------------------
+    # the batch_size highest-contribution not-selected items
+    cand_idx, cand_val = state.top_not_selected_contributions(batch_size)
+    # every item outside the pool is below the pool's lowest value, so a pool candidate still at
+    # or above that value is among the dataset's best: it is the round's admission threshold
+    threshold = np.float32(cand_val.min())
+    if len(cand_idx) < batch_size:
+        # the pool holds every remaining item, so nothing is outside it: run the pool down
+        threshold = np.float32(-np.inf)
 
-        The stopping rule rests on contributions that only fall as items are selected, which holds for
-        one separation tracker and for nothing else.
-        """
-        specs = objective.distinct_tracker_specs
-        return len(specs) == 1 and specs[0].contribution_family == DiversityContributionFamily.SEPARATION
-
-    def validate_objective(self, objective: DiversityObjective) -> None:
-        """Reject objectives that the round heuristics are not tailored to; see `is_diversity_objective_supported`."""
-        if not self.is_diversity_objective_supported(objective):
-            raise ValueError(
-                f"InitFarthestPointBatched does not support diversity objective {objective}: "
-                "the heuristics of the algorithm are tailored to a single separation-based diversity metric. "
-                "Use InitializationStrategy.farthest_point() instead."
-            )
-
-    def get_next_samples(self, state: SolverState, k_remaining: int | np.int32) -> NDArray[np.int32]:
-        """Run one round: collect a candidate pool from the current contributions and draw a batch from it.
-
-        The batch holds as many items as the round could draw before the pool could no longer be shown
-        to hold the best candidates — at least one; the solver applies it in a single tracker update.
-        """
-        # --- empty selection --------------------
-        # the seeded random start item, as for `InitFarthestPoint`
-        if state.n_selected == 0:
-            return randint(n=state.n, k=np.int32(1), replace=False, p=P_UNIFORM, rng_state=self._rng_state)
-
-        # --- candidate pool ---------------------
-        # the batch_size highest-contribution not-selected items
-        cand_idx, cand_val = state.top_not_selected_contributions(self._batch_size)
-        # every item outside the pool is below the pool's lowest value, so a pool candidate still at
-        # or above that value is among the dataset's best: it is the round's admission threshold
-        threshold = np.float32(cand_val.min())
-        if len(cand_idx) < self._batch_size:
-            # the pool holds every remaining item, so nothing is outside it: run the pool down
-            threshold = np.float32(-np.inf)
-
-        # --- draw -------------------------------
-        b_target = min(len(cand_idx), int(k_remaining))
-        out_batch = np.empty(b_target, dtype=np.int32)
-        top_positions = np.empty(self._top_k, dtype=np.int32)  # scratch for the draw loop's top-k positions
-        n_drawn = _draw_round(
-            cand_idx,
-            cand_val,
-            np.int32(self._top_k),
-            threshold,
-            np.int64(b_target),
-            state.distance_store,
-            self._rng_state,
-            out_batch,
-            top_positions,
-        )
-        return out_batch[:n_drawn]
+    # --- draw -------------------------------
+    b_target = min(len(cand_idx), int(k_remaining))
+    out_batch = np.empty(b_target, dtype=np.int32)
+    top_positions = np.empty(top_k, dtype=np.int32)  # scratch for the draw loop's top-k positions
+    n_drawn = _draw_round(
+        cand_idx,
+        cand_val,
+        np.int32(top_k),
+        threshold,
+        np.int64(b_target),
+        state.distance_store,
+        rng_state,
+        out_batch,
+        top_positions,
+    )
+    return out_batch[:n_drawn]
 
 
 # =================================================================================================
@@ -213,7 +176,7 @@ def _draw_round(
     `threshold` is the lowest contribution the pool held when the round opened. Every item outside
     the pool was below it then, and contributions only fall as items are selected, so a pool
     candidate still at or above it is among the whole dataset's best — which is what makes each
-    draw range over the candidates the per-pick construction would offer. The round ends when the
+    draw range over the candidates the one-item-at-a-time construction would offer. The round ends when the
     pool's `top_k`-th best live candidate is below `threshold`, or when fewer than `top_k` live
     candidates remain while `threshold` is finite. After each draw the remaining pool is refreshed
     against the drawn item.
@@ -234,7 +197,7 @@ def _draw_round(
             break  # too few live candidates to show the draw would range over the dataset's best
         if _select_highest(cand_val, n_live, k_eff, top_positions) < threshold:
             break
-        # a single candidate needs no draw, matching `InitFarthestPoint`'s argmax path
+        # a single candidate needs no draw, matching the one-item-at-a-time argmax path
         slot = 0 if k_eff == 1 else randint(np.int32(k_eff), np.int32(1), False, p_uniform, rng_state)[0]
         pick_pos = top_positions[slot]
         x = cand_idx[pick_pos]

@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from max_div._core.solver._solver_state import SolverState
 
     from ._init_farthest_point import InitFarthestPoint
-    from ._init_farthest_point_batched import InitFarthestPointBatched
     from ._init_most_feasible import InitMostFeasible
     from ._init_random_selection import InitRandomSelection
 
@@ -68,30 +67,22 @@ class InitializationStrategy(StrategyBase, ABC):
     #  Factory Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def farthest_point(cls, top_k: int = 1) -> InitFarthestPoint:
-        """Farthest-point-sampling initialization: a seeded random start item, then greedy picks.
+    def farthest_point(cls, top_k: int = 8, batch_size: int | None = 256) -> InitFarthestPoint:
+        """Create a farthest-point-sampling initialization: a seeded random start item, then greedy picks.
 
-        See `InitFarthestPoint` for the per-metric interpretation and constraint handling.
+        Where the objective is a single separation-family metric, the picks are drawn in rounds of
+        up to `batch_size` items per pass over the dataset, several times faster at large n; every
+        other objective, and `batch_size=None`, picks one item per pass. See `InitFarthestPoint` for
+        the per-metric interpretation and constraint handling.
 
         Args:
             top_k: Each greedy pick samples uniformly among the `top_k` highest diversity
-                contributions; the default 1 keeps the exact greedy construction.
+                contributions; 1 is the exact greedy construction.
+            batch_size: How many candidates a round collects; `None` picks one item at a time.
         """
         from ._init_farthest_point import InitFarthestPoint
 
-        return InitFarthestPoint(top_k=top_k)
-
-    @classmethod
-    def farthest_point_batched(cls, top_k: int = 8, batch_size: int = 256) -> InitFarthestPointBatched:
-        """Create a farthest-point initialization that draws a batch of items per pass over the dataset.
-
-        The strategy offers each draw the same candidates as `farthest_point`, so selections are of
-        equal quality but not identical, and it is several times faster at large n. Separation-family
-        diversity metrics only; see `InitFarthestPointBatched` for the mechanism and the parameters.
-        """
-        from ._init_farthest_point_batched import InitFarthestPointBatched
-
-        return InitFarthestPointBatched(top_k=top_k, batch_size=batch_size)
+        return InitFarthestPoint(top_k=top_k, batch_size=batch_size)
 
     @classmethod
     def most_feasible(cls, max_iter: int | None = None) -> InitMostFeasible:

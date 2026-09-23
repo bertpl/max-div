@@ -63,7 +63,7 @@ class SolverConfig:
                 diversity metric.
         """
         for step in self.solver_steps:
-            step.validate_objective(self.diversity_objectives[0])
+            step.bind_objective(self.diversity_objectives[0])
         if stores_by_distance is not None and stores_by_distance_provider is None:
             provider: Callable[[], Mapping[DistanceMetric | None, DistanceStore]] = lambda: stores_by_distance
         elif stores_by_distance is None and stores_by_distance_provider is not None:

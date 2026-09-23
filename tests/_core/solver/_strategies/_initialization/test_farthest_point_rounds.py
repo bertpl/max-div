@@ -7,10 +7,8 @@ from max_div._core.metrics._distance import DistanceStore
 from max_div._core.solver._solver_step import InitializationStep
 from max_div._core.solver._step_identity import SolverStepIdentity
 from max_div._core.solver._strategies import InitializationStrategy
-from max_div._core.solver._strategies._initialization._init_farthest_point_batched import (
-    InitFarthestPointBatched,
-    _draw_round,
-)
+from max_div._core.solver._strategies._initialization._farthest_point_rounds import _draw_round
+from max_div._core.solver._strategies._initialization._init_farthest_point import InitFarthestPoint
 from max_div.metrics import DiversityMetric
 
 from ._helpers import new_solver_state, new_solver_state_unconstrained
@@ -19,12 +17,19 @@ from ._helpers import new_solver_state, new_solver_state_unconstrained
 _STEP_IDENTITY = SolverStepIdentity(1, "test")
 
 
+def _farthest_point_in_rounds(**kwargs) -> InitFarthestPoint:
+    """Return a farthest-point strategy bound to a separation objective, so that it draws in rounds."""
+    strategy = InitializationStrategy.farthest_point(**kwargs)
+    strategy.bind_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))
+    return strategy
+
+
 @pytest.mark.parametrize("top_k", [1, 8])
-def test_init_farthest_point_batched_completes_selection(top_k: int):
-    """The batched init selects exactly k distinct items and reaches full size."""
+def test_rounds_completes_selection(top_k: int):
+    """Drawing in rounds selects exactly k distinct items and reaches full size."""
     # --- arrange ----------------------
     state = new_solver_state(has_constraints=False)
-    step = InitializationStep(InitializationStrategy.farthest_point_batched(top_k=top_k))
+    step = InitializationStep(_farthest_point_in_rounds(top_k=top_k))
 
     # --- act --------------------------
     step.run(state, _STEP_IDENTITY)
@@ -35,13 +40,13 @@ def test_init_farthest_point_batched_completes_selection(top_k: int):
     assert len(np.unique(selection)) == state.k
 
 
-def test_init_farthest_point_batched_is_deterministic_per_seed():
+def test_rounds_is_deterministic_per_seed():
     """The same seed reproduces the same selection; a different seed varies it."""
     # --- arrange ----------------------
     selections = []
     for seed in (7, 7, 8):
         state = new_solver_state(has_constraints=False)
-        step = InitializationStep(InitializationStrategy.farthest_point_batched())
+        step = InitializationStep(_farthest_point_in_rounds())
         step.set_seed(seed)
 
         # --- act ----------------------
@@ -53,13 +58,13 @@ def test_init_farthest_point_batched_is_deterministic_per_seed():
     assert not np.array_equal(selections[0], selections[2])
 
 
-def test_init_farthest_point_batched_quality_near_exact_sibling():
-    """The batched construction's min-separation is near `InitFarthestPoint`'s."""
+def test_rounds_quality_near_one_item_at_a_time():
+    """The min-separation reached in rounds is near the one reached one item at a time."""
     # --- arrange ----------------------
     results = {}
     for label, strategy in (
-        ("exact", InitializationStrategy.farthest_point(top_k=8)),
-        ("batched", InitializationStrategy.farthest_point_batched()),
+        ("one_at_a_time", InitializationStrategy.farthest_point(top_k=8, batch_size=None)),
+        ("rounds", _farthest_point_in_rounds()),
     ):
         state = new_solver_state(has_constraints=False)
         step = InitializationStep(strategy)
@@ -70,35 +75,52 @@ def test_init_farthest_point_batched_quality_near_exact_sibling():
         results[label] = state.score.diversity
 
     # --- assert -----------------------
-    assert results["batched"] >= 0.8 * results["exact"]
+    assert results["rounds"] >= 0.8 * results["one_at_a_time"]
 
 
-def test_init_farthest_point_batched_rejects_mean_family_metric():
-    """A mean-family main metric is refused: the round heuristics are separation-tailored."""
+@pytest.mark.parametrize(
+    "metric, batch_size, is_drawing_rounds",
+    [
+        (DiversityMetric.MIN_SEPARATION, 16, True),
+        (DiversityMetric.MIN_SEPARATION, None, False),
+        (DiversityMetric.MEAN_PAIRWISE_DISTANCE, 16, False),
+    ],
+)
+def test_rounds_only_for_a_separation_objective_and_a_batch_size(
+    metric: DiversityMetric, batch_size: int | None, is_drawing_rounds: bool
+):
+    """A strategy draws several items per call only when bound to a separation objective with a batch size."""
     # --- arrange ----------------------
-    strategy = InitializationStrategy.farthest_point_batched()
+    state = new_solver_state_unconstrained()
+    strategy = InitializationStrategy.farthest_point(batch_size=batch_size)
+    strategy.bind_objective(DiversityObjectiveSimple(metric))
 
-    # --- act / assert -----------------
-    with pytest.raises(ValueError, match="separation-based diversity metric"):
-        strategy.validate_objective(DiversityObjectiveSimple(DiversityMetric.MEAN_PAIRWISE_DISTANCE))
-    strategy.validate_objective(DiversityObjectiveSimple(DiversityMetric.MIN_SEPARATION))  # accepted: no raise
+    # --- act --------------------------
+    batch_sizes = []
+    while state.n_selected < state.k:
+        batch = strategy.get_next_samples(state, np.int32(state.k - state.n_selected))
+        batch_sizes.append(len(batch))
+        state.add_many(batch)
+
+    # --- assert -----------------------
+    assert (max(batch_sizes) > 1) is is_drawing_rounds
 
 
 @pytest.mark.parametrize(
     "kwargs",
     [{"top_k": 0}, {"batch_size": 0}, {"top_k": 8, "batch_size": 4}],
 )
-def test_init_farthest_point_batched_rejects_invalid_parameters(kwargs: dict):
+def test_rounds_rejects_invalid_parameters(kwargs: dict):
     """The constructor rejects `top_k` below 1 and `batch_size` below `top_k`."""
     with pytest.raises(ValueError):
-        InitFarthestPointBatched(**kwargs)
+        InitFarthestPoint(**kwargs)
 
 
-def test_init_farthest_point_batched_batches_respect_the_contract():
+def test_rounds_batches_respect_the_contract():
     """Every returned batch is duplicate-free, in range, and not yet selected."""
     # --- arrange ----------------------
     state = new_solver_state(has_constraints=False)
-    strategy = InitializationStrategy.farthest_point_batched(batch_size=16)
+    strategy = _farthest_point_in_rounds(batch_size=16)
 
     # --- arrange / act / assert -------
     while state.n_selected < state.k:
@@ -167,13 +189,39 @@ def test_draw_round_draws_while_the_pool_still_holds_the_best():
     assert n_drawn >= 2
 
 
+def test_draw_round_ends_when_fewer_than_top_k_candidates_remain():
+    """With a finite threshold, a draw needs top_k live candidates to be shown to range over the dataset's best."""
+    # --- arrange ----------------------
+    vectors = np.array([[0.0], [100.0], [200.0], [300.0]], dtype=np.float32)
+    store = DistanceStore.lazy(vectors, DistanceMetric.l2_euclidean())
+    cand_idx = np.array([1, 2, 3], dtype=np.int32)
+    cand_val = np.array([100.0, 200.0, 300.0], dtype=np.float32)
+    out_batch = np.empty(3, dtype=np.int32)
+
+    # --- act --------------------------
+    n_drawn = _draw_round(
+        cand_idx,
+        cand_val,
+        np.int32(2),
+        np.float32(50.0),
+        np.int64(3),
+        store,
+        new_rng_state(np.int64(1)),
+        out_batch,
+        np.empty(2, dtype=np.int32),
+    )
+
+    # --- assert -----------------------
+    assert n_drawn == 2  # the third draw would have only 1 live candidate for a top_k of 2
+
+
 @pytest.mark.parametrize("seed", [1, 2, 3])
 def test_every_draw_is_among_the_top_k_contributions(seed: int):
     """Each draw lands among the top_k highest contributions over all not-selected items."""
     # --- arrange ----------------------
     top_k = 4
     state = new_solver_state_unconstrained()
-    strategy = InitializationStrategy.farthest_point_batched(top_k=top_k, batch_size=16)
+    strategy = _farthest_point_in_rounds(top_k=top_k, batch_size=16)
     strategy.set_seed(seed)
 
     # --- arrange / act / assert -------
@@ -198,8 +246,8 @@ def test_top_k_one_reproduces_the_per_pick_construction_exactly(seed: int):
     # --- arrange ----------------------
     states = [new_solver_state_unconstrained() for _ in range(2)]
     steps = [
-        InitializationStep(InitializationStrategy.farthest_point(top_k=1)),
-        InitializationStep(InitializationStrategy.farthest_point_batched(top_k=1)),
+        InitializationStep(InitializationStrategy.farthest_point(top_k=1, batch_size=None)),
+        InitializationStep(_farthest_point_in_rounds(top_k=1)),
     ]
 
     # --- act --------------------------
